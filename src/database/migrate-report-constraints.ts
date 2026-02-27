@@ -14,6 +14,19 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
   const db = wrapper.getRawDB()
 
   try {
+    // 先检查 report_record 表是否存在
+    const tableCheck = db.exec(`
+      SELECT name FROM sqlite_master WHERE type='table' AND name='report_record'
+    `)
+
+    if (!tableCheck || tableCheck.length === 0 || tableCheck[0].values.length === 0) {
+      console.log('[迁移] report_record 表不存在，跳过迁移（全新数据库）')
+      return {
+        success: true,
+        message: 'report_record 表不存在，无需迁移（全新数据库）'
+      }
+    }
+
     console.log('[迁移] 开始更新 report_record 表约束...')
 
     // 步骤1: 开启事务
@@ -93,6 +106,18 @@ export function needsMigration(): boolean {
   const db = wrapper.getRawDB()
 
   try {
+    // 首先检查表是否存在
+    const tableCheck = db.exec(`
+      SELECT name FROM sqlite_master
+      WHERE type='table' AND name='report_record'
+    `)
+
+    if (!tableCheck || tableCheck.length === 0 || tableCheck[0].values.length === 0) {
+      // 表不存在，不需要迁移（全新数据库会在 schema 中直接创建正确的表）
+      console.log('[needsMigration] report_record 表不存在，跳过迁移')
+      return false
+    }
+
     // 获取表的 CREATE 语句
     const results = db.exec(`
       SELECT sql FROM sqlite_master
@@ -100,7 +125,7 @@ export function needsMigration(): boolean {
     `)
 
     if (!results || results.length === 0) {
-      return true
+      return false
     }
 
     // results[0].values 是二维数组，取第一行第一列
@@ -109,8 +134,8 @@ export function needsMigration(): boolean {
     // 检查约束是否包含 'conners-psq' 和 'conners-trs'
     return !sql.includes("'conners-psq'") || !sql.includes("'conners-trs'")
   } catch (error) {
-    // 如果查询失败，保守地认为需要迁移
-    console.warn('[needsMigration] 检查约束失败，默认需要迁移:', error)
-    return true
+    // 如果查询失败，保守地认为不需要迁移
+    console.warn('[needsMigration] 检查约束失败，跳过迁移:', error)
+    return false
   }
 }
