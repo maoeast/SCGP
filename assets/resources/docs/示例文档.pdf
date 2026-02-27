@@ -1,0 +1,10 @@
+这不是一个真实的PDF文件，只是一个占位符。
+您需要将实际的PDF文件放在这里。
+
+预置资源文件夹结构：
+- assets/resources/docs/ - 放置教学文档（PDF、Word、Excel等）
+- assets/resources/videos/ - 放置示范视频文件
+- assets/resources/ppt/ - 放置PPT课件
+- assets/resources/cases/ - 放置案例分析文档
+- assets/resources/images/ - 放置图片素材
+- assets/resources/audio/ - 放置音频文件

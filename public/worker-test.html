@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Worker 连接测试</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .test-container {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-top: 0;
+      color: #333;
+    }
+    .status-section {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .label {
+      font-weight: 600;
+      color: #666;
+    }
+    .value {
+      color: #333;
+    }
+    .status {
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 12px 20px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    button:hover:not(:disabled) {
+      background: #f0f0f0;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    button.primary {
+      background: #007bff;
+      color: white;
+      border-color: #007bff;
+    }
+    button.primary:hover:not(:disabled) {
+      background: #0056b3;
+    }
+    button.danger {
+      background: #dc3545;
+      color: white;
+      border-color: #dc3545;
+    }
+    button.danger:hover:not(:disabled) {
+      background: #a71d2a;
+    }
+    .results {
+      background: white;
+      border-radius: 6px;
+      padding: 15px;
+    }
+    h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #666;
+    }
+    .result-log {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 13px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      padding: 4px 0;
+      display: flex;
+      gap: 10px;
+    }
+    .log-entry .timestamp {
+      color: #858585;
+      min-width: 80px;
+    }
+    .log-entry.info .message {
+      color: #569cd6;
+    }
+    .log-entry.success .message {
+      color: #6a9955;
+    }
+    .log-entry.error .message {
+      color: #f48771;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>Database Worker 连接测试</h1>
+
+    <div class="status-section">
+      <div class="status-item">
+        <span class="label">Worker 状态:</span>
+        <span id="workerStatus" class="status error">未连接</span>
+      </div>
+      <div class="status-item">
+        <span class="label">运行模式:</span>
+        <span id="runMode" class="value">-</span>
+      </div>
+      <div class="status-item">
+        <span class="label">内存使用:</span>
+        <span id="memoryUsage" class="value">0 bytes</span>
+      </div>
+      <div class="status-item">
+        <span class="label">队列状态:</span>
+        <span id="queueStatus" class="value">队列: 0, 待处理: 0</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="btnInit" class="primary" onclick="handleInit()">1. 初始化 Worker</button>
+      <button id="btnPing" onclick="handlePing()" disabled>2. 健康检查 (PING)</button>
+      <button id="btnSelectOne" onclick="handleSelectOne()" disabled>3. 执行 SELECT 1</button>
+      <button id="btnBatchQuery" onclick="handleBatchQuery()" disabled>4. 批量查询测试</button>
+      <button id="btnClose" class="danger" onclick="handleClose()" disabled>5. 关闭 Worker</button>
+    </div>
+
+    <div class="results">
+      <h3>执行结果</h3>
+      <div id="logContainer" class="result-log"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // 简化的 Worker 代码（内联以避免文件加载问题）
+    const workerCode = `
+      let isInitialized = false;
+      let useTestMode = true;  // 测试模式
+
+      self.onmessage = function(event) {
+        const { type, id, payload } = event.data;
+        console.log('[Worker] Received:', type, id);
+
+        switch (type) {
+          case 'init':
+            handleInit(id, payload);
+            break;
+          case 'query':
+            handleQuery(id, payload);
+            break;
+          case 'batch_query':
+            handleBatchQuery(id, payload);
+            break;
+          case 'ping':
+            handlePing(id);
+            break;
+          case 'close':
+            handleClose(id);
+            break;
+          default:
+            self.postMessage({
+              id,
+              success: false,
+              error: { code: 'UNKNOWN_MESSAGE_TYPE', message: 'Unknown type: ' + type }
+            });
+        }
+      };
+
+      function createResponse(id, success, data, error) {
+        return { id, success, data, error, duration: 0 };
+      }
+
+      function handleInit(id, payload) {
+        const startTime = performance.now();
+        try {
+          isInitialized = true;
+          const duration = performance.now() - startTime;
+          console.log('[Worker] Initialized in ' + duration.toFixed(2) + 'ms');
+          self.postMessage(createResponse(id, true, {
+            ready: true,
+            dbPath: payload.dbPath,
+            memoryUsage: 0,
+            testMode: useTestMode
+          }));
+        } catch (error) {
+          self.postMessage({
+            id,
+            success: false,
+            error: { code: 'INIT_ERROR', message: error.message }
+          });
+        }
+      }
+
+      function handleQuery(id, payload) {
+        const startTime = performance.now();
+        try {
+          const { sql, params = [] } = payload;
+          let result;
+
+          if (sql.trim().toUpperCase() === 'SELECT 1') {
+            result = { rows: [{ value: 1 }], columns: ['value'] };
+          } else if (sql.includes('SELECT ?')) {
+            result = { rows: [{ iteration: params[0] || 0 }], columns: ['iteration'] };
+          } else {
+            result = { rows: [], columns: [] };
+          }
+
+          const duration = performance.now() - startTime;
+          self.postMessage(createResponse(id, true, result));
+        } catch (error) {
+          self.postMessage({
+            id,
+            success: false,
+            error: { code: 'QUERY_ERROR', message: error.message }
+          });
+        }
+      }
+
+      function handleBatchQuery(id, payload) {
+        const startTime = performance.now();
+        try {
+          const { operations } = payload;
+          const results = operations.map(op => {
+            if (op.sql.includes('SELECT ?')) {
+              return { rows: [{ iteration: op.params?.[0] || 0 }], changes: 0, lastInsertId: 0 };
+            }
+            return { rows: [], changes: 0, lastInsertId: 0 };
+          });
+
+          const duration = performance.now() - startTime;
+          self.postMessage(createResponse(id, true, { results, totalDuration: duration }));
+        } catch (error) {
+          self.postMessage({
+            id,
+            success: false,
+            error: { code: 'BATCH_ERROR', message: error.message }
+          });
+        }
+      }
+
+      function handlePing(id) {
+        self.postMessage(createResponse(id, true, {
+          ready: isInitialized,
+          memoryUsage: 0,
+          activeConnections: 1,
+          testMode: useTestMode
+        }));
+      }
+
+      function handleClose(id) {
+        isInitialized = false;
+        self.postMessage(createResponse(id, true, { closed: true }));
+      }
+    `;
+
+    // 创建 Worker
+    let worker = null;
+    let pendingRequests = new Map();
+    let messageIdCounter = 0;
+
+    function generateMessageId() {
+      return 'msg_' + Date.now() + '_' + (++messageIdCounter);
+    }
+
+    function createWorker() {
+      const blob = new Blob([workerCode], { type: 'application/javascript' });
+      const workerUrl = URL.createObjectURL(blob);
+      worker = new Worker(workerUrl);
+
+      worker.onmessage = function(event) {
+        const response = event.data;
+        const pending = pendingRequests.get(response.id);
+        if (pending) {
+          pending.resolve(response);
+          pendingRequests.delete(response.id);
+        }
+      };
+
+      worker.onerror = function(error) {
+        console.error('[Worker] error:', error);
+        addLog('error', 'Worker 错误: ' + error.message);
+      };
+    }
+
+    function enqueue(type, payload) {
+      return new Promise((resolve, reject) => {
+        const id = generateMessageId();
+        pendingRequests.set(id, { resolve, reject });
+        worker.postMessage({ type, id, payload, timestamp: Date.now() });
+      });
+    }
+
+    function addLog(type, message) {
+      const logContainer = document.getElementById('logContainer');
+      const timestamp = new Date().toLocaleTimeString();
+      const div = document.createElement('div');
+      div.className = 'log-entry ' + type;
+      div.innerHTML = '<span class="timestamp">' + timestamp + '</span><span class="message">' + message + '</span>';
+      logContainer.appendChild(div);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    function updateStatus() {
+      document.getElementById('queueStatus').textContent = '队列: 0, 待处理: ' + pendingRequests.size;
+    }
+
+    async function handleInit() {
+      try {
+        addLog('info', '正在创建 Worker...');
+        createWorker();
+        addLog('success', 'Worker 创建成功');
+
+        addLog('info', '正在初始化数据库...');
+        const response = await enqueue('init', {});
+
+        if (response.success) {
+          document.getElementById('workerStatus').className = 'status success';
+          document.getElementById('workerStatus').textContent = '已连接';
+          document.getElementById('runMode').textContent = response.data.testMode ? '测试模式' : '正常模式';
+          document.getElementById('memoryUsage').textContent = response.data.memoryUsage + ' bytes';
+          addLog('success', 'Worker 初始化成功 (testMode=' + response.data.testMode + ')');
+
+          // 启用按钮
+          document.getElementById('btnPing').disabled = false;
+          document.getElementById('btnSelectOne').disabled = false;
+          document.getElementById('btnBatchQuery').disabled = false;
+          document.getElementById('btnClose').disabled = false;
+          document.getElementById('btnInit').disabled = true;
+        } else {
+          throw new Error(response.error?.message || '初始化失败');
+        }
+      } catch (error) {
+        addLog('error', '初始化失败: ' + error.message);
+      }
+      updateStatus();
+    }
+
+    async function handlePing() {
+      try {
+        addLog('info', '发送 PING...');
+        const response = await enqueue('ping', {});
+
+        if (response.success) {
+          document.getElementById('memoryUsage').textContent = response.data.memoryUsage + ' bytes';
+          addLog('success', 'PING 成功, ready=' + response.data.ready + ', testMode=' + response.data.testMode);
+        }
+      } catch (error) {
+        addLog('error', 'PING 失败: ' + error.message);
+      }
+      updateStatus();
+    }
+
+    async function handleSelectOne() {
+      try {
+        addLog('info', '执行 SELECT 1...');
+        const response = await enqueue('query', { sql: 'SELECT 1' });
+
+        if (response.success) {
+          addLog('success', '查询成功: ' + JSON.stringify(response.data.rows));
+        }
+      } catch (error) {
+        addLog('error', 'SELECT 1 失败: ' + error.message);
+      }
+      updateStatus();
+    }
+
+    async function handleBatchQuery() {
+      try {
+        addLog('info', '执行批量查询（10 次 SELECT ?）...');
+        const operations = Array.from({ length: 10 }, (_, i) => ({
+          sql: 'SELECT ?',
+          params: [i + 1]
+        }));
+
+        const startTime = performance.now();
+        const response = await enqueue('batch_query', { operations });
+        const duration = performance.now() - startTime;
+
+        if (response.success) {
+          addLog('success', '批量查询成功: ' + response.data.results.length + ' 个结果, 耗时: ' + duration.toFixed(2) + 'ms');
+          addLog('info', '第一个结果: ' + JSON.stringify(response.data.results[0].rows));
+        }
+      } catch (error) {
+        addLog('error', '批量查询失败: ' + error.message);
+      }
+      updateStatus();
+    }
+
+    async function handleClose() {
+      try {
+        addLog('info', '正在关闭 Worker...');
+        await enqueue('close', {});
+
+        if (worker) {
+          worker.terminate();
+          worker = null;
+        }
+
+        document.getElementById('workerStatus').className = 'status error';
+        document.getElementById('workerStatus').textContent = '未连接';
+        document.getElementById('runMode').textContent = '-';
+        document.getElementById('memoryUsage').textContent = '0 bytes';
+
+        // 禁用按钮
+        document.getElementById('btnPing').disabled = true;
+        document.getElementById('btnSelectOne').disabled = true;
+        document.getElementById('btnBatchQuery').disabled = true;
+        document.getElementById('btnClose').disabled = true;
+        document.getElementById('btnInit').disabled = false;
+
+        addLog('success', 'Worker 已关闭');
+      } catch (error) {
+        addLog('error', '关闭失败: ' + error.message);
+      }
+      updateStatus();
+    }
+
+    // 将函数暴露到全局作用域
+    window.handleInit = handleInit;
+    window.handlePing = handlePing;
+    window.handleSelectOne = handleSelectOne;
+    window.handleBatchQuery = handleBatchQuery;
+    window.handleClose = handleClose;
+  </script>
+</body>
+</html>

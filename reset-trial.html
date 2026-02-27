@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>激活工具</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f7fa;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #42b983;
+            padding-bottom: 8px;
+        }
+        button {
+            background: #42b983;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #369870;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        button.secondary {
+            background: #909399;
+        }
+        button.secondary:hover {
+            background: #73767a;
+        }
+        .code-display {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 18px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+            position: relative;
+            word-break: break-all;
+        }
+        .code-type {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #42b983;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .input-group {
+            margin: 20px 0;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .info-box {
+            background: #e8f4fd;
+            border: 1px solid #b3d8ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #0052d9;
+        }
+        .steps {
+            background: #f0f9ff;
+            border-left: 4px solid #42b983;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .steps li {
+            margin-bottom: 10px;
+        }
+        .warning {
+            color: #e6a23c;
+            margin-top: 30px;
+            padding: 15px;
+            background: #fef6e7;
+            border: 1px solid #f5dab1;
+            border-radius: 8px;
+        }
+        .warning strong {
+            color: #b88230;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Self-Care ATS 激活工具</h1>
+
+        <div class="section">
+            <h2>快速激活（推荐）</h2>
+            <div class="info-box">
+                <h3>使用方法</h3>
+                <p>1. 点击按钮生成适用于当前机器的激活码</p>
+                <p>2. 复制生成的激活码</p>
+                <p>3. 在激活页面粘贴激活码即可激活</p>
+            </div>
+            <button onclick="generateFullActivation()">生成永久激活码</button>
+            <button class="secondary" onclick="generateEducationActivation()">生成教育版激活码（1年）</button>
+            <button class="secondary" onclick="generateEnterpriseActivation()">生成企业版激活码（3年）</button>
+
+            <div id="generatedCodes"></div>
+        </div>
+
+        <div class="section">
+            <h2>手动操作</h2>
+
+            <h3>1. 获取机器码</h3>
+            <p>获取当前机器的机器码：</p>
+            <button onclick="getMachineCode()">获取机器码</button>
+            <div class="code-display" id="machineCode">点击上方按钮获取</div>
+
+            <h3>2. 重置试用期</h3>
+            <div class="steps">
+                <ol>
+                    <li>点击按钮清除数据库中的激活记录</li>
+                    <li>刷新页面</li>
+                    <li>系统将重新开始7天试用期</li>
+                </ol>
+            </div>
+            <button class="secondary" onclick="resetTrial()">重置试用期</button>
+
+            <h3>3. 访问激活管理页面</h3>
+            <p>登录系统后，可以访问激活管理页面进行更详细的操作：</p>
+            <button class="secondary" onclick="openActivationAdmin()">打开激活管理页面</button>
+        </div>
+
+        <div class="warning">
+            <strong>注意：</strong>
+            <ul>
+                <li>此工具仅用于开发和测试环境</li>
+                <li>生成的激活码仅对当前机器有效</li>
+                <li>生产环境请使用官方提供的激活码</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量存储机器码
+        let machineCode = '';
+
+        // 生成机器码
+        function getMachineCode() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.fillText('Self-Care ATS Machine ID', 2, 2);
+                const fingerprint = canvas.toDataURL();
+
+                let hash = 0;
+                for (let i = 0; i < fingerprint.length; i++) {
+                    const char = fingerprint.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+
+                machineCode = Math.abs(hash).toString(16).toUpperCase().padStart(16, '0');
+                document.getElementById('machineCode').innerText = machineCode;
+            }
+        }
+
+        // 生成激活码
+        function generateActivationCode(type) {
+            if (!machineCode) {
+                getMachineCode();
+            }
+
+            const prefixes = {
+                'FULL': 'FULL',
+                'EDU': 'EDU',
+                'ENT': 'ENT'
+            };
+
+            const prefix = prefixes[type];
+            const part2 = machineCode.substring(0, 4).padEnd(4, 'X');
+            const part3 = machineCode.substring(4, 8).padEnd(4, 'Y');
+            const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+
+            return `SPED-${prefix}-${part2}-${part3}`;
+        }
+
+        // 生成永久激活码
+        function generateFullActivation() {
+            const code = generateActivationCode('FULL');
+            displayCode('永久激活码', code);
+        }
+
+        // 生成教育版激活码
+        function generateEducationActivation() {
+            const code = generateActivationCode('EDU');
+            displayCode('教育版激活码（1年）', code);
+        }
+
+        // 生成企业版激活码
+        function generateEnterpriseActivation() {
+            const code = generateActivationCode('ENT');
+            displayCode('企业版激活码（3年）', code);
+        }
+
+        // 显示生成的激活码
+        function displayCode(type, code) {
+            const container = document.getElementById('generatedCodes');
+            container.innerHTML = `
+                <h3>生成的激活码</h3>
+                <div class="code-display">
+                    <span class="code-type">${type}</span>
+                    ${code}
+                </div>
+                <button onclick="copyToClipboard('${code}')">复制激活码</button>
+            `;
+        }
+
+        // 复制到剪贴板
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('激活码已复制到剪贴板！');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                // 降级方案
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('激活码已复制到剪贴板！');
+            });
+        }
+
+        // 重置试用期
+        function resetTrial() {
+            if (confirm('确定要重置试用期吗？这将清除数据库中的所有激活记录。')) {
+                // 清除IndexedDB
+                const request = indexedDB.deleteDatabase('sped.db');
+                request.onsuccess = function() {
+                    alert('试用期已重置！请刷新页面重新开始。');
+                    // 刷新页面
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                };
+                request.onerror = function() {
+                    alert('重置失败，请手动清除浏览器数据。');
+                };
+            }
+        }
+
+        // 打开激活管理页面
+        function openActivationAdmin() {
+            window.open('http://localhost:5173/activation-admin', '_blank');
+        }
+
+        // 页面加载时获取机器码
+        window.onload = function() {
+            getMachineCode();
+        };
+    </script>
+</body>
+</html>

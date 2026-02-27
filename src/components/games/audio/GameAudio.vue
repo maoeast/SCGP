@@ -1,0 +1,1446 @@
+<template>
+  <div class="game-audio-container">
+    <!-- 游戏头部 -->
+    <div class="game-header" v-if="!gameEnded">
+      <div class="task-info">
+        <h2>{{ taskTitle }}</h2>
+        <p class="instruction">{{ currentInstruction }}</p>
+      </div>
+      <div class="game-stats">
+        <div class="stat">
+          <span class="label">进度：</span>
+          <span class="value">{{ currentRound }} / {{ totalRounds }}</span>
+        </div>
+        <div class="stat" v-if="mode !== 'rhythm'">
+          <span class="label">时间：</span>
+          <span class="value" :class="{ warning: timeLeft <= 10 }">{{ timeLeft }}s</span>
+        </div>
+        <div class="stat">
+          <span class="label">得分：</span>
+          <span class="value">{{ score }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 辨别模式 (Task 5) -->
+    <div v-if="mode === 'diff' && !gameEnded" class="game-mode-diff">
+      <button class="play-btn" @click="playSounds" :disabled="isPlaying">
+        <i class="fas fa-play"></i> 播放声音
+      </button>
+      <div class="choice-buttons" v-if="soundsPlayed">
+        <button
+          class="btn-choice btn-same"
+          @click="handleDiffChoice(true)"
+          :disabled="choiceMade"
+        >
+          👍 一样
+        </button>
+        <button
+          class="btn-choice btn-diff"
+          @click="handleDiffChoice(false)"
+          :disabled="choiceMade"
+        >
+          👎 不一样
+        </button>
+      </div>
+    </div>
+
+    <!-- 指令模式 (Task 6) -->
+    <div v-if="mode === 'command' && !gameEnded" class="game-mode-command">
+      <!-- 开始按钮：第一轮需要用户点击才能播放语音（浏览器自动播放策略） -->
+      <div v-if="currentRound === 0" class="start-prompt">
+        <button class="btn-start" @click="startFirstRound">
+          <i class="fas fa-play-circle"></i> 点击开始游戏
+        </button>
+        <p class="start-hint">点击按钮开始听指令做动作游戏</p>
+      </div>
+
+      <!-- 语音控制按钮组 -->
+      <div v-else class="voice-control">
+        <button class="play-btn" @click="playCommand(false)" :disabled="isPlaying">
+          <i class="fas fa-redo"></i> 重播指令
+        </button>
+        <span v-if="isPlaying" class="playing-indicator">
+          <i class="fas fa-volume-up"></i> 播放中...
+        </span>
+      </div>
+
+      <!-- 降级方案：显示文字指令 -->
+      <div class="command-text-fallback" v-if="!speechSynthesisSupported && commandPlayed">
+        <div class="command-instruction">
+          <span class="command-label">指令：</span>
+          <span class="command-text">{{ currentCommand }}</span>
+        </div>
+      </div>
+
+      <!-- 复用 Grid 布局显示选项 -->
+      <div class="command-grid" :class="`grid-${gridSize}x${gridSize}`" v-if="commandPlayed">
+        <div
+          v-for="item in commandOptions"
+          :key="item.id"
+          class="grid-item"
+          :class="{
+            selected: item.isSelected,
+            correct: item.isCorrect && showResult,
+            wrong: !item.isCorrect && item.isSelected && showResult
+          }"
+          @click="handleCommandClick(item)"
+        >
+          <div
+            class="item-shape"
+            :class="`shape-${item.shape}`"
+            :style="{ backgroundColor: GAME_COLORS[item.color] }"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 节奏模式 (Task 7) -->
+    <div v-if="mode === 'rhythm' && !gameEnded" class="game-mode-rhythm">
+      <button
+        class="play-btn rhythm-play"
+        @click="playRhythm"
+        :disabled="isPlaying"
+      >
+        <i class="fas fa-music"></i> 播放节奏
+      </button>
+
+      <div class="rhythm-visualizer">
+        <div
+          v-for="(beat, index) in rhythmPattern"
+          :key="index"
+          class="beat-dot"
+          :class="{ active: index === currentBeatIndex }"
+        ></div>
+      </div>
+
+      <div class="rhythm-record">
+        <button
+          class="btn-rhythm"
+          @click="handleRhythmTap"
+          :disabled="!canRecord"
+        >
+          👏 拍打
+        </button>
+        <div class="record-progress">
+          <div
+            v-for="(i, index) in recordedBeats"
+            :key="index"
+            class="recorded-beat"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 结果界面 -->
+    <div class="game-result" v-if="gameEnded">
+      <h2>🎵 训练完成！</h2>
+      <div class="result-stats">
+        <div class="result-item">
+          <span class="label">总轮次：</span>
+          <span class="value">{{ totalRounds }}</span>
+        </div>
+        <div class="result-item">
+          <span class="label">正确次数：</span>
+          <span class="value">{{ correctCount }}</span>
+        </div>
+        <div class="result-item">
+          <span class="label">准确率：</span>
+          <span class="value">{{ (accuracy * 100).toFixed(1) }}%</span>
+        </div>
+        <div class="result-item" v-if="mode === 'rhythm'">
+          <span class="label">平均偏差：</span>
+          <span class="value">{{ avgTimingError }}ms</span>
+        </div>
+        <div class="result-item" v-else>
+          <span class="label">平均反应时：</span>
+          <span class="value">{{ avgResponseTime }}ms</span>
+        </div>
+      </div>
+      <button class="btn-primary" @click="$emit('finish', sessionData)">
+        查看详细报告
+      </button>
+    </div>
+
+    <!-- 反馈 -->
+    <div v-if="feedback" class="feedback" :class="feedback.type">
+      {{ feedback.message }}
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import type { GameAudioMode, GridSize, GridItem, AudioTrialData, GameSessionData } from '@/types/games'
+import { GAME_COLORS, GAME_SHAPES, TaskID } from '@/types/games'
+
+// Props
+interface Props {
+  studentId: number
+  taskId: TaskID
+  mode: GameAudioMode
+  gridSize?: GridSize
+  rounds?: number
+  timeLimit?: number // 时间限制（秒）- 声音辨别和听指令做动作使用
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  gridSize: 2,
+  rounds: 8, // 减少轮次，避免疲劳
+  timeLimit: 60 // 默认60秒，给特殊儿童更多时间
+})
+
+// Emits
+const emit = defineEmits<{
+  finish: [data: GameSessionData]
+}>()
+
+// 状态
+const currentRound = ref(0)
+const timeLeft = ref(props.timeLimit)
+const score = ref(0)
+const gameEnded = ref(false)
+const feedback = ref<{ type: 'success' | 'error'; message: string } | null>(null)
+
+// 辨别模式
+const soundsPlayed = ref(false)
+const choiceMade = ref(false)
+const isPlaying = ref(false)
+const currentSounds = ref<string[]>([])
+const isSame = ref(false)
+
+// 指令模式
+const commandPlayed = ref(false)
+const commandOptions = ref<GridItem[]>([])
+const currentCommand = ref('')
+
+// 节奏模式
+const rhythmPattern = ref<number[]>([])
+const currentBeatIndex = ref(-1)
+const canRecord = ref(false)
+const recordedBeats = ref<number[]>([])
+const rhythmPlayback = ref<number | null>(null)
+
+// 通用
+const showResult = ref(false)
+const trials = ref<AudioTrialData[]>([])
+const trialStartTime = ref<number>(0) // 记录每轮开始时间
+
+// Audio Context（复用以符合浏览器自动播放策略）
+const audioContext = ref<AudioContext | null>(null)
+const speechSynthesisSupported = ref(
+  typeof window !== 'undefined' && 'speechSynthesis' in window
+)
+
+// 定时器
+const timerInterval = ref<number | null>(null)
+const rhythmTimeout = ref<number | null>(null)
+
+// 计算属性
+const totalRounds = computed(() => props.rounds)
+const correctCount = computed(() => trials.value.filter(t => t.isCorrect).length)
+const accuracy = computed(() => trials.value.length > 0 ? correctCount.value / trials.value.length : 0)
+const avgResponseTime = computed(() => {
+  const valid = trials.value.filter(t => t.responseTime > 0)
+  if (valid.length === 0) return 0
+  return Math.round(valid.reduce((sum, t) => sum + t.responseTime, 0) / valid.length)
+})
+const avgTimingError = computed(() => {
+  const rhythmTrials = trials.value.filter(t => t.rhythmStats)
+  if (rhythmTrials.length === 0) return 0
+  const errors = rhythmTrials.map(t => {
+    const pattern = t.rhythmPattern
+    const user = t.userRhythm || []
+    if (user.length === 0) return 0
+
+    const diffs: number[] = []
+    for (let i = 0; i < Math.min(pattern.length, user.length); i++) {
+      diffs.push(Math.abs(pattern[i] - user[i]))
+    }
+    return diffs.reduce((sum, d) => sum + d, 0) / diffs.length
+  })
+  return Math.round(errors.reduce((sum, e) => sum + e, 0) / errors.length)
+})
+
+const taskTitle = computed(() => {
+  const titles = {
+    diff: '🔊 声音辨别游戏',
+    command: '🎧 听指令做动作',
+    rhythm: '🎵 节奏模仿游戏'
+  }
+  return titles[props.mode]
+})
+
+const currentInstruction = computed(() => {
+  if (props.mode === 'diff') {
+    return '点击播放按钮，判断两个声音是否相同'
+  } else if (props.mode === 'command') {
+    return '仔细听指令，然后点击正确的选项'
+  } else {
+    return '先听节奏，然后跟着拍打'
+  }
+})
+
+const sessionData = computed<GameSessionData>(() => {
+  const correct = trials.value.filter(t => t.isCorrect).length
+  const omission = trials.value.filter(t => !t.userAnswer && !t.userSelection && !t.userRhythm).length
+  const commission = trials.value.filter(t => !t.isCorrect).length
+
+  // 计算疲劳指数
+  const midPoint = Math.floor(trials.value.length / 2)
+  const firstHalf = trials.value.slice(0, midPoint)
+  const secondHalf = trials.value.slice(midPoint)
+  const firstHalfAcc = firstHalf.length > 0 ? firstHalf.filter(t => t.isCorrect).length / firstHalf.length : 0
+  const secondHalfAcc = secondHalf.length > 0 ? secondHalf.filter(t => t.isCorrect).length / secondHalf.length : 0
+  const fatigueIndex = firstHalfAcc > 0 ? secondHalfAcc / firstHalfAcc : 1
+
+  return {
+    taskId: props.taskId,
+    studentId: props.studentId,
+    startTime: trials.value[0]?.timestamp || Date.now(),
+    endTime: Date.now(),
+    duration: props.mode === 'rhythm'
+      ? Math.round((Date.now() - (trials.value[0]?.timestamp || Date.now())) / 1000)
+      : props.timeLimit,
+    trials: trials.value,
+    totalTrials: trials.value.length,
+    correctTrials: correct,
+    accuracy: accuracy.value,
+    avgResponseTime: avgResponseTime.value,
+    errors: {
+      omission,
+      commission
+    },
+    behavior: {
+      impulsivityScore: 0,
+      fatigueIndex: Number(fatigueIndex.toFixed(2))
+    },
+    rhythmStats: props.mode === 'rhythm' ? {
+      timingErrorAvg: avgTimingError.value
+    } : undefined
+  }
+})
+
+/**
+ * 播放声音（辨别模式）
+ */
+function playSounds() {
+  if (isPlaying.value) return
+  isPlaying.value = true
+
+  // 生成两个音调
+  const freq1 = 400 + Math.random() * 400
+  const isSameSound = Math.random() > 0.5
+
+  currentSounds.value = [freq1]
+  if (isSameSound) {
+    currentSounds.value.push(freq1)
+    isSame.value = true
+  } else {
+    const freq2 = freq1 + 100 + Math.random() * 200
+    currentSounds.value.push(freq2)
+    isSame.value = false
+  }
+
+  // 播放第一个音
+  playTone(freq1, 500)
+
+  // 延迟后播放第二个音 - 特殊儿童需要更长时间处理第一个音
+  setTimeout(() => {
+    playTone(currentSounds.value[1], 500)
+    isPlaying.value = false
+    soundsPlayed.value = true
+    // 第二个声音播放后开始计时
+    trialStartTime.value = Date.now()
+  }, 1500)
+}
+
+/**
+ * 初始化 AudioContext（必须在用户交互后调用）
+ */
+function initAudioContext() {
+  if (!audioContext.value) {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+      if (AudioContextClass) {
+        audioContext.value = new AudioContextClass()
+      }
+    } catch (error) {
+      console.error('Failed to initialize AudioContext:', error)
+    }
+  }
+
+  // 确保 AudioContext 处于运行状态
+  if (audioContext.value && audioContext.value.state === 'suspended') {
+    audioContext.value.resume()
+  }
+
+  return audioContext.value
+}
+
+/**
+ * 播放音调（使用共享 AudioContext）
+ */
+function playTone(frequency: number, duration: number) {
+  try {
+    const ctx = initAudioContext()
+    if (!ctx) {
+      console.warn('AudioContext not available')
+      return
+    }
+
+    const oscillator = ctx.createOscillator()
+    const gainNode = ctx.createGain()
+
+    oscillator.type = 'sine'
+    oscillator.frequency.value = frequency
+
+    gainNode.gain.setValueAtTime(0.3, ctx.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration / 1000)
+
+    oscillator.connect(gainNode)
+    gainNode.connect(ctx.destination)
+
+    oscillator.start()
+    oscillator.stop(ctx.currentTime + duration / 1000)
+  } catch (error) {
+    console.error('Audio play error:', error)
+  }
+}
+
+/**
+ * 处理辨别选择
+ */
+function handleDiffChoice(same: boolean) {
+  if (choiceMade.value) return
+
+  choiceMade.value = true
+  const isCorrect = same === isSame.value
+  // 计算真实反应时间（从第二个声音播放到用户点击的时间）
+  // soundsPlayed在第二个声音播放完成后设为true，此时开始计时
+  const responseTime = trialStartTime.value > 0 ? Date.now() - trialStartTime.value : 0
+
+  trials.value.push({
+    trialId: currentRound.value,
+    mode: 'diff',
+    sounds: currentSounds.value,
+    userAnswer: same,
+    isCorrect,
+    responseTime,
+    timestamp: Date.now()
+  })
+
+  showResult.value = true
+  if (isCorrect) {
+    score.value += 10
+    showFeedback('success', '✓ 正确！')
+  } else {
+    showFeedback('error', '✕ 错误')
+  }
+
+  setTimeout(() => {
+    startNewRound()
+  }, 2500) // 延长反馈时间，特殊儿童需要更多时间理解
+}
+
+/**
+ * 生成指令选项
+ * 使用高区分度颜色作为目标，全部12种颜色作为干扰项
+ */
+function generateCommandOptions() {
+  // 高区分度颜色 - 用于目标颜色（避免相近色调混淆）
+  // 选择8种最容易区分的颜色（新增粉色，儿童容易识别）
+  const targetColorNames = ['红色', '橙色', '黄色', '绿色', '蓝色', '紫色', '粉色', '青色']
+  const targetColorKeys = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'cyan']
+
+  // 全部颜色 - 用于干扰项
+  const allColorKeys = Object.keys(GAME_COLORS)
+
+  // 形状名称和键名 - 使用全部8种形状
+  const shapeNames = ['圆形', '方形', '三角形', '正六边形', '五角星', '梯形', '菱形', '直角三角形']
+  const shapeKeys = Object.keys(GAME_SHAPES)
+
+  // 随机选择目标颜色和形状（从高区分度颜色中选择）
+  const targetColorIdx = Math.floor(Math.random() * targetColorKeys.length)
+  const shapeIdx = Math.floor(Math.random() * shapeKeys.length)
+
+  const selectedColor = targetColorKeys[targetColorIdx]
+  const selectedShape = shapeKeys[shapeIdx]
+  const colorName = targetColorNames[targetColorIdx]
+  const shapeName = shapeNames[shapeIdx]
+
+  currentCommand.value = `请点击${colorName}的${shapeName}`
+
+  // 调试日志：确保颜色和指令匹配
+  console.log('[GameAudio] 生成指令:', {
+    command: currentCommand.value,
+    selectedColor,
+    colorName,
+    selectedShape,
+    shapeName,
+    colorHex: GAME_COLORS[selectedColor as keyof typeof GAME_COLORS]
+  })
+
+  // 生成选项
+  const options: GridItem[] = []
+  const usedCombinations = new Set<string>()
+
+  // 添加正确答案
+  options.push({
+    id: Date.now(),
+    type: 'shape',
+    shape: selectedShape,
+    color: selectedColor as any,
+    isTarget: true,
+    isCorrect: true,
+    isSelected: false
+  })
+  usedCombinations.add(`${selectedColor}-${selectedShape}`)
+
+  // 添加干扰项 - 根据网格大小生成足够数量的选项
+  const totalOptions = props.gridSize * props.gridSize
+  const maxAttempts = totalOptions * 20 // 最大尝试次数，防止无限循环
+  let attempts = 0
+
+  // 使用全部颜色生成干扰项
+  while (options.length < totalOptions && attempts < maxAttempts) {
+    attempts++
+    const c = Math.floor(Math.random() * allColorKeys.length)
+    const s = Math.floor(Math.random() * shapeKeys.length)
+    const colorKey = allColorKeys[c]
+    const shapeKey = shapeKeys[s]
+    const key = `${colorKey}-${shapeKey}`
+
+    if (!usedCombinations.has(key)) {
+      usedCombinations.add(key)
+      options.push({
+        id: Date.now() + options.length,
+        type: 'shape',
+        shape: shapeKey as any,
+        color: colorKey as any,
+        isTarget: false,
+        isCorrect: false,
+        isSelected: false
+      })
+    }
+  }
+
+  // 如果无法生成足够的唯一干扰项，允许重复填充
+  while (options.length < totalOptions) {
+    const c = Math.floor(Math.random() * allColorKeys.length)
+    const s = Math.floor(Math.random() * shapeKeys.length)
+    options.push({
+      id: Date.now() + options.length,
+      type: 'shape',
+      shape: shapeKeys[s] as any,
+      color: allColorKeys[c] as any,
+      isTarget: false,
+      isCorrect: false,
+      isSelected: false
+    })
+  }
+
+  commandOptions.value = options.sort(() => Math.random() - 0.5)
+
+  // 调试日志：验证正确答案的颜色
+  const correctOption = commandOptions.value.find(o => o.isCorrect)
+  if (correctOption) {
+    console.log('[GameAudio] 正确答案:', {
+      color: correctOption.color,
+      shape: correctOption.shape,
+      hex: GAME_COLORS[correctOption.color as keyof typeof GAME_COLORS],
+      command: currentCommand.value
+    })
+  }
+}
+
+/**
+ * 播放指令（指令模式）
+ * @param autoShowOptions 是否在播放快结束时自动显示选项
+ */
+function playCommand(autoShowOptions = true) {
+  if (isPlaying.value) return
+
+  // 如果还没有生成选项，先生成
+  if (commandOptions.value.length === 0) {
+    generateCommandOptions()
+  }
+
+  // 检查语音合成是否可用
+  if (speechSynthesisSupported.value && window.speechSynthesis) {
+    // 使用语音合成播放指令
+    isPlaying.value = true
+    const utterance = new SpeechSynthesisUtterance(currentCommand.value)
+    utterance.lang = 'zh-CN'
+    utterance.rate = 0.8
+
+    // 估算语音时长（中文大约每秒4-5个字）
+    const estimatedDuration = currentCommand.value.length * 250 // 毫秒
+    console.log('语音指令:', currentCommand.value, '估算时长:', estimatedDuration, 'ms')
+
+    // 方案1：在语音播放到60%时显示选项
+    let timeoutId: number | null = null
+    if (autoShowOptions) {
+      timeoutId = window.setTimeout(() => {
+        console.log('setTimeout触发，显示选项')
+        if (!commandPlayed.value) {
+          commandPlayed.value = true
+          trialStartTime.value = Date.now()
+        }
+      }, Math.max(estimatedDuration * 0.6, 800)) // 至少等待800ms
+    }
+
+    // 方案3：最大等待时间（5秒），超时强制显示选项
+    const maxWaitTimeout = window.setTimeout(() => {
+      console.log('最大等待时间到达，强制显示选项')
+      if (!commandPlayed.value) {
+        commandPlayed.value = true
+        trialStartTime.value = Date.now()
+        isPlaying.value = false
+      }
+    }, 5000)
+
+    // 方案2：语音播放结束时显示选项（双保险）
+    utterance.onend = () => {
+      clearTimeout(maxWaitTimeout)
+      console.log('语音播放结束(onend)')
+      isPlaying.value = false
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+        timeoutId = null
+      }
+      // 不管autoShowOptions如何，onend时都要确保选项显示
+      if (!commandPlayed.value) {
+        console.log('onend触发显示选项')
+        commandPlayed.value = true
+        trialStartTime.value = Date.now()
+      }
+    }
+
+    utterance.onerror = (event) => {
+      clearTimeout(maxWaitTimeout)
+      console.warn('Speech synthesis error:', event)
+      isPlaying.value = false
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+        timeoutId = null
+      }
+      // 出错时立即显示选项（降级到文字）
+      commandPlayed.value = true
+      trialStartTime.value = Date.now()
+      speechSynthesisSupported.value = false
+    }
+
+    window.speechSynthesis.speak(utterance)
+  } else {
+    // 降级方案：直接显示文字指令
+    console.log('Speech synthesis not available, using text fallback')
+    isPlaying.value = false
+    commandPlayed.value = true
+    trialStartTime.value = Date.now()
+  }
+}
+
+/**
+ * 处理指令点击
+ */
+function handleCommandClick(item: GridItem) {
+  if (showResult.value || item.isSelected) return
+
+  // 计算真实反应时间（从选项显示到用户点击的时间差）
+  const responseTime = trialStartTime.value > 0 ? Date.now() - trialStartTime.value : 0
+  const isCorrect = item.isCorrect
+
+  item.isSelected = true
+  showResult.value = true
+
+  trials.value.push({
+    trialId: currentRound.value,
+    mode: 'command',
+    command: currentCommand.value,
+    targetAttributes: {
+      color: item.color,
+      shape: item.shape as any
+    },
+    userSelection: item,
+    isCorrect,
+    responseTime,
+    timestamp: Date.now()
+  })
+
+  if (isCorrect) {
+    score.value += 10
+    showFeedback('success', '✓ 正确！')
+  } else {
+    showFeedback('error', '✕ 再试试看')
+  }
+
+  setTimeout(() => {
+    startNewRound()
+  }, 2500) // 延长反馈时间，特殊儿童需要更多时间理解
+}
+
+/**
+ * 播放节奏（节奏模式）
+ */
+function playRhythm() {
+  if (isPlaying.value) return
+
+  // 生成简单节奏（2-4个节拍）- 特殊儿童需要更慢的节拍
+  const patternLength = 2 + Math.floor(Math.random() * 3)
+  rhythmPattern.value = []
+  let currentTime = 0
+
+  for (let i = 0; i < patternLength; i++) {
+    rhythmPattern.value.push(currentTime)
+    currentTime += 800 + Math.random() * 700 // 800-1500ms间隔，更适合特殊儿童
+  }
+
+  // 播放节奏
+  isPlaying.value = true
+  let beatIndex = 0
+
+  const playBeat = () => {
+    if (beatIndex >= rhythmPattern.value.length) {
+      // 播放完成
+      setTimeout(() => {
+        currentBeatIndex.value = -1
+        isPlaying.value = false
+        canRecord.value = true
+        recordedBeats.value = []
+      }, 500)
+      return
+    }
+
+    currentBeatIndex.value = beatIndex
+    playTone(600, 200)
+
+    setTimeout(() => {
+      beatIndex++
+      playBeat()
+    }, rhythmPattern.value[beatIndex + 1] - rhythmPattern.value[beatIndex])
+  }
+
+  playBeat()
+}
+
+/**
+ * 处理节奏拍打
+ */
+function handleRhythmTap() {
+  if (!canRecord.value) return
+
+  const now = Date.now()
+  if (rhythmPattern.value.length === 0) {
+    recordedBeats.value.push(now)
+  } else {
+    recordedBeats.value.push(now - recordedBeats.value[0])
+  }
+
+  // 检查是否完成
+  if (recordedBeats.value.length >= rhythmPattern.value.length) {
+    canRecord.value = false
+    evaluateRhythm()
+  }
+}
+
+/**
+ * 评估节奏
+ */
+function evaluateRhythm() {
+  const userRhythm = recordedBeats.value.slice()
+  const pattern = rhythmPattern.value.slice()
+
+  // 计算偏差
+  const diffs: number[] = []
+  for (let i = 0; i < Math.min(pattern.length, userRhythm.length); i++) {
+    diffs.push(Math.abs(pattern[i] - userRhythm[i]))
+  }
+
+  const avgDiff = diffs.reduce((sum, d) => sum + d, 0) / diffs.length
+  const isCorrect = avgDiff < 500 // 允许500ms误差，更适合特殊儿童
+
+  trials.value.push({
+    trialId: currentRound.value,
+    mode: 'rhythm',
+    rhythmPattern: pattern,
+    userRhythm: userRhythm,
+    isCorrect,
+    responseTime: Date.now(),
+    timestamp: Date.now()
+  })
+
+  showResult.value = true
+  if (isCorrect) {
+    score.value += 10
+    showFeedback('success', '✓ 节奏正确！')
+  } else {
+    showFeedback('error', `✕ 偏差 ${avgDiff.toFixed(0)}ms`)
+  }
+
+  setTimeout(() => {
+    startNewRound()
+  }, 2500) // 延长反馈时间，特殊儿童需要更多时间理解
+}
+
+/**
+ * 播放音效
+ * @param type 音效类型: 'success' | 'error'
+ */
+function playSound(type: 'success' | 'error') {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    if (type === 'success') {
+      // 正确音效：愉快的上升音调
+      oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime) // C5
+      oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1) // E5
+      oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2) // G5
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4)
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + 0.4)
+    } else if (type === 'error') {
+      // 错误音效：低沉的下降音调
+      oscillator.frequency.setValueAtTime(300, audioContext.currentTime)
+      oscillator.frequency.setValueAtTime(250, audioContext.currentTime + 0.15)
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+      oscillator.start(audioContext.currentTime)
+      oscillator.stop(audioContext.currentTime + 0.3)
+    }
+  } catch (error) {
+    console.warn('音效播放失败:', error)
+  }
+}
+
+/**
+ * 显示反馈
+ */
+function showFeedback(type: 'success' | 'error', message: string) {
+  feedback.value = { type, message }
+  // 播放对应音效
+  playSound(type)
+  setTimeout(() => {
+    feedback.value = null
+  }, 2000) // 延长反馈显示时间，特殊儿童需要更多时间理解
+}
+
+/**
+ * 开始第一轮（用户点击触发，解决浏览器自动播放策略限制）
+ */
+function startFirstRound() {
+  // 初始化 AudioContext（必须在用户交互后调用）
+  initAudioContext()
+
+  currentRound.value = 1
+  generateCommandOptions()
+
+  // 启动计时器（在用户点击后才开始倒计时）
+  if (!timerInterval.value) {
+    timerInterval.value = window.setInterval(() => {
+      timeLeft.value--
+      if (timeLeft.value <= 0) {
+        endGame()
+      }
+    }, 1000)
+  }
+
+  // 自动播放语音指令
+  playCommand(true)
+}
+
+/**
+ * 开始新的一轮
+ */
+function startNewRound() {
+  if (currentRound.value >= props.rounds) {
+    endGame()
+    return
+  }
+
+  // 重置状态
+  showResult.value = false
+  feedback.value = null
+  soundsPlayed.value = false
+  choiceMade.value = false
+  commandPlayed.value = false
+  commandOptions.value = []
+  isSame.value = false
+  rhythmPattern.value = []
+  recordedBeats.value = []
+  canRecord.value = false
+  trialStartTime.value = 0 // 重置开始时间
+
+  currentRound.value++
+
+  // 指令模式：自动生成选项并自动播放语音
+  if (props.mode === 'command') {
+    // 延迟一点时间让上一轮的清理完成
+    setTimeout(() => {
+      generateCommandOptions()
+      // 自动播放语音指令
+      playCommand(true)
+    }, 100)
+  }
+}
+
+/**
+ * 结束游戏
+ */
+function endGame() {
+  gameEnded.value = true
+  if (timerInterval.value) clearInterval(timerInterval.value)
+}
+
+/**
+ * 启动游戏
+ */
+function startGame() {
+  // 指令模式：第一轮需要用户点击开始按钮（浏览器自动播放策略）
+  // 倒计时在 startFirstRound 中启动
+  if (props.mode === 'command') {
+    // 不自动开始，等待用户点击开始按钮
+    // 此时不启动计时器
+  } else {
+    // 其他模式自动开始
+    startNewRound()
+
+    // 启动计时器
+    timerInterval.value = window.setInterval(() => {
+      if (props.mode !== 'rhythm') {
+        timeLeft.value--
+        if (timeLeft.value <= 0) {
+          endGame()
+        }
+      }
+    }, 1000)
+  }
+}
+
+// 生命周期
+onMounted(() => {
+  startGame()
+})
+
+onUnmounted(() => {
+  if (timerInterval.value) clearInterval(timerInterval.value)
+  if (rhythmTimeout.value) clearTimeout(rhythmTimeout.value)
+  window.speechSynthesis.cancel()
+})
+</script>
+
+<style scoped>
+.game-audio-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* 游戏头部 */
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.task-info h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.instruction {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.game-stats {
+  display: flex;
+  gap: 20px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat .label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.stat .value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.stat .value.warning {
+  color: #e74c3c;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 按钮样式 */
+.play-btn {
+  display: block;
+  margin: 0 auto 30px;
+  padding: 16px 32px;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.play-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+.play-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 辨别模式 */
+.choice-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+
+.btn-choice {
+  padding: 20px 40px;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-same {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+}
+
+.btn-diff {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+.btn-choice:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.btn-choice:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 指令模式 */
+.command-grid {
+  display: grid;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.command-grid.grid-2x2 {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 120px);
+}
+
+.command-grid.grid-3x3 {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 100px);
+}
+
+.command-grid.grid-4x4 {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 80px);
+  gap: 10px;
+}
+
+.grid-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.grid-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+/* 形状样式 - 使用固定像素尺寸保持1:1比例 */
+.item-shape {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* 2x2网格中形状稍大 */
+.command-grid.grid-2x2 .item-shape {
+  width: 80px;
+  height: 80px;
+}
+
+/* 3x3网格中形状适中 */
+.command-grid.grid-3x3 .item-shape {
+  width: 70px;
+  height: 70px;
+}
+
+/* 4x4网格中形状较小 */
+.command-grid.grid-4x4 .item-shape {
+  width: 60px;
+  height: 60px;
+}
+
+/* 8种形状样式 - 使用clip-path */
+.shape-circle {
+  border-radius: 50%;
+}
+
+.shape-triangle {
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.shape-hexagon {
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
+.shape-star {
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.shape-trapezoid {
+  clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+}
+
+.shape-diamond {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+.shape-rightTriangle {
+  clip-path: polygon(0% 0%, 100% 0%, 0% 100%);
+}
+
+.grid-item.selected {
+  transform: scale(0.95);
+}
+
+.grid-item.correct {
+  border: 3px solid #2ecc71;
+}
+
+.grid-item.wrong {
+  border: 3px solid #e74c3c;
+}
+
+/* 节奏模式 */
+.rhythm-play {
+  background: linear-gradient(135deg, #9B59B6 0%, #8e44ad 100%);
+}
+
+.rhythm-visualizer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin: 30px 0;
+}
+
+.beat-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ddd;
+  transition: all 0.2s ease;
+}
+
+.beat-dot.active {
+  background: #9B59B6;
+  transform: scale(1.3);
+}
+
+.rhythm-record {
+  text-align: center;
+}
+
+.btn-rhythm {
+  padding: 16px 40px;
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.btn-rhythm:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.btn-rhythm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.record-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.recorded-beat {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e74c3c;
+  animation: pop 0.3s ease;
+}
+
+@keyframes pop {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* 结果界面 */
+.game-result {
+  text-align: center;
+  padding: 40px;
+}
+
+.game-result h2 {
+  font-size: 32px;
+  color: #9B59B6;
+  margin-bottom: 30px;
+}
+
+.result-stats {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.result-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 120px;
+}
+
+.result-item .label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.result-item .value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+}
+
+.btn-primary {
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* 反馈 */
+.feedback {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px 40px;
+  font-size: 24px;
+  font-weight: 700;
+  border-radius: 12px;
+  animation: fadeInOut 1s ease;
+  z-index: 1000;
+}
+
+.feedback.success {
+  background: #2ecc71;
+  color: white;
+}
+
+.feedback.error {
+  background: #e74c3c;
+  color: white;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  85% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+}
+
+/* 语音合成降级方案 */
+.command-text-fallback {
+  margin: 20px auto;
+  padding: 16px 24px;
+  max-width: 400px;
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.command-instruction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.command-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #856404;
+}
+
+.command-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* 开始按钮样式 */
+.start-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  border-radius: 16px;
+  margin: 40px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.btn-start {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 48px;
+  font-size: 22px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-start:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.btn-start:active {
+  transform: scale(0.98);
+}
+
+.btn-start i {
+  font-size: 28px;
+}
+
+.start-hint {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #666;
+  text-align: center;
+}
+
+/* 语音控制按钮组 */
+.voice-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.playing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #e8f4f8;
+  border-radius: 20px;
+  color: #2c7a7b;
+  font-size: 14px;
+  font-weight: 500;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+</style>

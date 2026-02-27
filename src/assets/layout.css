@@ -1,0 +1,94 @@
+/**
+ * 全局页面布局规范 CSS
+ * 统一所有顶级入口页面的视觉风格
+ * 标杆：PlanList.vue
+ */
+
+/* ========================================
+   全局页面标准外层容器
+   ======================================== */
+.page-container {
+  padding: 24px;
+  background: #f5f7fa;
+  min-height: calc(100vh - 60px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================
+   全局页面头部
+   ======================================== */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.page-header .header-left h1 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.page-header .header-left .subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #909399;
+}
+
+.page-header .header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ========================================
+   全局轻量级筛选区
+   ======================================== */
+.filter-section {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.filter-section .el-select,
+.filter-section .el-input {
+  width: 100%;
+}
+
+/* ========================================
+   全局主内容白底容器
+   ======================================== */
+.main-content {
+  flex: 1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* ========================================
+   兼容旧版类名（逐步废弃）
+   ======================================== */
+/* 旧的 .content 类重定向到 .main-content */
+.page-container > .content {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ========================================
+   辅助类
+   ======================================== */
+.subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #909399;
+}

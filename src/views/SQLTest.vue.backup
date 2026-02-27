@@ -1,0 +1,446 @@
+<template>
+  <div class="sql-test">
+    <h1>系统测试页面</h1>
+
+    <div class="test-sections">
+      <div class="section">
+        <h2>SQL.js 测试</h2>
+        <button @click="testImport">测试导入</button>
+        <button @click="testInit">测试初始化</button>
+      </div>
+
+      <div class="section">
+        <h2>器材训练模块测试</h2>
+        <button @click="testEquipmentAPI" :disabled="testing.equipment">
+          {{ testing.equipment ? '测试中...' : '测试器材API' }}
+        </button>
+        <button @click="testEquipmentTraining" :disabled="testing.training">
+          {{ testing.training ? '测试中...' : '测试训练记录' }}
+        </button>
+        <button @click="testIEPGenerator" :disabled="testing.iep">
+          {{ testing.iep ? '测试中...' : '测试IEP生成' }}
+        </button>
+        <button @click="generateTestData" :disabled="testing.data">
+          {{ testing.data ? '生成中...' : '生成测试数据' }}
+        </button>
+      </div>
+
+      <div class="section">
+        <h2>数据库操作</h2>
+        <button @click="clearTestData">清空测试数据</button>
+        <button @click="viewDatabaseStats">数据库统计</button>
+      </div>
+    </div>
+
+    <div class="result-section">
+      <h3>测试结果</h3>
+      <pre>{{ testResult }}</pre>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { EquipmentAPI, EquipmentTrainingAPI, StudentAPI } from '@/database/api'
+import { IEPGenerator } from '@/utils/iep-generator'
+import { generateTestStudent, generateEquipmentTrainingRecords } from '@/database/equipment-test-data'
+import { equipmentDataList } from '@/database/equipment-data'
+import { ElMessage } from 'element-plus'
+
+const testResult = ref('点击按钮开始测试...')
+const testing = reactive({
+  equipment: false,
+  training: false,
+  iep: false,
+  data: false
+})
+
+// ========== SQL.js 测试 ==========
+
+async function testImport() {
+  testResult.value = '正在测试导入...\n'
+
+  try {
+    // 测试1: 直接导入
+    testResult.value += '\n1. 尝试直接导入 sql.js...\n'
+    const sqljs = await import('sql.js')
+    testResult.value += `模块对象: ${JSON.stringify(Object.keys(sqljs), null, 2)}\n`
+    testResult.value += `default 类型: ${typeof sqljs.default}\n`
+    testResult.value += `default 是否为函数: ${typeof sqljs.default === 'function'}\n`
+
+    // 测试2: 检查模块内容
+    testResult.value += '\n2. 检查模块所有属性...\n'
+    for (const key in sqljs) {
+      const value = (sqljs as any)[key]
+      testResult.value += `${key}: ${typeof value} ${typeof value === 'function' ? '(函数)' : ''}\n`
+    }
+
+    // 测试3: 尝试直接导入sql-wasm
+    testResult.value += '\n3. 尝试直接导入 sql-wasm.js...\n'
+    try {
+      const sqlWasm = await import('sql.js/dist/sql-wasm.js')
+      testResult.value += `sql-wasm 导出: ${JSON.stringify(Object.keys(sqlWasm), null, 2)}\n`
+    } catch (e: any) {
+      testResult.value += `sql-wasm 导入失败: ${e.message}\n`
+    }
+
+    // 测试4: 检查全局对象
+    testResult.value += '\n4. 检查全局对象...\n'
+    testResult.value += `window.initSqlJs: ${typeof (window as any).initSqlJs}\n`
+    testResult.value += `window.SQL: ${typeof (window as any).SQL}\n`
+
+  } catch (error: any) {
+    testResult.value += `\n错误: ${error.message}\n`
+    testResult.value += `错误堆栈: ${error.stack}\n`
+  }
+}
+
+async function testInit() {
+  testResult.value = '正在测试初始化...\n'
+
+  try {
+    // 使用我们之前发现的加载方式
+    testResult.value += '\n1. 尝试动态创建script标签...\n'
+
+    const initSqlJs = await new Promise((resolve, reject) => {
+      // 检查是否已存在
+      if ((window as any).initSqlJs) {
+        resolve((window as any).initSqlJs)
+        return
+      }
+
+      const script = document.createElement('script')
+      script.src = '/node_modules/sql.js/dist/sql-wasm.js'
+      script.onload = () => {
+        if ((window as any).initSqlJs) {
+          resolve((window as any).initSqlJs)
+        } else {
+          reject(new Error('initSqlJs not found'))
+        }
+      }
+      script.onerror = reject
+      document.head.appendChild(script)
+    })
+
+    testResult.value += `成功加载 initSqlJs: ${typeof initSqlJs}\n`
+
+    // 尝试初始化
+    testResult.value += '\n2. 尝试初始化数据库...\n'
+    const SQL = await initSqlJs({
+      locateFile: file => `/node_modules/sql.js/dist/${file}`
+    })
+
+    testResult.value += `数据库对象类型: ${typeof SQL}\n`
+    testResult.value += '创建测试数据库...\n'
+
+    const db = new SQL.Database()
+    db.run('CREATE TABLE test (id INTEGER, name TEXT)')
+    db.run('INSERT INTO test (id, name) VALUES (1, "Hello SQL.js")')
+
+    const result = db.exec('SELECT * FROM test')
+    testResult.value += `\n查询结果: ${JSON.stringify(result, null, 2)}\n`
+
+    testResult.value += '\n✅ SQL.js 测试成功！'
+  } catch (error: any) {
+    testResult.value += `\n❌ 错误: ${error.message}\n`
+    testResult.value += `错误堆栈: ${error.stack}\n`
+  }
+}
+
+// ========== 器材训练模块测试 ==========
+
+async function testEquipmentAPI() {
+  testing.equipment = true
+  testResult.value = '正在测试器材API...\n'
+
+  try {
+    const api = new EquipmentAPI()
+
+    testResult.value += '\n1. 获取所有器材...\n'
+      const cat = eq.category
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1
+    })
+    testResult.value += `✅ 分类统计: ${JSON.stringify(categoryCounts, null, 2)}\n`
+
+    testResult.value += '\n4. 搜索器材...\n'
+    const searchResults = api.getEquipment({ keyword: '球' })
+    testResult.value += `✅ 搜索"球"的结果: ${searchResults.length}个\n`
+
+    testResult.value += '\n✅ 器材API测试完成！'
+  } catch (error: any) {
+    testResult.value += `\n❌ 错误: ${error.message}\n`
+  } finally {
+    testing.equipment = false
+  }
+}
+
+async function testEquipmentTraining() {
+  testing.training = true
+  testResult.value = '正在测试训练记录API...\n'
+
+  try {
+    const api = new EquipmentTrainingAPI()
+    const studentAPI = new StudentAPI()
+
+    // 获取第一个学生
+    const students = await studentAPI.getAllStudents()
+    if (students.length === 0) {
+      testResult.value = '⚠️ 没有学生数据，请先创建学生\n'
+      testing.training = false
+      return
+    }
+
+    const student = students[0]
+    testResult.value += `使用测试学生: ${student.name}\n`
+
+    // 获取器材列表
+    const equipmentAPI = new EquipmentAPI()
+    const equipment = equipmentAPI.getAllEquipment()
+    if (equipment.length === 0) {
+      testResult.value = '⚠️ 没有器材数据\n'
+      testing.training = false
+      return
+    }
+
+    testResult.value += `\n1. 创建训练记录...\n`
+    const recordId = api.createRecord({
+      student_id: student.id,
+      equipment_id: equipment[0].id,
+      score: 4,
+      prompt_level: 2,
+      duration_seconds: 600,
+      notes: '测试记录',
+      training_date: new Date().toISOString()
+    })
+    testResult.value += `✅ 创建记录 ID: ${recordId}\n`
+
+    testResult.value += `\n2. 获取学生训练记录...\n`
+    const records = api.getStudentRecords(student.id)
+    testResult.value += `✅ 记录总数: ${records.length}\n`
+
+    testResult.value += `\n3. 获取上次记录...\n`
+    const lastRecord = api.getLastRecord(student.id, equipment[0].id)
+    testResult.value += `✅ 上次记录: ${lastRecord ? `${lastRecord.score}分` : '无'}\n`
+
+    testResult.value += `\n4. 获取统计数据...\n`
+    const stats = api.getTrainingStats(student.id)
+    testResult.value += `✅ 统计数据: ${JSON.stringify(stats, null, 2)}\n`
+
+    testResult.value += '\n✅ 训练记录API测试完成！'
+  } catch (error: any) {
+    testResult.value += `\n❌ 错误: ${error.message}\n`
+  } finally {
+    testing.training = false
+  }
+}
+
+async function testIEPGenerator() {
+  testing.iep = true
+  testResult.value = '正在测试IEP生成器...\n'
+
+  try {
+    testResult.value += '\n1. 生成器材训练IEP报告...\n'
+
+    const report = IEPGenerator.generateEquipmentReport({
+      studentName: '测试学生',
+      equipment: {
+        id: 1,
+        name: '触觉球',
+        category: 'tactile',
+        sub_category: '基础触觉',
+        description: '用于触觉刺激训练',
+        ability_tags: ['触觉感知', '手眼协调']
+      },
+      score: 4,
+      promptLevel: 2,
+      duration_seconds: 600,
+      training_date: new Date().toISOString(),
+      notes: '表现良好'
+    })
+
+    testResult.value += `\n✅ 报告生成成功！\n`
+    testResult.value += `\n学生: ${report.studentName}\n`
+    testResult.value += `器材: ${report.equipmentName}\n`
+    testResult.value += `领域: ${report.domainName}\n`
+    testResult.value += `日期: ${report.reportDate}\n`
+
+    testResult.value += `\n2. 表现评估:\n${report.performance}\n`
+
+    testResult.value += `\n3. 训练建议:\n${report.suggestions.map(s => `  • ${s}`).join('\n')}\n`
+
+    testResult.value += `\n4. 完整评语:\n${report.generatedComment}\n`
+
+    testResult.value += '\n✅ IEP生成器测试完成！'
+  } catch (error: any) {
+    testResult.value += `\n❌ 错误: ${error.message}\n`
+    testResult.value += `错误堆栈: ${error.stack}\n`
+  } finally {
+    testing.iep = false
+  }
+}
+
+async function generateTestData() {
+  testing.data = true
+  testResult.value = '正在生成测试数据...\n'
+
+  try {
+    const studentAPI = new StudentAPI()
+    const trainingAPI = new EquipmentTrainingAPI()
+    const equipmentAPI = new EquipmentAPI()
+
+    // 生成学生
+    testResult.value += '\n1. 生成测试学生...\n'
+    const students = generateTestStudent(3)
+    const studentIds: number[] = []
+
+    for (const student of students) {
+      const id = await studentAPI.addStudent(student)
+      studentIds.push(id)
+      testResult.value += `✅ 创建学生: ${student.name} (ID: ${id})\n`
+    }
+
+    // 获取器材
+    testResult.value += '\n2. 获取器材列表...\n'
+    const equipment = equipmentAPI.getAllEquipment()
+    testResult.value += `✅ 可用器材: ${equipment.length}个\n`
+
+    // 生成训练记录
+    testResult.value += '\n3. 生成训练记录...\n'
+    let totalRecords = 0
+
+    studentIds.forEach(studentId => {
+      const records = generateEquipmentTrainingRecords(studentId, equipment, 5)
+      records.forEach(record => {
+        trainingAPI.createRecord(record)
+        totalRecords++
+      })
+    })
+
+    testResult.value += `✅ 创建训练记录: ${totalRecords}条\n`
+
+    testResult.value += '\n✅ 测试数据生成完成！'
+    ElMessage.success('测试数据生成成功')
+  } catch (error: any) {
+    testResult.value += `\n❌ 错误: ${error.message}\n`
+    ElMessage.error('生成失败: ' + error.message)
+  } finally {
+    testing.data = false
+  }
+}
+
+function clearTestData() {
+  testResult.value = '清空测试数据功能...\n\n'
+  testResult.value += '提示: 此功能需要手动执行SQL删除测试数据\n'
+  testResult.value += '建议删除条件:\n'
+  testResult.value += '- 学生姓名包含"测试"\n'
+  testResult.value += '- 学号以"TEST"开头\n'
+}
+
+async function viewDatabaseStats() {
+  testResult.value = '数据库统计信息...\n\n'
+
+  try {
+    const studentAPI = new StudentAPI()
+    const equipmentAPI = new EquipmentAPI()
+    const trainingAPI = new EquipmentTrainingAPI()
+
+    testResult.value += '========== 数据库统计 ==========\n\n'
+
+    const students = await studentAPI.getAllStudents()
+    testResult.value += `📊 学生总数: ${students.length}\n`
+
+    const equipment = equipmentAPI.getAllEquipment()
+    testResult.value += `📊 器材总数: ${equipment.length}\n`
+
+    const counts = equipmentAPI.getCategoryCounts()
+    testResult.value += '\n器材分类统计:\n'
+    Object.entries(counts).forEach(([cat, count]) => {
+      testResult.value += `  ${cat}: ${count}个\n`
+    })
+
+    testResult.value += '\n训练记录统计:\n'
+    students.forEach(student => {
+      const records = trainingAPI.getStudentRecords(student.id)
+      if (records.length > 0) {
+        testResult.value += `  ${student.name}: ${records.length}条记录\n`
+      }
+    })
+
+    testResult.value += '\n================================\n'
+  } catch (error: any) {
+    testResult.value += `\n❌ 错误: ${error.message}\n`
+  }
+}
+</script>
+
+<style scoped>
+.sql-test {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.test-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.section {
+  padding: 15px;
+  background: #f5f7fa;
+  border-radius: 8px;
+}
+
+.section h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #303133;
+}
+
+.result-section {
+  margin-top: 20px;
+}
+
+.result-section h3 {
+  margin-bottom: 10px;
+  color: #303133;
+}
+
+pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 15px;
+  border-radius: 5px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+button {
+  margin: 5px;
+  padding: 8px 16px;
+  background: #409eff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+button:hover:not(:disabled) {
+  background: #66b1ff;
+}
+
+button:disabled {
+  background: #c0c4cc;
+  cursor: not-allowed;
+}
+</style>

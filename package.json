@@ -1,0 +1,128 @@
+{
+  "name": "scgp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "electron/main.mjs",
+  "author": "杭州炫灿科技有限公司",
+  "description": "星愿能力发展平台 (Stellar Competency Growth Platform)",
+  "copyright": "©2013-2026 杭州炫灿科技有限公司",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "node scripts/dev-start.js",
+    "dev:simple": "node kill-port-5173.js && vite",
+    "dev:force": "vite --port 5173 --force",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "preview": "vite preview",
+    "build-only": "vite build",
+    "type-check": "vue-tsc --build",
+    "lint": "eslint . --fix --cache",
+    "format": "prettier --write --experimental-cli src/",
+    "electron": "electron .",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on --timeout 30000 https://localhost:5173 && electron .\"",
+    "build:electron": "npm run build:web && electron-builder",
+    "build:web": "cross-env ELECTRON=true vite build",
+    "build:electron:win": "npm run build:web && electron-builder --win",
+    "build:electron:mac": "npm run build:web && electron-builder --mac",
+    "build:electron:linux": "npm run build:web && electron-builder --linux",
+    "generate:activation": "node scripts/generate-activation.js"
+  },
+  "build": {
+    "appId": "com.sic.ads",
+    "productName": "感官能力发展系统",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "${productName}_${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "perMachine": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true,
+      "include": "build/installer.nsh"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.icns",
+      "category": "public.app-category.medical"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "build/icons",
+      "category": "Medical"
+    }
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "@types/uuid": "^10.0.0",
+    "crypto-js": "^4.2.0",
+    "docx": "^9.5.1",
+    "echarts": "^6.0.0",
+    "electron-updater": "^6.8.3",
+    "element-plus": "^2.12.0",
+    "file-saver": "^2.0.5",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.4",
+    "jszip": "^3.10.1",
+    "pinia": "^3.0.4",
+    "sql.js": "^1.13.0",
+    "uuid": "^13.0.0",
+    "vue": "^3.5.25",
+    "vue-echarts": "^8.0.1",
+    "vue-router": "^4.6.3",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@tsconfig/node24": "^24.0.3",
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^24.10.1",
+    "@vitejs/plugin-vue": "^6.0.2",
+    "@vue/eslint-config-prettier": "^10.2.0",
+    "@vue/eslint-config-typescript": "^14.6.0",
+    "@vue/tsconfig": "^0.8.1",
+    "better-sqlite3": "^12.5.0",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^34.5.8",
+    "electron-builder": "^25.1.8",
+    "eslint": "^9.39.1",
+    "eslint-plugin-vue": "~10.5.1",
+    "jiti": "^2.6.1",
+    "npm-run-all2": "^8.0.4",
+    "prettier": "3.6.2",
+    "terser": "^5.44.1",
+    "typescript": "~5.9.0",
+    "vite": "^7.2.4",
+    "vite-plugin-vue-devtools": "^8.0.5",
+    "vue-tsc": "^3.1.5",
+    "wait-on": "^8.0.5"
+  }
+}
