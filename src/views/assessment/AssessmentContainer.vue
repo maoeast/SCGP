@@ -562,7 +562,7 @@ async function saveWeeFIMAssessment(startTime: string, endTime: string) {
   assessId.value = weefimApi.createAssessment({
     student_id: student.value.id,
     total_score: scoreResult.value.totalScore || 0,
-    motor_score: getDimensionScore('motor'),
+    adl_score: getDimensionScore('motor'),
     cognitive_score: getDimensionScore('cognitive'),
     level: scoreResult.value.level,
     start_time: startTime,
@@ -701,8 +701,20 @@ async function saveConnersTRSAssessment(startTime: string, endTime: string) {
 // ========== 导航处理 ==========
 
 function handleViewReport() {
-  // 使用路径参数而非查询参数，匹配路由定义: /assessment/:scaleCode/report/:assessId
-  router.push(`/assessment/${scaleCode.value}/report/${assessId.value}`)
+  // 不同量表使用不同的路由格式
+  if (scaleCode.value === 'sm' || scaleCode.value === 'weefim') {
+    // SM 和 WeeFIM 使用 query 参数
+    router.push({
+      path: `/assessment/${scaleCode.value}/report`,
+      query: {
+        assessId: assessId.value?.toString(),
+        studentId: student.value?.id?.toString()
+      }
+    })
+  } else {
+    // CSIRS 和 Conners 使用路径参数
+    router.push(`/assessment/${scaleCode.value}/report/${assessId.value}`)
+  }
 }
 
 function handleExit() {

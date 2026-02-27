@@ -94,8 +94,13 @@
             </el-col>
             <el-col :span="6">
               <div class="stat-card">
-                <div class="stat-value">{{ (sessionData.avgResponseTime / 1000).toFixed(1) }}s</div>
-                <div class="stat-label">平均反应时</div>
+                <div class="stat-value" v-if="sessionData.rhythmStats">
+                  {{ sessionData.rhythmStats.timingErrorAvg }}ms
+                </div>
+                <div class="stat-value" v-else>
+                  {{ (sessionData.avgResponseTime / 1000).toFixed(1) }}s
+                </div>
+                <div class="stat-label">{{ sessionData.rhythmStats ? '平均节奏误差' : '平均反应时' }}</div>
               </div>
             </el-col>
             <el-col :span="6">
@@ -422,7 +427,11 @@ const exportWord = async () => {
                 children: [
                   new Paragraph({
                     alignment: AlignmentType.CENTER,
-                    children: [new TextRun({ text: '平均反应时', bold: true, color: 'FFFFFF' })]
+                    children: [new TextRun({ 
+                      text: sessionData.value?.rhythmStats ? '平均节奏误差' : '平均反应时', 
+                      bold: true, 
+                      color: 'FFFFFF' 
+                    })]
                   })
                 ]
               }),
@@ -480,7 +489,9 @@ const exportWord = async () => {
                     alignment: AlignmentType.CENTER,
                     children: [
                       new TextRun({
-                        text: `${(sessionData.value.avgResponseTime / 1000).toFixed(1)}s`,
+                        text: sessionData.value?.rhythmStats 
+                          ? `${sessionData.value.rhythmStats.timingErrorAvg}ms`
+                          : `${(sessionData.value.avgResponseTime / 1000).toFixed(1)}s`,
                         bold: true,
                         size: 28
                       })

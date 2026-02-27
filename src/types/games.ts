@@ -222,6 +222,7 @@ export interface GameSessionData {
   // 特定任务的额外数据
   rhythmStats?: {
     timingErrorAvg: number // 平均节奏偏差（毫秒）
+    accuracy?: number // 节奏准确率（百分比）
   }
 
   trackingStats?: {

@@ -219,71 +219,125 @@ onBeforeUnmount(() => {
 }
 
 .question-title {
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.8;
   color: #303133;
-  margin-bottom: 20px;
-  padding: 16px;
-  background: #f5f7fa;
-  border-radius: 8px;
+  margin-bottom: 24px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  border-radius: 12px;
+  border-left: 4px solid #409eff;
+  font-weight: 500;
 }
 
 .question-actions {
   margin-bottom: 20px;
 }
 
-/* 垂直排列选项 */
+/* 垂直排列选项 - 优化版 */
 .vertical-options {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .vertical-options .option-item {
   display: flex;
-  align-items: flex-start;
-  padding: 16px;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
-  transition: all 0.2s;
+  align-items: center;
+  width: 100%;
+  padding: 20px 24px;
+  border: 2px solid #e4e7ed;
+  border-radius: 12px;
+  transition: all 0.3s ease;
   margin-right: 0;
   height: auto;
+  background: white;
 }
 
 .vertical-options .option-item:hover {
   border-color: #409eff;
-  background: #f0f7ff;
+  background: #f5f9ff;
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
 }
 
 .vertical-options .option-item.is-checked {
   border-color: #409eff;
   background: #ecf5ff;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
 }
 
 .vertical-options :deep(.el-radio__label) {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding-left: 8px;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  padding-left: 12px;
+  width: 100%;
 }
 
-/* 横向排列选项 */
+.vertical-options :deep(.el-radio__input) {
+  transform: scale(1.2);
+}
+
+.vertical-options .option-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  white-space: nowrap;
+  min-width: 100px;
+}
+
+.vertical-options .option-desc {
+  font-size: 14px;
+  color: #606266;
+  flex: 1;
+  line-height: 1.6;
+}
+
+/* 横向排列选项 - 优化版 */
 .horizontal-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
 }
 
 .horizontal-options .answer-option {
-  flex: 1;
-  min-width: 120px;
+  width: 100%;
+}
+
+.horizontal-options :deep(.el-radio-button__inner) {
+  width: 100%;
+  padding: 16px 12px;
+  border-radius: 10px;
+  border: 2px solid #dcdfe6;
+  transition: all 0.3s ease;
+}
+
+.horizontal-options :deep(.el-radio-button.is-active .el-radio-button__inner) {
+  border-color: #409eff;
+  background: #ecf5ff;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
 }
 
 .horizontal-options .option-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 0;
+  gap: 8px;
+}
+
+.horizontal-options .option-label {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.horizontal-options .option-desc {
+  font-size: 12px;
+  color: #909399;
+  text-align: center;
 }
 
 /* 选项文字 */
@@ -301,10 +355,20 @@ onBeforeUnmount(() => {
 
 @media (max-width: 768px) {
   .horizontal-options {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
-  .horizontal-options .answer-option {
+  .vertical-options .option-item {
+    padding: 16px;
+  }
+
+  .vertical-options :deep(.el-radio__label) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .vertical-options .option-label {
     min-width: auto;
   }
 }

@@ -95,40 +95,158 @@
       </div>
     </div>
 
-    <!-- 节奏模式 (Task 7) -->
+    <!-- 节奏模式 (Task 7) - 简化版：看-做模式 -->
     <div v-if="mode === 'rhythm' && !gameEnded" class="game-mode-rhythm">
-      <button
-        class="play-btn rhythm-play"
-        @click="playRhythm"
-        :disabled="isPlaying"
-      >
-        <i class="fas fa-music"></i> 播放节奏
-      </button>
-
-      <div class="rhythm-visualizer">
-        <div
-          v-for="(beat, index) in rhythmPattern"
-          :key="index"
-          class="beat-dot"
-          :class="{ active: index === currentBeatIndex }"
-        ></div>
+      <!-- 难度选择（游戏开始前） -->
+      <div class="difficulty-selector" v-if="!isRhythmPlaying && !canRecord && rhythmPattern.length === 0">
+        <div class="selector-label">选择难度：</div>
+        <div class="difficulty-buttons">
+          <button 
+            class="diff-btn easy" 
+            :class="{ active: difficulty === 'easy' }"
+            @click="difficulty = 'easy'"
+          >
+            <span class="diff-icon">🌱</span>
+            <span class="diff-label">简单</span>
+            <span class="diff-desc">慢节奏，容错大</span>
+          </button>
+          <button 
+            class="diff-btn medium" 
+            :class="{ active: difficulty === 'medium' }"
+            @click="difficulty = 'medium'"
+          >
+            <span class="diff-icon">🌿</span>
+            <span class="diff-label">中等</span>
+            <span class="diff-desc">标准节奏</span>
+          </button>
+          <button 
+            class="diff-btn hard" 
+            :class="{ active: difficulty === 'hard' }"
+            @click="difficulty = 'hard'"
+          >
+            <span class="diff-icon">🌳</span>
+            <span class="diff-label">困难</span>
+            <span class="diff-desc">快节奏，精度高</span>
+          </button>
+        </div>
       </div>
 
-      <div class="rhythm-record">
-        <button
-          class="btn-rhythm"
-          @click="handleRhythmTap"
-          :disabled="!canRecord"
-        >
-          👏 拍打
-        </button>
-        <div class="record-progress">
+      <!-- 阶段提示 -->
+      <div class="phase-indicator">
+        <div class="phase-step" :class="{ active: isRhythmPlaying, completed: !isRhythmPlaying && rhythmPattern.length > 0 }">
+          <span class="phase-icon">👀</span>
+          <span class="phase-text">仔细看</span>
+        </div>
+        <div class="phase-arrow">→</div>
+        <div class="phase-step" :class="{ active: canRecord }">
+          <span class="phase-icon">👆</span>
+          <span class="phase-text">跟着做</span>
+        </div>
+      </div>
+
+      <!-- 节奏可视化条 -->
+      <div class="rhythm-timeline">
+        <div class="timeline-track">
           <div
-            v-for="(i, index) in recordedBeats"
+            v-for="(beat, index) in rhythmPattern"
             :key="index"
-            class="recorded-beat"
+            class="beat-marker"
+            :class="{
+              'demo': isRhythmPlaying && index === currentBeatIndex,
+              'user-turn': canRecord && index === currentTapIndex,
+              'tapped': tapFeedback[index]?.show,
+              'correct': tapFeedback[index]?.show && tapFeedback[index]?.isCorrect,
+              'wrong': tapFeedback[index]?.show && !tapFeedback[index]?.isCorrect
+            }"
+          >
+            <div class="beat-circle">
+              <span class="beat-number" v-if="!tapFeedback[index]?.show">{{ index + 1 }}</span>
+              <span class="beat-accuracy" v-else>{{ tapFeedback[index]?.accuracy }}%</span>
+              <div class="beat-ripple" v-if="isRhythmPlaying && index === currentBeatIndex"></div>
+            </div>
+            <div class="beat-line" v-if="index < rhythmPattern.length - 1"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 主交互区域 -->
+      <div class="rhythm-main-area">
+        <!-- 开始按钮 -->
+        <button
+          v-if="!isRhythmPlaying && !canRecord && rhythmPattern.length === 0"
+          class="rhythm-start-btn"
+          @click="startRhythmGame"
+        >
+          <div class="btn-icon">🥁</div>
+          <div class="btn-text">开始游戏</div>
+          <div class="btn-hint">先看我做，然后你做</div>
+        </button>
+
+        <!-- 观看中提示 -->
+        <div v-else-if="isRhythmPlaying" class="rhythm-status watching">
+          <div class="status-icon">👀</div>
+          <div class="status-text">仔细看节奏...</div>
+        </div>
+
+        <!-- 用户操作鼓面 -->
+        <button
+          v-else-if="canRecord"
+          class="drum-pad"
+          :class="{ 'can-tap': true }"
+          @click="handleRhythmTap"
+        >
+          <div class="drum-surface">
+            <div class="drum-center">
+              <span class="drum-icon">👆</span>
+              <span class="drum-text">轮到你了！</span>
+              <span class="drum-subtext">第 {{ currentTapIndex + 1 }} / {{ rhythmPattern.length }} 拍</span>
+            </div>
+          </div>
+          <div class="tap-effects">
+            <div
+              v-for="n in 3"
+              :key="n"
+              class="tap-ring"
+              :class="{ 'tap-animate': tapEffects[n-1] }"
+            ></div>
+          </div>
+        </button>
+      </div>
+
+      <!-- 实时准确率显示 -->
+      <div class="accuracy-display" v-if="canRecord && currentTapIndex > 0">
+        <div class="accuracy-label">本拍准确度</div>
+        <div class="accuracy-value" :class="{ 'good': tapFeedback[currentTapIndex - 1]?.accuracy >= 70, 'bad': tapFeedback[currentTapIndex - 1]?.accuracy < 70 }" v-if="tapFeedback[currentTapIndex - 1]?.show">
+          {{ tapFeedback[currentTapIndex - 1]?.accuracy }}%
+        </div>
+        <div class="accuracy-hint" v-else>等待点击...</div>
+      </div>
+
+      <!-- 节拍进度 -->
+      <div class="rhythm-progress" v-if="rhythmPattern.length > 0">
+        <div class="progress-text">
+          <span v-if="isRhythmPlaying">👀 仔细看节奏...</span>
+          <span v-else-if="canRecord">👆 第 {{ currentTapIndex + 1 }} / {{ rhythmPattern.length }} 拍</span>
+          <span v-else>🎯 准备开始</span>
+        </div>
+        <div class="progress-bar">
+          <div
+            class="progress-fill"
+            :style="{ width: (currentTapIndex / rhythmPattern.length * 100) + '%' }"
           ></div>
         </div>
+      </div>
+
+      <!-- 提示信息 -->
+      <div class="rhythm-hint">
+        <p v-if="rhythmMode === 'follow'">
+          <span class="hint-icon">💡</span>
+          跟着鼓声一起点击鼓面，越快越准得分越高！
+        </p>
+        <p v-else>
+          <span class="hint-icon">💡</span>
+          仔细听节奏，播放完成后重复点击
+        </p>
       </div>
     </div>
 
@@ -221,6 +339,22 @@ const canRecord = ref(false)
 const recordedBeats = ref<number[]>([])
 const rhythmPlayback = ref<number | null>(null)
 
+// 改进的节奏游戏状态
+const rhythmMode = ref<'follow' | 'memory'>('follow') // 跟随模式 vs 记忆模式
+const currentTapIndex = ref(0) // 当前应该点击的节拍索引
+const tapFeedback = ref<{ index: number; isCorrect: boolean; show: boolean; accuracy?: number }[]>([]) // 点击反馈
+const comboCount = ref(0) // 连击计数
+const lastBeatTime = ref(0) // 最后一个节拍的时间
+const isRhythmPlaying = ref(false) // 是否正在播放节奏
+const difficulty = ref<'easy' | 'medium' | 'hard'>('medium') // 难度级别
+
+// 难度配置
+const difficultyConfig = {
+  easy: { interval: 1200, tolerance: 0.40, label: '简单' },    // 1200ms间隔，40%容错
+  medium: { interval: 800, tolerance: 0.30, label: '中等' },    // 800ms间隔，30%容错
+  hard: { interval: 500, tolerance: 0.20, label: '困难' }       // 500ms间隔，20%容错
+}
+
 // 通用
 const showResult = ref(false)
 const trials = ref<AudioTrialData[]>([])
@@ -239,27 +373,29 @@ const rhythmTimeout = ref<number | null>(null)
 // 计算属性
 const totalRounds = computed(() => props.rounds)
 const correctCount = computed(() => trials.value.filter(t => t.isCorrect).length)
+// 正确轮次比例（所有trial中isCorrect的比例）
 const accuracy = computed(() => trials.value.length > 0 ? correctCount.value / trials.value.length : 0)
+
+// 真实平均准确率（所有trial的rhythmStats.accuracy平均值）
+const realAccuracy = computed(() => {
+  const rhythmTrials = trials.value.filter(t => t.rhythmStats)
+  if (rhythmTrials.length === 0) return 0
+  const totalAcc = rhythmTrials.reduce((sum, t) => sum + (t.rhythmStats?.accuracy || 0), 0)
+  return totalAcc / rhythmTrials.length / 100 // 转换为0-1范围
+})
+
 const avgResponseTime = computed(() => {
   const valid = trials.value.filter(t => t.responseTime > 0)
   if (valid.length === 0) return 0
   return Math.round(valid.reduce((sum, t) => sum + t.responseTime, 0) / valid.length)
 })
+
+// 真实平均节奏误差（所有trial的rhythmStats.timingErrorAvg平均值）
 const avgTimingError = computed(() => {
   const rhythmTrials = trials.value.filter(t => t.rhythmStats)
   if (rhythmTrials.length === 0) return 0
-  const errors = rhythmTrials.map(t => {
-    const pattern = t.rhythmPattern
-    const user = t.userRhythm || []
-    if (user.length === 0) return 0
-
-    const diffs: number[] = []
-    for (let i = 0; i < Math.min(pattern.length, user.length); i++) {
-      diffs.push(Math.abs(pattern[i] - user[i]))
-    }
-    return diffs.reduce((sum, d) => sum + d, 0) / diffs.length
-  })
-  return Math.round(errors.reduce((sum, e) => sum + e, 0) / errors.length)
+  const totalError = rhythmTrials.reduce((sum, t) => sum + (t.rhythmStats?.timingErrorAvg || 0), 0)
+  return Math.round(totalError / rhythmTrials.length)
 })
 
 const taskTitle = computed(() => {
@@ -305,7 +441,7 @@ const sessionData = computed<GameSessionData>(() => {
     trials: trials.value,
     totalTrials: trials.value.length,
     correctTrials: correct,
-    accuracy: accuracy.value,
+    accuracy: realAccuracy.value,
     avgResponseTime: avgResponseTime.value,
     errors: {
       omission,
@@ -681,107 +817,226 @@ function handleCommandClick(item: GridItem) {
 }
 
 /**
- * 播放节奏（节奏模式）
+ * 开始节奏游戏 - 看-做模式（支持3种难度）
  */
-function playRhythm() {
-  if (isPlaying.value) return
+function startRhythmGame() {
+  if (isRhythmPlaying.value) return
 
-  // 生成简单节奏（2-4个节拍）- 特殊儿童需要更慢的节拍
-  const patternLength = 2 + Math.floor(Math.random() * 3)
+  // 重置状态
+  currentTapIndex.value = 0
+  recordedBeats.value = []
+  tapFeedback.value = []
+  comboCount.value = 0
+
+  // 根据难度生成节奏模式
+  const config = difficultyConfig[difficulty.value]
+  const patternLength = 3 + Math.floor(Math.random() * 2) // 3或4拍
   rhythmPattern.value = []
-  let currentTime = 0
 
   for (let i = 0; i < patternLength; i++) {
-    rhythmPattern.value.push(currentTime)
-    currentTime += 800 + Math.random() * 700 // 800-1500ms间隔，更适合特殊儿童
+    rhythmPattern.value.push(i * config.interval)
   }
 
-  // 播放节奏
+  // 第一步：播放演示（看）
+  playDemoSequence()
+}
+
+/**
+ * 播放演示序列（看）
+ */
+function playDemoSequence() {
+  isRhythmPlaying.value = true
   isPlaying.value = true
+  currentBeatIndex.value = 0
+
+  const config = difficultyConfig[difficulty.value]
   let beatIndex = 0
 
   const playBeat = () => {
     if (beatIndex >= rhythmPattern.value.length) {
-      // 播放完成
+      // 演示完成，进入用户操作阶段
       setTimeout(() => {
         currentBeatIndex.value = -1
+        isRhythmPlaying.value = false
         isPlaying.value = false
-        canRecord.value = true
+        canRecord.value = true // 现在轮到用户
+        currentTapIndex.value = 0
         recordedBeats.value = []
-      }, 500)
+      }, 600)
       return
     }
 
     currentBeatIndex.value = beatIndex
-    playTone(600, 200)
+    playTone(600, 200) // 播放声音
 
-    setTimeout(() => {
-      beatIndex++
-      playBeat()
-    }, rhythmPattern.value[beatIndex + 1] - rhythmPattern.value[beatIndex])
+    beatIndex++
+    if (beatIndex < rhythmPattern.value.length) {
+      rhythmTimeout.value = window.setTimeout(playBeat, config.interval)
+    } else {
+      rhythmTimeout.value = window.setTimeout(playBeat, config.interval)
+    }
   }
 
   playBeat()
 }
 
-/**
- * 处理节奏拍打
- */
-function handleRhythmTap() {
-  if (!canRecord.value) return
+// 点击效果状态
+const tapEffects = ref([false, false, false])
 
-  const now = Date.now()
-  if (rhythmPattern.value.length === 0) {
-    recordedBeats.value.push(now)
-  } else {
-    recordedBeats.value.push(now - recordedBeats.value[0])
-  }
-
-  // 检查是否完成
-  if (recordedBeats.value.length >= rhythmPattern.value.length) {
-    canRecord.value = false
-    evaluateRhythm()
+function triggerTapEffect() {
+  // 触发点击动画效果
+  const index = tapEffects.value.findIndex(v => !v)
+  if (index !== -1) {
+    tapEffects.value[index] = true
+    setTimeout(() => {
+      tapEffects.value[index] = false
+    }, 300)
   }
 }
 
 /**
- * 评估节奏
+ * 处理节奏拍打 - 评估版：检查时间间隔准确性
  */
-function evaluateRhythm() {
-  const userRhythm = recordedBeats.value.slice()
-  const pattern = rhythmPattern.value.slice()
+function handleRhythmTap() {
+  if (!canRecord.value) return
 
-  // 计算偏差
-  const diffs: number[] = []
-  for (let i = 0; i < Math.min(pattern.length, userRhythm.length); i++) {
-    diffs.push(Math.abs(pattern[i] - userRhythm[i]))
+  triggerTapEffect()
+  playTone(600, 150) // 用户点击时也播放声音，给反馈
+
+  const now = Date.now()
+  
+  // 记录点击时间
+  if (currentTapIndex.value === 0) {
+    // 第一拍：记录开始时间
+    recordedBeats.value = [now]
+  } else {
+    // 后续拍：直接push当前时间
+    recordedBeats.value.push(now)
+  }
+  
+  // 计算时间间隔准确度（从第二拍开始）
+  let isAccurate = true
+  let accuracy = 100
+  
+  if (currentTapIndex.value > 0) {
+    const config = difficultyConfig[difficulty.value]
+    const targetInterval = config.interval
+    
+    // 用户实际间隔（相对于上一拍）
+    const userInterval = currentTapIndex.value === 1 
+      ? (now - recordedBeats.value[0]) 
+      : (now - recordedBeats.value[currentTapIndex.value - 1])
+    
+    // 计算偏差比例
+    const diffRatio = Math.abs(userInterval - targetInterval) / targetInterval
+    
+    // 根据难度判定：简单40%、中等30%、困难20%容错
+    isAccurate = diffRatio < config.tolerance
+    accuracy = Math.max(0, Math.round(100 - diffRatio * 100))
   }
 
-  const avgDiff = diffs.reduce((sum, d) => sum + d, 0) / diffs.length
-  const isCorrect = avgDiff < 500 // 允许500ms误差，更适合特殊儿童
+  tapFeedback.value[currentTapIndex.value] = {
+    index: currentTapIndex.value,
+    isCorrect: isAccurate,
+    show: true,
+    accuracy: accuracy
+  }
+
+  // 显示反馈
+  if (isAccurate) {
+    showFeedback('success', `✨ ${accuracy}% 准确`)
+    score.value += 10 + Math.floor(accuracy / 10)
+  } else {
+    const config = difficultyConfig[difficulty.value]
+    const targetTime = recordedBeats.value[0] + (currentTapIndex.value * config.interval)
+    const diffMs = Math.abs(now - targetTime)
+    showFeedback('error', `时差 ${diffMs}ms`)
+    score.value += 5 // 鼓励分
+  }
+
+  currentTapIndex.value++
+
+  // 检查是否完成
+  if (currentTapIndex.value >= rhythmPattern.value.length) {
+    canRecord.value = false
+    setTimeout(() => {
+      evaluateRhythmRound()
+    }, 800)
+  }
+}
+
+/**
+ * 评估节奏轮次 - 基于时间准确度
+ */
+function evaluateRhythmRound() {
+  const pattern = rhythmPattern.value.slice()
+
+  // 计算平均准确率（第一拍不算，从第二拍开始）
+  let totalAccuracy = 0
+  let validBeats = 0
+  
+  for (let i = 1; i < tapFeedback.value.length; i++) {
+    if (tapFeedback.value[i]?.show) {
+      totalAccuracy += tapFeedback.value[i]?.accuracy || 0
+      validBeats++
+    }
+  }
+  
+  const avgAccuracy = validBeats > 0 ? Math.round(totalAccuracy / validBeats) : 100
+  const isCorrect = avgAccuracy >= 70 // 70%以上算通过
+
+  // 计算平均节奏误差（各拍与目标间隔的偏差平均值）
+  let totalTimingError = 0
+  let timingErrorCount = 0
+  const config = difficultyConfig[difficulty.value]
+  
+  for (let i = 1; i < recordedBeats.value.length; i++) {
+    const userInterval = recordedBeats.value[i] - recordedBeats.value[i - 1]
+    const targetInterval = config.interval
+    const error = Math.abs(userInterval - targetInterval)
+    totalTimingError += error
+    timingErrorCount++
+  }
+  
+  const avgTimingErrorForTrial = timingErrorCount > 0 ? Math.round(totalTimingError / timingErrorCount) : 0
 
   trials.value.push({
     trialId: currentRound.value,
     mode: 'rhythm',
     rhythmPattern: pattern,
-    userRhythm: userRhythm,
+    userRhythm: recordedBeats.value.slice(),
     isCorrect,
-    responseTime: Date.now(),
-    timestamp: Date.now()
+    responseTime: 0,
+    timestamp: Date.now(),
+    rhythmStats: {
+      timingErrorAvg: avgTimingErrorForTrial,
+      accuracy: avgAccuracy
+    }
   })
 
   showResult.value = true
+  
   if (isCorrect) {
-    score.value += 10
-    showFeedback('success', '✓ 节奏正确！')
+    score.value += 20 + Math.floor(avgAccuracy / 10)
+    showFeedback('success', `🎉 准确率 ${avgAccuracy}%！太棒了！`)
   } else {
-    showFeedback('error', `✕ 偏差 ${avgDiff.toFixed(0)}ms`)
+    score.value += 10
+    showFeedback('error', `准确率 ${avgAccuracy}%，继续练习！`)
   }
 
+  // 重置状态，开始下一轮
   setTimeout(() => {
+    tapFeedback.value = []
+    currentTapIndex.value = 0
+    rhythmPattern.value = []
+    canRecord.value = false
     startNewRound()
-  }, 2500) // 延长反馈时间，特殊儿童需要更多时间理解
+  }, 2000)
 }
+
+// 保留旧函数名兼容
+const evaluateRhythm = evaluateRhythmRound
+const playRhythm = startRhythmGame
 
 /**
  * 播放音效
@@ -1442,5 +1697,661 @@ onUnmounted(() => {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
+}
+
+/* ========== 改进版节奏游戏样式 ========== */
+
+/* 模式选择 */
+.rhythm-mode-selector {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.mode-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 30px;
+  background: white;
+  border: 3px solid #e0e0e0;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+}
+
+.mode-btn:hover {
+  border-color: #9B59B6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(155, 89, 182, 0.2);
+}
+
+.mode-btn.active {
+  border-color: #9B59B6;
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+}
+
+.mode-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.mode-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.mode-desc {
+  font-size: 12px;
+  color: #666;
+}
+
+/* 连击显示 */
+.combo-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  animation: comboPop 0.3s ease;
+}
+
+@keyframes comboPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.combo-text {
+  font-size: 18px;
+  color: #666;
+}
+
+.combo-count {
+  font-size: 36px;
+  font-weight: 700;
+  color: #e74c3c;
+  text-shadow: 2px 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+/* 节奏时间线 */
+.rhythm-timeline {
+  margin-bottom: 40px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 16px;
+}
+
+.timeline-track {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 30px;
+}
+
+.beat-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.beat-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s ease;
+  border: 3px solid transparent;
+}
+
+.beat-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: #999;
+}
+
+.beat-marker.played .beat-circle {
+  background: #9B59B6;
+}
+
+.beat-marker.played .beat-number {
+  color: white;
+}
+
+.beat-marker.playing .beat-circle {
+  background: #9B59B6;
+  transform: scale(1.2);
+  box-shadow: 0 0 20px rgba(155, 89, 182, 0.6);
+}
+
+.beat-marker.playing .beat-number {
+  color: white;
+}
+
+.beat-marker.expected .beat-circle {
+  border-color: #2ecc71;
+  animation: expectedPulse 0.8s infinite;
+}
+
+@keyframes expectedPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+}
+
+.beat-marker.tapped.correct .beat-circle {
+  background: #2ecc71;
+  border-color: #27ae60;
+}
+
+.beat-marker.tapped.wrong .beat-circle {
+  background: #e74c3c;
+  border-color: #c0392b;
+}
+
+.beat-marker.tapped .beat-number {
+  color: white;
+}
+
+.beat-ripple {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid #9B59B6;
+  animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+.beat-line {
+  position: absolute;
+  top: 50%;
+  left: 60px;
+  width: 30px;
+  height: 3px;
+  background: #ddd;
+  transform: translateY(-50%);
+}
+
+.beat-marker:last-child .beat-line {
+  display: none;
+}
+
+/* 主交互区域 */
+.rhythm-main-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 280px;
+  margin-bottom: 30px;
+}
+
+.rhythm-start-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+}
+
+.rhythm-start-btn:hover {
+  transform: scale(1.05) translateY(-4px);
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.5);
+}
+
+.btn-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.btn-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.btn-hint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 鼓面 */
+.drum-pad {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.drum-surface {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drum-center {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 8px 30px rgba(231, 76, 60, 0.4),
+    inset 0 -4px 20px rgba(0, 0, 0, 0.2),
+    inset 0 4px 20px rgba(255, 255, 255, 0.3);
+  transition: all 0.1s ease;
+}
+
+.drum-pad.can-tap .drum-center {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  box-shadow:
+    0 8px 30px rgba(46, 204, 113, 0.4),
+    inset 0 -4px 20px rgba(0, 0, 0, 0.2),
+    inset 0 4px 20px rgba(255, 255, 255, 0.3);
+  animation: drumReady 1s infinite;
+}
+
+@keyframes drumReady {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.drum-pad:active .drum-center {
+  transform: scale(0.95);
+  box-shadow:
+    0 4px 15px rgba(231, 76, 60, 0.3),
+    inset 0 -2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.drum-icon {
+  font-size: 48px;
+  margin-bottom: 4px;
+}
+
+.drum-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+}
+
+.drum-ring {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border: 4px solid rgba(231, 76, 60, 0.3);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.drum-ring.ring-active {
+  border-color: rgba(155, 89, 182, 0.6);
+  animation: ringPulse 0.8s ease-out;
+}
+
+@keyframes ringPulse {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+/* 点击效果 */
+.tap-effects {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.tap-ring {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.tap-ring.tap-animate {
+  animation: tapRipple 0.4s ease-out;
+}
+
+@keyframes tapRipple {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* 进度条 */
+.rhythm-progress {
+  margin-bottom: 20px;
+  padding: 0 20px;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.progress-bar {
+  height: 12px;
+  background: #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #9B59B6 0%, #8e44ad 100%);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+/* 提示信息 */
+.rhythm-hint {
+  text-align: center;
+  padding: 16px;
+  background: #fff9e6;
+  border-radius: 12px;
+  margin: 0 20px;
+}
+
+.rhythm-hint p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.hint-icon {
+  margin-right: 4px;
+}
+
+/* 响应式适配 */
+@media (max-width: 600px) {
+  .rhythm-mode-selector {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .timeline-track {
+    gap: 15px;
+  }
+
+  .beat-circle {
+    width: 45px;
+    height: 45px;
+  }
+
+  .beat-number {
+    font-size: 16px;
+  }
+
+  .drum-pad {
+    width: 180px;
+    height: 180px;
+  }
+
+  .drum-center {
+    width: 140px;
+    height: 140px;
+  }
+
+  .drum-icon {
+    font-size: 36px;
+  }
+}
+
+/* ========== 简化版新增样式 ========== */
+
+/* 难度选择器 */
+.difficulty-selector {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 16px;
+}
+
+.selector-label {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.difficulty-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.diff-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 24px;
+  background: white;
+  border: 3px solid #e0e0e0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.diff-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.diff-btn.active {
+  border-width: 3px;
+}
+
+.diff-btn.easy.active {
+  border-color: #2ecc71;
+  background: linear-gradient(135deg, #d5f5e3 0%, #abebc6 100%);
+}
+
+.diff-btn.medium.active {
+  border-color: #f39c12;
+  background: linear-gradient(135deg, #fdebd0 0%, #f9d79c 100%);
+}
+
+.diff-btn.hard.active {
+  border-color: #e74c3c;
+  background: linear-gradient(135deg, #fadbd8 0%, #f5b7b1 100%);
+}
+
+.diff-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.diff-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.diff-desc {
+  font-size: 12px;
+  color: #666;
+}
+
+/* 阶段指示器 */
+.phase-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 16px;
+}
+
+.phase-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 24px;
+  background: white;
+  border-radius: 12px;
+  border: 3px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.phase-step.active {
+  border-color: #9B59B6;
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+  box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
+}
+
+.phase-step.completed {
+  border-color: #2ecc71;
+  background: linear-gradient(135deg, #d5f5e3 0%, #abebc6 100%);
+}
+
+.phase-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.phase-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.phase-arrow {
+  font-size: 24px;
+  color: #999;
+}
+
+/* 状态显示 */
+.rhythm-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 60px;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 20px;
+  border: 3px solid #ff9800;
+  animation: pulse 1.5s infinite;
+}
+
+.status-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.status-text {
+  font-size: 24px;
+  font-weight: 700;
+  color: #e65100;
+}
+
+/* 节拍标记新状态 */
+.beat-marker.demo .beat-circle {
+  background: #9B59B6;
+  transform: scale(1.3);
+  box-shadow: 0 0 30px rgba(155, 89, 182, 0.6);
+}
+
+.beat-marker.demo .beat-number {
+  color: white;
+  font-weight: 700;
+}
+
+.beat-marker.user-turn .beat-circle {
+  border-color: #2ecc71;
+  animation: userTurnPulse 1s infinite;
+}
+
+.beat-accuracy {
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+}
+
+@keyframes userTurnPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+  50% { box-shadow: 0 0 0 15px rgba(46, 204, 113, 0); }
+}
+
+/* 鼓面副标题 */
+.drum-subtext {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 4px;
+}
+
+/* 实时准确率显示 */
+.accuracy-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  border-radius: 16px;
+  margin-bottom: 20px;
+  border: 2px solid #e0e0e0;
+}
+
+.accuracy-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.accuracy-value {
+  font-size: 36px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.accuracy-value.good {
+  color: #2ecc71;
+  text-shadow: 2px 2px 4px rgba(46, 204, 113, 0.3);
+}
+
+.accuracy-value.bad {
+  color: #e74c3c;
+  text-shadow: 2px 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+.accuracy-hint {
+  font-size: 18px;
+  color: #999;
 }
 </style>

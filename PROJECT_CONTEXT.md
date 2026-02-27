@@ -178,6 +178,17 @@
 
 > **提示**: 更多历史功能请查看 [CHANGELOG.md](docs/CHANGELOG.md)
 
+24. **[2026-02-27] Phase 5.1 - Bug修复与功能优化**
+    - **WeeFIM评估提交失败修复**: 修复字段名不匹配问题（`motor_score` → `adl_score`）
+    - **SM/WeeFIM量表报告404修复**: 分别处理query参数和路径参数的路由格式
+    - **节奏模仿游戏全面优化**:
+      - 看-做模式：系统演示→用户模仿
+      - 3种难度级别（简单/中等/困难）
+      - 实时准确度评估（基于时间间隔偏差）
+      - 视觉节拍条和鼓面交互优化
+    - **IEP报告数据修正**: 显示真实准确率和平均节奏误差（而非100%/0ms）
+    - **WeeFIM量表UI优化**: 选项整齐排列，标签固定宽度，视觉层次更清晰
+
 23. **[2026-02-27] Phase 5 - 项目重构与品牌升级**
    - **目标**: 将项目从 SIC-ADS 重构为 SCGP（星愿能力发展平台）
    - **Git 历史重置**:
@@ -239,203 +250,18 @@
      - `src/views/games/TrainingRecords.vue` - UI 标准化重构
      - `src/views/games/SensoryTrainingRecords.vue` - UI 标准化重构
 
-14. **[2026-02-22] Phase 3.10 资源管理模块 - ResourceManager.vue**
-   - **目标**: 实现系统资源的顶级管理功能，支持多模块、多资源类型的统一管理
-   - **路由配置**:
-     - 路径: `/admin/resources`
-     - 名称: `ResourceManager`
-     - 图标: `folder-open`
-     - 权限: `roles: ['admin']`（仅管理员可访问）
-     - **文件**: `src/router/index.ts`
-   - **左侧筛选面板**:
-     - 业务模块筛选: 感官训练、情绪调节、社交沟通、生活自理、认知训练
-     - 资源类型筛选: 器材、文档、视频、闪卡
-     - 状态筛选: 启用中、已禁用
-     - 搜索框: 支持关键词搜索（300ms 防抖）
-     - 统计信息: 显示资源总数、系统资源数、自定义资源数
-   - **资源列表表格**:
-     - 缩略图列（64×64 紧凑型）:
-       - 器材类: 显示实际图片（支持 el-image 大图预览）
-       - 其他类型: 显示类型图标（不同底色区分）
-       - 无封面: 显示默认占位符
-     - 资源名称 + 描述
-     - 分类标签
-     - 来源标签: 系统（蓝灰色+锁图标）/ 自定义（绿色+星标）
-     - 状态开关: 一键启用/禁用
-     - 标签列表: 最多显示 3 个，超出显示 +N
-     - 操作列: 编辑、删除（禁用时显示恢复）
-   - **权限控制**:
-     | 操作 | 系统资源 (is_custom=0) | 自定义资源 (is_custom=1) |
-     |:-----|:----------------------|:------------------------|
-     | 编辑名称 | ❌ 禁用 | ✅ 允许 |
-     | 编辑分类 | ❌ 禁用 | ✅ 允许 |
-     | 编辑描述 | ✅ 允许 | ✅ 允许 |
-     | 编辑标签 | ✅ 允许 | ✅ 允许 |
-     | 删除 | ❌ 禁用 + Tooltip | ✅ 允许 (软删除) |
-     | 启用/禁用 | ✅ 允许 | ✅ 允许 |
-   - **编辑弹窗**:
-     - 封面预览（自定义资源可更换）
-     - 名称输入（系统资源只读+锁图标）
-     - 分类选择（系统资源禁用）
-     - 详细描述
-     - 标签编辑器: 已选标签、可选标签列表、常用标签快捷添加
-   - **软删除与恢复**:
-     - 删除操作: 调用 `ResourceAPI.deleteResource()` 设置 `is_active = 0`
-     - 恢复入口: 筛选"已禁用"状态后显示恢复按钮
-     - 状态驱动: 根据状态自动切换删除/恢复按钮
-   - **ResourceAPI 扩展**:
-     - 新增 `getAllResourcesForAdmin()` 方法: 查询所有资源（包括禁用的）
-     - 排序: 启用资源优先，系统资源在前
-     - **文件**: `src/database/resource-api.ts` (+80行)
-   - **文件修改**:
-     - `src/views/admin/ResourceManager.vue` - 新增（~800行）
-     - `src/router/index.ts` - 添加路由配置
-     - `src/views/Layout.vue` - 添加菜单顺序
-     - `src/database/resource-api.ts` - 添加 getAllResourcesForAdmin 方法
+> **注意**: 条目 14-18 已归档到 [CHANGELOG.md](docs/CHANGELOG.md)
 
-15. **[2026-02-22] Phase 3.11 资源中心统一入口 - ResourceCenter.vue**
-   - **目标**: 将"资源管理"（训练资源）和"资料库"（教学资料）深度融合，构建统一的资源中心入口
-   - **架构设计**: 统一入口 + 双视图（Tab切换）
-     - Tab 1: 训练资源 → 面向 `sys_training_resource` 表
-     - Tab 2: 教学资料 → 面向 `resource_meta` 表
-   - **权限自适应**:
-     - admin: 完整 CRUD + 状态开关 + 批量导入
-     - teacher: 只读模式（列表展示 + 筛选 + 搜索）
-   - **路由变更**:
-     - `/resources` → `/resource-center`（重定向）
-     - `/admin/resources` → `/resource-center`（重定向）
-     - 新增 `/resource-center` 统一入口（admin/teacher 均可访问）
-   - **样式统一**: 250px 左侧栏宽度
-   - **修复的问题**:
-     - TeachingMaterials.vue: `ElMessageBox` 导入位置错误
-     - ResourceCenter.vue: `@/stores/user` → `@/stores/auth`
-   - **旧文件废弃标记**:
-     - `src/views/Resources.vue` - 添加 DEPRECATED 注释
-     - `src/views/admin/ResourceManager.vue` - 添加 DEPRECATED 注释
+14. **[2026-02-24] Phase 4.3 - Conners 常模数据验证与修复**
+   - **目标**: 验证并修复 Conners PSQ/TRS 的 T 分计算常模数据，确保评估结果准确
+   - **修复内容**:
+     - 修正常模数据格式，确保性别×年龄分组正确
+     - 验证 T 分计算公式：T = 50 + 10 × (Raw - Mean) / SD
+     - 修复年龄分组边界问题（6岁0个月 vs 6岁1个月）
    - **文件修改**:
-     - `src/views/admin/ResourceCenter.vue` - 新增（~180行）
-     - `src/views/resource-center/TrainingResources.vue` - 新增（~850行）
-     - `src/views/resource-center/TeachingMaterials.vue` - 新增（~780行）
-     - `src/router/index.ts` - 添加路由配置和重定向
-     - `src/views/Resources.vue` - 添加废弃注释
-     - `src/views/admin/ResourceManager.vue` - 添加废弃注释
-
-16. **[2026-02-24] Phase 4 评估基础设施重构 - ScaleDriver 策略模式**
-   - **目标**: 使用"UI Container Reuse + Strategy Driver"架构重构评估模块
-   - **ScaleDriver 接口设计** (`src/types/assessment.ts` ~300行):
-     - `getScaleInfo()`: 量表基本信息
-     - `getStartIndex(student)`: 根据年龄计算起始题目索引
-     - `getQuestions(student)`: 获取题目列表
-     - `getNextQuestion()`: 导航决策（NavigationDecision: next/jump/complete）
-     - `calculateScore()`: 计算评分结果
-     - `generateFeedback()`: 生成反馈文本
-     - `calculateProgress()`: 进度计算（可选）
-   - **SMDriver 实现** (`src/strategies/assessment/SMDriver.ts` ~700行):
-     - S-M 社会生活能力量表驱动器（132题，7个年龄阶段）
-     - Basal/Ceiling 规则：连续10项通过/不通过
-     - `stageBaseScores`: 各阶段基础分 {1:0, 2:19, 3:41, 4:63, 5:80, 6:96, 7:113}
-     - `calculateSMRawScore()`: 正确的粗分计算（基础分 + 通过题数）
-     - `getQuestionsFromStart()`: 基于起始索引的题目总数计算
-   - **AssessmentContainer 组件** (`src/views/assessment/AssessmentContainer.vue` ~630行):
-     - 统一评估容器，支持多量表驱动
-     - 三个阶段：welcome → assessing → complete
-     - 子组件：WelcomeDialog, QuestionCard, CompleteDialog
-     - 进度持久化（localStorage）
-     - 评估结果保存到数据库
-   - **策略工厂** (`src/strategies/assessment/index.ts`):
-     - `getDriverByScaleCode(scaleCode)`: 同步获取驱动器实例
-     - 驱动器缓存机制
-     - 静态导入（Vite ESM 兼容）
-   - **修复的问题**:
-     - 移除无效 `@/stores/class` 导入（500错误）
-     - `state.metadata.visitedStages` 空指针保护（运行时崩溃）
-     - 粗分计算逻辑：添加阶段基础分（评分错误）
-     - 报告路由：path参数改为query参数（404错误）
-     - 进度显示：基于起始索引计算总题数（进度不准确）
-     - 进度总数变化：初始化时保存startIndex（进度不稳定）
-     - 报告分数不一致：使用metadata中的startStage（数据不一致）
-     - 等级标签字体颜色：添加 color: #333（可读性问题）
-   - **文件修改**:
-     - `src/types/assessment.ts` - 新增（~300行）
-     - `src/strategies/assessment/SMDriver.ts` - 新增（~700行）
-     - `src/strategies/assessment/index.ts` - 新增（~107行）
-     - `src/views/assessment/AssessmentContainer.vue` - 新增（~630行）
-     - `src/views/assessment/components/WelcomeDialog.vue` - 新增（~80行）
-     - `src/views/assessment/components/QuestionCard.vue` - 新增（~150行）
-     - `src/views/assessment/components/CompleteDialog.vue` - 新增（~200行）
-     - `src/views/assessment/sm/Report.vue` - 修改（分数优先级、字体颜色）
-     - `src/router/index.ts` - 修改（路由配置）
-
-17. **[2026-02-24] Phase 4.1 BaseDriver + WeeFIMDriver + CSIRSDriver 实现**
-   - **目标**: 完善评估驱动器架构，实现更多量表驱动器
-   - **BaseDriver 抽象基类** (`src/strategies/assessment/BaseDriver.ts` ~280行):
-     - 抽象属性：scaleCode, scaleName, version, ageRange, totalQuestions, dimensions
-     - 抽象方法：getQuestions, getStartIndex, calculateScore, generateFeedback
-     - 通用实现：getNextQuestion（线性导航）、calculateProgress、getScaleInfo
-     - 工具方法：serializeAnswers, calculateTiming, analyzeDimensionScores, analyzeDimensions
-     - **关键修复**: getNextQuestion 使用 `state.metadata.totalQuestions` 而非调用 getQuestions
-   - **WeeFIMDriver 实现** (`src/strategies/assessment/WeeFIMDriver.ts` ~380行):
-     - WeeFIM 功能独立性量表驱动器（18题）
-     - 7 级评分（1-7分）
-     - 2 个维度：运动功能（13题）、认知功能（5题）
-     - 等级映射：完全独立(126), 基本独立(108-125), 轻度依赖(91-107), 中度依赖(73-90), 重度依赖(54-72), 极重依赖(36-53), 完全依赖(18-35)
-     - 欢迎对话框内容（评估说明）
-   - **CSIRSDriver 实现** (`src/strategies/assessment/CSIRSDriver.ts` ~560行):
-     - CSIRS 感觉统合量表驱动器（58题，根据年龄动态调整）
-     - 5 个维度：前庭觉调节与运动规划、触觉调节与情绪行为、身体感知与动作协调、视听知觉与学业表现（6岁+）、执行功能与社会适应（10岁+）
-     - 5 级评分（1-5分），反向计分
-     - T 分转换：使用 csirs-conversion.ts 查表
-     - 等级映射：非常优秀(71+), 优秀(61-70), 正常(40-60), 偏低(30-39), 严重偏低(0-29)
-   - **SMDriver 重构**:
-     - 继承 BaseDriver
-     - 保留 S-M 特有的 Basal/Ceiling 跳题逻辑
-   - **策略工厂注册** (`src/strategies/assessment/index.ts`):
-     - 注册 'sm': SMDriver
-     - 注册 'weefim': WeeFIMDriver
-     - 注册 'csirs': CSIRSDriver
-   - **AssessmentContainer 修复**:
-     - 初始化时保存 `totalQuestions` 到 `state.metadata`
-     - handleViewReport 使用路径参数
-   - **修复的问题**:
-     - getNextQuestion 返回 'next' 而非 'complete'（CSIRS 动态题目数问题）
-     - CSIRS 保存失败 "table csirs_assess has no column named total_score"（Schema 不匹配）
-   - **文件修改**:
-     - `src/strategies/assessment/BaseDriver.ts` - 新增（~280行）
-     - `src/strategies/assessment/WeeFIMDriver.ts` - 新增（~380行）
-     - `src/strategies/assessment/CSIRSDriver.ts` - 新增（~560行）
-     - `src/strategies/assessment/SMDriver.ts` - 重构（继承 BaseDriver）
-     - `src/strategies/assessment/index.ts` - 修改（注册新驱动器）
-     - `src/views/assessment/AssessmentContainer.vue` - 修改（metadata.totalQuestions, 路由修复）
-
-18. **[2026-02-24] Phase 4.2 收官 - ConnersPSQDriver + ConnersTRSDriver 实现**
-   - **目标**: 完成评估驱动器架构的最后两块拼图，实现 Conners 1978 版驱动器
-   - **ConnersPSQDriver 实现** (`src/strategies/assessment/ConnersPSQDriver.ts` ~350行):
-     - Conners 父母用问卷驱动器（48题）
-     - 6 个维度：品行问题、学习问题、心身障碍、冲动-多动、焦虑、多动指数
-     - 4 点评分（0-3分）
-     - T 分计算：使用 `conners-norms.ts` 性别×年龄常模
-     - 等级判定：基于多动指数 T 分（<60 正常, 60-69 临界, ≥70 临床显著）
-     - 欢迎对话框内容（评估说明）
-     - **注意**: 不包含 PI/NI 效度检查（1978版无此项）
-   - **ConnersTRSDriver 实现** (`src/strategies/assessment/ConnersTRSDriver.ts` ~320行):
-     - Conners 教师用问卷驱动器（28题）
-     - 4 个维度：品行问题、多动、不注意-被动、多动指数
-     - 4 点评分（0-3分）
-     - T 分计算：使用 `conners-norms.ts` 性别×年龄常模
-     - 学校指导建议生成
-   - **策略工厂注册** (`src/strategies/assessment/index.ts`):
-     - 注册 'conners-psq': ConnersPSQDriver
-     - 注册 'conners-trs': ConnersTRSDriver
-   - **AssessmentContainer 保存逻辑**:
-     - 新增 `saveConnersPSQAssessment()` 方法
-     - 新增 `saveConnersTRSAssessment()` 方法
-     - 1978版不使用 PI/NI 字段，设为默认值
-   - **旧评估页面废弃标记**:
-     - `src/views/assessment/sm/Assessment.vue` - 添加 @deprecated 注释
-     - `src/views/assessment/weefim/Assessment.vue` - 添加 @deprecated 注释
-     - `src/views/assessment/csirs/Assessment.vue` - 添加 @deprecated 注释
-     - `src/views/assessment/conners-psq/Assessment.vue` - 添加 @deprecated 注释
-     - `src/views/assessment/conners-trs/Assessment.vue` - 添加 @deprecated 注释
+     - `src/database/conners-norms.ts` - 常模数据修正
+     - `src/strategies/assessment/ConnersPSQDriver.ts` - T分计算逻辑优化
+     - `src/strategies/assessment/ConnersTRSDriver.ts` - T分计算逻辑优化
    - **架构状态**:
      | 维度 | 重构前 | 重构后 |
      |:-----|:-------|:-------|
@@ -1028,24 +854,27 @@ function calculateConnersTScore(
 
 **最后更新**: 2026-02-27
 **更新人**: Claude Code Assistant (首席实施工程师)
-**会话摘要**: Phase 5 完成 - 项目重构与品牌升级。项目从 SIC-ADS 重构为 SCGP（星愿能力发展平台），创建干净的 Git 历史，修复数据库初始化错误，清理废弃 worktree，执行文档归档。
+**会话摘要**: Phase 5.1 完成 - Bug修复与功能优化。修复WeeFIM评估提交失败、SM/WeeFIM报告404、节奏模仿游戏全面优化（3难度+看-做模式）、IEP报告数据修正、WeeFIM量表UI优化。已归档条目14-18到CHANGELOG.md。
 
 ### 下次会话优先事项
 
-1. **[P1 - 高] 器材训练模块多模块支持重构**
-   - **问题**: `QuickEntry.vue:26` 硬编码 `module-code="sensory"`，无法支持其他模块（情绪行为、社交沟通等）
-   - **方案讨论**: 需要在 URL 参数、模块选择器页面、或 Tab 集成中选择一种方案
-   - **相关文件**: `QuickEntry.vue`, `SelectStudent.vue`, `ResourceSelector.vue`
+根据本次会话进度和 `docs/plans/2025-02-05-refactor-implementation-plan.md`，下一步优先行动：
 
-2. **[P2 - 中] 数据库旧记录 module_code 更新**
-   - **问题**: 旧训练记录 `module_code` 字段为 NULL
-   - **解决方案**: 执行 SQL 更新
-   ```sql
-   UPDATE equipment_training_records SET module_code = 'sensory' WHERE module_code IS NULL;
-   UPDATE training_records SET module_code = 'sensory' WHERE module_code IS NULL;
-   ```
+1. **[P1 - 高] 节奏模仿游戏进一步验证与调优**
+   - **验证**: 测试3种难度级别的时间准确度评估是否正常工作
+   - **调优**: 根据实际测试反馈调整容错率（当前简单40%、中等30%、困难20%）
+   - **数据验证**: 确认IEP报告显示的真实准确率和平均节奏误差正确
+   - **相关文件**: `src/components/games/audio/GameAudio.vue`, `src/views/games/IEPReport.vue`
+
+2. **[P2 - 中] WeeFIM量表UI细节优化**
+   - **问题**: 7个选项的垂直排列已优化，但需验证响应式布局
+   - **测试**: 在不同屏幕尺寸下验证选项对齐效果
+   - **反馈收集**: 收集用户对新UI的反馈，必要时进一步调整
+   - **相关文件**: `src/views/assessment/components/QuestionCard.vue`
 
 3. **[P3 - 低] 评估模块端到端验证**
-   - 使用修复后的常模数据测试 Conners PSQ/TRS 评估
-   - 验证 T 分计算公式：T = 50 + 10 × (Raw - Mean) / SD
+   - **WeeFIM**: 验证修复后的评估提交流程完整可用
+   - **SM**: 验证报告页面跳转和数据显示正常
+   - **回归测试**: 确保节奏游戏优化不影响其他感官训练游戏
+   - **相关文件**: `src/views/assessment/AssessmentContainer.vue`, `src/views/assessment/sm/Report.vue`, `src/views/assessment/weefim/Report.vue`
    - 验证报告生成和 PDF 导出功能

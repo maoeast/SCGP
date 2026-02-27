@@ -2498,4 +2498,129 @@ UPDATE training_records SET module_code = 'sensory' WHERE module_code IS NULL;
 - [x] 新项目名称正确显示 ✅
 - [x] 新仓库地址配置正确 ✅
 - [x] 全新数据库初始化无报错 ✅
+
+---
+
+## Phase 5.1: Bug修复与功能优化 (Day 74续) ✅ 已完成
+
+### 目标
+修复本次会话中发现的关键Bug，优化评估和游戏模块的用户体验。
+
+### 完成日期
+2026-02-27
+
+### 任务清单
+
+#### 5.1.1 WeeFIM评估提交失败修复 ✅ 已完成
+**文件**: `src/views/assessment/AssessmentContainer.vue`
+
+**问题**: WeeFIM量表答题完成后提交失败，报错 `NOT NULL constraint failed: weefim_assess.adl_score`
+
+**原因**: 代码使用 `motor_score`，但数据库列名为 `adl_score`，导致 `undefined` 值违反 `NOT NULL` 约束
+
+**修复**:
+```typescript
+// 修复前
+motor_score: getDimensionScore('motor')
+
+// 修复后
+adl_score: getDimensionScore('motor')
+```
+
+#### 5.1.2 SM/WeeFIM量表报告404修复 ✅ 已完成
+**文件**: `src/views/assessment/AssessmentContainer.vue`
+
+**问题**: 评估结束后点击查看报告提示404，但报告生成模块里能看到评估报告
+
+**原因**: 
+- SM 和 WeeFIM 报告页面使用 query 参数格式（`?assessId=xxx`）
+- CSIRS 和 Conners 使用路径参数格式（`/report/:assessId`）
+- `handleViewReport` 统一使用路径参数，导致不匹配
+
+**修复**:
+```typescript
+// 分别处理不同量表的路由格式
+if (scaleCode.value === 'sm' || scaleCode.value === 'weefim') {
+  // 使用 query 参数
+  router.push({ path: `/assessment/${scaleCode.value}/report`, query: { assessId, studentId } })
+} else {
+  // 使用路径参数
+  router.push(`/assessment/${scaleCode.value}/report/${assessId.value}`)
+}
+```
+
+#### 5.1.3 节奏模仿游戏全面优化 ✅ 已完成
+**文件**: `src/components/games/audio/GameAudio.vue`, `src/types/games.ts`
+
+**优化内容**:
+
+1. **看-做模式重构**
+   - 系统先播放演示（看）
+   - 然后用户模仿点击（做）
+   - 明确的阶段指示器：👀仔细看 → 👆跟着做
+
+2. **3种难度级别**
+   - 🌱 简单：1200ms间隔，40%容错
+   - 🌿 中等：800ms间隔，30%容错  
+   - 🌳 困难：500ms间隔，20%容错
+
+3. **实时准确度评估**
+   - 每拍显示准确度百分比
+   - 基于时间间隔偏差计算
+   - 显示时差毫秒数
+
+4. **视觉节拍条**
+   - 显示所有节拍点（1、2、3、4）
+   - 播放时高亮当前节拍
+   - 点击后显示对错（绿色✓/红色✗）
+
+5. **鼓面交互优化**
+   - 大鼓面按钮，视觉直观
+   - 点击时有波纹动画效果
+   - 可点击时鼓面变绿色并脉动提示
+
+**Bug修复**:
+- 变量名拼写错误：`recordedBeeats` → `recordedBeats`
+- 时间间隔计算索引错误
+- 准确率计算逻辑修正
+
+#### 5.1.4 IEP报告数据修正 ✅ 已完成
+**文件**: `src/views/games/IEPReport.vue`, `src/components/games/audio/GameAudio.vue`
+
+**问题**: 训练报告显示准确率100%、平均节奏误差0ms，与实际表现不符
+
+**原因**:
+1. `trials` 保存时没有 `rhythmStats` 字段
+2. 显示的是"正确轮次比例"而非真实准确度
+
+**修复**:
+- 在 `evaluateRhythmRound` 中计算并保存 `timingErrorAvg` 和 `accuracy`
+- 新增 `realAccuracy` 计算属性，取所有轮次的 `rhythmStats.accuracy` 平均值
+- 更新类型定义 `AudioTrialData.rhythmStats` 添加 `accuracy` 字段
+
+#### 5.1.5 WeeFIM量表UI优化 ✅ 已完成
+**文件**: `src/views/assessment/components/QuestionCard.vue`
+
+**问题**: 7个选项排列歪歪扭扭，不美观
+
+**优化**:
+- 选项宽度统一为100%，整齐对齐
+- 标签和描述水平排列，标签固定宽度100px
+- 增加左侧缩进效果（hover时右移4px）
+- 圆角和阴影更现代
+- 题目标题增大到18px，渐变色背景，左侧蓝色边框装饰
+
+### 交付物清单
+- [x] WeeFIM评估提交失败修复
+- [x] SM/WeeFIM量表报告404修复
+- [x] 节奏模仿游戏全面优化（3难度+看-做模式）
+- [x] IEP报告数据修正
+- [x] WeeFIM量表UI优化
+
+### 验收标准
+- [x] WeeFIM评估可以正常提交 ✅
+- [x] SM/WeeFIM报告页面正常跳转 ✅
+- [x] 节奏游戏3种难度正常工作 ✅
+- [x] 训练报告显示真实准确率和节奏误差 ✅
+- [x] WeeFIM选项整齐排列 ✅
 - [x] 代码成功推送到新仓库 ✅
