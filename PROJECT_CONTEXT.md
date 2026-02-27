@@ -178,7 +178,24 @@
 
 > **提示**: 更多历史功能请查看 [CHANGELOG.md](docs/CHANGELOG.md)
 
-23. **[2026-02-27] Phase 4.6 - 训练记录模块重构与Bug修复**
+23. **[2026-02-27] Phase 5 - 项目重构与品牌升级**
+   - **目标**: 将项目从 SIC-ADS 重构为 SCGP（星愿能力发展平台）
+   - **Git 历史重置**:
+     - 创建 orphan 分支（无历史记录）
+     - 单一初始提交：2612 文件，646,125 行代码
+   - **品牌升级**:
+     - 中文名称：感官综合训练与评估系统 → 星愿能力发展平台
+     - 英文名称：SIC-ADS → SCGP (Stellar Competency Growth Platform)
+     - 版本：4.3.0 → 1.0.0
+   - **仓库迁移**:
+     - 旧仓库：https://github.com/maoeast/Self-Care-ATS.git
+     - 新仓库：https://github.com/maoeast/SCGP.git
+   - **数据库初始化修复**:
+     - 问题：全新数据库启动时报错 `no such table: main.report_record`
+     - 修复：`migrate-report-constraints.ts` 添加表存在性检查
+   - **废弃 worktree 清理**: 删除 `equipment-training` worktree
+
+22. **[2026-02-27] Phase 4.6 - 训练记录模块重构与Bug修复**
    - **目标**: 修复训练记录模块的关键Bug，确保多模块支持正常工作
    - **ResourceSelector 硬编码修复** (`src/components/resources/ResourceSelector.vue`):
      - 问题：`loadData` 函数中硬编码 `moduleCode: 'sensory' as any`
@@ -200,7 +217,7 @@
      - `src/views/equipment/Records.vue` - 路由同步修复
      - `src/views/training-records/components/EquipmentRecordsPanel.vue` - 简化过滤逻辑
 
-22. **[2026-02-27] Phase 4.5 - UI 标准化与交互优化**
+21. **[2026-02-27] Phase 4.5 - UI 标准化与交互优化**
    - **目标**: 统一训练记录模块的 UI 风格，优化器材训练记录的交互流程
    - **AssessmentSelect.vue 模板修复**:
      - 问题：Element Plus 中不存在 `School` 图标导致 500 错误
@@ -222,38 +239,7 @@
      - `src/views/games/TrainingRecords.vue` - UI 标准化重构
      - `src/views/games/SensoryTrainingRecords.vue` - UI 标准化重构
 
-14. **[2026-02-22] Phase 3.9 技术债清偿 - Resource 泛化架构彻底清理**
-   - **目标**: 彻底剥离旧表依赖与清理残留组件，确保架构不再存在双重依赖
-   - **getEquipment() 方法重构**:
-     - ❌ 移除 `INNER JOIN equipment_catalog ec ON tr.legacy_id = ec.id`
-     - ✅ 直接使用 `tr.category` 而非 `ec.category`
-     - ✅ 新增 `tr.module_code = 'sensory'` 模块过滤
-     - **文件**: `src/database/api.ts`
-   - **getCategoryStats() 统计方法重构**:
-     - ❌ 移除 `JOIN equipment_catalog ec ON etr.equipment_id = ec.id`
-     - ✅ 改用 `JOIN sys_training_resource tr ON etr.equipment_id = tr.id`
-     - **文件**: `src/database/api.ts`
-   - **删除残留组件**:
-     - 删除 `src/components/equipment/EquipmentSelector.vue`（无引用）
-   - **ResourceAPI CRUD 接口完善** (`src/database/resource-api.ts` +220行):
-     - `addResource(data)` - 创建资源（支持标签自动关联）
-     - `updateResource(id, data)` - 更新资源（支持标签替换）
-     - `deleteResource(id)` - **软删除**（设置 is_active = 0）
-     - `restoreResource(id)` - 恢复已删除资源
-     - `hardDeleteResource(id)` - 永久删除（谨慎使用）
-     - `incrementUsageCount(id)` - 增加使用次数
-   - **架构状态变更**:
-     | 维度 | 重构前 | 重构后 |
-     |:-----|:-------|:-------|
-     | 旧表依赖 | ⚠️ 双表 JOIN | ✅ 完全独立 |
-     | 代码引用 `equipment_catalog` | 5处 | 0处 |
-     | ResourceAPI CRUD | 仅查询 | ✅ 完整增删改 |
-   - **文件修改**:
-     - `src/database/api.ts` - getEquipment() 和 getCategoryStats() 重构
-     - `src/database/resource-api.ts` - CRUD 接口完善（+220行）
-     - `src/components/equipment/EquipmentSelector.vue` - 已删除
-
-15. **[2026-02-22] Phase 3.10 资源管理模块 - ResourceManager.vue**
+14. **[2026-02-22] Phase 3.10 资源管理模块 - ResourceManager.vue**
    - **目标**: 实现系统资源的顶级管理功能，支持多模块、多资源类型的统一管理
    - **路由配置**:
      - 路径: `/admin/resources`
@@ -307,7 +293,7 @@
      - `src/views/Layout.vue` - 添加菜单顺序
      - `src/database/resource-api.ts` - 添加 getAllResourcesForAdmin 方法
 
-16. **[2026-02-22] Phase 3.11 资源中心统一入口 - ResourceCenter.vue**
+15. **[2026-02-22] Phase 3.11 资源中心统一入口 - ResourceCenter.vue**
    - **目标**: 将"资源管理"（训练资源）和"资料库"（教学资料）深度融合，构建统一的资源中心入口
    - **架构设计**: 统一入口 + 双视图（Tab切换）
      - Tab 1: 训练资源 → 面向 `sys_training_resource` 表
@@ -334,7 +320,7 @@
      - `src/views/Resources.vue` - 添加废弃注释
      - `src/views/admin/ResourceManager.vue` - 添加废弃注释
 
-17. **[2026-02-24] Phase 4 评估基础设施重构 - ScaleDriver 策略模式**
+16. **[2026-02-24] Phase 4 评估基础设施重构 - ScaleDriver 策略模式**
    - **目标**: 使用"UI Container Reuse + Strategy Driver"架构重构评估模块
    - **ScaleDriver 接口设计** (`src/types/assessment.ts` ~300行):
      - `getScaleInfo()`: 量表基本信息
@@ -380,7 +366,7 @@
      - `src/views/assessment/sm/Report.vue` - 修改（分数优先级、字体颜色）
      - `src/router/index.ts` - 修改（路由配置）
 
-18. **[2026-02-24] Phase 4.1 BaseDriver + WeeFIMDriver + CSIRSDriver 实现**
+17. **[2026-02-24] Phase 4.1 BaseDriver + WeeFIMDriver + CSIRSDriver 实现**
    - **目标**: 完善评估驱动器架构，实现更多量表驱动器
    - **BaseDriver 抽象基类** (`src/strategies/assessment/BaseDriver.ts` ~280行):
      - 抽象属性：scaleCode, scaleName, version, ageRange, totalQuestions, dimensions
@@ -421,7 +407,7 @@
      - `src/strategies/assessment/index.ts` - 修改（注册新驱动器）
      - `src/views/assessment/AssessmentContainer.vue` - 修改（metadata.totalQuestions, 路由修复）
 
-19. **[2026-02-24] Phase 4.2 收官 - ConnersPSQDriver + ConnersTRSDriver 实现**
+18. **[2026-02-24] Phase 4.2 收官 - ConnersPSQDriver + ConnersTRSDriver 实现**
    - **目标**: 完成评估驱动器架构的最后两块拼图，实现 Conners 1978 版驱动器
    - **ConnersPSQDriver 实现** (`src/strategies/assessment/ConnersPSQDriver.ts` ~350行):
      - Conners 父母用问卷驱动器（48题）
@@ -463,7 +449,7 @@
      - `src/views/assessment/AssessmentContainer.vue` - 修改（+110行，保存逻辑）
      - 5个旧评估页面 - 添加 @deprecated 注释
 
-20. **[2026-02-26] Phase 4.3 - Conners 常模数据验证与修复**
+19. **[2026-02-26] Phase 4.3 - Conners 常模数据验证与修复**
    - **目标**: 对 Conners PSQ/TRS 量表的常模数据进行系统性交叉核对，确保 T 分计算精度
    - **PSQ 常模数据交叉核对** (`src/database/conners-norms.ts`):
      - 核对范围：5年龄段 × 2性别 × 6维度 = 60 个数据点
@@ -487,7 +473,7 @@
      - `src/database/conners-norms.ts` - PSQ 常模数据修复（5处）
      - `electron/main.mjs` - EPIPE 错误修复（+25行）
 
-21. **[2026-02-27] Phase 4.4 - 代码库瘦身与收官（技术债清偿）**
+20. **[2026-02-27] Phase 4.4 - 代码库瘦身与收官（技术债清偿）**
    - **目标**: 彻底清理废弃文件，完成架构重构的最后一步
    - **归档测试文件**:
      - `src/views/devtools/ConnersE2ETest.vue` → `src/views/_archived/devtools/`
@@ -1042,7 +1028,7 @@ function calculateConnersTScore(
 
 **最后更新**: 2026-02-27
 **更新人**: Claude Code Assistant (首席实施工程师)
-**会话摘要**: Phase 4.6 完成 - 训练记录模块重构与Bug修复。修复 ResourceSelector 硬编码 moduleCode 问题，解决路由重定向循环错误，修复 Records.vue 路由同步Bug，简化 EquipmentRecordsPanel 模块过滤逻辑。
+**会话摘要**: Phase 5 完成 - 项目重构与品牌升级。项目从 SIC-ADS 重构为 SCGP（星愿能力发展平台），创建干净的 Git 历史，修复数据库初始化错误，清理废弃 worktree，执行文档归档。
 
 ### 下次会话优先事项
 

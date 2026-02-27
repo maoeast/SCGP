@@ -2443,3 +2443,59 @@ UPDATE training_records SET module_code = 'sensory' WHERE module_code IS NULL;
 
 **最后更新**: 2026-02-27
 **审批状态**: Phase 4.6 完成 - 训练记录模块重构与Bug修复
+
+---
+
+## Phase 5: 项目重构与品牌升级 (Day 74) ✅ 已完成
+
+### 目标
+将项目从 SIC-ADS 重构为 SCGP（星愿能力发展平台），创建全新的代码仓库起点。
+
+### 完成日期
+2026-02-27
+
+### 任务清单
+
+#### 5.1 创建全新 Git 历史 ✅ 已完成
+- 删除旧的 main 分支
+- 创建 orphan 分支（无历史记录）
+- 单一初始提交：2612 文件，646,125 行代码
+
+#### 5.2 品牌升级 ✅ 已完成
+**项目信息更新**:
+| 项目信息 | 旧值 | 新值 |
+|:---------|:-----|:-----|
+| 中文名称 | 感官综合训练与评估系统 | 星愿能力发展平台 |
+| 英文名称 | SIC-ADS | SCGP (Stellar Competency Growth Platform) |
+| 版本 | 4.3.0 | 1.0.0 |
+
+**文件修改**:
+- `package.json` - name: scgp, description: 星愿能力发展平台
+- `PROJECT_CONTEXT.md` - 项目基本信息更新
+
+#### 5.3 仓库迁移 ✅ 已完成
+- 旧仓库: https://github.com/maoeast/Self-Care-ATS.git
+- 新仓库: https://github.com/maoeast/SCGP.git
+- 删除废弃 worktree: `equipment-training`
+
+#### 5.4 数据库初始化修复 ✅ 已完成
+**问题**: 全新数据库启动时报错 `no such table: main.report_record`
+
+**原因**: 迁移脚本在表不存在时尝试迁移
+
+**修复**:
+- `src/database/migrate-report-constraints.ts` - 添加表存在性检查
+- 表不存在时跳过迁移并返回成功
+
+### 交付物清单
+- [x] Git 历史重置（orphan 分支）
+- [x] 品牌升级（项目名称、描述）
+- [x] 仓库迁移（新 GitHub 地址）
+- [x] 废弃 worktree 清理
+- [x] 数据库初始化修复
+
+### 验收标准
+- [x] 新项目名称正确显示 ✅
+- [x] 新仓库地址配置正确 ✅
+- [x] 全新数据库初始化无报错 ✅
+- [x] 代码成功推送到新仓库 ✅

@@ -6,6 +6,37 @@
 
 ## [2026-02-27] Phase 4.5 之前的归档条目（从 PROJECT_CONTEXT.md 迁移）
 
+### [2026-02-22] Phase 3.9 技术债清偿 - Resource 泛化架构彻底清理
+- **目标**: 彻底剥离旧表依赖与清理残留组件，确保架构不再存在双重依赖
+- **getEquipment() 方法重构**:
+  - ❌ 移除 `INNER JOIN equipment_catalog ec ON tr.legacy_id = ec.id`
+  - ✅ 直接使用 `tr.category` 而非 `ec.category`
+  - ✅ 新增 `tr.module_code = 'sensory'` 模块过滤
+  - **文件**: `src/database/api.ts`
+- **getCategoryStats() 统计方法重构**:
+  - ❌ 移除 `JOIN equipment_catalog ec ON etr.equipment_id = ec.id`
+  - ✅ 改用 `JOIN sys_training_resource tr ON etr.equipment_id = tr.id`
+  - **文件**: `src/database/api.ts`
+- **删除残留组件**:
+  - 删除 `src/components/equipment/EquipmentSelector.vue`（无引用）
+- **ResourceAPI CRUD 接口完善** (`src/database/resource-api.ts` +220行):
+  - `addResource(data)` - 创建资源（支持标签自动关联）
+  - `updateResource(id, data)` - 更新资源（支持标签替换）
+  - `deleteResource(id)` - **软删除**（设置 is_active = 0）
+  - `restoreResource(id)` - 恢复已删除资源
+  - `hardDeleteResource(id)` - 永久删除（谨慎使用）
+  - `incrementUsageCount(id)` - 增加使用次数
+- **架构状态变更**:
+  | 维度 | 重构前 | 重构后 |
+  |:-----|:-------|:-------|
+  | 旧表依赖 | ⚠️ 双表 JOIN | ✅ 完全独立 |
+  | 代码引用 `equipment_catalog` | 5处 | 0处 |
+  | ResourceAPI CRUD | 仅查询 | ✅ 完整增删改 |
+- **文件修改**:
+  - `src/database/api.ts` - getEquipment() 和 getCategoryStats() 重构
+  - `src/database/resource-api.ts` - CRUD 接口完善（+220行）
+  - `src/components/equipment/EquipmentSelector.vue` - 已删除
+
 ### [2026-02-19] Electron 应用在线升级功能
 - **功能**: 检查更新、下载更新、安装更新、版本信息显示
 - **技术栈**: electron-updater + GitHub Releases
