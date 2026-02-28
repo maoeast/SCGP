@@ -145,20 +145,14 @@ const loadGameFromResource = async () => {
         gameResource.value = resource as unknown as ResourceItem
 
         // 从元数据解析游戏配置
-        let metaData = null
-        if (resource.meta_data) {
-          try {
-            metaData = typeof resource.meta_data === 'string'
-              ? JSON.parse(resource.meta_data)
-              : resource.meta_data
-          } catch (e) {
-            console.warn('[GamePlay] 解析元数据失败:', e)
-          }
-        }
+        // 注意：ResourceItem.metadata 是 camelCase，且已经是解析后的对象
+        const metaData = resource.metadata || null
 
         // 设置游戏配置
-        taskId.value = metaData?.taskId || resource.legacy_id || null
-        mode.value = metaData?.mode || ''
+        // 注意：ResourceItem.legacyId 是 camelCase，不是 snake_case
+        // 优先使用 metadata 中的值，其次使用 URL 参数中的值（兼容旧版）
+        taskId.value = metaData?.taskId || resource.legacyId || legacyTaskId.value || null
+        mode.value = metaData?.mode || legacyMode.value || ''
 
         console.log('[GamePlay] 从资源加载游戏配置:', {
           resourceId: resourceId.value,

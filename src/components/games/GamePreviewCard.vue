@@ -55,21 +55,159 @@
         type="primary"
         size="large"
         class="start-button"
-        :loading="starting"
-        @click="handleStartGame"
+        @click="showConfigDialog"
       >
         <span class="start-icon">🚀</span>
         <span class="start-text">开始游戏</span>
       </el-button>
-      <p class="start-hint">点击按钮开始训练，系统将记录训练数据</p>
+      <p class="start-hint">点击按钮配置训练参数，系统将记录训练数据</p>
     </div>
+
+    <!-- 训练配置对话框 -->
+    <el-dialog
+      v-model="configDialogVisible"
+      title="训练配置"
+      width="480px"
+      :close-on-click-modal="false"
+      class="config-dialog"
+    >
+      <div class="config-section">
+        <h4 class="config-title">难度设置</h4>
+
+        <!-- 颜色配对 / 形状识别 / 物品配对 -->
+        <template v-if="isVisualMatchGame">
+          <div class="config-item">
+            <label>网格大小</label>
+            <el-radio-group v-model="config.gridSize" size="large">
+              <el-radio-button :value="2">2×2</el-radio-button>
+              <el-radio-button :value="3">3×3</el-radio-button>
+              <el-radio-button :value="4">4×4</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>时间限制</label>
+            <el-radio-group v-model="config.timeLimit" size="large">
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>训练轮次</label>
+            <el-radio-group v-model="config.rounds" size="large">
+              <el-radio-button :value="5">5轮</el-radio-button>
+              <el-radio-button :value="8">8轮</el-radio-button>
+              <el-radio-button :value="10">10轮</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+
+        <!-- 视觉追踪 -->
+        <template v-else-if="isVisualTrackGame">
+          <div class="config-item">
+            <label>训练时长</label>
+            <el-radio-group v-model="config.duration" size="large">
+              <el-radio-button :value="30">30秒</el-radio-button>
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>目标大小</label>
+            <el-radio-group v-model="config.targetSize" size="large">
+              <el-radio-button :value="40">小</el-radio-button>
+              <el-radio-button :value="60">中</el-radio-button>
+              <el-radio-button :value="80">大</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>移动速度</label>
+            <el-radio-group v-model="config.targetSpeed" size="large">
+              <el-radio-button :value="1">慢速</el-radio-button>
+              <el-radio-button :value="2">中速</el-radio-button>
+              <el-radio-button :value="3">快速</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+
+        <!-- 声音辨别 -->
+        <template v-else-if="isAudioDiffGame">
+          <div class="config-item">
+            <label>时间限制</label>
+            <el-radio-group v-model="config.timeLimit" size="large">
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>训练轮次</label>
+            <el-radio-group v-model="config.rounds" size="large">
+              <el-radio-button :value="5">5轮</el-radio-button>
+              <el-radio-button :value="8">8轮</el-radio-button>
+              <el-radio-button :value="10">10轮</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+
+        <!-- 听指令做动作 -->
+        <template v-else-if="isAudioCommandGame">
+          <div class="config-item">
+            <label>网格大小</label>
+            <el-radio-group v-model="config.gridSize" size="large">
+              <el-radio-button :value="2">2×2</el-radio-button>
+              <el-radio-button :value="3">3×3</el-radio-button>
+              <el-radio-button :value="4">4×4</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>时间限制</label>
+            <el-radio-group v-model="config.timeLimit" size="large">
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>训练轮次</label>
+            <el-radio-group v-model="config.rounds" size="large">
+              <el-radio-button :value="5">5轮</el-radio-button>
+              <el-radio-button :value="8">8轮</el-radio-button>
+              <el-radio-button :value="10">10轮</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+
+        <!-- 节奏模仿 -->
+        <template v-else-if="isAudioRhythmGame">
+          <div class="config-item">
+            <label>训练轮次</label>
+            <el-radio-group v-model="config.rounds" size="large">
+              <el-radio-button :value="5">5轮</el-radio-button>
+              <el-radio-button :value="8">8轮</el-radio-button>
+              <el-radio-button :value="10">10轮</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="configDialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="starting" @click="handleStartGame">
+            开始训练
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </el-card>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { Clock, TrendCharts, VideoCamera } from '@element-plus/icons-vue'
 import type { ResourceItem } from '@/types/module'
+import { TaskID, type GridSize } from '@/types/games'
 
 interface Props {
   game: ResourceItem
@@ -84,19 +222,70 @@ const emit = defineEmits<{
     taskId: number
     mode: string
     studentId: number
+    gridSize?: number
+    rounds?: number
+    timeLimit?: number
+    duration?: number
+    targetSize?: number
+    targetSpeed?: number
   }]
 }>()
 
 // 状态
 const starting = ref(false)
+const configDialogVisible = ref(false)
+
+// 训练配置
+const config = reactive({
+  gridSize: 2 as GridSize,
+  rounds: 5,
+  timeLimit: 60,
+  duration: 30,
+  targetSize: 60,
+  targetSpeed: 2
+})
 
 // 解析元数据
 const metaData = computed(() => {
-  // ResourceItem 接口中定义的是 metadata（驼峰命名）
   if (props.game.metadata) {
     return props.game.metadata
   }
   return null
+})
+
+// 获取 taskId
+const taskId = computed(() => {
+  return metaData.value?.taskId || props.game.legacyId || 0
+})
+
+// 游戏类型判断
+// 颜色配对、形状识别、物品配对
+const isVisualMatchGame = computed(() => {
+  return [
+    TaskID.COLOR_MATCH,
+    TaskID.SHAPE_MATCH,
+    TaskID.ICON_MATCH
+  ].includes(taskId.value)
+})
+
+// 视觉追踪
+const isVisualTrackGame = computed(() => {
+  return taskId.value === TaskID.VISUAL_TRACK
+})
+
+// 声音辨别
+const isAudioDiffGame = computed(() => {
+  return taskId.value === TaskID.AUDIO_DIFF
+})
+
+// 听指令做动作
+const isAudioCommandGame = computed(() => {
+  return taskId.value === TaskID.AUDIO_COMMAND
+})
+
+// 节奏模仿
+const isAudioRhythmGame = computed(() => {
+  return taskId.value === TaskID.AUDIO_RHYTHM
 })
 
 // 获取游戏属性
@@ -138,31 +327,89 @@ const emojiStyle = computed(() => {
   }
 })
 
+// 显示配置对话框
+const showConfigDialog = () => {
+  // 根据游戏类型重置配置为默认值
+  if (isVisualMatchGame.value) {
+    config.gridSize = 2
+    config.timeLimit = 60
+    config.rounds = 5
+  } else if (isVisualTrackGame.value) {
+    config.duration = 30
+    config.targetSize = 60
+    config.targetSpeed = 2
+  } else if (isAudioDiffGame.value) {
+    config.timeLimit = 60
+    config.rounds = 5
+  } else if (isAudioCommandGame.value) {
+    config.gridSize = 2
+    config.timeLimit = 60
+    config.rounds = 5
+  } else if (isAudioRhythmGame.value) {
+    config.rounds = 5
+  }
+
+  configDialogVisible.value = true
+}
+
 // 开始游戏
 const handleStartGame = async () => {
   starting.value = true
 
   try {
-    // 从元数据获取 taskId 和 mode
-    const taskId = metaData.value?.taskId || props.game.legacyId || 0
     const mode = metaData.value?.mode || ''
 
-    if (!taskId) {
+    if (!taskId.value) {
       console.error('[GamePreviewCard] 无法获取 taskId')
       return
     }
 
-    if (!mode) {
-      console.warn('[GamePreviewCard] 无法获取 mode，使用默认值')
-    }
-
-    // 发射事件
-    emit('start-game', {
+    // 构建配置对象
+    const gameConfig: {
+      resourceId: number
+      taskId: number
+      mode: string
+      studentId: number
+      gridSize?: number
+      rounds?: number
+      timeLimit?: number
+      duration?: number
+      targetSize?: number
+      targetSpeed?: number
+    } = {
       resourceId: props.game.id,
-      taskId,
+      taskId: taskId.value,
       mode,
       studentId: props.studentId
-    })
+    }
+
+    // 根据游戏类型添加配置参数
+    if (isVisualMatchGame.value) {
+      gameConfig.gridSize = config.gridSize
+      gameConfig.timeLimit = config.timeLimit
+      gameConfig.rounds = config.rounds
+    } else if (isVisualTrackGame.value) {
+      gameConfig.duration = config.duration
+      gameConfig.targetSize = config.targetSize
+      gameConfig.targetSpeed = config.targetSpeed
+    } else if (isAudioDiffGame.value) {
+      gameConfig.timeLimit = config.timeLimit
+      gameConfig.rounds = config.rounds
+    } else if (isAudioCommandGame.value) {
+      gameConfig.gridSize = config.gridSize
+      gameConfig.timeLimit = config.timeLimit
+      gameConfig.rounds = config.rounds
+    } else if (isAudioRhythmGame.value) {
+      gameConfig.rounds = config.rounds
+    }
+
+    console.log('[GamePreviewCard] 开始游戏，配置:', gameConfig)
+
+    // 发射事件
+    emit('start-game', gameConfig)
+
+    // 关闭对话框
+    configDialogVisible.value = false
   } finally {
     starting.value = false
   }
@@ -313,5 +560,43 @@ const handleStartGame = async () => {
   font-size: 12px;
   color: #909399;
   margin: 12px 0 0 0;
+}
+
+/* 配置对话框样式 */
+.config-section {
+  padding: 10px 0;
+}
+
+.config-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0 0 20px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.config-item {
+  margin-bottom: 24px;
+}
+
+.config-item label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #606266;
+  margin-bottom: 12px;
+}
+
+.config-item .el-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 </style>

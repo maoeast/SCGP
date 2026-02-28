@@ -209,19 +209,37 @@ const handleStartGame = (gameConfig: {
   taskId: number
   mode: string
   studentId: number
+  // 训练配置参数
+  gridSize?: number
+  rounds?: number
+  timeLimit?: number
+  duration?: number
+  targetSize?: number
+  targetSpeed?: number
 }) => {
   console.log('[GameLobby] 开始游戏:', gameConfig)
+
+  // 构建查询参数
+  const query: Record<string, string> = {
+    studentId: String(gameConfig.studentId),
+    resourceId: String(gameConfig.resourceId),
+    taskId: String(gameConfig.taskId),
+    mode: gameConfig.mode,
+    module: currentModuleCode.value
+  }
+
+  // 添加训练配置参数
+  if (gameConfig.gridSize !== undefined) query.gridSize = String(gameConfig.gridSize)
+  if (gameConfig.rounds !== undefined) query.rounds = String(gameConfig.rounds)
+  if (gameConfig.timeLimit !== undefined) query.timeLimit = String(gameConfig.timeLimit)
+  if (gameConfig.duration !== undefined) query.duration = String(gameConfig.duration)
+  if (gameConfig.targetSize !== undefined) query.targetSize = String(gameConfig.targetSize)
+  if (gameConfig.targetSpeed !== undefined) query.targetSpeed = String(gameConfig.targetSpeed)
 
   // 跳转到游戏播放页面
   router.push({
     path: '/games/play',
-    query: {
-      studentId: String(gameConfig.studentId),
-      resourceId: String(gameConfig.resourceId),
-      taskId: String(gameConfig.taskId),
-      mode: gameConfig.mode,
-      module: currentModuleCode.value
-    }
+    query
   })
 }
 
