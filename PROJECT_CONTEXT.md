@@ -24,7 +24,7 @@
 | **技术栈**     | Electron + Vue 3 + TypeScript + Vite + SQL.js |
 | **数据库**     | SQLite (通过 sql.js 运行在浏览器端)           |
 | **当前分支**   | `main`                                        |
-| **最后更新**   | 2026-02-27 (项目初始化)                       |
+| **最后更新**   | 2026-02-28 (Bug修复与配置完善)                |
 | **系统健康度** | ✅ 可运行，所有核心功能正常                   |
 
 ### 项目简介
@@ -178,6 +178,29 @@
 ### 2. 已完成功能
 
 > **提示**: 更多历史功能请查看 [CHANGELOG.md](docs/CHANGELOG.md)
+
+26. **[2026-02-28] 游戏训练配置加载及配置对话框修复**
+    - **问题**: 游戏无法启动，报错"无法加载游戏配置"和"游戏模式未指定"
+    - **根因**: `GamePlay.vue` 使用 snake_case 属性名 (`resource.legacy_id`, `resource.meta_data`)，但 `ResourceItem` 接口定义的是 camelCase (`legacyId`, `metadata`)
+    - **修复**:
+      - `GamePlay.vue`: `resource.legacy_id` → `resource.legacyId`, `resource.meta_data` → `resource.metadata`
+      - 添加 URL 参数回退机制 (`legacyMode`)
+    - **新增功能**: 训练配置对话框
+      - 每个游戏定制专属配置选项
+      - 颜色配对/形状识别/物品配对: 网格大小(2×2,3×3,4×4)、时间限制(60s,90s,120s)、训练轮次(5,8,10)
+      - 视觉追踪: 训练时长(30s,60s,90s)、目标大小(小,中,大)、移动速度(慢速,中速,快速)
+      - 声音辨别: 时间限制(60s,90s,120s)、训练轮次(5,8,10)
+      - 听指令做动作: 网格大小(2×2,3×3,4×4)、时间限制(60s,90s,120s)、训练轮次(5,8,10)
+      - 节奏模仿: 训练轮次(5,8,10)
+    - **文件**: `src/views/games/GamePlay.vue`, `src/components/games/GamePreviewCard.vue`, `src/views/games/GameLobby.vue`
+    - **提交**: `06ca952`
+
+27. **[2026-02-28] 器材训练记录为空修复**
+    - **问题**: 器材训练记录页面没有任何数据显示
+    - **根因**: `EquipmentTrainingAPI.getStudentRecords` 的 SELECT 语句缺少 `etr.module_code` 字段，导致前端过滤时 `r.module_code` 为 `undefined`，与 `props.moduleCode` 比较永远为 `false`
+    - **修复**: 在 SELECT 语句中添加 `etr.module_code`
+    - **文件**: `src/database/api.ts` (getStudentRecords 方法)
+    - **提交**: `ae99fc7`
 
 25. **[2026-02-28] Phase 5.2 - 游戏训练模块重构（资源化）**
     - **目标**: 将"感官训练"模块升级为泛化的"游戏训练"模块，支持跨模块（感官、情绪、社交等）
@@ -803,26 +826,23 @@ function calculateConnersTScore(
 
 **最后更新**: 2026-02-28
 **更新人**: Claude Code Assistant (首席实施工程师)
-**会话摘要**: Phase 5.2 完成 - 游戏训练模块重构（资源化）。将"感官训练"升级为泛化的"游戏训练"模块，支持跨模块。创建 GameModuleMenu/GameLobby/GamePreviewCard 组件，游戏数据迁移到 sys_training_resource 表，ResourceSelector 支持 Emoji 渲染，GamePlay.vue 改造为通用游戏播放器壳。修复首次启动报错（report_record 表迁移）和 metadata 属性名不一致 Bug。
+**会话摘要**: 完成 2 个 Bug 修复。(1) 游戏训练配置加载修复：修复 `resource.legacy_id` → `resource.legacyId`, `resource.meta_data` → `resource.metadata` 的 camelCase 问题，新增训练配置对话框支持每个游戏定制配置选项。(2) 器材训练记录为空修复：`getStudentRecords` 查询缺少 `module_code` 字段导致前端过滤失效，已添加该字段。
 
 ### 下次会话优先事项
 
-根据本次会话进度和 `docs/plans/2025-02-05-refactor-implementation-plan.md`，下一步优先行动：
+根据本次会话进度，游戏训练模块已基本完成验证，下一步优先行动：
 
-1. **[P1 - 高] 游戏训练模块端到端验证**
-   - **验证**: 启动应用验证游戏大厅 Emoji 显示正常
-   - **验证**: 测试游戏选择和启动流程完整可用
-   - **验证**: 确认训练记录正确保存 module_code
-   - **相关文件**: `src/views/games/GameLobby.vue`, `src/views/games/GamePlay.vue`, `src/components/games/GamePreviewCard.vue`
+1. **[P1 - 高] 游戏训练模块完整验证**
+   - ✅ 游戏配置加载 - 已修复
+   - ✅ 训练配置对话框 - 已实现
+   - ✅ 训练记录保存 - 已验证
+   - 待验证: 不同游戏类型的配置参数是否正确传递到游戏组件
 
-2. **[P2 - 中] 游戏资源迁移验证**
-   - **检查**: 确认 7 个游戏正确迁移到 sys_training_resource 表
-   - **验证**: metadata 字段中的 taskId、mode、emoji、color 正确存储
-   - **测试**: 删除数据库后首次启动能自动迁移
-   - **相关文件**: `src/database/migration/migrate-games-to-resources.ts`
+2. **[P2 - 中] 器材训练记录模块验证**
+   - ✅ 记录显示 - 已修复
+   - 待验证: 新建训练记录、编辑、删除功能
 
-3. **[P3 - 低] 游戏训练模块功能完善**
-   - **扩展**: 为其他模块（情绪、社交）添加游戏资源
-   - **优化**: GamePreviewCard 添加更多游戏信息（历史成绩、最佳记录）
-   - **优化**: 游戏难度配置 UI（当前使用默认值）
-   - **相关文件**: `src/views/games/GameLobby.vue`, `src/components/games/GamePreviewCard.vue`
+3. **[P3 - 低] 功能完善**
+   - 游戏训练历史成绩展示
+   - 器材训练批量操作
+   - 其他模块（情绪、社交）游戏资源扩展
