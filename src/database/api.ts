@@ -1922,6 +1922,7 @@ export class EquipmentTrainingAPI extends DatabaseAPI {
         etr.teacher_name,
         etr.environment,
         etr.batch_id,
+        etr.module_code,
         etb.batch_name,
         s.name as student_name,
         etr.created_at,
