@@ -286,7 +286,7 @@ CREATE INDEX IF NOT EXISTS idx_login_log_time ON login_log(login_time DESC);
 CREATE TABLE IF NOT EXISTS report_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
-  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs')),
+  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs')),
   assess_id INTEGER,
   plan_id INTEGER,
   training_record_id INTEGER,
@@ -1054,6 +1054,27 @@ export async function initDatabase(): Promise<any> {
       }
     } catch (moduleMigrationError) {
       console.warn('[InitDatabase] ⚠️  模块化统计支持迁移检查失败:', moduleMigrationError)
+    }
+
+    // ========== 游戏资源迁移 ==========
+    try {
+      const { needsGameMigration, runGameMigration } = await import('./migration/migrate-games-to-resources')
+      if (needsGameMigration()) {
+        console.log('[InitDatabase] 🔄 检测到需要迁移游戏资源，自动运行迁移...')
+        const result = await runGameMigration()
+        if (result.success) {
+          console.log('[InitDatabase] ✅ 游戏资源迁移成功:', result.message)
+          if (result.verification) {
+            console.log('[InitDatabase] 📊 游戏统计:', result.verification.stats)
+          }
+        } else {
+          console.warn('[InitDatabase] ⚠️  游戏资源迁移失败:', result.message)
+        }
+      } else {
+        console.log('[InitDatabase] ✅ 游戏资源已是最新，无需迁移')
+      }
+    } catch (gameMigrationError) {
+      console.warn('[InitDatabase] ⚠️  游戏资源迁移检查失败:', gameMigrationError)
     }
 
     return db

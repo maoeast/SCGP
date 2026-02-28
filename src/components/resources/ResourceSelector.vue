@@ -17,7 +17,12 @@
     </div>
     <div v-else class="resource-list">
       <div v-for="item in filteredResources" :key="item.id" class="resource-item" :class="{ selected: selectedResource?.id === item.id }" @click="selectResource(item)">
-        <img :src="getResourceImage(item)" :alt="item.name" class="resource-image" />
+        <!-- 游戏：显示 Emoji -->
+        <div v-if="isGameResource(item)" class="resource-emoji" :style="getEmojiStyle(item)">
+          {{ getEmoji(item) }}
+        </div>
+        <!-- 器材：显示图片 -->
+        <img v-else :src="getResourceImage(item)" :alt="item.name" class="resource-image" />
         <div class="resource-info">
           <div class="resource-name">{{ item.name }}</div>
           <div class="resource-category">{{ getCategoryLabel(item.category) }}</div>
@@ -44,7 +49,9 @@ const SIMPLE_CATEGORY_LABELS: Record<string, string> = {
   auditory: '听觉',
   gustatory: '味觉',
   proprioceptive: '本体觉',
-  integration: '感官综合'
+  integration: '感官综合',
+  // 游戏分类
+  audio: '听觉游戏'
 }
 
 interface Props {
@@ -144,6 +151,49 @@ const getCategoryLabel = (category: string | undefined) => {
   return SIMPLE_CATEGORY_LABELS[category] || CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] || category
 }
 
+// ========== 游戏资源相关函数 ==========
+
+/**
+ * 判断是否为游戏资源
+ */
+const isGameResource = (item: ResourceItem): boolean => {
+  return item.resourceType === 'game' || props.resourceType === 'game'
+}
+
+/**
+ * 获取游戏 Emoji
+ */
+const getEmoji = (item: ResourceItem): string => {
+  // 优先从 metadata 获取 emoji
+  if (item.metadata?.emoji) {
+    return item.metadata.emoji
+  }
+  // 从 cover_image 获取（可能是 emoji）
+  if (item.coverImage && isEmoji(item.coverImage)) {
+    return item.coverImage
+  }
+  return '🎮' // 默认 emoji
+}
+
+/**
+ * 获取 Emoji 背景样式
+ */
+const getEmojiStyle = (item: ResourceItem): Record<string, string> => {
+  // 从 metadata 获取背景渐变色
+  const color = item.metadata?.color || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+  return {
+    background: color
+  }
+}
+
+/**
+ * 判断字符串是否为 Emoji
+ */
+const isEmoji = (str: string): boolean => {
+  const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u
+  return emojiRegex.test(str)
+}
+
 const loadData = async () => {
   loading.value = true
   try {
@@ -238,6 +288,17 @@ watch(selectedResource, (newVal) => {
   height: 64px;
   object-fit: cover;
   border-radius: 6px;
+}
+
+.resource-emoji {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
 }
 
 .resource-info {

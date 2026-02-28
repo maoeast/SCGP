@@ -29,8 +29,9 @@ const ClassManagement = () => import('@/views/admin/ClassManagement.vue')
 const StudentClassAssignment = () => import('@/views/admin/StudentClassAssignment.vue')
 const ResourceManager = () => import('@/views/admin/ResourceManager.vue')
 const ResourceCenter = () => import('@/views/admin/ResourceCenter.vue')
-const GamesMenu = () => import('@/views/games/GamesMenu.vue')
+const GameModuleMenu = () => import('@/views/games/GameModuleMenu.vue')
 const GameSelectStudent = () => import('@/views/games/SelectStudent.vue')
+const GameLobby = () => import('@/views/games/GameLobby.vue')
 const GamePlay = () => import('@/views/games/GamePlay.vue')
 const IEPReport = () => import('@/views/games/IEPReport.vue')
 const TrainingRecords = () => import('@/views/games/TrainingRecords.vue')
@@ -157,13 +158,24 @@ const router = createRouter({
             roles: ['admin', 'teacher']
           }
         },
+        // ===== 游戏训练模块（顶级菜单，与器材训练模式一致） =====
         {
           path: 'games',
-          name: 'GamesMenu',
-          component: GamesMenu,
+          name: 'GameTraining',
+          redirect: '/games/menu',
           meta: {
-            title: '感官训练',
+            title: '游戏训练',
             icon: 'gamepad',
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'games/menu',
+          name: 'GameModuleMenu',
+          component: GameModuleMenu,
+          meta: {
+            title: '游戏训练 - 选择模块',
+            hideInMenu: true,
             roles: ['admin', 'teacher']
           }
         },
@@ -172,7 +184,17 @@ const router = createRouter({
           name: 'GameSelectStudent',
           component: GameSelectStudent,
           meta: {
-            title: '选择训练学生',
+            title: '选择学生 - 游戏训练',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'games/lobby/:studentId',
+          name: 'GameLobby',
+          component: GameLobby,
+          meta: {
+            title: '游戏大厅',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

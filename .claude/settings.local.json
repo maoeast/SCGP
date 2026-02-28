@@ -132,7 +132,9 @@
       "Bash(git -C \"E:/VSC/H5/SIC-ADS\" commit -m \"$\\(cat <<''EOF''\nfeat\\(assessment\\): Phase 4.1 BaseDriver + WeeFIMDriver + CSIRSDriver 实现\n\n- 新增 BaseDriver 抽象基类，提取公共逻辑（线性导航、进度计算、答案序列化）\n- 新增 WeeFIMDriver（18题，7级评分，运动/认知双维度）\n- 新增 CSIRSDriver（58题，T分转换，5维度感觉统合评估）\n- 重构 SMDriver 继承 BaseDriver，保留 Basal/Ceiling 跳题逻辑\n- 修复 getNextQuestion 动态题目数问题（使用 state.metadata.totalQuestions）\n- 修复 CSIRS 保存 Schema 不匹配（使用正确的列名）\n- 更新文档：PROJECT_CONTEXT.md、CHANGELOG.md、实施计划\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git -C \"E:/VSC/H5/SIC-ADS\" log --oneline -3)",
       "Bash(npx tsx:*)",
-      "Bash(git remote set-url:*)"
+      "Bash(git remote set-url:*)",
+      "Bash(git pull:*)",
+      "Bash(move:*)"
     ]
   }
 }

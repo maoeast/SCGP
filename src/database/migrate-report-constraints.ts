@@ -29,6 +29,15 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
 
     console.log('[迁移] 开始更新 report_record 表约束...')
 
+    // 步骤0: 删除依赖 report_record 表的视图（迁移完成后会重新创建）
+    // 这是为了避免 DROP TABLE 时视图失效导致后续 RENAME 报错
+    try {
+      db.run('DROP VIEW IF EXISTS v_class_statistics_unified')
+      console.log('[迁移] 已删除依赖视图 v_class_statistics_unified（稍后会重新创建）')
+    } catch (dropViewError) {
+      console.warn('[迁移] 删除视图时出现警告（可能不存在）:', dropViewError)
+    }
+
     // 步骤1: 开启事务
     db.run('BEGIN TRANSACTION')
 

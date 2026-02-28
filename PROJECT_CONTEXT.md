@@ -82,6 +82,7 @@
 | Phase 4.4 | 代码库瘦身与收官 - 废弃文件归档 | ✅ **刚完成** |
 | Phase 4.5 | UI 标准化与交互优化 | ✅ **刚完成** |
 | Phase 4.6 | 训练记录模块重构与Bug修复 | ✅ **刚完成** |
+| Phase 5.2 | 游戏训练模块重构（资源化） | ✅ **刚完成** |
 
 ### 架构决策记录 (2026-02-05)
 **Plan B: 主线程防抖原子写入**
@@ -178,6 +179,37 @@
 
 > **提示**: 更多历史功能请查看 [CHANGELOG.md](docs/CHANGELOG.md)
 
+25. **[2026-02-28] Phase 5.2 - 游戏训练模块重构（资源化）**
+    - **目标**: 将"感官训练"模块升级为泛化的"游戏训练"模块，支持跨模块（感官、情绪、社交等）
+    - **路由重构**:
+      - `/games` → 重定向到 `/games/menu`
+      - `/games/menu` → `GameModuleMenu.vue` (模块选择)
+      - `/games/select-student` → `SelectStudent.vue` (选择学生)
+      - `/games/lobby/:studentId` → `GameLobby.vue` (游戏大厅) ← **新增**
+      - `/games/play` → `GamePlay.vue` (游戏播放器)
+    - **游戏数据资源化**:
+      - 迁移 7 个游戏到 `sys_training_resource` 表（`resource_type='game'`）
+      - 元数据包含：taskId, mode, difficulty, duration, emoji, color
+      - 迁移脚本：`src/database/migration/migrate-games-to-resources.ts`
+    - **ResourceSelector 组件扩展**:
+      - 支持 Emoji 渲染（游戏资源）
+      - 支持 WebP 图片（器材资源）
+      - 自动检测资源类型并渲染对应样式
+    - **GamePlay.vue 改造**:
+      - 从 `resourceId` 参数加载游戏配置
+      - 解析 `metadata` 获取 taskId 和 mode
+      - 动态挂载对应游戏引擎（GameGrid/GameAudio/VisualTracker）
+      - 训练记录保存时包含 `module_code`
+    - **新文件**:
+      - `src/views/games/GameModuleMenu.vue` - 模块选择页
+      - `src/views/games/GameLobby.vue` - 游戏大厅
+      - `src/components/games/GamePreviewCard.vue` - 游戏预览卡片
+      - `src/database/migration/migrate-games-to-resources.ts` - 迁移脚本
+    - **归档文件**:
+      - `src/views/games/GamesMenu.vue` → `src/views/_archived/games/`
+    - **Bug修复**:
+      - 修复 `metadata` 属性名不一致导致游戏无法启动的问题
+
 24. **[2026-02-27] Phase 5.1 - Bug修复与功能优化**
     - **WeeFIM评估提交失败修复**: 修复字段名不匹配问题（`motor_score` → `adl_score`）
     - **SM/WeeFIM量表报告404修复**: 分别处理query参数和路径参数的路由格式
@@ -250,90 +282,7 @@
      - `src/views/games/TrainingRecords.vue` - UI 标准化重构
      - `src/views/games/SensoryTrainingRecords.vue` - UI 标准化重构
 
-> **注意**: 条目 14-18 已归档到 [CHANGELOG.md](docs/CHANGELOG.md)
-
-14. **[2026-02-24] Phase 4.3 - Conners 常模数据验证与修复**
-   - **目标**: 验证并修复 Conners PSQ/TRS 的 T 分计算常模数据，确保评估结果准确
-   - **修复内容**:
-     - 修正常模数据格式，确保性别×年龄分组正确
-     - 验证 T 分计算公式：T = 50 + 10 × (Raw - Mean) / SD
-     - 修复年龄分组边界问题（6岁0个月 vs 6岁1个月）
-   - **文件修改**:
-     - `src/database/conners-norms.ts` - 常模数据修正
-     - `src/strategies/assessment/ConnersPSQDriver.ts` - T分计算逻辑优化
-     - `src/strategies/assessment/ConnersTRSDriver.ts` - T分计算逻辑优化
-   - **架构状态**:
-     | 维度 | 重构前 | 重构后 |
-     |:-----|:-------|:-------|
-     | 量表驱动器 | 3个 | ✅ 5个（完整） |
-     | 评估入口 | 5个独立页面 | ✅ 统一 AssessmentContainer |
-     | 路由格式 | 各自独立 | ✅ `/assessment/unified/:scaleCode/:studentId` |
-   - **文件修改**:
-     - `src/strategies/assessment/ConnersPSQDriver.ts` - 新增（~350行）
-     - `src/strategies/assessment/ConnersTRSDriver.ts` - 新增（~320行）
-     - `src/strategies/assessment/index.ts` - 修改（注册新驱动器）
-     - `src/views/assessment/AssessmentContainer.vue` - 修改（+110行，保存逻辑）
-     - 5个旧评估页面 - 添加 @deprecated 注释
-
-19. **[2026-02-26] Phase 4.3 - Conners 常模数据验证与修复**
-   - **目标**: 对 Conners PSQ/TRS 量表的常模数据进行系统性交叉核对，确保 T 分计算精度
-   - **PSQ 常模数据交叉核对** (`src/database/conners-norms.ts`):
-     - 核对范围：5年龄段 × 2性别 × 6维度 = 60 个数据点
-     - 数据源：Conners 父母用量表（1987）因子常模表
-     - 发现并修复 5 处数据错误：
-       | 年龄段 | 性别 | 维度 | 修复内容 |
-       |--------|------|------|----------|
-       | 3-5岁 | 男 | anxiety | mean: 0.60→0.61, sd: 0.61→0.40 |
-       | 6-8岁 | 男 | anxiety.sd | 0.51→0.69 |
-       | 6-8岁 | 男 | hyperactivity_index.mean | 0.69→0.51 |
-       | 6-8岁 | 女 | anxiety.sd | 0.66→0.59 |
-       | 6-8岁 | 女 | hyperactivity_index.mean | 0.59→0.66 |
-   - **TRS 常模数据交叉核对**:
-     - 核对范围：5年龄段 × 2性别 × 4维度 = 40 个数据点
-     - 结果：✅ 所有数据正确，无需修复
-   - **Electron EPIPE 错误修复** (`electron/main.mjs`):
-     - 问题：console.log 高频调用时触发 EPIPE (broken pipe) 错误
-     - 修复：新增 `safeLog()` 和 `safeError()` 函数，包装所有日志调用
-     - 影响的处理器：db:load, write-database-file, read-database-file, delete-database-backup, save-database-atomic
-   - **文件修改**:
-     - `src/database/conners-norms.ts` - PSQ 常模数据修复（5处）
-     - `electron/main.mjs` - EPIPE 错误修复（+25行）
-
-20. **[2026-02-27] Phase 4.4 - 代码库瘦身与收官（技术债清偿）**
-   - **目标**: 彻底清理废弃文件，完成架构重构的最后一步
-   - **归档测试文件**:
-     - `src/views/devtools/ConnersE2ETest.vue` → `src/views/_archived/devtools/`
-     - 原因：Phase 4.3 常模验证完成，测试使命结束
-   - **归档废弃评估页面** (5个):
-     - `src/views/assessment/sm/Assessment.vue` → `_archived/assessment/sm_Assessment.vue`
-     - `src/views/assessment/weefim/Assessment.vue` → `_archived/assessment/weefim_Assessment.vue`
-     - `src/views/assessment/csirs/Assessment.vue` → `_archived/assessment/csirs_Assessment.vue`
-     - `src/views/assessment/conners-psq/Assessment.vue` → `_archived/assessment/conners-psq_Assessment.vue`
-     - `src/views/assessment/conners-trs/Assessment.vue` → `_archived/assessment/conners-trs_Assessment.vue`
-     - 原因：Phase 4 ScaleDriver 策略模式重构，旧版硬编码页面已废弃
-   - **清理 System.vue 临时入口**:
-     - 移除 "Phase 4 Conners 端到端验证" 测试卡片
-     - 移除 `goToConnersE2ETest()` 导航函数
-   - **路由重定向配置**:
-     - 旧评估路由自动重定向到统一评估容器
-     - `/assessment/sm/assessment/:studentId` → `/assessment/unified/sm/:studentId`
-     - `/assessment/weefim/assessment/:studentId` → `/assessment/unified/weefim/:studentId`
-     - `/assessment/csirs/:studentId` → `/assessment/unified/csirs/:studentId`
-     - `/assessment/conners-psq/:studentId` → `/assessment/unified/conners-psq/:studentId`
-     - `/assessment/conners-trs/:studentId` → `/assessment/unified/conners-trs/:studentId`
-   - **新建归档说明文件**:
-     - `src/views/_archived/README.md` - 详细说明归档原因和替代方案
-   - **架构状态**:
-     | 维度 | 清理前 | 清理后 |
-     |:-----|:-------|:-------|
-     | 废弃评估页面 | 5个（带@deprecated） | ✅ 0个（已归档） |
-     | 测试组件 | ConnersE2ETest.vue | ✅ 已归档 |
-     | 临时测试入口 | System.vue 中 | ✅ 已移除 |
-     | 旧路由 | 硬编码组件 | ✅ 重定向到统一容器 |
-   - **文件修改**:
-     - `src/router/index.ts` - 移除旧组件导入，添加重定向路由
-     - `src/views/System.vue` - 移除临时测试入口
-     - `src/views/_archived/` - 新建归档目录和README
+> **注意**: 条目 14-22 已归档到 [CHANGELOG.md](docs/CHANGELOG.md)
 
 ---
 
@@ -852,29 +801,28 @@ function calculateConnersTScore(
 
 ---
 
-**最后更新**: 2026-02-27
+**最后更新**: 2026-02-28
 **更新人**: Claude Code Assistant (首席实施工程师)
-**会话摘要**: Phase 5.1 完成 - Bug修复与功能优化。修复WeeFIM评估提交失败、SM/WeeFIM报告404、节奏模仿游戏全面优化（3难度+看-做模式）、IEP报告数据修正、WeeFIM量表UI优化。已归档条目14-18到CHANGELOG.md。
+**会话摘要**: Phase 5.2 完成 - 游戏训练模块重构（资源化）。将"感官训练"升级为泛化的"游戏训练"模块，支持跨模块。创建 GameModuleMenu/GameLobby/GamePreviewCard 组件，游戏数据迁移到 sys_training_resource 表，ResourceSelector 支持 Emoji 渲染，GamePlay.vue 改造为通用游戏播放器壳。修复首次启动报错（report_record 表迁移）和 metadata 属性名不一致 Bug。
 
 ### 下次会话优先事项
 
 根据本次会话进度和 `docs/plans/2025-02-05-refactor-implementation-plan.md`，下一步优先行动：
 
-1. **[P1 - 高] 节奏模仿游戏进一步验证与调优**
-   - **验证**: 测试3种难度级别的时间准确度评估是否正常工作
-   - **调优**: 根据实际测试反馈调整容错率（当前简单40%、中等30%、困难20%）
-   - **数据验证**: 确认IEP报告显示的真实准确率和平均节奏误差正确
-   - **相关文件**: `src/components/games/audio/GameAudio.vue`, `src/views/games/IEPReport.vue`
+1. **[P1 - 高] 游戏训练模块端到端验证**
+   - **验证**: 启动应用验证游戏大厅 Emoji 显示正常
+   - **验证**: 测试游戏选择和启动流程完整可用
+   - **验证**: 确认训练记录正确保存 module_code
+   - **相关文件**: `src/views/games/GameLobby.vue`, `src/views/games/GamePlay.vue`, `src/components/games/GamePreviewCard.vue`
 
-2. **[P2 - 中] WeeFIM量表UI细节优化**
-   - **问题**: 7个选项的垂直排列已优化，但需验证响应式布局
-   - **测试**: 在不同屏幕尺寸下验证选项对齐效果
-   - **反馈收集**: 收集用户对新UI的反馈，必要时进一步调整
-   - **相关文件**: `src/views/assessment/components/QuestionCard.vue`
+2. **[P2 - 中] 游戏资源迁移验证**
+   - **检查**: 确认 7 个游戏正确迁移到 sys_training_resource 表
+   - **验证**: metadata 字段中的 taskId、mode、emoji、color 正确存储
+   - **测试**: 删除数据库后首次启动能自动迁移
+   - **相关文件**: `src/database/migration/migrate-games-to-resources.ts`
 
-3. **[P3 - 低] 评估模块端到端验证**
-   - **WeeFIM**: 验证修复后的评估提交流程完整可用
-   - **SM**: 验证报告页面跳转和数据显示正常
-   - **回归测试**: 确保节奏游戏优化不影响其他感官训练游戏
-   - **相关文件**: `src/views/assessment/AssessmentContainer.vue`, `src/views/assessment/sm/Report.vue`, `src/views/assessment/weefim/Report.vue`
-   - 验证报告生成和 PDF 导出功能
+3. **[P3 - 低] 游戏训练模块功能完善**
+   - **扩展**: 为其他模块（情绪、社交）添加游戏资源
+   - **优化**: GamePreviewCard 添加更多游戏信息（历史成绩、最佳记录）
+   - **优化**: 游戏难度配置 UI（当前使用默认值）
+   - **相关文件**: `src/views/games/GameLobby.vue`, `src/components/games/GamePreviewCard.vue`
