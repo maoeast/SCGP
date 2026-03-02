@@ -30,6 +30,15 @@
 | 1 | 游戏训练配置加载及配置对话框修复 | 2026-02-28 | 06ca952 | ✅ | direct fix |
 | 2 | 器材训练记录为空修复 | 2026-02-28 | 7d8fa62 | ✅ Verified | [debug/resolved](./debug/resolved/equipment-training-records-empty.md) |
 | 3 | 调整左侧菜单栏模块顺序 | 2026-03-02 | 48881f4 | ✅ | direct fix |
+| 4 | 游戏训练记录列表页面多个问题修复 | 2026-03-02 | 71bcbec | ✅ Verified | direct fix |
+
+### Last Activity
+**2026-03-02** - Completed quick task 4: 游戏训练记录列表页面多个问题修复
+- 修复 ModuleTrainingRecords.vue 语法错误（缺少闭合括号）
+- 修复 GameRecordsPanel.vue 语法错误（未定义的变量和函数)
+- 优化平均响应时间显示逻辑
+- 实现详情按钮跳转功能
+- 添加游戏名称显示（JOIN sys_training_resource)
 
 ### Last Activity
 **2026-03-02** - Completed quick task 3: 调整左侧菜单栏模块顺序
