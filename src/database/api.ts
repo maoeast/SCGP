@@ -1597,20 +1597,22 @@ export class GameTrainingAPI extends DatabaseAPI {
   getStudentTrainingRecords(studentId: number, taskId?: number, moduleCode?: string): any[] {
     let sql = `
       SELECT
-        id,
-        student_id,
-        task_id,
-        timestamp,
-        duration,
-        accuracy_rate,
-        avg_response_time,
-        raw_data,
-        class_id,
-        class_name,
-        module_code,
-        created_at
-      FROM training_records
-      WHERE student_id = ?
+        tr.id,
+        tr.student_id,
+        tr.task_id,
+        tr.timestamp,
+        tr.duration,
+        tr.accuracy_rate,
+        tr.avg_response_time,
+        tr.raw_data,
+        tr.class_id,
+        tr.class_name,
+        tr.module_code,
+        tr.created_at,
+        r.name as task_name
+      FROM training_records tr
+      LEFT JOIN sys_training_resource r ON tr.task_id = r.legacy_id
+      WHERE tr.student_id = ?
     `
     const params: any[] = [studentId]
 

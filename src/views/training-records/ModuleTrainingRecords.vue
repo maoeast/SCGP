@@ -123,9 +123,7 @@ const goBackToMenu = () => {
 const handleViewGameDetail = (recordId: number) => {
   // TODO: 实现游戏记录详情查看
   console.log('查看游戏记录详情:', recordId)
-}
-
-// 查看器材记录详情
+}// 查看器材记录详情
 const handleViewEquipmentDetail = (recordId: number) => {
   router.push({
     path: `/equipment/records/${recordId}`,

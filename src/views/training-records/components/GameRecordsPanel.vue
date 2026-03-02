@@ -44,9 +44,9 @@
       max-height="500"
     >
       <el-table-column prop="student_name" label="学生姓名" width="120" />
-      <el-table-column label="任务" width="100">
+      <el-table-column label="任务" width="150">
         <template #default="{ row }">
-          <el-tag size="small">任务{{ row.task_id }}</el-tag>
+          <el-tag size="small">{{ row.task_name || `任务${row.task_id}` }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="训练时间" width="180">
@@ -70,7 +70,7 @@
       </el-table-column>
       <el-table-column label="平均响应" width="100">
         <template #default="{ row }">
-          {{ row.avg_response_time }}ms
+          {{ formatResponseTime(row.avg_response_time) }}
         </template>
       </el-table-column>
       <el-table-column label="创建时间" width="180">
@@ -106,7 +106,7 @@
           {{ avgAccuracy }}%
         </el-descriptions-item>
         <el-descriptions-item label="平均响应时间">
-          {{ avgResponseTime }}ms
+          {{ formatResponseTime(avgResponseTime) }}
         </el-descriptions-item>
         <el-descriptions-item label="总训练时长">
           {{ totalDuration }}
@@ -144,11 +144,14 @@ const avgAccuracy = computed(() => {
   return Math.round((sum / records.value.length) * 100)
 })
 
-const avgResponseTime = computed(() => {
-  if (records.value.length === 0) return 0
-  const sum = records.value.reduce((acc, r) => acc + r.avg_response_time, 0)
-  return Math.round(sum / records.value.length)
-})
+// 格式化响应时间（毫秒转秒，保留1位小数）
+const formatResponseTime = (ms: number): string {
+  if (!ms || ms < 1000) {
+    return `${ms}ms`
+  }
+  const seconds = Math.floor(ms / 1000)
+  return `${seconds.toFixed(1)}秒`
+}
 
 const totalDuration = computed(() => {
   const total = records.value.reduce((acc, r) => acc + r.duration, 0)
