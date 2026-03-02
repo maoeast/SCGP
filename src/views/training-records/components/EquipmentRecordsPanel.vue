@@ -165,20 +165,20 @@ const categories = [
 const CATEGORY_LABELS: Record<string, string> = {
   tactile: '触觉',
   olfactory: '嗅觉',
-  visual: '视觉'
-  auditory: '听觉'
-  gustatory: '味觉'
-  proprioceptive: '本体觉'
+  visual: '视觉',
+  auditory: '听觉',
+  gustatory: '味觉',
+  proprioceptive: '本体觉',
   integration: '综合'
 }
 
 const CATEGORY_TAG_TYPES: Record<string, string> = {
-  tactile: 'danger'
-  olfactory: 'success'
-  visual: 'primary'
-  auditory: 'warning'
-  gustatory: 'info'
-  proprioceptive: ''
+  tactile: 'danger',
+  olfactory: 'success',
+  visual: 'primary',
+  auditory: 'warning',
+  gustatory: 'info',
+  proprioceptive: '',
   integration: 'success'
 }
 
