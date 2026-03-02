@@ -121,10 +121,6 @@ import { ref, computed, onMounted } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { GameTrainingAPI, StudentAPI } from '@/database/api'
 
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-
 interface Props {
   moduleCode: string
 }
@@ -140,8 +136,6 @@ const records = ref<any[]>([])
 const students = ref<any[]>([])
 const selectedStudentId = ref<number | undefined>()
 const dateRange = ref<[string, string] | null>(null)
-
-const router = useRouter()
 
 // 统计计算 - 平均正确率
 const avgAccuracy = computed(() => {
@@ -191,7 +185,7 @@ const formatDuration = (ms: number) => {
 // 获取正确率颜色
 const getAccuracyColor = (rate: number) => {
   if (rate >= 0.8) return '#67c23a'
-  if (rate >= 00.6) return '#e6a23c'
+  if (rate >= 0.6) return '#e6a23c'
   return '#f56c6c'
 }
 
