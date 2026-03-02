@@ -100,17 +100,15 @@
           {{ formatDuration(row.duration_seconds) }}
         </template>
       </el-table-column>
-      <el-table-column prop="training_date" label="训练日期" width="110" />
-      <el-table-column label="操作" width="100" fixed="right">
+      <el-table-column label="训练日期" width="180">
         <template #default="{ row }">
-          <el-button
-            type="primary"
-            size="small"
-            link
-            @click="$emit('view-detail', row.id)"
-          >
-            详情
-          </el-button>
+          {{ formatTrainingDate(row.training_date) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="评语" min-width="200">
+        <template #default="{ row }">
+          <span v-if="row.generated_comment">{{ row.generated_comment }}</span>
+          <span v-else class="no-comment">暂无评语</span>
         </template>
       </el-table-column>
     </el-table>
@@ -167,20 +165,20 @@ const categories = [
 const CATEGORY_LABELS: Record<string, string> = {
   tactile: '触觉',
   olfactory: '嗅觉',
-  visual: '视觉',
-  auditory: '听觉',
-  gustatory: '味觉',
-  proprioceptive: '本体觉',
+  visual: '视觉'
+  auditory: '听觉'
+  gustatory: '味觉'
+  proprioceptive: '本体觉'
   integration: '综合'
 }
 
 const CATEGORY_TAG_TYPES: Record<string, string> = {
-  tactile: 'danger',
-  olfactory: 'success',
-  visual: 'primary',
-  auditory: 'warning',
-  gustatory: 'info',
-  proprioceptive: '',
+  tactile: 'danger'
+  olfactory: 'success'
+  visual: 'primary'
+  auditory: 'warning'
+  gustatory: 'info'
+  proprioceptive: ''
   integration: 'success'
 }
 
@@ -203,7 +201,6 @@ const totalDuration = computed(() => {
   const total = records.value.reduce((acc, r) => acc + (r.duration_seconds || 0), 0)
   return formatDuration(total)
 })
-
 const equipmentCount = computed(() => {
   const uniqueIds = new Set(records.value.map(r => r.equipment_id))
   return uniqueIds.size
@@ -219,17 +216,26 @@ const formatDuration = (seconds: number) => {
   }
   return `${remainingSeconds}秒`
 }
-
+// 格式化训练日期
+const formatTrainingDate = (date: string | Date) => {
+  if (!date) return '-'
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  const seconds = String(d.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
 // 获取分类标签
 const getCategoryLabel = (category: string) => {
   return CATEGORY_LABELS[category] || category
 }
-
 // 获取分类 Tag 类型
 const getCategoryTagType = (category: string) => {
   return CATEGORY_TAG_TYPES[category] || ''
 }
-
 // 获取提示等级标签
 const getPromptLevelLabel = (level: number) => {
   const labels: Record<number, string> = {
@@ -241,14 +247,12 @@ const getPromptLevelLabel = (level: number) => {
   }
   return labels[level] || `等级${level}`
 }
-
 // 获取提示等级类型
 const getPromptLevelType = (level: number) => {
   if (level <= 2) return 'success'
   if (level <= 3) return 'warning'
   return 'danger'
 }
-
 // 加载学生列表
 const loadStudents = async () => {
   try {
@@ -258,16 +262,13 @@ const loadStudents = async () => {
     console.error('加载学生列表失败:', error)
   }
 }
-
 // 加载记录
 const loadRecords = () => {
   loading.value = true
   try {
     const api = new EquipmentTrainingAPI()
-
     // 获取指定模块的器材训练记录
     let allRecords: any[] = []
-
     if (selectedStudentId.value) {
       // 获取指定学生的记录
       const student = students.value.find(s => s.id === selectedStudentId.value)
@@ -275,10 +276,8 @@ const loadRecords = () => {
         start_date: dateRange.value?.[0],
         end_date: dateRange.value?.[1]
       })
-
       // 筛选模块
       const moduleRecords = studentRecords.filter((r: any) => r.module_code === props.moduleCode)
-
       allRecords = moduleRecords.map((r: any) => ({
         ...r,
         student_name: student?.name || '未知'
@@ -290,27 +289,22 @@ const loadRecords = () => {
           start_date: dateRange.value?.[0],
           end_date: dateRange.value?.[1]
         })
-
         // 筛选模块
         const moduleRecords = studentRecords.filter((r: any) => r.module_code === props.moduleCode)
-
         allRecords.push(...moduleRecords.map((r: any) => ({
           ...r,
           student_name: student.name
         })))
       }
     }
-
     // 分类筛选
     if (selectedCategory.value) {
       allRecords = allRecords.filter((r: any) => r.category === selectedCategory.value)
     }
-
     // 按训练日期倒序排列
     allRecords.sort((a: any, b: any) => {
       return new Date(b.training_date).getTime() - new Date(a.training_date).getTime()
     })
-
     records.value = allRecords
   } catch (error) {
     console.error('加载记录失败:', error)
@@ -318,18 +312,15 @@ const loadRecords = () => {
     loading.value = false
   }
 }
-
 onMounted(async () => {
   await loadStudents()
   loadRecords()
 })
 </script>
-
 <style scoped>
 .records-panel {
   padding: 0;
 }
-
 .filter-section {
   display: flex;
   justify-content: space-between;
@@ -339,22 +330,23 @@ onMounted(async () => {
   background: #f5f7fa;
   border-radius: 8px;
 }
-
 .filter-left {
   display: flex;
   gap: 12px;
 }
-
 .equipment-cell {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
 .stats-section {
   margin-top: 16px;
   padding: 16px;
   background: #f5f7fa;
   border-radius: 8px;
+}
+.no-comment {
+  color: #909399;
+  font-style: italic;
 }
 </style>
