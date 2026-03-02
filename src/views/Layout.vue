@@ -99,12 +99,12 @@ const menuRoutes = computed(() => {
     'ClassManagement', // 班级管理
     'StudentClassAssignment', // 学生分班
     'Assessment', // 能力评估
-    'GamesMenu', // 感官训练
+    'TrainingPlan', // 训练计划
+    'GameTraining', // 游戏训练
     'EquipmentTraining', // 器材训练
-    'TrainingRecords', // 训练记录
+    'TrainingRecordsModule', // 训练记录
     'Reports', // 报告生成
-    'Resources', // 资料库
-    'ResourceManager', // 资源管理
+    'ResourceCenter', // 资源中心
     'System', // 系统管理
   ]
 
