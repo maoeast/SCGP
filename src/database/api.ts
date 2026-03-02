@@ -1611,7 +1611,7 @@ export class GameTrainingAPI extends DatabaseAPI {
         tr.created_at,
         r.name as task_name
       FROM training_records tr
-      LEFT JOIN sys_training_resource r ON tr.task_id = r.legacy_id
+      LEFT JOIN sys_training_resource r ON tr.task_id = r.legacy_id AND r.resource_type = 'game'
       WHERE tr.student_id = ?
     `
     const params: any[] = [studentId]
