@@ -1617,16 +1617,16 @@ export class GameTrainingAPI extends DatabaseAPI {
     const params: any[] = [studentId]
 
     if (taskId !== undefined) {
-      sql += ' AND task_id = ?'
+      sql += ' AND tr.task_id = ?'
       params.push(taskId)
     }
 
     if (moduleCode) {
-      sql += ' AND module_code = ?'
+      sql += ' AND tr.module_code = ?'
       params.push(moduleCode)
     }
 
-    sql += ' ORDER BY timestamp DESC'
+    sql += ' ORDER BY tr.timestamp DESC'
 
     const records = this.query(sql, params)
 
