@@ -121,6 +121,10 @@ import { ref, computed, onMounted } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { GameTrainingAPI, StudentAPI } from '@/database/api'
 
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
 interface Props {
   moduleCode: string
 }
@@ -137,26 +141,36 @@ const students = ref<any[]>([])
 const selectedStudentId = ref<number | undefined>()
 const dateRange = ref<[string, string] | null>(null)
 
-// 统计计算
+const router = useRouter()
+
+// 统计计算 - 平均正确率
 const avgAccuracy = computed(() => {
   if (records.value.length === 0) return 0
   const sum = records.value.reduce((acc, r) => acc + r.accuracy_rate, 0)
   return Math.round((sum / records.value.length) * 100)
 })
 
-// 格式化响应时间（毫秒转秒，保留1位小数）
-const formatResponseTime = (ms: number): string {
-  if (!ms || ms < 1000) {
-    return `${ms}ms`
-  }
-  const seconds = Math.floor(ms / 1000)
-  return `${seconds.toFixed(1)}秒`
-}
+// 统计计算 - 平均响应时间
+const avgResponseTime = computed(() => {
+  if (records.value.length === 0) return 0
+  const sum = records.value.reduce((acc, r) => acc + r.avg_response_time, 0)
+  return Math.round(sum / records.value.length)
+})
 
+// 统计计算 - 总训练时长
 const totalDuration = computed(() => {
   const total = records.value.reduce((acc, r) => acc + r.duration, 0)
   return formatDuration(total)
 })
+
+// 格式化响应时间（毫秒转秒，保留1位小数)
+const formatResponseTime = (ms: number): string => {
+  if (!ms || ms < 1000) {
+    return `${ms}ms`
+  }
+  const seconds = (ms / 1000).toFixed(1)
+  return `${seconds}秒`
+}
 
 // 格式化时间戳
 const formatTimestamp = (timestamp: number) => {
@@ -177,7 +191,7 @@ const formatDuration = (ms: number) => {
 // 获取正确率颜色
 const getAccuracyColor = (rate: number) => {
   if (rate >= 0.8) return '#67c23a'
-  if (rate >= 0.6) return '#e6a23c'
+  if (rate >= 00.6) return '#e6a23c'
   return '#f56c6c'
 }
 
