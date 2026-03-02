@@ -24,13 +24,14 @@
 - Last Session: Phase 5.2 Game Training Module Refactoring was completed (resource-ified game data, created GameModuleMenu/GameLobby/GamePlay).
 - Next Action: Begin Phase 1 planning to validate GameLobby, GamePlay, and Emoji rendering, and test database migration logic.
 
-### Quick Tasks Completed (2026-02-28)
+### Quick Tasks Completed
 | # | Description | Date | Commit | Status | Directory |
 |---|-------------|------|--------|--------|-----------|
 | 1 | 游戏训练配置加载及配置对话框修复 | 2026-02-28 | 06ca952 | ✅ | direct fix |
 | 2 | 器材训练记录为空修复 | 2026-02-28 | 7d8fa62 | ✅ Verified | [debug/resolved](./debug/resolved/equipment-training-records-empty.md) |
+| 3 | 调整左侧菜单栏模块顺序 | 2026-03-02 | 48881f4 | ✅ | direct fix |
 
 ### Last Activity
-**2026-02-28** - Completed 2 bug fixes:
-1. **游戏训练配置**: 修复 `resource.legacy_id` → `resource.legacyId`, `resource.meta_data` → `resource.metadata` 的 camelCase 问题，添加训练配置对话框
-2. **器材训练记录**: 修复 `getStudentRecords` 查询缺少 `module_code` 字段导致前端过滤失效
+**2026-03-02** - Completed quick task 3: 调整左侧菜单栏模块顺序
+- 按用户要求重新排列菜单：系统首页、学生管理、班级管理、学生分班、能力评估、训练计划、游戏训练、器材训练、训练记录、报告生成、资源中心、系统管理
+- 修正路由名称映射 (GamesMenu→GameTraining, TrainingRecords→TrainingRecordsModule, Resources→ResourceCenter)
