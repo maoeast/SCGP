@@ -103,6 +103,7 @@ import type {
 import { calculateAgeInMonths } from '@/types/assessment'
 import { getDriverByScaleCode } from '@/strategies/assessment'
 import { StudentAPI, SMAssessmentAPI, CSIRSAPI, WeeFIMAPI, ReportAPI, ConnersPSQAPI, ConnersTRSAPI } from '@/database/api'
+import { getDatabase } from '@/database/init'
 
 // 子组件
 import WelcomeDialog from './components/WelcomeDialog.vue'
@@ -474,9 +475,58 @@ async function saveGenericAssessment(startTime: string, endTime: string) {
     await saveConnersPSQAssessment(startTime, endTime)
   } else if (scale === 'conners-trs') {
     await saveConnersTRSAssessment(startTime, endTime)
+  } else if (scale === 'sdq') {
+    await saveSDQAssessment(startTime, endTime)
   } else {
     console.warn(`[AssessmentContainer] 未实现的量表保存逻辑: ${scale}`)
   }
+}
+
+async function saveSDQAssessment(startTime: string, endTime: string) {
+  if (!student.value || !scoreResult.value) return
+
+  const db = getDatabase()
+
+  const rawAnswers = scoreResult.value.rawAnswers || {}
+  const dimensionScores = scoreResult.value.dimensions.reduce((acc, dim) => {
+    acc[dim.code] = {
+      rawScore: dim.rawScore,
+      levelName: dim.level || '正常'
+    }
+    return acc
+  }, {} as any)
+
+  db.execute(
+    `INSERT INTO sdq_assess (
+      student_id, age_months, raw_scores, dimension_scores,
+      total_difficulties_score, prosocial_score, is_valid, level, start_time, end_time
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      student.value.id,
+      student.value.ageInMonths,
+      JSON.stringify(rawAnswers),
+      JSON.stringify(dimensionScores),
+      scoreResult.value.totalScore || 1,
+      dimensionScores['prosocial']?.rawScore || 1,
+      1,
+      scoreResult.value.level || '正常',
+      startTime,
+      endTime
+    ]
+  )
+
+  const result = db.query('SELECT last_insert_rowid() as id')
+  assessId.value = result[0]?.values?.[0]?.[0] || 0
+
+  const reportApi = new ReportAPI()
+  reportApi.saveReportRecord({
+    student_id: student.value.id,
+    report_type: 'sdq',
+    assess_id: assessId.value,
+    title: `${student.value.name} - SDQ长处和困难问卷评估报告`
+  })
+
+  console.log('[AssessmentContainer] SDQ 评估保存成功, ID:', assessId.value)
 }
 
 async function saveCSIRSAssessment(startTime: string, endTime: string) {

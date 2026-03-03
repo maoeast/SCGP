@@ -63,6 +63,9 @@ const CSIRSHistory = () => import('@/views/assessment/csirs/History.vue')
 const ConnersPSQReport = () => import('@/views/assessment/conners-psq/Report.vue')
 const ConnersTRSReport = () => import('@/views/assessment/conners-trs/Report.vue')
 
+// SDQ 报告页面
+const SDQReport = () => import('@/views/assessment/sdq/Report.vue')
+
 // 通用评估容器（Phase 4 重构）
 const AssessmentContainer = () => import('@/views/assessment/AssessmentContainer.vue')
 
@@ -357,6 +360,10 @@ const router = createRouter({
           path: 'assessment/conners-trs/:studentId',
           redirect: (to: any) => `/assessment/unified/conners-trs/${to.params.studentId}`
         },
+        {
+          path: 'assessment/sdq/:studentId',
+          redirect: (to: any) => `/assessment/unified/sdq/${to.params.studentId}`
+        },
         // ===== 报告页面（保留） =====
         {
           path: 'assessment/sm/report',
@@ -414,6 +421,16 @@ const router = createRouter({
           component: ConnersTRSReport,
           meta: {
             title: 'Conners教师问卷评估报告',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'assessment/sdq/report/:assessId',
+          name: 'SDQReport',
+          component: SDQReport,
+          meta: {
+            title: 'SDQ长处和困难问卷评估报告',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

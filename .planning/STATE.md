@@ -2,27 +2,28 @@
 
 ## Project Reference
 **Core Value**: SCGP (Stellar Competency Growth Platform) provides special education teachers and clinicians with a comprehensive, offline, local-first assessment and intervention tool.
-**Current Focus**: Completing the transition to a multi-system platform by validating the refactored Game Training module and expanding into Emotional and Social modules.
+**Current Focus**: Phase 2 MVP - Integrating SDQ (长处和困难问卷) assessment into the Emotional module.
 
 ## Current Position
-- **Phase**: 1. Game Training Module Polish
-- **Plan**: None
-- **Status**: Planning
+- **Phase**: 2. Emotional & Social Expansion
+- **Plan**: SDQ Assessment Integration
+- **Status**: Executing
 
 ### Progress
-![0%](https://progress-bar.dev/0/?scale=100&title=Project%20Completion&width=500&color=blue&suffix=%)
+![15%](https://progress-bar.dev/15/?scale=100&title=Project%20Completion&width=500&color=green&suffix=%)
 
 ## Accumulated Context
-- **Decisions**: 
+- **Decisions**:
   - Using Debounced Atomic Save on the Main Thread instead of Web Workers for SQLite due to Vite compatibility issues.
-  - ScaleDriver Strategy is used for all assessments (S-M, WeeFIM, CSIRS, Conners) to generalize UI flows.
+  - ScaleDriver Strategy is used for all assessments (S-M, WeeFIM, CSIRS, Conners, SDQ) to generalize UI flows.
   - All resources (games, equipment, documents) are generalized into `sys_training_resource`.
-- **Blockers**: 
+  - SDQ feedback configuration integrated into feedbackConfig.js (expert-generated content).
+- **Blockers**:
   - Visual tracking games are deferred due to hardware/lighting dependencies making testing unreliable.
 
 ## Session Continuity
-- Last Session: Phase 5.2 Game Training Module Refactoring was completed (resource-ified game data, created GameModuleMenu/GameLobby/GamePlay).
-- Next Action: Begin Phase 1 planning to validate GameLobby, GamePlay, and Emoji rendering, and test database migration logic.
+- Last Session: SDQ assessment integration completed with bug fixes
+- Next Action: Test SDQ assessment end-to-end flow and verify report generation
 
 ### Quick Tasks Completed
 | # | Description | Date | Commit | Status | Directory |
@@ -31,16 +32,13 @@
 | 2 | 器材训练记录为空修复 | 2026-02-28 | 7d8fa62 | ✅ Verified | [debug/resolved](./debug/resolved/equipment-training-records-empty.md) |
 | 3 | 调整左侧菜单栏模块顺序 | 2026-03-02 | 48881f4 | ✅ | direct fix |
 | 4 | 游戏训练记录列表页面多个问题修复 | 2026-03-02 | fd771f6 | ✅ Verified | direct fix |
+| 5 | SDQ 评估保存功能修复 | 2026-03-03 | - | ✅ | direct fix |
 
 ### Last Activity
-**2026-03-02** - Completed quick task 4: 游戏训练记录列表页面多个问题修复
-- 修复 ModuleTrainingRecords.vue 语法错误（缺少闭合括号）
-- 修复 GameRecordsPanel.vue 语法错误（未定义的变量和函数)
-- 优化平均响应时间显示逻辑
-- 实现详情按钮跳转功能
-- 添加游戏名称显示（JOIN sys_training_resource)
-
-### Last Activity
-**2026-03-02** - Completed quick task 3: 调整左侧菜单栏模块顺序
-- 按用户要求重新排列菜单：系统首页、学生管理、班级管理、学生分班、能力评估、训练计划、游戏训练、器材训练、训练记录、报告生成、资源中心、系统管理
-- 修正路由名称映射 (GamesMenu→GameTraining, TrainingRecords→TrainingRecordsModule, Resources→ResourceCenter)
+**2026-03-03** - Completed quick task 5: SDQ 评估保存功能修复
+- 修复 AssessmentContainer.vue 中缺少 getDatabase 导入的问题 (import path: `'./init'` → `'@/database/init'`)
+- 修复 ReportAPI.saveReportRecord 方法中 report_type 不支持 'sdq' 的问题
+- 更新 feedbackConfig.js 合并新的专家评语配置
+- 修复 SDQDriver.ts 中的导入和引用问题
+- TypeScript 编译通过，开发服务器正常运行
+- Vite HMR 热重载成功，页面正常加载

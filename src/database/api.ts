@@ -1239,7 +1239,7 @@ export class ReportAPI extends DatabaseAPI {
    */
   saveReportRecord(record: {
     student_id: number
-    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep'
+    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq'
     assess_id?: number
     plan_id?: number
     title: string

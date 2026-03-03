@@ -24,7 +24,7 @@
 | **技术栈**     | Electron + Vue 3 + TypeScript + Vite + SQL.js |
 | **数据库**     | SQLite (通过 sql.js 运行在浏览器端)           |
 | **当前分支**   | `main`                                        |
-| **最后更新**   | 2026-03-02 (训练记录列表修复与菜单优化)        |
+| **最后更新**   | 2026-03-03 (SDQ评估集成与保存修复)            |
 | **系统健康度** | ✅ 可运行，所有核心功能正常                   |
 
 ### 项目简介
@@ -173,11 +173,27 @@
 - [x] CSIRS 感觉统合量表 (58题)
 - [x] Conners PSQ 父母问卷 (48题)
 - [x] Conners TRS 教师问卷 (28题)
+- [x] SDQ 长处和困难问卷 (25题) - **2026-03-03 新增**
 
 
 ### 2. 已完成功能
 
 > **提示**: 更多历史功能请查看 [CHANGELOG.md](docs/CHANGELOG.md)
+
+29. **[2026-03-03] SDQ 评估集成与保存功能修复**
+    - **目标**: 将 SDQ（长处和困难问卷）评估集成到情绪模块
+    - **SDQDriver 策略实现**:
+      - 继承 BaseDriver，实现 ScaleDriver 接口
+      - 25道题目，5个维度（情绪症状、品行问题、多动注意、同伴交往、亲社会行为）
+      - 专家生成的反馈配置（3个等级：正常/边缘/异常）
+      - 反向计分题目处理（7, 11, 14, 21, 25题）
+    - **修复内容**:
+      - 修复 AssessmentContainer.vue 中 `getDatabase` 导入路径错误（`'./init'` → `'@/database/init'`）
+      - 修复 ReportAPI.saveReportRecord 不支持 `report_type: 'sdq'` 的问题
+      - 更新 feedbackConfig.js 合并新的 SDQ 专家评语配置
+      - 修复 SDQDriver.ts 中的导入和引用问题
+    - **文件**: `src/strategies/assessment/SDQDriver.ts`, `src/views/assessment/AssessmentContainer.vue`, `src/database/api.ts`, `src/config/feedbackConfig.js`, `src/types/sdq.ts`, `src/database/sdq-questions.ts`
+    - **状态**: ✅ TypeScript 编译通过，开发服务器正常运行
 
 28. **[2026-03-02] 训练记录列表页面全面修复与优化**
     - **问题**: 游戏训练记录和器材训练记录页面存在多个显示和功能问题
@@ -847,24 +863,22 @@ function calculateConnersTScore(
 
 ---
 
-**最后更新**: 2026-03-02
+**最后更新**: 2026-03-03
 **更新人**: Claude Code Assistant (首席实施工程师)
-**会话摘要**: 完成训练记录列表页面全面修复与优化。(1) 左侧菜单栏模块顺序调整：按用户要求重新排列12个模块入口顺序。(2) 游戏训练记录列表修复：修复多个语法错误、任务列显示游戏名称、SQL列名歧义、JOIN资源类型过滤、平均响应时间单位优化、详情按钮跳转功能。(3) 器材训练记录优化：训练日期格式化、操作栏改为显示评语列。
+**会话摘要**: 完成 SDQ（长处和困难问卷）评估集成到情绪模块。(1) SDQDriver 策略实现：继承 BaseDriver，支持 25 题五维度评估，专家反馈配置，反向计分处理。(2) 修复 AssessmentContainer.vue 导入路径错误（`'./init'` → `'@/database/init'`）。(3) 修复 ReportAPI 不支持 `report_type: 'sdq'` 的问题。(4) 更新 feedbackConfig.js 合并专家评语配置。(5) TypeScript 编译通过，开发服务器正常运行。
 
 ### 下次会话优先事项
 
-根据本次会话进度，训练记录模块已完成修复，下一步优先行动：
+根据本次会话进度，SDQ 评估集成已完成，下一步优先行动：
 
-1. **[P1 - 高] 功能验证**
-   - ✅ 游戏训练记录列表 - 已修复
-   - ✅ 器材训练记录列表 - 已优化
-   - 待验证: 详情跳转是否正常工作
+1. **[P1 - 高] SDQ 端到端验证**
+   - 测试 SDQ 评估完整流程：选择学生 → 完成 25 题 → 保存 → 报告生成
+   - 验证报告页面正确显示各维度分数和专家评语
 
-2. **[P2 - 中] 其他模块验证**
-   - 菜单顺序调整后各模块入口是否正常
-   - 训练计划模块功能验证
+2. **[P2 - 中] CBCL 评估集成**
+   - 参考 SDQDriver 实现 CBCLDriver
+   - 集成 Achenbach 儿童行为量表
 
-3. **[P3 - 低] 功能完善**
-   - 游戏训练历史成绩展示
-   - 器材训练批量操作
-   - 其他模块（情绪、社交）游戏资源扩展
+3. **[P3 - 低] 社交模块资源**
+   - 社交沟通板资源
+   - 社交故事资源

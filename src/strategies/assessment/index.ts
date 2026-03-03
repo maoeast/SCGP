@@ -14,6 +14,7 @@ import { WeeFIMDriver } from './WeeFIMDriver'
 import { CSIRSDriver } from './CSIRSDriver'
 import { ConnersPSQDriver } from './ConnersPSQDriver'
 import { ConnersTRSDriver } from './ConnersTRSDriver'
+import { SDQDriver } from './SDQDriver'
 
 // 导出基类供其他驱动器继承
 export { BaseDriver } from './BaseDriver'
@@ -25,6 +26,7 @@ const driverRegistry: Record<string, new () => ScaleDriver> = {
   'csirs': CSIRSDriver,
   'conners-psq': ConnersPSQDriver,
   'conners-trs': ConnersTRSDriver,
+  'sdq': SDQDriver,
 }
 
 // 驱动器实例缓存
@@ -112,3 +114,4 @@ export { WeeFIMDriver } from './WeeFIMDriver'
 export { CSIRSDriver } from './CSIRSDriver'
 export { ConnersPSQDriver } from './ConnersPSQDriver'
 export { ConnersTRSDriver } from './ConnersTRSDriver'
+export { SDQDriver } from './SDQDriver'

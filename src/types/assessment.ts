@@ -478,7 +478,8 @@ export const SCALE_CODES = {
   WEEFIM: 'weefim',            // 改良儿童功能独立性评估量表
   CSIRS: 'csirs',              // 儿童感觉统合能力发展评定量表
   CONNERS_PSQ: 'conners-psq',  // Conners 父母用问卷
-  CONNERS_TRS: 'conners-trs'   // Conners 教师用问卷
+  CONNERS_TRS: 'conners-trs',  // Conners 教师用问卷
+  SDQ: 'sdq'                   // 长处和困难问卷
 } as const
 
 export type ScaleCode = typeof SCALE_CODES[keyof typeof SCALE_CODES]
