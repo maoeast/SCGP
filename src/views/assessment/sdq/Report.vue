@@ -56,6 +56,24 @@
             </div>
           </div>
         </div>
+        <!-- 总体评估标题 -->
+        <div v-if="totalScoreFeedback" class="total-feedback-title">
+          <el-tag :type="getTotalScoreTagType(assessData?.level)" size="large">
+            {{ totalScoreFeedback.title }}
+          </el-tag>
+        </div>
+      </div>
+    </el-card>
+
+    <!-- 总体评估说明 -->
+    <el-card class="overall-assessment" v-if="totalScoreFeedback">
+      <template #header>
+        <h3>📋 总体评估说明</h3>
+      </template>
+      <div class="assessment-content">
+        <p v-for="(paragraph, index) in totalScoreFeedback.content" :key="index" class="content-paragraph">
+          {{ replacePlaceholders(paragraph) }}
+        </p>
       </div>
     </el-card>
 
@@ -66,6 +84,22 @@
       </template>
 
       <el-table :data="dimensionScores" style="width: 100%">
+        <el-table-column type="expand">
+          <template #default="{ row }">
+            <div class="dimension-detail">
+              <div class="detail-section" v-if="row.content?.length">
+                <h4>详细说明</h4>
+                <p v-for="(p, i) in row.content" :key="i">{{ replacePlaceholders(p) }}</p>
+              </div>
+              <div class="detail-section" v-if="row.advice?.length">
+                <h4>干预建议</h4>
+                <ul>
+                  <li v-for="(a, i) in row.advice" :key="i" v-html="formatAdvice(a)"></li>
+                </ul>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="name" label="维度名称" width="150" />
         <el-table-column prop="score" label="得分" width="80" align="center">
           <template #default="{ row }">
@@ -89,7 +123,7 @@
 
       <div class="advice-content">
         <ul>
-          <li v-for="(advice, index) in expertAdvice" :key="index">{{ advice }}</li>
+          <li v-for="(advice, index) in expertAdvice" :key="index" v-html="formatAdvice(advice)"></li>
         </ul>
       </div>
     </el-card>
@@ -103,6 +137,7 @@ import { ElMessage } from 'element-plus'
 import { ArrowLeft, Document } from '@element-plus/icons-vue'
 import { getDatabase } from '@/database/init'
 import type { SDQAssessRecord } from '@/types/sdq'
+import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
 
 import { SDQ_DIMENSION_NAMES, SDQ_THRESHOLDS } from '@/database/sdq-questions'
 
@@ -113,6 +148,8 @@ interface DimensionRow {
   score: number
   level: string
   description: string
+  content?: string[]
+  advice?: string[]
 }
 
 // Props
@@ -124,7 +161,22 @@ const assessData = ref<SDQAssessRecord | null>(null)
 const studentInfo = ref<{ name: string; ageMonths: number } | null>(null)
 const dimensionScores = ref<DimensionRow[]>([])
 
-// 计算属性
+// 中文等级到英文等级的映射
+const levelToKey = (level: string | undefined): string => {
+  if (!level) return 'normal'
+  if (level === '异常') return 'abnormal'
+  if (level === '边缘') return 'borderline'
+  return 'normal'
+}
+
+// 计算属性：总分反馈
+const totalScoreFeedback = computed(() => {
+  if (!assessData.value) return null
+  const levelKey = levelToKey(assessData.value.level)
+  return ASSESSMENT_LIBRARY.sdq.total_score_rules[levelKey]
+})
+
+// 计算属性：亲社会行为等级
 const prosocialLevel = computed(() => {
   if (!assessData.value) return '正常'
   const score = assessData.value.prosocial_score
@@ -133,25 +185,10 @@ const prosocialLevel = computed(() => {
   return '需培养'
 })
 
+// 计算属性：专家建议（从 feedbackConfig 获取）
 const expertAdvice = computed(() => {
-  const advice: string[] = []
-  const level = assessData.value?.level
-
-  if (level === '异常' || level === '边缘') {
-    advice.push('建议进行专业心理咨询或评估')
-    advice.push('家长和老师应保持沟通，共同制定支持策略')
-  }
-
-  if (prosocialLevel.value === '需培养') {
-    advice.push('可以通过榜样示范培养孩子的同理心和助人意识')
-  }
-
-  if (advice.length === 0) {
-    advice.push('继续保持良好的家庭氛围和教养方式')
-    advice.push('定期复评以持续关注孩子的发展')
-  }
-
-  return advice
+  if (!totalScoreFeedback.value) return []
+  return totalScoreFeedback.value.advice || []
 })
 
 // 方法
@@ -171,6 +208,12 @@ const getProsocialLevelClass = (level: string) => {
   if (level === '优秀') return 'level-excellent'
   if (level === '边缘') return 'level-borderline'
   return 'level-warning'
+}
+
+const getTotalScoreTagType = (level: string | undefined) => {
+  if (level === '异常') return 'danger'
+  if (level === '边缘') return 'warning'
+  return 'success'
 }
 
 const getScoreClass = (code: string, score: number) => {
@@ -198,6 +241,24 @@ const goBack = () => {
 
 const exportPDF = () => {
   ElMessage.info('PDF 导出功能开发中')
+}
+
+// 替换占位符
+const replacePlaceholders = (text: string): string => {
+  const name = studentInfo.value?.name || '孩子'
+  return text.replace(/\[儿童姓名\]/g, name)
+}
+
+// 格式化建议文本（支持 Markdown 加粗）
+const formatAdvice = (text: string): string => {
+  return replacePlaceholders(text).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+}
+
+// 获取维度反馈
+const getDimensionFeedback = (code: string, level: string) => {
+  const dimConfig = ASSESSMENT_LIBRARY.sdq.dimensions[code]
+  if (!dimConfig) return null
+  return dimConfig[level]
 }
 
 const loadAssessData = async () => {
@@ -236,27 +297,33 @@ const loadAssessData = async () => {
           else englishLevel = 'normal'
         }
       }
+
+      // 从 feedbackConfig 获取维度详细反馈
+      const dimFeedback = getDimensionFeedback(code, englishLevel)
+
       return {
         code,
         name,
         score: data.rawScore,
         level: data.levelName,
-        description: getDimensionDescription(code, englishLevel)
+        description: dimFeedback?.content?.[0] || getDimensionDescription(code, englishLevel),
+        content: dimFeedback?.content || [],
+        advice: dimFeedback?.advice || []
       }
     })
 
     // 查询学生信息
     const student = db.get('SELECT name, birthday FROM student WHERE id = ?', [record.student_id])
     if (student) {
-    studentInfo.value = {
-      name: student.name,
-      ageMonths: record.age_months
+      studentInfo.value = {
+        name: student.name,
+        ageMonths: record.age_months
+      }
     }
+  } catch (error) {
+    console.error('加载评估数据失败:', error)
+    ElMessage.error('加载数据失败')
   }
-} catch (error) {
-  console.error('加载评估数据失败:', error)
-  ElMessage.error('加载数据失败')
-}
 }
 
 const getDimensionDescription = (code: string, level: string) => {
@@ -287,7 +354,7 @@ const getDimensionDescription = (code: string, level: string) => {
       abnormal: '需要培养亲社会行为'
     }
   }
-  return descriptions[code]?. [level.toLowerCase()] || ''
+  return descriptions[code]?.[level.toLowerCase()] || ''
 }
 
 // 生命周期
@@ -359,6 +426,7 @@ onMounted(() => {
   display: flex;
   gap: 40px;
   justify-content: center;
+  margin-bottom: 20px;
 }
 
 .score-item {
@@ -402,6 +470,16 @@ onMounted(() => {
   font-size: 12px;
 }
 
+.total-feedback-title {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.total-feedback-title .el-tag {
+  font-size: 16px;
+  padding: 8px 20px;
+}
+
 .level-normal, .level-excellent {
   color: #67c23a;
 }
@@ -414,8 +492,72 @@ onMounted(() => {
   color: #f56c6c;
 }
 
+/* 总体评估说明卡片 */
+.overall-assessment {
+  margin-bottom: 20px;
+}
+
+.assessment-content {
+  padding: 10px 0;
+}
+
+.content-paragraph {
+  line-height: 1.8;
+  color: #606266;
+  margin-bottom: 16px;
+  text-indent: 2em;
+}
+
+.content-paragraph:last-child {
+  margin-bottom: 0;
+}
+
 .dimension-scores {
   margin-bottom: 20px;
+}
+
+/* 维度详情展开样式 */
+.dimension-detail {
+  padding: 16px 20px;
+  background: #fafafa;
+}
+
+.dimension-detail .detail-section {
+  margin-bottom: 16px;
+}
+
+.dimension-detail .detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.dimension-detail h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #303133;
+  font-weight: 600;
+}
+
+.dimension-detail p {
+  line-height: 1.8;
+  color: #606266;
+  margin-bottom: 8px;
+  text-indent: 2em;
+}
+
+.dimension-detail ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dimension-detail li {
+  padding: 10px 16px;
+  margin-bottom: 8px;
+  background: #fff;
+  border-radius: 6px;
+  border-left: 3px solid #409eff;
+  line-height: 1.6;
+  color: #606266;
 }
 
 .score-excellent {
@@ -443,10 +585,20 @@ onMounted(() => {
 }
 
 .advice-content li {
-  padding: 12px 16px;
-  margin-bottom: 8px;
-  background: #f0f9ff;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
   border-radius: 8px;
   border-left: 4px solid #409eff;
+  line-height: 1.8;
+  color: #303133;
+}
+
+.advice-content li:last-child {
+  margin-bottom: 0;
+}
+
+.advice-content li :deep(strong) {
+  color: #409eff;
 }
 </style>
