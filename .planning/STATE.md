@@ -110,6 +110,25 @@ return { ...description: getDimensionDescription(code, englishLevel) }
 
 **Lesson:** Never assume stored data has all expected fields. When displaying data, prefer computing derived values from raw data + constants rather than relying on pre-computed values that might be missing or in different formats.
 
+#### Bug 4: Report Dimension Table Empty (`Report.vue`)
+**Problem:** Dimension table shows empty rows despite data being parsed correctly
+**Root Cause:** Vue template `<el-table :data="dimensionTableData">` but script defines `dimensionScores`
+**Solution:** Changed binding from `dimensionTableData` → `dimensionScores`
+**Lesson:** Always verify variable names match between template and script. TypeScript won't catch template binding errors.
+
+#### Bug 5: SDQ Report Not Recognized in Report Center (`Reports.vue`)
+**Problem:** SDQ reports show as "未知类型" and clicking "查看" shows "该类型报告暂未实现"
+**Root Cause:** Two missing registrations:
+1. `getReportTypeName` nameMap missing `'sdq': 'SDQ长处和困难问卷评估报告'`
+2. `viewReport` routeMap missing `'sdq': '/assessment/sdq/report/${report.assess_id}'`
+
+**Solution:** Added SDQ entries to both dictionaries
+**Lesson:** When adding new assessment types, update ALL related registries:
+- Database migration scripts (CHECK constraints)
+- Report type name maps
+- Report route maps
+- Assessment type selectors
+
 ---
 
 ### Architecture Notes (Lessons for Future Development)
