@@ -130,7 +130,7 @@ export const SDQ_THRESHOLDS: Record<string, { normal: number; borderline: number
   emotional: { normal: 3, borderline: 4 },      // 0-3正常, 4边缘, 5-10异常
   conduct: { normal: 2, borderline: 3 },        // 0-2正常, 3边缘, 4-10异常
   hyperactivity: { normal: 5, borderline: 6 },  // 0-5正常, 6边缘, 7-10异常
-  peer: { normal: 3, borderline: 4 },           // 0-3正常, 4边缘, 5-10异常
-  prosocial: { normal: 6, borderline: 5 },      // 6-10正常, 5边缘, 0-4异常（反向）
+  peer: { normal: 2, borderline: 3 },           // 0-2正常, 3边缘, 4-10异常 (与品行问题一致)
+  prosocial: { normal: 6, borderline: 5 },      // 6-10正常, 5边缘, 0-4异常（反向，分数越高越好）
   total_difficulties: { normal: 13, borderline: 16 }  // 0-13正常, 14-16边缘, 17-40异常
 }

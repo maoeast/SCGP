@@ -75,8 +75,38 @@ export interface SDQAssessRecord {
   total_difficulties_score: number
   prosocial_score: number
   level: string
+  levelCode?: SDQLevel  // 英文评级代码
   is_valid: number
   start_time: string
   end_time: string
   created_at?: string
+}
+
+/**
+ * SDQ 结构化反馈（返回给前端）
+ */
+export interface SDQStructuredFeedback {
+  /** 总体评价 */
+  overallSummary: string[]
+  /** 总体建议 */
+  overallAdvice: string[]
+  /** 各维度详情 */
+  dimensionDetails: SDQDimensionDetail[]
+  /** 专家建议（木桶效应+矛盾规避+总分兜底） */
+  expertRecommendations: string[]
+}
+
+/**
+ * SDQ 维度详情（用于反馈生成）
+ */
+export interface SDQDimensionDetail {
+  code: string
+  name: string
+  level: SDQLevel
+  levelName: string
+  score: number
+  severity: 'success' | 'warning' | 'danger'
+  content: string[]
+  advice: string[]
+  structured_advice?: Record<string, string[]>
 }
