@@ -286,7 +286,7 @@ CREATE INDEX IF NOT EXISTS idx_login_log_time ON login_log(login_time DESC);
 CREATE TABLE IF NOT EXISTS report_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
-  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs')),
+  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq')),
   assess_id INTEGER,
   plan_id INTEGER,
   training_record_id INTEGER,
@@ -374,6 +374,23 @@ CREATE TABLE IF NOT EXISTS conners_trs_assess (
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
 
+-- SDQ 长处和困难问卷表 (父母版 25题)
+CREATE TABLE IF NOT EXISTS sdq_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,
+  raw_scores TEXT NOT NULL,
+  dimension_scores TEXT NOT NULL,
+  total_difficulties_score INTEGER NOT NULL,
+  prosocial_score INTEGER NOT NULL,
+  level TEXT NOT NULL,
+  is_valid INTEGER DEFAULT 1,
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
 -- 系统配置表
 CREATE TABLE IF NOT EXISTS system_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -404,6 +421,7 @@ CREATE INDEX IF NOT EXISTS idx_csirs_assess_student ON csirs_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_csirs_assess_detail_assess ON csirs_assess_detail(assess_id);
 CREATE INDEX IF NOT EXISTS idx_conners_psq_assess_student ON conners_psq_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_conners_trs_assess_student ON conners_trs_assess(student_id);
+CREATE INDEX IF NOT EXISTS idx_sdq_assess_student ON sdq_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_train_plan_student ON train_plan(student_id);
 CREATE INDEX IF NOT EXISTS idx_train_log_student ON train_log(student_id);
 CREATE INDEX IF NOT EXISTS idx_task_category ON task(category_id);

@@ -34,13 +34,13 @@ interface CompressResult {
  * 检测 WebP 支持
  */
 function supportsWebP(): boolean {
-  const canvas = document.createElement('canvas')
-  // 检测 toDataURL 是否支持 image/webp
-  canvas.toDataURL('image/webp').startsWith('data:image/webp')
-  return true
-} catch {
-  return false
-}
+  try {
+    const canvas = document.createElement('canvas')
+    // 检测 toDataURL 是否支持 image/webp
+    return canvas.toDataURL('image/webp').startsWith('data:image/webp')
+  } catch {
+    return false
+  }
 }
 
 /**

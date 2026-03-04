@@ -1,24 +1,21 @@
 # CLAUDE.md - Agent Configuration & Rules
 
 ## 1. 🚨 核心协议 (CORE PROTOCOLS)
-> **最高优先级指令**：在开始任何任务前，**必须**遵循以下流程。
+> **最高优先级指令**：本项目已引入 GSD (Get Shit Done) 规范驱动开发流程。在开始任何任务前，**必须**遵循以下流程。
 
-1.  **上下文加载 (Context Loading)**：
-    *   **基础**: 读取根目录的 `PROJECT_CONTEXT.md`。
-    *   **重构 (关键)**: 由于项目处于架构重构阶段，**必须额外读取**:
-        *   `E:\VSC\H5\SIC-ADS\重构实施技术规范.md` (架构与约束)
-        *   `E:\VSC\H5\SIC-ADS\docs\plans\2025-02-05-refactor-implementation-plan.md` (进度追踪)
-2.  **状态同步 (Sync)**：对比 Context 与 Plan，确认当前的 [开发阶段] 和 [待办任务]。
-3.  **文档维护 (Maintenance)**：任务结束时，必须同时更新 `PROJECT_CONTEXT.md` (摘要) 和 `实施计划.md` (详细进度)。
-4.  **单一事实来源**：以 `重构实施技术规范.md` 为最高技术准则，忽略旧代码中的设计模式。
+1.  **GSD 工作流优先 (GSD Workflow)**：
+    *   你的核心规划与执行必须依赖 `.planning/` 目录下的状态文件 (`PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md`, `STATE.md`)。
+    *   在开发新功能前，优先考虑运行 `/gsd:plan-phase` 和 `/gsd:execute-phase` 进行结构化开发。
+2.  **上下文加载 (Legacy Context)**：作为补充，你仍需关注根目录的 `PROJECT_CONTEXT.md` 和 `重构实施技术规范.md` 以获取架构约束。
+3.  **单一事实来源**：以 `重构实施技术规范.md` 为最高技术准则，**必须**遵循其中定义的 `ScaleDriver` 策略模式和 `ModuleRegistry` 模块注册表架构。忽略旧代码中不符合该规范的模式。
 
 ## 2. 🛠 技术栈规范 (TECH STACK)
 - **Runtime**: Electron (Main/Renderer Process), Node.js
-- **Frontend**: Vue 3 (Composition API, `<script setup>`), Vite, TailwindCSS
+- **Frontend**: Vue 3 (Composition API, `<script setup>`), Vite, Element Plus, 纯 CSS/SCSS
 - **Backend/API**: Node.js, Express (在 Electron 环境中可能作为本地服务运行)
 - **Language**: TypeScript (Strict mode enabled)
-- **State Management**: Pinia (推荐) 或 Vue Reactivity
-- **Database**: sql.js (Wasm, Worker-driven) - **零原生依赖**
+- **State Management**: Pinia (推荐)
+- **Database**: sql.js (Wasm, 主线程防抖写入) - **零原生依赖**
 
 ## 3. 🏗️ 构建与运行 (COMMANDS)
 

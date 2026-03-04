@@ -301,14 +301,18 @@ const loadAssessData = async () => {
       // 从 feedbackConfig 获取维度详细反馈
       const dimFeedback = getDimensionFeedback(code, englishLevel)
 
+      if (!dimConfig) return null
+
+      const name = studentInfo.value?.name || '孩子'
+
       return {
         code,
         name,
         score: data.rawScore,
         level: data.levelName,
-        description: dimFeedback?.content?.[0] || getDimensionDescription(code, englishLevel),
-        content: dimFeedback?.content || [],
-        advice: dimFeedback?.advice || []
+        description: replacePlaceholders(dimFeedback?.content?.[0] || getDimensionDescription(code, englishLevel)),
+        content: dimFeedback?.content?.map((p: string) => replacePlaceholders(p)),
+        advice: dimFeedback?.advice?.map((a: string) => replacePlaceholders(a))
       }
     })
 

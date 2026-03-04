@@ -134,7 +134,13 @@
       "Bash(npx tsx:*)",
       "Bash(git remote set-url:*)",
       "Bash(git pull:*)",
-      "Bash(move:*)"
+      "Bash(move:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git diff:*)",
+      "Skill(webapp-testing)",
+      "Bash(cmd:*)",
+      "Bash(Select \"Sleep 2\")",
+      "Bash(powershell -Tail 100 \"C:\\\\Users\\\\maoea\\\\.claude\\\\projects\\\\E--VSC-H5-SIC-ADS\\\\1163a158-0966-4642-9038-19a7122cee90.jsonl\")"
     ]
   }
 }

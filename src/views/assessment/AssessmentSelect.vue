@@ -130,6 +130,30 @@
             开始评估
           </el-button>
         </el-card>
+
+        <!-- SDQ量表卡片 -->
+        <el-card
+          class="scale-card"
+          shadow="hover"
+          @click="selectScale('sdq')"
+        >
+          <div class="scale-icon sdq-icon">
+            <el-icon size="60"><Stamp /></el-icon>
+          </div>
+          <h3 class="scale-title">长处和困难问卷</h3>
+          <p class="scale-subtitle">(SDQ量表 - 父母版)</p>
+          <div class="scale-info">
+            <ul>
+              <li>适用年龄：3 - 16岁</li>
+              <li>题目数量：25道</li>
+              <li>评估维度：情绪症状、品行问题、多动注意、同伴交往、亲社会行为</li>
+              <li>评估时间：约5-10分钟</li>
+            </ul>
+          </div>
+          <el-button type="warning" size="large" class="scale-btn">
+            开始评估
+          </el-button>
+        </el-card>
       </div>
 
       <!-- 评估说明 -->
@@ -158,12 +182,12 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding } from '@element-plus/icons-vue'
+import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding, Stamp } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
 // 选择量表
-const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs') => {
+const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq') => {
   // 跳转到学生选择页面，传递量表类型参数
   router.push({
     path: '/assessment/select-student',
@@ -224,6 +248,11 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
 
 .conners-trs-icon {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.sdq-icon {
+  background: linear-gradient(135deg, #f09329 0%, #ff6b6b 100%);
   color: white;
 }
 
