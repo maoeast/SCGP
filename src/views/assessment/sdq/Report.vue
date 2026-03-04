@@ -283,7 +283,6 @@ const loadAssessData = async () => {
     // 解析维度分数
     const scores = JSON.parse(record.dimension_scores)
     dimensionScores.value = Object.entries(scores).map(([code, data]: any) => {
-      const name = SDQ_DIMENSION_NAMES[code] || code
       let englishLevel = 'normal'
       const threshold = SDQ_THRESHOLDS[code]
       if (threshold) {
@@ -301,13 +300,12 @@ const loadAssessData = async () => {
       // 从 feedbackConfig 获取维度详细反馈
       const dimFeedback = getDimensionFeedback(code, englishLevel)
 
-      if (!dimConfig) return null
-
-      const name = studentInfo.value?.name || '孩子'
+      // 获取维度显示名称
+      const dimName = SDQ_DIMENSION_NAMES[code] || code
 
       return {
         code,
-        name,
+        name: dimName,
         score: data.rawScore,
         level: data.levelName,
         description: replacePlaceholders(dimFeedback?.content?.[0] || getDimensionDescription(code, englishLevel)),
