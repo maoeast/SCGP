@@ -1,3 +1,16 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-03-04T02:51:47.236Z"
+progress:
+  total_phases: 1
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+---
+
 # STATE
 
 ## Project Reference
@@ -147,3 +160,22 @@ return { ...description: getDimensionDescription(code, englishLevel) }
    - Don't rely on stored derived values (like `levelName`)
    - Compute display values from raw data + constants at render time
    - This handles missing fields gracefully and supports schema evolution
+
+---
+
+### Phase 2.1: SDQ Report Polish (2026-03-04)
+
+Enhanced SDQ report page with expert feedback from feedbackConfig.js
+
+**What was added:**
+- `totalScoreFeedback` computed property loads content from `ASSESSMENT_LIBRARY.sdq.total_score_rules`
+- "总体评估说明" card displays detailed content paragraphs
+- Expert advice section now uses advice from feedbackConfig
+- Dimension table has expandable rows with detailed content and intervention suggestions
+- Placeholder support: `[儿童姓名]` replaced with actual student name
+- Markdown-style `**bold**` formatting in advice items
+
+**Key patterns used:**
+- `levelToKey()` for Chinese-to-English level mapping
+- `replacePlaceholders()` for student name substitution
+- `formatAdvice()` for Markdown bold rendering
