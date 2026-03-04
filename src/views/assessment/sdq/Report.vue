@@ -441,7 +441,7 @@ const loadAssessData = async () => {
       const dimName = SDQ_DIMENSION_NAMES[code] || code
 
       // 从 feedbackConfig 匹配等级配置
-      const levelConfig = matchDimensionLevel(code, data.rawScore)
+      const levelConfig = matchDimensionLevel(code, data.score)
 
       // 获取 severity
       const severity = levelConfig?.severity || 'success'
