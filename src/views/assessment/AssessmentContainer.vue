@@ -496,9 +496,9 @@ async function saveSDQAssessment(startTime: string, endTime: string) {
     return acc
   }, {} as any)
 
-  db.execute(
+  db.run(
     `INSERT INTO sdq_assess (
-      student_id, age_months, raw_scores, dimension_scores,
+      student_id, age_months, raw_scores, dimension_scores, 
       total_difficulties_score, prosocial_score, is_valid, level, start_time, end_time
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -506,8 +506,8 @@ async function saveSDQAssessment(startTime: string, endTime: string) {
       student.value.ageInMonths,
       JSON.stringify(rawAnswers),
       JSON.stringify(dimensionScores),
-      scoreResult.value.totalScore || 1,
-      dimensionScores['prosocial']?.rawScore || 1,
+      scoreResult.value.totalScore || 0,
+      dimensionScores['prosocial']?.rawScore || 0,
       1,
       scoreResult.value.level || '正常',
       startTime,
@@ -515,9 +515,8 @@ async function saveSDQAssessment(startTime: string, endTime: string) {
     ]
   )
 
-  const result = db.query('SELECT last_insert_rowid() as id')
-  assessId.value = result[0]?.values?.[0]?.[0] || 0
-
+  const result = db.all('SELECT last_insert_rowid() as id')
+  assessId.value = result[0]?.id || 0
   const reportApi = new ReportAPI()
   reportApi.saveReportRecord({
     student_id: student.value.id,

@@ -101,7 +101,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Document } from '@element-plus/icons-vue'
-import { getDatabase } from '@/database/api'
+import { getDatabase } from '@/database/init'
 import type { SDQAssessRecord } from '@/types/sdq'
 
 import { SDQ_DIMENSION_NAMES, SDQ_THRESHOLDS } from '@/database/sdq-questions'
@@ -223,12 +223,25 @@ const loadAssessData = async () => {
     const scores = JSON.parse(record.dimension_scores)
     dimensionScores.value = Object.entries(scores).map(([code, data]: any) => {
       const name = SDQ_DIMENSION_NAMES[code] || code
+      let englishLevel = 'normal'
+      const threshold = SDQ_THRESHOLDS[code]
+      if (threshold) {
+        if (code === 'prosocial') {
+          if (data.rawScore < threshold.borderline) englishLevel = 'abnormal'
+          else if (data.rawScore === threshold.borderline) englishLevel = 'borderline'
+          else englishLevel = 'normal'
+        } else {
+          if (data.rawScore > threshold.borderline) englishLevel = 'abnormal'
+          else if (data.rawScore > threshold.normal) englishLevel = 'borderline'
+          else englishLevel = 'normal'
+        }
+      }
       return {
         code,
         name,
         score: data.rawScore,
         level: data.levelName,
-        description: getDimensionDescription(code, data.level)
+        description: getDimensionDescription(code, englishLevel)
       }
     })
 

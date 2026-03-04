@@ -35,10 +35,96 @@
 | 5 | SDQ 评估保存功能修复 | 2026-03-03 | - | ✅ | direct fix |
 
 ### Last Activity
-**2026-03-03** - Completed quick task 5: SDQ 评估保存功能修复
-- 修复 AssessmentContainer.vue 中缺少 getDatabase 导入的问题 (import path: `'./init'` → `'@/database/init'`)
-- 修复 ReportAPI.saveReportRecord 方法中 report_type 不支持 'sdq' 的问题
-- 更新 feedbackConfig.js 合并新的专家评语配置
-- 修复 SDQDriver.ts 中的导入和引用问题
-- TypeScript 编译通过，开发服务器正常运行
-- Vite HMR 热重载成功，页面正常加载
+**2026-03-04** - SDQ Module Deep Bug Fixes (3 critical fixes)
+
+#### Bug 1: Database API Method Mismatch (`AssessmentContainer.vue`)
+**Problem:** `db.execute is not a function` when calling `getDatabase()` directly
+**Root Cause:** `getDatabase()` returns a `SQLWrapper` instance, NOT a `DatabaseAPI` subclass. `SQLWrapper` exposes:
+- `db.run(sql, params)` for INSERT/UPDATE/DELETE
+- `db.all(sql, params)` for SELECT queries
+- `db.get(sql, params)` for single-row SELECT
+
+**Wrong Pattern:**
+```typescript
+// ❌ WRONG: db.execute() doesn't exist on SQLWrapper
+const result = db.execute(sql, params)
+```
+
+**Correct Pattern:**
+```typescript
+// ✅ CORRECT: Use SQLWrapper methods directly
+db.run(sql, params)  // For INSERT/UPDATE/DELETE
+db.all(sql, params)  // For SELECT
+db.get(sql, params)  // For single row
+```
+
+**Lesson:** When bypassing `DatabaseAPI` and using `getDatabase()` directly, use `SQLWrapper` methods (`run`, `all`, `get`), NOT the `DatabaseAPI` methods (`execute`, `query`, `queryOne`).
+
+#### Bug 2: CHECK Constraint Failed (`migrate-report-constraints.ts`)
+**Problem:** `CHECK constraint failed` when inserting new `report_type = 'sdq'`
+**Root Cause:** SQLite CHECK constraints are immutable. Adding a new enum value requires:
+1. Create new table with updated constraint
+2. Copy data from old table
+3. Drop old table
+4. Rename new table
+
+**Solution Pattern:**
+```sql
+-- Step 1: Create new table with updated CHECK constraint
+CREATE TABLE report_record_new (
+  report_type TEXT NOT NULL
+  CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq'))
+  ...
+)
+
+-- Step 2: Copy data
+INSERT INTO report_record_new SELECT * FROM report_record
+
+-- Step 3: Swap tables
+DROP TABLE report_record
+ALTER TABLE report_record_new RENAME TO report_record
+```
+
+**Lesson:** When adding new enum values to SQLite CHECK constraints, the entire table must be recreated. This is a SQLite limitation, not a bug.
+
+#### Bug 3: `Cannot read properties of undefined (reading 'toLowerCase')` (`Report.vue`)
+**Problem:** `Cannot read properties of undefined (reading 'toLowerCase')`
+**Root Cause:** Database stores `levelName` (Chinese like '正常') but NOT `level` (English like 'normal'). The code was tried to call `.toLowerCase()` on `levelName`, which doesn't have that method.
+
+**Solution:** Don't rely on stored level - dynamically compute English level from `rawScore` and `SDQ_THRESHOLDS`:
+```typescript
+// ✅ CORRECT: Compute englishLevel from rawScore
+let englishLevel = 'normal'
+const threshold = SDQ_THRESHOLDS[code]
+if (threshold) {
+  if (code === 'prosocial') {
+    if (data.rawScore < threshold.borderline) englishLevel = 'abnormal'
+    else if (data.rawScore === threshold.borderline) englishLevel = 'borderline'
+  } else {
+    if (data.rawScore > threshold.borderline) englishLevel = 'abnormal'
+    else if (data.rawScore > threshold.normal) englishLevel = 'borderline'
+  }
+}
+return { ...description: getDimensionDescription(code, englishLevel) }
+```
+
+**Lesson:** Never assume stored data has all expected fields. When displaying data, prefer computing derived values from raw data + constants rather than relying on pre-computed values that might be missing or in different formats.
+
+---
+
+### Architecture Notes (Lessons for Future Development)
+
+1. **Database Layer Consistency:**
+   - `DatabaseAPI` subclasses provide `execute()` and `query()` methods
+   - Direct `getDatabase()` returns `SQLWrapper` with `run()`, `all()`, `get()` methods
+   - **Rule:** Be consistent - either always use DatabaseAPI OR always use SQLWrapper directly
+
+2. **SQLite Constraint Evolution:**
+   - CHECK constraints are table-level and immutable
+   - Adding new enum values requires table recreation migration
+   - Always update migration scripts when adding new report types
+
+3. **Data Display Robustness:**
+   - Don't rely on stored derived values (like `levelName`)
+   - Compute display values from raw data + constants at render time
+   - This handles missing fields gracefully and supports schema evolution
