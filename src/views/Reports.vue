@@ -289,6 +289,7 @@ const getReportTypeName = (type: string) => {
     'csirs': 'CSIRS感觉统合评估报告',
     'conners-psq': 'Conners父母问卷报告(PSQ)',
     'conners-trs': 'Conners教师问卷报告(TRS)',
+    'sdq': 'SDQ长处和困难问卷评估报告',
     'iep': 'IEP评估报告',
     'training': '训练报告'
   }
@@ -367,6 +368,7 @@ const viewReport = (report: any) => {
     'csirs': `/assessment/csirs/report/${report.assess_id}`,
     'conners-psq': `/assessment/conners-psq/report/${report.assess_id}`,
     'conners-trs': `/assessment/conners-trs/report/${report.assess_id}`,
+    'sdq': `/assessment/sdq/report/${report.assess_id}`,
     'iep': `/games/report?recordId=${report.training_record_id}&studentId=${report.student_id}`,
     'training': `/training/plans/${report.plan_id}` // 训练报告暂时跳转到计划详情
   }

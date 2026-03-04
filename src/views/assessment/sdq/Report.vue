@@ -65,7 +65,7 @@
         <h3>📈 维度分数详情</h3>
       </template>
 
-      <el-table :data="dimensionTableData" style="width: 100%">
+      <el-table :data="dimensionScores" style="width: 100%">
         <el-table-column prop="name" label="维度名称" width="150" />
         <el-table-column prop="score" label="得分" width="80" align="center">
           <template #default="{ row }">
