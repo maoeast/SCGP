@@ -316,6 +316,7 @@ export class SDQDriver extends BaseDriver {
             level: dim.level,
             levelName: dim.levelName,
             score: dim.rawScore,
+            severity: (dimLevelConfig.severity as 'success' | 'warning' | 'danger') || 'success',
             content,
             advice: dimLevelConfig.advice || [],
             structured_advice: dimLevelConfig.structured_advice
