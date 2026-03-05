@@ -180,6 +180,18 @@
 
 > **提示**: 更多历史功能请查看 [CHANGELOG.md](docs/CHANGELOG.md)
 
+31. **[2026-03-05] SDQ 报告页面最终优化（汉化与布局调整）**
+    - **任务1：修复维度名称汉化**
+      - 问题：维度分数详情表格显示英文代码（如 `hyperactivity`）而非中文名称
+      - 修复：SDQDriver.ts 中 name 字段优先级链更新为 `dimConfig?.label → SDQ_DIMENSION_NAMES → dim.name → dim.code`
+    - **任务2：新增"核心指导原则"区块**
+      - 在"维度分数详情"和"结构化专家建议"之间新增独立卡片
+      - 展示 `feedback.overallAdvice`（来自 `total_score_rules.base_advice`）
+      - 样式：渐变蓝色背景 + 左侧边框强调
+    - **提交**: `6082269` - feat(sdq): final optimization for SDQ report page
+    - **文件**: `src/strategies/assessment/SDQDriver.ts`, `src/views/assessment/sdq/Report.vue`
+    - **状态**: ✅ 构建通过
+
 30. **[2026-03-05] SDQ 报告页面数据流修复**
     - **问题**: SDQ 报告页面所有数据字段（总分、维度详情、专家建议）均显示为空白
     - **根因分析**:
@@ -879,20 +891,20 @@ function calculateConnersTScore(
 
 **最后更新**: 2026-03-05
 **更新人**: Claude Code Assistant (首席实施工程师)
-**会话摘要**: 修复 SDQ 报告页面数据流中断导致的内容空白 Bug。(1) 根因分析：feedbackConfig.js 中存在两个重复的 `"sdq"` 配置定义，导致新数组格式配置被旧对象格式覆盖。(2) 修复：删除旧格式重复配置，保留新数组格式。(3) 二次修复：Report.vue 中字段名不匹配 (`data.rawScore` → `data.score`)。(4) TypeScript 编译通过，Web 构建成功。
+**会话摘要**: 完成 SDQ 报告页面最终优化（汉化与布局调整）。(1) 修复维度名称显示英文问题：更新 SDQDriver.ts 优先使用 feedbackConfig.js 中的 label 字段。(2) 新增"核心指导原则"区块：在维度详情和专家建议之间新增独立卡片，展示 overallAdvice。(3) 重构 Report.vue 数据加载逻辑：完全依赖 SDQDriver.generateFeedback，删除重复数据处理代码，减少 69 行代码。(4) TypeScript 编译通过，Web 构建成功。
 
 ### 下次会话优先事项
 
-根据本次会话进度，SDQ 报告页面数据流修复已完成，下一步优先行动：
+根据本次会话进度，SDQ 报告页面优化已完成，下一步优先行动：
 
 1. **[P1 - 高] SDQ 端到端验证**
    - 测试 SDQ 评估完整流程：选择学生 → 完成 25 题 → 保存 → 报告生成
-   - 验证报告页面正确显示各维度分数、专家评语和结构化建议
+   - 验证报告页面正确显示：维度名称汉化、核心指导原则、结构化建议
    - **重要**: 需要清除浏览器缓存后重新测试
 
-2. **[P2 - 中] CBCL 评估集成**
-   - 参考 SDQDriver 实现 CBCLDriver
-   - 集成 Achenbach 儿童行为量表
+2. **[P2 - 中] CBCL/SRS2 评估集成**
+   - 参考 SDQDriver 实现 CBCLDriver 或 SRS2Driver
+   - 集成 Achenbach 儿童行为量表或社会反应量表
 
 3. **[P3 - 低] 社交模块资源**
    - 社交沟通板资源

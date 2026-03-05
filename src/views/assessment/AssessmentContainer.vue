@@ -491,7 +491,8 @@ async function saveSDQAssessment(startTime: string, endTime: string) {
   const dimensionScores = scoreResult.value.dimensions.reduce((acc, dim) => {
     acc[dim.code] = {
       rawScore: dim.rawScore,
-      levelName: dim.level || '正常'
+      level: dim.level || 'normal',
+      levelName: dim.levelName || '正常'
     }
     return acc
   }, {} as any)
