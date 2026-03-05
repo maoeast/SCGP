@@ -42,7 +42,7 @@
           <!-- 困难总分卡片 -->
           <div class="score-item total" :class="getTotalScoreClass(totalSeverity)">
             <div class="score-label">困难总分</div>
-            <div class="score-value">{{ assessData?.total_difficulties_score || 0 }}</div>
+            <div class="score-value">{{ assessData?.total_difficulties_score ?? 0 }}</div>
             <div class="score-range">(满分 40)</div>
             <div class="score-level" :class="getTotalLevelClass(totalSeverity)">
               {{ totalLevelText }}
@@ -51,7 +51,7 @@
           <!-- 亲社会行为卡片 -->
           <div class="score-item prosocial" :class="getProsocialClass(prosocialSeverity)">
             <div class="score-label">亲社会行为</div>
-            <div class="score-value">{{ assessData?.prosocial_score || 0 }}</div>
+            <div class="score-value">{{ assessData?.prosocial_score ?? 0 }}</div>
             <div class="score-range">(满分 10)</div>
             <div class="score-level" :class="getProsocialLevelClass(prosocialSeverity)">
               {{ prosocialLevelText }}
@@ -83,7 +83,7 @@
     </el-card>
 
     <!-- 维度分数详情 -->
-    <el-card class="dimension-scores">
+    <el-card class="dimension-scores" v-if="dimensionScores.length">
       <template #header>
         <h3>📈 维度分数详情</h3>
       </template>
@@ -99,11 +99,11 @@
               <div class="detail-section" v-if="row.structured_advice">
                 <h4>干预建议</h4>
                 <div
-                  v-for="(advices, categoryName) in Object.entries(row.structured_advice)"
-                  :key="categoryName"
+                  v-for="([categoryName, advices], idx) in Object.entries(row.structured_advice)"
+                  :key="idx"
                   class="advice-category"
                 >
-                  <h5>{{ getCategoryTitle(categoryName as string) }}</h5>
+                  <h5>{{ getCategoryTitle(categoryName) }}</h5>
                   <ul>
                     <li
                       v-for="(advice, i) in advices"
@@ -135,7 +135,7 @@
         </el-table-column>
         <el-table-column prop="description" label="说明">
           <template #default="{ row }">
-            <span v-html="formatMarkdown(row.description)"></span>
+            <span v-html="formatMarkdown(row.content?.[0] || '')"></span>
           </template>
         </el-table-column>
       </el-table>
@@ -191,25 +191,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Document } from '@element-plus/icons-vue'
 import { getDatabase } from '@/database/init'
-import type { SDQAssessRecord } from '@/types/sdq'
+import type { SDQAssessRecord, SDQDimensionDetail, SDQStructuredFeedback } from '@/types/sdq'
 import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
-import { SDQ_DIMENSION_NAMES } from '@/database/sdq-questions'
 import { SDQDriver } from '@/strategies/assessment/SDQDriver'
-import type { SDQDimensionDetail, SDQStructuredFeedback } from '@/types/sdq'
-
-// 类型定义
-interface DimensionRow {
-  code: string
-  name: string
-  score: number
-  level: string
-  levelName: string
-  severity: 'success' | 'warning' | 'danger'
-  description: string
-  content?: string[]
-  advice?: string[]
-  structured_advice?: Record<string, string[]>
-}
 
 // Props
 const route = useRoute()
@@ -218,9 +202,12 @@ const router = useRouter()
 // 响应式数据
 const assessData = ref<SDQAssessRecord | null>(null)
 const studentInfo = ref<{ name: string; ageMonths: number } | null>(null)
-const dimensionScores = ref<DimensionRow[]>([])
 const feedback = ref<SDQStructuredFeedback | null>(null)
-const structuredAdvice = ref<Record<string, string[]>>({})
+
+// 计算属性：维度分数（直接从 feedback 获取）
+const dimensionScores = computed<SDQDimensionDetail[]>(() => {
+  return feedback.value?.dimensionDetails || []
+})
 
 // 计算属性：总分反馈
 const totalScoreFeedback = computed(() => {
@@ -249,12 +236,12 @@ const totalSeverity = computed<'success' | 'warning' | 'danger'>(() => {
   return totalScoreFeedback.value?.severity || 'success'
 })
 
-// 计算属性:总分等级文本
+// 计算属性: 总分等级文本
 const totalLevelText = computed(() => {
   return totalScoreFeedback.value?.title || '正常'
 })
 
-// 计算属性:亲社会行为等级
+// 计算属性: 亲社会行为等级
 const prosocialLevel = computed(() => {
   if (!assessData.value) return '正常'
   const score = assessData.value.prosocial_score
@@ -263,7 +250,7 @@ const prosocialLevel = computed(() => {
   return '需培养'
 })
 
-// 计算属性:亲社会行为 severity
+// 计算属性: 亲社会行为 severity
 const prosocialSeverity = computed<'success' | 'warning' | 'danger'>(() => {
   if (!assessData.value) return 'success'
   const score = assessData.value.prosocial_score
@@ -272,17 +259,35 @@ const prosocialSeverity = computed<'success' | 'warning' | 'danger'>(() => {
   return 'danger'
 })
 
-// 计算属性:亲社会行为等级文本
+// 计算属性: 亲社会行为等级文本
 const prosocialLevelText = computed(() => {
   return prosocialLevel.value
 })
 
-// 计算属性:是否有结构化建议
+// 计算属性: 结构化建议（从 feedback 提取）
+const structuredAdvice = computed<Record<string, string[]>>(() => {
+  const result: Record<string, string[]> = {}
+
+  for (const dim of dimensionScores.value) {
+    if (dim.structured_advice) {
+      for (const [key, items] of Object.entries(dim.structured_advice)) {
+        if (!result[key]) {
+          result[key] = []
+        }
+        result[key].push(...items)
+      }
+    }
+  }
+
+  return result
+})
+
+// 计算属性: 是否有结构化建议
 const hasStructuredAdvice = computed(() => {
   return Object.keys(structuredAdvice.value).length > 0
 })
 
-// 计算属性:结构化建议分类
+// 计算属性: 结构化建议分类
 const structuredAdviceCategories = computed(() => {
   const categories = [
     { key: 'environment_setup', icon: '🏠' },
@@ -370,41 +375,17 @@ const exportPDF = () => {
   ElMessage.info('PDF 导出功能开发中')
 }
 
-// 格式化 Markdown 文本（支持 **粗体** 和占位符替换)
+// 格式化 Markdown 文本（支持 **粗体** 和占位符替换）
 const formatMarkdown = (text: string): string => {
   if (!text) return ''
-  const name = studentInfo.value?.name || '孩子'
-  return text
-    .replace(/\[儿童姓名\]/g, name)
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+  // 占位符已在 SDQDriver 中替换，这里只处理 Markdown 语法
+  return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
 }
 
-// 从 feedbackConfig 获取总分配置
-const matchTotalScoreRule = (score: number) => {
-  const rules = ASSESSMENT_LIBRARY.sdq.total_score_rules
-  if (!Array.isArray(rules)) return null
-
-  for (const rule of rules) {
-    if (score >= rule.range[0] && score <= rule.range[1]) {
-      return rule
-    }
-  }
-  return null
-}
-
-// 从 feedbackConfig 获取维度等级配置
-const matchDimensionLevel = (code: string, score: number) => {
-  const dimConfig = ASSESSMENT_LIBRARY.sdq.dimensions[code]
-  if (!dimConfig?.levels || !Array.isArray(dimConfig.levels)) return null
-
-  for (const level of dimConfig.levels) {
-    if (score >= level.range[0] && score <= level.range[1]) {
-      return level
-    }
-  }
-  return null
-}
-
+/**
+ * 重构后的数据加载逻辑
+ * 完全依赖 SDQDriver.generateFeedback 生成结构化反馈
+ */
 const loadAssessData = async () => {
   const assessId = route.params.assessId
   if (!assessId) {
@@ -415,16 +396,15 @@ const loadAssessData = async () => {
   try {
     const db = getDatabase()
 
-    // 查询评估记录
+    // 1. 查询评估记录
     const record = db.get('SELECT * FROM sdq_assess WHERE id = ?', [assessId]) as SDQAssessRecord
     if (!record) {
       ElMessage.error('评估记录不存在')
       return
     }
-
     assessData.value = record
 
-    // 查询学生信息
+    // 2. 查询学生信息
     const student = db.get('SELECT name, birthday FROM student WHERE id = ?', [record.student_id])
     if (student) {
       studentInfo.value = {
@@ -433,58 +413,34 @@ const loadAssessData = async () => {
       }
     }
 
-    // 解析维度分数
-    const scores = JSON.parse(record.dimension_scores)
+    // 3. 解析维度分数 JSON
+    const dimensionScoresData = JSON.parse(record.dimension_scores)
 
-    // 构建维度展示数据
-    dimensionScores.value = Object.entries(scores).map(([code, data]: any) => {
-      const dimName = SDQ_DIMENSION_NAMES[code] || code
+    // 4. 构建 ScoreResult 对象
+    const scoreResult = {
+      scaleCode: 'sdq',
+      studentId: record.student_id,
+      assessmentDate: record.start_time,
+      dimensions: Object.entries(dimensionScoresData)
+        .filter(([code]) => code !== 'total_difficulties')
+        .map(([code, data]: [string, any]) => ({
+          code,
+          name: data.name || code,
+          rawScore: data.rawScore ?? data.score ?? 0,
+          itemCount: 5,
+          passedCount: data.rawScore ?? data.score ?? 0,
+          averageScore: (data.rawScore ?? data.score ?? 0) / 5,
+          level: data.level || 'normal',
+          levelName: data.levelName || '正常'
+        })),
+      totalScore: record.total_difficulties_score,
+      level: record.level,
+      levelCode: dimensionScoresData.total_difficulties?.level || 'normal',
+      rawAnswers: {},
+      timing: {}
+    }
 
-      // 从 feedbackConfig 匹配等级配置
-      const levelConfig = matchDimensionLevel(code, data.score)
-
-      // 获取 severity
-      const severity = levelConfig?.severity || 'success'
-
-      // 获取内容
-      let content: string[] = []
-      let advice: string[] = []
-      let structured_advice: Record<string, string[]> | undefined
-      let description = ''
-
-      if (levelConfig) {
-        // 处理 age_stratified_summary
-        if (levelConfig.age_stratified_summary) {
-          const ageGroup = record.age_months < 72 ? 'preschool' : 'school_age'
-          if (levelConfig.age_stratified_summary[ageGroup]) {
-            content = [levelConfig.age_stratified_summary[ageGroup]]
-          }
-        } else if (levelConfig.summary) {
-          content = [levelConfig.summary]
-        } else if (levelConfig.content) {
-          content = Array.isArray(levelConfig.content) ? levelConfig.content : [levelConfig.content]
-        }
-
-        advice = levelConfig.advice || []
-        structured_advice = levelConfig.structured_advice
-        description = content[0] || ''
-      }
-
-      return {
-        code,
-        name: dimName,
-        score: data.rawScore,
-        level: data.level,
-        levelName: data.levelName,
-        severity,
-        description,
-        content,
-        advice,
-        structured_advice
-      }
-    })
-
-    // 生成结构化反馈
+    // 5. 实例化 SDQDriver 并设置学生上下文
     const driver = new SDQDriver()
     driver.setStudentContext({
       id: record.student_id,
@@ -493,30 +449,19 @@ const loadAssessData = async () => {
       gender: 'unknown'
     })
 
-    const scoreResult = {
-      scaleCode: 'sdq',
-      studentId: record.student_id,
-      assessmentDate: record.start_time,
-      dimensions: dimensionScores.value.map(d => ({
-        code: d.code,
-        name: d.name,
-        rawScore: d.score,
-        itemCount: 5,
-        passedCount: d.score,
-        averageScore: d.score / 5,
-        level: d.level,
-        levelName: d.levelName
-      })),
-      totalScore: record.total_difficulties_score,
-      level: record.level,
-      levelCode: scores.total_difficulties?.level || 'normal',
-      rawAnswers: {},
-      timing: {}
-    }
-
+    // 6. 调用 generateFeedback 获取完整的结构化反馈
     const generatedFeedback = driver.generateFeedback(scoreResult)
+
+    // 7. 更新响应式变量
     feedback.value = generatedFeedback
-    structuredAdvice.value = extractStructuredAdvice(generatedFeedback.dimensionDetails)
+
+    console.log('SDQ 报告数据加载完成:', {
+      record: record.id,
+      student: studentInfo.value?.name,
+      totalScore: record.total_difficulties_score,
+      dimensions: generatedFeedback.dimensionDetails.length,
+      expertRecommendations: generatedFeedback.expertRecommendations.length
+    })
 
   } catch (error) {
     console.error('加载评估数据失败:', error)
@@ -524,24 +469,10 @@ const loadAssessData = async () => {
   }
 }
 
-// 从维度详情中提取结构化建议
-const extractStructuredAdvice = (dimensionDetails: SDQDimensionDetail[]): Record<string, string[]> => {
-  const result: Record<string, string[]> = {}
-
-  for (const dim of dimensionDetails) {
-    if (dim.structured_advice) {
-      for (const [key, items] of Object.entries(dim.structured_advice)) {
-        if (!result[key]) {
-          result[key] = []
-        }
-        result[key].push(...items)
-      }
-    }
-  }
-
-  return result
-}
-
+// 生命周期
+onMounted(() => {
+  loadAssessData()
+})
 </script>
 
 <style scoped>
