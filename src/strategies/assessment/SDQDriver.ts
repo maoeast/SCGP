@@ -312,7 +312,7 @@ export class SDQDriver extends BaseDriver {
 
           dimensionDetails.push({
             code: dim.code,
-            name: dim.name,
+            name: dimConfig?.label || SDQ_DIMENSION_NAMES[dim.code] || dim.name || dim.code,
             level: dim.level,
             levelName: dim.levelName,
             score: dim.rawScore,

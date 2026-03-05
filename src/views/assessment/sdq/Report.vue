@@ -141,6 +141,21 @@
       </el-table>
     </el-card>
 
+    <!-- 核心指导原则 -->
+    <el-card class="core-principles" v-if="feedback?.overallAdvice?.length">
+      <template #header>
+        <h3>🎯 核心指导原则</h3>
+      </template>
+      <div class="principles-content">
+        <div
+          v-for="(principle, index) in feedback.overallAdvice"
+          :key="index"
+          class="principle-item"
+          v-html="formatMarkdown(principle)"
+        ></div>
+      </div>
+    </el-card>
+
     <!-- 结构化专家建议 -->
     <el-card class="expert-advice" v-if="hasStructuredAdvice">
       <template #header>
@@ -722,6 +737,41 @@ onMounted(() => {
 .score-warning {
   color: #f56c6c;
   font-weight: bold;
+}
+
+/* 核心指导原则样式 */
+.core-principles {
+  margin-bottom: 20px;
+}
+
+.core-principles h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #303133;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.principles-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.principle-item {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #e8f4fd 0%, #d4e9f7 100%);
+  border-radius: 8px;
+  border-left: 4px solid #409eff;
+  line-height: 1.8;
+  color: #303133;
+  font-size: 15px;
+}
+
+.principle-item :deep(strong) {
+  color: #409eff;
+  font-weight: 600;
 }
 
 /* 结构化专家建议样式 */
