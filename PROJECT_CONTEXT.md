@@ -24,7 +24,7 @@
 | **技术栈**     | Electron + Vue 3 + TypeScript + Vite + SQL.js |
 | **数据库**     | SQLite (通过 sql.js 运行在浏览器端)           |
 | **当前分支**   | `main`                                        |
-| **最后更新**   | 2026-03-03 (SDQ评估集成与保存修复)            |
+| **最后更新**   | 2026-03-05 (SDQ报告页面数据流修复)            |
 | **系统健康度** | ✅ 可运行，所有核心功能正常                   |
 
 ### 项目简介
@@ -179,6 +179,20 @@
 ### 2. 已完成功能
 
 > **提示**: 更多历史功能请查看 [CHANGELOG.md](docs/CHANGELOG.md)
+
+30. **[2026-03-05] SDQ 报告页面数据流修复**
+    - **问题**: SDQ 报告页面所有数据字段（总分、维度详情、专家建议）均显示为空白
+    - **根因分析**:
+      1. `feedbackConfig.js` 中存在**两个重复的** `"sdq"` 配置定义（旧对象格式 vs 新数组格式）
+      2. `Report.vue` 中字段名不匹配：使用 `data.rawScore` 但数据库存储的是 `score`
+    - **修复内容**:
+      - 删除旧格式的重复 SDQ 配置（第 414-619 行），保留新的数组格式配置
+      - 修复 `Report.vue:444` 将 `data.rawScore` 改为 `data.score`
+    - **提交**:
+      - `b388557` - fix(sdq): remove duplicate config causing blank report data
+      - `435f510` - fix(sdq): fix field name mismatch in Report.vue
+    - **文件**: `src/config/feedbackConfig.js`, `src/views/assessment/sdq/Report.vue`
+    - **状态**: ✅ 构建通过，待用户验证
 
 29. **[2026-03-03] SDQ 评估集成与保存功能修复**
     - **目标**: 将 SDQ（长处和困难问卷）评估集成到情绪模块
@@ -863,17 +877,18 @@ function calculateConnersTScore(
 
 ---
 
-**最后更新**: 2026-03-03
+**最后更新**: 2026-03-05
 **更新人**: Claude Code Assistant (首席实施工程师)
-**会话摘要**: 完成 SDQ（长处和困难问卷）评估集成到情绪模块。(1) SDQDriver 策略实现：继承 BaseDriver，支持 25 题五维度评估，专家反馈配置，反向计分处理。(2) 修复 AssessmentContainer.vue 导入路径错误（`'./init'` → `'@/database/init'`）。(3) 修复 ReportAPI 不支持 `report_type: 'sdq'` 的问题。(4) 更新 feedbackConfig.js 合并专家评语配置。(5) TypeScript 编译通过，开发服务器正常运行。
+**会话摘要**: 修复 SDQ 报告页面数据流中断导致的内容空白 Bug。(1) 根因分析：feedbackConfig.js 中存在两个重复的 `"sdq"` 配置定义，导致新数组格式配置被旧对象格式覆盖。(2) 修复：删除旧格式重复配置，保留新数组格式。(3) 二次修复：Report.vue 中字段名不匹配 (`data.rawScore` → `data.score`)。(4) TypeScript 编译通过，Web 构建成功。
 
 ### 下次会话优先事项
 
-根据本次会话进度，SDQ 评估集成已完成，下一步优先行动：
+根据本次会话进度，SDQ 报告页面数据流修复已完成，下一步优先行动：
 
 1. **[P1 - 高] SDQ 端到端验证**
    - 测试 SDQ 评估完整流程：选择学生 → 完成 25 题 → 保存 → 报告生成
-   - 验证报告页面正确显示各维度分数和专家评语
+   - 验证报告页面正确显示各维度分数、专家评语和结构化建议
+   - **重要**: 需要清除浏览器缓存后重新测试
 
 2. **[P2 - 中] CBCL 评估集成**
    - 参考 SDQDriver 实现 CBCLDriver
