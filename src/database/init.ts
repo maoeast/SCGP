@@ -286,7 +286,7 @@ CREATE INDEX IF NOT EXISTS idx_login_log_time ON login_log(login_time DESC);
 CREATE TABLE IF NOT EXISTS report_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
-  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq')),
+  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2')),
   assess_id INTEGER,
   plan_id INTEGER,
   training_record_id INTEGER,
@@ -391,6 +391,23 @@ CREATE TABLE IF NOT EXISTS sdq_assess (
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
 
+-- SRS-2 社交反应量表表 (学龄版 65题)
+CREATE TABLE IF NOT EXISTS srs2_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,
+  gender TEXT NOT NULL CHECK(gender IN ('male', 'female')),
+  raw_answers TEXT NOT NULL,
+  dimension_scores TEXT NOT NULL,
+  total_raw_score INTEGER NOT NULL,
+  total_t_score REAL NOT NULL,
+  total_level TEXT NOT NULL CHECK(total_level IN ('normal', 'mild', 'moderate', 'severe')),
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
 -- 系统配置表
 CREATE TABLE IF NOT EXISTS system_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -422,6 +439,7 @@ CREATE INDEX IF NOT EXISTS idx_csirs_assess_detail_assess ON csirs_assess_detail
 CREATE INDEX IF NOT EXISTS idx_conners_psq_assess_student ON conners_psq_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_conners_trs_assess_student ON conners_trs_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_sdq_assess_student ON sdq_assess(student_id);
+CREATE INDEX IF NOT EXISTS idx_srs2_assess_student ON srs2_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_train_plan_student ON train_plan(student_id);
 CREATE INDEX IF NOT EXISTS idx_train_log_student ON train_log(student_id);
 CREATE INDEX IF NOT EXISTS idx_task_category ON task(category_id);

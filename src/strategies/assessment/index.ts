@@ -15,6 +15,7 @@ import { CSIRSDriver } from './CSIRSDriver'
 import { ConnersPSQDriver } from './ConnersPSQDriver'
 import { ConnersTRSDriver } from './ConnersTRSDriver'
 import { SDQDriver } from './SDQDriver'
+import { SRS2Driver } from './SRS2Driver'
 
 // 导出基类供其他驱动器继承
 export { BaseDriver } from './BaseDriver'
@@ -27,6 +28,7 @@ const driverRegistry: Record<string, new () => ScaleDriver> = {
   'conners-psq': ConnersPSQDriver,
   'conners-trs': ConnersTRSDriver,
   'sdq': SDQDriver,
+  'srs2': SRS2Driver,
 }
 
 // 驱动器实例缓存
@@ -115,3 +117,4 @@ export { CSIRSDriver } from './CSIRSDriver'
 export { ConnersPSQDriver } from './ConnersPSQDriver'
 export { ConnersTRSDriver } from './ConnersTRSDriver'
 export { SDQDriver } from './SDQDriver'
+export { SRS2Driver } from './SRS2Driver'

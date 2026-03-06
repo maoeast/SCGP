@@ -154,6 +154,30 @@
             开始评估
           </el-button>
         </el-card>
+
+        <!-- SRS-2量表卡片 -->
+        <el-card
+          class="scale-card"
+          shadow="hover"
+          @click="selectScale('srs2')"
+        >
+          <div class="scale-icon srs2-icon">
+            <el-icon size="60"><Avatar /></el-icon>
+          </div>
+          <h3 class="scale-title">社交反应量表第二版</h3>
+          <p class="scale-subtitle">(SRS-2 学龄版)</p>
+          <div class="scale-info">
+            <ul>
+              <li>适用年龄：6 - 18岁</li>
+              <li>题目数量：65道</li>
+              <li>评估维度：社交觉知、社交认知、社交沟通、社交动机、刻板行为</li>
+              <li>评估时间：约15-20分钟</li>
+            </ul>
+          </div>
+          <el-button type="primary" size="large" class="scale-btn">
+            开始评估
+          </el-button>
+        </el-card>
       </div>
 
       <!-- 评估说明 -->
@@ -182,12 +206,12 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding, Stamp } from '@element-plus/icons-vue'
+import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding, Stamp, Avatar } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
 // 选择量表
-const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq') => {
+const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq' | 'srs2') => {
   // 跳转到学生选择页面，传递量表类型参数
   router.push({
     path: '/assessment/select-student',
@@ -253,6 +277,11 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
 
 .sdq-icon {
   background: linear-gradient(135deg, #f09329 0%, #ff6b6b 100%);
+  color: white;
+}
+
+.srs2-icon {
+  background: linear-gradient(135deg, #5B86E5 0%, #36D1DC 100%);
   color: white;
 }
 

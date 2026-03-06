@@ -34,7 +34,7 @@ const router = useRouter()
 const route = useRoute()
 
 // 有效的量表类型
-const validScales = ['sm', 'weefim', 'csirs', 'conners-psq', 'conners-trs', 'sdq'] as const
+const validScales = ['sm', 'weefim', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2'] as const
 type ScaleType = typeof validScales[number]
 
 // 当前量表类型
@@ -52,7 +52,8 @@ const pageTitle = computed(() => {
     'csirs': '选择评估学生 - CSIRS量表',
     'conners-psq': '选择评估学生 - Conners父母问卷',
     'conners-trs': '选择评估学生 - Conners教师问卷',
-    'sdq': '选择评估学生 - SDQ长处和困难问卷'
+    'sdq': '选择评估学生 - SDQ长处和困难问卷',
+    'srs2': '选择评估学生 - SRS-2社交反应量表'
   }
   return titles[scaleType.value]
 })
@@ -89,6 +90,11 @@ const currentModuleTag = computed<ModuleTag>(() => {
       type: 'warning',
       label: 'SDQ 长处和困难问卷',
       description: '评估儿童的情绪、行为及社交能力'
+    },
+    'srs2': {
+      type: 'primary',
+      label: 'SRS-2 社交反应量表',
+      description: '评估儿童社交反应能力'
     }
   }
   return tags[scaleType.value]

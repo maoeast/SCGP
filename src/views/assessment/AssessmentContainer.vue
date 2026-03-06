@@ -477,6 +477,8 @@ async function saveGenericAssessment(startTime: string, endTime: string) {
     await saveConnersTRSAssessment(startTime, endTime)
   } else if (scale === 'sdq') {
     await saveSDQAssessment(startTime, endTime)
+  } else if (scale === 'srs2') {
+    await saveSRS2Assessment(startTime, endTime)
   } else {
     console.warn(`[AssessmentContainer] 未实现的量表保存逻辑: ${scale}`)
   }
@@ -748,6 +750,63 @@ async function saveConnersTRSAssessment(startTime: string, endTime: string) {
   console.log('[AssessmentContainer] Conners TRS 评估保存成功, ID:', assessId.value)
 }
 
+async function saveSRS2Assessment(startTime: string, endTime: string) {
+  if (!student.value || !scoreResult.value) return
+
+  const db = getDatabase()
+
+  // 从维度分数中提取各维度得分
+  const rawAnswers = scoreResult.value.rawAnswers || {}
+  const dimensionScores = scoreResult.value.dimensions.reduce((acc, dim) => {
+    acc[dim.code] = {
+      name: dim.name,
+      rawScore: dim.rawScore,
+      tScore: dim.standardScore || 50,
+      level: dim.level || 'normal',
+      levelName: dim.levelName || '正常'
+    }
+    return acc
+  }, {} as any)
+
+  // 获取总 T 分数
+  const totalTScore = (scoreResult.value.extraData as { totalTScore: number })?.totalTScore || 50
+
+  // 1. 创建评估主记录
+  db.run(
+    `INSERT INTO srs2_assess (
+      student_id, age_months, gender, raw_answers, dimension_scores,
+      total_raw_score, total_t_score, total_level, start_time, end_time
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      student.value.id,
+      student.value.ageInMonths,
+      student.value.gender === '男' ? 'male' : 'female',
+      JSON.stringify(rawAnswers),
+      JSON.stringify(dimensionScores),
+      scoreResult.value.totalScore || 0,
+      totalTScore,
+      scoreResult.value.levelCode || 'normal',
+      startTime,
+      endTime
+    ]
+  )
+
+  // 获取最后插入的 ID
+  const result = db.all('SELECT last_insert_rowid() as id')
+  assessId.value = result[0]?.id || 0
+
+  // 2. 创建报告记录
+  const reportApi = new ReportAPI()
+  reportApi.saveReportRecord({
+    student_id: student.value.id,
+    report_type: 'srs2',
+    assess_id: assessId.value,
+    title: `${student.value.name} - SRS-2社交反应量表评估报告`
+  })
+
+  console.log('[AssessmentContainer] SRS-2 评估保存成功, ID:', assessId.value)
+}
+
 // ========== 导航处理 ==========
 
 function handleViewReport() {
@@ -762,7 +821,7 @@ function handleViewReport() {
       }
     })
   } else {
-    // CSIRS 和 Conners 使用路径参数
+    // CSIRS、Conners、SDQ、SRS-2 使用路径参数
     router.push(`/assessment/${scaleCode.value}/report/${assessId.value}`)
   }
 }

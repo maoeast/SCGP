@@ -46,7 +46,7 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
       CREATE TABLE report_record_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_id INTEGER NOT NULL,
-        report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq')),
+        report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2')),
         assess_id INTEGER,
         plan_id INTEGER,
         training_record_id INTEGER,
@@ -140,8 +140,8 @@ export function needsMigration(): boolean {
     // results[0].values 是二维数组，取第一行第一列
     const sql = results[0].values[0][0] as string
 
-    // 检查约束是否包含 'conners-psq', 'conners-trs' 和 'sdq'
-    return !sql.includes("'conners-psq'") || !sql.includes("'conners-trs'") || !sql.includes("'sdq'")
+    // 检查约束是否包含 'conners-psq', 'conners-trs', 'sdq' 和 'srs2'
+    return !sql.includes("'conners-psq'") || !sql.includes("'conners-trs'") || !sql.includes("'sdq'") || !sql.includes("'srs2'")
   } catch (error) {
     // 如果查询失败，保守地认为不需要迁移
     console.warn('[needsMigration] 检查约束失败，跳过迁移:', error)

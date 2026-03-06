@@ -66,6 +66,9 @@ const ConnersTRSReport = () => import('@/views/assessment/conners-trs/Report.vue
 // SDQ 报告页面
 const SDQReport = () => import('@/views/assessment/sdq/Report.vue')
 
+// SRS-2 报告页面
+const SRS2Report = () => import('@/views/assessment/srs2/Report.vue')
+
 // 通用评估容器（Phase 4 重构）
 const AssessmentContainer = () => import('@/views/assessment/AssessmentContainer.vue')
 
@@ -364,6 +367,10 @@ const router = createRouter({
           path: 'assessment/sdq/:studentId',
           redirect: (to: any) => `/assessment/unified/sdq/${to.params.studentId}`
         },
+        {
+          path: 'assessment/srs2/:studentId',
+          redirect: (to: any) => `/assessment/unified/srs2/${to.params.studentId}`
+        },
         // ===== 报告页面（保留） =====
         {
           path: 'assessment/sm/report',
@@ -431,6 +438,16 @@ const router = createRouter({
           component: SDQReport,
           meta: {
             title: 'SDQ长处和困难问卷评估报告',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'assessment/srs2/report/:assessId',
+          name: 'SRS2Report',
+          component: SRS2Report,
+          meta: {
+            title: 'SRS-2社交反应量表评估报告',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }
