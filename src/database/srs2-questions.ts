@@ -117,10 +117,10 @@ export const SRS2_QUESTIONS: SRS2QuestionData[] = [
  * 4 点计分：0-3
  */
 export const SRS2_OPTIONS = [
-  { value: 0, label: '从不', score: 0 },
-  { value: 1, label: '偶尔', score: 1 },
-  { value: 2, label: '经常', score: 2 },
-  { value: 3, label: '总是', score: 3 }
+  { value: 0, label: '不符合', score: 0 },
+  { value: 1, label: '有时符合', score: 1 },
+  { value: 2, label: '经常符合', score: 2 },
+  { value: 3, label: '几乎总是符合', score: 3 }
 ]
 
 /**
@@ -170,15 +170,25 @@ export function isReversedQuestion(questionId: number): boolean {
 
 /**
  * 转换为 ScaleQuestion 格式（供前端渲染使用）
+ *
+ * 关键设计：
+ * - content: 使用正确的字段名（修复空白Bug）
+ * - dimension: 设为空字符串（临床盲测，避免"启动效应"）
+ * - helpText: 添加6个月时效提示（符合心理测量规范）
  */
 export function getSRS2ScaleQuestions(): ScaleQuestion[] {
   return SRS2_QUESTIONS.map(q => ({
-    id: q.id.toString(),
-    text: q.text,
-    helpText: q.helpText,
-    dimension: q.dimension,
+    id: q.id,
+    content: q.text,
+    dimension: '', // 临床盲测：隐藏维度信息，避免评估者主观偏向
+    helpText: q.helpText
+      ? `${q.helpText}（请根据受试者过去6个月的实际表现进行选择）`
+      : '请根据受试者过去6个月的实际表现进行选择。',
     options: SRS2_OPTIONS,
-    isReversed: q.isReversed
+    isReversed: q.isReversed,
+    metadata: {
+      originalDimension: q.dimension // 保留原始维度用于后台计算
+    }
   }))
 }
 
