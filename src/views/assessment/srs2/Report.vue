@@ -325,7 +325,13 @@ const loadAssessData = async () => {
       level: record.total_level,
       levelCode: record.total_level,
       rawAnswers: {},
-      timing: {}
+      timing: {},
+      extraData: {
+        totalTScore: record.total_t_score,
+        dimensionTScores: Object.fromEntries(
+          Object.entries(dimensionScoresData).map(([code, data]: [string, any]) => [code, data.tScore || 50])
+        )
+      }
     }
 
     // 5. 实例化 SRS2Driver 并设置学生上下文
