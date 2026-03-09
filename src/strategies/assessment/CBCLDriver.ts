@@ -40,6 +40,7 @@ import {
   hasDetailedFactors
 } from '@/database/cbcl-norms'
 import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
+import { CBCL_QUESTIONS, CBCL_OPTIONS } from '@/database/cbcl-questions'
 
 // ==========================================
 // 类型定义
@@ -247,9 +248,23 @@ export class CBCLDriver extends BaseDriver {
    * CBCL题目是静态的，不随年龄变化
    */
   getQuestions(_context: StudentContext): ScaleQuestion[] {
-    // 题目数据将在后续计划中实现
-    // 这里返回空数组，实际使用时从 cbcl-questions.ts 加载
-    return []
+    // 从 cbcl-questions.ts 加载题目，转换为 ScaleQuestion 格式
+    return CBCL_QUESTIONS.map(q => ({
+      id: q.id,
+      text: q.text,
+      options: CBCL_OPTIONS.map(opt => ({
+        value: opt.value,
+        label: opt.label,
+        score: opt.value // CBCL 分值就是选项值 (0, 1, 2)
+      })),
+      dimension: q.isSubItem ? '体诉' : 'behavior',
+      dimensionName: q.isSubItem ? '体诉（子项）' : '行为问题',
+      metadata: {
+        hasDescription: q.hasDescription,
+        isSubItem: q.isSubItem,
+        parentId: q.parentId
+      }
+    }))
   }
 
   /**
