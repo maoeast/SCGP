@@ -255,28 +255,48 @@ const normGroupLabel = computed(() => {
 const socialCompetence = computed<CBCLSocialCompetenceResult | null>(() => {
   if (!assessData.value) return null
   try {
-    const socialData = JSON.parse(assessData.value.social_competence_data)
+    // 从数据库分数计算等级和T分数代表值
+    // 阈值判定：与Driver中保持一致
+    const activityScore = assessData.value.social_activity_score
+    const socialScore = assessData.value.social_social_score
+    const schoolScore = assessData.value.social_school_score
+
+    // 活动能力判定 (阈值: 3)
+    const activityLevel = activityScore < 3 ? 2 : activityScore < 3.5 ? 1 : 0
+    const activityTScore = activityLevel === 2 ? 30 : activityLevel === 1 ? 35 : 50
+
+    // 社交情况判定 (阈值: 3)
+    const socialLevel = socialScore < 3 ? 2 : socialScore < 3.5 ? 1 : 0
+    const socialTScore = socialLevel === 2 ? 30 : socialLevel === 1 ? 35 : 50
+
+    // 学校情况判定 (阈值: 2)
+    const schoolLevel = schoolScore < 2 ? 2 : schoolScore < 2.5 ? 1 : 0
+    const schoolTScore = schoolLevel === 2 ? 30 : schoolLevel === 1 ? 35 : 50
+
     return {
       group: null,
       activity: {
-        score: assessData.value.social_activity_score,
-        status: assessData.value.social_activity_score < 3 ? '可能异常' : '正常',
-        level: assessData.value.social_activity_score < 3 ? 2 : 0
+        score: activityScore,
+        status: activityLevel === 2 ? '可能异常' : activityLevel === 1 ? '边缘/需关注' : '正常',
+        level: activityLevel as 0 | 1 | 2,
+        tScore: activityTScore
       },
       social: {
-        score: assessData.value.social_social_score,
-        status: assessData.value.social_social_score < 3 ? '可能异常' : '正常',
-        level: assessData.value.social_social_score < 3 ? 2 : 0
+        score: socialScore,
+        status: socialLevel === 2 ? '可能异常' : socialLevel === 1 ? '边缘/需关注' : '正常',
+        level: socialLevel as 0 | 1 | 2,
+        tScore: socialTScore
       },
       school: {
-        score: assessData.value.social_school_score,
-        status: assessData.value.social_school_score < 2 ? '可能异常' : '正常',
-        level: assessData.value.social_school_score < 2 ? 2 : 0
+        score: schoolScore,
+        status: schoolLevel === 2 ? '可能异常' : schoolLevel === 1 ? '边缘/需关注' : '正常',
+        level: schoolLevel as 0 | 1 | 2,
+        tScore: schoolTScore
       },
       rawScores: {
-        factorActivity: assessData.value.social_activity_score,
-        factorSocial: assessData.value.social_social_score,
-        factorSchool: assessData.value.social_school_score
+        factorActivity: activityScore,
+        factorSocial: socialScore,
+        factorSchool: schoolScore
       }
     }
   } catch {

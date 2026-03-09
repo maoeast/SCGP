@@ -161,7 +161,9 @@
       "Bash(git -C \"E:\\\\VSC\\\\H5\\\\SIC-ADS\" add PROJECT_CONTEXT.md src/views/assessment/AssessmentContainer.vue)",
       "Bash(git -C \"E:\\\\VSC\\\\H5\\\\SIC-ADS\" commit -m \"$\\(cat <<''EOF''\ndocs: sync GSD progress - SDQ report final optimization\n\n- Add item 31: SDQ report page final optimization \\(localization + layout\\)\n- Fix AssessmentContainer.vue: add level field to dimension scores\n- Update session summary with completed work\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(commit -m \"fix\\(srs2: report优化年龄显示和\" - x岁+月\"格式\")",
-      "Bash(__NEW_LINE__ cd E:/VSC/H5/Sic-ads)"
+      "Bash(__NEW_LINE__ cd E:/VSC/H5/Sic-ads)",
+      "Skill(gsd:plan-phase)",
+      "Bash(echo:*)"
     ]
   }
 }

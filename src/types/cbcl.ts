@@ -263,6 +263,8 @@ export interface CBCLSocialFactorResult {
   status: string;
   /** 等级 (0:绿, 1:黄, 2:红) */
   level: 0 | 1 | 2;
+  /** T分数 (代表值: 50=正常, 35=边缘, 30=异常) */
+  tScore: number;
 }
 
 /** 社会能力评估结果 */

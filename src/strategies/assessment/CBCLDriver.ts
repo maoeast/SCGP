@@ -285,21 +285,40 @@ export function validateSocialCompetenceData(data: Partial<CBCLSocialCompetenceD
 }
 
 /**
- * 根据原始分估算T分数 (简化版线性转换)
- * 实际应用中应使用完整的常模转换表
+ * 根据原始分和阈值判定临床等级 (严格阈值法)
+ * 不使用线性公式估算，直接对比常模阈值
  */
-function estimateTScore(rawScore: number, mean: number, sd: number): number {
-  const tScore = 50 + 10 * ((rawScore - mean) / sd)
-  return Math.round(Math.max(30, Math.min(100, tScore)))
+function determineClinicalLevel(
+  rawScore: number,
+  p69: number,
+  p98: number
+): { level: 'normal' | 'borderline' | 'clinical'; tScore: number } {
+  // 严格阈值判定
+  if (rawScore >= p98) {
+    return { level: 'clinical', tScore: 70 } // 临床显著区间代表值
+  } else if (rawScore > p69) {
+    return { level: 'borderline', tScore: 65 } // 边缘区间代表值
+  } else {
+    return { level: 'normal', tScore: 50 } // 正常区间代表值
+  }
 }
 
 /**
- * 获取T分数对应的等级
+ * 根据总分判定总体等级
  */
-function getTScoreLevel(tScore: number): 'normal' | 'borderline' | 'clinical' {
-  if (tScore >= 70) return 'clinical'
-  if (tScore >= 65) return 'borderline'
-  return 'normal'
+function determineTotalLevel(
+  totalScore: number,
+  scoreLimit: number
+): { level: 'normal' | 'borderline' | 'clinical'; tScore: number } {
+  // 总分超过上限即为临床显著
+  if (totalScore > scoreLimit) {
+    return { level: 'clinical', tScore: 70 }
+  } else if (totalScore > scoreLimit * 0.85) {
+    // 超过85%上限为边缘
+    return { level: 'borderline', tScore: 65 }
+  } else {
+    return { level: 'normal', tScore: 50 }
+  }
 }
 
 /**
@@ -407,14 +426,19 @@ export class CBCLDriver extends BaseDriver {
     const scoreVII_234 = (data.VII_isSpecial ? 0 : 1) + (data.VII_isRetained ? 0 : 1) + (data.VII_hasProblem ? 0 : 1)
     const factorSchool = scoreVII_1 + scoreVII_234
 
-    // 4. 获取常模阈值并评估
+    // 4. 获取常模阈值并严格判定 (不使用估算)
     const socialNorm = CBCL_SOCIAL_NORMS[normGroup]
 
-    const evaluateSocialFactor = (score: number, threshold: number): { status: string; level: 0 | 1 | 2 } => {
-      // 社会能力分数越低越差
-      if (score < threshold) return { status: '可能异常', level: 2 }
-      if (score < threshold + 1) return { status: '边缘/需关注', level: 1 }
-      return { status: '正常', level: 0 }
+    // 严格阈值判定：低于阈值即为异常，无估算
+    const evaluateSocialFactor = (score: number, threshold: number): { status: string; level: 0 | 1 | 2; tScore: number } => {
+      // 社会能力分数越低越差 (与行为问题相反)
+      if (score < threshold) {
+        return { status: '可能异常', level: 2, tScore: 30 } // 低于阈值 = 异常
+      } else if (score < threshold + 0.5) {
+        return { status: '边缘/需关注', level: 1, tScore: 35 } // 接近阈值 = 边缘
+      } else {
+        return { status: '正常', level: 0, tScore: 50 } // 高于阈值 = 正常
+      }
     }
 
     const activityResult = evaluateSocialFactor(factorActivity, socialNorm?.activity || 3)
@@ -426,17 +450,20 @@ export class CBCLDriver extends BaseDriver {
       activity: {
         score: factorActivity,
         status: activityResult.status,
-        level: activityResult.level
+        level: activityResult.level,
+        tScore: activityResult.tScore
       },
       social: {
         score: factorSocial,
         status: socialResult.status,
-        level: socialResult.level
+        level: socialResult.level,
+        tScore: socialResult.tScore
       },
       school: {
         score: factorSchool,
         status: schoolResult.status,
-        level: schoolResult.level
+        level: schoolResult.level,
+        tScore: schoolResult.tScore
       },
       rawScores: {
         factorActivity,
@@ -457,7 +484,7 @@ export class CBCLDriver extends BaseDriver {
     const factorConfig = CBCL_FACTOR_NORMS[normGroup]
     const factorNames = factorConfig ? Object.keys(factorConfig) : []
 
-    // 3. 计算各因子原始分
+    // 3. 计算各因子原始分 (严格阈值判定法)
     const factorScores: CBCLFactorScore[] = []
     let totalRawScore = 0
 
@@ -472,12 +499,8 @@ export class CBCLDriver extends BaseDriver {
         }
       }
 
-      // 估算T分数 (使用简化公式，实际应查表)
-      // 均值和标准差根据常模数据估算
-      const mean = config.p69
-      const sd = (config.p98 - config.p69) / 2
-      const tScore = estimateTScore(rawScore, mean, sd)
-      const level = getTScoreLevel(tScore)
+      // 严格阈值判定 (不使用线性公式估算)
+      const { level, tScore } = determineClinicalLevel(rawScore, config.p69, config.p98)
 
       factorScores.push({
         code: FEEDBACK_FACTOR_MAP[factorName] || factorName,
@@ -493,7 +516,7 @@ export class CBCLDriver extends BaseDriver {
       totalRawScore += rawScore
     }
 
-    // 4. 计算内化/外化问题得分
+    // 4. 计算内化/外化问题得分 (原始分累加)
     const internalizingFactors = INTERNALIZING_FACTORS[normGroup] || []
     const externalizingFactors = EXTERNALIZING_FACTORS[normGroup] || []
 
@@ -505,15 +528,29 @@ export class CBCLDriver extends BaseDriver {
       .filter(f => externalizingFactors.includes(f.name))
       .reduce((sum, f) => sum + f.rawScore, 0)
 
-    // 估算内化/外化T分数
-    const internalizingTScore = estimateTScore(internalizingScore, 6, 3)
-    const externalizingTScore = estimateTScore(externalizingScore, 8, 4)
+    // 5. 总分阈值判定 (不使用线性公式)
+    const scoreLimit = CBCL_TOTAL_SCORE_LIMITS[normGroup] || 40
+    const { level: summaryLevel, tScore: totalTScore } = determineTotalLevel(totalRawScore, scoreLimit)
 
-    // 5. 计算总分T分数
-    const totalTScore = estimateTScore(totalRawScore, 25, 10)
+    // 6. 内化/外化定性判定 (基于因子等级加权)
+    // 如果相关因子中有临床显著的，则整体判定为临床显著
+    const hasClinicalInternalizing = factorScores
+      .filter(f => internalizingFactors.includes(f.name))
+      .some(f => f.level === 'clinical')
+    const hasBorderlineInternalizing = factorScores
+      .filter(f => internalizingFactors.includes(f.name))
+      .some(f => f.level === 'borderline')
 
-    // 6. 确定总体等级
-    const summaryLevel = getTScoreLevel(totalTScore)
+    const internalizingTScore = hasClinicalInternalizing ? 70 : hasBorderlineInternalizing ? 65 : 50
+
+    const hasClinicalExternalizing = factorScores
+      .filter(f => externalizingFactors.includes(f.name))
+      .some(f => f.level === 'clinical')
+    const hasBorderlineExternalizing = factorScores
+      .filter(f => externalizingFactors.includes(f.name))
+      .some(f => f.level === 'borderline')
+
+    const externalizingTScore = hasClinicalExternalizing ? 70 : hasBorderlineExternalizing ? 65 : 50
 
     return {
       normGroup,
@@ -707,7 +744,8 @@ export class CBCLDriver extends BaseDriver {
   }
 
   /**
-   * 生成社会能力反馈
+   * 生成社会能力反馈 (严格阈值法)
+   * 不使用估算公式，基于各因子等级判定
    */
   private generateSocialCompetenceFeedback(
     socialScores: CBCLSocialCompetenceResult | null | undefined,
@@ -717,11 +755,16 @@ export class CBCLDriver extends BaseDriver {
       return { summary: '未提供社会能力数据', advice: '' }
     }
 
-    // 计算社会能力综合T分数 (简化处理)
-    const avgScore = (socialScores.activity.score + socialScores.social.score + socialScores.school.score) / 3
-    const estimatedTSocial = 30 + avgScore * 10 // 粗略估算
+    // 严格阈值判定：取最差因子等级作为整体等级
+    const maxLevel = Math.max(
+      socialScores.activity.level,
+      socialScores.social.level,
+      socialScores.school.level
+    )
 
-    const levelConfig = this.matchTScoreToLevel(levels, estimatedTSocial)
+    // 根据等级选择反馈 (不使用估算T分)
+    const representativeScore = maxLevel === 2 ? 30 : maxLevel === 1 ? 35 : 50
+    const levelConfig = this.matchTScoreToLevel(levels, representativeScore)
 
     if (levelConfig) {
       const advice = this.extractAdvice(levelConfig.structured_advice) || ''
