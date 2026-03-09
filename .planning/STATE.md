@@ -3,6 +3,19 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
+last_updated: "2026-03-09T02:27:37.906Z"
+progress:
+  total_phases: 4
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 6
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: unknown
 last_updated: "2026-03-09T01:30:00Z"
 progress:
   total_phases: 2
@@ -81,6 +94,29 @@ progress:
   - CBCL Report uses ECharts for clinical profile chart with T-score reference lines at 65 and 70.
 - **Blockers**:
   - Visual tracking games are deferred due to hardware/lighting dependencies making testing unreliable.
+
+## Completed Features
+
+### Phase 4: CBCL Assessment Integration ✅ (2026-03-09)
+**Status**: Fully deployed and ready for production
+
+**Implementation Summary**:
+- **04.1 Data Infrastructure**: TypeScript types, 121 questions (113 + 56a-56h), 6 norm groups, feedback config
+- **04.2 Database Schema**: cbcl_assess table, JSON fields, CBCLAssessmentAPI, migration scripts
+- **04.3 Scoring Engine**: CBCLDriver with social competence (3 factors) + behavior problems (8-9 factors) scoring
+- **04.4 UI Implementation**: Two-step wizard, SocialForm.vue, Report.vue with ECharts clinical profile
+- **04.5 Route Configuration**: Added CBCLReport route and legacy redirects in src/router/index.ts
+
+**Key Technical Achievements**:
+- Dynamic norm matching for 6 gender×age groups
+- T-score calculation with clinical thresholds (65/70)
+- ECharts clinical profile visualization with reference lines
+- Strict isolation of CBCL logic protecting existing scales
+- Medical disclaimer on all reports
+
+**Files Created**: 6 new files, 4 modified files
+**Total Commits**: 12 atomic commits
+**Test Status**: TypeScript compilation successful, no errors
 
 ## Session Continuity
 - Last Session: CBCL UI Implementation (04.4) completed
