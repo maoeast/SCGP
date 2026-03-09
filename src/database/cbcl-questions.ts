@@ -164,7 +164,12 @@ export const CBCL_QUESTIONS: CBCLQuestion[] = [
   { id: 110, text: '表达出希望成为异性的强烈愿望', options: [0, 1, 2] },
   { id: 111, text: '孤独，不合群', options: [0, 1, 2] },
   { id: 112, text: '总是忧虑重重，满腹心事', options: [0, 1, 2] },
-  { id: 113, text: '请写出您孩子存在的、但上面未提及的其他问题', options: [0, 1, 2], hasDescription: true }
+  // 113题 - 父题（显示标题，不直接作答）
+  { id: 113, text: '请写出您孩子存在的、但上面未提及的其他问题', options: [0, 1, 2], hasDescription: false },
+  // 113题拆分为3个子题，支持多文本输入
+  { id: '113a', text: '问题1', options: [0, 1, 2], hasDescription: true, isSubItem: true, parentId: 113 },
+  { id: '113b', text: '问题2', options: [0, 1, 2], hasDescription: true, isSubItem: true, parentId: 113 },
+  { id: '113c', text: '问题3', options: [0, 1, 2], hasDescription: true, isSubItem: true, parentId: 113 }
 ];
 
 // ==========================================
