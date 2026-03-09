@@ -34,15 +34,15 @@ progress:
 
 ## Current Position
 - **Phase**: 4. CBCL Assessment Integration
-- **Plan**: 04.1 Data Infrastructure
+- **Plan**: 04.2 Database Schema
 - **Status**: Completed
 
 ### Completed Plan
-**04.1-data-infrastructure** - CBCL foundational data layer established
-- TypeScript types for all CBCL data structures
-- 121 questions (113 main + 8 sub-items)
-- 6 norm groups with factor mappings
-- Complete feedback configuration in feedbackConfig.js
+**04.2-database-schema** - CBCL database schema implementation complete
+- cbcl_assess table with all required fields (social competence, behavior problems, factor scores)
+- CHECK constraints for gender (male/female) and summary_level (normal/borderline/clinical)
+- Migration script updated to support 'cbcl' report type
+- CBCLAssessmentAPI with full CRUD operations and automatic JSON parsing
 
 ### Progress
 ![15%](https://progress-bar.dev/15/?scale=100&title=Project%20Completion&width=500&color=green&suffix=%)
@@ -54,12 +54,13 @@ progress:
   - All resources (games, equipment, documents) are generalized into `sys_training_resource`.
   - SDQ feedback configuration integrated into feedbackConfig.js (expert-generated content).
   - CBCL data infrastructure complete with types, questions, norms, and feedback configuration.
+  - CBCL database schema uses JSON TEXT fields for dynamic factor scores and raw answers, matching SRS-2 pattern.
 - **Blockers**:
   - Visual tracking games are deferred due to hardware/lighting dependencies making testing unreliable.
 
 ## Session Continuity
-- Last Session: CBCL Data Infrastructure (04.1) completed
-- Next Action: Implement CBCL ScaleDriver (04.2) for assessment flow integration
+- Last Session: CBCL Database Schema (04.2) completed
+- Next Action: Implement CBCL ScaleDriver (04.3) for assessment flow integration
 
 ### Quick Tasks Completed
 | # | Description | Date | Commit | Status | Directory |
