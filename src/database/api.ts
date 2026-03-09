@@ -911,6 +911,245 @@ export class CSIRSAPI extends DatabaseAPI {
   }
 }
 
+// CBCL 数据库 API
+export class CBCLAssessmentAPI extends DatabaseAPI {
+  /**
+   * 创建CBCL评估记录
+   */
+  createAssessment(data: {
+    student_id: number
+    age_months: number
+    gender: 'male' | 'female'
+    social_competence_data: string  // JSON string
+    social_activity_score?: number
+    social_social_score?: number
+    social_school_score?: number
+    raw_answers: string  // JSON string
+    behavior_raw_scores: string  // JSON string
+    factor_t_scores: string  // JSON string
+    total_problems_score: number
+    total_problems_t_score?: number
+    internalizing_t_score?: number
+    externalizing_t_score?: number
+    summary_level: 'normal' | 'borderline' | 'clinical'
+    start_time: string
+    end_time?: string
+  }): number {
+    this.execute(`
+      INSERT INTO cbcl_assess (
+        student_id, age_months, gender,
+        social_competence_data, social_activity_score, social_social_score, social_school_score,
+        raw_answers, behavior_raw_scores, factor_t_scores,
+        total_problems_score, total_problems_t_score, internalizing_t_score, externalizing_t_score,
+        summary_level, start_time, end_time
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      data.student_id,
+      data.age_months,
+      data.gender,
+      data.social_competence_data,
+      data.social_activity_score || null,
+      data.social_social_score || null,
+      data.social_school_score || null,
+      data.raw_answers,
+      data.behavior_raw_scores,
+      data.factor_t_scores,
+      data.total_problems_score,
+      data.total_problems_t_score || null,
+      data.internalizing_t_score || null,
+      data.externalizing_t_score || null,
+      data.summary_level,
+      data.start_time,
+      data.end_time || null
+    ])
+
+    return this.getLastInsertId()
+  }
+
+  /**
+   * 获取评估记录（解析JSON字段）
+   */
+  getAssessment(id: number): {
+    id: number
+    student_id: number
+    age_months: number
+    gender: 'male' | 'female'
+    social_competence_data: any
+    social_activity_score: number | null
+    social_social_score: number | null
+    social_school_score: number | null
+    raw_answers: Record<string, number>
+    behavior_raw_scores: Record<string, number>
+    factor_t_scores: Record<string, number>
+    total_problems_score: number
+    total_problems_t_score: number | null
+    internalizing_t_score: number | null
+    externalizing_t_score: number | null
+    summary_level: 'normal' | 'borderline' | 'clinical'
+    start_time: string
+    end_time: string | null
+    created_at: string
+  } | null {
+    const row = this.queryOne(`
+      SELECT * FROM cbcl_assess WHERE id = ?
+    `, [id])
+
+    if (!row) return null
+
+    // Parse JSON fields
+    return {
+      ...row,
+      social_competence_data: JSON.parse(row.social_competence_data || '{}'),
+      raw_answers: JSON.parse(row.raw_answers || '{}'),
+      behavior_raw_scores: JSON.parse(row.behavior_raw_scores || '{}'),
+      factor_t_scores: JSON.parse(row.factor_t_scores || '{}')
+    }
+  }
+
+  /**
+   * 获取学生的所有CBCL评估记录（不解析JSON，用于列表展示）
+   */
+  getStudentAssessments(studentId: number): any[] {
+    return this.query(`
+      SELECT
+        c.id,
+        c.student_id,
+        c.age_months,
+        c.gender,
+        c.total_problems_score,
+        c.total_problems_t_score,
+        c.internalizing_t_score,
+        c.externalizing_t_score,
+        c.summary_level,
+        c.start_time,
+        c.end_time,
+        c.created_at,
+        s.name as student_name
+      FROM cbcl_assess c
+      LEFT JOIN student s ON c.student_id = s.id
+      WHERE c.student_id = ?
+      ORDER BY c.created_at DESC
+    `, [studentId])
+  }
+
+  /**
+   * 获取最新的评估记录
+   */
+  getLatestAssessment(studentId: number): ReturnType<typeof this.getAssessment> {
+    const row = this.queryOne(`
+      SELECT * FROM cbcl_assess
+      WHERE student_id = ?
+      ORDER BY created_at DESC
+      LIMIT 1
+    `, [studentId])
+
+    if (!row) return null
+
+    // Parse JSON fields
+    return {
+      ...row,
+      social_competence_data: JSON.parse(row.social_competence_data || '{}'),
+      raw_answers: JSON.parse(row.raw_answers || '{}'),
+      behavior_raw_scores: JSON.parse(row.behavior_raw_scores || '{}'),
+      factor_t_scores: JSON.parse(row.factor_t_scores || '{}')
+    }
+  }
+
+  /**
+   * 更新评估记录
+   */
+  updateAssessment(id: number, data: Partial<{
+    social_competence_data: string
+    social_activity_score: number
+    social_social_score: number
+    social_school_score: number
+    raw_answers: string
+    behavior_raw_scores: string
+    factor_t_scores: string
+    total_problems_score: number
+    total_problems_t_score: number
+    internalizing_t_score: number
+    externalizing_t_score: number
+    summary_level: 'normal' | 'borderline' | 'clinical'
+    end_time: string
+  }>): boolean {
+    const updates: string[] = []
+    const params: any[] = []
+
+    if (data.social_competence_data !== undefined) {
+      updates.push('social_competence_data = ?')
+      params.push(data.social_competence_data)
+    }
+    if (data.social_activity_score !== undefined) {
+      updates.push('social_activity_score = ?')
+      params.push(data.social_activity_score)
+    }
+    if (data.social_social_score !== undefined) {
+      updates.push('social_social_score = ?')
+      params.push(data.social_social_score)
+    }
+    if (data.social_school_score !== undefined) {
+      updates.push('social_school_score = ?')
+      params.push(data.social_school_score)
+    }
+    if (data.raw_answers !== undefined) {
+      updates.push('raw_answers = ?')
+      params.push(data.raw_answers)
+    }
+    if (data.behavior_raw_scores !== undefined) {
+      updates.push('behavior_raw_scores = ?')
+      params.push(data.behavior_raw_scores)
+    }
+    if (data.factor_t_scores !== undefined) {
+      updates.push('factor_t_scores = ?')
+      params.push(data.factor_t_scores)
+    }
+    if (data.total_problems_score !== undefined) {
+      updates.push('total_problems_score = ?')
+      params.push(data.total_problems_score)
+    }
+    if (data.total_problems_t_score !== undefined) {
+      updates.push('total_problems_t_score = ?')
+      params.push(data.total_problems_t_score)
+    }
+    if (data.internalizing_t_score !== undefined) {
+      updates.push('internalizing_t_score = ?')
+      params.push(data.internalizing_t_score)
+    }
+    if (data.externalizing_t_score !== undefined) {
+      updates.push('externalizing_t_score = ?')
+      params.push(data.externalizing_t_score)
+    }
+    if (data.summary_level !== undefined) {
+      updates.push('summary_level = ?')
+      params.push(data.summary_level)
+    }
+    if (data.end_time !== undefined) {
+      updates.push('end_time = ?')
+      params.push(data.end_time)
+    }
+
+    if (updates.length === 0) {
+      return false
+    }
+
+    params.push(id)
+    const rowsAffected = this.execute(`
+      UPDATE cbcl_assess SET ${updates.join(', ')} WHERE id = ?
+    `, params)
+
+    return rowsAffected > 0
+  }
+
+  /**
+   * 删除评估记录
+   */
+  deleteAssessment(id: number): boolean {
+    const rowsAffected = this.execute('DELETE FROM cbcl_assess WHERE id = ?', [id])
+    return rowsAffected > 0
+  }
+}
+
 // Conners PSQ 数据库 API
 export class ConnersPSQAPI extends DatabaseAPI {
   /**
@@ -2163,6 +2402,7 @@ export default {
   SMAssessmentAPI,
   WeeFIMAPI,
   CSIRSAPI,
+  CBCLAssessmentAPI,
   GameTrainingAPI,
   ResourceAPI,
   ReportAPI,
