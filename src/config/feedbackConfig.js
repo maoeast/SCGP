@@ -921,5 +921,484 @@ export const ASSESSMENT_LIBRARY = {
         ]
       }
     }
+  },
+
+  // ==========================================
+  // 量表 5: CBCL Achenbach儿童行为量表 (家长版)
+  // 基于 T-Score (均值50, 标准差10)
+  // ==========================================
+  "cbcl": {
+    name: "Achenbach 儿童行为量表 (CBCL)",
+    description: "全球应用最广泛的儿童行为评估工具，从社会能力与行为问题双视角进行综合画像",
+    target_population: "4-16岁 (重点针对6-16岁学龄儿童)",
+
+    // 1. 总分评定规则 (基于 T-Score)
+    total_score_rules: [
+      {
+        id: "normal",
+        range: [0, 59],
+        title: "整体发展平稳",
+        severity: "success",
+        content: "[儿童姓名]近期的整体行为表现和情绪状态处于同龄人的正常波动范围内。即便偶尔有小情绪或违纪行为，也属于成长过程中的正常试错。",
+        base_advice: [
+          "**继续保持**：保持稳定、包容的家庭养育环境，肯定孩子的积极行为。",
+          "**优势培养**：关注孩子的兴趣特长，提供更多展现自主性的机会，帮助孩子从“合格”迈向“卓越”。"
+        ]
+      },
+      {
+        id: "borderline",
+        range: [60, 63],
+        title: "处于临界预警状态",
+        severity: "warning",
+        content: "系统监测到[儿童姓名]近期的情绪或行为压力略高于同龄人平均水平。这通常意味着孩子在生活、学业或人际中遇到了一些难以自我消化的挑战。",
+        base_advice: [
+          "**无评价陪伴**：建议在接下来的1-2个月内增加“无评价的高质量陪伴”，观察是否有特定的压力源（如学业变动、人际冲突），并提供情感支持。",
+          "**压力排查**：记录“行为日记”，观察孩子在什么时候最容易崩溃？累了？饿了？还是任务太难了？找到规律比单纯担心更有用。"
+        ]
+      },
+      {
+        id: "clinical",
+        range: [64, 120],
+        title: "建议寻求专业支持",
+        severity: "danger",
+        content: "[儿童姓名]目前的行为和情绪负荷已经显著超出了自我调节的范围，可能正在经历较大的内在痛苦或外部适应困难。",
+        base_advice: [
+          "**专业评估**：强烈建议携带此报告及日常观察记录，前往儿童心理科或特教资源中心进行评估。这不是为了“贴标签”，而是为了争取更匹配的教育资源。",
+          "**建立支持联盟**：建议与学校老师沟通评估结果，共同制定“减压计划”，为孩子构建一致的安全网。"
+        ]
+      }
+    ],
+
+    // 2. 社会能力评定 (注意：T分数越高越好，低分代表异常)
+    social_competence: {
+      label: "社会能力与适应性",
+      description: "评估儿童在活动、社交及学校生活中的适应水平",
+      levels: [
+        {
+          range: [0, 30],
+          severity: "danger",
+          title: "社会适应支持需求高",
+          content: "[儿童姓名]在社会适应领域得分处于预警范围。这并非指智力问题，而是指孩子在**课余爱好、同伴交往或学校表现**上的参与度显著偏低。",
+          structured_advice: {
+            environment_setup: [
+              "**寻找微小胜任感**：避开竞争激烈的领域，寻找非主流兴趣点（如乐高、昆虫观察）。"
+            ],
+            interaction_strategy: [
+              "**分析原因**：分析是“不想做”（动机问题）还是“不会做”（技能缺失），如果是后者，需要手把手教导社交脚本。"
+            ]
+          }
+        },
+        {
+          range: [31, 35],
+          severity: "warning",
+          title: "社会适应处于边缘状态",
+          content: "结果提示，[儿童姓名]的社会能力处于临界状态。孩子可能没有明显的破坏行为，但表现得比较被动、缺乏兴趣爱好，或在朋友圈中处于边缘位置。",
+          structured_advice: {
+            interaction_strategy: [
+              "**支架式参与**：孩子可能缺乏主动加入集体的勇气。家长可以先作为“共玩者”陪孩子参加活动，建立安全感后再逐渐退出。"
+            ]
+          }
+        },
+        {
+          range: [36, 100],
+          severity: "success",
+          title: "社会适应发展良好",
+          content: "[儿童姓名]积极参与课外活动，拥有良好的人际关系，并在学校生活中表现出与其年龄相符的适应能力。",
+          structured_advice: {
+            interaction_strategy: [
+              "**继续支持**：继续支持孩子发展现有的兴趣爱好，这不仅是技能的培养，更是其心理韧性的保护伞。"
+            ]
+          }
+        }
+      ]
+    },
+
+    // 3. 行为问题综合征 (Syndrome Scales)
+    dimensions: {
+      // --- 因子 I: 焦虑/抑郁 ---
+      anxious_depressed: {
+        label: "焦虑与抑郁情绪",
+        description: "反映孩子的焦虑、担忧、自责和情绪低落程度",
+        levels: [
+          {
+            range: [0, 64],
+            severity: "success",
+            title: "情绪状态平稳",
+            content: "[儿童姓名]近期情绪状态良好，能够自然地表达快乐、悲伤或担忧，且能较快自我平复。",
+            structured_advice: {
+              interaction_strategy: [
+                "**接纳情绪**：接纳孩子日常的喜怒哀乐，继续提供充满安全感的家庭氛围。"
+              ]
+            }
+          },
+          {
+            range: [65, 69],
+            severity: "warning",
+            title: "情绪敏感 / 易焦虑",
+            content: "[儿童姓名]近期表现得比同龄人更敏感、易哭或容易担忧，对犯错或改变可能表现出较高的紧张感。",
+            structured_advice: {
+              environment_setup: [
+                "**和平角**：在家庭或教室中设置一个舒适的“和平角”或安静区，允许孩子在情绪超载时主动去那里平复。"
+              ],
+              interaction_strategy: [
+                "**接纳情绪**：接纳孩子的情绪表达（“我知道你有些担心”）。在孩子平静时，教导替代性的情绪宣泄方式。"
+              ]
+            }
+          },
+          {
+            range: [70, 120],
+            severity: "danger",
+            title: "显著的情绪困扰",
+            content: "[儿童姓名]表现出高水平的持续焦虑、过度紧张或情绪低落，可能过度追求完美，或者经常显得缺乏快乐感。",
+            structured_advice: {
+              environment_setup: [
+                "**降低要求**：建议降低近期的学业或表现要求，创造低评价压力的环境。"
+              ],
+              interaction_strategy: [
+                "**内化问题**：属于典型的内化问题。请不要简单认为孩子是“抗挫折能力差”。"
+              ],
+              professional_support: [
+                "建议咨询儿童心理医生或沙盘游戏治疗师，获取专业支持。"
+              ]
+            }
+          }
+        ]
+      },
+
+      // --- 因子 II: 退缩/抑郁 ---
+      withdrawn: {
+        label: "社交退缩与孤立",
+        description: "反映孩子的社交回避、独处倾向和社交参与度",
+        levels: [
+          {
+            range: [0, 64],
+            severity: "success",
+            title: "社交参与度正常",
+            content: "[儿童姓名]在社交意愿和参与度上表现平稳，能够自然地与环境和他人互动。",
+            structured_advice: {
+              interaction_strategy: [
+                "**尊重气质**：尊重孩子自身的气质类型，无论是活泼还是慢热，只要能适应当前环境即可。"
+              ]
+            }
+          },
+          {
+            range: [65, 69],
+            severity: "warning",
+            title: "社交主动性偏弱",
+            content: "[儿童姓名]近期表现出较多的独处倾向，在集体活动中显得有些边缘化或缺乏参与动力。",
+            structured_advice: {
+              interaction_strategy: [
+                "**小步尝试**：不要强迫孩子直接面对大型集体。可以先从一对一的、基于共同兴趣（如搭积木、看画本）的同伴互动开始，逐步建立社交安全感。"
+              ]
+            }
+          },
+          {
+            range: [70, 120],
+            severity: "danger",
+            title: "显著的社交回避",
+            content: "[儿童姓名]表现出明显的封闭倾向，宁愿独处也不愿与人交往，可能对周围环境缺乏回应或眼神接触。",
+            structured_advice: {
+              environment_setup: [
+                "**排查原因**：这种退缩可能与社交焦虑或感觉处理差异（如对嘈杂环境过度防御）有关。"
+              ],
+              interaction_strategy: [
+                "**专业评估**：建议由特教专业人员评估其社交动机，排查环境刺激是否过载。"
+              ],
+              professional_support: [
+                "建议寻找社交技能小组（Social Skills Group）训练，或在学校申请同伴支持计划。"
+              ]
+            }
+          }
+        ]
+      },
+
+      // --- 因子 III: 躯体主诉 ---
+      somatic: {
+        label: "躯体化表现 (心因性不适)",
+        description: "反映孩子因心理压力导致的躯体不适症状",
+        levels: [
+          {
+            range: [0, 64],
+            severity: "success",
+            title: "躯体状态平稳",
+            content: "[儿童姓名]没有出现明显的心因性躯体不适。",
+            structured_advice: {
+              interaction_strategy: [
+                "**保持规律**：继续保持规律的作息和健康的饮食。"
+              ]
+            }
+          },
+          {
+            range: [65, 69],
+            severity: "warning",
+            title: "偶发的躯体化反应",
+            content: "[儿童姓名]偶尔抱怨头痛、肚子痛，尤其在面临特定任务（如考试、去学校）前后。这往往是轻度焦虑的躯体投射。",
+            structured_advice: {
+              interaction_strategy: [
+                "**接纳不适**：接纳孩子的不适感，避免说“你就是装病逃避”。可以引导表达：“是不是明天的任务让你有点紧张，所以肚子不舒服了？”"
+              ]
+            }
+          },
+          {
+            range: [70, 120],
+            severity: "danger",
+            title: "频繁的躯体化反应",
+            content: "[儿童姓名]频繁出现无明确医学原因的疼痛或不适。在排除器质性病变后，这是心理压力极度超载、转化为身体症状的典型表现。",
+            structured_advice: {
+              environment_setup: [
+                "**警惕信号**：需特别警惕这是否是“拒学/厌学”的早期躯体化信号。"
+              ],
+              interaction_strategy: [
+                "**症状日记**：家长和老师应记录“症状日记”寻找压力源规律，避免强行逼迫其进入高压环境。"
+              ],
+              professional_support: [
+                "建议咨询儿童心理医生，排查焦虑障碍或躯体形式障碍。"
+              ]
+            }
+          }
+        ]
+      },
+
+      // --- 因子 IV: 社交问题 ---
+      social_problems: {
+        label: "社交互动障碍",
+        description: "反映孩子在社交规则理解和同伴互动中的困难",
+        levels: [
+          {
+            range: [0, 64],
+            severity: "success",
+            title: "社交适应良好",
+            content: "[儿童姓名]能够较好地理解社交规则，与同伴维持较为融洽的关系。",
+            structured_advice: {
+              interaction_strategy: [
+                "**混龄社交**：鼓励孩子参与混龄社交环境，既能向大孩子学习，也能在照顾小孩子中培养同理心。"
+              ]
+            }
+          },
+          {
+            range: [65, 69],
+            severity: "warning",
+            title: "社交技巧待提升",
+            content: "[儿童姓名]在同伴交往中偶尔显得不够成熟，可能因为不懂得轮流、分享或读不懂他人的脸色而引发小摩擦。",
+            structured_advice: {
+              interaction_strategy: [
+                "**社交脚本**：这并非性格不好，而是缺少社交方法。成人需要提供具体的“社交脚本”，例如教孩子说：“我可以加入你们吗？”而不是直接抢玩具。"
+              ]
+            }
+          },
+          {
+            range: [70, 120],
+            severity: "danger",
+            title: "显著的社交困难",
+            content: "[儿童姓名]在同伴群体中显得行为不合群，或者经常遭到同伴的孤立和排斥。他/她可能难以理解基本的社交潜规则。",
+            structured_advice: {
+              environment_setup: [
+                "**结构化社交**：建议在特教老师指导下，参加结构化的“社交技能小组（Social Skills Training）”。"
+              ],
+              interaction_strategy: [
+                "**拆解步骤**：将复杂的社交场景拆解为可操作的步骤进行反复练习。"
+              ],
+              professional_support: [
+                "建议进行社交技能训练或咨询儿童心理专家。"
+              ]
+            }
+          }
+        ]
+      },
+
+      // --- 因子 V: 思维问题 ---
+      thought_problems: {
+        label: "思维与认知的特殊性",
+        description: "反映孩子的思维灵活性、刻板行为和特殊兴趣",
+        levels: [
+          {
+            range: [0, 64],
+            severity: "success",
+            title: "思维认知适龄",
+            content: "[儿童姓名]的思维逻辑和行为表现符合其年龄特征，现实检验能力正常。",
+            structured_advice: {
+              interaction_strategy: [
+                "**保护好奇心**：继续保护孩子的好奇心和丰富的想象力。"
+              ]
+            }
+          },
+          {
+            range: [65, 69],
+            severity: "warning",
+            title: "认知或兴趣独特",
+            content: "[儿童姓名]可能有一些相对特殊的“小执念”，或者对某些特定的事物表现出异于常人的沉迷。",
+            structured_advice: {
+              interaction_strategy: [
+                "**兴趣引导**：只要不影响日常生活和学习，可顺应其特殊兴趣进行引导，将其转化为探索知识的动力（如将对火车的沉迷转化为对机械原理的学习）。"
+              ]
+            }
+          },
+          {
+            range: [70, 120],
+            severity: "danger",
+            title: "认知模式需专业关注",
+            content: "[儿童姓名]表现出强烈的重复刻板行为、难以打破的固有常规，或通过非典型的方式感知周围环境。",
+            structured_advice: {
+              environment_setup: [
+                "**预告变化**：刻板往往源于对未知的恐惧。如果必须改变行程，请提前预告，并给予解释，给孩子心理缓冲期。"
+              ],
+              interaction_strategy: [
+                "**不要强硬打破**：不要采用强硬手段去打破孩子的刻板行为，建议寻求发育行为儿科的鉴别诊断。"
+              ],
+              professional_support: [
+                "高分可能提示属于神经发育多样性（如自闭症谱系特征）或强迫倾向，建议寻求专业评估。"
+              ]
+            }
+          }
+        ]
+      },
+
+      // --- 因子 VI: 注意力问题 ---
+      attention: {
+        label: "注意力与执行功能",
+        description: "反映孩子的专注力、冲动控制和活动水平",
+        levels: [
+          {
+            range: [0, 64],
+            severity: "success",
+            title: "专注力发展正常",
+            content: "[儿童姓名]在维持注意力、控制冲动和活动量方面，符合其当前年龄段的发展水平。",
+            structured_advice: {
+              interaction_strategy: [
+                "**培养专注**：通过阅读、工作材料操作等活动继续培养专注力，日常中注意控制电子屏幕的被动接收时间。"
+              ]
+            }
+          },
+          {
+            range: [65, 69],
+            severity: "warning",
+            title: "执行功能稍显不足",
+            content: "面对枯燥或需要持续脑力的任务时，[儿童姓名]容易分心、小动作多，需要成人较多的提醒。",
+            structured_advice: {
+              environment_setup: [
+                "**降低难度**：降低任务难度并提供视觉化支持。把长任务拆解为短步骤，利用沙漏或计时器将抽象的时间具象化。"
+              ],
+              interaction_strategy: [
+                "**即时反馈**：每完成一小步给予即时反馈，保护孩子的自信心。"
+              ]
+            }
+          },
+          {
+            range: [70, 120],
+            severity: "danger",
+            title: "显著的注意缺陷/多动",
+            content: "[儿童姓名]表现出极度的坐立不安、冲动、或者难以集中注意力完成基本任务，严重影响了日常学习和规则遵守。",
+            structured_advice: {
+              environment_setup: [
+                "**减少干扰**：环境布置上需减少干扰源，创造极简的学习环境。"
+              ],
+              interaction_strategy: [
+                "**允许活动**：允许孩子捏解压球、坐在瑜伽球上学习，或者站着思考。强迫静坐往往会消耗他们所有的认知资源。"
+              ],
+              professional_support: [
+                "高度提示在执行功能（如工作记忆、抑制控制）上存在发展迟缓。建议结合 SNAP-IV 量表进一步评估。"
+              ]
+            }
+          }
+        ]
+      },
+
+      // --- 因子 VII: 违纪行为 ---
+      rule_breaking: {
+        label: "规则违抗与冲动行为",
+        description: "反映孩子对规则的遵守情况和违纪行为频率",
+        levels: [
+          {
+            range: [0, 64],
+            severity: "success",
+            title: "规则意识正常",
+            content: "[儿童姓名]具有基本的规则意识，能够较好地遵守家庭和学校的常规要求。",
+            structured_advice: {
+              interaction_strategy: [
+                "**正向反馈**：维持清晰、一致的界限，当孩子遵守规则时给予具体的正向反馈。"
+              ]
+            }
+          },
+          {
+            range: [65, 69],
+            severity: "warning",
+            title: "规则试探与偶发违纪",
+            content: "[儿童姓名]近期出现了一些试探底线、撒谎或违反纪律的行为，这可能是对新环境适应不良或寻求关注的信号。",
+            structured_advice: {
+              interaction_strategy: [
+                "**温和坚定**：温和而坚定地执行规则。比起严厉说教，让孩子体验行为的自然后果（如打翻水就要自己擦干）更具教育意义。"
+              ]
+            }
+          },
+          {
+            range: [70, 120],
+            severity: "danger",
+            title: "行为界限需重点干预",
+            content: "[儿童姓名]表现出对规则的漠视，可能涉及逃避责任、破坏性行为或其他较严重的纪律问题。",
+            structured_advice: {
+              environment_setup: [
+                "**正向行为支持**：建议家校合作，建立正向行为支持计划（PBS），明确红线，剥离破坏行为带来的“隐性收益”，用强化物替代惩罚。"
+              ],
+              interaction_strategy: [
+                "**避免体罚**：严厉的体罚往往适得其反。"
+              ],
+              professional_support: [
+                "建议寻求专业心理咨询师或行为矫正专家的介入。"
+              ]
+            }
+          }
+        ]
+      },
+
+      // --- 因子 VIII: 攻击性行为 ---
+      aggressive: {
+        label: "攻击与情绪爆发",
+        description: "反映孩子的情绪调节能力和攻击行为频率",
+        levels: [
+          {
+            range: [0, 64],
+            severity: "success",
+            title: "情绪调节能力正常",
+            content: "[儿童姓名]偶尔会有生气的表现，但通常能够用可接受的方式（如言语）表达不满，没有破坏性行为。",
+            structured_advice: {
+              interaction_strategy: [
+                "**情绪命名**：继续鼓励孩子识别和命名自己的情绪：“我看到你现在有些生气，因为……”"
+              ]
+            }
+          },
+          {
+            range: [65, 69],
+            severity: "warning",
+            title: "偶发情绪失控",
+            content: "[儿童姓名]在极度受挫或愤怒时，可能偶尔会出现轻度的摔东西或动手推人的行为。",
+            structured_advice: {
+              interaction_strategy: [
+                "**替代宣泄**：在孩子平静时，教导替代性的情绪宣泄方式（如捏压力球、深呼吸）。设定底线：“你可以生气，但不能伤害人和破坏物品。”"
+              ]
+            }
+          },
+          {
+            range: [70, 120],
+            severity: "danger",
+            title: "情绪与行为控制显著不足",
+            content: "[儿童姓名]频繁发脾气，对他人的身体或物品进行攻击，难以自我控制。这表明孩子目前极度缺乏情绪调节的内在能力。",
+            structured_advice: {
+              environment_setup: [
+                "**安全第一**：情绪爆发时，成人需提供“共同调节（Co-regulation）”，将其转移至安全空间陪伴降温。"
+              ],
+              interaction_strategy: [
+                "**排查压力源**：事后需排查潜在压力源，必要时寻求心理干预。"
+              ],
+              professional_support: [
+                "若攻击性行为已威胁到自身或他人安全，建议寻求专业心理咨询师或行为矫正专家的介入。"
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    // 4. 默认专家寄语
+    expert_message: "每个孩子都是独特的。量表的分数只是帮助我们读懂孩子需求的工具，而非定义孩子的标签。只要给予恰当的理解与支持，[儿童姓名]完全有能力发展出适应环境的策略，实现属于他的精彩成长。"
   }
 };
