@@ -8,6 +8,13 @@
       @start="handleStartAssessment"
     />
 
+    <!-- CBCL 阶段：社会能力表单 -->
+    <CBCLSocialForm
+      v-else-if="phase === 'social' && scaleCode === 'cbcl'"
+      :student="student"
+      @submit="handleSocialFormSubmit"
+    />
+
     <!-- 阶段 2：评估进行中 -->
     <template v-else-if="phase === 'assessing'">
       <!-- 顶部进度区域 -->
@@ -65,6 +72,18 @@
           {{ isLastQuestion ? '完成评估' : '下一题' }}
         </el-button>
       </div>
+
+      <!-- CBCL 分页控件 -->
+      <div v-if="scaleCode === 'cbcl'" class="cbcl-pagination">
+        <el-pagination
+          v-model:current-page="currentPage"
+          :page-size="pageSize"
+          :total="questions.length"
+          layout="prev, pager, next"
+          @change="handlePageChange"
+        />
+        <span class="page-info">第 {{ currentPage }} / {{ totalPages }} 页</span>
+      </div>
     </template>
 
     <!-- 阶段 3：评估完成 -->
@@ -109,6 +128,10 @@ import { getDatabase } from '@/database/init'
 import WelcomeDialog from './components/WelcomeDialog.vue'
 import QuestionCard from './components/QuestionCard.vue'
 import CompleteDialog from './components/CompleteDialog.vue'
+import CBCLSocialForm from './cbcl/SocialForm.vue'
+
+// CBCL 类型
+import type { CBCLSocialCompetenceData } from '@/types/cbcl'
 
 // ========== 路由与状态 ==========
 const route = useRoute()
@@ -119,8 +142,17 @@ const scaleCode = computed(() => route.params.scaleCode as string || route.query
 const studentId = computed(() => parseInt(route.params.studentId as string || route.query.studentId as string))
 
 // 评估阶段
-type AssessmentPhase = 'loading' | 'welcome' | 'assessing' | 'complete'
+type AssessmentPhase = 'loading' | 'welcome' | 'social' | 'assessing' | 'complete'
 const phase = ref<AssessmentPhase>('loading')
+
+// CBCL 特有状态
+const cbclStep = ref<'social' | 'behavior'>('social')
+const socialFormData = ref<CBCLSocialCompetenceData | null>(null)
+
+// CBCL 分页状态
+const currentPage = ref(1)
+const pageSize = 10
+const totalPages = computed(() => Math.ceil(questions.value.length / pageSize))
 
 // 核心数据
 const student = ref<StudentContext | null>(null)
@@ -280,7 +312,35 @@ async function initializeAssessment() {
 // ========== 事件处理 ==========
 
 function handleStartAssessment() {
+  // CBCL 特殊处理：先进入社会能力表单
+  if (scaleCode.value === 'cbcl') {
+    phase.value = 'social'
+    cbclStep.value = 'social'
+  } else {
+    phase.value = 'assessing'
+    state.value.startTime = Date.now()
+  }
+}
+
+function handleSocialFormSubmit(data: CBCLSocialCompetenceData) {
+  socialFormData.value = data
+  // 将社会能力数据传递给驱动器
+  if (driver.value && 'setSocialData' in driver.value) {
+    (driver.value as any).setSocialData(data)
+  }
+  cbclStep.value = 'behavior'
   phase.value = 'assessing'
+  state.value.startTime = Date.now()
+  ElMessage.success('社会能力信息已保存，开始行为问题评估')
+}
+
+function handlePageChange(page: number) {
+  currentPage.value = page
+  // 更新当前题目索引到当前页的第一题
+  const newIndex = (page - 1) * pageSize
+  if (newIndex < questions.value.length) {
+    state.value.currentIndex = newIndex
+  }
 }
 
 function handleAnswer(value: number | string) {
@@ -479,6 +539,8 @@ async function saveGenericAssessment(startTime: string, endTime: string) {
     await saveSDQAssessment(startTime, endTime)
   } else if (scale === 'srs2') {
     await saveSRS2Assessment(startTime, endTime)
+  } else if (scale === 'cbcl') {
+    await saveCBCLAssessment(startTime, endTime)
   } else {
     console.warn(`[AssessmentContainer] 未实现的量表保存逻辑: ${scale}`)
   }
@@ -808,6 +870,73 @@ async function saveSRS2Assessment(startTime: string, endTime: string) {
   console.log('[AssessmentContainer] SRS-2 评估保存成功, ID:', assessId.value)
 }
 
+async function saveCBCLAssessment(startTime: string, endTime: string) {
+  if (!student.value || !scoreResult.value) return
+
+  const db = getDatabase()
+
+  // 从 extraData 获取 CBCL 特有数据
+  const extraData = scoreResult.value.extraData as any
+  const cbclData = extraData?.behaviorProblems
+  const socialScores = extraData?.socialCompetence
+
+  // 构建原始答案 JSON
+  const rawAnswers = scoreResult.value.rawAnswers || {}
+
+  // 构建行为因子原始分 JSON
+  const behaviorRawScores = cbclData?.rawScores || {}
+
+  // 构建因子 T 分数 JSON
+  const factorTScores = cbclData?.tScores || {}
+
+  // 1. 创建评估主记录
+  db.run(
+    `INSERT INTO cbcl_assess (
+      student_id, age_months, gender,
+      social_competence_data,
+      social_activity_score, social_social_score, social_school_score,
+      raw_answers, behavior_raw_scores, factor_t_scores,
+      total_problems_score, total_problems_t_score,
+      internalizing_t_score, externalizing_t_score,
+      summary_level, start_time, end_time
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      student.value.id,
+      student.value.ageInMonths,
+      student.value.gender === '男' ? 'male' : 'female',
+      JSON.stringify(socialFormData.value || {}),
+      socialScores?.activity?.score || 0,
+      socialScores?.social?.score || 0,
+      socialScores?.school?.score || 0,
+      JSON.stringify(rawAnswers),
+      JSON.stringify(behaviorRawScores),
+      JSON.stringify(factorTScores),
+      scoreResult.value.totalScore || 0,
+      cbclData?.totalProblemsTScore || 0,
+      cbclData?.internalizingTScore || 0,
+      cbclData?.externalizingTScore || 0,
+      scoreResult.value.levelCode || 'normal',
+      startTime,
+      endTime
+    ]
+  )
+
+  // 获取最后插入的 ID
+  const result = db.all('SELECT last_insert_rowid() as id')
+  assessId.value = result[0]?.id || 0
+
+  // 2. 创建报告记录
+  const reportApi = new ReportAPI()
+  reportApi.saveReportRecord({
+    student_id: student.value.id,
+    report_type: 'cbcl',
+    assess_id: assessId.value,
+    title: `${student.value.name} - CBCL儿童行为量表评估报告`
+  })
+
+  console.log('[AssessmentContainer] CBCL 评估保存成功, ID:', assessId.value)
+}
+
 // ========== 导航处理 ==========
 
 function handleViewReport() {
@@ -822,7 +951,7 @@ function handleViewReport() {
       }
     })
   } else {
-    // CSIRS、Conners、SDQ、SRS-2 使用路径参数
+    // CSIRS、Conners、SDQ、SRS-2、CBCL 使用路径参数
     router.push(`/assessment/${scaleCode.value}/report/${assessId.value}`)
   }
 }
@@ -979,5 +1108,21 @@ watch(() => route.params, () => {
     flex-direction: column;
     gap: 8px;
   }
+}
+
+/* CBCL 分页样式 */
+.cbcl-pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #ebeef5;
+}
+
+.page-info {
+  font-size: 14px;
+  color: #606266;
 }
 </style>
