@@ -408,6 +408,53 @@ CREATE TABLE IF NOT EXISTS srs2_assess (
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
 
+-- CBCL 儿童行为量表表 (6-18岁 113题+8子项)
+CREATE TABLE IF NOT EXISTS cbcl_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,
+  gender TEXT NOT NULL CHECK(gender IN ('male', 'female')),
+
+  -- Part 1: Social Competence (raw form data as JSON)
+  social_competence_data TEXT NOT NULL,
+
+  -- Calculated social competence scores
+  social_activity_score REAL,
+  social_social_score REAL,
+  social_school_score REAL,
+
+  -- Part 3: Behavior Problems
+  raw_answers TEXT NOT NULL,  -- JSON: { "1": 0, "2": 1, "56a": 2, ... }
+
+  -- Calculated factor scores (dynamic based on age/gender)
+  behavior_raw_scores TEXT NOT NULL,  -- JSON: { "factor_name": raw_score }
+  factor_t_scores TEXT NOT NULL,      -- JSON: { "factor_name": t_score }
+
+  -- Summary scores
+  total_problems_score INTEGER NOT NULL,
+  total_problems_t_score REAL,
+  internalizing_t_score REAL,
+  externalizing_t_score REAL,
+
+  -- Overall level
+  summary_level TEXT NOT NULL CHECK(summary_level IN ('normal', 'borderline', 'clinical')),
+
+  -- Metadata
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+-- CBCL评估表索引
+CREATE INDEX IF NOT EXISTS idx_cbcl_assess_student ON cbcl_assess(student_id);
+CREATE INDEX IF NOT EXISTS idx_cbcl_assess_created ON cbcl_assess(created_at DESC);
+
+-- SRS-2评估表索引
+CREATE INDEX IF NOT EXISTS idx_srs2_assess_student ON srs2_assess(student_id);
+CREATE INDEX IF NOT EXISTS idx_srs2_assess_created ON srs2_assess(created_at DESC);
+
 -- 系统配置表
 CREATE TABLE IF NOT EXISTS system_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
