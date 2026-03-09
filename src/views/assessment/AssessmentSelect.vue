@@ -178,6 +178,30 @@
             开始评估
           </el-button>
         </el-card>
+
+        <!-- CBCL量表卡片 -->
+        <el-card
+          class="scale-card"
+          shadow="hover"
+          @click="selectScale('cbcl')"
+        >
+          <div class="scale-icon cbcl-icon">
+            <el-icon size="60"><DataAnalysis /></el-icon>
+          </div>
+          <h3 class="scale-title">Achenbach儿童行为量表</h3>
+          <p class="scale-subtitle">(CBCL 家长版)</p>
+          <div class="scale-info">
+            <ul>
+              <li>适用年龄：4 - 16岁</li>
+              <li>题目数量：113道 + 社会能力评估</li>
+              <li>评估维度：社会能力、行为问题（内化/外化）</li>
+              <li>评估时间：约20-30分钟</li>
+            </ul>
+          </div>
+          <el-button type="warning" size="large" class="scale-btn">
+            开始评估
+          </el-button>
+        </el-card>
       </div>
 
       <!-- 评估说明 -->
@@ -206,12 +230,12 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding, Stamp, Avatar } from '@element-plus/icons-vue'
+import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding, Stamp, Avatar, DataAnalysis } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
 // 选择量表
-const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq' | 'srs2') => {
+const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq' | 'srs2' | 'cbcl') => {
   // 跳转到学生选择页面，传递量表类型参数
   router.push({
     path: '/assessment/select-student',
@@ -282,6 +306,11 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
 
 .srs2-icon {
   background: linear-gradient(135deg, #5B86E5 0%, #36D1DC 100%);
+  color: white;
+}
+
+.cbcl-icon {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
   color: white;
 }
 
