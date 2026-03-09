@@ -1,6 +1,6 @@
 /**
  * 数据库迁移脚本
- * 更新 report_record 表的 CHECK 约束，添加 conners-psq 和 conners-trs 类型
+ * 更新 report_record 表的 CHECK 约束，添加 conners-psq、conners-trs、sdq、srs2、cbcl 类型
  */
 
 import { getDatabase } from './init'
@@ -46,7 +46,7 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
       CREATE TABLE report_record_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_id INTEGER NOT NULL,
-        report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2')),
+        report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl')),
         assess_id INTEGER,
         plan_id INTEGER,
         training_record_id INTEGER,
@@ -85,7 +85,7 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
     db.run('COMMIT')
 
     console.log('[迁移] report_record 表约束更新成功！')
-    console.log('[迁移] 支持的报告类型: sm, weefim, training, iep, csirs, conners-psq, conners-trs')
+    console.log('[迁移] 支持的报告类型: sm, weefim, training, iep, csirs, conners-psq, conners-trs, sdq, srs2, cbcl')
 
     return {
       success: true,
@@ -140,8 +140,8 @@ export function needsMigration(): boolean {
     // results[0].values 是二维数组，取第一行第一列
     const sql = results[0].values[0][0] as string
 
-    // 检查约束是否包含 'conners-psq', 'conners-trs', 'sdq' 和 'srs2'
-    return !sql.includes("'conners-psq'") || !sql.includes("'conners-trs'") || !sql.includes("'sdq'") || !sql.includes("'srs2'")
+    // 检查约束是否包含 'conners-psq', 'conners-trs', 'sdq', 'srs2' 和 'cbcl'
+    return !sql.includes("'conners-psq'") || !sql.includes("'conners-trs'") || !sql.includes("'sdq'") || !sql.includes("'srs2'") || !sql.includes("'cbcl'")
   } catch (error) {
     // 如果查询失败，保守地认为不需要迁移
     console.warn('[needsMigration] 检查约束失败，跳过迁移:', error)
