@@ -28,7 +28,9 @@ progress:
 
 ## Project Reference
 **Core Value**: SCGP (Stellar Competency Growth Platform) provides special education teachers and clinicians with a comprehensive, offline, local-first assessment and intervention tool.
-**Current Focus**: Phase 2 MVP - Integrating SDQ (长处和困难问卷) assessment into the Emotional module.
+**Current Focus**: Phase 2 MVP - SRS-2 Integration
+
+**Plan**: SDQ Assessment Integration (Phase 2.1) ✅ → SRS-2 Assessment Integration (Phase 2.2) ✅
 
 ## Current Position
 - **Phase**: 2. Emotional & Social Expansion

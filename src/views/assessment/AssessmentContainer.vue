@@ -757,11 +757,12 @@ async function saveSRS2Assessment(startTime: string, endTime: string) {
 
   // 从维度分数中提取各维度得分
   const rawAnswers = scoreResult.value.rawAnswers || {}
+  const dimensionTScores = (scoreResult.value.extraData as any)?.dimensionTScores || {}
   const dimensionScores = scoreResult.value.dimensions.reduce((acc, dim) => {
     acc[dim.code] = {
       name: dim.name,
       rawScore: dim.rawScore,
-      tScore: dim.standardScore || 50,
+      tScore: dimensionTScores[dim.code] || dim.standardScore || 50,
       level: dim.level || 'normal',
       levelName: dim.levelName || '正常'
     }

@@ -30,7 +30,7 @@
         </div>
         <div class="info-item">
           <span class="label">年龄：</span>
-          <span class="value">{{ studentInfo.ageMonths }} 月</span>
+          <span class="value">{{ formatAge(studentInfo.ageMonths) }}</span>
         </div>
       </div>
     </el-card>
@@ -228,6 +228,20 @@ const totalLevelText = computed(() => {
 const formatDate = (dateStr: string | undefined) => {
   if (!dateStr) return '--'
   return new Date(dateStr).toLocaleDateString('zh-CN')
+}
+
+// 格式化年龄：将月龄转换为"X岁Y个月"格式
+const formatAge = (ageMonths: number | undefined) => {
+  if (!ageMonths && ageMonths !== 0) return '--'
+  const years = Math.floor(ageMonths / 12)
+  const months = ageMonths % 12
+  if (years === 0) {
+    return `${months}个月`
+  }
+  if (months === 0) {
+    return `${years}岁`
+  }
+  return `${years}岁${months}个月`
 }
 
 // 统一使用 severity 获取 UI 类型
