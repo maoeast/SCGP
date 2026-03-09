@@ -1148,6 +1148,61 @@ export class CBCLAssessmentAPI extends DatabaseAPI {
     const rowsAffected = this.execute('DELETE FROM cbcl_assess WHERE id = ?', [id])
     return rowsAffected > 0
   }
+
+  /**
+   * 迁移旧版社会能力数据到新版格式
+   * 用于向后兼容：将旧版只有计数字段的数据转换为包含文本输入的新格式
+   * @param oldData 旧版社会能力数据
+   * @returns 新版格式的社会能力数据
+   */
+  migrateSocialCompetenceData(oldData: any): any {
+    // 如果已经是新版格式（包含sports等文本字段），直接返回
+    if (oldData.sports && oldData.hobbies && oldData.organizations && oldData.labor) {
+      return oldData
+    }
+
+    // 旧版数据只有计数字段，需要添加默认的文本结构
+    const defaultTextItem = { a: '', b: '', c: '', none: false }
+
+    return {
+      // 添加新版字段默认值
+      reporter: oldData.reporter || 'mother',
+      other_relation: oldData.other_relation || '',
+      father_occupation: oldData.father_occupation || '',
+      mother_occupation: oldData.mother_occupation || '',
+
+      // 根据旧版计数填充文本字段（无法还原原始文本，留空）
+      sports: {
+        ...defaultTextItem,
+        none: oldData.I_count === 0
+      },
+      hobbies: {
+        ...defaultTextItem,
+        none: oldData.II_count === 0
+      },
+      organizations: {
+        ...defaultTextItem,
+        none: oldData.III_count === 0
+      },
+      labor: {
+        ...defaultTextItem,
+        none: oldData.IV_count === 0
+      },
+
+      // 保留所有旧版字段
+      ...oldData,
+
+      // 添加新版条件字段默认值
+      VII_notInSchool: oldData.VII_notInSchool || false,
+      VII_specialType: oldData.VII_specialType || '',
+      VII_retainedGrade: oldData.VII_retainedGrade || '',
+      VII_retainedReason: oldData.VII_retainedReason || '',
+      VII_problemContent: oldData.VII_problemContent || '',
+      VII_problemStart: oldData.VII_problemStart || '',
+      VII_isSolved: oldData.VII_isSolved || false,
+      VII_solvedWhen: oldData.VII_solvedWhen || ''
+    }
+  }
 }
 
 // Conners PSQ 数据库 API
