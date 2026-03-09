@@ -34,8 +34,17 @@ progress:
 
 ## Current Position
 - **Phase**: 4. CBCL Assessment Integration
-- **Plan**: 04.3 CBCL Driver
+- **Plan**: 04.4 UI Implementation
 - **Status**: Completed
+
+### Completed Plan
+**04.4-ui-implementation** - CBCL UI implementation complete
+- CBCLSocialForm.vue with all 7 sections for Part 2 data collection
+- CBCL Report.vue with ECharts clinical profile chart
+- AssessmentContainer.vue two-step flow (social form -> behavior questions)
+- Pagination for 113 questions (10 per page)
+- Entry point registrations in AssessmentSelect, SelectStudent, Reports
+- Medical disclaimer on report page
 
 ### Completed Plan
 **04.3-cbcl-driver** - CBCL scoring engine implementation complete
@@ -45,6 +54,7 @@ progress:
 - T-score estimation and clinical level assignment
 - Comprehensive feedback generation with placeholder replacement
 - Driver registered in assessment index
+- getQuestions() now returns actual CBCL questions from cbcl-questions.ts
 
 ### Completed Plan
 **04.2-database-schema** - CBCL database schema implementation complete
@@ -66,12 +76,15 @@ progress:
   - CBCL database schema uses JSON TEXT fields for dynamic factor scores and raw answers, matching SRS-2 pattern.
   - CBCL T-score estimation uses simplified linear formula based on p69/p98 thresholds (full lookup tables can be added later).
   - Factor name mapping bridges Chinese factor names to feedback config keys for consistent feedback generation.
+  - CBCL UI uses strict v-if="scaleCode==='cbcl'" isolation to protect existing scales.
+  - CBCL two-step wizard: SocialForm -> Behavior Questions with pagination (10 per page).
+  - CBCL Report uses ECharts for clinical profile chart with T-score reference lines at 65 and 70.
 - **Blockers**:
   - Visual tracking games are deferred due to hardware/lighting dependencies making testing unreliable.
 
 ## Session Continuity
-- Last Session: CBCL Driver (04.3) completed
-- Next Action: Implement CBCL UI components (04.4) for assessment flow integration
+- Last Session: CBCL UI Implementation (04.4) completed
+- Next Action: Phase 4 CBCL Assessment Integration is complete
 
 ### Quick Tasks Completed
 | # | Description | Date | Commit | Status | Directory |
