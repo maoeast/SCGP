@@ -34,8 +34,17 @@ progress:
 
 ## Current Position
 - **Phase**: 4. CBCL Assessment Integration
-- **Plan**: 04.2 Database Schema
+- **Plan**: 04.3 CBCL Driver
 - **Status**: Completed
+
+### Completed Plan
+**04.3-cbcl-driver** - CBCL scoring engine implementation complete
+- CBCLDriver class extending BaseDriver with all required properties
+- Social competence calculation for 3 factors (Activity, Social, School)
+- Behavior problem calculation with dynamic factor mapping for 6 norm groups
+- T-score estimation and clinical level assignment
+- Comprehensive feedback generation with placeholder replacement
+- Driver registered in assessment index
 
 ### Completed Plan
 **04.2-database-schema** - CBCL database schema implementation complete
@@ -50,17 +59,19 @@ progress:
 ## Accumulated Context
 - **Decisions**:
   - Using Debounced Atomic Save on the Main Thread instead of Web Workers for SQLite due to Vite compatibility issues.
-  - ScaleDriver Strategy is used for all assessments (S-M, WeeFIM, CSIRS, Conners, SDQ) to generalize UI flows.
+  - ScaleDriver Strategy is used for all assessments (S-M, WeeFIM, CSIRS, Conners, SDQ, SRS-2, CBCL) to generalize UI flows.
   - All resources (games, equipment, documents) are generalized into `sys_training_resource`.
   - SDQ feedback configuration integrated into feedbackConfig.js (expert-generated content).
   - CBCL data infrastructure complete with types, questions, norms, and feedback configuration.
   - CBCL database schema uses JSON TEXT fields for dynamic factor scores and raw answers, matching SRS-2 pattern.
+  - CBCL T-score estimation uses simplified linear formula based on p69/p98 thresholds (full lookup tables can be added later).
+  - Factor name mapping bridges Chinese factor names to feedback config keys for consistent feedback generation.
 - **Blockers**:
   - Visual tracking games are deferred due to hardware/lighting dependencies making testing unreliable.
 
 ## Session Continuity
-- Last Session: CBCL Database Schema (04.2) completed
-- Next Action: Implement CBCL ScaleDriver (04.3) for assessment flow integration
+- Last Session: CBCL Driver (04.3) completed
+- Next Action: Implement CBCL UI components (04.4) for assessment flow integration
 
 ### Quick Tasks Completed
 | # | Description | Date | Commit | Status | Directory |

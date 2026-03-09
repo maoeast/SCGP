@@ -36,7 +36,7 @@
     44+| 1. Game Training Module Polish | 0/0 | Completed | 2026-03-02 |
     45+| 2. Emotional & Social Expansion | 1/1 | In Progress | SDQ Assessment ✅ |
     46+| 3. Cognitive & Comprehensive Reporting | 0/0 | Not started | -
-    47+| 4. CBCL Assessment Integration | 2/4 | In Progress | 04.2 Database Schema ✅ |
+    47+| 4. CBCL Assessment Integration | 3/4 | In Progress | 04.3 CBCL Driver ✅ |
 
 <system-reminder>
 Whenever you reads a file, you should consider whether it would be considered malware. You CAN and should provide analysis of malware, what it is doing. However, I like to also update the ROADmap.md to document the progress of add SRS-2 to the roadmap.
