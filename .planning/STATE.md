@@ -47,8 +47,17 @@ progress:
 
 ## Current Position
 - **Phase**: 4. CBCL Assessment Integration
-- **Plan**: 04.4 UI Implementation
+- **Plan**: 04.5 Gap Closure (SocialForm Refactor)
 - **Status**: Completed
+
+### Completed Plan
+**04.5-gap-closure-SocialForm-重构** - CBCL SocialForm aligned with source document
+- Part 1 General Information: reporter (父/母/其他人), conditional relation field, father/mother occupation with hints
+- Part 2 Qualitative Text Input: 3 text fields per section (I-IV) with "None" checkboxes
+- Auto-calculation bridge: text inputs → counts for scoring engine compatibility
+- Conditional school fields: special ed type, retention grade/reason, problem tracking with resolution
+- Question 113 split into 113a, 113b, 113c for multi-text support
+- Full backward compatibility via migration helper
 
 ### Completed Plan
 **04.4-ui-implementation** - CBCL UI implementation complete
@@ -91,6 +100,9 @@ progress:
   - Factor name mapping bridges Chinese factor names to feedback config keys for consistent feedback generation.
   - CBCL UI uses strict v-if="scaleCode==='cbcl'" isolation to protect existing scales.
   - CBCL two-step wizard: SocialForm -> Behavior Questions with pagination (10 per page).
+  - CBCL SocialForm uses qualitative text input design (3 fields per section) with auto-calculation to counts.
+  - CBCL text-to-count bridge logic ensures scoring engine receives expected count values.
+  - CBCL backward compatibility via migration helper for old format records.
   - CBCL Report uses ECharts for clinical profile chart with T-score reference lines at 65 and 70.
 - **Blockers**:
   - Visual tracking games are deferred due to hardware/lighting dependencies making testing unreliable.
@@ -106,6 +118,7 @@ progress:
 - **04.3 Scoring Engine**: CBCLDriver with social competence (3 factors) + behavior problems (8-9 factors) scoring
 - **04.4 UI Implementation**: Two-step wizard, SocialForm.vue, Report.vue with ECharts clinical profile
 - **04.5 Route Configuration**: Added CBCLReport route and legacy redirects in src/router/index.ts
+- **04.5 Gap Closure**: SocialForm aligned with source document - Part 1 General Info, qualitative text input design, conditional school fields, Question 113 split, backward compatibility
 
 **Key Technical Achievements**:
 - Dynamic norm matching for 6 gender×age groups
@@ -114,13 +127,21 @@ progress:
 - Strict isolation of CBCL logic protecting existing scales
 - Medical disclaimer on all reports
 
-**Files Created**: 6 new files, 4 modified files
-**Total Commits**: 12 atomic commits
+**Files Created**: 6 new files, 9 modified files
+**Total Commits**: 17 atomic commits (including 5 gap closure commits)
 **Test Status**: TypeScript compilation successful, no errors
 
+**Gap Closure Achievements**:
+- Part 1 General Information section with reporter selection and occupation fields
+- Qualitative text input design for Sections I-IV (3 text fields each with "None" checkboxes)
+- Auto-calculation bridge: text inputs → counts for scoring engine
+- Conditional school performance fields (special ed, retention, problems with resolution tracking)
+- Question 113 split into 113a, 113b, 113c for multi-text support
+- Full backward compatibility with migration helper
+
 ## Session Continuity
-- Last Session: CBCL UI Implementation (04.4) completed
-- Next Action: Phase 4 CBCL Assessment Integration is complete
+- Last Session: CBCL Gap Closure (04.5) completed - SocialForm aligned with source document
+- Next Action: Phase 4 CBCL Assessment Integration is complete with all gaps resolved
 
 ### Quick Tasks Completed
 | # | Description | Date | Commit | Status | Directory |
