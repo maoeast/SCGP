@@ -55,6 +55,7 @@
               <el-option label="Conners教师问卷报告(TRS)" value="conners-trs" />
               <el-option label="SDQ长处和困难问卷评估报告" value="sdq" />
               <el-option label="SRS-2社交反应量表评估报告" value="srs2" />
+              <el-option label="CBCL儿童行为量表评估报告" value="cbcl" />
               <el-option label="IEP评估报告" value="iep" />
               <el-option label="训练报告" value="training" />
             </el-select>
@@ -279,6 +280,7 @@ const getReportTypeTagType = (type: string) => {
     'conners-trs': 'info',
     'sdq': 'warning',
     'srs2': 'primary',
+    'cbcl': 'success',
     'iep': 'danger',
     'training': 'primary'
   }
@@ -295,6 +297,7 @@ const getReportTypeName = (type: string) => {
     'conners-trs': 'Conners教师问卷报告(TRS)',
     'sdq': 'SDQ长处和困难问卷评估报告',
     'srs2': 'SRS-2社交反应量表评估报告',
+    'cbcl': 'CBCL儿童行为量表评估报告',
     'iep': 'IEP评估报告',
     'training': '训练报告'
   }
@@ -375,6 +378,7 @@ const viewReport = (report: any) => {
     'conners-trs': `/assessment/conners-trs/report/${report.assess_id}`,
     'sdq': `/assessment/sdq/report/${report.assess_id}`,
     'srs2': `/assessment/srs2/report/${report.assess_id}`,
+    'cbcl': `/assessment/cbcl/report/${report.assess_id}`,
     'iep': `/games/report?recordId=${report.training_record_id}&studentId=${report.student_id}`,
     'training': `/training/plans/${report.plan_id}` // 训练报告暂时跳转到计划详情
   }
