@@ -1398,7 +1398,76 @@ export const ASSESSMENT_LIBRARY = {
       }
     },
 
-    // 4. 默认专家寄语
+    // 4. 宽带量表 (Broad Band Scales)
+    broad_band: {
+      internalizing: {
+        label: "内化问题 (Internalizing)",
+        description: "指向内部的压力释放（如焦虑、抑郁、退缩），这类孩子容易被忽视。",
+        levels: [
+          {
+            range: [0, 63],
+            severity: "success",
+            title: "内化问题处于正常范围",
+            content: "[儿童姓名]的情绪压力释放方式较为健康，没有表现出显著的内向化情绪问题。",
+            structured_advice: {
+              interaction_strategy: [
+                "**情绪接纳**：继续接纳孩子的情绪表达，保持开放的沟通渠道。"
+              ]
+            }
+          },
+          {
+            range: [64, 120],
+            severity: "danger",
+            title: "显著内化倾向",
+            content: "[儿童姓名]主要将压力转向自身。这类孩子在学校可能因为“不惹事”而被忽视，但其实内心容易痛苦。",
+            structured_advice: {
+              interaction_strategy: [
+                "**看见与倾听**：关键在于看见和倾听。鼓励表达情感，增加亲子陪伴的质量，避免过度施压。"
+              ],
+              professional_support: [
+                "建议咨询儿童心理医生或沙盘游戏治疗师，关注孩子的内在情绪世界。"
+              ]
+            }
+          }
+        ]
+      },
+      externalizing: {
+        label: "外化问题 (Externalizing)",
+        description: "指向外部的压力释放（如攻击、违纪），这类孩子常被视为“捣蛋鬼”。",
+        levels: [
+          {
+            range: [0, 63],
+            severity: "success",
+            title: "外化问题处于正常范围",
+            content: "[儿童姓名]能够较好地控制冲动行为，没有表现出显著的向外释放压力的行为问题。",
+            structured_advice: {
+              interaction_strategy: [
+                "**正向引导**：继续用正向行为支持策略，肯定孩子的自控表现。"
+              ]
+            }
+          },
+          {
+            range: [64, 120],
+            severity: "danger",
+            title: "显著外化倾向",
+            content: "[儿童姓名]主要将压力释放到外部环境。这通常是他们**求助的错误方式**——因为不知道如何正确处理挫败感。",
+            structured_advice: {
+              environment_setup: [
+                "**规则与后果**：关键在于规则和后果。需要专业的行为矫正策略，将能量引导至体育运动等正向途径。"
+              ],
+              interaction_strategy: [
+                "**行为功能分析**：思考行为背后的功能——是为了获得关注？逃避任务？还是寻求感官刺激？"
+              ],
+              professional_support: [
+                "建议寻求专业心理咨询师或行为矫正专家的介入，建立正向行为支持计划（PBS）。"
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    // 5. 默认专家寄语
     expert_message: "每个孩子都是独特的。量表的分数只是帮助我们读懂孩子需求的工具，而非定义孩子的标签。只要给予恰当的理解与支持，[儿童姓名]完全有能力发展出适应环境的策略，实现属于他的精彩成长。"
   }
 };

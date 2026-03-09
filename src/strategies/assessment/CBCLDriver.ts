@@ -72,6 +72,30 @@ export interface CBCLBehaviorScoreResult {
   summaryLevel: 'normal' | 'borderline' | 'clinical'
 }
 
+/** 宽带量表反馈 */
+export interface CBCLBroadBandFeedback {
+  internalizing: {
+    tScore: number
+    title: string
+    content: string
+    structuredAdvice: {
+      environment_setup?: string[]
+      interaction_strategy?: string[]
+      professional_support?: string[]
+    }
+  }
+  externalizing: {
+    tScore: number
+    title: string
+    content: string
+    structuredAdvice: {
+      environment_setup?: string[]
+      interaction_strategy?: string[]
+      professional_support?: string[]
+    }
+  }
+}
+
 /** CBCL 结构化反馈 */
 export interface CBCLStructuredFeedback {
   overallSummary: string[]
@@ -92,6 +116,7 @@ export interface CBCLStructuredFeedback {
     factors: CBCLFactorScore[]
     normGroup: CBCLNormGroup
   }
+  broadband: CBCLBroadBandFeedback
 }
 
 // ==========================================
@@ -373,18 +398,20 @@ export class CBCLDriver extends BaseDriver {
     // 从 cbcl-questions.ts 加载题目，转换为 ScaleQuestion 格式
     return CBCL_QUESTIONS.map(q => ({
       id: q.id,
-      text: q.text,
+      content: q.text,
       options: CBCL_OPTIONS.map(opt => ({
         value: opt.value,
         label: opt.label,
         score: opt.value // CBCL 分值就是选项值 (0, 1, 2)
       })),
-      dimension: q.isSubItem ? '体诉' : 'behavior',
-      dimensionName: q.isSubItem ? '体诉（子项）' : '行为问题',
+      dimension: '', // 临床盲测：隐藏维度名称
+      dimensionName: '', 
+      helpText: '请根据孩子最近半年内的实际表现进行评价。',
       metadata: {
         hasDescription: q.hasDescription,
         isSubItem: q.isSubItem,
-        parentId: q.parentId
+        parentId: q.parentId,
+        originalDimension: q.isSubItem ? '体诉' : 'behavior'
       }
     }))
   }
@@ -718,12 +745,40 @@ export class CBCLDriver extends BaseDriver {
       }
     })
 
-    // 4. 占位符替换
+    // 4. 生成宽带量表反馈
+    const internalizingTScore = extraData?.internalizingTScore || 50
+    const externalizingTScore = extraData?.externalizingTScore || 50
+
+    const internalizingConfig = this.matchTScoreToLevel(
+      feedbackConfig.broad_band?.internalizing?.levels || [],
+      internalizingTScore
+    )
+    const externalizingConfig = this.matchTScoreToLevel(
+      feedbackConfig.broad_band?.externalizing?.levels || [],
+      externalizingTScore
+    )
+
+    const broadbandFeedback: CBCLBroadBandFeedback = {
+      internalizing: {
+        tScore: internalizingTScore,
+        title: internalizingConfig?.title || '',
+        content: internalizingConfig?.content || '',
+        structuredAdvice: internalizingConfig?.structured_advice || {}
+      },
+      externalizing: {
+        tScore: externalizingTScore,
+        title: externalizingConfig?.title || '',
+        content: externalizingConfig?.content || '',
+        structuredAdvice: externalizingConfig?.structured_advice || {}
+      }
+    }
+
+    // 5. 占位符替换
     const replacePlaceholders = (text: string): string => {
       return text.replace(/\[儿童姓名\]/g, studentName)
     }
 
-    // 5. 返回结构化反馈
+    // 6. 返回结构化反馈
     return {
       overallSummary: totalLevelConfig?.content ? [replacePlaceholders(totalLevelConfig.content)] : [],
       overallAdvice: (totalLevelConfig?.base_advice || []).map(replacePlaceholders),
@@ -739,6 +794,20 @@ export class CBCLDriver extends BaseDriver {
       clinicalProfile: {
         factors: behaviorScores?.factors || [],
         normGroup: behaviorScores?.normGroup || 'boy_6_11'
+      },
+      broadband: {
+        internalizing: {
+          tScore: internalizingTScore,
+          title: replacePlaceholders(broadbandFeedback.internalizing.title),
+          content: replacePlaceholders(broadbandFeedback.internalizing.content),
+          structuredAdvice: broadbandFeedback.internalizing.structuredAdvice
+        },
+        externalizing: {
+          tScore: externalizingTScore,
+          title: replacePlaceholders(broadbandFeedback.externalizing.title),
+          content: replacePlaceholders(broadbandFeedback.externalizing.content),
+          structuredAdvice: broadbandFeedback.externalizing.structuredAdvice
+        }
       }
     }
   }

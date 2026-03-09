@@ -65,9 +65,9 @@
       </el-row>
       <div class="social-feedback" v-if="feedback?.socialCompetence">
         <h4>评估说明</h4>
-        <p>{{ feedback.socialCompetence.summary }}</p>
+        <div class="feedback-content" v-html="formatMarkdown(feedback.socialCompetence.summary)"></div>
         <h4>建议</h4>
-        <p>{{ feedback.socialCompetence.advice }}</p>
+        <div class="feedback-content" v-html="formatMarkdown(feedback.socialCompetence.advice)"></div>
       </div>
     </el-card>
 
@@ -105,8 +105,14 @@
         <el-table-column type="expand">
           <template #default="{ row }">
             <div class="expanded-content">
-              <p v-if="row.summary"><strong>评估说明：</strong>{{ row.summary }}</p>
-              <p v-if="row.advice"><strong>专家建议：</strong>{{ row.advice }}</p>
+              <div v-if="row.summary" class="feedback-section">
+                <div class="section-title"><span class="section-icon">📋</span>评估说明</div>
+                <div class="section-content" v-html="formatMarkdown(row.summary)"></div>
+              </div>
+              <div v-if="row.advice" class="feedback-section">
+                <div class="section-title"><span class="section-icon">💡</span>专家建议</div>
+                <div class="section-content" v-html="formatMarkdown(row.advice)"></div>
+              </div>
             </div>
           </template>
         </el-table-column>
@@ -131,22 +137,76 @@
         <h3>🎯 宽带量表</h3>
       </template>
       <el-row :gutter="20">
+        <!-- 内化问题 -->
         <el-col :span="12">
-          <div class="broadband-item">
-            <div class="broadband-label">内化问题</div>
+          <div class="broadband-item" :class="getTScoreClass(broadBandData.internalizingTScore)">
+            <div class="broadband-header">
+              <span class="broadband-icon">🧠</span>
+              <span class="broadband-label">内化问题</span>
+              <el-tag :type="broadBandData.internalizingTScore >= 64 ? 'danger' : 'success'" size="small">
+                {{ broadBandData.internalizingTScore >= 64 ? '需关注' : '正常' }}
+              </el-tag>
+            </div>
             <div class="broadband-score" :class="getTScoreClass(broadBandData.internalizingTScore)">
               T = {{ broadBandData.internalizingTScore }}
             </div>
-            <div class="broadband-desc">焦虑、抑郁、躯体化等内化症状</div>
+            <div class="broadband-desc">焦虑、抑郁、躯体化、退缩等内向表现</div>
+            <!-- 详细反馈 -->
+            <div v-if="feedback?.broadband?.internalizing" class="broadband-feedback">
+              <div class="broadband-title">{{ feedback.broadband.internalizing.title }}</div>
+              <div class="broadband-content" v-html="formatMarkdown(feedback.broadband.internalizing.content)"></div>
+              <!-- 结构化建议 -->
+              <div v-if="feedback.broadband.internalizing.structuredAdvice" class="structured-advice">
+                <div v-if="feedback.broadband.internalizing.structuredAdvice.environment_setup?.length" class="advice-block">
+                  <div class="advice-block-title"><span class="advice-icon">🏠</span>环境创设</div>
+                  <div class="advice-block-content" v-html="formatMarkdown(formatMarkdownList(feedback.broadband.internalizing.structuredAdvice.environment_setup))"></div>
+                </div>
+                <div v-if="feedback.broadband.internalizing.structuredAdvice.interaction_strategy?.length" class="advice-block">
+                  <div class="advice-block-title"><span class="advice-icon">🤝</span>互动策略</div>
+                  <div class="advice-block-content" v-html="formatMarkdown(formatMarkdownList(feedback.broadband.internalizing.structuredAdvice.interaction_strategy))"></div>
+                </div>
+                <div v-if="feedback.broadband.internalizing.structuredAdvice.professional_support?.length" class="advice-block">
+                  <div class="advice-block-title"><span class="advice-icon">👨‍⚕️</span>专业支持</div>
+                  <div class="advice-block-content" v-html="formatMarkdown(formatMarkdownList(feedback.broadband.internalizing.structuredAdvice.professional_support))"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </el-col>
+        <!-- 外化问题 -->
         <el-col :span="12">
-          <div class="broadband-item">
-            <div class="broadband-label">外化问题</div>
+          <div class="broadband-item" :class="getTScoreClass(broadBandData.externalizingTScore)">
+            <div class="broadband-header">
+              <span class="broadband-icon">⚡</span>
+              <span class="broadband-label">外化问题</span>
+              <el-tag :type="broadBandData.externalizingTScore >= 64 ? 'danger' : 'success'" size="small">
+                {{ broadBandData.externalizingTScore >= 64 ? '需关注' : '正常' }}
+              </el-tag>
+            </div>
             <div class="broadband-score" :class="getTScoreClass(broadBandData.externalizingTScore)">
               T = {{ broadBandData.externalizingTScore }}
             </div>
-            <div class="broadband-desc">违纪、攻击性等外化行为</div>
+            <div class="broadband-desc">违纪、攻击性、冲动等多动/违抗表现</div>
+            <!-- 详细反馈 -->
+            <div v-if="feedback?.broadband?.externalizing" class="broadband-feedback">
+              <div class="broadband-title">{{ feedback.broadband.externalizing.title }}</div>
+              <div class="broadband-content" v-html="formatMarkdown(feedback.broadband.externalizing.content)"></div>
+              <!-- 结构化建议 -->
+              <div v-if="feedback.broadband.externalizing.structuredAdvice" class="structured-advice">
+                <div v-if="feedback.broadband.externalizing.structuredAdvice.environment_setup?.length" class="advice-block">
+                  <div class="advice-block-title"><span class="advice-icon">🏠</span>环境创设</div>
+                  <div class="advice-block-content" v-html="formatMarkdown(formatMarkdownList(feedback.broadband.externalizing.structuredAdvice.environment_setup))"></div>
+                </div>
+                <div v-if="feedback.broadband.externalizing.structuredAdvice.interaction_strategy?.length" class="advice-block">
+                  <div class="advice-block-title"><span class="advice-icon">🤝</span>互动策略</div>
+                  <div class="advice-block-content" v-html="formatMarkdown(formatMarkdownList(feedback.broadband.externalizing.structuredAdvice.interaction_strategy))"></div>
+                </div>
+                <div v-if="feedback.broadband.externalizing.structuredAdvice.professional_support?.length" class="advice-block">
+                  <div class="advice-block-title"><span class="advice-icon">👨‍⚕️</span>专业支持</div>
+                  <div class="advice-block-content" v-html="formatMarkdown(formatMarkdownList(feedback.broadband.externalizing.structuredAdvice.professional_support))"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </el-col>
       </el-row>
@@ -167,14 +227,12 @@
         </div>
         <div class="summary-content" v-if="feedback?.overallSummary?.length">
           <h4>评估总结</h4>
-          <p v-for="(paragraph, idx) in feedback.overallSummary" :key="idx">{{ paragraph }}</p>
+          <div v-for="(paragraph, idx) in feedback.overallSummary" :key="idx" class="summary-paragraph" v-html="formatMarkdown(paragraph)"></div>
         </div>
         <div class="expert-advice" v-if="feedback?.overallAdvice?.length">
           <h4>专家建议</h4>
           <div class="advice-list">
-            <div v-for="(advice, idx) in feedback.overallAdvice" :key="idx" class="advice-item">
-              {{ advice }}
-            </div>
+            <div v-for="(advice, idx) in feedback.overallAdvice" :key="idx" class="advice-item" v-html="formatMarkdown(advice)"></div>
           </div>
         </div>
       </div>
@@ -390,6 +448,22 @@ const broadBandData = computed(() => {
 // 计算属性：总分数据
 const totalProblemsScore = computed(() => assessData.value?.total_problems_score || 0)
 const totalProblemsTScore = computed(() => assessData.value?.total_problems_t_score || 50)
+
+// Markdown 格式化为 HTML
+const formatMarkdown = (text: string): string => {
+  if (!text) return ''
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\n/g, '<br/>')
+}
+
+// 将数组转换为 Markdown 列表
+const formatMarkdownList = (items: string[] | undefined): string => {
+  if (!items || items.length === 0) return ''
+  return items.map(item => `• ${item}`).join('\n')
+}
 
 // 方法
 const formatDate = (dateStr: string | undefined) => {
@@ -699,6 +773,45 @@ onUnmounted(() => {
   margin-bottom: 0;
 }
 
+.feedback-content {
+  line-height: 1.8;
+  color: #606266;
+  margin-bottom: 16px;
+}
+
+.feedback-content:last-child {
+  margin-bottom: 0;
+}
+
+/* 展开内容样式 */
+.feedback-section {
+  margin-bottom: 16px;
+}
+
+.feedback-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-icon {
+  font-size: 16px;
+}
+
+.section-content {
+  line-height: 1.8;
+  color: #606266;
+  padding-left: 22px;
+}
+
 .clinical-profile-card {
   margin-bottom: 20px;
 }
@@ -799,27 +912,112 @@ onUnmounted(() => {
 }
 
 .broadband-item {
-  text-align: center;
-  padding: 24px;
+  padding: 20px;
   background: #f5f7fa;
   border-radius: 8px;
+  border: 2px solid transparent;
+  transition: all 0.3s;
+}
+
+.broadband-item.score-normal {
+  border-color: #67c23a;
+  background: linear-gradient(135deg, #f0f9eb 0%, #e6f7d6 100%);
+}
+
+.broadband-item.score-borderline {
+  border-color: #e6a23c;
+  background: linear-gradient(135deg, #fdf6ec 0%, #faecd8 100%);
+}
+
+.broadband-item.score-clinical {
+  border-color: #f56c6c;
+  background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
+}
+
+.broadband-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.broadband-icon {
+  font-size: 24px;
 }
 
 .broadband-label {
   font-size: 16px;
+  font-weight: 600;
   color: #303133;
-  margin-bottom: 12px;
 }
 
 .broadband-score {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: bold;
+  text-align: center;
   margin-bottom: 8px;
 }
 
 .broadband-desc {
   font-size: 13px;
   color: #909399;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.broadband-feedback {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #dcdfe6;
+}
+
+.broadband-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.broadband-content {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #606266;
+  margin-bottom: 12px;
+}
+
+.structured-advice {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.advice-block {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.advice-block-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.advice-icon {
+  font-size: 14px;
+}
+
+.advice-block-content {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #606266;
+  padding-left: 20px;
 }
 
 .total-summary-card {
@@ -873,11 +1071,15 @@ onUnmounted(() => {
   color: #303133;
 }
 
-.summary-content p {
+.summary-content .summary-paragraph {
   line-height: 1.8;
   color: #606266;
   margin: 0 0 12px 0;
   text-indent: 2em;
+}
+
+.summary-content .summary-paragraph:last-child {
+  margin-bottom: 0;
 }
 
 .advice-list {
