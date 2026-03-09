@@ -579,7 +579,7 @@ export class CBCLDriver extends BaseDriver {
 
     const externalizingTScore = hasClinicalExternalizing ? 70 : hasBorderlineExternalizing ? 65 : 50
 
-    return {
+    const result = {
       normGroup,
       factors: factorScores,
       totalProblemsScore: totalRawScore,
@@ -590,6 +590,8 @@ export class CBCLDriver extends BaseDriver {
       externalizingTScore,
       summaryLevel
     }
+    console.log('CBCLDriver: calculateBehaviorProblems 返回结果:', result)
+    return result
   }
 
   /**
@@ -673,6 +675,7 @@ export class CBCLDriver extends BaseDriver {
     }
 
     console.log('%c========== CBCL 评分计算完成 ==========', 'color: #2196F3; font-size: 14px; font-weight: bold;')
+    console.log('CBCLDriver: calculateScore 返回的 behaviorScores:', behaviorScores)
 
     return {
       scaleCode: this.scaleCode,

@@ -883,11 +883,24 @@ async function saveCBCLAssessment(startTime: string, endTime: string) {
   // 构建原始答案 JSON
   const rawAnswers = scoreResult.value.rawAnswers || {}
 
-  // 构建行为因子原始分 JSON
-  const behaviorRawScores = cbclData?.rawScores || {}
+  // 构建行为因子原始分 JSON 和 T 分数 JSON
+  // 注意：cbclData.factors 是数组，需要转换为对象格式 { 因子名: 分数 }
+  const behaviorRawScores: Record<string, number> = {}
+  const factorTScores: Record<string, number> = {}
 
-  // 构建因子 T 分数 JSON
-  const factorTScores = cbclData?.tScores || {}
+  if (cbclData?.factors && Array.isArray(cbclData.factors)) {
+    for (const factor of cbclData.factors) {
+      if (factor.name) {
+        behaviorRawScores[factor.name] = factor.rawScore || 0
+        factorTScores[factor.name] = factor.tScore || 50
+      }
+    }
+  }
+
+  console.log('保存到数据库的 cbclData:', cbclData)
+  console.log('保存到数据库的 behavior_raw_scores:', JSON.stringify(behaviorRawScores))
+  console.log('保存到数据库的 factor_t_scores:', JSON.stringify(factorTScores))
+  console.log('保存到数据库的 factors 数组:', cbclData?.factors)
 
   // 1. 创建评估主记录
   db.run(

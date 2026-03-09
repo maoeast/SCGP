@@ -58,6 +58,10 @@
         <el-col :span="8" v-for="factor in socialFactors" :key="factor.code">
           <div class="score-card" :class="factor.levelClass">
             <div class="score-value">{{ factor.score.toFixed(1) }}</div>
+            <div class="score-meta">
+              <span class="raw-score-label">原始分</span>
+              <span class="t-score-display" :class="'t-level-' + factor.level">T ≈ {{ factor.tScore }}</span>
+            </div>
             <div class="score-label">{{ factor.name }}</div>
             <el-tag :type="factor.tagType" size="small">{{ factor.status }}</el-tag>
           </div>
@@ -75,7 +79,7 @@
     <el-card class="clinical-profile-card">
       <template #header>
         <div class="chart-header">
-          <h3>📈 临床剖面图</h3>
+          <h3>📈 行为特征剖面图</h3>
           <span class="norm-group" v-if="normGroupLabel">常模组：{{ normGroupLabel }}</span>
         </div>
       </template>
@@ -91,7 +95,7 @@
         </span>
         <span class="legend-item clinical">
           <span class="legend-dot" style="background: #f56c6c;"></span>
-          临床 (T &ge; 70)
+          需关注 (T &ge; 70)
         </span>
       </div>
     </el-card>
@@ -143,8 +147,8 @@
             <div class="broadband-header">
               <span class="broadband-icon">🧠</span>
               <span class="broadband-label">内化问题</span>
-              <el-tag :type="broadBandData.internalizingTScore >= 64 ? 'danger' : 'success'" size="small">
-                {{ broadBandData.internalizingTScore >= 64 ? '需关注' : '正常' }}
+              <el-tag :type="getTScoreTagType(broadBandData.internalizingTScore)" size="small">
+                {{ getTScoreLabel(broadBandData.internalizingTScore) }}
               </el-tag>
             </div>
             <div class="broadband-score" :class="getTScoreClass(broadBandData.internalizingTScore)">
@@ -179,8 +183,8 @@
             <div class="broadband-header">
               <span class="broadband-icon">⚡</span>
               <span class="broadband-label">外化问题</span>
-              <el-tag :type="broadBandData.externalizingTScore >= 64 ? 'danger' : 'success'" size="small">
-                {{ broadBandData.externalizingTScore >= 64 ? '需关注' : '正常' }}
+              <el-tag :type="getTScoreTagType(broadBandData.externalizingTScore)" size="small">
+                {{ getTScoreLabel(broadBandData.externalizingTScore) }}
               </el-tag>
             </div>
             <div class="broadband-score" :class="getTScoreClass(broadBandData.externalizingTScore)">
@@ -225,14 +229,27 @@
             <span class="t-score" :class="getTScoreClass(totalProblemsTScore)">(T = {{ totalProblemsTScore }})</span>
           </div>
         </div>
-        <div class="summary-content" v-if="feedback?.overallSummary?.length">
+        <!-- 情况1：总分正常但子项异常时的特殊提示 -->
+        <div v-if="overallAssessment" class="summary-content">
+          <h4 :class="'severity-' + overallAssessment.severity">{{ overallAssessment.title }}</h4>
+          <div class="summary-paragraph" v-html="formatMarkdown(overallAssessment.content)"></div>
+          <div class="summary-paragraph detail-text" v-html="formatMarkdown(overallAssessment.detail)"></div>
+        </div>
+        <!-- 情况2：正常使用反馈引擎内容 -->
+        <div v-else-if="feedback?.overallSummary?.length" class="summary-content">
           <h4>评估总结</h4>
           <div v-for="(paragraph, idx) in feedback.overallSummary" :key="idx" class="summary-paragraph" v-html="formatMarkdown(paragraph)"></div>
         </div>
-        <div class="expert-advice" v-if="feedback?.overallAdvice?.length">
+        <!-- 建议部分 -->
+        <div class="expert-advice" v-if="overallAssessment?.advice?.length || feedback?.overallAdvice?.length">
           <h4>专家建议</h4>
           <div class="advice-list">
-            <div v-for="(advice, idx) in feedback.overallAdvice" :key="idx" class="advice-item" v-html="formatMarkdown(advice)"></div>
+            <template v-if="overallAssessment?.advice?.length">
+              <div v-for="(advice, idx) in overallAssessment.advice" :key="idx" class="advice-item warning-item" v-html="formatMarkdown(advice)"></div>
+            </template>
+            <template v-else>
+              <div v-for="(advice, idx) in feedback.overallAdvice" :key="idx" class="advice-item" v-html="formatMarkdown(advice)"></div>
+            </template>
           </div>
         </div>
       </div>
@@ -247,12 +264,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Document } from '@element-plus/icons-vue'
 import { getDatabase } from '@/database/init'
 import * as echarts from 'echarts'
+import { CBCLDriver } from '@/strategies/assessment/CBCLDriver'
 import type { CBCLSocialCompetenceResult, CBCLFactorScore } from '@/strategies/assessment/CBCLDriver'
 
 // CBCL 评估记录类型
@@ -365,33 +383,51 @@ const socialCompetence = computed<CBCLSocialCompetenceResult | null>(() => {
 // 计算属性：社会能力因子展示
 const socialFactors = computed(() => {
   if (!socialCompetence.value) return []
+
+  // 辅助函数：获取等级样式类
+  const getLevelClass = (level: number) => {
+    if (level === 2) return 'level-danger'
+    if (level === 1) return 'level-warning'
+    return 'level-success'
+  }
+
+  // 辅助函数：获取标签类型
+  const getTagType = (level: number): any => {
+    if (level === 2) return 'danger'
+    if (level === 1) return 'warning'
+    return 'success'
+  }
+
   const factors = [
     {
       code: 'activity',
       name: '活动能力',
       score: socialCompetence.value.activity.score,
+      tScore: socialCompetence.value.activity.tScore,
       status: socialCompetence.value.activity.status,
       level: socialCompetence.value.activity.level,
-      levelClass: socialCompetence.value.activity.level === 2 ? 'level-danger' : 'level-success',
-      tagType: socialCompetence.value.activity.level === 2 ? 'danger' : 'success'
+      levelClass: getLevelClass(socialCompetence.value.activity.level),
+      tagType: getTagType(socialCompetence.value.activity.level)
     },
     {
       code: 'social',
       name: '社交情况',
       score: socialCompetence.value.social.score,
+      tScore: socialCompetence.value.social.tScore,
       status: socialCompetence.value.social.status,
       level: socialCompetence.value.social.level,
-      levelClass: socialCompetence.value.social.level === 2 ? 'level-danger' : 'level-success',
-      tagType: socialCompetence.value.social.level === 2 ? 'danger' : 'success'
+      levelClass: getLevelClass(socialCompetence.value.social.level),
+      tagType: getTagType(socialCompetence.value.social.level)
     },
     {
       code: 'school',
       name: '学校表现',
       score: socialCompetence.value.school.score,
+      tScore: socialCompetence.value.school.tScore,
       status: socialCompetence.value.school.status,
       level: socialCompetence.value.school.level,
-      levelClass: socialCompetence.value.school.level === 2 ? 'level-danger' : 'level-success',
-      tagType: socialCompetence.value.school.level === 2 ? 'danger' : 'success'
+      levelClass: getLevelClass(socialCompetence.value.school.level),
+      tagType: getTagType(socialCompetence.value.school.level)
     }
   ]
   return factors
@@ -399,12 +435,14 @@ const socialFactors = computed(() => {
 
 // 计算属性：因子分数数据
 const factorScores = computed<CBCLFactorScore[]>(() => {
+  console.log('Report.vue: factorScores 计算中，assessData:', assessData.value)
   if (!assessData.value) return []
   try {
     const rawScores = JSON.parse(assessData.value.behavior_raw_scores || '{}')
     const tScores = JSON.parse(assessData.value.factor_t_scores || '{}')
+    console.log('Report.vue: 解析后的 rawScores:', rawScores, 'tScores:', tScores)
 
-    return Object.entries(rawScores).map(([name, rawScore]) => {
+    const result = Object.entries(rawScores).map(([name, rawScore]) => {
       const tScore = tScores[name] || 50
       const level = tScore >= 70 ? 'clinical' : tScore >= 65 ? 'borderline' : 'normal'
       return {
@@ -418,7 +456,10 @@ const factorScores = computed<CBCLFactorScore[]>(() => {
         p98: 0
       }
     })
-  } catch {
+    console.log('Report.vue: 最终生成的 factorScores 数组:', result)
+    return result
+  } catch (e) {
+    console.error('Report.vue: factorScores 计算出错:', e)
     return []
   }
 })
@@ -448,6 +489,75 @@ const broadBandData = computed(() => {
 // 计算属性：总分数据
 const totalProblemsScore = computed(() => assessData.value?.total_problems_score || 0)
 const totalProblemsTScore = computed(() => assessData.value?.total_problems_t_score || 50)
+
+// 计算属性：是否存在子项异常（用于总分正常但子项异常时的交叉判断）
+const hasSubscaleAnomalies = computed(() => {
+  if (!assessData.value) return false
+  const internalizingT = assessData.value.internalizing_t_score
+  const externalizingT = assessData.value.externalizing_t_score
+
+  // 检查内化或外化是否达到需关注水平(T>=65)
+  if (internalizingT >= 65 || externalizingT >= 65) return true
+
+  // 检查是否有任意单项因子T>=65
+  try {
+    const tScores = JSON.parse(assessData.value.factor_t_scores || '{}')
+    return Object.values(tScores).some((t: any) => (t as number) >= 65)
+  } catch {
+    return false
+  }
+})
+
+// 计算属性：获取异常子项的名称列表
+const anomalousSubscales = computed(() => {
+  if (!assessData.value) return []
+  const anomalies: string[] = []
+
+  const internalizingT = assessData.value.internalizing_t_score
+  const externalizingT = assessData.value.externalizing_t_score
+
+  // 检查内化问题
+  if (internalizingT >= 65) {
+    anomalies.push('内化问题')
+  }
+
+  // 检查外化问题
+  if (externalizingT >= 65) {
+    anomalies.push('外化问题')
+  }
+
+  return anomalies
+})
+
+// 计算属性：总体评估内容（处理总分正常但子项异常的情况）
+const overallAssessment = computed(() => {
+  const studentName = studentInfo.value?.name || '孩子'
+  const totalT = totalProblemsTScore.value
+
+  // 情况1：总分 >= 64，使用反馈引擎的内容
+  if (totalT >= 64) {
+    return null // 使用 feedback.overallSummary
+  }
+
+  // 情况2：总分 < 60 且存在子项异常，显示特殊提示
+  if (totalT < 60 && hasSubscaleAnomalies.value) {
+    const anomalyAreas = anomalousSubscales.value.join('、')
+    return {
+      title: '存在特定领域需关注',
+      severity: 'warning',
+      content: `虽然${studentName}的整体行为问题总分处于正常范围，没有表现出广泛的适应困难，但系统检测到其在**${anomalyAreas || '特定领域'}**存在显著的压力信号。`,
+      detail: `这类孩子往往**"表面顺从"，但内心可能正经历情绪困扰**。建议家长重点关注其内在情绪变化，避免被"总分正常"的表象误导。`,
+      advice: [
+        `**关注内在世界**：虽然孩子外表看起来"没什么问题"，但${anomalyAreas || '特定领域'}的高分提示其可能存在难以言说的焦虑、担忧或身体不适。`,
+        '**建立情感连接**：创造一个安全、无评判的家庭氛围，让孩子知道"有任何情绪都可以告诉爸爸妈妈"。',
+        '**观察与记录**：留意孩子是否有睡眠困难、食欲改变、频繁的身体不适主诉（如头痛、肚子痛），或突然变得沉默寡言。'
+      ]
+    }
+  }
+
+  // 情况3：其他情况，使用反馈引擎内容
+  return null
+})
 
 // Markdown 格式化为 HTML
 const formatMarkdown = (text: string): string => {
@@ -486,6 +596,20 @@ const getTScoreClass = (tScore: number) => {
   return 'score-normal'
 }
 
+// 根据 T 分数获取 Element Plus 标签类型
+const getTScoreTagType = (tScore: number): any => {
+  if (tScore >= 70) return 'danger'
+  if (tScore >= 65) return 'warning'
+  return 'success'
+}
+
+// 根据 T 分数获取标签文本
+const getTScoreLabel = (tScore: number): string => {
+  if (tScore >= 70) return '需关注'
+  if (tScore >= 65) return '边缘'
+  return '正常'
+}
+
 const getLevelType = (level: string) => {
   const typeMap: Record<string, any> = {
     'normal': 'success',
@@ -519,7 +643,7 @@ const initChart = () => {
 
   const option: echarts.EChartsOption = {
     title: {
-      text: 'CBCL 综合征剖面图',
+      text: 'CBCL 行为特征剖面图',
       left: 'center',
       textStyle: {
         fontSize: 16,
@@ -578,7 +702,7 @@ const initChart = () => {
             },
             {
               xAxis: 70,
-              label: { formatter: '临床', position: 'end' },
+              label: { formatter: '需关注', position: 'end' },
               lineStyle: { color: '#f56c6c', type: 'dashed', width: 2 }
             }
           ]
@@ -619,21 +743,167 @@ const loadAssessData = async () => {
       }
     }
 
-    // 初始化图表
-    setTimeout(() => {
-      initChart()
-    }, 100)
+    // 初始化图表将在 watch 中处理，替代 setTimeout
+    // initChart() moved to watch
+
+    // ========== 调用反馈引擎 ==========
+    // 1. 实例化 Driver
+    const driver = new CBCLDriver()
+
+    // 2. 组装 ScoreResult 对象
+    const rawScores = JSON.parse(record.behavior_raw_scores || '{}')
+    const tScores = JSON.parse(record.factor_t_scores || '{}')
+    const rawAnswers = JSON.parse(record.raw_answers || '{}')
+
+    // 构建 dimensions 数组
+    const dimensions: any[] = []
+
+    // 添加社会能力维度
+    if (record.social_activity_score !== null) {
+      const activityLevel = record.social_activity_score < 3 ? 2 : record.social_activity_score < 3.5 ? 1 : 0
+      dimensions.push({
+        code: 'activity',
+        name: '活动能力',
+        rawScore: record.social_activity_score,
+        itemCount: 4,
+        level: activityLevel === 2 ? 'clinical' : activityLevel === 1 ? 'borderline' : 'normal',
+        levelName: activityLevel === 2 ? '可能异常' : activityLevel === 1 ? '边缘/需关注' : '正常'
+      })
+    }
+    if (record.social_social_score !== null) {
+      const socialLevel = record.social_social_score < 3 ? 2 : record.social_social_score < 3.5 ? 1 : 0
+      dimensions.push({
+        code: 'social',
+        name: '社交情况',
+        rawScore: record.social_social_score,
+        itemCount: 4,
+        level: socialLevel === 2 ? 'clinical' : socialLevel === 1 ? 'borderline' : 'normal',
+        levelName: socialLevel === 2 ? '可能异常' : socialLevel === 1 ? '边缘/需关注' : '正常'
+      })
+    }
+    if (record.social_school_score !== null) {
+      const schoolLevel = record.social_school_score < 2 ? 2 : record.social_school_score < 2.5 ? 1 : 0
+      dimensions.push({
+        code: 'school',
+        name: '学校表现',
+        rawScore: record.social_school_score,
+        itemCount: 3,
+        level: schoolLevel === 2 ? 'clinical' : schoolLevel === 1 ? 'borderline' : 'normal',
+        levelName: schoolLevel === 2 ? '可能异常' : schoolLevel === 1 ? '边缘/需关注' : '正常'
+      })
+    }
+
+    // 添加行为问题因子维度
+    const factorNames = Object.keys(rawScores)
+    for (const factorName of factorNames) {
+      const tScore = tScores[factorName] || 50
+      const level = tScore >= 70 ? 'clinical' : tScore >= 65 ? 'borderline' : 'normal'
+      dimensions.push({
+        code: factorName,
+        name: factorName,
+        rawScore: rawScores[factorName],
+        standardScore: tScore,
+        itemCount: 0,
+        level: level,
+        levelName: level === 'clinical' ? '可能异常' : level === 'borderline' ? '边缘/需关注' : '正常'
+      })
+    }
+
+    // 构建 socialCompetence 对象
+    const socialCompetenceData = JSON.parse(record.social_competence_data || '{}')
+    const socialCompetenceResult = {
+      group: null,
+      activity: {
+        score: record.social_activity_score,
+        status: record.social_activity_score < 3 ? '可能异常' : record.social_activity_score < 3.5 ? '边缘/需关注' : '正常',
+        level: record.social_activity_score < 3 ? 2 : record.social_activity_score < 3.5 ? 1 : 0,
+        tScore: record.social_activity_score < 3 ? 30 : record.social_activity_score < 3.5 ? 35 : 50
+      },
+      social: {
+        score: record.social_social_score,
+        status: record.social_social_score < 3 ? '可能异常' : record.social_social_score < 3.5 ? '边缘/需关注' : '正常',
+        level: record.social_social_score < 3 ? 2 : record.social_social_score < 3.5 ? 1 : 0,
+        tScore: record.social_social_score < 3 ? 30 : record.social_social_score < 3.5 ? 35 : 50
+      },
+      school: {
+        score: record.social_school_score,
+        status: record.social_school_score < 2 ? '可能异常' : record.social_school_score < 2.5 ? 1 : 0 ? '边缘/需关注' : '正常',
+        level: record.social_school_score < 2 ? 2 : record.social_school_score < 2.5 ? 1 : 0,
+        tScore: record.social_school_score < 2 ? 30 : record.social_school_score < 2.5 ? 35 : 50
+      },
+      rawScores: {
+        factorActivity: record.social_activity_score,
+        factorSocial: record.social_social_score,
+        factorSchool: record.social_school_score
+      }
+    }
+
+    // 构建 behaviorProblems 对象
+    const behaviorProblemsResult = {
+      normGroup: record.gender === 'male' ? 'boy_6_11' : 'girl_6_11',
+      factors: factorNames.map(name => ({
+        code: name,
+        name: name,
+        rawScore: rawScores[name],
+        tScore: tScores[name] || 50,
+        level: (tScores[name] || 50) >= 70 ? 'clinical' : (tScores[name] || 50) >= 65 ? 'borderline' : 'normal',
+        levelName: (tScores[name] || 50) >= 70 ? '可能异常' : (tScores[name] || 50) >= 65 ? '边缘/需关注' : '正常',
+        p69: 0,
+        p98: 0
+      })),
+      totalProblemsScore: record.total_problems_score,
+      totalProblemsTScore: record.total_problems_t_score,
+      internalizingScore: 0,
+      internalizingTScore: record.internalizing_t_score,
+      externalizingScore: 0,
+      externalizingTScore: record.externalizing_t_score,
+      summaryLevel: record.summary_level
+    }
+
+    // 组装完整的 ScoreResult
+    const scoreResult = {
+      scaleCode: 'cbcl',
+      studentId: record.student_id,
+      assessmentDate: record.start_time,
+      dimensions: dimensions,
+      totalScore: record.total_problems_score,
+      tScore: record.total_problems_t_score,
+      level: record.summary_level === 'clinical' ? '可能异常' : record.summary_level === 'borderline' ? '边缘/需关注' : '正常',
+      levelCode: record.summary_level,
+      rawAnswers: rawAnswers,
+      timing: { startTime: record.start_time, endTime: record.end_time },
+      extraData: {
+        socialCompetence: socialCompetenceResult,
+        behaviorProblems: behaviorProblemsResult,
+        internalizingTScore: record.internalizing_t_score,
+        externalizingTScore: record.externalizing_t_score
+      }
+    }
+
+    // 3. 调用 generateFeedback 生成反馈
+    feedback.value = driver.generateFeedback(scoreResult)
 
     console.log('CBCL 报告数据加载完成:', {
       record: record.id,
       student: studentInfo.value?.name,
-      totalTScore: record.total_problems_t_score
+      totalTScore: record.total_problems_t_score,
+      feedback: feedback.value
     })
   } catch (error) {
     console.error('加载评估数据失败:', error)
     ElMessage.error('加载数据失败')
   }
 }
+
+// 使用 watch 替代 setTimeout 初始化图表（解决渲染时效问题）
+watch([factorScores, chartRef], ([newScores, newRef]) => {
+  if (newScores && newScores.length > 0 && newRef) {
+    // 使用 nextTick 确保 DOM 已更新
+    setTimeout(() => {
+      initChart()
+    }, 0)
+  }
+}, { immediate: true, flush: 'post' })
 
 // 生命周期
 onMounted(() => {
@@ -736,6 +1006,46 @@ onUnmounted(() => {
 .score-card.level-danger {
   background: linear-gradient(135deg, #fef0f0 0%, #fde2e2 100%);
   border: 1px solid #fab6b6;
+}
+
+.score-card.level-warning {
+  background: linear-gradient(135deg, #fdf6ec 0%, #faecd8 100%);
+  border: 1px solid #f5dab1;
+}
+
+.score-card .score-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.score-card .raw-score-label {
+  font-size: 11px;
+  color: #909399;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.score-card .t-score-display {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: #f0f9eb;
+  color: #67c23a;
+}
+
+.score-card .t-score-display.t-level-1 {
+  background: #fdf6ec;
+  color: #e6a23c;
+}
+
+.score-card .t-score-display.t-level-2 {
+  background: #fef0f0;
+  color: #f56c6c;
 }
 
 .score-card .score-value {
@@ -1095,6 +1405,33 @@ onUnmounted(() => {
   border-left: 4px solid #409eff;
   line-height: 1.6;
   color: #303133;
+}
+
+/* 警告样式：用于总分正常但子项异常的情况 */
+.summary-content h4.severity-warning {
+  color: #e6a23c;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  padding: 12px;
+  background: linear-gradient(135deg, #fdf6ec 0%, #faecd8 100%);
+  border-radius: 8px;
+  border: 1px solid #f5dab1;
+  margin-bottom: 16px;
+}
+
+.summary-content .summary-paragraph.detail-text {
+  color: #e6a23c;
+  font-weight: 500;
+  background: #fdf6ec;
+  padding: 12px 16px;
+  border-radius: 6px;
+  border-left: 3px solid #e6a23c;
+}
+
+.advice-item.warning-item {
+  background: linear-gradient(135deg, #fdf6ec 0%, #faecd8 100%);
+  border-left: 4px solid #e6a23c;
 }
 
 .report-actions {
