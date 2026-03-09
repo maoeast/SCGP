@@ -89,44 +89,131 @@ export interface CBCLFactorNorms {
 // 社会能力数据类型 (第二部分)
 // ==========================================
 
+/** 文本输入项结构 (a, b, c + none选项) */
+export interface CBCLTextItem {
+  a: string;      // 第一个文本输入
+  b: string;      // 第二个文本输入
+  c: string;      // 第三个文本输入
+  none: boolean;  // "无/没有"选项
+}
+
+/** 一般信息 (Part 1) */
+export interface CBCLGeneralInfo {
+  /** 填表者 */
+  reporter: 'father' | 'mother' | 'other';
+  /** 其他人关系 (当reporter为other时填写) */
+  other_relation?: string;
+  /** 父亲职业 */
+  father_occupation: string;
+  /** 母亲职业 */
+  mother_occupation: string;
+}
+
+/** 社会能力文本输入数据 */
+export interface CBCLSocialTexts {
+  /** I. 体育运动 */
+  sports: CBCLTextItem;
+  /** II. 课余爱好 */
+  hobbies: CBCLTextItem;
+  /** III. 参加组织 */
+  organizations: CBCLTextItem;
+  /** IV. 劳动实践 */
+  labor: CBCLTextItem;
+}
+
+/** 学校表现条件字段 */
+export interface CBCLSchoolConditions {
+  /** 是否在特殊教育班级 */
+  is_special_ed: boolean;
+  /** 特教班级性质 (当is_special_ed为true时填写) */
+  special_ed_type?: string;
+  /** 是否留过级 */
+  is_retained: boolean;
+  /** 留级年级 (当is_retained为true时填写) */
+  retained_grade?: string;
+  /** 留级理由 (当is_retained为true时填写) */
+  retained_reason?: string;
+  /** 是否有学习或其他问题 */
+  has_problems: boolean;
+  /** 问题内容 (当has_problems为true时填写) */
+  problem_content?: string;
+  /** 问题何时开始 (当has_problems为true时填写) */
+  problem_start?: string;
+  /** 问题是否已解决 */
+  is_solved?: boolean;
+  /** 何时解决 (当is_solved为true时填写) */
+  solved_when?: string;
+}
+
 /** 社会能力表单数据 */
 export interface CBCLSocialCompetenceData {
+  // ===== Part 1: 一般信息 =====
+  /** 填表者 */
+  reporter: 'father' | 'mother' | 'other';
+  /** 其他人关系 */
+  other_relation?: string;
+  /** 父亲职业 */
+  father_occupation: string;
+  /** 母亲职业 */
+  mother_occupation: string;
+
+  // ===== Part 2: 社会能力文本输入 =====
+  /** I. 体育运动 - 文本输入 */
+  sports: CBCLTextItem;
+  /** II. 课余爱好 - 文本输入 */
+  hobbies: CBCLTextItem;
+  /** III. 参加组织 - 文本输入 */
+  organizations: CBCLTextItem;
+  /** IV. 劳动实践 - 文本输入 */
+  labor: CBCLTextItem;
+
+  // ===== I-IV 计分字段 (由文本自动计算) =====
   // I. 体育运动
-  I_count: number;      // 爱好数量 (0-3)
+  I_count: number;      // 爱好数量 (0-3) - 自动计算
   I_time: number;       // 时间投入 (0-3)
   I_level: number;      // 水平评价 (0-3)
 
   // II. 课余爱好
-  II_count: number;     // 爱好数量 (0-3)
+  II_count: number;     // 爱好数量 (0-3) - 自动计算
   II_time: number;      // 时间投入 (0-3)
   II_level: number;     // 水平评价 (0-3)
 
   // III. 参加组织
-  III_count: number;    // 参加数量 (0-3)
+  III_count: number;    // 参加数量 (0-3) - 自动计算
   III_active: number;   // 活跃程度 (0-3)
 
   // IV. 劳动实践
-  IV_count: number;     // 参与数量 (0-3)
+  IV_count: number;     // 参与数量 (0-3) - 自动计算
   IV_quality: number;   // 完成质量 (0-3)
 
-  // V. 交友情况
+  // ===== V. 交友情况 =====
   V_friends: number;    // 朋友数量 (0-3)
   V_meet: number;       // 见面频率 (0-3)
 
-  // VI. 与同龄孩子相比
+  // ===== VI. 与同龄孩子相比 =====
   VI_a: number;         // 与兄弟姐妹相处 (0-2, -1表示无)
   VI_b: number;         // 与其他儿童相处 (0-2)
   VI_c: number;         // 对待父母态度 (0-2)
   VI_d: number;         // 独立做事表现 (0-2)
 
-  // VII. 学习表现
+  // ===== VII. 学习表现 =====
   VII_math: number;     // 数学成绩 (0-3)
   VII_chinese: number;  // 语文成绩 (0-3)
   VII_english: number;  // 英语成绩 (0-3)
   VII_other: number;    // 其他科目 (0-3)
-  VII_isSpecial: boolean;   // 是否特教班级
-  VII_isRetained: boolean;  // 是否留级
-  VII_hasProblem: boolean;  // 是否有学习问题
+  VII_notInSchool: boolean;  // 未上学
+
+  // VII. 条件字段
+  VII_isSpecial: boolean;       // 是否特教班级
+  VII_specialType?: string;     // 特教性质
+  VII_isRetained: boolean;      // 是否留级
+  VII_retainedGrade?: string;   // 留级年级
+  VII_retainedReason?: string;  // 留级理由
+  VII_hasProblem: boolean;      // 是否有学习问题
+  VII_problemContent?: string;  // 问题内容
+  VII_problemStart?: string;    // 问题开始时间
+  VII_isSolved?: boolean;       // 是否已解决
+  VII_solvedWhen?: string;      // 解决时间
 }
 
 // ==========================================
