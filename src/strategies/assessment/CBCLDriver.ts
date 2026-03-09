@@ -26,7 +26,8 @@ import type {
   CBCLFactorResult,
   CBCLNormGroup,
   CBCLGender,
-  CBCLBehaviorAnswers
+  CBCLBehaviorAnswers,
+  CBCLTextItem
 } from '@/types/cbcl'
 import {
   CBCL_FACTOR_NORMS,
@@ -179,6 +180,108 @@ function calcAvg(values: number[]): number {
   const validValues = values.filter(v => v >= 0)
   if (validValues.length === 0) return 0
   return Math.round((validValues.reduce((a, b) => a + b, 0) / validValues.length) * 2) / 2
+}
+
+// ==========================================
+// 文本到计数的桥接逻辑 (Bridge Logic)
+// ==========================================
+
+/**
+ * 从文本输入计算计数
+ * 根据CBCL量表要求，用户填写具体文本，系统自动计算数量
+ * @param item 文本输入项 {a, b, c, none}
+ * @returns 计数 (0-3)
+ */
+export function calculateCountFromTexts(item: CBCLTextItem): number {
+  if (item.none) return 0
+  return [item.a, item.b, item.c].filter(t => t && t.trim().length > 0).length
+}
+
+/**
+ * 转换社会能力数据中的文本输入为计数
+ * 在提交表单前调用，确保计数字段正确
+ * @param data 原始社会能力数据
+ * @returns 转换后的数据（包含正确的计数）
+ */
+export function transformTextsToCounts(data: CBCLSocialCompetenceData): CBCLSocialCompetenceData {
+  return {
+    ...data,
+    I_count: calculateCountFromTexts(data.sports),
+    II_count: calculateCountFromTexts(data.hobbies),
+    III_count: calculateCountFromTexts(data.organizations),
+    IV_count: calculateCountFromTexts(data.labor)
+  }
+}
+
+/**
+ * 验证社会能力数据完整性
+ * @param data 社会能力数据
+ * @returns 验证结果
+ */
+export function validateSocialCompetenceData(data: Partial<CBCLSocialCompetenceData>): {
+  valid: boolean
+  missingFields: string[]
+} {
+  const requiredFields: Array<keyof CBCLSocialCompetenceData> = [
+    'reporter',
+    'father_occupation',
+    'mother_occupation',
+    'sports',
+    'hobbies',
+    'organizations',
+    'labor',
+    'I_time',
+    'I_level',
+    'II_time',
+    'II_level',
+    'III_active',
+    'IV_quality',
+    'V_friends',
+    'V_meet',
+    'VI_a',
+    'VI_b',
+    'VI_c',
+    'VI_d'
+  ]
+
+  const missingFields: string[] = []
+
+  for (const field of requiredFields) {
+    const value = data[field]
+    if (value === undefined || value === null || value === '') {
+      missingFields.push(field)
+    }
+  }
+
+  // 条件验证：如果reporter是other，则other_relation必填
+  if (data.reporter === 'other' && !data.other_relation) {
+    missingFields.push('other_relation')
+  }
+
+  // 条件验证：特教班级需要性质
+  if (data.VII_isSpecial && !data.VII_specialType) {
+    missingFields.push('VII_specialType')
+  }
+
+  // 条件验证：留级需要年级和理由
+  if (data.VII_isRetained) {
+    if (!data.VII_retainedGrade) missingFields.push('VII_retainedGrade')
+    if (!data.VII_retainedReason) missingFields.push('VII_retainedReason')
+  }
+
+  // 条件验证：有问题需要内容和开始时间
+  if (data.VII_hasProblem) {
+    if (!data.VII_problemContent) missingFields.push('VII_problemContent')
+    if (!data.VII_problemStart) missingFields.push('VII_problemStart')
+    if (data.VII_isSolved && !data.VII_solvedWhen) {
+      missingFields.push('VII_solvedWhen')
+    }
+  }
+
+  return {
+    valid: missingFields.length === 0,
+    missingFields
+  }
 }
 
 /**
