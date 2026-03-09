@@ -69,6 +69,9 @@ const SDQReport = () => import('@/views/assessment/sdq/Report.vue')
 // SRS-2 报告页面
 const SRS2Report = () => import('@/views/assessment/srs2/Report.vue')
 
+// CBCL 报告页面
+const CBCLReport = () => import('@/views/assessment/cbcl/Report.vue')
+
 // 通用评估容器（Phase 4 重构）
 const AssessmentContainer = () => import('@/views/assessment/AssessmentContainer.vue')
 
@@ -371,6 +374,10 @@ const router = createRouter({
           path: 'assessment/srs2/:studentId',
           redirect: (to: any) => `/assessment/unified/srs2/${to.params.studentId}`
         },
+        {
+          path: 'assessment/cbcl/:studentId',
+          redirect: (to: any) => `/assessment/unified/cbcl/${to.params.studentId}`
+        },
         // ===== 报告页面（保留） =====
         {
           path: 'assessment/sm/report',
@@ -448,6 +455,16 @@ const router = createRouter({
           component: SRS2Report,
           meta: {
             title: 'SRS-2社交反应量表评估报告',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'assessment/cbcl/report/:assessId',
+          name: 'CBCLReport',
+          component: CBCLReport,
+          meta: {
+            title: 'CBCL儿童行为量表评估报告',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }
