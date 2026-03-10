@@ -51,6 +51,7 @@
         :answer="currentAnswerValue"
         :question-index="state.currentIndex"
         :total-count="questions.length"
+        :is-skipped="isCurrentQuestionSkipped"
         @answer="handleAnswer"
       />
 
@@ -65,7 +66,7 @@
         </el-button>
         <el-button
           type="primary"
-          :disabled="currentAnswerValue === null"
+          :disabled="!canProceedToNext"
           @click="handleNext"
           size="large"
         >
@@ -185,7 +186,39 @@ const currentQuestion = computed<ScaleQuestion | null>(() => {
 const currentAnswerValue = computed(() => {
   if (!currentQuestion.value) return null
   const answer = state.value.answers[currentQuestion.value.id]
-  return answer?.value ?? null
+  if (!answer) return null
+
+  // 如果答案包含 metadata 且有 description 字段，返回对象格式
+  if (answer.metadata?.description !== undefined) {
+    return {
+      value: answer.value,
+      description: answer.metadata.description
+    }
+  }
+
+  return answer.value
+})
+
+// 计算属性：是否可以进入下一题（用于禁用按钮）
+const canProceedToNext = computed(() => {
+  if (!currentQuestion.value) return false
+
+  const answer = state.value.answers[currentQuestion.value.id]
+  if (!answer) return false
+
+  // 如果题目需要说明内容
+  if (currentQuestion.value.metadata?.hasDescription) {
+    const isNonZeroAnswer = answer.value !== 0 && answer.value !== '0'
+    const description = answer.metadata?.description
+    const isDescriptionEmpty = !description || description.trim() === ''
+
+    // 非0答案且说明内容为空，不能继续
+    if (isNonZeroAnswer && isDescriptionEmpty) {
+      return false
+    }
+  }
+
+  return true
 })
 
 const currentAnswer = computed<ScaleAnswer | null>(() => {
@@ -246,6 +279,24 @@ const currentStageLabel = computed(() => {
 
 const currentDimensionLabel = computed(() => {
   return currentQuestion.value?.dimensionName || currentQuestion.value?.dimension || null
+})
+
+// 计算属性：当前题目是否应该被跳过（用于CBCL 56题子题跳题逻辑）
+const isCurrentQuestionSkipped = computed(() => {
+  if (!currentQuestion.value || scaleCode.value !== 'cbcl') return false
+
+  const question = currentQuestion.value
+  const metadata = question.metadata
+
+  // 检查是否是56题的子题 (56a-56h)
+  if (metadata?.isSubItem && metadata?.parentId === 56) {
+    // 获取56题的答案
+    const q56Answer = state.value.answers[56]
+    // 如果56题答案为0（无此表现），则跳过子题
+    return q56Answer?.value === 0 || q56Answer?.value === '0'
+  }
+
+  return false
 })
 
 // ========== 初始化 ==========
@@ -343,29 +394,67 @@ function handlePageChange(page: number) {
   }
 }
 
-function handleAnswer(value: number | string) {
+interface AnswerWithDescription {
+  value: number | string
+  description?: string
+}
+
+function handleAnswer(value: number | string | AnswerWithDescription) {
   if (!currentQuestion.value || !driver.value) return
 
   const question = currentQuestion.value
-  const option = question.options.find(o => o.value === value)
+
+  // 解析答案值和说明内容
+  let answerValue: number | string
+  let description: string | undefined
+
+  if (typeof value === 'object' && 'value' in value) {
+    // 对象格式：包含说明内容
+    answerValue = value.value
+    description = value.description
+  } else {
+    // 简单值格式
+    answerValue = value
+  }
+
+  const option = question.options.find(o => o.value === answerValue)
 
   if (!option) {
-    console.warn('[AssessmentContainer] 无效的答案选项:', value)
+    console.warn('[AssessmentContainer] 无效的答案选项:', answerValue)
     return
+  }
+
+  // 检查是否需要说明内容但未填写
+  const needsDescription = question.metadata?.hasDescription === true
+  const isNonZeroAnswer = answerValue !== 0 && answerValue !== '0'
+  const isDescriptionEmpty = !description || description.trim() === ''
+
+  if (needsDescription && isNonZeroAnswer && isDescriptionEmpty) {
+    // 需要说明内容但未填写，显示提示但不跳转
+    ElMessage.warning('请填写说明内容后再继续')
+    // 仍然保存当前答案（方便用户后续填写说明）
   }
 
   // 检查是否是首次回答（用于区分新答案和修改答案）
   const previousAnswer = state.value.answers[question.id]
   const isModifying = previousAnswer !== undefined
 
-  // 记录答案
-  state.value.answers[question.id] = {
+  // 构建答案对象
+  const answerRecord: ScaleAnswer = {
     questionId: question.id,
-    value: value,
+    value: answerValue,
     score: option.score,
     timestamp: Date.now(),
     responseTime: Date.now() - (state.value.metadata?.lastAnswerTime || state.value.startTime)
   }
+
+  // 如果有说明内容，保存到 metadata
+  if (description !== undefined) {
+    answerRecord.metadata = { description }
+  }
+
+  // 记录答案
+  state.value.answers[question.id] = answerRecord
 
   // 更新最后答题时间
   if (!state.value.metadata) state.value.metadata = {}
@@ -377,6 +466,11 @@ function handleAnswer(value: number | string) {
   // 如果是修改答案，不自动跳转
   if (isModifying) {
     ElMessage.success('答案已更新')
+    return
+  }
+
+  // 如果需要说明内容但未填写，不自动跳转
+  if (needsDescription && isNonZeroAnswer && isDescriptionEmpty) {
     return
   }
 
@@ -393,6 +487,21 @@ function handlePrevious() {
 }
 
 function handleNext() {
+  // 检查当前题目是否需要说明内容但未填写
+  if (currentQuestion.value && currentQuestion.value.metadata?.hasDescription) {
+    const currentAnswer = state.value.answers[currentQuestion.value.id]
+    const answerValue = currentAnswer?.value
+    const description = currentAnswer?.metadata?.description
+
+    const isNonZeroAnswer = answerValue !== 0 && answerValue !== '0'
+    const isDescriptionEmpty = !description || description.trim() === ''
+
+    if (isNonZeroAnswer && isDescriptionEmpty) {
+      ElMessage.warning('请填写说明内容后再继续')
+      return
+    }
+  }
+
   navigateToNext()
 }
 

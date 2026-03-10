@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-09T02:27:37.906Z"
+last_updated: "2026-03-10T08:00:00.000Z"
 progress:
   total_phases: 4
   completed_phases: 2
@@ -140,8 +140,8 @@ progress:
 - Full backward compatibility with migration helper
 
 ## Session Continuity
-- Last Session: CBCL Gap Closure (04.5) completed - SocialForm aligned with source document
-- Next Action: Phase 4 CBCL Assessment Integration is complete with all gaps resolved
+- Last Session: CBCL Bug Fixes - Factor name mapping, description input fields, question 56 skip logic, and description required validation
+- Next Action: Awaiting further bug reports or new feature requirements
 
 ### Quick Tasks Completed
 | # | Description | Date | Commit | Status | Directory |
@@ -151,8 +151,136 @@ progress:
 | 3 | 调整左侧菜单栏模块顺序 | 2026-03-02 | 48881f4 | ✅ | direct fix |
 | 4 | 游戏训练记录列表页面多个问题修复 | 2026-03-02 | fd771f6 | ✅ Verified | direct fix |
 | 5 | SDQ 评估保存功能修复 | 2026-03-03 | - | ✅ | direct fix |
+| 6 | CBCL报告因子名称映射修复 | 2026-03-10 | - | ✅ Verified | direct fix |
+| 7 | CBCL题目说明内容输入框修复 | 2026-03-10 | - | ✅ Verified | direct fix |
+| 8 | CBCL题号56跳题逻辑修复 | 2026-03-10 | - | ✅ Verified | direct fix |
+| 9 | CBCL说明内容必填验证修复 | 2026-03-10 | - | ✅ Verified | direct fix |
 
 ### Last Activity
+**2026-03-10** - CBCL Report & Assessment Bug Fixes (4 critical fixes)
+
+#### Bug 1: CBCL报告因子名称映射问题 (`Report.vue` + `feedbackConfig.js`)
+**Problem:** 报告页面的行为问题因子详情里，每个因子没有相关建议内容
+**Root Cause:** `feedbackConfig.js` 中的 `dimensions` 配置使用英文代码作为键（如 `anxious_depressed`），但 `Report.vue` 传递给 `generateFeedback` 的 `factor.code` 是中文名（如"抑郁"），导致配置匹配失败
+
+**Solution:** 添加因子名称映射表 `FEEDBACK_FACTOR_MAP`，将中文名映射为英文代码
+```typescript
+const FEEDBACK_FACTOR_MAP: Record<string, string> = {
+  '抑郁': 'anxious_depressed',
+  '社交退缩': 'withdrawn',
+  '体诉': 'somatic',
+  // ... 其他映射
+}
+```
+
+**Files Modified:**
+- `src/views/assessment/cbcl/Report.vue` - 添加映射表，修复 `factorScores`、`dimensions`、`behaviorProblemsResult` 的 `code` 字段
+
+**Verification:** 项目构建成功，因子建议内容正常显示
+
+---
+
+#### Bug 2: CBCL题目说明内容输入框缺失 (`QuestionCard.vue` + `AssessmentContainer.vue`)
+**Problem:** 21道需要填写说明内容的题目没有提供输入框
+**Affected Questions:** 2, 9, 28, 29, 40, 46, 56d, 56h, 58, 66, 70, 73, 77, 79, 83, 84, 85, 92, 100, 105, 113a-c
+
+**Root Cause:** `QuestionCard` 组件没有处理题目定义中的 `hasDescription` 标记
+
+**Solution:**
+1. `QuestionCard.vue` - 添加说明内容输入框UI，支持对象格式答案 `{ value, description }`
+2. `AssessmentContainer.vue` - 修改 `handleAnswer` 和 `currentAnswerValue` 支持对象格式答案
+
+**Key Changes:**
+- 当 `hasDescription=true` 且选择非0选项时显示输入框
+- 说明内容保存到 `ScaleAnswer.metadata.description`
+- 失焦时自动保存说明内容
+
+**Files Modified:**
+- `src/views/assessment/components/QuestionCard.vue`
+- `src/views/assessment/AssessmentContainer.vue`
+
+**Verification:** 项目构建成功，输入框正常显示和保存
+
+---
+
+#### Bug 3: CBCL题号56跳题逻辑缺失 (`AssessmentContainer.vue` + `QuestionCard.vue`)
+**Problem:** 题号56（查不出医学原因的躯体不适症状）选择"无此表现"时，应该直接跳到题号57，但当前仍然会显示56a-56h子题
+
+**Root Cause:** CBCL使用分页模式（每页10题），没有实现题号56的子题跳题逻辑
+
+**Solution:**
+1. `QuestionCard.vue` - 添加 `isSkipped` 属性，当题目被跳过时：
+   - 显示"此题不适用，已自动跳过"提示
+   - 禁用选项选择
+   - 自动设置答案为0
+2. `AssessmentContainer.vue` - 添加 `isCurrentQuestionSkipped` 计算属性：
+   - 检测当前题目是否是56题的子题 (56a-56h)
+   - 如果56题答案为0，子题标记为跳过
+
+**Key Changes:**
+```typescript
+// AssessmentContainer.vue
+const isCurrentQuestionSkipped = computed(() => {
+  if (metadata?.isSubItem && metadata?.parentId === 56) {
+    const q56Answer = state.value.answers[56]
+    return q56Answer?.value === 0
+  }
+  return false
+})
+```
+
+**Files Modified:**
+- `src/views/assessment/components/QuestionCard.vue`
+- `src/views/assessment/AssessmentContainer.vue`
+
+**Verification:** 项目构建成功，56题选择"无此表现"后，56a-56h显示跳过提示并自动设置答案为0
+
+---
+
+#### Bug 4: CBCL说明内容必填验证缺失 (`AssessmentContainer.vue`)
+**Problem:** 在需要输入题目说明内容的几道题目里，点击"有时有"、"经常有"后偶尔会自动进入下一道题目，导致说明内容为空
+
+**Root Cause:** `handleAnswer` 函数在选择答案后300ms自动调用 `navigateToNext()`，没有检查说明内容是否已填写
+
+**Solution:**
+1. 添加 `canProceedToNext` 计算属性：
+   - 检查当前题目是否需要说明内容
+   - 检查是否选择了非0选项
+   - 检查说明内容是否为空
+   - 如果条件满足，返回 `false` 禁用"下一题"按钮
+2. 修改 `handleAnswer` 函数：
+   - 如果需要说明内容但未填写，显示警告"请填写说明内容后再继续"
+   - 阻止自动跳转到下一题
+3. 修改 `handleNext` 函数：
+   - 添加相同的验证逻辑
+   - 如果未填写说明内容，显示警告并阻止跳转
+
+**Key Changes:**
+```typescript
+// 新增计算属性：是否可以进入下一题
+const canProceedToNext = computed(() => {
+  if (currentQuestion.value?.metadata?.hasDescription) {
+    const isNonZeroAnswer = answer.value !== 0
+    const isDescriptionEmpty = !description || description.trim() === ''
+    if (isNonZeroAnswer && isDescriptionEmpty) return false
+  }
+  return true
+})
+
+// 修改 handleAnswer - 阻止自动跳转
+if (needsDescription && isNonZeroAnswer && isDescriptionEmpty) {
+  ElMessage.warning('请填写说明内容后再继续')
+  return  // 不调用 navigateToNext
+}
+```
+
+**Files Modified:**
+- `src/views/assessment/AssessmentContainer.vue`
+
+**Verification:** 项目构建成功，选择"有时有"/"经常有"后不会自动跳转，必须填写说明内容后才能点击"下一题"
+
+---
+
 **2026-03-04** - SDQ Module Deep Bug Fixes (3 critical fixes)
 
 #### Bug 1: Database API Method Mismatch (`AssessmentContainer.vue`)

@@ -273,6 +273,25 @@ import * as echarts from 'echarts'
 import { CBCLDriver } from '@/strategies/assessment/CBCLDriver'
 import type { CBCLSocialCompetenceResult, CBCLFactorScore } from '@/strategies/assessment/CBCLDriver'
 
+// CBCL 因子名称映射 (中文 -> 英文代码)
+// 用于匹配 feedbackConfig.js 中的 dimensions 配置
+const FEEDBACK_FACTOR_MAP: Record<string, string> = {
+  '抑郁': 'anxious_depressed',
+  '焦虑强迫': 'anxious_depressed',
+  '社交退缩': 'withdrawn',
+  '抑郁退缩': 'withdrawn',
+  '体诉': 'somatic',
+  '交往不良': 'social_problems',
+  '强迫性': 'thought_problems',
+  '多动': 'attention',
+  '攻击性': 'aggressive',
+  '违纪': 'rule_breaking',
+  '分裂样': 'thought_problems',
+  '不成熟': 'thought_problems',
+  '敌意性': 'aggressive',
+  '残忍': 'aggressive'
+}
+
 // CBCL 评估记录类型
 interface CBCLAssessRecord {
   id: number
@@ -446,8 +465,8 @@ const factorScores = computed<CBCLFactorScore[]>(() => {
       const tScore = tScores[name] || 50
       const level = tScore >= 70 ? 'clinical' : tScore >= 65 ? 'borderline' : 'normal'
       return {
-        code: name,
-        name,
+        code: FEEDBACK_FACTOR_MAP[name] || name, // 使用英文代码匹配配置
+        name, // 保持中文名称用于显示
         rawScore: rawScore as number,
         tScore,
         level,
@@ -799,8 +818,8 @@ const loadAssessData = async () => {
       const tScore = tScores[factorName] || 50
       const level = tScore >= 70 ? 'clinical' : tScore >= 65 ? 'borderline' : 'normal'
       dimensions.push({
-        code: factorName,
-        name: factorName,
+        code: FEEDBACK_FACTOR_MAP[factorName] || factorName, // 使用英文代码匹配配置
+        name: factorName, // 保持中文名称用于显示
         rawScore: rawScores[factorName],
         standardScore: tScore,
         itemCount: 0,
@@ -842,8 +861,8 @@ const loadAssessData = async () => {
     const behaviorProblemsResult = {
       normGroup: record.gender === 'male' ? 'boy_6_11' : 'girl_6_11',
       factors: factorNames.map(name => ({
-        code: name,
-        name: name,
+        code: FEEDBACK_FACTOR_MAP[name] || name, // 使用英文代码匹配配置
+        name: name, // 保持中文名称用于显示
         rawScore: rawScores[name],
         tScore: tScores[name] || 50,
         level: (tScores[name] || 50) >= 70 ? 'clinical' : (tScores[name] || 50) >= 65 ? 'borderline' : 'normal',
