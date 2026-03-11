@@ -17,7 +17,6 @@ import type {
 } from '@/types/assessment'
 import {
   SRS2_QUESTIONS,
-  SRS2_OPTIONS,
   SRS2_DIMENSION_NAMES,
   SRS2_DIMENSION_QUESTIONS,
   reverseScore,
@@ -27,6 +26,7 @@ import {
 } from '@/database/srs2-questions'
 import { getSRSTScore } from '@/database/srs2-norms'
 import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
+import type { SRS2Level, SRS2StructuredFeedback } from '@/types/srs2'
 
 /**
  * SRS-2 维度详情（用于反馈生成）
@@ -43,15 +43,6 @@ export interface SRS2DimensionDetail {
   advice: string[]
 }
 
-/**
- * SRS-2 结构化反馈（返回给前端）
- */
-export interface SRS2StructuredFeedback {
-  overallSummary: string
-  overallAdvice: string[]
-  dimensionDetails: SRS2DimensionDetail[]
-}
-
 // 维度代码列表
 const SRS2_DIMENSIONS: SRS2DimensionCode[] = [
   'awareness',
@@ -62,7 +53,7 @@ const SRS2_DIMENSIONS: SRS2DimensionCode[] = [
 ]
 
 // 等级名称映射
-const LEVEL_NAMES: Record<string, string> = {
+const LEVEL_NAMES: Record<SRS2Level, string> = {
   normal: '正常',
   mild: '轻度',
   moderate: '中度',
@@ -72,7 +63,7 @@ const LEVEL_NAMES: Record<string, string> = {
 /**
  * 根据等级获取 severity 类型
  */
-function getSeverityType(level: string): 'success' | 'warning' | 'danger' {
+function getSeverityType(level: SRS2Level): 'success' | 'warning' | 'danger' {
   switch (level) {
     case 'normal':
       return 'success'
@@ -224,8 +215,8 @@ export class SRS2Driver extends BaseDriver {
    */
   private calculateDimensionScores(
     processedScores: Record<string, number>
-  ): Record<string, { rawScore: number; tScore: number; level: string }> {
-    const results: Record<string, { rawScore: number; tScore: number; level: string }> = {}
+  ): Record<string, { rawScore: number; tScore: number; level: SRS2Level }> {
+    const results: Record<string, { rawScore: number; tScore: number; level: SRS2Level }> = {}
 
     for (const dimension of SRS2_DIMENSIONS) {
       const questionIds = SRS2_DIMENSION_QUESTIONS[dimension]
@@ -236,7 +227,7 @@ export class SRS2Driver extends BaseDriver {
 
       // 计算 T分数
       const tScore = getSRSTScore(dimension, this.studentGender, this.studentAgeMonths, rawScore)
-      const level = getSeverityFromTScore(tScore)
+      const level = getSeverityFromTScore(tScore) as SRS2Level
 
       results[dimension] = { rawScore, tScore, level }
     }
@@ -249,7 +240,10 @@ export class SRS2Driver extends BaseDriver {
    * 生成评估反馈和 IEP 建议
    */
   generateFeedback(scoreResult: ScoreResult): SRS2StructuredFeedback {
-    const totalTScore = (scoreResult.extraData as { totalTScore: number })?.totalTScore || scoreResult.totalScore
+    const totalTScore =
+      (scoreResult.extraData as { totalTScore?: number } | undefined)?.totalTScore ??
+      scoreResult.totalScore ??
+      50
     const studentName = this.studentName || '孩子'
 
     // 获取反馈配置
@@ -281,9 +275,9 @@ export class SRS2Driver extends BaseDriver {
             name: dimConfig?.label || SRS2_DIMENSION_NAMES[dim.code as SRS2DimensionCode] || dim.name,
             rawScore: dim.rawScore,
             tScore: dimTScore,
-            level: getSeverityFromTScore(dimTScore),
-            levelName: dimLevelConfig.title || LEVEL_NAMES[getSeverityFromTScore(dimTScore)],
-            severity: dimLevelConfig.severity as 'success' | 'warning' | 'danger' || getSeverityType(getSeverityFromTScore(dimTScore)),
+            level: getSeverityFromTScore(dimTScore) as SRS2Level,
+            levelName: dimLevelConfig.title || LEVEL_NAMES[getSeverityFromTScore(dimTScore) as SRS2Level],
+            severity: (dimLevelConfig.severity as 'success' | 'warning' | 'danger') || getSeverityType(getSeverityFromTScore(dimTScore) as SRS2Level),
             content: dimLevelConfig.summary || '',
             advice: dimLevelConfig.advice || []
           })

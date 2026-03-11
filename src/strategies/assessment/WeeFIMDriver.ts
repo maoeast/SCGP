@@ -118,6 +118,16 @@ export class WeeFIMDriver extends BaseDriver {
 
     // 获取对应等级的建议
     const recommendation = weefimRecommendations.find(r => r.level === level) ?? weefimRecommendations[weefimRecommendations.length - 1]
+    if (!recommendation) {
+      return {
+        summary: this.generateSummary(totalScore, level, ''),
+        strengths: [],
+        weaknesses: [],
+        recommendations: [],
+        trainingFocus: this.generateTrainingFocus(scoreResult.dimensions),
+        homeGuidance: this.generateHomeGuidance(level)
+      }
+    }
 
     // 分析优势和弱势维度
     const { strengths, weaknesses } = this.analyzeDimensions(scoreResult.dimensions)

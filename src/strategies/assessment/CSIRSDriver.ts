@@ -21,23 +21,21 @@ import type {
   ScaleAnswer,
   ScoreResult,
   AssessmentFeedback,
-  DimensionScore
+  DimensionScore,
+  AssessmentState
 } from '@/types/assessment'
 import { BaseDriver } from './BaseDriver'
 import {
   csirsQuestions,
   csirsDimensions,
-  getQuestionsByAge,
-  type CSIRSQuestion,
-  type CSIRSDimension
+  getQuestionsByAge
 } from '@/database/csirs-questions'
 import {
-  csirsConversionTables,
   csirsEvaluationLevels,
   calculateTScore,
-  getEvaluationLevel as getCSIRSEvaluationLevel,
-  type CSIRSDimensionType
+  getEvaluationLevel as getCSIRSEvaluationLevel
 } from '@/database/csirs-conversion'
+import type { CSIRSQuestion, CSIRSDimensionType } from '@/types/csirs'
 
 /**
  * CSIRS 量表驱动器实现

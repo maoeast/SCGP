@@ -18,42 +18,14 @@ import type {
 } from '@/types/assessment'
 import {
   SDQ_QUESTIONS,
-  SDQ_OPTIONS,
   SDQ_DIMENSION_NAMES,
   SDQ_DIMENSION_QUESTIONS,
   SDQ_THRESHOLDS,
   reverseScore,
-  isReversedQuestion,
   getSDQScaleQuestions
 } from '@/database/sdq-questions'
 import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
-import type { SDQDimensionCode, SDQLevel } from '@/types/sdq'
-
-/**
- * SDQ 维度详情（用于反馈生成）
- */
-export interface SDQDimensionDetail {
-  code: string
-  name: string
-  level: SDQLevel
-  levelName: string
-  score: number
-  content: string[]
-  advice: string[]
-  structured_advice?: Record<string, string[]>
-}
-
-
-
-/**
- * SDQ 结构化反馈（返回给前端)
- */
-export interface SDQStructuredFeedback {
-  overallSummary: string[]
-  overallAdvice: string[]
-  dimensionDetails: SDQDimensionDetail[]
-  expertRecommendations: string[]
-}
+import type { SDQDimensionCode, SDQDimensionDetail, SDQLevel, SDQStructuredFeedback } from '@/types/sdq'
 
 // 维度代码列表
 const SDQ_DIMENSIONS: SDQDimensionCode[] = [
@@ -72,7 +44,7 @@ const LEVEL_NAMES: Record<SDQLevel, string> = {
 }
 
 // 亲社会行为等级名称
-const PROSOCIAL_LEVEL_NAMES: Record<string, string> = {
+const PROSOCIAL_LEVEL_NAMES: Record<SDQLevel, string> = {
   normal: '优秀',
   borderline: '边缘',
   abnormal: '需培养'
@@ -313,8 +285,8 @@ export class SDQDriver extends BaseDriver {
           dimensionDetails.push({
             code: dim.code,
             name: dimConfig?.label || SDQ_DIMENSION_NAMES[dim.code] || dim.name || dim.code,
-            level: dim.level,
-            levelName: dim.levelName,
+            level: (dim.level as SDQLevel | undefined) ?? 'normal',
+            levelName: dim.levelName ?? '正常',
             score: dim.rawScore,
             severity: (dimLevelConfig.severity as 'success' | 'warning' | 'danger') || 'success',
             content,
@@ -324,7 +296,7 @@ export class SDQDriver extends BaseDriver {
 
           // 记录有问题的维度（severity 为 warning 或 danger）
           if (dimLevelConfig.severity === 'warning' || dimLevelConfig.severity === 'danger') {
-            problemDimensions.push(dim.code)
+            problemDimensions.push(dim.code as SDQDimensionCode)
           }
         }
       }
@@ -389,7 +361,7 @@ export class SDQDriver extends BaseDriver {
         ? Object.fromEntries(
             Object.entries(dim.structured_advice).map(([key, values]) => [
               key,
-              values.map(replacePlaceholders)
+              (values as string[]).map(replacePlaceholders)
             ])
           )
         : undefined
@@ -424,7 +396,7 @@ export class SDQDriver extends BaseDriver {
   /**
    * 分析各维度情况并生成反馈（旧方法，保留向后兼容）
    */
-  private analyzeDimensions(
+  private analyzeDimensionsLegacy(
     dimensions: DimensionScore[],
     dimensionConfigs: typeof ASSESSMENT_LIBRARY.sdq.dimensions
   ): {

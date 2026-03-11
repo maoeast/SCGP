@@ -29,6 +29,7 @@ import type {
   CBCLBehaviorAnswers,
   CBCLTextItem
 } from '@/types/cbcl'
+export type { CBCLSocialCompetenceResult } from '@/types/cbcl'
 import {
   CBCL_FACTOR_NORMS,
   CBCL_SOCIAL_NORMS,
@@ -509,7 +510,20 @@ export class CBCLDriver extends BaseDriver {
 
     // 2. 获取因子配置
     const factorConfig = CBCL_FACTOR_NORMS[normGroup]
-    const factorNames = factorConfig ? Object.keys(factorConfig) : []
+    if (!factorConfig) {
+      return {
+        normGroup,
+        factors: [],
+        totalProblemsScore: 0,
+        totalProblemsTScore: 50,
+        internalizingScore: 0,
+        internalizingTScore: 50,
+        externalizingScore: 0,
+        externalizingTScore: 50,
+        summaryLevel: 'normal'
+      }
+    }
+    const factorNames = Object.keys(factorConfig)
 
     // 3. 计算各因子原始分 (严格阈值判定法)
     const factorScores: CBCLFactorScore[] = []
@@ -517,6 +531,7 @@ export class CBCLDriver extends BaseDriver {
 
     for (const factorName of factorNames) {
       const config = factorConfig[factorName]
+      if (!config) continue
       let rawScore = 0
 
       for (const item of config.items) {

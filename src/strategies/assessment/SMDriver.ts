@@ -366,6 +366,7 @@ export class SMDriver extends BaseDriver {
     let consecutiveFail = 0
     for (let i = currentIndex; i >= 0; i--) {
       const q = this.sortedQuestions[i]
+      if (!q) continue
       const answer = answers[q.id]
 
       if (!answer) break
@@ -385,6 +386,7 @@ export class SMDriver extends BaseDriver {
     consecutiveFail = 0
     for (let i = 0; i < this.sortedQuestions.length; i++) {
       const q = this.sortedQuestions[i]
+      if (!q) continue
       const answer = answers[q.id]
 
       if (!answer) continue
@@ -524,7 +526,9 @@ export class SMDriver extends BaseDriver {
     // Phase 1: 从起始阶段向前搜索
     let consecutivePass = 0
     for (let i = Math.max(0, startIndex); i < allQuestions.length; i++) {
-      const qid = allQuestions[i].id
+      const currentQuestion = allQuestions[i]
+      if (!currentQuestion) continue
+      const qid = currentQuestion.id
       const answer = answers[qid]
       if (!answer) break
 
@@ -533,7 +537,8 @@ export class SMDriver extends BaseDriver {
         if (consecutivePass === 10) {
           tenPassStartIndex = i - 9
           tenPassEndIndex = i
-          console.log('[SMDriver] 向前搜索：发现连续10项通过，从题目', allQuestions[tenPassStartIndex].id, '到', allQuestions[i].id)
+          const startQuestion = allQuestions[tenPassStartIndex]
+          console.log('[SMDriver] 向前搜索：发现连续10项通过，从题目', startQuestion?.id, '到', currentQuestion.id)
           break
         }
       } else {
@@ -545,7 +550,9 @@ export class SMDriver extends BaseDriver {
     if (tenPassStartIndex === -1 && startIndex > 0) {
       consecutivePass = 0
       for (let i = startIndex - 1; i >= 0; i--) {
-        const qid = allQuestions[i].id
+        const currentQuestion = allQuestions[i]
+        if (!currentQuestion) continue
+        const qid = currentQuestion.id
         const answer = answers[qid]
         if (!answer) break
 
@@ -554,7 +561,8 @@ export class SMDriver extends BaseDriver {
           if (consecutivePass === 10) {
             tenPassStartIndex = i
             tenPassEndIndex = i + 9
-            console.log('[SMDriver] 向后搜索：发现连续10项通过，从题目', allQuestions[i].id, '到', allQuestions[tenPassEndIndex].id)
+            const endQuestion = allQuestions[tenPassEndIndex]
+            console.log('[SMDriver] 向后搜索：发现连续10项通过，从题目', currentQuestion.id, '到', endQuestion?.id)
             break
           }
         } else {
@@ -570,6 +578,9 @@ export class SMDriver extends BaseDriver {
     if (tenPassStartIndex !== -1) {
       // 找到了连续10项通过，确定有效的年龄阶段和基础分
       const tenPassQuestion = allQuestions[tenPassStartIndex]
+      if (!tenPassQuestion) {
+        return effectiveBaseScore
+      }
       const effectiveAgeStage = tenPassQuestion.age_stage
       effectiveBaseScore = stageBaseScores[effectiveAgeStage] || 0
 
@@ -581,7 +592,9 @@ export class SMDriver extends BaseDriver {
 
       // 2. 连续10项通过之后的通过题目
       for (let i = tenPassEndIndex + 1; i < allQuestions.length; i++) {
-        const qid = allQuestions[i].id
+        const currentQuestion = allQuestions[i]
+        if (!currentQuestion) continue
+        const qid = currentQuestion.id
         const answer = answers[qid]
         if (answer) {
           if (answer.score === 1) {
@@ -597,7 +610,8 @@ export class SMDriver extends BaseDriver {
       // 没有找到连续10项通过，只计算实际通过的题目
       console.log('[SMDriver] 没有连续10项通过，只计算实际通过题目')
       for (const qid in answers) {
-        if (answers[qid].score === 1) {
+        const answer = answers[qid]
+        if (answer?.score === 1) {
           finalPassedCount++
         }
       }
