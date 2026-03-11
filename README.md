@@ -71,5 +71,7 @@ npm run build:electron
 
 ## 说明
 
-- `.planning/`、`.archive/`、`.claude/`、`.gemini/` 主要是过程材料、代理协作材料或历史归档，不是对外主入口。
+- `.planning/`：过程型协作材料，包含阶段上下文、研究记录、任务拆解，不是正式需求文档入口。
+- `.archive/`：历史归档，保留旧方案和旧过程文件，不代表当前实现。
+- `.claude/`、`.gemini/`：代理协作与命令模板目录；其中 `gsd` 是给代理使用的工作流命令，不属于业务模块。
 - 如果你要理解当前项目，优先看 `README.md`、`docs/INDEX.md`、`PROJECT_CONTEXT.md` 和核心实施计划。

@@ -72,6 +72,12 @@
 - `docs/analysis`：专项分析
 - `docs/tech-design`：历史技术设计文档，当前仅保留少量旧文档
 
+### 仓库中的非主文档目录
+
+- `.planning`：过程型协作材料，记录阶段上下文、研究过程和任务拆解
+- `.archive`：历史归档，不应默认视为当前方案
+- `.claude`、`.gemini`：代理协作目录，`gsd` 属于代理工作流命令集，不是产品功能目录
+
 ## 当前推荐阅读顺序
 
 1. [README.md](/home/DONG/Mycode/SCGP/README.md)
@@ -83,5 +89,5 @@
 ## 说明
 
 - `PROJECT_CONTEXT.md` 是持续更新的协作上下文，不等同于用户手册。
-- `.planning/` 和 `.archive/` 不属于 `docs/` 主文档体系。
+- `.planning/`、`.archive/`、`.claude/`、`.gemini/` 都不属于 `docs/` 主文档体系。
 - 如果新增文档，请先看 [DOCS_GUIDE.md](/home/DONG/Mycode/SCGP/docs/DOCS_GUIDE.md)。
