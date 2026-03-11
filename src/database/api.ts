@@ -1533,15 +1533,18 @@ export class ReportAPI extends DatabaseAPI {
    */
   saveReportRecord(record: {
     student_id: number
-    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq'
+    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl'
     assess_id?: number
     plan_id?: number
     title: string
   }): number {
     // 获取学生当前班级信息作为快照
-    const student = this.execute('SELECT current_class_id, current_class_name FROM student WHERE id = ?', [record.student_id])
-    const classId = student?.[0]?.current_class_id || null
-    const className = student?.[0]?.current_class_name || null
+    const student = this.queryOne(
+      'SELECT current_class_id, current_class_name FROM student WHERE id = ?',
+      [record.student_id]
+    )
+    const classId = student?.current_class_id || null
+    const className = student?.current_class_name || null
 
     const sql = `
       INSERT INTO report_record (student_id, report_type, assess_id, plan_id, title, class_id, class_name)
@@ -1650,6 +1653,9 @@ export class ReportAPI extends DatabaseAPI {
     csirs_count: number
     conners_psq_count: number
     conners_trs_count: number
+    sdq_count: number
+    srs2_count: number
+    cbcl_count: number
     iep_count: number
     training_count: number
   } {
@@ -1672,6 +1678,9 @@ export class ReportAPI extends DatabaseAPI {
       csirs_count: 0,
       conners_psq_count: 0,
       conners_trs_count: 0,
+      sdq_count: 0,
+      srs2_count: 0,
+      cbcl_count: 0,
       iep_count: 0,
       training_count: 0
     }
@@ -1683,6 +1692,9 @@ export class ReportAPI extends DatabaseAPI {
       if (row.report_type === 'csirs') stats.csirs_count = row.count
       if (row.report_type === 'conners-psq') stats.conners_psq_count = row.count
       if (row.report_type === 'conners-trs') stats.conners_trs_count = row.count
+      if (row.report_type === 'sdq') stats.sdq_count = row.count
+      if (row.report_type === 'srs2') stats.srs2_count = row.count
+      if (row.report_type === 'cbcl') stats.cbcl_count = row.count
       if (row.report_type === 'iep') stats.iep_count = row.count
       if (row.report_type === 'training') stats.training_count = row.count
     })
@@ -1700,6 +1712,9 @@ export class ReportAPI extends DatabaseAPI {
     csirs_migrated: number
     conners_psq_migrated: number
     conners_trs_migrated: number
+    sdq_migrated: number
+    srs2_migrated: number
+    cbcl_migrated: number
     total: number
   } {
     let smMigrated = 0
@@ -1707,6 +1722,9 @@ export class ReportAPI extends DatabaseAPI {
     let csirsMigrated = 0
     let connersPSQMigrated = 0
     let connersTRSMigrated = 0
+    let sdqMigrated = 0
+    let srs2Migrated = 0
+    let cbclMigrated = 0
 
     try {
       // 迁移 S-M 评估记录
@@ -1829,7 +1847,76 @@ export class ReportAPI extends DatabaseAPI {
         connersTRSMigrated++
       })
 
-      console.log(`✅ 数据迁移完成: S-M ${smMigrated} 条, WeeFIM ${weefimMigrated} 条, CSIRS ${csirsMigrated} 条, Conners PSQ ${connersPSQMigrated} 条, Conners TRS ${connersTRSMigrated} 条`)
+      const sdqAssessments = this.query(`
+        SELECT
+          sa.id,
+          sa.student_id,
+          sa.created_at,
+          s.name as student_name
+        FROM sdq_assess sa
+        LEFT JOIN student s ON sa.student_id = s.id
+        WHERE NOT EXISTS (
+          SELECT 1 FROM report_record rr
+          WHERE rr.report_type = 'sdq' AND rr.assess_id = sa.id
+        )
+      `)
+
+      sdqAssessments.forEach((assessment: any) => {
+        const title = `SDQ长处和困难问卷评估报告_${assessment.student_name}_${new Date(assessment.created_at).toLocaleDateString()}`
+        this.execute(
+          'INSERT INTO report_record (student_id, report_type, assess_id, title, created_at) VALUES (?, ?, ?, ?, ?)',
+          [assessment.student_id, 'sdq', assessment.id, title, assessment.created_at]
+        )
+        sdqMigrated++
+      })
+
+      const srs2Assessments = this.query(`
+        SELECT
+          sa.id,
+          sa.student_id,
+          sa.created_at,
+          s.name as student_name
+        FROM srs2_assess sa
+        LEFT JOIN student s ON sa.student_id = s.id
+        WHERE NOT EXISTS (
+          SELECT 1 FROM report_record rr
+          WHERE rr.report_type = 'srs2' AND rr.assess_id = sa.id
+        )
+      `)
+
+      srs2Assessments.forEach((assessment: any) => {
+        const title = `SRS-2社交反应量表评估报告_${assessment.student_name}_${new Date(assessment.created_at).toLocaleDateString()}`
+        this.execute(
+          'INSERT INTO report_record (student_id, report_type, assess_id, title, created_at) VALUES (?, ?, ?, ?, ?)',
+          [assessment.student_id, 'srs2', assessment.id, title, assessment.created_at]
+        )
+        srs2Migrated++
+      })
+
+      const cbclAssessments = this.query(`
+        SELECT
+          ca.id,
+          ca.student_id,
+          ca.created_at,
+          s.name as student_name
+        FROM cbcl_assess ca
+        LEFT JOIN student s ON ca.student_id = s.id
+        WHERE NOT EXISTS (
+          SELECT 1 FROM report_record rr
+          WHERE rr.report_type = 'cbcl' AND rr.assess_id = ca.id
+        )
+      `)
+
+      cbclAssessments.forEach((assessment: any) => {
+        const title = `CBCL儿童行为量表评估报告_${assessment.student_name}_${new Date(assessment.created_at).toLocaleDateString()}`
+        this.execute(
+          'INSERT INTO report_record (student_id, report_type, assess_id, title, created_at) VALUES (?, ?, ?, ?, ?)',
+          [assessment.student_id, 'cbcl', assessment.id, title, assessment.created_at]
+        )
+        cbclMigrated++
+      })
+
+      console.log(`✅ 数据迁移完成: S-M ${smMigrated} 条, WeeFIM ${weefimMigrated} 条, CSIRS ${csirsMigrated} 条, Conners PSQ ${connersPSQMigrated} 条, Conners TRS ${connersTRSMigrated} 条, SDQ ${sdqMigrated} 条, SRS-2 ${srs2Migrated} 条, CBCL ${cbclMigrated} 条`)
     } catch (error) {
       console.error('❌ 数据迁移失败:', error)
     }
@@ -1840,7 +1927,10 @@ export class ReportAPI extends DatabaseAPI {
       csirs_migrated: csirsMigrated,
       conners_psq_migrated: connersPSQMigrated,
       conners_trs_migrated: connersTRSMigrated,
-      total: smMigrated + weefimMigrated + csirsMigrated + connersPSQMigrated + connersTRSMigrated
+      sdq_migrated: sdqMigrated,
+      srs2_migrated: srs2Migrated,
+      cbcl_migrated: cbclMigrated,
+      total: smMigrated + weefimMigrated + csirsMigrated + connersPSQMigrated + connersTRSMigrated + sdqMigrated + srs2Migrated + cbclMigrated
     }
   }
 }
@@ -1861,9 +1951,12 @@ export class GameTrainingAPI extends DatabaseAPI {
     module_code?: string // 模块代码，默认为 sensory
   }): number {
     // 获取学生当前班级信息作为快照
-    const student = this.execute('SELECT current_class_id, current_class_name FROM student WHERE id = ?', [data.student_id])
-    const classId = student?.[0]?.current_class_id || null
-    const className = student?.[0]?.current_class_name || null
+    const student = this.queryOne(
+      'SELECT current_class_id, current_class_name FROM student WHERE id = ?',
+      [data.student_id]
+    )
+    const classId = student?.current_class_id || null
+    const className = student?.current_class_name || null
     const moduleCode = data.module_code || 'sensory' // 默认为感官统合模块
 
     const rawDataJson = JSON.stringify(data.raw_data)
@@ -2135,15 +2228,21 @@ export class EquipmentTrainingAPI extends DatabaseAPI {
     module_code?: string // 模块代码，默认从器材资源获取
   }): number {
     // 获取学生当前班级信息作为快照
-    const student = this.execute('SELECT current_class_id, current_class_name FROM student WHERE id = ?', [data.student_id])
-    const classId = student?.[0]?.current_class_id || null
-    const className = student?.[0]?.current_class_name || null
+    const student = this.queryOne(
+      'SELECT current_class_id, current_class_name FROM student WHERE id = ?',
+      [data.student_id]
+    )
+    const classId = student?.current_class_id || null
+    const className = student?.current_class_name || null
 
     // 获取器材对应的模块代码
     let moduleCode = data.module_code
     if (!moduleCode) {
-      const equipment = this.execute('SELECT module_code FROM sys_training_resource WHERE id = ?', [data.equipment_id])
-      moduleCode = equipment?.[0]?.module_code || 'sensory'
+      const equipment = this.queryOne(
+        'SELECT module_code FROM sys_training_resource WHERE id = ?',
+        [data.equipment_id]
+      )
+      moduleCode = equipment?.module_code || 'sensory'
     }
 
     this.execute(`

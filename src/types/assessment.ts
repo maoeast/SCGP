@@ -107,6 +107,8 @@ export interface ScaleAnswer {
   timestamp: number
   /** 响应时长（毫秒） */
   responseTime?: number
+  /** 量表扩展元数据（如文字说明） */
+  metadata?: Record<string, any>
 }
 
 // ============================================================
@@ -182,6 +184,14 @@ export interface DimensionScore {
   passedCount?: number
   /** 平均分 */
   averageScore?: number
+  /** 等级显示文本 */
+  level?: string
+  /** 等级代码 */
+  levelCode?: string
+  /** 等级名称 */
+  levelName?: string
+  /** UI 严重程度标记 */
+  severity?: 'success' | 'warning' | 'danger' | 'info'
 }
 
 /**
@@ -243,6 +253,8 @@ export interface ScoreResult {
   // ========== 原始数据 ==========
   /** 原始答案（用于存档） */
   rawAnswers: Record<string, any>
+  /** 量表扩展数据（如宽带量表、维度 T 分） */
+  extraData?: Record<string, any>
   /** 答题时长统计 */
   timing?: {
     totalTime: number      // 总用时（毫秒）
@@ -259,19 +271,21 @@ export interface ScoreResult {
  */
 export interface AssessmentFeedback {
   /** 总体评价 */
-  summary: string
+  summary?: string
   /** 优势领域 */
-  strengths: string[]
+  strengths?: string[]
   /** 待提升领域 */
-  weaknesses: string[]
+  weaknesses?: string[]
   /** IEP 建议 */
-  recommendations: string[]
+  recommendations?: string[]
   /** 训练重点 */
-  trainingFocus: string[]
+  trainingFocus?: string[]
   /** 资源推荐 */
   resourceSuggestions?: string[]
   /** 家庭指导建议 */
   homeGuidance?: string[]
+  /** 允许量表返回结构化扩展字段 */
+  [key: string]: any
 }
 
 // ============================================================

@@ -322,23 +322,24 @@ async function initializeAssessment() {
       return
     }
 
-    student.value = {
+    const studentContext: StudentContext = {
       ...studentData,
       ageInMonths: calculateAgeInMonths(studentData.birthday)
     }
+    student.value = studentContext
 
     // 3. 加载驱动器
     driver.value = getDriverByScaleCode(scaleCode.value)
 
     // 4. 初始化评估状态
-    const startIndex = driver.value.getStartIndex(student.value)
+    const startIndex = driver.value.getStartIndex(studentContext)
     state.value.currentIndex = startIndex
     state.value.answers = {}
     state.value.isComplete = false
     state.value.startTime = Date.now()
 
     // 获取有效的题目列表（用于判断完成条件）
-    const effectiveQuestions = driver.value.getQuestions(student.value)
+    const effectiveQuestions = driver.value.getQuestions(studentContext)
 
     // 初始化 metadata，保存起始索引和有效题目总数（用于进度计算和完成判断）
     state.value.metadata = {
@@ -577,7 +578,8 @@ async function completeAssessment() {
 async function saveAssessmentToDatabase() {
   if (!student.value || !scoreResult.value || !driver.value) return
 
-  const startTime = new Date(state.value.startTime).toISOString()
+  const startedAt = state.value.startTime ?? Date.now()
+  const startTime = new Date(startedAt).toISOString()
   const endTime = new Date(state.value.endTime || Date.now()).toISOString()
 
   // 根据量表类型选择保存方式
@@ -624,7 +626,7 @@ async function saveSMAssessment(startTime: string, endTime: string) {
   reportApi.saveReportRecord({
     student_id: student.value.id,
     report_type: 'sm',
-    assess_id: assessId.value,
+    assess_id: assessId.value ?? undefined,
     title: `${student.value.name} - S-M量表评估报告`
   })
 
@@ -695,7 +697,7 @@ async function saveSDQAssessment(startTime: string, endTime: string) {
   reportApi.saveReportRecord({
     student_id: student.value.id,
     report_type: 'sdq',
-    assess_id: assessId.value,
+    assess_id: assessId.value ?? undefined,
     title: `${student.value.name} - SDQ长处和困难问卷评估报告`
   })
 
@@ -705,7 +707,7 @@ async function saveSDQAssessment(startTime: string, endTime: string) {
 async function saveCSIRSAssessment(startTime: string, endTime: string) {
   if (!student.value || !scoreResult.value) return
 
-  const csirsApi = new CSIRSAPI()
+  const db = getDatabase()
 
   // 从维度分数中提取各维度得分
   const dimensions = scoreResult.value.dimensions
@@ -720,7 +722,7 @@ async function saveCSIRSAssessment(startTime: string, endTime: string) {
   }
 
   // 1. 创建评估主记录（使用正确的表结构）
-  assessId.value = csirsApi.execute(
+  db.run(
     `INSERT INTO csirs_assess (
       student_id, age_months, raw_scores, t_scores, total_t_score, level, start_time, end_time
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -737,14 +739,14 @@ async function saveCSIRSAssessment(startTime: string, endTime: string) {
   )
 
   // 获取最后插入的 ID
-  const result = csirsApi.queryOne('SELECT last_insert_rowid() as id')
-  assessId.value = result?.id || 0
+  const result = db.all('SELECT last_insert_rowid() as id')
+  assessId.value = result[0]?.id || 0
 
   // 2. 保存答题详情（直接执行 SQL，因为 API 方法缺少 dimension 字段）
   const questions = driver.value?.getQuestions(student.value) || []
   for (const [questionId, answer] of Object.entries(state.value.answers)) {
     const question = questions.find(q => q.id === parseInt(questionId))
-    csirsApi.execute(
+    db.run(
       `INSERT INTO csirs_assess_detail (assess_id, question_id, dimension, score, answer_time)
        VALUES (?, ?, ?, ?, ?)`,
       [
@@ -762,7 +764,7 @@ async function saveCSIRSAssessment(startTime: string, endTime: string) {
   reportApi.saveReportRecord({
     student_id: student.value.id,
     report_type: 'csirs',
-    assess_id: assessId.value,
+    assess_id: assessId.value ?? undefined,
     title: `${student.value.name} - CSIRS感觉统合评估报告`
   })
 
@@ -808,7 +810,7 @@ async function saveWeeFIMAssessment(startTime: string, endTime: string) {
   reportApi.saveReportRecord({
     student_id: student.value.id,
     report_type: 'weefim',
-    assess_id: assessId.value,
+    assess_id: assessId.value ?? undefined,
     title: `${student.value.name} - WeeFIM功能独立性评估报告`
   })
 
@@ -861,7 +863,7 @@ async function saveConnersPSQAssessment(startTime: string, endTime: string) {
   reportApi.saveReportRecord({
     student_id: student.value.id,
     report_type: 'conners-psq',
-    assess_id: assessId.value,
+    assess_id: assessId.value ?? undefined,
     title: `${student.value.name} - Conners父母问卷评估报告`
   })
 
@@ -914,7 +916,7 @@ async function saveConnersTRSAssessment(startTime: string, endTime: string) {
   reportApi.saveReportRecord({
     student_id: student.value.id,
     report_type: 'conners-trs',
-    assess_id: assessId.value,
+    assess_id: assessId.value ?? undefined,
     title: `${student.value.name} - Conners教师问卷评估报告`
   })
 
@@ -972,7 +974,7 @@ async function saveSRS2Assessment(startTime: string, endTime: string) {
   reportApi.saveReportRecord({
     student_id: student.value.id,
     report_type: 'srs2',
-    assess_id: assessId.value,
+    assess_id: assessId.value ?? undefined,
     title: `${student.value.name} - SRS-2社交反应量表评估报告`
   })
 
@@ -1052,7 +1054,7 @@ async function saveCBCLAssessment(startTime: string, endTime: string) {
   reportApi.saveReportRecord({
     student_id: student.value.id,
     report_type: 'cbcl',
-    assess_id: assessId.value,
+    assess_id: assessId.value ?? undefined,
     title: `${student.value.name} - CBCL儿童行为量表评估报告`
   })
 

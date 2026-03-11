@@ -165,6 +165,47 @@
         </el-card>
       </el-col>
     </el-row>
+    <el-row :gutter="20" class="stats-row secondary-stats-row">
+      <el-col :span="8">
+        <el-card class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon amber">
+              <i class="fas fa-face-smile"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ statistics.sdq_count }}</div>
+              <div class="stat-label">SDQ评估</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon cyan">
+              <i class="fas fa-people-arrows"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ statistics.srs2_count }}</div>
+              <div class="stat-label">SRS-2评估</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon teal">
+              <i class="fas fa-brain"></i>
+            </div>
+            <div class="stat-info">
+              <div class="stat-value">{{ statistics.cbcl_count }}</div>
+              <div class="stat-label">CBCL评估</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
 
     <!-- 报告列表 -->
     <el-card class="report-list-card">
@@ -264,6 +305,9 @@ const statistics = ref({
   csirs_count: 0,
   conners_psq_count: 0,
   conners_trs_count: 0,
+  sdq_count: 0,
+  srs2_count: 0,
+  cbcl_count: 0,
   iep_count: 0,
   training_count: 0
 })
@@ -351,8 +395,8 @@ const loadReports = async () => {
     reportList.value = api.getReportList(params)
 
     // 获取统计
-    const statsParams = filters.value.student_id ? { student_id: filters.value.student_id } : undefined
-    statistics.value = api.getReportStatistics(statsParams?.student_id)
+    const selectedStudentId = filters.value.student_id ? Number(filters.value.student_id) : undefined
+    statistics.value = api.getReportStatistics(selectedStudentId)
 
     console.log('报告列表已加载:', reportList.value.length)
   } catch (error) {
@@ -429,7 +473,7 @@ const migrateData = async () => {
   try {
     await ElMessageBox.confirm(
       '此操作将为所有已有的评估记录创建对应的报告记录。\n\n' +
-      '• 支持的量表：S-M、WeeFIM、CSIRS、Conners PSQ、Conners TRS\n' +
+      '• 支持的量表：S-M、WeeFIM、CSIRS、Conners PSQ、Conners TRS、SDQ、SRS-2、CBCL\n' +
       '• 只会迁移没有报告记录的评估数据\n' +
       '• 迁移后可以在报告列表中查看和导出\n' +
       '• 这是一个安全操作，不会删除任何数据',
@@ -455,6 +499,9 @@ const migrateData = async () => {
         `CSIRS评估: ${result.csirs_migrated} 条`,
         `Conners PSQ: ${result.conners_psq_migrated} 条`,
         `Conners TRS: ${result.conners_trs_migrated} 条`,
+        `SDQ评估: ${result.sdq_migrated} 条`,
+        `SRS-2评估: ${result.srs2_migrated} 条`,
+        `CBCL评估: ${result.cbcl_migrated} 条`,
         `总计: ${result.total} 条`
       ].join('\n')
       ElMessage.success(msg)
@@ -496,6 +543,10 @@ onMounted(async () => {
 
 .stats-row {
   margin-top: 0;
+}
+
+.secondary-stats-row {
+  margin-top: 20px;
 }
 
 .stat-card {
@@ -545,6 +596,14 @@ onMounted(async () => {
 
 .stat-icon.indigo {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-icon.amber {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.stat-icon.cyan {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
 }
 
 .stat-info {
