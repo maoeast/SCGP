@@ -553,9 +553,9 @@ src/
 ## 9. References
 
 ### Documentation Files
-- `/docs/儿童行为量表（CBCL）- 2026数字化题目.md` - Complete question set
-- `/docs/儿童行为量表（CBCL）自动计分引擎.js` - Scoring algorithm reference
-- `/docs/儿童行为量表（CBCL）报告解释生成引擎.js` - Feedback content reference
+- `/docs/references/儿童行为量表（CBCL）- 2026数字化题目.md` - Complete question set
+- `/docs/references/儿童行为量表（CBCL）自动计分引擎.js` - Scoring algorithm reference
+- `/docs/references/儿童行为量表（CBCL）报告解释生成引擎.js` - Feedback content reference
 
 ### Code References
 - `src/strategies/assessment/SDQDriver.ts` - Similar dimension-based scoring

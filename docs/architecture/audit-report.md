@@ -380,8 +380,8 @@ const data = await newAPI.getResource(id) ?? await oldAPI.getEquipment(id)
 
 ### 交付物清单
 
-- [x] `docs/audit-report.md` - 代码审计报告（本文档）
-- [ ] `docs/data-flow-diagram.md` - 详细数据流图（待补充）
+- [x] `docs/architecture/audit-report.md` - 代码审计报告（本文档）
+- [x] `docs/architecture/data-flow-diagram.md` - 详细数据流图
 - [ ] `docs/optimization-plan.md` - 优化实施计划（待补充）
 
 ---

@@ -440,5 +440,5 @@ flowchart TD
 ---
 
 **文档生成时间**: 2026-02-05
-**相关文档**: `docs/audit-report.md`, `重构实施技术规范.md`
+**相关文档**: `docs/architecture/audit-report.md`, `重构实施技术规范.md`
 **维护者**: 首席实施工程师

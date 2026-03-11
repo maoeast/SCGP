@@ -1,6 +1,6 @@
 /**
  * CBCL (Achenbach儿童行为量表) 题目库
- * 来源: docs/儿童行为量表（CBCL）- 2026数字化题目.md
+ * 来源: docs/references/儿童行为量表（CBCL）- 2026数字化题目.md
  * 共113道行为问题 + 8道子题(56a-h)
  */
 

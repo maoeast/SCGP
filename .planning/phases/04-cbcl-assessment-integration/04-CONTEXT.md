@@ -68,9 +68,9 @@ CBCL (Achenbach儿童行为量表) 是全球应用最广泛的儿童行为评估
 - Report.vue 实现包含临床剖面图的专业级报告
 
 ### 参考文件位置
-- docs/儿童行为量表（CBCL）- 2026数字化题目.md
-- docs/儿童行为量表（CBCL）自动计分引擎.js
-- docs/儿童行为量表（CBCL）报告解释生成引擎.js
+- docs/references/儿童行为量表（CBCL）- 2026数字化题目.md
+- docs/references/儿童行为量表（CBCL）自动计分引擎.js
+- docs/references/儿童行为量表（CBCL）报告解释生成引擎.js
 
 </specifics>
 

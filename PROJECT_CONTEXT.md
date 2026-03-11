@@ -838,7 +838,7 @@ function calculateConnersTScore(
 - [ ] DatabaseAPI 调用审计（搜索 `db.exec`, `db.run`, `database.query`）
 - [ ] ability_tags 使用模式分析
 - [ ] 数据流图绘制（评估流程、训练记录写入）
-- **交付物**: `docs/audit-report.md`
+- **交付物**: `docs/architecture/audit-report.md`
 
 #### Phase 1: 数据库与持久化底座 (Day 4-18)
 - [ ] Worker 环境搭建（`db.worker.ts`, `db-bridge.ts`）

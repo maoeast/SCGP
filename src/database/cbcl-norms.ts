@@ -1,6 +1,6 @@
 /**
  * CBCL (Achenbach儿童行为量表) 常模配置
- * 来源: docs/儿童行为量表（CBCL）自动计分引擎.js
+ * 来源: docs/references/儿童行为量表（CBCL）自动计分引擎.js
  * 包含6个常模组 (性别 × 年龄) 的因子配置
  */
 
