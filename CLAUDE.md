@@ -19,6 +19,16 @@
 - `docs/plans/2025-02-17-assessment-module-refactor-design.md`
 - `docs/planning/prd.md`
 
+如果任务与 `emotional` 模块有关，再额外优先查看：
+
+- `docs/planning/2026-03-16-emotional-module-prd.md`
+
+使用规则：
+
+- 该文档是 `emotional` 模块的现行需求入口
+- 但它描述的是模块目标范围与实现要求，不等同于当前代码已实现状态
+- 开发前必须回到当前代码确认 `emotional` 仍处于未开发、占位还是部分结构准备状态
+
 `.planning/PROJECT.md`、`.planning/ROADMAP.md`、`.planning/REQUIREMENTS.md`、`.planning/STATE.md` 主要是 GSD 过程状态文件。只有在任务已经明确进入 GSD 规划或执行流程时，才把它们作为工作流入口；它们不是当前产品事实的最高来源。
 
 ## 2. 项目身份
@@ -79,6 +89,7 @@ SCGP 当前主线已经具备以下可运行能力：
 - 新模块扩展优先沿用平台底座，不要回到单体垂直页面堆叠
 - 如果文档与当前代码实现冲突，以代码为准判断“当前现实”，并按需修正文档口径
 - 当前导航与路由仍是静态装配；除非任务明确要求推进注册表驱动，否则优先修改现有静态路由和菜单
+- 如果任务来自 `docs/planning/2026-03-16-emotional-module-prd.md`，先把它视为目标需求输入，再单独确认当前代码缺口，不要把 PRD 直接当成现状
 
 ## 6. 代码风格与改动策略
 

@@ -46,7 +46,7 @@
 
 - [2026-03-13-scgp-current-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-13-scgp-current-prd.md)
 - [2026-03-12-emotional-module-execution-prompt.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-12-emotional-module-execution-prompt.md)
-- [2026-03-12-emotional-module-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-12-emotional-module-prd.md)
+- [2026-03-16-emotional-module-prd.md（emotional 模块现行 PRD）](/home/DONG/Mycode/SCGP/docs/planning/2026-03-16-emotional-module-prd.md)
 - [prd.md（原始需求基线）](/home/DONG/Mycode/SCGP/docs/planning/prd.md)
 - [感官训练PRD.md](/home/DONG/Mycode/SCGP/docs/planning/%E6%84%9F%E5%AE%98%E8%AE%AD%E7%BB%83PRD.md)
 - [报告生成模块技术方案.md](/home/DONG/Mycode/SCGP/docs/planning/%E6%8A%A5%E5%91%8A%E7%94%9F%E6%88%90%E6%A8%A1%E5%9D%97%E6%8A%80%E6%9C%AF%E6%96%B9%E6%A1%88.md)
@@ -101,6 +101,11 @@
 7. [docs/reports/2026-03-11-assessment-cleanup.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-11-assessment-cleanup.md)
 8. [docs/plans/2025-02-05-refactor-implementation-plan.md](/home/DONG/Mycode/SCGP/docs/plans/2025-02-05-refactor-implementation-plan.md)
 9. [docs/planning/prd.md](/home/DONG/Mycode/SCGP/docs/planning/prd.md)
+
+如果任务与 `emotional` 模块有关，再补充阅读：
+
+- [docs/planning/2026-03-16-emotional-module-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-16-emotional-module-prd.md)
+- 使用时需区分“模块目标要求”和“当前代码现实”，不要把 PRD 目标态当成已实现现状
 
 ## 说明
 

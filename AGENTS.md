@@ -29,6 +29,16 @@
 - `docs/plans/2025-02-17-assessment-module-refactor-design.md`
 - `docs/planning/prd.md`
 
+如果任务与 `emotional` 模块有关，再额外优先查看：
+
+- `docs/planning/2026-03-16-emotional-module-prd.md`
+
+使用规则：
+
+- 该文档是 `emotional` 模块的现行需求入口
+- 但它描述的是模块目标范围与实现要求，不等同于当前代码已实现状态
+- 在进入开发前，必须先回到当前代码确认 `emotional` 仍处于未开发/占位/部分结构准备中的哪一种现实状态
+
 ## 3. 当前产品边界
 
 SCGP 当前代码主线已经具备以下可运行能力：
@@ -93,6 +103,11 @@ SCGP 当前代码主线已经具备以下可运行能力：
 - `docs/guides/系统使用说明书.md`
 - `docs/guides/系统参数技术文档.md`
 - 历史实施计划、历史设计稿、历史审计和历史数据流图
+
+模块专用补充规则：
+
+- 如果任务明确指向 `emotional` 模块，除上述基础文档外，补充阅读 `docs/planning/2026-03-16-emotional-module-prd.md`
+- 读取该文档时，必须区分“模块目标要求”和“当前代码现实”，不要把 PRD 目标态写成已实现现状
 
 ## 7. 当前技术债重点
 
