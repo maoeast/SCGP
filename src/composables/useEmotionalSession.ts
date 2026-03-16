@@ -59,7 +59,7 @@ export function useEmotionalSession() {
   const currentStep = computed(() => steps.value[currentIndex.value] || null)
   const currentPhase = computed<EmotionalSessionPhase | null>(() => currentStep.value?.phase || null)
   const isActive = computed(() => status.value === 'running')
-  const questionSteps = computed(() => steps.value.filter((step) => step.stepType))
+  const questionSteps = computed(() => steps.value.filter((step) => step.interactive !== false))
   const completedStepCount = computed(() => Object.keys(latestResults.value).length)
 
   function resetRuntimeState() {

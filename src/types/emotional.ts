@@ -194,6 +194,7 @@ export interface EmotionalSessionStepDefinition {
   key: string
   phase: EmotionalSessionPhase
   stepType: EmotionalStepType
+  interactive?: boolean
   title?: string
   promptId?: string
   promptText?: string
