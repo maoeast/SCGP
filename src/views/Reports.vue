@@ -1,10 +1,9 @@
 <template>
   <div class="page-container">
-    <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
-        <h1>报告生成</h1>
-        <p class="subtitle">查看和管理评估报告，支持导出PDF</p>
+        <h1>报告中心</h1>
+        <p class="subtitle">查看和管理评估、训练与情绪模块报告。</p>
       </div>
       <div class="header-right">
         <el-button
@@ -18,7 +17,6 @@
       </div>
     </div>
 
-    <!-- 筛选区域 -->
     <div class="filter-section">
       <el-row :gutter="20">
         <el-col :span="6">
@@ -48,15 +46,16 @@
               clearable
               @change="handleFilter"
             >
-              <el-option label="S-M量表评估报告" value="sm" />
-              <el-option label="WeeFIM量表评估报告" value="weefim" />
-              <el-option label="CSIRS感觉统合评估报告" value="csirs" />
-              <el-option label="Conners父母问卷报告(PSQ)" value="conners-psq" />
-              <el-option label="Conners教师问卷报告(TRS)" value="conners-trs" />
-              <el-option label="SDQ长处和困难问卷评估报告" value="sdq" />
-              <el-option label="SRS-2社交反应量表评估报告" value="srs2" />
-              <el-option label="CBCL儿童行为量表评估报告" value="cbcl" />
-              <el-option label="IEP评估报告" value="iep" />
+              <el-option label="S-M 评估报告" value="sm" />
+              <el-option label="WeeFIM 评估报告" value="weefim" />
+              <el-option label="CSIRS 评估报告" value="csirs" />
+              <el-option label="Conners PSQ 报告" value="conners-psq" />
+              <el-option label="Conners TRS 报告" value="conners-trs" />
+              <el-option label="SDQ 评估报告" value="sdq" />
+              <el-option label="SRS-2 评估报告" value="srs2" />
+              <el-option label="CBCL 评估报告" value="cbcl" />
+              <el-option label="情绪行为调节模块报告" value="emotional" />
+              <el-option label="IEP 报告" value="iep" />
               <el-option label="训练报告" value="training" />
             </el-select>
           </div>
@@ -84,14 +83,11 @@
       </el-row>
     </div>
 
-    <!-- 统计卡片 -->
     <el-row :gutter="20" class="stats-row">
       <el-col :span="4">
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon blue">
-              <i class="fas fa-file-lines"></i>
-            </div>
+            <div class="stat-icon blue"><i class="fas fa-file-lines"></i></div>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.total }}</div>
               <div class="stat-label">报告总数</div>
@@ -102,12 +98,10 @@
       <el-col :span="4">
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon orange">
-              <i class="fas fa-clipboard-check"></i>
-            </div>
+            <div class="stat-icon orange"><i class="fas fa-clipboard-check"></i></div>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.sm_count }}</div>
-              <div class="stat-label">S-M评估</div>
+              <div class="stat-label">S-M</div>
             </div>
           </div>
         </el-card>
@@ -115,12 +109,10 @@
       <el-col :span="4">
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon green">
-              <i class="fas fa-chart-line"></i>
-            </div>
+            <div class="stat-icon green"><i class="fas fa-chart-line"></i></div>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.weefim_count }}</div>
-              <div class="stat-label">WeeFIM评估</div>
+              <div class="stat-label">WeeFIM</div>
             </div>
           </div>
         </el-card>
@@ -128,12 +120,10 @@
       <el-col :span="4">
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon pink">
-              <i class="fas fa-puzzle-piece"></i>
-            </div>
+            <div class="stat-icon pink"><i class="fas fa-puzzle-piece"></i></div>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.csirs_count || 0 }}</div>
-              <div class="stat-label">CSIRS评估</div>
+              <div class="stat-label">CSIRS</div>
             </div>
           </div>
         </el-card>
@@ -141,9 +131,7 @@
       <el-col :span="4">
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon purple">
-              <i class="fas fa-child"></i>
-            </div>
+            <div class="stat-icon purple"><i class="fas fa-child"></i></div>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.conners_psq_count || 0 }}</div>
               <div class="stat-label">Conners PSQ</div>
@@ -154,9 +142,7 @@
       <el-col :span="4">
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon indigo">
-              <i class="fas fa-chalkboard-user"></i>
-            </div>
+            <div class="stat-icon indigo"><i class="fas fa-chalkboard-user"></i></div>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.conners_trs_count || 0 }}</div>
               <div class="stat-label">Conners TRS</div>
@@ -165,49 +151,54 @@
         </el-card>
       </el-col>
     </el-row>
+
     <el-row :gutter="20" class="stats-row secondary-stats-row">
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon amber">
-              <i class="fas fa-face-smile"></i>
-            </div>
+            <div class="stat-icon amber"><i class="fas fa-face-smile"></i></div>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.sdq_count }}</div>
-              <div class="stat-label">SDQ评估</div>
+              <div class="stat-label">SDQ</div>
             </div>
           </div>
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon cyan">
-              <i class="fas fa-people-arrows"></i>
-            </div>
+            <div class="stat-icon cyan"><i class="fas fa-people-arrows"></i></div>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.srs2_count }}</div>
-              <div class="stat-label">SRS-2评估</div>
+              <div class="stat-label">SRS-2</div>
             </div>
           </div>
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card class="stat-card">
           <div class="stat-content">
-            <div class="stat-icon teal">
-              <i class="fas fa-brain"></i>
-            </div>
+            <div class="stat-icon teal"><i class="fas fa-brain"></i></div>
             <div class="stat-info">
               <div class="stat-value">{{ statistics.cbcl_count }}</div>
-              <div class="stat-label">CBCL评估</div>
+              <div class="stat-label">CBCL</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="stat-card">
+          <div class="stat-content">
+            <div class="stat-icon emerald"><i class="fas fa-heart-circle-check"></i></div>
+            <div class="stat-info">
+              <div class="stat-value">{{ statistics.emotional_count }}</div>
+              <div class="stat-label">情绪模块</div>
             </div>
           </div>
         </el-card>
       </el-col>
     </el-row>
 
-    <!-- 报告列表 -->
     <el-card class="report-list-card">
       <template #header>
         <div class="list-header">
@@ -216,11 +207,7 @@
         </div>
       </template>
 
-      <el-table
-        :data="reportList"
-        style="width: 100%"
-        v-loading="loading"
-      >
+      <el-table :data="reportList" style="width: 100%" v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="title" label="报告标题" min-width="250" />
         <el-table-column label="学生姓名" width="120">
@@ -228,7 +215,7 @@
             {{ scope.row.student_name }}
           </template>
         </el-table-column>
-        <el-table-column label="报告类型" width="150">
+        <el-table-column label="报告类型" width="170">
           <template #default="scope">
             <el-tag :type="getReportTypeTagType(scope.row.report_type)">
               {{ getReportTypeName(scope.row.report_type) }}
@@ -242,32 +229,19 @@
         </el-table-column>
         <el-table-column label="操作" width="320" fixed="right">
           <template #default="scope">
-            <el-button
-              type="primary"
-              size="small"
-              @click="viewReport(scope.row)"
-            >
+            <el-button type="primary" size="small" @click="viewReport(scope.row)">
               <i class="fas fa-eye"></i> 查看
             </el-button>
-            <el-button
-              type="success"
-              size="small"
-              @click="downloadReport(scope.row)"
-            >
+            <el-button type="success" size="small" @click="downloadReport(scope.row)">
               <i class="fas fa-download"></i> 下载
             </el-button>
-            <el-button
-              type="danger"
-              size="small"
-              @click="deleteReport(scope.row)"
-            >
+            <el-button type="danger" size="small" @click="deleteReport(scope.row)">
               <i class="fas fa-trash"></i> 删除
             </el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 空状态 -->
       <el-empty
         v-if="!loading && reportList.length === 0"
         description="暂无报告记录"
@@ -277,7 +251,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { RefreshRight } from '@element-plus/icons-vue'
@@ -287,7 +261,6 @@ import { ReportAPI } from '@/database/api'
 const router = useRouter()
 const studentStore = useStudentStore()
 
-// 筛选条件
 const filters = ref({
   student_id: '',
   report_type: ''
@@ -295,7 +268,6 @@ const filters = ref({
 
 const dateRange = ref<[string, string] | null>(null)
 
-// 数据
 const students = ref<any[]>([])
 const reportList = ref<any[]>([])
 const statistics = ref({
@@ -308,47 +280,47 @@ const statistics = ref({
   sdq_count: 0,
   srs2_count: 0,
   cbcl_count: 0,
+  emotional_count: 0,
   iep_count: 0,
   training_count: 0
 })
 const loading = ref(false)
 const migrating = ref(false)
 
-// 获取报告类型标签类型
 const getReportTypeTagType = (type: string) => {
-  const typeMap: Record<string, any> = {
-    'sm': 'warning',
-    'weefim': 'success',
-    'csirs': 'danger',
+  const typeMap: Record<string, string> = {
+    sm: 'warning',
+    weefim: 'success',
+    csirs: 'danger',
     'conners-psq': 'primary',
     'conners-trs': 'info',
-    'sdq': 'warning',
-    'srs2': 'primary',
-    'cbcl': 'success',
-    'iep': 'danger',
-    'training': 'primary'
+    sdq: 'warning',
+    srs2: 'primary',
+    cbcl: 'success',
+    emotional: 'warning',
+    iep: 'danger',
+    training: 'primary'
   }
   return typeMap[type] || 'info'
 }
 
-// 获取报告类型名称
 const getReportTypeName = (type: string) => {
   const nameMap: Record<string, string> = {
-    'sm': 'S-M量表评估报告',
-    'weefim': 'WeeFIM量表评估报告',
-    'csirs': 'CSIRS感觉统合评估报告',
-    'conners-psq': 'Conners父母问卷报告(PSQ)',
-    'conners-trs': 'Conners教师问卷报告(TRS)',
-    'sdq': 'SDQ长处和困难问卷评估报告',
-    'srs2': 'SRS-2社交反应量表评估报告',
-    'cbcl': 'CBCL儿童行为量表评估报告',
-    'iep': 'IEP评估报告',
-    'training': '训练报告'
+    sm: 'S-M 评估报告',
+    weefim: 'WeeFIM 评估报告',
+    csirs: 'CSIRS 评估报告',
+    'conners-psq': 'Conners PSQ 报告',
+    'conners-trs': 'Conners TRS 报告',
+    sdq: 'SDQ 评估报告',
+    srs2: 'SRS-2 评估报告',
+    cbcl: 'CBCL 评估报告',
+    emotional: '情绪行为调节模块报告',
+    iep: 'IEP 报告',
+    training: '训练报告'
   }
   return nameMap[type] || '未知类型'
 }
 
-// 格式化日期
 const formatDate = (dateString: string) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
@@ -361,7 +333,6 @@ const formatDate = (dateString: string) => {
   })
 }
 
-// 加载学生列表
 const loadStudents = async () => {
   try {
     await studentStore.loadStudents()
@@ -372,13 +343,11 @@ const loadStudents = async () => {
   }
 }
 
-// 加载报告列表
 const loadReports = async () => {
   loading.value = true
   try {
     const api = new ReportAPI()
 
-    // 构建筛选条件
     const params: any = {}
     if (filters.value.student_id) {
       params.student_id = filters.value.student_id
@@ -388,17 +357,12 @@ const loadReports = async () => {
     }
     if (dateRange.value && dateRange.value.length === 2) {
       params.start_date = dateRange.value[0]
-      params.end_date = dateRange.value[1] + ' 23:59:59'
+      params.end_date = `${dateRange.value[1]} 23:59:59`
     }
 
-    // 获取报告列表
     reportList.value = api.getReportList(params)
-
-    // 获取统计
     const selectedStudentId = filters.value.student_id ? Number(filters.value.student_id) : undefined
     statistics.value = api.getReportStatistics(selectedStudentId)
-
-    console.log('报告列表已加载:', reportList.value.length)
   } catch (error) {
     console.error('加载报告列表失败:', error)
     ElMessage.error('加载报告列表失败')
@@ -407,46 +371,42 @@ const loadReports = async () => {
   }
 }
 
-// 筛选处理
 const handleFilter = () => {
   loadReports()
 }
 
-// 查看报告
 const viewReport = (report: any) => {
   const routeMap: Record<string, string> = {
-    'sm': `/assessment/sm/report?assessId=${report.assess_id}&studentId=${report.student_id}`,
-    'weefim': `/assessment/weefim/report?assessId=${report.assess_id}&studentId=${report.student_id}`,
-    'csirs': `/assessment/csirs/report/${report.assess_id}`,
+    sm: `/assessment/sm/report?assessId=${report.assess_id}&studentId=${report.student_id}`,
+    weefim: `/assessment/weefim/report?assessId=${report.assess_id}&studentId=${report.student_id}`,
+    csirs: `/assessment/csirs/report/${report.assess_id}`,
     'conners-psq': `/assessment/conners-psq/report/${report.assess_id}`,
     'conners-trs': `/assessment/conners-trs/report/${report.assess_id}`,
-    'sdq': `/assessment/sdq/report/${report.assess_id}`,
-    'srs2': `/assessment/srs2/report/${report.assess_id}`,
-    'cbcl': `/assessment/cbcl/report/${report.assess_id}`,
-    'iep': `/games/report?recordId=${report.training_record_id}&studentId=${report.student_id}`,
-    'training': `/training/plans/${report.plan_id}` // 训练报告暂时跳转到计划详情
+    sdq: `/assessment/sdq/report/${report.assess_id}`,
+    srs2: `/assessment/srs2/report/${report.assess_id}`,
+    cbcl: `/assessment/cbcl/report/${report.assess_id}`,
+    emotional: `/emotional/report?studentId=${report.student_id}&reportId=${report.id}`,
+    iep: `/games/report?recordId=${report.training_record_id}&studentId=${report.student_id}`,
+    training: `/training/plans/${report.plan_id}`,
   }
 
-  const route = routeMap[report.report_type]
-  if (route) {
-    router.push(route)
-  } else {
-    ElMessage.warning('该类型报告暂未实现')
+  const target = routeMap[report.report_type]
+  if (target) {
+    router.push(target)
+    return
   }
+  ElMessage.warning('该类型报告暂未实现')
 }
 
-// 下载报告
 const downloadReport = (report: any) => {
-  // 打开新窗口查看报告,用户可以在报告页面下载
   viewReport(report)
-  ElMessage.info('请在报告页面点击"导出PDF"或"导出Word"按钮下载报告')
+  ElMessage.info('请在报告页面执行下载或导出操作')
 }
 
-// 删除报告
 const deleteReport = async (report: any) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除报告"${report.title}"吗？`,
+      `确定要删除报告“${report.title}”吗？`,
       '删除确认',
       {
         confirmButtonText: '确定',
@@ -457,7 +417,6 @@ const deleteReport = async (report: any) => {
 
     const api = new ReportAPI()
     api.deleteReportRecord(report.id)
-
     ElMessage.success('删除成功')
     loadReports()
   } catch (error) {
@@ -468,59 +427,38 @@ const deleteReport = async (report: any) => {
   }
 }
 
-// 迁移历史数据
 const migrateData = async () => {
   try {
     await ElMessageBox.confirm(
-      '此操作将为所有已有的评估记录创建对应的报告记录。\n\n' +
-      '• 支持的量表：S-M、WeeFIM、CSIRS、Conners PSQ、Conners TRS、SDQ、SRS-2、CBCL\n' +
-      '• 只会迁移没有报告记录的评估数据\n' +
-      '• 迁移后可以在报告列表中查看和导出\n' +
-      '• 这是一个安全操作，不会删除任何数据',
+      '此操作将为历史评估数据创建对应的报告记录，不会删除已有数据。',
       '迁移历史数据',
       {
         confirmButtonText: '开始迁移',
         cancelButtonText: '取消',
-        type: 'warning',
-        dangerouslyUseHTMLString: true
+        type: 'warning'
       }
     )
 
     migrating.value = true
-
     const api = new ReportAPI()
     const result = api.migrateAssessmentRecordsToReportRecords()
 
     if (result.total > 0) {
-      const msg = [
-        '数据迁移完成！',
-        `S-M评估: ${result.sm_migrated} 条`,
-        `WeeFIM评估: ${result.weefim_migrated} 条`,
-        `CSIRS评估: ${result.csirs_migrated} 条`,
-        `Conners PSQ: ${result.conners_psq_migrated} 条`,
-        `Conners TRS: ${result.conners_trs_migrated} 条`,
-        `SDQ评估: ${result.sdq_migrated} 条`,
-        `SRS-2评估: ${result.srs2_migrated} 条`,
-        `CBCL评估: ${result.cbcl_migrated} 条`,
-        `总计: ${result.total} 条`
-      ].join('\n')
-      ElMessage.success(msg)
-      // 刷新报告列表
+      ElMessage.success(`历史数据迁移完成，共处理 ${result.total} 条记录`)
       await loadReports()
     } else {
       ElMessage.info('没有需要迁移的数据')
     }
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('数据迁移失败:', error)
-      ElMessage.error('数据迁移失败')
+      console.error('迁移数据失败:', error)
+      ElMessage.error('迁移失败')
     }
   } finally {
     migrating.value = false
   }
 }
 
-// 初始化
 onMounted(async () => {
   await loadStudents()
   await loadReports()
@@ -528,7 +466,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* 筛选项 */
 .filter-item {
   display: flex;
   align-items: center;
@@ -550,7 +487,7 @@ onMounted(async () => {
 }
 
 .stat-card {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .stat-content {
@@ -606,6 +543,10 @@ onMounted(async () => {
   background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
 }
 
+.stat-icon.emerald {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+}
+
 .stat-info {
   flex: 1;
 }
@@ -624,7 +565,7 @@ onMounted(async () => {
 }
 
 .report-list-card {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .list-header {

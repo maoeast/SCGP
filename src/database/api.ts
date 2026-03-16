@@ -1673,6 +1673,7 @@ export class ReportAPI extends DatabaseAPI {
     sdq_count: number
     srs2_count: number
     cbcl_count: number
+    emotional_count: number
     iep_count: number
     training_count: number
   } {
@@ -1698,6 +1699,7 @@ export class ReportAPI extends DatabaseAPI {
       sdq_count: 0,
       srs2_count: 0,
       cbcl_count: 0,
+      emotional_count: 0,
       iep_count: 0,
       training_count: 0
     }
@@ -1712,6 +1714,7 @@ export class ReportAPI extends DatabaseAPI {
       if (row.report_type === 'sdq') stats.sdq_count = row.count
       if (row.report_type === 'srs2') stats.srs2_count = row.count
       if (row.report_type === 'cbcl') stats.cbcl_count = row.count
+      if (row.report_type === 'emotional') stats.emotional_count = row.count
       if (row.report_type === 'iep') stats.iep_count = row.count
       if (row.report_type === 'training') stats.training_count = row.count
     })

@@ -11,96 +11,118 @@
     <div class="page-header">
       <div class="header-left">
         <h1>模块报告</h1>
-        <p class="subtitle">Phase 1 页面壳，后续将在这里接入情绪模块的趋势图表与干预建议。</p>
+        <p class="subtitle">按学生汇总情绪训练表现、话术偏好和场景掌握情况。</p>
       </div>
       <div class="header-right">
-        <el-button @click="goTo('/emotional/menu')">返回模块入口</el-button>
+        <el-select v-model="selectedStudentId" placeholder="选择学生" style="width: 220px" @change="loadReport">
+          <el-option
+            v-for="student in studentOptions"
+            :key="student.id"
+            :label="student.name"
+            :value="student.id"
+          />
+        </el-select>
       </div>
     </div>
 
     <div class="main-content">
       <el-alert
+        v-if="!selectedStudentId"
         type="info"
         :closable="false"
         show-icon
-        title="报告页尚未接入计算与图表"
-        description="本页当前不展示真实报告，只保留后续图表、汇总和建议区域的壳结构。"
+        title="请选择学生"
+        description="选择有情绪模块训练记录的学生后，将显示专属可视化报告。"
       />
 
-      <div class="content-grid">
-        <el-card class="shell-card" shadow="never">
+      <template v-else-if="reportPayload">
+        <el-row :gutter="16" class="summary-row">
+          <el-col :span="6">
+            <el-card class="summary-card" shadow="never">
+              <span class="summary-label">学生</span>
+              <strong class="summary-value summary-value--text">{{ reportPayload.studentName }}</strong>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card class="summary-card" shadow="never">
+              <span class="summary-label">训练总次数</span>
+              <strong class="summary-value">{{ reportPayload.totalSessions }}</strong>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card class="summary-card" shadow="never">
+              <span class="summary-label">平均正确率</span>
+              <strong class="summary-value">{{ reportPayload.averageAccuracy }}%</strong>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card class="summary-card" shadow="never">
+              <span class="summary-label">平均提示层级</span>
+              <strong class="summary-value">{{ reportPayload.averageHintLevel }}</strong>
+            </el-card>
+          </el-col>
+        </el-row>
+
+        <div class="chart-grid">
+          <EmotionAccuracyTrendChart :points="reportPayload.trend" />
+          <EmotionPerformanceBarChart :points="reportPayload.emotionPerformance" />
+          <CarePreferencePieChart :points="reportPayload.carePreference" />
+          <SceneMasteryRadarChart :points="reportPayload.sceneMastery" />
+        </div>
+
+        <el-card class="suggestion-card" shadow="never">
           <template #header>
-            <span>当前上下文</span>
+            <span>教师 / 家长干预建议</span>
           </template>
-
-          <el-descriptions :column="1" border>
-            <el-descriptions-item label="页面">模块报告</el-descriptions-item>
-            <el-descriptions-item label="学生">
-              {{ studentName || '未传入学生姓名' }}
-            </el-descriptions-item>
-            <el-descriptions-item label="学生 ID">
-              {{ studentId || '未传入学生 ID' }}
-            </el-descriptions-item>
-          </el-descriptions>
-        </el-card>
-
-        <el-card class="shell-card" shadow="never">
-          <template #header>
-            <span>预留输出</span>
-          </template>
-
-          <ul class="placeholder-list">
-            <li>训练表现趋势图与分布视图。</li>
-            <li>情绪类型与表达方式偏好分析。</li>
-            <li>教师与家长可读的简要干预建议。</li>
-            <li>与训练记录、会话总结联动的跳转入口。</li>
+          <ul class="suggestion-list">
+            <li v-for="suggestion in reportPayload.suggestions" :key="suggestion">
+              {{ suggestion }}
+            </li>
           </ul>
         </el-card>
-
-        <el-card class="shell-card" shadow="never">
-          <template #header>
-            <span>壳页面导航</span>
-          </template>
-
-          <div class="action-list">
-            <el-button type="primary" @click="goTo('/emotional/records')">
-              查看训练记录
-            </el-button>
-            <el-button plain @click="goTo('/emotional/menu')">
-              返回模块入口
-            </el-button>
-          </div>
-        </el-card>
-      </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import CarePreferencePieChart from '@/components/emotional/charts/CarePreferencePieChart.vue'
+import EmotionAccuracyTrendChart from '@/components/emotional/charts/EmotionAccuracyTrendChart.vue'
+import EmotionPerformanceBarChart from '@/components/emotional/charts/EmotionPerformanceBarChart.vue'
+import SceneMasteryRadarChart from '@/components/emotional/charts/SceneMasteryRadarChart.vue'
+import { EmotionalTrainingAPI, type EmotionalStudentReportPayload } from '@/database/emotional-api'
 
 const route = useRoute()
-const router = useRouter()
+const api = new EmotionalTrainingAPI()
 
 const inheritedQuery = computed(() => ({ ...route.query }))
+const studentOptions = ref<Array<{ id: number; name: string }>>([])
+const selectedStudentId = ref<number | undefined>(
+  Number(Array.isArray(route.query.studentId) ? route.query.studentId[0] : route.query.studentId || 0) || undefined
+)
+const reportPayload = ref<EmotionalStudentReportPayload | null>(null)
 
-const studentId = computed(() => {
-  const value = route.query.studentId
-  return Array.isArray(value) ? value[0] : value || ''
-})
-
-const studentName = computed(() => {
-  const value = route.query.studentName
-  return Array.isArray(value) ? value[0] : value || ''
-})
-
-const goTo = (path: string) => {
-  router.push({
-    path,
-    query: inheritedQuery.value
-  })
+function loadStudentOptions() {
+  studentOptions.value = api.getStudentsWithEmotionalSessions()
+  if (!selectedStudentId.value && studentOptions.value.length > 0) {
+    selectedStudentId.value = studentOptions.value[0]?.id
+  }
 }
+
+function loadReport() {
+  if (!selectedStudentId.value) {
+    reportPayload.value = null
+    return
+  }
+  reportPayload.value = api.getStudentReportPayload(selectedStudentId.value)
+}
+
+onMounted(() => {
+  loadStudentOptions()
+  loadReport()
+})
 </script>
 
 <style scoped>
@@ -112,29 +134,48 @@ const goTo = (path: string) => {
 
 .main-content {
   padding: 24px;
-}
-
-.content-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  margin-top: 16px;
-}
-
-.shell-card {
-  min-height: 100%;
-}
-
-.action-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.placeholder-list {
+.summary-card,
+.suggestion-card {
+  border-radius: 20px;
+}
+
+.summary-label {
+  display: block;
+  font-size: 13px;
+  color: #909399;
+  margin-bottom: 8px;
+}
+
+.summary-value {
+  font-size: 28px;
+  color: #303133;
+}
+
+.summary-value--text {
+  font-size: 22px;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.suggestion-list {
   margin: 0;
-  padding-left: 18px;
+  padding-left: 20px;
   color: #606266;
-  line-height: 1.8;
+  line-height: 1.9;
+}
+
+@media (max-width: 1080px) {
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
