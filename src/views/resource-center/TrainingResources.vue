@@ -392,6 +392,64 @@
             </div>
           </div>
         </el-form-item>
+
+        <el-form-item
+          v-if="isEmotionalResourceType(editingResource?.resourceType)"
+          label="meta_data"
+        >
+          <div class="metadata-editor">
+            <el-alert
+              type="info"
+              :closable="false"
+              show-icon
+              :title="editingResource?.resourceType === 'emotion_scene' ? '情绪场景资源配置' : '表达关心资源配置'"
+              :description="getMetadataPlaceholder(editingResource?.resourceType)"
+            />
+            <div class="metadata-toolbar">
+              <el-button size="small" @click="applyMetadataTemplate('edit')">
+                填充模板
+              </el-button>
+              <el-button size="small" @click="formatMetadataJson('edit')">
+                格式化 JSON
+              </el-button>
+            </div>
+            <el-input
+              v-model="editForm.metadataJson"
+              type="textarea"
+              :rows="14"
+              placeholder="请输入 meta_data JSON"
+            />
+          </div>
+        </el-form-item>
+
+        <el-form-item
+          v-if="false"
+          label="meta_data"
+        >
+          <div class="metadata-editor">
+            <el-alert
+              type="info"
+              :closable="false"
+              show-icon
+              :title="createForm.resourceType === 'emotion_scene' ? '情绪场景资源配置' : '表达关心资源配置'"
+              :description="getMetadataPlaceholder(createForm.resourceType)"
+            />
+            <div class="metadata-toolbar">
+              <el-button size="small" @click="applyMetadataTemplate('create')">
+                填充模板
+              </el-button>
+              <el-button size="small" @click="formatMetadataJson('create')">
+                格式化 JSON
+              </el-button>
+            </div>
+            <el-input
+              v-model="createForm.metadataJson"
+              type="textarea"
+              :rows="14"
+              placeholder="请输入 meta_data JSON"
+            />
+          </div>
+        </el-form-item>
       </el-form>
 
       <template #footer>
@@ -558,6 +616,35 @@
         </el-form-item>
 
         <!-- 提示信息 -->
+        <el-form-item
+          v-if="isEmotionalResourceType(createForm.resourceType)"
+          label="meta_data"
+        >
+          <div class="metadata-editor">
+            <el-alert
+              type="info"
+              :closable="false"
+              show-icon
+              :title="createForm.resourceType === 'emotion_scene' ? '情绪场景资源配置' : '表达关心资源配置'"
+              :description="getMetadataPlaceholder(createForm.resourceType)"
+            />
+            <div class="metadata-toolbar">
+              <el-button size="small" @click="applyMetadataTemplate('create')">
+                填充模板
+              </el-button>
+              <el-button size="small" @click="formatMetadataJson('create')">
+                格式化 JSON
+              </el-button>
+            </div>
+            <el-input
+              v-model="createForm.metadataJson"
+              type="textarea"
+              :rows="14"
+              placeholder="请输入 meta_data JSON"
+            />
+          </div>
+        </el-form-item>
+
         <el-form-item>
           <div class="create-hint">
             <el-icon><InfoFilled /></el-icon>
@@ -582,10 +669,11 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import {
   Filter, Search, Plus, Edit, Delete, RefreshRight,
   Picture, Lock, Star, Upload, WarningFilled,
-  Document, VideoPlay, Box, Files, InfoFilled
+  Document, VideoPlay, Box, Files, InfoFilled, Sunny, ChatDotRound
 } from '@element-plus/icons-vue'
 import { ResourceAPI } from '@/database/resource-api'
 import type { ResourceItem, ModuleCode } from '@/types/module'
+import type { EmotionalBaseEmotion } from '@/types/emotional'
 import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
 
 // ========== Props ==========
@@ -612,8 +700,20 @@ const resourceTypes = [
   { code: 'equipment', name: '器材' },
   { code: 'document', name: '文档' },
   { code: 'video', name: '视频' },
-  { code: 'flashcard', name: '闪卡' }
+  { code: 'flashcard', name: '闪卡' },
+  { code: 'emotion_scene', name: '情绪场景' },
+  { code: 'care_scene', name: '表达关心' }
 ]
+
+const EMOTIONAL_RESOURCE_TYPE_SET = new Set(['emotion_scene', 'care_scene'])
+
+const EMOTION_COLOR_PRESETS: Record<EmotionalBaseEmotion, { token: string; hex: string; label: string }> = {
+  happy: { token: 'green', hex: '#67C23A', label: '绿色区' },
+  sad: { token: 'blue', hex: '#409EFF', label: '蓝色区' },
+  embarrassed: { token: 'yellow', hex: '#E6A23C', label: '黄色区' },
+  angry: { token: 'red', hex: '#F56C6C', label: '红色区' },
+  scared: { token: 'red', hex: '#F56C6C', label: '红色区' }
+}
 
 // 分类映射
 const CATEGORY_LABELS: Record<string, string> = {
@@ -632,7 +732,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   communication: '沟通能力',
   cognition: '认知能力',
   social: '社交能力',
-  emotional: '情绪管理'
+  emotional: '情绪管理',
+  daily_life: '日常生活',
+  peer_interaction: '同伴互动',
+  peer_support: '同伴支持',
+  school_context: '学校情境',
+  family_support: '家庭支持'
 }
 
 // ========== 响应式状态 ==========
@@ -661,7 +766,8 @@ const editForm = reactive({
   name: '',
   category: '',
   description: '',
-  tags: [] as string[]
+  tags: [] as string[],
+  metadataJson: ''
 })
 const newTag = ref('')
 
@@ -678,7 +784,8 @@ const createForm = reactive({
   name: '',
   category: '',
   description: '',
-  tags: [] as string[]
+  tags: [] as string[],
+  metadataJson: ''
 })
 const newCreateTag = ref('')
 const creating = ref(false)
@@ -784,6 +891,8 @@ function getTypeIcon(type: string) {
     document: Document,
     video: VideoPlay,
     flashcard: Picture,
+    emotion_scene: Sunny,
+    care_scene: ChatDotRound,
     default: Files
   }
   return iconMap[type] || iconMap.default
@@ -796,6 +905,8 @@ function getTypeIconClass(type: string) {
     document: 'type-document',
     video: 'type-video',
     flashcard: 'type-flashcard',
+    emotion_scene: 'type-emotion-scene',
+    care_scene: 'type-care-scene',
     default: 'type-default'
   }
   return classMap[type] || classMap.default
@@ -816,6 +927,171 @@ function getSuggestedTags(): string[] {
   return commonTags
 }
 
+function isEmotionalResourceType(resourceType?: string): boolean {
+  return !!resourceType && EMOTIONAL_RESOURCE_TYPE_SET.has(resourceType)
+}
+
+function getMetadataPlaceholder(resourceType?: string): string {
+  if (resourceType === 'emotion_scene') {
+    return '建议保留 sceneCode / targetEmotion / difficultyLevel / emotionColorToken 等基础字段'
+  }
+  if (resourceType === 'care_scene') {
+    return '建议保留 sceneCode / careType / preferredUtteranceIds / emotionColorToken 等基础字段'
+  }
+  return '当前资源类型无需配置 meta_data'
+}
+
+function buildEmotionColorPayload(emotion: EmotionalBaseEmotion) {
+  const preset = EMOTION_COLOR_PRESETS[emotion]
+  return {
+    emotionColorToken: preset.token,
+    emotionColorHex: preset.hex,
+    emotionColorLabel: preset.label
+  }
+}
+
+function buildMetadataTemplate(resourceType: string, resourceName: string) {
+  if (resourceType === 'emotion_scene') {
+    return {
+      sceneCode: `emotion_scene_${Date.now()}`,
+      title: resourceName || '新的情绪场景',
+      imageUrl: '',
+      difficultyLevel: 1,
+      targetEmotion: 'happy',
+      emotionOptions: ['happy', 'sad', 'embarrassed', 'angry', 'scared'],
+      emotionClues: ['请补充视觉线索 1', '请补充视觉线索 2'],
+      prompts: [
+        {
+          questionId: 'prompt_1',
+          questionType: 'cause',
+          questionText: '请填写原因推理问题',
+          options: [
+            {
+              id: 'opt_1',
+              text: '请填写正确选项',
+              isCorrect: true,
+              feedbackText: '请填写温和反馈'
+            }
+          ]
+        }
+      ],
+      solutions: [
+        {
+          id: 'solution_1',
+          text: '请填写推荐回应',
+          suitability: 'optimal',
+          explanation: '请填写该回应为什么更合适'
+        }
+      ],
+      ageRange: '6-9',
+      abilityLevel: 'primary',
+      tags: ['情绪识别', 'MVP'],
+      ...buildEmotionColorPayload('happy')
+    }
+  }
+
+  return {
+    sceneCode: `care_scene_${Date.now()}`,
+    title: resourceName || '新的关心表达场景',
+    imageUrl: '',
+    difficultyLevel: 1,
+    careType: 'empathy',
+    speakerPerspectiveText: '请填写表达者视角文本',
+    receiverPerspectiveText: '请填写接收者视角文本',
+    utterances: [
+      {
+        id: 'utterance_1',
+        type: 'empathy',
+        text: '请填写关心表达',
+        effect: '请填写这句话会带来的效果'
+      }
+    ],
+    receiverOptions: [
+      {
+        id: 'receiver_1',
+        text: '请填写让对方更舒服的表达',
+        isComforting: true,
+        reasonText: '请填写原因'
+      }
+    ],
+    preferredUtteranceIds: ['utterance_1'],
+    receiverEmotion: 'sad',
+    ageRange: '6-9',
+    abilityLevel: 'primary',
+    tags: ['表达关心', 'MVP'],
+    ...buildEmotionColorPayload('sad')
+  }
+}
+
+function applyMetadataTemplate(target: 'create' | 'edit') {
+  if (target === 'create') {
+    if (!isEmotionalResourceType(createForm.resourceType)) return
+    createForm.metadataJson = JSON.stringify(
+      buildMetadataTemplate(createForm.resourceType, createForm.name),
+      null,
+      2
+    )
+    return
+  }
+
+  const resourceType = editingResource.value?.resourceType
+  if (!isEmotionalResourceType(resourceType)) return
+  editForm.metadataJson = JSON.stringify(
+    buildMetadataTemplate(resourceType!, editForm.name || editingResource.value?.name || ''),
+    null,
+    2
+  )
+}
+
+function formatMetadataJson(target: 'create' | 'edit') {
+  const source = target === 'create' ? createForm.metadataJson : editForm.metadataJson
+  if (!source.trim()) return
+
+  try {
+    const parsed = JSON.parse(source)
+    const formatted = JSON.stringify(parsed, null, 2)
+    if (target === 'create') {
+      createForm.metadataJson = formatted
+    } else {
+      editForm.metadataJson = formatted
+    }
+  } catch {
+    ElMessage.error('meta_data JSON 格式无效，请先修正后再格式化')
+  }
+}
+
+function parseMetadataForSave(resourceType: string, metadataJson: string): Record<string, any> | null | undefined {
+  if (!isEmotionalResourceType(resourceType)) {
+    return undefined
+  }
+
+  const source = metadataJson.trim()
+  if (!source) {
+    ElMessage.error('情绪模块资源需要填写 meta_data JSON')
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(source) as Record<string, any>
+    if (!parsed.title) {
+      parsed.title = createForm.name || editForm.name
+    }
+
+    const colorEmotion = parsed.targetEmotion || parsed.receiverEmotion
+    if (colorEmotion && EMOTION_COLOR_PRESETS[colorEmotion as EmotionalBaseEmotion]) {
+      const preset = buildEmotionColorPayload(colorEmotion as EmotionalBaseEmotion)
+      parsed.emotionColorToken = parsed.emotionColorToken || preset.emotionColorToken
+      parsed.emotionColorHex = parsed.emotionColorHex || preset.emotionColorHex
+      parsed.emotionColorLabel = parsed.emotionColorLabel || preset.emotionColorLabel
+    }
+
+    return parsed
+  } catch {
+    ElMessage.error('meta_data JSON 解析失败，请检查格式后再保存')
+    return null
+  }
+}
+
 // 防抖搜索
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 function handleSearchDebounced() {
@@ -832,6 +1108,10 @@ async function loadResources() {
   loading.value = true
   try {
     const api = new ResourceAPI()
+    const metadata = parseMetadataForSave(editingResource.value.resourceType, editForm.metadataJson)
+    if (isEmotionalResourceType(editingResource.value.resourceType) && metadata === null) {
+      return
+    }
 
     // 构建查询选项
     const options: any = {
@@ -945,7 +1225,10 @@ function handleCreate() {
   if (props.readOnly) return
   // 设置默认值为当前选中的模块
   createForm.moduleCode = selectedModule.value
-  createForm.resourceType = selectedType.value || 'equipment'
+  createForm.resourceType = selectedType.value || (selectedModule.value === 'emotional' ? 'emotion_scene' : 'equipment')
+  if (isEmotionalResourceType(createForm.resourceType) && !createForm.metadataJson.trim()) {
+    applyMetadataTemplate('create')
+  }
   createDialogVisible.value = true
 }
 
@@ -962,14 +1245,19 @@ async function handleSaveCreate() {
   creating.value = true
   try {
     const api = new ResourceAPI()
+    const metadata = parseMetadataForSave(createForm.resourceType, createForm.metadataJson)
+    if (isEmotionalResourceType(createForm.resourceType) && metadata === null) {
+      return
+    }
 
     const resourceId = api.addResource({
-      moduleCode: createForm.moduleCode as ModuleCode,
+      moduleCode: (isEmotionalResourceType(createForm.resourceType) ? 'emotional' : createForm.moduleCode) as ModuleCode,
       resourceType: createForm.resourceType,
       name: createForm.name,
       category: createForm.category,
       description: createForm.description || undefined,
-      tags: createForm.tags.length > 0 ? createForm.tags : undefined
+      tags: createForm.tags.length > 0 ? createForm.tags : undefined,
+      metadata
     })
 
     if (resourceId) {
@@ -997,6 +1285,7 @@ function resetCreateForm() {
   createForm.category = ''
   createForm.description = ''
   createForm.tags = []
+  createForm.metadataJson = ''
   newCreateTag.value = ''
 }
 
@@ -1060,6 +1349,9 @@ function handleEdit(resource: ResourceItem) {
   editForm.category = resource.category || ''
   editForm.description = resource.description || ''
   editForm.tags = [...(resource.tags || [])]
+  editForm.metadataJson = isEmotionalResourceType(resource.resourceType)
+    ? JSON.stringify(resource.metadata || buildMetadataTemplate(resource.resourceType, resource.name), null, 2)
+    : ''
   editDialogVisible.value = true
 }
 
@@ -1078,11 +1370,16 @@ async function handleSaveEdit() {
   saving.value = true
   try {
     const api = new ResourceAPI()
+    const metadata = parseMetadataForSave(editingResource.value.resourceType, editForm.metadataJson)
+    if (isEmotionalResourceType(editingResource.value.resourceType) && metadata === null) {
+      return
+    }
 
     // 根据是否为自定义资源决定更新哪些字段
     const updateData: any = {
       description: editForm.description,
-      tags: editForm.tags
+      tags: editForm.tags,
+      metadata
     }
 
     // 自定义资源可以更新名称和分类
@@ -1102,7 +1399,8 @@ async function handleSaveEdit() {
           name: editForm.name,
           category: editForm.category,
           description: editForm.description,
-          tags: editForm.tags
+          tags: editForm.tags,
+          metadata: metadata ?? allResources.value[index].metadata
         }
       }
 
@@ -1123,6 +1421,7 @@ function resetEditForm() {
   editForm.category = ''
   editForm.description = ''
   editForm.tags = []
+  editForm.metadataJson = ''
   editingResource.value = null
 }
 
@@ -1209,6 +1508,15 @@ onMounted(() => {
 })
 
 // 暴露刷新方法给父组件
+watch(() => createForm.resourceType, (newType) => {
+  if (isEmotionalResourceType(newType)) {
+    createForm.moduleCode = 'emotional'
+    if (!createForm.metadataJson.trim()) {
+      applyMetadataTemplate('create')
+    }
+  }
+})
+
 defineExpose({
   loadResources
 })
@@ -1395,6 +1703,16 @@ defineExpose({
   color: #67c23a;
 }
 
+.type-emotion-scene {
+  background: #fff4e6;
+  color: #e6a23c;
+}
+
+.type-care-scene {
+  background: #f0f9eb;
+  color: #67c23a;
+}
+
 .type-default {
   background: #f0f2f5;
   color: #909399;
@@ -1497,6 +1815,18 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.metadata-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.metadata-toolbar {
+  display: flex;
+  gap: 8px;
 }
 
 .selected-tags {

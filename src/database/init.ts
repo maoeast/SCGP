@@ -1200,6 +1200,13 @@ export async function initDatabase(): Promise<any> {
       console.warn('[InitDatabase] ⚠️  游戏资源迁移检查失败:', gameMigrationError)
     }
 
+    try {
+      await insertEmotionalResourceData()
+      console.log('[InitDatabase] ✅ emotional 演示资源初始化完成')
+    } catch (emotionalResourceError) {
+      console.warn('[InitDatabase] ⚠️  emotional 演示资源初始化失败:', emotionalResourceError)
+    }
+
     return db
   } catch (error) {
     console.error('SQL.js数据库初始化失败:', error)
@@ -1452,6 +1459,93 @@ export async function insertEquipmentData(): Promise<void> {
     createDefaultAdminAccount(db)
   } catch (error) {
     console.error('插入器材数据失败:', error)
+    throw error
+  }
+}
+
+export async function insertEmotionalResourceData(): Promise<void> {
+  try {
+    const { EMOTIONAL_DEMO_RESOURCES } = await import('./emotional-resource-data')
+
+    const tagMap = new Map<string, number>()
+    let inserted = 0
+
+    for (const resource of EMOTIONAL_DEMO_RESOURCES) {
+      const existing = db.get(
+        'SELECT id FROM sys_training_resource WHERE module_code = ? AND resource_type = ? AND name = ?',
+        ['emotional', resource.resourceType, resource.name]
+      )
+
+      if (existing) {
+        continue
+      }
+
+      db.run(`
+        INSERT INTO sys_training_resource (
+          module_code, resource_type, name, category, description,
+          cover_image, is_custom, is_active, legacy_source, meta_data, usage_count
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        'emotional',
+        resource.resourceType,
+        resource.name,
+        resource.category,
+        resource.description,
+        resource.coverImage || '',
+        0,
+        1,
+        'emotional_demo_seed',
+        JSON.stringify(resource.metadata),
+        0,
+      ])
+
+      const result = db.exec('SELECT last_insert_rowid() as id')
+      const resourceId = result?.[0]?.values?.[0]?.[0]
+
+      if (!resourceId) {
+        continue
+      }
+
+      for (const tagName of resource.tags) {
+        const tagKey = `ability:${tagName}`
+        let tagId = tagMap.get(tagKey)
+
+        if (!tagId) {
+          const existingTag = db.get(
+            'SELECT id FROM sys_tags WHERE domain = ? AND name = ?',
+            ['ability', tagName]
+          )
+
+          if (existingTag?.id) {
+            tagId = existingTag.id
+          } else {
+            db.run(
+              'INSERT INTO sys_tags (domain, name, usage_count, is_preset) VALUES (?, ?, ?, ?)',
+              ['ability', tagName, 0, 1]
+            )
+            const tagResult = db.exec('SELECT last_insert_rowid() as id')
+            tagId = tagResult?.[0]?.values?.[0]?.[0]
+          }
+
+          if (tagId) {
+            tagMap.set(tagKey, tagId)
+          }
+        }
+
+        if (tagId) {
+          db.run(
+            'INSERT OR IGNORE INTO sys_resource_tag_map (resource_id, tag_id) VALUES (?, ?)',
+            [resourceId, tagId]
+          )
+        }
+      }
+
+      inserted++
+    }
+
+    console.log(`[insertEmotionalResourceData] 完成 emotional 演示资源初始化: ${inserted} 条`)
+  } catch (error) {
+    console.error('插入 emotional 演示资源失败:', error)
     throw error
   }
 }
