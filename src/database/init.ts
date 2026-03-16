@@ -1543,7 +1543,6 @@ export async function insertEmotionalResourceData(): Promise<void> {
       inserted++
     }
 
-    console.log(`[insertEmotionalResourceData] 完成 emotional 演示资源初始化: ${inserted} 条`)
   } catch (error) {
     console.error('插入 emotional 演示资源失败:', error)
     throw error

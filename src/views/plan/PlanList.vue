@@ -453,6 +453,8 @@
             <el-radio-button label="sensory">感官训练</el-radio-button>
             <el-radio-button label="emotional">情绪调节</el-radio-button>
             <el-radio-button label="social">社交互动</el-radio-button>
+            <el-radio-button label="emotion_scene">情绪场景</el-radio-button>
+            <el-radio-button label="care_scene">表达关心</el-radio-button>
           </el-radio-group>
         </div>
 
@@ -676,6 +678,16 @@ const planResourcesMap = ref<Record<number, PlanResourceMap[]>>({})
 // 今日已完成资源缓存（学生ID + 资源ID -> 是否完成）
 const todayCompletedResources = ref<Set<string>>(new Set())
 
+const EXTRA_RESOURCE_TYPE_LABELS: Record<string, string> = {
+  emotion_scene: '情绪场景',
+  care_scene: '表达关心',
+}
+
+const EXTRA_RESOURCE_TYPE_CLASSES: Record<string, string> = {
+  emotion_scene: 'type-emotion-scene',
+  care_scene: 'type-care-scene',
+}
+
 // API 实例
 const planApi = new PlanAPI()
 const dbApi = new DatabaseAPI()
@@ -809,7 +821,7 @@ function getResourceTypeLabel(type: string): string {
     flashcard: '闪卡',
     document: '文档'
   }
-  return labelMap[type] || type
+  return EXTRA_RESOURCE_TYPE_LABELS[type] || labelMap[type] || type
 }
 
 // 获取计划资源列表（从缓存）
@@ -830,7 +842,7 @@ function getResourceTypeClass(type: string): string {
     flashcard: 'type-flashcard',
     document: 'type-document'
   }
-  return classMap[type] || ''
+  return EXTRA_RESOURCE_TYPE_CLASSES[type] || classMap[type] || ''
 }
 
 function formatDateRange(start: string, end: string): string {
@@ -852,6 +864,9 @@ function getPlanProgress(plan: TrainingPlan): number {
 
 function getResourceImage(resource: PlanResourceMap): string {
   if (resource.cover_image) {
+    if (!String(resource.cover_image).includes('/') && !String(resource.cover_image).startsWith('data:')) {
+      return buildEmojiThumbnail(String(resource.cover_image))
+    }
     return resource.cover_image
   }
   // 使用默认图片逻辑
@@ -859,6 +874,9 @@ function getResourceImage(resource: PlanResourceMap): string {
 }
 
 function getResourceItemImage(resource: ResourceItem): string {
+  if (resource.coverImage && !String(resource.coverImage).includes('/') && !String(resource.coverImage).startsWith('data:')) {
+    return buildEmojiThumbnail(String(resource.coverImage))
+  }
   const id = resource.legacyId ?? resource.id
   return getEquipmentImageUrl(resource.category as any, id, resource.name)
 }
@@ -866,6 +884,16 @@ function getResourceItemImage(resource: ResourceItem): string {
 // 筛选处理
 function handleFilterChange() {
   // 筛选由计算属性自动处理
+}
+
+function buildEmojiThumbnail(symbol: string): string {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+      <rect width="96" height="96" rx="24" fill="#fff7ed" />
+      <text x="48" y="56" font-size="40" text-anchor="middle">${symbol}</text>
+    </svg>
+  `
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
 }
 
 function handleSearch() {
@@ -1087,6 +1115,34 @@ function handleLaunchTraining(plan: TrainingPlan, resource: PlanResourceMap) {
       ElMessage.success(`正在启动闪卡「${resource_name}」...`)
       break
 
+    case 'emotion_scene':
+      router.push({
+        path: '/emotional/emotion-scene',
+        query: {
+          studentId: String(student_id),
+          resourceId: String(resource_id),
+          studentName: plan.student_name || '',
+          planId: String(plan.id),
+          from: 'plan'
+        }
+      })
+      ElMessage.success(`正在启动「${resource_name}」训练...`)
+      break
+
+    case 'care_scene':
+      router.push({
+        path: '/emotional/care-expression',
+        query: {
+          studentId: String(student_id),
+          resourceId: String(resource_id),
+          studentName: plan.student_name || '',
+          planId: String(plan.id),
+          from: 'plan'
+        }
+      })
+      ElMessage.success(`正在启动「${resource_name}」训练...`)
+      break
+
     case 'document':
     case 'video':
       // 文档/视频类型：直接打开预览（使用 openResource 方法）
@@ -1223,9 +1279,9 @@ function confirmResourceSelection() {
       plan_id: editingPlan.value?.id || 0,
       resource_id: resource.id,
       resource_name: resource.name,
-      resource_type: resource.resource_type,
-      cover_image: resource.cover_image,
-      module_code: resource.module_code,
+      resource_type: resource.resourceType,
+      cover_image: resource.coverImage,
+      module_code: resource.moduleCode,
       frequency: 3,
       duration_minutes: 15,
       notes: '',

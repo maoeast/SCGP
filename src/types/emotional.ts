@@ -65,6 +65,10 @@ export interface EmotionSceneResourceMeta {
   emotionClues: string[]
   prompts: EmotionScenePrompt[]
   solutions: EmotionSceneSolution[]
+  recommendedHintCeiling?: 0 | 1 | 2 | 3
+  emotionColorToken?: 'green' | 'blue' | 'yellow' | 'red'
+  emotionColorHex?: string
+  emotionColorLabel?: string
   ageRange?: string
   abilityLevel?: 'primary' | 'middle' | 'advanced'
   tags?: string[]
@@ -92,11 +96,16 @@ export interface CareSceneResourceMeta {
   imageUrl: string
   difficultyLevel: 1 | 2 | 3
   careType?: EmotionalCareType
+  receiverEmotion?: EmotionalBaseEmotion
+  emotionColorToken?: 'green' | 'blue' | 'yellow' | 'red'
+  emotionColorHex?: string
+  emotionColorLabel?: string
   speakerPerspectiveText: string
   receiverPerspectiveText: string
   utterances: CareSceneUtterance[]
   receiverOptions: CareSceneReceiverOption[]
   preferredUtteranceIds: string[]
+  recommendedHintCeiling?: 0 | 1 | 2 | 3
   ageRange?: string
   abilityLevel?: 'primary' | 'middle' | 'advanced'
   tags?: string[]

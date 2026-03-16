@@ -10,55 +10,72 @@
     <div class="page-header">
       <div class="header-left">
         <h1>情绪行为调节</h1>
-        <p class="subtitle">Phase 1 页面壳，当前仅接入模块入口与页面导航，不包含训练业务逻辑。</p>
+        <p class="subtitle">把“先评估、后训练”串成一条完整闭环，帮助教师围绕同一位学生连续开展支持。</p>
       </div>
       <div class="header-right">
-        <el-tag type="warning" effect="light">Phase 1 Shell</el-tag>
+        <el-tag type="success" effect="light">MVP</el-tag>
       </div>
     </div>
 
     <div class="main-content">
-      <el-alert
-        type="warning"
-        :closable="false"
-        show-icon
-        title="当前仅为模块外壳"
-        description="本阶段只完成静态页面、路由和学生上下文透传，资源加载、训练流程、记录写入与报告生成将在后续阶段接入。"
-      />
+      <el-card class="context-card" shadow="never">
+        <template #header>
+          <span>当前上下文</span>
+        </template>
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="学生">
+            {{ studentName || '尚未选择学生' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="学生 ID">
+            {{ studentId || '未传入' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="模块状态">
+            已接入评估、训练、记录与报告闭环
+          </el-descriptions-item>
+          <el-descriptions-item label="建议路径">
+            先完成评估，再进入情绪训练
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-card>
 
-      <div class="content-grid">
-        <el-card class="shell-card" shadow="never">
+      <div class="menu-grid">
+        <el-card class="menu-card">
           <template #header>
-            <span>当前上下文</span>
+            <span>评估快捷入口</span>
           </template>
-
-          <el-descriptions :column="1" border>
-            <el-descriptions-item label="模块">情绪行为调节</el-descriptions-item>
-            <el-descriptions-item label="阶段">Phase 1 空壳接入</el-descriptions-item>
-            <el-descriptions-item label="学生">
-              {{ studentName || '未传入学生姓名' }}
-            </el-descriptions-item>
-            <el-descriptions-item label="学生 ID">
-              {{ studentId || '未传入学生 ID' }}
-            </el-descriptions-item>
-          </el-descriptions>
+          <p class="card-copy">不重新开发量表，直接跳转到系统现有统一评估容器。</p>
+          <div class="card-actions">
+            <el-button type="primary" :disabled="!studentId" @click="goToAssessment('sdq')">
+              SDQ 评估
+            </el-button>
+            <el-button type="primary" plain :disabled="!studentId" @click="goToAssessment('cbcl')">
+              CBCL 评估
+            </el-button>
+          </div>
+          <p class="card-hint" v-if="!studentId">请先从游戏训练入口选择学生，再使用快捷评估。</p>
         </el-card>
 
-        <el-card class="shell-card" shadow="never">
+        <el-card class="menu-card">
           <template #header>
-            <span>页面入口</span>
+            <span>训练入口</span>
           </template>
-
-          <div class="action-list">
-            <el-button type="primary" @click="goTo('/emotional/emotion-scene')">
+          <p class="card-copy">围绕同一位学生开始情绪场景训练或表达关心训练。</p>
+          <div class="card-actions">
+            <el-button type="success" :disabled="!studentId" @click="goTo('/emotional/emotion-scene')">
               情绪与场景训练
             </el-button>
-            <el-button type="primary" plain @click="goTo('/emotional/care-expression')">
+            <el-button type="success" plain :disabled="!studentId" @click="goTo('/emotional/care-expression')">
               表达关心训练
             </el-button>
-            <el-button plain @click="goTo('/emotional/session-summary')">
-              会话总结
-            </el-button>
+          </div>
+        </el-card>
+
+        <el-card class="menu-card">
+          <template #header>
+            <span>训练结果</span>
+          </template>
+          <p class="card-copy">进入情绪模块记录和专属可视化报告，查看趋势与干预建议。</p>
+          <div class="card-actions">
             <el-button plain @click="goTo('/emotional/records')">
               训练记录
             </el-button>
@@ -66,19 +83,6 @@
               模块报告
             </el-button>
           </div>
-        </el-card>
-
-        <el-card class="shell-card" shadow="never">
-          <template #header>
-            <span>后续实现范围</span>
-          </template>
-
-          <ul class="placeholder-list">
-            <li>接入情绪与场景训练资源及步骤引导。</li>
-            <li>接入表达关心训练的题目与反馈结构。</li>
-            <li>接入训练记录落库、会话总结和报告视图。</li>
-            <li>接入资源、记录和报告之间的真实数据链路。</li>
-          </ul>
         </el-card>
       </div>
     </div>
@@ -96,7 +100,8 @@ const inheritedQuery = computed(() => ({ ...route.query }))
 
 const studentId = computed(() => {
   const value = route.query.studentId
-  return Array.isArray(value) ? value[0] : value || ''
+  const resolved = Array.isArray(value) ? value[0] : value
+  return resolved ? Number(resolved) : 0
 })
 
 const studentName = computed(() => {
@@ -104,11 +109,16 @@ const studentName = computed(() => {
   return Array.isArray(value) ? value[0] : value || ''
 })
 
-const goTo = (path: string) => {
+function goTo(path: string) {
   router.push({
     path,
-    query: inheritedQuery.value
+    query: inheritedQuery.value,
   })
+}
+
+function goToAssessment(scaleCode: 'sdq' | 'cbcl') {
+  if (!studentId.value) return
+  router.push(`/assessment/unified/${scaleCode}/${studentId.value}`)
 }
 </script>
 
@@ -121,29 +131,37 @@ const goTo = (path: string) => {
 
 .main-content {
   padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.content-grid {
+.context-card,
+.menu-card {
+  border-radius: 20px;
+}
+
+.menu-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  margin-top: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
 }
 
-.shell-card {
-  min-height: 100%;
+.card-copy {
+  margin: 0 0 16px;
+  line-height: 1.8;
+  color: #606266;
 }
 
-.action-list {
+.card-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
 }
 
-.placeholder-list {
-  margin: 0;
-  padding-left: 18px;
-  color: #606266;
-  line-height: 1.8;
+.card-hint {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #909399;
 }
 </style>
