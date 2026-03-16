@@ -8,98 +8,120 @@
       </el-breadcrumb>
     </div>
 
-    <div class="page-header">
-      <div class="header-left">
-        <h1>会话总结</h1>
-        <p class="subtitle">Phase 1 页面壳，后续将在这里汇总本次训练结果与下一步建议。</p>
-      </div>
-      <div class="header-right">
-        <el-button @click="goTo('/emotional/menu')">返回模块入口</el-button>
-      </div>
-    </div>
+    <div class="summary-wrap">
+      <el-card class="summary-card" shadow="never">
+        <div class="celebration-stage">
+          <div class="celebration-burst">
+            <span class="burst burst--left">✨</span>
+            <span class="burst burst--right">✨</span>
+            <div class="hero-emoji">🎉</div>
+          </div>
 
-    <div class="main-content">
-      <el-alert
-        type="info"
-        :closable="false"
-        show-icon
-        title="总结页尚未接入真实数据"
-        description="后续阶段会在这里展示会话结果、提示使用情况和下一步去向；当前只保留页面结构。"
-      />
+          <div class="headline">
+            <h1>太棒了！训练完成！</h1>
+            <p>{{ encouragementText }}</p>
+          </div>
 
-      <div class="content-grid">
-        <el-card class="shell-card" shadow="never">
-          <template #header>
-            <span>当前上下文</span>
-          </template>
+          <div class="stars-panel" aria-label="星级评价">
+            <span
+              v-for="index in 3"
+              :key="index"
+              class="star"
+              :class="{ 'star--active': index <= starCount }"
+            >
+              ⭐
+            </span>
+          </div>
 
-          <el-descriptions :column="1" border>
-            <el-descriptions-item label="页面">会话总结</el-descriptions-item>
-            <el-descriptions-item label="学生">
-              {{ studentName || '未传入学生姓名' }}
-            </el-descriptions-item>
-            <el-descriptions-item label="学生 ID">
-              {{ studentId || '未传入学生 ID' }}
-            </el-descriptions-item>
-          </el-descriptions>
-        </el-card>
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-label">本次星级</span>
+              <strong class="metric-value">{{ starCount }} 星</strong>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">学习场景</span>
+              <strong class="metric-value">{{ sceneCount }} 个</strong>
+            </div>
+          </div>
 
-        <el-card class="shell-card" shadow="never">
-          <template #header>
-            <span>预留输出</span>
-          </template>
-
-          <ul class="placeholder-list">
-            <li>本次训练完成情况与用时。</li>
-            <li>提示层级、重试次数等过程数据。</li>
-            <li>跳转训练记录或报告页面的真实摘要卡片。</li>
-          </ul>
-        </el-card>
-
-        <el-card class="shell-card" shadow="never">
-          <template #header>
-            <span>壳页面导航</span>
-          </template>
-
-          <div class="action-list">
-            <el-button type="primary" @click="goTo('/emotional/records')">
-              前往训练记录
+          <div class="action-row">
+            <el-button type="primary" size="large" class="action-btn" @click="goToMenu">
+              返回情绪模块首页
             </el-button>
-            <el-button plain @click="goTo('/emotional/report')">
-              前往模块报告
+            <el-button type="success" size="large" plain class="action-btn" @click="goToReport">
+              查看我的进步报告
             </el-button>
           </div>
-        </el-card>
-      </div>
+        </div>
+      </el-card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { EmotionalTrainingAPI } from '@/database/emotional-api'
 
 const route = useRoute()
 const router = useRouter()
+const api = new EmotionalTrainingAPI()
 
 const inheritedQuery = computed(() => ({ ...route.query }))
+const studentId = computed(() => Number(Array.isArray(route.query.studentId) ? route.query.studentId[0] : route.query.studentId || 0))
+const trainingRecordId = computed(() => Number(Array.isArray(route.query.trainingRecordId) ? route.query.trainingRecordId[0] : route.query.trainingRecordId || 0))
 
-const studentId = computed(() => {
-  const value = route.query.studentId
-  return Array.isArray(value) ? value[0] : value || ''
+const accuracyRate = ref(1)
+const sceneCount = ref(1)
+const questionCount = ref(0)
+
+const starCount = computed(() => {
+  if (accuracyRate.value >= 0.9) return 3
+  if (accuracyRate.value >= 0.6) return 2
+  return 1
 })
 
-const studentName = computed(() => {
-  const value = route.query.studentName
-  return Array.isArray(value) ? value[0] : value || ''
+const encouragementText = computed(() => {
+  if (starCount.value === 3) {
+    return '你已经很会观察别人的心情，也学会了更温柔的回应方式。'
+  }
+  if (starCount.value === 2) {
+    return '你已经完成了今天的练习，继续这样慢慢练，就会越来越棒。'
+  }
+  return '你认真完成了今天的练习，每一次尝试都在帮助你进步。'
 })
 
-const goTo = (path: string) => {
+function loadSessionSummary() {
+  if (!trainingRecordId.value) return
+
+  const session = api.getSessionByTrainingRecordId(trainingRecordId.value)
+  if (!session) return
+
+  accuracyRate.value = Number(session.accuracy_rate || 0)
+  questionCount.value = Number(session.question_count || 0)
+  sceneCount.value = 1
+}
+
+function goToMenu() {
   router.push({
-    path,
-    query: inheritedQuery.value
+    path: '/emotional/menu',
+    query: inheritedQuery.value,
   })
 }
+
+function goToReport() {
+  router.push({
+    path: '/emotional/report',
+    query: {
+      ...inheritedQuery.value,
+      studentId: String(studentId.value || ''),
+    },
+  })
+}
+
+onMounted(() => {
+  loadSessionSummary()
+})
 </script>
 
 <style scoped>
@@ -109,31 +131,164 @@ const goTo = (path: string) => {
   border-bottom: 1px solid #ebeef5;
 }
 
-.main-content {
-  padding: 24px;
+.summary-wrap {
+  padding: 28px;
 }
 
-.content-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  margin-top: 16px;
+.summary-card {
+  border-radius: 30px;
+  min-height: calc(100vh - 180px);
+  border: 1px solid #f3f4f6;
 }
 
-.shell-card {
+.celebration-stage {
   min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  text-align: center;
+  padding: 24px 12px;
 }
 
-.action-list {
+.celebration-burst {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-emoji {
+  font-size: 92px;
+  animation: hero-bounce 1.8s ease-in-out infinite;
+}
+
+.burst {
+  position: absolute;
+  top: 50%;
+  font-size: 30px;
+  transform: translateY(-50%);
+  animation: burst-float 1.8s ease-in-out infinite;
+}
+
+.burst--left {
+  left: 8px;
+}
+
+.burst--right {
+  right: 8px;
+  animation-delay: 0.3s;
+}
+
+.headline h1 {
+  margin: 0;
+  font-size: 40px;
+  color: #303133;
+}
+
+.headline p {
+  margin: 12px 0 0;
+  max-width: 560px;
+  font-size: 17px;
+  line-height: 1.8;
+  color: #606266;
+}
+
+.stars-panel {
+  display: flex;
+  gap: 16px;
+}
+
+.star {
+  font-size: 42px;
+  opacity: 0.28;
+  transform: scale(0.9);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.star--active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 18px;
+}
+
+.metric-card {
+  padding: 20px 24px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #fff7ed 0%, #eef7ff 100%);
+  box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.08);
+}
+
+.metric-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #909399;
+}
+
+.metric-value {
+  font-size: 32px;
+  color: #303133;
+}
+
+.action-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  justify-content: center;
+  gap: 16px;
 }
 
-.placeholder-list {
-  margin: 0;
-  padding-left: 18px;
-  color: #606266;
-  line-height: 1.8;
+.action-btn {
+  min-width: 220px;
+  min-height: 54px;
+  border-radius: 18px;
+  font-size: 17px;
+}
+
+@keyframes hero-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes burst-float {
+  0%, 100% {
+    transform: translateY(-50%) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-60%) scale(1.12);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .headline h1 {
+    font-size: 30px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .action-row {
+    width: 100%;
+  }
+
+  .action-btn {
+    width: 100%;
+  }
 }
 </style>
