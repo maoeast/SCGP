@@ -7,7 +7,7 @@ import { SQLWrapper } from './sql-wrapper'
 
 // 数据库版本号 - 当数据结构发生变化时递增此版本号
 // 必须与 indexeddb-storage.ts 中的 DATA_VERSION 保持一致
-export const DATABASE_VERSION = '4.1.2' // 添加 training_records 表用于感官训练记录
+export const DATABASE_VERSION = '4.2.0' // emotional foundation schema baseline
 const DB_VERSION_KEY = 'selfcare_ats_db_version'
 
 /**
@@ -75,7 +75,7 @@ export async function initSQLDatabase(): Promise<any> {
     }
 
     const SQL = await initSqlJs({
-      locateFile: (file) => `/node_modules/sql.js/dist/${file}`,
+      locateFile: (file: string) => `/node_modules/sql.js/dist/${file}`,
     })
 
     // 检查数据库版本，如果不匹配则清除旧数据
@@ -361,7 +361,10 @@ async function createSchemaAndData(db: any): Promise<void> {
     CREATE TABLE IF NOT EXISTS training_records (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       student_id INTEGER NOT NULL,
-      task_id INTEGER NOT NULL CHECK(task_id IN (1, 2, 3, 4, 5, 6, 7)),
+      task_id INTEGER,
+      resource_id INTEGER,
+      resource_type TEXT,
+      session_type TEXT,
       timestamp INTEGER NOT NULL,
       duration INTEGER NOT NULL,
       accuracy_rate REAL NOT NULL CHECK(accuracy_rate BETWEEN 0 AND 1),
@@ -375,6 +378,7 @@ async function createSchemaAndData(db: any): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_training_records_student_id ON training_records(student_id);
     CREATE INDEX IF NOT EXISTS idx_training_records_task_id ON training_records(task_id);
     CREATE INDEX IF NOT EXISTS idx_training_records_timestamp ON training_records(timestamp);
+    CREATE INDEX IF NOT EXISTS idx_training_records_resource_id ON training_records(resource_id);
   `
 
   // 执行创建表的SQL

@@ -1,6 +1,8 @@
 // SQL.js 将通过动态导入加载
 
 // 内联schema.sql内容
+import emotionalSchemaSQL from './schema/emotional-schema.sql?raw'
+
 const schemaSQL = `
 -- 学生表
 CREATE TABLE IF NOT EXISTS student (
@@ -286,11 +288,14 @@ CREATE INDEX IF NOT EXISTS idx_login_log_time ON login_log(login_time DESC);
 CREATE TABLE IF NOT EXISTS report_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
-  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl')),
+  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional')),
   assess_id INTEGER,
   plan_id INTEGER,
   training_record_id INTEGER,
   title TEXT NOT NULL,
+  class_id INTEGER,
+  class_name TEXT,
+  module_code TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id),
@@ -495,12 +500,18 @@ CREATE INDEX IF NOT EXISTS idx_task_category ON task(category_id);
 CREATE TABLE IF NOT EXISTS training_records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
-  task_id INTEGER NOT NULL CHECK(task_id IN (1, 2, 3, 4, 5, 6, 7)),
+  task_id INTEGER,
+  resource_id INTEGER,
+  resource_type TEXT,
+  session_type TEXT,
   timestamp INTEGER NOT NULL,
   duration INTEGER NOT NULL,
   accuracy_rate REAL NOT NULL CHECK(accuracy_rate BETWEEN 0 AND 1),
   avg_response_time INTEGER NOT NULL,
   raw_data TEXT NOT NULL,
+  class_id INTEGER,
+  class_name TEXT,
+  module_code TEXT DEFAULT 'sensory',
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -509,6 +520,7 @@ CREATE TABLE IF NOT EXISTS training_records (
 CREATE INDEX IF NOT EXISTS idx_training_records_student_id ON training_records(student_id);
 CREATE INDEX IF NOT EXISTS idx_training_records_task_id ON training_records(task_id);
 CREATE INDEX IF NOT EXISTS idx_training_records_timestamp ON training_records(timestamp);
+CREATE INDEX IF NOT EXISTS idx_training_records_resource_id ON training_records(resource_id);
 
 -- 器材主数据表 (器材训练模块)
 CREATE TABLE IF NOT EXISTS equipment_catalog (
@@ -1139,6 +1151,34 @@ export async function initDatabase(): Promise<any> {
       console.warn('[InitDatabase] ⚠️  模块化统计支持迁移检查失败:', moduleMigrationError)
     }
 
+    // ========== emotional 模块基础迁移与表初始化 ==========
+    try {
+      const { needsEmotionalFoundationMigration, migrateEmotionalFoundation } = await import('./migration/migrate-emotional-foundation')
+      if (needsEmotionalFoundationMigration()) {
+        console.log('[InitDatabase] 🔄 检测到 emotional 基础 schema 需要迁移，自动运行迁移...')
+        const result = await migrateEmotionalFoundation()
+        if (result.success) {
+          console.log('[InitDatabase] ✅ emotional 基础迁移成功:', result.message)
+          if (result.changes) {
+            console.log('[InitDatabase] 📊 emotional 迁移统计:', result.changes)
+          }
+        } else {
+          console.warn('[InitDatabase] ⚠️  emotional 基础迁移失败:', result.message)
+        }
+      } else {
+        console.log('[InitDatabase] ✅ emotional 基础 schema 已是最新，无需迁移')
+      }
+    } catch (emotionalMigrationError) {
+      console.warn('[InitDatabase] ⚠️  emotional 基础迁移检查失败:', emotionalMigrationError)
+    }
+
+    try {
+      await initializeEmotionalTables(rawDb)
+      console.log('[InitDatabase] ✅ emotional 模块表初始化完成')
+    } catch (emotionalSchemaError) {
+      console.warn('[InitDatabase] ⚠️  emotional 模块表初始化失败:', emotionalSchemaError)
+    }
+
     // ========== 游戏资源迁移 ==========
     try {
       const { needsGameMigration, runGameMigration } = await import('./migration/migrate-games-to-resources')
@@ -1432,6 +1472,9 @@ export async function migrateEquipmentLegacyIds(): Promise<{ success: boolean; u
     // 遍历器材数据，按名称匹配并更新 legacy_id
     for (let i = 0; i < EQUIPMENT_DATA.length; i++) {
       const equipment = EQUIPMENT_DATA[i]
+      if (!equipment) {
+        continue
+      }
       const legacyId = i + 1 // 从 1 开始
 
       // 检查是否存在且 legacy_id 为空
@@ -1658,7 +1701,12 @@ function columnExists(database: any, tableName: string, columnName: string): boo
 function safeAddColumn(database: any, tableName: string, columnDef: string): void {
   // columnDef 格式: "column_name TEXT" 或 "column_id INTEGER"
   const parts = columnDef.trim().split(/\s+/)
-  const columnName = parts[0]
+  const columnName = parts[0] || ''
+
+  if (!columnName) {
+    console.warn(`[ClassTables] 无法解析列定义，跳过: ${tableName} -> ${columnDef}`)
+    return
+  }
 
   const exists = columnExists(database, tableName, columnName)
 
@@ -1699,10 +1747,10 @@ async function initializeSysTables(rawDb: any): Promise<void> {
   console.log('[SysTables] 开始初始化系统表结构...')
 
   // 使用内联 SQL，避免动态导入问题
-  const statements = sysTablesSQL
+  const statements: string[] = sysTablesSQL
     .split(';')
-    .map(s => s.trim())
-    .filter(s => s.length > 0 && !s.startsWith('--'))
+    .map((s: string) => s.trim())
+    .filter((s: string) => s.length > 0 && !s.startsWith('--'))
 
   // 执行所有 SQL 语句
   for (const statement of statements) {
@@ -1733,6 +1781,10 @@ async function initializeSysTables(rawDb: any): Promise<void> {
  *
  * @param rawDb 原始的 sql.js Database 对象
  */
+async function initializeEmotionalTables(rawDb: any): Promise<void> {
+  rawDb.run(emotionalSchemaSQL)
+}
+
 async function initializeClassTables(rawDb: any): Promise<void> {
   console.log('[ClassTables] 开始初始化班级管理表结构...')
 

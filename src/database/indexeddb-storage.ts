@@ -9,7 +9,7 @@ const STORE_NAME = 'database'
 
 // 数据库内容版本号 - 当数据结构发生变化时递增此版本号
 // 必须与 sqljs-init.ts 中的 DATABASE_VERSION 保持一致
-export const DATA_VERSION = '4.1.2' // 添加 training_records 表用于感官训练记录
+export const DATA_VERSION = '4.2.0' // emotional foundation schema baseline
 const DATA_VERSION_KEY = 'data_version'
 
 export class IndexedDBStorage {

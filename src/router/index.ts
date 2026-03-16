@@ -36,6 +36,12 @@ const GamePlay = () => import('@/views/games/GamePlay.vue')
 const IEPReport = () => import('@/views/games/IEPReport.vue')
 const TrainingRecords = () => import('@/views/games/TrainingRecords.vue')
 const SensoryTrainingRecords = () => import('@/views/games/SensoryTrainingRecords.vue')
+const EmotionalMenu = () => import('@/views/emotional/Menu.vue')
+const EmotionSceneTraining = () => import('@/views/emotional/EmotionSceneTraining.vue')
+const CareExpressionTraining = () => import('@/views/emotional/CareExpressionTraining.vue')
+const EmotionalSessionSummary = () => import('@/views/emotional/SessionSummary.vue')
+const EmotionalRecords = () => import('@/views/emotional/Records.vue')
+const EmotionalReport = () => import('@/views/emotional/Report.vue')
 
 // 训练记录模块（Phase 4.6 重构）
 const TrainingRecordsMenu = () => import('@/views/training-records/TrainingRecordsMenu.vue')
@@ -76,7 +82,8 @@ const CBCLReport = () => import('@/views/assessment/cbcl/Report.vue')
 const AssessmentContainer = () => import('@/views/assessment/AssessmentContainer.vue')
 
 // Electron 环境检测：在 Electron 中使用 HashRouter 避免 file:// 协议下的路由白屏问题
-const isElectron = !!(window && window.process && window.process.type)
+const processRef = typeof window !== 'undefined' ? ((window as any).process as { type?: string } | undefined) : undefined
+const isElectron = !!processRef?.type
 // 开发环境下也可以通过检查是否有 electronAPI 来判断
 const isElectronEnv = !!(window as any).electronAPI || isElectron
 
@@ -168,6 +175,66 @@ const router = createRouter({
           }
         },
         // ===== 游戏训练模块（顶级菜单，与器材训练模式一致） =====
+        {
+          path: 'emotional/menu',
+          name: 'EmotionalMenu',
+          component: EmotionalMenu,
+          meta: {
+            title: '情绪行为调节',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/emotion-scene',
+          name: 'EmotionSceneTraining',
+          component: EmotionSceneTraining,
+          meta: {
+            title: '情绪与场景训练',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/care-expression',
+          name: 'CareExpressionTraining',
+          component: CareExpressionTraining,
+          meta: {
+            title: '表达关心训练',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/session-summary',
+          name: 'EmotionalSessionSummary',
+          component: EmotionalSessionSummary,
+          meta: {
+            title: '情绪模块会话总结',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/records',
+          name: 'EmotionalRecords',
+          component: EmotionalRecords,
+          meta: {
+            title: '情绪模块训练记录',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/report',
+          name: 'EmotionalReport',
+          component: EmotionalReport,
+          meta: {
+            title: '情绪模块报告',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
         {
           path: 'games',
           name: 'GameTraining',
@@ -706,8 +773,9 @@ router.beforeEach(async (to, from, next) => {
     }
 
     // 检查角色权限
-    if (to.meta.roles && to.meta.roles.length > 0) {
-      if (!to.meta.roles.includes(authStore.user?.role)) {
+    const routeRoles = Array.isArray(to.meta.roles) ? (to.meta.roles as string[]) : []
+    if (routeRoles.length > 0) {
+      if (!routeRoles.includes(authStore.user?.role || '')) {
         // 权限不足
         next('/403')
         return

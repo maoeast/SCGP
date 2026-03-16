@@ -177,8 +177,16 @@ const selectStudent = (student: any) => {
 
   // 跳转到游戏大厅
   router.push({
-    path: `/games/lobby/${student.id}`,
-    query: { module: currentModuleCode.value }
+    path: currentModuleCode.value === ModuleCode.EMOTIONAL
+      ? '/emotional/menu'
+      : `/games/lobby/${student.id}`,
+    query: currentModuleCode.value === ModuleCode.EMOTIONAL
+      ? {
+          module: currentModuleCode.value,
+          studentId: String(student.id),
+          studentName: student.name || ''
+        }
+      : { module: currentModuleCode.value }
   })
 }
 

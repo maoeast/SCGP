@@ -1528,14 +1528,26 @@ export class ResourceAPI extends DatabaseAPI {
 
 // 报告记录相关操作
 export class ReportAPI extends DatabaseAPI {
+  private resolveModuleCode(reportType: string, moduleCode?: string): string | null {
+    if (moduleCode) return moduleCode
+
+    if (reportType === 'emotional') {
+      return 'emotional'
+    }
+
+    return null
+  }
+
   /**
    * 保存报告记录
    */
   saveReportRecord(record: {
     student_id: number
-    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl'
+    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional'
     assess_id?: number
     plan_id?: number
+    training_record_id?: number
+    module_code?: string
     title: string
   }): number {
     // 获取学生当前班级信息作为快照
@@ -1547,17 +1559,22 @@ export class ReportAPI extends DatabaseAPI {
     const className = student?.current_class_name || null
 
     const sql = `
-      INSERT INTO report_record (student_id, report_type, assess_id, plan_id, title, class_id, class_name)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO report_record (
+        student_id, report_type, assess_id, plan_id, training_record_id,
+        title, class_id, class_name, module_code
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     this.execute(sql, [
       record.student_id,
       record.report_type,
       record.assess_id || null,
       record.plan_id || null,
+      record.training_record_id || null,
       record.title,
       classId,
-      className
+      className,
+      this.resolveModuleCode(record.report_type, record.module_code)
     ])
     return this.getLastInsertId()
   }
@@ -1942,7 +1959,10 @@ export class GameTrainingAPI extends DatabaseAPI {
    */
   saveTrainingRecord(data: {
     student_id: number
-    task_id: number
+    task_id?: number | null
+    resource_id?: number | null
+    resource_type?: string | null
+    session_type?: string | null
     timestamp: number
     duration: number
     accuracy_rate: number
@@ -1961,11 +1981,18 @@ export class GameTrainingAPI extends DatabaseAPI {
 
     const rawDataJson = JSON.stringify(data.raw_data)
     this.execute(`
-      INSERT INTO training_records (student_id, task_id, timestamp, duration, accuracy_rate, avg_response_time, raw_data, class_id, class_name, module_code)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO training_records (
+        student_id, task_id, resource_id, resource_type, session_type,
+        timestamp, duration, accuracy_rate, avg_response_time, raw_data,
+        class_id, class_name, module_code
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       data.student_id,
-      data.task_id,
+      data.task_id ?? null,
+      data.resource_id ?? null,
+      data.resource_type ?? null,
+      data.session_type ?? null,
       data.timestamp,
       data.duration,
       data.accuracy_rate,
@@ -1987,6 +2014,9 @@ export class GameTrainingAPI extends DatabaseAPI {
         tr.id,
         tr.student_id,
         tr.task_id,
+        tr.resource_id,
+        tr.resource_type,
+        tr.session_type,
         tr.timestamp,
         tr.duration,
         tr.accuracy_rate,
@@ -1998,7 +2028,11 @@ export class GameTrainingAPI extends DatabaseAPI {
         tr.created_at,
         r.name as task_name
       FROM training_records tr
-      LEFT JOIN sys_training_resource r ON tr.task_id = r.legacy_id AND r.resource_type = 'game'
+      LEFT JOIN sys_training_resource r
+        ON (
+          tr.resource_id = r.id
+          OR (tr.resource_id IS NULL AND tr.task_id = r.legacy_id AND r.resource_type = 'game')
+        )
       WHERE tr.student_id = ?
     `
     const params: any[] = [studentId]
@@ -2024,6 +2058,9 @@ export class GameTrainingAPI extends DatabaseAPI {
         ...record,
         // 映射前端期望的字段名
         taskId: record.task_id,
+        resourceId: record.resource_id,
+        resourceType: record.resource_type,
+        sessionType: record.session_type,
         accuracy: record.accuracy_rate,
         avgResponseTime: record.avg_response_time,
         moduleCode: record.module_code,
@@ -2041,6 +2078,9 @@ export class GameTrainingAPI extends DatabaseAPI {
         id,
         student_id,
         task_id,
+        resource_id,
+        resource_type,
+        session_type,
         timestamp,
         duration,
         accuracy_rate,
@@ -2059,6 +2099,9 @@ export class GameTrainingAPI extends DatabaseAPI {
       ...record,
       // 映射前端期望的字段名
       taskId: record.task_id,
+      resourceId: record.resource_id,
+      resourceType: record.resource_type,
+      sessionType: record.session_type,
       accuracy: record.accuracy_rate,
       avgResponseTime: record.avg_response_time,
       raw_data: rawData

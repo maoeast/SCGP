@@ -3,6 +3,22 @@
 /**
  * 全局 Window 接口扩展
  */
+declare module '*.sql?raw' {
+  const content: string
+  export default content
+}
+
+declare module 'sql.js' {
+  const initSqlJs: any
+  export default initSqlJs
+  export const SQL: any
+}
+
+declare module 'sql.js/dist/sql-wasm.js' {
+  const sqlWasm: any
+  export default sqlWasm
+}
+
 declare global {
   interface Window {
     electronAPI?: {
