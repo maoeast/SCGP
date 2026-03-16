@@ -1,158 +1,154 @@
-# CLAUDE.md - Agent Configuration & Rules
+# CLAUDE.md - SCGP Claude Working Guide
 
-## 1. 🚨 核心协议 (CORE PROTOCOLS)
-> **最高优先级指令**：本项目已引入 GSD (Get Shit Done) 规范驱动开发流程。在开始任何任务前，**必须**遵循以下流程。
+本文件用于帮助 Claude 在 SCGP 仓库中快速建立正确上下文，并按当前代码现实开展开发工作。
 
-1.  **GSD 工作流优先 (GSD Workflow)**：
-    *   你的核心规划与执行必须依赖 `.planning/` 目录下的状态文件 (`PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md`, `STATE.md`)。
-    *   在开发新功能前，优先考虑运行 `/gsd:plan-phase` 和 `/gsd:execute-phase` 进行结构化开发。
-2.  **上下文加载 (Legacy Context)**：作为补充，你仍需关注根目录的 `PROJECT_CONTEXT.md` 和 `重构实施技术规范.md` 以获取架构约束。
-3.  **产品命名**：当前正式产品名称是 `SCGP / 星愿能力发展平台`；文档中的 `SIC-ADS` 和“生活自理适应综合训练系统”默认视为历史阶段名称，除非任务明确要求处理旧交付物。
-4.  **单一事实来源**：以 `README.md` + `重构实施技术规范.md` 作为当前产品定位与技术约束的最高准则，并结合 `PROJECT_CONTEXT.md` 判断当前落地状态。忽略旧代码和旧文档中不符合该规范的模式。
+## 1. 启动先读
 
-## 2. 🛠 技术栈规范 (TECH STACK)
-- **Runtime**: Electron (Main/Renderer Process), Node.js
-- **Frontend**: Vue 3 (Composition API, `<script setup>`), Vite, Element Plus, 纯 CSS
-- **Backend/API**: Electron Main Process + Preload + IPC（无独立在线后端作为主架构前提）
-- **Language**: TypeScript (Strict mode enabled)
-- **State Management**: Pinia (推荐)
-- **Database**: sql.js (Wasm, 主线程防抖写入) - **零原生依赖**
+进入仓库后，优先按以下顺序建立上下文：
 
-## 3. 🏗️ 构建与运行 (COMMANDS)
+1. `README.md`
+2. `PROJECT_CONTEXT.md`
+3. `重构实施技术规范.md`
+4. `docs/planning/2026-03-13-scgp-current-prd.md`
+5. `docs/reports/2026-03-13-scgp-prd-gap-analysis.md`
+6. `docs/INDEX.md`
 
-### 开发环境 (Development)
-> **注意**：优先使用并发启动命令，避免多终端操作。
+如果任务与历史方案有关，再按需查看：
 
-- **Electron (首选)**: `npm run electron:dev`
-    - *行为: 并行启动 Vite Server 和 Electron 窗口，支持热重载 (HMR)。*
-- **Web Only (调试UI)**: `npm run dev`
-    - *行为: 仅启动浏览器模式，适用于调试纯前端 UI 逻辑（不涉及 Node/Electron API 时使用）。*
-- **Reset**: `npm run dev:force`
-    - *行为: 清除 Vite/Electron 缓存并强制重启。*
+- `docs/plans/2025-02-05-refactor-implementation-plan.md`
+- `docs/plans/2025-02-17-assessment-module-refactor-design.md`
+- `docs/planning/prd.md`
 
-### 生产构建 (Production Build)
-- **Web Build**: `npm run build:web`
-- **Electron (Windows)**: `npm run build:electron:win`
-- **Electron (macOS)**: `npm run build:electron:mac`
-- **Electron (Linux)**: `npm run build:electron:linux`
+`.planning/PROJECT.md`、`.planning/ROADMAP.md`、`.planning/REQUIREMENTS.md`、`.planning/STATE.md` 主要是 GSD 过程状态文件。只有在任务已经明确进入 GSD 规划或执行流程时，才把它们作为工作流入口；它们不是当前产品事实的最高来源。
 
-### 依赖管理 (Dependencies)
-- **安装依赖**: `npm install`
-- **添加依赖**: `npm install [package]` (或 `--save-dev`)
-    - *⚠️ 警告*: **严格禁止引入 Native 模块** (如 sqlite3, sharp)。必须保持纯 JS/Wasm 架构以支持跨平台构建。
+## 2. 项目身份
 
-## 4. 📝 代码风格偏好 (CODING STYLE)
+- 当前正式产品名称：`SCGP / 星愿能力发展平台`
+- 历史阶段名称：
+  - `生活自理适应综合训练系统`
+  - `感官能力发展系统 (SIC-ADS)`
+- 当前实现、当前产品、当前平台，统一使用 `SCGP`
+- 旧名称仅用于历史文档、旧计划、兼容代码和演进追溯
 
-### Vue 组件规范
+## 3. 当前产品现实
 
-- **使用 Vue 3 Composition API** + `<script setup lang="ts">`
-  - 所有新组件必须使用 `<script setup lang="ts">` 语法
-  - 避免使用 Options API 或 `defineComponent`
-  - 使用 `ref()` 和 `computed()` 管理响应式状态
+SCGP 当前主线已经具备以下可运行能力：
 
-```vue
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+- 学生管理
+- 能力评估
+- 游戏训练
+- 器材训练
+- 训练记录
+- 训练计划
+- 报告生成
+- 资源中心
+- 系统管理
+- 班级管理与学生分班
+- 本地账号登录、激活、更新接入、备份恢复
 
-const loading = ref(false)
-const router = useRouter()
-</script>
+截至 2026-03-13，应明确以下现实：
 
-<style scoped>
-/* 使用 scoped CSS，避免全局样式污染 */
-</style>
-```
+- `sensory` 是当前最完整的业务主链
+- `emotional`、`social` 等未来模块仍主要是占位、实验或部分结构准备
+- 不要把未来模块写成已经完整交付
 
-### TypeScript 规范
+## 4. 当前架构事实
 
-- **Interface vs Type**：
-  - 复杂对象、类、函数签名 → 使用 `interface`
-  - 联合类型、字面量类型 → 使用 `type`
+- 技术栈：`Electron + Vue 3 + TypeScript + Vite + SQL.js`
+- 数据库主线：渲染进程内 `sql.js` + `SQLWrapper` 防抖保存
+- 持久化主线：渲染进程导出数据库，经 IPC 交给 Electron Main 做原子写入
+- 资源协议：`resource://`
+- 资源主模型：`sys_training_resource + sys_tags + sys_resource_tag_map`
+- 评估主链：`AssessmentContainer + ScaleDriver`
+- 模块系统：已有 `ModuleRegistry`
+- 当前路由现状：仍以静态路由表为主，不是注册表动态装配
 
-```typescript
-// ✅ Interface 用于对象
-interface Student {
-  id: number
-  name: string
-  gender: '男' | '女'
-  birthday: string
-}
+不要误判为当前已完成的事项：
 
-// ✅ Type 用于联合类型
-type ScaleType = 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs'
-```
+- 数据库 Worker 主链
+- Image Worker 主链
+- 注册表驱动的动态路由
+- 完整可交付的多模块平台
 
-- **Props 定义**：使用 `defineProps<T>()` 泛型语法
+## 5. 实现约束
 
-```typescript
-interface Props {
-  studentId: number
-  readonly?: boolean
-}
-const props = defineProps<Props>()
-```
+- 默认保持本地优先、零原生依赖路线
+- 不要新增 `sqlite3`、`sharp` 等需要原生编译的运行时依赖
+- 新评估能力优先接入统一评估容器和 `ScaleDriver`
+- 新资源能力优先接入统一资源模型，不要继续扩散旧表模式
+- 新模块扩展优先沿用平台底座，不要回到单体垂直页面堆叠
+- 如果文档与当前代码实现冲突，以代码为准判断“当前现实”，并按需修正文档口径
+- 当前导航与路由仍是静态装配；除非任务明确要求推进注册表驱动，否则优先修改现有静态路由和菜单
 
-### 样式规范
+## 6. 代码风格与改动策略
 
-- **仅使用 Scoped CSS**：`<style scoped>`
-- **禁止使用**：Tailwind、UnoCSS、CSS Modules、SCSS
-- **样式隔离**：所有组件样式必须使用 `scoped` 避免污染全局
+- 新 Vue 组件优先使用 `<script setup lang="ts">`
+- 现有稳定代码不因风格偏好做无关重写
+- Pinia 在当前仓库中同时存在 options-style 和 setup-style store；新增或修改 store 时优先跟随所在模块既有风格，不做顺手统一重构
+- 样式优先沿用现有 `scoped` CSS 模式，避免无必要引入 Tailwind、UnoCSS、CSS Modules、SCSS 体系切换
+- 路径引用优先使用 `@/` 指向 `src/`
+- 异步流程、IPC 通信、数据库写入、资源文件操作必须有明确错误处理
 
-### 目录结构规范
+## 7. 当前优先技术债
 
-```
-src/
-├── views/assessment/        # 评估模块（按功能分组）
-│   ├── conners-psq/        # PSQ 评估
-│   ├── conners-trs/        # TRS 评估
-│   └── csirs/              # CSIRS 评估
-├── stores/                 # Pinia 状态管理
-├── types/                  # TypeScript 类型定义
-├── database/               # 数据库相关
-└── utils/                  # 工具函数
-```
+如任务没有明确指定方向，优先关注这些平台债：
 
-### 状态管理
+- 备份/恢复未完全覆盖当前主线 schema
+- 资源文件生命周期管理未完全收口
+- 资源收藏能力未完成
+- 评估入口仍是硬编码，不是配置驱动
+- 模块注册已存在，但导航与路由仍是静态装配
+- 系统命名仍残留旧阶段名称
+- 开发/迁移工具仍混在主路由树中
 
-- **仅使用 Pinia**：禁止使用 Vuex
-- Store 定义使用 `setup` 语法：
+## 8. 工作方式
 
-```typescript
-export const useStudentStore = defineStore('student', () => {
-  const students = ref<Student[]>([])
-  const loadStudents = async () => { /* ... */ }
-  return { students, loadStudents }
-})
-```
+- 先确认当前代码真实状态，再写文档、计划或结论
+- 如果发现“文档写已完成，但代码仍是过渡态”，以代码为准，并修正文档口径
+- 如果任务是规划类，优先给出：
+  - 当前状态
+  - 差距
+  - 可执行阶段
+  - 验收标准
+- 如果任务已经放入 GSD 流程或 `.planning/phases/*`，遵循对应计划执行；但对产品现状的判断，仍优先依据现行文档和代码
+- 修改文档入口时，同步检查：
+  - `README.md`
+  - `docs/INDEX.md`
+  - `PROJECT_CONTEXT.md`
+- 引用历史文档时，必须明确标注“历史 / 草案 / 原始需求 / 旧交付稿”
 
-### 依赖库规范
+## 9. 常用命令
 
-| 用途 | 使用 | 禁止使用 |
-| :--- | :--- | :--- |
-| UI 组件库 | Element Plus | - |
-| 图表 | ECharts | Chart.js, D3 |
-| 状态管理 | Pinia | Vuex |
-| 工具函数 | 原生 API | lodash, underscore |
-| 路由 | Vue Router | - |
+### 开发
 
-### 命名规范
+- 安装依赖：`npm install`
+- Web 开发：`npm run dev`
+- Electron 联调：`npm run electron:dev`
+- 强制重启 Vite：`npm run dev:force`
 
-- **组件文件**：PascalCase (例：`AssessmentSelect.vue`)
-- **工具函数**：camelCase (例：`calculateAge()`)
-- **常量**：SCREAMING_SNAKE_CASE (例：`MAX_SCORE`)
-- **类型/接口**：PascalCase (例：`interface Student`)
+### 校验
 
-### 代码组织原则
+- 类型检查：`npm run type-check`
+- 代码格式化：`npm run format`
+- Lint：`npm run lint`
 
-1. **单一职责**：每个组件/函数只做一件事
-2. **DRY**：避免重复代码，抽取公共逻辑到 `utils/`
-3. **YAGNI**：不过度设计，只实现当前需要的功能
-4. **模块化**：按功能分组，而非按文件类型
+### 构建
 
-### 通用规范
+- Web 构建：`npm run build:web`
+- Electron 构建：`npm run build:electron`
+- Electron Windows：`npm run build:electron:win`
+- Electron macOS：`npm run build:electron:mac`
+- Electron Linux：`npm run build:electron:linux`
 
-- **异步处理**：优先使用 `async/await`，避免回调地狱
-- **错误处理**：在 IPC 通信和后端 API 中必须包含 try/catch 块
-- **路径引用**：使用 `@/` 别名引用 `src/` 目录
+## 10. 验证基线
+
+- 改动 TypeScript、Vue、路由、Store、数据库 API 后，至少运行一次 `npm run type-check`
+- 涉及 Electron IPC、激活、备份恢复、资源导入导出、评估报告生成时，补充说明手工验证路径或当前阻塞
+- 优先给出最小但真实的验证结果，不要只写“理论上可行”
+
+## 11. 输出要求
+
+- 简洁、直接、少空话
+- 优先说清“当前已实现 / 当前未实现 / 当前过渡态”
+- 避免把目标态当现状
+- 除非任务要求，不要做与目标无关的大规模风格重构
