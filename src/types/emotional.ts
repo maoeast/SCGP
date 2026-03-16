@@ -165,3 +165,102 @@ export interface EmotionalReportSummary {
   senderPerspectiveAccuracy: number
   receiverPerspectiveAccuracy: number
 }
+
+export type EmotionalSessionStatus =
+  | 'idle'
+  | 'running'
+  | 'persisting'
+  | 'completed'
+  | 'cancelled'
+  | 'error'
+
+export type EmotionalSessionPhase =
+  | 'scene_intro'
+  | 'emotion_recognition'
+  | 'reasoning'
+  | 'solution'
+  | 'perspective_taking'
+  | 'summary'
+
+export interface EmotionalSessionOption {
+  value: string
+  label: string
+  isCorrect?: boolean
+  isAcceptable?: boolean
+  metadata?: Record<string, any>
+}
+
+export interface EmotionalSessionStepDefinition {
+  key: string
+  phase: EmotionalSessionPhase
+  stepType: EmotionalStepType
+  title?: string
+  promptId?: string
+  promptText?: string
+  perspective?: EmotionalPerspective
+  options?: EmotionalSessionOption[]
+  correctValues?: string[]
+  acceptableValues?: string[]
+  metadata?: Record<string, any>
+}
+
+export interface EmotionalStepSubmitPayload {
+  selectedValue: string
+  selectedLabel?: string
+  isCorrect?: boolean
+  isAcceptable?: boolean
+  feedbackCode?: EmotionalFeedbackCode
+  perspective?: EmotionalPerspective
+  metadata?: Record<string, any>
+}
+
+export interface EmotionalStepResult {
+  stepKey: string
+  stepType: EmotionalStepType
+  phase: EmotionalSessionPhase
+  selectedValue: string
+  selectedLabel?: string
+  isCorrect: boolean
+  isAcceptable: boolean
+  hintLevel: 0 | 1 | 2 | 3
+  retryCount: number
+  responseTimeMs: number
+  feedbackCode?: EmotionalFeedbackCode
+  perspective: EmotionalPerspective
+  recordedAt: number
+}
+
+export interface EmotionalSessionConfig {
+  studentId: number
+  resourceId: number
+  resourceType: EmotionalResourceType
+  subModule: EmotionalSubModule
+  steps: EmotionalSessionStepDefinition[]
+  moduleCode?: 'emotional'
+  startedAt?: number
+  buildSummary?: (context: {
+    config: EmotionalSessionConfig
+    latestResults: EmotionalStepResult[]
+    attempts: EmotionalStepResult[]
+    totalHintCount: number
+    totalRetryCount: number
+  }) => Partial<EmotionalTrainingSummaryRawData>
+}
+
+export interface PersistEmotionalSessionInput {
+  studentId: number
+  resourceId: number
+  resourceType: EmotionalResourceType
+  subModule: EmotionalSubModule
+  startedAt: number
+  endedAt: number
+  completionStatus: 'completed' | 'cancelled' | 'interrupted'
+  summary: EmotionalTrainingSummaryRawData
+  details: Array<Omit<EmotionalTrainingDetailEntity, 'id' | 'session_id' | 'created_at'>>
+}
+
+export interface PersistEmotionalSessionResult {
+  trainingRecordId: number
+  sessionId: number
+  detailIds: number[]
+}
