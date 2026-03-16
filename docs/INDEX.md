@@ -2,6 +2,8 @@
 
 本索引只收录当前仓库中仍然存在且建议继续使用的文档入口。
 
+> 说明：本仓库同时保留 `SCGP` 当前平台文档，以及“生活自理适应综合训练系统”/`SIC-ADS` 阶段的历史文档。带有“历史”“原始需求”“旧交付稿”标记的文件仅用于追溯，不作为当前实现的单一事实来源。
+
 ## 先看这些
 
 ### 项目入口
@@ -22,24 +24,30 @@
 
 面向使用、运维或具体操作的说明文档。
 
+- [2026-03-12-gsd-token-efficient-workflow.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-12-gsd-token-efficient-workflow.md)
 - [activation-code-generator.md](/home/DONG/Mycode/SCGP/docs/guides/activation-code-generator.md)
 - [activation-system-guide.md](/home/DONG/Mycode/SCGP/docs/guides/activation-system-guide.md)
-- [系统使用说明书.md](/home/DONG/Mycode/SCGP/docs/guides/%E7%B3%BB%E7%BB%9F%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E%E4%B9%A6.md)
-- [系统参数技术文档.md](/home/DONG/Mycode/SCGP/docs/guides/%E7%B3%BB%E7%BB%9F%E5%8F%82%E6%95%B0%E6%8A%80%E6%9C%AF%E6%96%87%E6%A1%A3.md)
+- [系统使用说明书.md（历史交付稿）](/home/DONG/Mycode/SCGP/docs/guides/%E7%B3%BB%E7%BB%9F%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E%E4%B9%A6.md)
+- [系统参数技术文档.md（历史交付稿）](/home/DONG/Mycode/SCGP/docs/guides/%E7%B3%BB%E7%BB%9F%E5%8F%82%E6%95%B0%E6%8A%80%E6%9C%AF%E6%96%87%E6%A1%A3.md)
 
 ### `docs/architecture`
 
 架构、审计、系统设计相关文档。
 
-- [audit-report.md](/home/DONG/Mycode/SCGP/docs/architecture/audit-report.md)
-- [data-flow-diagram.md](/home/DONG/Mycode/SCGP/docs/architecture/data-flow-diagram.md)
+- [audit-report.md（Phase 2 历史审计）](/home/DONG/Mycode/SCGP/docs/architecture/audit-report.md)
+- [2026-03-12-emotional-module-data-design.md](/home/DONG/Mycode/SCGP/docs/architecture/2026-03-12-emotional-module-data-design.md)
+- [2026-03-12-emotional-module-page-and-route-design.md](/home/DONG/Mycode/SCGP/docs/architecture/2026-03-12-emotional-module-page-and-route-design.md)
+- [data-flow-diagram.md（Phase 2 历史数据流稿）](/home/DONG/Mycode/SCGP/docs/architecture/data-flow-diagram.md)
 - [源码加密混淆技术方案.md](/home/DONG/Mycode/SCGP/docs/architecture/%E6%BA%90%E7%A0%81%E5%8A%A0%E5%AF%86%E6%B7%B7%E6%B7%86%E6%8A%80%E6%9C%AF%E6%96%B9%E6%A1%88.md)
 
 ### `docs/planning`
 
 较稳定的需求与专题方案。
 
-- [prd.md](/home/DONG/Mycode/SCGP/docs/planning/prd.md)
+- [2026-03-13-scgp-current-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-13-scgp-current-prd.md)
+- [2026-03-12-emotional-module-execution-prompt.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-12-emotional-module-execution-prompt.md)
+- [2026-03-12-emotional-module-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-12-emotional-module-prd.md)
+- [prd.md（原始需求基线）](/home/DONG/Mycode/SCGP/docs/planning/prd.md)
 - [感官训练PRD.md](/home/DONG/Mycode/SCGP/docs/planning/%E6%84%9F%E5%AE%98%E8%AE%AD%E7%BB%83PRD.md)
 - [报告生成模块技术方案.md](/home/DONG/Mycode/SCGP/docs/planning/%E6%8A%A5%E5%91%8A%E7%94%9F%E6%88%90%E6%A8%A1%E5%9D%97%E6%8A%80%E6%9C%AF%E6%96%B9%E6%A1%88.md)
 
@@ -47,16 +55,20 @@
 
 阶段性实施计划和详细执行方案。
 
+- [2026-03-13-scgp-executable-roadmap.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-13-scgp-executable-roadmap.md)
 - [2025-01-28-csirs-assessment-module.md](/home/DONG/Mycode/SCGP/docs/plans/2025-01-28-csirs-assessment-module.md)
 - [2025-01-29-conners-psq-trs-assessment.md](/home/DONG/Mycode/SCGP/docs/plans/2025-01-29-conners-psq-trs-assessment.md)
-- [2025-02-05-refactor-implementation-plan.md](/home/DONG/Mycode/SCGP/docs/plans/2025-02-05-refactor-implementation-plan.md)
-- [2025-02-17-assessment-module-refactor-design.md](/home/DONG/Mycode/SCGP/docs/plans/2025-02-17-assessment-module-refactor-design.md)
+- [2025-02-05-refactor-implementation-plan.md（历史实施计划）](/home/DONG/Mycode/SCGP/docs/plans/2025-02-05-refactor-implementation-plan.md)
+- [2025-02-17-assessment-module-refactor-design.md（历史设计稿）](/home/DONG/Mycode/SCGP/docs/plans/2025-02-17-assessment-module-refactor-design.md)
+- [2026-03-12-emotional-module-implementation-plan.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-12-emotional-module-implementation-plan.md)
+- [2026-03-12-emotional-module-gsd-execution-sequence.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-12-emotional-module-gsd-execution-sequence.md)
 - [2026-02-04-equipment-training-module.md](/home/DONG/Mycode/SCGP/docs/plans/2026-02-04-equipment-training-module.md)
 
 ### `docs/reports`
 
 阶段工作报告、专项检查结果。
 
+- [2026-03-13-scgp-prd-gap-analysis.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-13-scgp-prd-gap-analysis.md)
 - [2026-03-11-assessment-cleanup.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-11-assessment-cleanup.md)
 
 ### `docs/references`
@@ -83,8 +95,12 @@
 1. [README.md](/home/DONG/Mycode/SCGP/README.md)
 2. [PROJECT_CONTEXT.md](/home/DONG/Mycode/SCGP/PROJECT_CONTEXT.md)
 3. [重构实施技术规范.md](/home/DONG/Mycode/SCGP/%E9%87%8D%E6%9E%84%E5%AE%9E%E6%96%BD%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83.md)
-4. [docs/planning/prd.md](/home/DONG/Mycode/SCGP/docs/planning/prd.md)
-5. [docs/plans/2025-02-05-refactor-implementation-plan.md](/home/DONG/Mycode/SCGP/docs/plans/2025-02-05-refactor-implementation-plan.md)
+4. [docs/planning/2026-03-13-scgp-current-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-13-scgp-current-prd.md)
+5. [docs/reports/2026-03-13-scgp-prd-gap-analysis.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-13-scgp-prd-gap-analysis.md)
+6. [docs/plans/2026-03-13-scgp-executable-roadmap.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-13-scgp-executable-roadmap.md)
+7. [docs/reports/2026-03-11-assessment-cleanup.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-11-assessment-cleanup.md)
+8. [docs/plans/2025-02-05-refactor-implementation-plan.md](/home/DONG/Mycode/SCGP/docs/plans/2025-02-05-refactor-implementation-plan.md)
+9. [docs/planning/prd.md](/home/DONG/Mycode/SCGP/docs/planning/prd.md)
 
 ## 说明
 

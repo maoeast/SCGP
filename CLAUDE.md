@@ -7,12 +7,13 @@
     *   你的核心规划与执行必须依赖 `.planning/` 目录下的状态文件 (`PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md`, `STATE.md`)。
     *   在开发新功能前，优先考虑运行 `/gsd:plan-phase` 和 `/gsd:execute-phase` 进行结构化开发。
 2.  **上下文加载 (Legacy Context)**：作为补充，你仍需关注根目录的 `PROJECT_CONTEXT.md` 和 `重构实施技术规范.md` 以获取架构约束。
-3.  **单一事实来源**：以 `重构实施技术规范.md` 为最高技术准则，**必须**遵循其中定义的 `ScaleDriver` 策略模式和 `ModuleRegistry` 模块注册表架构。忽略旧代码中不符合该规范的模式。
+3.  **产品命名**：当前正式产品名称是 `SCGP / 星愿能力发展平台`；文档中的 `SIC-ADS` 和“生活自理适应综合训练系统”默认视为历史阶段名称，除非任务明确要求处理旧交付物。
+4.  **单一事实来源**：以 `README.md` + `重构实施技术规范.md` 作为当前产品定位与技术约束的最高准则，并结合 `PROJECT_CONTEXT.md` 判断当前落地状态。忽略旧代码和旧文档中不符合该规范的模式。
 
 ## 2. 🛠 技术栈规范 (TECH STACK)
 - **Runtime**: Electron (Main/Renderer Process), Node.js
-- **Frontend**: Vue 3 (Composition API, `<script setup>`), Vite, Element Plus, 纯 CSS/SCSS
-- **Backend/API**: Node.js, Express (在 Electron 环境中可能作为本地服务运行)
+- **Frontend**: Vue 3 (Composition API, `<script setup>`), Vite, Element Plus, 纯 CSS
+- **Backend/API**: Electron Main Process + Preload + IPC（无独立在线后端作为主架构前提）
 - **Language**: TypeScript (Strict mode enabled)
 - **State Management**: Pinia (推荐)
 - **Database**: sql.js (Wasm, 主线程防抖写入) - **零原生依赖**
