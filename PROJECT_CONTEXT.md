@@ -24,7 +24,7 @@
 | **技术栈**     | Electron + Vue 3 + TypeScript + Vite + SQL.js |
 | **数据库**     | SQLite (通过 sql.js 运行在浏览器端)           |
 | **当前分支**   | `main`                                        |
-| **最后更新**   | 2026-03-17 (启动 emotional v1.1 易用性升级规划) |
+| **最后更新**   | 2026-03-17 (完成 emotional v1.1 里程碑归档) |
 | **系统健康度** | ✅ 可运行，所有核心功能正常                   |
 
 ### 项目简介
@@ -978,14 +978,13 @@ function calculateConnersTScore(
 
 **最后更新**: 2026-03-17
 **更新人**: Claude Code Assistant (首席实施工程师)
-**会话摘要**: 已完成 SCGP `emotional` 模块 v1.1 的 Phase 8：`Emotional Scene Gallery & Launch Flow`。新增 `src/views/emotional/SceneSelector.vue` 作为统一场景选择页，并在 `router/index.ts` 中增加 `/emotional/emotion-scene/select` 和 `/emotional/care-expression/select` 两个静态路由；`Menu.vue` 已改为先进入 selector，再由老师点击场景卡片启动训练。场景卡片会展示封面图或优雅的默认底图、标题、难度和情绪颜色角标。训练页侧则收紧了显式 `resourceId` 逻辑：`EmotionSceneTraining.vue` 和 `CareExpressionTraining.vue` 在收到明确 `resourceId` 时会优先按该 ID 查库，若该资源不存在或已停用则直接报错，不再偷偷 fallback 到 `LIMIT 1` 的第一条数据。与此同时，`.planning/ROADMAP.md` 已补充未来 backlog：后续需要支持“批量导入/导出预置情绪资源”，用于满足特教老师跨机构互换资源包的需求。Phase 8 相关文件的定向 `vue-tsc` 校验已通过，当前里程碑 v1.1 已达到审计与归档条件。
+**会话摘要**: 已完成 SCGP `emotional` 模块 v1.1 全里程碑的审计与归档。v1.1 的 3 个阶段（06 资源契约与编辑器基础设施、07 可视化资源编辑器、08 场景画廊与动态启动流）均已补齐 PLAN / SUMMARY / VERIFICATION，8/8 requirements 在 `.planning/v1.1-MILESTONE-AUDIT.md` 中审计通过。随后已将当前 milestone 的 ROADMAP 和 REQUIREMENTS 分别归档到 `.planning/milestones/v1.1-ROADMAP.md` 与 `.planning/milestones/v1.1-REQUIREMENTS.md`，并重置 active `.planning/ROADMAP.md` / `.planning/REQUIREMENTS.md` / `.planning/STATE.md` 为“无 active milestone”状态。同时，`ROADMAP.md` backlog 已记录新的产品需求：未来需要支持“批量导入/导出预置情绪资源”，以满足特教老师跨机构互换资源包的需求。当前项目已正式结束 v1.1，等待下一轮 milestone 定义。
 
 ### 下次会话优先事项
 
-1. **[P1 - 高] v1.1 里程碑审计与归档**
-   - 生成 v1.1 milestone audit，确认 8/8 requirements 已覆盖
-   - 归档 ROADMAP / REQUIREMENTS，更新 PROJECT / MILESTONES / STATE
-   - 创建 v1.1 git tag，正式结束当前里程碑
+1. **[P1 - 高] 下一个 milestone 定义**
+   - 基于 backlog 候选项启动新的 milestone
+   - 优先在资源互换、报告增强、路由平台化之间做产品取舍
 
 2. **[P2 - 中] 编辑器稳定性回归**
    - 用现有 demo emotional 资源做回填和重存测试

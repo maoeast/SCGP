@@ -1,5 +1,18 @@
 # Milestones
 
+## v1.1 Emotional Authoring & Scene Gallery (Shipped: 2026-03-17)
+
+**Phases completed:** 3 phases, 3 plans, 8 requirements
+
+**Key accomplishments:**
+- Emotional resources in Resource Center now use visual editors instead of raw JSON textareas.
+- Emotional editor contracts normalize and validate scene metadata before persistence.
+- Teachers now select concrete emotional scenes from a gallery before entering training runtime.
+- Emotional training runtime now honors explicit `resourceId` launch flow and reports missing requested resources instead of silently falling back.
+- Future demand for emotional resource pack import/export was captured in backlog without expanding v1.1 scope.
+
+---
+
 ## v1.0 Emotional MVP (Shipped: 2026-03-17)
 
 **Phases completed:** 5 phases, 9 plans, 9 tasks

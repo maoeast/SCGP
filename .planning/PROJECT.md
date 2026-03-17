@@ -8,40 +8,37 @@ SCGP helps special education teachers and rehabilitation staff run structured as
 
 ## Current State
 
-### Shipped Milestone
+### Shipped Milestones
 
+- **v1.1 Emotional Authoring & Scene Gallery** shipped on 2026-03-17
+  - Archive: `.planning/milestones/v1.1-ROADMAP.md`
 - **v1.0 Emotional MVP** shipped on 2026-03-17
-- Archived roadmap: `.planning/milestones/v1.0-ROADMAP.md`
-- Archived requirements: `.planning/milestones/v1.0-REQUIREMENTS.md`
+  - Archive: `.planning/milestones/v1.0-ROADMAP.md`
 
-### Current Milestone: v1.1 Emotional Authoring & Scene Gallery
+### What v1.1 Delivered
 
-**Goal:** Reduce special-education teacher operating friction in the Emotional module by replacing raw JSON authoring with visual editors and replacing implicit first-scene launch with explicit scene selection.
+- Replaced emotional raw JSON authoring in Resource Center with visual editors
+- Added typed normalization and validation for emotional resource metadata
+- Added selector galleries so teachers choose a concrete emotional scene before launch
+- Converted emotional training launch into explicit `resourceId` flow
 
-**Target features:**
-- Visual resource editor for `emotion_scene` resources inside Resource Center
-- Visual resource editor for `care_scene` resources inside Resource Center
-- Shared normalization and validation against the current `src/types/emotional.ts` metadata contract
-- Scene selector pages for both emotional training submodules, launching runtime with explicit `resourceId`
+### No Active Milestone
 
-### Why This Milestone Now
-
-- Emotional MVP mainline is already shipped, but Resource Center still exposes `meta_data` raw JSON for emotional resources.
-- Emotional training entry still falls back to `LIMIT 1`, which conflicts with teacher-led scene choice during instruction.
-- PRD section 9 defines special-education UX rules that are not yet reflected in resource authoring or scene selection.
-
-### Constraints For v1.1
-
-1. **No schema rewrite**: v1.1 keeps using `sys_training_resource.meta_data` as the persistence field for emotional resources.
-2. **Current type contract wins**: editor serialization must match `EmotionSceneResourceMeta` and `CareSceneResourceMeta` in `src/types/emotional.ts`.
-3. **Static routing reality**: v1.1 can add new static routes/pages, but it does not attempt registry-driven dynamic routing.
-4. **No native deps**: do not introduce `sqlite3`, `sharp`, or any other runtime native dependency.
+There is currently no active milestone. The planning state has been reset after v1.1 archive.
 
 ### Next Milestone Candidates
 
-- Emotional report polish based on richer scene taxonomy and teacher-facing summaries
+- Emotional resource pack import/export for teacher-to-teacher resource exchange
+- Emotional report polish based on richer scene taxonomy
 - Cross-module route/menu platformization after current static-route debt is prioritized
-- Cognitive assessment foundation (`MOD-03`) and multi-module comprehensive reporting (`MOD-04`)
+- Cognitive assessment foundation (`MOD-03`)
+- Multi-module comprehensive reporting (`MOD-04`)
+
+### Constraints
+
+1. **No schema rewrite by default**: prefer extending current `sys_training_resource.meta_data` and current runtime contracts unless a later milestone explicitly approves schema changes.
+2. **Static-route reality still applies**: the emotional selector flow is now cleaner, but the platform is still not registry-driven.
+3. **No native deps**: do not introduce `sqlite3`, `sharp`, or other runtime native dependencies.
 
 ---
-*Last updated: 2026-03-17 for milestone v1.1 Emotional Authoring & Scene Gallery*
+*Last updated: 2026-03-17 after v1.1 milestone archive*
