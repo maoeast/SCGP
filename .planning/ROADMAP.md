@@ -32,7 +32,7 @@
 **Goal**: Replace emotional resource JSON textareas in Resource Center with dedicated visual editors.
 **Depends on**: Phase 6
 **Requirements**: EDITOR-01, EDITOR-02
-**Status**: Planned
+**Status**: Completed
 
 **Success Criteria**:
 1. Admin can create and edit `emotion_scene` resources through a dedicated form component.
@@ -67,7 +67,7 @@
 
 ## Next Step
 
-Start implementation planning for `Phase 7`.
+Start implementation planning for `Phase 8`.
 
 ---
 *Created on 2026-03-17 for milestone v1.1 Emotional Authoring & Scene Gallery*

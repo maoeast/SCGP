@@ -8,10 +8,10 @@
 
 ### Visual Resource Authoring
 
-- [ ] **EDITOR-01**: Admin can create and edit `emotion_scene` resources through a dedicated visual form in Resource Center without directly editing raw JSON.
-- [ ] **EDITOR-02**: Admin can create and edit `care_scene` resources through a dedicated visual form in Resource Center without directly editing raw JSON.
-- [ ] **EDITOR-03**: System validates and normalizes nested emotional resource metadata against the current `src/types/emotional.ts` contract before saving to `sys_training_resource.meta_data`.
-- [ ] **EDITOR-04**: Existing v1.0 emotional resources can be loaded back into the new visual editors without requiring manual data migration.
+- [x] **EDITOR-01**: Admin can create and edit `emotion_scene` resources through a dedicated visual form in Resource Center without directly editing raw JSON.
+- [x] **EDITOR-02**: Admin can create and edit `care_scene` resources through a dedicated visual form in Resource Center without directly editing raw JSON.
+- [x] **EDITOR-03**: System validates and normalizes nested emotional resource metadata against the current `src/types/emotional.ts` contract before saving to `sys_training_resource.meta_data`.
+- [x] **EDITOR-04**: Existing v1.0 emotional resources can be loaded back into the new visual editors without requiring manual data migration.
 
 ### Scene Selection & Launch
 
@@ -26,8 +26,8 @@
 |-------------|-------|--------|
 | EDITOR-03 | Phase 6 | Completed |
 | EDITOR-04 | Phase 6 | Completed |
-| EDITOR-01 | Phase 7 | Planned |
-| EDITOR-02 | Phase 7 | Planned |
+| EDITOR-01 | Phase 7 | Completed |
+| EDITOR-02 | Phase 7 | Completed |
 | SCENE-01 | Phase 8 | Planned |
 | SCENE-02 | Phase 8 | Planned |
 | SCENE-03 | Phase 8 | Planned |

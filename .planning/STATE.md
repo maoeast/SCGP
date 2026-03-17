@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: emotional-authoring-and-scene-gallery
 status: in_progress
-last_updated: "2026-03-17T22:05:00+08:00"
+last_updated: "2026-03-17T23:05:00+08:00"
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # STATE
@@ -19,10 +19,10 @@ progress:
 **Plan**: Phase 6 Emotional Resource Contract & Editor Infrastructure -> Phase 7 Visual Emotional Resource Editors -> Phase 8 Emotional Scene Gallery & Launch Flow
 
 ## Current Position
-- **Phase**: 7. Visual Emotional Resource Editors
-- **Plan**: Phase 7 not started
-- **Status**: Phase 6 completed, waiting to expand the shell editors into full nested authoring UI
-- **Last activity**: 2026-03-17 — Completed Phase 6 editor contract and shell integration
+- **Phase**: 8. Emotional Scene Gallery & Launch Flow
+- **Plan**: Phase 8 not started
+- **Status**: Phase 7 completed, ready to implement selector pages and explicit launch flow
+- **Last activity**: 2026-03-17 — Completed production-grade visual emotional resource editors
 
 ## This Milestone
 - Replace raw JSON editing for emotional resources with visual form-based authoring
@@ -31,11 +31,10 @@ progress:
 - Keep scope inside current static-route architecture
 
 ## Latest Completed Phase
-- **Phase 6: Emotional Resource Contract & Editor Infrastructure**
-- Delivered typed normalization for `emotion_scene` / `care_scene` metadata
-- Added `EmotionSceneEditor.vue` and `CareExpressionEditor.vue` shell editors with `v-model` contracts
-- Integrated conditional rendering into `TrainingResources.vue` while preserving non-emotional resource flows
-- Replaced direct emotional raw JSON editing path with typed metadata save/load
+- **Phase 7: Visual Emotional Resource Editors**
+- `EmotionSceneEditor.vue` and `CareExpressionEditor.vue` 已升级为动态嵌套表单
+- 保存前校验已接回 Resource Center，空标题、缺少正确答案、缺少原因解释等会阻止保存
+- 其他资源类型仍保持原有 create/edit 路径不变
 
 ## Previous Milestone Snapshot
 - v1.0 Emotional MVP shipped on 2026-03-17
@@ -57,5 +56,5 @@ progress:
   - Execution is intentionally paused until roadmap confirmation.
 
 ## Next Action
-- Start Phase 7 implementation for full nested emotional authoring UI.
-- Keep Phase 8 scene selector work blocked until Phase 7 editor depth is complete.
+- Start Phase 8 implementation for selector pages and explicit `resourceId` launch flow.
+- Keep the existing visual editors stable and avoid reopening persistence shape changes during Phase 8.

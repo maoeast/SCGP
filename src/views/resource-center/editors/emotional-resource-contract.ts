@@ -20,6 +20,33 @@ export const DEFAULT_EMOTION_OPTIONS: EmotionalBaseEmotion[] = [
   'scared',
 ]
 
+export const REASONING_TYPE_OPTIONS: Array<{
+  value: EmotionalReasoningQuestionType
+  label: string
+}> = [
+  { value: 'cause', label: '原因推理' },
+  { value: 'need', label: '需求推理' },
+  { value: 'empathy', label: '换位思考' },
+]
+
+export const SOLUTION_RANK_OPTIONS: Array<{
+  value: EmotionalSolutionRank
+  label: string
+}> = [
+  { value: 'optimal', label: '最佳' },
+  { value: 'acceptable', label: '可接受' },
+  { value: 'inappropriate', label: '不合适' },
+]
+
+export const CARE_TYPE_OPTIONS: Array<{
+  value: EmotionalCareType
+  label: string
+}> = [
+  { value: 'empathy', label: '共情式' },
+  { value: 'advice', label: '建议式' },
+  { value: 'action', label: '行动式' },
+]
+
 export const EMOTION_COLOR_PRESETS: Record<
   EmotionalBaseEmotion,
   { token: 'green' | 'blue' | 'yellow' | 'red'; hex: string; label: string }
@@ -136,6 +163,10 @@ function normalizePromptOption(
   }
 }
 
+export function createEmotionScenePromptOption(index: number, isCorrect = index === 0): EmotionScenePromptOption {
+  return normalizePromptOption(undefined, index, isCorrect)
+}
+
 function normalizePrompt(value: unknown, index: number): EmotionScenePrompt {
   const prompt = value as Partial<EmotionScenePrompt> | undefined
   const options = Array.isArray(prompt?.options) && prompt?.options.length > 0
@@ -153,6 +184,10 @@ function normalizePrompt(value: unknown, index: number): EmotionScenePrompt {
   }
 }
 
+export function createEmotionScenePrompt(index: number): EmotionScenePrompt {
+  return normalizePrompt(undefined, index)
+}
+
 function normalizeSolution(value: unknown, index: number): EmotionSceneSolution {
   const solution = value as Partial<EmotionSceneSolution> | undefined
   return {
@@ -162,6 +197,10 @@ function normalizeSolution(value: unknown, index: number): EmotionSceneSolution 
     suitability: normalizeSolutionRank(solution?.suitability, index === 0 ? 'optimal' : 'acceptable'),
     explanation: normalizeString(solution?.explanation, '请填写该回应的解释说明'),
   }
+}
+
+export function createEmotionSceneSolution(index: number): EmotionSceneSolution {
+  return normalizeSolution(undefined, index)
 }
 
 function normalizeUtterance(value: unknown, index: number): CareSceneUtterance {
@@ -177,6 +216,10 @@ function normalizeUtterance(value: unknown, index: number): CareSceneUtterance {
   }
 }
 
+export function createCareSceneUtterance(index: number): CareSceneUtterance {
+  return normalizeUtterance(undefined, index)
+}
+
 function normalizeReceiverOption(value: unknown, index: number): CareSceneReceiverOption {
   const option = value as Partial<CareSceneReceiverOption> | undefined
   return {
@@ -185,6 +228,10 @@ function normalizeReceiverOption(value: unknown, index: number): CareSceneReceiv
     isComforting: typeof option?.isComforting === 'boolean' ? option.isComforting : index === 0,
     reasonText: normalizeString(option?.reasonText, '请填写原因说明'),
   }
+}
+
+export function createCareSceneReceiverOption(index: number): CareSceneReceiverOption {
+  return normalizeReceiverOption(undefined, index)
 }
 
 export function createEmotionSceneEditorModel(resourceName = ''): EmotionSceneResourceMeta {
@@ -229,6 +276,65 @@ export function normalizeEmotionSceneEditorModel(
       : [],
     ...normalizeEmotionColorPayload(targetEmotion),
   }
+}
+
+export function validateEmotionSceneEditorModel(model: EmotionSceneResourceMeta): string[] {
+  const errors: string[] = []
+
+  if (!model.title.trim()) {
+    errors.push('请填写场景标题')
+  }
+
+  if (!model.sceneCode.trim()) {
+    errors.push('请填写场景编码')
+  }
+
+  if (model.emotionClues.length === 0 || model.emotionClues.every((item) => !item.trim())) {
+    errors.push('请至少填写 1 条情绪线索')
+  }
+
+  if (model.prompts.length === 0) {
+    errors.push('请至少配置 1 个社交推理问题')
+  }
+
+  model.prompts.forEach((prompt, promptIndex) => {
+    if (!prompt.questionText.trim()) {
+      errors.push(`第 ${promptIndex + 1} 个推理问题缺少题目文字`)
+    }
+
+    if (prompt.options.length < 2) {
+      errors.push(`第 ${promptIndex + 1} 个推理问题至少需要 2 个选项`)
+    }
+
+    const correctCount = prompt.options.filter((option) => option.isCorrect).length
+    if (correctCount !== 1) {
+      errors.push(`第 ${promptIndex + 1} 个推理问题需要且只能有 1 个正确答案`)
+    }
+
+    prompt.options.forEach((option, optionIndex) => {
+      if (!option.text.trim()) {
+        errors.push(`第 ${promptIndex + 1} 题的第 ${optionIndex + 1} 个选项缺少文字`)
+      }
+      if (!option.feedbackText.trim()) {
+        errors.push(`第 ${promptIndex + 1} 题的第 ${optionIndex + 1} 个选项缺少反馈解释`)
+      }
+    })
+  })
+
+  if (model.solutions.length === 0) {
+    errors.push('请至少配置 1 个应对方案')
+  }
+
+  model.solutions.forEach((solution, solutionIndex) => {
+    if (!solution.text.trim()) {
+      errors.push(`第 ${solutionIndex + 1} 个应对方案缺少方案文字`)
+    }
+    if (!solution.explanation.trim()) {
+      errors.push(`第 ${solutionIndex + 1} 个应对方案缺少效果说明`)
+    }
+  })
+
+  return Array.from(new Set(errors))
 }
 
 export function normalizeCareSceneEditorModel(
@@ -277,4 +383,60 @@ export function normalizeCareSceneEditorModel(
       : [],
     ...normalizeEmotionColorPayload(receiverEmotion),
   }
+}
+
+export function validateCareSceneEditorModel(model: CareSceneResourceMeta): string[] {
+  const errors: string[] = []
+
+  if (!model.title.trim()) {
+    errors.push('请填写情境标题')
+  }
+
+  if (!model.sceneCode.trim()) {
+    errors.push('请填写场景编码')
+  }
+
+  if (!model.speakerPerspectiveText.trim()) {
+    errors.push('请填写表达者视角提示')
+  }
+
+  if (!model.receiverPerspectiveText.trim()) {
+    errors.push('请填写接收者视角提示')
+  }
+
+  if (model.utterances.length === 0) {
+    errors.push('请至少配置 1 条表达者视角话术')
+  }
+
+  model.utterances.forEach((utterance, utteranceIndex) => {
+    if (!utterance.text.trim()) {
+      errors.push(`第 ${utteranceIndex + 1} 条表达者话术缺少文字`)
+    }
+    if (!utterance.effect.trim()) {
+      errors.push(`第 ${utteranceIndex + 1} 条表达者话术缺少效果说明`)
+    }
+  })
+
+  if (model.receiverOptions.length === 0) {
+    errors.push('请至少配置 1 条接收者视角选项')
+  }
+
+  model.receiverOptions.forEach((option, optionIndex) => {
+    if (!option.text.trim()) {
+      errors.push(`第 ${optionIndex + 1} 条接收者选项缺少文字`)
+    }
+    if (!option.reasonText.trim()) {
+      errors.push(`第 ${optionIndex + 1} 条接收者选项缺少原因解释`)
+    }
+  })
+
+  if (!model.receiverOptions.some((option) => option.isComforting)) {
+    errors.push('接收者视角至少需要 1 条“最舒服”的表达')
+  }
+
+  if (model.preferredUtteranceIds.length === 0) {
+    errors.push('请至少勾选 1 条推荐话术')
+  }
+
+  return Array.from(new Set(errors))
 }

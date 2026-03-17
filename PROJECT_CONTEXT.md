@@ -978,19 +978,18 @@ function calculateConnersTScore(
 
 **最后更新**: 2026-03-17
 **更新人**: Claude Code Assistant (首席实施工程师)
-**会话摘要**: 已完成 SCGP `emotional` 模块 v1.1 的 Phase 6：`Emotional Resource Contract & Editor Infrastructure`。本阶段没有进入完整业务编辑器细项，而是先完成底层契约收口与资源中心接线：新增情绪资源编辑契约工具，对 `EmotionSceneResourceMeta` / `CareSceneResourceMeta` 做默认模板、归一化和保存序列化；新增 `EmotionSceneEditor.vue` 与 `CareExpressionEditor.vue` 两个可视化编辑壳子组件；在 `TrainingResources.vue` 中改为按 `resource_type` 条件挂载编辑器，`emotion_scene` / `care_scene` 不再暴露 raw JSON 文本域，其他资源类型保持原有流程不变。同时补齐了 `ResourceItem` 的 `updatedAt/statusLoading` 字段和 `ResourceAPI.getAbilityTags()` 公共查询接口，避免资源中心继续绕过受保护的数据库基类方法。Phase 6 相关文件已通过局部 `vue-tsc` 过滤校验；全仓库 `npm run type-check` 仍存在大量历史类型债，尚未在本阶段处理。
+**会话摘要**: 已完成 SCGP `emotional` 模块 v1.1 的 Phase 7：`Visual Emotional Resource Editors`。在 Phase 6 的契约与壳子基础上，`EmotionSceneEditor.vue` 已扩展为生产级动态嵌套表单：支持基础信息、情绪线索增删、社交推理问题增删、题内动态选项增删、单选正确答案和反馈解释、以及问题解决方案列表与适宜度配置。`CareExpressionEditor.vue` 已扩展为完整的表达关心编辑器：支持基础信息、表达者视角话术列表、话术类型选择、接收者反应文字/表情、接收者视角选项列表、最舒服表达标记，以及推荐话术勾选。与此同时，`emotional-resource-contract.ts` 补齐了动态项工厂函数和编辑器级校验，`TrainingResources.vue` 的保存链路已接入这些校验，在标题为空、推理题没有唯一正确答案、话术缺少原因解释等情况下会阻止保存。Phase 7 相关文件的定向 `vue-tsc` 校验已通过；全仓库 `npm run type-check` 仍有历史类型债，未纳入本阶段范围。
 
 ### 下次会话优先事项
 
-1. **[P1 - 高] Phase 7 可视化资源编辑器深化**
-   - 在资源中心废弃情绪资源 raw JSON 文本域
-   - 基于现有壳子组件补齐动态增删题项、选项、反馈和图文字段的校验与交互
-   - 让 clues、prompts、solutions、utterances、receiverOptions、preferredUtteranceIds 真正可编辑
-
-2. **[P2 - 中] Phase 8 场景选择页执行**
+1. **[P1 - 高] Phase 8 场景选择页执行**
    - 为 `情绪与场景` / `表达关心` 新增场景选择页
    - 改造模块菜单与静态路由，使训练页改为显式接收 `resourceId`
    - 保留当前本地优先与静态路由边界，不扩展到注册表驱动路由
+
+2. **[P2 - 中] 编辑器稳定性回归**
+   - 用现有 demo emotional 资源做回填和重存测试
+   - 确认旧资源不会因字段归一化而破坏训练运行页
 
 3. **[P3 - 中] 全局类型债评估**
    - 评估当前 `npm run type-check` 中的历史错误面

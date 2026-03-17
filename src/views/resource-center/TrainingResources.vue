@@ -633,6 +633,8 @@ import EmotionSceneEditor from './editors/EmotionSceneEditor.vue'
 import {
   normalizeCareSceneEditorModel,
   normalizeEmotionSceneEditorModel,
+  validateCareSceneEditorModel,
+  validateEmotionSceneEditorModel,
 } from './editors/emotional-resource-contract'
 
 // ========== Props ==========
@@ -935,7 +937,14 @@ function parseMetadataForSave(resourceType: string, source: 'create' | 'edit'): 
       return null
     }
 
-    return normalizeEmotionSceneEditorModel(emotionSceneMeta, resourceName)
+    const normalized = normalizeEmotionSceneEditorModel(emotionSceneMeta, resourceName)
+    const errors = validateEmotionSceneEditorModel(normalized)
+    if (errors.length > 0) {
+      ElMessage.error(errors[0] || '情绪场景配置未完成')
+      return null
+    }
+
+    return normalized
   }
 
   if (resourceType === 'care_scene') {
@@ -944,7 +953,14 @@ function parseMetadataForSave(resourceType: string, source: 'create' | 'edit'): 
       return null
     }
 
-    return normalizeCareSceneEditorModel(careSceneMeta, resourceName)
+    const normalized = normalizeCareSceneEditorModel(careSceneMeta, resourceName)
+    const errors = validateCareSceneEditorModel(normalized)
+    if (errors.length > 0) {
+      ElMessage.error(errors[0] || '表达关心配置未完成')
+      return null
+    }
+
+    return normalized
   }
 
   return undefined
