@@ -40,16 +40,6 @@
 3. User can complete "Expressing Care" training with empathy, suggestion, and action-oriented utterance practice across sender and receiver perspectives.
 4. System records local session data, detailed responses, and teacher/parent-visible trend reports for the Emotional module.
 
-### Phase 3: Cognitive & Comprehensive Reporting
-**Goal**: Users have a complete holistic view of a student's competency across all modules.
-**Depends on**: Phase 2
-**Requirements**: MOD-03, MOD-04
-**Status**: Not Started
-
-**Success Criteria**:
-1. User can conduct cognitive assessments using the ScaleDriver strategy.
-2. User can generate a unified comprehensive report combining Sensory, emotional, social, and cognitive data.
-
 ### Phase 4: CBCL Assessment Integration
 **Goal**: Integrate Achenbach Child Behavior Checklist (CBCL) assessment into the Emotional module.
 **Depends on**: Phase 2
@@ -69,7 +59,6 @@
 | 2. Emotional & Social Expansion | 2/2 | Completed | SDQ / CBCL / Emotional MVP ✅ |
 | 2.1 SDQ Report Polish | 1/1 | Completed | feedback polish ✅ |
 | 2.2 Emotional Behavior Regulation Module | 1/1 | Completed | historical backfill + verification ✅ |
-| 3. Cognitive & Comprehensive Reporting | 0/4 | Not Started | planned only |
 | 4. CBCL Assessment Integration | 5/5 | Completed | 04.1 ✅ 04.2 ✅ 04.3 ✅ 04.4 ✅ 04.5 ✅ |
 
 ### Phase 4 Plans Detail
@@ -92,8 +81,16 @@ The normalized planning state now shows these completed workstreams:
 - Phase 4 CBCL assessment integration complete
 
 Recommended next planned work:
-- Phase 3: Cognitive & Comprehensive Reporting
+- Start a future milestone for Cognitive & Comprehensive Reporting if the product scope expands beyond Emotional MVP
 
 Possible future follow-ups:
 - Additional assessments (e.g., ABAS, Vineland)
 - Longitudinal tracking across assessments
+
+## Future Backlog
+
+- Cognitive & Comprehensive Reporting
+  - Formerly planned as Phase 3
+  - Requirements: MOD-03, MOD-04
+  - Status: Moved to future milestone / backlog
+  - Reason: current milestone definition of done is now explicitly limited to Emotional MVP delivery
