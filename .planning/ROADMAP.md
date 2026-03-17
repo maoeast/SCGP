@@ -1,96 +1,21 @@
 # Roadmap
 
-## Phases
+## Archived Milestones
 
-### Phase 1: Game Training Module Polish
-**Goal**: Validate and enhance game newly refactored game training module
-**Status**: Completed
+- ✅ [v1.0 Emotional MVP](/E:/VSC/H5/SIC-ADS/.planning/milestones/v1.0-ROADMAP.md) — shipped 2026-03-17
 
-### Phase 2: Emotional & Social Expansion
-**Goal**: Users can complete Emotional-module assessment and structured emotional training flows within the current SCGP platform.
-**Status**: Completed
-**Requirements**: MOD-01, MOD-02
+## Current State
 
-**Success Criteria**:
-1. User can conduct SDQ assessments for emotional/behavioral screening.
-2. User can conduct CBCL assessments for comprehensive behavior evaluation.
-3. User can enter the Emotional module and complete structured training flows for selected students.
-4. System records emotional sessions and exposes emotional records/reports locally.
+No active milestone roadmap is open.
 
-### Phase 2.1: SDQ Report Polish
-**Goal**: Enhance the SDQ report page with expert feedback content from `feedbackConfig.js`.
-**Depends on**: Phase 2
-**Requirements**: MOD-01
-**Status**: Completed
-
-**Success Criteria**:
-1. SDQ report displays total score content from `feedbackConfig.js`.
-2. Expert advice and dimension feedback are rendered from configuration instead of hardcoded text.
-3. Student placeholders and rich text formatting render correctly in the report.
-
-### Phase 2.2: Emotional Behavior Regulation Module
-**Goal**: Users can conduct structured emotional scene reasoning and caring-expression training within the Emotional module.
-**Depends on**: Phase 2
-**Requirements**: MOD-01, MOD-02
-**Status**: Completed
-
-**Success Criteria**:
-1. User can enter the Emotional module from the current training flow and start module-specific sessions for selected students.
-2. User can complete "Emotion & Scene" training with emotion recognition, guided reasoning, and response selection.
-3. User can complete "Expressing Care" training with empathy, suggestion, and action-oriented utterance practice across sender and receiver perspectives.
-4. System records local session data, detailed responses, and teacher/parent-visible trend reports for the Emotional module.
-
-### Phase 4: CBCL Assessment Integration
-**Goal**: Integrate Achenbach Child Behavior Checklist (CBCL) assessment into the Emotional module.
-**Depends on**: Phase 2
-**Requirements**: MOD-01 (extended)
-**Status**: Completed
-
-**Success Criteria**:
-1. User can conduct CBCL assessments with two-step wizard (Social Form + 113 behavior questions).
-2. System correctly calculates factor scores using gender×age specific norms.
-3. User can view professional clinical profile report with ECharts visualization.
-
-## Progress
-
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Game Training Module Polish | 1/1 | Completed | historical backfill ✅ |
-| 2. Emotional & Social Expansion | 2/2 | Completed | SDQ / CBCL / Emotional MVP ✅ |
-| 2.1 SDQ Report Polish | 1/1 | Completed | feedback polish ✅ |
-| 2.2 Emotional Behavior Regulation Module | 1/1 | Completed | historical backfill + verification ✅ |
-| 4. CBCL Assessment Integration | 5/5 | Completed | 04.1 ✅ 04.2 ✅ 04.3 ✅ 04.4 ✅ 04.5 ✅ |
-
-### Phase 4 Plans Detail
-
-| Plan | Description | Status | Commit |
-|------|-------------|--------|--------|
-| 04.1 | Data Infrastructure (types, questions, norms, feedback) | Completed | - |
-| 04.2 | Database Schema (cbcl_assess table, API) | Completed | - |
-| 04.3 | CBCL Driver (scoring engine, T-scores, feedback) | Completed | - |
-| 04.4 | UI Implementation (SocialForm, Report, AssessmentContainer) | Completed | 4683803 |
-| 04.5 | Gap Closure (SocialForm refactor and source alignment) | Completed | - |
-
-## Next Steps
-
-The normalized planning state now shows these completed workstreams:
-- Phase 1 historical completion backfilled into `.planning`
-- Phase 2 SDQ / CBCL / Emotional MVP complete
-- Phase 2.1 SDQ report polish complete
-- Phase 2.2 Emotional Behavior Regulation backfilled and verified
-- Phase 4 CBCL assessment integration complete
-
-Recommended next planned work:
-- Start a future milestone for Cognitive & Comprehensive Reporting if the product scope expands beyond Emotional MVP
-
-Possible future follow-ups:
-- Additional assessments (e.g., ABAS, Vineland)
-- Longitudinal tracking across assessments
+The previous milestone closed on Emotional MVP delivery:
+- Game training mainline stabilized
+- SDQ / CBCL assessment chain shipped
+- Emotional module training, records, and reports shipped
 
 ## Future Backlog
 
-- Cognitive & Comprehensive Reporting
-  - Formerly planned as Phase 3
-  - Requirements: MOD-03, MOD-04
-  - Status: Moved to future milestone / backlog
-  - Reason: current milestone definition of done is now explicitly limited to Emotional MVP delivery
+- Cognitive assessment foundation (`MOD-03`)
+- Multi-module comprehensive reporting (`MOD-04`)
+
+Use `$gsd-new-milestone` when you want to promote backlog work into a new active milestone.
