@@ -3,7 +3,7 @@
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item :to="{ path: '/emotional' }">情绪行为</el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ path: '/emotional/menu', query: inheritedQuery }">选择训练</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/emotional/emotion-scene/select', query: inheritedQuery }">选择场景</el-breadcrumb-item>
         <el-breadcrumb-item>情绪与场景训练</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
@@ -421,6 +421,11 @@ async function loadResource() {
     ? db.get(`${sql} AND id = ? LIMIT 1`, [resourceId])
     : null
 
+  if (resourceId > 0 && !resolvedRow) {
+    loadError.value = '指定的情绪场景不存在或已停用，请返回场景选择页重新选择。'
+    return
+  }
+
   if (!resolvedRow && typeof db.all === 'function') {
     const rows = db.all(`${sql} ORDER BY id ASC LIMIT 1`)
     resolvedRow = rows?.[0] || null
@@ -493,7 +498,7 @@ async function handleExit() {
   }
 
   await router.push({
-    path: '/emotional/menu',
+    path: '/emotional/emotion-scene/select',
     query: inheritedQuery.value,
   })
 }

@@ -978,19 +978,23 @@ function calculateConnersTScore(
 
 **最后更新**: 2026-03-17
 **更新人**: Claude Code Assistant (首席实施工程师)
-**会话摘要**: 已完成 SCGP `emotional` 模块 v1.1 的 Phase 7：`Visual Emotional Resource Editors`。在 Phase 6 的契约与壳子基础上，`EmotionSceneEditor.vue` 已扩展为生产级动态嵌套表单：支持基础信息、情绪线索增删、社交推理问题增删、题内动态选项增删、单选正确答案和反馈解释、以及问题解决方案列表与适宜度配置。`CareExpressionEditor.vue` 已扩展为完整的表达关心编辑器：支持基础信息、表达者视角话术列表、话术类型选择、接收者反应文字/表情、接收者视角选项列表、最舒服表达标记，以及推荐话术勾选。与此同时，`emotional-resource-contract.ts` 补齐了动态项工厂函数和编辑器级校验，`TrainingResources.vue` 的保存链路已接入这些校验，在标题为空、推理题没有唯一正确答案、话术缺少原因解释等情况下会阻止保存。Phase 7 相关文件的定向 `vue-tsc` 校验已通过；全仓库 `npm run type-check` 仍有历史类型债，未纳入本阶段范围。
+**会话摘要**: 已完成 SCGP `emotional` 模块 v1.1 的 Phase 8：`Emotional Scene Gallery & Launch Flow`。新增 `src/views/emotional/SceneSelector.vue` 作为统一场景选择页，并在 `router/index.ts` 中增加 `/emotional/emotion-scene/select` 和 `/emotional/care-expression/select` 两个静态路由；`Menu.vue` 已改为先进入 selector，再由老师点击场景卡片启动训练。场景卡片会展示封面图或优雅的默认底图、标题、难度和情绪颜色角标。训练页侧则收紧了显式 `resourceId` 逻辑：`EmotionSceneTraining.vue` 和 `CareExpressionTraining.vue` 在收到明确 `resourceId` 时会优先按该 ID 查库，若该资源不存在或已停用则直接报错，不再偷偷 fallback 到 `LIMIT 1` 的第一条数据。与此同时，`.planning/ROADMAP.md` 已补充未来 backlog：后续需要支持“批量导入/导出预置情绪资源”，用于满足特教老师跨机构互换资源包的需求。Phase 8 相关文件的定向 `vue-tsc` 校验已通过，当前里程碑 v1.1 已达到审计与归档条件。
 
 ### 下次会话优先事项
 
-1. **[P1 - 高] Phase 8 场景选择页执行**
-   - 为 `情绪与场景` / `表达关心` 新增场景选择页
-   - 改造模块菜单与静态路由，使训练页改为显式接收 `resourceId`
-   - 保留当前本地优先与静态路由边界，不扩展到注册表驱动路由
+1. **[P1 - 高] v1.1 里程碑审计与归档**
+   - 生成 v1.1 milestone audit，确认 8/8 requirements 已覆盖
+   - 归档 ROADMAP / REQUIREMENTS，更新 PROJECT / MILESTONES / STATE
+   - 创建 v1.1 git tag，正式结束当前里程碑
 
 2. **[P2 - 中] 编辑器稳定性回归**
    - 用现有 demo emotional 资源做回填和重存测试
    - 确认旧资源不会因字段归一化而破坏训练运行页
 
-3. **[P3 - 中] 全局类型债评估**
+3. **[P3 - 中] 情绪资源包互换需求**
+   - 规划批量导入/导出预置情绪资源
+   - 明确 JSON / Excel 两种资源交换格式的优先级
+
+4. **[P4 - 中] 全局类型债评估**
    - 评估当前 `npm run type-check` 中的历史错误面
    - 区分与 emotional v1.1 无关的旧债和后续需要清偿的公共类型问题

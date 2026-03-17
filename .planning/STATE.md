@@ -6,9 +6,9 @@ status: in_progress
 last_updated: "2026-03-17T23:05:00+08:00"
 progress:
   total_phases: 3
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 3
+  total_plans: 3
+  completed_plans: 3
 ---
 
 # STATE
@@ -19,10 +19,10 @@ progress:
 **Plan**: Phase 6 Emotional Resource Contract & Editor Infrastructure -> Phase 7 Visual Emotional Resource Editors -> Phase 8 Emotional Scene Gallery & Launch Flow
 
 ## Current Position
-- **Phase**: 8. Emotional Scene Gallery & Launch Flow
-- **Plan**: Phase 8 not started
-- **Status**: Phase 7 completed, ready to implement selector pages and explicit launch flow
-- **Last activity**: 2026-03-17 — Completed production-grade visual emotional resource editors
+- **Phase**: Milestone complete
+- **Plan**: —
+- **Status**: Phase 8 completed, milestone ready for audit and archive
+- **Last activity**: 2026-03-17 — Completed scene gallery and explicit dynamic launch flow
 
 ## This Milestone
 - Replace raw JSON editing for emotional resources with visual form-based authoring
@@ -31,10 +31,10 @@ progress:
 - Keep scope inside current static-route architecture
 
 ## Latest Completed Phase
-- **Phase 7: Visual Emotional Resource Editors**
-- `EmotionSceneEditor.vue` and `CareExpressionEditor.vue` 已升级为动态嵌套表单
-- 保存前校验已接回 Resource Center，空标题、缺少正确答案、缺少原因解释等会阻止保存
-- 其他资源类型仍保持原有 create/edit 路径不变
+- **Phase 8: Emotional Scene Gallery & Launch Flow**
+- 新增 `SceneSelector.vue`，为两个情绪训练子模块提供统一场景画廊
+- `Menu.vue` 已改为先进入 selector，再由卡片点击进入训练页
+- `EmotionSceneTraining.vue` / `CareExpressionTraining.vue` 已改为显式尊重 `resourceId`，指定资源缺失时不再静默回退
 
 ## Previous Milestone Snapshot
 - v1.0 Emotional MVP shipped on 2026-03-17
@@ -56,5 +56,5 @@ progress:
   - Execution is intentionally paused until roadmap confirmation.
 
 ## Next Action
-- Start Phase 8 implementation for selector pages and explicit `resourceId` launch flow.
-- Keep the existing visual editors stable and avoid reopening persistence shape changes during Phase 8.
+- Run milestone audit for v1.1.
+- If audit passes, archive and close milestone v1.1.

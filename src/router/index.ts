@@ -37,6 +37,7 @@ const IEPReport = () => import('@/views/games/IEPReport.vue')
 const TrainingRecords = () => import('@/views/games/TrainingRecords.vue')
 const SensoryTrainingRecords = () => import('@/views/games/SensoryTrainingRecords.vue')
 const EmotionalMenu = () => import('@/views/emotional/Menu.vue')
+const EmotionalSceneSelector = () => import('@/views/emotional/SceneSelector.vue')
 const EmotionSceneTraining = () => import('@/views/emotional/EmotionSceneTraining.vue')
 const CareExpressionTraining = () => import('@/views/emotional/CareExpressionTraining.vue')
 const EmotionalSessionSummary = () => import('@/views/emotional/SessionSummary.vue')
@@ -196,11 +197,31 @@ const router = createRouter({
           }
         },
         {
+          path: 'emotional/emotion-scene/select',
+          name: 'EmotionSceneSelector',
+          component: EmotionalSceneSelector,
+          meta: {
+            title: '选择情绪场景',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
           path: 'emotional/emotion-scene',
           name: 'EmotionSceneTraining',
           component: EmotionSceneTraining,
           meta: {
             title: '情绪与场景训练',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/care-expression/select',
+          name: 'CareExpressionSelector',
+          component: EmotionalSceneSelector,
+          meta: {
+            title: '选择关心情境',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

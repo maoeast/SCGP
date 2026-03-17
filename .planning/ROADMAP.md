@@ -44,7 +44,7 @@
 **Goal**: Add selector pages so teachers choose a concrete scene before entering emotional training runtime.
 **Depends on**: Phase 7
 **Requirements**: SCENE-01, SCENE-02, SCENE-03, SCENE-04
-**Status**: Planned
+**Status**: Completed
 
 **Success Criteria**:
 1. `情绪与场景` and `表达关心` menu cards route to dedicated selector pages instead of entering runtime directly.
@@ -65,9 +65,13 @@
 - Existing emotional resources are stored in `meta_data`, and runtime pages parse them directly; editor changes cannot silently drift the serialized shape.
 - Emotional routes are still static in `src/router/index.ts`; selector pages should fit the current static route architecture instead of reopening platform-routing scope.
 
+## Future Backlog
+
+- **Emotional Resource Pack Import / Export**: add batch import/export for preset emotional resources so teachers can exchange scene packs across schools, likely via standard JSON or Excel into `sys_training_resource`.
+
 ## Next Step
 
-Start implementation planning for `Phase 8`.
+Run milestone audit and archive v1.1.
 
 ---
 *Created on 2026-03-17 for milestone v1.1 Emotional Authoring & Scene Gallery*

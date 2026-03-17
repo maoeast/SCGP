@@ -63,14 +63,14 @@ const trainingCards = [
   {
     title: '情绪与场景',
     description: '通过生活场景识别情绪、观察线索，并进一步推理原因与回应方式。',
-    path: '/emotional/emotion-scene',
+    path: '/emotional/emotion-scene/select',
     icon: PictureFilled,
     themeColor: '#E6A23C',
   },
   {
     title: '表达关心',
     description: '学习在不同情境下表达共情与关心，理解不同话语给他人的感受。',
-    path: '/emotional/care-expression',
+    path: '/emotional/care-expression/select',
     icon: ChatDotRound,
     themeColor: '#409EFF',
   },

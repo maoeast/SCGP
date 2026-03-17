@@ -15,10 +15,10 @@
 
 ### Scene Selection & Launch
 
-- [ ] **SCENE-01**: Teacher can open a scene selector page before entering `情绪与场景` training and browse all active `emotion_scene` resources for自主选题.
-- [ ] **SCENE-02**: Teacher can open a scene selector page before entering `表达关心` training and browse all active `care_scene` resources for自主选题.
-- [ ] **SCENE-03**: Scene selector cards present cover, title, difficulty, and emotion color cues in a touch-friendly layout aligned with PRD section 9 special-education UX rules.
-- [ ] **SCENE-04**: Clicking a scene card launches the corresponding training page with explicit `resourceId`, replacing the current implicit `LIMIT 1` fallback path for normal entry.
+- [x] **SCENE-01**: Teacher can open a scene selector page before entering `情绪与场景` training and browse all active `emotion_scene` resources for自主选题.
+- [x] **SCENE-02**: Teacher can open a scene selector page before entering `表达关心` training and browse all active `care_scene` resources for自主选题.
+- [x] **SCENE-03**: Scene selector cards present cover, title, difficulty, and emotion color cues in a touch-friendly layout aligned with PRD section 9 special-education UX rules.
+- [x] **SCENE-04**: Clicking a scene card launches the corresponding training page with explicit `resourceId`, replacing the current implicit `LIMIT 1` fallback path for normal entry.
 
 ## Traceability
 
@@ -28,10 +28,10 @@
 | EDITOR-04 | Phase 6 | Completed |
 | EDITOR-01 | Phase 7 | Completed |
 | EDITOR-02 | Phase 7 | Completed |
-| SCENE-01 | Phase 8 | Planned |
-| SCENE-02 | Phase 8 | Planned |
-| SCENE-03 | Phase 8 | Planned |
-| SCENE-04 | Phase 8 | Planned |
+| SCENE-01 | Phase 8 | Completed |
+| SCENE-02 | Phase 8 | Completed |
+| SCENE-03 | Phase 8 | Completed |
+| SCENE-04 | Phase 8 | Completed |
 
 ## Out Of Scope For v1.1
 
