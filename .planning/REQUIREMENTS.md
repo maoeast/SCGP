@@ -10,7 +10,7 @@
 
 ### Business Module Expansion
 * MOD-01: User can conduct CBCL and SDQ assessments for the Emotional module using the generalized ScaleDriver architecture.
-* MOD-02: User can access and manage Social module resources such as social stories and communication boards.
+* MOD-02: User can enter the Emotional module, complete "情绪与场景" / "表达关心" training, and view local emotional records and reports.
 * MOD-03: User can conduct cognitive assessments using the ScaleDriver architecture.
 * MOD-04: User can generate a multi-module comprehensive report that aggregates data across Sensory, Emotional, Social, and Cognitive domains.
 
@@ -22,8 +22,8 @@
 | GAME-02 | Phase 1 | Pending |
 | GAME-03 | Phase 1 | Pending |
 | GAME-04 | Phase 2 | Pending |
-| MOD-01 | Phase 2 | Pending |
-| MOD-02 | Phase 2 | Pending |
+| MOD-01 | Phase 2 | Completed ✅ |
+| MOD-02 | Phase 2 | Completed ✅ |
 | MOD-03 | Phase 3 | Pending |
 | MOD-04 | Phase 3 | Pending |
 

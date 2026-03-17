@@ -4,6 +4,7 @@
  */
 
 import { getDatabase } from './init'
+import { captureDependentViews, dropViews, restoreViews } from './migration/migration-view-utils'
 
 /**
  * 迁移 report_record 表的约束
@@ -29,17 +30,15 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
 
     console.log('[迁移] 开始更新 report_record 表约束...')
 
-    // 步骤0: 删除依赖 report_record 表的视图（迁移完成后会重新创建）
-    // 这是为了避免 DROP TABLE 时视图失效导致后续 RENAME 报错
-    try {
-      db.run('DROP VIEW IF EXISTS v_class_statistics_unified')
-      console.log('[迁移] 已删除依赖视图 v_class_statistics_unified（稍后会重新创建）')
-    } catch (dropViewError) {
-      console.warn('[迁移] 删除视图时出现警告（可能不存在）:', dropViewError)
-    }
-
     // 步骤1: 开启事务
     db.run('BEGIN TRANSACTION')
+
+    // 删除所有依赖 report_record / training_records 的视图，并在迁移完成后按原 SQL 恢复。
+    const dependentViews = captureDependentViews(db, ['report_record', 'training_records'])
+    if (dependentViews.length > 0) {
+      dropViews(db, dependentViews)
+      console.log('[迁移] 已删除依赖视图:', dependentViews.map((view) => view.name).join(', '))
+    }
 
     // 步骤2: 创建新表（带更新的约束）
     db.run(`
@@ -81,7 +80,13 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
     db.run('CREATE INDEX IF NOT EXISTS idx_report_type ON report_record(report_type)')
     db.run('CREATE INDEX IF NOT EXISTS idx_report_created ON report_record(created_at DESC)')
 
-    // 步骤7: 提交事务
+    // 步骤7: 恢复依赖视图
+    if (dependentViews.length > 0) {
+      restoreViews(db, dependentViews)
+      console.log('[迁移] 已恢复依赖视图:', dependentViews.map((view) => view.name).join(', '))
+    }
+
+    // 步骤8: 提交事务
     db.run('COMMIT')
 
     console.log('[迁移] report_record 表约束更新成功！')

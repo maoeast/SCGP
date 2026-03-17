@@ -2,8 +2,8 @@
   <div class="page-container">
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/games/menu' }">游戏训练</el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ path: '/emotional/menu', query: inheritedQuery }">情绪行为调节</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/emotional' }">情绪行为</el-breadcrumb-item>
+        <el-breadcrumb-item :to="{ path: '/emotional/menu', query: inheritedQuery }">选择训练</el-breadcrumb-item>
         <el-breadcrumb-item>模块报告</el-breadcrumb-item>
       </el-breadcrumb>
     </div>

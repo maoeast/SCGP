@@ -1108,10 +1108,6 @@ async function loadResources() {
   loading.value = true
   try {
     const api = new ResourceAPI()
-    const metadata = parseMetadataForSave(editingResource.value.resourceType, editForm.metadataJson)
-    if (isEmotionalResourceType(editingResource.value.resourceType) && metadata === null) {
-      return
-    }
 
     // 构建查询选项
     const options: any = {

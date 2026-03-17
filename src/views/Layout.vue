@@ -79,6 +79,16 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
 
+interface MenuRouteItem {
+  path: string
+  meta: {
+    title: string
+    displayTitle: string
+    icon?: string
+    roles?: string[]
+  }
+}
+
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
@@ -87,7 +97,7 @@ const systemConfigStore = useSystemConfigStore()
 const sidebarCollapsed = ref(false)
 
 // 菜单路由
-const menuRoutes = computed(() => {
+const menuRoutes = computed<MenuRouteItem[]>(() => {
   const routes = router
     .getRoutes()
     .filter((r) => r.meta?.title && !r.meta?.hideInMenu && r.path !== '/')
@@ -100,6 +110,7 @@ const menuRoutes = computed(() => {
     'StudentClassAssignment', // 学生分班
     'Assessment', // 能力评估
     'TrainingPlan', // 训练计划
+    'EmotionalTraining', // 情绪行为
     'GameTraining', // 游戏训练
     'EquipmentTraining', // 器材训练
     'TrainingRecordsModule', // 训练记录
@@ -117,10 +128,12 @@ const menuRoutes = computed(() => {
       return orderA - orderB
     })
     .map((r) => ({
-      ...r,
+      path: r.path,
       meta: {
-        ...r.meta,
-        displayTitle: r.meta.title,
+        title: String(r.meta.title || ''),
+        displayTitle: String(r.meta.title || ''),
+        icon: typeof r.meta.icon === 'string' ? r.meta.icon : undefined,
+        roles: Array.isArray(r.meta.roles) ? r.meta.roles as string[] : undefined,
       },
     }))
 })

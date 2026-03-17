@@ -7,15 +7,15 @@
 **Status**: Completed
 
 ### Phase 2: Emotional & Social Expansion
-**Goal**: User can access social communication boards and social stories resources.
-**Status**: In Progress
+**Goal**: Users can complete Emotional-module assessment and structured emotional training flows within the current SCGP platform.
+**Status**: Completed
 **Requirements**: MOD-01, MOD-02
 
 **Success Criteria**:
-1. User can play specific game resources designed for Emotional and Social modules.
-2. User can conduct SDQ assessments for emotional/behavioral screening.
-3. User can conduct SRS-2 assessments for social responsiveness.
-4. User can conduct CBCL assessments for comprehensive behavior evaluation.
+1. User can conduct SDQ assessments for emotional/behavioral screening.
+2. User can conduct CBCL assessments for comprehensive behavior evaluation.
+3. User can enter the Emotional module and complete structured training flows for selected students.
+4. System records emotional sessions and exposes emotional records/reports locally.
 
 ### Phase 2.1: SDQ Report Polish
 **Goal**: Enhance the SDQ report page with expert feedback content from `feedbackConfig.js`.
@@ -32,7 +32,7 @@
 **Goal**: Users can conduct structured emotional scene reasoning and caring-expression training within the Emotional module.
 **Depends on**: Phase 2
 **Requirements**: MOD-01, MOD-02
-**Status**: Not Started
+**Status**: Completed
 
 **Success Criteria**:
 1. User can enter the Emotional module from the current training flow and start module-specific sessions for selected students.
@@ -66,10 +66,10 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Game Training Module Polish | 1/1 | Completed | historical backfill ✅ |
-| 2. Emotional & Social Expansion | 1/1 | In Progress | SDQ cleanup ✅ |
+| 2. Emotional & Social Expansion | 2/2 | Completed | SDQ / CBCL / Emotional MVP ✅ |
 | 2.1 SDQ Report Polish | 1/1 | Completed | feedback polish ✅ |
-| 2.2 Emotional Behavior Regulation Module | 0/0 | Not Started | - |
-| 3. Cognitive & Comprehensive Reporting | 0/0 | Not Started | - |
+| 2.2 Emotional Behavior Regulation Module | 1/1 | Completed | historical backfill + verification ✅ |
+| 3. Cognitive & Comprehensive Reporting | 0/4 | Not Started | planned only |
 | 4. CBCL Assessment Integration | 5/5 | Completed | 04.1 ✅ 04.2 ✅ 04.3 ✅ 04.4 ✅ 04.5 ✅ |
 
 ### Phase 4 Plans Detail
@@ -86,12 +86,12 @@
 
 The normalized planning state now shows these completed workstreams:
 - Phase 1 historical completion backfilled into `.planning`
-- Phase 2 SDQ cleanup complete
+- Phase 2 SDQ / CBCL / Emotional MVP complete
 - Phase 2.1 SDQ report polish complete
+- Phase 2.2 Emotional Behavior Regulation backfilled and verified
 - Phase 4 CBCL assessment integration complete
 
 Recommended next planned work:
-- Phase 2.2: Emotional Behavior Regulation Module
 - Phase 3: Cognitive & Comprehensive Reporting
 
 Possible future follow-ups:

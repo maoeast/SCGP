@@ -174,13 +174,23 @@ const router = createRouter({
             roles: ['admin', 'teacher']
           }
         },
+        {
+          path: 'emotional',
+          name: 'EmotionalTraining',
+          redirect: '/emotional/menu',
+          meta: {
+            title: '情绪行为',
+            icon: 'smile',
+            roles: ['admin', 'teacher']
+          }
+        },
         // ===== 游戏训练模块（顶级菜单，与器材训练模式一致） =====
         {
           path: 'emotional/menu',
           name: 'EmotionalMenu',
           component: EmotionalMenu,
           meta: {
-            title: '情绪行为调节',
+            title: '情绪行为',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

@@ -862,6 +862,33 @@ export async function initDatabase(): Promise<any> {
     const { SQLWrapper } = await import('./sql-wrapper')
     db = new SQLWrapper(rawDb, SQL)
 
+    // 旧库兼容修复必须先于 schemaSQL 执行。
+    // 否则 schemaSQL 中针对 training_records(resource_id) 的索引创建会在缺列旧库上直接失败。
+    if (!isNewDb) {
+      try {
+        const { needsEmotionalFoundationMigration, migrateEmotionalFoundation } = await import('./migration/migrate-emotional-foundation')
+        if (needsEmotionalFoundationMigration(rawDb)) {
+          console.log('[InitDatabase] 🔄 在 schema 初始化前修复 emotional 兼容表结构...')
+          const result = await migrateEmotionalFoundation(rawDb)
+          if (!result.success) {
+            throw new Error(result.message)
+          }
+          if (result.changes) {
+            console.log('[InitDatabase] 📊 pre-schema emotional 迁移统计:', result.changes)
+          }
+          if (needsEmotionalFoundationMigration(rawDb)) {
+            throw new Error('pre-schema emotional 兼容迁移后仍检测到旧 schema')
+          }
+          console.log('[InitDatabase] ✅ pre-schema emotional 兼容迁移完成')
+        } else {
+          console.log('[InitDatabase] ✅ pre-schema emotional 兼容检查通过')
+        }
+      } catch (preSchemaEmotionalError) {
+        console.error('[InitDatabase] ❌ pre-schema emotional 兼容迁移失败:', preSchemaEmotionalError)
+        throw preSchemaEmotionalError
+      }
+    }
+
     // 创建表结构
     db.run(schemaSQL)
 
@@ -1154,22 +1181,23 @@ export async function initDatabase(): Promise<any> {
     // ========== emotional 模块基础迁移与表初始化 ==========
     try {
       const { needsEmotionalFoundationMigration, migrateEmotionalFoundation } = await import('./migration/migrate-emotional-foundation')
-      if (needsEmotionalFoundationMigration()) {
-        console.log('[InitDatabase] 🔄 检测到 emotional 基础 schema 需要迁移，自动运行迁移...')
-        const result = await migrateEmotionalFoundation()
+      if (needsEmotionalFoundationMigration(rawDb)) {
+        console.log('[InitDatabase] 🔄 检测到 emotional 基础 schema 仍需迁移，继续补齐...')
+        const result = await migrateEmotionalFoundation(rawDb)
         if (result.success) {
           console.log('[InitDatabase] ✅ emotional 基础迁移成功:', result.message)
           if (result.changes) {
             console.log('[InitDatabase] 📊 emotional 迁移统计:', result.changes)
           }
         } else {
-          console.warn('[InitDatabase] ⚠️  emotional 基础迁移失败:', result.message)
+          throw new Error(result.message)
         }
       } else {
         console.log('[InitDatabase] ✅ emotional 基础 schema 已是最新，无需迁移')
       }
     } catch (emotionalMigrationError) {
-      console.warn('[InitDatabase] ⚠️  emotional 基础迁移检查失败:', emotionalMigrationError)
+      console.error('[InitDatabase] ❌ emotional 基础迁移检查失败:', emotionalMigrationError)
+      throw emotionalMigrationError
     }
 
     try {

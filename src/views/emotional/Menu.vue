@@ -1,87 +1,41 @@
 <template>
   <div class="page-container">
-    <div class="breadcrumb-wrapper">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/games/menu' }">游戏训练</el-breadcrumb-item>
-        <el-breadcrumb-item>情绪行为调节</el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
-
     <div class="page-header">
       <div class="header-left">
-        <h1>情绪行为调节</h1>
-        <p class="subtitle">把“先评估、后训练”串成一条完整闭环，帮助教师围绕同一位学生连续开展支持。</p>
-      </div>
-      <div class="header-right">
-        <el-tag type="success" effect="light">MVP</el-tag>
+        <h1>情绪行为</h1>
+        <p class="subtitle">选择训练方向，围绕生活情境开展情绪识别、原因推理与关心表达练习。</p>
       </div>
     </div>
 
     <div class="main-content">
-      <el-card class="context-card" shadow="never">
-        <template #header>
-          <span>当前上下文</span>
-        </template>
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="学生">
-            {{ studentName || '尚未选择学生' }}
-          </el-descriptions-item>
-          <el-descriptions-item label="学生 ID">
-            {{ studentId || '未传入' }}
-          </el-descriptions-item>
-          <el-descriptions-item label="模块状态">
-            已接入评估、训练、记录与报告闭环
-          </el-descriptions-item>
-          <el-descriptions-item label="建议路径">
-            先完成评估，再进入情绪训练
-          </el-descriptions-item>
-        </el-descriptions>
-      </el-card>
-
-      <div class="menu-grid">
-        <el-card class="menu-card">
-          <template #header>
-            <span>评估快捷入口</span>
-          </template>
-          <p class="card-copy">不重新开发量表，直接跳转到系统现有统一评估容器。</p>
-          <div class="card-actions">
-            <el-button type="primary" :disabled="!studentId" @click="goToAssessment('sdq')">
-              SDQ 评估
-            </el-button>
-            <el-button type="primary" plain :disabled="!studentId" @click="goToAssessment('cbcl')">
-              CBCL 评估
-            </el-button>
+      <div class="module-grid">
+        <el-card
+          v-for="card in trainingCards"
+          :key="card.path"
+          class="module-card module-active"
+          shadow="hover"
+          @click="goTo(card.path)"
+        >
+          <div
+            class="module-icon"
+            :style="{
+              backgroundColor: `${card.themeColor}25`,
+              borderColor: `${card.themeColor}60`,
+              boxShadow: `0 4px 12px ${card.themeColor}30`
+            }"
+          >
+            <el-icon :size="40" :color="card.themeColor">
+              <component :is="card.icon" />
+            </el-icon>
           </div>
-          <p class="card-hint" v-if="!studentId">请先从游戏训练入口选择学生，再使用快捷评估。</p>
-        </el-card>
 
-        <el-card class="menu-card">
-          <template #header>
-            <span>训练入口</span>
-          </template>
-          <p class="card-copy">围绕同一位学生开始情绪场景训练或表达关心训练。</p>
-          <div class="card-actions">
-            <el-button type="success" :disabled="!studentId" @click="goTo('/emotional/emotion-scene')">
-              情绪与场景训练
-            </el-button>
-            <el-button type="success" plain :disabled="!studentId" @click="goTo('/emotional/care-expression')">
-              表达关心训练
-            </el-button>
-          </div>
-        </el-card>
+          <div class="module-info">
+            <h3 class="module-name">{{ card.title }}</h3>
+            <p class="module-description">{{ card.description }}</p>
 
-        <el-card class="menu-card">
-          <template #header>
-            <span>训练结果</span>
-          </template>
-          <p class="card-copy">进入情绪模块记录和专属可视化报告，查看趋势与干预建议。</p>
-          <div class="card-actions">
-            <el-button plain @click="goTo('/emotional/records')">
-              训练记录
-            </el-button>
-            <el-button plain @click="goTo('/emotional/report')">
-              模块报告
-            </el-button>
+            <div class="module-meta">
+              <el-tag size="small" type="success">训练子模块</el-tag>
+            </div>
           </div>
         </el-card>
       </div>
@@ -92,6 +46,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { ChatDotRound, PictureFilled } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -104,64 +59,105 @@ const studentId = computed(() => {
   return resolved ? Number(resolved) : 0
 })
 
-const studentName = computed(() => {
-  const value = route.query.studentName
-  return Array.isArray(value) ? value[0] : value || ''
-})
+const trainingCards = [
+  {
+    title: '情绪与场景',
+    description: '通过生活场景识别情绪、观察线索，并进一步推理原因与回应方式。',
+    path: '/emotional/emotion-scene',
+    icon: PictureFilled,
+    themeColor: '#E6A23C',
+  },
+  {
+    title: '表达关心',
+    description: '学习在不同情境下表达共情与关心，理解不同话语给他人的感受。',
+    path: '/emotional/care-expression',
+    icon: ChatDotRound,
+    themeColor: '#409EFF',
+  },
+]
 
 function goTo(path: string) {
+  if (!studentId.value) {
+    router.push({
+      path: '/games/select-student',
+      query: { module: 'emotional' },
+    })
+    return
+  }
+
   router.push({
     path,
     query: inheritedQuery.value,
   })
 }
-
-function goToAssessment(scaleCode: 'sdq' | 'cbcl') {
-  if (!studentId.value) return
-  router.push(`/assessment/unified/${scaleCode}/${studentId.value}`)
-}
 </script>
 
 <style scoped>
-.breadcrumb-wrapper {
-  padding: 12px 24px;
-  background: #fff;
-  border-bottom: 1px solid #ebeef5;
-}
-
 .main-content {
   padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
 }
 
-.context-card,
-.menu-card {
-  border-radius: 20px;
-}
-
-.menu-grid {
+.module-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
 }
 
-.card-copy {
-  margin: 0 0 16px;
-  line-height: 1.8;
-  color: #606266;
+.module-card {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
 }
 
-.card-actions {
+.module-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
+}
+
+.module-card.module-active {
+  border-color: var(--el-color-primary);
+}
+
+.module-icon {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  margin: 20px auto 16px;
+  border: 2px solid;
+  transition: all 0.3s ease;
 }
 
-.card-hint {
-  margin: 12px 0 0;
+.module-card:hover .module-icon {
+  transform: scale(1.08);
+}
+
+.module-info {
+  text-align: center;
+  padding: 0 16px 20px;
+}
+
+.module-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0 0 8px;
+}
+
+.module-description {
   font-size: 13px;
   color: #909399;
+  margin: 0 0 16px;
+  line-height: 1.7;
+  min-height: 44px;
+}
+
+.module-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

@@ -1,6 +1,11 @@
 import { getDatabase } from '../init'
+import { captureDependentViews, dropViews, restoreViews, type SqlViewDefinition } from './migration-view-utils'
 
-function getRawDB(): any {
+function resolveDb(explicitDb?: any): any {
+  if (explicitDb) {
+    return explicitDb
+  }
+
   const db = getDatabase()
   if (db && typeof db.getRawDB === 'function') {
     return db.getRawDB()
@@ -33,6 +38,10 @@ function hasColumn(db: any, tableName: string, columnName: string): boolean {
   return getTableColumns(db, tableName).includes(columnName)
 }
 
+function dropIfExists(db: any, tableName: string): void {
+  db.run(`DROP TABLE IF EXISTS ${tableName}`)
+}
+
 function needsTrainingRecordsMigration(db: any): boolean {
   const tableSql = getTableSql(db, 'training_records')
   if (!tableSql) return false
@@ -57,6 +66,15 @@ function buildCopyExpression(columns: Set<string>, columnName: string, fallbackS
 
 function migrateTrainingRecords(db: any): number {
   const columns = new Set(getTableColumns(db, 'training_records'))
+  const hasTaskId = columns.has('task_id')
+  const resourceTypeFallback = hasTaskId
+    ? "CASE WHEN task_id IS NOT NULL THEN 'game' ELSE NULL END"
+    : 'NULL'
+  const sessionTypeFallback = hasTaskId
+    ? "CASE WHEN task_id IS NOT NULL THEN 'game_session' ELSE NULL END"
+    : 'NULL'
+
+  dropIfExists(db, 'training_records_new')
 
   db.run(`
     CREATE TABLE training_records_new (
@@ -102,8 +120,8 @@ function migrateTrainingRecords(db: any): number {
       ${buildCopyExpression(columns, 'student_id', 'NULL')},
       ${buildCopyExpression(columns, 'task_id', 'NULL')},
       ${buildCopyExpression(columns, 'resource_id', 'NULL')},
-      ${buildCopyExpression(columns, 'resource_type', "CASE WHEN task_id IS NOT NULL THEN 'game' ELSE NULL END")},
-      ${buildCopyExpression(columns, 'session_type', "CASE WHEN task_id IS NOT NULL THEN 'game_session' ELSE NULL END")},
+      ${buildCopyExpression(columns, 'resource_type', resourceTypeFallback)},
+      ${buildCopyExpression(columns, 'session_type', sessionTypeFallback)},
       ${buildCopyExpression(columns, 'timestamp', '0')},
       ${buildCopyExpression(columns, 'duration', '0')},
       ${buildCopyExpression(columns, 'accuracy_rate', '0')},
@@ -131,6 +149,8 @@ function migrateTrainingRecords(db: any): number {
 
 function migrateReportRecord(db: any): number {
   const columns = new Set(getTableColumns(db, 'report_record'))
+
+  dropIfExists(db, 'report_record_new')
 
   db.run(`
     CREATE TABLE report_record_new (
@@ -196,14 +216,14 @@ function migrateReportRecord(db: any): number {
   return insertResult?.changes || 0
 }
 
-export function needsEmotionalFoundationMigration(): boolean {
-  const db = getRawDB()
+export function needsEmotionalFoundationMigration(explicitDb?: any): boolean {
+  const db = resolveDb(explicitDb)
   if (!db) return false
 
   return needsTrainingRecordsMigration(db) || needsReportRecordMigration(db)
 }
 
-export async function migrateEmotionalFoundation(): Promise<{
+export async function migrateEmotionalFoundation(explicitDb?: any): Promise<{
   success: boolean
   message: string
   changes?: {
@@ -211,7 +231,7 @@ export async function migrateEmotionalFoundation(): Promise<{
     reportRecordsRebuilt: number
   }
 }> {
-  const db = getRawDB()
+  const db = resolveDb(explicitDb)
   if (!db) {
     return {
       success: false,
@@ -221,10 +241,16 @@ export async function migrateEmotionalFoundation(): Promise<{
 
   let trainingRecordsRebuilt = 0
   let reportRecordsRebuilt = 0
+  let dependentViews: SqlViewDefinition[] = []
 
   try {
     db.run('PRAGMA foreign_keys = OFF')
     db.run('BEGIN TRANSACTION')
+
+    dependentViews = captureDependentViews(db, ['training_records', 'report_record'])
+    if (dependentViews.length > 0) {
+      dropViews(db, dependentViews)
+    }
 
     if (needsTrainingRecordsMigration(db)) {
       trainingRecordsRebuilt = migrateTrainingRecords(db)
@@ -232,6 +258,14 @@ export async function migrateEmotionalFoundation(): Promise<{
 
     if (needsReportRecordMigration(db)) {
       reportRecordsRebuilt = migrateReportRecord(db)
+    }
+
+    if (needsTrainingRecordsMigration(db) || needsReportRecordMigration(db)) {
+      throw new Error('情绪模块基础迁移后仍检测到旧 schema 状态')
+    }
+
+    if (dependentViews.length > 0) {
+      restoreViews(db, dependentViews)
     }
 
     db.run('COMMIT')
