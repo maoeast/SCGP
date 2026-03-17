@@ -24,7 +24,7 @@
 | **技术栈**     | Electron + Vue 3 + TypeScript + Vite + SQL.js |
 | **数据库**     | SQLite (通过 sql.js 运行在浏览器端)           |
 | **当前分支**   | `main`                                        |
-| **最后更新**   | 2026-03-13 (新增 AGENTS.md 与执行路线图)      |
+| **最后更新**   | 2026-03-17 (启动 emotional v1.1 易用性升级规划) |
 | **系统健康度** | ✅ 可运行，所有核心功能正常                   |
 
 ### 项目简介
@@ -969,28 +969,29 @@ function calculateConnersTScore(
 
 ### 长期规划 (3个月+)
 
-- [ ] 新增情绪调节模块（CBCL, SDQ）
+- [ ] 情绪模块 v1.1 易用性升级（可视化资源编辑器 + 场景选择页）
 - [ ] 新增社交沟通模块（社交剧本, 沟通板）
 - [ ] 新增认知发展模块
 - [ ] 多模块综合报告生成
 
 ---
 
-**最后更新**: 2026-03-10
+**最后更新**: 2026-03-17
 **更新人**: Claude Code Assistant (首席实施工程师)
-**会话摘要**: 完成 CBCL 评估系统4个关键Bug修复。(1) 报告因子名称映射修复：添加 `FEEDBACK_FACTOR_MAP` 映射表，修复因子建议内容不显示问题。(2) 题目说明内容输入框修复：21道需要填写说明的题目现在支持输入框。(3) 题号56跳题逻辑修复：选择"无此表现"时跳过56a-56h子题。(4) 说明内容必填验证修复：选择"有时有"/"经常有"时必须填写说明才能继续，防止自动跳转造成数据丢失。
+**会话摘要**: 已完成 SCGP `emotional` 模块 v1.1 的 Phase 6：`Emotional Resource Contract & Editor Infrastructure`。本阶段没有进入完整业务编辑器细项，而是先完成底层契约收口与资源中心接线：新增情绪资源编辑契约工具，对 `EmotionSceneResourceMeta` / `CareSceneResourceMeta` 做默认模板、归一化和保存序列化；新增 `EmotionSceneEditor.vue` 与 `CareExpressionEditor.vue` 两个可视化编辑壳子组件；在 `TrainingResources.vue` 中改为按 `resource_type` 条件挂载编辑器，`emotion_scene` / `care_scene` 不再暴露 raw JSON 文本域，其他资源类型保持原有流程不变。同时补齐了 `ResourceItem` 的 `updatedAt/statusLoading` 字段和 `ResourceAPI.getAbilityTags()` 公共查询接口，避免资源中心继续绕过受保护的数据库基类方法。Phase 6 相关文件已通过局部 `vue-tsc` 过滤校验；全仓库 `npm run type-check` 仍存在大量历史类型债，尚未在本阶段处理。
 
 ### 下次会话优先事项
 
-1. **[P1 - 高] CBCL 端到端验证**
-   - 测试 CBCL 评估完整流程：选择学生 → 完成社会能力表单 → 完成113题行为评估 → 保存 → 报告生成
-   - 验证报告页面正确显示：因子建议内容、说明内容输入、56题跳题逻辑、必填验证
-   - **重要**: 测试21道需要说明的题目验证逻辑是否正常工作
+1. **[P1 - 高] Phase 7 可视化资源编辑器深化**
+   - 在资源中心废弃情绪资源 raw JSON 文本域
+   - 基于现有壳子组件补齐动态增删题项、选项、反馈和图文字段的校验与交互
+   - 让 clues、prompts、solutions、utterances、receiverOptions、preferredUtteranceIds 真正可编辑
 
-2. **[P2 - 中] SRS-2 评估验证**
-   - 验证 SRS-2 社交反应量表集成是否正常工作
-   - 检查报告页面的T分数显示和反馈内容
+2. **[P2 - 中] Phase 8 场景选择页执行**
+   - 为 `情绪与场景` / `表达关心` 新增场景选择页
+   - 改造模块菜单与静态路由，使训练页改为显式接收 `resourceId`
+   - 保留当前本地优先与静态路由边界，不扩展到注册表驱动路由
 
-3. **[P3 - 低] 社交模块资源**
-   - 社交沟通板资源
-   - 社交故事资源
+3. **[P3 - 中] 全局类型债评估**
+   - 评估当前 `npm run type-check` 中的历史错误面
+   - 区分与 emotional v1.1 无关的旧债和后续需要清偿的公共类型问题

@@ -324,6 +324,20 @@ export class ResourceAPI extends DatabaseAPI {
     return row ? this.mapToResourceItem(row) : null
   }
 
+  getAbilityTags(limit = 50): string[] {
+    const results = this.query(`
+      SELECT DISTINCT t.name
+      FROM sys_tags t
+      WHERE t.domain = 'ability'
+      ORDER BY t.usage_count DESC
+      LIMIT ?
+    `, [limit])
+
+    return results
+      .map((row: any) => row.name)
+      .filter((name: unknown): name is string => typeof name === 'string' && name.trim().length > 0)
+  }
+
   /**
    * 获取资源分类统计
    *

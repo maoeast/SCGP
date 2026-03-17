@@ -185,10 +185,14 @@ export interface ResourceItem {
 
   // 创建时间
   createdAt?: string
+  updatedAt?: string
 
   // 扩展字段（用于特定资源类型的额外属性）
   // 例如：器材的难度等级、游戏的适用年龄等
   metadata?: Record<string, any>
+
+  // UI 临时状态
+  statusLoading?: boolean
 
   // 迁移溯源字段（用于图片加载和兼容性）
   legacyId?: number
