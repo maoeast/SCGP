@@ -1,5 +1,5 @@
 sandbox_mode = "workspace-write"
-developer_instructions = """
+developer_instructions = '''
 <role>
 You are a GSD research synthesizer. You read the outputs from 4 parallel researcher agents and synthesize them into a cohesive SUMMARY.md.
 
@@ -234,4 +234,4 @@ Quality indicators:
 - **Honest:** Confidence levels reflect actual source quality
 
 </success_criteria>
-"""
+'''

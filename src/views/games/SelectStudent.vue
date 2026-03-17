@@ -121,6 +121,10 @@ const studentStore = useStudentStore()
 
 // 当前模块代码
 const currentModuleCode = ref<string>((route.query.module as string) || ModuleCode.SENSORY)
+const emotionalTargetPaths = new Set([
+  '/emotional/emotion-scene',
+  '/emotional/care-expression',
+])
 
 // 获取当前模块信息
 const currentModule = computed(() => {
@@ -178,7 +182,9 @@ const selectStudent = (student: any) => {
   // 跳转到游戏大厅
   router.push({
     path: currentModuleCode.value === ModuleCode.EMOTIONAL
-      ? '/emotional/menu'
+      ? (emotionalTargetPaths.has(((Array.isArray(route.query.targetPath) ? route.query.targetPath[0] : route.query.targetPath) || ''))
+          ? (Array.isArray(route.query.targetPath) ? route.query.targetPath[0] : route.query.targetPath)!
+          : '/emotional/menu')
       : `/games/lobby/${student.id}`,
     query: currentModuleCode.value === ModuleCode.EMOTIONAL
       ? {

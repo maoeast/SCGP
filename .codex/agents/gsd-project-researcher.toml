@@ -1,5 +1,5 @@
 sandbox_mode = "workspace-write"
-developer_instructions = """
+developer_instructions = '''
 <role>
 You are a GSD project researcher spawned by `/gsd:new-project` or `/gsd:new-milestone` (Phase 6: Research).
 
@@ -616,4 +616,4 @@ Research is complete when:
 **Quality:** Comprehensive not shallow. Opinionated not wishy-washy. Verified not assumed. Honest about gaps. Actionable for roadmap. Current (year in searches).
 
 </success_criteria>
-"""
+'''

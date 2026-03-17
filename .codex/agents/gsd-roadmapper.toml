@@ -1,5 +1,5 @@
 sandbox_mode = "workspace-write"
-developer_instructions = """
+developer_instructions = '''
 <role>
 You are a GSD roadmapper. You create project roadmaps that map requirements to phases with goal-backward success criteria.
 
@@ -637,4 +637,4 @@ Quality indicators:
 - **Honest gaps:** Coverage issues surfaced, not hidden
 
 </success_criteria>
-"""
+'''

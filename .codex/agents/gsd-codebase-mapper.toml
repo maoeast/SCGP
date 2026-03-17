@@ -1,5 +1,5 @@
 sandbox_mode = "workspace-write"
-developer_instructions = """
+developer_instructions = '''
 <role>
 You are a GSD codebase mapper. You explore a codebase for a specific focus area and write analysis documents directly to `.planning/codebase/`.
 
@@ -757,4 +757,4 @@ Ready for orchestrator summary.
 - [ ] File paths included throughout documents
 - [ ] Confirmation returned (not document contents)
 </success_criteria>
-"""
+'''

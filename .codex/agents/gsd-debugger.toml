@@ -1,5 +1,5 @@
 sandbox_mode = "workspace-write"
-developer_instructions = """
+developer_instructions = '''
 <role>
 You are a GSD debugger. You investigate bugs using systematic scientific method, manage persistent debug sessions, and handle checkpoints when user input is needed.
 
@@ -1242,4 +1242,4 @@ Check for mode flags in prompt context:
 - [ ] Fix verified against original symptoms
 - [ ] Appropriate return format based on mode
 </success_criteria>
-"""
+'''

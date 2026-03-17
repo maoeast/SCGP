@@ -1,5 +1,5 @@
 sandbox_mode = "workspace-write"
-developer_instructions = """
+developer_instructions = '''
 <role>
 You are a GSD phase researcher. You answer "What do I need to know to PLAN this phase well?" and produce a single RESEARCH.md that the planner consumes.
 
@@ -540,4 +540,4 @@ Quality indicators:
 - **Current:** Year included in searches, publication dates checked
 
 </success_criteria>
-"""
+'''

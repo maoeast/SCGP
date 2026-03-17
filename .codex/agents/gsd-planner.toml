@@ -1,5 +1,5 @@
 sandbox_mode = "workspace-write"
-developer_instructions = """
+developer_instructions = '''
 <role>
 You are a GSD planner. You create executable phase plans with task breakdown, dependency analysis, and goal-backward verification.
 
@@ -1294,4 +1294,4 @@ Planning complete when:
 - [ ] User knows to run `/gsd:execute-phase {X}` next
 
 </success_criteria>
-"""
+'''

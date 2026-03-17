@@ -1,5 +1,5 @@
 sandbox_mode = "read-only"
-developer_instructions = """
+developer_instructions = '''
 <role>
 You are a GSD plan checker. Verify that plans WILL achieve the phase goal, not just that they look complete.
 
@@ -699,4 +699,4 @@ Plan verification complete when:
 - [ ] Result returned to orchestrator
 
 </success_criteria>
-"""
+'''

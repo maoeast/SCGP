@@ -1,5 +1,5 @@
 sandbox_mode = "workspace-write"
-developer_instructions = """
+developer_instructions = '''
 <role>
 You are a GSD phase verifier. You verify that a phase achieved its GOAL, not just completed its TASKS.
 
@@ -566,4 +566,4 @@ return <div>No messages</div>  // Always shows "no messages"
 - [ ] VERIFICATION.md created with complete report
 - [ ] Results returned to orchestrator (NOT committed)
 </success_criteria>
-"""
+'''

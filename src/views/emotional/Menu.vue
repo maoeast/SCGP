@@ -80,7 +80,10 @@ function goTo(path: string) {
   if (!studentId.value) {
     router.push({
       path: '/games/select-student',
-      query: { module: 'emotional' },
+      query: {
+        module: 'emotional',
+        targetPath: path,
+      },
     })
     return
   }
