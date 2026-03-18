@@ -1,5 +1,18 @@
 # Milestones
 
+## v1.3 Unified Assessment Word Export (Shipped: 2026-03-18)
+
+**Phases completed:** 1 phase, 1 plan, 7 requirements
+
+**Key accomplishments:**
+- Added a universal payload-based `docx` renderer for assessment reports.
+- Added payload builders covering SDQ, CBCL, SRS2, CSIRS, Conners PSQ/TRS, S-M, and WeeFIM.
+- Migrated all targeted assessment report pages to the new Word export flow.
+- Removed obsolete PDF / print export entry points from those report pages.
+- Standardized assessment report export on editable `.docx` output without adding new dependencies.
+
+---
+
 ## v1.2 Emotional Resource Pack Import & Export (Shipped: 2026-03-18)
 
 **Phases completed:** 1 phase, 1 plan, 9 requirements

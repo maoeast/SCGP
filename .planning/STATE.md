@@ -1,8 +1,8 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: emotional-resource-pack-import-export
-status: in_progress
+milestone: v1.3
+milestone_name: unified-assessment-word-export
+status: completed
 last_updated: "2026-03-18T10:06:29+08:00"
 progress:
   total_phases: 5
@@ -15,18 +15,18 @@ progress:
 
 ## Project Reference
 **Core Value**: SCGP provides special education teachers and clinicians with a comprehensive, offline, local-first assessment and intervention tool.
-**Current Focus**: v1.3 Unified Assessment Word Export
-**Plan**: `docs/planning/2026-03-18-unified-assessment-word-export-milestone-plan.md`
+**Current Focus**: Await the next milestone definition after archiving v1.3
+**Plan**: —
 
 ## Current Position
-- **Phase**: Phase A-E complete
-- **Plan**: Shared Word exporter foundation, per-scale payload builders, full report-page migration, targeted validation
-- **Status**: v1.3 implementation complete; all targeted assessment reports now use the universal `.docx` exporter
-- **Last activity**: 2026-03-18 — Migrated SRS2 / CSIRS / Conners / SM / WeeFIM to the universal Word export flow, removed legacy PDF/export code, and completed targeted type-check validation
+- **Phase**: v1.3 archived
+- **Plan**: —
+- **Status**: Milestone shipped, audited, and archived
+- **Last activity**: 2026-03-18 — Archived milestone v1.3 after universal assessment Word export landed across the targeted report pages
 
 ## Latest Shipped Milestone
-- **v1.2 Emotional Resource Pack Import & Export**
-- Delivered Resource Center-based JSON/Excel emotional resource exchange with preview, duplicate handling, and compatibility with the existing typed emotional runtime.
+- **v1.3 Unified Assessment Word Export**
+- Delivered a universal `docx` renderer plus full target-scale migration to editable assessment Word export.
 
 ## Accumulated Context
 - **Decisions**:
@@ -42,5 +42,5 @@ progress:
   - Repository-wide historical TypeScript errors still exist outside the emotional v1.2 scope.
 
 ## Next Action
-- Formalize v1.3 milestone artifacts if you want GSD audit/archive to run cleanly.
-- After that, run milestone audit and archive, then push the resulting commit/tag.
+- Define the next milestone.
+- If continuing immediately, use `$gsd-new-milestone`.
