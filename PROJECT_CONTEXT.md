@@ -114,6 +114,17 @@
 - ✅ 使用原始 SQL.js Database 对象，绕过 SQLWrapper 防抖保存
 - **文件**: `src/database/init.ts`, `src/database/migrate-report-constraints.ts`
 
+**量表报告导出规范（2026-03-18）**
+- ✅ **强制规则**: 所有新接入的评估量表，其报告导出功能必须且只能使用 Word 格式
+- ❌ **严禁**: 引入截屏 PDF 库、恢复旧“导出 PDF”按钮、复用 HTML 伪装 Word 的旧导出链路
+- ✅ **必须复用**:
+  - `src/utils/export-word.ts`
+  - `src/utils/assessment-word-builders.ts`
+- ✅ **实现要求**:
+  - 每个新量表必须在 `src/utils/assessment-word-builders.ts` 中新增对应的 `buildXxxWordPayload` 数据转换函数
+  - 报告页导出按钮统一接入通用 Word 导出引擎，不允许在页面内手写新的 `docx` 组装逻辑
+  - 开发新量表请直接参考 `SDQ` 或 `CBCL` 报告页实现
+
 ---
 
 **Phase 3.5 功能验证** - 器材训练与感官训练模块整合与优化（已归档）
