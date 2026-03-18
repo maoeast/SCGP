@@ -24,6 +24,7 @@
 
 面向使用、运维或具体操作的说明文档。
 
+- [2026-03-18-emotional-resource-pack-excel-template-guide.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-18-emotional-resource-pack-excel-template-guide.md)
 - [2026-03-12-gsd-token-efficient-workflow.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-12-gsd-token-efficient-workflow.md)
 - [activation-code-generator.md](/home/DONG/Mycode/SCGP/docs/guides/activation-code-generator.md)
 - [activation-system-guide.md](/home/DONG/Mycode/SCGP/docs/guides/activation-system-guide.md)
