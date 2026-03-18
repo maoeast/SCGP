@@ -53,7 +53,7 @@
                     @change="handleFileSelect"
                     style="display: none"
                   />
-                  <button @click="$refs.fileInput.click()" class="btn btn-secondary">
+                  <button @click="triggerFileSelect" class="btn btn-secondary">
                     <i class="fas fa-arrow-up-from-bracket"></i>
                     选择备份文件
                   </button>
@@ -113,115 +113,6 @@
               </div>
             </div>
 
-            <!-- 数据统计卡片 -->
-            <div class="devtools-card info">
-              <div class="card-header">
-                <h3>数据统计</h3>
-                <p>查看当前数据库中的数据量</p>
-              </div>
-              <div class="card-body">
-                <div v-if="dataStats" class="stats-list">
-                  <div class="stat-item">
-                    <span class="stat-label">学生数量:</span>
-                    <span class="stat-value">{{ dataStats.studentCount }}</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-label">评估记录 (S-M):</span>
-                    <span class="stat-value">{{ dataStats.smAssessCount }}</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-label">评估记录 (WeeFIM):</span>
-                    <span class="stat-value">{{ dataStats.weefimAssessCount }}</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-label">训练记录:</span>
-                    <span class="stat-value">{{ dataStats.trainLogCount }}</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-label">用户数量:</span>
-                    <span class="stat-value">{{ dataStats.userCount }}</span>
-                  </div>
-                </div>
-                <button @click="handleLoadStats" class="btn btn-secondary">
-                  <i class="fas fa-refresh"></i>
-                  刷新统计
-                </button>
-              </div>
-            </div>
-
-            <!-- Phase 2.0 重构工具 -->
-            <div class="devtools-card success">
-              <div class="card-header">
-                <h3>Phase 2.0 架构迁移</h3>
-                <p>Schema 迁移与验证工具</p>
-              </div>
-              <div class="card-body">
-                <div class="migration-tools">
-                  <button @click="goToSchemaMigration" class="btn btn-primary">
-                    <i class="fas fa-database"></i>
-                    Schema 迁移
-                  </button>
-                  <button @click="goToMigrationVerification" class="btn btn-success">
-                    <i class="fas fa-check-circle"></i>
-                    迁移验证
-                  </button>
-                </div>
-                <p class="help-text info">
-                  Phase 2.0 重构工具：执行数据库架构迁移和验证
-                </p>
-              </div>
-            </div>
-
-            <!-- Phase 3.5 模块开发者工具 -->
-            <div class="devtools-card primary">
-              <div class="card-header">
-                <h3>模块开发者工具</h3>
-                <p>查看和管理已注册的模块</p>
-              </div>
-              <div class="card-body">
-                <div class="migration-tools">
-                  <button @click="goToModuleDevTools" class="btn btn-primary">
-                    <i class="fas fa-cubes"></i>
-                    模块管理
-                  </button>
-                  <button @click="goToBenchmarkRunner" class="btn btn-info">
-                    <i class="fas fa-gauge-high"></i>
-                    性能测试
-                  </button>
-                </div>
-                <p class="help-text info">
-                  Phase 3.5 开发者工具：管理模块、测试 IEP 策略、性能基准测试
-                </p>
-              </div>
-            </div>
-
-            <!-- 班级管理测试工具 -->
-            <div class="devtools-card success">
-              <div class="card-header">
-                <h3>班级管理测试工具</h3>
-                <p>测试数据生成与验证工具</p>
-              </div>
-              <div class="card-body">
-                <div class="migration-tools">
-                  <button @click="goToClassManagementTest" class="btn btn-warning">
-                    <i class="fas fa-flask"></i>
-                    测试工具
-                  </button>
-                  <button @click="goToClassSnapshotVerification" class="btn btn-info">
-                    <i class="fas fa-shield-alt"></i>
-                    快照验证
-                  </button>
-                  <button @click="goToClassTestLite" class="btn btn-secondary">
-                    <i class="fas fa-vial"></i>
-                    轻量测试
-                  </button>
-                </div>
-                <p class="help-text success">
-                  测试工具：测试数据生成、学年升级模拟、快照验证、轻量测试
-                </p>
-              </div>
-            </div>
-
             <!-- 软件更新 -->
             <div class="devtools-card primary">
               <div class="card-header">
@@ -264,15 +155,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { backupManager } from '@/utils/backup'
 import { ElMessageBox } from 'element-plus'
 import UserManagement from './system/UserManagement.vue'
 import SystemSettings from './system/SystemSettings.vue'
 import UpdatePanel from './updates/UpdatePanel.vue'
-
-const router = useRouter()
 
 const authStore = useAuthStore()
 
@@ -293,8 +181,6 @@ const copyright = ref('')
 
 // 开发者工具相关
 const isClearing = ref(false)
-const dataStats = ref<any>(null)
-
 // 检测是否为开发环境
 const isDevMode = computed(() => {
   return (
@@ -345,22 +231,29 @@ const handleBackup = async () => {
   }
 }
 
+const triggerFileSelect = () => {
+  fileInput.value?.click()
+}
+
 // 选择文件
 const handleFileSelect = async (event: Event) => {
   const target = event.target as HTMLInputElement
-  if (target.files && target.files.length > 0) {
-    const file = target.files[0]
-    selectedFile.value = file
+  const file = target.files?.[0]
 
-    // 读取备份信息
-    try {
-      const content = await backupManager.loadBackupFromFile(file)
-      backupInfo.value = backupManager.getBackupInfo(content)
-    } catch (error) {
-      console.error('读取备份文件失败:', error)
-      backupInfo.value = null
-      alert('备份文件格式错误')
-    }
+  if (!file) {
+    return
+  }
+
+  selectedFile.value = file
+
+  // 读取备份信息
+  try {
+    const content = await backupManager.loadBackupFromFile(file)
+    backupInfo.value = backupManager.getBackupInfo(content)
+  } catch (error) {
+    console.error('读取备份文件失败:', error)
+    backupInfo.value = null
+    alert('备份文件格式错误')
   }
 }
 
@@ -419,11 +312,14 @@ const handleClearAllData = async () => {
 
     // 第二步确认 - 输入验证
     try {
-      const { value } = await ElMessageBox.prompt('请输入 "DELETE" 来确认此操作：', '二次确认', {
+      const promptResult = await ElMessageBox.prompt('请输入 "DELETE" 来确认此操作：', '二次确认', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         inputType: 'text',
       })
+      const value = typeof (promptResult as { value?: unknown }).value === 'string'
+        ? (promptResult as { value: string }).value
+        : ''
 
       // 手动验证输入
       if (value !== 'DELETE') {
@@ -449,78 +345,9 @@ const handleClearAllData = async () => {
   }
 }
 
-// 加载数据统计
-const handleLoadStats = async () => {
-  try {
-    const { getDatabase } = await import('@/database/init')
-    const db = getDatabase()
-
-    const getResult = (table: string) => {
-      try {
-        return db.all(`SELECT COUNT(*) as count FROM ${table}`)[0]?.count || 0
-      } catch {
-        return 0
-      }
-    }
-
-    dataStats.value = {
-      studentCount: getResult('student'),
-      smAssessCount: getResult('sm_assess'),
-      weefimAssessCount: getResult('weefim_assess'),
-      trainLogCount: getResult('train_log'),
-      userCount: getResult('user'),
-    }
-  } catch (error) {
-    console.error('加载统计失败:', error)
-    // 数据库可能未初始化，显示空统计
-    dataStats.value = {
-      studentCount: 0,
-      smAssessCount: 0,
-      weefimAssessCount: 0,
-      trainLogCount: 0,
-      userCount: 0,
-    }
-  }
-}
-
-// Phase 2.0 重构工具导航
-const goToSchemaMigration = () => {
-  router.push({ name: 'SchemaMigration' })
-}
-
-const goToMigrationVerification = () => {
-  router.push({ name: 'MigrationVerification' })
-}
-
-// Phase 3.5 开发者工具导航
-const goToModuleDevTools = () => {
-  router.push('/module-devtools')
-}
-
-const goToBenchmarkRunner = () => {
-  router.push('/benchmark-runner')
-}
-
-// 班级管理测试工具导航
-const goToClassManagementTest = () => {
-  router.push('/class-management-test')
-}
-
-const goToClassSnapshotVerification = () => {
-  router.push('/class-snapshot-verification')
-}
-
-const goToClassTestLite = () => {
-  router.push('/class-test-lite')
-}
-
 // 初始化
 onMounted(() => {
   loadPackageInfo()
-  // 如果在开发模式，自动加载统计
-  if (isDevMode.value) {
-    handleLoadStats()
-  }
 })
 </script>
 
