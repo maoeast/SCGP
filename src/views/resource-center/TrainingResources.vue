@@ -76,6 +76,14 @@
           <span class="current-module">{{ currentModuleName }}</span>
         </div>
         <div class="toolbar-right" v-if="!readOnly">
+          <template v-if="selectedModule === 'emotional'">
+            <el-button plain @click="openResourcePackDialog('import')">
+              导入资源包
+            </el-button>
+            <el-button plain @click="openResourcePackDialog('export')">
+              导出资源包
+            </el-button>
+          </template>
           <el-button type="primary" :icon="Plus" @click="handleCreate">
             新建资源
           </el-button>
@@ -613,6 +621,14 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <EmotionalResourcePackDialog
+      v-if="!readOnly"
+      v-model="resourcePackDialogVisible"
+      :initial-mode="resourcePackDialogMode"
+      :exportable-resources="exportableEmotionalResources"
+      @completed="handleResourcePackCompleted"
+    />
   </div>
 </template>
 
@@ -630,6 +646,7 @@ import type { CareSceneResourceMeta, EmotionSceneResourceMeta } from '@/types/em
 import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
 import CareExpressionEditor from './editors/CareExpressionEditor.vue'
 import EmotionSceneEditor from './editors/EmotionSceneEditor.vue'
+import EmotionalResourcePackDialog from './components/EmotionalResourcePackDialog.vue'
 import {
   normalizeCareSceneEditorModel,
   normalizeEmotionSceneEditorModel,
@@ -744,6 +761,8 @@ const createForm = reactive({
 })
 const newCreateTag = ref('')
 const creating = ref(false)
+const resourcePackDialogVisible = ref(false)
+const resourcePackDialogMode = ref<'import' | 'export'>('export')
 
 // ========== 计算属性 ==========
 
@@ -754,7 +773,7 @@ const currentModuleName = computed(() => {
 })
 
 // 筛选后的资源列表
-const filteredResources = computed(() => {
+const filteredResourcePool = computed(() => {
   let result = allResources.value
 
   // 状态筛选
@@ -764,21 +783,29 @@ const filteredResources = computed(() => {
     result = result.filter(r => !r.isActive)
   }
 
+  return result
+})
+
+const filteredResources = computed(() => {
   // 分页
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
 
-  return result.slice(start, end)
+  return filteredResourcePool.value.slice(start, end)
 })
 
 // 总资源数
-const totalResources = computed(() => allResources.value.length)
+const totalResources = computed(() => filteredResourcePool.value.length)
 
 // 系统资源数
-const systemCount = computed(() => allResources.value.filter(r => !r.isCustom).length)
+const systemCount = computed(() => filteredResourcePool.value.filter(r => !r.isCustom).length)
 
 // 自定义资源数
-const customCount = computed(() => allResources.value.filter(r => r.isCustom).length)
+const customCount = computed(() => filteredResourcePool.value.filter(r => r.isCustom).length)
+
+const exportableEmotionalResources = computed(() =>
+  filteredResourcePool.value.filter((resource) => isEmotionalResourceType(resource.resourceType))
+)
 
 // 分类选项
 const categoryOptions = computed(() => {
@@ -1367,6 +1394,16 @@ async function handleRestore(resource: ResourceItem) {
     console.error('[TrainingResources] 恢复失败:', error)
     ElMessage.error('恢复失败')
   }
+}
+
+function openResourcePackDialog(mode: 'import' | 'export') {
+  if (props.readOnly || selectedModule.value !== 'emotional') return
+  resourcePackDialogMode.value = mode
+  resourcePackDialogVisible.value = true
+}
+
+function handleResourcePackCompleted() {
+  loadResources()
 }
 
 // ========== 生命周期 ==========
