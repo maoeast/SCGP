@@ -1,5 +1,18 @@
 # Milestones
 
+## v1.2 Emotional Resource Pack Import & Export (Shipped: 2026-03-18)
+
+**Phases completed:** 1 phase, 1 plan, 9 requirements
+
+**Key accomplishments:**
+- Resource Center emotional management now supports batch import/export without leaving the existing training-resource workflow.
+- Emotional resources can be exchanged as versioned JSON packs while preserving base fields, tags, and normalized typed metadata.
+- Emotional resources can also be exported/imported as relational Excel workbooks with a downloadable template for offline authoring and review.
+- Import preview blocks invalid rows and supports `skip`, `update existing`, and `import as copy` duplicate strategies based on `resourceType + sceneCode`.
+- Imported resources stay compatible with existing emotional editors, scene selectors, and training runtime because persistence remains on `sys_training_resource.meta_data`.
+
+---
+
 ## v1.1 Emotional Authoring & Scene Gallery (Shipped: 2026-03-17)
 
 **Phases completed:** 3 phases, 3 plans, 8 requirements

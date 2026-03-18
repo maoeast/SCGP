@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: emotional-resource-pack-import-export
-status: completed
+status: archived
 last_updated: "2026-03-18T10:06:29+08:00"
 progress:
   total_phases: 1
@@ -15,18 +15,18 @@ progress:
 
 ## Project Reference
 **Core Value**: SCGP provides special education teachers and clinicians with a comprehensive, offline, local-first assessment and intervention tool.
-**Current Focus**: Milestone v1.2 Emotional Resource Pack Import & Export
-**Plan**: `.planning/phases/09-emotional-resource-pack-import-export/09-PLAN.md`
+**Current Focus**: Await the next milestone definition after archiving v1.2
+**Plan**: —
 
 ## Current Position
-- **Phase**: 09 Emotional Resource Pack Import & Export
-- **Plan**: `09-PLAN.md`
-- **Status**: Phase implemented and verified; milestone ready for audit/archive
-- **Last activity**: 2026-03-18 — Landed Resource Center emotional pack import/export, added JSON/Excel pack tooling, and verified phase-local type safety
+- **Phase**: v1.2 archived
+- **Plan**: —
+- **Status**: Milestone shipped, audited, and archived
+- **Last activity**: 2026-03-18 — Archived milestone v1.2 after passing milestone audit and tagging release candidate state
 
 ## Latest Shipped Milestone
-- **v1.1 Emotional Authoring & Scene Gallery**
-- Delivered typed emotional resource contracts, dynamic visual editors, scene gallery selection, and explicit `resourceId` launch flow.
+- **v1.2 Emotional Resource Pack Import & Export**
+- Delivered Resource Center-based JSON/Excel emotional resource exchange with preview, duplicate handling, and compatibility with the existing typed emotional runtime.
 
 ## Accumulated Context
 - **Decisions**:
@@ -40,5 +40,5 @@ progress:
   - Repository-wide historical TypeScript errors still exist outside the emotional v1.2 scope.
 
 ## Next Action
-- Audit/archive milestone v1.2.
-- If continuing immediately, use `$gsd-audit-milestone`.
+- Define the next milestone.
+- If continuing immediately, use `$gsd-new-milestone`.

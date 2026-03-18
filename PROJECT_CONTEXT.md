@@ -24,7 +24,7 @@
 | **技术栈**     | Electron + Vue 3 + TypeScript + Vite + SQL.js |
 | **数据库**     | SQLite (通过 sql.js 运行在浏览器端)           |
 | **当前分支**   | `main`                                        |
-| **最后更新**   | 2026-03-18 (完成 emotional v1.2 情绪资源包导入导出) |
+| **最后更新**   | 2026-03-18 (完成并归档 emotional v1.2 情绪资源包导入导出) |
 | **系统健康度** | ✅ 可运行，所有核心功能正常                   |
 
 ### 项目简介
@@ -52,13 +52,14 @@
 ### 最新规划快照 (2026-03-18)
 
 - 已完成 `emotional v1.1` 里程碑归档
-- 已完成 `emotional v1.2`：预置情绪资源包批量导入/导出
+- 已完成并归档 `emotional v1.2`：预置情绪资源包批量导入/导出
 - v1.2 已交付内容：
   - Resource Center 情绪模块导入/导出入口
   - 标准 JSON 资源包导入/导出
   - Excel workbook 多 Sheet 模板、导入、导出
   - 基于 `resourceType + sceneCode` 的重复检测与 `skip/update/copy` 策略
   - 继续写入 `sys_training_resource.meta_data`，未引入 schema 重写或二进制资源打包
+ - 当前无活动 milestone，下一阶段需重新定义需求与 roadmap
 
 ### 重构目标
 将现有 "感官能力发展系统 (SIC-ADS)" 从单一垂直应用转型为 **"多系统融合的综合康复平台"**：
