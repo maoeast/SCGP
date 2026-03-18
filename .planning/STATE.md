@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: none
-milestone_name: no-active-milestone
-status: idle
-last_updated: "2026-03-17T23:55:00+08:00"
+milestone: v1.2
+milestone_name: emotional-resource-pack-import-export
+status: planning
+last_updated: "2026-03-18T10:30:00+08:00"
 progress:
-  total_phases: 0
+  total_phases: 1
   completed_phases: 0
-  total_plans: 0
+  total_plans: 1
   completed_plans: 0
 ---
 
@@ -15,14 +15,14 @@ progress:
 
 ## Project Reference
 **Core Value**: SCGP provides special education teachers and clinicians with a comprehensive, offline, local-first assessment and intervention tool.
-**Current Focus**: No active milestone
-**Plan**: Start the next scoped milestone with `$gsd-new-milestone`
+**Current Focus**: Milestone v1.2 Emotional Resource Pack Import & Export
+**Plan**: `.planning/phases/09-emotional-resource-pack-import-export/09-PLAN.md`
 
 ## Current Position
-- **Phase**: None (milestone archived)
-- **Plan**: —
-- **Status**: v1.1 archived and the planning state is idle
-- **Last activity**: 2026-03-17 — Archived milestone v1.1 Emotional Authoring & Scene Gallery
+- **Phase**: 09 Emotional Resource Pack Import & Export
+- **Plan**: `09-PLAN.md`
+- **Status**: Milestone defined and detailed plan drafted; waiting for confirmation before execution
+- **Last activity**: 2026-03-18 — Started milestone v1.2 and drafted roadmap / phase plan for emotional resource pack import/export
 
 ## Latest Shipped Milestone
 - **v1.1 Emotional Authoring & Scene Gallery**
@@ -31,12 +31,13 @@ progress:
 ## Accumulated Context
 - **Decisions**:
   - Emotional resource persistence remains on `sys_training_resource.meta_data`.
-  - Emotional scene authoring now uses dedicated visual editors instead of JSON textareas.
-  - Emotional teacher launch flow now goes through selector galleries before runtime.
-  - Batch import/export for emotional resource packs is intentionally deferred to a later milestone.
+  - Emotional scene authoring stays on dedicated visual editors, not raw JSON textareas.
+  - v1.2 will ship JSON pack import/export first and Excel workbook support second on the same normalized contract.
+  - Excel support should reuse the existing `xlsx` dependency already present in the repository.
+  - Duplicate detection should use `resourceType + sceneCode` in application logic and expose explicit import strategies.
 - **Blockers**:
-  - Repository-wide historical TypeScript errors still exist outside the v1.1 milestone scope.
+  - Repository-wide historical TypeScript errors still exist outside the emotional v1.2 scope.
 
 ## Next Action
-- Start the next milestone with `$gsd-new-milestone`.
-- If needed, pick up backlog items such as emotional resource pack import/export or report polish.
+- Review `.planning/phases/09-emotional-resource-pack-import-export/09-PLAN.md`.
+- If approved, execute with `$gsd-execute-phase 09`.

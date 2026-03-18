@@ -22,23 +22,22 @@ SCGP helps special education teachers and rehabilitation staff run structured as
 - Added selector galleries so teachers choose a concrete emotional scene before launch
 - Converted emotional training launch into explicit `resourceId` flow
 
-### No Active Milestone
+## Current Milestone: v1.2 Emotional Resource Pack Import & Export
 
-There is currently no active milestone. The planning state has been reset after v1.1 archive.
+**Goal:** Build an admin-facing batch import/export tool for preset emotional resources that supports standard JSON and Excel, and converts imported content into the current `sys_training_resource.meta_data` contract.
 
-### Next Milestone Candidates
-
-- Emotional resource pack import/export for teacher-to-teacher resource exchange
-- Emotional report polish based on richer scene taxonomy
-- Cross-module route/menu platformization after current static-route debt is prioritized
-- Cognitive assessment foundation (`MOD-03`)
-- Multi-module comprehensive reporting (`MOD-04`)
+**Target features:**
+- Export one or more emotional resources as a standard JSON pack that preserves resource metadata, tags, and typed `meta_data`
+- Import emotional resource packs from standard JSON first, then Excel workbook sheets, with preview and duplicate handling
+- Reuse the existing emotional editor normalization / validation logic so imported resources stay compatible with current Resource Center editors, scene selectors, and training runtime
 
 ### Constraints
 
-1. **No schema rewrite by default**: prefer extending current `sys_training_resource.meta_data` and current runtime contracts unless a later milestone explicitly approves schema changes.
-2. **Static-route reality still applies**: the emotional selector flow is now cleaner, but the platform is still not registry-driven.
-3. **No native deps**: do not introduce `sqlite3`, `sharp`, or other runtime native dependencies.
+1. **No schema rewrite by default**: keep persistence on `sys_training_resource.meta_data`; do not introduce milestone-scoped schema changes.
+2. **Typed contract is already real**: `src/types/emotional.ts` and `src/views/resource-center/editors/emotional-resource-contract.ts` stay the source of truth for normalization and validation.
+3. **JSON first, Excel second**: milestone execution should land JSON pack import/export first, then Excel workbook parsing/export on the same intermediate contract.
+4. **No native deps**: do not introduce `sqlite3`, `sharp`, or other runtime native dependencies.
+5. **Current UI anchor**: the tool should extend the existing Resource Center emotional resource management flow instead of creating a parallel admin-only page.
 
 ---
-*Last updated: 2026-03-17 after v1.1 milestone archive*
+*Last updated: 2026-03-18 after starting milestone v1.2 Emotional Resource Pack Import & Export*
