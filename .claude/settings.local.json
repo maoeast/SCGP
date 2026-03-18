@@ -163,7 +163,11 @@
       "Bash(commit -m \"fix\\(srs2: report优化年龄显示和\" - x岁+月\"格式\")",
       "Bash(__NEW_LINE__ cd E:/VSC/H5/Sic-ads)",
       "Skill(gsd:plan-phase)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(git config:*)",
+      "Bash(claude config get:*)",
+      "Bash(claude config set:*)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }
