@@ -24,7 +24,7 @@
 | **技术栈**     | Electron + Vue 3 + TypeScript + Vite + SQL.js |
 | **数据库**     | SQLite (通过 sql.js 运行在浏览器端)           |
 | **当前分支**   | `main`                                        |
-| **最后更新**   | 2026-03-18 (完成并归档 emotional v1.2 情绪资源包导入导出) |
+| **最后更新**   | 2026-03-18 (完成并归档 v1.3 统一评估报告 Word 导出，并清理系统管理开发者调试页) |
 | **系统健康度** | ✅ 可运行，所有核心功能正常                   |
 
 ### 项目简介
@@ -53,13 +53,25 @@
 
 - 已完成 `emotional v1.1` 里程碑归档
 - 已完成并归档 `emotional v1.2`：预置情绪资源包批量导入/导出
+- 已完成并归档 `v1.3 Unified Assessment Word Export`
+- v1.3 已交付内容：
+  - 通用 `docx` Word 导出引擎：`src/utils/export-word.ts`
+  - 量表报告 payload builder：`src/utils/assessment-word-builders.ts`
+  - SDQ / CBCL / SRS2 / CSIRS / Conners PSQ/TRS / S-M / WeeFIM 报告页统一导出 Word
+  - 清除目标量表页面中的旧 PDF / 打印导出入口
+- 已补充架构强制规则：
+  - 新量表报告导出必须且只能使用 Word
+  - 必须复用 `src/utils/export-word.ts` 与 `src/utils/assessment-word-builders.ts`
+- 已完成系统管理页“开发者调试”轻量清理：
+  - 删除数据统计、Schema迁移、模块开发者工具、班级管理测试工具卡片
+  - 保留“清空所有数据”和“软件更新”卡片
 - v1.2 已交付内容：
   - Resource Center 情绪模块导入/导出入口
   - 标准 JSON 资源包导入/导出
   - Excel workbook 多 Sheet 模板、导入、导出
   - 基于 `resourceType + sceneCode` 的重复检测与 `skip/update/copy` 策略
   - 继续写入 `sys_training_resource.meta_data`，未引入 schema 重写或二进制资源打包
- - 当前无活动 milestone，下一阶段需重新定义需求与 roadmap
+- 当前无活动 milestone，下一阶段需重新定义需求与 roadmap
 
 ### 重构目标
 将现有 "感官能力发展系统 (SIC-ADS)" 从单一垂直应用转型为 **"多系统融合的综合康复平台"**：
@@ -242,6 +254,46 @@
       - Excel 模板下载
       - 复用情绪资源编辑器的归一化/校验契约写回 `sys_training_resource.meta_data`
     - 状态：✅ 已完成
+    - 状态：✅ 已完成
+
+37. **[2026-03-18] 完成统一评估报告 Word 导出（v1.3）**
+    - 核心实现：
+      - `src/utils/export-word.ts`
+      - `src/utils/assessment-word-builders.ts`
+    - 迁移范围：
+      - `src/views/assessment/sdq/Report.vue`
+      - `src/views/assessment/cbcl/Report.vue`
+      - `src/views/assessment/srs2/Report.vue`
+      - `src/views/assessment/csirs/Report.vue`
+      - `src/views/assessment/conners-psq/Report.vue`
+      - `src/views/assessment/conners-trs/Report.vue`
+      - `src/views/assessment/sm/Report.vue`
+      - `src/views/assessment/weefim/Report.vue`
+    - 交付能力：
+      - 所有目标量表统一为真实 `.docx` 导出
+      - 删除旧“导出PDF / 打印报告”入口
+      - 复用统一 payload -> Word renderer 架构
+    - 状态：✅ 已完成并归档
+
+38. **[2026-03-18] 固化量表报告导出架构规则**
+    - 更新文件：`PROJECT_CONTEXT.md`
+    - 规则内容：
+      - 新接入量表报告必须且只能使用 Word 导出
+      - 严禁引入截屏 PDF 库
+      - 必须复用 `src/utils/export-word.ts`
+      - 必须在 `src/utils/assessment-word-builders.ts` 中实现 `buildXxxWordPayload`
+    - 状态：✅ 已完成
+
+39. **[2026-03-18] 清理系统管理页开发者调试死代码**
+    - 文件：`src/views/System.vue`
+    - 删除内容：
+      - 数据统计卡片及其统计逻辑
+      - Phase 2.0 架构迁移卡片及其跳转逻辑
+      - 模块开发者工具卡片及其跳转逻辑
+      - 班级管理测试工具卡片及其跳转逻辑
+    - 保留内容：
+      - “清空所有数据”
+      - “软件更新”
     - 状态：✅ 已完成
 
 36. **[2026-03-13] 新增仓库级 AGENTS 与执行路线图**
