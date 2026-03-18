@@ -2,27 +2,27 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: emotional-resource-pack-import-export
-status: archived
+status: in_progress
 last_updated: "2026-03-18T10:06:29+08:00"
 progress:
-  total_phases: 1
-  completed_phases: 1
+  total_phases: 5
+  completed_phases: 3
   total_plans: 1
-  completed_plans: 1
+  completed_plans: 0
 ---
 
 # STATE
 
 ## Project Reference
 **Core Value**: SCGP provides special education teachers and clinicians with a comprehensive, offline, local-first assessment and intervention tool.
-**Current Focus**: Await the next milestone definition after archiving v1.2
-**Plan**: —
+**Current Focus**: v1.3 Unified Assessment Word Export
+**Plan**: `docs/planning/2026-03-18-unified-assessment-word-export-milestone-plan.md`
 
 ## Current Position
-- **Phase**: v1.2 archived
-- **Plan**: —
-- **Status**: Milestone shipped, audited, and archived
-- **Last activity**: 2026-03-18 — Archived milestone v1.2 after passing milestone audit and tagging release candidate state
+- **Phase**: Phase A-C complete
+- **Plan**: Shared Word exporter foundation, SDQ/CBCL builders, SDQ/CBCL page migration
+- **Status**: v1.3 milestone execution started; generic `.docx` exporter landed and first two assessment reports migrated
+- **Last activity**: 2026-03-18 — Implemented generic assessment Word export base, completed SDQ/CBCL integration, and removed obsolete PDF export entry points from those pages
 
 ## Latest Shipped Milestone
 - **v1.2 Emotional Resource Pack Import & Export**
@@ -36,9 +36,11 @@ progress:
   - Excel support should reuse the existing `xlsx` dependency already present in the repository.
   - Duplicate detection should use `resourceType + sceneCode` in application logic and expose explicit import strategies.
   - Inactive duplicate targets must be restored before calling `updateResource()`, because the current API only resolves active rows for updates.
+  - v1.3 assessment report export should standardize on true `docx` generation and must not reuse the older HTML-as-Word fallback utilities.
+  - The new assessment Word export layer should accept normalized payloads and keep per-scale data shaping in builder functions instead of embedding business logic in the renderer.
 - **Blockers**:
   - Repository-wide historical TypeScript errors still exist outside the emotional v1.2 scope.
 
 ## Next Action
-- Define the next milestone.
-- If continuing immediately, use `$gsd-new-milestone`.
+- Continue Phase D-E of v1.3 Unified Assessment Word Export.
+- Next recommended targets: SRS2, CSIRS, Conners PSQ/TRS, then cross-report cleanup/verification.
