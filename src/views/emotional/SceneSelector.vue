@@ -234,6 +234,7 @@ async function loadScenes() {
       query: {
         module: 'emotional',
         targetPath: route.path,
+        subModule: resourceType.value,
       },
     })
     return

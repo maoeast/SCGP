@@ -14,7 +14,7 @@
           :key="card.path"
           class="module-card module-active"
           shadow="hover"
-          @click="goTo(card.path)"
+          @click="goTo(card.path, card.subModule)"
         >
           <div
             class="module-icon"
@@ -64,6 +64,7 @@ const trainingCards = [
     title: '情绪与场景',
     description: '通过生活场景识别情绪、观察线索，并进一步推理原因与回应方式。',
     path: '/emotional/emotion-scene/select',
+    subModule: 'emotion_scene',
     icon: PictureFilled,
     themeColor: '#E6A23C',
   },
@@ -71,18 +72,20 @@ const trainingCards = [
     title: '表达关心',
     description: '学习在不同情境下表达共情与关心，理解不同话语给他人的感受。',
     path: '/emotional/care-expression/select',
+    subModule: 'care_scene',
     icon: ChatDotRound,
     themeColor: '#409EFF',
   },
 ]
 
-function goTo(path: string) {
+function goTo(path: string, subModule?: string) {
   if (!studentId.value) {
     router.push({
       path: '/games/select-student',
       query: {
         module: 'emotional',
         targetPath: path,
+        subModule: subModule || '',
       },
     })
     return

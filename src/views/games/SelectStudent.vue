@@ -129,6 +129,11 @@ const emotionalTargetPaths = new Set([
   '/emotional/care-expression',
 ])
 
+const emotionalSubModuleTargetMap: Record<string, string> = {
+  emotion_scene: '/emotional/emotion-scene/select',
+  care_scene: '/emotional/care-expression/select',
+}
+
 function resolveEmotionalTargetPath() {
   const rawTargetPath = Array.isArray(route.query.targetPath)
     ? route.query.targetPath[0]
@@ -136,6 +141,14 @@ function resolveEmotionalTargetPath() {
 
   if (typeof rawTargetPath === 'string' && emotionalTargetPaths.has(rawTargetPath)) {
     return rawTargetPath
+  }
+
+  const rawSubModule = Array.isArray(route.query.subModule)
+    ? route.query.subModule[0]
+    : route.query.subModule
+
+  if (typeof rawSubModule === 'string' && emotionalSubModuleTargetMap[rawSubModule]) {
+    return emotionalSubModuleTargetMap[rawSubModule]
   }
 
   return '/emotional/menu'
