@@ -9,9 +9,6 @@
             <h2>Conners 教师问卷评估报告 (TRS)</h2>
           </div>
           <div class="header-actions">
-            <el-button type="success" :icon="Document" @click="exportPDF">
-              导出PDF
-            </el-button>
             <el-button type="primary" :icon="Download" @click="exportWord">
               导出Word
             </el-button>
@@ -162,10 +159,10 @@
               </div>
             </div>
             <div class="dimension-feedback">
-              <div class="feedback-core" v-if="dim.levelContent" v-html="formatContent(replacePlaceholders(dim.levelContent, { dimensionName: dim.name }))"></div>
+              <div class="feedback-core" v-if="dim.levelContent" v-html="formatContent(replacePlaceholders(dim.levelContent || '', { dimensionName: dim.name || '' }))"></div>
               <div class="feedback-section" v-if="dim.levelAdvice && dim.shouldShowAdvice">
                 <strong>💡 专业建议：</strong>
-                <div v-html="formatContent(replacePlaceholders(dim.levelAdvice, { dimensionName: dim.name }))"></div>
+                <div v-html="formatContent(replacePlaceholders(dim.levelAdvice || '', { dimensionName: dim.name || '' }))"></div>
               </div>
             </div>
           </div>
@@ -229,12 +226,19 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Download, Document, Clock } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, Clock } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { ConnersTRSAPI } from '@/database/api'
 import { getDatabase } from '@/database/init'
 import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
+import type { ConnersExportData } from '@/utils/docxExporter'
 import type { ConnersTRSAssessment } from '@/types/conners'
+import { buildConnersWordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
+
+interface ConnersTRSReportAssessment extends ConnersTRSAssessment {
+  student_name: string
+}
 
 // T分阈值常量
 const TSCORE_CLINICAL_THRESHOLD = 70
@@ -263,13 +267,11 @@ const LEVEL_TEXTS: Record<string, string> = {
 const router = useRouter()
 const route = useRoute()
 const db = getDatabase()
-const trsAPI = new ConnersTRSAPI(db)
-
 // 获取Conners配置
 const connersConfig = ASSESSMENT_LIBRARY.conners
 
 // 响应式数据
-const assessment = ref<ConnersTRSAssessment | null>(null)
+const assessment = ref<ConnersTRSReportAssessment | null>(null)
 const radarChartRef = ref<HTMLElement | null>(null)
 let radarChart: echarts.ECharts | null = null
 let resizeHandler: (() => void) | null = null
@@ -435,24 +437,10 @@ const goBack = () => {
   router.back()
 }
 
-// 导出PDF
-const exportPDF = async () => {
-  try {
-    const { exportToPDF } = await import('@/utils/exportUtils')
-    await exportToPDF('report-content', `Conners-TRS评估报告_${assessment.value?.student_name}_${new Date().toLocaleDateString()}`)
-    ElMessage.success('PDF导出成功')
-  } catch (error) {
-    console.error('导出PDF失败:', error)
-    ElMessage.error('PDF导出失败，请重试')
-  }
-}
-
 // 导出Word
 const exportWord = async () => {
   try {
-    const { exportConnersToWord } = await import('@/utils/docxExporter')
-
-    const reportContent = {
+    const reportContent: ConnersExportData = {
       student: {
         name: assessment.value?.student_name || '',
         gender: assessment.value?.gender || '未知',
@@ -469,12 +457,12 @@ const exportWord = async () => {
         invalid_reason: assessment.value?.invalid_reason
       },
       dimensions: dimensionScores.value.map(dim => ({
-        name: dim.name,
+        name: dim.name || '',
         rawScore: dim.rawScore,
         tScore: dim.tScore,
         level: dim.level,
-        description: dim.levelContent,
-        advice: dim.levelAdvice
+        description: dim.levelContent || '',
+        advice: dim.levelAdvice || ''
       })),
       totalScore: totalTScore.value,
       totalLevel: totalScoreRule.value?.severity === 'danger' ? 'clinical' :
@@ -483,10 +471,11 @@ const exportWord = async () => {
       advice: totalScoreRule.value?.advice || []
     }
 
-    await exportConnersToWord(
+    const payload = buildConnersWordPayload(
       reportContent,
       `Conners-TRS评估报告_${assessment.value?.student_name}_${new Date().toLocaleDateString()}`
     )
+    await exportWordDocument(payload)
     ElMessage.success('Word导出成功')
   } catch (error) {
     console.error('导出Word失败:', error)
@@ -622,7 +611,7 @@ const loadAssessment = async () => {
       return
     }
 
-    assessment.value = result
+    assessment.value = result as ConnersTRSReportAssessment
 
     // 初始化图表
     await nextTick()

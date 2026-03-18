@@ -5,7 +5,7 @@
         <div class="header-content">
           <h2>S-M量表评估报告</h2>
           <div class="header-actions">
-            <el-button type="success" :icon="Document" @click="exportWord">
+            <el-button type="primary" :icon="Download" @click="exportWord">
               导出Word
             </el-button>
           </div>
@@ -227,8 +227,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Download, Document, Printer } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { Download } from '@element-plus/icons-vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { RadarChart } from 'echarts/charts'
@@ -237,6 +237,8 @@ import VChart from 'vue-echarts'
 import { useStudentStore } from '@/stores/student'
 import { SMAssessmentAPI } from '@/database/api'
 import { SMReportTemplate } from '@/utils/reportTemplates'
+import { buildSMWordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 
 // 注册ECharts组件
 use([
@@ -591,6 +593,7 @@ const radarChartOption = computed(() => {
         trigger: 'item',
         formatter: (params: any) => {
           const indicator = radarData[params.dataIndex]
+          if (!indicator) return ''
           return `${indicator.name}: ${indicator.value}/${indicator.max}题 (${Math.round((indicator.value / indicator.max) * 100)}%)`
         }
       },
@@ -720,11 +723,11 @@ const getLevelClass = (level: string) => {
 const getResultDescription = (level: string) => {
   // 使用SMReportTemplate获取统一的结果描述
   const levelInfo = getLevelInfo(level)
-  if (!levelInfo || !levelInfo.resultDescription) {
+  if (!levelInfo || !levelInfo.description) {
     return '暂无描述'
   }
 
-  return levelInfo.resultDescription
+  return levelInfo.description
 }
 
 // 获取训练重点
@@ -969,53 +972,9 @@ const getQuestionsByDimension = (dimension: string) => {
   return result
 }
 
-// 导出PDF - 使用浏览器打印功能
-const exportPDF = async () => {
-  const reportElement = document.getElementById('report-content')
-  if (!reportElement) {
-    ElMessage.error('找不到报告内容，请刷新页面后重试')
-    return
-  }
-
-  try {
-    // 显示使用说明
-    const result = await ElMessageBox.confirm(
-      '将打开新的打印窗口，请按以下步骤操作：\n\n' +
-      '1. 在新窗口中，使用浏览器的打印功能（Ctrl+P）\n' +
-      '2. 选择"目标打印机"为"另存为PDF"或"Microsoft Print to PDF"\n' +
-      '3. 调整页面设置（建议选择A4纸张）\n' +
-      '4. 点击"保存"按钮\n\n' +
-      '注意：如果浏览器阻止了弹窗，请允许此网站的弹窗。',
-      'PDF导出说明',
-      {
-        confirmButtonText: '我知道了',
-        cancelButtonText: '取消',
-        type: 'info',
-        dangerouslyUseHTMLString: true,
-        center: true,
-        customClass: 'pdf-export-dialog'
-      }
-    )
-
-    // 使用新的打印方案
-    const { exportToPDFSimple } = await import('@/utils/printHelper')
-    await exportToPDFSimple(
-      'report-content',
-      `S-M评估报告_${student.value?.name}_${new Date().toLocaleDateString()}`
-    )
-
-  } catch (error) {
-    if (error !== 'cancel' && error !== 'close') {
-      console.error('导出失败:', error)
-      ElMessage.error('导出失败，请重试')
-    }
-  }
-}
-
 // 导出Word
 const exportWord = async () => {
   try {
-    const { exportSMToWord } = await import('@/utils/docxExporter')
     const { SMReportTemplate } = await import('@/utils/reportTemplates')
 
     // 获取等级信息
@@ -1059,20 +1018,16 @@ const exportWord = async () => {
       guidance: SMReportTemplate.familyGuidance[levelKey as keyof typeof SMReportTemplate.familyGuidance] || []
     }
 
-    await exportSMToWord(
+    const payload = buildSMWordPayload(
       reportContent,
       `S-M评估报告_${student.value?.name}_${new Date().toLocaleDateString()}`
     )
+    await exportWordDocument(payload)
     ElMessage.success('Word导出成功')
   } catch (error) {
     console.error('导出Word失败:', error)
     ElMessage.error('Word导出失败，请重试')
   }
-}
-
-// 打印报告
-const printReport = () => {
-  window.print()
 }
 
 // 初始化

@@ -9,7 +9,7 @@
             <h2>SRS-2 社交反应量表评估报告</h2>
           </div>
           <div class="header-actions">
-            <el-button type="success" :icon="Document" @click="exportPDF">导出PDF</el-button>
+            <el-button type="primary" :icon="Download" @click="exportWord">导出Word</el-button>
           </div>
         </div>
       </template>
@@ -157,11 +157,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Document, WarningFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, WarningFilled } from '@element-plus/icons-vue'
 import { getDatabase } from '@/database/init'
-import type { SRS2DimensionDetail, SRS2StructuredFeedback } from '@/strategies/assessment/SRS2Driver'
+import type { ScoreResult } from '@/types/assessment'
+import type { SRS2DimensionDetail, SRS2StructuredFeedback } from '@/types/srs2'
 import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
 import { SRS2Driver } from '@/strategies/assessment/SRS2Driver'
+import { buildSRS2WordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 
 // SRS-2 评估记录类型
 interface SRS2AssessRecord {
@@ -274,8 +277,31 @@ const goBack = () => {
   router.back()
 }
 
-const exportPDF = () => {
-  ElMessage.info('PDF 导出功能开发中')
+const exportWord = async () => {
+  if (!assessData.value || !studentInfo.value || !feedback.value) {
+    ElMessage.warning('报告数据尚未加载完成')
+    return
+  }
+
+  try {
+    const payload = buildSRS2WordPayload({
+      studentName: studentInfo.value.name,
+      gender: studentInfo.value.gender,
+      ageMonths: studentInfo.value.ageMonths,
+      assessmentDate: assessData.value.start_time,
+      totalRawScore: assessData.value.total_raw_score,
+      totalTScore: assessData.value.total_t_score,
+      totalLevelText: totalLevelText.value,
+      feedback: feedback.value,
+      dimensionDetails: dimensionScores.value,
+    })
+
+    await exportWordDocument(payload)
+    ElMessage.success('Word 文档导出成功')
+  } catch (error: any) {
+    console.error('导出 Word 失败:', error)
+    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+  }
 }
 
 // 格式化 Markdown 文本（支持 **粗体**）
@@ -319,7 +345,7 @@ const loadAssessData = async () => {
     const dimensionScoresData = JSON.parse(record.dimension_scores)
 
     // 4. 构建 ScoreResult 对象
-    const scoreResult = {
+    const scoreResult: ScoreResult = {
       scaleCode: 'srs2',
       studentId: record.student_id,
       assessmentDate: record.start_time,
@@ -339,7 +365,7 @@ const loadAssessData = async () => {
       level: record.total_level,
       levelCode: record.total_level,
       rawAnswers: {},
-      timing: {},
+      timing: { totalTime: 0, averageTime: 0 },
       extraData: {
         totalTScore: record.total_t_score,
         dimensionTScores: Object.fromEntries(
@@ -353,8 +379,9 @@ const loadAssessData = async () => {
     driver.setStudentContext({
       id: record.student_id,
       name: studentInfo.value?.name || '孩子',
+      birthday: '',
       ageInMonths: record.age_months,
-      gender: record.gender
+      gender: record.gender === '女' ? '女' : '男'
     })
 
     // 6. 调用 generateFeedback 获取完整的结构化反馈

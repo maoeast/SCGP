@@ -5,7 +5,7 @@
         <div class="header-content">
           <h2>WeeFIM量表评估报告</h2>
           <div class="header-actions">
-            <el-button type="success" :icon="Document" @click="exportWord">
+            <el-button type="primary" :icon="Download" @click="exportWord">
               导出Word
             </el-button>
           </div>
@@ -288,9 +288,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Download, Document, Printer, Promotion, Reading } from '@element-plus/icons-vue'
-import { exportReportToPDF } from '@/utils/reportExporter'
+import { ElMessage } from 'element-plus'
+import { Download, Promotion, Reading } from '@element-plus/icons-vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { RadarChart } from 'echarts/charts'
@@ -298,6 +297,8 @@ import { TitleComponent, LegendComponent, TooltipComponent } from 'echarts/compo
 import VChart from 'vue-echarts'
 import { useStudentStore } from '@/stores/student'
 import { WeeFIMAPI } from '@/database/api'
+import { buildWeeFIMWordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 import { getWeeFIMLevelAndDescription, weefimRecommendations } from '@/database/weefim-data'
 
 // 注册ECharts组件
@@ -847,61 +848,9 @@ const getEnvironmentSuggestions = () => {
   ]
 }
 
-// 导出PDF - 使用统一导出方案（保留雷达图）
-const exportPDF = async () => {
-  // 检查数据是否已加载
-  if (!reportData.value || !assessmentDetails.value || assessmentDetails.value.length === 0) {
-    ElMessage.error('报告数据尚未加载完成，请稍后再试')
-    return
-  }
-
-  const reportElement = document.getElementById('report-content')
-  if (!reportElement) {
-    ElMessage.error('找不到报告内容，请刷新页面后重试')
-    return
-  }
-
-  try {
-    // 显示使用说明
-    await ElMessageBox.confirm(
-      '将导出高质量PDF报告，保留雷达图等可视化元素。\n\n' +
-      '特点：\n' +
-      '• 保留原始页面样式和布局\n' +
-      '• ECharts雷达图转图片展示\n' +
-      '• 所见即所得，效果专业\n' +
-      '• 需要允许浏览器弹出窗口',
-      'PDF导出说明',
-      {
-        confirmButtonText: '继续导出',
-        cancelButtonText: '取消',
-        type: 'info',
-        dangerouslyUseHTMLString: true,
-        center: true
-      }
-    )
-
-    // 使用统一导出函数
-    await exportReportToPDF(
-      'report-content',
-      `WeeFIM评估报告_${student.value?.name}_${new Date().toLocaleDateString()}`,
-      'weefim' as const
-    )
-
-    ElMessage.success('PDF导出成功，请在打印对话框中另存为PDF')
-
-  } catch (error) {
-    if (error !== 'cancel' && error !== 'close') {
-      console.error('导出失败:', error)
-      ElMessage.error('导出失败，请重试')
-    }
-  }
-}
-
 // 导出Word
 const exportWord = async () => {
   try {
-    const { exportWeeFIMToWord } = await import('@/utils/docxExporter')
-
     const reportContent = {
       student: {
         name: student.value?.name || '',
@@ -933,20 +882,16 @@ const exportWord = async () => {
       }
     }
 
-    await exportWeeFIMToWord(
+    const payload = buildWeeFIMWordPayload(
       reportContent,
       `WeeFIM评估报告_${student.value?.name}_${new Date().toLocaleDateString()}`
     )
+    await exportWordDocument(payload)
     ElMessage.success('Word导出成功')
   } catch (error) {
     console.error('导出Word失败:', error)
     ElMessage.error('Word导出失败，请重试')
   }
-}
-
-// 打印报告
-const printReport = () => {
-  window.print()
 }
 
 // 初始化

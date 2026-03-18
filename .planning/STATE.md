@@ -6,9 +6,9 @@ status: in_progress
 last_updated: "2026-03-18T10:06:29+08:00"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 5
   total_plans: 1
-  completed_plans: 0
+  completed_plans: 1
 ---
 
 # STATE
@@ -19,10 +19,10 @@ progress:
 **Plan**: `docs/planning/2026-03-18-unified-assessment-word-export-milestone-plan.md`
 
 ## Current Position
-- **Phase**: Phase A-C complete
-- **Plan**: Shared Word exporter foundation, SDQ/CBCL builders, SDQ/CBCL page migration
-- **Status**: v1.3 milestone execution started; generic `.docx` exporter landed and first two assessment reports migrated
-- **Last activity**: 2026-03-18 — Implemented generic assessment Word export base, completed SDQ/CBCL integration, and removed obsolete PDF export entry points from those pages
+- **Phase**: Phase A-E complete
+- **Plan**: Shared Word exporter foundation, per-scale payload builders, full report-page migration, targeted validation
+- **Status**: v1.3 implementation complete; all targeted assessment reports now use the universal `.docx` exporter
+- **Last activity**: 2026-03-18 — Migrated SRS2 / CSIRS / Conners / SM / WeeFIM to the universal Word export flow, removed legacy PDF/export code, and completed targeted type-check validation
 
 ## Latest Shipped Milestone
 - **v1.2 Emotional Resource Pack Import & Export**
@@ -42,5 +42,5 @@ progress:
   - Repository-wide historical TypeScript errors still exist outside the emotional v1.2 scope.
 
 ## Next Action
-- Continue Phase D-E of v1.3 Unified Assessment Word Export.
-- Next recommended targets: SRS2, CSIRS, Conners PSQ/TRS, then cross-report cleanup/verification.
+- Formalize v1.3 milestone artifacts if you want GSD audit/archive to run cleanly.
+- After that, run milestone audit and archive, then push the resulting commit/tag.
