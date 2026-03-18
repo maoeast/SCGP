@@ -82,6 +82,34 @@ function getRawDb(db: DbLike) {
   return typeof db.getRawDB === 'function' ? db.getRawDB() : db
 }
 
+function queryAll(db: DbLike, sql: string, params: any[] = []): any[] {
+  if (typeof db.all === 'function') {
+    return db.all(sql, params)
+  }
+
+  const rawDb = getRawDb(db)
+
+  if (typeof rawDb.all === 'function') {
+    return rawDb.all(sql, params)
+  }
+
+  if (typeof rawDb.prepare === 'function') {
+    const stmt = rawDb.prepare(sql)
+    if (params.length > 0 && typeof stmt.bind === 'function') {
+      stmt.bind(params.map((param) => param === undefined ? null : param))
+    }
+
+    const rows: any[] = []
+    while (stmt.step()) {
+      rows.push(stmt.getAsObject())
+    }
+    stmt.free()
+    return rows
+  }
+
+  return []
+}
+
 function getLastInsertId(db: DbLike): number {
   if (typeof db.lastInsertId === 'function') {
     return db.lastInsertId()
@@ -267,16 +295,12 @@ export class EmotionalTrainingAPI {
 
   getSessionDetails(sessionId: number) {
     const db = getActiveDb()
-    const rawDb = getRawDb(db)
-    if (typeof rawDb.all === 'function') {
-      return rawDb.all(`
-        SELECT *
-        FROM emotional_training_detail
-        WHERE session_id = ?
-        ORDER BY step_index ASC, id ASC
-      `, [sessionId])
-    }
-    return []
+    return queryAll(db, `
+      SELECT *
+      FROM emotional_training_detail
+      WHERE session_id = ?
+      ORDER BY step_index ASC, id ASC
+    `, [sessionId])
   }
 
   getRecordList(filters?: {
@@ -286,10 +310,6 @@ export class EmotionalTrainingAPI {
     endDate?: string
   }): EmotionalSessionRecordItem[] {
     const db = getActiveDb()
-    const rawDb = getRawDb(db)
-    if (typeof rawDb.all !== 'function') {
-      return []
-    }
 
     let sql = `
       SELECT
@@ -344,7 +364,7 @@ export class EmotionalTrainingAPI {
 
     sql += ' ORDER BY s.created_at DESC'
 
-    return rawDb.all(sql, params).map((row: any) => ({
+    return queryAll(db, sql, params).map((row: any) => ({
       sessionId: row.session_id,
       trainingRecordId: row.training_record_id,
       studentId: row.student_id,
@@ -367,12 +387,7 @@ export class EmotionalTrainingAPI {
 
   getStudentsWithEmotionalSessions(): Array<{ id: number; name: string }> {
     const db = getActiveDb()
-    const rawDb = getRawDb(db)
-    if (typeof rawDb.all !== 'function') {
-      return []
-    }
-
-    return rawDb.all(`
+    return queryAll(db, `
       SELECT DISTINCT st.id, st.name
       FROM emotional_training_session s
       INNER JOIN student st ON st.id = s.student_id
@@ -381,6 +396,7 @@ export class EmotionalTrainingAPI {
   }
 
   getStudentReportPayload(studentId: number): EmotionalStudentReportPayload {
+    const db = getActiveDb()
     const records = this.getRecordList({ studentId })
     if (records.length === 0) {
       return {
@@ -415,7 +431,7 @@ export class EmotionalTrainingAPI {
     const sessionDetails = records.map((record) => {
       const session = this.getSessionByTrainingRecordId(record.trainingRecordId)
       const detailRows = this.getSessionDetails(record.sessionId)
-      const resourceRow = getActiveDb().get(
+      const resourceRow = db.get(
         'SELECT meta_data FROM sys_training_resource WHERE id = ?',
         [record.resourceId]
       )
@@ -453,7 +469,7 @@ export class EmotionalTrainingAPI {
       .filter((item) => item.record.subModule === 'care_scene')
       .forEach((item) => {
         const summaryType = item.record.trainingRecordId
-          ? getActiveDb().get('SELECT raw_data FROM training_records WHERE id = ?', [item.record.trainingRecordId])?.raw_data
+          ? db.get('SELECT raw_data FROM training_records WHERE id = ?', [item.record.trainingRecordId])?.raw_data
           : null
         const parsed = summaryType ? JSON.parse(summaryType) : null
         const key = parsed?.dominantChoiceType || 'unknown'

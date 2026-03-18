@@ -86,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import CarePreferencePieChart from '@/components/emotional/charts/CarePreferencePieChart.vue'
 import EmotionAccuracyTrendChart from '@/components/emotional/charts/EmotionAccuracyTrendChart.vue'
@@ -98,10 +98,13 @@ const route = useRoute()
 const api = new EmotionalTrainingAPI()
 
 const inheritedQuery = computed(() => ({ ...route.query }))
+const routeStudentId = computed<number | undefined>(() => {
+  const value = Array.isArray(route.query.studentId) ? route.query.studentId[0] : route.query.studentId
+  const numeric = Number(value || 0)
+  return numeric > 0 ? numeric : undefined
+})
 const studentOptions = ref<Array<{ id: number; name: string }>>([])
-const selectedStudentId = ref<number | undefined>(
-  Number(Array.isArray(route.query.studentId) ? route.query.studentId[0] : route.query.studentId || 0) || undefined
-)
+const selectedStudentId = ref<number | undefined>(routeStudentId.value)
 const reportPayload = ref<EmotionalStudentReportPayload | null>(null)
 
 function loadStudentOptions() {
@@ -118,6 +121,21 @@ function loadReport() {
   }
   reportPayload.value = api.getStudentReportPayload(selectedStudentId.value)
 }
+
+watch(routeStudentId, (value) => {
+  if (value && value !== selectedStudentId.value) {
+    selectedStudentId.value = value
+    return
+  }
+
+  if (!value && selectedStudentId.value && !studentOptions.value.some((student) => student.id === selectedStudentId.value)) {
+    selectedStudentId.value = undefined
+  }
+})
+
+watch(selectedStudentId, () => {
+  loadReport()
+})
 
 onMounted(() => {
   loadStudentOptions()
