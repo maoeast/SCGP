@@ -165,14 +165,58 @@ function buildRawEmotionSceneErrors(metadata: Partial<EmotionSceneResourceMeta> 
 
   if (!Array.isArray(metadata?.emotionClues) || metadata.emotionClues.length === 0) {
     errors.push('请至少提供 1 条情绪线索')
+  } else if (metadata.emotionClues.every((clue) => !normalizeString(clue))) {
+    errors.push('情绪线索不能为空')
   }
 
   if (!Array.isArray(metadata?.prompts) || metadata.prompts.length === 0) {
     errors.push('请至少提供 1 个社交推理问题')
+  } else {
+    metadata.prompts.forEach((prompt, index) => {
+      if (!normalizeString(prompt.questionId)) {
+        errors.push(`第 ${index + 1} 个推理问题缺少 questionId`)
+      }
+      if (!normalizeString(prompt.questionText)) {
+        errors.push(`第 ${index + 1} 个推理问题缺少题目文字`)
+      }
+      if (!Array.isArray(prompt.options) || prompt.options.length < 2) {
+        errors.push(`第 ${index + 1} 个推理问题至少需要 2 个选项`)
+        return
+      }
+
+      const correctCount = prompt.options.filter((option) => normalizeBoolean(option.isCorrect)).length
+      if (correctCount !== 1) {
+        errors.push(`第 ${index + 1} 个推理问题需要且只能有 1 个正确答案`)
+      }
+
+      prompt.options.forEach((option, optionIndex) => {
+        if (!normalizeString(option.id)) {
+          errors.push(`第 ${index + 1} 个推理问题的第 ${optionIndex + 1} 个选项缺少 optionId`)
+        }
+        if (!normalizeString(option.text)) {
+          errors.push(`第 ${index + 1} 个推理问题的第 ${optionIndex + 1} 个选项缺少文字`)
+        }
+        if (!normalizeString(option.feedbackText)) {
+          errors.push(`第 ${index + 1} 个推理问题的第 ${optionIndex + 1} 个选项缺少反馈说明`)
+        }
+      })
+    })
   }
 
   if (!Array.isArray(metadata?.solutions) || metadata.solutions.length === 0) {
     errors.push('请至少提供 1 个问题解决方案')
+  } else {
+    metadata.solutions.forEach((solution, index) => {
+      if (!normalizeString(solution.id)) {
+        errors.push(`第 ${index + 1} 个问题解决方案缺少 solutionId`)
+      }
+      if (!normalizeString(solution.text)) {
+        errors.push(`第 ${index + 1} 个问题解决方案缺少文字`)
+      }
+      if (!normalizeString(solution.explanation)) {
+        errors.push(`第 ${index + 1} 个问题解决方案缺少解释说明`)
+      }
+    })
   }
 
   return errors
@@ -195,10 +239,34 @@ function buildRawCareSceneErrors(metadata: Partial<CareSceneResourceMeta> | unde
 
   if (!Array.isArray(metadata?.utterances) || metadata.utterances.length === 0) {
     errors.push('请至少提供 1 条表达者话术')
+  } else {
+    metadata.utterances.forEach((utterance, index) => {
+      if (!normalizeString(utterance.id)) {
+        errors.push(`第 ${index + 1} 条表达者话术缺少 utteranceId`)
+      }
+      if (!normalizeString(utterance.text)) {
+        errors.push(`第 ${index + 1} 条表达者话术缺少文字`)
+      }
+      if (!normalizeString(utterance.effect)) {
+        errors.push(`第 ${index + 1} 条表达者话术缺少效果说明`)
+      }
+    })
   }
 
   if (!Array.isArray(metadata?.receiverOptions) || metadata.receiverOptions.length === 0) {
     errors.push('请至少提供 1 条接收者选项')
+  } else {
+    metadata.receiverOptions.forEach((option, index) => {
+      if (!normalizeString(option.id)) {
+        errors.push(`第 ${index + 1} 条接收者选项缺少 optionId`)
+      }
+      if (!normalizeString(option.text)) {
+        errors.push(`第 ${index + 1} 条接收者选项缺少文字`)
+      }
+      if (!normalizeString(option.reasonText)) {
+        errors.push(`第 ${index + 1} 条接收者选项缺少原因说明`)
+      }
+    })
   }
 
   return errors
