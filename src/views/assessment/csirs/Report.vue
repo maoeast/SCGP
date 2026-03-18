@@ -8,9 +8,6 @@
             <h2>CSIRS感觉统合评估报告</h2>
           </div>
           <div class="header-actions">
-            <el-button type="success" :icon="Document" @click="exportPDF">
-              导出PDF
-            </el-button>
             <el-button type="primary" :icon="Download" @click="exportWord">
               导出Word
             </el-button>
@@ -168,13 +165,15 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Download, Document, Clock } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, Clock } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { csirsDimensions, getDimensionsByAge } from '@/database/csirs-questions'
 import { getEvaluationLevel as getEvalLevel } from '@/database/csirs-conversion'
 import { getDatabase } from '@/database/init'
 import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
 import type { CSIRSAssessment, CSIRSDimension } from '@/types/csirs'
+import { buildCSIRSWordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 
 // T分阈值常量
 const TSCORE_EXCELLENT_THRESHOLD = 40
@@ -322,23 +321,9 @@ const goBack = () => {
   router.back()
 }
 
-// 导出PDF
-const exportPDF = async () => {
-  try {
-    const { exportToPDF } = await import('@/utils/exportUtils')
-    await exportToPDF('report-content', `CSIRS评估报告_${assessment.value?.student_name}_${new Date().toLocaleDateString()}`)
-    ElMessage.success('PDF导出成功')
-  } catch (error) {
-    console.error('导出PDF失败:', error)
-    ElMessage.error('PDF导出失败，请重试')
-  }
-}
-
 // 导出Word
 const exportWord = async () => {
   try {
-    const { exportCSIRSToWord } = await import('@/utils/docxExporter')
-
     const reportContent = {
       student: {
         name: assessment.value?.student_name || '',
@@ -365,10 +350,11 @@ const exportWord = async () => {
       advice: totalScoreRule.value?.advice || []
     }
 
-    await exportCSIRSToWord(
+    const payload = buildCSIRSWordPayload(
       reportContent,
       `CSIRS评估报告_${assessment.value?.student_name}_${new Date().toLocaleDateString()}`
     )
+    await exportWordDocument(payload)
     ElMessage.success('Word导出成功')
   } catch (error) {
     console.error('导出Word失败:', error)

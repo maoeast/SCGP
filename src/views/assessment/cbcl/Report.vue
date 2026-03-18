@@ -9,7 +9,7 @@
             <h2>CBCL 儿童行为量表评估报告</h2>
           </div>
           <div class="header-actions">
-            <el-button type="success" :icon="Document" @click="exportPDF">导出PDF</el-button>
+            <el-button type="primary" :icon="Download" @click="exportWord">导出Word</el-button>
           </div>
         </div>
       </template>
@@ -258,7 +258,7 @@
     <!-- Actions -->
     <div class="report-actions">
       <el-button @click="goBack">返回</el-button>
-      <el-button type="primary" @click="exportPDF">打印报告</el-button>
+      <el-button type="primary" @click="exportWord">导出Word</el-button>
     </div>
   </div>
 </template>
@@ -267,11 +267,14 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Document } from '@element-plus/icons-vue'
+import { ArrowLeft, Download } from '@element-plus/icons-vue'
 import { getDatabase } from '@/database/init'
 import * as echarts from 'echarts'
 import { CBCLDriver } from '@/strategies/assessment/CBCLDriver'
 import type { CBCLSocialCompetenceResult, CBCLFactorScore } from '@/strategies/assessment/CBCLDriver'
+import type { DimensionScore, ScoreResult } from '@/types/assessment'
+import { buildCBCLWordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 
 // CBCL 因子名称映射 (中文 -> 英文代码)
 // 用于匹配 feedbackConfig.js 中的 dimensions 配置
@@ -457,13 +460,13 @@ const factorScores = computed<CBCLFactorScore[]>(() => {
   console.log('Report.vue: factorScores 计算中，assessData:', assessData.value)
   if (!assessData.value) return []
   try {
-    const rawScores = JSON.parse(assessData.value.behavior_raw_scores || '{}')
-    const tScores = JSON.parse(assessData.value.factor_t_scores || '{}')
+    const rawScores = JSON.parse(assessData.value.behavior_raw_scores || '{}') as Record<string, number>
+    const tScores = JSON.parse(assessData.value.factor_t_scores || '{}') as Record<string, number>
     console.log('Report.vue: 解析后的 rawScores:', rawScores, 'tScores:', tScores)
 
-    const result = Object.entries(rawScores).map(([name, rawScore]) => {
+    const result: CBCLFactorScore[] = Object.entries(rawScores).map(([name, rawScore]) => {
       const tScore = tScores[name] || 50
-      const level = tScore >= 70 ? 'clinical' : tScore >= 65 ? 'borderline' : 'normal'
+      const level: CBCLFactorScore['level'] = tScore >= 70 ? 'clinical' : tScore >= 65 ? 'borderline' : 'normal'
       return {
         code: FEEDBACK_FACTOR_MAP[name] || name, // 使用英文代码匹配配置
         name, // 保持中文名称用于显示
@@ -642,8 +645,60 @@ const goBack = () => {
   router.back()
 }
 
-const exportPDF = () => {
-  ElMessage.info('PDF 导出功能开发中')
+const exportWord = async () => {
+  if (!assessData.value || !studentInfo.value || !feedback.value) {
+    ElMessage.warning('报告数据尚未加载完成')
+    return
+  }
+
+  try {
+    const payload = buildCBCLWordPayload({
+      studentName: studentInfo.value.name,
+      gender: studentInfo.value.gender,
+      ageMonths: studentInfo.value.ageMonths,
+      assessmentDate: assessData.value.start_time,
+      normGroupLabel: normGroupLabel.value,
+      totalProblemsScore: totalProblemsScore.value,
+      totalProblemsTScore: totalProblemsTScore.value,
+      totalLevelText: assessData.value.summary_level === 'clinical'
+        ? '可能异常'
+        : assessData.value.summary_level === 'borderline'
+          ? '边缘/需关注'
+          : '正常',
+      internalizingTScore: assessData.value.internalizing_t_score,
+      externalizingTScore: assessData.value.externalizing_t_score,
+      socialFactors: socialFactors.value.map((factor) => ({
+        name: factor.name,
+        score: factor.score,
+        tScore: factor.tScore,
+        status: factor.status,
+      })),
+      syndromeRows: syndromeTableData.value.map((row) => ({
+        name: row.name,
+        rawScore: row.rawScore,
+        tScore: row.tScore,
+        levelName: row.levelName,
+        summary: row.summary,
+        advice: row.advice,
+      })),
+      feedback: feedback.value,
+      overallAssessment: overallAssessment.value
+        ? {
+            title: overallAssessment.value.title,
+            severity: overallAssessment.value.severity,
+            content: overallAssessment.value.content,
+            detail: overallAssessment.value.detail,
+            advice: overallAssessment.value.advice,
+          }
+        : null,
+    })
+
+    await exportWordDocument(payload)
+    ElMessage.success('Word 文档导出成功')
+  } catch (error: any) {
+    console.error('导出 Word 失败:', error)
+    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+  }
 }
 
 // 初始化图表
@@ -675,6 +730,7 @@ const initChart = () => {
       formatter: (params: any) => {
         const p = params[0]
         const factor = factors[p.dataIndex]
+        if (!factor) return ''
         return `${factor.name}<br/>原始分: ${factor.rawScore}<br/>T分数: ${factor.tScore}`
       }
     },
@@ -775,7 +831,7 @@ const loadAssessData = async () => {
     const rawAnswers = JSON.parse(record.raw_answers || '{}')
 
     // 构建 dimensions 数组
-    const dimensions: any[] = []
+    const dimensions: DimensionScore[] = []
 
     // 添加社会能力维度
     if (record.social_activity_score !== null) {
@@ -880,7 +936,7 @@ const loadAssessData = async () => {
     }
 
     // 组装完整的 ScoreResult
-    const scoreResult = {
+    const scoreResult: ScoreResult = {
       scaleCode: 'cbcl',
       studentId: record.student_id,
       assessmentDate: record.start_time,
@@ -890,7 +946,7 @@ const loadAssessData = async () => {
       level: record.summary_level === 'clinical' ? '可能异常' : record.summary_level === 'borderline' ? '边缘/需关注' : '正常',
       levelCode: record.summary_level,
       rawAnswers: rawAnswers,
-      timing: { startTime: record.start_time, endTime: record.end_time },
+      timing: { totalTime: 0, averageTime: 0 },
       extraData: {
         socialCompetence: socialCompetenceResult,
         behaviorProblems: behaviorProblemsResult,

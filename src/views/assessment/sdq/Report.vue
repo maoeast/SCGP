@@ -9,7 +9,7 @@
             <h2>SDQ 长处和困难问卷评估报告</h2>
           </div>
           <div class="header-actions">
-            <el-button type="success" :icon="Document" @click="exportPDF">导出PDF</el-button>
+            <el-button type="primary" :icon="Download" @click="exportWord">导出Word</el-button>
           </div>
         </div>
       </template>
@@ -204,11 +204,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Document } from '@element-plus/icons-vue'
+import { ArrowLeft, Download } from '@element-plus/icons-vue'
 import { getDatabase } from '@/database/init'
 import type { SDQAssessRecord, SDQDimensionDetail, SDQStructuredFeedback } from '@/types/sdq'
+import type { ScoreResult } from '@/types/assessment'
 import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
 import { SDQDriver } from '@/strategies/assessment/SDQDriver'
+import { buildSDQWordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 
 // Props
 const route = useRoute()
@@ -386,8 +389,32 @@ const goBack = () => {
   router.back()
 }
 
-const exportPDF = () => {
-  ElMessage.info('PDF 导出功能开发中')
+const exportWord = async () => {
+  if (!assessData.value || !studentInfo.value || !feedback.value) {
+    ElMessage.warning('报告数据尚未加载完成')
+    return
+  }
+
+  try {
+    const payload = buildSDQWordPayload({
+      studentName: studentInfo.value.name,
+      ageMonths: studentInfo.value.ageMonths,
+      assessmentDate: assessData.value.start_time,
+      totalDifficultiesScore: assessData.value.total_difficulties_score,
+      totalLevelText: totalLevelText.value,
+      prosocialScore: assessData.value.prosocial_score,
+      prosocialLevelText: prosocialLevelText.value,
+      feedback: feedback.value,
+      dimensionDetails: dimensionScores.value,
+      structuredAdvice: structuredAdvice.value,
+    })
+
+    await exportWordDocument(payload)
+    ElMessage.success('Word 文档导出成功')
+  } catch (error: any) {
+    console.error('导出 Word 失败:', error)
+    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+  }
 }
 
 // 格式化 Markdown 文本（支持 **粗体** 和占位符替换）
@@ -420,7 +447,7 @@ const loadAssessData = async () => {
     assessData.value = record
 
     // 2. 查询学生信息
-    const student = db.get('SELECT name, birthday FROM student WHERE id = ?', [record.student_id])
+    const student = db.get('SELECT name, birthday, gender FROM student WHERE id = ?', [record.student_id])
     if (student) {
       studentInfo.value = {
         name: student.name,
@@ -432,7 +459,7 @@ const loadAssessData = async () => {
     const dimensionScoresData = JSON.parse(record.dimension_scores)
 
     // 4. 构建 ScoreResult 对象
-    const scoreResult = {
+    const scoreResult: ScoreResult = {
       scaleCode: 'sdq',
       studentId: record.student_id,
       assessmentDate: record.start_time,
@@ -452,7 +479,7 @@ const loadAssessData = async () => {
       level: record.level,
       levelCode: dimensionScoresData.total_difficulties?.level || 'normal',
       rawAnswers: {},
-      timing: {}
+      timing: { totalTime: 0, averageTime: 0 }
     }
 
     // 5. 实例化 SDQDriver 并设置学生上下文
@@ -460,8 +487,9 @@ const loadAssessData = async () => {
     driver.setStudentContext({
       id: record.student_id,
       name: studentInfo.value?.name || '孩子',
+      birthday: student?.birthday || '',
       ageInMonths: record.age_months,
-      gender: 'unknown'
+      gender: student?.gender === '女' ? '女' : '男'
     })
 
     // 6. 调用 generateFeedback 获取完整的结构化反馈

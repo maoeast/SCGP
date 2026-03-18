@@ -2,6 +2,8 @@
 
 ## Archived Milestones
 
+- ✅ `v1.3 Unified Assessment Word Export` — shipped 2026-03-18
+  - Archive: `.planning/milestones/v1.3-ROADMAP.md`
 - ✅ `v1.2 Emotional Resource Pack Import & Export` — shipped 2026-03-18
   - Archive: `.planning/milestones/v1.2-ROADMAP.md`
 - ✅ `v1.1 Emotional Authoring & Scene Gallery` — shipped 2026-03-17
