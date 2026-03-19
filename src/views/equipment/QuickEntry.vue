@@ -49,9 +49,9 @@
             </el-option>
           </el-select>
         </div>
-        <el-tag v-if="fromPlan" type="success" size="small">来自训练计划</el-tag>
+        <el-tag v-if="launchSource" type="success" size="small">{{ sourceTagLabel }}</el-tag>
         <el-button @click="goBackToStudentList" :icon="ArrowLeft">
-          {{ fromPlan ? '返回计划' : '返回列表' }}
+          {{ launchSource ? sourceBackLabel : '返回列表' }}
         </el-button>
       </div>
     </div>
@@ -206,7 +206,9 @@ const submitting = ref(false)
 const successDialogVisible = ref(false)
 
 // 从计划跳转的上下文
-const fromPlan = ref(route.query.from === 'plan')
+const launchSource = ref<string>((route.query.from as string) || '')
+const fromPlan = computed(() => launchSource.value === 'plan')
+const fromDashboard = computed(() => launchSource.value === 'dashboard')
 const preselectedEquipmentId = ref<number | null>(
   route.query.equipmentId ? parseInt(route.query.equipmentId as string) : null
 )
@@ -214,6 +216,8 @@ const planId = ref<number | null>(
   route.query.planId ? parseInt(route.query.planId as string) : null
 )
 const resourceName = ref<string>(route.query.resourceName as string || '')
+const sourceTagLabel = computed(() => fromDashboard.value ? '来自首页日程' : '来自训练计划')
+const sourceBackLabel = computed(() => fromDashboard.value ? '返回首页' : '返回计划')
 
 // 获取模块图标组件
 const getModuleIcon = (moduleCode: string) => {
@@ -260,7 +264,7 @@ const handleModuleChange = (newModuleCode: string) => {
     path: `/equipment/quick-entry/${studentId.value}`,
     query: {
       module: newModuleCode,
-      ...(fromPlan.value && { from: 'plan' }),
+      ...(launchSource.value && { from: launchSource.value }),
       ...(preselectedEquipmentId.value && { equipmentId: preselectedEquipmentId.value }),
       ...(planId.value && { planId: planId.value })
     }
@@ -335,8 +339,9 @@ const continueWithSameStudent = () => {
 // 返回学生列表（器材训练学生选择页）
 const backToStudentList = () => {
   successDialogVisible.value = false
-  // 如果从计划跳转，返回计划列表
-  if (fromPlan.value) {
+  if (fromDashboard.value) {
+    router.push('/dashboard')
+  } else if (fromPlan.value) {
     router.push('/training-plan')
   } else {
     router.push({
@@ -348,8 +353,9 @@ const backToStudentList = () => {
 
 // 顶部返回按钮：根据来源决定返回位置
 const goBackToStudentList = () => {
-  // 如果从计划跳转，返回计划列表
-  if (fromPlan.value) {
+  if (fromDashboard.value) {
+    router.push('/dashboard')
+  } else if (fromPlan.value) {
     router.push('/training-plan')
   } else {
     router.push({

@@ -17,6 +17,10 @@ export interface DashboardScheduleItem {
   startDate: string
   endDate: string
   resourceCount: number
+  launchResourceId: number | null
+  launchResourceType: string | null
+  launchResourceName: string | null
+  launchResourceModuleCode: string | null
 }
 
 export interface DashboardAnomalyItem {
@@ -125,7 +129,47 @@ export class DashboardAPI extends DatabaseAPI {
           tp.student_id,
           s.name AS student_name,
           s.avatar_path,
-          COUNT(prm.id) AS resource_count
+          COUNT(prm.id) AS resource_count,
+          (
+            SELECT prm2.resource_id
+            FROM sys_plan_resource_map prm2
+            INNER JOIN sys_training_resource tr2 ON tr2.id = prm2.resource_id
+            WHERE prm2.plan_id = tp.id
+              AND tr2.is_active = 1
+              AND tr2.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene')
+            ORDER BY prm2.sort_order ASC, prm2.created_at ASC
+            LIMIT 1
+          ) AS launch_resource_id,
+          (
+            SELECT tr3.resource_type
+            FROM sys_plan_resource_map prm3
+            INNER JOIN sys_training_resource tr3 ON tr3.id = prm3.resource_id
+            WHERE prm3.plan_id = tp.id
+              AND tr3.is_active = 1
+              AND tr3.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene')
+            ORDER BY prm3.sort_order ASC, prm3.created_at ASC
+            LIMIT 1
+          ) AS launch_resource_type,
+          (
+            SELECT tr4.name
+            FROM sys_plan_resource_map prm4
+            INNER JOIN sys_training_resource tr4 ON tr4.id = prm4.resource_id
+            WHERE prm4.plan_id = tp.id
+              AND tr4.is_active = 1
+              AND tr4.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene')
+            ORDER BY prm4.sort_order ASC, prm4.created_at ASC
+            LIMIT 1
+          ) AS launch_resource_name,
+          (
+            SELECT tr5.module_code
+            FROM sys_plan_resource_map prm5
+            INNER JOIN sys_training_resource tr5 ON tr5.id = prm5.resource_id
+            WHERE prm5.plan_id = tp.id
+              AND tr5.is_active = 1
+              AND tr5.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene')
+            ORDER BY prm5.sort_order ASC, prm5.created_at ASC
+            LIMIT 1
+          ) AS launch_resource_module_code
         FROM sys_training_plan tp
         INNER JOIN student s ON s.id = tp.student_id
         LEFT JOIN sys_plan_resource_map prm ON prm.plan_id = tp.id
@@ -157,6 +201,12 @@ export class DashboardAPI extends DatabaseAPI {
       startDate: row.start_date || '',
       endDate: row.end_date || '',
       resourceCount: normalizeNumber(row.resource_count),
+      launchResourceId: row.launch_resource_id === null || row.launch_resource_id === undefined
+        ? null
+        : Number(row.launch_resource_id),
+      launchResourceType: row.launch_resource_type || null,
+      launchResourceName: row.launch_resource_name || null,
+      launchResourceModuleCode: row.launch_resource_module_code || null,
     }))
   }
 

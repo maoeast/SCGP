@@ -603,6 +603,7 @@ import { ResourceAPI } from '@/database/resource-api'
 import { DatabaseAPI, StudentAPI } from '@/database/api'
 import type { ResourceItem, ModuleCode } from '@/types/module'
 import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
+import { buildTrainingLaunchRoute } from '@/utils/training-launch'
 
 // 类型定义
 interface Student {
@@ -1072,86 +1073,35 @@ function handleLaunchTraining(plan: TrainingPlan, resource: PlanResourceMap) {
   // 关闭详情抽屉（如果打开的话）
   detailDrawerVisible.value = false
 
-  switch (resource_type) {
-    case 'equipment':
-      // 器材类型：跳转到器材录入页，自动预选学生和器材
-      router.push({
-        path: `/equipment/quick-entry/${student_id}`,
-        query: {
-          equipmentId: resource_id,
-          planId: plan.id,
-          from: 'plan',
-          resourceName: resource_name
-        }
-      })
-      ElMessage.success(`正在启动「${resource_name}」训练...`)
-      break
-
-    case 'game':
-      // 游戏类型：跳转到游戏页面
-      router.push({
-        path: '/games/play',
-        query: {
-          studentId: student_id,
-          gameId: resource_id,
-          planId: plan.id,
-          from: 'plan'
-        }
-      })
-      ElMessage.success(`正在启动游戏「${resource_name}」...`)
-      break
-
-    case 'flashcard':
-      // 闪卡类型：跳转到闪卡游戏
-      router.push({
-        path: '/games/play',
-        query: {
-          studentId: student_id,
-          flashcardId: resource_id,
-          planId: plan.id,
-          from: 'plan'
-        }
-      })
-      ElMessage.success(`正在启动闪卡「${resource_name}」...`)
-      break
-
-    case 'emotion_scene':
-      router.push({
-        path: '/emotional/emotion-scene',
-        query: {
-          studentId: String(student_id),
-          resourceId: String(resource_id),
-          studentName: plan.student_name || '',
-          planId: String(plan.id),
-          from: 'plan'
-        }
-      })
-      ElMessage.success(`正在启动「${resource_name}」训练...`)
-      break
-
-    case 'care_scene':
-      router.push({
-        path: '/emotional/care-expression',
-        query: {
-          studentId: String(student_id),
-          resourceId: String(resource_id),
-          studentName: plan.student_name || '',
-          planId: String(plan.id),
-          from: 'plan'
-        }
-      })
-      ElMessage.success(`正在启动「${resource_name}」训练...`)
-      break
-
-    case 'document':
-    case 'video':
-      // 文档/视频类型：直接打开预览（使用 openResource 方法）
-      handlePreviewResource(resource)
-      break
-
-    default:
-      ElMessage.warning(`暂不支持「${resource_type}」类型的训练入口`)
+  if (!resource_type) {
+    ElMessage.warning('当前资源缺少启动类型，无法直接开始训练')
+    return
   }
+
+  if (resource_type === 'document' || resource_type === 'video') {
+    handlePreviewResource(resource)
+    return
+  }
+
+  const target = buildTrainingLaunchRoute({
+    studentId: student_id,
+    studentName: plan.student_name || undefined,
+    planId: plan.id,
+    source: 'plan',
+    moduleCode: plan.module_code,
+    resourceId: resource_id,
+    resourceType: resource_type,
+    resourceName: resource_name,
+    resourceModuleCode: resource.module_code,
+  })
+
+  if (!target) {
+    ElMessage.warning(`暂不支持「${resource_type}」类型的训练入口`)
+    return
+  }
+
+  router.push(target)
+  ElMessage.success(`正在启动「${resource_name}」训练...`)
 }
 
 // 预览文档/视频资源

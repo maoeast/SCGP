@@ -241,6 +241,10 @@ const canAdvanceFromReceiver = ref(false)
 
 const inheritedQuery = computed(() => ({ ...route.query }))
 const studentId = computed(() => Number(Array.isArray(route.query.studentId) ? route.query.studentId[0] : route.query.studentId || 0))
+const launchSource = computed(() => {
+  const value = route.query.from
+  return Array.isArray(value) ? value[0] : value || ''
+})
 const studentName = computed(() => {
   const value = route.query.studentName
   return Array.isArray(value) ? value[0] : value || ''
@@ -530,6 +534,17 @@ async function handleExit() {
   if (session.isActive.value && session.attempts.value.length > 0 && !session.persistedIds.value) {
     await session.cancelSession()
   }
+
+  if (launchSource.value === 'dashboard') {
+    await router.push('/dashboard')
+    return
+  }
+
+  if (launchSource.value === 'plan') {
+    await router.push('/training-plan')
+    return
+  }
+
   await router.push({
     path: '/emotional/care-expression/select',
     query: inheritedQuery.value,

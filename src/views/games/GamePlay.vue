@@ -81,6 +81,7 @@ const gameResource = ref<ResourceItem | null>(null)
 const studentId = ref<number>(Number(route.query.studentId) || 0)
 const resourceId = ref<number>(Number(route.query.resourceId) || 0)
 const moduleCode = ref<string>((route.query.module as string) || 'sensory')
+const launchSource = ref<string>((route.query.from as string) || '')
 
 // 从资源加载的游戏配置
 const taskId = ref<TaskID | null>(null)
@@ -278,9 +279,9 @@ const handleGameFinish = async (sessionData: GameSessionData) => {
       })
     }, 1000)
   } else {
-    // 保存失败，返回游戏大厅
+    // 保存失败，按来源返回上一层入口
     setTimeout(() => {
-      router.push(`/games/lobby/${studentId.value}?module=${moduleCode.value}`)
+      goBack()
     }, 2000)
   }
 }
@@ -289,6 +290,16 @@ const handleGameFinish = async (sessionData: GameSessionData) => {
  * 返回上一页
  */
 const goBack = () => {
+  if (launchSource.value === 'dashboard') {
+    router.push('/dashboard')
+    return
+  }
+
+  if (launchSource.value === 'plan') {
+    router.push('/training-plan')
+    return
+  }
+
   router.push(`/games/lobby/${studentId.value}?module=${moduleCode.value}`)
 }
 

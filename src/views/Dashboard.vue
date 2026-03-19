@@ -101,11 +101,17 @@
                   <div class="schedule-meta">
                     <span>周期：{{ formatDateRange(item.startDate, item.endDate) }}</span>
                     <span>资源：{{ item.resourceCount }} 项</span>
+                    <span v-if="item.launchResourceName">首项：{{ item.launchResourceName }}</span>
                   </div>
                 </div>
 
                 <div class="schedule-action">
-                  <el-button type="primary" plain @click="openPlanModule(item)">
+                  <el-button
+                    type="primary"
+                    plain
+                    :disabled="!item.launchResourceId || !item.launchResourceType"
+                    @click="openPlanModule(item)"
+                  >
                     <el-icon><VideoPlay /></el-icon>
                     开始训练
                   </el-button>
@@ -223,6 +229,7 @@ import {
   type DashboardScheduleItem,
   type DashboardSnapshot,
 } from '@/database/dashboard-api'
+import { buildTrainingLaunchRoute } from '@/utils/training-launch'
 
 const router = useRouter()
 const dashboardApi = new DashboardAPI()
@@ -331,22 +338,27 @@ function goTo(path: string) {
 }
 
 function openPlanModule(item: DashboardScheduleItem) {
-  if (item.moduleCode === 'emotional') {
-    router.push('/emotional/menu')
+  if (!item.launchResourceId || !item.launchResourceType) {
     return
   }
 
-  if (item.moduleCode === 'all' || item.moduleCode === 'sensory') {
-    router.push('/games/menu')
+  const target = buildTrainingLaunchRoute({
+    studentId: item.studentId,
+    studentName: item.studentName,
+    planId: item.planId,
+    source: 'dashboard',
+    moduleCode: item.moduleCode,
+    resourceId: item.launchResourceId,
+    resourceType: item.launchResourceType,
+    resourceName: item.launchResourceName || undefined,
+    resourceModuleCode: item.launchResourceModuleCode || undefined,
+  })
+
+  if (!target) {
     return
   }
 
-  if (item.moduleCode === 'life_skills') {
-    router.push('/equipment/menu')
-    return
-  }
-
-  router.push('/training-records/menu')
+  router.push(target)
 }
 
 function formatPercent(value: number) {
