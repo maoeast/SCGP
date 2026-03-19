@@ -10,6 +10,8 @@ SCGP helps special education teachers and rehabilitation staff run structured as
 
 ### Shipped Milestones
 
+- **v1.5 Strict Modular Licensing** shipped on 2026-03-19
+  - Archive: `.planning/milestones/v1.5-ROADMAP.md`
 - **v1.4 Dashboard Special Ed Command Center** shipped on 2026-03-19
   - Archive: `.planning/milestones/v1.4-ROADMAP.md`
 - **v1.3 Unified Assessment Word Export** shipped on 2026-03-18
@@ -21,24 +23,19 @@ SCGP helps special education teachers and rehabilitation staff run structured as
 - **v1.0 Emotional MVP** shipped on 2026-03-17
   - Archive: `.planning/milestones/v1.0-ROADMAP.md`
 
-### What v1.4 Delivered
+### What v1.5 Delivered
 
-- Rebuilt the homepage as a special-education daily command center instead of a generic ERP-style summary page
-- Added real SQL aggregation for active plans, 7-day anomalies, and overdue assessment reminders
-- Enforced zero-mock dashboard rendering with explicit empty states when local data is missing
-- Added context-aware direct launch from today's schedule into game, equipment, and emotional training runtimes
-- Unified direct-launch routing through `src/utils/training-launch.ts` so Dashboard and Training Plan share one contract
+- Added strict `am` / `allowedModules` handling to the signed activation payload and local activation persistence
+- Added explicit entitlement state plus `hasModuleAccess()` in the auth store
+- Added a DEV-only activation bypass so local development can continue without real production codes
+- Enforced module authorization at router, sidebar, dashboard quick actions, and direct runtime launch entry points
+- Kept unauthorized modules visible as locked commercial surfaces instead of silently hiding them
 
 ## Next Milestone Goals
 
-Current active milestone: `v1.5 Strict Modular Licensing`
+The next milestone is not defined yet. Candidate directions already visible in backlog:
 
-- Add strict `allowedModules` handling to activation payload, local persistence, and auth state
-- Enforce module licensing at route, menu, dashboard, and direct-launch entry points
-- Keep development moving with a tightly-scoped DEV-only mock entitlement for `sensory + emotional`
-
-Backlog beyond v1.5:
-
+- Refine authorization semantics for cross-module pages such as `Reports`, `ResourceCenter`, and `TrainingPlan`
 - Replace first-resource dashboard launch with plan-priority or teacher-guided recommended resource selection
 - Emotional report polish based on richer scene taxonomy and teacher-facing summaries
 - Resource pack bundling for local image assets after metadata exchange proves stable
@@ -54,4 +51,4 @@ Backlog beyond v1.5:
 5. **Word-first export**: assessment reports should standardize on editable Word delivery before revisiting PDF quality work.
 
 ---
-*Last updated: 2026-03-19 after archiving v1.4 milestone*
+*Last updated: 2026-03-19 after archiving v1.5 milestone*

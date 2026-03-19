@@ -1,5 +1,16 @@
 # Milestones
 
+## v1.5 Strict Modular Licensing (Shipped: 2026-03-19)
+
+**Phases completed:** 2 phases, 2 plans, 8 requirements
+
+**Key accomplishments:**
+- Strict modular licensing core now requires `am` in the signed payload, persists allowed modules locally, and exposes entitlement checks plus DEV-only mock authorization.
+- Router, sidebar, dashboard, and direct-launch entry points now enforce module authorization while keeping unauthorized modules visible as locked commercial surfaces.
+- Development can now proceed with `sensory + emotional` unlocked in DEV without leaking the bypass into production activation logic.
+
+---
+
 ## v1.4 Dashboard Special Ed Command Center (Shipped: 2026-03-19)
 
 **Phases completed:** 1 phase, 1 plan, 8 requirements
