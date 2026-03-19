@@ -24,7 +24,7 @@
 | **技术栈**     | Electron + Vue 3 + TypeScript + Vite + SQL.js |
 | **数据库**     | SQLite (通过 sql.js 运行在浏览器端)           |
 | **当前分支**   | `main`                                        |
-| **最后更新**   | 2026-03-18 (完成并归档 v1.3 统一评估报告 Word 导出，并清理系统管理开发者调试页) |
+| **最后更新**   | 2026-03-19 (完成并归档 v1.5 模块授权架构，并补齐 Dashboard 特教业务指挥中心基线口径) |
 | **系统健康度** | ✅ 可运行，所有核心功能正常                   |
 
 ### 项目简介
@@ -49,11 +49,24 @@
 > **实施计划**: `docs/plans/2025-02-05-refactor-implementation-plan.md`
 > **预计工期**: 6-8 周
 
-### 最新规划快照 (2026-03-18)
+### 最新规划快照 (2026-03-19)
 
 - 已完成 `emotional v1.1` 里程碑归档
 - 已完成并归档 `emotional v1.2`：预置情绪资源包批量导入/导出
 - 已完成并归档 `v1.3 Unified Assessment Word Export`
+- 已完成并归档 `v1.4 Dashboard Special Ed Command Center`
+- 已完成并归档 `v1.5 Strict Modular Licensing`
+- v1.5 已交付内容：
+  - 激活码 payload 强制包含 `am`（`allowedModules`）
+  - 本地 `activation` 表新增 `allowed_modules`
+  - `auth` store 新增 `entitlements` 与 `hasModuleAccess()`
+  - 路由、侧边菜单、Dashboard 快捷入口、训练直达链路统一接入模块授权拦截
+  - 开发环境下提供 `['sensory', 'emotional']` 的免真实激活码授权注入
+- v1.4 已交付内容：
+  - 首页改造为“特教业务指挥中心”
+  - 首页卡片、今日日程、异常预警、待评估预警全部改为本地 SQLite 真实聚合查询
+  - 清除首页 Mock 数据口径，无数据时统一空状态
+  - 今日日程支持带学生 / 计划 / 资源上下文直接进入训练执行页
 - v1.3 已交付内容：
   - 通用 `docx` Word 导出引擎：`src/utils/export-word.ts`
   - 量表报告 payload builder：`src/utils/assessment-word-builders.ts`
@@ -294,6 +307,33 @@
     - 保留内容：
       - “清空所有数据”
       - “软件更新”
+    - 状态：✅ 已完成
+
+40. **[2026-03-19] 完成 Dashboard 特教业务指挥中心重构（v1.4）**
+    - 核心实现：
+      - `src/views/Dashboard.vue`
+      - `src/database/dashboard-api.ts`
+      - `src/utils/training-launch.ts`
+    - 交付能力：
+      - 首页由 ERP 式摘要页升级为教师每日指挥中心
+      - 今日日程、本周异常预警、待评估预警全部来自本地 SQLite 真实聚合查询
+      - 移除首页 Mock 数据口径；无数据时统一使用空状态
+      - 从日程列表可直接带学生/计划/资源上下文启动训练
+    - 状态：✅ 已完成
+
+41. **[2026-03-19] 完成模块授权架构（v1.5）**
+    - 核心实现：
+      - `src/utils/license-manager.ts`
+      - `src/utils/activation-manager.ts`
+      - `src/stores/auth.ts`
+      - `src/router/index.ts`
+      - `src/views/Layout.vue`
+    - 交付能力：
+      - 激活码 payload 强制包含 `am` (`allowedModules`)
+      - 本地授权状态支持按模块授权判断
+      - 路由、菜单、Dashboard 快捷入口、训练直达流统一接入 `hasModuleAccess`
+      - 未授权模块在 UI 中以灰态 + 🔒 呈现，并拦截进入
+      - DEV 环境下支持 `['sensory', 'emotional']` 的免真实激活码授权注入
     - 状态：✅ 已完成
 
 36. **[2026-03-13] 新增仓库级 AGENTS 与执行路线图**
