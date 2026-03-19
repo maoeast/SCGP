@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 
 // 路由懒加载
@@ -172,7 +173,8 @@ const router = createRouter({
           meta: {
             title: '能力评估',
             icon: 'clipboard-check',
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            moduleCode: 'sensory'
           }
         },
         {
@@ -182,7 +184,8 @@ const router = createRouter({
           meta: {
             title: '情绪行为',
             icon: 'smile',
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            moduleCode: 'emotional'
           }
         },
         // ===== 游戏训练模块（顶级菜单，与器材训练模式一致） =====
@@ -273,7 +276,8 @@ const router = createRouter({
           meta: {
             title: '游戏训练',
             icon: 'gamepad',
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            moduleCode: 'sensory'
           }
         },
         {
@@ -329,7 +333,8 @@ const router = createRouter({
           meta: {
             title: '训练记录',
             icon: 'chart-line',
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            moduleCode: 'sensory'
           }
         },
         {
@@ -379,7 +384,8 @@ const router = createRouter({
           meta: {
             title: '器材训练',
             icon: 'dumbbell',
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            moduleCode: 'sensory'
           }
         },
         {
@@ -786,6 +792,23 @@ router.beforeEach(async (to, from, next) => {
 
   const authStore = useAuthStore()
 
+  const resolveModuleCode = () => {
+    const fromMeta = typeof to.meta.moduleCode === 'string' ? to.meta.moduleCode : ''
+    if (fromMeta) return fromMeta
+
+    if (to.path.startsWith('/emotional')) return 'emotional'
+    if (
+      to.path.startsWith('/games') ||
+      to.path.startsWith('/equipment') ||
+      to.path.startsWith('/assessment') ||
+      to.path.startsWith('/training-records')
+    ) {
+      return 'sensory'
+    }
+
+    return ''
+  }
+
   // 首次访问时，确保激活状态已检查
   if (!from.name) {
     await authStore.checkActivation()
@@ -817,6 +840,17 @@ router.beforeEach(async (to, from, next) => {
     // 只有在完全未激活（不在试用期内）才跳转到激活页面
     if (to.name !== 'Activation' && !authStore.isActivated && !authStore.activationInfo.isInTrial) {
       next('/activation')
+      return
+    }
+
+    const moduleCode = resolveModuleCode()
+    if (moduleCode && !authStore.hasModuleAccess(moduleCode)) {
+      ElMessage.warning('该模块未授权')
+      if (to.path === '/dashboard') {
+        next(false)
+      } else {
+        next('/dashboard')
+      }
       return
     }
   } else {

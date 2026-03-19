@@ -46,7 +46,8 @@
           :key="action.label"
           shadow="hover"
           class="quick-card"
-          @click="goTo(action.path)"
+          :class="{ 'quick-card--locked': isActionLocked(action) }"
+          @click="goTo(action)"
         >
           <div class="quick-icon" :style="{ background: action.background, color: action.color }">
             <el-icon :size="24">
@@ -54,7 +55,10 @@
             </el-icon>
           </div>
           <div class="quick-body">
-            <h3>{{ action.label }}</h3>
+            <h3>
+              {{ action.label }}
+              <span v-if="isActionLocked(action)" class="quick-lock">🔒</span>
+            </h3>
             <p>{{ action.description }}</p>
           </div>
           <el-icon class="quick-arrow"><ArrowRight /></el-icon>
@@ -212,6 +216,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import {
   ArrowRight,
   Calendar,
@@ -229,10 +234,12 @@ import {
   type DashboardScheduleItem,
   type DashboardSnapshot,
 } from '@/database/dashboard-api'
-import { buildTrainingLaunchRoute } from '@/utils/training-launch'
+import { resolveTrainingLaunch } from '@/utils/training-launch'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const dashboardApi = new DashboardAPI()
+const authStore = useAuthStore()
 
 const loading = ref(false)
 const snapshot = ref<DashboardSnapshot>({
@@ -296,6 +303,7 @@ const quickActions = [
     label: '快速发起评估',
     description: '进入量表选择页，快速为学生建立或更新评估基线。',
     path: '/assessment',
+    moduleCode: 'sensory',
     icon: EditPen,
     background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
     color: '#1d4ed8',
@@ -304,6 +312,7 @@ const quickActions = [
     label: '启动感官游戏',
     description: '进入游戏训练模块，按学生和模块快速开始训练。',
     path: '/games/menu',
+    moduleCode: 'sensory',
     icon: Monitor,
     background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
     color: '#6d28d9',
@@ -312,6 +321,7 @@ const quickActions = [
     label: '情绪场景训练',
     description: '进入情绪行为模块，围绕真实场景开展情绪与关心训练。',
     path: '/emotional/menu',
+    moduleCode: 'emotional',
     icon: MagicStick,
     background: 'linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)',
     color: '#c2410c',
@@ -320,6 +330,7 @@ const quickActions = [
     label: '录入训练记录',
     description: '查看并进入各模块训练记录入口，承接日常训练复盘。',
     path: '/training-records/menu',
+    moduleCode: 'sensory',
     icon: DataAnalysis,
     background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
     color: '#15803d',
@@ -329,12 +340,18 @@ const quickActions = [
 const displayedAnomalies = computed(() => snapshot.value.anomalies.slice(0, 4))
 const displayedAssessmentAlerts = computed(() => snapshot.value.assessmentAlerts.slice(0, 4))
 
+const isActionLocked = (action: { moduleCode: string }) => !authStore.hasModuleAccess(action.moduleCode)
+
 function getModuleLabel(moduleCode: string) {
   return moduleLabelMap[moduleCode] || moduleCode || '训练模块'
 }
 
-function goTo(path: string) {
-  router.push(path)
+function goTo(action: { path: string; moduleCode: string }) {
+  if (isActionLocked(action)) {
+    ElMessage.warning('该模块未授权，请联系厂商购买')
+    return
+  }
+  router.push(action.path)
 }
 
 function openPlanModule(item: DashboardScheduleItem) {
@@ -342,23 +359,32 @@ function openPlanModule(item: DashboardScheduleItem) {
     return
   }
 
-  const target = buildTrainingLaunchRoute({
-    studentId: item.studentId,
-    studentName: item.studentName,
-    planId: item.planId,
-    source: 'dashboard',
-    moduleCode: item.moduleCode,
-    resourceId: item.launchResourceId,
-    resourceType: item.launchResourceType,
-    resourceName: item.launchResourceName || undefined,
-    resourceModuleCode: item.launchResourceModuleCode || undefined,
-  })
+  const resolution = resolveTrainingLaunch(
+    {
+      studentId: item.studentId,
+      studentName: item.studentName,
+      planId: item.planId,
+      source: 'dashboard',
+      moduleCode: item.moduleCode,
+      resourceId: item.launchResourceId,
+      resourceType: item.launchResourceType,
+      resourceName: item.launchResourceName || undefined,
+      resourceModuleCode: item.launchResourceModuleCode || undefined,
+    },
+    authStore.hasModuleAccess
+  )
 
-  if (!target) {
+  if (!resolution.authorized) {
+    ElMessage.warning('该模块未授权，请联系厂商购买')
     return
   }
 
-  router.push(target)
+  if (!resolution.route) {
+    ElMessage.warning('当前训练入口无法启动')
+    return
+  }
+
+  router.push(resolution.route)
 }
 
 function formatPercent(value: number) {
@@ -508,6 +534,16 @@ onMounted(() => {
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.11);
 }
 
+.quick-card.quick-card--locked {
+  opacity: 0.72;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.quick-card.quick-card--locked:hover {
+  transform: none;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.07);
+}
+
 .quick-card :deep(.el-card__body) {
   display: flex;
   align-items: center;
@@ -533,6 +569,11 @@ onMounted(() => {
   margin: 0 0 4px;
   font-size: 16px;
   color: #0f172a;
+}
+
+.quick-lock {
+  margin-left: 6px;
+  font-size: 14px;
 }
 
 .quick-body p {

@@ -15,19 +15,22 @@
       </div>
 
       <nav class="sidebar-nav">
-        <router-link
+        <a
           v-for="route in menuRoutes"
           :key="route.path"
-          :to="route.path"
+          :href="route.path"
           class="nav-item"
-          :class="{ active: isActive(route.path) }"
+          :class="{ active: isActive(route.path), locked: isRouteLocked(route) }"
+          :title="isRouteLocked(route) ? '该模块未授权，请联系厂商购买' : route.meta.title"
+          @click.prevent="handleMenuClick(route)"
           v-show="hasRole(route.meta.roles)"
         >
           <i class="icon" :class="`fas fa-${route.meta.icon}`"></i>
           <span class="nav-text" v-show="!sidebarCollapsed">{{
             route.meta.displayTitle || route.meta.title
           }}</span>
-        </router-link>
+          <span v-if="isRouteLocked(route)" class="lock-mark" aria-hidden="true">🔒</span>
+        </a>
       </nav>
 
       <div class="sidebar-footer">
@@ -76,6 +79,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
 
@@ -86,6 +90,7 @@ interface MenuRouteItem {
     displayTitle: string
     icon?: string
     roles?: string[]
+    moduleCode?: string
   }
 }
 
@@ -134,6 +139,7 @@ const menuRoutes = computed<MenuRouteItem[]>(() => {
         displayTitle: String(r.meta.title || ''),
         icon: typeof r.meta.icon === 'string' ? r.meta.icon : undefined,
         roles: Array.isArray(r.meta.roles) ? r.meta.roles as string[] : undefined,
+        moduleCode: typeof r.meta.moduleCode === 'string' ? r.meta.moduleCode : undefined,
       },
     }))
 })
@@ -167,6 +173,19 @@ const isActive = (path: string) => {
 const hasRole = (roles?: string[]) => {
   if (!roles || roles.length === 0) return true
   return roles.includes(authStore.user?.role || '')
+}
+
+const isRouteLocked = (route: MenuRouteItem) => {
+  if (!route.meta.moduleCode) return false
+  return !authStore.hasModuleAccess(route.meta.moduleCode)
+}
+
+const handleMenuClick = (route: MenuRouteItem) => {
+  if (isRouteLocked(route)) {
+    ElMessage.warning('该模块未授权，请联系厂商购买')
+    return
+  }
+  router.push(route.path)
 }
 
 // 获取角色名称
@@ -302,6 +321,16 @@ onMounted(() => {
   color: white;
 }
 
+.nav-item.locked {
+  color: #7f8c8d;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-item.locked:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #d5dbdb;
+}
+
 .nav-item.active::before {
   content: '';
   position: absolute;
@@ -326,6 +355,11 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   transition: opacity 0.3s;
+}
+
+.lock-mark {
+  margin-left: auto;
+  font-size: 14px;
 }
 
 .sidebar-footer {

@@ -169,6 +169,26 @@ export const useAuthStore = defineStore('auth', {
     // 检查激活状态
     async checkActivation(): Promise<void> {
       try {
+        if (import.meta.env.DEV) {
+          this.activationInfo.machineCode = 'DEV-BYPASS'
+          this.activationInfo.isActivated = true
+          this.activationInfo.isInTrial = false
+          this.activationInfo.trialEnd = undefined
+          this.activationInfo.expiresAt = undefined
+          this.activationInfo.trialDays = 0
+          this.activationInfo.trialUsed = 0
+
+          this.entitlements.allowedModules = [...DEV_MOCK_ALLOWED_MODULES]
+          this.entitlements.source = 'dev-mock'
+          this.entitlements.isFullAccess = false
+
+          console.log('开发环境已绕过激活校验', {
+            machineCode: this.activationInfo.machineCode,
+            allowedModules: this.entitlements.allowedModules
+          })
+          return
+        }
+
         const { activationManager } = await import('@/utils/activation-manager')
 
         // 获取激活信息
@@ -208,19 +228,12 @@ export const useAuthStore = defineStore('auth', {
           this.activationInfo.expiresAt = activation.expiresAt
         }
 
-        const shouldUseDevMock = import.meta.env.DEV && !activation.activationCode
-        const allowedModules = shouldUseDevMock
-          ? [...DEV_MOCK_ALLOWED_MODULES]
-          : Array.isArray(activation.allowedModules)
-            ? activation.allowedModules
-            : []
+        const allowedModules = Array.isArray(activation.allowedModules)
+          ? activation.allowedModules
+          : []
 
         this.entitlements.allowedModules = allowedModules
-        this.entitlements.source = shouldUseDevMock
-          ? 'dev-mock'
-          : activation.activationCode
-            ? 'license'
-            : 'none'
+        this.entitlements.source = activation.activationCode ? 'license' : 'none'
         this.entitlements.isFullAccess = (BUSINESS_MODULE_CODES as readonly string[]).every((moduleCode) =>
           allowedModules.includes(moduleCode)
         )
