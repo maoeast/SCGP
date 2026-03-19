@@ -10,6 +10,8 @@ SCGP helps special education teachers and rehabilitation staff run structured as
 
 ### Shipped Milestones
 
+- **v1.4 Dashboard Special Ed Command Center** shipped on 2026-03-19
+  - Archive: `.planning/milestones/v1.4-ROADMAP.md`
 - **v1.3 Unified Assessment Word Export** shipped on 2026-03-18
   - Archive: `.planning/milestones/v1.3-ROADMAP.md`
 - **v1.2 Emotional Resource Pack Import & Export** shipped on 2026-03-18
@@ -19,18 +21,19 @@ SCGP helps special education teachers and rehabilitation staff run structured as
 - **v1.0 Emotional MVP** shipped on 2026-03-17
   - Archive: `.planning/milestones/v1.0-ROADMAP.md`
 
-### What v1.3 Delivered
+### What v1.4 Delivered
 
-- Added a universal payload-based `docx` renderer for assessment reports
-- Added scale-specific Word payload builders for SDQ, CBCL, SRS2, CSIRS, Conners PSQ/TRS, S-M, and WeeFIM
-- Migrated all targeted assessment report pages to the unified Word export flow
-- Removed obsolete PDF / print export entry points from the migrated report pages
-- Standardized report export on editable `.docx` output without introducing new dependencies
+- Rebuilt the homepage as a special-education daily command center instead of a generic ERP-style summary page
+- Added real SQL aggregation for active plans, 7-day anomalies, and overdue assessment reminders
+- Enforced zero-mock dashboard rendering with explicit empty states when local data is missing
+- Added context-aware direct launch from today's schedule into game, equipment, and emotional training runtimes
+- Unified direct-launch routing through `src/utils/training-launch.ts` so Dashboard and Training Plan share one contract
 
 ## Next Milestone Goals
 
 The next milestone is not defined yet. Candidate directions already visible in backlog:
 
+- Replace first-resource dashboard launch with plan-priority or teacher-guided recommended resource selection
 - Emotional report polish based on richer scene taxonomy and teacher-facing summaries
 - Resource pack bundling for local image assets after metadata exchange proves stable
 - Cross-module route/menu platformization and future generic resource-pack infrastructure
@@ -45,4 +48,4 @@ The next milestone is not defined yet. Candidate directions already visible in b
 5. **Word-first export**: assessment reports should standardize on editable Word delivery before revisiting PDF quality work.
 
 ---
-*Last updated: 2026-03-18 after archiving v1.3 milestone*
+*Last updated: 2026-03-19 after archiving v1.4 milestone*

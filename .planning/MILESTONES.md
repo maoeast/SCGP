@@ -1,5 +1,17 @@
 # Milestones
 
+## v1.4 Dashboard Special Ed Command Center (Shipped: 2026-03-19)
+
+**Phases completed:** 1 phase, 1 plan, 8 requirements
+
+**Key accomplishments:**
+- Dashboard now acts as a real special-ed command center with SQL-backed metrics, intervention alerts, and direct schedule launch into training runtime.
+- Today's Schedule is driven by real active plans instead of placeholder homepage content.
+- Weekly anomaly and overdue-assessment reminders are aggregated from real local training and assessment tables.
+- Teachers can now jump from schedule directly into the concrete training runtime without repeating student/module selection.
+
+---
+
 ## v1.3 Unified Assessment Word Export (Shipped: 2026-03-18)
 
 **Phases completed:** 1 phase, 1 plan, 7 requirements
