@@ -31,7 +31,13 @@ SCGP helps special education teachers and rehabilitation staff run structured as
 
 ## Next Milestone Goals
 
-The next milestone is not defined yet. Candidate directions already visible in backlog:
+Current active milestone: `v1.5 Strict Modular Licensing`
+
+- Add strict `allowedModules` handling to activation payload, local persistence, and auth state
+- Enforce module licensing at route, menu, dashboard, and direct-launch entry points
+- Keep development moving with a tightly-scoped DEV-only mock entitlement for `sensory + emotional`
+
+Backlog beyond v1.5:
 
 - Replace first-resource dashboard launch with plan-priority or teacher-guided recommended resource selection
 - Emotional report polish based on richer scene taxonomy and teacher-facing summaries

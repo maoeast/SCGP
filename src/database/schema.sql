@@ -276,6 +276,7 @@ CREATE TABLE IF NOT EXISTS activation (
   machine_code TEXT NOT NULL,
   activation_code TEXT NOT NULL,
   license_data TEXT NOT NULL,
+  allowed_modules TEXT NOT NULL DEFAULT '[]',
   is_valid INTEGER DEFAULT 1,
   expires_at TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,

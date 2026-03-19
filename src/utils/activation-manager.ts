@@ -9,7 +9,7 @@ import type { LicenseInfo } from './license-manager'
 
 // localStorage 缓存相关常量
 const CACHE_KEY = 'sic_ads_activation_cache'
-const CACHE_VERSION = '1.0'
+const CACHE_VERSION = '1.1'
 
 /**
  * localStorage 缓存的激活数据结构
@@ -24,6 +24,7 @@ interface ActivationCache {
   trialEnd?: string
   expiresAt?: string
   licenseType: 'trial' | 'full'
+  allowedModules: string[]
   cachedAt: string
 }
 
@@ -36,6 +37,7 @@ export interface ActivationInfo {
   trialEnd?: string
   expiresAt?: string
   licenseType: 'trial' | 'full'
+  allowedModules: string[]
 }
 
 export interface ActivationResult {
@@ -53,6 +55,22 @@ export class ActivationManager {
 
   constructor() {
     // 延迟初始化，避免在构造时访问数据库
+  }
+
+  private normalizeAllowedModules(value: unknown): string[] {
+    if (!Array.isArray(value)) return []
+    return value
+      .filter((moduleCode): moduleCode is string => typeof moduleCode === 'string')
+      .map((moduleCode) => moduleCode.trim())
+      .filter(Boolean)
+  }
+
+  private query(sql: string, params: any[] = []): any[] {
+    return (this.api as any).query(sql, params)
+  }
+
+  private execute(sql: string, params: any[] = []): number {
+    return (this.api as any).execute(sql, params)
   }
 
   /**
@@ -91,6 +109,7 @@ export class ActivationManager {
       trialEnd: info.trialEnd,
       expiresAt: info.expiresAt,
       licenseType: info.licenseType,
+      allowedModules: info.allowedModules,
       cachedAt: new Date().toISOString()
     }
     localStorage.setItem(CACHE_KEY, JSON.stringify(cache))
@@ -202,13 +221,14 @@ export class ActivationManager {
         trialStart: cache.trialStart,
         trialEnd: cache.trialEnd,
         expiresAt: cache.expiresAt,
-        licenseType: cache.licenseType
+        licenseType: cache.licenseType,
+        allowedModules: this.normalizeAllowedModules(cache.allowedModules)
       }
     }
 
     // 2. 缓存无效或不存在，从数据库读取
     // 查询数据库中的激活记录
-    const activationRecords = this.api.query(
+    const activationRecords = this.query(
       `SELECT * FROM activation WHERE machine_code = ? AND is_valid = 1 ORDER BY created_at DESC LIMIT 1`,
       [machineCode]
     )
@@ -220,7 +240,7 @@ export class ActivationManager {
       // 检查是否过期
       if (record.expires_at && new Date(record.expires_at) < new Date()) {
         // 过期了，更新为无效
-        this.api.execute(
+        this.execute(
           `UPDATE activation SET is_valid = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
           [record.id]
         )
@@ -237,7 +257,10 @@ export class ActivationManager {
         trialStart: licenseData.trialStart,
         trialEnd: licenseData.trialEnd,
         expiresAt: record.expires_at,
-        licenseType: licenseData.type
+        licenseType: licenseData.type,
+        allowedModules: this.normalizeAllowedModules(
+          record.allowed_modules ? JSON.parse(record.allowed_modules) : []
+        )
       }
 
       // 保存到 localStorage 缓存
@@ -258,7 +281,7 @@ export class ActivationManager {
    */
   private getTrialActivation(machineCode: string): ActivationInfo {
     // 查询系统配置中的首次运行时间
-    const config = this.api.query(
+    const config = this.query(
       `SELECT value FROM system_config WHERE key = 'first_run_time'`
     )
 
@@ -267,7 +290,7 @@ export class ActivationManager {
     if (config.length === 0) {
       // 首次运行，记录时间
       firstRunTime = new Date().toISOString()
-      this.api.execute(
+      this.execute(
         `INSERT INTO system_config (key, value, description) VALUES (?, ?, ?)`,
         ['first_run_time', firstRunTime, '首次运行时间']
       )
@@ -285,7 +308,8 @@ export class ActivationManager {
       isTrial: true,
       trialStart: trialStart.toISOString(),
       trialEnd: trialEnd.toISOString(),
-      licenseType: 'trial'
+      licenseType: 'trial',
+      allowedModules: []
     }
   }
 
@@ -317,7 +341,7 @@ export class ActivationManager {
       }
 
       // 5. 检查是否已被使用
-      const existingActivation = this.api.query(
+      const existingActivation = this.query(
         `SELECT * FROM activation WHERE activation_code = ? AND is_valid = 1`,
         [code]
       )
@@ -338,8 +362,29 @@ export class ActivationManager {
           isActivated: true,
           isTrial: licenseInfo.type === 'trial',
           expiresAt: licenseInfo.expireAt?.toISOString(),
-          licenseType: licenseInfo.type
+          licenseType: licenseInfo.type,
+          allowedModules: licenseInfo.allowedModules
         }
+
+        this.execute(
+          `UPDATE activation
+           SET license_data = ?, allowed_modules = ?, expires_at = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?`,
+          [
+            JSON.stringify({
+              type: licenseInfo.type,
+              machineCode,
+              activationCode: code,
+              createdAt: licenseInfo.createdAt.toISOString(),
+              isPermanent: licenseInfo.isPermanent,
+              version: '1.1',
+              allowedModules: licenseInfo.allowedModules
+            }),
+            JSON.stringify(licenseInfo.allowedModules),
+            licenseInfo.expireAt ? licenseInfo.expireAt.toISOString() : null,
+            record.id
+          ]
+        )
 
         // 保存到 localStorage 缓存
         this.setCache(existingData)
@@ -358,16 +403,18 @@ export class ActivationManager {
         activationCode: code,
         createdAt: licenseInfo.createdAt.toISOString(),
         isPermanent: licenseInfo.isPermanent,
-        version: '1.0'
+        version: '1.1',
+        allowedModules: licenseInfo.allowedModules
       }
 
-      this.api.execute(
-        `INSERT INTO activation (machine_code, activation_code, license_data, expires_at, is_valid)
-         VALUES (?, ?, ?, ?, 1)`,
+      this.execute(
+        `INSERT INTO activation (machine_code, activation_code, license_data, allowed_modules, expires_at, is_valid)
+         VALUES (?, ?, ?, ?, ?, 1)`,
         [
           machineCode,
           code,
           JSON.stringify(licenseData),
+          JSON.stringify(licenseInfo.allowedModules),
           licenseInfo.expireAt ? licenseInfo.expireAt.toISOString() : null
         ]
       )
@@ -378,7 +425,8 @@ export class ActivationManager {
         isActivated: true,
         isTrial: licenseInfo.type === 'trial',
         expiresAt: licenseInfo.expireAt?.toISOString(),
-        licenseType: licenseInfo.type
+        licenseType: licenseInfo.type,
+        allowedModules: licenseInfo.allowedModules
       }
 
       // 保存到 localStorage 缓存
@@ -479,14 +527,14 @@ export class ActivationManager {
     this.clearCache()
 
     // 设置当前机器的激活记录为无效
-    this.api.execute(
+    this.execute(
       `UPDATE activation SET is_valid = 0, updated_at = CURRENT_TIMESTAMP
        WHERE machine_code = ?`,
       [machineCode]
     )
 
     // 清除首次运行时间
-    this.api.execute(
+    this.execute(
       `DELETE FROM system_config WHERE key = 'first_run_time'`
     )
   }

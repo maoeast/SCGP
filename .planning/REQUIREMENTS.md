@@ -1,0 +1,44 @@
+# REQUIREMENTS
+
+## Milestone v1.5: Strict Modular Licensing
+
+**Goal:** Introduce strict module entitlements into activation payload, local persistence, and auth state so SCGP can enforce school-by-school module licensing without any legacy fallback debt.
+
+## Completed Requirements
+
+### License Payload & Persistence
+
+- [x] **LIC-01**: Signed activation payload must include `am` (`allowedModules`) and fail validation if the field is missing.
+- [x] **LIC-02**: The local `activation` table persists authorized modules in a dedicated `allowed_modules` column.
+- [x] **LIC-03**: Activation cache and database read/write logic preserve the authorized module list without any old-code full-access fallback.
+
+### Auth Store & DEV Mock
+
+- [x] **LIC-04**: `src/stores/auth.ts` exposes entitlement state with `allowedModules`, entitlement source, and `hasModuleAccess(moduleCode)`.
+- [x] **LIC-05**: Development mode injects `['sensory', 'emotional']` only when `import.meta.env.DEV === true` and no real activation code is present.
+
+## Remaining Requirements
+
+### Route / UI Enforcement
+
+- [ ] **LIC-06**: Router guards block direct navigation into unauthorized business modules.
+- [ ] **LIC-07**: Sidebar menu keeps unauthorized modules visible in a locked visual state instead of hiding them.
+- [ ] **LIC-08**: Dashboard quick actions and direct launch flows refuse unauthorized module entry points with clear user feedback.
+
+## Traceability
+
+| Requirement | Phase | Current Status |
+|-------------|-------|----------------|
+| LIC-01 | Phase 12 | Completed |
+| LIC-02 | Phase 12 | Completed |
+| LIC-03 | Phase 12 | Completed |
+| LIC-04 | Phase 12 | Completed |
+| LIC-05 | Phase 12 | Completed |
+| LIC-06 | Phase 13 | Pending |
+| LIC-07 | Phase 13 | Pending |
+| LIC-08 | Phase 13 | Pending |
+
+## Notes
+
+- v1.5 deliberately rejects all legacy full-access fallback behavior.
+- Any activation code without `am` is considered invalid for modular licensing.

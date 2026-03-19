@@ -21,6 +21,7 @@ export type LicenseData = {
   m: string             // machineId: 机器码 (试用码为 '*')
   c: number             // createdAt: 创建时间戳
   e: number | null      // expireAt: 过期时间戳 (null表示永久)
+  am: string[]          // allowedModules: 授权模块列表
   p?: boolean           // permanent: 是否永久激活
 }
 
@@ -30,6 +31,7 @@ export type LicenseInfo = {
   machineId: string
   createdAt: Date
   expireAt: Date | null
+  allowedModules: string[]
   isPermanent: boolean
   isExpired: boolean
   daysRemaining: number | null
@@ -133,7 +135,7 @@ export class LicenseManager {
   /**
    * 使用 RSA 公钥验证签名
    */
-  private async verifySignature(data: string, signature: ArrayBuffer): Promise<boolean> {
+  private async verifySignature(data: string, signature: BufferSource): Promise<boolean> {
     await this.ensurePublicKeyLoaded()
 
     // 检查 crypto.subtle 是否可用
@@ -259,6 +261,15 @@ export class LicenseManager {
         throw new Error(`不支持的许可证版本: ${licenseData.v}`)
       }
 
+      // 9.5. 强制校验授权模块字段
+      if (!Array.isArray(licenseData.am)) {
+        throw new Error('激活码缺少 am 授权模块字段')
+      }
+      const allowedModules = licenseData.am
+        .filter((moduleCode): moduleCode is string => typeof moduleCode === 'string')
+        .map((moduleCode) => moduleCode.trim())
+        .filter(Boolean)
+
       // 10. 验证机器码（试用码除外）
       if (licenseData.m !== '*' && licenseData.m !== machineId) {
         throw new Error('激活码与当前机器码不匹配')
@@ -280,6 +291,7 @@ export class LicenseManager {
         machineId: licenseData.m,
         createdAt,
         expireAt,
+        allowedModules,
         isPermanent,
         isExpired,
         daysRemaining

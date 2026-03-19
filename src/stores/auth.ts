@@ -20,6 +20,17 @@ interface ActivationInfo {
   machineCode: string
 }
 
+type EntitlementSource = 'license' | 'dev-mock' | 'none'
+
+interface EntitlementsInfo {
+  allowedModules: string[]
+  source: EntitlementSource
+  isFullAccess: boolean
+}
+
+const DEV_MOCK_ALLOWED_MODULES = ['sensory', 'emotional'] as const
+const BUSINESS_MODULE_CODES = ['sensory', 'emotional', 'social', 'cognitive', 'life_skills'] as const
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as User | null,
@@ -33,16 +44,28 @@ export const useAuthStore = defineStore('auth', {
       trialEnd: undefined,
       machineCode: '',
       expiresAt: undefined
-    } as ActivationInfo
+    } as ActivationInfo,
+    entitlements: {
+      allowedModules: [],
+      source: 'none',
+      isFullAccess: false
+    } as EntitlementsInfo
   }),
 
   getters: {
     isLoggedIn: (state) => !!state.user,
     isActivated: (state) => state.activationInfo.isActivated,
+    allowedModules: (state) => state.entitlements.allowedModules,
     isAdmin: (state) => state.user?.role === 'admin',
     isTeacher: (state) => state.user?.role === 'teacher',
     canAccess: (state) => (roles: string[]) => {
       return state.user && roles.includes(state.user.role)
+    },
+    hasModuleAccess: (state) => (moduleCode: string) => {
+      if (!(BUSINESS_MODULE_CODES as readonly string[]).includes(moduleCode)) {
+        return true
+      }
+      return state.entitlements.allowedModules.includes(moduleCode)
     }
   },
 
@@ -82,7 +105,7 @@ export const useAuthStore = defineStore('auth', {
 
         // 登录失败，记录失败日志
         try {
-          const failUser = userAPI.queryOne('SELECT id FROM user WHERE username = ?', [username])
+          const failUser = (userAPI as any).queryOne('SELECT id FROM user WHERE username = ?', [username])
           if (failUser) {
             await userAPI.addLoginLog({
               userId: failUser.id,
@@ -157,7 +180,11 @@ export const useAuthStore = defineStore('auth', {
         // 判断是否已激活：
         // isActivated = true 表示正式激活（非试用期）
         // isInTrial = true 表示在试用期内
-        const isTrialActive = activation.isTrial && activation.trialEnd && new Date(activation.trialEnd) > new Date()
+        const isTrialActive = Boolean(
+          activation.isTrial &&
+          activation.trialEnd &&
+          new Date(activation.trialEnd) > new Date()
+        )
         this.activationInfo.isActivated = activation.isActivated && !activation.isTrial
         this.activationInfo.isInTrial = isTrialActive
         this.activationInfo.trialEnd = activation.trialEnd
@@ -181,12 +208,31 @@ export const useAuthStore = defineStore('auth', {
           this.activationInfo.expiresAt = activation.expiresAt
         }
 
+        const shouldUseDevMock = import.meta.env.DEV && !activation.activationCode
+        const allowedModules = shouldUseDevMock
+          ? [...DEV_MOCK_ALLOWED_MODULES]
+          : Array.isArray(activation.allowedModules)
+            ? activation.allowedModules
+            : []
+
+        this.entitlements.allowedModules = allowedModules
+        this.entitlements.source = shouldUseDevMock
+          ? 'dev-mock'
+          : activation.activationCode
+            ? 'license'
+            : 'none'
+        this.entitlements.isFullAccess = (BUSINESS_MODULE_CODES as readonly string[]).every((moduleCode) =>
+          allowedModules.includes(moduleCode)
+        )
+
         console.log('激活状态检查结果:', {
           machineCode: this.activationInfo.machineCode,
           isActivated: this.activationInfo.isActivated,
           isInTrial: this.activationInfo.isInTrial,
           trialDays: this.activationInfo.trialDays,
-          trialUsed: this.activationInfo.trialUsed
+          trialUsed: this.activationInfo.trialUsed,
+          entitlementSource: this.entitlements.source,
+          allowedModules: this.entitlements.allowedModules
         })
       } catch (error) {
         console.error('检查激活状态失败:', error)

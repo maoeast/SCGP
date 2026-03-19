@@ -1,7 +1,12 @@
 ---
 gsd_state_version: 1.0
+milestone: v1.5
+milestone_name: strict-modular-licensing
+current_phase: 12
+current_phase_name: modular-licensing-core
+current_plan: 12-01
 status: completed
-last_updated: "2026-03-19T15:20:00+08:00"
+last_updated: "2026-03-19T18:10:00+08:00"
 progress:
   total_phases: 1
   completed_phases: 1
@@ -13,14 +18,16 @@ progress:
 
 ## Project Reference
 **Core Value**: SCGP provides special education teachers and clinicians with a comprehensive, offline, local-first assessment and intervention tool.
-**Current Focus**: Await the next milestone definition after archiving v1.4
-**Plan**: —
+**Current Focus**: v1.5 strict modular licensing core is complete; route and UI enforcement are next
+**Plan**: 12-01 Strict Payload, Activation Persistence, and Auth Entitlements
 
 ## Current Position
-- **Phase**: v1.4 archived
-- **Plan**: —
-- **Status**: Completed; no active milestone. Latest shipped milestone remains archived.
-- **Last activity**: 2026-03-19 — Archived milestone v1.4 after shipping the special-ed dashboard and direct schedule launch flow
+- **Current Phase:** 12
+- **Current Phase Name:** modular-licensing-core
+- **Current Plan:** 12-01
+- **Status:** Completed
+- **Last Activity:** 2026-03-19
+- **Last Activity Description:** Completed strict modular license payload, activation persistence, auth entitlements, and DEV mock injection
 
 ## Latest Shipped Milestone
 - **v1.4 Dashboard Special Ed Command Center**
@@ -28,12 +35,11 @@ progress:
 
 ## Accumulated Context
 - **Decisions**:
-  - Dashboard metrics and lists must use real SQL-backed data only; no mock fallbacks are allowed.
-  - Today's schedule should truthfully show active plan date ranges until the schema supports time-of-day scheduling.
-  - Direct training launch should be centralized in a shared route builder rather than duplicated between Dashboard and Training Plan.
+  - Modular licensing does not support legacy full-access fallback; missing `am` is invalid.
+  - Authorized modules must be persisted separately from raw license JSON for fast entitlement lookup.
+  - DEV mock entitlements are allowed only when no real activation code exists.
 - **Blockers**:
-  - Repository-wide historical TypeScript errors still exist outside the v1.4 touched-file scope.
+  - Repository-wide historical TypeScript errors still exist outside the v1.5 touched-file scope.
 
 ## Next Action
-- Define the next milestone.
-- If continuing immediately, use `$gsd-new-milestone`.
+- Implement Phase 13 route and UI enforcement for unauthorized modules.

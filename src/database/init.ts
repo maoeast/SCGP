@@ -476,6 +476,7 @@ CREATE TABLE IF NOT EXISTS activation (
   machine_code TEXT NOT NULL,
   activation_code TEXT NOT NULL,
   license_data TEXT NOT NULL,
+  allowed_modules TEXT NOT NULL DEFAULT '[]',
   is_valid INTEGER DEFAULT 1,
   expires_at TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -2063,6 +2064,7 @@ async function initializeClassTables(rawDb: any): Promise<void> {
   safeAddColumn(rawDb, 'report_record', 'class_name TEXT')
   safeAddColumn(rawDb, 'equipment_training_records', 'class_id INTEGER')
   safeAddColumn(rawDb, 'equipment_training_records', 'class_name TEXT')
+  safeAddColumn(rawDb, 'activation', 'allowed_modules TEXT NOT NULL DEFAULT \'[]\'')
 
   // Phase 4.6: 训练记录模块重构 - 添加 module_code 字段
   safeAddColumn(rawDb, 'training_records', 'module_code TEXT DEFAULT "sensory"')

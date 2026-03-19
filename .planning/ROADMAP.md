@@ -15,11 +15,47 @@
 
 ## Current Milestone
 
-No active milestone. Start the next milestone with `$gsd-new-milestone`.
+## v1.5 Strict Modular Licensing
+
+**Status:** In Progress  
+**Phases:** 12-13  
+**Total Plans:** 2
+
+## Overview
+
+v1.5 introduces strict modular licensing for school-by-school delivery. The milestone first adds authorized module payload, local persistence, and auth-store entitlement state, then follows with route/menu/business-entry enforcement.
+
+## Phases
+
+### Phase 12: Modular Licensing Core
+
+**Goal**: Add strict `allowedModules` support to the signed license payload, local activation persistence, and auth store state.  
+**Depends on**: current activation system, `activation` table, auth store  
+**Plans**: 1 plan
+
+Plans:
+
+- [x] 12-01: Strict Payload, Activation Persistence, and Auth Entitlements
+
+**Details:**
+- Require `am` (`allowedModules`) in the signed license payload.
+- Persist authorized modules to `activation.allowed_modules`.
+- Expose `entitlements` and `hasModuleAccess()` in the auth store.
+- Inject `['sensory', 'emotional']` only in DEV mode when no real activation code exists.
+
+### Phase 13: Licensing Enforcement UI
+
+**Goal**: Enforce modular licensing at route, menu, dashboard, and direct-launch entry points.  
+**Depends on**: Phase 12  
+**Plans**: 1 plan
+
+Plans:
+
+- [ ] 13-01: Route Guards, Locked Menu State, and Business Entry Enforcement
 
 ## Milestone Summary
 
-Awaiting definition of the next milestone.
+Strict modular licensing is now underway. Core entitlement plumbing is complete; route and UI interception are next.
 
 ## Future Backlog
 
