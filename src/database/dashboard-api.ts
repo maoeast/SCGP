@@ -279,7 +279,7 @@ export class DashboardAPI extends DatabaseAPI {
           END AS reason
         FROM emotional_anomalies ea
 
-        ORDER BY datetime(created_at) DESC
+        ORDER BY created_at DESC
       `,
       [since, since],
     )
