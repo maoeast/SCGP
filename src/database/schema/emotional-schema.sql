@@ -59,3 +59,41 @@ CREATE INDEX IF NOT EXISTS idx_emotional_detail_student
   ON emotional_training_detail(student_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_emotional_detail_step
   ON emotional_training_detail(step_type, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS game_emotion_records (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  game_code TEXT NOT NULL
+    CHECK(game_code IN ('G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER')),
+  start_time TEXT NOT NULL,
+  duration_ms INTEGER NOT NULL,
+  difficulty_level INTEGER DEFAULT 1
+    CHECK(difficulty_level IN (1, 2, 3)),
+  completion_status TEXT NOT NULL
+    CHECK(completion_status IN ('completed', 'aborted')),
+  performance_data TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_game_emotion_records_student
+  ON game_emotion_records(student_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_game_emotion_records_code
+  ON game_emotion_records(game_code, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS student_badges (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  badge_code TEXT NOT NULL,
+  badge_name TEXT NOT NULL,
+  game_code TEXT NOT NULL
+    CHECK(game_code IN ('G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER')),
+  unlock_count INTEGER DEFAULT 1,
+  first_earned_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  last_earned_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(student_id, badge_code),
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_student_badges_student
+  ON student_badges(student_id, last_earned_at DESC);

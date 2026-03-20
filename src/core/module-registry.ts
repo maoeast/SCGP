@@ -404,20 +404,20 @@ export function initializeBuiltinModules(): void {
     icon: 'Emotion',
     themeColor: '#e6a23c',
     version: '1.0.0',
-    status: 'experimental',
+    status: 'active',
     features: [
       {
         code: 'relaxation_training',
         name: '放松训练',
         description: '深呼吸、渐进式肌肉放松等训练',
-        status: 'coming_soon',
+        status: 'active',
         route: '/emotional/relaxation'
       },
       {
         code: 'emotion_recognition',
         name: '情绪识别',
         description: '识别和理解基本情绪',
-        status: 'coming_soon',
+        status: 'active',
         route: '/emotional/recognition'
       }
     ]

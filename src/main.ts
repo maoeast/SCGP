@@ -1,5 +1,5 @@
-// 使用CDN方式加载Font Awesome 5.15.4（unpkg源）
-// 注意：不在这里导入main.css，已在index.html中导入以确保正确的加载顺序
+// Font Awesome 已通过 index.html 从 /public/fontawesome 本地目录加载
+// 注意：不在这里导入 main.css，已在 index.html 中导入以确保正确的加载顺序
 
 import { createApp } from 'vue'
 import pinia from './stores'

@@ -48,6 +48,7 @@
 - [2026-03-13-scgp-current-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-13-scgp-current-prd.md)
 - [2026-03-12-emotional-module-execution-prompt.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-12-emotional-module-execution-prompt.md)
 - [2026-03-16-emotional-module-prd.md（emotional 模块现行 PRD）](/home/DONG/Mycode/SCGP/docs/planning/2026-03-16-emotional-module-prd.md)
+- [emotion-games-dev-guidelines.md（情绪游戏开发范式与避坑指南）](/home/DONG/Mycode/SCGP/docs/planning/emotion-games-dev-guidelines.md)
 - [prd.md（原始需求基线）](/home/DONG/Mycode/SCGP/docs/planning/prd.md)
 - [感官训练PRD.md](/home/DONG/Mycode/SCGP/docs/planning/%E6%84%9F%E5%AE%98%E8%AE%AD%E7%BB%83PRD.md)
 - [报告生成模块技术方案.md](/home/DONG/Mycode/SCGP/docs/planning/%E6%8A%A5%E5%91%8A%E7%94%9F%E6%88%90%E6%A8%A1%E5%9D%97%E6%8A%80%E6%9C%AF%E6%96%B9%E6%A1%88.md)

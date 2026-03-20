@@ -127,11 +127,13 @@ const emotionalTargetPaths = new Set([
   '/emotional/emotion-scene',
   '/emotional/care-expression/select',
   '/emotional/care-expression',
+  '/emotional/games/balloon',
 ])
 
 const emotionalSubModuleTargetMap: Record<string, string> = {
   emotion_scene: '/emotional/emotion-scene/select',
   care_scene: '/emotional/care-expression/select',
+  emotion_games_balloon: '/emotional/games/balloon',
 }
 
 function resolveEmotionalTargetPath() {
@@ -206,6 +208,19 @@ const handleStudentAdded = async () => {
 // 选择学生 - 跳转到游戏大厅
 const selectStudent = (student: any) => {
   console.log('[SelectStudent] 选择学生:', student.id, '模块:', currentModuleCode.value)
+
+  const hasExplicitEmotionalTarget = Boolean(route.query.targetPath || route.query.subModule)
+
+  if (currentModuleCode.value === ModuleCode.EMOTIONAL && !hasExplicitEmotionalTarget) {
+    router.push({
+      path: `/games/lobby/${student.id}`,
+      query: {
+        module: currentModuleCode.value,
+        studentName: student.name || '',
+      },
+    })
+    return
+  }
 
   // 跳转到游戏大厅
   router.push({

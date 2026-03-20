@@ -75,6 +75,7 @@ import { Lock } from '@element-plus/icons-vue'
 import { ModuleRegistry } from '@/core/module-registry'
 import { ModuleCode, type ModuleMetadata } from '@/types/module'
 import { ResourceAPI } from '@/database/resource-api'
+import { getEmotionalGameCount } from './emotional-game-catalog'
 
 // 游戏模块扩展（带 emoji）
 interface GameModule extends ModuleMetadata {
@@ -117,6 +118,10 @@ const getStatusLabel = (status: string) => {
 
 // 获取模块游戏数量
 const getResourceCount = (moduleCode: ModuleCode) => {
+  if (moduleCode === ModuleCode.EMOTIONAL) {
+    return getEmotionalGameCount()
+  }
+
   try {
     const api = new ResourceAPI()
     const resources = api.getResources({
