@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.app.json",
+  "include": [
+    "env.d.ts",
+    "src/views/emotional/**/*",
+    "src/components/emotional/**/*",
+    "src/types/emotional.ts",
+    "src/types/emotional/**/*",
+    "src/database/emotional*",
+    "src/database/migration/migrate-emotional*",
+    "src/composables/useEmotional*",
+    "src/utils/emotional*",
+    "src/views/games/emotional-game-catalog.ts",
+    "src/views/resource-center/components/EmotionalResourcePackDialog.vue",
+    "src/views/resource-center/editors/emotional-resource-contract.ts"
+  ],
+  "exclude": ["src/**/__tests__/*"],
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.emotional.tsbuildinfo"
+  }
+}

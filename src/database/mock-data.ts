@@ -1,5 +1,8 @@
+export type MockRow = Record<string, unknown> & { id?: number }
+type MockTableData = Record<string, MockRow[]>
+
 // 模拟数据存储
-const mockData = {
+const mockData: MockTableData = {
   user: [
     {
       id: 1,
@@ -131,12 +134,12 @@ const mockData = {
 }
 
 // 获取模拟数据
-export function getMockData(tableName: string) {
-  return mockData[tableName as keyof typeof mockData] || []
+export function getMockData(tableName: string): MockRow[] {
+  return mockData[tableName] || []
 }
 
 // 查找模拟数据
-export function findMockData(tableName: string, field: string, value: any) {
+export function findMockData(tableName: string, field: string, value: unknown): MockRow | undefined {
   const tableData = getMockData(tableName)
   return tableData.find((item) => item[field] === value)
 }

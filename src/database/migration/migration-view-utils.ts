@@ -27,7 +27,7 @@ export function captureDependentViews(db: any, tableNames: string[]): SqlViewDef
         name: String(row[0] || ''),
         sql: String(row[1] || ''),
       }))
-      .filter((view) => view.name && view.sql && patterns.some((pattern) => pattern.test(view.sql)))
+      .filter((view: SqlViewDefinition) => view.name && view.sql && patterns.some((pattern) => pattern.test(view.sql)))
   } catch {
     return []
   }

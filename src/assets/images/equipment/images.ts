@@ -17,7 +17,7 @@ import { CATEGORY_COLORS } from '@/types/equipment'
 
 // 使用 Vite 的 glob 导入，在构建时包含所有 .webp 图片
 // @ts-ignore - Vite 的 glob 导入
-const imageModules = import.meta.glob('./*.webp', { eager: true })
+const imageModules = import.meta.glob<{ default: string }>('./*.webp', { eager: true })
 
 /**
  * 生成占位符图片 URL（当真实图片不存在时）
@@ -55,7 +55,7 @@ export function getEquipmentImageUrl(
   // 检查 glob 导入中是否有对应图片
   if (imageName in imageModules) {
     // 获取图片的默认导出（URL）
-    return imageModules[imageName].default
+    return imageModules[imageName]?.default || generatePlaceholderUrl(category, name)
   }
 
   // 如果图片不存在，返回占位符
