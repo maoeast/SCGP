@@ -127,3 +127,36 @@ const guideBearBottom = computed(() => panelSafeBottom.value + 130)
 - “看不见角色”很多时候是容器参考系错误
 - 带操作面板的情绪游戏，不应该靠固定百分比摆主体
 - 这类页面应默认准备“可测量布局”，而不是“猜测布局”
+
+## 8. 预览文案来源规则
+
+后续新增情绪小游戏时，游戏大厅中的“玩法说明”必须以目录元数据为单一事实来源，不允许在 `GameLobby.vue` 再写一份硬编码文案。
+
+当前约定：
+
+- 数据来源：`src/views/games/emotional-game-catalog.ts`
+- 字段：`metadata.previewDescription`
+
+推荐模式：
+
+```ts
+const getEmotionalPreviewDescription = (game: ResourceItem) => {
+  const previewDescription = game.metadata?.previewDescription
+  if (typeof previewDescription === 'string' && previewDescription.trim()) {
+    return previewDescription
+  }
+
+  return game.description || '请先选择一个情绪调节游戏。'
+}
+```
+
+原因：
+
+- 目录卡片、预览页、后续运营文案都应该围绕同一份元数据维护
+- 否则会出现“游戏 A 的玩法说明显示成游戏 B”的问题
+- 新增游戏时如果忘记同步硬编码页面，错误不会立刻暴露
+
+提交前必须检查：
+
+- 当前游戏是否填写了 `metadata.previewDescription`
+- `GameLobby.vue` 是否仍然只读取目录元数据，而没有新增硬编码说明文本

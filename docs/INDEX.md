@@ -72,6 +72,7 @@
 
 - [2026-03-13-scgp-prd-gap-analysis.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-13-scgp-prd-gap-analysis.md)
 - [2026-03-11-assessment-cleanup.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-11-assessment-cleanup.md)
+- [2026-03-20-emotion-games-layout-debug-lessons.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-20-emotion-games-layout-debug-lessons.md)
 
 ### `docs/references`
 

@@ -114,6 +114,7 @@
               <div class="preview-block">
                 <h4>玩法说明</h4>
                 <p>按住大按钮慢慢吸气，让热气球鼓起来；松开时温柔呼气，帮助它平稳升空。</p>
+                <p class="emotion-preview-dynamic">{{ getEmotionalPreviewDescription(selectedGame) }}</p>
               </div>
 
               <div class="preview-block">
@@ -248,6 +249,15 @@ const getModuleGameCount = (moduleCode: string): number => {
   } catch {
     return 0
   }
+}
+
+const getEmotionalPreviewDescription = (game: ResourceItem): string => {
+  const previewDescription = game.metadata?.previewDescription
+  if (typeof previewDescription === 'string' && previewDescription.trim()) {
+    return previewDescription
+  }
+
+  return game.description || '璇峰厛閫夋嫨涓€涓儏缁皟鑺傛父鎴忋€?'
 }
 
 // 处理模块切换
@@ -517,6 +527,10 @@ watch(isEmotionalModule, (value) => {
   margin: 0;
   color: #6a6a6a;
   line-height: 1.7;
+}
+
+.emotion-preview-body > .preview-block:first-child > p:first-of-type {
+  display: none;
 }
 
 .emotion-preview-actions {
