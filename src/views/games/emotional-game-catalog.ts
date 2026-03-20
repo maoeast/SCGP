@@ -70,6 +70,29 @@ export const EMOTIONAL_GAME_CATALOG: ResourceItem[] = [
       repeatPlayHint: '每次会轮换底部笑脸细节、冰霜裂纹和光点节奏，让孩子在不同状态下反复做大动作释放，慢慢把坏心情擦干净。',
     },
   },
+  {
+    id: -1004,
+    moduleCode: ModuleCode.EMOTIONAL,
+    resourceType: 'game',
+    name: '喂食情绪小怪兽',
+    description: '把合适的安抚工具拖给不同情绪颜色的小怪兽，帮助孩子练习情绪匹配、照顾他人与问题解决。',
+    category: 'matching',
+    tags: ['情绪匹配', '拖拽互动', '问题解决', '传送带挑战'],
+    coverImage: '🧸',
+    isCustom: false,
+    isActive: true,
+    metadata: {
+      emoji: '🧸',
+      color: 'linear-gradient(135deg, #ffa86b 0%, #ff7fa3 38%, #7ad9c7 100%)',
+      duration: '3-6分钟',
+      difficulty: '三级拖拽进阶',
+      entryPath: '/emotional/games/monster',
+      gameCode: 'G07_MONSTER',
+      therapeuticGoal: '认知匹配',
+      previewDescription: '把水杯、拥抱、耳罩等安抚工具拖给对应情绪颜色的小怪兽。简单模式只有 1 只怪兽和 2 个工具，中等模式会同时出现 2 只怪兽和更多干扰项，困难模式里工具还会放在缓慢移动的传送带上。',
+      repeatPlayHint: '每次会轮换怪兽组合、工具顺序和 L3 传送带节奏，让孩子在反复练习中慢慢学会“谁现在需要什么安抚工具”。',
+    },
+  },
 ]
 
 export function getEmotionalGameCount() {
