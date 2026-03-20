@@ -113,7 +113,6 @@
             <div class="emotion-preview-body">
               <div class="preview-block">
                 <h4>玩法说明</h4>
-                <p>按住大按钮慢慢吸气，让热气球鼓起来；松开时温柔呼气，帮助它平稳升空。</p>
                 <p class="emotion-preview-dynamic">{{ getEmotionalPreviewDescription(selectedGame) }}</p>
               </div>
 
@@ -527,10 +526,6 @@ watch(isEmotionalModule, (value) => {
   margin: 0;
   color: #6a6a6a;
   line-height: 1.7;
-}
-
-.emotion-preview-body > .preview-block:first-child > p:first-of-type {
-  display: none;
 }
 
 .emotion-preview-actions {

@@ -47,6 +47,29 @@ export const EMOTIONAL_GAME_CATALOG: ResourceItem[] = [
       repeatPlayHint: '每次会轮换小动物组合、森林地形和灯泡颜色，让孩子在反复练习中慢慢找到“魔法声音”。',
     },
   },
+  {
+    id: -1003,
+    moduleCode: ModuleCode.EMOTIONAL,
+    resourceType: 'game',
+    name: '擦亮坏心情',
+    description: '用大范围、连续的手势擦掉冰霜，让底部的阳光笑脸慢慢亮起来，帮助孩子把坏心情释放出去。',
+    category: 'release',
+    tags: ['情绪释放', '大动作发泄', '刮擦互动', 'Canvas'],
+    coverImage: '☀️',
+    isCustom: false,
+    isActive: true,
+    metadata: {
+      emoji: '☀️',
+      color: 'linear-gradient(135deg, #7fd6ff 0%, #8be0c8 46%, #ffd36e 100%)',
+      duration: '3-5分钟',
+      difficulty: '三级擦除进阶',
+      entryPath: '/emotional/games/wipe-ice',
+      gameCode: 'G04_WIPE_ICE',
+      therapeuticGoal: '大动作发泄',
+      previewDescription: '用整只手臂带着手指快速擦掉冰霜，让藏在下面的阳光笑脸一点点露出来。简单模式很快就会融化，中等模式停太久会慢慢结冰，困难模式要把厚厚的冰霜反复擦亮三次。',
+      repeatPlayHint: '每次会轮换底部笑脸细节、冰霜裂纹和光点节奏，让孩子在不同状态下反复做大动作释放，慢慢把坏心情擦干净。',
+    },
+  },
 ]
 
 export function getEmotionalGameCount() {

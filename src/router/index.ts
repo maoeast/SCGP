@@ -46,6 +46,7 @@ const EmotionalRecords = () => import('@/views/emotional/Records.vue')
 const EmotionalReport = () => import('@/views/emotional/Report.vue')
 const BalloonBreathingPage = () => import('@/views/emotional/games/BalloonBreathingPage.vue')
 const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
+const WipeSadnessPage = () => import('@/views/emotional/games/WipeSadnessPage.vue')
 
 // 训练记录模块（Phase 4.6 重构）
 const TrainingRecordsMenu = () => import('@/views/training-records/TrainingRecordsMenu.vue')
@@ -287,6 +288,16 @@ const router = createRouter({
           component: VoiceVolumeForestPage,
           meta: {
             title: '音量魔法森林',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/games/wipe-ice',
+          name: 'WipeSadnessGame',
+          component: WipeSadnessPage,
+          meta: {
+            title: '擦亮坏心情',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }
