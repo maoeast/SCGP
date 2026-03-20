@@ -29,8 +29,42 @@
     </div>
 
     <div class="forest-layer">
-      <div class="tree-row">
+      <div class="tree-row" :style="{ bottom: `${treeRowBottom}px` }">
         <span v-for="tree in 6" :key="tree" class="tree" />
+      </div>
+
+      <div
+        v-if="showGuideBear"
+        ref="guideBearCardRef"
+        class="guide-bear-card"
+        :style="{ bottom: `${guideBearBottom}px` }"
+      >
+        <svg viewBox="0 0 180 180" class="guide-bear-svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="guideBearCoat" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#d9c2a1" />
+              <stop offset="100%" stop-color="#8a6b4f" />
+            </linearGradient>
+            <linearGradient id="guideBearSnout" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f5ead9" />
+              <stop offset="100%" stop-color="#e1c8aa" />
+            </linearGradient>
+          </defs>
+          <circle cx="52" cy="44" r="22" fill="url(#guideBearCoat)" />
+          <circle cx="128" cy="44" r="22" fill="url(#guideBearCoat)" />
+          <circle cx="52" cy="44" r="10" fill="#f2ddc3" />
+          <circle cx="128" cy="44" r="10" fill="#f2ddc3" />
+          <ellipse cx="90" cy="98" rx="58" ry="54" fill="url(#guideBearCoat)" />
+          <ellipse cx="90" cy="114" rx="34" ry="26" fill="url(#guideBearSnout)" />
+          <circle cx="70" cy="92" r="6" fill="#25352d" />
+          <circle cx="110" cy="92" r="6" fill="#25352d" />
+          <ellipse cx="90" cy="110" rx="10" ry="8" fill="#3f2f26" />
+          <path d="M82 122c4 8 12 8 16 0" fill="none" stroke="#3f2f26" stroke-width="4" stroke-linecap="round" />
+          <path d="M40 118c-8 8-12 20-12 32 10-8 20-12 30-12" fill="none" stroke="#b98a58" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M140 118c8 8 12 20 12 32-10-8-20-12-30-12" fill="none" stroke="#b98a58" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <strong>小熊在这里</strong>
+        <small>{{ guideBearCopy }}</small>
       </div>
 
       <div class="fireflies">
@@ -42,26 +76,58 @@
         />
       </div>
 
-      <div class="animals">
+      <div
+        ref="animalsContainerRef"
+        class="animals"
+        :style="{ bottom: `${animalsBottom}px` }"
+      >
         <article
-          v-for="animal in animalStates"
+          v-for="animal in visibleAnimalStates"
           :key="animal.id"
           class="animal"
-          :class="[animal.kind, { awake: animal.awake, hiding: animal.hiding, dancing: phase === 'celebrating' }]"
+          :class="[
+            animal.kind,
+            {
+              awake: animal.awake,
+              hiding: animal.hiding,
+              dancing: phase === 'celebrating',
+            },
+          ]"
         >
           <div class="hole"></div>
-          <div class="body">
-            <div class="ears">
-              <span class="ear left"></span>
-              <span class="ear right"></span>
-            </div>
-            <div class="face">
-              <span class="eye left"></span>
-              <span class="eye right"></span>
-              <span class="nose"></span>
-            </div>
-            <div v-if="animal.kind === 'squirrel'" class="tail"></div>
-          </div>
+          <svg
+            viewBox="0 0 180 180"
+            class="animal-figure"
+            :style="getAnimalPalette(animal.kind)"
+            aria-hidden="true"
+          >
+            <g v-if="animal.kind === 'rabbit'">
+              <ellipse cx="60" cy="42" rx="16" ry="34" fill="var(--coat-color)" />
+              <ellipse cx="120" cy="42" rx="16" ry="34" fill="var(--coat-color)" />
+              <ellipse cx="60" cy="44" rx="8" ry="24" fill="var(--inner-ear)" />
+              <ellipse cx="120" cy="44" rx="8" ry="24" fill="var(--inner-ear)" />
+            </g>
+            <g v-else-if="animal.kind === 'bear'">
+              <circle cx="56" cy="48" r="20" fill="var(--coat-color)" />
+              <circle cx="124" cy="48" r="20" fill="var(--coat-color)" />
+              <circle cx="56" cy="48" r="9" fill="var(--inner-ear)" />
+              <circle cx="124" cy="48" r="9" fill="var(--inner-ear)" />
+            </g>
+            <g v-else>
+              <ellipse cx="60" cy="48" rx="18" ry="22" fill="var(--coat-color)" />
+              <ellipse cx="120" cy="48" rx="18" ry="22" fill="var(--coat-color)" />
+              <ellipse cx="140" cy="116" rx="24" ry="34" fill="var(--tail-color)" transform="rotate(-18 140 116)" />
+              <ellipse cx="146" cy="110" rx="12" ry="18" fill="var(--tail-highlight)" transform="rotate(-18 146 110)" />
+            </g>
+            <ellipse cx="90" cy="98" rx="54" ry="50" fill="var(--coat-color)" />
+            <ellipse cx="90" cy="114" rx="32" ry="24" fill="var(--snout-color)" />
+            <circle cx="72" cy="96" r="5.5" fill="var(--eye-color)" />
+            <circle cx="108" cy="96" r="5.5" fill="var(--eye-color)" />
+            <ellipse cx="90" cy="111" rx="9" ry="7" fill="var(--nose-color)" />
+            <path d="M82 123c4 7 12 7 16 0" fill="none" stroke="var(--mouth-color)" stroke-width="4" stroke-linecap="round" />
+            <ellipse cx="64" cy="118" rx="8" ry="4" fill="var(--blush-color)" opacity="0.55" />
+            <ellipse cx="116" cy="118" rx="8" ry="4" fill="var(--blush-color)" opacity="0.55" />
+          </svg>
           <strong>{{ animal.label }}</strong>
           <small>{{ animal.awake ? '醒来啦' : '还在做梦' }}</small>
         </article>
@@ -87,7 +153,7 @@
       </div>
     </div>
 
-    <div class="panel">
+    <div ref="panelRef" class="panel">
       <div class="tags">
         <span>{{ theme.title }}</span>
         <span class="accent">{{ objective.title }}</span>
@@ -133,7 +199,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { EmotionGameAudioController, EmotionGameCompletionPayload, EmotionGameDifficulty, EmotionGameSettings } from '@/types/emotional/games'
 
 type Phase = 'ready' | 'requesting' | 'quiet' | 'voice' | 'listening' | 'warning' | 'celebrating' | 'finished' | 'error'
@@ -320,15 +386,33 @@ const showBadge = ref(false)
 const calibrationFallbackUsed = ref(false)
 const micPermissionGranted = ref(false)
 const hiddenAnimalId = ref<number | null>(null)
+const animalsContainerRef = ref<HTMLElement | null>(null)
+const guideBearCardRef = ref<HTMLElement | null>(null)
+const panelRef = ref<HTMLElement | null>(null)
+const panelRect = ref({ left: 0, top: 0, width: 0, height: 0 })
 
 const objective = computed(() => OBJECTIVES[props.difficulty])
 const stars = STARS
 const fireflies = FIREFLIES
-const animalStates = computed(() => ANIMALS.map((animal, index) => ({
+const orderedAnimals = computed(() => [ANIMALS[2], ANIMALS[0], ANIMALS[1]].filter(Boolean) as Animal[])
+const animalStates = computed(() => orderedAnimals.value.map((animal, index) => ({
   ...animal,
   awake: index < activeAnimalCount.value || phase.value === 'celebrating',
   hiding: hiddenAnimalId.value === animal.id,
+  visible: phase.value === 'celebrating' || index < activeAnimalCount.value,
 })))
+const visibleAnimalStates = computed(() => animalStates.value.filter((animal) => animal.visible))
+const showGuideBear = computed(() => activeAnimalCount.value === 0 && ['ready', 'requesting', 'quiet', 'voice', 'listening', 'warning'].includes(phase.value))
+const guideBearCopy = computed(() => {
+  if (phase.value === 'voice') return '现在用你平时说话的声音，对小熊说一句“你好”吧。'
+  if (phase.value === 'listening' || phase.value === 'warning') return '把声音稳稳放在日常交流区，小熊听到了就会出来。'
+  if (phase.value === 'quiet') return '先陪小熊一起安静 2 秒，让森林听听夜晚有多安静。'
+  return '点一下开始，先让小熊把耳朵借给你。'
+})
+const panelSafeBottom = computed(() => panelRect.value.height > 0 ? panelRect.value.height + 28 : 300)
+const treeRowBottom = computed(() => panelSafeBottom.value - 12)
+const animalsBottom = computed(() => panelSafeBottom.value + 10)
+const guideBearBottom = computed(() => panelSafeBottom.value + 130)
 
 const difficultyLabel = computed(() => {
   if (props.difficulty === 1) return '简单 · 轻声尝试'
@@ -391,6 +475,26 @@ let particles: Particle[] = []
 const timeouts = new Set<number>()
 const noiseSamples: number[] = []
 const voiceSamples: number[] = []
+
+function updateDebugRects() {
+  const panelEl = panelRef.value
+  if (panelEl) {
+    const rect = panelEl.getBoundingClientRect()
+    panelRect.value = {
+      left: Math.round(rect.left),
+      top: Math.round(rect.top),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+    }
+  } else {
+    panelRect.value = { left: 0, top: 0, width: 0, height: 0 }
+  }
+}
+
+async function syncDebugRects() {
+  await nextTick()
+  updateDebugRects()
+}
 
 function scheduleTimeout(callback: () => void, delay: number) {
   const timer = window.setTimeout(() => {
@@ -539,6 +643,48 @@ function getFireflyStyle(firefly: Firefly) {
   }
 }
 
+function getAnimalPalette(kind: Animal['kind']) {
+  if (kind === 'bear') {
+    return {
+      '--coat-color': '#9a7758',
+      '--inner-ear': '#ead5bb',
+      '--snout-color': '#f0dfc9',
+      '--eye-color': '#25352d',
+      '--nose-color': '#463328',
+      '--mouth-color': '#463328',
+      '--blush-color': '#f1b7a8',
+      '--tail-color': '#9a7758',
+      '--tail-highlight': '#b99270',
+    } as Record<string, string>
+  }
+
+  if (kind === 'rabbit') {
+    return {
+      '--coat-color': '#f3e7d5',
+      '--inner-ear': '#f5c7cf',
+      '--snout-color': '#fff5eb',
+      '--eye-color': '#31423a',
+      '--nose-color': '#ff9db1',
+      '--mouth-color': '#6a584d',
+      '--blush-color': '#ffd4de',
+      '--tail-color': '#f3e7d5',
+      '--tail-highlight': '#fff5eb',
+    } as Record<string, string>
+  }
+
+  return {
+    '--coat-color': '#c98756',
+    '--inner-ear': '#f0d1b0',
+    '--snout-color': '#f6e4cf',
+    '--eye-color': '#2d362f',
+    '--nose-color': '#5e4331',
+    '--mouth-color': '#5e4331',
+    '--blush-color': '#f4c1ab',
+    '--tail-color': '#b46f43',
+    '--tail-highlight': '#e5b07b',
+  } as Record<string, string>
+}
+
 function setProgress(progressMs: number) {
   const milestones = objective.value.animalMilestones
   activeAnimalCount.value = milestones.filter((milestone) => progressMs >= milestone).length
@@ -546,7 +692,7 @@ function setProgress(progressMs: number) {
 }
 
 function triggerHideAnimal() {
-  const animal = ANIMALS[Math.min(activeAnimalCount.value, ANIMALS.length - 1)]
+  const animal = orderedAnimals.value[Math.min(activeAnimalCount.value, orderedAnimals.value.length - 1)]
   if (!animal) return
   hiddenAnimalId.value = animal.id
   scheduleTimeout(() => {
@@ -690,7 +836,7 @@ async function completeSession() {
   phase.value = 'celebrating'
   stageMessage.value = objective.value.successPrompt
   helperMessage.value = '小灯泡亮起来啦，大家正在开心摇摆。'
-  activeAnimalCount.value = ANIMALS.length
+  activeAnimalCount.value = orderedAnimals.value.length
   litBulbCount.value = theme.value.bulbs.length
   stopPartyBed()
   stopMic()
@@ -909,11 +1055,36 @@ onMounted(() => {
   pickTheme()
   resetForDifficulty()
   window.addEventListener('resize', resizeCanvas)
+  window.addEventListener('resize', updateDebugRects)
+  syncDebugRects().catch(() => {
+    // ignore
+  })
 })
 
 watch(() => props.difficulty, () => {
   resetForDifficulty()
 })
+
+watch(phase, () => {
+  syncDebugRects().catch(() => {
+    // ignore
+  })
+})
+
+watch(activeAnimalCount, () => {
+  syncDebugRects().catch(() => {
+    // ignore
+  })
+})
+
+watch(
+  () => `${showGuideBear.value}|${visibleAnimalStates.value.length}|${visibleAnimalStates.value.map((animal) => `${animal.label}:${animal.awake}:${animal.hiding}`).join(',')}`,
+  () => {
+    syncDebugRects().catch(() => {
+      // ignore
+    })
+  },
+)
 
 watch(() => props.paused, (paused) => {
   if (paused) {
@@ -946,6 +1117,7 @@ onBeforeUnmount(() => {
   stopRuntime()
   props.audio.stopAll()
   window.removeEventListener('resize', resizeCanvas)
+  window.removeEventListener('resize', updateDebugRects)
   if (audioContext && audioContext.state !== 'closed') {
     audioContext.close().catch(() => {
       // ignore
@@ -958,6 +1130,9 @@ onBeforeUnmount(() => {
 .voice-forest-game { position: relative; min-height: calc(100vh - 120px); overflow: hidden; }
 .celebration-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; z-index: 30; pointer-events: none; }
 .sky-layer, .forest-layer, .hud, .panel { position: relative; z-index: 2; }
+.forest-layer { position: absolute; inset: 0; z-index: 3; }
+.hud { z-index: 6; }
+.panel { z-index: 5; }
 .moon-glow, .moon { position: absolute; right: 12%; top: 12%; border-radius: 999px; }
 .moon-glow { width: 180px; height: 180px; filter: blur(8px); }
 .moon { width: 88px; height: 88px; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95), #ffe8a3 80%); box-shadow: 0 0 24px rgba(255,237,180,0.4); }
@@ -967,33 +1142,25 @@ onBeforeUnmount(() => {
 .bulb { position: relative; width: 16px; height: 30px; border-radius: 12px 12px 16px 16px; background: rgba(255,255,255,0.22); transition: all 0.28s ease; }
 .bulb::before { content: ''; position: absolute; top: -9px; left: 50%; width: 4px; height: 10px; border-radius: 999px; transform: translateX(-50%); background: rgba(92,88,72,0.8); }
 .bulb.lit { background: var(--bulb-color); box-shadow: 0 0 22px var(--bulb-color), 0 0 40px rgba(255,255,255,0.16); transform: translateY(-2px); }
-.tree-row { position: absolute; left: 0; right: 0; bottom: 25%; display: flex; justify-content: space-around; }
+.tree-row { position: absolute; left: 0; right: 0; display: flex; justify-content: space-around; }
 .tree { position: relative; width: 92px; height: 180px; transform: scale(0.9); opacity: 0.82; }
 .tree::before, .tree::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); border-radius: 999px; }
 .tree::before { bottom: 0; width: 18px; height: 92px; background: #5a4334; }
 .tree::after { bottom: 58px; width: 92px; height: 110px; background: radial-gradient(circle at 50% 35%, rgba(255,255,255,0.12), transparent 34%), linear-gradient(180deg, #4b8d5a 0%, #244d37 100%); }
+.guide-bear-card { position: absolute; left: 50%; z-index: 4; width: min(260px, calc(100% - 48px)); padding: 18px 16px 14px; border-radius: 26px; transform: translateX(-50%); text-align: center; color: #eefbf3; background: linear-gradient(180deg, rgba(8, 28, 26, 0.18), rgba(8, 28, 26, 0.42)); box-shadow: 0 16px 34px rgba(8, 28, 26, 0.18); backdrop-filter: blur(10px); }
+.guide-bear-card strong { display: block; margin: 8px 0 6px; font-size: 20px; }
+.guide-bear-card small { display: block; line-height: 1.5; color: rgba(238, 251, 243, 0.82); }
+.guide-bear-svg { display: block; width: 116px; height: 116px; margin: 0 auto; filter: drop-shadow(0 10px 14px rgba(17, 29, 24, 0.24)); }
 .fireflies { position: absolute; inset: 12% 0 20% 0; pointer-events: none; }
 .firefly { position: absolute; border-radius: 999px; background: radial-gradient(circle, rgba(255,244,158,1) 0%, rgba(255,244,158,0.15) 80%); box-shadow: 0 0 18px rgba(255,244,158,0.7); animation: floaty 3.6s ease-in-out infinite; }
-.animals { position: absolute; left: 8%; right: 8%; bottom: 18%; display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 18px; }
-.animal { position: relative; min-height: 176px; padding: 28px 18px 18px; border-radius: 28px; background: rgba(11,32,31,0.3); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); text-align: center; color: rgba(255,255,255,0.95); transition: all 0.3s ease; }
+.animals { position: absolute; left: 10%; right: 10%; z-index: 4; display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 18px; align-items: end; }
+.animal { position: relative; min-height: 176px; padding: 28px 18px 18px; border-radius: 28px; background: rgba(11,32,31,0.42); box-shadow: 0 18px 34px rgba(6, 20, 18, 0.22), inset 0 1px 0 rgba(255,255,255,0.08); text-align: center; color: rgba(255,255,255,0.95); transition: all 0.3s ease; }
 .animal.awake { transform: translateY(-6px); }
 .animal.dancing { animation: sway 1.2s ease-in-out infinite; }
-.animal.hiding .body { transform: translateY(32px) scale(0.9); opacity: 0.2; }
+.animal.hiding .animal-figure { transform: translateY(32px) scale(0.9); opacity: 0.18; }
 .hole { position: absolute; left: 50%; bottom: 22px; width: 72px; height: 20px; border-radius: 999px; transform: translateX(-50%); background: rgba(6,16,14,0.78); }
-.body { position: relative; width: 84px; height: 84px; margin: 0 auto 12px; border-radius: 50%; background: linear-gradient(180deg, rgba(255,244,224,0.96), rgba(229,209,186,0.96)); transition: all 0.24s ease; }
-.squirrel .body { background: linear-gradient(180deg, #f4d9b1, #c98f53); }
-.bear .body { background: linear-gradient(180deg, #d9c2a1, #8a6b4f); }
-.ears { position: absolute; top: -10px; left: 50%; width: 100%; transform: translateX(-50%); }
-.ear { position: absolute; width: 22px; height: 32px; border-radius: 999px; background: inherit; }
-.ear.left { left: 16px; }
-.ear.right { right: 16px; }
-.bear .ear { width: 22px; height: 22px; top: 2px; }
-.face { position: absolute; inset: 0; }
-.eye, .nose { position: absolute; border-radius: 999px; }
-.eye { top: 34px; width: 10px; height: 10px; background: #21332b; }
-.eye.left { left: 24px; } .eye.right { right: 24px; }
-.nose { left: 50%; bottom: 22px; width: 16px; height: 12px; transform: translateX(-50%); background: #ff9aa2; }
-.tail { position: absolute; top: 22px; right: -14px; width: 28px; height: 42px; border-radius: 18px 22px 22px 18px; background: linear-gradient(180deg, #e5ba86, #b36f3f); }
+.animal-figure { display: block; width: 110px; height: 110px; margin: 0 auto 10px; filter: drop-shadow(0 10px 14px rgba(15, 26, 23, 0.18)); transition: transform 0.24s ease, opacity 0.24s ease; }
+.animal.awake .animal-figure { transform: translateY(-4px) scale(1.03); }
 .animal strong { display: block; margin-bottom: 6px; font-size: 18px; }
 .animal small { color: rgba(246,251,246,0.72); }
 .hud { position: absolute; top: 96px; left: 24px; right: 24px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
@@ -1028,9 +1195,10 @@ onBeforeUnmount(() => {
 @media (max-width: 980px) {
   .voice-forest-game { min-height: calc(100vh - 92px); }
   .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .animals { left: 12px; right: 12px; bottom: 30%; gap: 10px; }
+  .guide-bear-card { width: min(240px, calc(100% - 24px)); }
+  .animals { left: 12px; right: 12px; gap: 10px; }
   .animal { min-height: 146px; padding: 18px 12px 14px; }
-  .body { width: 68px; height: 68px; }
+  .animal-figure { width: 88px; height: 88px; }
   .panel { left: 12px; right: 12px; bottom: 12px; padding: 18px; }
   .panel h2 { font-size: 28px; }
   .panel p { font-size: 16px; }
