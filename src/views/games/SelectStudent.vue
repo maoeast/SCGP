@@ -128,12 +128,14 @@ const emotionalTargetPaths = new Set([
   '/emotional/care-expression/select',
   '/emotional/care-expression',
   '/emotional/games/balloon',
+  '/emotional/games/forest',
 ])
 
 const emotionalSubModuleTargetMap: Record<string, string> = {
   emotion_scene: '/emotional/emotion-scene/select',
   care_scene: '/emotional/care-expression/select',
   emotion_games_balloon: '/emotional/games/balloon',
+  emotion_games_forest: '/emotional/games/forest',
 }
 
 function resolveEmotionalTargetPath() {

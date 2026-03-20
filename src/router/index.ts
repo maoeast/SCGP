@@ -45,6 +45,7 @@ const EmotionalSessionSummary = () => import('@/views/emotional/SessionSummary.v
 const EmotionalRecords = () => import('@/views/emotional/Records.vue')
 const EmotionalReport = () => import('@/views/emotional/Report.vue')
 const BalloonBreathingPage = () => import('@/views/emotional/games/BalloonBreathingPage.vue')
+const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
 
 // 训练记录模块（Phase 4.6 重构）
 const TrainingRecordsMenu = () => import('@/views/training-records/TrainingRecordsMenu.vue')
@@ -276,6 +277,16 @@ const router = createRouter({
           component: BalloonBreathingPage,
           meta: {
             title: '深呼吸热气球',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/games/forest',
+          name: 'VoiceVolumeForestGame',
+          component: VoiceVolumeForestPage,
+          meta: {
+            title: '音量魔法森林',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }
