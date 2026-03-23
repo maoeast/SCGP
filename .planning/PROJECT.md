@@ -31,16 +31,30 @@ SCGP helps special education teachers and rehabilitation staff run structured as
 - Enforced module authorization at router, sidebar, dashboard quick actions, and direct runtime launch entry points
 - Kept unauthorized modules visible as locked commercial surfaces instead of silently hiding them
 
-## Next Milestone Goals
+## Current Milestone: v1.6 Emotional Engine Refactoring
 
-The next milestone is not defined yet. Candidate directions already visible in backlog:
+**Goal:** Refactor the existing emotional training runtime into a shared engine architecture that restores current `emotion_scene` and `care_scene` behavior exactly, while moving page-level orchestration into compile adapters and a unified interaction engine.
 
-- Refine authorization semantics for cross-module pages such as `Reports`, `ResourceCenter`, and `TrainingPlan`
-- Replace first-resource dashboard launch with plan-priority or teacher-guided recommended resource selection
-- Emotional report polish based on richer scene taxonomy and teacher-facing summaries
-- Resource pack bundling for local image assets after metadata exchange proves stable
-- Cross-module route/menu platformization and future generic resource-pack infrastructure
-- Cognitive assessment foundation and multi-module comprehensive reporting backlog
+**Target features:**
+- Extract compile adapters so `EmotionSceneResourceMeta` and `CareSceneResourceMeta` are translated into `EmotionalSessionConfig` without changing the resource-layer schema.
+- Introduce one `EmotionalInteractionEngine` plus `stepType -> renderer` dispatch so both current submodules run on the same execution layer.
+- Reduce `EmotionSceneTraining.vue` and `CareExpressionTraining.vue` to shell pages that load resources, compile config, and host the shared engine.
+- Preserve current persistence, summary, records, report, route paths, and launch/exit behavior so the refactor is behaviorally transparent outside the engine internals.
+
+## Requirements
+
+### Active
+
+- [ ] Resource-layer emotional schemas stay unchanged while compile adapters generate the runtime step DSL.
+- [ ] A shared emotional interaction engine replaces duplicated page-level session orchestration.
+- [ ] Step rendering is standardized on normalized step definitions rather than page-specific resource interpretation.
+- [ ] Current routes, persistence outputs, summaries, records, and reports remain compatible after the refactor.
+
+### Out of Scope
+
+- Introducing new emotional business concepts, new submodules, or external interaction patterns beyond the current codebase.
+- Rewriting emotional persistence away from the current local SQL.js, `training_records`, and emotional session/detail tables.
+- Changing route paths, selector semantics, report surfaces, or resource-pack schema contracts unless required to preserve current behavior under the new engine.
 
 ### Constraints
 
@@ -49,6 +63,7 @@ The next milestone is not defined yet. Candidate directions already visible in b
 3. **Structured exchange is now proven**: future export work should extend the normalized payload approach instead of rebuilding per-page document trees.
 4. **No native deps**: do not introduce `sqlite3`, `sharp`, or other runtime native dependencies.
 5. **Word-first export**: assessment reports should standardize on editable Word delivery before revisiting PDF quality work.
+6. **Refactor only**: this milestone uses the existing internal architecture blueprint and current TypeScript schema; do not import new business models or external workflow patterns.
 
 ---
-*Last updated: 2026-03-19 after archiving v1.5 milestone*
+*Last updated: 2026-03-23 after starting milestone v1.6 Emotional Engine Refactoring*
