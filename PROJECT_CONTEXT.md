@@ -1,10 +1,12 @@
 # PROJECT_CONTEXT.md
 
+> 说明：本文档是持续维护型协作上下文与工作记录，不再建议作为每次新会话默认首读文件。启动阶段请优先使用 `AGENTS.md` 与 `docs/planning/2026-03-23-scgp-context-bootstrap.md` 建立最小上下文。
+
 > **🤖 CLAUDE AGENT PROTOCOL (v2.0)**
 >
 > 1. **自动维护**：任务结束时必须更新此文件。
 > 2. **Git 同步**：修改需提交 (Commit: `docs: update context`)。
-> 3. **新会话启动**：新会话优先读取此文件。
+> 3. **新会话启动**：新会话先读取 `AGENTS.md` 与 `docs/planning/2026-03-23-scgp-context-bootstrap.md`；只有在需要延续工作记录时再读取此文件。
 > 4. **诚实记录**：记录 Bug 和失败尝试。
 > 5. **自动归档 (GC机制)**：
 >    - 当 [2. 已完成功能] 列表超过 **10项** 时，请将最早的条目剪切并移动到 `docs/CHANGELOG.md` 文件中，仅在当前文件保留最近的 10 项。
@@ -24,7 +26,7 @@
 | **技术栈**     | Electron + Vue 3 + TypeScript + Vite + SQL.js |
 | **数据库**     | SQLite (通过 sql.js 运行在浏览器端)           |
 | **当前分支**   | `main`                                        |
-| **最后更新**   | 2026-03-19 (完成并归档 v1.5 模块授权架构，并补齐 Dashboard 特教业务指挥中心基线口径) |
+| **最后更新**   | 2026-03-23 (完成 emotional 8 类情绪全链路改造，并将合并后的 80 条情绪场景写回当前数据库) |
 | **系统健康度** | ✅ 可运行，所有核心功能正常                   |
 
 ### 项目简介
@@ -44,18 +46,30 @@
 
 **🚀 Phase 2.0 架构重构** - 核心底座 + 业务模块平台化转型
 
-> **状态**: ✅ Phase 4 评估基础设施重构完成 (2026-02-24)
+> **状态**: ✅ 实施计划最新主线阶段已完成至 Phase 5.2；当前进入 Phase 3.X 业务模块能力完善与 emotional 数据升级阶段 (2026-03-23)
 > **技术规范**: `重构实施技术规范.md` (V1.2)
 > **实施计划**: `docs/plans/2025-02-05-refactor-implementation-plan.md`
 > **预计工期**: 6-8 周
 
-### 最新规划快照 (2026-03-19)
+### 最新规划快照 (2026-03-23)
 
 - 已完成 `emotional v1.1` 里程碑归档
 - 已完成并归档 `emotional v1.2`：预置情绪资源包批量导入/导出
 - 已完成并归档 `v1.3 Unified Assessment Word Export`
 - 已完成并归档 `v1.4 Dashboard Special Ed Command Center`
 - 已完成并归档 `v1.5 Strict Modular Licensing`
+- 已完成 `emotional` 资源链路从 5 类情绪扩展到正式 8 类情绪：
+  - `calm / happy / sad / angry / scared / embarrassed / shy / proud`
+  - 类型、颜色预设、编辑器、导入校验、运行时渲染、场景选择页已统一改造
+- 已完成当前情绪场景库替换：
+  - 从当前数据库导出 80 条 `emotion_scene`
+  - 将专家新增 24 条重编号为 `scene-50` 到 `scene-56`、`scene-64` 到 `scene-80`
+  - 按 `sceneCode` 覆盖写回现有 80 条 `emotion_scene`，保留原有资源记录 ID
+- 已补充当前可用参考文件：
+  - `docs/references/current-emotion-scenes-export.json`
+  - `docs/references/emotion-scenes-new24-renumbered.json`
+  - `docs/references/emotion-scenes-merged-candidate.json`
+  - `docs/references/emotion-scenes-removed-24.json`
 - v1.5 已交付内容：
   - 激活码 payload 强制包含 `am`（`allowedModules`）
   - 本地 `activation` 表新增 `allowed_modules`
@@ -336,6 +350,37 @@
       - DEV 环境下支持 `['sensory', 'emotional']` 的免真实激活码授权注入
     - 状态：✅ 已完成
 
+42. **[2026-03-23] 完成 emotional 8 类情绪正式支持改造**
+    - 核心实现：
+      - `src/features/emotional/emotion-catalog.ts`
+      - `src/types/emotional.ts`
+      - `src/views/resource-center/editors/emotional-resource-contract.ts`
+      - `src/components/emotional/engine/renderers/EmotionChoiceRenderer.vue`
+    - 交付能力：
+      - 情绪枚举正式统一为 `calm / happy / sad / angry / scared / embarrassed / shy / proud`
+      - 颜色预设、中文标签、Emoji、编辑器选项、导入校验、运行时渲染统一走共享情绪字典
+      - 保留历史误写 `anger` 的兼容归一化，正式对外口径统一为 `angry`
+      - 训练页和场景选择页在读取旧资源时会先归一化情绪值，避免旧资源直接失效
+    - 同步更新：
+      - `docs/references/emotion_scene_import_template.json`
+      - `docs/references/emotion_scene_import_spec.md`
+    - 状态：✅ 已完成
+
+43. **[2026-03-23] 完成 80 条情绪场景合并替换与数据库落库**
+    - 输入来源：
+      - 当前数据库导出：`docs/references/current-emotion-scenes-export.json`
+      - 专家新增 24 条：`docs/references/emotion-scenes-new24.json`
+    - 处理过程：
+      - 删除并替换原始 `scene-50` 到 `scene-56`、`scene-64` 到 `scene-80`
+      - 生成 `docs/references/emotion-scenes-new24-renumbered.json`
+      - 生成合并候选 `docs/references/emotion-scenes-merged-candidate.json`
+      - 备份当前数据库后，按 `sceneCode` 覆盖更新 `AppData\\Roaming\\scgp\\database.sqlite`
+    - 交付结果：
+      - 当前库中 `emotion_scene` 保持 80 条
+      - `scene-50` 到 `scene-80` 指定替换位已切换为新场景
+      - 导出复核确认当前库中已无正式枚举 `anger`，统一为 `angry`
+    - 状态：✅ 已完成
+
 36. **[2026-03-13] 新增仓库级 AGENTS 与执行路线图**
     - 新增文件：
       - `AGENTS.md`
@@ -614,8 +659,9 @@
 | 优先级 | 问题描述                              | 失败尝试记录 | 建议下一步   |
 | :----- | :------------------------------------ | :----------- | :----------- |
 | Low    | WebGazer 眼动追踪精度受硬件环境影响   | 摄像头角度过高、逆光导致视线抖动 | 调整摄像头至与眼睛平齐，改善光照条件 |
-| Low    | CSIRS/PSQ/TRS 报告 PDF 导出可优化样式 | -            | 后续迭代实现 |
+| Medium | 全局 TypeScript 历史错误仍较多，`npm run type-check` 不能作为全仓回归基线 | 本次仅对 emotional 改动相关文件做了定向筛查；全仓仍有大量历史类型错误 | 后续单独清偿公共类型债，并建立可持续的全仓类型检查基线 |
 | Low    | Conners 历史/趋势对比页面缺失         | -            | 后续迭代实现 |
+| Low    | 专家原始文件 `docs/references/emotion-scenes-new24.json` 不是严格合法 JSON（顶层对象间缺逗号） | 当前已通过容错脚本读取并生成可用重编号版，但原文件未回写修复 | 后续要求外部资源交付统一通过严格 JSON 校验，避免人工合并时再次踩坑 |
 
 ### 已解决问题
 
@@ -1103,9 +1149,9 @@ function calculateConnersTScore(
 
 ---
 
-**最后更新**: 2026-03-17
+**最后更新**: 2026-03-23
 **更新人**: Claude Code Assistant (首席实施工程师)
-**会话摘要**: 已完成 SCGP `emotional` 模块 v1.1 全里程碑的审计与归档。v1.1 的 3 个阶段（06 资源契约与编辑器基础设施、07 可视化资源编辑器、08 场景画廊与动态启动流）均已补齐 PLAN / SUMMARY / VERIFICATION，8/8 requirements 在 `.planning/v1.1-MILESTONE-AUDIT.md` 中审计通过。随后已将当前 milestone 的 ROADMAP 和 REQUIREMENTS 分别归档到 `.planning/milestones/v1.1-ROADMAP.md` 与 `.planning/milestones/v1.1-REQUIREMENTS.md`，并重置 active `.planning/ROADMAP.md` / `.planning/REQUIREMENTS.md` / `.planning/STATE.md` 为“无 active milestone”状态。同时，`ROADMAP.md` backlog 已记录新的产品需求：未来需要支持“批量导入/导出预置情绪资源”，以满足特教老师跨机构互换资源包的需求。当前项目已正式结束 v1.1，等待下一轮 milestone 定义。
+**会话摘要**: 已完成 SCGP `emotional` 模块当前一轮资源与数据升级。代码层面已将情绪链路从 5 类扩展为正式 8 类情绪，并统一到共享情绪字典，覆盖类型、颜色预设、编辑器、导入校验、运行时渲染与场景选择页。数据层面已从当前数据库导出 80 条 `emotion_scene`，将专家新增 24 条重编号并替换 `scene-50` 到 `scene-56`、`scene-64` 到 `scene-80`，随后按 `sceneCode` 覆盖写回当前数据库，保留原有资源记录 ID，同时统一正式英文枚举为 `angry` 并兼容历史误写 `anger`。当前项目已从 emotional v1.2 资源交换能力，进入 emotional 数据内容与业务链路持续完善阶段。
 
 ### 下次会话优先事项
 

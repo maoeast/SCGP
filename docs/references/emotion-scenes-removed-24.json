@@ -1,0 +1,2058 @@
+[
+  {
+    "sceneCode": "scene-50",
+    "title": "不小心打碎了妈妈最爱的瓷碗",
+    "description": "识别因个人行为造成物品破坏的内疚情绪，完成“我的过失导致坏结果”的因果推理，学习克服逃避心理并主动承认错误。",
+    "imageUrl": "/assets/scenes/scene50_broken_bowl.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "sad",
+      "happy",
+      "angry"
+    ],
+    "emotionClues": [
+      "看看明明深深低着的头，和把手背在身后的动作，他在躲避妈妈的目光。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-50-cause",
+        "questionType": "cause",
+        "questionText": "明明为什么觉得内疚？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "自己不小心打碎了碗，弄脏了地板，做错了事",
+            "imageUrl": "/icons/break_bowl.png",
+            "isCorrect": true,
+            "feedbackText": "是的，当我们自己的行为造成了不好的后果、给别人添麻烦时，就会产生内疚的感觉。"
+          },
+          {
+            "id": "c2",
+            "text": "妈妈不给他看动画片",
+            "imageUrl": "/icons/no_tv.png",
+            "isCorrect": false,
+            "feedbackText": "如果不让看电视他会生气的，但看看地上的碎瓷片，是他闯祸了哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-50-need",
+        "questionType": "need",
+        "questionText": "明明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "需要主动承认错误，请求妈妈的原谅",
+            "imageUrl": "/icons/admit_ask_forgiveness.png",
+            "isCorrect": true,
+            "feedbackText": "没错，做错事不可怕，勇敢认错才能获得内心的平静。"
+          },
+          {
+            "id": "n2",
+            "text": "需要马上躺在碎玻璃上打滚",
+            "imageUrl": "/icons/roll_glass.png",
+            "isCorrect": false,
+            "feedbackText": "这极其危险！碎玻璃会把身体严重划伤的。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "大声撒谎说：“不是我打碎的，是猫碰掉的！”",
+        "imageUrl": "/icons/lie_cat.png",
+        "suitability": "inappropriate",
+        "explanation": "撒谎推卸责任比打碎碗更严重，这会让大人对你非常失望，失去信任。 哎呀！绝对不能撒谎推卸责任，诚实是最重要的品质。"
+      },
+      {
+        "id": "p2",
+        "text": "吓得大哭起来跑到房间里锁上门",
+        "imageUrl": "/icons/cry_lock_door.png",
+        "suitability": "acceptable",
+        "explanation": "感到内疚和害怕躲起来可以理解，但地上的碎片还需要处理，躲避解决不了问题。 躲起来是可以的，但等一会儿还是要出来面对哦。"
+      },
+      {
+        "id": "p3",
+        "text": "低头诚恳地说：“妈妈对不起，我不小心打碎了碗”，并保证以后小心",
+        "imageUrl": "/icons/say_sorry_mom.png",
+        "suitability": "optimal",
+        "explanation": "勇敢承认错误并道歉，妈妈不仅不会狠狠惩罚你，还会教你以后怎么安全地拿碗。 太棒了！勇敢认错，不推卸责任，你是个诚实勇敢的好孩子！"
+      }
+    ],
+    "abilityLevel": "primary",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-51",
+    "title": "推拉中把同学的手臂抓出红血丝",
+    "description": "识别导致他人受伤场景中的内疚情绪，理解自身行为对他人带来身体痛苦的因果关系，重点训练换位思考共情能力与真诚道歉的社会交往行为。",
+    "imageUrl": "/assets/scenes/scene51_scratched_arm.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "happy",
+      "sad",
+      "angry",
+      "scared"
+    ],
+    "emotionClues": [
+      "看看明明低着头、咬嘴唇流泪的样子，他不敢看对方。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-51-cause",
+        "questionType": "cause",
+        "questionText": "明明为什么觉得内疚？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "自己推拉时不小心把同学的手臂抓流血了",
+            "imageUrl": "/icons/scratch_arm.png",
+            "isCorrect": true,
+            "feedbackText": "是的，当我们不小心让别人身体受伤感到疼痛时，心里会觉得非常抱歉和难受。"
+          },
+          {
+            "id": "c2",
+            "text": "他自己的手被门夹了",
+            "imageUrl": "/icons/hurt_hand.png",
+            "isCorrect": false,
+            "feedbackText": "如果自己手被夹了他会大哭的，但他现在一直低头看着别人受伤的手臂哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-51-need",
+        "questionType": "need",
+        "questionText": "明明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "冲着那个受伤哭泣的小朋友大吼",
+            "imageUrl": "/icons/yell_at_crying.png",
+            "isCorrect": false,
+            "feedbackText": "别人已经受伤了，大吼只会让对方哭得更伤心。"
+          },
+          {
+            "id": "n2",
+            "text": "向同学道歉，并带他去找老师涂药",
+            "imageUrl": "/icons/take_to_teacher.png",
+            "isCorrect": true,
+            "feedbackText": "没错，承认错误并赶紧帮助受伤的同学处理伤口，是最要紧的。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "大声撒谎说：“是他自己摔的，我没有碰他！”",
+        "imageUrl": "/icons/lie_push.png",
+        "suitability": "inappropriate",
+        "explanation": "推卸责任和撒谎是非常不诚实的行为，不仅同学会生你的气，老师也不会信任你了。 哎呀！绝对不能撒谎！做错事要勇敢承认才是好孩子。"
+      },
+      {
+        "id": "p2",
+        "text": "吓得一句话不敢说，转身跑回家",
+        "imageUrl": "/icons/run_home_guilt.png",
+        "suitability": "acceptable",
+        "explanation": "因为害怕惩罚跑掉是可以理解的，但这会让受伤的同学没人管，是非常不负责任的。 跑开是逃避问题哦，同学还在流血呢，需要大人的帮助。"
+      },
+      {
+        "id": "p3",
+        "text": "真诚地说“对不起”，并牵着他的手去找保健室老师",
+        "imageUrl": "/icons/say_sorry_help.png",
+        "suitability": "optimal",
+        "explanation": "主动道歉并提供帮助，证明你是个负责任的人，同学也会原谅你的无心之失。 太棒了！勇敢认错并帮助别人处理伤口，你是个有担当的好孩子！"
+      }
+    ],
+    "abilityLevel": "primary",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-52",
+    "title": "把借来的图书馆绘本撕破了一大页",
+    "description": "识别损坏公共财物引发的内疚情绪，理解违背公共契约与规则的自责心理，学习承担个人责任并主动寻求修补或赔偿等补救措施。",
+    "imageUrl": "/assets/scenes/scene52_torn_library_book.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "happy",
+      "sad",
+      "scared"
+    ],
+    "emotionClues": [
+      "看看小华紧皱的眉头和他低头懊悔的神情。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-52-cause",
+        "questionType": "cause",
+        "questionText": "小华为什么觉得内疚？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "他把借来的公共图书弄坏了，影响了其他人看书",
+            "imageUrl": "/icons/torn_book.png",
+            "isCorrect": true,
+            "feedbackText": "是的！弄坏了大家的公共财产，这是一种做错事的负罪感。"
+          },
+          {
+            "id": "c2",
+            "text": "这是他自己花钱买的书觉得不可惜",
+            "imageUrl": "/icons/own_book.png",
+            "isCorrect": false,
+            "feedbackText": "如果是自己的书他顶多会难过，但书上贴着图书馆的条形码哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-52-need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "向图书管理员坦白并承担赔偿的责任",
+            "imageUrl": "/icons/confess_librarian.png",
+            "isCorrect": true,
+            "feedbackText": "没错，承认错误并修补或者赔偿，是减轻内疚感最好的办法。"
+          },
+          {
+            "id": "n2",
+            "text": "马上拿笔在书上乱涂乱画，让它变得更烂",
+            "imageUrl": "/icons/draw_on_book.png",
+            "isCorrect": false,
+            "feedbackText": "继续破坏公共物品是非常恶劣的行为！"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "偷偷把破书塞回书架上，假装什么都没发生",
+        "imageUrl": "/icons/hide_book_shelf.png",
+        "suitability": "inappropriate",
+        "explanation": "偷偷放回去不仅是对借书规则的破坏，也会让下一个借书的人很失望，这是逃避责任。 哎呀！绝对不能偷偷放回去，逃避是不诚实的表现哦。"
+      },
+      {
+        "id": "p2",
+        "text": "吓得哭起来，把书藏在书包里再也不敢还了",
+        "imageUrl": "/icons/hide_in_bag.png",
+        "suitability": "acceptable",
+        "explanation": "害怕被罚是可以理解的，但一直藏着借书卡会被冻结，问题并没有解决。 藏起来不敢还虽然能躲避一时，但这块石头会一直压在你心里的。"
+      },
+      {
+        "id": "p3",
+        "text": "拿透明胶带小心粘好，还书时主动向管理员道歉并按规定赔偿",
+        "imageUrl": "/icons/tape_book_apologize.png",
+        "suitability": "optimal",
+        "explanation": "主动补救并勇敢承认错误，管理员不仅会原谅你，还会夸奖你的诚实。 太棒了！自己闯祸自己担，用实际行动修补错误是最棒的男子汉！"
+      }
+    ],
+    "abilityLevel": "middle",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-53",
+    "title": "踢球砸碎了教室的玻璃窗",
+    "description": "识别意外肇事引发的强烈内疚情绪，理解玩耍过失造成严重公共后果的悔恨与恐惧，训练面对严重错误时的主动担当与不逃避意识。",
+    "imageUrl": "/assets/scenes/scene53_broken_window.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "sad",
+      "happy",
+      "angry"
+    ],
+    "emotionClues": [
+      "看看小华缩着脖子、深深低着头的样子，他不敢看老师。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-53-cause",
+        "questionType": "cause",
+        "questionText": "小华为什么觉得内疚？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "自己贪玩踢球，不小心砸碎了教室的玻璃",
+            "imageUrl": "/icons/football_glass.png",
+            "isCorrect": true,
+            "feedbackText": "是的！做出了破坏环境、给集体造成损失的行为，会让人产生强烈的自责。"
+          },
+          {
+            "id": "c2",
+            "text": "玻璃是被大风吹破的",
+            "imageUrl": "/icons/wind_glass.png",
+            "isCorrect": false,
+            "feedbackText": "如果是风吹破的，他不用觉得内疚。但你看他脚下那个肇事的足球哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-53-need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "转身踢球砸坏更多的玻璃",
+            "imageUrl": "/icons/break_more.png",
+            "isCorrect": false,
+            "feedbackText": "继续搞破坏是绝对绝对不可以的严重错误行为。"
+          },
+          {
+            "id": "n2",
+            "text": "向老师承认是自己踢的，并让父母赔偿玻璃",
+            "imageUrl": "/icons/admit_pay.png",
+            "isCorrect": true,
+            "feedbackText": "没错，面对老师的到来，诚实坦白是唯一的也是最正确的做法。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "大声指着旁边路过的同学说：“是他踢的！”",
+        "imageUrl": "/icons/blame_others.png",
+        "suitability": "inappropriate",
+        "explanation": "诬陷同学是非常卑劣的行为，不仅不诚实，还会让你在班里完全失去朋友和信誉。 哎呀！绝对不能把错误推给无辜的同学，这是大错特错的！"
+      },
+      {
+        "id": "p2",
+        "text": "吓得转身飞快地跑出学校躲起来",
+        "imageUrl": "/icons/run_hide_school.png",
+        "suitability": "acceptable",
+        "explanation": "害怕被惩罚逃跑是可以理解的本能，但老师还是会查出真相，逃跑只会罪加一等。 逃跑虽然能躲开眼前的老师，但回家后还是要被批评的哦。"
+      },
+      {
+        "id": "p3",
+        "text": "站在原地，低头对老师说：“对不起老师，是我踢的，我会让爸爸来赔”",
+        "imageUrl": "/icons/stand_confess.png",
+        "suitability": "optimal",
+        "explanation": "不逃避责任，敢于站在原地承担严重的后果，这是非常有担当和诚实的男子汉表现！ 太棒了！一人做事一人当，勇敢承认错误，老师反而会欣赏你的诚实！"
+      }
+    ],
+    "abilityLevel": "middle",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-54",
+    "title": "踩脏了同学今天刚穿的新白鞋",
+    "description": "识别日常社交摩擦中的内疚情绪，理解不小心冒犯他人后的歉意与心理负担，学习即时做出补偿行为（如帮忙擦拭）以维护同伴关系。",
+    "imageUrl": "/assets/scenes/scene54_stepped_shoe.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "happy",
+      "sad",
+      "scared",
+      "angry"
+    ],
+    "emotionClues": [
+      "看看小华通红的脸和不好意思看着同学鞋子的眼神。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-54-cause",
+        "questionType": "cause",
+        "questionText": "小华为什么觉得内疚？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "同学的脚把他绊倒了",
+            "imageUrl": "/icons/trip_over.png",
+            "isCorrect": false,
+            "feedbackText": "如果是同学绊倒他，他会生气才对。他现在是满脸抱歉哦。"
+          },
+          {
+            "id": "c2",
+            "text": "自己走路不小心，踩脏了同学今天刚穿的新白鞋",
+            "imageUrl": "/icons/dirty_shoe_print.png",
+            "isCorrect": true,
+            "feedbackText": "对啦，新东西被弄脏谁都会心疼的，小华知道自己闯祸了所以很自责。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-54-need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "立刻说对不起，并拿出纸巾帮同学把鞋擦干净",
+            "imageUrl": "/icons/wipe_shoe.png",
+            "isCorrect": true,
+            "feedbackText": "没错，光道歉是不够的，还需要用实际行动去弥补过失。"
+          },
+          {
+            "id": "n2",
+            "text": "再用力去踩另外一只鞋",
+            "imageUrl": "/icons/stomp_other_shoe.png",
+            "isCorrect": false,
+            "feedbackText": "这样是非常恶劣的欺负人的行为了！"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "大声骂同学：“谁让你站在这里挡我的路！”",
+        "imageUrl": "/icons/blame_victim.png",
+        "suitability": "inappropriate",
+        "explanation": "自己踩了人还倒打一耙怪别人，这非常没有素质，会引起激烈的打架冲突。 哎呀！绝对不能倒打一耙，明明是你踩了别人哦。"
+      },
+      {
+        "id": "p2",
+        "text": "红着脸一直小声说对不起，手足无措站着",
+        "imageUrl": "/icons/keep_saying_sorry.png",
+        "suitability": "acceptable",
+        "explanation": "道歉是对的，但如果只说对不起却不去帮忙擦干净，同学心里的火气很难完全消掉。 道歉态度很好，但如果能帮别人擦一擦就更好啦。"
+      },
+      {
+        "id": "p3",
+        "text": "郑重地说“对不起我不是故意的”，赶紧拿出湿巾蹲下来帮同学擦鞋",
+        "imageUrl": "/icons/clean_shoe_apologize.png",
+        "suitability": "optimal",
+        "explanation": "态度诚恳，并且用行动立刻补救，这能最大程度获得同学的谅解，化解矛盾。 太棒了！能弯下腰帮别人弥补过失，你是个有责任心的好朋友！"
+      }
+    ],
+    "abilityLevel": "middle",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-55",
+    "title": "骑车走神撞倒了路边的小树苗",
+    "description": "识别对非人类对象造成无意破坏的内疚情绪，理解超越人际关系的生态责任感与懊悔心理，培养高阶同理心与对自然生命的敬畏感。",
+    "imageUrl": "/assets/scenes/scene55_knocked_tree.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "scared",
+      "sad",
+      "happy",
+      "angry"
+    ],
+    "emotionClues": [
+      "看看李明双手捂头、非常懊悔的表情。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-55-cause",
+        "questionType": "cause",
+        "questionText": "李明为什么觉得内疚？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "因为他骑车走神，不小心撞断了路边无辜的小树苗",
+            "imageUrl": "/icons/bike_break_tree.png",
+            "isCorrect": true,
+            "feedbackText": "是的！当我们的失误伤害了弱小的生命或破坏了环境时，良知会让我们感到内疚。"
+          },
+          {
+            "id": "c2",
+            "text": "他的自行车轮胎被钉子扎破了",
+            "imageUrl": "/icons/flat_tire.png",
+            "isCorrect": false,
+            "feedbackText": "如果是车胎破了他只会觉得倒霉或生气，但他现在正对着断掉的树苗懊悔呢。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-55-need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "把自行车扔进河里不要了",
+            "imageUrl": "/icons/throw_bike.png",
+            "isCorrect": false,
+            "feedbackText": "毁坏自行车不仅不能让树苗活过来，还会造成新的损失。"
+          },
+          {
+            "id": "n2",
+            "text": "想办法把小树苗扶正，或者联系园林工人赔偿补救",
+            "imageUrl": "/icons/fix_tree.png",
+            "isCorrect": true,
+            "feedbackText": "没错，感到内疚时，寻找弥补和挽救的方法是最好的出路。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "四处张望发现没人看到，扶起自行车假装没事飞快溜走",
+        "imageUrl": "/icons/hit_and_run.png",
+        "suitability": "inappropriate",
+        "explanation": "逃避责任是非常不道德的行为，这和肇事逃逸一样，你的心里会一直背着包袱。 哎呀！这叫肇事逃逸，绝对不能偷偷溜走不管哦！"
+      },
+      {
+        "id": "p2",
+        "text": "站在断掉的树苗旁边一直哭，不知所措",
+        "imageUrl": "/icons/stand_cry_tree.png",
+        "suitability": "acceptable",
+        "explanation": "感到愧疚不知所措是可以理解的，但光站着哭不能救活小树，得去寻求帮助。 虽然你很有良知，但一直站着是解决不了问题的哦。"
+      },
+      {
+        "id": "p3",
+        "text": "扶起自行车，把小树苗尽量扶正，并找旁边的环卫工人说明情况愿意赔偿",
+        "imageUrl": "/icons/report_fix_tree.png",
+        "suitability": "optimal",
+        "explanation": "不逃避，主动想办法补救并承担后果，这展现了极高的公民素质和责任感！ 太棒了！能够主动报告并承担责任，你是个有素质的好公民！"
+      }
+    ],
+    "abilityLevel": "advanced",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-56",
+    "title": "没忍住偷吃完了给客人准备的整盒点心",
+    "description": "识别违背规则与信任后的内疚情绪，理解“明知故犯”后面临抓包时的自我愧疚感，结合心智理论训练儿童的诚信意识与冲动克制能力。",
+    "imageUrl": "/assets/scenes/scene56_eaten_guest_snacks.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "happy",
+      "sad",
+      "angry",
+      "scared"
+    ],
+    "emotionClues": [
+      "看看李明沾满点心渣的嘴角和他因为做错事而懊悔的脸。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-56-cause",
+        "questionType": "cause",
+        "questionText": "李明为什么觉得内疚？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "自己没忍住馋嘴，把父母准备招待客人的高档点心全吃光了",
+            "imageUrl": "/icons/ate_all_snacks.png",
+            "isCorrect": true,
+            "feedbackText": "是的！因为自己贪嘴破坏了父母的待客礼仪，这种自私的行为会带来内疚感。"
+          },
+          {
+            "id": "c2",
+            "text": "觉得点心太难吃了",
+            "imageUrl": "/icons/bad_taste_snack.png",
+            "isCorrect": false,
+            "feedbackText": "如果难吃他怎么会把一整盒都吃得空空的呢？显然是他没控制住自己。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-56-need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "马上去向父母坦白道歉，并想办法准备替代的水果",
+            "imageUrl": "/icons/confess_prepare_fruit.png",
+            "isCorrect": true,
+            "feedbackText": "没错，承认错误并赶紧准备别的食物待客，才是负责任的做法。"
+          },
+          {
+            "id": "n2",
+            "text": "把空盒子藏在沙发底下",
+            "imageUrl": "/icons/hide_empty_box.png",
+            "isCorrect": false,
+            "feedbackText": "藏起来客人就彻底没有东西吃了，这种掩盖错误的行为是不对的。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "抹干净嘴巴撒谎说：“我没吃，家里可能有老鼠把点心偷吃了。”",
+        "imageUrl": "/icons/lie_mouse.png",
+        "suitability": "inappropriate",
+        "explanation": "找借口撒谎是对父母和客人的欺骗，被拆穿后不仅极其丢脸，还会挨严厉的批评。 哎呀！绝对不能撒谎骗人，大人们一眼就能看穿谎言的！"
+      },
+      {
+        "id": "p2",
+        "text": "觉得没脸见人，立刻锁上房门躲在房间里死活不出来",
+        "imageUrl": "/icons/lock_door_hide.png",
+        "suitability": "acceptable",
+        "explanation": "因为内疚不敢见人是真实的反应，但如果躲避不见客人，是非常没有礼貌的行为。 虽然觉得很丢脸，但躲起来会让外面的气氛更尴尬哦。"
+      },
+      {
+        "id": "p3",
+        "text": "擦干净嘴巴走出去，坦诚向父母和客人道歉，并主动去洗水果招待客人",
+        "imageUrl": "/icons/apologize_wash_fruit.png",
+        "suitability": "optimal",
+        "explanation": "敢作敢当，诚实承认错误并立刻用行动弥补，客人不仅不会怪你，还会觉得你很懂事。 太棒了！诚实面对并主动去洗水果补救，你是个懂事的大孩子！"
+      }
+    ],
+    "abilityLevel": "advanced",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-64",
+    "title": "憋尿找不到厕所在走廊急得跺脚",
+    "description": "识别生理急迫场景中的焦虑情绪，理解基本生理需求受阻引发的强烈躯体紧张感，训练在紧急情况下的准确语言表达与求助技能。",
+    "imageUrl": "/assets/scenes/scene64_need_toilet.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "angry",
+      "happy",
+      "sad"
+    ],
+    "emotionClues": [
+      "注意明明夹紧的双腿、头上急出来的汗水和他来回转圈的动作。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-64-cause",
+        "questionType": "cause",
+        "questionText": "明明为什么很焦虑急躁？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "他尿急快憋不住了，却怎么也找不到厕所",
+            "imageUrl": "/icons/hold_pee.png",
+            "isCorrect": true,
+            "feedbackText": "是的，极端的生理需求得不到马上解决，会让人产生极度紧张和焦虑的身体反应。"
+          },
+          {
+            "id": "c2",
+            "text": "商场的冷气开得太足，他觉得很冷",
+            "imageUrl": "/icons/cold_ac.png",
+            "isCorrect": false,
+            "feedbackText": "如果很冷他会抱紧手臂，但他现在的姿势是紧紧夹着腿捂着裤子哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-64-need",
+        "questionType": "need",
+        "questionText": "明明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "需要立刻找到一个洗手间",
+            "imageUrl": "/icons/find_toilet.png",
+            "isCorrect": true,
+            "feedbackText": "没错，马上解决生理需求是他当前唯一且最紧迫的任务。"
+          },
+          {
+            "id": "n2",
+            "text": "需要去买一杯冰可乐喝",
+            "imageUrl": "/icons/drink_cola.png",
+            "isCorrect": false,
+            "feedbackText": "这时候再喝水就更憋不住啦，绝对不行！"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "不管了，直接脱下裤子尿在商场地板上",
+        "imageUrl": "/icons/pee_floor.png",
+        "suitability": "inappropriate",
+        "explanation": "随地大小便破坏公共卫生，是非常不文明的恶劣行为，清洁阿姨会非常生气的。 哎呀！绝对不可以随地大小便！我们要讲究公共卫生。"
+      },
+      {
+        "id": "p2",
+        "text": "急得站在原地哇哇大哭，等妈妈来找自己",
+        "imageUrl": "/icons/cry_wait_mom.png",
+        "suitability": "acceptable",
+        "explanation": "尿急大哭是真实的反应，但哭泣解决不了问题，时间久了还是会尿裤子的。 急得哭是可以理解的，但要想办法赶紧找厕所哦。"
+      },
+      {
+        "id": "p3",
+        "text": "深呼吸忍住，迅速走到商场前台，问穿制服的阿姨：“请问厕所在哪里？”",
+        "imageUrl": "/icons/ask_directions.png",
+        "suitability": "optimal",
+        "explanation": "遇到紧急困难迅速向工作人员求助，这是最高效、最文明的解决办法！ 太棒了！遇到困难开口向工作人员求助，你非常聪明且有礼貌！"
+      }
+    ],
+    "abilityLevel": "primary",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-65",
+    "title": "考试快结束试卷还有大半面空白",
+    "description": "识别时间紧迫场景下的焦虑情绪，理解时间流逝与任务未完带来的强压迫感，训练时间管理意识及考场深呼吸等自我抗压技巧。",
+    "imageUrl": "/assets/scenes/scene65_exam_time_running_out.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "scared",
+    "emotionOptions": [
+      "happy",
+      "scared",
+      "angry"
+    ],
+    "emotionClues": [
+      "注意看小华咬着铅笔、满头大汗的样子，以及他不停抖动的腿。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-65-cause",
+        "questionType": "cause",
+        "questionText": "小华为什么很焦虑紧张？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "同桌一直跟他讲话，打扰他考试",
+            "imageUrl": "/icons/talkative_desk_mate.png",
+            "isCorrect": false,
+            "feedbackText": "如果被一直打扰他会觉得生气烦躁，你看他现在一直盯着墙上的钟表看呢。"
+          },
+          {
+            "id": "c2",
+            "text": "考试马上就要交卷了，但他还有一大半试题没做",
+            "imageUrl": "/icons/blank_test_clock.png",
+            "isCorrect": true,
+            "feedbackText": "对啦，明确的时间压力和未完成的重大任务，是产生焦虑感最主要的原因。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-65-need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "立刻把试卷撕掉跑出教室",
+            "imageUrl": "/icons/tear_test.png",
+            "isCorrect": false,
+            "feedbackText": "撕毁试卷意味着考试成绩作废，是非常错误且冲动的做法。"
+          },
+          {
+            "id": "n2",
+            "text": "迅速冷静下来，争分夺秒把能写的题目写上",
+            "imageUrl": "/icons/focus_write_fast.png",
+            "isCorrect": true,
+            "feedbackText": "没错，在最后的时间里保持专注，写一点就能多得一点分数。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "急得脑子一片空白，直接趴在桌子上放弃不写了",
+        "imageUrl": "/icons/give_up_test.png",
+        "suitability": "inappropriate",
+        "explanation": "放弃写卷子就等于直接认输，未完成的题目一分也得不到，这种态度非常消极。 哎呀！绝对不可以放弃！坚持到最后一秒钟才是最重要的。"
+      },
+      {
+        "id": "p2",
+        "text": "不管三七二十一，把所有的选择题全部乱蒙一个答案",
+        "imageUrl": "/icons/guess_all.png",
+        "suitability": "acceptable",
+        "explanation": "在最后一分钟蒙答案可以减少空白，但这只是应急办法，说明你前面时间分配得很糟糕。 没时间的时候蒙一下选择题是可以的，但下次考试要注意控制时间哦。"
+      },
+      {
+        "id": "p3",
+        "text": "深呼吸一口气，先挑最简单、分值最高的题目快速作答",
+        "imageUrl": "/icons/breathe_do_easy.png",
+        "suitability": "optimal",
+        "explanation": "用深呼吸快速降温情绪，然后利用剩下的时间拿到最有把握的分数，这是极其出色的危机处理能力！ 太棒了！临危不乱，深呼吸挑容易的题目先做，你非常机智！"
+      }
+    ],
+    "abilityLevel": "middle",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-66",
+    "title": "坐在爸爸电动车后座遇上超长红灯",
+    "description": "识别目标受阻场景下的焦虑情绪，理解空间受限与长时间等待造成的即时烦躁不安，学习在不可控等待环境中的注意力转移与自我平复。",
+    "imageUrl": "/assets/scenes/scene66_long_red_light.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "sad",
+      "angry",
+      "scared",
+      "happy"
+    ],
+    "emotionClues": [
+      "注意看小华探头张望和不停看手表、跺脚的动作。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-66-cause",
+        "questionType": "cause",
+        "questionText": "小华为什么觉得不耐烦？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "前方是超长红灯，他上学马上就要迟到了",
+            "imageUrl": "/icons/red_light_late.png",
+            "isCorrect": true,
+            "feedbackText": "是的，被困在原地无法移动，又眼看着时间流逝，会让人产生强烈的急躁感。"
+          },
+          {
+            "id": "c2",
+            "text": "爸爸的电动车被别人撞坏了",
+            "imageUrl": "/icons/crashed_bike.png",
+            "isCorrect": false,
+            "feedbackText": "如果是出车祸他会害怕或生气。现在他们只是在原地等红灯哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-66-need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "接受红灯无法改变的现实，耐心等待",
+            "imageUrl": "/icons/accept_wait.png",
+            "isCorrect": true,
+            "feedbackText": "没错，既然交通规则不能打破，只能用耐心去面对这段等待。"
+          },
+          {
+            "id": "n2",
+            "text": "让爸爸闭上眼睛直接冲过十字路口",
+            "imageUrl": "/icons/run_red_light.png",
+            "isCorrect": false,
+            "feedbackText": "闯红灯是严重违反交通法规的行为，极其容易发生车祸伤亡！"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "坐在后座大声冲爸爸发脾气：“都怪你起得太晚！”",
+        "imageUrl": "/icons/blame_dad.png",
+        "suitability": "inappropriate",
+        "explanation": "在路上向骑车的人发脾气不仅非常不讲理，还会分散大人的注意力，造成危险的交通事故。 哎呀！绝对不能影响爸爸骑车，把火气撒在家人身上是错的。"
+      },
+      {
+        "id": "p2",
+        "text": "跳下电动车，自己在马路上的车流中往前跑",
+        "imageUrl": "/icons/jump_run_traffic.png",
+        "suitability": "inappropriate",
+        "explanation": "在车流中乱跑极其危险，很容易被汽车撞倒，绝对不可以这么做！ 太危险了！绝对不可以下车在马路上乱跑！"
+      },
+      {
+        "id": "p3",
+        "text": "做几个深呼吸，在心里数数，到了学校主动向老师解释迟到原因",
+        "imageUrl": "/icons/breathe_explain_teacher.png",
+        "suitability": "optimal",
+        "explanation": "理智地接受不可控的状况，用深呼吸平复心情，并为可能发生的结果（迟到）做好解释准备。 太棒了！用深呼吸克服急躁，安全第一，老师会理解你的情况的！"
+      }
+    ],
+    "abilityLevel": "middle",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-67",
+    "title": "手里拿着一团打死结的耳机线解不开",
+    "description": "识别处理繁琐事物受挫时的焦虑情绪，理解无效努力带来的烦躁与暴躁易怒状态，训练遇到死磕难题时“停下、深呼吸、寻求帮助”的调节机制。",
+    "imageUrl": "/assets/scenes/scene67_tangled_earphones.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "angry",
+      "happy",
+      "sad",
+      "scared"
+    ],
+    "emotionClues": [
+      "看看小华紧皱的眉头和咬紧牙齿暴躁的表情。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-67-cause",
+        "questionType": "cause",
+        "questionText": "小华为什么觉得烦躁？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "手里的耳机线缠成了死结，越着急越解不开",
+            "imageUrl": "/icons/tangled_wire.png",
+            "isCorrect": true,
+            "feedbackText": "是的，遇到这种需要耐心处理却反复失败的小麻烦，最容易消耗人的耐心让人暴躁。"
+          },
+          {
+            "id": "c2",
+            "text": "他正在听一首很难听的歌",
+            "imageUrl": "/icons/bad_music.png",
+            "isCorrect": false,
+            "feedbackText": "耳机线都还没解开呢，他根本听不到音乐哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-67-need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "立刻把耳机线剪断",
+            "imageUrl": "/icons/cut_wire.png",
+            "isCorrect": false,
+            "feedbackText": "剪断耳机就彻底坏了，再也不能听了。"
+          },
+          {
+            "id": "n2",
+            "text": "停下手里的动作，让自己烦躁的大脑先冷静一下",
+            "imageUrl": "/icons/stop_calm_down.png",
+            "isCorrect": true,
+            "feedbackText": "没错，在烦躁状态下是做不好精细动作的，他需要先冷却情绪。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "气得破口大骂，用力把耳机线直接扯断扔掉",
+        "imageUrl": "/icons/pull_break_earphone.png",
+        "suitability": "inappropriate",
+        "explanation": "因为情绪失控而毁坏有用的物品是非常冲动的行为，这会让你遭受经济损失并后悔。 哎呀！绝对不能暴力扯断，破坏东西是不对的。"
+      },
+      {
+        "id": "p2",
+        "text": "烦躁地把耳机丢在一边，生闷气不听了",
+        "imageUrl": "/icons/throw_aside_sulk.png",
+        "suitability": "acceptable",
+        "explanation": "暂时放下让你烦躁的东西去转移注意力是对的，但问题依然没解决。 暂时把它放下去做别的事可以缓解情绪，但之后还是要找机会解开哦。"
+      },
+      {
+        "id": "p3",
+        "text": "放下耳机做三个深呼吸，或者拿去请耐心的爸爸妈妈帮忙解开",
+        "imageUrl": "/icons/breathe_ask_help.png",
+        "suitability": "optimal",
+        "explanation": "学会识别自己的情绪极限，及时叫停。自己做不到的事情主动求助，是非常成熟的策略！ 太棒了！控制情绪不去破坏物品，果断寻求大人帮助，你太聪明了！"
+      }
+    ],
+    "abilityLevel": "middle",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-68",
+    "title": "站在考场外等候进场",
+    "description": "识别面临重大评判前的考前焦虑情绪，理解预期压力带来的极度身心紧张反应，学习考前认知重塑、积极心理暗示等有效情绪降温策略。",
+    "imageUrl": "/assets/scenes/scene68_exam_hall_waiting.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "scared",
+    "emotionOptions": [
+      "scared",
+      "happy",
+      "angry",
+      "sad"
+    ],
+    "emotionClues": [
+      "看看李明冒汗的额头和他死死攥紧试卷发抖的双手。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-68-cause",
+        "questionType": "cause",
+        "questionText": "李明为什么很紧张？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "马上就要进入决定命运的中考/高考考场",
+            "imageUrl": "/icons/big_exam.png",
+            "isCorrect": true,
+            "feedbackText": "是的！面对即将发生的、结果不可预知的重大评判事件，每个人都会出现极度紧张的生理反应。"
+          },
+          {
+            "id": "c2",
+            "text": "他在等朋友一起去打篮球",
+            "imageUrl": "/icons/wait_basketball.png",
+            "isCorrect": false,
+            "feedbackText": "等朋友打球只会觉得不耐烦，不会双手发抖冒冷汗，他是在等大考进场哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-68-need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "立刻转身逃跑，拒绝参加考试",
+            "imageUrl": "/icons/run_from_exam.png",
+            "isCorrect": false,
+            "feedbackText": "逃避只会毁掉自己多年的努力，这是绝对不可以的。"
+          },
+          {
+            "id": "n2",
+            "text": "接纳紧张感，通过深呼吸平复自己激烈跳动的心脏",
+            "imageUrl": "/icons/accept_breathe.png",
+            "isCorrect": true,
+            "feedbackText": "没错，紧张是正常的，他需要把过高的能量稍微降一降，保持专注。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "紧张得觉得肯定考不好了，把复习资料全撕了",
+        "imageUrl": "/icons/tear_notes_panic.png",
+        "suitability": "inappropriate",
+        "explanation": "在关键时刻让情绪彻底崩溃并做出破坏行为，会严重影响发挥，多年的努力就白费了。 哎呀！绝对不可以自暴自弃，不到最后一刻绝不认输！"
+      },
+      {
+        "id": "p2",
+        "text": "拼命地去背诵根本没见过的偏题怪题",
+        "imageUrl": "/icons/cram_hard.png",
+        "suitability": "acceptable",
+        "explanation": "考前看书可以寻求一点安全感，但看太难的题反而会让你觉得自己什么都不会，更加焦虑。 临阵磨枪是可以的，但最好看一些基础知识哦。"
+      },
+      {
+        "id": "p3",
+        "text": "放下资料，闭上眼睛做几个深呼吸，在心里告诉自己“我已经准备得很好了”",
+        "imageUrl": "/icons/self_affirmation.png",
+        "suitability": "optimal",
+        "explanation": "用深呼吸降低生理上的紧张，用积极的自我暗示提升心理上的自信，这是最顶级的考前减压策略！ 太棒了！用深呼吸和积极暗示让自己找回自信，你一定能考出好成绩！"
+      }
+    ],
+    "abilityLevel": "advanced",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-69",
+    "title": "手机只有1%电量却扫不开共享单车",
+    "description": "识别资源枯竭与突发障碍带来的焦虑情绪，理解现代关键生存工具失效时的失控恐慌感，训练制定备用方案（Plan B）与面对突发困难时的冷静思考能力。",
+    "imageUrl": "/assets/scenes/scene69_low_battery_bike.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "happy",
+      "angry",
+      "sad",
+      "embarrassed"
+    ],
+    "emotionClues": [
+      "看看李明紧锁的眉头和他狂点屏幕急躁的手指。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-69-cause",
+        "questionType": "cause",
+        "questionText": "李明为什么觉得焦虑急躁？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "手机只有1%电量随时会关机，急需用车却扫码失败",
+            "imageUrl": "/icons/low_battery_fail.png",
+            "isCorrect": true,
+            "feedbackText": "是的！时间紧迫加上关键资源的即将枯竭，双重压力让人变得极其焦躁。"
+          },
+          {
+            "id": "c2",
+            "text": "他在玩一个非常刺激的手机游戏",
+            "imageUrl": "/icons/mobile_game.png",
+            "isCorrect": false,
+            "feedbackText": "如果是玩游戏他应该面露兴奋，看看屏幕上那个醒目的红色没电警告吧。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-69-need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "放下死机或没电的手机，寻找其他回家的方式",
+            "imageUrl": "/icons/find_alternative.png",
+            "isCorrect": true,
+            "feedbackText": "没错，既然这个办法走不通了，必须果断放弃去寻找其他出路。"
+          },
+          {
+            "id": "n2",
+            "text": "继续一直扫码直到手机彻底黑屏",
+            "imageUrl": "/icons/keep_scanning.png",
+            "isCorrect": false,
+            "feedbackText": "明知道行不通还继续耗着，只会失去用最后1%电量打电话求助的机会。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "气得破口大骂，用力把手机砸碎在地上，踹单车一脚",
+        "imageUrl": "/icons/smash_phone_kick.png",
+        "suitability": "inappropriate",
+        "explanation": "破坏贵重物品和公共设施是极度失控的暴力行为。不仅回不了家，还会造成巨大的金钱损失。 哎呀！绝对不能砸东西泄愤，冲动是魔鬼！"
+      },
+      {
+        "id": "p2",
+        "text": "站在路边急得发脾气，不知道怎么办好",
+        "imageUrl": "/icons/stand_panic.png",
+        "suitability": "acceptable",
+        "explanation": "遇到突发状况慌乱是很正常的反应，但一直发脾气并不能让你变出电量或回到家。 慌乱是可以理解的，但要赶紧想想有什么别的办法回去了哦。"
+      },
+      {
+        "id": "p3",
+        "text": "停止无用的扫码，用最后1%的电迅速给父母发个定位短信，然后改去坐公交车或求助路人",
+        "imageUrl": "/icons/text_parents_bus.png",
+        "suitability": "optimal",
+        "explanation": "迅速接受受挫现实，把有限的资源（电量）用在最关键的求救上，并果断更换出行方案，这展示了极其强大的执行力！ 太棒了！果断止损，向父母报备安全并换个回家的方法，你解决问题的能力太强了！"
+      }
+    ],
+    "abilityLevel": "advanced",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-70",
+    "title": "马上要上台表演在侧幕疯狂背台词",
+    "description": "识别面临重大公开表现前的焦虑情绪，理解高期待与潜在犯错恐惧交织的高度心理紧张，学习接纳适度焦虑并将其转化为促进表现的正向动力。",
+    "imageUrl": "/assets/scenes/scene70_backstage_nerves.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "scared",
+    "emotionOptions": [
+      "happy",
+      "sad",
+      "scared",
+      "angry"
+    ],
+    "emotionClues": [
+      "看看李明大口深呼吸的样子，和他紧张得往衣服上擦汗的手。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-70-cause",
+        "questionType": "cause",
+        "questionText": "李明为什么很紧张？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "偷吃了别人的零食怕被发现",
+            "imageUrl": "/icons/steal_snack_fear.png",
+            "isCorrect": false,
+            "feedbackText": "如果是怕被发现那是内疚和害怕。看他手里正紧紧攥着上台用的台词本呢。"
+          },
+          {
+            "id": "c2",
+            "text": "马上就要登台面对无数观众进行表演，害怕自己出错",
+            "imageUrl": "/icons/stage_performance_fear.png",
+            "isCorrect": true,
+            "feedbackText": "是的，人类天生害怕在众人面前“丢脸”，高强度的社会评价会引发剧烈的紧张反应。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-70-need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "立刻把台词本撕掉逃跑",
+            "imageUrl": "/icons/run_away_stage.png",
+            "isCorrect": false,
+            "feedbackText": "逃跑会让整个节目彻底搞砸，也会让他自己以后更加害怕上台。"
+          },
+          {
+            "id": "n2",
+            "text": "放松紧绷的肌肉，建立起能顺利演完的自信",
+            "imageUrl": "/icons/relax_confidence.png",
+            "isCorrect": true,
+            "feedbackText": "没错，他现在的准备已经足够了，只需要战胜自己的心理恐惧。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "觉得压力太大了，找借口说肚子疼坚决不上台",
+        "imageUrl": "/icons/fake_stomachache.png",
+        "suitability": "inappropriate",
+        "explanation": "临阵脱逃是非常没有责任感的行为，不仅辜负了队友的努力，你也会因此一直看不起自己。 哎呀！绝对不能装病逃避哦，勇敢跨出这一步才是正确的。"
+      },
+      {
+        "id": "p2",
+        "text": "反复狂背台词，一直背到走上台的那一秒钟",
+        "imageUrl": "/icons/cram_lines_stage.png",
+        "suitability": "acceptable",
+        "explanation": "死记硬背能带来一点安全感，但上台那一刻如果突然卡壳，你反而会更加崩溃。 临上场前再看一眼是可以的，但让自己放松下来更重要哦。"
+      },
+      {
+        "id": "p3",
+        "text": "把台词放下，闭上眼睛做三次深深的腹式呼吸，然后对自己微笑说“我可以的”",
+        "imageUrl": "/icons/deep_breath_smile_stage.png",
+        "suitability": "optimal",
+        "explanation": "通过深呼吸从生理上切断紧张反应，用积极自我对话建立信心，这是最专业的舞台减压技巧！ 太棒了！用深呼吸和微笑战胜紧张，你一定能带来最完美的表演！"
+      }
+    ],
+    "abilityLevel": "advanced",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-71",
+    "title": "妈妈正在亲吻拥抱二胎弟弟/妹妹",
+    "description": "识别家庭资源被瓜分时的嫉妒情绪，理解吃醋的心理机制，学习用语言正向表达对父母爱的需求，而非采取针对同胞的攻击行为。",
+    "imageUrl": "/assets/scenes/scene71_mom_hugging_baby.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "happy",
+      "sad",
+      "scared",
+      "angry"
+    ],
+    "emotionClues": [
+      "看看明明斜着眼睛看妈妈和弟弟的眼神，他撅着嘴很不高兴。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-71-cause",
+        "questionType": "cause",
+        "questionText": "明明为什么觉得嫉妒？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "他最爱的妈妈正在亲吻拥抱小弟弟，他觉得自己被冷落了",
+            "imageUrl": "/icons/mom_hugs_baby.png",
+            "isCorrect": true,
+            "feedbackText": "是的！看到别人得到了自己想要的东西或爱，心里就会发酸，这就是嫉妒。"
+          },
+          {
+            "id": "c2",
+            "text": "他想看电视但妈妈把电视关了",
+            "imageUrl": "/icons/tv_off.png",
+            "isCorrect": false,
+            "feedbackText": "关电视他会大发脾气，你看他现在只是紧紧盯着弟弟看呢。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-71-need",
+        "questionType": "need",
+        "questionText": "明明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "需要知道妈妈一样爱他，也需要一个妈妈的拥抱",
+            "imageUrl": "/icons/mom_hug_both.png",
+            "isCorrect": true,
+            "feedbackText": "没错，他需要确认妈妈的爱并没有减少。"
+          },
+          {
+            "id": "n2",
+            "text": "需要把弟弟扔出窗外",
+            "imageUrl": "/icons/throw_baby.png",
+            "isCorrect": false,
+            "feedbackText": "这是绝对不可以的严重伤害行为，弟弟也是一家人。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "冲过去用力掐弟弟一下，把弟弟弄哭",
+        "imageUrl": "/icons/pinch_baby.png",
+        "suitability": "inappropriate",
+        "explanation": "伤害弱小的弟弟不仅极其危险，还会让妈妈非常生气和失望，你会受到严厉的惩罚。 哎呀！绝对不能伤害小宝宝，打人是非常错误的行为！"
+      },
+      {
+        "id": "p2",
+        "text": "一个人跑回房间里偷偷掉眼泪生闷气",
+        "imageUrl": "/icons/cry_alone_room.png",
+        "suitability": "acceptable",
+        "explanation": "心里难受躲起来是可以理解的，但如果你不告诉妈妈，妈妈就不知道你其实也想要抱抱。 生闷气虽然没有伤害别人，但妈妈不知道你想要什么哦。"
+      },
+      {
+        "id": "p3",
+        "text": "走到妈妈身边，拉着妈妈的手说：“妈妈，我也想要你抱抱我！”",
+        "imageUrl": "/icons/ask_for_hug.png",
+        "suitability": "optimal",
+        "explanation": "用勇敢的话语说出自己的需求，妈妈一定会高兴地张开双臂把你和弟弟一起抱在怀里！ 太棒了！大声说出你的需要，妈妈非常愿意给你一个大大的拥抱！"
+      }
+    ],
+    "abilityLevel": "primary",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-72",
+    "title": "别的小朋友在吃大大的棉花糖，自己没有",
+    "description": "识别物质落差带来的基础嫉妒情绪，理解“别人有我没有”的心里不平衡感，训练接纳物质差异，克制负面情绪与不合理的当众索要行为。",
+    "imageUrl": "/assets/scenes/scene72_big_cotton_candy.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "angry",
+      "happy",
+      "scared"
+    ],
+    "emotionClues": [
+      "看看明明斜着眼睛盯着别人好吃的的样子，他咽了一下口水。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-72-cause",
+        "questionType": "cause",
+        "questionText": "明明为什么觉得嫉妒？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "因为他手里的白开水太难喝了",
+            "imageUrl": "/icons/drink_water.png",
+            "isCorrect": false,
+            "feedbackText": "他平时也是喝白开水的，但他现在的眼睛全盯着别人的棉花糖哦。"
+          },
+          {
+            "id": "c2",
+            "text": "别人拥有漂亮好吃的棉花糖，而自己只有白开水，产生了落差",
+            "imageUrl": "/icons/cotton_candy_envy.png",
+            "isCorrect": true,
+            "feedbackText": "对啦，同在一个画面里，别人有的东西自己没有，就会产生心理落差。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-72-need",
+        "questionType": "need",
+        "questionText": "明明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "学会接纳自己不能拥有所有东西的现实，或者合理向大人提出请求",
+            "imageUrl": "/icons/accept_or_ask.png",
+            "isCorrect": true,
+            "feedbackText": "没错，他需要懂得世界上的东西不可能全都是自己的。"
+          },
+          {
+            "id": "n2",
+            "text": "冲上去把别人的棉花糖踩扁",
+            "imageUrl": "/icons/stomp_candy.png",
+            "isCorrect": false,
+            "feedbackText": "破坏别人的快乐是非常非常恶劣的行为！"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "冲过去一把抢走别人的棉花糖自己吃",
+        "imageUrl": "/icons/snatch_candy.png",
+        "suitability": "inappropriate",
+        "explanation": "抢劫别人的东西是绝对不允许的坏行为！这不仅会让别人大哭，你也会受到严厉批评。 哎呀！绝对不能动手抢东西，这不是好孩子该做的。"
+      },
+      {
+        "id": "p2",
+        "text": "跑去找妈妈大哭大闹，在地上打滚非要买不可",
+        "imageUrl": "/icons/tantrum_for_candy.png",
+        "suitability": "acceptable",
+        "explanation": "想吃东西去求妈妈是可以的，但打滚哭闹是不礼貌的，妈妈可能更不会给你买了。 虽然你想买，但撒泼打滚的办法可不聪明哦。"
+      },
+      {
+        "id": "p3",
+        "text": "喝一口自己的白开水，走开去玩好玩的滑梯",
+        "imageUrl": "/icons/drink_water_play.png",
+        "suitability": "optimal",
+        "explanation": "懂得转移注意力，接受“我不需要拥有所有东西”，你展现了超强的自我情绪控制能力！ 太棒了！不是所有的东西我们都要拥有，去玩别的也一样开心！"
+      }
+    ],
+    "abilityLevel": "primary",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-73",
+    "title": "同学在炫耀最新款的高级文具盒，自己只有旧的",
+    "description": "识别同伴攀比场景中的嫉妒情绪，理解物质条件对比引发的眼红与自卑交织心理，学习建立内在自我价值感，树立正确的物质相处观念。",
+    "imageUrl": "/assets/scenes/scene73_new_pencilcase.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "happy",
+      "angry",
+      "sad"
+    ],
+    "emotionClues": [
+      "看看小华紧捏旧文具盒的手和他斜眼怒视的眼神。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-73-cause",
+        "questionType": "cause",
+        "questionText": "小华为什么觉得嫉妒？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "同学有大家羡慕的最新款文具，而自己只有旧的，心里觉得不平衡",
+            "imageUrl": "/icons/envy_new_pencilcase.png",
+            "isCorrect": true,
+            "feedbackText": "是的，强烈的物质对比和看到别人成为焦点，会让人产生想要取而代之的嫉妒心。"
+          },
+          {
+            "id": "c2",
+            "text": "他自己把铁皮文具盒捏坏了",
+            "imageUrl": "/icons/crush_pencilcase.png",
+            "isCorrect": false,
+            "feedbackText": "他是因为生气别人有新东西，才用力捏自己的文具盒的哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-73-need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "需要把同学的新文具盒偷走扔进垃圾桶",
+            "imageUrl": "/icons/steal_pencilcase.png",
+            "isCorrect": false,
+            "feedbackText": "这是偷盗和破坏行为，是违法的，绝对不可以！"
+          },
+          {
+            "id": "n2",
+            "text": "明白文具只是用来学习的工具，放下攀比心理",
+            "imageUrl": "/icons/focus_learning.png",
+            "isCorrect": true,
+            "feedbackText": "没错，关注自己的学习才是最重要的，文具能用就好。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "走过去趁他不注意，拿笔把他的新文具盒画花",
+        "imageUrl": "/icons/ruin_pencilcase.png",
+        "suitability": "inappropriate",
+        "explanation": "因为嫉妒去毁坏别人的物品，不仅要原价赔偿，还会成为全班同学都讨厌的坏人。 哎呀！绝对不能去毁坏别人的东西，这是非常恶劣的行为。"
+      },
+      {
+        "id": "p2",
+        "text": "大声讽刺说：“有什么了不起的，我一点也不稀罕！”",
+        "imageUrl": "/icons/sarcastic_comment.png",
+        "suitability": "acceptable",
+        "explanation": "用酸言酸语保护自尊心虽然没有动手，但别人一听就知道你是嫉妒了，显得你不够大度。 说酸话其实是暴露了你心里的在乎，这样并不显得酷哦。"
+      },
+      {
+        "id": "p3",
+        "text": "走过去大方地说：“哇，真酷！但我这个旧的也很好用”，然后专心看书",
+        "imageUrl": "/icons/praise_and_focus.png",
+        "suitability": "optimal",
+        "explanation": "大方赞美别人的拥有，同时接纳自己的物品，这种豁达的自信会让你变得闪闪发光！ 太棒了！自信地接纳自己拥有的东西，不盲目攀比，你非常成熟！"
+      }
+    ],
+    "abilityLevel": "middle",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-74",
+    "title": "老师给同桌发了奖品笔记本，自己桌上空空",
+    "description": "识别荣誉落差带来的嫉妒情绪，理解他人获得奖赏而自己落空的心里不甘与酸楚，训练化嫉妒为进步动力并学会由衷欣赏他人的优秀特质。",
+    "imageUrl": "/assets/scenes/scene74_deskmate_reward.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "happy",
+      "angry",
+      "scared",
+      "sad"
+    ],
+    "emotionClues": [
+      "看看小华空空的桌子，和他盯着同桌奖品发紧的下巴。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-74-cause",
+        "questionType": "cause",
+        "questionText": "小华为什么觉得嫉妒？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "同桌得到了老师的奖励和认可，自己却没有得到",
+            "imageUrl": "/icons/deskmate_reward.png",
+            "isCorrect": true,
+            "feedbackText": "是的！在同样的竞争环境里，别人获得了荣誉自己落空，很容易让人嫉妒。"
+          },
+          {
+            "id": "c2",
+            "text": "因为他不喜欢这个本子的颜色",
+            "imageUrl": "/icons/dislike_color.png",
+            "isCorrect": false,
+            "feedbackText": "那是别人的奖品，他不是因为颜色不喜欢，是因为奖品不属于他哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-74-need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "立刻要求老师也必须给他发一个一样的奖品",
+            "imageUrl": "/icons/demand_reward.png",
+            "isCorrect": false,
+            "feedbackText": "奖品是靠努力和优秀表现换来的，不能直接要哦。"
+          },
+          {
+            "id": "n2",
+            "text": "把嫉妒变成动力，下次自己也努力争取",
+            "imageUrl": "/icons/turn_envy_to_motivation.png",
+            "isCorrect": true,
+            "feedbackText": "没错，看到别人的优秀，应该激励自己变得更好。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "趁同桌不在，偷偷把奖品笔记本扔进垃圾桶",
+        "imageUrl": "/icons/throw_reward_trash.png",
+        "suitability": "inappropriate",
+        "explanation": "毁坏别人的荣誉是非常恶毒的行为，这会让你成为一个不受欢迎且犯错的人。 哎呀！绝对不可以去破坏别人的东西，自己得不到也不能去毁坏。"
+      },
+      {
+        "id": "p2",
+        "text": "转过身去趴在桌子上，一整天都不和同桌说话",
+        "imageUrl": "/icons/ignore_deskmate.png",
+        "suitability": "acceptable",
+        "explanation": "生闷气虽然没有伤害同桌的本子，但这不仅让你自己难受，也会破坏你们的友谊。 生闷气其实是在惩罚自己哦，别人得奖是开心的事情。"
+      },
+      {
+        "id": "p3",
+        "text": "大方地对同桌说“恭喜你！”，然后在心里发誓下次自己也要得奖",
+        "imageUrl": "/icons/congratulate_try_hard.png",
+        "suitability": "optimal",
+        "explanation": "将嫉妒转化为良性竞争，大方送上祝福，你不仅赢得了朋友的尊重，还获得了进步的动力！ 太棒了！把嫉妒变成努力的动力，并且大度地祝贺别人，你做得极好！"
+      }
+    ],
+    "abilityLevel": "middle",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-75",
+    "title": "自己最好的朋友跟别人戴了“同款手链”笑闹",
+    "description": "识别社交关系维系中的嫉妒与独占欲情绪，理解排他性被打破时的心理被剥夺感，学习理解同伴友谊的开放性特征，妥善处理人际交往中的占有欲。",
+    "imageUrl": "/assets/scenes/scene75_best_friend_bracelet.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "happy",
+      "embarrassed",
+      "angry"
+    ],
+    "emotionClues": [
+      "看看李明站在角落里、皱着眉头冷冷盯着别人的眼神。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-75-cause",
+        "questionType": "cause",
+        "questionText": "李明为什么觉得嫉妒？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "自己最好的朋友和别人建立了亲密的关系，感觉自己被排挤取代了",
+            "imageUrl": "/icons/friend_replaced.png",
+            "isCorrect": true,
+            "feedbackText": "是的，在人际关系中看到在乎的朋友和别人走得很近，会让人产生很强的领地危机感和嫉妒。"
+          },
+          {
+            "id": "c2",
+            "text": "那条手链太贵了，他买不起",
+            "imageUrl": "/icons/expensive_bracelet.png",
+            "isCorrect": false,
+            "feedbackText": "这不仅是物品的问题，最关键的是那条手链代表了“好朋友”的身份归属哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-75-need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "需要立刻冲过去把别人的手链扯断",
+            "imageUrl": "/icons/break_bracelet.png",
+            "isCorrect": false,
+            "feedbackText": "扯断手链不仅解决不了问题，还会彻底让好朋友讨厌他。"
+          },
+          {
+            "id": "n2",
+            "text": "需要知道即使朋友交了新朋友，他们也依然是好朋友",
+            "imageUrl": "/icons/reassurance_friendship.png",
+            "isCorrect": true,
+            "feedbackText": "没错，他需要学会社交的宽容度，明白友谊不是独占的。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "冲过去大骂好朋友背叛了自己，以后再也不理他了",
+        "imageUrl": "/icons/yell_betrayal.png",
+        "suitability": "inappropriate",
+        "explanation": "过度的控制欲和指责会让你永远失去这个好朋友，每个人都有交其他朋友的自由。 哎呀！绝对不能要求朋友只能和你一个人玩，这是不讲理的哦。"
+      },
+      {
+        "id": "p2",
+        "text": "冷着脸走开，然后到处散播那个新同学的坏话",
+        "imageUrl": "/icons/spread_rumors.png",
+        "suitability": "inappropriate",
+        "explanation": "造谣和背后说坏话是校园欺凌行为，这比嫉妒本身还要恶劣一百倍！ 太糟糕了！绝对不可以因为嫉妒去造谣伤害别人。"
+      },
+      {
+        "id": "p3",
+        "text": "深呼吸，走过去笑着说：“手链真好看，我们三个可以一起玩吗？”",
+        "imageUrl": "/icons/join_friends.png",
+        "suitability": "optimal",
+        "explanation": "打破吃醋的心理，主动扩大社交圈，你不仅保住了老朋友，还收获了新朋友！ 太棒了！学会分享友谊，主动加入他们，你拥有极高的情商！"
+      }
+    ],
+    "abilityLevel": "advanced",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-76",
+    "title": "同桌的桌上堆满生日礼物，自己桌上空空",
+    "description": "识别社交待遇极大落差下的嫉妒情绪，理解自己被冷落而他人受追捧时的深层防御心理，训练在社交劣势情境中保持情绪觉察、不过度内耗及进行自我肯定。",
+    "imageUrl": "/assets/scenes/scene76_deskmate_birthday_gifts.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "happy",
+      "scared",
+      "sad",
+      "angry"
+    ],
+    "emotionClues": [
+      "看看李明双手抱臂的防御姿势，和他斜着眼盯着别人礼物的神情。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-76-cause",
+        "questionType": "cause",
+        "questionText": "李明为什么觉得嫉妒？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "巨大的待遇落差，同桌有那么多朋友和礼物，而自己没有",
+            "imageUrl": "/icons/treatment_gap.png",
+            "isCorrect": true,
+            "feedbackText": "是的！在同一个空间里，明显的受欢迎程度对比，极易让人心里产生落差和嫉妒。"
+          },
+          {
+            "id": "c2",
+            "text": "因为那些礼物其实全是他买给同桌的",
+            "imageUrl": "/icons/bought_all_gifts.png",
+            "isCorrect": false,
+            "feedbackText": "如果是他买的他应该高兴地送过去，但他现在是满眼羡慕和酸意地看着哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-76-need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "明白每个人都有自己的高光时刻，今天主角是同桌",
+            "imageUrl": "/icons/accept_spotlight.png",
+            "isCorrect": true,
+            "feedbackText": "没错，放下自己，接纳今天是别人重要日子的现实。"
+          },
+          {
+            "id": "n2",
+            "text": "趁乱把其中一个精美的礼物偷走",
+            "imageUrl": "/icons/steal_gift.png",
+            "isCorrect": false,
+            "feedbackText": "偷别人的生日礼物是非常可耻的行为，绝对不能这么做。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "故意走过去把蛋糕弄翻，破坏生日的气氛",
+        "imageUrl": "/icons/ruin_cake.png",
+        "suitability": "inappropriate",
+        "explanation": "毁掉别人的生日是最恶毒的行为，全班同学都会因此孤立你、讨厌你。 哎呀！绝对不能去搞破坏，毁掉别人的快乐太自私啦。"
+      },
+      {
+        "id": "p2",
+        "text": "趴在自己空荡荡的桌子上假装睡觉，什么都不看",
+        "imageUrl": "/icons/fake_sleep_desk.png",
+        "suitability": "acceptable",
+        "explanation": "眼不见为净是个逃避嫉妒的办法，但同桌生日你一点反应都没有，会显得有些冷漠。 闭上眼睛不看是可以缓解嫉妒的，但这样也错过了沾沾喜气的机会哦。"
+      },
+      {
+        "id": "p3",
+        "text": "整理好心情，大方地走过去对他说：“生日快乐，你的礼物真棒！”",
+        "imageUrl": "/icons/say_happy_birthday.png",
+        "suitability": "optimal",
+        "explanation": "大度地送上祝福，不仅克服了内心的嫉妒，还能让你融入大家欢乐的氛围中！ 太棒了！克服嫉妒心，真诚地送上祝福，你是个心胸宽广的好人！"
+      }
+    ],
+    "abilityLevel": "advanced",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-77",
+    "title": "课间操大家手拉手围成圈，自己站在圈外",
+    "description": "识别物理隔离造成的孤独情绪，理解“群体互动与个体落单”带来的强烈落差失落感，学习如何鼓起勇气发出社交请求并顺利融入群体圈子。",
+    "imageUrl": "/assets/scenes/scene77_left_out_circle.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "happy",
+      "sad",
+      "scared",
+      "angry"
+    ],
+    "emotionClues": [
+      "看看小华和前面那个大圆圈的距离，他一个人站得远远的。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-77-cause",
+        "questionType": "cause",
+        "questionText": "小华为什么觉得孤独？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "大家组成了一个热闹的群体，而他被排除在这个群体之外",
+            "imageUrl": "/icons/excluded_group.png",
+            "isCorrect": true,
+            "feedbackText": "是的，强烈的物理隔离和群体热闹的对比，最容易产生孤独感。"
+          },
+          {
+            "id": "c2",
+            "text": "他正在和好朋友玩捉迷藏",
+            "imageUrl": "/icons/hide_seek.png",
+            "isCorrect": false,
+            "feedbackText": "如果是在玩捉迷藏他应该躲起来，现在他只是站在明处低着头哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-77-need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "需要立刻冲过去把圈子里的人全部推倒",
+            "imageUrl": "/icons/push_circle.png",
+            "isCorrect": false,
+            "feedbackText": "使用暴力破坏别人的游戏，别人就更不会和你玩了。"
+          },
+          {
+            "id": "n2",
+            "text": "鼓起勇气，去请求加入同学们的游戏",
+            "imageUrl": "/icons/ask_join.png",
+            "isCorrect": true,
+            "feedbackText": "没错，打破孤独的最好办法就是主动开口尝试融入。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "捡起石头砸向正在玩游戏的人，引起他们的注意",
+        "imageUrl": "/icons/throw_stone_group.png",
+        "suitability": "inappropriate",
+        "explanation": "扔石头是非常危险的伤人行为。为了引起注意而做坏事，会让大家都讨厌你。 哎呀！绝对不能用伤害别人的方式来吸引注意！"
+      },
+      {
+        "id": "p2",
+        "text": "转身回到教室里，一个人静静地看书",
+        "imageUrl": "/icons/read_alone.png",
+        "suitability": "acceptable",
+        "explanation": "如果不想玩，自己找事情做打发时间是可以的，但这不能解决你想交朋友的心愿。 自己找书看也可以排解孤独，但其实你更想和大家一起玩对吧？"
+      },
+      {
+        "id": "p3",
+        "text": "走上前，微笑着对同学说：“我也想玩，我可以拉你们的手吗？”",
+        "imageUrl": "/icons/ask_join_smile.png",
+        "suitability": "optimal",
+        "explanation": "主动且礼貌地提出请求，绝大多数同学都会非常乐意给你让出一个位置，孤独感瞬间消失！ 太棒了！主动跨出第一步，勇敢地用嘴巴询问，大家都会欢迎你的！"
+      }
+    ],
+    "abilityLevel": "middle",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-78",
+    "title": "食堂里大家坐满大桌聊天，自己独自坐角落单人桌",
+    "description": "识别喧闹环境下的孤独情绪，理解身处人群却无人陪伴的深层孤立感，训练适应适当的公共空间独处，或主动寻找搭伴的社交主动性与勇气。",
+    "imageUrl": "/assets/scenes/scene78_eat_alone_cafeteria.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "happy",
+      "sad",
+      "scared",
+      "angry"
+    ],
+    "emotionClues": [
+      "看看小华一个人坐在最角落的背影，再看看远处那些热闹的大桌子。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-78-cause",
+        "questionType": "cause",
+        "questionText": "小华为什么觉得孤独？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "大家都在一起分享快乐，而他只能一个人默默面对墙角",
+            "imageUrl": "/icons/eat_corner.png",
+            "isCorrect": true,
+            "feedbackText": "是的，周围越是热闹，自己越是一个人，孤独的落差感就会越强。"
+          },
+          {
+            "id": "c2",
+            "text": "他觉得自己饭盒里的菜太难吃了",
+            "imageUrl": "/icons/bad_taste_food.png",
+            "isCorrect": false,
+            "feedbackText": "如果是饭菜难吃他应该是不满，但他现在是因为没有人陪他说话哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-78-need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "端起饭盆把菜全倒在别人桌子上",
+            "imageUrl": "/icons/dump_food.png",
+            "isCorrect": false,
+            "feedbackText": "这是恶意的报复，别人会非常生气并排斥他的。"
+          },
+          {
+            "id": "n2",
+            "text": "找到熟悉的同学，和他们坐在一起",
+            "imageUrl": "/icons/find_familiar_seat.png",
+            "isCorrect": true,
+            "feedbackText": "没错，靠近群体、建立连接是消除孤独感最有效的办法。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "觉得大家都不喜欢自己，把饭全倒进垃圾桶饿着肚子回教室",
+        "imageUrl": "/icons/throw_food_away.png",
+        "suitability": "inappropriate",
+        "explanation": "浪费粮食不对，而且因为情绪饿肚子是在惩罚自己的身体，同学们其实并没有恶意孤立你。 哎呀！绝对不能浪费粮食饿肚子，其实大家只是没看到你而已。"
+      },
+      {
+        "id": "p2",
+        "text": "默默坐在角落赶快把饭吃完，然后去图书馆看书",
+        "imageUrl": "/icons/eat_fast_leave.png",
+        "suitability": "acceptable",
+        "explanation": "如果实在不想去社交，快速吃完去做自己喜欢的事情是可以的，这叫独处。 自己安静地吃完饭也没关系，享受独处的时光也可以哦。"
+      },
+      {
+        "id": "p3",
+        "text": "端起餐盘，走到认识的同学那一桌问：“这里有人坐吗？我可以坐这里吗？”",
+        "imageUrl": "/icons/ask_seat_tray.png",
+        "suitability": "optimal",
+        "explanation": "勇敢寻找同伴并礼貌询问，这是非常高级的社交技巧。大家通常都会热情地为你拉开椅子的！ 太棒了！端起盘子主动出击，礼貌询问，你一定能找到一起吃饭的好朋友！"
+      }
+    ],
+    "abilityLevel": "middle",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-79",
+    "title": "体育课自由活动，别人在打球自己独自在树下",
+    "description": "识别自由活动中被边缘化的孤独情绪，理解缺乏同伴接纳或共同话题时的落寞感，学习发掘自身兴趣爱好进行自我充实，或主动观察并寻找志同道合的同伴。",
+    "imageUrl": "/assets/scenes/scene79_alone_under_tree.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "happy",
+      "angry",
+      "embarrassed",
+      "sad"
+    ],
+    "emotionClues": [
+      "看看李明抱紧膝盖的姿势，他坐在阴影里看着阳光下玩耍的同学。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-79-cause",
+        "questionType": "cause",
+        "questionText": "李明为什么觉得孤独？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "别人都在阳光下成群结队地玩耍，而自己仿佛被隔离在外",
+            "imageUrl": "/icons/outside_looking_in.png",
+            "isCorrect": true,
+            "feedbackText": "是的，想要参与却不知如何加入，只能做旁观者的失落感就是孤独。"
+          },
+          {
+            "id": "c2",
+            "text": "大树底下的蚂蚁咬了他的腿",
+            "imageUrl": "/icons/ant_bite.png",
+            "isCorrect": false,
+            "feedbackText": "如果被咬了应该会疼得跳起来，但他现在一动不动地看着远方哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-79-need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "需要有人注意到他，邀请他或者自己勇敢走上前加入",
+            "imageUrl": "/icons/join_basketball.png",
+            "isCorrect": true,
+            "feedbackText": "没错，双向的奔赴或者主动的跨出，才能消除阴影里的孤独。"
+          },
+          {
+            "id": "n2",
+            "text": "立刻大喊大叫要求所有人都停下不准玩",
+            "imageUrl": "/icons/yell_stop_playing.png",
+            "isCorrect": false,
+            "feedbackText": "强行破坏别人的快乐不仅自私，还会让大家更加排斥你。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "觉得大家都在针对自己，跑过去把他们的篮球扔到墙外面",
+        "imageUrl": "/icons/throw_ball_away.png",
+        "suitability": "inappropriate",
+        "explanation": "其实同学们并没有故意针对你。如果破坏别人的活动，就真的会被所有人孤立了。 哎呀！绝对不能把气撒在篮球上，这样做别人会生气的！"
+      },
+      {
+        "id": "p2",
+        "text": "戴上耳机听自己喜欢的音乐，享受一个人的清闲",
+        "imageUrl": "/icons/listen_music_alone.png",
+        "suitability": "acceptable",
+        "explanation": "将孤独转化为享受独处的清静是非常有智慧的调节方法，只要你自己觉得开心就好。 自己听听音乐放松一下是非常好的排解方式哦。"
+      },
+      {
+        "id": "p3",
+        "text": "站起来走到球场边，帮他们捡一次球，然后问：“带我一个可以吗？”",
+        "imageUrl": "/icons/pass_ball_ask.png",
+        "suitability": "optimal",
+        "explanation": "通过友善的帮助（捡球）作为敲门砖，顺势提出加入请求，这招交友技巧简直是满分！ 太棒了！用友好的行动当做敲门砖，勇敢去融入群体，你一定行！"
+      }
+    ],
+    "abilityLevel": "advanced",
+    "tags": []
+  },
+  {
+    "sceneCode": "scene-80",
+    "title": "放学下雨，别人被家长打伞接走，自己站在屋檐下等",
+    "description": "识别缺乏他人支持与庇护时的孤独情绪，理解在困境中无人依靠的无助与凄凉感，训练在逆境中的情绪自理能力及寻求实际帮助（如借伞、打电话求助）的生活技能。",
+    "imageUrl": "/assets/scenes/scene80_rain_waiting.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "happy",
+      "sad",
+      "scared",
+      "angry"
+    ],
+    "emotionClues": [
+      "看看李明一个人站在屋檐下，对比远处的五颜六色的雨伞和家人。"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-80-cause",
+        "questionType": "cause",
+        "questionText": "李明为什么觉得孤独？",
+        "options": [
+          {
+            "id": "c1",
+            "text": "看着别人都有依靠和陪伴，而自己独自面临恶劣的天气等待",
+            "imageUrl": "/icons/rain_no_umbrella.png",
+            "isCorrect": true,
+            "feedbackText": "是的，在恶劣环境中最需要保护的时候无人陪伴，会极速放大内心的孤独感。"
+          },
+          {
+            "id": "c2",
+            "text": "他觉得自己买的雨衣不够好看",
+            "imageUrl": "/icons/ugly_raincoat.png",
+            "isCorrect": false,
+            "feedbackText": "你看他身上什么雨具都没有哦，只能站在屋檐下面躲雨。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-80-need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "n1",
+            "text": "需要家人的出现或者得到一把伞的帮助",
+            "imageUrl": "/icons/get_umbrella.png",
+            "isCorrect": true,
+            "feedbackText": "没错，解决眼前的困难，脱离困境是他现在最需要的。"
+          },
+          {
+            "id": "n2",
+            "text": "需要冲出去在暴雨里跳舞",
+            "imageUrl": "/icons/dance_in_rain.png",
+            "isCorrect": false,
+            "feedbackText": "淋雨会生病感冒的，这不是一个明智的做法。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "p1",
+        "text": "觉得委屈，直接冲进大雨里跑回家，结果淋成重感冒",
+        "imageUrl": "/icons/run_in_rain.png",
+        "suitability": "inappropriate",
+        "explanation": "拿自己的身体健康去赌气是绝对不可以的！生病只会让你自己更难受，父母更担心。 哎呀！绝对不可以赌气去淋雨，保护身体不感冒最重要。"
+      },
+      {
+        "id": "p2",
+        "text": "站在屋檐下一个人安静地等待，相信雨总会停的",
+        "imageUrl": "/icons/wait_quietly_rain.png",
+        "suitability": "acceptable",
+        "explanation": "耐心等待雨停是安全的做法，孤独感也会慢慢随着时间退散。 安静等待是安全的做法，雨总有停的时候哦。"
+      },
+      {
+        "id": "p3",
+        "text": "走进门卫室，礼貌地借用保安叔叔的电话联系家长或者寻求帮助",
+        "imageUrl": "/icons/call_parents_security.png",
+        "suitability": "optimal",
+        "explanation": "不被孤独和委屈打倒，积极寻求资源的帮助，这是非常强大的问题解决能力！ 太棒了！遇到困难不自怨自艾，主动找门卫叔叔借电话求助，你太聪明了！"
+      }
+    ],
+    "abilityLevel": "advanced",
+    "tags": []
+  }
+]

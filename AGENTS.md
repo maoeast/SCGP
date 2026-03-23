@@ -14,14 +14,24 @@
 
 ## 2. 启动先读
 
-进入仓库后，优先按以下顺序建立上下文：
+进入仓库后，默认先用最小上下文建立项目事实，避免会话启动阶段读取过多大文档：
 
-1. `README.md`
-2. `PROJECT_CONTEXT.md`
-3. `重构实施技术规范.md`
-4. `docs/planning/2026-03-13-scgp-current-prd.md`
-5. `docs/reports/2026-03-13-scgp-prd-gap-analysis.md`
-6. `docs/INDEX.md`
+1. `docs/planning/2026-03-23-scgp-context-bootstrap.md`
+2. `README.md`
+
+只有在任务确实需要更多细节时，再按需补充读取：
+
+- `docs/planning/2026-03-13-scgp-current-prd.md`
+- `docs/reports/2026-03-13-scgp-prd-gap-analysis.md`
+- `docs/INDEX.md`
+- `重构实施技术规范.md`
+- `PROJECT_CONTEXT.md`
+
+补充读取规则：
+
+- `PROJECT_CONTEXT.md` 是持续维护型上下文与工作记录，不再作为每次新会话默认首读文件
+- `重构实施技术规范.md` 同时包含当前落地态与目标态，只有涉及技术细节时再展开读取
+- 进入具体开发前，仍必须回到当前代码确认真实实现状态
 
 如果任务与历史方案有关，再按需查看：
 
@@ -91,11 +101,12 @@ SCGP 当前代码主线已经具备以下可运行能力：
 
 当前文档优先级：
 
-1. `README.md` + `重构实施技术规范.md`
-2. `PROJECT_CONTEXT.md`
-3. `docs/planning/2026-03-13-scgp-current-prd.md`
-4. `docs/reports/2026-03-13-scgp-prd-gap-analysis.md`
-5. 当前仍在执行的 `docs/plans/*.md`
+1. `docs/planning/2026-03-23-scgp-context-bootstrap.md`
+2. `README.md` + `docs/planning/2026-03-13-scgp-current-prd.md`
+3. `docs/reports/2026-03-13-scgp-prd-gap-analysis.md`
+4. `重构实施技术规范.md`
+5. `PROJECT_CONTEXT.md`
+6. 当前仍在执行的 `docs/plans/*.md`
 
 以下文档默认不是当前事实来源，只能作为背景参考：
 

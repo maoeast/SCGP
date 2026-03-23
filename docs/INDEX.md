@@ -8,6 +8,7 @@
 
 ### 项目入口
 
+- [docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
 - [README.md](/home/DONG/Mycode/SCGP/README.md)
 - [PROJECT_CONTEXT.md](/home/DONG/Mycode/SCGP/PROJECT_CONTEXT.md)
 - [重构实施技术规范.md](/home/DONG/Mycode/SCGP/%E9%87%8D%E6%9E%84%E5%AE%9E%E6%96%BD%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83.md)
@@ -95,15 +96,26 @@
 
 ## 当前推荐阅读顺序
 
-1. [README.md](/home/DONG/Mycode/SCGP/README.md)
-2. [PROJECT_CONTEXT.md](/home/DONG/Mycode/SCGP/PROJECT_CONTEXT.md)
-3. [重构实施技术规范.md](/home/DONG/Mycode/SCGP/%E9%87%8D%E6%9E%84%E5%AE%9E%E6%96%BD%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83.md)
-4. [docs/planning/2026-03-13-scgp-current-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-13-scgp-current-prd.md)
-5. [docs/reports/2026-03-13-scgp-prd-gap-analysis.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-13-scgp-prd-gap-analysis.md)
-6. [docs/plans/2026-03-13-scgp-executable-roadmap.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-13-scgp-executable-roadmap.md)
-7. [docs/reports/2026-03-11-assessment-cleanup.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-11-assessment-cleanup.md)
-8. [docs/plans/2025-02-05-refactor-implementation-plan.md](/home/DONG/Mycode/SCGP/docs/plans/2025-02-05-refactor-implementation-plan.md)
-9. [docs/planning/prd.md](/home/DONG/Mycode/SCGP/docs/planning/prd.md)
+1. [docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
+2. [README.md](/home/DONG/Mycode/SCGP/README.md)
+3. [docs/planning/2026-03-13-scgp-current-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-13-scgp-current-prd.md)
+4. [docs/reports/2026-03-13-scgp-prd-gap-analysis.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-13-scgp-prd-gap-analysis.md)
+5. [docs/INDEX.md](/home/DONG/Mycode/SCGP/docs/INDEX.md)
+
+## 重文档按需读取
+
+- [PROJECT_CONTEXT.md](/home/DONG/Mycode/SCGP/PROJECT_CONTEXT.md)
+  - 持续维护型上下文与工作记录，不再建议作为每次新会话默认首读文件
+- [重构实施技术规范.md](/home/DONG/Mycode/SCGP/%E9%87%8D%E6%9E%84%E5%AE%9E%E6%96%BD%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83.md)
+  - 适合数据库、资源、迁移、持久化等技术细节任务
+- [docs/plans/2026-03-13-scgp-executable-roadmap.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-13-scgp-executable-roadmap.md)
+  - 适合 roadmap 或阶段拆解任务
+- [docs/reports/2026-03-11-assessment-cleanup.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-11-assessment-cleanup.md)
+  - 适合评估模块专项清理回顾
+- [docs/plans/2025-02-05-refactor-implementation-plan.md](/home/DONG/Mycode/SCGP/docs/plans/2025-02-05-refactor-implementation-plan.md)
+  - 历史实施计划，仅在追溯历史方案时读取
+- [docs/planning/prd.md](/home/DONG/Mycode/SCGP/docs/planning/prd.md)
+  - 原始需求基线，不作为当前实现事实来源
 
 如果任务与 `emotional` 模块有关，再补充阅读：
 

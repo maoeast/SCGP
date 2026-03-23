@@ -1499,6 +1499,20 @@ export async function insertEmotionalResourceData(): Promise<void> {
     const tagMap = new Map<string, number>()
     let inserted = 0
 
+    const existingEmotionalCount = db.get(
+      `SELECT COUNT(*) AS count
+       FROM sys_training_resource
+       WHERE module_code = ?
+         AND resource_type IN ('emotion_scene', 'care_scene')
+         AND is_active = 1`,
+      ['emotional']
+    )?.count || 0
+
+    if (existingEmotionalCount > 0) {
+      console.log('[InitDatabase] emotional 资源已存在，跳过 demo seed 注入:', existingEmotionalCount)
+      return
+    }
+
     for (const resource of EMOTIONAL_DEMO_RESOURCES) {
       const existing = db.get(
         'SELECT id FROM sys_training_resource WHERE module_code = ? AND resource_type = ? AND name = ?',

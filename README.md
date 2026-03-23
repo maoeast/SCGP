@@ -77,11 +77,13 @@ npm run build:electron
 
 - 文档总索引：[docs/INDEX.md](/home/DONG/Mycode/SCGP/docs/INDEX.md)
 - 文档治理说明：[docs/DOCS_GUIDE.md](/home/DONG/Mycode/SCGP/docs/DOCS_GUIDE.md)
+- 轻量启动上下文：[docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
 - 项目上下文：[PROJECT_CONTEXT.md](/home/DONG/Mycode/SCGP/PROJECT_CONTEXT.md)
 
 ## 当前最重要的文档
 
 - [AGENTS.md](/home/DONG/Mycode/SCGP/AGENTS.md)
+- [docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
 - [docs/planning/2026-03-13-scgp-current-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-13-scgp-current-prd.md)
 - [docs/plans/2026-03-13-scgp-executable-roadmap.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-13-scgp-executable-roadmap.md)
 - [docs/reports/2026-03-13-scgp-prd-gap-analysis.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-13-scgp-prd-gap-analysis.md)
@@ -96,6 +98,7 @@ npm run build:electron
 - `.archive/`：历史归档，保留旧方案和旧过程文件，不代表当前实现。
 - `.claude/`、`.gemini/`：代理协作与命令模板目录；其中 `gsd` 是给代理使用的工作流命令，不属于业务模块。
 - `AGENTS.md`：仓库级代理启动说明，供 Codex 类代理在进入仓库时快速建立项目背景和执行规则。
+- `docs/planning/2026-03-23-scgp-context-bootstrap.md`：轻量启动上下文，适合作为新会话默认首读入口，用于控制启动阶段上下文体积。
 - `docs/planning/prd.md`：原始需求基线，主要反映“生活自理适应综合训练系统”阶段，不等同于当前 SCGP 平台范围。
 - `docs/guides/系统使用说明书.md`、`docs/guides/系统参数技术文档.md`：历史交付型文档，当前仅作为参考材料，不作为单一事实来源。
-- 如果你要理解当前项目，优先看 `README.md`、`docs/INDEX.md`、`PROJECT_CONTEXT.md` 和核心实施计划。
+- 如果你要快速理解当前项目，优先看 `AGENTS.md`、`docs/planning/2026-03-23-scgp-context-bootstrap.md` 和 `README.md`，再按任务补读其他大文档。

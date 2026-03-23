@@ -1,0 +1,104 @@
+[
+  {
+    "sceneCode": "emotion_scene_demo_001",
+    "title": "请填写场景名称",
+    "imageUrl": "/assets/scenes/scene001.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "calm",
+    "emotionOptions": [
+      "calm",
+      "happy",
+      "sad",
+      "angry",
+      "scared",
+      "embarrassed",
+      "shy",
+      "proud"
+    ],
+    "emotionClues": [
+      "请填写线索：表情 / 动作 / 环境",
+      "请填写线索：表情 / 动作 / 环境"
+    ],
+    "prompts": [
+      {
+        "questionId": "emotion_scene_demo_001_cause",
+        "questionType": "cause",
+        "questionText": "请填写原因推理问题",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "请填写正确答案",
+            "imageUrl": "/icons/option_correct.png",
+            "isCorrect": true,
+            "feedbackText": "请填写正确后的温和反馈"
+          },
+          {
+            "id": "cause_2",
+            "text": "请填写干扰答案",
+            "imageUrl": "/icons/option_wrong_1.png",
+            "isCorrect": false,
+            "feedbackText": "请填写错误后的温和反馈"
+          },
+          {
+            "id": "cause_3",
+            "text": "请填写干扰答案",
+            "imageUrl": "/icons/option_wrong_2.png",
+            "isCorrect": false,
+            "feedbackText": "请填写错误后的温和反馈"
+          }
+        ]
+      },
+      {
+        "questionId": "emotion_scene_demo_001_need",
+        "questionType": "need",
+        "questionText": "请填写需求推理问题",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "请填写正确答案",
+            "imageUrl": "/icons/need_correct.png",
+            "isCorrect": true,
+            "feedbackText": "请填写正确后的温和反馈"
+          },
+          {
+            "id": "need_2",
+            "text": "请填写干扰答案",
+            "imageUrl": "/icons/need_wrong.png",
+            "isCorrect": false,
+            "feedbackText": "请填写错误后的温和反馈"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "solution_1",
+        "text": "请填写最佳回应",
+        "imageUrl": "/icons/solution_optimal.png",
+        "suitability": "optimal",
+        "explanation": "请填写为什么这是最佳回应"
+      },
+      {
+        "id": "solution_2",
+        "text": "请填写可接受回应",
+        "imageUrl": "/icons/solution_acceptable.png",
+        "suitability": "acceptable",
+        "explanation": "请填写为什么这是可接受回应"
+      },
+      {
+        "id": "solution_3",
+        "text": "请填写不合适回应",
+        "imageUrl": "/icons/solution_inappropriate.png",
+        "suitability": "inappropriate",
+        "explanation": "请填写为什么这是不合适回应"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "6-9",
+    "abilityLevel": "primary",
+    "tags": [
+      "请填写标签",
+      "请填写标签"
+    ]
+  }
+]

@@ -10,6 +10,9 @@ import type {
 } from '@/types/emotional'
 import type { ResourceItem } from '@/types/module'
 import {
+  parseEmotionalBaseEmotion,
+} from '@/features/emotional/emotion-catalog'
+import {
   normalizeCareSceneEditorModel,
   normalizeEmotionSceneEditorModel,
   validateCareSceneEditorModel,
@@ -163,6 +166,27 @@ function buildRawEmotionSceneErrors(metadata: Partial<EmotionSceneResourceMeta> 
     errors.push('缺少 sceneCode')
   }
 
+  const normalizedTargetEmotion = parseEmotionalBaseEmotion(metadata?.targetEmotion)
+  if (!normalizedTargetEmotion) {
+    errors.push('targetEmotion 必须属于 8 类正式情绪枚举')
+  }
+
+  if (!Array.isArray(metadata?.emotionOptions) || metadata.emotionOptions.length === 0) {
+    errors.push('emotionOptions 至少需要提供 1 个情绪选项')
+  } else {
+    const normalizedEmotionOptions = metadata.emotionOptions
+      .map((item) => parseEmotionalBaseEmotion(item))
+      .filter((item): item is EmotionSceneResourceMeta['targetEmotion'] => !!item)
+    const hasInvalidEmotionOption = metadata.emotionOptions.some((item) => !parseEmotionalBaseEmotion(item))
+    if (hasInvalidEmotionOption) {
+      errors.push('emotionOptions 中存在不受支持的情绪值')
+    }
+
+    if (normalizedTargetEmotion && !normalizedEmotionOptions.includes(normalizedTargetEmotion)) {
+      errors.push('emotionOptions 必须包含 targetEmotion')
+    }
+  }
+
   if (!Array.isArray(metadata?.emotionClues) || metadata.emotionClues.length === 0) {
     errors.push('请至少提供 1 条情绪线索')
   } else if (metadata.emotionClues.every((clue) => !normalizeString(clue))) {
@@ -227,6 +251,10 @@ function buildRawCareSceneErrors(metadata: Partial<CareSceneResourceMeta> | unde
 
   if (!metadata?.sceneCode || !String(metadata.sceneCode).trim()) {
     errors.push('缺少 sceneCode')
+  }
+
+  if (metadata?.receiverEmotion && !parseEmotionalBaseEmotion(metadata.receiverEmotion)) {
+    errors.push('receiverEmotion 必须属于 8 类正式情绪枚举')
   }
 
   if (!metadata?.speakerPerspectiveText || !String(metadata.speakerPerspectiveText).trim()) {

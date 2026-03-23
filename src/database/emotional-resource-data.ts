@@ -48,7 +48,7 @@ export const EMOTIONAL_DEMO_RESOURCES: EmotionalSeedResource[] = [
       imageUrl: '',
       difficultyLevel: 1,
       targetEmotion: 'happy',
-      emotionOptions: ['happy', 'sad', 'embarrassed', 'angry', 'scared'],
+      emotionOptions: ['calm', 'happy', 'sad', 'angry', 'scared', 'embarrassed', 'shy', 'proud'],
       emotionClues: ['桌上有蛋糕和礼物', '小朋友面带笑容', '大家在一起唱生日歌'],
       prompts: [
         {
@@ -129,7 +129,7 @@ export const EMOTIONAL_DEMO_RESOURCES: EmotionalSeedResource[] = [
       imageUrl: '',
       difficultyLevel: 2,
       targetEmotion: 'scared',
-      emotionOptions: ['happy', 'sad', 'embarrassed', 'angry', 'scared'],
+      emotionOptions: ['calm', 'happy', 'sad', 'angry', 'scared', 'embarrassed', 'shy', 'proud'],
       emotionClues: ['小朋友抓着大人的衣角', '周围有医院床位和仪器', '表情紧张，身体靠后'],
       prompts: [
         {
@@ -330,7 +330,7 @@ export const EMOTIONAL_DEMO_RESOURCES: EmotionalSeedResource[] = [
       imageUrl: '',
       difficultyLevel: 1,
       targetEmotion: 'happy',
-      emotionOptions: ['happy', 'sad', 'embarrassed', 'angry', 'scared'],
+      emotionOptions: ['calm', 'happy', 'sad', 'angry', 'scared', 'embarrassed', 'shy', 'proud'],
       emotionClues: ['老师面带微笑竖起大拇指', '孩子站得更挺，眼睛发亮', '同学们也在看着他'],
       prompts: [
         {
@@ -377,7 +377,7 @@ export const EMOTIONAL_DEMO_RESOURCES: EmotionalSeedResource[] = [
       imageUrl: '',
       difficultyLevel: 3,
       targetEmotion: 'angry',
-      emotionOptions: ['happy', 'sad', 'embarrassed', 'angry', 'scared'],
+      emotionOptions: ['calm', 'happy', 'sad', 'angry', 'scared', 'embarrassed', 'shy', 'proud'],
       emotionClues: ['眉毛皱起来，手握得很紧', '另一个孩子把玩具拿走了', '身体向前冲，看起来很激动'],
       prompts: [
         {

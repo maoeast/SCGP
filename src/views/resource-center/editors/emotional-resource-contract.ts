@@ -11,14 +11,17 @@ import type {
   EmotionSceneResourceMeta,
   EmotionSceneSolution,
 } from '@/types/emotional'
+import {
+  EMOTION_COLOR_PRESETS as SHARED_EMOTION_COLOR_PRESETS,
+  EMOTIONAL_BASE_EMOTIONS,
+  getEmotionCatalogEntry,
+  isEmotionalBaseEmotion,
+  normalizeEmotionalBaseEmotion,
+  normalizeEmotionalBaseEmotionList,
+} from '@/features/emotional/emotion-catalog'
 
-export const DEFAULT_EMOTION_OPTIONS: EmotionalBaseEmotion[] = [
-  'happy',
-  'sad',
-  'embarrassed',
-  'angry',
-  'scared',
-]
+export const DEFAULT_EMOTION_OPTIONS: EmotionalBaseEmotion[] = [...EMOTIONAL_BASE_EMOTIONS]
+export const EMOTION_COLOR_PRESETS = SHARED_EMOTION_COLOR_PRESETS
 
 export const REASONING_TYPE_OPTIONS: Array<{
   value: EmotionalReasoningQuestionType
@@ -46,17 +49,6 @@ export const CARE_TYPE_OPTIONS: Array<{
   { value: 'advice', label: '建议式' },
   { value: 'action', label: '行动式' },
 ]
-
-export const EMOTION_COLOR_PRESETS: Record<
-  EmotionalBaseEmotion,
-  { token: 'green' | 'blue' | 'yellow' | 'red'; hex: string; label: string }
-> = {
-  happy: { token: 'green', hex: '#67C23A', label: '绿色区' },
-  sad: { token: 'blue', hex: '#409EFF', label: '蓝色区' },
-  embarrassed: { token: 'yellow', hex: '#E6A23C', label: '黄色区' },
-  angry: { token: 'red', hex: '#F56C6C', label: '红色区' },
-  scared: { token: 'red', hex: '#F56C6C', label: '红色区' },
-}
 
 const ABILITY_LEVELS = ['primary', 'middle', 'advanced'] as const
 const HINT_LEVELS = [0, 1, 2, 3] as const
@@ -87,9 +79,7 @@ function normalizeAbilityLevel(value: unknown): 'primary' | 'middle' | 'advanced
 }
 
 function normalizeEmotion(value: unknown, fallback: EmotionalBaseEmotion): EmotionalBaseEmotion {
-  return DEFAULT_EMOTION_OPTIONS.includes(value as EmotionalBaseEmotion)
-    ? (value as EmotionalBaseEmotion)
-    : fallback
+  return normalizeEmotionalBaseEmotion(value, fallback)
 }
 
 function normalizeCareType(value: unknown, fallback: EmotionalCareType): EmotionalCareType {
@@ -122,28 +112,15 @@ function normalizeStringArray(value: unknown, fallback: string[]): string[] {
 }
 
 function normalizeEmotionOptions(value: unknown, targetEmotion: EmotionalBaseEmotion): EmotionalBaseEmotion[] {
-  const source = Array.isArray(value) ? value : DEFAULT_EMOTION_OPTIONS
-  const unique = Array.from(
-    new Set(
-      source.filter((item): item is EmotionalBaseEmotion =>
-        DEFAULT_EMOTION_OPTIONS.includes(item as EmotionalBaseEmotion)
-      )
-    )
-  )
-
-  if (!unique.includes(targetEmotion)) {
-    unique.unshift(targetEmotion)
-  }
-
-  return unique.length > 0 ? unique : [...DEFAULT_EMOTION_OPTIONS]
+  return normalizeEmotionalBaseEmotionList(value, targetEmotion)
 }
 
 function normalizeEmotionColorPayload(emotion: EmotionalBaseEmotion) {
-  const preset = EMOTION_COLOR_PRESETS[emotion]
+  const preset = getEmotionCatalogEntry(emotion, emotion)
   return {
-    emotionColorToken: preset.token,
-    emotionColorHex: preset.hex,
-    emotionColorLabel: preset.label,
+    emotionColorToken: preset.colorToken,
+    emotionColorHex: preset.colorHex,
+    emotionColorLabel: preset.colorLabel,
   }
 }
 
@@ -281,6 +258,22 @@ export function normalizeEmotionSceneEditorModel(
 export function validateEmotionSceneEditorModel(model: EmotionSceneResourceMeta): string[] {
   const errors: string[] = []
 
+  if (!isEmotionalBaseEmotion(model.targetEmotion)) {
+    errors.push('目标情绪必须属于 8 类正式情绪枚举')
+  }
+
+  if (model.emotionOptions.length === 0) {
+    errors.push('请至少配置 1 个情绪选项')
+  }
+
+  if (model.emotionOptions.some((emotion) => !isEmotionalBaseEmotion(emotion))) {
+    errors.push('情绪选项中存在不受支持的情绪值')
+  }
+
+  if (!model.emotionOptions.includes(model.targetEmotion)) {
+    errors.push('情绪选项必须包含目标情绪')
+  }
+
   if (!model.title.trim()) {
     errors.push('请填写场景标题')
   }
@@ -387,6 +380,10 @@ export function normalizeCareSceneEditorModel(
 
 export function validateCareSceneEditorModel(model: CareSceneResourceMeta): string[] {
   const errors: string[] = []
+
+  if (model.receiverEmotion && !isEmotionalBaseEmotion(model.receiverEmotion)) {
+    errors.push('接收者情绪必须属于 8 类正式情绪枚举')
+  }
 
   if (!model.title.trim()) {
     errors.push('请填写情境标题')

@@ -3,6 +3,7 @@ import type {
   EmotionalCompileContext,
   EmotionalCompiledSessionConfig,
 } from '@/features/emotional/engine/types'
+import { EMOTIONAL_BASE_EMOTION_META } from '@/features/emotional/emotion-catalog'
 
 export function compileEmotionScene(
   meta: EmotionSceneResourceMeta,
@@ -42,7 +43,7 @@ export function compileEmotionScene(
       },
       options: meta.emotionOptions.map((emotion) => ({
         value: emotion,
-        label: emotion,
+        label: EMOTIONAL_BASE_EMOTION_META[emotion].label,
         isCorrect: emotion === meta.targetEmotion,
         metadata: {
           emotion,

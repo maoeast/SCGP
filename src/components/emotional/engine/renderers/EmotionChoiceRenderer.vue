@@ -13,15 +13,7 @@ import { computed } from 'vue'
 import EmotionSelector from '@/components/emotional/EmotionSelector.vue'
 import { getOptionVisualState } from '@/components/emotional/engine/runtime/visibility'
 import type { EmotionChoiceStep } from '@/features/emotional/engine/types'
-import type { EmotionalBaseEmotion } from '@/types/emotional'
-
-const EMOTION_META: Record<EmotionalBaseEmotion, { label: string; emoji: string; colorHex: string; zoneLabel: string }> = {
-  happy: { label: '开心', emoji: '😊', colorHex: '#67C23A', zoneLabel: '绿色区' },
-  sad: { label: '失落', emoji: '😢', colorHex: '#409EFF', zoneLabel: '蓝色区' },
-  embarrassed: { label: '尴尬', emoji: '😳', colorHex: '#E6A23C', zoneLabel: '黄色区' },
-  angry: { label: '生气', emoji: '😠', colorHex: '#F56C6C', zoneLabel: '红色区' },
-  scared: { label: '害怕', emoji: '😨', colorHex: '#F56C6C', zoneLabel: '红色区' },
-}
+import { getEmotionCatalogEntry } from '@/features/emotional/emotion-catalog'
 
 const props = defineProps<{
   step: EmotionChoiceStep
@@ -38,19 +30,19 @@ const emotionSelectorOptions = computed(() => {
     : (props.step.options || [])
 
   return baseOptions.map((option) => {
-  const meta = EMOTION_META[option.value as EmotionalBaseEmotion]
-  const visualState = getOptionVisualState(option, props.hintLevel)
+    const meta = getEmotionCatalogEntry(option.value, 'happy')
+    const visualState = getOptionVisualState(option, props.hintLevel)
 
-  return {
-    value: option.value,
-    label: meta?.label || option.label,
-    emoji: meta?.emoji || '🙂',
-    colorHex: meta?.colorHex || '#dcdfe6',
-    zoneLabel: meta?.zoneLabel || '提示区',
-    isCorrect: !!option.isCorrect,
-    muted: visualState.muted,
-    highlighted: visualState.highlighted,
-  }
+    return {
+      value: option.value,
+      label: meta.label || option.label,
+      emoji: meta.emoji,
+      colorHex: meta.colorHex,
+      zoneLabel: meta.colorLabel,
+      isCorrect: !!option.isCorrect,
+      muted: visualState.muted,
+      highlighted: visualState.highlighted,
+    }
   })
 })
 

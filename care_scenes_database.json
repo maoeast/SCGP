@@ -1,0 +1,3741 @@
+[
+  {
+    "sceneCode": "care-scene-1",
+    "title": "好朋友的玩具坏了",
+    "imageUrl": "/assets/care_scenes/care1_broken_toy.jpg",
+    "difficultyLevel": 1,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "你的好朋友小明最喜欢的玩具汽车摔坏了，他坐在地上难过地哭泣。这时候你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，如果你最心爱的玩具坏了，哭得很伤心。这时候朋友走过来，你最希望他做什么？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "empathy",
+        "text": "“玩具坏了，我知道你现在一定很难过。”",
+        "effect": "这句话让小明感觉到你理解他的伤心，他觉得不再孤单了。",
+        "receiverReactionText": "谢谢你懂我",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“别哭了，我们重新买一个或者修好它吧。”",
+        "effect": "小明现在正处在极度的悲伤中，他可能还没准备好听建议，只想发泄情绪。",
+        "receiverReactionText": "可是我就要这个旧的",
+        "receiverReactionEmoji": "😞"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "递给他一张纸巾擦眼泪，或者轻轻拍拍他的后背。",
+        "effect": "无声的动作传递了非常温暖的陪伴，小明的情绪慢慢好了一点。",
+        "receiverReactionText": "(接过纸巾擦眼泪)",
+        "receiverReactionEmoji": "🤧"
+      }
+    ],
+    "preferredUtteranceIds":["u1", "u3"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友走过来大声嘲笑我：“你真不小心！”",
+        "isComforting": false,
+        "reasonText": "嘲笑会让原本难过的心情变成委屈和生气，这绝对不是关心。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友轻轻拍拍我的背，陪着我一起难过。",
+        "isComforting": true,
+        "reasonText": "当人伤心时，安静的陪伴和理解是最好的安慰剂。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "4-6",
+    "abilityLevel": "primary",
+    "tags":["同伴交往", "安慰", "物品损坏"]
+  },
+  {
+    "sceneCode": "care-scene-2",
+    "title": "同学跑步摔倒了",
+    "imageUrl": "/assets/care_scenes/care2_fall_down.jpg",
+    "difficultyLevel": 1,
+    "careType": "action",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "上体育课时，同桌小华跑步不小心摔倒了，膝盖擦破了皮，疼得掉眼泪。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，如果你在操场上摔倒了非常疼，别人都在玩。这时候，你最希望同学怎么对你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "action",
+        "text": "向他伸出手，把他从地上拉起来。",
+        "effect": "及时的实际行动能解决他起不来的困境，这是最直接的帮助。",
+        "receiverReactionText": "(抓住你的手站起来)",
+        "receiverReactionEmoji": "🤝"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“摔破皮流血了，一定很疼吧？”",
+        "effect": "你的话让他觉得痛苦被看见了，他感到了温暖。",
+        "receiverReactionText": "嗯，真的很疼",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u3",
+        "type": "advice",
+        "text": "“你下次跑步一定要看着路，别再摔了。”",
+        "effect": "虽然你说得对，但现在他正疼着呢，这句话听起来像是责备和教训。",
+        "receiverReactionText": "我也不是故意的...",
+        "receiverReactionEmoji": "😣"
+      }
+    ],
+    "preferredUtteranceIds": ["u1", "u2"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同学跑过来问我疼不疼，并扶我起来。",
+        "isComforting": true,
+        "reasonText": "在身体受到伤害时，被扶起来和被关心疼痛，能带来极大的安全感。"
+      },
+      {
+        "id": "ro2",
+        "text": "同学假装没看见，继续和其他人玩游戏。",
+        "isComforting": false,
+        "reasonText": "被忽视会让人感到强烈的被抛弃感和无助感。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "4-6",
+    "abilityLevel": "primary",
+    "tags": ["同伴交往", "受伤", "帮助"]
+  },
+  {
+    "sceneCode": "care-scene-3",
+    "title": "妈妈下班回家很累",
+    "imageUrl": "/assets/care_scenes/care3_tired_mom.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "晚上，妈妈下班回到家，累得直接瘫坐在沙发上，闭着眼睛揉着额头。这时候你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，如果你做了一整天的作业非常非常累。这时候，你最希望家人怎么对你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“妈妈，你这么累，赶紧去床上睡觉吧。”",
+        "effect": "这是一个很好的建议，体现了你对她身体的关心。",
+        "receiverReactionText": "好，妈妈休息一会儿",
+        "receiverReactionEmoji": "😌"
+      },
+      {
+        "id": "u2",
+        "type": "action",
+        "text": "安静地倒一杯温水端给妈妈，或者帮她捶捶肩膀。",
+        "effect": "这种无声的行动比语言更有力量，妈妈会觉得你长大了，非常感动。",
+        "receiverReactionText": "谢谢宝贝，妈妈觉得好多了",
+        "receiverReactionEmoji": "🥰"
+      },
+      {
+        "id": "u3",
+        "type": "empathy",
+        "text": "“妈妈，你看上去很累，今天上班辛苦啦。”",
+        "effect": "承认妈妈的辛苦，会让她觉得所有的付出都是值得的。",
+        "receiverReactionText": "看到你懂事，妈妈就不累了",
+        "receiverReactionEmoji": "💖"
+      }
+    ],
+    "preferredUtteranceIds":["u2", "u3"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "家人一直在耳边大声吵闹，让我陪他玩。",
+        "isComforting": false,
+        "reasonText": "极度疲惫时，嘈杂的声音会让人感到烦躁，这没有顾及到对方的感受。"
+      },
+      {
+        "id": "ro2",
+        "text": "家人安静地给我倒了杯水，让我好好休息。",
+        "isComforting": true,
+        "reasonText": "疲惫时最需要的是安静的环境和细心的照顾。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": ["家庭亲情", "疲惫", "感恩"]
+  },
+  {
+    "sceneCode": "care-scene-4",
+    "title": "好朋友比赛输了",
+    "imageUrl": "/assets/care_scenes/care4_lost_game.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "学校的拔河比赛结束了，你最好的朋友所在的队伍输了。他坐在操场边，低着头很不甘心。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你拼尽全力却输掉了重要的比赛，心里很受挫。这时候，你最希望朋友对你说什么？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“别难过了，输了就输了，下次比赛再赢回来就行了。”",
+        "effect": "这句鼓励的话是对的，但有时候太快讲大道理，会让对方觉得你站着说话不腰疼。",
+        "receiverReactionText": "可是这次我真的很想赢",
+        "receiverReactionEmoji": "😔"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“我看到你刚才拼尽了全力，输掉比赛一定很不甘心吧。”",
+        "effect": "这句话肯定了他的努力，也接纳了他的失落，这是最顶级的共情安慰。",
+        "receiverReactionText": "嗯，我的手都磨破了...",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "走过去坐在他旁边，什么都不说，递给他一瓶运动饮料。",
+        "effect": "无声的陪伴和物资补充，能很好地缓解比赛后的疲惫和失落。",
+        "receiverReactionText": "(接过饮料喝了一口)",
+        "receiverReactionEmoji": "🥤"
+      }
+    ],
+    "preferredUtteranceIds":["u2", "u3"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友走过来说：“我都看到啦，你刚才有多努力，没关系的。”",
+        "isComforting": true,
+        "reasonText": "努力被认可，是失败者最渴望听到的安慰。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友走过来说：“哎呀，是你们班其他人力气太小了。”",
+        "isComforting": false,
+        "reasonText": "贬低队友虽然想安慰你，但会破坏团队团结，这不是正确的关心方式。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": ["同伴交往", "比赛挫折", "共情"]
+  },
+  {
+    "sceneCode": "care-scene-5",
+    "title": "同学忘带了重要的作业",
+    "imageUrl": "/assets/care_scenes/care5_forgot_homework.jpg",
+    "difficultyLevel": 2,
+    "careType": "advice",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "马上就要上数学课了，同桌翻遍了书包发现没带数学作业本，急得满头大汗，害怕被老师批评。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你马上要面临老师的严厉检查却忘带了东西，急得像热锅上的蚂蚁。这时候你最需要什么帮助？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "empathy",
+        "text": "“你找不到作业本了，现在肯定很着急害怕吧。”",
+        "effect": "这句话理解了他的焦虑，但此时最紧迫的是解决问题，光共情还不够。",
+        "receiverReactionText": "是啊，怎么办啊！",
+        "receiverReactionEmoji": "😰"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“别慌，我陪你一起去办公室，主动向老师承认错误说明情况吧。”",
+        "effect": "在对方惊慌失措时，提供一个可行的解决方案，能瞬间帮他找到主心骨。",
+        "receiverReactionText": "好...你陪我去我就敢了",
+        "receiverReactionEmoji": "🙏"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "把自己空白的草稿本撕下一页递给他，让他假装这是作业。",
+        "effect": "这表面上是帮助，实际上是教唆撒谎欺骗老师，这是极其错误的“关心”。",
+        "receiverReactionText": "这...被发现了惩罚会更严重的",
+        "receiverReactionEmoji": "🚫"
+      }
+    ],
+    "preferredUtteranceIds": ["u2"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同学帮我一起想办法，并鼓励我主动去跟老师坦白。",
+        "isComforting": true,
+        "reasonText": "在危机时刻，能提供正确建议和勇气的朋友才是真朋友。"
+      },
+      {
+        "id": "ro2",
+        "text": "同学在一旁幸灾乐祸：“完蛋啦，你等下死定啦！”",
+        "isComforting": false,
+        "reasonText": "恐吓和看笑话只会加剧他人的焦虑，是完全没有同理心的表现。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": ["同伴交往", "危机解决", "诚实"]
+  }
+]
+{
+    "sceneCode": "care-scene-6",
+    "title": "同桌不小心把水洒在裤子上",
+    "imageUrl": "/assets/care_scenes/care6_spilled_water.jpg",
+    "difficultyLevel": 1,
+    "careType": "action",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "课间，同桌喝水时不小心把水杯碰倒了，水洒了一裤子。大家都看过来，他脸红红的觉得很丢人。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你在教室里当着大家的面把裤子弄湿了，觉得非常尴尬丢脸。这时候你最希望同桌怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "empathy",
+        "text": "“没关系的，我上次也不小心洒过水，干了就好了。”",
+        "effect": "告诉他别人也会犯这种小失误，能极大地减轻他的尴尬和羞耻感。",
+        "receiverReactionText": "原来你也有过，那我就没那么丢脸了",
+        "receiverReactionEmoji": "😌"
+      },
+      {
+        "id": "u2",
+        "type": "action",
+        "text": "赶紧递给他一包纸巾，并帮他挡住其他同学的视线。",
+        "effect": "实际的行动能帮他立刻解决问题，保护他的隐私，这是非常体贴的关心。",
+        "receiverReactionText": "(赶紧接过纸巾擦裤子)",
+        "receiverReactionEmoji": "🤧"
+      },
+      {
+        "id": "u3",
+        "type": "advice",
+        "text": "“你喝水怎么这么不小心，下次一定要拿稳杯子呀。”",
+        "effect": "虽然这是个好建议，但在别人正觉得丢脸的时候说，听起来就像是在批评他。",
+        "receiverReactionText": "我已经很难为情了，别说了...",
+        "receiverReactionEmoji": "低下头"
+      }
+    ],
+    "preferredUtteranceIds": ["u1", "u2"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同桌指着我大声笑：“哈哈，你好像尿裤子了！”",
+        "isComforting": false,
+        "reasonText": "把别人的意外当成笑话，会让人觉得非常受伤和更加尴尬。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌默默递给我纸巾，没有声张也没有笑我。",
+        "isComforting": true,
+        "reasonText": "在尴尬的时候，不被围观和得到悄悄的帮助，是最让人感激的。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "4-8",
+    "abilityLevel": "primary",
+    "tags":["同伴交往", "化解尴尬", "提供帮助"]
+  },
+  {
+    "sceneCode": "care-scene-7",
+    "title": "好朋友搭的积木被推倒了",
+    "imageUrl": "/assets/care_scenes/care7_knocked_blocks.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "angry",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "你的好朋友辛辛苦苦搭了一个很高的积木城堡，结果被旁边跑过的同学撞倒了。好朋友气得握紧拳头大叫。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你花了很久做好的东西被别人毁掉了，你气得快要爆炸了。这时候你希望好朋友对你说什么？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“哎呀别生气了，积木倒了我们再重新搭一个不就行了。”",
+        "effect": "这否认了他的愤怒情绪。在别人非常生气时叫他“别生气”，会让他觉得你不理解他的心血被毁的痛苦。",
+        "receiverReactionText": "可是我搭了半个小时！你根本不懂！",
+        "receiverReactionEmoji": "😡"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“天哪，你搭了那么久却被撞倒了，换作是我也会气疯的！”",
+        "effect": "接纳并确认他的愤怒是合理的，这叫“共情愤怒”。他会觉得你完全站在他这一边。",
+        "receiverReactionText": "对啊，我真的太生气了！",
+        "receiverReactionEmoji": "😤"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "陪他一起去找那个撞倒积木的同学，要求对方道歉。",
+        "effect": "用行动支持他维护自己的权利，是好朋友非常仗义的表现。",
+        "receiverReactionText": "好，你陪我一起去",
+        "receiverReactionEmoji": "🤝"
+      }
+    ],
+    "preferredUtteranceIds": ["u2", "u3"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友走过来对我说：“算啦算啦，多大点事啊。”",
+        "isComforting": false,
+        "reasonText": "这叫“站着说话不腰疼”，没有体会到受害者的愤怒，不能带来安慰。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友走过来说：“他怎么能这样！太气人了，我陪你去找他算账（讲理）。”",
+        "isComforting": true,
+        "reasonText": "当我很生气时，有人能理解我的愤怒并站在我这边，我心里的火气就会消一半。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":["同伴交往", "共情愤怒", "支持"]
+  },
+  {
+    "sceneCode": "care-scene-8",
+    "title": "妹妹害怕打雷闪电",
+    "imageUrl": "/assets/care_scenes/care8_thunder_fear.jpg",
+    "difficultyLevel": 1,
+    "careType": "action",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "外面突然打了一个巨大的响雷，妹妹吓得尖叫一声，捂着耳朵躲在沙发角落里发抖。作为哥哥/姐姐，你应该怎么关心她？",
+    "receiverPerspectiveText": "想象一下，你突然遇到了一件极其可怕的事情，吓得浑身发抖。这时候你希望家人怎么对待你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“这只是自然现象，雷声又不会咬人，有什么好怕的。”",
+        "effect": "讲科学道理在极度恐惧时是无效的，这会让妹妹觉得自己很胆小很没用。",
+        "receiverReactionText": "(继续捂着耳朵发抖不敢听)",
+        "receiverReactionEmoji": "😖"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“刚才那个雷声真的好大好吓人，连我也吓了一跳呢。”",
+        "effect": "告诉她“害怕是正常的，大家都会怕”，能有效减轻她因为害怕而产生的心理压力。",
+        "receiverReactionText": "哥哥/姐姐你也怕吗？",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "坐到她旁边，紧紧抱住她，并帮她捂住耳朵。",
+        "effect": "身体的接触（拥抱）是消除恐惧最快、最有效的安全感来源。",
+        "receiverReactionText": "(钻进你的怀里紧紧抱住)",
+        "receiverReactionEmoji": "🫂"
+      }
+    ],
+    "preferredUtteranceIds": ["u2", "u3"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "哥哥/姐姐跑过来抱住我，说：“别怕，我保护你。”",
+        "isComforting": true,
+        "reasonText": "在害怕的时候，得到强有力的保护和温暖的拥抱是最让人安心的。"
+      },
+      {
+        "id": "ro2",
+        "text": "哥哥/姐姐指着我大笑：“胆小鬼，连打雷都怕！”",
+        "isComforting": false,
+        "reasonText": "嘲笑别人的恐惧是非常残忍的，会让害怕的人又气又伤心。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-8",
+    "abilityLevel": "primary",
+    "tags":["家庭亲情", "消除恐惧", "身体接触"]
+  },
+  {
+    "sceneCode": "care-scene-9",
+    "title": "同学弄丢了心爱的钢笔",
+    "imageUrl": "/assets/care_scenes/care9_lost_pen.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "小华最喜欢的一支钢笔找不到了，他在课桌堂里翻来翻去，急得快哭了。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你把你最心爱的、每天都带在身边的东西弄丢了，找了半天都找不到，急得要命。你最希望同学怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "action",
+        "text": "“你先别急，我帮你一起在座位周围的地上找找看。”",
+        "effect": "提供实际的帮助去解决问题，是此时最能缓解他焦虑和难过的举动。",
+        "receiverReactionText": "太好了，谢谢你帮我",
+        "receiverReactionEmoji": "🙏"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“旧的不去新的不来，你让你妈妈明天再给你买一支新的就好了。”",
+        "effect": "他心疼的是那支有感情的笔，叫他买支新的并没有安慰到他失去心爱物品的难过。",
+        "receiverReactionText": "可是我就喜欢那支笔...",
+        "receiverReactionEmoji": "💧"
+      },
+      {
+        "id": "u3",
+        "type": "empathy",
+        "text": "“我记得那是你最喜欢的笔，找不到了心里一定很难受。”",
+        "effect": "理解这支笔对他的特殊意义，而不是单纯把它当成一件可以替换的物品，这会让他很感动。",
+        "receiverReactionText": "嗯，那是我过生日收到的礼物",
+        "receiverReactionEmoji": "😢"
+      }
+    ],
+    "preferredUtteranceIds": ["u1", "u3"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同学趴在地上，拿着手电筒帮我一起在角落里找。",
+        "isComforting": true,
+        "reasonText": "有朋友愿意花时间和精力陪我一起面对困难，这让我觉得非常温暖。"
+      },
+      {
+        "id": "ro2",
+        "text": "同学坐在旁边冷言冷语：“谁叫你自己平时乱丢东西，活该找不到了吧。”",
+        "isComforting": false,
+        "reasonText": "在别人遭遇损失时落井下石，是非常恶劣和伤害人的行为。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": ["同伴交往", "物品丢失", "实际帮助"]
+  },
+  {
+    "sceneCode": "care-scene-10",
+    "title": "朋友回答错问题被笑话",
+    "imageUrl": "/assets/care_scenes/care10_wrong_answer.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "上课时，你的好朋友站起来回答问题，结果答得完全不对，全班同学都在笑他。他红着脸坐下，恨不得找个地缝钻进去。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你在全班面前出了洋相，被大家哄堂大笑，觉得非常丢脸尴尬。你希望好朋友怎么对待你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "action",
+        "text": "跟着其他同学一起捂着嘴笑他。",
+        "effect": "这是背叛！好朋友的嘲笑会比其他人的嘲笑带来大十倍的伤害。",
+        "receiverReactionText": "(心都碎了，觉得被朋友背叛)",
+        "receiverReactionEmoji": "💔"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "悄悄递给他一张纸条写着：“没关系，那道题真的太难了，我也不会。”",
+        "effect": "用悄悄话保全了他的面子，同时告诉他“你不是一个人”，这是顶级的情商和关心。",
+        "receiverReactionText": "(看着纸条，心里好受多了)",
+        "receiverReactionEmoji": "📝"
+      },
+      {
+        "id": "u3",
+        "type": "advice",
+        "text": "小声对他说：“你昨天晚上肯定没好好复习吧，下次要认真听讲啊。”",
+        "effect": "在别人最尴尬的时候讲大道理教育他，不仅没安慰到他，还会在他的伤口上撒盐。",
+        "receiverReactionText": "连你也教训我...",
+        "receiverReactionEmoji": "😞"
+      }
+    ],
+    "preferredUtteranceIds": ["u2"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "好朋友没有笑我，并在桌子下面悄悄拍了拍我的手安慰我。",
+        "isComforting": true,
+        "reasonText": "在尴尬的处境中，一个默默支持我的朋友能帮我找回自尊和勇气。"
+      },
+      {
+        "id": "ro2",
+        "text": "好朋友笑得最大声，还转过头去和别人议论我答错的话。",
+        "isComforting": false,
+        "reasonText": "这会让被笑话的人感到极度的屈辱、愤怒和孤立无援。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": ["同伴交往", "化解尴尬", "私下安慰"]
+  }
+]
+{
+    "sceneCode": "care-scene-11",
+    "title": "同学忘带午餐饿肚子",
+    "imageUrl": "/assets/care_scenes/care11_forgot_lunch.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "中午吃饭时，同桌发现自己忘带午餐盒了。他摸着咕咕叫的肚子，看着别人吃饭，委屈得快要掉眼泪了。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，大家都在吃香喷喷的午饭，只有你一个人饿着肚子看着，觉得又饿又委屈。这时候你最希望同桌怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“你昨天晚上怎么不装进书包里？下次一定要提前装好啊。”",
+        "effect": "在别人遇到困难时当“事后诸葛亮”去指责对方，不仅不能解决他现在的饥饿，还会让他更加难过。",
+        "receiverReactionText": "我知道错了，可是我现在好饿...",
+        "receiverReactionEmoji": "😞"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“看着大家吃饭自己却饿肚子，真的太难受了。”",
+        "effect": "这句话表达了你对他感受的理解，但他现在的核心问题是肚子饿，光有共情还不够。",
+        "receiverReactionText": "是啊，我肚子一直在叫",
+        "receiverReactionEmoji": "😣"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“我今天的面包/菜有很多，分给你一半，我们一起吃吧！”",
+        "effect": "慷慨的分享和直接的实际行动，是解决别人困境最温暖、最有效的关心。",
+        "receiverReactionText": "谢谢你！你真是我的好朋友！",
+        "receiverReactionEmoji": "🥪"
+      }
+    ],
+    "preferredUtteranceIds": ["u3"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同桌故意在我面前大口大口地吃，还说“真香啊”。",
+        "isComforting": false,
+        "reasonText": "在别人匮乏的时候故意炫耀，是非常残忍和缺乏同情心的行为。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌把自己的食物分给了我一部分，让我不用饿肚子。",
+        "isComforting": true,
+        "reasonText": "在我最困难的时候愿意把自己的东西分给我，这是真正的善意和关心。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":["同伴交往", "分享", "实际帮助"]
+  },
+  {
+    "sceneCode": "care-scene-12",
+    "title": "弟弟的气球爆炸了",
+    "imageUrl": "/assets/care_scenes/care12_popped_balloon.jpg",
+    "difficultyLevel": 1,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "弟弟拿着刚买的卡通气球开心地跑，结果气球不小心碰到树枝“砰”地一声爆炸了。弟弟吓了一跳，然后坐在地上大哭起来。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你最喜欢的玩具突然坏了，你伤心得大哭。这时候你最希望哥哥/姐姐怎么对你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“别哭了别哭了，不就是一个破气球吗，有什么好哭的。”",
+        "effect": "否定别人的情绪是非常糟糕的关心。虽然对你来说只是个气球，但对弟弟来说那是他刚才最宝贝的东西。",
+        "receiverReactionText": "(哭得更大声了，觉得你不懂他)",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“哎呀，你最喜欢的气球破了，一定很心疼很难过吧。”",
+        "effect": "这叫“情绪确认”。当你承认他的失去和伤心时，他的委屈就得到了一半的释放。",
+        "receiverReactionText": "那是我的大奥特曼气球...",
+        "receiverReactionEmoji": "😢"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "抱起弟弟，拍拍他的后背说：“不哭了，回家我把我的小汽车借给你玩。”",
+        "effect": "用温暖的拥抱安抚他的惊吓，并用替代方案弥补他的损失，是非常棒的哥哥/姐姐。",
+        "receiverReactionText": "(擦干眼泪) 真的吗？",
+        "receiverReactionEmoji": "🚗"
+      }
+    ],
+    "preferredUtteranceIds":["u2", "u3"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "哥哥/姐姐抱住我，对我说气球破了确实很让人难过。",
+        "isComforting": true,
+        "reasonText": "被理解伤心，并且得到温暖的拥抱，能让我很快停止哭泣。"
+      },
+      {
+        "id": "ro2",
+        "text": "哥哥/姐姐不耐烦地说：“谁叫你跑那么快，活该气球破了！”",
+        "isComforting": false,
+        "reasonText": "在别人伤心时去指责对方，只会让对方感到更加痛苦和委屈。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-8",
+    "abilityLevel": "primary",
+    "tags":["家庭亲情", "物品损坏", "情绪确认"]
+  },
+  {
+    "sceneCode": "care-scene-13",
+    "title": "好朋友上台前紧张发抖",
+    "imageUrl": "/assets/care_scenes/care13_nervous_friend.jpg",
+    "difficultyLevel": 2,
+    "careType": "advice",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "还有三分钟就要轮到好朋友上台表演演讲了。他站在后台，手里拿着稿子，紧张得浑身发抖，说话都结巴了。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你马上要上台面对全校同学，心里怕得要命，感觉快要晕倒了。这时候你最希望朋友怎么帮助你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "empathy",
+        "text": "“我看着那么多观众也觉得好可怕，我都替你紧张了。”",
+        "effect": "虽然你想共情，但在别人极度紧张时传递更多的负面情绪，会让他更加害怕。",
+        "receiverReactionText": "被你一说我更害怕了...",
+        "receiverReactionEmoji": "😱"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“看着我的眼睛，跟着我一起做三次深呼吸。你练习了那么久，一定没问题的！”",
+        "effect": "提供具体可行的缓解紧张方法（深呼吸），并给予积极的心理暗示，是考前/赛前最顶级的关心。",
+        "receiverReactionText": "呼...吸...好，我试试",
+        "receiverReactionEmoji": "😤"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "用力推他一把说：“男子汉大丈夫有什么好怕的，快上去吧！”",
+        "effect": "强行推搡不仅极其不礼貌，还会破坏他仅存的心理防线，让他彻底崩溃。",
+        "receiverReactionText": "(被推得一个踉跄，差点哭出来)",
+        "receiverReactionEmoji": "🚫"
+      }
+    ],
+    "preferredUtteranceIds": ["u2"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友拉着我的手，带我深呼吸，夸我一定能行。",
+        "isComforting": true,
+        "reasonText": "有朋友教我如何放松，并给我力量，能让我找回自信。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友在旁边吓唬我：“你要是忘词了，大家都会笑你的。”",
+        "isComforting": false,
+        "reasonText": "这种“好心的提醒”其实是施加压力，会让紧张的人彻底失去勇气。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": ["同伴交往", "克服恐惧", "缓解紧张"]
+  },
+  {
+    "sceneCode": "care-scene-14",
+    "title": "同学的美术作业被恶意破坏",
+    "imageUrl": "/assets/care_scenes/care14_ruined_drawing.jpg",
+    "difficultyLevel": 3,
+    "careType": "empathy",
+    "receiverEmotion": "angry",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "小华画了好几天的精美水彩画，被一个调皮的同学故意用水泼花了。小华看着毁掉的画，气得浑身发抖，紧紧攥着拳头。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你最珍贵的心血被人故意毁掉了，你愤怒得想打人。这时候你希望同桌怎么对你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“算了吧，反正是要交的作业，你拿纸把水吸干随便交上去就行了。”",
+        "effect": "敷衍的建议不仅没有平息他的怒火，反而让他觉得你不尊重他的心血和艺术。",
+        "receiverReactionText": "这怎么能算了吧！你根本不懂！",
+        "receiverReactionEmoji": "😠"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“他怎么能这么做！这是你画了那么久的心血，换作是我也会气炸的！”",
+        "effect": "强烈且坚定的“共情愤怒”，能让受害者感受到巨大的支持，让他知道生气是完全合理的。",
+        "receiverReactionText": "对啊，我真的咽不下这口气！",
+        "receiverReactionEmoji": "😡"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“别打架！我陪你拿着这幅画去告诉美术老师，让老师来惩罚他。”",
+        "effect": "阻止他做出冲动打人的行为，并用规则来帮他讨回公道，这是最理智和友善的帮助。",
+        "receiverReactionText": "好！我们现在就去找老师。",
+        "receiverReactionEmoji": "👩‍🏫"
+      }
+    ],
+    "preferredUtteranceIds": ["u2", "u3"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同桌对我说：“这种人太坏了，我作证是他弄的，我陪你找老师。”",
+        "isComforting": true,
+        "reasonText": "在被欺负愤怒时，有人愿意当证人并支持我寻求公道，是莫大的安慰。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌对我说：“哎呀你画得也没多好看，毁了就毁了呗。”",
+        "isComforting": false,
+        "reasonText": "贬低别人的心血是非常恶毒的，这只会让原本愤怒的人更加崩溃和愤怒。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags": ["同伴交往", "共情愤怒", "寻求公正"]
+  },
+  {
+    "sceneCode": "care-scene-15",
+    "title": "走廊里书本撒了一地",
+    "imageUrl": "/assets/care_scenes/care15_dropped_books.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "课间走廊里，一个同学不小心没抱稳，十几本书“哗啦”一声全部掉在地上散开了。周围路过的人都在看他，他脸红得像苹果一样蹲在地上捡。你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，你在人来人往的走廊里不小心把东西撒了一地，所有人都盯着你看，你觉得极度尴尬无地自容。这时候你希望别人怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "empathy",
+        "text": "大声地对他说：“哇，这么多人看着你，你现在一定觉得很尴尬很丢脸吧！”",
+        "effect": "在别人尴尬时去强调他的尴尬，不仅不是共情，反而是在他的伤口上撒盐，让他更丢脸。",
+        "receiverReactionText": "(脸更红了，恨不得立刻消失)",
+        "receiverReactionEmoji": "😳"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "站在旁边说：“你捡的时候注意别让书页折了，下次抱书要用两只手哦。”",
+        "effect": "他现在急需的是人手帮忙，你只在一旁指挥教训，会显得非常冷漠和高高在上。",
+        "receiverReactionText": "你能别说了赶紧帮帮我吗...",
+        "receiverReactionEmoji": "😓"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "什么都不说，立刻蹲下身，动作迅速地帮他把书叠整齐递给他。",
+        "effect": "面对别人的小意外，不围观、不议论、直接动手帮忙，是最有教养也是最让人感激的关心方式。",
+        "receiverReactionText": "太谢谢你了，帮了我大忙！",
+        "receiverReactionEmoji": "📚"
+      }
+    ],
+    "preferredUtteranceIds": ["u3"],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同学没有盯着我看笑话，而是直接蹲下来飞快地帮我把书捡起来。",
+        "isComforting": true,
+        "reasonText": "在尴尬的处境中，实际的行动援助能最快帮我摆脱被人围观的困境。"
+      },
+      {
+        "id": "ro2",
+        "text": "同学站在旁边盯着我看，还指指点点地对别人说我不小心。",
+        "isComforting": false,
+        "reasonText": "在别人出意外时围观和议论，是非常不礼貌的行为，会加重别人的难堪。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":["校园生活", "化解尴尬", "实际帮助"]
+  }
+]
+{
+    "sceneCode": "care-scene-16",
+    "title": "上课不小心叫老师“妈妈”",
+    "imageUrl": "/assets/care_scenes/care16_call_teacher_mom.jpg",
+    "difficultyLevel": 1,
+    "careType": "empathy",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "上课回答问题时，同桌一紧张，大声对着女老师喊了一声“妈妈！”全班瞬间哄堂大笑。同桌立刻捂住通红的脸，恨不得钻进抽屉里。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你一不小心把老师喊成了妈妈，全班都在笑你，你觉得丢脸极了。这时候你最希望同桌怎么对你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "action",
+        "text": "跟着全班同学一起指着他哈哈大笑，还一直重复他喊错的词。",
+        "effect": "这等于在朋友最尴尬的时候往他身上泼冷水，会让他觉得被全世界嘲笑，自尊心严重受挫。",
+        "receiverReactionText": "(捂着脸趴在桌子上，觉得连朋友都在笑我)",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“你上课肯定是在想家里人吧，下次回答问题前要在脑子里先过一遍。”",
+        "effect": "虽然建议是对的，但在别人羞愧难当的时候讲大道理，显得非常没有同理心。",
+        "receiverReactionText": "我真的一时嘴瓢，你别教训我了...",
+        "receiverReactionEmoji": "😓"
+      },
+      {
+        "id": "u3",
+        "type": "empathy",
+        "text": "悄悄拍拍他的肩膀说：“没事的，我一年级的时候也把舅舅叫成过老师，大家笑一会就忘了。”",
+        "effect": "用自己曾经的“出丑经历”来安慰对方（正常化），能瞬间打破他的羞耻感，这是最高级的情商！",
+        "receiverReactionText": "真的吗？谢谢你告诉我...",
+        "receiverReactionEmoji": "🥺"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同桌悄悄告诉我，他也犯过这种小迷糊，让我不用放在心上。",
+        "isComforting": true,
+        "reasonText": "知道别人也犯过同样的错，会让我觉得自己并不奇怪，尴尬感立刻减少了一半。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌用手肘撞我，笑嘻嘻地问我：“你多大了还找妈妈？”",
+        "isComforting": false,
+        "reasonText": "落井下石的玩笑是非常伤人的，这完全没有顾及我丢脸的心情。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "校园生活",
+      "化解尴尬",
+      "共情"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-17",
+    "title": "同学的仓鼠生病了",
+    "imageUrl": "/assets/care_scenes/care17_sick_hamster.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "课间，你的好朋友趴在桌子上偷偷抹眼泪。他告诉你，他养了很久的小仓鼠生了重病，可能快不行了。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你最心爱的小宠物生病了，你特别害怕失去它，心里很难过。你希望朋友怎么安慰你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“别哭了，一只仓鼠才几块钱，死了让你妈妈再给你买一只一模一样的就行了。”",
+        "effect": "这是极度冷漠的话！宠物是有感情的生命，不能用钱衡量，这样说会让他觉得你根本不懂他的爱。",
+        "receiverReactionText": "它不是能随便换的玩具！你根本不懂！",
+        "receiverReactionEmoji": "😠"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“你每天都那么用心照顾它，它生病了你一定特别心疼、特别着急吧。”",
+        "effect": "理解他对宠物的深厚感情和担忧，这种情绪确认能让他感受到被深深理解。",
+        "receiverReactionText": "是啊，我好怕它离开我...",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "递给他纸巾，然后说：“放学后我陪你一起去宠物医院看看有什么办法吧。”",
+        "effect": "在别人无助悲伤时，提供陪伴和切实的行动方案，能给他巨大的精神支撑。",
+        "receiverReactionText": "太感谢你了，有你陪我没那么怕了。",
+        "receiverReactionEmoji": "🤝"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友坐过来拍着我的背，说他知道我有多喜欢那只仓鼠。",
+        "isComforting": true,
+        "reasonText": "理解我的伤心，尊重我对宠物的感情，这才是好朋友该做的事。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友敷衍地说：“生老病死很正常，你想开点。”",
+        "isComforting": false,
+        "reasonText": "大道理谁都懂，但在伤心的时候，讲冰冷的大道理只会让人觉得冷血。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "同伴交往",
+      "宠物生病",
+      "倾听与陪伴"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-18",
+    "title": "害怕去医务室涂药",
+    "imageUrl": "/assets/care_scenes/care18_scared_clinic.jpg",
+    "difficultyLevel": 1,
+    "careType": "advice",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "体育课上，同学摔破了膝盖，被老师叫去医务室涂碘伏。他站在医务室门口，吓得紧紧抓着门框不敢进去，浑身发抖。作为陪同的朋友，你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你受了伤站在医务室门口，想到涂药会非常疼，你害怕得不敢进去。这时候你最希望陪你的同学怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "action",
+        "text": "用力把他往门里推，大声说：“快进去吧，男子汉大丈夫别磨蹭了！”",
+        "effect": "强行推搡不仅粗鲁，还会加剧他的恐惧，甚至可能让他因为挣扎而二次受伤。",
+        "receiverReactionText": "(拼命往后缩，甚至急哭了)",
+        "receiverReactionEmoji": "😫"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“等会儿涂药的时候你紧紧抓住我的手，我们一起闭着眼睛从1数到10，很快就过去了！”",
+        "effect": "提供一个具体可行的转移注意力的方法，并表示会陪他一起经历，这是极其强大的心理支撑。",
+        "receiverReactionText": "好...那你千万别松手啊。",
+        "receiverReactionEmoji": "🤝"
+      },
+      {
+        "id": "u3",
+        "type": "empathy",
+        "text": "“我之前也涂过那个药，确实有点蛰人，你害怕是正常的。”",
+        "effect": "承认他害怕的合理性，不嘲笑他的恐惧，这能让他稍微放松紧绷的神经。",
+        "receiverReactionText": "真的吗？原来大家都怕...",
+        "receiverReactionEmoji": "🥺"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同学向我伸出手说：“别怕，我握着你的手陪你一起进去。”",
+        "isComforting": true,
+        "reasonText": "在面临恐惧时，有一双坚定的手可以依靠，会立刻让我充满勇气。"
+      },
+      {
+        "id": "ro2",
+        "text": "同学在旁边叹气说：“你真胆小，再不进去我就自己回教室了。”",
+        "isComforting": false,
+        "reasonText": "用离开来威胁一个正在害怕的人，会让他感到被抛弃和绝望。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "primary",
+    "tags": [
+      "同伴交往",
+      "克服恐惧",
+      "提供安全感"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-19",
+    "title": "借给别人的书被撕破了",
+    "imageUrl": "/assets/care_scenes/care19_torn_book_returned.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "angry",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "你的朋友好心把最喜欢的漫画书借给别人，结果还回来的时候封面被撕破了一大个口子。他气得满脸通红，把书狠狠摔在桌子上。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你好心把宝贝借给别人，对方却随意弄坏了它。你气得快要爆炸了，这时候你希望同桌对你说什么？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "empathy",
+        "text": "“天哪！这是你最喜欢的漫画，他借走却弄坏了，换作是我也会气疯的！”",
+        "effect": "与他产生强烈的“共情愤怒”，让他知道自己生气是完全对的，这能瞬间拉近你们的距离。",
+        "receiverReactionText": "就是啊！他太不尊重我的东西了！",
+        "receiverReactionEmoji": "😡"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“你别生气了，拿透明胶带粘一下还能看，不要因为一本书破坏同学关系。”",
+        "effect": "在别人愤怒的时候当“理中客（和事佬）”，会被认为你是在偏袒犯错的人，这非常惹人厌。",
+        "receiverReactionText": "你到底是哪一边的？凭什么要我忍着！",
+        "receiverReactionEmoji": "😤"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“走，我陪你拿着书去问问他到底怎么回事，必须让他给你一个交代或赔偿。”",
+        "effect": "支持他合理地维护自己的权益，陪伴他去解决冲突，这是极其有担当的好朋友。",
+        "receiverReactionText": "走！我们去找他问清楚！",
+        "receiverReactionEmoji": "🚶‍♂️"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u1",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同桌和我一起生气，并支持我去要求对方道歉赔偿。",
+        "isComforting": true,
+        "reasonText": "当我感到权益被侵犯时，同伴的支持是我敢于维护权利的最大底气。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌说：“谁叫你要借给他，下次别借了吃一堑长一智吧。”",
+        "isComforting": false,
+        "reasonText": "这是典型的“受害者有罪论”，把别人犯的错怪到我的善良上，会让我更加委屈愤怒。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "同伴交往",
+      "共情愤怒",
+      "权益维护"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-20",
+    "title": "没被邀请去生日派对",
+    "imageUrl": "/assets/care_scenes/care20_not_invited.jpg",
+    "difficultyLevel": 3,
+    "careType": "action",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "班里的同学周末要办生日派对，很多人都在开心地讨论。你的好朋友没有收到邀请卡，他趴在走廊的栏杆上，看起来非常失落和孤独。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，大家都在兴高采烈地讨论周末的派对，只有你没有被邀请，感觉自己被彻底孤立了。你希望好朋友怎么安慰你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“你应该去问问他为什么不邀请你，是不是你哪里得罪他了？”",
+        "effect": "这个建议会让他觉得“可能是我的错才不被邀请”，进一步加重他的自我怀疑和尴尬。",
+        "receiverReactionText": "我去问岂不是显得很丢脸...",
+        "receiverReactionEmoji": "😔"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“看到大家都在讨论派对却没叫你，这种感觉一定很孤单、很难受吧。”",
+        "effect": "直接点出他因为“被排除在外”而感到的失落，这让他觉得自己的委屈被懂了。",
+        "receiverReactionText": "嗯，感觉自己像个局外人...",
+        "receiverReactionEmoji": "💧"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“其实那个派对挺无聊的，这周末我们俩去打你最喜欢的篮球怎么样？”",
+        "effect": "用实际的高质量陪伴来填补他的时间空缺，用“我的选择”来证明他的价值，这是最顶级的关心！",
+        "receiverReactionText": "好啊！我们去打球，不稀罕去他的派对！",
+        "receiverReactionEmoji": "🏀"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "好朋友拉着我的手说：“没事，我也不去那个派对，周末我们去吃好吃的！”",
+        "isComforting": true,
+        "reasonText": "在我感觉被群体抛弃时，有一个人坚定地选择和我在一起，这彻底治愈了我的孤独。"
+      },
+      {
+        "id": "ro2",
+        "text": "好朋友拿着邀请卡在我面前炫耀：“真可惜你没被邀请，据说那天有超级大蛋糕哦！”",
+        "isComforting": false,
+        "reasonText": "这是极度的残忍，故意炫耀只会让我觉得更加自卑和痛苦。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags":[
+      "校园社交",
+      "化解孤独",
+      "替代陪伴"
+    ]
+  }
+]
+{
+    "sceneCode": "care-scene-21",
+    "title": "好朋友要转学离开了",
+    "imageUrl": "/assets/care_scenes/care21_friend_moving.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "你的好朋友告诉你，他下学期就要转学去别的城市了。他坐在操场边低着头，想到要离开大家，特别难过地掉眼泪。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你马上要离开熟悉的朋友和学校去一个完全陌生的地方，心里非常舍不得和害怕。这时候你最希望朋友怎么对你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“别难过啦，到了新学校你肯定会交到比我们更多、更好的新朋友的。”",
+        "effect": "虽然这是事实，但在离别的时候说这种话，会让他觉得你根本不在乎你们现在的友谊，轻易就把他推开了。",
+        "receiverReactionText": "可是我只想要你们这些老朋友...",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“我们要分开这么远，我真的好舍不得你，我也会特别难过的。”",
+        "effect": "表达你同样的不舍和悲伤，这叫“情感共鸣”。知道别人也深深在乎自己，是离别时最大的安慰。",
+        "receiverReactionText": "我也是，我会想死你的！",
+        "receiverReactionEmoji": "🫂"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“周末我们一起去拍一套大头贴做纪念吧，我会把你送我的礼物永远留着！”",
+        "effect": "用充满仪式的行动把记忆留住，给了朋友一份极其安定的长久承诺。",
+        "receiverReactionText": "好！我们一定要多拍几张照！",
+        "receiverReactionEmoji": "📸"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友紧紧抱着我说他会一直想念我，并约好以后要经常打电话。",
+        "isComforting": true,
+        "reasonText": "离别时最怕被遗忘，朋友的承诺让我觉得我们的友谊不会断。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友无所谓地说：“哦，那你走吧，刚好你的座位可以让给别人。”",
+        "isComforting": false,
+        "reasonText": "冷漠的态度会让人觉得之前的友谊都是假的，让人极度寒心和痛苦。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "同伴交往",
+      "分离焦虑",
+      "共情"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-22",
+    "title": "同桌被老师冤枉作弊",
+    "imageUrl": "/assets/care_scenes/care22_wrongly_accused.jpg",
+    "difficultyLevel": 3,
+    "careType": "action",
+    "receiverEmotion": "angry",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "考试时，同桌明明只是在低头捡橡皮，却被老师误以为在看小抄，严厉地批评了他。同桌坐在座位上，气得满脸通红，咬紧牙关发抖。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你明明什么坏事都没做，却被当众冤枉成骗子，你气得想大喊大叫证明清白。这时候你希望同桌怎么帮你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“算了吧，老师也是为了考场纪律好，你下次考试注意点别乱动就行了。”",
+        "effect": "这是“和稀泥”。在别人遭受极大委屈和不公平时，替冤枉他的人说话，会瞬间把你变成他的敌人。",
+        "receiverReactionText": "连你也觉得是我错了吗？！",
+        "receiverReactionEmoji": "😡"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“你明明没作弊却被当众冤枉了，换作是我，我也会觉得超级委屈和生气的！”",
+        "effect": "坚定地站在他这边，承认他愤怒的合理性。这份“信任”对他来说是雪中送炭。",
+        "receiverReactionText": "谢谢你相信我，我真的快气死了！",
+        "receiverReactionEmoji": "😤"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“下课我陪你一起去办公室，我刚才一直看着你，我给你作证你没看别人的。”",
+        "effect": "用实际行动当证人，帮他洗刷冤屈，这是对抗不公平最有力量的友谊支持！",
+        "receiverReactionText": "太感谢你了，有你作证我就不怕了。",
+        "receiverReactionEmoji": "🤝"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同桌拍拍我的肩膀，并主动告诉老师：“老师，他刚才真的只是在捡橡皮。”",
+        "isComforting": true,
+        "reasonText": "在我百口莫辩时，有人愿意冒着得罪老师的风险替我澄清，这是最大的安慰。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌偷偷对我说：“你胆子真大，抄到了没有？”",
+        "isComforting": false,
+        "reasonText": "连好朋友都怀疑我的人品，这比被老师批评还要让人愤怒和绝望。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags": [
+      "校园生活",
+      "遭遇不公",
+      "支持与作证"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-23",
+    "title": "教室突然停电一片漆黑",
+    "imageUrl": "/assets/care_scenes/care23_sudden_blackout.jpg",
+    "difficultyLevel": 1,
+    "careType": "action",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "晚自习时，教室突然停电，变得一片漆黑。同桌特别怕黑，吓得尖叫了一声，紧紧抓住你的胳膊发抖。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你特别怕黑，突然周围什么都看不见了，像掉进黑洞里一样，心里非常害怕。你希望旁边的人怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“你胆子也太小了，大家都在教室里，又没有怪物你怕什么。”",
+        "effect": "否定别人的恐惧。害怕是一种不受控制的本能，嘲笑胆小不仅没有用，还会让他觉得羞愧。",
+        "receiverReactionText": "(继续发抖，不敢说话)",
+        "receiverReactionEmoji": "😖"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“突然变得这么黑确实挺吓人的，我也被吓了一大跳呢。”",
+        "effect": "告诉对方“我也怕，你不是一个人”，这种共情能瞬间降低黑暗带来的孤立恐惧感。",
+        "receiverReactionText": "是啊，吓死我了...",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "拍拍他抓着你的手说：“别怕，我在这呢。我用电话手表给你照个亮。”",
+        "effect": "提供光源（解决问题）和身体接触（带来安全感），是最完美的守护。",
+        "receiverReactionText": "呼...有光就好多了，谢谢你。",
+        "receiverReactionEmoji": "🔦"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同桌抓住我的手，打开了小手电筒照亮了我们的桌子。",
+        "isComforting": true,
+        "reasonText": "在黑暗和恐慌中，及时的光亮和安定的陪伴是最好的救心丸。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌在黑暗中故意装出鬼叫的声音来吓唬我。",
+        "isComforting": false,
+        "reasonText": "在别人极度恐惧时恶作剧，是非常恶劣的行为，甚至会给人留下心理阴影。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-8",
+    "abilityLevel": "primary",
+    "tags":[
+      "校园生活",
+      "突发状况",
+      "提供安全感"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-24",
+    "title": "安静时肚子发出咕噜叫声",
+    "imageUrl": "/assets/care_scenes/care24_stomach_growl.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "图书馆里非常安静。同桌的肚子突然发出超大声的“咕噜噜”叫声。周围人都转头看他，他羞得满脸通红，把头埋在书里。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，在安静的地方，你的身体发出了奇怪的声音被所有人围观，你恨不得找个地缝钻进去。这时候你希望同桌怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "empathy",
+        "text": "大声对他说：“哇，你的肚子叫得好大声啊！你肯定觉得很丢脸很尴尬吧？”",
+        "effect": "这是“虚假的共情”。在安静的场合大声指出别人的窘境，等于拿喇叭向全世界宣告他的尴尬，会让他羞愤欲绝。",
+        "receiverReactionText": "(捂着脸跑出了图书馆)",
+        "receiverReactionEmoji": "🏃‍♂️"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“你早上应该多吃点饭的，现在肚子叫多引人注意啊。”",
+        "effect": "在别人尴尬得要命的时候去批评他没做好计划，完全是在伤口上撒盐。",
+        "receiverReactionText": "我早上起晚了嘛，你别说了...",
+        "receiverReactionEmoji": "😓"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "假装没听见，拿书挡住别人的视线，悄悄从桌子底下递给他一块小饼干。",
+        "effect": "看破不说破！保护他的隐私并默默提供帮助，这是极其体贴、高情商的关心方式。",
+        "receiverReactionText": "(感激地看你一眼，悄悄接过饼干)",
+        "receiverReactionEmoji": "🍪"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同桌假装什么都没发生，并在桌子底下偷偷塞给我一颗糖。",
+        "isComforting": true,
+        "reasonText": "假装没看见是对我面子最大的保护，私下给糖则是最贴心的帮助。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌捂着肚子笑得停不下来，指着我说：“你饿死鬼投胎吗！”",
+        "isComforting": false,
+        "reasonText": "大声嘲笑生理性失误是非常没教养的，会让人感觉受到极大的羞辱。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "校园生活",
+      "生理尴尬",
+      "隐私保护"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-25",
+    "title": "辛苦种的小番茄枯死了",
+    "imageUrl": "/assets/care_scenes/care25_dead_plant.jpg",
+    "difficultyLevel": 1,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "自然科学课上，同学每天认真浇水照顾的小番茄苗不知道为什么枯死了。他看着干枯变黄的叶子，伤心地掉眼泪。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你付出了很多心血、每天照顾的小植物突然死掉了，所有的努力都白费了，你非常难过。你希望别人怎么安慰你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“这有什么好哭的，枯了就扔掉呗，明天再买几颗种子重新种一盆就行了。”",
+        "effect": "这是否定他的付出。对他来说，那不是随便一颗种子，而是他投入了感情的宝贝。",
+        "receiverReactionText": "可是我只想要原来那颗...",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“你每天都那么用心地给它浇水晒太阳，现在它枯死了，你一定特别伤心吧。”",
+        "effect": "承认他的努力，并且懂得他因为心血白费而产生的失落，这种理解非常温暖人心。",
+        "receiverReactionText": "嗯，我明明很用心照顾它的。",
+        "receiverReactionEmoji": "😢"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "递给他纸巾擦眼泪说：“我把我种的这盆分给你一半，我们一起种好不好？”",
+        "effect": "在朋友伤心时愿意分享自己的成果，陪他一起重新开始，这是最慷慨的帮助。",
+        "receiverReactionText": "真的吗？谢谢你！",
+        "receiverReactionEmoji": "🌱"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同学安慰我，并帮我一起检查是不是泥土或者水出了问题，陪我重新开始。",
+        "isComforting": true,
+        "reasonText": "有朋友陪我一起面对失败，并和我分享解决问题的过程，让我又有了动力。"
+      },
+      {
+        "id": "ro2",
+        "text": "同学在一旁冷嘲热讽：“你看我的长得多好，谁叫你不会种啊。”",
+        "isComforting": false,
+        "reasonText": "拿自己的成功去对比别人的失败，是非常伤人自尊和缺乏同理心的表现。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "4-8",
+    "abilityLevel": "primary",
+    "tags":[
+      "校园生活",
+      "心血白费",
+      "共情与分享"
+    ]
+  }
+]
+{
+    "sceneCode": "care-scene-26",
+    "title": "画的画被同学嘲笑难看",
+    "imageUrl": "/assets/care_scenes/care26_mocked_drawing.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "美术课上，你的好朋友认真画了一幅画，却被几个路过的同学指着大笑说“画得真丑”。他紧紧抓着画纸，低着头委屈得快哭了。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你很用心做出的作品，别人不仅不欣赏，还当面大声嘲笑你。你觉得非常委屈和难过，这时候你希望朋友怎么对你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“你要是觉得画得不好，周末去报个美术班多练习一下吧。”",
+        "effect": "这种建议等于是变相承认了他画得确实丑，会在他受伤的自尊心上再补一刀。",
+        "receiverReactionText": "连你也觉得我画得很丑吗...",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“你画了那么久，他们却那样笑话你，这太过分了，我知道你现在很难过。”",
+        "effect": "第一时间与他共情，否定那些嘲笑的人的行为，坚定地做他的心理后盾。",
+        "receiverReactionText": "他们凭什么那样笑我，我画得很认真！",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "把他手里的画拿过来说：“别听他们的，我觉得你画的这个小狗特别可爱！”",
+        "effect": "用实际的欣赏和夸奖去对抗别人的嘲笑，能瞬间缝合他破碎的自信心。",
+        "receiverReactionText": "真的吗？你觉得可爱吗？",
+        "receiverReactionEmoji": "✨"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友走过来，帮我把嘲笑我的人赶走，并夸奖了我的画。",
+        "isComforting": true,
+        "reasonText": "在我被否定和孤立时，有人愿意欣赏我、保护我，这是最大的安慰。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友敷衍地说：“哎呀确实有点难看，你以后别画这种了。”",
+        "isComforting": false,
+        "reasonText": "附和那些嘲笑者的话，是友谊里最让人绝望的背叛。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "同伴交往",
+      "作品被嘲笑",
+      "建立自信"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-27",
+    "title": "妹妹晚上怕黑不敢睡觉",
+    "imageUrl": "/assets/care_scenes/care27_scared_of_dark.jpg",
+    "difficultyLevel": 1,
+    "careType": "action",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "晚上到了睡觉时间，房间灯一关，妹妹就吓得大哭起来，紧紧抱着枕头说房间里有怪物不敢睡。作为哥哥/姐姐，你应该怎么关心她？",
+    "receiverPerspectiveText": "想象一下，周围黑乎乎的，你觉得角落里随时会跑出可怕的东西，吓得睡不着觉。你希望家里人怎么帮助你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“世界上根本没有怪物，你都多大了还怕黑，赶紧闭上眼睛睡！”",
+        "effect": "用大人的逻辑去否定儿童的恐惧心理，不仅无法消除害怕，还会让她觉得你不爱她了。",
+        "receiverReactionText": "(躲在被子里不敢出声，但还是发抖)",
+        "receiverReactionEmoji": "😖"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“关了灯确实黑乎乎的容易让人害怕，哥哥/姐姐以前像你这么大时也怕过。”",
+        "effect": "把害怕正常化，告诉她“我也怕过，你不是胆小鬼”，能极大缓解她的心理压力。",
+        "receiverReactionText": "真的吗？那你后来是怎么睡着的？",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "帮她打开一盏暖黄色的小夜灯，坐在床边给她讲个睡前故事陪她入睡。",
+        "effect": "用实际的光源驱散黑暗，用陪伴提供安全感，这是最完美的安抚方式。",
+        "receiverReactionText": "有亮光我就不怕了，谢谢哥哥/姐姐。",
+        "receiverReactionEmoji": "😴"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "家人不嫌弃我胆小，给我留了一盏小灯，并牵着我的手陪我。",
+        "isComforting": true,
+        "reasonText": "在充满安全感的环境里，恐惧感会慢慢消散，让我安心入睡。"
+      },
+      {
+        "id": "ro2",
+        "text": "家人不耐烦地把灯关死，大声吼我让我闭嘴睡觉。",
+        "isComforting": false,
+        "reasonText": "在黑暗中大声训斥，会让原本害怕的心情变成极度的恐慌和绝望。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-8",
+    "abilityLevel": "primary",
+    "tags":[
+      "家庭亲情",
+      "黑暗恐惧",
+      "提供安全感"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-28",
+    "title": "在食堂不小心打翻了餐盘",
+    "imageUrl": "/assets/care_scenes/care28_spilled_food_tray.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "中午在拥挤的食堂里，同学脚下一滑，餐盘掉在地上，饭菜撒了一地，还溅到了自己的鞋子上。周围人都转头看他，他脸红到了脖子根，不知所措地站在原地。你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，你在人多的地方打翻了饭菜，又脏又丢脸，所有人都盯着你看，你觉得极度尴尬。这时候你最希望别人怎么对待你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "empathy",
+        "text": "大声对他说：“哇，那么多人看着你，你现在一定觉得丢死人了吧！”",
+        "effect": "用极大的声音说出他的尴尬，等于是用大喇叭吸引更多人来看他，这是最糟糕的“假共情”。",
+        "receiverReactionText": "求求你别说了！",
+        "receiverReactionEmoji": "😳"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "站在旁边袖手旁观：“你下次端盘子一定要用两只手拿稳，走路看脚下啊。”",
+        "effect": "当别人正处在狼狈不堪的困境时，讲大道理不仅毫无用处，还会显得你高高在上冷嘲热讽。",
+        "receiverReactionText": "我现在需要的是纸，不是教训...",
+        "receiverReactionEmoji": "😓"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "什么都不说，立刻跑去拿来扫把和纸巾，帮他挡住视线并一起清理地面。",
+        "effect": "闭上嘴巴，直接用实际行动帮他收拾残局，保护他的尊严，这是最顶级的关心。",
+        "receiverReactionText": "谢谢你帮我解围！",
+        "receiverReactionEmoji": "🧹"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同学没有任何嘲笑，直接拿来清洁工具帮我一起收拾，并轻声说没事。",
+        "isComforting": true,
+        "reasonText": "在最丢脸的时刻，实际的帮助和不放大的态度，能挽救我破碎的自尊。"
+      },
+      {
+        "id": "ro2",
+        "text": "同学站在一旁躲得远远的，还捂着鼻子嫌弃地说：“弄得好脏啊。”",
+        "isComforting": false,
+        "reasonText": "嫌弃和避之不及的态度，会让犯了无心之失的人感到极度难堪和被排斥。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "校园生活",
+      "化解尴尬",
+      "实际行动"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-29",
+    "title": "好朋友在街上被父母大声训斥",
+    "imageUrl": "/assets/care_scenes/care29_scolded_by_parents.jpg",
+    "difficultyLevel": 3,
+    "careType": "action",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "放学路上，你好朋友的妈妈因为成绩的事，在大街上当着很多路人的面大声训斥他。他低着头，脸涨得通红，眼泪在眼眶里打转。作为同行的人，你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你当着外人和好朋友的面，被家长指着鼻子大骂，你觉得自己的自尊心被踩在了地上。这时候你希望好朋友怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "帮着他妈妈一起说：“阿姨说得对，你确实没好好复习，快向阿姨认错吧。”",
+        "effect": "这是一种严重的背叛！在朋友最无助、最没面子的时候，你站在对立面教训他，会让他彻底崩溃。",
+        "receiverReactionText": "连你也帮着我妈骂我？！",
+        "receiverReactionEmoji": "💔"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "当着他妈妈的面大声说：“当街骂人太伤自尊了，你一定觉得很尴尬难受吧。”",
+        "effect": "虽然你想共情，但当着家长的面挑明尴尬，可能会激怒家长，让朋友陷入更尴尬的境地。",
+        "receiverReactionText": "嘘！别说了，我妈更生气了...",
+        "receiverReactionEmoji": "😰"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "假装看旁边的风景不盯着他看，等家长走后或气消了，悄悄塞给他一颗糖。",
+        "effect": "在别人极度难堪时，主动“非关注（不看他）”是保护他面子的最好方式。事后的私下安抚，才是真友谊。",
+        "receiverReactionText": "(攥紧手里的糖，感激地看着你)",
+        "receiverReactionEmoji": "🍬"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友为了保护我的面子，假装去旁边买水没听到。事后再像平常一样和我聊天。",
+        "isComforting": true,
+        "reasonText": "看破不说破，装作没看见我最狼狈的样子，是对我自尊心最大的保护。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友一直站在旁边直勾勾地盯着我挨骂，事后还追问我为什么挨骂。",
+        "isComforting": false,
+        "reasonText": "围观别人挨骂并不断揭伤疤，是极度缺乏同理心和让人反感的行为。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags":[
+      "同伴交往",
+      "维护自尊",
+      "隐私保护"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-30",
+    "title": "接力赛掉棒导致班级输了",
+    "imageUrl": "/assets/care_scenes/care30_dropped_baton.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "学校运动会上，好朋友在最后冲刺接力时脚下一滑掉棒了，导致你们班最后拿了倒数第一。他蹲在跑道边，深深埋着头自责地大哭起来。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，因为你一个人的失误，害得全班同学的努力都白费了。你极度内疚和难过，怕大家怪你。这时候你最希望听到什么？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“你刚才跑步的时候手抓紧一点接力棒不就不会掉了吗。”",
+        "effect": "在别人已经深深自责时去复盘“你本应该怎么做”，这是指责，只会加重他的内疚和痛苦。",
+        "receiverReactionText": "对不起...都是我的错...",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“因为失误让我们班输了比赛，我知道你现在肯定特别自责和难过。”",
+        "effect": "准确说出他内心的内疚感，让他感受到自己并不是被全盘否定的，情绪得到了安抚。",
+        "receiverReactionText": "真的对不起大家...",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "拍拍他的肩膀把他拉起来，大声说：“没关系，你已经拼尽全力了，我们大家不会怪你的！”",
+        "effect": "用实际的宽容和集体的包容感，把他从自责的泥潭里拉出来，这是最伟大的团队精神。",
+        "receiverReactionText": "谢谢你们原谅我！",
+        "receiverReactionEmoji": "🤝"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同学们跑过来把我扶起，递给我水说：“你刚才跑得飞快，失误没关系的。”",
+        "isComforting": true,
+        "reasonText": "在失误拖累团队时，不被指责反而被包容和肯定，这能瞬间化解内疚感。"
+      },
+      {
+        "id": "ro2",
+        "text": "几个同学在旁边埋怨：“真倒霉，本来稳拿第一的，全被你毁了。”",
+        "isComforting": false,
+        "reasonText": "集体的埋怨和指责，会让失误的人承受极大的心理压力，甚至产生社交恐惧。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "校园生活",
+      "失误自责",
+      "团队包容"
+    ]
+  }
+]
+{
+    "sceneCode": "care-scene-31",
+    "title": "同学在教室里突然呕吐",
+    "imageUrl": "/assets/care_scenes/care31_vomit_class.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "上课时，同桌突然觉得不舒服，吐了一地。周围的同学纷纷捂着鼻子躲开。同桌脸色苍白，觉得又难受又丢脸，快要哭了。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你生病没忍住当众吐了，弄脏了教室，大家都嫌弃地看着你。你觉得难受极了，这时候你最希望同桌怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "大声说：“你早上是不是吃坏肚子了？下次不舒服你要提前跟老师请假啊。”",
+        "effect": "在别人身体极度虚弱且羞愧时，去追究原因和教训他，不仅毫无用处，还会让他觉得你没有同情心。",
+        "receiverReactionText": "我实在没忍住...对不起...",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“生病吐了特别难受，而且大家都看着，你现在一定觉得很尴尬吧。”",
+        "effect": "轻轻的一句理解，告诉他“生病不是你的错”，能极大缓解他内心的羞愧感。",
+        "receiverReactionText": "嗯，我觉得太丢人了...",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "不捂鼻子，立刻递给他一包纸巾擦嘴，然后举手大声告诉老师同桌生病了。",
+        "effect": "不表现出嫌弃，第一时间提供纸巾并寻求大人的医疗帮助，这是最体贴、最高级的修养！",
+        "receiverReactionText": "谢谢你不嫌弃我...",
+        "receiverReactionEmoji": "🤧"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同桌没有嫌弃我，递给我水漱口，还帮我叫了老师。",
+        "isComforting": true,
+        "reasonText": "在最狼狈、最虚弱的时候得到不带嫌弃的照顾，会让我充满感激。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌夸张地捂着鼻子，大喊：“好恶心啊！臭死了！”",
+        "isComforting": false,
+        "reasonText": "夸张的嫌弃和尖叫是对生病同学极大的羞辱，非常伤人。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "校园生活",
+      "突发生病",
+      "化解尴尬",
+      "实际行动"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-32",
+    "title": "想加入游戏被拒绝",
+    "imageUrl": "/assets/care_scenes/care32_rejected_game.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "课间，你的好朋友想加入同学们的足球游戏，但被同学以“人满了”为由拒绝了。他低着头，非常失落地走到操场边坐下。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你鼓起勇气想和大家一起玩，却被当面拒绝，感觉自己被排挤了。这时候你希望好朋友怎么安慰你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "empathy",
+        "text": "“想一起玩却被他们拒绝，这种感觉真的太让人难过、太孤单了。”",
+        "effect": "准确地读出了他心里的失落和孤独感。当痛苦被说中，委屈就能得到释放。",
+        "receiverReactionText": "是啊，感觉他们不喜欢我...",
+        "receiverReactionEmoji": "😞"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“你别管他们了，你去告诉老师他们欺负你，不带你玩。”",
+        "effect": "别人只是因为人满拒绝，并不是欺凌。怂恿去告状不仅不能解决问题，还会让他彻底被其他同学孤立。",
+        "receiverReactionText": "可是告诉老师，他们以后更不和我玩了...",
+        "receiverReactionEmoji": "😨"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“他们不带你玩，我带你玩！走，我们俩去打乒乓球！”",
+        "effect": "用热情的替代邀请，瞬间填补了他的社交空缺，用行动证明了他是个受欢迎的人。",
+        "receiverReactionText": "好！我们去打球！",
+        "receiverReactionEmoji": "🏓"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u1",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "好朋友拉着我的手说：“他们人满了，那我们俩自己去玩更好玩的游戏！”",
+        "isComforting": true,
+        "reasonText": "被一个人接纳，能瞬间治愈被一群人拒绝的失落。"
+      },
+      {
+        "id": "ro2",
+        "text": "好朋友嘲笑我说：“谁让你平时踢球技术那么差，难怪他们不带你。”",
+        "isComforting": false,
+        "reasonText": "贬低朋友的能力是在伤口上撒盐，不仅残忍，还彻底摧毁了自信。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "同伴交往",
+      "被拒绝",
+      "替代陪伴"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-33",
+    "title": "玩桌游输了气得掀桌子",
+    "imageUrl": "/assets/care_scenes/care33_flipped_board_game.jpg",
+    "difficultyLevel": 3,
+    "careType": "empathy",
+    "receiverEmotion": "angry",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "你和朋友一起玩大富翁，朋友连续几次运气不好输掉了很多钱。他气得满脸通红，大叫一声一把将棋盘掀翻了。面对愤怒的朋友，你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，你玩游戏一直输，觉得特别不公平，气得情绪失控摔了东西。虽然知道不对，但心里全是火。你希望对面的人怎么对你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“这只是个游戏而已，输赢一点都不重要，你脾气也太差了吧！”",
+        "effect": "对一个正在气头上的人说“这不重要”，会让他觉得你在否定他的努力和在乎，反而会激怒他。",
+        "receiverReactionText": "对我来说很重要！你就是赢了才这么说！",
+        "receiverReactionEmoji": "😡"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“你运气一直不好，眼看要赢了又输了，确实让人非常非常火大。”",
+        "effect": "先不要指责他掀桌子，而是共情他因为“运气差导致失败”的愤怒，这能让他的情绪像泄了气的皮球一样软下来。",
+        "receiverReactionText": "我就是气不过我的运气为什么那么差...",
+        "receiverReactionEmoji": "😤"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "什么都不说，默默把散落的棋子捡起来装进盒子里：“没关系，今天运气不好，我们不玩了，去喝点水休息一下。”",
+        "effect": "不激化矛盾，主动叫停游戏并收拾残局，给他一个冷静的台阶下，这是非常成熟的做法。",
+        "receiverReactionText": "(觉得有点内疚) 对不起，我帮你一起捡...",
+        "receiverReactionEmoji": "😔"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友没有骂我，而是把游戏收起来提议我们去吃点零食冷静一下。",
+        "isComforting": true,
+        "reasonText": "在失控发脾气后，不被指责而是被给予冷静的空间，能让我迅速找回理智并感到抱歉。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友大声吼我：“你输不起就别玩！我再也不跟你玩了！”",
+        "isComforting": false,
+        "reasonText": "以暴制暴的吼叫只会让冲突升级，最后两个人都会非常生气地绝交。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "7-12",
+    "abilityLevel": "advanced",
+    "tags":[
+      "同伴交往",
+      "情绪失控",
+      "叫停与安抚"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-34",
+    "title": "不小心打碎了老师的花盆",
+    "imageUrl": "/assets/care_scenes/care34_broken_plant.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "课间打闹时，朋友不小心撞倒了老师放在窗台上的最喜欢的花盆。花盆碎了一地，朋友吓得脸色煞白，浑身发抖。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你闯了一个大祸，马上就要面对老师极其严厉的惩罚，吓得不知所措。这时候你最希望同伴怎么帮你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "empathy",
+        "text": "“天哪，这是老师最喜欢的花，你马上要被重重惩罚了，肯定吓死你了吧。”",
+        "effect": "虽然你想表达共情，但过分强调后果的可怕，会加重他的恐惧和绝望感。",
+        "receiverReactionText": "别说了！我该怎么办啊！",
+        "receiverReactionEmoji": "😱"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“快！趁老师还没来，我们赶紧跑回座位假装没看见，千万别承认！”",
+        "effect": "教唆朋友逃避责任和撒谎，这不仅不是帮他，还会让他错上加错，心里一辈子不安。",
+        "receiverReactionText": "可是监控能查出来，我会死得更惨的...",
+        "receiverReactionEmoji": "😨"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“别怕，这是个意外。我陪你一起去找老师承认错误，我和你一起打扫干净。”",
+        "effect": "告诉他是“意外”，陪他一起去面对惩罚并善后。这种强大的支持能瞬间击碎恐惧！",
+        "receiverReactionText": "好，有你陪着我就敢去认错了。",
+        "receiverReactionEmoji": "🤝"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友拉着我的手说：“别慌，我作证你不是故意的，我陪你一起去认错。”",
+        "isComforting": true,
+        "reasonText": "在最害怕的时候，有一个愿意和我共同进退的伙伴，给了我极大的勇气去承担责任。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友赶紧跳开指着我说：“完蛋了！这是你一个人干的，跟我没关系！”",
+        "isComforting": false,
+        "reasonText": "撇清关系和恐吓，会让我觉得被所有人抛弃了，非常孤立无援。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "校园生活",
+      "闯祸恐惧",
+      "陪伴承担"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-35",
+    "title": "唱歌时严重破音被笑话",
+    "imageUrl": "/assets/care_scenes/care35_voice_crack.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "音乐课上，同学在全班面前独唱，结果到了高音的地方声音突然劈叉了（破音），发出了很滑稽的鸭子叫声。底下的人都在捂嘴笑，他尴尬得满脸通红。你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，你很认真地在台上表演，结果出了一个极其滑稽的失误，被全班嘲笑，丢脸到了极点。这时候你希望好朋友怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“哎呀，你高音唱不上去就别硬唱嘛，下次选首简单点的歌。”",
+        "effect": "在别人已经下不来台的时候去评价他的能力不行，这是非常打击自信心的错误关心。",
+        "receiverReactionText": "我以后再也不敢唱歌了...",
+        "receiverReactionEmoji": "😔"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“在那么多人面前破音被笑，真的让人尴尬得想钻进地缝里，我也遇到过。”",
+        "effect": "准确表达出尴尬的深度，并且用“我也遇到过”来正常化这个失误，能最快缓解羞耻感。",
+        "receiverReactionText": "太丢人了，我刚才脸都烧起来了。",
+        "receiverReactionEmoji": "😳"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "不笑，在台下竖起大拇指大喊一声：“没关系！刚才前面唱得特别好听！”",
+        "effect": "用正面的大声肯定来压过周围的嘲笑声，为他提供极强的心理支持，帮他保住面子。",
+        "receiverReactionText": "(感动地看了你一眼，鼓起勇气唱完)",
+        "receiverReactionEmoji": "👍"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友没有跟着笑，而是用力给我鼓掌，夸我很勇敢。",
+        "isComforting": true,
+        "reasonText": "在全世界都在看我笑话的时候，只要有一个人支持我，我就不会觉得难堪。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友不仅跟着笑，还模仿我刚才破音发出的鸭子叫声。",
+        "isComforting": false,
+        "reasonText": "落井下石的模仿是对别人自尊心最严重的践踏，绝对不是好朋友该做的。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "校园生活",
+      "当众出丑",
+      "化解尴尬",
+      "正向肯定"
+    ]
+  }
+]
+{
+    "sceneCode": "care-scene-36",
+    "title": "心爱的游戏存档被不小心删了",
+    "imageUrl": "/assets/care_scenes/care36_deleted_game_save.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "课间，好朋友趴在桌子上哭得很伤心。他告诉你，他玩了整整半年的游戏账号被弟弟不小心删除了，所有的装备都没了。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你付出了无数个日夜、最心爱的虚拟宝贝瞬间化为乌有，你觉得心痛得无法呼吸。这时候你希望同桌怎么安慰你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“哎呀，只是个游戏而已，虚拟的东西有什么好哭的，重开一个不就好了。”",
+        "effect": "这是否定他的付出！在特教中，虚拟损失带来的悲伤和真实的玩具坏了是一样的，这样说会让他觉得你冷血。",
+        "receiverReactionText": "那是我半年的心血！你根本不懂！",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“天哪，你每天都在努力攒装备，现在全没了，这种心血白费的感觉真的太让人难受了。”",
+        "effect": "承认他付出的时间是有价值的，接纳他因为“虚拟损失”而产生的真实悲伤，这是最高级的共情。",
+        "receiverReactionText": "是啊，我所有的稀有装备都没了...",
+        "receiverReactionEmoji": "😢"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "拍拍他的肩膀说：“等你不那么难过了，周末我陪你重新建号，我带你快速升级！”",
+        "effect": "在共情之后提供切实的行动支持（陪伴重来），能给他带来一丝重头再来的希望。",
+        "receiverReactionText": "真的吗？谢谢你愿意陪我...",
+        "receiverReactionEmoji": "🎮"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同桌明白那对我有多重要，陪我一起骂了那个调皮的弟弟，并安慰我。",
+        "isComforting": true,
+        "reasonText": "当我的热爱被别人尊重并理解时，我的委屈就得到了极大的释放。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌嘲笑我说：“你多大了还因为一个破游戏哭鼻子。”",
+        "isComforting": false,
+        "reasonText": "否定别人的热爱是非常伤人的，这会让我觉得彻底失去了沟通的欲望。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "同伴交往",
+      "虚拟损失",
+      "心血白费"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-37",
+    "title": "在操场被高年级同学围观出丑",
+    "imageUrl": "/assets/care_scenes/care37_tripped_older_kids.jpg",
+    "difficultyLevel": 3,
+    "careType": "action",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "操场上，你的朋友不小心摔了个四脚朝天，口袋里的零食也撒了一地。旁边几个高年级的同学指着他大声笑。他脸红到了脖子根，趴在地上不敢起来。你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，你在比你大、比你厉害的人面前出了个大洋相，觉得极度羞耻和难堪。你最希望朋友怎么帮你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "empathy",
+        "text": "大声喊：“哇，高年级的人都在笑你，你现在一定觉得丢死人了吧！”",
+        "effect": "这是绝对的灾难！在高度敏感的社交羞耻时刻，大声点破只会把所有人的注意力再次集中到他身上。",
+        "receiverReactionText": "求求你闭嘴吧！",
+        "receiverReactionEmoji": "😳"
+      },
+      {
+        "id": "u2",
+        "type": "action",
+        "text": "迅速跑过去挡在高年级同学的视线前面，把他拉起来，飞快帮他捡起东西拉着他离开。",
+        "effect": "用身体阻挡嘲笑的视线，用最快的速度带他脱离尴尬的物理环境，这是英雄般的救援！",
+        "receiverReactionText": "谢谢你带我逃离那里...",
+        "receiverReactionEmoji": "🏃‍♂️"
+      },
+      {
+        "id": "u3",
+        "type": "advice",
+        "text": "“你赶紧自己爬起来啊，一直趴在地上别人笑得更大声。”",
+        "effect": "在别人大脑已经因为羞愧而死机的时候，给指令不如直接给他搭一把手来得实在。",
+        "receiverReactionText": "我腿软了起不来，你快拉我一把...",
+        "receiverReactionEmoji": "😓"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友冲过来挡住我，拉着我就跑，什么都没多问。",
+        "isComforting": true,
+        "reasonText": "在极度尴尬时，带我逃离现场是最有效的保护，我不需要任何语言的安慰。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友站在旁边，也跟着高年级的同学一起笑我四脚朝天的样子。",
+        "isComforting": false,
+        "reasonText": "被陌生人笑只是尴尬，但被好朋友跟着一起笑，那就是深刻的背叛和痛苦了。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags":[
+      "校园生活",
+      "社交羞耻",
+      "脱离困境"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-38",
+    "title": "秋游时在人群中走散",
+    "imageUrl": "/assets/care_scenes/care38_lost_field_trip.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "学校秋游时，同学去上了个厕所，出来发现全班都不见了。他一个人站在陌生的地方，吓得满头大汗，快要哭了。你跑回去找到了他，应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，在一个完全陌生的地方，你发现认识的人全都不见了。你极度恐慌和无助。这时候突然看到了熟悉的朋友，你希望他怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“你上厕所怎么不跟老师说！害得我们大家都在找你，下次千万别乱跑了！”",
+        "effect": "在别人惊魂未定的时候去责怪他，只会加重他的内疚和紧张，完全没有起到安抚的作用。",
+        "receiverReactionText": "我太害怕了，你别骂我了...",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“一个人找不到大部队，周围全是陌生人，你刚才一定吓坏了吧。”",
+        "effect": "确认他刚才经历的极度恐慌，能让他紧绷的神经放松下来，找到安全感。",
+        "receiverReactionText": "我以为你们把我丢下了...",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "跑过去紧紧抓住他的手说：“别怕，我找到你了！走，老师就在前面不远，我带你过去。”",
+        "effect": "身体接触（牵手）传递了强烈的依靠感，明确的下一步行动让他彻底脱离了恐慌。",
+        "receiverReactionText": "太好了，你一定要抓紧我！",
+        "receiverReactionEmoji": "🤝"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同学跑过来牵起我的手，告诉我大家都安全，马上带我回去。",
+        "isComforting": true,
+        "reasonText": "在绝望时看到熟悉的面孔并被牵着走，就像抓住了救命稻草，恐惧感瞬间消失。"
+      },
+      {
+        "id": "ro2",
+        "text": "同学跑过来大喊大叫：“你死定了，老师发了很大的火！”",
+        "isComforting": false,
+        "reasonText": "恐吓一个已经非常害怕的人，会让他陷入更加严重的恐慌情绪中。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "校园生活",
+      "迷路恐慌",
+      "提供安全感"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-39",
+    "title": "被同伴诬陷弄坏了道具",
+    "imageUrl": "/assets/care_scenes/care39_framed_by_peer.jpg",
+    "difficultyLevel": 3,
+    "careType": "empathy",
+    "receiverEmotion": "angry",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "班级排练话剧时，一个道具坏了。明明不是你朋友弄的，却被另一个同学指着鼻子诬陷是他弄坏的。你朋友气得浑身发抖，攥紧拳头想要打人。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你什么都没做却被当众泼了脏水，对方还理直气壮。你愤怒到了极点，准备动手。你希望好朋友怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“清者自清，你别理他，就当没听见，随便他怎么说吧。”",
+        "effect": "面对恶意的诬陷，劝人“忍气吞声”会让他觉得你不支持他维护清白，心里的火会憋得更难受。",
+        "receiverReactionText": "凭什么我没做过要我忍！",
+        "receiverReactionEmoji": "😡"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“我知道你没碰过！被这样胡乱冤枉，换作是我也会气得想打人的，我完全相信你！”",
+        "effect": "坚定的信任和“共情愤怒”是此时最宝贵的支撑。听到“我相信你”，他的愤怒就会转为感动。",
+        "receiverReactionText": "谢谢你相信我！他太过分了！",
+        "receiverReactionEmoji": "😤"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "拉住他的手防止他打人，大声对那个同学说：“你不要乱说，我一直和他在一起，根本不是他弄的！”",
+        "effect": "既阻止了他做出冲动打人的错误行为，又亲自下场帮他洗刷冤屈，这是最强大的友谊！",
+        "receiverReactionText": "(慢慢松开拳头) 有你作证我就不怕了。",
+        "receiverReactionEmoji": "🛡️"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友挺身而出挡在我前面，大声帮我澄清事实。",
+        "isComforting": true,
+        "reasonText": "在被所有人怀疑的愤怒时刻，有人愿意站出来保护我、相信我，这给了我极大的力量。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友悄悄退到人群后面，用怀疑的眼神看着我。",
+        "isComforting": false,
+        "reasonText": "被最亲密的朋友怀疑，比被外人诬陷还要让人心寒和绝望。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags":[
+      "校园生活",
+      "遭遇诬陷",
+      "信任与支持"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-40",
+    "title": "父母早上吵了很凶的架",
+    "imageUrl": "/assets/care_scenes/care40_parents_fighting.jpg",
+    "difficultyLevel": 3,
+    "careType": "action",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "早读课上，你的同桌一言不发地趴在桌子上偷偷掉眼泪。他悄悄告诉你，今天早上出门前，他爸爸妈妈爆发了极其激烈的争吵，还摔了东西。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你最爱的父母在家里大吵大闹，你觉得特别害怕、无助，甚至觉得是自己的错。到了学校依然很伤心。你希望同桌怎么安慰你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“你要是觉得烦，回去就叫他们离婚好了，或者你直接骂他们一顿让他们闭嘴。”",
+        "effect": "这极其越界！在别人家庭矛盾引发的悲伤中出“离婚”或“对抗”的主意，是非常无知和伤人的。",
+        "receiverReactionText": "你别胡说八道！我不想他们分开！",
+        "receiverReactionEmoji": "😠"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“看到爸爸妈妈吵得那么凶还摔东西，那种感觉真的特别可怕、特别无助吧。”",
+        "effect": "准确读出了他在家庭冲突中的“恐惧和无助”，让他知道自己的创伤被接纳了。",
+        "receiverReactionText": "嗯，我当时躲在房间里害怕极了...",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "递给他一张纸巾，什么都没问，只说：“想哭就哭一会儿吧，我帮你挡着老师，我一直在这儿陪你。”",
+        "effect": "面对复杂的家庭创伤，不去深挖隐私，只提供绝对安全的空间和无声的陪伴，这是最深刻的温柔。",
+        "receiverReactionText": "(把头埋进臂弯里，安心地哭了一会儿)",
+        "receiverReactionEmoji": "🤧"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同桌没有追问细节，只是默默给我递纸巾，并帮我挡住其他同学的视线。",
+        "isComforting": true,
+        "reasonText": "家里的事情很难向外人说清楚。不八卦、只陪伴的倾听，是最让我感到安全的关心。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌一直追问：“他们为什么吵架啊？谁打谁了？是为了你吵的吗？”",
+        "isComforting": false,
+        "reasonText": "过度的八卦和追问像是在扒我的伤口，甚至让我觉得是我的错，这让我非常痛苦。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags":[
+      "家庭亲情",
+      "家庭创伤",
+      "安全空间",
+      "倾听"
+    ]
+  }
+]
+{
+    "sceneCode": "care-scene-41",
+    "title": "爸爸辛苦做的饭烧焦了",
+    "imageUrl": "/assets/care_scenes/care41_burnt_food.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "周末，爸爸在厨房忙了一下午想给全家做顿大餐，结果不小心把最重要的一道菜烧焦了。爸爸看着锅里黑乎乎的菜，叹了口气，显得非常失落和自责。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你花了很多心思和时间想给家人一个惊喜，结果却被自己搞砸了，你觉得很挫败。这时候你希望家人怎么对你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“哎呀，你下次看着火别玩手机不就行了。算了吧我们点外卖吧。”",
+        "effect": "在别人因为失误而自责时去马后炮地教训他，完全否定了他一下午的辛苦付出，会让爸爸更难受。",
+        "receiverReactionText": "我本来想给你们做顿好的...",
+        "receiverReactionEmoji": "😞"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“爸爸，你在厨房里忙了这么久，流了那么多汗，现在菜糊了你心里一定觉得很可惜吧。”",
+        "effect": "看见并肯定对方的“辛苦付出”，而不是只盯着“搞砸的结果”，这是对家人最温暖的理解。",
+        "receiverReactionText": "是啊，太可惜了，爸爸没做好。",
+        "receiverReactionEmoji": "😢"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "走过去抱抱爸爸说：“没关系爸爸！你做的其他的菜闻起来特别香，我们快去吃那些吧！”",
+        "effect": "用实际的拥抱安慰，并把注意力转移到他做得好的地方，能瞬间扫除家人的挫败感。",
+        "receiverReactionText": "好宝贝，走，我们去吃其他菜！",
+        "receiverReactionEmoji": "🥰"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "家人跑过来抱住我，说他们知道我有多用心，就算吃别的也很开心。",
+        "isComforting": true,
+        "reasonText": "努力被家人看见和珍惜，就算结果不完美，心里的挫败感也会消失。"
+      },
+      {
+        "id": "ro2",
+        "text": "家人抱怨说：“等了一下午就吃这个啊，你真是太笨了。”",
+        "isComforting": false,
+        "reasonText": "家人的嫌弃和指责，会把原本想制造惊喜的心情彻底变成委屈和愤怒。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "家庭亲情",
+      "努力白费",
+      "肯定付出"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-42",
+    "title": "好朋友来家里玩打碎了杯子",
+    "imageUrl": "/assets/care_scenes/care42_friend_broke_cup.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "好朋友来你家做客，喝水时不小心把你家的玻璃杯打碎了。他僵在原地，脸涨得通红，特别害怕你妈妈出来骂他。你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，你在别人家里做客闯了祸，觉得非常尴尬又害怕大人的责备，恨不得马上逃走。你希望好朋友怎么帮你解围？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“你赶紧把碎片捡起来扔掉，千万别让我妈看见，不然你就死定了！”",
+        "effect": "恐吓加上错误的建议（徒手捡玻璃会割伤），这不仅加重了他的恐惧，还可能导致身体受伤。",
+        "receiverReactionText": "(吓得手抖，去捡玻璃结果把手划破了)",
+        "receiverReactionEmoji": "😱"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“在别人家打碎东西真的特别吓人，我上次去亲戚家打碎碗也被吓坏了。”",
+        "effect": "用自己的类似经历去“正常化”他的失误，能极大地减轻他的羞愧和恐惧感。",
+        "receiverReactionText": "那你当时挨骂了吗...",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“你别动，小心扎到脚！我马上叫我妈妈拿扫把来，这是个意外，我妈妈绝对不会怪你的。”",
+        "effect": "制止危险动作，主动承担起沟通大人的责任，并给予明确的“免责安全感”，这是神仙级别的主人待客之道！",
+        "receiverReactionText": "太对不起了，真的不会骂我吗？",
+        "receiverReactionEmoji": "🤝"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友赶紧让我退后，并主动向他妈妈解释说这只是个意外，替我求情。",
+        "isComforting": true,
+        "reasonText": "在别人地盘上闯祸时，主人主动站出来保护我、替我说话，会让我充满感激。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友生气地冲我大喊：“你怎么那么笨！那可是我最喜欢的杯子！”",
+        "isComforting": false,
+        "reasonText": "主人的指责会瞬间放大我的恐惧和内疚，让我以后再也不敢来你家了。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "同伴交往",
+      "做客闯祸",
+      "提供安全感",
+      "担当"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-43",
+    "title": "妹妹半夜做噩梦吓哭了",
+    "imageUrl": "/assets/care_scenes/care43_nightmare_sister.jpg",
+    "difficultyLevel": 1,
+    "careType": "action",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "半夜，妹妹因为做了一个可怕的噩梦，突然从床上坐起来大哭，浑身都是汗。作为哥哥/姐姐，你被吵醒了，应该怎么关心她？",
+    "receiverPerspectiveText": "想象一下，你在梦里被可怕的怪物追，惊醒后发现周围黑乎乎的，分不清是梦还是现实，特别害怕。你希望家人怎么对你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“那都是假的，梦都是反的，你快别哭了吵死人了，赶紧闭上眼睛睡觉！”",
+        "effect": "用大人的逻辑去否定儿童的恐惧，不仅无法安抚她，你的不耐烦还会让她觉得更缺乏安全感。",
+        "receiverReactionText": "(不敢哭出声，但在被子里一直发抖)",
+        "receiverReactionEmoji": "😖"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“是不是梦见可怕的大怪物了？噩梦真的太吓人了，你的心现在一定还在怦怦跳吧。”",
+        "effect": "帮她确认“那是噩梦”而且“害怕是正常的”，让她的情绪得到了接纳。",
+        "receiverReactionText": "嗯，梦里有个好黑的怪兽抓我...",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "打开小夜灯，坐在她床边握着她的手说：“不怕，哥哥/姐姐在这里陪你，我看着你睡着我再走。”",
+        "effect": "光线（驱散黑暗）加上身体接触和承诺陪伴，能最快将她拉回安全的现实世界中。",
+        "receiverReactionText": "你别走，抓着我的手...",
+        "receiverReactionEmoji": "🫂"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "哥哥/姐姐打开了灯，紧紧抱住我，告诉我这只是梦，现实里很安全。",
+        "isComforting": true,
+        "reasonText": "温暖的光线和拥抱能立刻把我从噩梦的恐惧中唤醒，给我十足的安全感。"
+      },
+      {
+        "id": "ro2",
+        "text": "哥哥/姐姐抱怨着翻了个身，捂着耳朵嫌弃我吵到他睡觉了。",
+        "isComforting": false,
+        "reasonText": "被亲人嫌弃会让我觉得在这黑夜里彻底孤立无援，更加害怕了。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-8",
+    "abilityLevel": "primary",
+    "tags":[
+      "家庭亲情",
+      "噩梦恐惧",
+      "陪伴"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-44",
+    "title": "哥哥的房间被亲戚小孩弄乱",
+    "imageUrl": "/assets/care_scenes/care44_messy_room_brother.jpg",
+    "difficultyLevel": 3,
+    "careType": "empathy",
+    "receiverEmotion": "angry",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "过节亲戚来串门，亲戚家的小孩溜进了哥哥/姐姐的房间，把珍藏的漫画和手办翻得乱七八糟。哥哥/姐姐回来看到后，气得攥紧拳头浑身发抖。你应该怎么关心？",
+    "receiverPerspectiveText": "想象一下，你最私人、最珍贵的领地被别人毫无尊重地破坏了。你火冒三丈。这时候你最希望自家人对你说什么？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“算啦，他还是个不懂事的小弟弟嘛，你是大人就让着他点，原谅他吧。”",
+        "effect": "这是经典的道德绑架（Toxic Positivity）！在受害者极度愤怒时劝他大度，等同于背叛，会让他连你也一起恨上。",
+        "receiverReactionText": "凭什么让我原谅！我的东西被毁了！",
+        "receiverReactionEmoji": "😡"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“天哪，他们未经允许就乱翻你最宝贝的东西，这太不尊重人了，换谁都会气疯的！”",
+        "effect": "极度坚定的“共情愤怒”。站在他的立场上谴责这种越界行为，让他知道家人的心是和他在一起的。",
+        "receiverReactionText": "对！我绝对咽不下这口气！",
+        "receiverReactionEmoji": "😤"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“我帮你一起把东西收拾好，待会我们去找妈妈，要求那个小孩必须向你道歉！”",
+        "effect": "不仅帮忙整理残局，还坚定地支持他讨回公道、维护边界。这是最可靠的兄弟姐妹！",
+        "receiverReactionText": "好，他必须向我道歉！",
+        "receiverReactionEmoji": "🛡️"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "家人坚定地站在我这边，不仅帮我收拾，还去严肃地批评了那个乱翻东西的小孩。",
+        "isComforting": true,
+        "reasonText": "当我的边界被侵犯时，家里人能站出来护短、帮我维权，这让我感受到被深深爱着。"
+      },
+      {
+        "id": "ro2",
+        "text": "家人全都在旁边说风凉话：“谁叫你自己出门不锁门的。”",
+        "isComforting": false,
+        "reasonText": "受害者有罪论！不仅不保护我，还把别人的错误怪到我头上，这让人极其寒心和绝望。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags":[
+      "家庭亲情",
+      "边界侵犯",
+      "共情愤怒"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-45",
+    "title": "周末去游乐园因为暴雨取消",
+    "imageUrl": "/assets/care_scenes/care45_rain_canceled_trip.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "你的好朋友期待了整整一个月的周末游乐园计划，因为突然的暴雨台风被取消了。他坐在窗前看着大雨，满脸的失落和不甘心。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你兴奋了很久、准备了很久的最期待的事情，突然因为不可抗力泡汤了。你像泄了气的皮球一样难过。你希望朋友怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“下大雨也是没办法的事，大不了下周末再去游乐园嘛，有什么好难过的。”",
+        "effect": "试图用理性轻视他的失落感。对期待已久的人来说，“下周”太遥远了，他现在的失望是需要被看见的。",
+        "receiverReactionText": "可是我今天就想去...",
+        "receiverReactionEmoji": "😔"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“你倒数了整整一个月，就等今天去玩过山车了，现在突然去不了，这种巨大的失望真的太难熬了。”",
+        "effect": "准确点出了“期待落空”的痛点，让他知道自己的失落是完全合理的，这能很好地释放他的委屈。",
+        "receiverReactionText": "我连背包都装好零食了，唉...",
+        "receiverReactionEmoji": "😢"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“既然出不去，不如我带上最新的双人桌游去你家里，我们在家开个室内派对怎么样？”",
+        "effect": "用同样高质量的陪伴和全新的期待，去填补他因为计划取消而产生的巨大心里落差。",
+        "receiverReactionText": "好啊！那你快点过来，我在家等你！",
+        "receiverReactionEmoji": "🎲"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友理解我的失落，并提议来我家陪我玩别的游戏，不让我一个人闷着。",
+        "isComforting": true,
+        "reasonText": "虽然去不了游乐园，但有朋友专门来陪我，这种失落感很快就会被新的快乐代替。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友在电话里说：“那我就自己在家里看电视了，挂了啊。”",
+        "isComforting": false,
+        "reasonText": "面对我的巨大失落，朋友敷衍的冷处理会让我觉得加倍的空虚和孤单。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "同伴交往",
+      "期待落空",
+      "替代陪伴"
+    ]
+  }
+]
+{
+    "sceneCode": "care-scene-46",
+    "title": "爷爷忘记买答应好的零食",
+    "imageUrl": "/assets/care_scenes/care46_grandpa_forgot.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "爷爷去超市前答应给你买最喜欢的零食，回来后却发现自己完全忘记了。爷爷拍着脑袋叹了口气，非常自责地说：“哎，我老了，记性越来越差了，真没用。”你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你年纪大了记忆力衰退，辜负了最疼爱的孙子的期待，你觉得自己不中用了，特别内疚难过。这时候你最希望孙子对你说什么？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "action",
+        "text": "气得在地上打滚大哭：“你骗人！我就要吃那个零食，我现在就要！”",
+        "effect": "这是极度自私的做法！不仅毫无关心可言，还会让已经很自责的爷爷感到加倍的内疚和心痛。",
+        "receiverReactionText": "(深深叹气，觉得更对不起孩子了)",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“爷爷，你记性这么差，下次去超市一定要拿笔记在纸上啊。”",
+        "effect": "在长辈因为衰老而感到自卑时，去强调他的“记性差”并给出说教，会让他心里更加不是滋味。",
+        "receiverReactionText": "是啊，爷爷老了记不住了...",
+        "receiverReactionEmoji": "😔"
+      },
+      {
+        "id": "u3",
+        "type": "empathy",
+        "text": "抱住爷爷的手臂说：“没关系的爷爷，每个人都会忘记事情。零食不重要，我更喜欢你在家陪我！”",
+        "effect": "用包容的心态化解长辈的内疚，并强调“你比零食更重要”，这是极具孝心和高情商的共情！",
+        "receiverReactionText": "真是爷爷的好孙子，爷爷心里暖暖的。",
+        "receiverReactionEmoji": "🥰"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "孙子不但没有生气，还抱着我说没事，说我能平安回家最重要。",
+        "isComforting": true,
+        "reasonText": "被晚辈无条件地包容和理解，能瞬间驱散我因为老去而产生的无力感。"
+      },
+      {
+        "id": "ro2",
+        "text": "孙子抱怨说：“你连这都能忘，我以后再也不让你去买东西了。”",
+        "isComforting": false,
+        "reasonText": "这种嫌弃的话语是对老年人自尊心最沉重的打击。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "家庭亲情",
+      "长辈自责",
+      "宽容与爱"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-47",
+    "title": "妈妈切菜时不小心切到手",
+    "imageUrl": "/assets/care_scenes/care47_mom_cut_finger.jpg",
+    "difficultyLevel": 1,
+    "careType": "action",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "妈妈在厨房做饭时，不小心一刀切到了手指，鲜血立刻流了出来。妈妈疼得倒吸一口凉气，紧紧捏着手指，显得有些慌乱。你应该怎么关心她？",
+    "receiverPerspectiveText": "想象一下，你突然受了伤流了很多血，又疼又慌张，急需帮助。这时候你希望旁边的孩子怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "站在旁边说：“妈妈你切菜怎么这么不小心，下次切慢点啊。”",
+        "effect": "在别人受伤流血的紧急关头当“马后炮”说教，不仅完全没用，还会让伤者觉得你很冷血。",
+        "receiverReactionText": "我现在疼得要命，你别说风凉话了...",
+        "receiverReactionEmoji": "😓"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“天哪流了好多血，看着就觉得好疼好疼啊！”",
+        "effect": "表达了对妈妈痛苦的理解，但现在是紧急情况，光嘴上说心疼是解决不了流血问题的。",
+        "receiverReactionText": "是挺疼的，你能帮帮妈妈吗？",
+        "receiverReactionEmoji": "😖"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“妈妈你别动！”然后飞快跑去客厅拿来创可贴和纸巾，并大声喊爸爸来帮忙。",
+        "effect": "面对突发的身体伤害，提供快速的医疗物资并呼叫大人支援，这是最沉着、最有效的关心！",
+        "receiverReactionText": "谢谢宝贝，你真是妈妈的小救星！",
+        "receiverReactionEmoji": "🩹"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "孩子没有吓哭，而是跑去帮我拿来了医药箱和纸巾。",
+        "isComforting": true,
+        "reasonText": "在受伤慌乱时，孩子能做出实际的救援行动，会让我感到莫大的安心和欣慰。"
+      },
+      {
+        "id": "ro2",
+        "text": "孩子看到血，吓得哇哇大哭，还要我忍着痛去哄他。",
+        "isComforting": false,
+        "reasonText": "这不仅没有帮到我，反而给我增加了额外的心理负担和麻烦。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-8",
+    "abilityLevel": "primary",
+    "tags":[
+      "家庭亲情",
+      "意外受伤",
+      "紧急求助",
+      "实际行动"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-48",
+    "title": "爸爸工作文件丢失大发脾气",
+    "imageUrl": "/assets/care_scenes/care48_dad_angry_computer.jpg",
+    "difficultyLevel": 3,
+    "careType": "action",
+    "receiverEmotion": "angry",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "爸爸在家里加班，电脑突然死机，写了一下午的文件全都没了。爸爸气得一巴掌拍在桌子上，脸色铁青，烦躁地用力抓自己的头发。你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，你付出了巨大心血的工作瞬间化为乌有，你气得快要爆炸了，正处在情绪的火山口。这时候你希望家人怎么对待你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“爸爸，你做重要的文件怎么不知道随手保存呢？下次记得按保存键啊。”",
+        "effect": "火上浇油！在成年人极度愤怒和挫败时去指出他的失误，无异于在他愤怒的火药桶上扔火柴。",
+        "receiverReactionText": "(怒火中烧) 我现在不想听你教训我！出去！",
+        "receiverReactionEmoji": "😡"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“一下午的心血全没了，这种感觉真的太让人崩溃了，我理解你为什么这么生气。”",
+        "effect": "精准的共情，肯定了爸爸愤怒的合理性。这能让他知道家人理解他的不易，怒火会消减一些。",
+        "receiverReactionText": "唉...是啊，一整个下午全白干了。",
+        "receiverReactionEmoji": "😤"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "什么都不问，悄悄给爸爸倒一杯温水放在桌角，然后安静地关上门退出去，给他留出空间。",
+        "effect": "高级的家庭边界感！当大人情绪失控时，不打扰、给空间、留下一丝温暖，这是最成熟的爱。",
+        "receiverReactionText": "(看着桌角的温水，深呼吸让自己慢慢冷静下来)",
+        "receiverReactionEmoji": "☕"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "孩子安静地给我递了一杯水，并轻轻关上门让我一个人静一静。",
+        "isComforting": true,
+        "reasonText": "在暴怒和极度烦躁时，我最需要的是安静的空间来消化挫败感，无声的照顾最贴心。"
+      },
+      {
+        "id": "ro2",
+        "text": "孩子跑过来一直叽叽喳喳地问我怎么了，还要我陪他玩。",
+        "isComforting": false,
+        "reasonText": "在大人情绪濒临崩溃时依然强行索取关注，会让人彻底失去耐心甚至发火。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags":[
+      "家庭亲情",
+      "情绪失控",
+      "留出空间",
+      "非语言安慰"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-49",
+    "title": "表弟在家族聚餐时打翻果汁",
+    "imageUrl": "/assets/care_scenes/care49_spilled_juice_dinner.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "在人很多的亲戚聚餐上，小表弟夹菜时不小心把一大杯果汁碰倒了，洒得满桌都是。所有亲戚瞬间安静下来看向他，表弟羞得僵在座位上不敢抬头。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你在全家众多长辈面前闯了祸，所有人都盯着你看，你觉得无地自容尴尬极了。这时候你希望旁边的哥哥/姐姐怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "empathy",
+        "text": "大声地说：“哇，所有人都看着你呢，你现在一定觉得特别丢脸吧！”",
+        "effect": "这是绝对的灾难！当众点破别人的尴尬等于让他在长辈面前再“社死”一次，非常没有眼力见。",
+        "receiverReactionText": "(头埋得更低了，眼泪在眼眶里打转)",
+        "receiverReactionEmoji": "😳"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "当着亲戚的面教育他：“你吃饭手脚太乱动了，下次吃饭手肘不要放在桌子上。”",
+        "effect": "在大家面前训斥他，会让他觉得长辈在看笑话，连同辈的哥哥姐姐也看不起他。",
+        "receiverReactionText": "我知道错了，你别当着大家面说我了...",
+        "receiverReactionEmoji": "😓"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "马上拿过抽纸帮他擦衣服，笑着对亲戚们说：“没事没事，我来擦，大家继续吃菜！”",
+        "effect": "迅速转移长辈的注意力，用实际行动化解他的困局，这是在社交场合中最仗义的“救场”！",
+        "receiverReactionText": "谢谢哥哥/姐姐帮我解围！",
+        "receiverReactionEmoji": "🧻"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "哥哥/姐姐飞快地帮我清理桌面，并主动岔开话题让大人们不再盯着我看。",
+        "isComforting": true,
+        "reasonText": "在被长辈注视的尴尬时刻，能帮我转移视线和收拾残局的人，简直就是救世主。"
+      },
+      {
+        "id": "ro2",
+        "text": "哥哥/姐姐也跟着大人们一起指责我毛手毛脚。",
+        "isComforting": false,
+        "reasonText": "落井下石的指责会让我觉得自己被整个家族抛弃了，极度受挫。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "家庭亲情",
+      "公众出丑",
+      "解围与行动"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-50",
+    "title": "好朋友留宿时想家哭了",
+    "imageUrl": "/assets/care_scenes/care50_homesick_sleepover.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "好朋友第一次来你家过夜。晚上关灯后，你听到他在被子里偷偷抽泣。他不好意思地告诉你，他突然很想他的妈妈和自己的床。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你第一次住在别人家，关灯后突然觉得很不习惯，非常想念家人的温暖。你觉得偷偷哭很丢脸，这时候你希望朋友怎么对你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“你都是大孩子了，住别人家还哭着想妈妈，这也太丢人了吧。”",
+        "effect": "这是一种极其伤人的“情感羞辱（Shaming）”！会让他觉得自己软弱无能，产生强烈的自卑感。",
+        "receiverReactionText": "对不起，但我控制不住想家...",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“第一次离开家在外面睡，会觉得害怕和想妈妈是特别正常的，我之前去夏令营也偷偷哭过呢。”",
+        "effect": "极其优秀的“情绪正常化”。告诉他“你这样很正常，我也经历过”，能瞬间消除他因为哭泣而产生的羞耻感。",
+        "receiverReactionText": "真的吗？你也会想家想哭吗？",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“你不要忍着，如果实在太想家了，我现在就把电话借给你，你给妈妈打个睡前电话好不好？”",
+        "effect": "不仅接纳他的情绪，还提供了一个能立刻缓解他思乡之苦的解决方案，非常贴心。",
+        "receiverReactionText": "好，我想听听我妈的声音...",
+        "receiverReactionEmoji": "📱"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友没有笑话我，反而告诉我他第一次出门也想家，还让我给他妈妈打电话。",
+        "isComforting": true,
+        "reasonText": "被理解和包容的感受，让我卸下了所有的伪装，获得了真正的安全感。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友大声把他妈妈叫来，当面说我是个离不开妈妈的胆小鬼。",
+        "isComforting": false,
+        "reasonText": "将我的脆弱当众揭穿并嘲笑，这是对友谊信任的严重背叛。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "同伴交往",
+      "思乡难过",
+      "情绪正常化"
+    ]
+  }
+]
+{
+    "sceneCode": "care-scene-51",
+    "title": "奶奶弄丢了最珍贵的项链",
+    "imageUrl": "/assets/care_scenes/care51_grandma_lost_necklace.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "奶奶把戴了很多年的旧项链弄丢了。她坐在沙发上，一边翻找一边抹眼泪，觉得非常心疼和自责。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你把你最心爱、最珍贵的宝贝弄丢了，找了半天都找不到，你伤心极了。这时候你最希望家人怎么安慰你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“奶奶别找了，那个项链那么旧了，明天让爸爸给你买个全新、更贵的就行了。”",
+        "effect": "用金钱去衡量有感情的旧物是非常不体贴的，这会让奶奶觉得你不懂她对项链的深厚感情。",
+        "receiverReactionText": "你不懂，那是爷爷送给我的纪念...",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“那条项链陪了您那么久，现在找不到了，您心里一定空落落的，特别难受吧。”",
+        "effect": "认可物品对她的情感价值，而不是它值多少钱。这种深刻的共情能让长辈觉得非常窝心。",
+        "receiverReactionText": "是啊，我心里真的好难受啊。",
+        "receiverReactionEmoji": "😢"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "拿来手电筒说：“奶奶您别急先坐着休息，我帮您把床底和沙发下面全都仔细找一遍！”",
+        "effect": "在别人焦急悲伤时，主动充当他们的手和眼，用实际的寻找行动来分担他们的焦虑。",
+        "receiverReactionText": "好孩子，谢谢你帮奶奶找。",
+        "receiverReactionEmoji": "🔦"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "孙子没有嫌弃我丢三落四，而是拿来手电筒趴在地上耐心地帮我一起找。",
+        "isComforting": true,
+        "reasonText": "看到家人这么用心地帮我找回失去的东西，我的焦虑和自责减轻了一大半。"
+      },
+      {
+        "id": "ro2",
+        "text": "孙子在一旁抱怨：“谁叫你平时乱放东西的，现在找不到了吧。”",
+        "isComforting": false,
+        "reasonText": "在别人已经很自责的时候落井下石，是非常冷血的行为。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "家庭亲情",
+      "物品丢失",
+      "实际帮助"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-52",
+    "title": "牙齿上沾了很大一片菜叶",
+    "imageUrl": "/assets/care_scenes/care52_spinach_in_teeth.jpg",
+    "difficultyLevel": 3,
+    "careType": "action",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "午饭后，好朋友在开心地和你说话，你发现他的门牙上沾了一大片绿色的菜叶，非常显眼。如果被别人看到他一定会觉得很丢脸。你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，你顶着牙齿上的大片菜叶在教室里走来走去，大家都看到了却不说，后来你自己在镜子里发现了，觉得尴尬得要命。你希望好朋友当初怎么提醒你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "action",
+        "text": "指着他的嘴巴大声笑出来：“哈哈哈！你的牙齿上有一块好大的绿菜叶，太好笑了！”",
+        "effect": "把朋友的尴尬当成笑话当众大声宣扬，会瞬间摧毁他的尊严，让他无地自容。",
+        "receiverReactionText": "(赶紧捂住嘴巴，羞愧得想逃跑)",
+        "receiverReactionEmoji": "😳"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "假装没看见，什么都不说，心里想“反正不关我的事，让他自己发现吧”。",
+        "effect": "虽然你没有嘲笑他，但看着朋友顶着菜叶出去出丑而不提醒，这不是真正的朋友该做的。",
+        "receiverReactionText": "(事后发现) 你刚才为什么不告诉我，太丢人了！",
+        "receiverReactionEmoji": "😠"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "把他拉到没人的角落，递给他一张纸巾，悄悄指了指自己的牙齿提醒他擦掉。",
+        "effect": "最高级的修养！私下提醒、提供工具，不仅完美保全了他的面子，还帮他避开了更大的尴尬。",
+        "receiverReactionText": "(悄悄擦掉) 天哪，太谢谢你提醒我了！",
+        "receiverReactionEmoji": "🤫"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友悄悄把我拉到一边，递给我纸巾让我擦掉牙齿上的菜叶。",
+        "isComforting": true,
+        "reasonText": "在私密的环境下善意地提醒我，是对我面子和自尊心的最大保护。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友当着其他同学的面，大声指着我的嘴巴笑。",
+        "isComforting": false,
+        "reasonText": "当众揭穿别人的出丑瞬间，不仅没有礼貌，还会让我立刻成为全班的笑柄。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags":[
+      "同伴交往",
+      "外貌出丑",
+      "隐私保护",
+      "高情商"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-53",
+    "title": "手工作品被小狗咬坏了",
+    "imageUrl": "/assets/care_scenes/care53_dog_ruined_art.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "angry",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "哥哥花了一晚上做好的手工航模，被家里调皮的小狗咬得稀巴烂。哥哥看着满地的碎片，气得浑身发抖，握着拳头想去打小狗。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你付出了很多心血的作品被宠物毁了，你怒火中烧却又无处发泄。你希望家人对你说什么？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“小狗又不懂事，它不是故意的，你作为一个大人怎么能跟小狗发脾气呢？”",
+        "effect": "这是极度越界的道德绑架！用小狗的无知来否定哥哥的愤怒，会让他觉得连家人都不体谅他的心血。",
+        "receiverReactionText": "它不懂事难道我就活该被毁掉心血吗？！",
+        "receiverReactionEmoji": "😡"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“天哪，你做了一整个晚上的航模被咬成这样，换作是我也会气得想抓狂的！”",
+        "effect": "极度优秀的“共情愤怒”！让他知道，即使肇事者是可爱的小狗，他的生气也是完全被允许和理解的。",
+        "receiverReactionText": "真的，我气得简直想把它扔出去！",
+        "receiverReactionEmoji": "😤"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "赶紧把小狗抱到另一个房间关起来，然后回来帮哥哥把没坏的零件捡起来整理好。",
+        "effect": "把肇事者（小狗）带离现场防止他冲动打狗，然后默默帮他收拾残局，这是最理智和贴心的举动。",
+        "receiverReactionText": "谢谢你把狗弄走，不然我真的控制不住想打它...",
+        "receiverReactionEmoji": "📦"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "弟弟/妹妹告诉我，他完全理解我有多生气，并帮我一起把没坏的零件找出来。",
+        "isComforting": true,
+        "reasonText": "愤怒被认可，心血被惋惜，还有人帮我一起补救，这让我慢慢找回了理智。"
+      },
+      {
+        "id": "ro2",
+        "text": "弟弟/妹妹抱着小狗说：“狗狗好可怜，你千万别打它哦。”",
+        "isComforting": false,
+        "reasonText": "完全无视我被毁掉的痛苦，只知道护着闯祸的小狗，这让我彻底心寒。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "家庭亲情",
+      "宠物闯祸",
+      "共情愤怒"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-54",
+    "title": "同桌极度害怕桌子上的大虫子",
+    "imageUrl": "/assets/care_scenes/care54_scared_of_bug.jpg",
+    "difficultyLevel": 1,
+    "careType": "action",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "教室里，同桌发现自己的课桌上趴着一只巨大的黑色甲虫。他天生最怕虫子，吓得尖叫一声跳出座位，靠在墙上浑身发抖不敢过去。你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，你最害怕的东西就放在你的面前，你吓得完全无法思考、浑身僵硬。这时候你最希望身边的人怎么帮你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "action",
+        "text": "故意用纸包着虫子，举到他面前吓唬他：“看！它要飞过来了！”",
+        "effect": "极其残忍的恶作剧！把别人的恐惧当做玩笑，会给别人造成严重的心理阴影。",
+        "receiverReactionText": "(吓得哇哇大哭，拼命往外跑)",
+        "receiverReactionEmoji": "😭"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“这么小的虫子又不咬人，你怕什么呀，直接用书把它拍死不就行了。”",
+        "effect": "在别人极度恐惧时要求他自己去面对，完全无效。因为恐惧是不受理智控制的。",
+        "receiverReactionText": "我不敢碰它，你快帮帮我...",
+        "receiverReactionEmoji": "😖"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“你站在那里别动，别害怕，我拿个空纸杯把它扣住扔到窗外去。”",
+        "effect": "英雄般的行动！代替他去处理恐惧源，让他置身于安全区，这是最让人充满安全感的关怀。",
+        "receiverReactionText": "太谢谢你了，你真勇敢！",
+        "receiverReactionEmoji": "🦸‍♂️"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同学安慰我别怕，然后果断地拿纸巾把虫子抓起来扔到了外面。",
+        "isComforting": true,
+        "reasonText": "在遇到害怕的东西时，能帮我把危险立刻清除的人，就是我眼里的超级英雄。"
+      },
+      {
+        "id": "ro2",
+        "text": "同学大声嘲笑我：“你胆子也太小了吧，连个虫子都怕！”",
+        "isComforting": false,
+        "reasonText": "不仅没有帮我解决问题，还在全班面前羞辱我的胆小，非常过分。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-8",
+    "abilityLevel": "primary",
+    "tags": [
+      "校园生活",
+      "克服恐惧",
+      "实际帮助"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-55",
+    "title": "落选了期待已久的校队",
+    "imageUrl": "/assets/care_scenes/care55_failed_team_tryout.jpg",
+    "difficultyLevel": 3,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "公告栏前，好朋友在校队选拔的名单里找了三遍，也没有看到自己的名字。他期待并且训练了整整一个月。他垂下肩膀，红着眼眶一言不发。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你为了一个目标付出了巨大的努力，最后还是失败了。你觉得自己的努力全白费了，非常伤心。你希望好朋友怎么安慰你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“没选上就算了，反正校队每天训练那么累，不进也是件好事，多出时间玩多好。”",
+        "effect": "试图用“狐狸吃不到葡萄说葡萄酸”的方式安慰，不仅无效，还会让他觉得你根本不懂他有多热爱这个队伍。",
+        "receiverReactionText": "可我真的非常想进校队...",
+        "receiverReactionEmoji": "😔"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“我看到你这个月每天都在疯狂练习，付出了那么多却没有选上，这种落空的感觉真的太让人难过了。”",
+        "effect": "肯定他的“努力过程”，接纳他“目标落空的极度悲伤”，这是最高级的精神抚慰。",
+        "receiverReactionText": "是啊，我以为我这次一定能选上的...",
+        "receiverReactionEmoji": "💧"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“不管选没选上，你在我心里都是最棒的球员！走，我请你去吃最爱的冰淇淋，好好发泄一下！”",
+        "effect": "给予坚定不移的个人肯定，用他喜欢的美食作为情绪的缓冲剂，陪伴他度过最失落的时刻。",
+        "receiverReactionText": "谢谢你一直支持我，走吧去吃冰淇淋。",
+        "receiverReactionEmoji": "🍦"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "好朋友告诉我，他看到了我有多努力，就算落选了我也一样很棒。",
+        "isComforting": true,
+        "reasonText": "在被官方否定时，朋友无条件的支持和肯定，能保住我最后的自信心。"
+      },
+      {
+        "id": "ro2",
+        "text": "好朋友说：“肯定是他们有黑幕不公平，我们去骂教练！”",
+        "isComforting": false,
+        "reasonText": "用偏激和仇恨来掩盖失败并不是成熟的做法，反而会惹出更多的麻烦。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags":[
+      "同伴交往",
+      "努力落空",
+      "肯定价值"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-56",
+    "title": "爸爸在公园不小心滑倒出丑",
+    "imageUrl": "/assets/care_scenes/care56_dad_slipped.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "周末全家在公园散步，爸爸没看清地上的青苔，脚下一滑摔了个四脚朝天，衣服也弄脏了。周围散步的陌生人都停下来看着他，爸爸尴尬得脸都红了。你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，你作为一个大人，在人来人往的公园里摔了个大马趴，被所有人盯着看，觉得面子都丢光了。你希望你的孩子怎么做？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "action",
+        "text": "指着爸爸大声笑得前仰后合：“哈哈哈，爸爸你摔得像个大乌龟一样！”",
+        "effect": "把家人的出丑当成笑话，这会让原本就觉得丢脸的爸爸感到极度的羞愤和难堪。",
+        "receiverReactionText": "(觉得极其丢面子，甚至可能发火)",
+        "receiverReactionEmoji": "😡"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“爸爸，你走路怎么不看着点地啊，多危险啊。”",
+        "effect": "在别人尴尬的关头还要接受晚辈的教训，这会让他觉得自己的长辈尊严受到了打击。",
+        "receiverReactionText": "我没注意看而已，你别教训我了...",
+        "receiverReactionEmoji": "😓"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "赶紧跑过去扶起爸爸，关切地问：“爸爸你没摔疼吧？”，然后帮他拍掉身上的土。",
+        "effect": "迅速用关心的行动打破围观的尴尬氛围，无视路人的目光，给爸爸递上最温暖的台阶。",
+        "receiverReactionText": "没摔疼，谢谢宝贝来扶爸爸。",
+        "receiverReactionEmoji": "🤝"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "孩子没有笑我，第一时间跑过来关心我疼不疼，并用力把我拉起来。",
+        "isComforting": true,
+        "reasonText": "在觉得尴尬出丑时，家人的关心和掩护能瞬间让我找回自尊，化解羞耻。"
+      },
+      {
+        "id": "ro2",
+        "text": "孩子觉得跟我走在一起很丢人，装作不认识我跑开了。",
+        "isComforting": false,
+        "reasonText": "被亲近的人嫌弃和抛弃，比摔倒本身还要让人感到痛心。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "家庭亲情",
+      "长辈出丑",
+      "化解尴尬",
+      "实际行动"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-57",
+    "title": "接水时被别人恶意插队",
+    "imageUrl": "/assets/care_scenes/care57_cut_in_line_water.jpg",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "angry",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "下课时，好朋友拿着水杯排了很久的队终于要接水了。突然一个别班的同学强行挤到他前面接水。好朋友气得瞪大了眼睛，紧紧捏着水杯发抖。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你遵守规则排了半天队，却被不讲理的人强行插队抢了位置。你气得想骂人，你希望好朋友怎么支持你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“算了吧，就一杯水而已，让他先接也没关系，我们别惹事了。”",
+        "effect": "在朋友权益被侵犯时劝他“忍气吞声”，会让他觉得你是个懦弱的人，甚至把气撒到你身上。",
+        "receiverReactionText": "凭什么要我让他！明明是我先排队的！",
+        "receiverReactionEmoji": "😡"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“这个人也太不讲理了吧！我们排了这么久他凭什么插队，真的太让人火大了！”",
+        "effect": "坚定的“共情愤怒”。和他统一战线，让他知道他的生气是完全正当的，你会支持他。",
+        "receiverReactionText": "就是啊！太没有素质了！",
+        "receiverReactionEmoji": "😤"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "走到前面，陪他一起对插队的人大声说：“同学，请你到后面排队，大家都在排队！”",
+        "effect": "陪伴他一起勇敢地用正当语言维权，这是对抗不公平的最强力量！",
+        "receiverReactionText": "对！请你去后面排队！",
+        "receiverReactionEmoji": "🛡️"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友和我一起站出来，大声指出对方插队的错误，要求他去后面排队。",
+        "isComforting": true,
+        "reasonText": "有朋友撑腰并和我共同对抗不讲理的人，给了我极大维护规则的底气。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友吓得退后两步，拉着我的袖子叫我算了别出声。",
+        "isComforting": false,
+        "reasonText": "这种退缩不仅不能平息我的愤怒，反而让我觉得自己孤立无援，非常憋屈。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "同伴交往",
+      "遭遇插队",
+      "共同维权"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-58",
+    "title": "走玻璃栈道吓得不敢动",
+    "imageUrl": "/assets/care_scenes/care58_scared_glass_bridge.jpg",
+    "difficultyLevel": 2,
+    "careType": "advice",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "周末去爬山，要经过一段透明的玻璃吊桥。好朋友天生恐高，刚走上去两步就吓得腿软，蹲在地上死死抓住栏杆，脸色煞白闭着眼睛。你应该怎么帮助他？",
+    "receiverPerspectiveText": "想象一下，你处于万丈深渊的上面，感觉随时会掉下去，极度恐慌浑身无力。这时候你希望同伴怎么帮你脱离险境？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "action",
+        "text": "觉得他胆子太小，在背后突然推他一把说：“快走啊，这玻璃掉不下去的！”",
+        "effect": "致命的错误！对一个极度恐高的人进行推搡，不仅可能造成休克，更是对他极度的残忍。",
+        "receiverReactionText": "(吓得大声尖叫，甚至可能会晕过去)",
+        "receiverReactionEmoji": "😱"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“从这里看下去确实特别高、特别恐怖，你害怕得腿软是完全正常的反应。”",
+        "effect": "不去否定他的恐高心理，接纳他的正常生理反应，让他先不要因为“自己不敢走”而感到羞愧。",
+        "receiverReactionText": "我真的不敢看下面，我动不了了...",
+        "receiverReactionEmoji": "😖"
+      },
+      {
+        "id": "u3",
+        "type": "advice",
+        "text": "“你先闭上眼睛，拉紧我的手。千万别往下看，盯着我的后背，我一步一步慢慢牵你走过去。”",
+        "effect": "给出明确的指令（不往下看），并提供身体支撑（牵手带路），这是最顶级的脱困救援策略。",
+        "receiverReactionText": "好，你一定要抓紧我，我闭上眼睛了。",
+        "receiverReactionEmoji": "🤝"
+      }
+    ],
+    "preferredUtteranceIds":[
+      "u2",
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "朋友拉着我的手，告诉我闭上眼睛只跟着他的步伐慢慢走。",
+        "isComforting": true,
+        "reasonText": "在丧失行动能力的极度恐慌中，一个坚定可信赖的引导者是我唯一的救命稻草。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友跑到前面去，拿着手机不停拍我害怕蹲在地上的丑态并大声嘲笑。",
+        "isComforting": false,
+        "reasonText": "将别人的极度恐惧当做取乐的素材，是毫无人性、令人极度反感的恶劣行为。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "同伴交往",
+      "克服恐高",
+      "给予支撑"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-59",
+    "title": "妈妈生病发高烧躺在床上",
+    "imageUrl": "/assets/care_scenes/care59_sick_mom_fever.jpg",
+    "difficultyLevel": 1,
+    "careType": "action",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "今天妈妈生病了，发着高烧躺在床上休息。她脸色很不好，浑身没力气，时不时地咳嗽两声。作为家里的小主人，你应该怎么关心妈妈？",
+    "receiverPerspectiveText": "想象一下，你生了很严重的病，浑身酸痛没有一点力气，只能躺在床上休息。你最希望家人怎么照顾你？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "跑到床边大声喊：“妈妈你快点起来做饭呀，我肚子都饿得咕咕叫了！”",
+        "effect": "在别人极度虚弱时还索取照顾，是非常自私、缺乏同理心的行为，会让生病的妈妈感到心寒和自责。",
+        "receiverReactionText": "(强撑着想起来，觉得很难受)",
+        "receiverReactionEmoji": "😔"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“妈妈，你发烧一定觉得浑身很酸痛、很不舒服吧。生病的感觉真的太难受了。”",
+        "effect": "温柔的话语能给生病的人带来心理上的极大慰藉，让妈妈感受到你的贴心。",
+        "receiverReactionText": "谢谢宝贝的关心，妈妈没事的。",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "拿来一条湿毛巾轻轻搭在妈妈的额头上，然后悄悄关上门说：“妈妈你安心睡觉，我不吵你。”",
+        "effect": "用实际的物理降温行动和提供安静的休息环境，这是对生病家人最成熟、最温暖的照顾！",
+        "receiverReactionText": "(感受到凉爽的毛巾，安心地闭上眼睛)",
+        "receiverReactionEmoji": "😴"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "孩子安静地给我端来一杯温水，然后帮我盖好被子让我好好睡觉。",
+        "isComforting": true,
+        "reasonText": "在身体虚弱时，孩子懂事的照顾和不打扰的贴心，比任何良药都能让我觉得温暖。"
+      },
+      {
+        "id": "ro2",
+        "text": "孩子把电视声音开得特别大，还在房间里跑来跑去大声喧哗。",
+        "isComforting": false,
+        "reasonText": "生病时最怕吵闹，孩子不顾及我的感受制造噪音，会让我觉得头疼欲裂更加难受。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-8",
+    "abilityLevel": "primary",
+    "tags":[
+      "家庭亲情",
+      "生病照顾",
+      "提供安静"
+    ]
+  },
+  {
+    "sceneCode": "care-scene-60",
+    "title": "同桌穿了不同颜色的两只袜子",
+    "imageUrl": "/assets/care_scenes/care60_mismatched_socks.jpg",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "embarrassed",
+    "emotionColorToken": "yellow",
+    "emotionColorLabel": "黄区",
+    "speakerPerspectiveText": "体育课换鞋时，同桌脱下鞋子，大家才发现他今天早上穿错了袜子——一只红色一只蓝色。几个同学指着他的脚笑。同桌赶紧把脚缩回来，羞得脸通红。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你因为早上起晚了出了个很滑稽的洋相被大家发现了，被笑得下不来台。你希望好朋友怎么帮你解围？",
+    "utterances":[
+      {
+        "id": "u1",
+        "type": "action",
+        "text": "也指着他的脚大声说：“哇！你这袜子穿得也太奇怪了吧，你早上闭着眼穿的吗？”",
+        "effect": "当众揭穿并夸大别人的小失误，等于把朋友推向更加难堪的深渊，绝对不可取。",
+        "receiverReactionText": "(脸红到耳根，觉得连朋友都在看笑话)",
+        "receiverReactionEmoji": "😳"
+      },
+      {
+        "id": "u2",
+        "type": "advice",
+        "text": "“你赶紧把鞋穿上藏起来吧，以后晚上睡觉前记得把袜子先配对放好。”",
+        "effect": "在别人尴尬得要死的时候给出“正确但毫无意义”的建议，会显得你像个高高在上的指导者。",
+        "receiverReactionText": "我知道了，你别说了...",
+        "receiverReactionEmoji": "😓"
+      },
+      {
+        "id": "u3",
+        "type": "empathy",
+        "text": "笑着拍拍他说：“这有什么，我以前还把毛衣穿反了一整天呢，你这红蓝配看着还挺潮的！”",
+        "effect": "极高情商的“自我暴露”！用自己更糗的经历去正常化他的失误，甚至把缺点幽默化为优点，瞬间化解尴尬！",
+        "receiverReactionText": "哈哈，真的吗？其实我也觉得颜色挺搭的。",
+        "receiverReactionEmoji": "😂"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u3"
+    ],
+    "receiverOptions":[
+      {
+        "id": "ro1",
+        "text": "同桌没有笑话我，反而告诉我他以前也干过把裤子穿反的糗事，大家笑作一团。",
+        "isComforting": true,
+        "reasonText": "用善意的幽默和自我暴露来替我解围，让我觉得自己不仅不奇怪，还很好玩。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌鄙视地看我一眼说：“真邋遢，你是不是袜子都不洗随便乱穿的。”",
+        "isComforting": false,
+        "reasonText": "无端的猜测和人身攻击是对自尊的严重伤害，完全没有任何同理心可言。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags":[
+      "校园生活",
+      "外貌出丑",
+      "幽默化解",
+      "自我暴露"
+    ]
+  }
+]

@@ -107,7 +107,11 @@ import { RefreshRight } from '@element-plus/icons-vue'
 import { ResourceAPI } from '@/database/resource-api'
 import { ModuleCode, type ResourceItem } from '@/types/module'
 import type { EmotionalBaseEmotion } from '@/types/emotional'
-import { EMOTION_COLOR_PRESETS } from '@/views/resource-center/editors/emotional-resource-contract'
+import {
+  EMOTION_COLOR_PRESETS,
+  normalizeCareSceneEditorModel,
+  normalizeEmotionSceneEditorModel,
+} from '@/views/resource-center/editors/emotional-resource-contract'
 
 interface SceneCard {
   id: number
@@ -203,9 +207,11 @@ function resolveCover(value: string | undefined, fallbackEmoji: string) {
 }
 
 function mapResourceToSceneCard(resource: ResourceItem): SceneCard {
-  const metadata = (resource.metadata || {}) as Record<string, any>
+  const metadata = resource.resourceType === 'care_scene'
+    ? normalizeCareSceneEditorModel(resource.metadata, resource.name)
+    : normalizeEmotionSceneEditorModel(resource.metadata, resource.name)
   const sceneTitle = String(metadata.title || resource.name || '')
-  const sceneEmotion = (metadata.targetEmotion || metadata.receiverEmotion) as EmotionalBaseEmotion | undefined
+  const sceneEmotion = ('targetEmotion' in metadata ? metadata.targetEmotion : metadata.receiverEmotion) as EmotionalBaseEmotion | undefined
   const { colorHex, colorLabel } = deriveEmotionColor(sceneEmotion, metadata.emotionColorHex, metadata.emotionColorLabel)
   const cover = resolveCover(
     (resource.coverImage || metadata.imageUrl || '') as string,

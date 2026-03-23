@@ -50,6 +50,7 @@ import EmotionalInteractionEngine from '@/components/emotional/engine/EmotionalI
 import { compileCareScene } from '@/features/emotional/adapters'
 import type { EmotionalCompiledSessionConfig } from '@/features/emotional/engine/types'
 import type { CareSceneResourceMeta, PersistEmotionalSessionResult } from '@/types/emotional'
+import { normalizeCareSceneEditorModel } from '@/views/resource-center/editors/emotional-resource-contract'
 
 interface CareSceneResourceRecord {
   id: number
@@ -131,7 +132,10 @@ function getActiveDb(): DbLike {
 }
 
 function mapResourceRow(row: any): CareSceneResourceRecord {
-  const metadata = row.meta_data ? JSON.parse(row.meta_data) : {}
+  let metadata = {} as CareSceneResourceMeta & Record<string, any>
+  if (row.meta_data) {
+    metadata = normalizeCareSceneEditorModel(JSON.parse(row.meta_data), row.name)
+  }
   return {
     id: row.id,
     name: row.name,

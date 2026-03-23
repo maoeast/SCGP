@@ -50,6 +50,7 @@ import EmotionalInteractionEngine from '@/components/emotional/engine/EmotionalI
 import { compileEmotionScene } from '@/features/emotional/adapters'
 import type { EmotionalCompiledSessionConfig } from '@/features/emotional/engine/types'
 import type { EmotionSceneResourceMeta, PersistEmotionalSessionResult } from '@/types/emotional'
+import { normalizeEmotionSceneEditorModel } from '@/views/resource-center/editors/emotional-resource-contract'
 
 interface EmotionSceneResourceRecord {
   id: number
@@ -133,7 +134,7 @@ function getActiveDb(): DbLike {
 function mapResourceRow(row: any): EmotionSceneResourceRecord {
   let metadata = {} as EmotionSceneResourceMeta & Record<string, any>
   if (row.meta_data) {
-    metadata = JSON.parse(row.meta_data)
+    metadata = normalizeEmotionSceneEditorModel(JSON.parse(row.meta_data), row.name)
   }
 
   return {

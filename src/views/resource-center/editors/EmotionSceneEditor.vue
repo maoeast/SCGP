@@ -435,6 +435,7 @@ import type {
   EmotionSceneResourceMeta,
   EmotionSceneSolution,
 } from '@/types/emotional'
+import { EMOTIONAL_BASE_EMOTION_OPTIONS } from '@/features/emotional/emotion-catalog'
 import {
   createEmotionScenePrompt,
   createEmotionScenePromptOption,
@@ -460,13 +461,7 @@ const emit = defineEmits<{
 
 const newClue = ref('')
 
-const emotionOptions: Array<{ value: EmotionalBaseEmotion; label: string }> = [
-  { value: 'happy', label: '开心' },
-  { value: 'sad', label: '失落' },
-  { value: 'embarrassed', label: '尴尬' },
-  { value: 'angry', label: '生气' },
-  { value: 'scared', label: '害怕' },
-]
+const emotionOptions: Array<{ value: EmotionalBaseEmotion; label: string }> = EMOTIONAL_BASE_EMOTION_OPTIONS
 
 const difficultyOptions = [
   { label: '1 级', value: 1 },

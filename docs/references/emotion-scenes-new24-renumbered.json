@@ -1,0 +1,2210 @@
+[
+  {
+    "sceneCode": "scene-50",
+    "title": "手里的玩具被一把抢走",
+    "imageUrl": "/assets/scenes/rep001_toy_snatched.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "happy",
+      "sad",
+      "angry",
+      "scared"
+    ],
+    "emotionClues": [
+      "眉头紧紧地皱在一起，眼睛狠狠地瞪着",
+      "牙齿咬紧，双手紧紧攥成了拳头"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_001_cause",
+        "questionType": "cause",
+        "questionText": "明明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "正玩得开心的玩具被别人强行抢走了",
+            "imageUrl": "/icons/snatch_toy.png",
+            "isCorrect": true,
+            "feedbackText": "是的，自己的东西被别人不讲理地抢走，边界受到了侵犯，会让人非常火大。"
+          },
+          {
+            "id": "cause_2",
+            "text": "他自己不想玩这个玩具了",
+            "imageUrl": "/icons/bored_toy.png",
+            "isCorrect": false,
+            "feedbackText": "如果是不想玩了，他会放下玩具走开，而不是攥着拳头瞪人哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_001_need",
+        "questionType": "need",
+        "questionText": "明明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "对方立刻把玩具还给他并道歉",
+            "imageUrl": "/icons/return_toy.png",
+            "isCorrect": true,
+            "feedbackText": "没错，拿回属于自己的东西是平息怒火的第一步。"
+          },
+          {
+            "id": "need_2",
+            "text": "把房间里的其他玩具全都砸烂",
+            "imageUrl": "/icons/smash_toys.png",
+            "isCorrect": false,
+            "feedbackText": "砸坏其他玩具不仅找不回自己的东西，还会制造新的麻烦。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "大声说“这是我的，还给我！”，然后寻求老师的帮助",
+        "imageUrl": "/icons/yell_and_teacher.png",
+        "suitability": "optimal",
+        "explanation": "大声用语言表达拒绝，并寻找大人的规则保护，是最安全有效的做法。"
+      },
+      {
+        "id": "sol_2",
+        "text": "气得坐在地上哇哇大哭，引来大人的注意",
+        "imageUrl": "/icons/angry_cry.png",
+        "suitability": "acceptable",
+        "explanation": "生气时哭出来可以发泄情绪并吸引大人的帮助，但最好能用嘴巴说出原因。"
+      },
+      {
+        "id": "sol_3",
+        "text": "冲上去用力咬对方的手臂，打架抢回来",
+        "imageUrl": "/icons/bite_arm.png",
+        "suitability": "inappropriate",
+        "explanation": "咬人是非常严重的暴力行为，生气绝对不能成为伤害别人身体的理由！"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "4-6",
+    "abilityLevel": "primary",
+    "tags": [
+      "物品被抢",
+      "情绪爆发",
+      "边界感"
+    ]
+  },
+  {
+    "sceneCode": "scene-51",
+    "title": "辛苦画的画掉进了水坑里",
+    "imageUrl": "/assets/scenes/rep002_drawing_in_puddle.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "happy",
+      "sad",
+      "angry",
+      "calm"
+    ],
+    "emotionClues": [
+      "眼眶红红的，大滴的眼泪挂在脸上",
+      "嘴角向下撇着，肩膀无力地耷拉下来"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_002_cause",
+        "questionType": "cause",
+        "questionText": "小华为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "辛苦画了好久的画被脏水彻底毁掉了",
+            "imageUrl": "/icons/ruined_art.png",
+            "isCorrect": true,
+            "feedbackText": "对啦，自己的心血和喜欢的东西被意外毁掉，会让人感到极度的失落和痛心。"
+          },
+          {
+            "id": "cause_2",
+            "text": "他觉得自己画得太难看了",
+            "imageUrl": "/icons/ugly_drawing.png",
+            "isCorrect": false,
+            "feedbackText": "如果是觉得画得不好，他只会默默重画。他现在是因为失去而哭泣。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_002_need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "接纳失去的心血，并得到一个安慰的拥抱",
+            "imageUrl": "/icons/comfort_hug.png",
+            "isCorrect": true,
+            "feedbackText": "没错，在遭遇丧失时，温暖的安抚能最快治愈受伤的心。"
+          },
+          {
+            "id": "need_2",
+            "text": "立刻跳进水坑里打滚把衣服也弄脏",
+            "imageUrl": "/icons/roll_in_puddle.png",
+            "isCorrect": false,
+            "feedbackText": "这样做只会让情况变得更糟，不仅画坏了，衣服也脏了。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "把画捡起来扔进垃圾桶，回家向父母倾诉后重新画一幅",
+        "imageUrl": "/icons/talk_and_redraw.png",
+        "suitability": "optimal",
+        "explanation": "接受现实，向家人寻求情感支持，然后重新开始，这是最坚强的表现。"
+      },
+      {
+        "id": "sol_2",
+        "text": "站在水坑旁边伤心地哭一会儿发泄情绪",
+        "imageUrl": "/icons/cry_puddle.png",
+        "suitability": "acceptable",
+        "explanation": "失去心爱之物哭泣是非常正常的，发泄完情绪后记得要回家哦。"
+      },
+      {
+        "id": "sol_3",
+        "text": "气得把旁边路过同学的画也撕掉",
+        "imageUrl": "/icons/tear_others_art.png",
+        "suitability": "inappropriate",
+        "explanation": "因为自己的不幸就去毁坏别人的东西是非常恶劣的行为，这会让你变成做错事的人。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "物品毁坏",
+      "意外丧失",
+      "自我调节"
+    ]
+  },
+  {
+    "sceneCode": "scene-52",
+    "title": "突然冲出来狂吠的大狗",
+    "imageUrl": "/assets/scenes/rep003_barking_dog.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "scared",
+    "emotionOptions": [
+      "scared",
+      "sad",
+      "angry",
+      "proud"
+    ],
+    "emotionClues": [
+      "眼睛瞪得大大的，瞳孔放大，嘴巴张开",
+      "身体向后退缩，双手本能地挡在胸前"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_003_cause",
+        "questionType": "cause",
+        "questionText": "明明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "被突然冲出来、看起来很凶的大狗吓到了",
+            "imageUrl": "/icons/scary_dog.png",
+            "isCorrect": true,
+            "feedbackText": "是的，突然面临体型巨大的动物的攻击倾向，本能会产生极度的警觉和恐惧。"
+          },
+          {
+            "id": "cause_2",
+            "text": "看到了一只可爱的小奶狗想抱抱",
+            "imageUrl": "/icons/cute_puppy.png",
+            "isCorrect": false,
+            "feedbackText": "想抱可爱的小狗应该会露出开心的笑脸，他现在是拼命往后躲哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_003_need",
+        "questionType": "need",
+        "questionText": "明明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "立刻远离危险的大狗，跑到安全的大人身边",
+            "imageUrl": "/icons/run_to_adult.png",
+            "isCorrect": true,
+            "feedbackText": "没错，在面临危险时，大人是最坚固的保护伞。"
+          },
+          {
+            "id": "need_2",
+            "text": "冲过去对着大狗大喊大叫",
+            "imageUrl": "/icons/yell_at_dog.png",
+            "isCorrect": false,
+            "feedbackText": "大喊大叫不仅赶不走大狗，还可能激怒它咬人，这太危险了！"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "像木头人一样站住不动，不大叫，慢慢呼唤妈妈过来",
+        "imageUrl": "/icons/stand_still.png",
+        "suitability": "optimal",
+        "explanation": "遇到恶狗站着不动是最安全的防卫方式，大狗觉得无趣就会走开。"
+      },
+      {
+        "id": "sol_2",
+        "text": "吓得蹲在地上用手护住头和脖子",
+        "imageUrl": "/icons/cover_head.png",
+        "suitability": "acceptable",
+        "explanation": "这是一种自我保护的本能姿势，可以避免关键部位被咬到。"
+      },
+      {
+        "id": "sol_3",
+        "text": "转身挥舞着手臂疯狂地飞跑",
+        "imageUrl": "/icons/run_wildly.png",
+        "suitability": "inappropriate",
+        "explanation": "千万不能跑！狗有追逐猎物的本能，你一跑它反而会扑上来咬你！"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-6",
+    "abilityLevel": "primary",
+    "tags": [
+      "突发危险",
+      "动物恐惧",
+      "自我保护"
+    ]
+  },
+  {
+    "sceneCode": "scene-53",
+    "title": "在平地上突然绊倒被围观",
+    "imageUrl": "/assets/scenes/rep004_trip_on_flat_ground.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "embarrassed",
+    "emotionOptions": [
+      "calm",
+      "embarrassed",
+      "angry",
+      "sad"
+    ],
+    "emotionClues": [
+      "脸涨得通红，像红苹果一样",
+      "赶紧低着头，眼神躲躲闪闪不敢看周围的人"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_004_cause",
+        "questionType": "cause",
+        "questionText": "小华为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "走在平地上摔了个四脚朝天，被大家盯着看",
+            "imageUrl": "/icons/trip_stared_at.png",
+            "isCorrect": true,
+            "feedbackText": "对啦！因为自己笨拙的小失误而成为大家目光的焦点，会让人觉得非常没有面子。"
+          },
+          {
+            "id": "cause_2",
+            "text": "跑步比赛拿了冠军，大家在为他鼓掌",
+            "imageUrl": "/icons/run_first.png",
+            "isCorrect": false,
+            "feedbackText": "如果是拿了冠军被大家看，那是自豪和害羞。他现在是趴在地上摔疼了哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_004_need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "赶紧站起来拍拍土，让大家不要再盯着他看",
+            "imageUrl": "/icons/stand_up_brush.png",
+            "isCorrect": true,
+            "feedbackText": "没错，迅速结束这个四脚朝天的姿势，尴尬的场面就能马上化解。"
+          },
+          {
+            "id": "need_2",
+            "text": "一直趴在地上装死不起来",
+            "imageUrl": "/icons/play_dead.png",
+            "isCorrect": false,
+            "feedbackText": "一直趴着别人会以为你受了重伤，会引来更多人围观，那就更尴尬了。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "自己笑出声来化解气氛，飞快爬起来说“哎呀没看路”，然后离开",
+        "imageUrl": "/icons/laugh_it_off.png",
+        "suitability": "optimal",
+        "explanation": "用自嘲和幽默来化解突发的洋相，展现了极高的情商，别人不仅不会笑话你还会觉得你性格好。"
+      },
+      {
+        "id": "sol_2",
+        "text": "红着脸一言不发地爬起来，低头快步走开",
+        "imageUrl": "/icons/walk_away_fast.png",
+        "suitability": "acceptable",
+        "explanation": "觉得丢脸想赶快逃离现场是人之常情，只要没有受伤，赶紧离开也是对的。"
+      },
+      {
+        "id": "sol_3",
+        "text": "觉得太丢人了，指着路人大骂：“看什么看！没见过人摔跤啊！”",
+        "imageUrl": "/icons/yell_at_strangers.png",
+        "suitability": "inappropriate",
+        "explanation": "因为自己的失误去迁怒无辜的路人是非常没有礼貌的，这会让你从“出丑”变成“无理取闹”。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "当众出丑",
+      "化解尴尬",
+      "高情商"
+    ]
+  },
+  {
+    "sceneCode": "scene-54",
+    "title": "被不认识的亲戚热情夸奖",
+    "imageUrl": "/assets/scenes/rep005_praised_by_relative.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "shy",
+    "emotionOptions": [
+      "sad",
+      "shy",
+      "angry",
+      "scared"
+    ],
+    "emotionClues": [
+      "脸蛋红扑扑的，带着浅浅的、抿着嘴的笑",
+      "身体不自觉地往妈妈身后躲，眼神有些躲闪"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_005_cause",
+        "questionType": "cause",
+        "questionText": "小华为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "面对不熟悉的阿姨高强度的热情夸赞，觉得有点不好意思",
+            "imageUrl": "/icons/unfamiliar_praise.png",
+            "isCorrect": true,
+            "feedbackText": "是的，接收到正面的善意但又不太习惯成为焦点，就会产生这种腼腆的退缩感。"
+          },
+          {
+            "id": "cause_2",
+            "text": "阿姨正在大声训斥他不懂礼貌",
+            "imageUrl": "/icons/relative_scolding.png",
+            "isCorrect": false,
+            "feedbackText": "如果被训斥他会委屈地哭，你看他现在的嘴角是微微翘起来在笑的哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_005_need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "稍微躲在妈妈身边适应一下，接受这份善意",
+            "imageUrl": "/icons/adapt_mom.png",
+            "isCorrect": true,
+            "feedbackText": "没错，躲在熟悉的妈妈身边能提供安全感，帮助他慢慢接纳夸奖。"
+          },
+          {
+            "id": "need_2",
+            "text": "大喊着让阿姨闭嘴滚出去",
+            "imageUrl": "/icons/yell_at_relative.png",
+            "isCorrect": false,
+            "feedbackText": "阿姨是在表达喜欢，如果这样回应是非常伤人且不懂礼貌的。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "红着脸探出头，小声地对阿姨说一句“谢谢阿姨”",
+        "imageUrl": "/icons/say_thanks_shyly.png",
+        "suitability": "optimal",
+        "explanation": "即使觉得害羞，也用最简单的言语回应了别人的善意，这是非常懂事有教养的表现。"
+      },
+      {
+        "id": "sol_2",
+        "text": "把脸完全埋在妈妈的衣服里，一声不吭",
+        "imageUrl": "/icons/hide_face.png",
+        "suitability": "acceptable",
+        "explanation": "因为害羞躲起来是可以理解的，阿姨和妈妈会明白你只是太腼腆了。"
+      },
+      {
+        "id": "sol_3",
+        "text": "觉得不自在，冲着阿姨吐口水以示抗议",
+        "imageUrl": "/icons/spit_at_relative.png",
+        "suitability": "inappropriate",
+        "explanation": "吐口水是极具攻击性和侮辱性的行为！绝对不能用这种方式来表达自己的害羞。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "家庭社交",
+      "面对夸奖",
+      "腼腆退缩"
+    ]
+  },
+  {
+    "sceneCode": "scene-55",
+    "title": "大扫除被公开表扬负责任",
+    "imageUrl": "/assets/scenes/rep006_praised_cleaning.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "proud",
+    "emotionOptions": [
+      "proud",
+      "sad",
+      "angry",
+      "scared"
+    ],
+    "emotionClues": [
+      "昂首挺胸，站得笔直像个小士兵",
+      "脸上带着极其自信、灿烂的笑容，眼神发光"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_006_cause",
+        "questionType": "cause",
+        "questionText": "李明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "自己不怕脏不怕累的劳动，得到了老师和全班的高度认可",
+            "imageUrl": "/icons/recognized_hard_work.png",
+            "isCorrect": true,
+            "feedbackText": "对啦！靠自己辛勤的汗水换来集体的公开表扬，会激发内心最强烈的自豪感。"
+          },
+          {
+            "id": "cause_2",
+            "text": "他在地上捡到了一块钱",
+            "imageUrl": "/icons/found_money.png",
+            "isCorrect": false,
+            "feedbackText": "捡到钱可能会开心，但这并不能让他骄傲地挺起胸膛接受全班的注视。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_006_need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "大方地接纳荣誉，并继续保持这种优秀的品质",
+            "imageUrl": "/icons/keep_good_work.png",
+            "isCorrect": true,
+            "feedbackText": "没错，让这份自豪转化为继续做个好学生的动力。"
+          },
+          {
+            "id": "need_2",
+            "text": "马上把扫把扔了，说以后再也不打扫卫生了",
+            "imageUrl": "/icons/throw_broom.png",
+            "isCorrect": false,
+            "feedbackText": "这是骄傲自满的表现，老师表扬你是希望你做得更好，而不是从此罢工哦。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "大声对大家说：“谢谢大家，以后班里的卫生包在我身上！”",
+        "imageUrl": "/icons/confident_speech.png",
+        "suitability": "optimal",
+        "explanation": "自信地接纳表扬，并向集体做出有担当的承诺，展现了极其卓越的领袖气质！"
+      },
+      {
+        "id": "sol_2",
+        "text": "开心得一直笑，拿着扫把站在原地不说话",
+        "imageUrl": "/icons/smile_stand_still.png",
+        "suitability": "acceptable",
+        "explanation": "静静地享受这份属于自己的荣光也是可以的，把开心留在心里。"
+      },
+      {
+        "id": "sol_3",
+        "text": "拿着扫把指着其他同学说：“你们都太懒了，都不如我厉害！”",
+        "imageUrl": "/icons/belittle_others.png",
+        "suitability": "inappropriate",
+        "explanation": "因为自己的优秀就去拉踩和贬低其他同学，会瞬间败光大家对你的好感，变得惹人讨厌。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags": [
+      "校园劳动",
+      "获得荣誉",
+      "社会责任感"
+    ]
+  },
+  {
+    "sceneCode": "scene-56",
+    "title": "看牙医害怕机器的声音",
+    "imageUrl": "/assets/scenes/rep007_scared_dentist.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "scared",
+    "emotionOptions": [
+      "happy",
+      "scared",
+      "angry",
+      "calm"
+    ],
+    "emotionClues": [
+      "双手紧紧抓住牙医椅子的扶手，身体拼命往后缩",
+      "眼睛睁得大大的，紧张地盯着医生手里的工具"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_007_cause",
+        "questionType": "cause",
+        "questionText": "小华为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "看牙医时听到可怕的机器声音，害怕会很疼",
+            "imageUrl": "/icons/dentist_drill.png",
+            "isCorrect": true,
+            "feedbackText": "是的！面对陌生、会发出巨大声响并且可能带来疼痛的医疗工具，本能地会感到极度恐惧。"
+          },
+          {
+            "id": "cause_2",
+            "text": "因为他不想上学，故意装病",
+            "imageUrl": "/icons/fake_sick.png",
+            "isCorrect": false,
+            "feedbackText": "如果装病他会偷偷笑或者装出虚弱的样子，但他现在是抓紧椅子发抖哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_007_need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "大人的鼓励陪伴，以及深呼吸来放松身体",
+            "imageUrl": "/icons/breathe_hold_hands.png",
+            "isCorrect": true,
+            "feedbackText": "没错，在医疗环境中，大人的陪伴和自己的深呼吸能最快降低恐惧感。"
+          },
+          {
+            "id": "need_2",
+            "text": "一脚把医生的工具踢飞",
+            "imageUrl": "/icons/kick_tools.png",
+            "isCorrect": false,
+            "feedbackText": "踢飞医疗工具是非常危险的行为，不仅会伤到自己还会伤到医生！"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "闭上眼睛，紧紧抓住爸爸妈妈的手，在心里默默数数",
+        "imageUrl": "/icons/hold_hand_count.png",
+        "suitability": "optimal",
+        "explanation": "通过数数转移注意力和依靠家人，能让你勇敢地度过看牙的难关，你是最棒的小勇士！"
+      },
+      {
+        "id": "sol_2",
+        "text": "害怕得掉眼泪，但还是乖乖张开嘴巴配合医生",
+        "imageUrl": "/icons/cry_but_open_mouth.png",
+        "suitability": "acceptable",
+        "explanation": "觉得害怕哭出来是完全可以的，只要配合医生把牙齿治好就很了不起啦。"
+      },
+      {
+        "id": "sol_3",
+        "text": "大喊大叫，死活不张嘴，还咬医生的手",
+        "imageUrl": "/icons/bite_doctor.png",
+        "suitability": "inappropriate",
+        "explanation": "咬人和大叫不仅治不好牙齿，还会让牙齿越来越痛，这是绝对不允许的。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "医疗恐惧",
+      "克服害怕",
+      "身体紧张"
+    ]
+  },
+  {
+    "sceneCode": "scene-64",
+    "title": "日记本被别人偷看",
+    "imageUrl": "/assets/scenes/rep008_diary_snooped.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "sad",
+      "angry",
+      "proud",
+      "shy"
+    ],
+    "emotionClues": [
+      "眉头倒竖，眼神狠狠地盯着拿着自己日记本的人",
+      "一把抢过本子，胸口因为生气而剧烈起伏"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_008_cause",
+        "questionType": "cause",
+        "questionText": "李明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "自己最私密的日记被别人未经允许偷看了",
+            "imageUrl": "/icons/snoop_diary.png",
+            "isCorrect": true,
+            "feedbackText": "对啦！每个人都有自己的隐私，隐私被侵犯会让人觉得极其愤怒和不被尊重。"
+          },
+          {
+            "id": "cause_2",
+            "text": "日记本的封皮不好看",
+            "imageUrl": "/icons/ugly_cover.png",
+            "isCorrect": false,
+            "feedbackText": "如果是封皮不好看他只会想要换一个，你看他正死死瞪着偷看日记的人呢。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_008_need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "偷看的人立刻向他道歉，并保证绝对不再犯",
+            "imageUrl": "/icons/apology_privacy.png",
+            "isCorrect": true,
+            "feedbackText": "没错，边界被侵犯时，肇事者必须承担责任并道歉才能平息怒火。"
+          },
+          {
+            "id": "need_2",
+            "text": "把偷看的人的日记本也拿出来撕掉",
+            "imageUrl": "/icons/tear_others_diary.png",
+            "isCorrect": false,
+            "feedbackText": "互相报复只会让矛盾升级，解决不了隐私被侵犯的问题。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "大声且严肃地警告对方：“看别人日记是不对的！立刻向我道歉！”",
+        "imageUrl": "/icons/demand_apology.png",
+        "suitability": "optimal",
+        "explanation": "理直气壮地维护自己的隐私边界，用语言制止错误行为，非常有力量！"
+      },
+      {
+        "id": "sol_2",
+        "text": "气得满脸通红，抢回日记本一句话不说就跑开",
+        "imageUrl": "/icons/snatch_and_run.png",
+        "suitability": "acceptable",
+        "explanation": "保护物品逃离现场是可以的，但如果不严肃警告对方，他可能不知道自己错得多严重。"
+      },
+      {
+        "id": "sol_3",
+        "text": "冲过去拿起椅子砸向偷看日记的人",
+        "imageUrl": "/icons/throw_chair.png",
+        "suitability": "inappropriate",
+        "explanation": "不管多生气，使用暴力打人都是极其错误的，这会让你面临比被偷看日记更严重的惩罚。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags": [
+      "隐私被犯",
+      "情绪失控",
+      "维护边界"
+    ]
+  },
+  {
+    "sceneCode": "scene-65",
+    "title": "最喜欢的冰淇淋掉地上了",
+    "imageUrl": "/assets/scenes/rep009_dropped_icecream.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "sad",
+      "happy",
+      "angry",
+      "scared"
+    ],
+    "emotionClues": [
+      "嘴巴向下撇着，眼泪大滴大滴往下掉",
+      "低着头，死死盯着地上融化弄脏的冰淇淋球"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_009_cause",
+        "questionType": "cause",
+        "questionText": "明明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "刚买的、最想吃的冰淇淋掉在地上吃不成了",
+            "imageUrl": "/icons/dropped_icecream.png",
+            "isCorrect": true,
+            "feedbackText": "是的，心爱的食物或物品意外损坏、失去，会让人感到强烈的伤心和失落。"
+          },
+          {
+            "id": "cause_2",
+            "text": "冰淇淋太冰了，吃得牙疼",
+            "imageUrl": "/icons/brain_freeze.png",
+            "isCorrect": false,
+            "feedbackText": "如果牙疼他会捂住嘴巴，但你看冰淇淋是掉在地上坏掉的哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_009_need",
+        "questionType": "need",
+        "questionText": "明明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "需要大人的抱抱安慰，慢慢接受冰淇淋没了的事实",
+            "imageUrl": "/icons/hug_comfort_sad.png",
+            "isCorrect": true,
+            "feedbackText": "没错，在伤心的时候，温暖的抱抱能最快平复心情。"
+          },
+          {
+            "id": "need_2",
+            "text": "不管三七二十一，把地上的脏冰淇淋捡起来吃掉",
+            "imageUrl": "/icons/eat_dirty_food.png",
+            "isCorrect": false,
+            "feedbackText": "掉在地上的东西有很多细菌，吃了会拉肚子生病的，绝对不可以哦。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "拉着大人的手说：“冰淇淋掉了，我好难过”，在大人怀里哭一会儿",
+        "imageUrl": "/icons/say_sad_hug.png",
+        "suitability": "optimal",
+        "explanation": "勇敢说出自己的伤心并寻求大人的安慰，情绪发泄出来之后就会好很多啦。"
+      },
+      {
+        "id": "sol_2",
+        "text": "站在原地看着冰淇淋一直默默流眼泪",
+        "imageUrl": "/icons/cry_silently.png",
+        "suitability": "acceptable",
+        "explanation": "失去喜欢的东西哭泣是很正常的，哭完记得要把地面清理干净哦。"
+      },
+      {
+        "id": "sol_3",
+        "text": "躺在地上打滚，大声尖叫非要大人立刻重新买一个",
+        "imageUrl": "/icons/tantrum_roll.png",
+        "suitability": "inappropriate",
+        "explanation": "在地上打滚发脾气不仅弄脏衣服，还非常不讲理，大人是不会喜欢这种行为的。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-6",
+    "abilityLevel": "primary",
+    "tags": [
+      "失去心爱物",
+      "悲伤流泪",
+      "寻求安慰"
+    ]
+  },
+  {
+    "sceneCode": "scene-66",
+    "title": "独立拼好了一千块的拼图",
+    "imageUrl": "/assets/scenes/rep010_finished_puzzle.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "proud",
+    "emotionOptions": [
+      "sad",
+      "embarrassed",
+      "proud",
+      "scared"
+    ],
+    "emotionClues": [
+      "双手叉腰，下巴高高抬起，非常神气",
+      "脸上挂着极其灿烂、自信的大笑容"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_010_cause",
+        "questionType": "cause",
+        "questionText": "小华为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "靠自己的耐心和努力，完成了一个极其困难的超级大拼图",
+            "imageUrl": "/icons/finish_hard_puzzle.png",
+            "isCorrect": true,
+            "feedbackText": "是的！克服困难完成了一件了不起的事情，这种靠自己赢得的胜利最让人骄傲。"
+          },
+          {
+            "id": "cause_2",
+            "text": "同学帮他把所有的拼图都拼好了",
+            "imageUrl": "/icons/friend_did_it.png",
+            "isCorrect": false,
+            "feedbackText": "如果是别人代劳的，就不会有这么强烈的自豪感了，这是他自己一个人完成的杰作！"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_010_need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "向家人展示自己的作品，分享成功的喜悦",
+            "imageUrl": "/icons/show_parents_proud.png",
+            "isCorrect": true,
+            "feedbackText": "没错，成就感是需要被看见和分享的，家人的夸奖会让他更加自信。"
+          },
+          {
+            "id": "need_2",
+            "text": "立刻把拼图全砸乱，假装没拼过",
+            "imageUrl": "/icons/smash_puzzle.png",
+            "isCorrect": false,
+            "feedbackText": "好不容易拼好的杰作，马上毁掉太让人伤心啦。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "开心地叫来爸爸妈妈：“快看！这是我自己拼好的！”",
+        "imageUrl": "/icons/call_parents_look.png",
+        "suitability": "optimal",
+        "explanation": "大方地展示自己的努力成果，接受大人的赞美，这能极大地提升你的自信心！"
+      },
+      {
+        "id": "sol_2",
+        "text": "一个人站在桌子前面开心地看了很久",
+        "imageUrl": "/icons/stare_happily.png",
+        "suitability": "acceptable",
+        "explanation": "独自享受成功的喜悦也是非常美好的，只要不一直盯着看让眼睛太累就好。"
+      },
+      {
+        "id": "sol_3",
+        "text": "跑去嘲笑弟弟：“我拼了1000块，你连10块的都不会拼，真笨！”",
+        "imageUrl": "/icons/mock_sibling.png",
+        "suitability": "inappropriate",
+        "explanation": "因为自己的厉害就去拉踩和嘲笑别人，会让你变成一个骄傲自大惹人厌的人哦。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "完成挑战",
+      "自信展示",
+      "分享成就"
+    ]
+  },
+  {
+    "sceneCode": "scene-67",
+    "title": "热情挥手发现对方在和别人打招呼",
+    "imageUrl": "/assets/scenes/rep011_wrong_wave.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "embarrassed",
+    "emotionOptions": [
+      "happy",
+      "embarrassed",
+      "angry",
+      "calm"
+    ],
+    "emotionClues": [
+      "举在半空中挥舞的手突然僵住",
+      "脸颊瞬间变得通红，很不自然地转过头去不敢看人"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_011_cause",
+        "questionType": "cause",
+        "questionText": "李明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "以为别人在和自己打招呼，结果发现对方是在看自己身后的人",
+            "imageUrl": "/icons/wave_back_mistake.png",
+            "isCorrect": true,
+            "feedbackText": "对啦，表错情会让人瞬间陷入社交尴尬，觉得非常丢脸和无地自容。"
+          },
+          {
+            "id": "cause_2",
+            "text": "看到好朋友走过来，高兴得满脸通红",
+            "imageUrl": "/icons/wave_friend_happy.png",
+            "isCorrect": false,
+            "feedbackText": "如果是遇到朋友他会大步走过去，现在他是手僵在半空中转过头哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_011_need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "赶紧放下手，用自然的小动作化解这个误会",
+            "imageUrl": "/icons/put_hand_down_natural.png",
+            "isCorrect": true,
+            "feedbackText": "没错，迅速终止错误动作并转移注意力，能最快脱离尴尬的处境。"
+          },
+          {
+            "id": "need_2",
+            "text": "大喊大叫逼着对方必须和自己打招呼",
+            "imageUrl": "/icons/force_greeting.png",
+            "isCorrect": false,
+            "feedbackText": "对方根本不认识你，强迫别人打招呼会让你显得更加奇怪。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "顺势摸摸自己的后脑勺或者整理头发，假装只是在伸懒腰，自然走开",
+        "imageUrl": "/icons/pretend_stretch.png",
+        "suitability": "optimal",
+        "explanation": "极其丝滑的高情商处理！用连贯的自然动作化解突发尴尬，不仅保护了面子还没人会发现。"
+      },
+      {
+        "id": "sol_2",
+        "text": "红着脸迅速把手缩回来，低着头快步跑掉",
+        "imageUrl": "/icons/run_away_blushing.png",
+        "suitability": "acceptable",
+        "explanation": "觉得丢脸跑掉是人的本能反应，虽然有点明显，但能快速逃离尴尬的现场。"
+      },
+      {
+        "id": "sol_3",
+        "text": "恼羞成怒地指着对方骂：“你不和我打招呼你挥什么手啊！”",
+        "imageUrl": "/icons/blame_others_wave.png",
+        "suitability": "inappropriate",
+        "explanation": "因为自己的小失误就去迁怒别人，这是非常没有素质、无理取闹的表现。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags": [
+      "社交失误",
+      "化解尴尬",
+      "高情商应急"
+    ]
+  },
+  {
+    "sceneCode": "scene-68",
+    "title": "躲在妈妈身后不敢打招呼",
+    "imageUrl": "/assets/scenes/rep012_hiding_behind_mom.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "shy",
+    "emotionOptions": [
+      "angry",
+      "sad",
+      "shy",
+      "proud"
+    ],
+    "emotionClues": [
+      "身体紧紧缩在妈妈的腿后面，只露出半个脑袋",
+      "脸红扑扑的，眼神躲闪不敢看对面的陌生阿姨"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_012_cause",
+        "questionType": "cause",
+        "questionText": "明明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "遇到了不认识的大人，不知道该怎么开口说话，觉得不好意思",
+            "imageUrl": "/icons/meet_stranger_shy.png",
+            "isCorrect": true,
+            "feedbackText": "是的，遇到陌生人的社交场合，小朋友本能地会产生腼腆和退缩的害羞情绪。"
+          },
+          {
+            "id": "cause_2",
+            "text": "妈妈不给他买玩具，他正在生妈妈的气",
+            "imageUrl": "/icons/mad_at_mom.png",
+            "isCorrect": false,
+            "feedbackText": "如果是生妈妈的气，他会推开妈妈大哭的。你看他正紧紧抓着妈妈寻求保护哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_012_need",
+        "questionType": "need",
+        "questionText": "明明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "躲在妈妈身边一会儿，等自己觉得安全了再慢慢打招呼",
+            "imageUrl": "/icons/safe_behind_mom.png",
+            "isCorrect": true,
+            "feedbackText": "没错，妈妈的身边是最安全的港湾，可以让他有时间慢慢适应陌生人。"
+          },
+          {
+            "id": "need_2",
+            "text": "用力踢那个不认识的阿姨一脚",
+            "imageUrl": "/icons/kick_stranger.png",
+            "isCorrect": false,
+            "feedbackText": "踢人是非常非常不礼貌的暴力行为，绝对不能这么做哦！"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "牵着妈妈的手，探出小脑袋小声对阿姨说一句“阿姨好”",
+        "imageUrl": "/icons/say_hello_shyly.png",
+        "suitability": "optimal",
+        "explanation": "克服一点点害羞，用勇敢的声音打个招呼，大家都会夸你是个懂礼貌的好孩子！"
+      },
+      {
+        "id": "sol_2",
+        "text": "不敢说话，只躲在妈妈身后对着阿姨挥挥小手",
+        "imageUrl": "/icons/wave_hand_shyly.png",
+        "suitability": "acceptable",
+        "explanation": "如果实在害羞不敢说话，挥手也是一种很可爱、很有礼貌的打招呼方式哦。"
+      },
+      {
+        "id": "sol_3",
+        "text": "大声冲着阿姨喊：“我讨厌你，你走开！”",
+        "imageUrl": "/icons/yell_go_away.png",
+        "suitability": "inappropriate",
+        "explanation": "因为自己害羞就对别人大喊大叫，是非常没有礼貌的，这会让妈妈和阿姨都很伤心。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-6",
+    "abilityLevel": "primary",
+    "tags": [
+      "陌生人社交",
+      "腼腆退缩",
+      "礼貌回应"
+    ]
+  },
+  {
+    "sceneCode": "scene-69",
+    "title": "收到梦寐以求的小狗礼物",
+    "imageUrl": "/assets/scenes/rep013_puppy_gift.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "happy",
+    "emotionOptions": [
+      "sad",
+      "happy",
+      "angry",
+      "scared"
+    ],
+    "emotionClues": [
+      "嘴角高高上扬，露出开心的牙齿",
+      "双手激动地抱紧小狗，眼睛笑成了弯弯的月牙"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_013_cause",
+        "questionType": "cause",
+        "questionText": "明明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "收到了自己一直特别想要的宠物小狗",
+            "imageUrl": "/icons/got_puppy.png",
+            "isCorrect": true,
+            "feedbackText": "对啦！心愿实现，得到了最喜欢的东西，会让人感觉心里像开了花一样快乐。"
+          },
+          {
+            "id": "cause_2",
+            "text": "他被小狗咬了一口",
+            "imageUrl": "/icons/dog_bite.png",
+            "isCorrect": false,
+            "feedbackText": "如果被咬了他会疼得大哭，你看他现在正笑眯眯地紧紧抱着小狗哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_013_need",
+        "questionType": "need",
+        "questionText": "明明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "大声向送礼物的爸爸妈妈说谢谢，然后和小狗一起玩",
+            "imageUrl": "/icons/say_thanks_play.png",
+            "isCorrect": true,
+            "feedbackText": "没错，表达感谢并享受快乐，是现在最棒的事情！"
+          },
+          {
+            "id": "need_2",
+            "text": "立刻把小狗扔到门外去",
+            "imageUrl": "/icons/throw_puppy_out.png",
+            "isCorrect": false,
+            "feedbackText": "这是他最喜欢的礼物，怎么会把它扔掉呢？绝对不可以扔小动物哦。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "开心地抱着爸爸妈妈亲一口，说：“谢谢你们，我太喜欢啦！”",
+        "imageUrl": "/icons/hug_parents_thanks.png",
+        "suitability": "optimal",
+        "explanation": "快乐是需要分享的！把你的开心和感谢表达出来，送礼物的人也会觉得非常幸福。"
+      },
+      {
+        "id": "sol_2",
+        "text": "开心得一句话都不说，直接抱着小狗在地上打滚玩",
+        "imageUrl": "/icons/play_with_puppy.png",
+        "suitability": "acceptable",
+        "explanation": "沉浸在快乐中自己玩耍是可以的，但如果能跟爸爸妈妈说句谢谢就更好啦。"
+      },
+      {
+        "id": "sol_3",
+        "text": "觉得小狗不够大，生气地踢小狗一脚说要换一个",
+        "imageUrl": "/icons/kick_puppy.png",
+        "suitability": "inappropriate",
+        "explanation": "虐待小动物和对礼物挑三拣四是非常恶劣的行为，这会让父母伤透心。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-8",
+    "abilityLevel": "primary",
+    "tags": [
+      "收到礼物",
+      "愿望实现",
+      "表达感谢"
+    ]
+  },
+  {
+    "sceneCode": "scene-70",
+    "title": "排队玩滑梯被强行插队",
+    "imageUrl": "/assets/scenes/rep014_slide_cut_line.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "happy",
+      "sad",
+      "angry",
+      "proud"
+    ],
+    "emotionClues": [
+      "紧紧皱着眉头，眼睛愤怒地瞪着前面插队的人",
+      "双手叉腰，身体前倾，一副要吵架的样子"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_014_cause",
+        "questionType": "cause",
+        "questionText": "小华为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "自己乖乖排队，却被不遵守规则的人强行插队抢了位置",
+            "imageUrl": "/icons/cut_in_line.png",
+            "isCorrect": true,
+            "feedbackText": "是的！当自己遵守规则却遭遇不公平时，边界被侵犯，会让人觉得非常火大。"
+          },
+          {
+            "id": "cause_2",
+            "text": "他觉得自己玩滑梯太害怕了",
+            "imageUrl": "/icons/scared_of_slide.png",
+            "isCorrect": false,
+            "feedbackText": "如果害怕他会往后躲。你看他现在双手叉腰瞪着眼，这是在生气哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_014_need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "插队的人立刻离开，排到队伍的最后面去",
+            "imageUrl": "/icons/go_to_back.png",
+            "isCorrect": true,
+            "feedbackText": "没错，恢复公平的秩序，保护自己的权利是他现在的需求。"
+          },
+          {
+            "id": "need_2",
+            "text": "一把将插队的人从滑梯上推下去",
+            "imageUrl": "/icons/push_off_slide.png",
+            "isCorrect": false,
+            "feedbackText": "在滑梯上推人会发生严重的受伤事故！不管多生气都不能动手伤人。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "大声地对他说：“请你不要插队，大家都在排队！”，如果他不听就告诉老师",
+        "imageUrl": "/icons/speak_up_and_teacher.png",
+        "suitability": "optimal",
+        "explanation": "理直气壮地用语言维护规则，并寻求大人的帮助，这是最勇敢、最正确的做法！"
+      },
+      {
+        "id": "sol_2",
+        "text": "气得在原地跺脚，最后忍气吞声让他先玩",
+        "imageUrl": "/icons/stomp_and_yield.png",
+        "suitability": "acceptable",
+        "explanation": "为了不惹麻烦选择让步是可以的，但这会让你心里一直觉得很憋屈、不公平。"
+      },
+      {
+        "id": "sol_3",
+        "text": "冲过去死死咬住插队人的手背，和他打架",
+        "imageUrl": "/icons/bite_and_fight.png",
+        "suitability": "inappropriate",
+        "explanation": "咬人和打架不仅解决不了问题，还会让你成为违反纪律、受惩罚的人！"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "遭遇不公",
+      "破坏规则",
+      "情绪失控"
+    ]
+  },
+  {
+    "sceneCode": "scene-71",
+    "title": "安静的考场上肚子大声咕噜叫",
+    "imageUrl": "/assets/scenes/rep015_stomach_growl_exam.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "embarrassed",
+    "emotionOptions": [
+      "embarrassed",
+      "angry",
+      "happy",
+      "calm"
+    ],
+    "emotionClues": [
+      "脸瞬间红到了耳朵根，神情极度不自然",
+      "把头埋得很低，恨不得钻进课桌里，一只手尴尬地捂着肚子"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_015_cause",
+        "questionType": "cause",
+        "questionText": "李明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "在非常安静的环境里，身体发出了巨大的声音，引来了同学们的目光",
+            "imageUrl": "/icons/loud_stomach.png",
+            "isCorrect": true,
+            "feedbackText": "对啦，不可控的生理现象在公共场合引起大家注意时，会让人觉得非常难为情。"
+          },
+          {
+            "id": "cause_2",
+            "text": "他发现考试的题目太简单了",
+            "imageUrl": "/icons/easy_test.png",
+            "isCorrect": false,
+            "feedbackText": "如果题目简单他会自信地笑，但他现在满脸通红恨不得躲起来呢。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_015_need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "大家不再看他，让他能假装没事继续写试卷",
+            "imageUrl": "/icons/ignore_and_write.png",
+            "isCorrect": true,
+            "feedbackText": "没错，只要大家的视线移开，这种丢脸的感觉很快就会过去。"
+          },
+          {
+            "id": "need_2",
+            "text": "立刻站起来给大家跳个舞",
+            "imageUrl": "/icons/dance_in_exam.png",
+            "isCorrect": false,
+            "feedbackText": "在考场跳舞是严重违反纪律的，这会让场面更加尴尬。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "做个深呼吸，自己也觉得好笑地微微低头，然后集中精神继续答题",
+        "imageUrl": "/icons/breathe_keep_writing.png",
+        "suitability": "optimal",
+        "explanation": "坦然接受身体的小意外，不被别人的目光打扰，专注眼前的任务，这是顶级的情绪控制力。"
+      },
+      {
+        "id": "sol_2",
+        "text": "红着脸趴在桌子上装死，不敢抬起头看卷子",
+        "imageUrl": "/icons/play_dead_desk.png",
+        "suitability": "acceptable",
+        "explanation": "觉得丢脸想躲避是很正常的反应，但这样会浪费考试的时间哦。"
+      },
+      {
+        "id": "sol_3",
+        "text": "恼羞成怒地拍桌子大吼：“看什么看！谁肚子没叫过！”",
+        "imageUrl": "/icons/yell_at_exam.png",
+        "suitability": "inappropriate",
+        "explanation": "在考场大声喧哗不仅极其没有礼貌，还会被老师判定为作弊或扰乱考场纪律！"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags": [
+      "生理尴尬",
+      "公众出丑",
+      "自我调节"
+    ]
+  },
+  {
+    "sceneCode": "scene-72",
+    "title": "好朋友转学离开了",
+    "imageUrl": "/assets/scenes/rep016_friend_moved_away.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "sad",
+      "happy",
+      "angry",
+      "scared"
+    ],
+    "emotionClues": [
+      "眼泪不停地流下来，眼眶又红又肿",
+      "紧紧抓着朋友送的礼物，垂头丧气地坐在座位上"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_016_cause",
+        "questionType": "cause",
+        "questionText": "小华为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "最要好的朋友去外地读书了，以后很难见到了",
+            "imageUrl": "/icons/friend_moving.png",
+            "isCorrect": true,
+            "feedbackText": "是的，和最亲密的人分别，舍不得的感情会让人体会到深深的悲伤和孤独。"
+          },
+          {
+            "id": "cause_2",
+            "text": "因为朋友没把这件礼物送给他",
+            "imageUrl": "/icons/want_gift.png",
+            "isCorrect": false,
+            "feedbackText": "礼物就在他的手里呢，他哭是因为送礼物的那个人离开了。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_016_need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "痛痛快快地哭一场，并在心里祝朋友在新学校一切都好",
+            "imageUrl": "/icons/cry_and_bless.png",
+            "isCorrect": true,
+            "feedbackText": "没错，接受离别的痛苦，把思念化作祝福，是疗愈悲伤的最好方式。"
+          },
+          {
+            "id": "need_2",
+            "text": "马上打电话把朋友痛骂一顿",
+            "imageUrl": "/icons/scold_friend.png",
+            "isCorrect": false,
+            "feedbackText": "朋友搬家不是他的错，骂朋友不仅解决不了难过，还会伤害彼此的感情。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "擦干眼泪，把朋友的礼物珍藏起来，决定以后周末给他打电话",
+        "imageUrl": "/icons/keep_gift_call.png",
+        "suitability": "optimal",
+        "explanation": "学会和朋友体面地告别，并用新的方式保持联系，说明你长大了、变得坚强了。"
+      },
+      {
+        "id": "sol_2",
+        "text": "一整天都趴在桌子上哭，什么课都听不进去",
+        "imageUrl": "/icons/cry_all_day.png",
+        "suitability": "acceptable",
+        "explanation": "因为太伤心而无法集中注意力是可以理解的，给自己一点时间慢慢恢复吧。"
+      },
+      {
+        "id": "sol_3",
+        "text": "气得把朋友送的礼物狠狠砸在地上踩烂",
+        "imageUrl": "/icons/smash_gift.png",
+        "suitability": "inappropriate",
+        "explanation": "把离别的痛苦变成搞破坏，不仅摧毁了你们友谊的纪念，事后你也会非常后悔的。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "分离焦虑",
+      "友谊",
+      "接纳现实"
+    ]
+  },
+  {
+    "sceneCode": "scene-73",
+    "title": "第一次学会骑两轮自行车",
+    "imageUrl": "/assets/scenes/rep017_ride_bike_first_time.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "proud",
+    "emotionOptions": [
+      "scared",
+      "proud",
+      "sad",
+      "embarrassed"
+    ],
+    "emotionClues": [
+      "昂首挺胸地稳稳坐在行驶的自行车上",
+      "脸上满是自信、灿烂的笑容，还开心地跟爸爸挥手"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_017_cause",
+        "questionType": "cause",
+        "questionText": "小华为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "克服了摔倒的困难，靠自己掌握了骑自行车的技能",
+            "imageUrl": "/icons/learned_bike.png",
+            "isCorrect": true,
+            "feedbackText": "对啦！通过无数次练习终于学会了一项很酷的新本领，这种成就感最让人骄傲。"
+          },
+          {
+            "id": "cause_2",
+            "text": "他发现这辆自行车坏了骑不动",
+            "imageUrl": "/icons/broken_bike.png",
+            "isCorrect": false,
+            "feedbackText": "如果车坏了他会着急或者难过，但现在他正稳稳地骑在路上开心地笑呢。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_017_need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "听到爸爸妈妈的夸奖，并继续开心地练习",
+            "imageUrl": "/icons/parents_praise_bike.png",
+            "isCorrect": true,
+            "feedbackText": "没错，成就感需要家人的见证，鼓励能让他把车骑得更稳。"
+          },
+          {
+            "id": "need_2",
+            "text": "立刻闭上眼睛双手离开车把",
+            "imageUrl": "/icons/no_hands_eyes_closed.png",
+            "isCorrect": false,
+            "feedbackText": "刚学会骑车就做这么危险的动作，一定会摔得头破血流的！"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "开心地大喊：“爸爸你看！我终于学会啦！”，然后继续专心看路",
+        "imageUrl": "/icons/shout_look_ahead.png",
+        "suitability": "optimal",
+        "explanation": "大方地展示自己的进步，同时不忘注意安全，你是一个聪明又棒的小骑手！"
+      },
+      {
+        "id": "sol_2",
+        "text": "一个人得意地抿着嘴笑，什么也不说，继续在空地上绕圈",
+        "imageUrl": "/icons/ride_quietly_smile.png",
+        "suitability": "acceptable",
+        "explanation": "静静地体会自己长大的感觉也是很美好的，只要保证安全就好。"
+      },
+      {
+        "id": "sol_3",
+        "text": "为了炫耀，故意骑着车往人多的地方冲",
+        "imageUrl": "/icons/ride_into_crowd.png",
+        "suitability": "inappropriate",
+        "explanation": "为了虚荣心去危险的地方炫耀，不仅会撞伤别人，还会把自己的喜剧变成悲剧。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "掌握新技能",
+      "克服困难",
+      "展示自信"
+    ]
+  },
+  {
+    "sceneCode": "scene-74",
+    "title": "收到同学亲手做的新年贺卡",
+    "imageUrl": "/assets/scenes/rep018_handmade_card.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "shy",
+    "emotionOptions": [
+      "angry",
+      "shy",
+      "sad",
+      "scared"
+    ],
+    "emotionClues": [
+      "低着头不敢看对方的眼睛，脸颊泛起了一阵红晕",
+      "双手接过贺卡，嘴角带着腼腆开心的微笑"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_018_cause",
+        "questionType": "cause",
+        "questionText": "李明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "意外收到了同学用心准备的礼物，感受到了别人的好意",
+            "imageUrl": "/icons/receive_handmade_card.png",
+            "isCorrect": true,
+            "feedbackText": "是的，接收到同伴特别的善意和关注，内心会觉得非常高兴但又有些难为情。"
+          },
+          {
+            "id": "cause_2",
+            "text": "同学在贺卡里写了骂他的话",
+            "imageUrl": "/icons/mean_card.png",
+            "isCorrect": false,
+            "feedbackText": "如果看到骂人的话他会很生气或难过，你看他现在嘴角是微微翘起来笑的哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_018_need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "收下这份心意，并用礼貌的方式回应同学",
+            "imageUrl": "/icons/accept_and_thank.png",
+            "isCorrect": true,
+            "feedbackText": "没错，别人表达了友善，我们也应该勇敢地接纳并表达感谢。"
+          },
+          {
+            "id": "need_2",
+            "text": "把贺卡当面撕成两半",
+            "imageUrl": "/icons/tear_card.png",
+            "isCorrect": false,
+            "feedbackText": "这是极其没礼貌的举动！会把送贺卡的同学气哭的。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "抬起头微微一笑，真诚地说：“谢谢你，贺卡真漂亮，新年快乐！”",
+        "imageUrl": "/icons/smile_thanks_newyear.png",
+        "suitability": "optimal",
+        "explanation": "克服腼腆，大方地给出夸奖和祝福，你们一定会成为更好的朋友。"
+      },
+      {
+        "id": "sol_2",
+        "text": "红着脸飞快地把贺卡塞进书包，小声说句谢谢就跑开",
+        "imageUrl": "/icons/hide_card_run.png",
+        "suitability": "acceptable",
+        "explanation": "因为不好意思逃跑是可以理解的，同学也能看出来你其实很高兴收到礼物。"
+      },
+      {
+        "id": "sol_3",
+        "text": "觉得被别人送东西很丢脸，大喊：“我才不稀罕你的东西！”并扔回去",
+        "imageUrl": "/icons/throw_card_back.png",
+        "suitability": "inappropriate",
+        "explanation": "因为掩饰自己的害羞而去伤害别人，会让你变成一个冷漠、不领情的人。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags": [
+      "同伴交往",
+      "收到礼物",
+      "腼腆应对"
+    ]
+  },
+  {
+    "sceneCode": "scene-75",
+    "title": "在沙滩上安静地堆沙堡",
+    "imageUrl": "/assets/scenes/rep019_building_sandcastle.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "calm",
+    "emotionOptions": [
+      "angry",
+      "calm",
+      "scared",
+      "sad"
+    ],
+    "emotionClues": [
+      "身体放松，专心致志地拿着小铲子玩沙子",
+      "眉毛平展，嘴角带着非常放松平和的表情"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_019_cause",
+        "questionType": "cause",
+        "questionText": "明明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "在海边安静地做着自己喜欢的事情，没有打扰",
+            "imageUrl": "/icons/quiet_beach.png",
+            "isCorrect": true,
+            "feedbackText": "对啦，专心做自己喜欢的、没有压力的手工活动，会让心情像水面一样平静。"
+          },
+          {
+            "id": "cause_2",
+            "text": "他找不到回家的路了",
+            "imageUrl": "/icons/lost_way.png",
+            "isCorrect": false,
+            "feedbackText": "如果迷路了他会害怕得大哭。你看他现在非常放松地在玩沙子哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_019_need",
+        "questionType": "need",
+        "questionText": "明明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "保持安静的环境，继续享受这段放松的时光",
+            "imageUrl": "/icons/enjoy_peace.png",
+            "isCorrect": true,
+            "feedbackText": "没错，不被打扰地沉浸在自己的小世界里，是非常美好的事情。"
+          },
+          {
+            "id": "need_2",
+            "text": "马上把别人的沙堡全踢倒",
+            "imageUrl": "/icons/kick_sandcastle.png",
+            "isCorrect": false,
+            "feedbackText": "搞破坏是非常惹人讨厌的行为，这会打破沙滩上平静快乐的氛围。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "继续专注地搭自己的沙堡，享受阳光和海风",
+        "imageUrl": "/icons/focus_sandcastle.png",
+        "suitability": "optimal",
+        "explanation": "享受平静、独处的时光也是一种非常棒的能力，能让大脑得到充分的休息。"
+      },
+      {
+        "id": "sol_2",
+        "text": "轻轻地问旁边的小朋友：“我们能一起搭一个大城堡吗？”",
+        "imageUrl": "/icons/ask_to_play.png",
+        "suitability": "acceptable",
+        "explanation": "友善地发起社交邀请也是可以的，一起玩可以把平静变成开心。"
+      },
+      {
+        "id": "sol_3",
+        "text": "突然大声尖叫，把沙子扬得到处都是，弄进别人眼睛里",
+        "imageUrl": "/icons/throw_sand.png",
+        "suitability": "inappropriate",
+        "explanation": "沙子飞进眼睛会非常痛！乱扬沙子是极度危险和没有礼貌的行为。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-6",
+    "abilityLevel": "primary",
+    "tags": [
+      "独处放松",
+      "专注",
+      "环境舒适"
+    ]
+  },
+  {
+    "sceneCode": "scene-76",
+    "title": "最喜欢的贴纸书被人撕坏",
+    "imageUrl": "/assets/scenes/rep020_torn_sticker_book.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "angry",
+    "emotionOptions": [
+      "happy",
+      "calm",
+      "angry",
+      "proud"
+    ],
+    "emotionClues": [
+      "瞪大眼睛怒视着对方，眉头紧紧拧在一起",
+      "双手紧紧抓着撕坏的书，胸口因为生气而剧烈起伏"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_020_cause",
+        "questionType": "cause",
+        "questionText": "小华为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "心爱的私人物品被别人故意破坏了",
+            "imageUrl": "/icons/torn_book_anger.png",
+            "isCorrect": true,
+            "feedbackText": "是的，自己的宝贝没有被别人好好爱护甚至被毁坏，边界被严重侵犯，会让人极其火大。"
+          },
+          {
+            "id": "cause_2",
+            "text": "他觉得自己贴纸贴得不好看",
+            "imageUrl": "/icons/ugly_stickers.png",
+            "isCorrect": false,
+            "feedbackText": "如果是自己没贴好，他只会重新贴。他现在正死死盯着那个撕书的同学呢。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_020_need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "破坏者必须道歉，并且赔偿一本新的贴纸书",
+            "imageUrl": "/icons/demand_compensation.png",
+            "isCorrect": true,
+            "feedbackText": "没错，犯了错的人必须要承担责任，这是化解怒火的必要条件。"
+          },
+          {
+            "id": "need_2",
+            "text": "立刻把破坏者的衣服也撕烂",
+            "imageUrl": "/icons/tear_clothes.png",
+            "isCorrect": false,
+            "feedbackText": "以暴制暴是不对的，撕别人的衣服会让你也变成做错事的坏孩子。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "大声严厉地对他说：“你不能撕我的书！立刻赔我一本新的！”，然后拉着他去找老师",
+        "imageUrl": "/icons/yell_and_teacher.png",
+        "suitability": "optimal",
+        "explanation": "理直气壮地维护自己的权利，并要求对方承担责任，借助老师的帮助是最理智的做法。"
+      },
+      {
+        "id": "sol_2",
+        "text": "气得哇哇大哭，把坏掉的书扔在地上抗议",
+        "imageUrl": "/icons/cry_and_throw.png",
+        "suitability": "acceptable",
+        "explanation": "因为生气委屈哭出来是可以的，但这不能让那个同学受到应有的惩罚。"
+      },
+      {
+        "id": "sol_3",
+        "text": "冲上去一把将对方的脸抓破，和他扭打在一起",
+        "imageUrl": "/icons/scratch_face.png",
+        "suitability": "inappropriate",
+        "explanation": "打架和抓人是非常恶劣的暴力行为，这会让你面临严厉的校规处分，绝对不可以！"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "物品被毁",
+      "维护边界",
+      "情绪失控"
+    ]
+  },
+  {
+    "sceneCode": "scene-77",
+    "title": "走错班级被全班同学盯着看",
+    "imageUrl": "/assets/scenes/rep021_wrong_classroom.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "embarrassed",
+    "emotionOptions": [
+      "happy",
+      "embarrassed",
+      "angry",
+      "scared"
+    ],
+    "emotionClues": [
+      "站在门口整个人僵住了，不知所措地站在原地",
+      "脸瞬间涨得通红，尴尬地抠着衣角，不敢和里面的同学对视"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_021_cause",
+        "questionType": "cause",
+        "questionText": "李明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "迷糊走错了教室，引发了全班陌生同学的齐刷刷注视",
+            "imageUrl": "/icons/walk_wrong_class.png",
+            "isCorrect": true,
+            "feedbackText": "是的！犯了低级的小失误并突然成为一群陌生人的焦点，会让人觉得非常丢脸和难为情。"
+          },
+          {
+            "id": "cause_2",
+            "text": "老师正在讲台上表扬他",
+            "imageUrl": "/icons/teacher_praise.png",
+            "isCorrect": false,
+            "feedbackText": "如果被表扬他会觉得害羞且自豪，但他现在是僵在门口，面对着全班陌生的脸孔哦。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_021_need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "赶紧离开这个不属于自己的教室，脱离大家的视线",
+            "imageUrl": "/icons/leave_classroom.png",
+            "isCorrect": true,
+            "feedbackText": "没错，只要退出门外，远离这个围观环境，尴尬就会立刻消失。"
+          },
+          {
+            "id": "need_2",
+            "text": "随便找个空座位坐下装作是这个班的人",
+            "imageUrl": "/icons/sit_fake_student.png",
+            "isCorrect": false,
+            "feedbackText": "这不仅会更尴尬，还会因为没去自己的班级上课而被老师算作旷课哦。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "红着脸微笑着说一句“对不起走错了”，然后赶紧退出去关上门",
+        "imageUrl": "/icons/say_sorry_leave.png",
+        "suitability": "optimal",
+        "explanation": "大方承认失误，礼貌道歉并迅速撤离，这是非常得体的高情商应对方法！"
+      },
+      {
+        "id": "sol_2",
+        "text": "吓得一句话不敢说，僵了两秒钟后猛地掉头跑掉",
+        "imageUrl": "/icons/run_away_fast.png",
+        "suitability": "acceptable",
+        "explanation": "觉得丢脸跑掉是本能反应，大家都能理解你走错教室的慌张。"
+      },
+      {
+        "id": "sol_3",
+        "text": "觉得没面子，恼羞成怒地指着里面的人骂：“看什么看！没见过走错路的啊！”",
+        "imageUrl": "/icons/yell_at_class.png",
+        "suitability": "inappropriate",
+        "explanation": "明明是自己犯了错，却对无辜的同学发脾气，是非常没有礼貌的行为。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "迷糊出错",
+      "公众出丑",
+      "化解尴尬"
+    ]
+  },
+  {
+    "sceneCode": "scene-78",
+    "title": "课桌上突然出现一只大蜘蛛",
+    "imageUrl": "/assets/scenes/rep022_spider_on_desk.jpg",
+    "difficultyLevel": 1,
+    "targetEmotion": "scared",
+    "emotionOptions": [
+      "calm",
+      "scared",
+      "sad",
+      "proud"
+    ],
+    "emotionClues": [
+      "吓得猛地从座位上弹开，靠着后面的墙浑身发抖",
+      "眼睛睁得极大，惊恐地盯着桌子上的虫子，双手捂着嘴巴"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_022_cause",
+        "questionType": "cause",
+        "questionText": "明明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "突然看到自己非常害怕的虫子出现在离自己很近的地方",
+            "imageUrl": "/icons/big_spider.png",
+            "isCorrect": true,
+            "feedbackText": "对啦，人类对于突然出现的长腿昆虫天生有一种防备心理，会引发极度的恐惧。"
+          },
+          {
+            "id": "cause_2",
+            "text": "他的铅笔掉在地上找不到了",
+            "imageUrl": "/icons/lost_pencil.png",
+            "isCorrect": false,
+            "feedbackText": "铅笔掉了他只会弯腰去找，绝不会吓得脸色发白从座位上弹起来。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_022_need",
+        "questionType": "need",
+        "questionText": "明明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "保持距离，寻求大人或勇敢的同学帮忙把蜘蛛赶走",
+            "imageUrl": "/icons/ask_help_bug.png",
+            "isCorrect": true,
+            "feedbackText": "没错，自己害怕的事情可以交给不怕的人来处理，这样就安全了。"
+          },
+          {
+            "id": "need_2",
+            "text": "徒手去把大蜘蛛抓起来捏死",
+            "imageUrl": "/icons/grab_spider.png",
+            "isCorrect": false,
+            "feedbackText": "有些虫子是有毒的，不认识的虫子绝对不能用手直接去抓！"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "赶紧跑到讲台上，礼貌地请老师来帮忙把蜘蛛抓走",
+        "imageUrl": "/icons/teacher_catch_bug.png",
+        "suitability": "optimal",
+        "explanation": "遇到害怕且可能危险的东西，远离它并请大人帮忙是最聪明的自我保护方法。"
+      },
+      {
+        "id": "sol_2",
+        "text": "吓得站在角落里一直哭，不敢回座位",
+        "imageUrl": "/icons/cry_in_corner.png",
+        "suitability": "acceptable",
+        "explanation": "因为害怕哭出来是可以理解的，老师听到哭声就会过来帮你的。"
+      },
+      {
+        "id": "sol_3",
+        "text": "抓起旁边同学的书包狠狠砸向课桌，把桌子上的东西全砸坏了",
+        "imageUrl": "/icons/smash_desk.png",
+        "suitability": "inappropriate",
+        "explanation": "因为害怕而胡乱砸东西不仅可能会激怒虫子，还会毁坏同学的财物，非常冲动。"
+      }
+    ],
+    "recommendedHintCeiling": 1,
+    "ageRange": "4-6",
+    "abilityLevel": "primary",
+    "tags": [
+      "突发惊吓",
+      "昆虫恐惧",
+      "寻求帮助"
+    ]
+  },
+  {
+    "sceneCode": "scene-79",
+    "title": "期待的秋游因为暴雨取消了",
+    "imageUrl": "/assets/scenes/rep023_canceled_field_trip.jpg",
+    "difficultyLevel": 2,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "sad",
+      "happy",
+      "angry",
+      "scared"
+    ],
+    "emotionClues": [
+      "无精打采地趴在窗台上看外面的大雨，肩膀耷拉着",
+      "眼眶红红的，非常失望地叹着气，旁边放着装满零食的背包"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_023_cause",
+        "questionType": "cause",
+        "questionText": "小华为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "期待了很久的美好计划被糟糕的天气破坏了，愿望落空",
+            "imageUrl": "/icons/rain_ruined_trip.png",
+            "isCorrect": true,
+            "feedbackText": "是的，付出了很大的期待和准备，最后却没能实现，这种落差感让人十分难过。"
+          },
+          {
+            "id": "cause_2",
+            "text": "外面打雷闪电他非常害怕",
+            "imageUrl": "/icons/lightning.png",
+            "isCorrect": false,
+            "feedbackText": "如果是害怕他会捂住耳朵躲起来。但他现在正趴在窗台上看雨哦，这是失落的表现。"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_023_need",
+        "questionType": "need",
+        "questionText": "小华现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "接受不能去秋游的现实，并在家里找到其他开心的事情做",
+            "imageUrl": "/icons/find_new_fun.png",
+            "isCorrect": true,
+            "feedbackText": "没错，既然天气无法改变，换一种方式过周末也能让心情变好。"
+          },
+          {
+            "id": "need_2",
+            "text": "逼着爸妈冒着暴雨立刻开车带他去山上玩",
+            "imageUrl": "/icons/force_trip_in_rain.png",
+            "isCorrect": false,
+            "feedbackText": "暴雨天去爬山极其危险，可能会遇到泥石流，绝对不能拿生命开玩笑。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "把背包里的零食拿出来，提议和家人在客厅里铺上垫子“室内野餐”",
+        "imageUrl": "/icons/indoor_picnic.png",
+        "suitability": "optimal",
+        "explanation": "灵活变通！把室外的遗憾变成室内的温馨，你拥有超强的自我调节能力！"
+      },
+      {
+        "id": "sol_2",
+        "text": "难过地回到床上抱着被子哭一会儿，生闷气",
+        "imageUrl": "/icons/cry_in_bed.png",
+        "suitability": "acceptable",
+        "explanation": "期待落空哭一会儿发泄情绪是很正常的，等雨停了心情就会好啦。"
+      },
+      {
+        "id": "sol_3",
+        "text": "气得把装满零食的背包顺着窗户扔进雨里",
+        "imageUrl": "/icons/throw_bag_out.png",
+        "suitability": "inappropriate",
+        "explanation": "乱扔东西不仅危险而且非常浪费，这完全是乱发脾气的错误行为。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "期待落空",
+      "计划打断",
+      "自我调节"
+    ]
+  },
+  {
+    "sceneCode": "scene-80",
+    "title": "足球比赛踢进了制胜的一球",
+    "imageUrl": "/assets/scenes/rep024_scored_winning_goal.jpg",
+    "difficultyLevel": 3,
+    "targetEmotion": "happy",
+    "emotionOptions": [
+      "scared",
+      "sad",
+      "happy",
+      "embarrassed"
+    ],
+    "emotionClues": [
+      "兴奋地在草坪上跳了起来，双手高高举过头顶",
+      "脸上绽放出极其灿烂的大笑，嘴巴张得大大的"
+    ],
+    "prompts": [
+      {
+        "questionId": "rep_024_cause",
+        "questionType": "cause",
+        "questionText": "李明为什么会产生这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "靠自己的努力在最后一刻帮助球队赢得了比赛",
+            "imageUrl": "/icons/score_goal.png",
+            "isCorrect": true,
+            "feedbackText": "对啦！经过激烈的竞技，最终获得了胜利，这是最能让人激动和狂喜的时刻。"
+          },
+          {
+            "id": "cause_2",
+            "text": "他不小心把球踢到了自己的球门里",
+            "imageUrl": "/icons/own_goal.png",
+            "isCorrect": false,
+            "feedbackText": "如果踢进自家球门那叫乌龙球，他会极其自责和难过的。你看他现在跳得多高啊！"
+          }
+        ]
+      },
+      {
+        "questionId": "rep_024_need",
+        "questionType": "need",
+        "questionText": "李明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "和队友们一起相拥欢呼，庆祝这个激动人心的胜利",
+            "imageUrl": "/icons/celebrate_with_team.png",
+            "isCorrect": true,
+            "feedbackText": "没错，足球是团队运动，和大家一起分享胜利的喜悦是最棒的。"
+          },
+          {
+            "id": "need_2",
+            "text": "跑到裁判面前要求把对方球队禁赛",
+            "imageUrl": "/icons/ban_opponents.png",
+            "isCorrect": false,
+            "feedbackText": "赢得比赛就要尊重对手，提这种无理要求是没有体育精神的。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "大喊着跑向队友，大家紧紧拥抱在一起，并在赛后去和对手握手",
+        "imageUrl": "/icons/hug_team_shake_hands.png",
+        "suitability": "optimal",
+        "explanation": "既尽情庆祝了胜利，又表现出了对对手的尊重，这是最完美的体育精神！"
+      },
+      {
+        "id": "sol_2",
+        "text": "开心地脱下衣服在球场上疯狂地跑圈庆祝",
+        "imageUrl": "/icons/run_around_field.png",
+        "suitability": "acceptable",
+        "explanation": "因为太激动而在球场上狂奔庆祝是可以理解的，只要不影响后续比赛进程就好。"
+      },
+      {
+        "id": "sol_3",
+        "text": "跑到输掉的对手面前，指着他们的鼻子大声嘲笑：“你们太弱了！”",
+        "imageUrl": "/icons/mock_losers.png",
+        "suitability": "inappropriate",
+        "explanation": "赢球不能赢人品！嘲讽对手是极度缺乏教养的表现，会让你失去所有人的尊重。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "13-17",
+    "abilityLevel": "advanced",
+    "tags": [
+      "团队胜利",
+      "极度激动",
+      "体育精神"
+    ]
+  }
+]

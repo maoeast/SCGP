@@ -3,11 +3,24 @@ export type EmotionalSubModule = 'emotion_scene' | 'care_scene'
 export type EmotionalResourceType = EmotionalSubModule
 
 export type EmotionalBaseEmotion =
+  | 'calm'
   | 'happy'
   | 'sad'
-  | 'embarrassed'
   | 'angry'
   | 'scared'
+  | 'embarrassed'
+  | 'shy'
+  | 'proud'
+
+export type EmotionalColorToken =
+  | 'green'
+  | 'yellow'
+  | 'blue'
+  | 'red'
+  | 'purple'
+  | 'gold'
+  | 'magenta'
+  | 'peach'
 
 export type EmotionalReasoningQuestionType = 'cause' | 'need' | 'empathy'
 
@@ -66,7 +79,7 @@ export interface EmotionSceneResourceMeta {
   prompts: EmotionScenePrompt[]
   solutions: EmotionSceneSolution[]
   recommendedHintCeiling?: 0 | 1 | 2 | 3
-  emotionColorToken?: 'green' | 'blue' | 'yellow' | 'red'
+  emotionColorToken?: EmotionalColorToken
   emotionColorHex?: string
   emotionColorLabel?: string
   ageRange?: string
@@ -97,7 +110,7 @@ export interface CareSceneResourceMeta {
   difficultyLevel: 1 | 2 | 3
   careType?: EmotionalCareType
   receiverEmotion?: EmotionalBaseEmotion
-  emotionColorToken?: 'green' | 'blue' | 'yellow' | 'red'
+  emotionColorToken?: EmotionalColorToken
   emotionColorHex?: string
   emotionColorLabel?: string
   speakerPerspectiveText: string
