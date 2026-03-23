@@ -63,7 +63,7 @@
                     <div class="scene-copy">
                       <el-tag effect="light" class="scene-tag">{{ resource.name }}</el-tag>
                       <h2 class="scene-title">{{ sceneTitle }}</h2>
-                      <p class="scene-description">{{ resource.description || '请先观察场景，再进入情绪判断。' }}</p>
+                      <p class="scene-description">{{ sceneDescription }}</p>
                     </div>
                   </div>
 
@@ -153,10 +153,17 @@ import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import EmotionSelector from '@/components/emotional/EmotionSelector.vue'
 import ReasoningCard from '@/components/emotional/ReasoningCard.vue'
 import { useEmotionalSession } from '@/composables/useEmotionalSession'
+import { compileEmotionScene } from '@/features/emotional/adapters'
+import type {
+  EmotionalCompiledSessionConfig,
+  ReasoningQuestionOptionMetadata,
+  ReasoningQuestionStepMetadata,
+  SceneIntroStepMetadata,
+  SolutionChoiceOptionMetadata,
+} from '@/features/emotional/engine/types'
 import type {
   EmotionalBaseEmotion,
   EmotionalFeedbackCode,
-  EmotionalSessionConfig,
   EmotionalSessionOption,
   EmotionSceneResourceMeta,
 } from '@/types/emotional'
@@ -188,7 +195,7 @@ const router = useRouter()
 const session = useEmotionalSession()
 
 const resource = ref<EmotionSceneResourceRecord | null>(null)
-const sessionConfig = ref<EmotionalSessionConfig | null>(null)
+const sessionConfig = ref<EmotionalCompiledSessionConfig | null>(null)
 const feedbackMessage = ref<{ title: string; description: string; type: 'success' | 'info' } | null>(null)
 const isTransitioning = ref(false)
 const loadError = ref('')
@@ -209,11 +216,16 @@ const currentPhase = computed(() => session.currentPhase.value)
 const currentHintLevel = computed(() => session.currentHintLevel.value)
 
 const sceneMeta = computed(() => (resource.value?.metadata || {}) as EmotionSceneResourceMeta & Record<string, any>)
-const sceneEmoji = computed(() => resource.value?.coverImage || '🎭')
-const sceneTitle = computed(() => sceneMeta.value.title || resource.value?.name || '情绪场景')
-const sceneClues = computed(() => sceneMeta.value.emotionClues || [])
+const introMetadata = computed<SceneIntroStepMetadata | null>(() => {
+  const introStep = sessionConfig.value?.steps.find((step) => step.phase === 'scene_intro')
+  return introStep?.metadata || null
+})
+const sceneEmoji = computed(() => introMetadata.value?.sceneVisual.coverImage || resource.value?.coverImage || '🎭')
+const sceneTitle = computed(() => introMetadata.value?.title || resource.value?.name || '情绪场景')
+const sceneDescription = computed(() => introMetadata.value?.description || resource.value?.description || '请先观察场景，再进入情绪判断。')
+const sceneClues = computed(() => introMetadata.value?.clues || [])
 const activeSceneGradient = computed(() => {
-  const hex = sceneMeta.value.emotionColorHex || '#67C23A'
+  const hex = introMetadata.value?.sceneVisual.emotionColorHex || '#67C23A'
   return `linear-gradient(135deg, ${hex}22 0%, ${hex}55 100%)`
 })
 
@@ -231,7 +243,7 @@ function buildReasoningVisual(step: typeof currentStep.value, option: EmotionalS
     return '🧩'
   }
 
-  const type = step?.metadata?.questionType
+  const type = (step?.metadata as ReasoningQuestionStepMetadata | undefined)?.questionType
   if (type === 'cause') return '🔍'
   if (type === 'need') return '🫶'
   if (type === 'empathy') return '💭'
@@ -275,14 +287,23 @@ const currentReasoningOptions = computed(() => {
     return []
   }
 
-  return getVisibleReasoningOptions(step.options).map((option) => ({
-    value: option.value,
-    label: option.label,
-    supportText: option.metadata?.feedbackText || option.metadata?.explanation || '',
+  return getVisibleReasoningOptions(step.options).map((option) => {
+    const optionMetadata = option.metadata as ReasoningQuestionOptionMetadata | SolutionChoiceOptionMetadata | undefined
+    const supportText = !optionMetadata
+      ? ''
+      : 'feedbackText' in optionMetadata
+        ? optionMetadata.feedbackText
+        : optionMetadata.explanation
+
+    return {
+      value: option.value,
+      label: option.label,
+      supportText,
     icon: buildReasoningVisual(step, option),
     isCorrect: !!option.isCorrect,
     isAcceptable: !!option.isAcceptable,
-  }))
+    }
+  })
 })
 
 function setGentleFeedback(code: EmotionalFeedbackCode, isAdvance: boolean) {
@@ -306,79 +327,6 @@ function setGentleFeedback(code: EmotionalFeedbackCode, isAdvance: boolean) {
     title: '我们再试一次',
     description: descriptions[level] ?? descriptions[0] ?? '',
     type: 'info',
-  }
-}
-
-function buildSessionConfig(meta: EmotionSceneResourceMeta): EmotionalSessionConfig {
-  const steps: EmotionalSessionConfig['steps'] = [
-    {
-      key: 'scene_intro',
-      phase: 'scene_intro' as const,
-      stepType: 'emotion_choice' as const,
-      interactive: false,
-      title: meta.title,
-      metadata: {
-        clues: meta.emotionClues,
-      },
-    },
-    {
-      key: 'emotion_choice',
-      phase: 'emotion_recognition' as const,
-      stepType: 'emotion_choice' as const,
-      promptText: '你觉得他现在是什么心情？',
-      options: meta.emotionOptions.map((emotion) => ({
-        value: emotion,
-        label: EMOTION_META[emotion]?.label || emotion,
-        isCorrect: emotion === meta.targetEmotion,
-      })),
-      correctValues: [meta.targetEmotion],
-    },
-    ...meta.prompts.map((prompt) => ({
-      key: prompt.questionId,
-      phase: 'reasoning' as const,
-      stepType: 'reasoning_question' as const,
-      promptId: prompt.questionId,
-      promptText: prompt.questionText,
-      metadata: {
-        questionType: prompt.questionType,
-      },
-      options: prompt.options.map((option) => ({
-        value: option.id,
-        label: option.text,
-        isCorrect: option.isCorrect,
-        isAcceptable: option.isAcceptable,
-        metadata: {
-          feedbackText: option.feedbackText,
-        },
-      })),
-      correctValues: prompt.options.filter((option) => option.isCorrect).map((option) => option.id),
-      acceptableValues: prompt.options.filter((option) => option.isAcceptable).map((option) => option.id),
-    })),
-    {
-      key: 'solution_choice',
-      phase: 'solution' as const,
-      stepType: 'solution_choice' as const,
-      promptText: '下面哪种回应更合适？',
-      options: meta.solutions.map((solution) => ({
-        value: solution.id,
-        label: solution.text,
-        isCorrect: solution.suitability === 'optimal',
-        isAcceptable: solution.suitability === 'acceptable',
-        metadata: {
-          explanation: solution.explanation,
-        },
-      })),
-      correctValues: meta.solutions.filter((solution) => solution.suitability === 'optimal').map((solution) => solution.id),
-      acceptableValues: meta.solutions.filter((solution) => solution.suitability === 'acceptable').map((solution) => solution.id),
-    },
-  ]
-
-  return {
-    studentId: studentId.value,
-    resourceId: resource.value!.id,
-    resourceType: 'emotion_scene',
-    subModule: 'emotion_scene',
-    steps,
   }
 }
 
@@ -441,7 +389,13 @@ async function loadResource() {
   }
 
   resource.value = mapResourceRow(resolvedRow)
-  sessionConfig.value = buildSessionConfig(sceneMeta.value)
+  sessionConfig.value = compileEmotionScene(sceneMeta.value, {
+    studentId: studentId.value,
+    resourceId: resource.value.id,
+    resourceName: resource.value.name,
+    resourceDescription: resource.value.description,
+    coverImage: resource.value.coverImage,
+  })
   session.startSession(sessionConfig.value)
 }
 
