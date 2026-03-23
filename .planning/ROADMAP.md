@@ -19,7 +19,7 @@
 
 ### Milestone v1.6: Emotional Engine Refactoring
 
-**Status:** Ready for planning  
+**Status:** In progress  
 **Phases:** 14-16  
 **Total Plans:** 3
 
@@ -34,10 +34,11 @@ v1.6 refactors the emotional runtime into a shared execution layer without chang
 **Goal**: Extract compile adapters and normalized engine-facing metadata so current emotional resources compile into one shared `EmotionalSessionConfig` DSL without changing resource schema.  
 **Depends on**: —  
 **Plans**: 1 plan
+**Status:** Complete (2026-03-23)
 
 Plans:
 
-- [ ] 14-01: Compile EmotionScene / CareScene into the unified runtime DSL
+- [x] 14-01: Compile EmotionScene / CareScene into the unified runtime DSL
 
 **Requirements:** `CMPL-01`, `CMPL-02`, `CMPL-03`
 

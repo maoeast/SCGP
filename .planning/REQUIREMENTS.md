@@ -7,9 +7,9 @@
 
 ### Compile Layer
 
-- [ ] **CMPL-01**: `emotion_scene` resources compile from `EmotionSceneResourceMeta` into `EmotionalSessionConfig` with the current execution order `scene_intro -> emotion_choice -> reasoning_question[] -> solution_choice`.
-- [ ] **CMPL-02**: `care_scene` resources compile from `CareSceneResourceMeta` into `EmotionalSessionConfig` with the current execution order `scene_intro -> care_utterance -> receiver_preference`.
-- [ ] **CMPL-03**: Compile output preserves current correctness, acceptable-answer, feedback, explanation, reaction, and metadata semantics without adding runtime-only fields to resource JSON.
+- [x] **CMPL-01**: `emotion_scene` resources compile from `EmotionSceneResourceMeta` into `EmotionalSessionConfig` with the current execution order `scene_intro -> emotion_choice -> reasoning_question[] -> solution_choice`.
+- [x] **CMPL-02**: `care_scene` resources compile from `CareSceneResourceMeta` into `EmotionalSessionConfig` with the current execution order `scene_intro -> care_utterance -> receiver_preference`.
+- [x] **CMPL-03**: Compile output preserves current correctness, acceptable-answer, feedback, explanation, reaction, and metadata semantics without adding runtime-only fields to resource JSON.
 
 ### Unified Engine
 
@@ -44,9 +44,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CMPL-01 | Phase 14 | Pending |
-| CMPL-02 | Phase 14 | Pending |
-| CMPL-03 | Phase 14 | Pending |
+| CMPL-01 | Phase 14 | Complete |
+| CMPL-02 | Phase 14 | Complete |
+| CMPL-03 | Phase 14 | Complete |
 | ENGN-01 | Phase 15 | Pending |
 | ENGN-02 | Phase 15 | Pending |
 | ENGN-03 | Phase 15 | Pending |
