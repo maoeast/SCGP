@@ -69,7 +69,7 @@
                     <div class="scene-copy">
                       <el-tag effect="light" class="scene-tag">{{ resource.name }}</el-tag>
                       <h2 class="scene-title">{{ sceneTitle }}</h2>
-                      <p class="scene-description">{{ resource.description || '请先观察情境，再决定怎么表达关心。' }}</p>
+                      <p class="scene-description">{{ sceneDescription }}</p>
                     </div>
                   </div>
 
@@ -200,10 +200,16 @@ import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import CareOptionCard from '@/components/emotional/CareOptionCard.vue'
 import PerspectiveSwitchView from '@/components/emotional/PerspectiveSwitchView.vue'
 import { useEmotionalSession } from '@/composables/useEmotionalSession'
+import { compileCareScene } from '@/features/emotional/adapters'
+import type {
+  CareUtteranceOptionMetadata,
+  EmotionalCompiledSessionConfig,
+  ReceiverPreferenceOptionMetadata,
+  SceneIntroStepMetadata,
+} from '@/features/emotional/engine/types'
 import type {
   CareSceneResourceMeta,
   EmotionalFeedbackCode,
-  EmotionalSessionConfig,
 } from '@/types/emotional'
 
 interface CareSceneResourceRecord {
@@ -231,11 +237,11 @@ const router = useRouter()
 const session = useEmotionalSession()
 
 const resource = ref<CareSceneResourceRecord | null>(null)
-const sessionConfig = ref<EmotionalSessionConfig | null>(null)
+const sessionConfig = ref<EmotionalCompiledSessionConfig | null>(null)
 const feedbackMessage = ref<{ title: string; description: string; type: 'success' | 'info' } | null>(null)
 const loadError = ref('')
-const selectedUtteranceEffect = ref<CareSceneResourceMeta['utterances'][number] | null>(null)
-const selectedReceiverReason = ref<CareSceneResourceMeta['receiverOptions'][number] | null>(null)
+const selectedUtteranceEffect = ref<CareUtteranceOptionMetadata | null>(null)
+const selectedReceiverReason = ref<ReceiverPreferenceOptionMetadata | null>(null)
 const canAdvanceFromUtterance = ref(false)
 const canAdvanceFromReceiver = ref(false)
 
@@ -254,8 +260,13 @@ const currentStep = computed(() => session.currentStep.value)
 const currentPhase = computed(() => session.currentPhase.value)
 const currentHintLevel = computed(() => session.currentHintLevel.value)
 const careMeta = computed(() => (resource.value?.metadata || {}) as CareSceneResourceMeta & Record<string, any>)
-const sceneEmoji = computed(() => resource.value?.coverImage || '💌')
-const sceneTitle = computed(() => careMeta.value.title || resource.value?.name || '表达关心场景')
+const introMetadata = computed<SceneIntroStepMetadata | null>(() => {
+  const introStep = sessionConfig.value?.steps.find((step) => step.phase === 'scene_intro')
+  return introStep?.metadata || null
+})
+const sceneEmoji = computed(() => introMetadata.value?.sceneVisual.coverImage || resource.value?.coverImage || '💌')
+const sceneTitle = computed(() => introMetadata.value?.title || resource.value?.name || '表达关心场景')
+const sceneDescription = computed(() => introMetadata.value?.description || resource.value?.description || '请先观察情境，再决定怎么表达关心。')
 const totalDisplaySteps = computed(() => sessionConfig.value?.steps.length || 0)
 const displayStepIndex = computed(() => session.currentIndex.value + 1)
 const progressPercentage = computed(() => {
@@ -263,9 +274,9 @@ const progressPercentage = computed(() => {
   return Math.round((displayStepIndex.value / sessionConfig.value.steps.length) * 100)
 })
 
-const sceneIntroText = computed(() => careMeta.value.speakerPerspectiveText || '先观察情境，再判断怎样表达关心更合适。')
-const speakerPromptText = computed(() => careMeta.value.speakerPerspectiveText || '请选择你想对对方说的话。')
-const receiverPromptText = computed(() => careMeta.value.receiverPerspectiveText || '请选择你觉得听起来最舒服的一句话。')
+const sceneIntroText = computed(() => introMetadata.value?.speakerPerspectiveText || '先观察情境，再判断怎样表达关心更合适。')
+const speakerPromptText = computed(() => currentStep.value?.promptText || '请选择你想对对方说的话。')
+const receiverPromptText = computed(() => currentStep.value?.promptText || '请选择你觉得听起来最舒服的一句话。')
 
 function getActiveDb(): DbLike {
   const db = (window as Window & { db?: DbLike }).db
@@ -306,8 +317,8 @@ const utteranceCards = computed(() => {
   if (!step || currentPhase.value !== 'solution' || !step.options) return []
 
   return step.options.map((option) => {
-    const utterance = careMeta.value.utterances.find((item) => item.id === option.value)
-    const typeMeta = CARE_TYPE_META[utterance?.type || 'empathy']
+    const utterance = (option.metadata as CareUtteranceOptionMetadata | undefined) || null
+    const typeMeta = CARE_TYPE_META[utterance?.utteranceType || 'empathy']
     return {
       value: option.value,
       label: option.label,
@@ -330,7 +341,7 @@ const receiverCards = computed(() => {
   if (!step || currentPhase.value !== 'perspective_taking' || !step.options) return []
 
   return step.options.map((option) => {
-    const receiver = careMeta.value.receiverOptions.find((item) => item.id === option.value)
+    const receiver = (option.metadata as ReceiverPreferenceOptionMetadata | undefined) || null
     return {
       value: option.value,
       label: option.label,
@@ -346,73 +357,6 @@ const receiverCards = computed(() => {
 })
 
 const visibleReceiverCards = computed(() => getVisibleOptions(receiverCards.value))
-
-function buildSessionConfig(meta: CareSceneResourceMeta): EmotionalSessionConfig {
-  const steps: EmotionalSessionConfig['steps'] = [
-    {
-      key: 'care_intro',
-      phase: 'scene_intro',
-      stepType: 'care_utterance',
-      interactive: false,
-      title: meta.title,
-      metadata: {
-        speakerPerspectiveText: meta.speakerPerspectiveText,
-      },
-    },
-    {
-      key: 'care_utterance_choice',
-      phase: 'solution',
-      stepType: 'care_utterance',
-      promptText: meta.speakerPerspectiveText,
-      perspective: 'sender',
-      options: meta.utterances.map((utterance) => ({
-        value: utterance.id,
-        label: utterance.text,
-        isCorrect: meta.preferredUtteranceIds.includes(utterance.id),
-        isAcceptable: utterance.type === 'advice',
-        metadata: {
-          type: utterance.type,
-          effect: utterance.effect,
-          receiverReactionText: utterance.receiverReactionText,
-          receiverReactionEmoji: utterance.receiverReactionEmoji,
-        },
-      })),
-      correctValues: meta.preferredUtteranceIds,
-      acceptableValues: meta.utterances.filter((item) => item.type === 'advice').map((item) => item.id),
-    },
-    {
-      key: 'receiver_preference_choice',
-      phase: 'perspective_taking',
-      stepType: 'receiver_preference',
-      promptText: meta.receiverPerspectiveText,
-      perspective: 'receiver',
-      options: meta.receiverOptions.map((option) => ({
-        value: option.id,
-        label: option.text,
-        isCorrect: option.isComforting,
-        isAcceptable: option.isComforting,
-        metadata: {
-          reasonText: option.reasonText,
-        },
-      })),
-      correctValues: meta.receiverOptions.filter((option) => option.isComforting).map((option) => option.id),
-    },
-  ]
-
-  return {
-    studentId: studentId.value,
-    resourceId: resource.value!.id,
-    resourceType: 'care_scene',
-    subModule: 'care_scene',
-    steps,
-    buildSummary: ({ latestResults }) => {
-      const selectedUtterance = latestResults.find((item) => item.stepType === 'care_utterance')
-      return {
-        dominantChoiceType: careMeta.value.utterances.find((item) => item.id === selectedUtterance?.selectedValue)?.type || null,
-      }
-    },
-  }
-}
 
 function setGentleFeedback(code: EmotionalFeedbackCode, isAdvance: boolean) {
   if (isAdvance) {
@@ -471,7 +415,13 @@ async function loadResource() {
   }
 
   resource.value = mapResourceRow(resolvedRow)
-  sessionConfig.value = buildSessionConfig(careMeta.value)
+  sessionConfig.value = compileCareScene(careMeta.value, {
+    studentId: studentId.value,
+    resourceId: resource.value.id,
+    resourceName: resource.value.name,
+    resourceDescription: resource.value.description,
+    coverImage: resource.value.coverImage,
+  })
   session.startSession(sessionConfig.value)
 }
 
