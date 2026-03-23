@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Emotional Engine Refactoring
-status: unknown
-last_updated: "2026-03-23T05:21:10.573Z"
+status: awaiting_human_verification
+last_updated: "2026-03-23T15:12:41.9657433+09:00"
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # STATE
@@ -19,10 +19,10 @@ progress:
 **Plan**: 15-01
 
 ## Current Position
-- **Phase**: 14 Emotional Compile Layer & Runtime Contract
-- **Plan**: 14-01
-- **Status**: Completed `14-SUMMARY.md`; compile adapters and runtime contract are ready for the shared engine phase.
-- **Last activity**: 2026-03-23 — Executed Phase 14 plan 14-01, added emotional compile adapters, migrated both runtime pages to adapter output, and completed `CMPL-01`, `CMPL-02`, and `CMPL-03`.
+- **Phase**: 15 Unified Emotional Interaction Engine
+- **Plan**: 15-01
+- **Status**: Implemented and summarized in `15-SUMMARY.md`; awaiting manual runtime verification from `15-VERIFICATION.md`.
+- **Last activity**: 2026-03-23 – Executed Phase 15 plan 15-01, added `EmotionalInteractionEngine`, centralized renderer dispatch / feedback / hint orchestration, and migrated both emotional runtime pages to shared-engine hosts.
 
 ## Latest Shipped Milestone
 - **v1.5 Strict Modular Licensing**
@@ -32,12 +32,15 @@ progress:
 - **Decisions**:
   - Compile adapters now own translation from `EmotionSceneResourceMeta` / `CareSceneResourceMeta` into `EmotionalSessionConfig`.
   - Care-scene `dominantChoiceType` is derived from compiled option metadata instead of raw runtime-page resource lookups.
+  - The shared emotional runtime now resolves `scene_intro` through an engine-side renderer key instead of changing persisted `stepType` contracts.
+  - Emotional runtime pages now act as hosts that load resources, compile session config, and hand orchestration to `EmotionalInteractionEngine`.
   - Modular licensing does not support legacy full-access fallback; missing `am` is invalid.
   - Authorized modules must be persisted separately from raw license JSON for fast entitlement lookup.
   - DEV mock entitlements are allowed only when no real activation code exists.
 - **Blockers**:
   - Repository-wide historical TypeScript errors still exist outside the emotional phase scope, so `npm run type-check` remains red even though `npm run type-check:emotional` passes.
+  - Phase 15 still requires manual UI verification for pacing, route-leave cancellation, and session-summary parity before roadmap completion.
 
 ## Next Action
-- Start Phase 15 plan `15-01` on top of the compile-layer contract delivered in Phase 14.
-- Preserve current prompt escalation, routing, persistence, and summary/report compatibility while replacing duplicated page orchestration with the shared emotional engine.
+- Run the manual verification items listed in `.planning/phases/15-unified-emotional-interaction-engine/15-VERIFICATION.md`.
+- If approved, mark Phase 15 complete and move to Phase 16 shell migration and end-to-end compatibility closure.

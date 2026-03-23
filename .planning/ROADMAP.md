@@ -53,10 +53,11 @@ Plans:
 **Goal**: Replace duplicated runtime orchestration with a shared engine and renderer map that preserves current prompt escalation, feedback pacing, and step advancement behavior.  
 **Depends on**: Phase 14  
 **Plans**: 1 plan
+**Status:** Awaiting manual verification (2026-03-23)
 
 Plans:
 
-- [ ] 15-01: Build shared engine shell, renderer dispatch, and legacy-compatible runtime behavior
+- [x] 15-01: Build shared engine shell, renderer dispatch, and legacy-compatible runtime behavior
 
 **Requirements:** `ENGN-01`, `ENGN-02`, `ENGN-03`
 
