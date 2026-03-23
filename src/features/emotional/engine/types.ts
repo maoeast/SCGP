@@ -2,6 +2,8 @@ import type {
   CareSceneResourceMeta,
   EmotionalBaseEmotion,
   EmotionalCareType,
+  EmotionalFeedbackCode,
+  EmotionalPerspective,
   EmotionalReasoningQuestionType,
   EmotionalSessionConfig,
   EmotionalSessionOption,
@@ -10,6 +12,7 @@ import type {
   EmotionalSolutionRank,
   EmotionalStepType,
   EmotionSceneResourceMeta,
+  PersistEmotionalSessionResult,
 } from '@/types/emotional'
 
 export interface EmotionalCompileContext {
@@ -153,4 +156,49 @@ export type EmotionalCompiledStep =
 
 export type EmotionalCompiledSessionConfig = Omit<EmotionalSessionConfig, 'steps'> & {
   steps: EmotionalCompiledStep[]
+}
+
+export type EmotionalRendererKey =
+  | 'scene_intro'
+  | 'emotion_choice'
+  | 'reasoning_question'
+  | 'solution_choice'
+  | 'care_utterance'
+  | 'receiver_preference'
+
+export type EmotionalAdvanceMode = 'auto' | 'continue' | 'complete'
+
+export interface EmotionalFeedbackMessage {
+  title: string
+  description: string
+  type: 'success' | 'info'
+}
+
+export interface EmotionalEngineSubmitInput {
+  value: string
+  label?: string
+  perspective?: EmotionalPerspective
+}
+
+export interface CareUtteranceSelectionState {
+  kind: 'care_utterance'
+  canAdvance: boolean
+  feedbackCode: EmotionalFeedbackCode
+  metadata: CareUtteranceOptionMetadata | null
+}
+
+export interface ReceiverPreferenceSelectionState {
+  kind: 'receiver_preference'
+  canAdvance: boolean
+  feedbackCode: EmotionalFeedbackCode
+  metadata: ReceiverPreferenceOptionMetadata | null
+}
+
+export type EmotionalRendererSelectionState =
+  | CareUtteranceSelectionState
+  | ReceiverPreferenceSelectionState
+
+export interface EmotionalEngineNavigationHandlers {
+  completeSessionSummary: (result: PersistEmotionalSessionResult) => void | Promise<void>
+  exitTraining: () => void | Promise<void>
 }
