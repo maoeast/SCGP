@@ -10,7 +10,7 @@
 
     <div class="emotion-grid">
       <button
-        v-for="emotion in visibleOptions"
+        v-for="emotion in options"
         :key="emotion.value"
         type="button"
         class="emotion-card"
@@ -39,8 +39,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
 interface EmotionOptionView {
   value: string
   label: string
@@ -48,6 +46,8 @@ interface EmotionOptionView {
   colorHex: string
   zoneLabel: string
   isCorrect: boolean
+  muted?: boolean
+  highlighted?: boolean
 }
 
 const props = defineProps<{
@@ -61,18 +61,10 @@ defineEmits<{
   (e: 'select', value: string): void
 }>()
 
-const visibleOptions = computed(() => {
-  if (props.hintLevel < 3) {
-    return props.options
-  }
-  return props.options.filter((option) => option.isCorrect)
-})
-
 function getCardClass(option: EmotionOptionView) {
-  const isWrong = !option.isCorrect
   return {
-    'emotion-card--muted': props.hintLevel === 1 && isWrong,
-    'emotion-card--highlight': props.hintLevel >= 2 && option.isCorrect,
+    'emotion-card--muted': option.muted,
+    'emotion-card--highlight': option.highlighted,
   }
 }
 </script>

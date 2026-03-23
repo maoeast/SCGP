@@ -10,7 +10,7 @@
 
     <div class="option-list">
       <button
-        v-for="option in visibleOptions"
+        v-for="option in options"
         :key="option.value"
         type="button"
         class="option-card"
@@ -39,8 +39,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
 interface ReasoningOptionView {
   value: string
   label: string
@@ -48,6 +46,8 @@ interface ReasoningOptionView {
   icon: string
   isCorrect: boolean
   isAcceptable: boolean
+  muted?: boolean
+  highlighted?: boolean
 }
 
 const props = defineProps<{
@@ -61,26 +61,10 @@ defineEmits<{
   (e: 'select', value: string): void
 }>()
 
-const visibleOptions = computed(() => {
-  if (props.hintLevel === 0 || props.hintLevel === 1) {
-    return props.options
-  }
-
-  if (props.hintLevel === 2) {
-    const correct = props.options.filter((option) => option.isCorrect || option.isAcceptable)
-    const wrong = props.options.filter((option) => !option.isCorrect && !option.isAcceptable)
-    const retainedWrong = wrong.slice(0, Math.ceil(wrong.length / 2))
-    return [...correct, ...retainedWrong]
-  }
-
-  return props.options.filter((option) => option.isCorrect || option.isAcceptable)
-})
-
 function getCardClass(option: ReasoningOptionView) {
-  const isWrong = !option.isCorrect && !option.isAcceptable
   return {
-    'option-card--muted': props.hintLevel === 1 && isWrong,
-    'option-card--highlight': props.hintLevel >= 2 && (option.isCorrect || option.isAcceptable),
+    'option-card--muted': option.muted,
+    'option-card--highlight': option.highlighted,
   }
 }
 </script>
