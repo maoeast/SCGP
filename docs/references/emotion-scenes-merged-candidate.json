@@ -84,7 +84,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-2",
@@ -171,7 +172,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "自然生态"
+    "sceneDomain": "自然生态",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-3",
@@ -257,7 +259,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-4",
@@ -344,7 +347,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-5",
@@ -431,7 +435,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "公共商业与社区"
+    "sceneDomain": "公共商业与社区",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-6",
@@ -518,7 +523,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "公共商业与社区"
+    "sceneDomain": "公共商业与社区",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-7",
@@ -605,7 +611,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "公共商业与社区"
+    "sceneDomain": "公共商业与社区",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-8",
@@ -692,7 +699,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "家庭"
+    "sceneDomain": "家庭",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-9",
@@ -778,7 +786,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-10",
@@ -865,7 +874,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "家庭"
+    "sceneDomain": "家庭",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-11",
@@ -952,7 +962,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "公共商业与社区"
+    "sceneDomain": "公共商业与社区",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-12",
@@ -1038,7 +1049,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-13",
@@ -1125,7 +1137,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "交通出行"
+    "sceneDomain": "交通出行",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-14",
@@ -1211,7 +1224,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "公共商业与社区"
+    "sceneDomain": "公共商业与社区",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-15",
@@ -1297,7 +1311,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "公共商业与社区"
+    "sceneDomain": "公共商业与社区",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-16",
@@ -1383,7 +1398,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "公共商业与社区"
+    "sceneDomain": "公共商业与社区",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-17",
@@ -1469,7 +1485,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-18",
@@ -1555,7 +1572,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "家庭"
+    "sceneDomain": "家庭",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-19",
@@ -1641,7 +1659,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-20",
@@ -1728,7 +1747,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-21",
@@ -1815,7 +1835,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-22",
@@ -1901,7 +1922,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-23",
@@ -1988,7 +2010,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "公共商业与社区"
+    "sceneDomain": "公共商业与社区",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-24",
@@ -2074,7 +2097,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "数字虚拟"
+    "sceneDomain": "数字虚拟",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-25",
@@ -2160,7 +2184,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-26",
@@ -2247,7 +2272,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-27",
@@ -2334,7 +2360,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-28",
@@ -2421,7 +2448,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-29",
@@ -2507,7 +2535,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-30",
@@ -2593,7 +2622,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "自然生态"
+    "sceneDomain": "自然生态",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-31",
@@ -2680,7 +2710,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "自然生态"
+    "sceneDomain": "自然生态",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-32",
@@ -2766,7 +2797,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "医疗康复"
+    "sceneDomain": "医疗康复",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-33",
@@ -2853,7 +2885,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "公共商业与社区"
+    "sceneDomain": "公共商业与社区",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-34",
@@ -2940,7 +2973,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "数字虚拟"
+    "sceneDomain": "数字虚拟",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-35",
@@ -3027,7 +3061,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "公共商业与社区"
+    "sceneDomain": "公共商业与社区",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-36",
@@ -3114,7 +3149,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-37",
@@ -3200,7 +3236,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-38",
@@ -3287,7 +3324,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-39",
@@ -3374,7 +3412,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-40",
@@ -3461,7 +3500,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-41",
@@ -3548,7 +3588,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-42",
@@ -3635,7 +3676,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-43",
@@ -3722,7 +3764,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "公共商业与社区"
+    "sceneDomain": "公共商业与社区",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-44",
@@ -3809,7 +3852,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "家庭"
+    "sceneDomain": "家庭",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-45",
@@ -3896,7 +3940,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-46",
@@ -3983,7 +4028,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-47",
@@ -4069,7 +4115,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-48",
@@ -4156,7 +4203,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-49",
@@ -4242,7 +4290,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-50",
@@ -4980,7 +5029,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "家庭"
+    "sceneDomain": "家庭",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-58",
@@ -5067,7 +5117,8 @@
     ],
     "abilityLevel": "primary",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "4-6"
   },
   {
     "sceneCode": "scene-59",
@@ -5154,7 +5205,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-60",
@@ -5241,7 +5293,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "家庭"
+    "sceneDomain": "家庭",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-61",
@@ -5328,7 +5381,8 @@
     ],
     "abilityLevel": "middle",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "7-12"
   },
   {
     "sceneCode": "scene-62",
@@ -5415,7 +5469,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "校园"
+    "sceneDomain": "校园",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-63",
@@ -5502,7 +5557,8 @@
     ],
     "abilityLevel": "advanced",
     "tags": [],
-    "sceneDomain": "家庭"
+    "sceneDomain": "家庭",
+    "ageRange": "13-17"
   },
   {
     "sceneCode": "scene-64",
@@ -6053,7 +6109,7 @@
       }
     ],
     "recommendedHintCeiling": 1,
-    "ageRange": "4-8",
+    "ageRange": "4-6",
     "abilityLevel": "primary",
     "tags": [
       "收到礼物",

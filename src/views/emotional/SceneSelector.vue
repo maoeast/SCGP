@@ -58,6 +58,30 @@
 
           <div class="filter-section">
             <div class="filter-label-row">
+              <span class="filter-label">适用年龄（Who）</span>
+              <span class="filter-hint">按当前学生年龄筛选更合适的情绪场景。</span>
+              <el-button
+                v-if="studentAgeLabel && recommendedAgeRanges.length > 0"
+                size="small"
+                text
+                @click="applyRecommendedAgeFilters"
+              >
+                按学生年龄推荐：{{ studentAgeLabel }}
+              </el-button>
+            </div>
+            <el-checkbox-group v-model="selectedAgeRanges" class="matrix-group">
+              <el-checkbox-button
+                v-for="ageRange in availableAgeRanges"
+                :key="ageRange"
+                :label="ageRange"
+              >
+                {{ ageRange }}岁 · {{ ageCounts[ageRange] || 0 }}
+              </el-checkbox-button>
+            </el-checkbox-group>
+          </div>
+
+          <div class="filter-section">
+            <div class="filter-label-row">
               <span class="filter-label">物理空间（Where）</span>
               <span class="filter-hint">家庭 / 校园 / 公共商业与社区 / 交通出行 / 医疗康复 / 自然生态 / 数字虚拟</span>
             </div>
@@ -147,6 +171,7 @@
 
                 <div class="scene-meta">
                   <el-tag size="small" type="warning" effect="plain">{{ scene.resourceTypeLabel }}</el-tag>
+                  <el-tag v-if="scene.ageRange" size="small" type="info" effect="plain">{{ scene.ageRange }}岁</el-tag>
                   <el-tag size="small" effect="plain">{{ scene.sceneDomain }}</el-tag>
                   <el-tag size="small" type="success" effect="plain">{{ scene.themeCategory }}</el-tag>
                   <el-tag size="small" effect="plain">{{ scene.resourceCode }}</el-tag>
@@ -164,6 +189,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { RefreshRight } from '@element-plus/icons-vue'
+import { StudentAPI } from '@/database/api'
 import { ResourceAPI } from '@/database/resource-api'
 import { ModuleCode, type ResourceItem } from '@/types/module'
 import type { EmotionalBaseEmotion, EmotionalSceneDomain } from '@/types/emotional'
@@ -185,6 +211,7 @@ interface SceneCard {
   difficultyLevel: 1 | 2 | 3
   resourceCode: string
   resourceTypeLabel: string
+  ageRange?: string
   sceneDomain: EmotionalSceneDomain | '未分类'
   themeCategory: string
 }
@@ -210,11 +237,19 @@ const SCENE_THEME_ORDER = [
   '平静专注',
 ] as const
 
+const AGE_RANGE_ORDER = [
+  '4-6',
+  '7-12',
+  '13-17',
+] as const
+
 const route = useRoute()
 const router = useRouter()
 
 const loading = ref(false)
 const scenes = ref<SceneCard[]>([])
+const studentAgeYears = ref<number | null>(null)
+const selectedAgeRanges = ref<string[]>([])
 const selectedDomains = ref<EmotionalSceneDomain[]>([])
 const selectedThemes = ref<string[]>([])
 
@@ -247,12 +282,23 @@ const emptyDescription = computed(() => (
   isEmotionSceneSelector.value
     ? (
         scenes.value.length > 0 && hasActiveFilters.value
-          ? '当前筛选条件下没有匹配的情绪场景，请调整场域空间或情景主题。'
+          ? '当前筛选条件下没有匹配的情绪场景，请调整年龄、场域空间或情景主题。'
           : '当前没有可用的情绪场景资源，请先在资源中心配置。'
       )
     : '当前没有可用的表达关心资源，请先在资源中心配置。'
 ))
-const hasActiveFilters = computed(() => selectedDomains.value.length > 0 || selectedThemes.value.length > 0)
+const studentAgeLabel = computed(() => (
+  studentAgeYears.value === null ? '' : `${studentAgeYears.value}岁`
+))
+const hasActiveFilters = computed(() => (
+  selectedAgeRanges.value.length > 0 || selectedDomains.value.length > 0 || selectedThemes.value.length > 0
+))
+const ageCounts = computed<Record<string, number>>(() => scenes.value.reduce((acc, scene) => {
+  if (scene.ageRange) {
+    acc[scene.ageRange] = (acc[scene.ageRange] || 0) + 1
+  }
+  return acc
+}, {} as Record<string, number>))
 const domainCounts = computed<Record<string, number>>(() => scenes.value.reduce((acc, scene) => {
   acc[scene.sceneDomain] = (acc[scene.sceneDomain] || 0) + 1
   return acc
@@ -261,24 +307,68 @@ const themeCounts = computed<Record<string, number>>(() => scenes.value.reduce((
   acc[scene.themeCategory] = (acc[scene.themeCategory] || 0) + 1
   return acc
 }, {} as Record<string, number>))
+const availableAgeRanges = computed(() => AGE_RANGE_ORDER.filter((ageRange) => ageCounts.value[ageRange] > 0))
 const availableDomainOptions = computed(() => SCENE_DOMAIN_ORDER
   .filter((domain) => domainCounts.value[domain] > 0)
   .map((domain) => ({ value: domain, label: domain })))
 const availableThemes = computed(() => SCENE_THEME_ORDER.filter((theme) => themeCounts.value[theme] > 0))
+const recommendedAgeRanges = computed(() => {
+  if (studentAgeYears.value === null) {
+    return []
+  }
+
+  return availableAgeRanges.value.filter((ageRange) => matchesAgeRange(ageRange, studentAgeYears.value))
+})
 const filteredScenes = computed(() => scenes.value.filter((scene) => {
+  const matchesAge = selectedAgeRanges.value.length === 0 || (
+    !!scene.ageRange && selectedAgeRanges.value.includes(scene.ageRange)
+  )
   const matchesDomain = selectedDomains.value.length === 0 || selectedDomains.value.includes(scene.sceneDomain as EmotionalSceneDomain)
   const matchesTheme = selectedThemes.value.length === 0 || selectedThemes.value.includes(scene.themeCategory)
-  return matchesDomain && matchesTheme
+  return matchesAge && matchesDomain && matchesTheme
 }))
 const activeFilterSummary = computed(() => {
   if (!hasActiveFilters.value) {
     return `当前展示全部 ${filteredScenes.value.length} 个情绪场景。`
   }
 
+  const ageText = selectedAgeRanges.value.length > 0 ? selectedAgeRanges.value.join('、') : '全部年龄'
   const domainText = selectedDomains.value.length > 0 ? selectedDomains.value.join('、') : '全部场域'
   const themeText = selectedThemes.value.length > 0 ? selectedThemes.value.join('、') : '全部主题'
-  return `当前筛选：空间 [${domainText}] + 主题 [${themeText}]，共匹配 ${filteredScenes.value.length} 个场景。`
+  return `当前筛选：年龄 [${ageText}] + 空间 [${domainText}] + 主题 [${themeText}]，共匹配 ${filteredScenes.value.length} 个场景。`
 })
+
+function calculateAge(birthday: string): number | null {
+  if (!birthday) {
+    return null
+  }
+
+  const birth = new Date(birthday)
+  if (Number.isNaN(birth.getTime())) {
+    return null
+  }
+
+  const today = new Date()
+  let age = today.getFullYear() - birth.getFullYear()
+  const monthDiff = today.getMonth() - birth.getMonth()
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age -= 1
+  }
+
+  return age >= 0 ? age : null
+}
+
+function matchesAgeRange(ageRange: string, ageYears: number): boolean {
+  const match = ageRange.match(/^(\d+)\s*-\s*(\d+)$/)
+  if (!match) {
+    return false
+  }
+
+  const minAge = Number(match[1])
+  const maxAge = Number(match[2])
+  return ageYears >= minAge && ageYears <= maxAge
+}
 
 function deriveEmotionColor(
   emotion: EmotionalBaseEmotion | undefined,
@@ -346,6 +436,7 @@ function mapResourceToSceneCard(resource: ResourceItem): SceneCard {
     difficultyLevel: metadata.difficultyLevel === 2 || metadata.difficultyLevel === 3 ? metadata.difficultyLevel : 1,
     resourceCode: String(metadata.sceneCode || `resource_${resource.id}`),
     resourceTypeLabel: isEmotionSceneSelector.value ? '情绪与场景' : '表达关心',
+    ageRange: 'ageRange' in metadata ? metadata.ageRange : undefined,
     sceneDomain: ('sceneDomain' in metadata && metadata.sceneDomain ? metadata.sceneDomain : '未分类') as EmotionalSceneDomain | '未分类',
     themeCategory: resource.category || '未分类',
   }
@@ -367,12 +458,21 @@ async function loadScenes() {
   loading.value = true
   try {
     const api = new ResourceAPI()
+    const studentApi = new StudentAPI()
     const resources = api.getResources({
       moduleCode: ModuleCode.EMOTIONAL,
       resourceType: resourceType.value,
     })
 
     scenes.value = resources.map(mapResourceToSceneCard)
+
+    if (isEmotionSceneSelector.value) {
+      const student = await studentApi.getStudentById(studentId.value)
+      studentAgeYears.value = calculateAge(student?.birthday || '')
+      if (selectedAgeRanges.value.length === 0 && recommendedAgeRanges.value.length > 0) {
+        selectedAgeRanges.value = [...recommendedAgeRanges.value]
+      }
+    }
   } finally {
     loading.value = false
   }
@@ -389,8 +489,13 @@ function launchScene(resourceId: number) {
 }
 
 function clearFilters() {
+  selectedAgeRanges.value = []
   selectedDomains.value = []
   selectedThemes.value = []
+}
+
+function applyRecommendedAgeFilters() {
+  selectedAgeRanges.value = [...recommendedAgeRanges.value]
 }
 
 function goBackToMenu() {

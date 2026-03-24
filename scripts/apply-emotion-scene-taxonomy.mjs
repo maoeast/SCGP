@@ -98,9 +98,45 @@ const REFERENCE_FILES = [
 
 const OUTPUT_CSV_PATH = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scene-taxonomy-2026-03-24.csv')
 const OUTPUT_MD_PATH = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scene-taxonomy-2026-03-24.md')
+const AGE_RANGE_BY_DIFFICULTY = {
+  1: '4-6',
+  2: '7-12',
+  3: '13-17',
+}
+const AGE_RANGE_ALIASES = {
+  '4-8': '4-6',
+}
 
 function normalizeString(value, fallback = '') {
   return typeof value === 'string' ? value.trim() : fallback
+}
+
+function normalizeOptionalString(value) {
+  const normalized = normalizeString(value)
+  return normalized || undefined
+}
+
+function normalizeAgeRange(value) {
+  const normalized = normalizeOptionalString(value)
+  if (!normalized) {
+    return undefined
+  }
+
+  return AGE_RANGE_ALIASES[normalized] || normalized
+}
+
+function normalizeDifficultyLevel(value) {
+  return value === 2 || value === 3 ? value : 1
+}
+
+function resolveAgeRange(metadata, fallbackDifficultyLevel = 1) {
+  const existingAgeRange = normalizeAgeRange(metadata?.ageRange)
+  if (existingAgeRange) {
+    return existingAgeRange
+  }
+
+  const difficultyLevel = normalizeDifficultyLevel(metadata?.difficultyLevel ?? fallbackDifficultyLevel)
+  return AGE_RANGE_BY_DIFFICULTY[difficultyLevel] || AGE_RANGE_BY_DIFFICULTY[1]
 }
 
 async function fileExists(filePath) {
@@ -207,14 +243,16 @@ function buildSummaryTable(rows, key) {
 async function writeAuditFiles(rows, dbPath) {
   const themeSummary = buildSummaryTable(rows, 'themeCategory')
   const domainSummary = buildSummaryTable(rows, 'sceneDomain')
+  const ageSummary = buildSummaryTable(rows, 'ageRange')
 
   const csvLines = [
-    'sceneCode,title,themeCategory,sceneDomain',
+    'sceneCode,title,themeCategory,sceneDomain,ageRange',
     ...rows.map((row) => [
       row.sceneCode,
       row.title,
       row.themeCategory,
       row.sceneDomain,
+      row.ageRange,
     ].map(escapeCsv).join(',')),
   ]
   await fs.writeFile(OUTPUT_CSV_PATH, `${csvLines.join('\n')}\n`, 'utf8')
@@ -237,11 +275,17 @@ async function writeAuditFiles(rows, dbPath) {
     '|---|---:|',
     ...domainSummary.map(([value, count]) => `| ${value} | ${count} |`),
     '',
+    '## Age Summary',
+    '',
+    '| Age Range | Count |',
+    '|---|---:|',
+    ...ageSummary.map(([value, count]) => `| ${value} | ${count} |`),
+    '',
     '## Scene List',
     '',
-    '| sceneCode | Title | Theme Category | Scene Domain |',
-    '|---|---|---|---|',
-    ...rows.map((row) => `| ${row.sceneCode} | ${String(row.title).replace(/\|/g, '\\|')} | ${row.themeCategory} | ${row.sceneDomain} |`),
+    '| sceneCode | Title | Theme Category | Scene Domain | Age Range |',
+    '|---|---|---|---|---|',
+    ...rows.map((row) => `| ${row.sceneCode} | ${String(row.title).replace(/\|/g, '\\|')} | ${row.themeCategory} | ${row.sceneDomain} | ${row.ageRange} |`),
     '',
   ]
   await fs.writeFile(OUTPUT_MD_PATH, `${mdLines.join('\n')}\n`, 'utf8')
@@ -261,9 +305,12 @@ async function updateReferenceFiles() {
         return scene
       }
 
+      const ageRange = resolveAgeRange(scene, scene.difficultyLevel)
+
       return {
         ...scene,
         sceneDomain: taxonomy.sceneDomain,
+        ageRange,
       }
     })
 
@@ -310,6 +357,7 @@ async function main() {
       }
 
       metadata.sceneDomain = taxonomy.sceneDomain
+      metadata.ageRange = resolveAgeRange(metadata, metadata.difficultyLevel)
 
       db.run(
         `UPDATE sys_training_resource
@@ -323,6 +371,7 @@ async function main() {
         title: row.name,
         themeCategory: taxonomy.themeCategory,
         sceneDomain: taxonomy.sceneDomain,
+        ageRange: metadata.ageRange,
       })
     }
 
@@ -344,6 +393,7 @@ async function main() {
       outputMd: OUTPUT_MD_PATH,
       themeSummary: buildSummaryTable(appliedRows, 'themeCategory'),
       domainSummary: buildSummaryTable(appliedRows, 'sceneDomain'),
+      ageSummary: buildSummaryTable(appliedRows, 'ageRange'),
     }, null, 2))
   } catch (error) {
     try {
