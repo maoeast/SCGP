@@ -19,7 +19,7 @@
 
 ### Milestone v1.6: Emotional Engine Refactoring
 
-**Status:** In progress  
+**Status:** In progress (all plans executed; manual verification pending)  
 **Phases:** 14-16  
 **Total Plans:** 3
 
@@ -72,10 +72,11 @@ Plans:
 **Goal**: Reduce the two runtime pages to thin shells and verify that current launch, persistence, summary, records, and report flows behave the same after the engine refactor.  
 **Depends on**: Phase 15  
 **Plans**: 1 plan
+**Status:** Awaiting manual verification (2026-03-24)
 
 Plans:
 
-- [ ] 16-01: Migrate runtime pages to shell wrappers and lock regression compatibility
+- [x] 16-01: Migrate runtime pages to shell wrappers and lock regression compatibility
 
 **Requirements:** `COMP-01`, `COMP-02`, `COMP-03`, `COMP-04`
 
