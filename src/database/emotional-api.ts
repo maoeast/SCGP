@@ -240,28 +240,30 @@ export class EmotionalTrainingAPI {
         detailIds.push(getLastInsertId(db))
       }
 
-      const reportTitle = `${studentName} - 情绪行为调节训练报告`
-      const existingReport = db.get(
-        `SELECT id
-         FROM report_record
-         WHERE student_id = ? AND report_type = 'emotional'`,
-        [input.studentId]
-      )
+      if (input.completionStatus === 'completed') {
+        const reportTitle = `${studentName} - 情绪行为调节训练报告`
+        const existingReport = db.get(
+          `SELECT id
+           FROM report_record
+           WHERE student_id = ? AND report_type = 'emotional'`,
+          [input.studentId]
+        )
 
-      if (existingReport?.id) {
-        db.run(`
-          UPDATE report_record
-          SET training_record_id = ?, title = ?, class_id = ?, class_name = ?,
-              module_code = 'emotional', created_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `, [trainingRecordId, reportTitle, classId, className, existingReport.id])
-      } else {
-        db.run(`
-          INSERT INTO report_record (
-            student_id, report_type, training_record_id, title,
-            class_id, class_name, module_code, created_at, updated_at
-          ) VALUES (?, 'emotional', ?, ?, ?, ?, 'emotional', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        `, [input.studentId, trainingRecordId, reportTitle, classId, className])
+        if (existingReport?.id) {
+          db.run(`
+            UPDATE report_record
+            SET training_record_id = ?, title = ?, class_id = ?, class_name = ?,
+                module_code = 'emotional', created_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `, [trainingRecordId, reportTitle, classId, className, existingReport.id])
+        } else {
+          db.run(`
+            INSERT INTO report_record (
+              student_id, report_type, training_record_id, title,
+              class_id, class_name, module_code, created_at, updated_at
+            ) VALUES (?, 'emotional', ?, ?, ?, ?, 'emotional', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `, [input.studentId, trainingRecordId, reportTitle, classId, className])
+        }
       }
 
       rawDb.run('COMMIT')
