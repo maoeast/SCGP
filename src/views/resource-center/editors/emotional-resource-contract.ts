@@ -4,6 +4,7 @@ import type {
   CareSceneUtterance,
   EmotionalBaseEmotion,
   EmotionalCareType,
+  EmotionalSceneDomain,
   EmotionalReasoningQuestionType,
   EmotionalSolutionRank,
   EmotionScenePrompt,
@@ -50,11 +51,33 @@ export const CARE_TYPE_OPTIONS: Array<{
   { value: 'action', label: '行动式' },
 ]
 
+export const SCENE_DOMAIN_OPTIONS: Array<{
+  value: EmotionalSceneDomain
+  label: EmotionalSceneDomain
+}> = [
+  { value: '家庭', label: '家庭' },
+  { value: '校园', label: '校园' },
+  { value: '公共商业与社区', label: '公共商业与社区' },
+  { value: '交通出行', label: '交通出行' },
+  { value: '医疗康复', label: '医疗康复' },
+  { value: '数字虚拟', label: '数字虚拟' },
+  { value: '自然生态', label: '自然生态' },
+]
+
 const ABILITY_LEVELS = ['primary', 'middle', 'advanced'] as const
 const HINT_LEVELS = [0, 1, 2, 3] as const
 const REASONING_TYPES = ['cause', 'need', 'empathy'] as const
 const SOLUTION_RANKS = ['optimal', 'acceptable', 'inappropriate'] as const
 const CARE_TYPES = ['empathy', 'advice', 'action'] as const
+const SCENE_DOMAINS = [
+  '家庭',
+  '校园',
+  '公共商业与社区',
+  '交通出行',
+  '医疗康复',
+  '数字虚拟',
+  '自然生态',
+] as const
 
 function normalizeString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback
@@ -101,6 +124,12 @@ function normalizeSolutionRank(value: unknown, fallback: EmotionalSolutionRank):
   return SOLUTION_RANKS.includes(value as EmotionalSolutionRank)
     ? (value as EmotionalSolutionRank)
     : fallback
+}
+
+function normalizeSceneDomain(value: unknown): EmotionalSceneDomain | undefined {
+  return SCENE_DOMAINS.includes(value as EmotionalSceneDomain)
+    ? (value as EmotionalSceneDomain)
+    : undefined
 }
 
 function normalizeStringArray(value: unknown, fallback: string[]): string[] {
@@ -241,6 +270,7 @@ export function normalizeEmotionSceneEditorModel(
     imageUrl: normalizeString(model?.imageUrl),
     difficultyLevel: normalizeDifficultyLevel(model?.difficultyLevel),
     targetEmotion,
+    sceneDomain: normalizeSceneDomain(model?.sceneDomain),
     emotionOptions: normalizeEmotionOptions(model?.emotionOptions, targetEmotion),
     emotionClues: normalizeStringArray(model?.emotionClues, ['请补充视觉线索 1', '请补充视觉线索 2']),
     prompts,

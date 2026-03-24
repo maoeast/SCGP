@@ -12,6 +12,15 @@ export type EmotionalBaseEmotion =
   | 'shy'
   | 'proud'
 
+export type EmotionalSceneDomain =
+  | '家庭'
+  | '校园'
+  | '公共商业与社区'
+  | '交通出行'
+  | '医疗康复'
+  | '数字虚拟'
+  | '自然生态'
+
 export type EmotionalColorToken =
   | 'green'
   | 'yellow'
@@ -74,6 +83,7 @@ export interface EmotionSceneResourceMeta {
   imageUrl: string
   difficultyLevel: 1 | 2 | 3
   targetEmotion: EmotionalBaseEmotion
+  sceneDomain?: EmotionalSceneDomain
   emotionOptions: EmotionalBaseEmotion[]
   emotionClues: string[]
   prompts: EmotionScenePrompt[]

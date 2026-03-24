@@ -23,7 +23,9 @@
       <div class="toolbar">
         <div class="toolbar-copy">
           <el-tag size="large" effect="light">{{ studentName || `学生 #${studentId}` }}</el-tag>
-          <span class="scene-count">共 {{ scenes.length }} 个可选场景</span>
+          <span class="scene-count">
+            {{ isEmotionSceneSelector ? `筛后 ${filteredScenes.length} / ${scenes.length} 个情绪场景` : `共 ${filteredScenes.length} 个可选场景` }}
+          </span>
         </div>
 
         <div class="toolbar-actions">
@@ -35,8 +37,64 @@
       <el-skeleton v-if="loading" animated :rows="8" />
 
       <template v-else>
+        <el-card
+          v-if="isEmotionSceneSelector"
+          shadow="never"
+          class="filter-matrix-card"
+        >
+          <div class="filter-matrix-head">
+            <div>
+              <h3 class="filter-matrix-title">交叉筛选矩阵</h3>
+              <p class="filter-matrix-subtitle">先按场域空间筛“情绪发生在哪”，再按情景主题筛“发生了什么事”。</p>
+            </div>
+            <el-button
+              v-if="hasActiveFilters"
+              plain
+              @click="clearFilters"
+            >
+              清空筛选
+            </el-button>
+          </div>
+
+          <div class="filter-section">
+            <div class="filter-label-row">
+              <span class="filter-label">物理空间（Where）</span>
+              <span class="filter-hint">家庭 / 校园 / 公共商业与社区 / 交通出行 / 医疗康复 / 自然生态 / 数字虚拟</span>
+            </div>
+            <el-checkbox-group v-model="selectedDomains" class="matrix-group">
+              <el-checkbox-button
+                v-for="option in availableDomainOptions"
+                :key="option.value"
+                :label="option.value"
+              >
+                {{ option.label }} · {{ domainCounts[option.value] || 0 }}
+              </el-checkbox-button>
+            </el-checkbox-group>
+          </div>
+
+          <div class="filter-section">
+            <div class="filter-label-row">
+              <span class="filter-label">情景主题（What / Why）</span>
+              <span class="filter-hint">同伴冲突与边界 / 害怕与安全 / 社交尴尬 / 失落挫折 / 快乐体验 / 成长成就 / 害羞与被关注 / 平静专注</span>
+            </div>
+            <el-checkbox-group v-model="selectedThemes" class="matrix-group">
+              <el-checkbox-button
+                v-for="theme in availableThemes"
+                :key="theme"
+                :label="theme"
+              >
+                {{ theme }} · {{ themeCounts[theme] || 0 }}
+              </el-checkbox-button>
+            </el-checkbox-group>
+          </div>
+
+          <div class="filter-summary">
+            <span>{{ activeFilterSummary }}</span>
+          </div>
+        </el-card>
+
         <el-empty
-          v-if="scenes.length === 0"
+          v-if="filteredScenes.length === 0"
           :description="emptyDescription"
         >
           <el-button type="primary" @click="goToResourceCenter">去配置资源</el-button>
@@ -44,7 +102,7 @@
 
         <el-row v-else :gutter="20" class="gallery-grid">
           <el-col
-            v-for="scene in scenes"
+            v-for="scene in filteredScenes"
             :key="scene.id"
             :xs="24"
             :sm="12"
@@ -89,6 +147,8 @@
 
                 <div class="scene-meta">
                   <el-tag size="small" type="warning" effect="plain">{{ scene.resourceTypeLabel }}</el-tag>
+                  <el-tag size="small" effect="plain">{{ scene.sceneDomain }}</el-tag>
+                  <el-tag size="small" type="success" effect="plain">{{ scene.themeCategory }}</el-tag>
                   <el-tag size="small" effect="plain">{{ scene.resourceCode }}</el-tag>
                 </div>
               </div>
@@ -106,7 +166,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { RefreshRight } from '@element-plus/icons-vue'
 import { ResourceAPI } from '@/database/resource-api'
 import { ModuleCode, type ResourceItem } from '@/types/module'
-import type { EmotionalBaseEmotion } from '@/types/emotional'
+import type { EmotionalBaseEmotion, EmotionalSceneDomain } from '@/types/emotional'
 import {
   EMOTION_COLOR_PRESETS,
   normalizeCareSceneEditorModel,
@@ -125,13 +185,38 @@ interface SceneCard {
   difficultyLevel: 1 | 2 | 3
   resourceCode: string
   resourceTypeLabel: string
+  sceneDomain: EmotionalSceneDomain | '未分类'
+  themeCategory: string
 }
+
+const SCENE_DOMAIN_ORDER: EmotionalSceneDomain[] = [
+  '家庭',
+  '校园',
+  '公共商业与社区',
+  '交通出行',
+  '医疗康复',
+  '自然生态',
+  '数字虚拟',
+]
+
+const SCENE_THEME_ORDER = [
+  '同伴冲突与边界',
+  '害怕与安全',
+  '社交尴尬',
+  '失落挫折',
+  '快乐体验',
+  '成长成就',
+  '害羞与被关注',
+  '平静专注',
+] as const
 
 const route = useRoute()
 const router = useRouter()
 
 const loading = ref(false)
 const scenes = ref<SceneCard[]>([])
+const selectedDomains = ref<EmotionalSceneDomain[]>([])
+const selectedThemes = ref<string[]>([])
 
 const inheritedQuery = computed(() => ({ ...route.query }))
 const studentId = computed(() => Number(Array.isArray(route.query.studentId) ? route.query.studentId[0] : route.query.studentId || 0))
@@ -160,9 +245,40 @@ const defaultDescription = computed(() => (
 ))
 const emptyDescription = computed(() => (
   isEmotionSceneSelector.value
-    ? '当前没有可用的情绪场景资源，请先在资源中心配置。'
+    ? (
+        scenes.value.length > 0 && hasActiveFilters.value
+          ? '当前筛选条件下没有匹配的情绪场景，请调整场域空间或情景主题。'
+          : '当前没有可用的情绪场景资源，请先在资源中心配置。'
+      )
     : '当前没有可用的表达关心资源，请先在资源中心配置。'
 ))
+const hasActiveFilters = computed(() => selectedDomains.value.length > 0 || selectedThemes.value.length > 0)
+const domainCounts = computed<Record<string, number>>(() => scenes.value.reduce((acc, scene) => {
+  acc[scene.sceneDomain] = (acc[scene.sceneDomain] || 0) + 1
+  return acc
+}, {} as Record<string, number>))
+const themeCounts = computed<Record<string, number>>(() => scenes.value.reduce((acc, scene) => {
+  acc[scene.themeCategory] = (acc[scene.themeCategory] || 0) + 1
+  return acc
+}, {} as Record<string, number>))
+const availableDomainOptions = computed(() => SCENE_DOMAIN_ORDER
+  .filter((domain) => domainCounts.value[domain] > 0)
+  .map((domain) => ({ value: domain, label: domain })))
+const availableThemes = computed(() => SCENE_THEME_ORDER.filter((theme) => themeCounts.value[theme] > 0))
+const filteredScenes = computed(() => scenes.value.filter((scene) => {
+  const matchesDomain = selectedDomains.value.length === 0 || selectedDomains.value.includes(scene.sceneDomain as EmotionalSceneDomain)
+  const matchesTheme = selectedThemes.value.length === 0 || selectedThemes.value.includes(scene.themeCategory)
+  return matchesDomain && matchesTheme
+}))
+const activeFilterSummary = computed(() => {
+  if (!hasActiveFilters.value) {
+    return `当前展示全部 ${filteredScenes.value.length} 个情绪场景。`
+  }
+
+  const domainText = selectedDomains.value.length > 0 ? selectedDomains.value.join('、') : '全部场域'
+  const themeText = selectedThemes.value.length > 0 ? selectedThemes.value.join('、') : '全部主题'
+  return `当前筛选：空间 [${domainText}] + 主题 [${themeText}]，共匹配 ${filteredScenes.value.length} 个场景。`
+})
 
 function deriveEmotionColor(
   emotion: EmotionalBaseEmotion | undefined,
@@ -230,6 +346,8 @@ function mapResourceToSceneCard(resource: ResourceItem): SceneCard {
     difficultyLevel: metadata.difficultyLevel === 2 || metadata.difficultyLevel === 3 ? metadata.difficultyLevel : 1,
     resourceCode: String(metadata.sceneCode || `resource_${resource.id}`),
     resourceTypeLabel: isEmotionSceneSelector.value ? '情绪与场景' : '表达关心',
+    sceneDomain: ('sceneDomain' in metadata && metadata.sceneDomain ? metadata.sceneDomain : '未分类') as EmotionalSceneDomain | '未分类',
+    themeCategory: resource.category || '未分类',
   }
 }
 
@@ -268,6 +386,11 @@ function launchScene(resourceId: number) {
       resourceId: String(resourceId),
     },
   })
+}
+
+function clearFilters() {
+  selectedDomains.value = []
+  selectedThemes.value = []
 }
 
 function goBackToMenu() {
@@ -312,6 +435,76 @@ onMounted(() => {
   border-radius: 18px;
   background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
   border: 1px solid #edf2f7;
+}
+
+.filter-matrix-card {
+  margin-bottom: 20px;
+  border-radius: 22px;
+  border: 1px solid #e5edf6;
+  background:
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 30%),
+    linear-gradient(135deg, #fffdf8 0%, #f8fbff 100%);
+}
+
+.filter-matrix-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.filter-matrix-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: #1f2937;
+}
+
+.filter-matrix-subtitle {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.7;
+  font-size: 13px;
+}
+
+.filter-section + .filter-section {
+  margin-top: 18px;
+}
+
+.filter-label-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.filter-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.filter-hint {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.matrix-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-summary {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.75);
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.7;
+  border: 1px dashed #d7e3f1;
 }
 
 .toolbar-copy,
@@ -417,7 +610,8 @@ onMounted(() => {
   .toolbar,
   .toolbar-copy,
   .toolbar-actions,
-  .scene-topline {
+  .scene-topline,
+  .filter-matrix-head {
     flex-direction: column;
     align-items: stretch;
   }

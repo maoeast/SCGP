@@ -83,7 +83,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-2",
@@ -169,7 +170,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "自然生态"
   },
   {
     "sceneCode": "scene-3",
@@ -254,7 +256,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-4",
@@ -340,7 +343,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-5",
@@ -426,7 +430,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-6",
@@ -512,7 +517,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-7",
@@ -598,7 +604,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-8",
@@ -684,7 +691,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "家庭"
   },
   {
     "sceneCode": "scene-9",
@@ -769,7 +777,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-10",
@@ -855,7 +864,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "家庭"
   },
   {
     "sceneCode": "scene-11",
@@ -941,7 +951,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-12",
@@ -1026,7 +1037,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-13",
@@ -1112,7 +1124,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "交通出行"
   },
   {
     "sceneCode": "scene-14",
@@ -1197,7 +1210,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-15",
@@ -1282,7 +1296,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-16",
@@ -1367,7 +1382,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-17",
@@ -1452,7 +1468,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-18",
@@ -1537,7 +1554,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "家庭"
   },
   {
     "sceneCode": "scene-19",
@@ -1622,7 +1640,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-20",
@@ -1708,7 +1727,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-21",
@@ -1794,7 +1814,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-22",
@@ -1879,7 +1900,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-23",
@@ -1965,7 +1987,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-24",
@@ -2050,7 +2073,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "数字虚拟"
   },
   {
     "sceneCode": "scene-25",
@@ -2135,7 +2159,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-26",
@@ -2221,7 +2246,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-27",
@@ -2307,7 +2333,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-28",
@@ -2393,7 +2420,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-29",
@@ -2478,7 +2506,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-30",
@@ -2563,7 +2592,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "自然生态"
   },
   {
     "sceneCode": "scene-31",
@@ -2649,7 +2679,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "自然生态"
   },
   {
     "sceneCode": "scene-32",
@@ -2734,7 +2765,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "医疗康复"
   },
   {
     "sceneCode": "scene-33",
@@ -2820,7 +2852,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-34",
@@ -2906,7 +2939,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "数字虚拟"
   },
   {
     "sceneCode": "scene-35",
@@ -2992,7 +3026,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-36",
@@ -3078,7 +3113,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-37",
@@ -3163,7 +3199,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-38",
@@ -3249,7 +3286,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-39",
@@ -3335,7 +3373,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-40",
@@ -3421,7 +3460,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-41",
@@ -3507,7 +3547,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-42",
@@ -3593,7 +3634,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-43",
@@ -3679,7 +3721,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-44",
@@ -3687,10 +3730,10 @@
     "description": "识别获得长辈正向关注时的害羞情绪，理解喜悦伴随轻微退缩的复合心理表现，学习如何大方地接受赞美并进行基本礼貌互动。",
     "imageUrl": "/assets/scenes/scene44_auntie_praise.jpg",
     "difficultyLevel": 1,
-    "targetEmotion": "embarrassed",
+    "targetEmotion": "shy",
     "emotionOptions": [
       "sad",
-      "embarrassed",
+      "shy",
       "scared",
       "angry"
     ],
@@ -3765,7 +3808,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "家庭"
   },
   {
     "sceneCode": "scene-45",
@@ -3773,11 +3817,11 @@
     "description": "识别初次获得荣誉成为焦点时的害羞情绪，理解自我意识萌发时的腼腆心态，鼓励特需儿童接纳来自群体的善意注视。",
     "imageUrl": "/assets/scenes/scene45_first_red_scarf.jpg",
     "difficultyLevel": 1,
-    "targetEmotion": "embarrassed",
+    "targetEmotion": "shy",
     "emotionOptions": [
       "scared",
       "sad",
-      "embarrassed",
+      "shy",
       "angry"
     ],
     "emotionClues": [
@@ -3851,7 +3895,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-46",
@@ -3859,10 +3904,10 @@
     "description": "识别同伴面前受到公开表扬的害羞情绪，理解内心自豪与外表含蓄的内敛表达方式，培养恰当的同伴互动与自我肯定感。",
     "imageUrl": "/assets/scenes/scene46_read_essay.jpg",
     "difficultyLevel": 2,
-    "targetEmotion": "embarrassed",
+    "targetEmotion": "shy",
     "emotionOptions": [
       "sad",
-      "embarrassed",
+      "shy",
       "angry",
       "scared"
     ],
@@ -3937,7 +3982,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-47",
@@ -3945,10 +3991,10 @@
     "description": "识别社交关系中收到同伴正向反馈的害羞情绪，理解同伴交往中的真诚善意，训练面对他人示好时的眼神接触与真诚道谢能力。",
     "imageUrl": "/assets/scenes/scene47_paper_crane.jpg",
     "difficultyLevel": 2,
-    "targetEmotion": "embarrassed",
+    "targetEmotion": "shy",
     "emotionOptions": [
       "angry",
-      "embarrassed",
+      "shy",
       "scared"
     ],
     "emotionClues": [
@@ -4022,7 +4068,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-48",
@@ -4030,11 +4077,11 @@
     "description": "识别高强度正向情感包围下的害羞情绪，理解成为集体唯一焦点时的局促与快乐交织，训练在群体祝福中安然自处并给予合宜回馈。",
     "imageUrl": "/assets/scenes/scene48_birthday_song.jpg",
     "difficultyLevel": 3,
-    "targetEmotion": "embarrassed",
+    "targetEmotion": "shy",
     "emotionOptions": [
       "sad",
       "scared",
-      "embarrassed",
+      "shy",
       "angry"
     ],
     "emotionClues": [
@@ -4108,7 +4155,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-49",
@@ -4116,9 +4164,9 @@
     "description": "识别正式场合受到权威肯定时的腼腆与害羞情绪，理解不过度张扬的内敛喜悦，学习在公开仪式上保持得体大方的社交仪态。",
     "imageUrl": "/assets/scenes/scene49_award_stage.jpg",
     "difficultyLevel": 3,
-    "targetEmotion": "embarrassed",
+    "targetEmotion": "shy",
     "emotionOptions": [
-      "embarrassed",
+      "shy",
       "angry",
       "scared"
     ],
@@ -4193,7 +4241,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-50",
@@ -4286,7 +4335,8 @@
       "物品被抢",
       "情绪爆发",
       "边界感"
-    ]
+    ],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-51",
@@ -4379,7 +4429,8 @@
       "物品毁坏",
       "意外丧失",
       "自我调节"
-    ]
+    ],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-52",
@@ -4472,7 +4523,8 @@
       "突发危险",
       "动物恐惧",
       "自我保护"
-    ]
+    ],
+    "sceneDomain": "自然生态"
   },
   {
     "sceneCode": "scene-53",
@@ -4565,7 +4617,8 @@
       "当众出丑",
       "化解尴尬",
       "高情商"
-    ]
+    ],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-54",
@@ -4658,7 +4711,8 @@
       "家庭社交",
       "面对夸奖",
       "腼腆退缩"
-    ]
+    ],
+    "sceneDomain": "家庭"
   },
   {
     "sceneCode": "scene-55",
@@ -4751,7 +4805,8 @@
       "校园劳动",
       "获得荣誉",
       "社会责任感"
-    ]
+    ],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-56",
@@ -4844,7 +4899,8 @@
       "医疗恐惧",
       "克服害怕",
       "身体紧张"
-    ]
+    ],
+    "sceneDomain": "医疗康复"
   },
   {
     "sceneCode": "scene-57",
@@ -4930,7 +4986,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "家庭"
   },
   {
     "sceneCode": "scene-58",
@@ -5016,7 +5073,8 @@
       }
     ],
     "abilityLevel": "primary",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-59",
@@ -5102,7 +5160,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-60",
@@ -5188,7 +5247,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "家庭"
   },
   {
     "sceneCode": "scene-61",
@@ -5274,7 +5334,8 @@
       }
     ],
     "abilityLevel": "middle",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-62",
@@ -5360,7 +5421,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-63",
@@ -5446,7 +5508,8 @@
       }
     ],
     "abilityLevel": "advanced",
-    "tags": []
+    "tags": [],
+    "sceneDomain": "家庭"
   },
   {
     "sceneCode": "scene-64",
@@ -5539,7 +5602,8 @@
       "隐私被犯",
       "情绪失控",
       "维护边界"
-    ]
+    ],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-65",
@@ -5632,7 +5696,8 @@
       "失去心爱物",
       "悲伤流泪",
       "寻求安慰"
-    ]
+    ],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-66",
@@ -5725,7 +5790,8 @@
       "完成挑战",
       "自信展示",
       "分享成就"
-    ]
+    ],
+    "sceneDomain": "家庭"
   },
   {
     "sceneCode": "scene-67",
@@ -5818,7 +5884,8 @@
       "社交失误",
       "化解尴尬",
       "高情商应急"
-    ]
+    ],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-68",
@@ -5911,7 +5978,8 @@
       "陌生人社交",
       "腼腆退缩",
       "礼貌回应"
-    ]
+    ],
+    "sceneDomain": "家庭"
   },
   {
     "sceneCode": "scene-69",
@@ -6004,7 +6072,8 @@
       "收到礼物",
       "愿望实现",
       "表达感谢"
-    ]
+    ],
+    "sceneDomain": "家庭"
   },
   {
     "sceneCode": "scene-70",
@@ -6097,7 +6166,8 @@
       "遭遇不公",
       "破坏规则",
       "情绪失控"
-    ]
+    ],
+    "sceneDomain": "公共商业与社区"
   },
   {
     "sceneCode": "scene-71",
@@ -6190,7 +6260,8 @@
       "生理尴尬",
       "公众出丑",
       "自我调节"
-    ]
+    ],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-72",
@@ -6283,7 +6354,8 @@
       "分离焦虑",
       "友谊",
       "接纳现实"
-    ]
+    ],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-73",
@@ -6376,7 +6448,8 @@
       "掌握新技能",
       "克服困难",
       "展示自信"
-    ]
+    ],
+    "sceneDomain": "交通出行"
   },
   {
     "sceneCode": "scene-74",
@@ -6469,7 +6542,8 @@
       "同伴交往",
       "收到礼物",
       "腼腆应对"
-    ]
+    ],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-75",
@@ -6562,7 +6636,8 @@
       "独处放松",
       "专注",
       "环境舒适"
-    ]
+    ],
+    "sceneDomain": "自然生态"
   },
   {
     "sceneCode": "scene-76",
@@ -6655,7 +6730,8 @@
       "物品被毁",
       "维护边界",
       "情绪失控"
-    ]
+    ],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-77",
@@ -6748,7 +6824,8 @@
       "迷糊出错",
       "公众出丑",
       "化解尴尬"
-    ]
+    ],
+    "sceneDomain": "校园"
   },
   {
     "sceneCode": "scene-78",
@@ -6841,7 +6918,8 @@
       "突发惊吓",
       "昆虫恐惧",
       "寻求帮助"
-    ]
+    ],
+    "sceneDomain": "自然生态"
   },
   {
     "sceneCode": "scene-79",
@@ -6934,7 +7012,8 @@
       "期待落空",
       "计划打断",
       "自我调节"
-    ]
+    ],
+    "sceneDomain": "自然生态"
   },
   {
     "sceneCode": "scene-80",
@@ -7027,6 +7106,7 @@
       "团队胜利",
       "极度激动",
       "体育精神"
-    ]
+    ],
+    "sceneDomain": "校园"
   }
 ]
