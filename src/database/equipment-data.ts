@@ -1,6 +1,6 @@
 /**
  * 器材数据初始化
- * 从 docs/感官综合发展资源功能描述.xlsx 导入的62种器材
+ * 基于 2026-03-26 导入的感官综合发展资源 CSV 生成的 63 种器材
  *
  * 图片说明：
  * - 优先使用真实图片：src/assets/images/equipment/{category}-{id}.webp
@@ -9,7 +9,6 @@
 
 import type { EquipmentCatalog } from '@/types/equipment'
 import { CATEGORY_COLORS } from '@/types/equipment'
-import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
 
 /**
  * 生成颜色占位符图片 URL（后备方案）
@@ -18,7 +17,6 @@ function generatePlaceholderImageUrl(category: string, name: string): string {
   const color = CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS] || '#CCCCCC'
   const firstChar = name.charAt(0)
 
-  // 生成 SVG Data URI（彩色背景 + 首字母）
   const svg = `
     <svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
       <rect width="128" height="128" fill="${color}"/>
@@ -30,594 +28,574 @@ function generatePlaceholderImageUrl(category: string, name: string): string {
 }
 
 /**
- * 获取器材图片 URL（带占位符后备）
- * 用于静态数据定义，运行时会自动尝试加载真实图片
- */
-function getEquipmentImageUrlWithFallback(
-  category: string,
-  id: number,
-  name: string
-): string {
-  // 返回占位符，运行时会通过 API 层动态替换为真实图片
-  return generatePlaceholderImageUrl(category, name)
-}
-
-/**
- * 62种器材数据
+ * 63种器材数据
  */
 export const EQUIPMENT_DATA: Omit<EquipmentCatalog, 'id' | 'created_at'>[] = [
-  // ==================== 触觉系统套装 (24种) ====================
   {
     category: 'tactile',
-    sub_category: '小型触觉探索套件',
-    name: '感官手环',
-    description: '提供不同纹理的触觉输入，辅助学生缓解触觉防御，平复情绪。',
+    sub_category: '触觉材料套装',
+    name: '感官环',
+    description: '戴在手腕上随时摸摸不同的纹理，能帮敏感的孩子适应触觉刺激，让焦躁的心情变平静。',
     ability_tags: ['触觉调节', '情绪稳定'],
-    image_url: generatePlaceholderImageUrl('tactile', '感官手环'),
+    image_url: generatePlaceholderImageUrl('tactile', '感官环'),
     is_active: 1
   },
   {
     category: 'tactile',
-    sub_category: '小型触觉探索套件',
-    name: '感官石',
-    description: '通过触摸辨识不同表面质地，提升手指末梢的感知力与分辨力。',
+    sub_category: '触觉材料套装',
+    name: '彩色感官组',
+    description: '让小手摸摸光滑或粗糙的石头，像探险一样分辨不同质感，让手指尖的感觉变得更灵敏。',
     ability_tags: ['触觉辨识', '精细触觉'],
-    image_url: generatePlaceholderImageUrl('tactile', '感官石'),
+    image_url: generatePlaceholderImageUrl('tactile', '彩色感官组'),
     is_active: 1
   },
   {
     category: 'tactile',
-    sub_category: '小型触觉探索套件',
-    name: '魔法触觉包',
-    description: '通过触摸辨识物体形状，锻炼触觉记忆与描述能力。',
-    ability_tags: ['触觉记忆', '形状认知'],
-    image_url: generatePlaceholderImageUrl('tactile', '魔法触觉包'),
+    sub_category: '触觉材料套装',
+    name: '触觉认知拓扑球',
+    description: '使劲捏这个拓扑球，手指越用力越能感觉到反馈，能帮孩子发泄多余精力，让大脑清醒点。',
+    ability_tags: ['指尖力量', '自我调节'],
+    image_url: generatePlaceholderImageUrl('tactile', '触觉认知拓扑球'),
     is_active: 1
   },
   {
     category: 'tactile',
-    sub_category: '小型触觉探索套件',
-    name: '《我的感官真有趣》摸一摸',
-    description: '提供结构化的触觉探索活动指引，辅助建立触觉词汇与认知。',
-    ability_tags: ['感官认知', '课程指引'],
-    image_url: generatePlaceholderImageUrl('tactile', '《我的感官真有趣》摸一摸'),
+    sub_category: '触觉材料套装',
+    name: '多角形压力调节组',
+    description: '星星角捏起来软硬适中，孩子心烦时使劲揉搓它，既能把坏情绪发泄掉，又能锻炼手指头。',
+    ability_tags: ['情绪宣泄', '精细控制'],
+    image_url: generatePlaceholderImageUrl('tactile', '多角形压力调节组'),
     is_active: 1
   },
   {
     category: 'tactile',
-    sub_category: '踩踏/坐姿触觉垫',
-    name: '感官垫',
-    description: '结合不同动物造型与纹理，通过手摸或赤足踩踏提供丰富的触觉输入，进行触觉脱敏与辨识训练，同时锻炼身体平衡。',
-    ability_tags: ['触觉脱敏', '触觉辨识', '动态平衡'],
-    image_url: generatePlaceholderImageUrl('tactile', '感官垫'),
+    sub_category: '触觉材料套装',
+    name: '色彩流变感知组',
+    description: '一捏里面的液体就会流动变色，好看又好玩。孩子盯着看一会儿，哭闹的注意力就被转移了。',
+    ability_tags: ['视觉追踪', '情绪调节'],
+    image_url: generatePlaceholderImageUrl('tactile', '色彩流变感知组'),
     is_active: 1
   },
   {
     category: 'tactile',
-    sub_category: '踩踏/坐姿触觉垫',
-    name: '触觉垫',
-    description: '提供持续的触觉输入，明确身体位置感，辅助维持坐姿专注。',
-    ability_tags: ['坐姿辅助', '触觉反馈'],
-    image_url: generatePlaceholderImageUrl('tactile', '触觉垫'),
+    sub_category: '触觉材料套装',
+    name: '双位按压反馈组',
+    description: '按下去“啵”的一声特别解压，手闲不住的孩子一直按这个，上课就不容易走神或捣乱了。',
+    ability_tags: ['听觉反馈', '专注辅助'],
+    image_url: generatePlaceholderImageUrl('tactile', '双位按压反馈组'),
     is_active: 1
   },
   {
     category: 'tactile',
-    sub_category: '深压觉安抚套件',
-    name: '图像捕捉器',
-    description: '通过按压针阵形成3D图像，提供丰富的触觉反馈，锻炼手指按压力度与精细控制。',
-    ability_tags: ['触觉反馈', '精细控制'],
-    image_url: generatePlaceholderImageUrl('tactile', '图像捕捉器'),
+    sub_category: '触觉材料套装',
+    name: '慢回弹压力缓解组',
+    description: '软乎乎的包子随便怎么捏都能变回原样，孩子发脾气想撒气时就捏它，安全又练手劲儿。',
+    ability_tags: ['情绪宣泄', '手部控制'],
+    image_url: generatePlaceholderImageUrl('tactile', '慢回弹压力缓解组'),
     is_active: 1
   },
   {
     category: 'tactile',
-    sub_category: '深压觉安抚套件',
-    name: '安抚小龟',
-    description: '通过重量感提供深压觉输入（Deep Pressure），帮助镇静与放松。',
-    ability_tags: ['深压觉', '情绪调节'],
-    image_url: generatePlaceholderImageUrl('tactile', '安抚小龟'),
+    sub_category: '触觉材料套装',
+    name: '彩色波纹伸缩组',
+    description: '一扔出去瞬间变大，收回来又变小。神奇的变形能吸引孩子一直玩，锻炼眼睛盯着物体看。',
+    ability_tags: ['视觉关注', '因果认知'],
+    image_url: generatePlaceholderImageUrl('tactile', '彩色波纹伸缩组'),
     is_active: 1
   },
   {
     category: 'tactile',
-    sub_category: '深压觉安抚套件',
-    name: '感官袜',
-    description: '提供全身性的深层压力包裹，帮助明确身体边界，调节情绪唤醒度，建立安全感。',
-    ability_tags: ['深压觉', '情绪调节', '身体概念'],
-    image_url: generatePlaceholderImageUrl('tactile', '感官袜'),
+    sub_category: '触觉材料套装',
+    name: '多向伸缩感知组',
+    description: '把小人的手脚扭来扭去摆造型，既练手劲又好玩。看着小人的笑脸，还能教孩子认识表情。',
+    ability_tags: ['手部力量', '本体感知'],
+    image_url: generatePlaceholderImageUrl('tactile', '多向伸缩感知组'),
     is_active: 1
   },
   {
     category: 'tactile',
-    sub_category: '深压觉安抚套件',
-    name: '震动颈枕',
-    description: '提供温和的震动刺激，促进颈部肌肉放松，缓解紧张焦虑。',
-    ability_tags: ['震动反馈', '身体放松'],
-    image_url: generatePlaceholderImageUrl('tactile', '震动颈枕'),
-    is_active: 1
-  },
-  {
-    category: 'tactile',
-    sub_category: '挤压/拉伸触觉套件',
-    name: '挤压球链',
-    description: '通过反复挤压动作强化指尖力量，提供本体觉反馈以调节唤醒度。',
-    ability_tags: ['手指力量', '自我调节'],
-    image_url: generatePlaceholderImageUrl('tactile', '挤压球链'),
-    is_active: 1
-  },
-  {
-    category: 'tactile',
-    sub_category: '挤压/拉伸触觉套件',
-    name: '包子玩具',
-    description: '满足抓握与揉捏需求，作为安全的情绪宣泄工具，提升手部控制。',
-    ability_tags: ['情绪宣泄', '抓握力量'],
-    image_url: generatePlaceholderImageUrl('tactile', '包子玩具'),
-    is_active: 1
-  },
-  {
-    category: 'tactile',
-    sub_category: '挤压/拉伸触觉套件',
-    name: '七彩弹力网',
-    description: '在拉伸中感知阻力变化，整合视觉与本体觉，激发手部操作兴趣。',
-    ability_tags: ['双手协调', '本体感知'],
-    image_url: generatePlaceholderImageUrl('tactile', '七彩弹力网'),
-    is_active: 1
-  },
-  {
-    category: 'tactile',
-    sub_category: '挤压/拉伸触觉套件',
-    name: '触觉球',
-    description: '提供滚动按压等丰富的触觉刺激，可用于身体按摩脱敏。',
-    ability_tags: ['触觉脱敏', '身体按摩'],
-    image_url: generatePlaceholderImageUrl('tactile', '触觉球'),
-    is_active: 1
-  },
-  {
-    category: 'tactile',
-    sub_category: '变形/关节活动套件',
-    name: '变形机器人安拉',
-    description: '通过关节扭转与连接变换形态，锻炼手腕灵活性、手指精细动作及双手协作。',
-    ability_tags: ['手腕灵活', '双手协作'],
-    image_url: generatePlaceholderImageUrl('tactile', '变形机器人安拉'),
-    is_active: 1
-  },
-  {
-    category: 'tactile',
-    sub_category: '变形/关节活动套件',
-    name: '开花球',
-    description: '观察并操作从收缩到展开的形态变化，提供视觉惊喜与操作动力。',
-    ability_tags: ['视觉关注', '因果关系'],
-    image_url: generatePlaceholderImageUrl('tactile', '开花球'),
-    is_active: 1
-  },
-  {
-    category: 'tactile',
-    sub_category: '变形/关节活动套件',
-    name: '百变魔尺',
-    description: '通过旋转拼接构建造型，锻炼手腕灵活性、空间想象力与序列规划能力。',
+    sub_category: '触觉材料套装',
+    name: '柔性人形感知组',
+    description: '转一转就能变出各种形状，像变魔术一样。这能让孩子手腕更灵活，脑子里也有立体图形。',
     ability_tags: ['空间规划', '手腕灵活'],
-    image_url: generatePlaceholderImageUrl('tactile', '百变魔尺'),
+    image_url: generatePlaceholderImageUrl('tactile', '柔性人形感知组'),
     is_active: 1
   },
   {
     category: 'tactile',
-    sub_category: '变形/关节活动套件',
-    name: '弯曲方块',
-    description: '进行多方向的扭动操作，提升手指精细灵活性与空间方向感。',
-    ability_tags: ['指尖精细', '空间感知'],
-    image_url: generatePlaceholderImageUrl('tactile', '弯曲方块'),
-    is_active: 1
-  },
-  {
-    category: 'tactile',
-    sub_category: '变形/关节活动套件',
-    name: '扭动毛毛虫',
-    description: '简单的弯曲与复原动作，适合初阶学生进行模仿与关节活动。',
-    ability_tags: ['基础模仿', '动作诱发'],
-    image_url: generatePlaceholderImageUrl('tactile', '扭动毛毛虫'),
-    is_active: 1
-  },
-  {
-    category: 'tactile',
-    sub_category: '变形/关节活动套件',
-    name: '伸缩管',
-    description: '在拉伸收缩中感知长度变化与声音反馈，训练双手协调与听觉关注。',
-    ability_tags: ['双手协作', '视听整合'],
-    image_url: generatePlaceholderImageUrl('tactile', '伸缩管'),
-    is_active: 1
-  },
-  {
-    category: 'tactile',
-    sub_category: '精细触觉与操作箱',
-    name: '综合箱(8合1)',
-    description: '通过拔萝卜、敲球、钓鱼等情境游戏，锻炼指尖捏取力量与手眼协调能力。',
-    ability_tags: ['手眼协调', '指尖精细'],
-    image_url: generatePlaceholderImageUrl('tactile', '综合箱(8合1)'),
-    is_active: 1
-  },
-  {
-    category: 'tactile',
-    sub_category: '精细触觉与操作箱',
-    name: '萝卜塔',
-    description: '在情境游戏中锻炼指尖捏取（二指/三指抓握）及手眼协调能力。',
+    sub_category: '触觉材料套装',
+    name: '分段式弯折感知组',
+    description: '用两个手指捏着玩弯折游戏，就像拔萝卜一样有趣。专门锻炼孩子拿东西的手势和准头。',
     ability_tags: ['手眼协调', '精细抓握'],
-    image_url: generatePlaceholderImageUrl('tactile', '萝卜塔'),
+    image_url: generatePlaceholderImageUrl('tactile', '分段式弯折感知组'),
     is_active: 1
   },
   {
     category: 'tactile',
-    sub_category: '精细触觉与操作箱',
-    name: '触觉原子球组合',
-    description: '多维度的抓握训练，提供特殊的触觉与阻力反馈，提升手指灵活性。',
-    ability_tags: ['触觉辨识', '建构能力'],
-    image_url: generatePlaceholderImageUrl('tactile', '触觉原子球组合'),
+    sub_category: '触觉材料套装',
+    name: '多环嵌套感知组',
+    description: '弯一弯再直起来，动作特别简单。很适合刚开始学的孩子跟着老师做模仿，活动手指关节。',
+    ability_tags: ['基础模仿', '动作诱发'],
+    image_url: generatePlaceholderImageUrl('tactile', '多环嵌套感知组'),
     is_active: 1
   },
   {
     category: 'tactile',
-    sub_category: '视觉触觉互动套件',
-    name: '神奇翻翻乐',
-    description: '通过翻页动作改变视觉图案，建立动作与视觉变化的因果联系。',
+    sub_category: '触觉材料套装',
+    name: '可扭转感知组',
+    description: '用力拉开会有“咔咔”的声音，还能接在一起。喜欢听怪声、手劲大的孩子玩这个最过瘾。',
+    ability_tags: ['双手协调', '听觉反馈'],
+    image_url: generatePlaceholderImageUrl('tactile', '可扭转感知组'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '3D网式感知组',
+    description: '拿在手里不停地扭来扭去，一点声音都没有。孩子上课紧张或手痒时玩这个，解压不扰民。',
+    ability_tags: ['精细控制', '情绪调节'],
+    image_url: generatePlaceholderImageUrl('tactile', '3D网式感知组'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '3D翻转感知组',
+    description: '双手用力拉开这张网，看着它变形。拉扯时的阻力能让孩子感觉到肌肉发力，锻炼协调性。',
+    ability_tags: ['双手协调', '本体感知'],
+    image_url: generatePlaceholderImageUrl('tactile', '3D翻转感知组'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '立体构型组',
+    description: '既能指尖旋转又能按压，手感特别丰富。坐不住的孩子玩着它，就能安静下来不乱动了。',
+    ability_tags: ['视觉触觉', '缓解多动'],
+    image_url: generatePlaceholderImageUrl('tactile', '立体构型组'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '彩色连环感知组',
+    description: '不停地翻折这个方块，图案一直在变。孩子为了看新图案会一直动手，明白动手才有变化。',
     ability_tags: ['因果关系', '视觉追踪'],
-    image_url: generatePlaceholderImageUrl('tactile', '神奇翻翻乐'),
-    is_active: 1
-  },
-
-  // ==================== 嗅觉系统套装 (6种) ====================
-  {
-    category: 'olfactory',
-    sub_category: '嗅觉探索套件',
-    name: '水果香片',
-    description: '辨识不同水果气味，扩充嗅觉记忆库，刺激边缘系统以辅助记忆训练。',
-    ability_tags: ['嗅觉辨识', '感官记忆'],
-    image_url: generatePlaceholderImageUrl('olfactory', '水果香片'),
+    image_url: generatePlaceholderImageUrl('tactile', '彩色连环感知组'),
     is_active: 1
   },
   {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '多触点旋转组',
+    description: '朝着不同方向拧这个方块，手指得灵活才行。能帮孩子分清上下左右，锻炼空间方向感。',
+    ability_tags: ['指尖精细', '空间感知'],
+    image_url: generatePlaceholderImageUrl('tactile', '多触点旋转组'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '桌游互动包',
+    description: '手伸进袋子里摸一摸，猜猜是什么形状。这能锻炼孩子只靠手感记东西，并试着说出来。',
+    ability_tags: ['触觉记忆', '形状认知'],
+    image_url: generatePlaceholderImageUrl('tactile', '桌游互动包'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '触摸本',
+    description: '跟着书本去摸不同的东西，一边摸一边学“软的、硬的”这些词，让孩子能说出感觉。',
+    ability_tags: ['感官认知', '词汇建立'],
+    image_url: generatePlaceholderImageUrl('tactile', '触摸本'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '多材质纹理感知组',
+    description: '光脚踩在不同纹理的垫子上，像探险一样。既能帮敏感的孩子适应触觉，又能练习走稳路。',
+    ability_tags: ['触觉脱敏', '动态平衡'],
+    image_url: generatePlaceholderImageUrl('tactile', '多材质纹理感知组'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '立体形态感知组',
+    description: '手按在针板上印出手印，冰冰凉凉的很舒服。能控制孩子按压的力度，还能看到立体形状。',
+    ability_tags: ['触觉反馈', '精细控制'],
+    image_url: generatePlaceholderImageUrl('tactile', '立体形态感知组'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '重力安抚器',
+    description: '有分量的小熊抱在怀里，就像妈妈的拥抱。孩子哭闹或者睡不着时抱着它，很快就安心了。',
+    ability_tags: ['深压安抚', '情绪调节'],
+    image_url: generatePlaceholderImageUrl('tactile', '重力安抚器'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '加权安抚感知组',
+    description: '比普通玩偶重很多的狐狸，压在腿上特别踏实。受惊吓或者感官超载时，它是最好的陪伴。',
+    ability_tags: ['深压输入', '安全感'],
+    image_url: generatePlaceholderImageUrl('tactile', '加权安抚感知组'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '全身压力输入感官组',
+    description: '钻进这个弹力袋子里，全身被紧紧包裹着。这种挤压感能让崩溃大哭的孩子瞬间找回安全感。',
+    ability_tags: ['全身深压', '情绪调节'],
+    image_url: generatePlaceholderImageUrl('tactile', '全身压力输入感官组'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '振动热敷感知组',
+    description: '挂在脖子上会有轻微震动，像按摩一样舒服。考试紧张或者害怕时用它，身体马上就放松了。',
+    ability_tags: ['震动反馈', '身体放松'],
+    image_url: generatePlaceholderImageUrl('tactile', '振动热敷感知组'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '木质机器人感知组',
+    description: '机器人的关节可以随便扭，摆出各种酷酷的姿势。需要两只手配合，锻炼手腕灵活度。',
+    ability_tags: ['手腕灵活', '双手协作'],
+    image_url: generatePlaceholderImageUrl('tactile', '木质机器人感知组'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '磁性切分操作组',
+    description: '拿刀切开水果，“咔嚓”一声特别爽。教孩子左手拿右手切，锻炼手眼配合，学习生活常识。',
+    ability_tags: ['手眼协调', '生活认知'],
+    image_url: generatePlaceholderImageUrl('tactile', '磁性切分操作组'),
+    is_active: 1
+  },
+  {
+    category: 'tactile',
+    sub_category: '触觉材料套装',
+    name: '弹性建构感知组',
+    description: '颜色鲜艳的球有很多洞洞，小手容易抓得住。引导宝宝伸手去抓去捏，锻炼手部控制能力。',
+    ability_tags: ['抓握力量', '空间认知'],
+    image_url: generatePlaceholderImageUrl('tactile', '弹性建构感知组'),
+    is_active: 1
+  },
+  {
     category: 'olfactory',
-    sub_category: '嗅觉探索套件',
-    name: '仿真水果',
-    description: '配合香片进行"气味-实物"配对，建立视嗅联系，丰富感官词汇。',
+    sub_category: '味嗅觉材料套装',
+    name: '嗅觉认知组件',
+    description: '这个假水果配合香片一起闻，让孩子闻味道找水果，把鼻子和眼睛配合起来，增强记忆力。',
     ability_tags: ['视嗅整合', '认知配对'],
-    image_url: generatePlaceholderImageUrl('olfactory', '仿真水果'),
+    image_url: generatePlaceholderImageUrl('olfactory', '嗅觉认知组件'),
     is_active: 1
   },
   {
     category: 'olfactory',
-    sub_category: '嗅觉探索套件',
-    name: '香包',
-    description: '辨识常见的自然花香，进行气味分类与联想，刺激嗅觉记忆。',
+    sub_category: '味嗅觉材料套装',
+    name: '香包组件',
+    description: '闻闻香包猜猜是哪种花，把一样的味道分在一起。能锻炼鼻子灵敏度，还能唤起嗅觉记忆。',
     ability_tags: ['嗅觉辨识', '记忆联想'],
-    image_url: generatePlaceholderImageUrl('olfactory', '香包'),
+    image_url: generatePlaceholderImageUrl('olfactory', '香包组件'),
     is_active: 1
   },
   {
     category: 'olfactory',
-    sub_category: '嗅觉探索套件',
-    name: '仿真面包',
-    description: '结合视觉与嗅觉进行物品配对，提升生活物品的认知命名能力。',
-    ability_tags: ['多感官整合', '生活认知'],
-    image_url: generatePlaceholderImageUrl('olfactory', '仿真面包'),
-    is_active: 1
-  },
-  {
-    category: 'olfactory',
-    sub_category: '嗅觉探索套件',
+    sub_category: '味嗅觉材料套装',
     name: '香薰',
-    description: '接触更广泛的生活气味，扩展嗅觉经验，辅助情绪调节。',
+    description: '闻闻不同的精油味道，有的让人精神，有的让人放松。扩展孩子的嗅觉经验，调节心情。',
     ability_tags: ['嗅觉脱敏', '情绪调节'],
     image_url: generatePlaceholderImageUrl('olfactory', '香薰'),
     is_active: 1
   },
   {
     category: 'olfactory',
-    sub_category: '嗅觉探索套件',
-    name: '《我的感官真有趣》闻一闻',
-    description: '提供嗅觉训练的结构化课程指引，辅助建立嗅觉认知与语言表达。',
-    ability_tags: ['感官课程', '语言表达'],
-    image_url: generatePlaceholderImageUrl('olfactory', '《我的感官真有趣》闻一闻'),
-    is_active: 1
-  },
-
-  // ==================== 视觉系统套装 (10种) ====================
-  {
-    category: 'visual',
-    sub_category: '流动与光影追踪套件',
-    name: '流水解压组',
-    description: '追踪缓慢流动的液体与闪粉，锻炼视觉平滑追踪能力，平复情绪。',
-    ability_tags: ['视觉追踪', '情绪安抚'],
-    image_url: generatePlaceholderImageUrl('visual', '流水解压组'),
+    sub_category: '味嗅觉材料套装',
+    name: '仿真面包',
+    description: '看着像面包，闻着也像面包。教孩子把气味和物品对上号，学会叫出生活中食物的名字。',
+    ability_tags: ['多感官整合', '生活认知'],
+    image_url: generatePlaceholderImageUrl('olfactory', '仿真面包'),
     is_active: 1
   },
   {
-    category: 'visual',
-    sub_category: '流动与光影追踪套件',
-    name: '闪光管',
-    description: '追踪管内物体的运动轨迹，吸引并维持视觉注意力。',
-    ability_tags: ['视觉注意', '视觉聚焦'],
-    image_url: generatePlaceholderImageUrl('visual', '闪光管'),
+    category: 'olfactory',
+    sub_category: '味嗅觉材料套装',
+    name: '嗅觉本',
+    description: '跟着书本做游戏，一边闻一边学着说“香的、臭的”。让孩子学会用语言描述闻到的味道。',
+    ability_tags: ['嗅觉认知', '语言表达'],
+    image_url: generatePlaceholderImageUrl('olfactory', '嗅觉本'),
+    is_active: 1
+  },
+  {
+    category: 'gustatory',
+    sub_category: '味嗅觉材料套装',
+    name: '味觉套装',
+    description: '安全地尝一点酸甜苦咸，让挑食的孩子适应不同味道。学会分辨味道，不再抗拒新食物。',
+    ability_tags: ['味觉耐受', '认知建立'],
+    image_url: generatePlaceholderImageUrl('gustatory', '味觉套装'),
+    is_active: 1
+  },
+  {
+    category: 'gustatory',
+    sub_category: '味嗅觉材料套装',
+    name: '味觉本',
+    description: '按照书里的步骤去尝味道，教孩子说出“好酸、好甜”。把吃东西的感觉变成话语说出来。',
+    ability_tags: ['味觉体验', '语言表达'],
+    image_url: generatePlaceholderImageUrl('gustatory', '味觉本'),
     is_active: 1
   },
   {
     category: 'visual',
-    sub_category: '流动与光影追踪套件',
-    name: '火箭灯',
-    description: '观察旋转上升的水流与变幻灯光，提供高强度视觉刺激，作为强化物。',
-    ability_tags: ['视觉刺激', '专注力'],
-    image_url: generatePlaceholderImageUrl('visual', '火箭灯'),
+    sub_category: '视觉材料套装',
+    name: '色彩感知组',
+    description: '看着卡片上的颜色，把小棍插到鳄鱼背上。既要认准颜色，手还要插得准，锻炼眼手配合。',
+    ability_tags: ['视觉辨识', '精细动作'],
+    image_url: generatePlaceholderImageUrl('visual', '色彩感知组'),
     is_active: 1
   },
   {
     category: 'visual',
-    sub_category: '定点与计时视觉套件',
-    name: '沙漏计时器套装',
-    description: '观察液体/沙粒匀速流动，辅助理解时间流逝概念，提升持续注视。',
+    sub_category: '视觉材料套装',
+    name: '色彩流动输入组',
+    description: '看着亮光里的水流旋转上升，非常吸引眼球。孩子做对任务时给看这个，是最好的奖励。',
+    ability_tags: ['视觉刺激', '强化奖励'],
+    image_url: generatePlaceholderImageUrl('visual', '色彩流动输入组'),
+    is_active: 1
+  },
+  {
+    category: 'visual',
+    sub_category: '视觉材料套装',
+    name: '星光影感知组',
+    description: '关上灯，找找墙上的星星都在哪。让孩子不再怕黑，还能锻炼眼睛在暗处找东西的能力。',
+    ability_tags: ['视觉搜寻', '环境适应'],
+    image_url: generatePlaceholderImageUrl('visual', '星光影感知组'),
+    is_active: 1
+  },
+  {
+    category: 'visual',
+    sub_category: '视觉材料套装',
+    name: '视觉本',
+    description: '跟着书本找不同、找规律。教孩子学会仔细观察，不再看东西走马观花，提升观察力。',
+    ability_tags: ['视觉观察', '课程指引'],
+    image_url: generatePlaceholderImageUrl('visual', '视觉本'),
+    is_active: 1
+  },
+  {
+    category: 'visual',
+    sub_category: '视觉材料套装',
+    name: '动态分层视觉组',
+    description: '看着沙漏一点点流完，孩子就明白“五分钟”是多久了。既能练专注，又能学会等待。',
     ability_tags: ['时间概念', '视觉持续'],
-    image_url: generatePlaceholderImageUrl('visual', '沙漏计时器套装'),
+    image_url: generatePlaceholderImageUrl('visual', '动态分层视觉组'),
     is_active: 1
   },
   {
     category: 'visual',
-    sub_category: '定点与计时视觉套件',
+    sub_category: '视觉材料套装',
     name: '手持星星',
-    description: '注视手中光源，进行暗环境下的视觉定位训练及视听结合训练。',
+    description: '手里拿着发光的星星，走到哪亮到哪。训练孩子眼睛盯着光走，锻炼在暗处的视觉定位。',
     ability_tags: ['视觉定位', '视听整合'],
     image_url: generatePlaceholderImageUrl('visual', '手持星星'),
     is_active: 1
   },
   {
     category: 'visual',
-    sub_category: '定点与计时视觉套件',
-    name: '月光',
-    description: '注视手中光源，进行暗环境下的视觉定位训练及视听结合训练。',
-    ability_tags: ['视觉定位', '视听整合'],
-    image_url: generatePlaceholderImageUrl('visual', '月光'),
+    sub_category: '视觉材料套装',
+    name: '七彩渐变感知组',
+    description: '柔和的月亮光会变色，拿着它在黑屋子里探索。能让怕黑的孩子有安全感，锻炼视觉追踪。',
+    ability_tags: ['视觉追踪', '安全感'],
+    image_url: generatePlaceholderImageUrl('visual', '七彩渐变感知组'),
     is_active: 1
   },
   {
     category: 'visual',
-    sub_category: '定点与计时视觉套件',
-    name: '《我的感官真有趣》看一看',
-    description: '提供视觉训练的结构化课程指引，提升视觉观察技巧。',
-    ability_tags: ['视觉认知', '课程指引'],
-    image_url: generatePlaceholderImageUrl('visual', '《我的感官真有趣》看一看'),
-    is_active: 1
-  },
-  {
-    category: 'visual',
-    sub_category: '视觉空间与建构套件',
-    name: '迷你星空投影仪',
-    description: '在昏暗环境中辨识投射的星光图案，锻炼视觉搜寻与空间感知。',
-    ability_tags: ['视觉搜寻', '环境适应'],
-    image_url: generatePlaceholderImageUrl('visual', '迷你星空投影仪'),
-    is_active: 1
-  },
-  {
-    category: 'visual',
-    sub_category: '视觉空间与建构套件',
-    name: '阳光彩虹积木(60个)',
-    description: '利用透明彩色积木进行光影建构，锻炼颜色识别与空间堆叠。',
+    sub_category: '视觉材料套装',
+    name: '光影建构视觉模块',
+    description: '透光的彩色积木搭在一起，阳光一照特别美。让孩子认识颜色叠加，还能练习搭高高。',
     ability_tags: ['颜色认知', '空间建构'],
-    image_url: generatePlaceholderImageUrl('visual', '阳光彩虹积木(60个)'),
+    image_url: generatePlaceholderImageUrl('visual', '光影建构视觉模块'),
     is_active: 1
   },
-
-  // ==================== 听觉系统套装 (7种) ====================
+  {
+    category: 'visual',
+    sub_category: '视觉材料套装',
+    name: '手持式光影感官调控板',
+    description: '晃一晃，里面的亮片液体就流动起来。孩子烦躁时盯着它看，心跳就能慢慢平复下来。',
+    ability_tags: ['视觉追踪', '情绪镇静'],
+    image_url: generatePlaceholderImageUrl('visual', '手持式光影感官调控板'),
+    is_active: 1
+  },
   {
     category: 'auditory',
-    sub_category: '乐器与自然音套件',
-    name: '奥尔夫乐器套装(7件)',
-    description: '辨识不同乐器音色，培养节奏感，通过合奏促进社交互动。',
+    sub_category: '听觉材料套装',
+    name: '节奏感知听觉训练组',
+    description: '敲敲打打听不同的声音，跟着节奏摇摆。大家一起玩乐器，能让孩子学会配合别人。',
     ability_tags: ['听觉分辨', '社交互动'],
-    image_url: generatePlaceholderImageUrl('auditory', '奥尔夫乐器套装(7件)'),
+    image_url: generatePlaceholderImageUrl('auditory', '节奏感知听觉训练组'),
     is_active: 1
   },
   {
     category: 'auditory',
-    sub_category: '乐器与自然音套件',
-    name: '雨冲木珠迷宫',
-    description: '将木珠滚动声与"雨滴"自然声音建立联系，培养听觉想象力与专注力。',
-    ability_tags: ['听觉联想', '专注力'],
-    image_url: generatePlaceholderImageUrl('auditory', '雨冲木珠迷宫'),
+    sub_category: '听觉材料套装',
+    name: '多感官听觉感知组',
+    description: '上下翻转，里面的珠子滚过迷宫声音很清脆。吸引孩子竖起耳朵听，锻炼专注力和抓握。',
+    ability_tags: ['听觉专注', '抓握能力'],
+    image_url: generatePlaceholderImageUrl('auditory', '多感官听觉感知组'),
     is_active: 1
   },
   {
     category: 'auditory',
-    sub_category: '乐器与自然音套件',
-    name: '雨声筒',
-    description: '将木珠滚动声与"雨滴"自然声音建立联系，培养听觉想象力与专注力。',
-    ability_tags: ['听觉联想', '专注力'],
-    image_url: generatePlaceholderImageUrl('auditory', '雨声筒'),
+    sub_category: '听觉材料套装',
+    name: '分层听觉感知单元',
+    description: '慢慢倾斜，闭上眼听就像下雨的声音。这种白噪音能让孩子安静下来，培养听觉想象力。',
+    ability_tags: ['听觉联想', '情绪安抚'],
+    image_url: generatePlaceholderImageUrl('auditory', '分层听觉感知单元'),
     is_active: 1
   },
   {
     category: 'auditory',
-    sub_category: '乐器与自然音套件',
-    name: '海浪鼓',
-    description: '将珠子滚动声与"海浪"声关联，用于情绪放松或故事场景营造。',
-    ability_tags: ['听觉脱敏', '情绪放松'],
-    image_url: generatePlaceholderImageUrl('auditory', '海浪鼓'),
+    sub_category: '听觉材料套装',
+    name: '听觉本',
+    description: '跟着书本玩听声音游戏，分辨是大声还是小声。教孩子学会听指令，锻炼耳朵的敏锐度。',
+    ability_tags: ['听觉训练', '听从指令'],
+    image_url: generatePlaceholderImageUrl('auditory', '听觉本'),
     is_active: 1
   },
   {
     category: 'auditory',
-    sub_category: '听觉反馈与表达套件',
-    name: '神奇的镜子',
-    description: '结合镜像观察与声音录放功能，提供即时视听反馈，辅助口部构音练习与自我认知。',
-    ability_tags: ['视听反馈', '语言诱发', '自我认知'],
-    image_url: generatePlaceholderImageUrl('auditory', '神奇的镜子'),
+    sub_category: '听觉材料套装',
+    name: '多频听觉敲击单元',
+    description: '敲不同的琴键声音不一样，让孩子明白动作带来声音。敲敲打打还能锻炼手臂的大动作。',
+    ability_tags: ['听觉辨识', '上肢协调'],
+    image_url: generatePlaceholderImageUrl('auditory', '多频听觉敲击单元'),
     is_active: 1
   },
   {
     category: 'auditory',
-    sub_category: '听觉反馈与表达套件',
-    name: '手持变色喇叭',
-    description: '通过变声效果提供有趣的听觉反馈，激发发声动机，建立声音与动作的因果联系。',
-    ability_tags: ['发声动机', '听觉反馈', '因果认知'],
-    image_url: generatePlaceholderImageUrl('auditory', '手持变色喇叭'),
+    sub_category: '听觉材料套装',
+    name: '视听联动表达组',
+    description: '对着镜子说话还能录音，看见自己的口型，听见自己的声音。专门帮孩子练习开口说话。',
+    ability_tags: ['语言诱发', '自我认知'],
+    image_url: generatePlaceholderImageUrl('auditory', '视听联动表达组'),
     is_active: 1
   },
   {
     category: 'auditory',
-    sub_category: '听觉反馈与表达套件',
-    name: '《我的感官真有趣》听一听',
-    description: '提供听觉训练的结构化活动指引与课程扩展。',
-    ability_tags: ['感官课程', '语言表达'],
-    image_url: generatePlaceholderImageUrl('auditory', '《我的感官真有趣》听一听'),
-    is_active: 1
-  },
-
-  // ==================== 味觉系统套装 (3种) ====================
-  {
-    category: 'gustatory',
-    sub_category: '味觉探索套件',
-    name: '味觉套装',
-    description: '在安全指导下尝试不同味道（酸/甜等），建立味觉耐受度与认知。',
-    ability_tags: ['味觉耐受', '生活认知'],
-    image_url: generatePlaceholderImageUrl('gustatory', '味觉套装'),
-    is_active: 1
-  },
-  {
-    category: 'gustatory',
-    sub_category: '味觉探索套件',
-    name: '《我的感官真有趣》尝一尝',
-    description: '提供味觉训练的结构化课程指引，将味觉体验与语言表达结合。',
-    ability_tags: ['感官课程', '语言表达'],
-    image_url: generatePlaceholderImageUrl('gustatory', '《我的感官真有趣》尝一尝'),
-    is_active: 1
-  },
-
-  // ==================== 本体觉系统套装 (2种) ====================
-  {
-    category: 'proprioceptive',
-    sub_category: '线性前庭与本体训练',
-    name: '豌豆荚',
-    description: '提供挤压感与包裹感，帮助感知身体边界，建立安全感与体像能力。',
-    ability_tags: ['身体概念', '本体觉'],
-    image_url: generatePlaceholderImageUrl('proprioceptive', '豌豆荚'),
+    sub_category: '听觉材料套装',
+    name: '听觉辨别组',
+    description: '使劲吹气就能发出动物叫声，好玩又能练肺活量。锻炼嘴巴肌肉，为以后说话打基础。',
+    ability_tags: ['口肌锻炼', '发音辅助'],
+    image_url: generatePlaceholderImageUrl('auditory', '听觉辨别组'),
     is_active: 1
   },
   {
     category: 'proprioceptive',
-    sub_category: '线性前庭与本体训练',
+    sub_category: '本体觉材料套装',
+    name: '包裹本体觉感知单元',
+    description: '像豌豆一样挤在这个充气船里，身体被紧紧包住。这种挤压感能给孩子极大的安全感。',
+    ability_tags: ['身体边界', '安全感'],
+    image_url: generatePlaceholderImageUrl('proprioceptive', '包裹本体觉感知单元'),
+    is_active: 1
+  },
+  {
+    category: 'proprioceptive',
+    sub_category: '本体觉材料套装',
     name: '颗粒大龙球',
-    description: '提供大面积触觉刺激与前庭输入，用于核心稳定性训练及姿势控制。',
-    ability_tags: ['前庭输入', '核心稳定', '触觉调节'],
+    description: '骑在这个大花生球上摇晃，表面还有按摩颗粒。能锻炼孩子的腰腹力量，帮他们坐得稳。',
+    ability_tags: ['核心稳定', '前庭输入'],
     image_url: generatePlaceholderImageUrl('proprioceptive', '颗粒大龙球'),
     is_active: 1
   },
-
-  // ==================== 感官综合箱套装 (12种) ====================
   {
-    category: 'integration',
-    sub_category: '动态平衡与协调套件',
-    name: '跳跳球',
-    description: '在动态跳跃中维持身体平衡，强化前庭刺激，提升核心力量。',
+    category: 'proprioceptive',
+    sub_category: '本体觉材料套装',
+    name: '重力弹跳感知单元',
+    description: '抓着手柄蹦蹦跳跳，这需要很好的平衡能力。能消耗多余精力，还能锻炼全身的协调性。',
     ability_tags: ['动态平衡', '核心力量'],
-    image_url: generatePlaceholderImageUrl('integration', '跳跳球'),
+    image_url: generatePlaceholderImageUrl('proprioceptive', '重力弹跳感知单元'),
+    is_active: 1
+  },
+  {
+    category: 'proprioceptive',
+    sub_category: '本体觉材料套装',
+    name: '触觉-本体觉联动游戏衣',
+    description: '互相追逐去揪对方的尾巴，跑来跑去很开心。锻炼孩子跑动平衡，还能学会和小伙伴玩。',
+    ability_tags: ['社交互动', '大运动'],
+    image_url: generatePlaceholderImageUrl('proprioceptive', '触觉-本体觉联动游戏衣'),
     is_active: 1
   },
   {
     category: 'integration',
-    sub_category: '动态平衡与协调套件',
-    name: '手忙脚乱敏捷垫',
-    description: '根据视觉指令快速调整手脚位置，锻炼身体协调性、反应速度及动作计划能力。',
-    ability_tags: ['动作计划', '反应速度'],
-    image_url: generatePlaceholderImageUrl('integration', '手忙脚乱敏捷垫'),
-    is_active: 1
-  },
-  {
-    category: 'integration',
-    sub_category: '动态平衡与协调套件',
-    name: '揪尾巴',
-    description: '在追逐躲闪中维持身体动态平衡，强化前庭本体整合，提升社交互动能力。',
-    ability_tags: ['动态平衡', '社交互动'],
-    image_url: generatePlaceholderImageUrl('integration', '揪尾巴'),
-    is_active: 1
-  },
-  {
-    category: 'integration',
-    sub_category: '建构逻辑与认知套件',
-    name: '萝卜塔',
-    description: '在情境游戏中锻炼指尖捏取（二指/三指抓握）及手眼协调能力。',
-    ability_tags: ['手眼协调', '精细抓握'],
-    image_url: generatePlaceholderImageUrl('integration', '萝卜塔'),
-    is_active: 1
-  },
-  {
-    category: 'integration',
-    sub_category: '建构逻辑与认知套件',
-    name: '表情积木拼图',
-    description: '识别并拼搭不同的面部表情，提升情绪理解与非语言社交能力。',
+    sub_category: '综合训练材料套装',
+    name: '表情游戏组',
+    description: '拼出哭、笑、生气的脸，教孩子看懂别人的表情。学会察言观色，知道别人是开心还是难过。',
     ability_tags: ['情绪认知', '社交观察'],
-    image_url: generatePlaceholderImageUrl('integration', '表情积木拼图'),
+    image_url: generatePlaceholderImageUrl('integration', '表情游戏组'),
     is_active: 1
   },
   {
     category: 'integration',
-    sub_category: '社交规则与互动套件',
-    name: '猫捉老鼠',
-    description: '通过听觉指令进行快速反应游戏，锻炼听觉注意力、冲动控制及轮流等待规则。',
-    ability_tags: ['听觉注意', '社交规则', '冲动控制'],
-    image_url: generatePlaceholderImageUrl('integration', '猫捉老鼠'),
+    sub_category: '综合训练材料套装',
+    name: '猫捉老鼠桌游',
+    description: '听到指令赶紧抓或赶紧跑，比谁反应快。这能治孩子冲动的毛病，学会听指挥和守规矩。',
+    ability_tags: ['冲动控制', '规则意识'],
+    image_url: generatePlaceholderImageUrl('integration', '猫捉老鼠桌游'),
     is_active: 1
   },
   {
     category: 'integration',
-    sub_category: '视觉空间与建构套件',
-    name: '百变齿轮',
-    description: '拼插并转动齿轮，理解机械传动的因果关系，锻炼逻辑思维。',
+    sub_category: '综合训练材料套装',
+    name: '百变结构组',
+    description: '转动一个齿轮，所有的都跟着转，太神奇了。让孩子明白因果关系，锻炼动脑逻辑能力。',
     ability_tags: ['逻辑思维', '因果推理'],
-    image_url: generatePlaceholderImageUrl('integration', '百变齿轮'),
+    image_url: generatePlaceholderImageUrl('integration', '百变结构组'),
     is_active: 1
   },
   {
     category: 'integration',
-    sub_category: '社交规则与互动套件',
-    name: '滚来滚去(大骰子)',
-    description: '作为集体活动的辅助教具，用于建立轮流机制、数字/颜色认知及大运动指令发布。',
+    sub_category: '综合训练材料套装',
+    name: '指令游戏组',
+    description: '扔大骰子决定做什么动作或拿几个东西。让大家轮流玩，学会遵守游戏规则和认识数字。',
     ability_tags: ['社交轮流', '规则意识'],
-    image_url: generatePlaceholderImageUrl('integration', '滚来滚去(大骰子)'),
+    image_url: generatePlaceholderImageUrl('integration', '指令游戏组'),
     is_active: 1
   },
   {
     category: 'integration',
-    sub_category: '社交规则与互动套件',
-    name: '彩色翻板',
-    description: '通过翻板的连锁翻转动作，建立因果关系认知，锻炼视觉追踪能力及持续注意力。',
-    ability_tags: ['因果关系', '视觉追踪', '持续注意'],
-    image_url: generatePlaceholderImageUrl('integration', '彩色翻板'),
-    is_active: 1
-  },
-  {
-    category: 'integration',
-    sub_category: '生活技能训练套件',
-    name: '枕头安安',
-    description: '通过操作插扣与内置响球，锻炼手指力量与双手协作；结合图案与声音反馈，进行多感官认知训练。',
-    ability_tags: ['双手协作', '精细动作', '多感官整合'],
-    image_url: generatePlaceholderImageUrl('integration', '枕头安安'),
-    is_active: 1
-  },
-  {
-    category: 'integration',
-    sub_category: '生活技能训练套件',
+    sub_category: '综合训练材料套装',
     name: '小熊乐乐',
-    description: '模拟穿衣情境（拉链、系扣、系带），锻炼精细动作与手眼协调，培养生活自理能力基础。',
-    ability_tags: ['生活自理(ADL)', '手眼协调', '精细抓握'],
+    description: '给小熊拉拉链、系扣子、绑鞋带。把手练巧了，以后孩子就能自己穿衣服，不用家长帮。',
+    ability_tags: ['生活自理', '精细动作'],
     image_url: generatePlaceholderImageUrl('integration', '小熊乐乐'),
     is_active: 1
   },
   {
     category: 'integration',
-    sub_category: '视觉听觉安抚套件',
-    name: '波浪投影小乌龟',
-    description: '提供柔和的波浪光影投射与白噪音，营造低唤醒度的感官环境，辅助情绪调节与放松入睡。',
-    ability_tags: ['情绪调节', '视觉舒缓', '环境适应'],
-    image_url: generatePlaceholderImageUrl('integration', '波浪投影小乌龟'),
+    sub_category: '综合训练材料套装',
+    name: '枕头安安',
+    description: '枕头上有插扣和响球，专门给手闲不住的孩子玩。锻炼手指力量，需要两只手配合才能玩。',
+    ability_tags: ['双手协作', '精细动作'],
+    image_url: generatePlaceholderImageUrl('integration', '枕头安安'),
+    is_active: 1
+  },
+  {
+    category: 'integration',
+    sub_category: '综合训练材料套装',
+    name: '发声感官启智配对豆包',
+    description: '摸起来手感不同，捏一下还会响。让孩子一边摸形状一边听声音，全面锻炼感觉统合能力。',
+    ability_tags: ['触觉脱敏', '感官统合'],
+    image_url: generatePlaceholderImageUrl('integration', '发声感官启智配对豆包'),
     is_active: 1
   }
 ]
-
-// 验证数据数量
-console.log(`器材数据加载完成: ${EQUIPMENT_DATA.length} 种器材`)
