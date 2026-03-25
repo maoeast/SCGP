@@ -1382,6 +1382,23 @@ async function insertInitialData() {
 // 插入器材目录数据（Phase 1.4.3 重构：写入新表结构）
 export async function insertEquipmentData(): Promise<void> {
   try {
+    const existingEquipmentCount = db.get(
+      `
+        SELECT COUNT(*) AS count
+        FROM sys_training_resource
+        WHERE module_code = ?
+          AND resource_type = ?
+          AND is_active = 1
+      `,
+      ['sensory', 'equipment']
+    )?.count || 0
+
+    if (existingEquipmentCount > 0) {
+      console.log('[insertEquipmentData] 检测到已有感官器材资源，跳过旧版 seed 注入:', existingEquipmentCount)
+      createDefaultAdminAccount(db)
+      return
+    }
+
     // 动态导入器材数据
     const { EQUIPMENT_DATA } = await import('./equipment-data')
 

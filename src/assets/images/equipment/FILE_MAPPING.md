@@ -1,131 +1,141 @@
 # 器材图片文件名对照表
 
-> 共 62 种器材，按 ID 顺序排列
+> 当前版本基于 2026-03-26 导入的感官 CSV 资源生成
+> 共 63 种器材
 > 文件命名格式：`{category}-{id}.webp`
 
-## 触觉系统套装 (ID: 1-24)
+## 触觉系统套装 (ID: 1-29)
 
 | ID | 中文名称 | 文件名 | 英文分类 |
 |----|----------|--------|----------|
-| 1 | 感官手环 | `tactile-1.webp` | tactile |
-| 2 | 感官石 | `tactile-2.webp` | tactile |
-| 3 | 魔法触觉包 | `tactile-3.webp` | tactile |
-| 4 | 《我的感官真有趣》摸一摸 | `tactile-4.webp` | tactile |
-| 5 | 感官垫 | `tactile-5.webp` | tactile |
-| 6 | 触觉垫 | `tactile-6.webp` | tactile |
-| 7 | 图像捕捉器 | `tactile-7.webp` | tactile |
-| 8 | 安抚小龟 | `tactile-8.webp` | tactile |
-| 9 | 感官袜 | `tactile-9.webp` | tactile |
-| 10 | 震动颈枕 | `tactile-10.webp` | tactile |
-| 11 | 挤压球链 | `tactile-11.webp` | tactile |
-| 12 | 包子玩具 | `tactile-12.webp` | tactile |
-| 13 | 七彩弹力网 | `tactile-13.webp` | tactile |
-| 14 | 触觉球 | `tactile-14.webp` | tactile |
-| 15 | 变形机器人安拉 | `tactile-15.webp` | tactile |
-| 16 | 开花球 | `tactile-16.webp` | tactile |
-| 17 | 百变魔尺 | `tactile-17.webp` | tactile |
-| 18 | 弯曲方块 | `tactile-18.webp` | tactile |
-| 19 | 扭动毛毛虫 | `tactile-19.webp` | tactile |
-| 20 | 伸缩管 | `tactile-20.webp` | tactile |
-| 21 | 综合箱(8合1) | `tactile-21.webp` | tactile |
-| 22 | 萝卜塔 | `tactile-22.webp` | tactile |
-| 23 | 触觉原子球组合 | `tactile-23.webp` | tactile |
-| 24 | 神奇翻翻乐 | `tactile-24.webp` | tactile |
+| 1 | 感官环 | `tactile-1.webp` | tactile |
+| 2 | 彩色感官组 | `tactile-2.webp` | tactile |
+| 3 | 触觉认知拓扑球 | `tactile-3.webp` | tactile |
+| 4 | 多角形压力调节组 | `tactile-4.webp` | tactile |
+| 5 | 色彩流变感知组 | `tactile-5.webp` | tactile |
+| 6 | 双位按压反馈组 | `tactile-6.webp` | tactile |
+| 7 | 慢回弹压力缓解组 | `tactile-7.webp` | tactile |
+| 8 | 彩色波纹伸缩组 | `tactile-8.webp` | tactile |
+| 9 | 多向伸缩感知组 | `tactile-9.webp` | tactile |
+| 10 | 柔性人形感知组 | `tactile-10.webp` | tactile |
+| 11 | 分段式弯折感知组 | `tactile-11.webp` | tactile |
+| 12 | 多环嵌套感知组 | `tactile-12.webp` | tactile |
+| 13 | 可扭转感知组 | `tactile-13.webp` | tactile |
+| 14 | 3D网式感知组 | `tactile-14.webp` | tactile |
+| 15 | 3D翻转感知组 | `tactile-15.webp` | tactile |
+| 16 | 立体构型组 | `tactile-16.webp` | tactile |
+| 17 | 彩色连环感知组 | `tactile-17.webp` | tactile |
+| 18 | 多触点旋转组 | `tactile-18.webp` | tactile |
+| 19 | 桌游互动包 | `tactile-19.webp` | tactile |
+| 20 | 触摸本 | `tactile-20.webp` | tactile |
+| 21 | 多材质纹理感知组 | `tactile-21.webp` | tactile |
+| 22 | 立体形态感知组 | `tactile-22.webp` | tactile |
+| 23 | 重力安抚器 | `tactile-23.webp` | tactile |
+| 24 | 加权安抚感知组 | `tactile-24.webp` | tactile |
+| 25 | 全身压力输入感官组 | `tactile-25.webp` | tactile |
+| 26 | 振动热敷感知组 | `tactile-26.webp` | tactile |
+| 27 | 木质机器人感知组 | `tactile-27.webp` | tactile |
+| 28 | 磁性切分操作组 | `tactile-28.webp` | tactile |
+| 29 | 弹性建构感知组 | `tactile-29.webp` | tactile |
 
-## 嗅觉系统套装 (ID: 25-30)
-
-| ID | 中文名称 | 文件名 | 英文分类 |
-|----|----------|--------|----------|
-| 25 | 水果香片 | `olfactory-25.webp` | olfactory |
-| 26 | 仿真水果 | `olfactory-26.webp` | olfactory |
-| 27 | 香包 | `olfactory-27.webp` | olfactory |
-| 28 | 仿真面包 | `olfactory-28.webp` | olfactory |
-| 29 | 香薰 | `olfactory-29.webp` | olfactory |
-| 30 | 《我的感官真有趣》闻一闻 | `olfactory-30.webp` | olfactory |
-
-## 视觉系统套装 (ID: 31-37)
+## 嗅觉系统套装 (ID: 30-34)
 
 | ID | 中文名称 | 文件名 | 英文分类 |
 |----|----------|--------|----------|
-| 31 | 流水解压组 | `visual-31.webp` | visual |
-| 32 | 闪光管 | `visual-32.webp` | visual |
-| 33 | 火箭灯 | `visual-33.webp` | visual |
-| 34 | 沙漏计时器套装 | `visual-34.webp` | visual |
-| 35 | 手持星星 | `visual-35.webp` | visual |
-| 36 | 月光 | `visual-36.webp` | visual |
-| 37 | 《我的感官真有趣》看一看 | `visual-37.webp` | visual |
+| 30 | 嗅觉认知组件 | `olfactory-30.webp` | olfactory |
+| 31 | 香包组件 | `olfactory-31.webp` | olfactory |
+| 32 | 香薰 | `olfactory-32.webp` | olfactory |
+| 33 | 仿真面包 | `olfactory-33.webp` | olfactory |
+| 34 | 嗅觉本 | `olfactory-34.webp` | olfactory |
 
-## 听觉系统套装 (ID: 38-44)
+## 味觉系统套装 (ID: 35-36)
 
 | ID | 中文名称 | 文件名 | 英文分类 |
 |----|----------|--------|----------|
-| 38 | 迷你星空投影仪 | `auditory-38.webp` | auditory |
-| 39 | 阳光彩虹积木(60个) | `auditory-39.webp` | auditory |
-| 40 | 奥尔夫乐器套装(7件) | `auditory-40.webp` | auditory |
-| 41 | 雨冲木珠迷宫 | `auditory-41.webp` | auditory |
-| 42 | 雨声筒 | `auditory-42.webp` | auditory |
-| 43 | 海浪鼓 | `auditory-43.webp` | auditory |
-| 44 | 神奇的镜子 | `auditory-44.webp` | auditory |
+| 35 | 味觉套装 | `gustatory-35.webp` | gustatory |
+| 36 | 味觉本 | `gustatory-36.webp` | gustatory |
 
-## 听觉反馈与表达套件 (ID: 45-46)
+## 视觉系统套装 (ID: 37-45)
 
 | ID | 中文名称 | 文件名 | 英文分类 |
 |----|----------|--------|----------|
-| 45 | 手持变色喇叭 | `auditory-45.webp` | auditory |
-| 46 | 《我的感官真有趣》听一听 | `auditory-46.webp` | auditory |
+| 37 | 色彩感知组 | `visual-37.webp` | visual |
+| 38 | 色彩流动输入组 | `visual-38.webp` | visual |
+| 39 | 星光影感知组 | `visual-39.webp` | visual |
+| 40 | 视觉本 | `visual-40.webp` | visual |
+| 41 | 动态分层视觉组 | `visual-41.webp` | visual |
+| 42 | 手持星星 | `visual-42.webp` | visual |
+| 43 | 七彩渐变感知组 | `visual-43.webp` | visual |
+| 44 | 光影建构视觉模块 | `visual-44.webp` | visual |
+| 45 | 手持式光影感官调控板 | `visual-45.webp` | visual |
 
-## 味觉系统套装 (ID: 47-48)
-
-| ID | 中文名称 | 文件名 | 英文分类 |
-|----|----------|--------|----------|
-| 47 | 味觉套装 | `gustatory-47.webp` | gustatory |
-| 48 | 《我的感官真有趣》尝一尝 | `gustatory-48.webp` | gustatory |
-
-## 本体觉系统套装 (ID: 49-50)
-
-| ID | 中文名称 | 文件名 | 英文分类 |
-|----|----------|--------|----------|
-| 49 | 豌豆荚 | `proprioceptive-49.webp` | proprioceptive |
-| 50 | 颗粒大龙球 | `proprioceptive-50.webp` | proprioceptive |
-
-## 本体觉与平衡套件 (ID: 51-52)
+## 听觉系统套装 (ID: 46-52)
 
 | ID | 中文名称 | 文件名 | 英文分类 |
 |----|----------|--------|----------|
-| 51 | 跳跳球 | `proprioceptive-51.webp` | proprioceptive |
-| 52 | 手忙脚乱敏捷垫 | `proprioceptive-52.webp` | proprioceptive |
+| 46 | 节奏感知听觉训练组 | `auditory-46.webp` | auditory |
+| 47 | 多感官听觉感知组 | `auditory-47.webp` | auditory |
+| 48 | 分层听觉感知单元 | `auditory-48.webp` | auditory |
+| 49 | 听觉本 | `auditory-49.webp` | auditory |
+| 50 | 多频听觉敲击单元 | `auditory-50.webp` | auditory |
+| 51 | 视听联动表达组 | `auditory-51.webp` | auditory |
+| 52 | 听觉辨别组 | `auditory-52.webp` | auditory |
 
-## 感官综合箱套装 (ID: 53-62)
+## 本体觉系统套装 (ID: 53-56)
 
 | ID | 中文名称 | 文件名 | 英文分类 |
 |----|----------|--------|----------|
-| 53 | 揪尾巴 | `integration-53.webp` | integration |
-| 54 | 萝卜塔 | `integration-54.webp` | integration |
-| 55 | 表情积木拼图 | `integration-55.webp` | integration |
-| 56 | 猫捉老鼠 | `integration-56.webp` | integration |
-| 57 | 百变齿轮 | `integration-57.webp` | integration |
-| 58 | 滚来滚去(大骰子) | `integration-58.webp` | integration |
-| 59 | 彩色翻板 | `integration-59.webp` | integration |
-| 60 | 枕头安安 | `integration-60.webp` | integration |
+| 53 | 包裹本体觉感知单元 | `proprioceptive-53.webp` | proprioceptive |
+| 54 | 颗粒大龙球 | `proprioceptive-54.webp` | proprioceptive |
+| 55 | 重力弹跳感知单元 | `proprioceptive-55.webp` | proprioceptive |
+| 56 | 触觉-本体觉联动游戏衣 | `proprioceptive-56.webp` | proprioceptive |
+
+## 感官综合箱套装 (ID: 57-63)
+
+| ID | 中文名称 | 文件名 | 英文分类 |
+|----|----------|--------|----------|
+| 57 | 表情游戏组 | `integration-57.webp` | integration |
+| 58 | 猫捉老鼠桌游 | `integration-58.webp` | integration |
+| 59 | 百变结构组 | `integration-59.webp` | integration |
+| 60 | 指令游戏组 | `integration-60.webp` | integration |
 | 61 | 小熊乐乐 | `integration-61.webp` | integration |
-| 62 | 波浪投影小乌龟 | `integration-62.webp` | integration |
+| 62 | 枕头安安 | `integration-62.webp` | integration |
+| 63 | 发声感官启智配对豆包 | `integration-63.webp` | integration |
 
 ---
 
-## 批量重命名命令（PowerShell）
+## 命名规则
 
-```powershell
-# 示例：将图片文件重命名为对应格式
-# 假设您的原始图片名为 "感官手环.png"，运行以下命令：
-
-Rename-Item "感官手环.png" "tactile-1.webp"
-Rename-Item "感官石.png" "tactile-2.webp"
-# ... 依此类推
+```text
+{category}-{id}.webp
 ```
 
-## 图片规格提醒
+分类代码：
 
-- **推荐尺寸**: 96x96px 或 128x128px
-- **推荐格式**: WebP（或 PNG）
-- **文件大小**: 单张 < 20KB
-- **存放位置**: `src/assets/images/equipment/`
+- `tactile`：触觉
+- `olfactory`：嗅觉
+- `gustatory`：味觉
+- `visual`：视觉
+- `auditory`：听觉
+- `proprioceptive`：本体觉
+- `integration`：综合
+
+示例：
+
+```text
+tactile-1.webp
+visual-45.webp
+integration-63.webp
+```
+
+## 存放位置
+
+```text
+src/assets/images/equipment/
+```
+
+## 说明
+
+- 当前前端按数据库中的 `legacy_id` 取图。
+- 如果对应图片不存在，系统会自动回退到占位图，不会报错。
+- 若后续再次更换 CSV 并重排器材顺序，需要同步更新本文件。
