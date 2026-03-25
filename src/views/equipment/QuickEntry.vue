@@ -74,8 +74,8 @@
             <div class="card-header">
               <div class="equipment-info">
                 <span class="equipment-name">{{ selectedResource.name }}</span>
-                <el-tag :type="getCategoryTagType(selectedResource.category)" size="small">
-                  {{ getCategoryLabel(selectedResource.category) }}
+                <el-tag :type="getCategoryTagType(selectedResource.category || '')" size="small">
+                  {{ getCategoryLabel(selectedResource.category || '') }}
                 </el-tag>
               </div>
             </div>
@@ -176,8 +176,8 @@ const route = useRoute()
 const router = useRouter()
 
 // 当前模块代码（从 URL 参数获取，默认 sensory）
-const currentModuleCode = ref<string>(
-  (route.query.module as string) || ModuleCode.SENSORY
+const currentModuleCode = ref<ModuleCode>(
+  ((route.query.module as ModuleCode) || ModuleCode.SENSORY)
 )
 
 // 获取当前模块信息
@@ -254,7 +254,7 @@ const getCategoryTagType = (category: string) => {
 }
 
 // 处理模块切换
-const handleModuleChange = (newModuleCode: string) => {
+const handleModuleChange = (newModuleCode: ModuleCode) => {
   // 清空当前选择
   selectedResource.value = null
   selectedCategory.value = 'all'
@@ -270,7 +270,7 @@ const handleModuleChange = (newModuleCode: string) => {
     }
   })
 
-  ElMessage.success(`已切换到 ${currentModule.value?.name || '器材训练'}`)
+  ElMessage.success(`已切换到 ${ModuleRegistry.getModule(newModuleCode)?.name || '器材训练'}`)
 }
 
 // 加载学生信息

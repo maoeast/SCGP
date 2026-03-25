@@ -64,11 +64,11 @@ function loadImage(file: File): Promise<HTMLImageElement> {
 export async function compressImage(file: File, options: CompressOptions = {}): Promise<CompressResult> {
   try {
     // 默认选项
-    const opts: Required<CompressOptions> = {
+    const opts = {
       quality: 0.8,
       maxWidth: 1920,
       maxHeight: 1080,
-      format: undefined, // 保持原格式
+      format: options.format, // 保持原格式
       enableWebP: true,
       ...options
     }
@@ -120,7 +120,7 @@ export async function compressImage(file: File, options: CompressOptions = {}): 
     }
 
     // 转换为 Blob
-    const mimeFormat = `image/${outputFormat === 'jpg' ? 'jpeg' : outputFormat}`
+    const mimeFormat = `image/${outputFormat}`
     const dataUrl = canvas.toDataURL(mimeFormat, opts.quality)
 
     // 转换 dataURL 为 Blob

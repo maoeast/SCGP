@@ -195,8 +195,8 @@ export class BenchmarkRunner {
 
     const mean = this.mean(durations)
     const median = this.median(durations)
-    const min = durations[0]
-    const max = durations[durations.length - 1]
+    const min = durations[0] ?? 0
+    const max = durations[durations.length - 1] ?? 0
     const stdDev = this.standardDeviation(durations, mean)
     const p95 = this.percentile(durations, 95)
     const p99 = this.percentile(durations, 99)
@@ -349,8 +349,8 @@ export class BenchmarkRunner {
   private median(sortedValues: number[]): number {
     const mid = Math.floor(sortedValues.length / 2)
     return sortedValues.length % 2 !== 0
-      ? sortedValues[mid]
-      : (sortedValues[mid - 1] + sortedValues[mid]) / 2
+      ? (sortedValues[mid] ?? 0)
+      : ((sortedValues[mid - 1] ?? 0) + (sortedValues[mid] ?? 0)) / 2
   }
 
   private standardDeviation(values: number[], mean: number): number {
@@ -365,10 +365,10 @@ export class BenchmarkRunner {
     const weight = index - lower
 
     if (upper >= sortedValues.length) {
-      return sortedValues[sortedValues.length - 1]
+      return sortedValues[sortedValues.length - 1] ?? 0
     }
 
-    return sortedValues[lower] * (1 - weight) + sortedValues[upper] * weight
+    return (sortedValues[lower] ?? 0) * (1 - weight) + (sortedValues[upper] ?? 0) * weight
   }
 }
 
@@ -480,7 +480,7 @@ export class TestDataGenerator {
    */
   private static randomDate(start: Date, end: Date): string {
     const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
-    return date.toISOString().split('T')[0]
+    return date.toISOString().split('T')[0] ?? date.toISOString().slice(0, 10)
   }
 
   /**
@@ -488,7 +488,7 @@ export class TestDataGenerator {
    */
   private static randomChineseDiagnosis(): string {
     const diagnoses = ['孤独症谱系障碍', '发育迟缓', '注意力缺陷多动障碍', '语言发育迟缓', '感觉统合失调']
-    return diagnoses[Math.floor(Math.random() * diagnoses.length)]
+    return diagnoses[Math.floor(Math.random() * diagnoses.length)] ?? diagnoses[0]!
   }
 
   /**

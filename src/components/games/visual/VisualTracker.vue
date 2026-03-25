@@ -113,7 +113,7 @@
           </div>
 
           <!-- 视线偏低提示 -->
-          <div v-if="calibrationProgress >= 2 && isTrackingGaze && debugDistance > CALIBRATION_THRESHOLD && debugDistance < CALIBRATION_THRESHOLD * 2 && gazeY > (calibrationPoints[currentCalibrationIndex]?.y / 100 * windowHeight + 50)" class="gaze-hint-adjust">
+          <div v-if="calibrationProgress >= 2 && isTrackingGaze && debugDistance > CALIBRATION_THRESHOLD && debugDistance < CALIBRATION_THRESHOLD * 2 && gazeY > (((calibrationPoints[currentCalibrationIndex]?.y ?? 0) / 100) * windowHeight + 50)" class="gaze-hint-adjust">
             👆 请稍微往上看一点
           </div>
         </div>
@@ -466,6 +466,7 @@ const gazeIndicatorStyle = computed(() => {
 
 const calibrationPointStyle = computed(() => {
   const point = calibrationPoints.value[currentCalibrationIndex.value]
+  if (!point) return {}
   return {
     left: `${point.x}%`,
     top: `${point.y}%`
@@ -518,7 +519,8 @@ const sessionData = computed<GameSessionData>(() => ({
   studentId: props.studentId,
   startTime: Date.now() - totalTime.value,
   endTime: Date.now(),
-  duration: props.duration,
+  duration: props.duration ?? 30,
+  trials: [],
   trackingData: {
     timeOnTarget: timeOnTarget.value,
     totalTime: totalTime.value,
@@ -841,6 +843,7 @@ function checkCalibrationGaze(x: number, y: number) {
   }
 
   const point = calibrationPoints.value[currentCalibrationIndex.value]
+  if (!point) return
 
   // 获取校准容器的实际位置和尺寸（校准目标显示在这个容器内）
   const calibrationScene = document.querySelector('.calibration-scene') as HTMLElement
@@ -872,6 +875,7 @@ function checkCalibrationGaze(x: number, y: number) {
   if (gazeHistory.value.length >= 3) {
     let maxDeviation = 0
     const latest = gazeHistory.value[gazeHistory.value.length - 1]
+    if (!latest) return
     for (const g of gazeHistory.value) {
       const dev = Math.sqrt(Math.pow(g.x - latest.x, 2) + Math.pow(g.y - latest.y, 2))
       if (dev > maxDeviation) maxDeviation = dev
@@ -907,6 +911,7 @@ function checkCalibrationGaze(x: number, y: number) {
 
 function completeCalibrationPoint() {
   const point = calibrationPoints.value[currentCalibrationIndex.value]
+  if (!point) return
   const wg = (window as any).webgazer
   if (wg) {
     wg.recordScreenPosition(point.x, point.y, 'click')
@@ -1091,6 +1096,7 @@ function updatePointerPosition(e: Event) {
 
   if ('touches' in (e as TouchEvent)) {
     const touch = (e as TouchEvent).touches[0]
+    if (!touch) return
     clientX = touch.clientX
     clientY = touch.clientY
   } else {

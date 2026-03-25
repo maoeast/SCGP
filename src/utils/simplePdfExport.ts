@@ -3,6 +3,11 @@
  * 不使用html2canvas，而是直接使用window.print()
  */
 
+declare function html2canvas(
+  element: HTMLElement,
+  options: Record<string, unknown>
+): Promise<HTMLCanvasElement>
+
 export function simplePrintToPDF(filename: string): void {
   // 创建一个打印样式
   const printStyle = document.createElement('style')
@@ -60,7 +65,7 @@ export async function exportAsImage(filename: string): Promise<void> {
   })
 
   // 转换为图片并下载
-  canvas.toBlob((blob) => {
+  canvas.toBlob((blob: Blob | null) => {
     if (blob) {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')

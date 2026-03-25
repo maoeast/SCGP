@@ -277,8 +277,7 @@ import type {
   ClassChangeRequest,
   GradeUpgradeRequest,
   StudentClassInfo,
-  ClassChangeReason,
-  getCurrentAcademicYear
+  ClassChangeReason
 } from '@/types/class'
 import { getDatabase } from '@/database/init'
 
@@ -348,7 +347,8 @@ const upgradeFormRef = ref<FormInstance>()
 function getNextAcademicYear(): AcademicYear {
   const current = getCurrentAcademicYear()
   const [startYear] = current.split('-').map(Number)
-  return `${startYear + 1}-${startYear + 2}`
+  const safeStartYear = startYear ?? new Date().getFullYear()
+  return `${safeStartYear + 1}-${safeStartYear + 2}`
 }
 
 function calculateAge(birthday: string): number {
@@ -445,7 +445,7 @@ async function confirmAssign() {
           studentIds,
           classId: assignForm.value.classId,
           academicYear: assignForm.value.academicYear,
-          enrollmentDate: assignForm.value.enrollmentDate
+          enrollmentDate: assignForm.value.enrollmentDate ?? new Date().toISOString().slice(0, 10)
         })
         ElMessage.success(`成功为 ${studentIds.length} 名学生分班`)
       } else {
@@ -455,7 +455,7 @@ async function confirmAssign() {
           currentStudent.value.name,
           assignForm.value.classId,
           assignForm.value.academicYear,
-          assignForm.value.enrollmentDate
+          assignForm.value.enrollmentDate ?? new Date().toISOString().slice(0, 10)
         )
         ElMessage.success('分班成功')
       }
@@ -472,7 +472,7 @@ async function confirmAssign() {
 function showUpgradeDialog() {
   upgradeForm.value = {
     academicYear: getNextAcademicYear(),
-    upgradeDate: new Date().toISOString().split('T')[0],
+    upgradeDate: new Date().toISOString().split('T')[0] ?? new Date().toISOString().slice(0, 10),
     createNewClasses: true
   }
   upgradeDialogVisible.value = true
@@ -493,7 +493,7 @@ async function confirmUpgrade() {
 
       const request: GradeUpgradeRequest = {
         academicYear: upgradeForm.value.academicYear,
-        upgradeDate: upgradeForm.value.upgradeDate,
+        upgradeDate: upgradeForm.value.upgradeDate ?? new Date().toISOString().slice(0, 10),
         createNewClasses: upgradeForm.value.createNewClasses
       }
 

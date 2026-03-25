@@ -82,7 +82,7 @@ export function verifyStatistics(classId: number = 1) {
   `, [classId])
 
   console.log('按模块统计结果:')
-  statsByModule.forEach(stat => {
+  statsByModule.forEach((stat: any) => {
     console.log(`  模块: ${stat.module_code}`)
     console.log(`    训练次数: ${stat.total_training_count}`)
     console.log(`    评估次数: ${stat.total_assessment_count}`)
@@ -118,7 +118,7 @@ export function verifyStatistics(classId: number = 1) {
   `, [classId, classId])
 
   console.log('分值类型分析:')
-  scoreAnalysis.forEach(row => {
+  scoreAnalysis.forEach((row: any) => {
     console.log(`  ${row.source}:`)
     console.log(`    分值类型: ${row.score_type}`)
     console.log(`    数量: ${row.count}`)
@@ -129,14 +129,14 @@ export function verifyStatistics(classId: number = 1) {
   // ========== 第六步：风险评估 ==========
   console.log('\n【第六步】分值一致性风险评估')
 
-  const allStats = statsByModule.filter(s => s.module_code === 'all')
+  const allStats = statsByModule.filter((s: any) => s.module_code === 'all')
   if (allStats.length > 0) {
     const totalStats = allStats[0]
     console.log('⚠️  "全部模块" 模式下的平均分:', totalStats.average_score)
     console.log('⚠️  问题分析:')
 
-    const hasTraining = scoreAnalysis.some(s => s.source === 'training_records' && s.count > 0)
-    const hasEquipment = scoreAnalysis.some(s => s.source === 'equipment_training' && s.count > 0)
+    const hasTraining = scoreAnalysis.some((s: any) => s.source === 'training_records' && s.count > 0)
+    const hasEquipment = scoreAnalysis.some((s: any) => s.source === 'equipment_training' && s.count > 0)
 
     if (hasTraining && hasEquipment) {
       console.log('  ❌ 存在混合分值类型：')
@@ -155,9 +155,9 @@ export function verifyStatistics(classId: number = 1) {
   // ========== 第七步：验证结果总结 ==========
   console.log('\n【验证结果总结】')
 
-  const sensoryStats = statsByModule.find(s => s.module_code === 'sensory')
-  const lifeSkillsStats = statsByModule.find(s => s.module_code === 'life_skills')
-  const allModuleStats = statsByModule.find(s => s.module_code === 'all')
+  const sensoryStats = statsByModule.find((s: any) => s.module_code === 'sensory')
+  const lifeSkillsStats = statsByModule.find((s: any) => s.module_code === 'life_skills')
+  const allModuleStats = statsByModule.find((s: any) => s.module_code === 'all')
 
   console.log('✅ 验证 1: sensory 模块仅包含感官相关数据')
   console.log(`   预期: 训练记录 + 器材记录`)

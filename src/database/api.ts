@@ -10,7 +10,7 @@ export class DatabaseAPI {
   }
 
   // 执行查询（同步 - 默认行为）
-  protected query(sql: string, params: any[] = []): any[] {
+  query(sql: string, params: any[] = []): any[] {
     try {
       return this.db.all(sql, params);
     } catch (error) {
@@ -23,7 +23,7 @@ export class DatabaseAPI {
    * 异步查询方法
    * Plan B: 直接调用同步方法，SQLWrapper 内部处理防抖保存
    */
-  protected async queryAsync(sql: string, params: any[] = []): Promise<any[]> {
+  async queryAsync(sql: string, params: any[] = []): Promise<any[]> {
     try {
       return this.db.all(sql, params);
     } catch (error) {
@@ -33,7 +33,7 @@ export class DatabaseAPI {
   }
 
   // 执行单行查询（同步 - 默认行为）
-  protected queryOne(sql: string, params: any[] = []): any | null {
+  queryOne(sql: string, params: any[] = []): any | null {
     try {
       return this.db.get(sql, params);
     } catch (error) {
@@ -46,7 +46,7 @@ export class DatabaseAPI {
    * 异步查询单行方法
    * Plan B: 直接调用同步方法，SQLWrapper 内部处理防抖保存
    */
-  protected async queryOneAsync(sql: string, params: any[] = []): Promise<any | null> {
+  async queryOneAsync(sql: string, params: any[] = []): Promise<any | null> {
     try {
       return this.db.get(sql, params);
     } catch (error) {
@@ -56,7 +56,7 @@ export class DatabaseAPI {
   }
 
   // 执行更新（INSERT/UPDATE/DELETE）（同步 - 默认行为）
-  protected execute(sql: string, params: any[] = []): number {
+  execute(sql: string, params: any[] = []): number {
     try {
       this.db.run(sql, params);
       return this.db.changes();
@@ -70,7 +70,7 @@ export class DatabaseAPI {
    * 异步执行方法
    * Plan B: 直接调用同步方法，SQLWrapper 内部处理防抖保存
    */
-  protected async executeAsync(sql: string, params: any[] = []): Promise<number> {
+  async executeAsync(sql: string, params: any[] = []): Promise<number> {
     try {
       this.db.run(sql, params);
       return this.db.changes();

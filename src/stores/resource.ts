@@ -215,7 +215,7 @@ export const useResourceStore = defineStore('resource', () => {
       const result = await window.electronAPI.openFile(fullPath);
 
       // 检查打开结果
-      if (!result.success) {
+      if (result !== true) {
         // 根据文件类型给出友好的错误提示
         const fileType = resource.type.toLowerCase();
         let softwareHint = '';
@@ -252,7 +252,7 @@ export const useResourceStore = defineStore('resource', () => {
         }
 
         // 显示错误提示
-        const errorMessage = result.error || '系统无法打开此文件';
+        const errorMessage = typeof result === 'string' ? result : '系统无法打开此文件';
         error.value = `打开文件失败：${errorMessage}\n\n${softwareHint}`;
 
         // 10秒后自动清除错误提示

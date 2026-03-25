@@ -139,6 +139,7 @@ export interface GridItem {
   icon?: GameIcon
   isTarget: boolean
   isSelected: boolean
+  isCorrect?: boolean
 }
 
 /**
@@ -173,15 +174,19 @@ export interface AudioTrialData {
   trialId: number
   mode: GameAudioMode
   // 辨别模式
-  sounds: string[]
-  userAnswer: boolean | null // true=一样 false=不一样
+  sounds?: number[]
+  userAnswer?: boolean | null // true=一样 false=不一样
   // 指令模式
   command?: string
   targetAttributes?: { color?: GameColor; shape?: GameShape }
   userSelection?: GridItem
   // 节奏模式
-  rhythmPattern: number[] // 时间戳数组
+  rhythmPattern?: number[] // 时间戳数组
   userRhythm?: number[]
+  rhythmStats?: {
+    timingErrorAvg: number
+    accuracy?: number
+  }
   // 通用
   isCorrect: boolean
   responseTime: number
@@ -227,6 +232,7 @@ export interface GameSessionData {
 
   trackingStats?: {
     timeOnTargetPercent: number
+    useEyeTracking?: boolean
   }
 }
 

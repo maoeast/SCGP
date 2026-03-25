@@ -216,8 +216,8 @@
       <!-- 实时准确率显示 -->
       <div class="accuracy-display" v-if="canRecord && currentTapIndex > 0">
         <div class="accuracy-label">本拍准确度</div>
-        <div class="accuracy-value" :class="{ 'good': tapFeedback[currentTapIndex - 1]?.accuracy >= 70, 'bad': tapFeedback[currentTapIndex - 1]?.accuracy < 70 }" v-if="tapFeedback[currentTapIndex - 1]?.show">
-          {{ tapFeedback[currentTapIndex - 1]?.accuracy }}%
+        <div class="accuracy-value" :class="{ 'good': (previousTapFeedback?.accuracy ?? 0) >= 70, 'bad': (previousTapFeedback?.accuracy ?? 0) < 70 }" v-if="previousTapFeedback?.show">
+          {{ previousTapFeedback?.accuracy }}%
         </div>
         <div class="accuracy-hint" v-else>等待点击...</div>
       </div>
@@ -289,8 +289,15 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import type { GameAudioMode, GridSize, GridItem, AudioTrialData, GameSessionData } from '@/types/games'
+import type { GameAudioMode, GridSize, GridItem, AudioTrialData, GameSessionData, GameColor, GameShape } from '@/types/games'
 import { GAME_COLORS, GAME_SHAPES, TaskID } from '@/types/games'
+
+type CommandOption = GridItem & {
+  type: 'shape'
+  color: GameColor
+  shape: GameShape
+  isCorrect: boolean
+}
 
 // Props
 interface Props {
@@ -324,12 +331,12 @@ const feedback = ref<{ type: 'success' | 'error'; message: string } | null>(null
 const soundsPlayed = ref(false)
 const choiceMade = ref(false)
 const isPlaying = ref(false)
-const currentSounds = ref<string[]>([])
+const currentSounds = ref<number[]>([])
 const isSame = ref(false)
 
 // 指令模式
 const commandPlayed = ref(false)
-const commandOptions = ref<GridItem[]>([])
+const commandOptions = ref<CommandOption[]>([])
 const currentCommand = ref('')
 
 // 节奏模式
@@ -417,6 +424,14 @@ const currentInstruction = computed(() => {
   }
 })
 
+const previousTapFeedback = computed(() => {
+  if (currentTapIndex.value <= 0) {
+    return null
+  }
+
+  return tapFeedback.value[currentTapIndex.value - 1] ?? null
+})
+
 const sessionData = computed<GameSessionData>(() => {
   const correct = trials.value.filter(t => t.isCorrect).length
   const omission = trials.value.filter(t => !t.userAnswer && !t.userSelection && !t.userRhythm).length
@@ -483,7 +498,10 @@ function playSounds() {
 
   // 延迟后播放第二个音 - 特殊儿童需要更长时间处理第一个音
   setTimeout(() => {
-    playTone(currentSounds.value[1], 500)
+    const secondSound = currentSounds.value[1]
+    if (secondSound !== undefined) {
+      playTone(secondSound, 500)
+    }
     isPlaying.value = false
     soundsPlayed.value = true
     // 第二个声音播放后开始计时
@@ -587,21 +605,21 @@ function generateCommandOptions() {
   // 高区分度颜色 - 用于目标颜色（避免相近色调混淆）
   // 选择8种最容易区分的颜色（新增粉色，儿童容易识别）
   const targetColorNames = ['红色', '橙色', '黄色', '绿色', '蓝色', '紫色', '粉色', '青色']
-  const targetColorKeys = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'cyan']
+  const targetColorKeys: GameColor[] = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'cyan']
 
   // 全部颜色 - 用于干扰项
-  const allColorKeys = Object.keys(GAME_COLORS)
+  const allColorKeys = Object.keys(GAME_COLORS) as GameColor[]
 
   // 形状名称和键名 - 使用全部8种形状
   const shapeNames = ['圆形', '方形', '三角形', '正六边形', '五角星', '梯形', '菱形', '直角三角形']
-  const shapeKeys = Object.keys(GAME_SHAPES)
+  const shapeKeys = Object.keys(GAME_SHAPES) as GameShape[]
 
   // 随机选择目标颜色和形状（从高区分度颜色中选择）
   const targetColorIdx = Math.floor(Math.random() * targetColorKeys.length)
   const shapeIdx = Math.floor(Math.random() * shapeKeys.length)
 
-  const selectedColor = targetColorKeys[targetColorIdx]
-  const selectedShape = shapeKeys[shapeIdx]
+  const selectedColor = targetColorKeys[targetColorIdx] ?? targetColorKeys[0]!
+  const selectedShape = shapeKeys[shapeIdx] ?? shapeKeys[0]!
   const colorName = targetColorNames[targetColorIdx]
   const shapeName = shapeNames[shapeIdx]
 
@@ -618,7 +636,7 @@ function generateCommandOptions() {
   })
 
   // 生成选项
-  const options: GridItem[] = []
+  const options: CommandOption[] = []
   const usedCombinations = new Set<string>()
 
   // 添加正确答案
@@ -626,7 +644,7 @@ function generateCommandOptions() {
     id: Date.now(),
     type: 'shape',
     shape: selectedShape,
-    color: selectedColor as any,
+    color: selectedColor,
     isTarget: true,
     isCorrect: true,
     isSelected: false
@@ -643,8 +661,8 @@ function generateCommandOptions() {
     attempts++
     const c = Math.floor(Math.random() * allColorKeys.length)
     const s = Math.floor(Math.random() * shapeKeys.length)
-    const colorKey = allColorKeys[c]
-    const shapeKey = shapeKeys[s]
+    const colorKey = allColorKeys[c] ?? allColorKeys[0]!
+    const shapeKey = shapeKeys[s] ?? shapeKeys[0]!
     const key = `${colorKey}-${shapeKey}`
 
     if (!usedCombinations.has(key)) {
@@ -652,8 +670,8 @@ function generateCommandOptions() {
       options.push({
         id: Date.now() + options.length,
         type: 'shape',
-        shape: shapeKey as any,
-        color: colorKey as any,
+        shape: shapeKey,
+        color: colorKey,
         isTarget: false,
         isCorrect: false,
         isSelected: false
@@ -668,8 +686,8 @@ function generateCommandOptions() {
     options.push({
       id: Date.now() + options.length,
       type: 'shape',
-      shape: shapeKeys[s] as any,
-      color: allColorKeys[c] as any,
+      shape: shapeKeys[s] ?? shapeKeys[0]!,
+      color: allColorKeys[c] ?? allColorKeys[0]!,
       isTarget: false,
       isCorrect: false,
       isSelected: false
@@ -780,7 +798,7 @@ function playCommand(autoShowOptions = true) {
 /**
  * 处理指令点击
  */
-function handleCommandClick(item: GridItem) {
+function handleCommandClick(item: CommandOption) {
   if (showResult.value || item.isSelected) return
 
   // 计算真实反应时间（从选项显示到用户点击的时间差）
@@ -796,7 +814,7 @@ function handleCommandClick(item: GridItem) {
     command: currentCommand.value,
     targetAttributes: {
       color: item.color,
-      shape: item.shape as any
+      shape: item.shape
     },
     userSelection: item,
     isCorrect,
@@ -923,9 +941,11 @@ function handleRhythmTap() {
     const targetInterval = config.interval
     
     // 用户实际间隔（相对于上一拍）
-    const userInterval = currentTapIndex.value === 1 
-      ? (now - recordedBeats.value[0]) 
-      : (now - recordedBeats.value[currentTapIndex.value - 1])
+    const firstBeat = recordedBeats.value[0]
+    const previousBeat = recordedBeats.value[currentTapIndex.value - 1]
+    const userInterval = currentTapIndex.value === 1
+      ? (firstBeat !== undefined ? now - firstBeat : 0)
+      : (previousBeat !== undefined ? now - previousBeat : 0)
     
     // 计算偏差比例
     const diffRatio = Math.abs(userInterval - targetInterval) / targetInterval
@@ -948,7 +968,8 @@ function handleRhythmTap() {
     score.value += 10 + Math.floor(accuracy / 10)
   } else {
     const config = difficultyConfig[difficulty.value]
-    const targetTime = recordedBeats.value[0] + (currentTapIndex.value * config.interval)
+    const firstBeat = recordedBeats.value[0] ?? now
+    const targetTime = firstBeat + (currentTapIndex.value * config.interval)
     const diffMs = Math.abs(now - targetTime)
     showFeedback('error', `时差 ${diffMs}ms`)
     score.value += 5 // 鼓励分
@@ -991,7 +1012,12 @@ function evaluateRhythmRound() {
   const config = difficultyConfig[difficulty.value]
   
   for (let i = 1; i < recordedBeats.value.length; i++) {
-    const userInterval = recordedBeats.value[i] - recordedBeats.value[i - 1]
+    const currentBeat = recordedBeats.value[i]
+    const previousBeat = recordedBeats.value[i - 1]
+    if (currentBeat === undefined || previousBeat === undefined) {
+      continue
+    }
+    const userInterval = currentBeat - previousBeat
     const targetInterval = config.interval
     const error = Math.abs(userInterval - targetInterval)
     totalTimingError += error

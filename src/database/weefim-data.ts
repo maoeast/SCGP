@@ -232,7 +232,7 @@ export function getWeeFIMLevelAndDescription(score: number): WeeFIMLevel {
     }
   }
   // 如果没有找到，返回最低等级
-  return weefimLevels[weefimLevels.length - 1];
+  return weefimLevels[weefimLevels.length - 1] ?? weefimLevels[0]!;
 }
 
 // 计算各维度得分
@@ -264,7 +264,9 @@ export function calculateWeeFIMScores(answers: Record<number, number>): {
   const level = getWeeFIMLevelAndDescription(total_score);
 
   // 获取评语建议
-  const recommendation = weefimRecommendations.find(r => r.level === level.level) ?? weefimRecommendations[weefimRecommendations.length - 1];
+  const recommendation = weefimRecommendations.find(r => r.level === level.level)
+    ?? weefimRecommendations[weefimRecommendations.length - 1]
+    ?? weefimRecommendations[0]!;
 
   return {
     total_score,
@@ -326,8 +328,8 @@ export function generateAssessmentFromRecommendations(
 
     // 合并两次分析的结果
     for (let i = 1; i <= 18; i++) {
-      scores[i] = Math.round((scores[i] + additionalScores[i]) / 2);
-      scores[i] = Math.max(1, Math.min(7, scores[i])); // 确保分数在1-7范围内
+      const mergedScore = Math.round(((scores[i] ?? 4) + (additionalScores[i] ?? 4)) / 2);
+      scores[i] = Math.max(1, Math.min(7, mergedScore)); // 确保分数在1-7范围内
     }
   }
 

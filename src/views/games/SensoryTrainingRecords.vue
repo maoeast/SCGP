@@ -259,6 +259,7 @@ import { useStudentStore } from '@/stores/student'
 import { GameTrainingAPI } from '@/database/api'
 import { TaskID } from '@/types/games'
 import type { GameSessionData } from '@/types/games'
+import type { Student } from '@/stores/student'
 
 const router = useRouter()
 const route = useRoute()
@@ -267,7 +268,7 @@ const studentStore = useStudentStore()
 
 // 状态
 const loading = ref(false)
-const students = ref([])
+const students = ref<Student[]>([])
 const selectedStudentId = ref<number | null>(null)
 const selectedTaskId = ref<number | null>(null)
 const dateRange = ref<[Date, Date] | null>(null)
@@ -486,7 +487,7 @@ const updateTrendChart = () => {
         symbol: 'pin',
         symbolSize: 50
       }
-    }]
+    }] as any
   }
 
   trendChart.setOption(option)
@@ -540,7 +541,7 @@ const updateRadarChart = () => {
         value: [visualAccuracy, audioAccuracy, responseScore],
         name: '能力分布',
         areaStyle: {
-          color: new echarts.graphic.RadialGradient(0.5, 0.5, 0.5, 1, [
+          color: new echarts.graphic.RadialGradient(0.5, 0.5, 0.5, [
             { offset: 0, color: '#667eea' },
             { offset: 1, color: '#764ba2' }
           ])

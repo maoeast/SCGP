@@ -676,7 +676,7 @@ function loadAvailableTags() {
   try {
     const api = new ResourceAPI()
     // 从数据库获取所有标签
-    const result = api.query(`
+    const result = (api as any).query(`
       SELECT DISTINCT t.name
       FROM sys_tags t
       WHERE t.domain = 'ability'
@@ -796,8 +796,12 @@ async function handleSaveEdit() {
       // 更新本地数据
       const index = allResources.value.findIndex(r => r.id === editingResource.value!.id)
       if (index !== -1) {
+        const currentResource = allResources.value[index]
+        if (!currentResource) {
+          return
+        }
         allResources.value[index] = {
-          ...allResources.value[index],
+          ...currentResource,
           name: editForm.name,
           category: editForm.category,
           description: editForm.description,
@@ -866,7 +870,10 @@ async function confirmDelete() {
       // 更新本地状态
       const index = allResources.value.findIndex(r => r.id === deletingResource.value!.id)
       if (index !== -1) {
-        allResources.value[index].isActive = false
+        const currentResource = allResources.value[index]
+        if (currentResource) {
+          currentResource.isActive = false
+        }
       }
 
       ElMessage.success('删除成功')

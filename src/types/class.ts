@@ -246,10 +246,10 @@ export function parseAcademicYear(academicYear: AcademicYear): {
 } {
   const [start, end] = academicYear.split('-').map(Number)
   return {
-    startYear: start,
-    endYear: end,
-    startDate: `${start}-09-01`,
-    endDate: `${end}-08-31`
+    startYear: start ?? new Date().getFullYear(),
+    endYear: end ?? new Date().getFullYear() + 1,
+    startDate: `${start ?? new Date().getFullYear()}-09-01`,
+    endDate: `${end ?? new Date().getFullYear() + 1}-08-31`
   }
 }
 

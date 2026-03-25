@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { UserAPI } from '@/database/api'
 
-interface User {
+export interface User {
   id: number
   username: string
   role: 'admin' | 'teacher'
@@ -10,7 +10,7 @@ interface User {
   last_login?: string
 }
 
-interface ActivationInfo {
+export interface ActivationInfo {
   isActivated: boolean
   isInTrial: boolean  // 是否在试用期内
   trialDays: number
@@ -22,7 +22,7 @@ interface ActivationInfo {
 
 type EntitlementSource = 'license' | 'dev-mock' | 'none'
 
-interface EntitlementsInfo {
+export interface EntitlementsInfo {
   allowedModules: string[]
   source: EntitlementSource
   isFullAccess: boolean

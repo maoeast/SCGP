@@ -16,6 +16,7 @@ import { ClassAPI } from '../class-api'
 import { StudentAPI } from '../api'
 import { EquipmentTrainingAPI } from '../api'
 import { getDatabase } from '../init'
+import { ClassChangeReason } from '@/types/class'
 import type { AcademicYear, GradeLevel } from '@/types/class'
 
 /**
@@ -226,7 +227,7 @@ export class ClassSnapshotVerifier {
    */
   private safeAddColumn(tableName: string, columnDef: string): void {
     const parts = columnDef.trim().split(/\s+/)
-    const columnName = parts[0]
+    const columnName = parts[0] ?? ''
 
     const exists = this.columnExists(tableName, columnName)
 
@@ -359,7 +360,7 @@ export class ClassSnapshotVerifier {
 
       // 1.1 创建初始班级
       console.log(`  1.1 创建班级: ${this.INITIAL_CLASS_NAME}`)
-      this.initialClassId = this.classAPI.createClass({
+      this.initialClassId = await this.classAPI.createClass({
         gradeLevel: 1,
         classNumber: 1,
         academicYear: this.INITIAL_ACADEMIC_YEAR,
@@ -388,12 +389,13 @@ export class ClassSnapshotVerifier {
 
       // 1.3 分配学生到初始班级
       console.log(`  1.3 分配学生到班级: ${this.INITIAL_CLASS_NAME}`)
-      this.classAPI.assignStudentToClass(
+      const enrollmentDate = new Date().toISOString().split('T')[0] ?? new Date().toISOString().slice(0, 10)
+      await this.classAPI.assignStudentToClass(
         this.testStudentId,
         '测试学生-快照验证',
-        this.initialClassId,
+        this.initialClassId!,
         this.INITIAL_ACADEMIC_YEAR,
-        new Date().toISOString().split('T')[0]
+        enrollmentDate
       )
 
       console.log(`      ✓ 学生分配成功`)
@@ -468,7 +470,7 @@ export class ClassSnapshotVerifier {
 
       // 2.2 录入器材训练记录
       console.log(`  2.2 录入器材训练记录`)
-      const today = new Date().toISOString().split('T')[0]
+      const today = new Date().toISOString().split('T')[0] ?? new Date().toISOString().slice(0, 10)
 
       this.trainingRecordId = this.equipmentAPI.createRecord({
         student_id: this.testStudentId!,
@@ -554,7 +556,7 @@ export class ClassSnapshotVerifier {
 
       // 3.1 创建新班级"2026级-进阶班"
       console.log(`  3.1 创建新班级: ${this.NEW_CLASS_NAME}`)
-      this.newClassId = this.classAPI.createClass({
+      this.newClassId = await this.classAPI.createClass({
         gradeLevel: 2,
         classNumber: 1,
         academicYear: this.NEW_ACADEMIC_YEAR,
@@ -570,15 +572,15 @@ export class ClassSnapshotVerifier {
 
       // 3.2 执行学生转班（模拟升学）
       console.log(`  3.2 执行学生转班操作`)
-      const upgradeDate = new Date().toISOString().split('T')[0]
+      const upgradeDate = new Date().toISOString().split('T')[0] ?? new Date().toISOString().slice(0, 10)
 
-      this.classAPI.changeStudentClass({
+      await this.classAPI.changeStudentClass({
         studentId: this.testStudentId!,
         oldClassId: this.initialClassId!,
         newClassId: this.newClassId!,
         academicYear: this.NEW_ACADEMIC_YEAR,
         changeDate: upgradeDate,
-        reason: 'upgrade'
+        reason: ClassChangeReason.UPGRADE
       })
 
       console.log(`      ✓ 学生转班成功`)

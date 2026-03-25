@@ -121,7 +121,7 @@ export class ClassTestDataGenerator {
         // 创建班级
         for (let i = 1; i <= this.config.classesPerGrade; i++) {
           const classNumber = i as ClassNumber
-          const classId = this.classAPI.createClass({
+          const classId = await this.classAPI.createClass({
             academicYear,
             gradeLevel,
             classNumber,
@@ -137,7 +137,7 @@ export class ClassTestDataGenerator {
             try {
               // 注意：这里假设学生已存在于 student 表中
               // 实际使用时需要先插入学生到 student 表
-              this.classAPI.assignStudentToClass(
+              await this.classAPI.assignStudentToClass(
                 student.id,
                 student.name,
                 classId,
@@ -168,12 +168,12 @@ export class ClassTestDataGenerator {
   /**
    * 创建指定学年的班级
    */
-  createClassesForYear(academicYear: AcademicYear): number {
+  async createClassesForYear(academicYear: AcademicYear): Promise<number> {
     let count = 0
 
     for (const gradeLevel of this.config.gradesPerYear) {
       for (let i = 1; i <= this.config.classesPerGrade; i++) {
-        this.classAPI.createClass({
+        await this.classAPI.createClass({
           academicYear,
           gradeLevel,
           classNumber: i as ClassNumber,
@@ -190,29 +190,32 @@ export class ClassTestDataGenerator {
   /**
    * 模拟学年升级场景
    */
-  simulateGradeUpgrade(
+  async simulateGradeUpgrade(
     fromYear: AcademicYear,
     toYear: AcademicYear,
     upgradeDate: string
-  ): {
+  ): Promise<{
     upgraded: number
     graduated: number
-  } {
+  }> {
     console.log(`[ClassTestDataGenerator] 模拟学年升级: ${fromYear} → ${toYear}`)
 
     // 创建新学年的班级
-    const newClassesCreated = this.createClassesForYear(toYear)
+    const newClassesCreated = await this.createClassesForYear(toYear)
 
     // 执行升级
-    const result = this.classAPI.upgradeGrade({
+    const result = await this.classAPI.upgradeGrade({
       academicYear: toYear,
       upgradeDate,
       createNewClasses: false
     })
 
-    console.log(`[ClassTestDataGenerator] 升级完成: ${result.upgraded} 名学生升级, ${result.graduated} 名学生毕业`)
+    console.log(`[ClassTestDataGenerator] 升级完成: ${result} 名学生升级, 0 名学生毕业`)
 
-    return result
+    return {
+      upgraded: result,
+      graduated: 0
+    }
   }
 
   /**
@@ -242,7 +245,7 @@ export class ClassTestDataGenerator {
     classesByYear: Record<string, number>
     studentsByClass: Array<{ className: string; count: number }>
   } {
-    const allClasses = this.classAPI.getAllClasses()
+    const allClasses = this.classAPI.getClasses()
     const totalClasses = allClasses.length
 
     const classesByYear: Record<string, number> = {}

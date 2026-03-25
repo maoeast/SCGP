@@ -285,6 +285,18 @@ const getEquipmentImage = (record: EquipmentTrainingRecordWithEquipment) => {
   return getEquipmentImageUrl(record.category as EquipmentCategory, id, record.equipment_name)
 }
 
+const toEquipmentCatalog = (record: EquipmentTrainingRecordWithEquipment) => ({
+  id: record.equipment_id,
+  name: record.equipment_name,
+  category: record.category,
+  sub_category: record.sub_category,
+  description: record.description || '',
+  ability_tags: ensureArray(record.ability_tags),
+  image_url: getEquipmentImage(record),
+  is_active: 1,
+  created_at: record.created_at || record.training_date
+})
+
 // 加载学生列表
 const loadStudents = async () => {
   try {
@@ -397,17 +409,10 @@ const viewIEP = async (record: EquipmentTrainingRecordWithEquipment) => {
   currentIEP.value = null
 
   try {
-    const report = IEPGenerator.generateEquipmentReport({
-      studentName: record.student_name || '学生',
-      equipment: {
-        id: record.equipment_id,
-        name: record.equipment_name,
-        category: record.category,
-        sub_category: record.sub_category,
-        description: record.description || '',
-        ability_tags: ensureArray(record.ability_tags)
-      },
-      score: record.score,
+      const report = IEPGenerator.generateEquipmentReport({
+        studentName: record.student_name || '学生',
+        equipment: toEquipmentCatalog(record),
+        score: record.score,
       promptLevel: record.prompt_level,
       duration_seconds: record.duration_seconds,
       training_date: record.training_date,
@@ -477,14 +482,7 @@ const exportAllIEP = async () => {
       records: await Promise.all(records.value.map(async (record) => {
         const report = IEPGenerator.generateEquipmentReport({
           studentName: record.student_name || '学生',
-          equipment: {
-            id: record.equipment_id,
-            name: record.equipment_name,
-            category: record.category,
-            sub_category: record.sub_category,
-            description: record.description || '',
-            ability_tags: ensureArray(record.ability_tags)
-          },
+          equipment: toEquipmentCatalog(record),
           score: record.score,
           promptLevel: record.prompt_level,
           duration_seconds: record.duration_seconds,
@@ -567,14 +565,7 @@ const exportIEP = async () => {
       records: await Promise.all(records.value.map(async (record) => {
         const report = IEPGenerator.generateEquipmentReport({
           studentName: record.student_name || '学生',
-          equipment: {
-            id: record.equipment_id,
-            name: record.equipment_name,
-            category: record.category,
-            sub_category: record.sub_category,
-            description: record.description || '',
-            ability_tags: ensureArray(record.ability_tags)
-          },
+          equipment: toEquipmentCatalog(record),
           score: record.score,
           promptLevel: record.prompt_level,
           duration_seconds: record.duration_seconds,

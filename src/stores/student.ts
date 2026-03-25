@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { StudentAPI } from '@/database/api'
 
-interface Student {
+export interface Student {
   id: number
   name: string
   gender: '男' | '女'

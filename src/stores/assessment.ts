@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { SMAssessmentAPI } from '@/database/api'
 import { useStudentStore } from './student'
 
-interface AssessmentRecord {
+export interface AssessmentRecord {
   id: number
   student_id: number
   age_stage: number
@@ -14,7 +14,7 @@ interface AssessmentRecord {
   created_at: string
 }
 
-interface Question {
+export interface Question {
   id: number
   dimension: string
   age_stage: number
@@ -24,7 +24,7 @@ interface Question {
   audio?: string
 }
 
-interface Answer {
+export interface Answer {
   questionId: number
   score: 0 | 1
   answerTime: number
@@ -96,6 +96,7 @@ export const useAssessmentStore = defineStore('assessment', {
 
       for (let i = startIndex; i < sortedAnswers.length && !shouldStop; i++) {
         const answer = sortedAnswers[i]
+        if (!answer) continue
 
         if (answer.score === 1) { // 通过
           totalPassCount++
