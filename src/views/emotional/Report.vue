@@ -67,7 +67,16 @@
           <EmotionAccuracyTrendChart :points="reportPayload.trend" />
           <EmotionPerformanceBarChart :points="reportPayload.emotionPerformance" />
           <CarePreferencePieChart :points="reportPayload.carePreference" />
-          <SceneMasteryRadarChart :points="reportPayload.sceneMastery" />
+          <SceneMasteryRadarChart
+            :points="reportPayload.sceneMastery"
+            title="各类场景掌握情况分布"
+            empty-description="暂无主题分类掌握数据"
+          />
+          <SceneMasteryRadarChart
+            :points="reportPayload.sceneDomainMastery"
+            title="各场域场景掌握情况分布"
+            empty-description="暂无场域分类掌握数据"
+          />
         </div>
 
         <el-card class="suggestion-card" shadow="never">
@@ -180,7 +189,7 @@ onMounted(() => {
 
 .chart-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 16px;
 }
 

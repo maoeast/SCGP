@@ -1,9 +1,9 @@
 <template>
   <el-card class="chart-card" shadow="never">
     <template #header>
-      <span>各类场景掌握情况分布</span>
+      <span>{{ title }}</span>
     </template>
-    <el-empty v-if="points.length === 0" description="暂无场景掌握数据" />
+    <el-empty v-if="points.length === 0" :description="emptyDescription" />
     <VChart v-else class="chart-view" :option="option" autoresize />
   </el-card>
 </template>
@@ -22,7 +22,12 @@ use([CanvasRenderer, RadarChart, LegendComponent, TooltipComponent])
 
 const props = defineProps<{
   points: EmotionalSceneMasteryPoint[]
+  title?: string
+  emptyDescription?: string
 }>()
+
+const title = computed(() => props.title || '各类场景掌握情况分布')
+const emptyDescription = computed(() => props.emptyDescription || '暂无场景掌握数据')
 
 const option = computed<EChartsOption>(() => ({
   tooltip: {},

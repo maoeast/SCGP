@@ -186,6 +186,36 @@ export function normalizeEmotionalBaseEmotionList(
   return unique.length > 0 ? unique : [...EMOTIONAL_BASE_EMOTIONS]
 }
 
+function shuffleEmotionList<T>(values: T[]): T[] {
+  const next = [...values]
+
+  for (let index = next.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1))
+    const currentValue = next[index]
+    const randomValue = next[randomIndex]
+    if (currentValue === undefined || randomValue === undefined) {
+      continue
+    }
+    next[index] = randomValue
+    next[randomIndex] = currentValue
+  }
+
+  return next
+}
+
+export function buildEmotionChoiceOptions(
+  targetEmotion: EmotionalBaseEmotion,
+  optionCount = 5,
+): EmotionalBaseEmotion[] {
+  const normalizedOptionCount = Math.max(1, Math.min(optionCount, EMOTIONAL_BASE_EMOTIONS.length))
+  const distractorCount = Math.max(0, normalizedOptionCount - 1)
+  const distractors = shuffleEmotionList(
+    EMOTIONAL_BASE_EMOTIONS.filter((emotion) => emotion !== targetEmotion)
+  ).slice(0, distractorCount)
+
+  return shuffleEmotionList([targetEmotion, ...distractors])
+}
+
 export function getEmotionCatalogEntry(
   emotion: unknown,
   fallback: EmotionalBaseEmotion,

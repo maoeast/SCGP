@@ -57,6 +57,7 @@ export interface EmotionalStudentReportPayload {
   emotionPerformance: EmotionalPerformancePoint[]
   carePreference: EmotionalPreferencePoint[]
   sceneMastery: EmotionalSceneMasteryPoint[]
+  sceneDomainMastery: EmotionalSceneMasteryPoint[]
   suggestions: string[]
 }
 
@@ -412,6 +413,7 @@ export class EmotionalTrainingAPI {
         emotionPerformance: [],
         carePreference: [],
         sceneMastery: [],
+        sceneDomainMastery: [],
         suggestions: ['当前还没有情绪模块训练记录，完成训练后这里会显示趋势和建议。'],
       }
     }
@@ -484,14 +486,32 @@ export class EmotionalTrainingAPI {
     }))
 
     const sceneMasteryMap = new Map<string, { total: number; accuracySum: number }>()
-    records.forEach((item) => {
-      const bucket = sceneMasteryMap.get(item.resourceCategory) || { total: 0, accuracySum: 0 }
-      bucket.total += 1
-      bucket.accuracySum += item.accuracyRate * 100
-      sceneMasteryMap.set(item.resourceCategory, bucket)
-    })
+    records
+      .filter((item) => item.subModule === 'emotion_scene')
+      .forEach((item) => {
+        const bucket = sceneMasteryMap.get(item.resourceCategory) || { total: 0, accuracySum: 0 }
+        bucket.total += 1
+        bucket.accuracySum += item.accuracyRate * 100
+        sceneMasteryMap.set(item.resourceCategory, bucket)
+      })
 
     const sceneMastery = Array.from(sceneMasteryMap.entries()).map(([category, stats]) => ({
+      category,
+      accuracy: stats.total > 0 ? round(stats.accuracySum / stats.total, 1) : 0,
+    }))
+
+    const sceneDomainMasteryMap = new Map<string, { total: number; accuracySum: number }>()
+    sessionDetails
+      .filter((item) => item.record.subModule === 'emotion_scene')
+      .forEach((item) => {
+        const sceneDomain = item.metadata?.sceneDomain || '未分类'
+        const bucket = sceneDomainMasteryMap.get(sceneDomain) || { total: 0, accuracySum: 0 }
+        bucket.total += 1
+        bucket.accuracySum += item.record.accuracyRate * 100
+        sceneDomainMasteryMap.set(sceneDomain, bucket)
+      })
+
+    const sceneDomainMastery = Array.from(sceneDomainMasteryMap.entries()).map(([category, stats]) => ({
       category,
       accuracy: stats.total > 0 ? round(stats.accuracySum / stats.total, 1) : 0,
     }))
@@ -525,6 +545,7 @@ export class EmotionalTrainingAPI {
       emotionPerformance,
       carePreference,
       sceneMastery,
+      sceneDomainMastery,
       suggestions,
     }
   }

@@ -631,6 +631,7 @@ function parseExcelPack(buffer: ArrayBuffer): EmotionalPackImportResult {
         imageUrl: normalizeString(row.imageUrl),
         difficultyLevel: normalizeDifficultyLevel(row.difficultyLevel),
         targetEmotion: normalizeOptionalString(row.targetEmotion) as EmotionSceneResourceMeta['targetEmotion'],
+        sceneDomain: normalizeOptionalString(row.sceneDomain) as EmotionSceneResourceMeta['sceneDomain'],
         emotionOptions: normalizeStringList(row.emotionOptions) as EmotionSceneResourceMeta['emotionOptions'],
         emotionClues: normalizeStringList(row.emotionClues),
         prompts: parsePromptRows(promptRows, promptOptionRows, sceneCode),
@@ -754,6 +755,7 @@ export function createEmotionalExcelPackBuffer(resources: ResourceItem[]) {
       return {
         ...baseRow,
         targetEmotion: metadata.targetEmotion,
+        sceneDomain: metadata.sceneDomain || '',
         emotionOptions: joinList(metadata.emotionOptions),
         emotionClues: joinList(metadata.emotionClues),
         careType: '',
@@ -767,6 +769,7 @@ export function createEmotionalExcelPackBuffer(resources: ResourceItem[]) {
     return {
       ...baseRow,
       targetEmotion: '',
+      sceneDomain: '',
       emotionOptions: '',
       emotionClues: '',
       careType: metadata.careType || '',
@@ -782,7 +785,7 @@ export function createEmotionalExcelPackBuffer(resources: ResourceItem[]) {
     resourceRows.length > 0 ? XLSX.utils.json_to_sheet(resourceRows) : createEmptySheet([
       'resourceType', 'sceneCode', 'name', 'title', 'category', 'description', 'coverImage',
       'imageUrl', 'difficultyLevel', 'recommendedHintCeiling', 'ageRange', 'abilityLevel',
-      'tags', 'targetEmotion', 'emotionOptions', 'emotionClues', 'careType', 'receiverEmotion',
+      'tags', 'targetEmotion', 'sceneDomain', 'emotionOptions', 'emotionClues', 'careType', 'receiverEmotion',
       'speakerPerspectiveText', 'receiverPerspectiveText', 'preferredUtteranceIds',
     ]),
     'resources'

@@ -3,12 +3,17 @@ import type {
   EmotionalCompileContext,
   EmotionalCompiledSessionConfig,
 } from '@/features/emotional/engine/types'
-import { EMOTIONAL_BASE_EMOTION_META } from '@/features/emotional/emotion-catalog'
+import {
+  buildEmotionChoiceOptions,
+  EMOTIONAL_BASE_EMOTION_META,
+} from '@/features/emotional/emotion-catalog'
 
 export function compileEmotionScene(
   meta: EmotionSceneResourceMeta,
   context: EmotionalCompileContext,
 ): EmotionalCompiledSessionConfig {
+  const emotionChoiceOptions = buildEmotionChoiceOptions(meta.targetEmotion, 5)
+
   const steps: EmotionalCompiledSessionConfig['steps'] = [
     {
       key: 'scene_intro',
@@ -41,7 +46,7 @@ export function compileEmotionScene(
         emotionColorToken: meta.emotionColorToken,
         emotionColorLabel: meta.emotionColorLabel,
       },
-      options: meta.emotionOptions.map((emotion) => ({
+      options: emotionChoiceOptions.map((emotion) => ({
         value: emotion,
         label: EMOTIONAL_BASE_EMOTION_META[emotion].label,
         isCorrect: emotion === meta.targetEmotion,

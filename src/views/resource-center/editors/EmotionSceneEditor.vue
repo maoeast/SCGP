@@ -88,7 +88,7 @@
             </el-form-item>
           </el-col>
 
-          <el-col :xs="24" :md="8">
+          <el-col :xs="24" :md="6">
             <el-form-item label="难度等级">
               <el-segmented
                 :model-value="modelValue.difficultyLevel"
@@ -98,7 +98,26 @@
             </el-form-item>
           </el-col>
 
-          <el-col :xs="24" :md="8">
+          <el-col :xs="24" :md="6">
+            <el-form-item label="场域分类">
+              <el-select
+                :model-value="modelValue.sceneDomain"
+                clearable
+                style="width: 100%"
+                placeholder="请选择场域"
+                @update:model-value="updateField('sceneDomain', $event as EmotionalSceneDomain | undefined)"
+              >
+                <el-option
+                  v-for="option in sceneDomainOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+
+          <el-col :xs="24" :md="6">
             <el-form-item label="适用年龄">
               <el-input
                 :model-value="modelValue.ageRange || ''"
@@ -108,7 +127,7 @@
             </el-form-item>
           </el-col>
 
-          <el-col :xs="24" :md="8">
+          <el-col :xs="24" :md="6">
             <el-form-item label="能力层级">
               <el-select
                 :model-value="modelValue.abilityLevel"
@@ -430,6 +449,7 @@
 import { computed, ref } from 'vue'
 import type {
   EmotionalBaseEmotion,
+  EmotionalSceneDomain,
   EmotionScenePrompt,
   EmotionScenePromptOption,
   EmotionSceneResourceMeta,
@@ -442,6 +462,7 @@ import {
   createEmotionSceneSolution,
   EMOTION_COLOR_PRESETS,
   REASONING_TYPE_OPTIONS,
+  SCENE_DOMAIN_OPTIONS,
   SOLUTION_RANK_OPTIONS,
   validateEmotionSceneEditorModel,
 } from './emotional-resource-contract'
@@ -470,6 +491,7 @@ const difficultyOptions = [
 ]
 
 const reasoningTypeOptions = REASONING_TYPE_OPTIONS
+const sceneDomainOptions = SCENE_DOMAIN_OPTIONS
 const solutionRankOptions = SOLUTION_RANK_OPTIONS
 
 const colorMeta = computed(() => EMOTION_COLOR_PRESETS[props.modelValue.targetEmotion])
