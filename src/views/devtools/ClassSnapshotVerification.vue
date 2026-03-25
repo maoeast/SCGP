@@ -306,13 +306,18 @@ async function startVerification() {
       () => verifier.phase4_FinalVerification()
     ]
 
-    const phaseResults = []
+    const phaseResults: VerificationReport['phases'] = []
 
     for (let i = 0; i < phases.length; i++) {
+      const step = steps[i]
+      const phaseRunner = phases[i]
+      if (!step || !phaseRunner) {
+        break
+      }
       currentPhase.value = i
-      addLog('info', `\n========== ${steps[i].title} ==========`)
+      addLog('info', `\n========== ${step.title} ==========`)
 
-      const result = await phases[i]()
+      const result = await phaseRunner()
       phaseResults.push(result)
 
       if (result.success) {

@@ -284,7 +284,7 @@ const testConfig = reactive({
 const upgradeConfig = reactive({
   fromYear: '2023-2024',
   toYear: '2024-2025',
-  upgradeDate: new Date().toISOString().split('T')[0]
+  upgradeDate: new Date().toISOString().split('T')[0] ?? new Date().toISOString().slice(0, 10)
 })
 
 const assignmentConfig = reactive({
@@ -367,7 +367,7 @@ async function generateTestData() {
 /**
  * 模拟学年升级
  */
-function simulateUpgrade() {
+async function simulateUpgrade() {
   if (!classAPI) {
     ElMessage.error('ClassAPI 未初始化')
     return
@@ -378,10 +378,10 @@ function simulateUpgrade() {
 
   try {
     const generator = new ClassTestDataGenerator(classAPI)
-    const result = generator.simulateGradeUpgrade(
+    const result = await generator.simulateGradeUpgrade(
       upgradeConfig.fromYear as any,
       upgradeConfig.toYear as any,
-      upgradeConfig.upgradeDate
+      upgradeConfig.upgradeDate ?? new Date().toISOString().slice(0, 10)
     )
 
     addLog('success', `学年升级完成！`)
@@ -402,7 +402,7 @@ function simulateUpgrade() {
 /**
  * 测试学生分班
  */
-function testStudentAssignment() {
+async function testStudentAssignment() {
   if (!classAPI) {
     ElMessage.error('ClassAPI 未初始化')
     return
@@ -416,16 +416,16 @@ function testStudentAssignment() {
     const classInfo = classAPI.getClass(assignmentConfig.classId)
     const studentName = `测试学生${assignmentConfig.studentId}`
 
-    classAPI.assignStudentToClass(
+    await classAPI.assignStudentToClass(
       assignmentConfig.studentId,
       studentName,
       assignmentConfig.classId,
       assignmentConfig.academicYear as any,
-      new Date().toISOString().split('T')[0]
+      new Date().toISOString().split('T')[0] ?? new Date().toISOString().slice(0, 10)
     )
 
     addLog('success', `学生分班成功！`)
-    addLog('info', `${studentName} 已分配到 ${classInfo.name}`)
+    addLog('info', `${studentName} 已分配到 ${classInfo?.name || '未知班级'}`)
 
     ElMessage.success('学生分班成功')
   } catch (error: any) {
@@ -445,7 +445,7 @@ function loadAllClasses() {
   addLog('info', '加载所有班级...')
 
   try {
-    testData.value = classAPI.getAllClasses()
+    testData.value = classAPI.getClasses()
     addLog('success', `加载了 ${testData.value.length} 个班级`)
   } catch (error: any) {
     addLog('error', `加载失败: ${error.message}`)
@@ -461,7 +461,7 @@ function loadClassHistory() {
   addLog('info', '加载班级变更历史...')
 
   try {
-    classHistory.value = classAPI.getAllClassHistory()
+    classHistory.value = (classAPI as any).getAllClassHistory?.() || []
     addLog('success', `加载了 ${classHistory.value.length} 条历史记录`)
   } catch (error: any) {
     addLog('error', `加载失败: ${error.message}`)

@@ -169,6 +169,7 @@ import { ElMessage } from 'element-plus'
 import { Microphone } from '@element-plus/icons-vue'
 import { csirsQuestions, getQuestionsByAge } from '@/database/csirs-questions'
 import { calculateTScore, getEvaluationLevel } from '@/database/csirs-conversion'
+import type { CSIRSDimensionType } from '@/types/csirs'
 import { getDatabase } from '@/database/init'
 import { ReportAPI } from '@/database/api'
 import type { CSIRSQuestion, CSIRSAnswer } from '@/types/csirs'
@@ -308,7 +309,8 @@ const previousQuestion = () => {
     answers.value.pop()
     currentIndex.value--
     // 恢复上一题的答案
-    const lastAnswer = answers.value.find(a => a.question_id === filteredQuestions.value[currentIndex.value].id)
+    const currentQuestion = filteredQuestions.value[currentIndex.value]
+    const lastAnswer = currentQuestion ? answers.value.find(a => a.question_id === currentQuestion.id) : undefined
     currentAnswer.value = lastAnswer?.score || null
   }
 }
@@ -328,7 +330,10 @@ const submitAssessment = () => {
         if (!dimensionScores[question.dimension_en]) {
           dimensionScores[question.dimension_en] = []
         }
-        dimensionScores[question.dimension_en].push(answer.score)
+        const dimensionBucket = dimensionScores[question.dimension_en]
+        if (dimensionBucket) {
+          dimensionBucket.push(answer.score)
+        }
       }
     }
 
@@ -341,7 +346,7 @@ const submitAssessment = () => {
 
       // 只有非executive维度才有T分转换表
       if (dimension !== 'executive') {
-        tScores[dimension] = calculateTScore(rawScores[dimension], ageYears, dimension)
+        tScores[dimension] = calculateTScore(rawScores[dimension], ageYears, dimension as CSIRSDimensionType)
       }
     }
 
@@ -403,7 +408,7 @@ const submitAssessment = () => {
       reportAPI.saveReportRecord({
         student_id: student.value.id,
         report_type: 'csirs',
-        assess_id: assessId.value,
+        assess_id: assessId.value ?? undefined,
         title
       })
     } catch (error) {

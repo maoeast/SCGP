@@ -92,7 +92,10 @@ export async function exportAssessmentReport(options: ExportOptions): Promise<vo
         if (!reportData) {
           throw new Error('Word导出需要提供 reportData 参数')
         }
-        await exportToWord(reportType, reportData, filename)
+        if (reportType === ReportType.TRAINING) {
+          throw new Error('Word导出暂不支持训练报告')
+        }
+        await exportToWord(reportData, reportType, filename)
         break
 
       default:

@@ -264,8 +264,8 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { InfoFilled } from '@element-plus/icons-vue'
-import type { VerificationReport } from '@/database/migration/migration-verification'
-import type { DualWriteResult } from '@/database/migration/compatibility-adapter'
+type VerificationReport = any
+type DualWriteResult = any
 
 // 状态
 const loading = ref(false)

@@ -12,7 +12,8 @@
 import type {
   WorkerMessage,
   WorkerResponse,
-  BatchOperation
+  BatchOperation,
+  BatchQueryPayload
 } from './types/worker-messages'
 
 /**
@@ -216,7 +217,10 @@ export class DatabaseCommandQueue {
 
     // 如果只有一个请求，直接发送
     if (requests.length === 1) {
-      this.sendMessage(requests[0].message)
+      const firstRequest = requests[0]
+      if (firstRequest) {
+        this.sendMessage(firstRequest.message)
+      }
       return
     }
 
@@ -241,7 +245,7 @@ export class DatabaseCommandQueue {
 
     if (allQueries) {
       // 合并为批量查询
-      const batchMessage: WorkerMessage<BatchOperation[]> = {
+      const batchMessage: WorkerMessage<BatchQueryPayload> = {
         type: 'batch_query',
         id: this.generateMessageId(),
         payload: {

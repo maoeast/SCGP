@@ -206,7 +206,7 @@ export async function createBridgeSQLWrapper(existingDbData?: Uint8Array): Promi
   } catch (error) {
     // 未初始化，进行初始化
     console.log('[BridgeSQLWrapper] Initializing Worker with database data:', existingDbData?.byteLength || 0, 'bytes')
-    await bridge.init(undefined, { dbData: existingDbData })
+    await bridge.init(undefined)
   }
 
   return new BridgeSQLWrapper(bridge)

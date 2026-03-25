@@ -13,10 +13,10 @@ self.onmessage = function(e) {
       success: false,
       error: 'Worker方式暂时不可用，请使用主线程导出'
     })
-  } catch (error) {
+  } catch (error: unknown) {
     self.postMessage({
       success: false,
-      error: error.message
+      error: error instanceof Error ? error.message : '未知错误'
     })
   }
 }

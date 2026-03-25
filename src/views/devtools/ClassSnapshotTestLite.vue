@@ -105,6 +105,7 @@ import { ClassAPI } from '@/database/class-api'
 import { StudentAPI } from '@/database/api'
 import { EquipmentTrainingAPI } from '@/database/api'
 import { getDatabase } from '@/database/init'
+import { ClassChangeReason } from '@/types/class'
 
 // 测试状态
 type TestStatus = 'idle' | 'running' | 'passed' | 'failed'
@@ -353,12 +354,12 @@ async function runTest() {
     log('success', `  创建学生 "测试张三" (ID: ${testStudentId})`)
 
     // 分配学生到班级
-    classAPI.assignStudentToClass(
+    await classAPI.assignStudentToClass(
       testStudentId,
       '测试张三',
       testClassId,
       '2025-2026',
-      new Date().toISOString().split('T')[0]
+      new Date().toISOString().split('T')[0] ?? new Date().toISOString().slice(0, 10)
     )
     log('success', `  分配学生到 "测试2025班"`)
 
@@ -392,7 +393,7 @@ async function runTest() {
 
     // 直接使用原始数据库创建训练记录，包含班级快照
     // rawDb 已在函数开始时声明
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toISOString().split('T')[0] ?? new Date().toISOString().slice(0, 10)
 
     rawDb.run(`
       INSERT INTO equipment_training_records (
@@ -482,13 +483,13 @@ async function runTest() {
     }
 
     // 执行学生转班
-    classAPI.changeStudentClass({
+    await classAPI.changeStudentClass({
       studentId: testStudentId,
       oldClassId: testClassId,
       newClassId: newClassId,
       academicYear: '2026-2027',
-      changeDate: new Date().toISOString().split('T')[0],
-      reason: 'upgrade'
+      changeDate: new Date().toISOString().split('T')[0] ?? new Date().toISOString().slice(0, 10),
+      reason: ClassChangeReason.UPGRADE
     })
     log('success', `  执行学生升学操作`)
 

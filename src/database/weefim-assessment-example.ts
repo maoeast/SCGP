@@ -73,7 +73,7 @@ export function runAssessmentExamples() {
     // 显示具体项目评分
     console.log('\n具体项目评分:');
     weefimQuestions.forEach((question, index) => {
-      const score = result.scores[question.id];
+      const score = result.scores[question.id] ?? 0;
       const level = getScoreLevel(score);
       console.log(`  ${question.id}. ${question.title}: ${score}分 (${level})`);
     });

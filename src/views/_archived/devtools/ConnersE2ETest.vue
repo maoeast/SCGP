@@ -59,10 +59,10 @@
       <el-descriptions :column="3" border>
         <el-descriptions-item label="姓名">{{ testStudent.name }}</el-descriptions-item>
         <el-descriptions-item label="性别">{{ testStudent.gender }}</el-descriptions-item>
-        <el-descriptions-item label="年龄">{{ testStudent.ageMonths }} 个月 ({{ Math.floor(testStudent.ageMonths / 12) }} 岁)</el-descriptions-item>
+        <el-descriptions-item label="年龄">{{ testStudent.ageInMonths }} 个月 ({{ Math.floor(testStudent.ageInMonths / 12) }} 岁)</el-descriptions-item>
         <el-descriptions-item label="出生日期">{{ testStudent.birthday }}</el-descriptions-item>
         <el-descriptions-item label="学生ID">{{ testStudent.id }}</el-descriptions-item>
-        <el-descriptions-item label="年龄段">{{ testStudent.ageGroup }}</el-descriptions-item>
+        <el-descriptions-item label="年龄段">{{ getAgeGroup(testStudent.ageInMonths) }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
 
@@ -363,6 +363,7 @@ function generateMockAnswers(): Record<string, ScaleAnswer> {
 
     answers[q.id] = {
       questionId: q.id,
+      value: score,
       score,
       timestamp: Date.now()
     }
@@ -550,7 +551,7 @@ async function saveAssessment(
       itemCount: dim.itemCount
     }
     rawScores[dim.code] = dim.rawScore
-    tScores[dim.code] = dim.standardScore
+    tScores[dim.code] = dim.standardScore ?? 0
   }
 
   const now = new Date().toISOString()

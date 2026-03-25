@@ -296,7 +296,8 @@ export class ResourceManager {
     await this.ensurePathInitialized()
     if (window.electronAPI && window.electronAPI.openFile) {
       const fullPath = this.getFullPath(filePath)
-      return await window.electronAPI.openFile(fullPath)
+      const result = await window.electronAPI.openFile(fullPath)
+      return result === true
     }
     // 开发环境：使用完整的资源路径
     const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath

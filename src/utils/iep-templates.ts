@@ -367,7 +367,7 @@ export function generateEquipmentIEPComment(
   const level = score >= 4 ? 'high' : score >= 3 ? 'medium' : 'low'
 
   // 获取动作描述（处理字符串键 "1", "2", ... 转换为数字）
-  const actionDescription = template.actionDescriptions[String(promptLevel)] || template.actionDescriptions['1']
+  const actionDescription = template.actionDescriptions[String(promptLevel)] || template.actionDescriptions['1'] || '完成训练'
 
   // 器材训练专用占位符替换逻辑
   let comment = template.performance[level]

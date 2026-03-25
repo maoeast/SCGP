@@ -878,7 +878,7 @@ const completeAssessment = async () => {
         console.log('已保存详情:', detail)
       }
 
-      assessId.value = savedAssessId.toString()
+      assessId.value = savedAssessId ?? 0
       console.log('✅ S-M评估数据已保存到数据库，ID:', savedAssessId)
     } catch (error) {
       console.error('保存S-M评估数据失败:', error)

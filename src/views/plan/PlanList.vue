@@ -502,7 +502,7 @@
                 <div class="option-name">{{ resource.name }}</div>
                 <div class="option-meta">
                   <el-tag size="small" type="info">
-                    {{ getResourceTypeLabel(resource.resource_type) }}
+                    {{ getResourceTypeLabel(resource.resourceType) }}
                   </el-tag>
                 </div>
               </div>
@@ -601,7 +601,8 @@ import {
 import { PlanAPI, type TrainingPlan, type PlanStatus, type PlanResourceMap } from '@/database/plan-api'
 import { ResourceAPI } from '@/database/resource-api'
 import { DatabaseAPI, StudentAPI } from '@/database/api'
-import type { ResourceItem, ModuleCode } from '@/types/module'
+import type { ResourceItem } from '@/types/module'
+import { ModuleCode } from '@/types/module'
 import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
 import { buildTrainingLaunchRoute } from '@/utils/training-launch'
 
@@ -641,7 +642,7 @@ const planFormRef = ref<FormInstance>()
 const planForm = ref({
   name: '',
   student_id: null as number | null,
-  module_code: 'all',
+  module_code: 'all' as 'all' | ModuleCode,
   dateRange: [] as string[],
   description: '',
   long_term_goals: [] as string[],
@@ -661,7 +662,7 @@ const selectedResources = ref<SelectedResource[]>([])
 
 // 资源选择器状态
 const resourceSelectorVisible = ref(false)
-const resourceFilterModule = ref('all')
+const resourceFilterModule = ref<'all' | ModuleCode>('all')
 const resourceFilterType = ref('')
 const resourceSearchKeyword = ref('')
 const resourceLoading = ref(false)
@@ -805,23 +806,25 @@ function getStatusLabel(status: PlanStatus): string {
   return labelMap[status] || status
 }
 
-function getModuleLabel(moduleCode: string): string {
+function getModuleLabel(moduleCode?: string): string {
   const labelMap: Record<string, string> = {
     all: '综合计划',
     sensory: '感官训练',
     emotional: '情绪调节',
     social: '社交互动'
   }
+  if (!moduleCode) return '未分类'
   return labelMap[moduleCode] || moduleCode
 }
 
-function getResourceTypeLabel(type: string): string {
+function getResourceTypeLabel(type?: string): string {
   const labelMap: Record<string, string> = {
     equipment: '器材',
     game: '游戏',
     flashcard: '闪卡',
     document: '文档'
   }
+  if (!type) return '未分类'
   return EXTRA_RESOURCE_TYPE_LABELS[type] || labelMap[type] || type
 }
 
@@ -836,13 +839,14 @@ function isResourceCompletedToday(studentId: number, resourceId: number): boolea
 }
 
 // 获取资源类型的 CSS 类名
-function getResourceTypeClass(type: string): string {
+function getResourceTypeClass(type?: string): string {
   const classMap: Record<string, string> = {
     equipment: 'type-equipment',
     game: 'type-game',
     flashcard: 'type-flashcard',
     document: 'type-document'
   }
+  if (!type) return ''
   return EXTRA_RESOURCE_TYPE_CLASSES[type] || classMap[type] || ''
 }
 
@@ -991,8 +995,8 @@ async function handleSavePlan(targetStatus: PlanStatus = 'draft') {
       planApi.updatePlan(editingPlan.value.id, {
         name: planForm.value.name,
         module_code: planForm.value.module_code as any,
-        start_date: planForm.value.dateRange[0],
-        end_date: planForm.value.dateRange[1],
+        start_date: planForm.value.dateRange[0] ?? '',
+        end_date: planForm.value.dateRange[1] ?? '',
         description: planForm.value.description,
         long_term_goals: longTermGoals.length > 0 ? longTermGoals : null,
         short_term_goals: shortTermGoals.length > 0 ? shortTermGoals : null
@@ -1023,8 +1027,8 @@ async function handleSavePlan(targetStatus: PlanStatus = 'draft') {
         name: planForm.value.name,
         student_id: planForm.value.student_id!,
         module_code: planForm.value.module_code as any,
-        start_date: planForm.value.dateRange[0],
-        end_date: planForm.value.dateRange[1],
+        start_date: planForm.value.dateRange[0] ?? '',
+        end_date: planForm.value.dateRange[1] ?? '',
         description: planForm.value.description,
         long_term_goals: longTermGoals.length > 0 ? longTermGoals : null,
         short_term_goals: shortTermGoals.length > 0 ? shortTermGoals : null
@@ -1119,7 +1123,10 @@ async function handlePreviewResource(resource: PlanResourceMap) {
     }
 
     // 使用系统默认程序打开
-    await resourceManager.openWithSystem(fullResource.path || '')
+    const resourcePath = (fullResource.metadata?.path as string | undefined)
+      || fullResource.legacySource
+      || ''
+    await resourceManager.openWithSystem(resourcePath)
     ElMessage.success(`已打开「${resource.resource_name}」`)
   } catch (error) {
     console.error('打开资源失败:', error)
@@ -1177,7 +1184,7 @@ async function loadResourcesForSelection() {
     // 如果选择全部模块，需要分别查询
     if (resourceFilterModule.value === 'all') {
       const allResources: ResourceItem[] = []
-      const modules: ModuleCode[] = ['sensory', 'emotional', 'social']
+      const modules: ModuleCode[] = [ModuleCode.SENSORY, ModuleCode.EMOTIONAL, ModuleCode.SOCIAL]
 
       for (const mod of modules) {
         queryOptions.moduleCode = mod

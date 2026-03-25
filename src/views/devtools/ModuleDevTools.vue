@@ -354,7 +354,7 @@
                       :min="0"
                       :max="1"
                       :step="0.01"
-                      :format-tooltip="(v) => `${(v * 100).toFixed(0)}%`"
+                      :format-tooltip="(v: number) => `${(v * 100).toFixed(0)}%`"
                     />
                   </el-form-item>
                   <el-form-item label="平均响应时间(ms)">

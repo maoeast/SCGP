@@ -410,7 +410,7 @@ const completeAssessment = async () => {
 
       console.log('评估结果已保存:', assessData)
       console.log('详细结果:', result)
-      assessId.value = savedAssessId.toString() // 使用数据库生成的真实ID
+      assessId.value = savedAssessId ?? 0 // 使用数据库生成的真实ID
 
       // 保存报告记录
       try {

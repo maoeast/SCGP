@@ -181,7 +181,7 @@ import type { ConnersAnswer } from '@/types/conners'
 const router = useRouter()
 const route = useRoute()
 const db = getDatabase()
-const trsAPI = new ConnersTRSAPI(db)
+const trsAPI = new ConnersTRSAPI()
 
 // 状态
 const showWelcomeDialog = ref(true)
@@ -322,7 +322,8 @@ const previousQuestion = () => {
     answers.value.pop()
     currentIndex.value--
     // 恢复上一题的答案
-    const lastAnswer = answers.value.find(a => a.question_id === questions[currentIndex.value].id)
+    const currentQuestion = questions[currentIndex.value]
+    const lastAnswer = currentQuestion ? answers.value.find(a => a.question_id === currentQuestion.id) : undefined
     currentAnswer.value = lastAnswer?.score ?? null
   }
 }
@@ -371,7 +372,7 @@ const submitAssessment = async () => {
       pi_score: 0,  // 1978年修订版无PI效度题
       ni_score: 0,  // 1978年修订版无NI效度题
       is_valid: 1,
-      invalid_reason: null,
+      invalid_reason: undefined,
       hyperactivity_index: hyperIndexT,
       level: scoreResult.level,
       start_time: new Date(startTime.value).toISOString(),

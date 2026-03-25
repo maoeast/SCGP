@@ -194,7 +194,7 @@ async function handleBatchQuery() {
     const duration = performance.now() - startTime
 
     addLog('success', `批量查询成功: ${results.length} 个结果, 耗时: ${duration.toFixed(2)}ms`)
-    addLog('info', `第一个结果: ${JSON.stringify(results[0].rows)}`)
+    addLog('info', `第一个结果: ${JSON.stringify(results[0]?.rows || [])}`)
     updateStatus()
   } catch (error: any) {
     addLog('error', `批量查询失败: ${error.message}`)

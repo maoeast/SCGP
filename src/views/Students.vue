@@ -109,7 +109,7 @@
               @change="handleFileSelect"
               style="display: none"
             />
-            <button @click="$refs.fileInput.click()" class="btn btn-primary">
+            <button @click="triggerFileInput" class="btn btn-primary">
               <i class="fas fa-arrow-up-from-bracket"></i>
               选择文件
             </button>
@@ -135,7 +135,11 @@ const searchKeyword = ref('')
 const showAddModal = ref(false)
 const showImportModal = ref(false)
 const selectedFile = ref<File | null>(null)
-const fileInput = ref<HTMLInputElement>()
+const fileInput = ref<HTMLInputElement | null>(null)
+
+const triggerFileInput = () => {
+  fileInput.value?.click()
+}
 const editingStudent = ref<any | null>(null)
 
 // 计算属性
@@ -205,8 +209,9 @@ const deleteStudent = async (id: number) => {
 // 文件选择
 const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement
-  if (target.files && target.files.length > 0) {
-    selectedFile.value = target.files[0]
+  const file = target.files?.[0]
+  if (file) {
+    selectedFile.value = file
   }
 }
 

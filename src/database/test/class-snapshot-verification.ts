@@ -22,7 +22,7 @@ import type { AcademicYear, GradeLevel } from '@/types/class'
 /**
  * 验证结果接口
  */
-interface VerificationResult {
+export interface VerificationResult {
   success: boolean
   phase: string
   message: string
@@ -33,7 +33,7 @@ interface VerificationResult {
 /**
  * 验证报告接口
  */
-interface VerificationReport {
+export interface VerificationReport {
   phases: VerificationResult[]
   summary: {
     total: number
@@ -318,7 +318,7 @@ export class ClassSnapshotVerifier {
    * Phase 1: 建立初始状态
    * 创建班级"2025级-启航班"并分配测试学生
    */
-  private async phase1_InitialSetup(): Promise<VerificationResult> {
+  async phase1_InitialSetup(): Promise<VerificationResult> {
     const phase = 'Phase 1: 建立初始状态'
 
     try {
@@ -447,7 +447,7 @@ export class ClassSnapshotVerifier {
    * Phase 2: 触发快照记录
    * 录入器材训练记录，确认班级快照已固化
    */
-  private async phase2_TriggerSnapshot(): Promise<VerificationResult> {
+  async phase2_TriggerSnapshot(): Promise<VerificationResult> {
     const phase = 'Phase 2: 触发快照记录'
 
     try {
@@ -548,7 +548,7 @@ export class ClassSnapshotVerifier {
    * Phase 3: 模拟组织变更
    * 执行学年升级，将学生迁移至"2026级-进阶班"
    */
-  private async phase3_SimulateUpgrade(): Promise<VerificationResult> {
+  async phase3_SimulateUpgrade(): Promise<VerificationResult> {
     const phase = 'Phase 3: 模拟组织变更'
 
     try {
@@ -658,7 +658,7 @@ export class ClassSnapshotVerifier {
    * Phase 4: 核心验收核实
    * 验证历史记录的班级信息不变，学生档案的当前班级已更新
    */
-  private async phase4_FinalVerification(): Promise<VerificationResult> {
+  async phase4_FinalVerification(): Promise<VerificationResult> {
     const phase = 'Phase 4: 核心验收核实'
 
     try {

@@ -515,7 +515,7 @@ export function exportToCSV(data: Array<Record<string, any>>, filename: string =
     }
 
     // 获取表头
-    const headers = Object.keys(data[0])
+    const headers = Object.keys(data[0] ?? {})
 
     // 生成CSV内容
     const csvContent = [

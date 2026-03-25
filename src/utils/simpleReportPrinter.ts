@@ -510,7 +510,7 @@ export class SimpleReportPrinter {
       <div class="info-row">
         <div class="info-cell">
           <span class="info-label">评估编号：</span>
-          <span>${reportData.assessId || assessment.id || 'N/A'}</span>
+          <span>${reportData.assessId || 'N/A'}</span>
         </div>
       </div>
     </div>
@@ -956,7 +956,7 @@ export class SimpleReportPrinter {
         if (reportData.categories?.[cat.key]?.items?.[index]) {
           itemScore = reportData.categories[cat.key].items[index].score || 4
         }
-        const level = scoreLevels[itemScore] || scoreLevels[4]
+        const level = scoreLevels[itemScore] || scoreLevels[4]!
         return `<li>${itemName}：${itemScore}/7分（${level.text}）</li>`
       }).join('')
 

@@ -564,7 +564,10 @@ const classGroups = computed(() => {
         classes: []
       }
     }
-    groups[cls.gradeLevel].classes.push(cls)
+    const group = groups[cls.gradeLevel]
+    if (group) {
+      group.classes.push(cls)
+    }
   }
 
   return Object.values(groups).sort((a, b) => a.gradeLevel - b.gradeLevel)

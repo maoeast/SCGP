@@ -101,7 +101,10 @@ export const useStudentStore = defineStore('student', {
           // 更新本地状态
           const index = this.students.findIndex(s => s.id === id)
           if (index !== -1) {
-            this.students[index] = { ...this.students[index], ...student }
+            const currentStudent = this.students[index]
+            if (currentStudent) {
+              this.students[index] = { ...currentStudent, ...student }
+            }
           }
 
           // 更新当前学生

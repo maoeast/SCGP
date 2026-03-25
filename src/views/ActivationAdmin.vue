@@ -129,7 +129,12 @@ import { DatabaseAPI } from '@/database/api'
 
 const currentMachineCode = ref('')
 const activationHistory = ref<any[]>([])
-const activationStatus = ref({
+const activationStatus = ref<{
+  canUse: boolean
+  type: 'trial' | 'full'
+  daysRemaining?: number
+  message: string
+}>({
   canUse: false,
   type: 'trial',
   daysRemaining: 0,

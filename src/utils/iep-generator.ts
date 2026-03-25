@@ -21,6 +21,7 @@
 import { ModuleCode, type IEPResult } from '@/types/module'
 import { ModuleRegistry } from '@/core/module-registry'
 import { TaskID, type GameSessionData, type IEPReport, type IEPReportSection } from '@/types/games'
+import { CATEGORY_LABELS } from '@/types/equipment'
 import type { EquipmentCatalog, EquipmentCategory, PromptLevel } from '@/types/equipment'
 import { iepTaskMapping, equipmentTaskMapping } from './iep-templates'
 
