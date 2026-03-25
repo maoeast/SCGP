@@ -1,4 +1,4 @@
-import fs from 'node:fs/promises'
+﻿import fs from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
 import initSqlJs from 'sql.js'
@@ -7,7 +7,7 @@ const REPO_ROOT = process.cwd()
 const APPDATA = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming')
 const MAIN_DB_NAME = 'database.sqlite'
 const BACKUP_DB_NAME = 'database_backup.db'
-const CSV_PATH = path.join(REPO_ROOT, 'docs', 'references', '情绪场景.csv')
+const CSV_PATH = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scene', '鎯呯华鍦烘櫙.csv')
 
 function fail(message) {
   throw new Error(message)
@@ -54,12 +54,12 @@ async function readEmotionSceneCsv() {
   const text = new TextDecoder('gb18030').decode(buffer)
   const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0)
   if (lines.length < 2) {
-    fail('情绪场景.csv 没有可用数据行')
+    fail('鎯呯华鍦烘櫙.csv 娌℃湁鍙敤鏁版嵁琛?)
   }
 
   const header = parseCsvLine(lines[0]).map((item) => item.replace(/^\uFEFF/, ''))
   if (header.length < 6) {
-    fail(`情绪场景.csv 列数不足: ${header.length}`)
+    fail(`鎯呯华鍦烘櫙.csv 鍒楁暟涓嶈冻: ${header.length}`)
   }
 
   const mapping = new Map()
@@ -120,7 +120,7 @@ async function findUserDataDir(SQL) {
   }
 
   if (candidates.length === 0) {
-    fail('没有找到包含 emotion_scene 数据的 SCGP 用户目录')
+    fail('娌℃湁鎵惧埌鍖呭惈 emotion_scene 鏁版嵁鐨?SCGP 鐢ㄦ埛鐩綍')
   }
 
   candidates.sort((a, b) => {
@@ -150,14 +150,14 @@ async function saveDb(db, userDataDir) {
 
 async function main() {
   const mapping = await readEmotionSceneCsv()
-  console.log(`CSV 映射条数: ${mapping.size}`)
+  console.log(`CSV 鏄犲皠鏉℃暟: ${mapping.size}`)
 
   const SQL = await initSqlJs({
     locateFile: (file) => path.join(REPO_ROOT, 'node_modules', 'sql.js', 'dist', file),
   })
 
   const userDataDir = await findUserDataDir(SQL)
-  console.log(`命中的 SCGP 数据目录: ${userDataDir}`)
+  console.log(`鍛戒腑鐨?SCGP 鏁版嵁鐩綍: ${userDataDir}`)
 
   const timestampLabel = new Date().toISOString().replace(/[:.]/g, '-')
   const mainBackup = await backupFile(path.join(userDataDir, MAIN_DB_NAME), timestampLabel)
@@ -249,6 +249,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('更新失败:', error)
+  console.error('鏇存柊澶辫触:', error)
   process.exitCode = 1
 })
+

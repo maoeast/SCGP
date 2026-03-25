@@ -66,10 +66,10 @@
   - 将专家新增 24 条重编号为 `scene-50` 到 `scene-56`、`scene-64` 到 `scene-80`
   - 按 `sceneCode` 覆盖写回现有 80 条 `emotion_scene`，保留原有资源记录 ID
 - 已补充当前可用参考文件：
-  - `docs/references/current-emotion-scenes-export.json`
-  - `docs/references/emotion-scenes-new24-renumbered.json`
-  - `docs/references/emotion-scenes-merged-candidate.json`
-  - `docs/references/emotion-scenes-removed-24.json`
+  - `docs/references/emotion-scene/current-emotion-scenes-export.json`
+  - `docs/references/emotion-scene/emotion-scenes-new24-renumbered.json`
+  - `docs/references/emotion-scene/emotion-scenes-merged-candidate.json`
+  - `docs/references/emotion-scene/emotion-scenes-removed-24.json`
 - v1.5 已交付内容：
   - 激活码 payload 强制包含 `am`（`allowedModules`）
   - 本地 `activation` 表新增 `allowed_modules`
@@ -362,18 +362,18 @@
       - 保留历史误写 `anger` 的兼容归一化，正式对外口径统一为 `angry`
       - 训练页和场景选择页在读取旧资源时会先归一化情绪值，避免旧资源直接失效
     - 同步更新：
-      - `docs/references/emotion_scene_import_template.json`
-      - `docs/references/emotion_scene_import_spec.md`
+      - `docs/references/emotion-scene/emotion_scene_import_template.json`
+      - `docs/references/emotion-scene/emotion_scene_import_spec.md`
     - 状态：✅ 已完成
 
 43. **[2026-03-23] 完成 80 条情绪场景合并替换与数据库落库**
     - 输入来源：
-      - 当前数据库导出：`docs/references/current-emotion-scenes-export.json`
-      - 专家新增 24 条：`docs/references/emotion-scenes-new24.json`
+      - 当前数据库导出：`docs/references/emotion-scene/current-emotion-scenes-export.json`
+      - 专家新增 24 条：`docs/references/emotion-scene/emotion-scenes-new24.json`
     - 处理过程：
       - 删除并替换原始 `scene-50` 到 `scene-56`、`scene-64` 到 `scene-80`
-      - 生成 `docs/references/emotion-scenes-new24-renumbered.json`
-      - 生成合并候选 `docs/references/emotion-scenes-merged-candidate.json`
+      - 生成 `docs/references/emotion-scene/emotion-scenes-new24-renumbered.json`
+      - 生成合并候选 `docs/references/emotion-scene/emotion-scenes-merged-candidate.json`
       - 备份当前数据库后，按 `sceneCode` 覆盖更新 `AppData\\Roaming\\scgp\\database.sqlite`
     - 交付结果：
       - 当前库中 `emotion_scene` 保持 80 条
@@ -661,7 +661,7 @@
 | Low    | WebGazer 眼动追踪精度受硬件环境影响   | 摄像头角度过高、逆光导致视线抖动 | 调整摄像头至与眼睛平齐，改善光照条件 |
 | Medium | 全局 TypeScript 历史错误仍较多，`npm run type-check` 不能作为全仓回归基线 | 本次仅对 emotional 改动相关文件做了定向筛查；全仓仍有大量历史类型错误 | 后续单独清偿公共类型债，并建立可持续的全仓类型检查基线 |
 | Low    | Conners 历史/趋势对比页面缺失         | -            | 后续迭代实现 |
-| Low    | 专家原始文件 `docs/references/emotion-scenes-new24.json` 不是严格合法 JSON（顶层对象间缺逗号） | 当前已通过容错脚本读取并生成可用重编号版，但原文件未回写修复 | 后续要求外部资源交付统一通过严格 JSON 校验，避免人工合并时再次踩坑 |
+| Low    | 专家原始文件 `docs/references/emotion-scene/emotion-scenes-new24.json` 不是严格合法 JSON（顶层对象间缺逗号） | 当前已通过容错脚本读取并生成可用重编号版，但原文件未回写修复 | 后续要求外部资源交付统一通过严格 JSON 校验，避免人工合并时再次踩坑 |
 
 ### 已解决问题
 

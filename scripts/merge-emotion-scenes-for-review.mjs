@@ -2,11 +2,12 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 const REPO_ROOT = process.cwd()
-const EXPORT_PATH = path.join(REPO_ROOT, 'docs', 'references', 'current-emotion-scenes-export.json')
-const NEW24_PATH = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scenes-new24.json')
-const RENumbered_PATH = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scenes-new24-renumbered.json')
-const MERGED_PATH = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scenes-merged-candidate.json')
-const REMOVED_PATH = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scenes-removed-24.json')
+const EMOTION_SCENE_REFERENCE_DIR = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scene')
+const EXPORT_PATH = path.join(EMOTION_SCENE_REFERENCE_DIR, 'current-emotion-scenes-export.json')
+const NEW24_PATH = path.join(EMOTION_SCENE_REFERENCE_DIR, 'emotion-scenes-new24.json')
+const RENumbered_PATH = path.join(EMOTION_SCENE_REFERENCE_DIR, 'emotion-scenes-new24-renumbered.json')
+const MERGED_PATH = path.join(EMOTION_SCENE_REFERENCE_DIR, 'emotion-scenes-merged-candidate.json')
+const REMOVED_PATH = path.join(EMOTION_SCENE_REFERENCE_DIR, 'emotion-scenes-removed-24.json')
 
 const REPLACEMENT_NUMBERS = [
   50, 51, 52, 53, 54, 55, 56,

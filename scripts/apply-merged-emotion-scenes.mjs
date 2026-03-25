@@ -7,7 +7,7 @@ const REPO_ROOT = process.cwd()
 const APPDATA = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming')
 const MAIN_DB_NAME = 'database.sqlite'
 const BACKUP_DB_NAME = 'database_backup.db'
-const INPUT_PATH = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scenes-merged-candidate.json')
+const INPUT_PATH = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scene', 'emotion-scenes-merged-candidate.json')
 
 const FORMAL_EMOTIONS = new Set([
   'calm',
@@ -160,6 +160,7 @@ function buildMetadata(scene) {
     imageUrl: normalizeString(scene.imageUrl),
     difficultyLevel: scene.difficultyLevel === 2 || scene.difficultyLevel === 3 ? scene.difficultyLevel : 1,
     targetEmotion,
+    sceneDomain: normalizeOptionalString(scene.sceneDomain),
     emotionOptions: normalizeEmotionOptions(scene.emotionOptions, targetEmotion),
     emotionClues: normalizeStringArray(scene.emotionClues),
     prompts: Array.isArray(scene.prompts)

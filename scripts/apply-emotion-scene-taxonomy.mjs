@@ -7,6 +7,7 @@ const REPO_ROOT = process.cwd()
 const APPDATA = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming')
 const MAIN_DB_NAME = 'database.sqlite'
 const BACKUP_DB_NAME = 'database_backup.db'
+const EMOTION_SCENE_REFERENCE_DIR = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scene')
 
 const TAXONOMY = {
   'scene-1': { themeCategory: '平静专注', sceneDomain: '校园' },
@@ -92,12 +93,12 @@ const TAXONOMY = {
 }
 
 const REFERENCE_FILES = [
-  path.join(REPO_ROOT, 'docs', 'references', 'current-emotion-scenes-export.json'),
-  path.join(REPO_ROOT, 'docs', 'references', 'emotion-scenes-merged-candidate.json'),
+  path.join(EMOTION_SCENE_REFERENCE_DIR, 'current-emotion-scenes-export.json'),
+  path.join(EMOTION_SCENE_REFERENCE_DIR, 'emotion-scenes-merged-candidate.json'),
 ]
 
-const OUTPUT_CSV_PATH = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scene-taxonomy-2026-03-24.csv')
-const OUTPUT_MD_PATH = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scene-taxonomy-2026-03-24.md')
+const OUTPUT_CSV_PATH = path.join(EMOTION_SCENE_REFERENCE_DIR, 'emotion-scene-taxonomy-2026-03-24.csv')
+const OUTPUT_MD_PATH = path.join(EMOTION_SCENE_REFERENCE_DIR, 'emotion-scene-taxonomy-2026-03-24.md')
 const AGE_RANGE_BY_DIFFICULTY = {
   1: '4-6',
   2: '7-12',

@@ -6,7 +6,7 @@ import initSqlJs from 'sql.js'
 const REPO_ROOT = process.cwd()
 const APPDATA = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming')
 const MAIN_DB_NAME = 'database.sqlite'
-const OUTPUT_PATH = path.join(REPO_ROOT, 'docs', 'references', 'current-emotion-scenes-export.json')
+const OUTPUT_PATH = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scene', 'current-emotion-scenes-export.json')
 
 const FORMAL_EMOTIONS = new Set([
   'calm',
@@ -140,6 +140,7 @@ function normalizeSceneExport(row) {
     imageUrl: normalizeString(metadata.imageUrl),
     difficultyLevel: metadata.difficultyLevel === 2 || metadata.difficultyLevel === 3 ? metadata.difficultyLevel : 1,
     targetEmotion,
+    sceneDomain: normalizeOptionalString(metadata.sceneDomain),
     emotionOptions: normalizeEmotionOptions(metadata.emotionOptions, targetEmotion),
     emotionClues: normalizeStringArray(metadata.emotionClues),
     prompts: Array.isArray(metadata.prompts)

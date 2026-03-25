@@ -1,7 +1,7 @@
 # 情绪场景 JSON 导入规范
 
 适用文件：
-- [emotion_scene_import_template.json](/E:/VSC/H5/SIC-ADS/docs/references/emotion_scene_import_template.json)
+- [emotion_scene_import_template.json](/E:/VSC/H5/SIC-ADS/docs/references/emotion-scene/emotion_scene_import_template.json)
 
 ## 1. 当前正式支持的 8 类情绪
 
