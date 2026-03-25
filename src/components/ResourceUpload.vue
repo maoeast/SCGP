@@ -45,7 +45,7 @@
         />
         <!-- 文件信息 -->
         <div class="file-info">
-          <p class="file-name">{{ file.name }}</p>
+          <p class="file-name">{{ file.file.name }}</p>
           <p class="file-size">
             {{ formatFileSize(file.originalSize) }} → {{ formatFileSize(file.compressedSize) }}
             <span :class="['compression-ratio', file.compressionRatio < 1 ? 'success' : 'warning']">
@@ -132,6 +132,7 @@ interface UploadResult {
   blob?: Blob
   dataUrl?: string
   fileName?: string
+  savedPath?: string
   preview?: string
   originalSize: number
   compressedSize: number
@@ -197,9 +198,8 @@ const processFiles = async (files: File[]) => {
 
   const results: UploadResult[] = []
 
-  for (let i = 0; i < validFiles.length; i++) {
-    const file = validFiles[i]
-    progressText.value = `正在处理 ${i + 1}/${validFiles.length}...`
+  for (const [index, file] of validFiles.entries()) {
+    progressText.value = `正在处理 ${index + 1}/${validFiles.length}...`
 
     const result = await compressImage(file, {
       quality: props.quality,
@@ -221,7 +221,7 @@ const processFiles = async (files: File[]) => {
       error: result.error
     })
 
-    uploadProgress.value = Math.round(((i + 1) / validFiles.length) * 100)
+    uploadProgress.value = Math.round(((index + 1) / validFiles.length) * 100)
   }
 
   fileList.value = results
@@ -247,7 +247,11 @@ const saveFile = async (file: UploadResult) => {
     const uniqueName = generateUniqueFileName(originalName).replace(/\.[^.]+$/, ext)
 
     // 调用 IPC 保存
-    const result = await window.api.invoke('SAVE_ASSET', uniqueName, buffer)
+    const result = await window.electronAPI.invoke('SAVE_ASSET', uniqueName, buffer) as {
+      success: boolean
+      error?: string
+      path?: string
+    }
 
     if (result.success) {
       ElMessage.success('保存成功')
@@ -255,8 +259,8 @@ const saveFile = async (file: UploadResult) => {
     } else {
       ElMessage.error(`保存失败: ${result.error}`)
     }
-  } catch (error: any) {
-    ElMessage.error(`保存失败: ${error.message}`)
+  } catch (error: unknown) {
+    ElMessage.error(`保存失败: ${error instanceof Error ? error.message : '未知错误'}`)
   }
 }
 
@@ -275,8 +279,6 @@ const uploadStatus = computed(() => {
   return 'success'
 })
 
-// Expose formatFileSize for template
-const { formatFileSize: formatFileSizeFn } = { formatFileSize }
 </script>
 
 <style scoped>

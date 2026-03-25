@@ -9,7 +9,7 @@
           <div
             v-if="mode === 'color'"
             class="target-color"
-            :style="{ backgroundColor: GAME_COLORS[currentTarget.color] }"
+            :style="{ backgroundColor: currentTarget.color ? GAME_COLORS[currentTarget.color] : '#ccc' }"
           ></div>
           <!-- 形状模式 -->
           <div
@@ -20,7 +20,7 @@
           ></div>
           <!-- 图标模式 -->
           <div v-else-if="mode === 'icon'" class="target-icon">
-            {{ GAME_ICONS[currentTarget.icon] }}
+            {{ currentTarget.icon ? GAME_ICONS[currentTarget.icon] : '' }}
           </div>
         </div>
       </div>
@@ -167,6 +167,10 @@ const avgResponseTime = computed(() => {
   return Math.round(valid.reduce((sum, t) => sum + t.responseTime, 0) / valid.length)
 })
 
+function pickRandom<T>(values: readonly T[]): T {
+  return values[Math.floor(Math.random() * values.length)]!
+}
+
 const sessionData = computed<GameSessionData>(() => {
   const correct = trials.value.filter(t => t.isCorrect).length
   const omission = trials.value.filter(t => t.isOmission).length
@@ -261,14 +265,14 @@ function generateTarget(): GridItem {
   const id = Date.now()
 
   if (props.mode === 'color') {
-    const color = colors[Math.floor(Math.random() * colors.length)]
+    const color = pickRandom(colors)
     return { id, type: 'color', color, isTarget: true, isSelected: false }
   } else if (props.mode === 'shape') {
-    const shape = shapes[Math.floor(Math.random() * shapes.length)]
-    const color = colors[Math.floor(Math.random() * colors.length)]
+    const shape = pickRandom(shapes)
+    const color = pickRandom(colors)
     return { id, type: 'shape', shape, color, isTarget: true, isSelected: false }
   } else {
-    const icon = icons[Math.floor(Math.random() * icons.length)]
+    const icon = pickRandom(icons)
     return { id, type: 'icon', icon, isTarget: true, isSelected: false }
   }
 }
@@ -308,16 +312,16 @@ function generateOptions(target: GridItem, count: number): GridItem[] {
     let key: string
 
     if (props.mode === 'color') {
-      const color = colors[Math.floor(Math.random() * colors.length)]
+      const color = pickRandom(colors)
       key = color
       item = { id: Date.now() + items.length, type: 'color', color, isTarget: false, isSelected: false }
     } else if (props.mode === 'shape') {
-      const shape = shapes[Math.floor(Math.random() * shapes.length)]
-      const color = colors[Math.floor(Math.random() * colors.length)]
+      const shape = pickRandom(shapes)
+      const color = pickRandom(colors)
       key = `${color}-${shape}`
       item = { id: Date.now() + items.length, type: 'shape', shape, color, isTarget: false, isSelected: false }
     } else {
-      const icon = icons[Math.floor(Math.random() * icons.length)]
+      const icon = pickRandom(icons)
       key = icon
       item = { id: Date.now() + items.length, type: 'icon', icon, isTarget: false, isSelected: false }
     }
@@ -336,9 +340,10 @@ function generateOptions(target: GridItem, count: number): GridItem[] {
     if (props.mode === 'color') {
       // 颜色模式：从剩余未使用的颜色中选择，如果都用完了则随机但不使用目标颜色
       const availableColors = colors.filter(c => !usedValues.has(c))
+      const fallbackColors = colors.filter(c => c !== target.color)
       const color = availableColors.length > 0
-        ? availableColors[Math.floor(Math.random() * availableColors.length)]
-        : colors.filter(c => c !== target.color)[Math.floor(Math.random() * (colors.length - 1))]
+        ? pickRandom(availableColors)
+        : pickRandom(fallbackColors.length > 0 ? fallbackColors : colors)
       usedValues.add(color)
       items.push({
         id: Date.now() + items.length,
@@ -349,11 +354,13 @@ function generateOptions(target: GridItem, count: number): GridItem[] {
       })
     } else if (props.mode === 'shape') {
       // 形状模式：确保不重复目标的颜色+形状组合
-      let color, shape, key
+      let color = pickRandom(colors)
+      let shape = pickRandom(shapes)
+      let key = `${color}-${shape}`
       let safetyCounter = 0
       do {
-        color = colors[Math.floor(Math.random() * colors.length)]
-        shape = shapes[Math.floor(Math.random() * shapes.length)]
+        color = pickRandom(colors)
+        shape = pickRandom(shapes)
         key = `${color}-${shape}`
         safetyCounter++
       } while (usedValues.has(key) && safetyCounter < 100)
@@ -368,10 +375,10 @@ function generateOptions(target: GridItem, count: number): GridItem[] {
       })
     } else {
       // 图标模式：确保不重复目标图标
-      let icon
+      let icon = pickRandom(icons)
       let safetyCounter = 0
       do {
-        icon = icons[Math.floor(Math.random() * icons.length)]
+        icon = pickRandom(icons)
         safetyCounter++
       } while (usedValues.has(icon) && safetyCounter < 100)
       usedValues.add(icon)

@@ -133,7 +133,8 @@ export function calculateTScore(rawScore: number, ageYears: number, dimension: C
   // 数组值是该T分对应的原始分阈值
   // 查找原始分对应的最高T分（原始分越高，T分越高）
   for (let i = scores.length - 1; i >= 0; i--) {
-    if (rawScore >= scores[i]) {
+    const score = scores[i];
+    if (score !== undefined && rawScore >= score) {
       return 10 + i;
     }
   }
@@ -145,7 +146,16 @@ export function calculateTScore(rawScore: number, ageYears: number, dimension: C
 // 根据T分获取等级
 export function getEvaluationLevel(tScore: number): CSIRSEvaluationLevel {
   const level = csirsEvaluationLevels.find(l => tScore >= l.min_t && tScore <= l.max_t);
-  return level || csirsEvaluationLevels[2]; // 默认返回正常
+  if (level) {
+    return level;
+  }
+
+  const defaultLevel = csirsEvaluationLevels.find(item => item.level === '正常');
+  if (defaultLevel) {
+    return defaultLevel;
+  }
+
+  throw new Error('CSIRS evaluation levels are not configured');
 }
 
 // 获取转换表

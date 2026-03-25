@@ -505,7 +505,7 @@ function getFileIconColor(type: string): string {
     gif: '#00bcd4',
     default: '#607d8b'
   }
-  return colorMap[type.toLowerCase()] || colorMap.default
+  return colorMap[type.toLowerCase()] ?? '#607d8b'
 }
 
 // 获取分类图标
@@ -550,11 +550,12 @@ function getCategoryName(categoryId: number): string {
 
 function handleFileSelect(e: Event) {
   const target = e.target as HTMLInputElement
-  if (target.files && target.files.length > 0) {
-    selectedFile.value = target.files[0]
+  const file = target.files?.[0]
+  if (file) {
+    selectedFile.value = file
     // 自动填充标题
     if (!uploadForm.value.title) {
-      uploadForm.value.title = selectedFile.value.name.replace(/\.[^/.]+$/, '')
+      uploadForm.value.title = file.name.replace(/\.[^/.]+$/, '')
     }
   }
 }
@@ -613,8 +614,9 @@ async function handleUpload() {
 
 function handleCsvChange(e: Event) {
   const target = e.target as HTMLInputElement
-  if (target.files && target.files.length > 0) {
-    csvFile.value = target.files[0]
+  const file = target.files?.[0]
+  if (file) {
+    csvFile.value = file
     batchImportResult.value = null
   }
 }
@@ -744,7 +746,7 @@ function showResourceDetail(resource: any) {
   showDetailDialog.value = true
 }
 
-function deleteResource(resource: any) {
+async function deleteResource(resource: any) {
   if (props.readOnly) return
 
   ElMessageBox.confirm(
@@ -756,7 +758,8 @@ function deleteResource(resource: any) {
       type: 'warning'
     }
   ).then(() => {
-    const success = resourceStore.deleteResource(resource.id)
+    return resourceStore.deleteResource(resource.id)
+  }).then((success) => {
     if (success) {
       ElMessage.success('资源已删除')
     } else {

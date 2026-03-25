@@ -238,11 +238,12 @@ export function getConversionTable(ageInMonths: number): SMRawToSQ | null {
   // 找到最接近的年龄分段
   for (let i = 0; i < smAgeRanges.length; i++) {
     const range = smAgeRanges[i];
-    if (ageInMonths <= range.max) {
-      return smRawToSQTable[i];
+    const table = smRawToSQTable[i];
+    if (range && table && ageInMonths <= range.max) {
+      return table;
     }
   }
-  return smRawToSQTable[smRawToSQTable.length - 1]; // 返回最大年龄段的表
+  return smRawToSQTable[smRawToSQTable.length - 1] ?? null; // 返回最大年龄段的表
 }
 
 // 根据粗分计算标准分
@@ -278,7 +279,7 @@ export function calculateSQScore(rawScore: number, ageInMonths: number): number 
       }
     } else if (range.includes('~')) {
       const [min, max] = range.split('~').map(n => parseInt(n));
-      if (rawScore >= min && rawScore <= max) {
+      if (min !== undefined && max !== undefined && rawScore >= min && rawScore <= max) {
         console.log('  ✅ 匹配! 粗分', rawScore, '在范围', min, '~', max, '内');
         return sq;
       }

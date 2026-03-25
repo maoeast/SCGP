@@ -10,10 +10,7 @@
  * 参考官方 SRS-2 手册以获取完整和准确的数据。
  */
 
-// 假设您的 Gender 类型定义在其他文件，如: type Gender = '男' | '女';
-// 如果是独立文件测试，可以取消下面这行的注释:
-// export type Gender = '男' | '女';
-import type { Gender } from '@/types/student'
+export type Gender = '男' | '女'
 
 // ==========================================
 // 1. 类型定义 (Type Definitions)
@@ -143,36 +140,51 @@ function findAgeBandKey(ageMap: AgeStratifiedTScoreMap, ageInMonths: number): nu
  */
 function convertRawToT(tScoreMap: TScoreMap, rawScore: number): number {
   const rawPoints = Object.keys(tScoreMap).map(Number).sort((a, b) => a - b)
+  if (rawPoints.length === 0) {
+    return 50
+  }
+
+  const firstPoint = rawPoints[0]
+  const lastPoint = rawPoints[rawPoints.length - 1]
+  if (firstPoint === undefined || lastPoint === undefined) {
+    return 50
+  }
   
   // 1. 完美命中：字典里有这个原始分的准确映射
-  if (tScoreMap[rawScore] !== undefined) {
-    return tScoreMap[rawScore]
+  const exactMatch = tScoreMap[rawScore]
+  if (exactMatch !== undefined) {
+    return exactMatch
   }
 
   // 2. 地板效应兜底：原始分 <= 字典中的最低分
-  if (rawScore <= rawPoints[0]) {
-    return tScoreMap[rawPoints[0]]
+  if (rawScore <= firstPoint) {
+    return tScoreMap[firstPoint] ?? 50
   }
 
   // 3. 天花板效应兜底：原始分 >= 字典中的最高分
-  if (rawScore >= rawPoints[rawPoints.length - 1]) {
-    return tScoreMap[rawPoints[rawPoints.length - 1]]
+  if (rawScore >= lastPoint) {
+    return tScoreMap[lastPoint] ?? 50
   }
 
   // 4. 线性插值计算 (Linear Interpolation)
-  let lower = rawPoints[0]
-  let upper = rawPoints[rawPoints.length - 1]
+  let lower = firstPoint
+  let upper = lastPoint
   
   for (let i = 1; i < rawPoints.length; i++) {
-    if (rawPoints[i] > rawScore) {
-      upper = rawPoints[i]
-      lower = rawPoints[i - 1]
+    const point = rawPoints[i]
+    const previousPoint = rawPoints[i - 1]
+    if (point !== undefined && previousPoint !== undefined && point > rawScore) {
+      upper = point
+      lower = previousPoint
       break
     }
   }
 
   const tLower = tScoreMap[lower]
   const tUpper = tScoreMap[upper]
+  if (tLower === undefined || tUpper === undefined || upper === lower) {
+    return 50
+  }
 
   // 两点一线公式: y = y0 + (x - x0) * (y1 - y0) / (x1 - x0)
   const exactTScore = tLower + ((rawScore - lower) * (tUpper - tLower)) / (upper - lower)
@@ -204,7 +216,13 @@ function getTScoreFromTable(
     return 50
   }
 
-  return convertRawToT(ageMap[ageBandKey], rawScore)
+  const tScoreMap = ageMap[ageBandKey]
+  if (!tScoreMap) {
+    console.warn(`[SRS-2 Engine] 月龄组 ${ageBandKey} 缺失常模数据，返回默认值 50`)
+    return 50
+  }
+
+  return convertRawToT(tScoreMap, rawScore)
 }
 
 

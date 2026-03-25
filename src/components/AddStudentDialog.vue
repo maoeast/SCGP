@@ -113,7 +113,7 @@
                   <i class="fas fa-camera"></i>
                   拍照
                 </button>
-                <button type="button" @click="$refs.avatarInput.click()">
+                <button type="button" @click="triggerAvatarUpload">
                   <i class="fas fa-arrow-up-from-bracket"></i>
                   本地上传
                 </button>
@@ -182,6 +182,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useStudentStore } from '@/stores/student'
 import { classAPI } from '@/database/class-api'
 import { getCurrentAcademicYear } from '@/types/class'
@@ -192,8 +193,29 @@ const emit = defineEmits<{
   saved: []
 }>()
 
+type StudentGender = '男' | '女'
+
+interface EditableStudent {
+  id: number
+  name?: string
+  gender?: StudentGender
+  birthday?: string
+  student_no?: string
+  disorder?: string
+  avatar_path?: string
+}
+
+interface StudentFormState {
+  name: string
+  gender: StudentGender | ''
+  birthday: string
+  student_no: string
+  disorder: string
+  classId: number | null
+}
+
 const props = defineProps<{
-  editingStudent?: any
+  editingStudent?: EditableStudent
 }>()
 
 const studentStore = useStudentStore()
@@ -201,16 +223,35 @@ const studentStore = useStudentStore()
 // 响应式数据
 const saving = ref(false)
 const avatarPreview = ref('')
-const avatarInput = ref<HTMLInputElement>()
+const avatarInput = ref<HTMLInputElement | null>(null)
 const cameraMenuVisible = ref(false)
 const showCameraDialog = ref(false)
 const photoTaken = ref(false)
-const cameraVideo = ref<HTMLVideoElement>()
-const cameraCanvas = ref<HTMLCanvasElement>()
+const cameraVideo = ref<HTMLVideoElement | null>(null)
+const cameraCanvas = ref<HTMLCanvasElement | null>(null)
 const cameraStream = ref<MediaStream | null>(null)
 const availableClasses = ref<ClassInfo[]>([])
 
-const studentForm = ref({
+function createEmptyStudentForm(): StudentFormState {
+  return {
+    name: '',
+    gender: '',
+    birthday: '',
+    student_no: '',
+    disorder: '',
+    classId: null
+  }
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : '未知错误'
+}
+
+function triggerAvatarUpload() {
+  avatarInput.value?.click()
+}
+
+const studentForm = ref<StudentFormState>({
   name: '',
   gender: '',
   birthday: '',
@@ -266,7 +307,7 @@ const openCamera = async () => {
       cameraMenuVisible.value = false
       // 自动触发文件上传
       setTimeout(() => {
-        document.querySelector('.avatar-uploader input')?.click()
+        triggerAvatarUpload()
       }, 100)
       return
     }
@@ -284,24 +325,28 @@ const openCamera = async () => {
     if (cameraVideo.value) {
       cameraVideo.value.srcObject = stream
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('无法访问摄像头:', error)
     closeCameraDialog()
 
     // 根据错误类型提供不同的提示
-    if (error.name === 'NotFoundError') {
+    const errorName = typeof error === 'object' && error !== null && 'name' in error
+      ? String(error.name)
+      : ''
+
+    if (errorName === 'NotFoundError') {
       ElMessage.warning('未找到摄像头设备，请使用文件上传方式')
-    } else if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+    } else if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
       ElMessage.warning('摄像头权限被拒绝，请在浏览器设置中允许访问摄像头，或使用文件上传方式')
-    } else if (error.name === 'NotReadableError') {
+    } else if (errorName === 'NotReadableError') {
       ElMessage.error('摄像头被其他应用占用，请关闭其他使用摄像头的程序后重试')
     } else {
-      ElMessage.error(`无法访问摄像头: ${error.message || '未知错误'}`)
+      ElMessage.error(`无法访问摄像头: ${getErrorMessage(error)}`)
     }
 
     // 自动切换到文件上传
     setTimeout(() => {
-      document.querySelector('.avatar-uploader input')?.click()
+      triggerAvatarUpload()
     }, 500)
   }
 }
@@ -339,6 +384,12 @@ const handleSubmit = async () => {
   try {
     saving.value = true
 
+    const normalizedGender = studentForm.value.gender
+    if (normalizedGender !== '男' && normalizedGender !== '女') {
+      ElMessage.error('请选择性别')
+      return
+    }
+
     // 如果没有填写学号，自动生成
     if (!studentForm.value.student_no) {
       studentForm.value.student_no = `STU${Date.now()}`
@@ -371,8 +422,10 @@ const handleSubmit = async () => {
 
     if (props.editingStudent) {
       // 编辑模式
+      const { classId: _classId, ...studentData } = studentForm.value
       await studentStore.updateStudent(props.editingStudent.id, {
-        ...studentForm.value,
+        ...studentData,
+        gender: normalizedGender,
         avatar_path: finalAvatarPath || ''
       })
     } else {
@@ -380,6 +433,7 @@ const handleSubmit = async () => {
       const { classId, ...studentData } = studentForm.value
       const studentId = await studentStore.addStudent({
         ...studentData,
+        gender: normalizedGender,
         avatar_path: finalAvatarPath || ''
       })
 
@@ -387,26 +441,26 @@ const handleSubmit = async () => {
       if (classId && studentForm.value.name) {
         try {
           const academicYear = getCurrentAcademicYear()
-          const enrollmentDate = new Date().toISOString().split('T')[0]
-          classAPI.assignStudentToClass(
+          const enrollmentDate = new Date().toISOString().split('T')[0] ?? new Date().toISOString().slice(0, 10)
+          await classAPI.assignStudentToClass(
             studentId,
             studentForm.value.name,
             classId,
             academicYear,
             enrollmentDate
           )
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.warn('班级分配失败:', error)
           // 班级分配失败不影响学生创建
-          alert('学生添加成功，但班级分配失败：' + error.message)
+          alert('学生添加成功，但班级分配失败：' + getErrorMessage(error))
         }
       }
     }
 
     emit('saved')
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(props.editingStudent ? '更新学生失败:' : '添加学生失败:', error)
-    alert((props.editingStudent ? '更新失败：' : '添加失败：') + error.message)
+    alert((props.editingStudent ? '更新失败：' : '添加失败：') + getErrorMessage(error))
   } finally {
     saving.value = false
   }
@@ -425,15 +479,7 @@ const initializeForm = () => {
     }
     avatarPreview.value = props.editingStudent.avatar_path || ''
   } else {
-    // 重置表单
-    studentForm.value = {
-      name: '',
-      gender: '',
-      birthday: '',
-      student_no: '',
-      disorder: '',
-      classId: null
-    }
+    studentForm.value = createEmptyStudentForm()
   }
 }
 

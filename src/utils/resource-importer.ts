@@ -21,6 +21,10 @@ export class ResourceImporter {
     this.api = new ResourceAPI()
   }
 
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : '未知错误'
+  }
+
   /**
    * 从CSV文件导入资源
    */
@@ -32,12 +36,17 @@ export class ResourceImporter {
     let failed = 0
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim()
+      const rawLine = lines[i]
+      if (!rawLine) continue
+
+      const line = rawLine.trim()
       if (!line) continue
 
       try {
         // 解析CSV行
         const parts = line.split(',').map(part => part.trim().replace(/^"|"$/g, ''))
+        const filePath = parts[0] ?? ''
+        const rawCategoryId = parts[1] ?? ''
 
         if (parts.length < 2) {
           errors.push('Line ' + (i + 1) + ': Format error, at least file path and category ID required')
@@ -46,9 +55,9 @@ export class ResourceImporter {
         }
 
         const resource: ImportResource = {
-          filePath: parts[0],
-          categoryId: parseInt(parts[1]),
-          title: parts[2] || this.getFileNameFromPath(parts[0]),
+          filePath,
+          categoryId: parseInt(rawCategoryId),
+          title: parts[2] || this.getFileNameFromPath(filePath),
           tags: parts[3] || '',
           description: parts[4] || '',
           size_kb: parts[5] ? parseInt(parts[5]) : undefined
@@ -56,15 +65,15 @@ export class ResourceImporter {
 
         // 验证数据
         if (isNaN(resource.categoryId) || resource.categoryId < 1 || resource.categoryId > 6) {
-          errors.push('Line ' + (i + 1) + ': Invalid category ID (' + parts[1] + '), should be 1-6')
+          errors.push('Line ' + (i + 1) + ': Invalid category ID (' + rawCategoryId + '), should be 1-6')
           failed++
           continue
         }
 
         resources.push(resource)
         success++
-      } catch (error) {
-        errors.push('Line ' + (i + 1) + ': Parse error - ' + error.message)
+      } catch (error: unknown) {
+        errors.push('Line ' + (i + 1) + ': Parse error - ' + this.getErrorMessage(error))
         failed++
       }
     }
@@ -113,8 +122,8 @@ export class ResourceImporter {
         errors.push('无法访问文件夹（仅在Electron环境下可用）')
         return { success: 0, failed: 0, errors }
       }
-    } catch (error) {
-      errors.push('Failed to read folder: ' + error.message)
+    } catch (error: unknown) {
+      errors.push('Failed to read folder: ' + this.getErrorMessage(error))
       return { success: 0, failed: 0, errors }
     }
 
@@ -182,9 +191,9 @@ export class ResourceImporter {
           errors.push('Database save failed: ' + resource.title)
           failed++
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Import failed: ' + resource.filePath, error)
-        errors.push('Import failed ' + (resource.title || resource.filePath) + ': ' + error.message)
+        errors.push('Import failed ' + (resource.title || resource.filePath) + ': ' + this.getErrorMessage(error))
         failed++
       }
     }
@@ -197,7 +206,7 @@ export class ResourceImporter {
    */
   private getFileNameFromPath(filePath: string): string {
     const fileName = filePath.split('/').pop() || filePath
-    const nameWithoutExt = fileName.split('.')[0]
+    const nameWithoutExt = fileName.split('.')[0] ?? fileName
     return nameWithoutExt
   }
 
@@ -250,9 +259,7 @@ export class ResourceImporter {
     try {
       let csvContent: string
       if (window.electronAPI && window.electronAPI.readFile) {
-        const content = await window.electronAPI.readFile(templatePath)
-        const decoder = new TextDecoder('utf-8')
-        csvContent = decoder.decode(content)
+        csvContent = await window.electronAPI.readFile(templatePath)
       } else {
         // 开发环境下，直接返回示例数据
         csvContent = 'docs/S-M量表评估指南.pdf,1,S-M量表评估指南,S-M,评估,S-M量表详细评估指南\n' +
@@ -264,7 +271,7 @@ export class ResourceImporter {
       }
 
       return await this.importFromCSV(csvContent)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('读取模板文件失败:', error)
       return { success: 0, failed: 0, errors: ['无法读取模板文件'] }
     }

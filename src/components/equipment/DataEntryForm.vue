@@ -98,7 +98,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
-import type { EquipmentCatalog } from '@/types/equipment'
+import type { EquipmentCatalog, EquipmentCategory } from '@/types/equipment'
 import type { ResourceItem } from '@/types/module'
 import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
 
@@ -118,6 +118,7 @@ const equipmentData = computed(() => {
   const eq = props.equipment
   // 检查是否是 ResourceItem（有 moduleCode 字段）
   const isResourceItem = 'moduleCode' in eq
+  const category = (eq.category ?? 'integration') as EquipmentCategory
 
   return {
     name: eq.name,
@@ -125,7 +126,7 @@ const equipmentData = computed(() => {
     // 图片：ResourceItem 用 coverImage，EquipmentCatalog 用 image_url
     image: isResourceItem
       ? getEquipmentImageUrl(
-          eq.category,
+          category,
           (eq as ResourceItem).legacyId ?? eq.id,
           eq.name
         )
@@ -134,7 +135,7 @@ const equipmentData = computed(() => {
     tags: isResourceItem
       ? (eq as ResourceItem).tags || []
       : (eq as EquipmentCatalog).ability_tags || [],
-    category: eq.category
+    category
   }
 })
 

@@ -4,12 +4,12 @@
 
 // 资源分类
 export const resourceCategories = [
-  { id: 1, name: '文档资料', icon: 'fa-file-alt', description: 'PDF、Word等文档资料' },
-  { id: 2, name: '视频教程', icon: 'fa-video', description: '教学视频和示范视频' },
-  { id: 3, name: '音频资料', icon: 'fa-music', description: '音频和语音资料' },
-  { id: 4, name: '压缩包', icon: 'fa-file-archive', description: 'ZIP等压缩文件' },
-  { id: 5, name: '图片素材', icon: 'fa-image', description: 'JPG、PNG等图片素材' },
-  { id: 6, name: '其他资源', icon: 'fa-file', description: '其他类型资源' }
+  { id: 1, name: '文档资料', icon: 'fa-file-alt', color: '#409eff', description: 'PDF、Word等文档资料' },
+  { id: 2, name: '视频教程', icon: 'fa-video', color: '#9c27b0', description: '教学视频和示范视频' },
+  { id: 3, name: '音频资料', icon: 'fa-music', color: '#ff9800', description: '音频和语音资料' },
+  { id: 4, name: '压缩包', icon: 'fa-file-archive', color: '#607d8b', description: 'ZIP等压缩文件' },
+  { id: 5, name: '图片素材', icon: 'fa-image', color: '#00bcd4', description: 'JPG、PNG等图片素材' },
+  { id: 6, name: '其他资源', icon: 'fa-file', color: '#8c8c8c', description: '其他类型资源' }
 ]
 
 // 示例资源数据（可选，用于初始化）

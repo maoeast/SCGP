@@ -670,7 +670,7 @@ export class ClassAPI {
    */
   getClassStatisticsUnified(classId: number, moduleCode: string = 'all'): UnifiedClassStatistics | null {
     const results = this.getStatistics({ classId, moduleCode })
-    return results.length > 0 ? results[0] : null
+    return results[0] ?? null
   }
 
   /**

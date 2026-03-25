@@ -11,9 +11,13 @@ import type { EquipmentCatalog, EquipmentCategory } from '@/types/equipment'
 const CHINESE_SURNAMES = ['王', '李', '张', '刘', '陈', '杨', '黄', '赵', '吴', '周']
 const CHINESE_NAMES = ['明', '华', '强', '芳', '娜', '敏', '静', '丽', '军', '杰', '伟', '勇', '艳', '涛', '磊']
 
+function pickRandom<T>(values: readonly T[]): T {
+  return values[Math.floor(Math.random() * values.length)]!
+}
+
 function randomChineseName(): string {
-  const surname = CHINESE_SURNAMES[Math.floor(Math.random() * CHINESE_SURNAMES.length)]
-  const name = CHINESE_NAMES[Math.floor(Math.random() * CHINESE_NAMES.length)]
+  const surname = pickRandom(CHINESE_SURNAMES)
+  const name = pickRandom(CHINESE_NAMES)
   return surname + name
 }
 
@@ -56,7 +60,7 @@ const DISORDERS = [
 ]
 
 function randomDisorder(): string {
-  return DISORDERS[Math.floor(Math.random() * DISORDERS.length)]
+  return pickRandom(DISORDERS)
 }
 
 /**
@@ -167,7 +171,7 @@ export function generateEquipmentTrainingRecords(
 
   const records = []
   for (let i = 0; i < count; i++) {
-    const equipment = availableEquipment[Math.floor(Math.random() * availableEquipment.length)]
+    const equipment = pickRandom(availableEquipment)
     records.push({
       student_id: studentId,
       equipment_id: equipment.id,
@@ -194,7 +198,10 @@ export function generateCompleteTestData(
   equipmentList: EquipmentCatalog[]
 ) {
   const students = generateTestStudent(studentCount)
-  const allRecords = []
+  const allRecords: Array<{
+    student: ReturnType<typeof generateTestStudent>[number]
+    records: ReturnType<typeof generateEquipmentTrainingRecords>
+  }> = []
 
   students.forEach(student => {
     const records = generateEquipmentTrainingRecords(
@@ -244,7 +251,11 @@ export function printTestDataSummary(data: ReturnType<typeof generateCompleteTes
 
 // 用于测试的器材列表（从 equipment-data 导入）
 import { EQUIPMENT_DATA } from './equipment-data'
-const equipmentList: EquipmentCatalog[] = EQUIPMENT_DATA
+const equipmentList: EquipmentCatalog[] = EQUIPMENT_DATA.map((item, index) => ({
+  ...item,
+  id: index + 1,
+  created_at: '1970-01-01T00:00:00.000Z'
+}))
 
 /**
  * 导出测试数据到数据库（供外部调用）
@@ -260,4 +271,3 @@ export async function seedEquipmentTestData(
   printTestDataSummary(testData)
   return testData
 }
-

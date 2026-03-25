@@ -145,8 +145,11 @@ function formatErrorMessage(data: { message: string; code?: string }): string {
     ERR_PERMISSIONS: '权限不足，请以管理员身份运行'
   }
 
-  if (data.code && errorMessages[data.code]) {
-    return errorMessages[data.code]
+  if (data.code) {
+    const mappedMessage = errorMessages[data.code]
+    if (mappedMessage) {
+      return mappedMessage
+    }
   }
 
   return data.message || '未知错误'

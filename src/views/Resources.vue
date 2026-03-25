@@ -506,11 +506,12 @@ function formatDate(dateString: string): string {
 
 function handleFileSelect(e: Event) {
   const target = e.target as HTMLInputElement;
-  if (target.files && target.files.length > 0) {
-    selectedFile.value = target.files[0];
+  const file = target.files?.[0];
+  if (file) {
+    selectedFile.value = file;
     // 自动填充标题
     if (!uploadForm.value.title) {
-      uploadForm.value.title = selectedFile.value.name.replace(/\.[^/.]+$/, '');
+      uploadForm.value.title = file.name.replace(/\.[^/.]+$/, '');
     }
   }
 }
@@ -582,8 +583,9 @@ async function handleUpload() {
 // 批量导入相关函数
 function handleCsvChange(e: Event) {
   const target = e.target as HTMLInputElement;
-  if (target.files && target.files.length > 0) {
-    csvFile.value = target.files[0];
+  const file = target.files?.[0];
+  if (file) {
+    csvFile.value = file;
     batchImportResult.value = null;
   }
 }
@@ -731,9 +733,9 @@ function showResourceDetail(resource: any) {
   showDetailDialog.value = true;
 }
 
-function deleteResource(resource: any) {
+async function deleteResource(resource: any) {
   if (confirm(`确定要删除资源"${resource.title}"吗？此操作不可恢复。`)) {
-    const success = resourceStore.deleteResource(resource.id);
+    const success = await resourceStore.deleteResource(resource.id);
     if (success) {
       alert('资源已删除');
     } else {

@@ -140,15 +140,14 @@ export class PlanAPI extends DatabaseAPI {
       [name, student_id, module_code, start_date, end_date, status, ltGoalsJson, stGoalsJson, description]
     )
 
-    const result = this.getRawDb().exec('SELECT last_insert_rowid() as id')
-    return result[0]?.values?.[0]?.[0] as number
+    return this.getLastInsertId()
   }
 
   /**
    * 根据 ID 获取计划（不含资源）
    */
   getPlanById(id: number): TrainingPlan | null {
-    return this.get(
+    return this.queryOne(
       `SELECT tp.*, s.name as student_name
        FROM sys_training_plan tp
        LEFT JOIN student s ON tp.student_id = s.id
@@ -340,7 +339,7 @@ export class PlanAPI extends DatabaseAPI {
     } = params
 
     // 检查是否已存在
-    const existing = this.get(
+    const existing = this.queryOne(
       `SELECT id FROM sys_plan_resource_map WHERE plan_id = ? AND resource_id = ?`,
       [plan_id, resource_id]
     )
@@ -363,8 +362,7 @@ export class PlanAPI extends DatabaseAPI {
       [plan_id, resource_id, frequency, duration_minutes, notes, sort_order]
     )
 
-    const result = this.getRawDb().exec('SELECT last_insert_rowid() as id')
-    return result[0]?.values?.[0]?.[0] as number
+    return this.getLastInsertId()
   }
 
   /**

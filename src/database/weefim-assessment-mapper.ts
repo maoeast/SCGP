@@ -264,6 +264,17 @@ const assessmentMappings: DomainAssessmentMapping[] = [
 
 // 评估文本分析器
 export class AssessmentAnalyzer {
+  private static getMapping(index: number): DomainAssessmentMapping {
+    const mapping = assessmentMappings[index];
+    if (!mapping) {
+      throw new Error(`Missing assessment mapping at index ${index}`);
+    }
+    return mapping;
+  }
+
+  private static getScore(scores: Record<number, number>, questionId: number): number {
+    return scores[questionId] ?? 1;
+  }
 
   // 分析评估文本并返回各项目的水平评分
   static analyzeAssessmentText(assessmentText: string): Record<number, number> {
@@ -386,10 +397,10 @@ export class AssessmentAnalyzer {
         const selfCareText = domainSuggestions.self_care.join(' ');
         const selfCareAdjustment = this.analyzeDomain(
           selfCareText.toLowerCase(),
-          assessmentMappings[0]
+          this.getMapping(0)
         );
         [1, 2, 3, 4, 5, 6].forEach(id => {
-          textBasedScores[id] = Math.round((textBasedScores[id] + selfCareAdjustment) / 2);
+          textBasedScores[id] = Math.round((this.getScore(textBasedScores, id) + selfCareAdjustment) / 2);
         });
       }
 
@@ -398,10 +409,10 @@ export class AssessmentAnalyzer {
         const communicationText = domainSuggestions.communication.join(' ');
         const communicationAdjustment = this.analyzeDomain(
           communicationText.toLowerCase(),
-          assessmentMappings[4]
+          this.getMapping(4)
         );
         [14, 15].forEach(id => {
-          textBasedScores[id] = Math.round((textBasedScores[id] + communicationAdjustment) / 2);
+          textBasedScores[id] = Math.round((this.getScore(textBasedScores, id) + communicationAdjustment) / 2);
         });
       }
 
@@ -410,10 +421,10 @@ export class AssessmentAnalyzer {
         const socialText = domainSuggestions.social_cognition.join(' ');
         const socialAdjustment = this.analyzeDomain(
           socialText.toLowerCase(),
-          assessmentMappings[5]
+          this.getMapping(5)
         );
         [16, 17, 18].forEach(id => {
-          textBasedScores[id] = Math.round((textBasedScores[id] + socialAdjustment) / 2);
+          textBasedScores[id] = Math.round((this.getScore(textBasedScores, id) + socialAdjustment) / 2);
         });
       }
     }
@@ -421,8 +432,8 @@ export class AssessmentAnalyzer {
     // 综合文本分析和水平推断（各占50%权重）
     const finalScores: Record<number, number> = {};
     for (let i = 1; i <= 18; i++) {
-      finalScores[i] = Math.round((textBasedScores[i] + levelBasedScores[i]) / 2);
-      finalScores[i] = Math.max(1, Math.min(7, finalScores[i])); // 确保分数在1-7范围内
+      const averagedScore = Math.round((this.getScore(textBasedScores, i) + this.getScore(levelBasedScores, i)) / 2);
+      finalScores[i] = Math.max(1, Math.min(7, averagedScore)); // 确保分数在1-7范围内
     }
 
     return finalScores;

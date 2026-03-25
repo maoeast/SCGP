@@ -14,7 +14,7 @@ export class SQLWrapper {
 
   // ========== Plan B: 防抖保存状态 ==========
   /** 保存定时器 ID */
-  private saveTimer: number | null = null
+  private saveTimer: ReturnType<typeof setTimeout> | null = null
   /** 防抖延迟（毫秒） */
   private readonly SAVE_DEBOUNCE_MS = 2000
   /** 数据库名称 */

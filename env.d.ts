@@ -21,12 +21,14 @@ declare module 'sql.js/dist/sql-wasm.js' {
 
 declare global {
   interface Window {
-    electronAPI?: {
+    electronAPI: {
       // 应用路径
       getPath: (name: string) => Promise<string>
+      getAppPath: () => Promise<string>
 
       // 文件操作
       saveFile: (filePath: string, buffer: ArrayBuffer | Uint8Array) => Promise<boolean>
+      readFile: (filePath: string) => Promise<string>
       readFileAsBase64: (filePath: string) => Promise<string>
       fileExists: (filePath: string) => Promise<boolean>
       deleteFile: (filePath: string) => Promise<boolean>
@@ -48,9 +50,12 @@ declare global {
 
       // 机器码
       getMachineId: () => Promise<string>
+      getAppVersion: () => Promise<string>
+      getElectronVersion: () => Promise<string>
 
       // 数据库备份专用 API
       getUserDataPath: () => Promise<string>
+      loadDatabaseFile: () => Promise<Uint8Array | null>
       writeDatabaseFile: (filePath: string, data: Uint8Array) => Promise<{
         success: boolean
         error?: string
@@ -69,6 +74,23 @@ declare global {
         success: boolean
         error?: string
       }>
+      saveDatabaseAtomic: (dbBuffer: Uint8Array, dbName?: string) => Promise<{
+        success: boolean
+        error?: string
+        tmpPath?: string
+      }>
+      getDatabaseStats: (dbName?: string) => Promise<{
+        exists: boolean
+        size?: number
+        modifiedTime?: string
+        createdTime?: string
+      }>
+
+      // 通用 IPC / 更新能力
+      invoke: (channel: string, ...args: any[]) => Promise<any>
+      on: (channel: string, callback: (...args: any[]) => void) => void
+      off: (channel: string, callback: (...args: any[]) => void) => void
+      send: (channel: string, ...args: any[]) => void
     }
   }
 }
