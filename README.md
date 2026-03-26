@@ -14,7 +14,7 @@
 
 - 项目处于持续开发和重构中
 - 核心评估模块已完成统一容器 + `ScaleDriver` 架构改造
-- 首页已重构为“特教业务指挥中心”，使用本地 SQLite 的真实聚合数据展示日程、异常预警与待评估预警
+- 首页已重构为“首页看板”，使用本地 SQLite 的真实聚合数据展示日程、异常预警与待评估预警
 - 首页支持从今日日程直接带上下文启动训练，不再依赖中间选择页
 - 系统已实现按模块授权（Modular Licensing）基础架构，前端具备路由拦截与带锁菜单能力
 - 开发环境下支持免真实激活码的授权注入，用于本地主线开发
@@ -76,7 +76,8 @@ npm run build:electron
 - `electron/`：Electron 主进程与预加载
 - `docs/`：现行项目文档、规划、报告与参考资料
 - `tests/`：性能测试与验证代码
-- `PROJECT_CONTEXT.md`：会话上下文和持续维护记录
+- `.continue-here.md`：当前唯一有效续接入口
+- `PROJECT_CONTEXT.md`：当前有效协作上下文摘要
 - `重构实施技术规范.md`：当前重要技术规范
 
 ## 文档入口
@@ -84,7 +85,9 @@ npm run build:electron
 - 文档总索引：[docs/INDEX.md](/home/DONG/Mycode/SCGP/docs/INDEX.md)
 - 文档治理说明：[docs/DOCS_GUIDE.md](/home/DONG/Mycode/SCGP/docs/DOCS_GUIDE.md)
 - 轻量启动上下文：[docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
-- 项目上下文：[PROJECT_CONTEXT.md](/home/DONG/Mycode/SCGP/PROJECT_CONTEXT.md)
+- 当前续接入口：[.continue-here.md](/home/DONG/Mycode/SCGP/.continue-here.md)
+- 当前项目上下文：[PROJECT_CONTEXT.md](/home/DONG/Mycode/SCGP/PROJECT_CONTEXT.md)
+- 历史上下文归档：[docs/logs/2026-03-26-project-context-archive.md](/home/DONG/Mycode/SCGP/docs/logs/2026-03-26-project-context-archive.md)
 
 ## 当前最重要的文档
 
@@ -105,6 +108,9 @@ npm run build:electron
 - `.claude/`、`.gemini/`：代理协作与命令模板目录；其中 `gsd` 是给代理使用的工作流命令，不属于业务模块。
 - `AGENTS.md`：仓库级代理启动说明，供 Codex 类代理在进入仓库时快速建立项目背景和执行规则。
 - `docs/planning/2026-03-23-scgp-context-bootstrap.md`：轻量启动上下文，适合作为新会话默认首读入口，用于控制启动阶段上下文体积。
+- `.continue-here.md`：当前唯一有效续接任务说明，适合新会话继续未完成工作时优先读取。
+- `PROJECT_CONTEXT.md`：当前有效协作上下文摘要，不再保存长篇阶段流水。
+- `docs/logs/2026-03-26-project-context-archive.md`：从旧 `PROJECT_CONTEXT.md` 迁出的历史归档摘要，不作为默认首读入口。
 - `docs/planning/prd.md`：原始需求基线，主要反映“生活自理适应综合训练系统”阶段，不等同于当前 SCGP 平台范围。
 - `docs/guides/系统使用说明书.md`、`docs/guides/系统参数技术文档.md`：历史交付型文档，当前仅作为参考材料，不作为单一事实来源。
-- 如果你要快速理解当前项目，优先看 `AGENTS.md`、`docs/planning/2026-03-23-scgp-context-bootstrap.md` 和 `README.md`，再按任务补读其他大文档。
+- 如果你要快速理解当前项目，优先看 `AGENTS.md`、`docs/planning/2026-03-23-scgp-context-bootstrap.md`、`README.md` 和 `.continue-here.md`，再按任务补读其他大文档。

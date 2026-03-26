@@ -19,6 +19,10 @@
 1. `docs/planning/2026-03-23-scgp-context-bootstrap.md`
 2. `README.md`
 
+如果是在续接上一轮未完成工作，再补充读取：
+
+3. `.continue-here.md`
+
 只有在任务确实需要更多细节时，再按需补充读取：
 
 - `docs/planning/2026-03-13-scgp-current-prd.md`
@@ -29,7 +33,9 @@
 
 补充读取规则：
 
-- `PROJECT_CONTEXT.md` 是持续维护型上下文与工作记录，不再作为每次新会话默认首读文件
+- `.continue-here.md` 只保留当前有效续接信息，优先级高于历史工作日志
+- `PROJECT_CONTEXT.md` 已收敛为当前有效上下文摘要，不再作为每次新会话默认首读文件
+- `docs/logs/2026-03-26-project-context-archive.md` 是历史归档摘要，不作为默认首读文件
 - `重构实施技术规范.md` 同时包含当前落地态与目标态，只有涉及技术细节时再展开读取
 - 进入具体开发前，仍必须回到当前代码确认真实实现状态
 
@@ -103,16 +109,18 @@ SCGP 当前代码主线已经具备以下可运行能力：
 
 1. `docs/planning/2026-03-23-scgp-context-bootstrap.md`
 2. `README.md` + `docs/planning/2026-03-13-scgp-current-prd.md`
-3. `docs/reports/2026-03-13-scgp-prd-gap-analysis.md`
-4. `重构实施技术规范.md`
-5. `PROJECT_CONTEXT.md`
-6. 当前仍在执行的 `docs/plans/*.md`
+3. `.continue-here.md`（仅在续接未完成工作时）
+4. `docs/reports/2026-03-13-scgp-prd-gap-analysis.md`
+5. `重构实施技术规范.md`
+6. `PROJECT_CONTEXT.md`
+7. 当前仍在执行的 `docs/plans/*.md`
 
 以下文档默认不是当前事实来源，只能作为背景参考：
 
 - `docs/planning/prd.md`
 - `docs/guides/系统使用说明书.md`
 - `docs/guides/系统参数技术文档.md`
+- `docs/logs/2026-03-26-project-context-archive.md`
 - 历史实施计划、历史设计稿、历史审计和历史数据流图
 
 模块专用补充规则：
