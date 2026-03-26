@@ -71,6 +71,7 @@
 ### `docs/references`
 
 - `docs/references/emotion-scene/`：情绪场景导出、合并候选、taxonomy、审计产物和导入模板的收口子目录。
+- `docs/references/physical-equipment/`：情绪调节、社交沟通、精细动作、安抚教具等物理器材资源的 CSV 初稿、字段规范、resourceCode 命名约定与导入参考目录。
 鍘熷閲忚〃璧勬枡銆侀鐩暣鐞嗙銆佽瘎鍒嗚剼鏈€佸閮ㄥ弬鑰冩枃妗ｅ拰璧勬枡鏂囦欢銆?
 璇存槑锛?- 杩欓噷鐨勬枃浠跺緢澶氭槸 PDF銆丏OCX銆乆LSX銆乀XT銆丣S銆丣SON銆?- 瀹冧滑涓昏浣滀负鍙傝€冭祫鏂欏瓨鍦紝涓嶅簲榛樿瑙嗕负褰撳墠瀹炵幇鐨勫崟涓€浜嬪疄鏉ユ簮銆?
 ### 鍏朵粬淇濈暀鐩綍

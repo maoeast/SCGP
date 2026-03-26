@@ -6,6 +6,13 @@
 
 ## [2026-02-27] 最新归档条目（从 PROJECT_CONTEXT.md 迁移）
 
+## [2026-03-26] emotional 默认完整 seed 与物理器材目录规范
+- emotional 默认资源初始化已从 8 条 demo 切换为完整 `80 emotion_scene + 60 care_scene`
+- `src/database/init.ts` 已支持在无训练记录时自动清理旧 `emotional_demo_seed` 并替换为完整 seed
+- 新增 `scripts/reset-sensory-equipment-resources.cjs` 与 `npm run reset:sensory-equipment`
+- 新增 `docs/references/physical-equipment/` 与 `src/assets/images/physical-equipment/`
+- 新物理器材图片与导入建议改用稳定 `resourceCode`，不再推荐继续绑定 `legacy_id`
+
 ### [2026-02-24] Phase 4.2 收官 - ConnersPSQDriver + ConnersTRSDriver 实现
 - **目标**: 完成评估驱动器架构的最后两块拼图，实现 Conners 1978 版驱动器
 - **ConnersPSQDriver 实现** (`src/strategies/assessment/ConnersPSQDriver.ts` ~350行):

@@ -26,7 +26,7 @@
 | **技术栈**     | Electron + Vue 3 + TypeScript + Vite + SQL.js |
 | **数据库**     | SQLite (通过 sql.js 运行在浏览器端)           |
 | **当前分支**   | `main`                                        |
-| **最后更新**   | 2026-03-23 (完成 emotional 8 类情绪全链路改造，并将合并后的 80 条情绪场景写回当前数据库) |
+| **最后更新**   | 2026-03-26 (emotional 默认切换为完整 80+60 seed，感官器材重置脚本已落地，并新增 physical-equipment 目录规范) |
 | **系统健康度** | ✅ 可运行，所有核心功能正常                   |
 
 ### 项目简介
@@ -52,6 +52,26 @@
 > **预计工期**: 6-8 周
 
 ### 最新规划快照 (2026-03-23)
+
+### 最新变更快照 (2026-03-26)
+
+- 已完成 `emotional` 默认资源初始化切换：
+  - 不再使用 8 条 demo 资源
+  - 新库默认写入完整 `80 emotion_scene + 60 care_scene`
+  - `emotion_scene` 默认 seed 来源改为 `docs/references/emotion-scene/current-emotion-scenes-export.json`
+  - `care_scene` 默认 seed 来源保持为仓库根目录 `care_scenes_database.json`
+- 已完成旧 `emotional_demo_seed` 自动升级逻辑：
+  - 若旧 demo 资源无 `emotional_training_session` 记录，则删除并重写完整 seed
+  - 若旧 demo 资源已有训练记录，则跳过自动替换，避免历史记录断链
+- 已新增感官器材系统资源重置脚本：
+  - `scripts/reset-sensory-equipment-resources.cjs`
+  - npm 命令：`npm run reset:sensory-equipment`
+  - 支持对 `sensory/equipment` 系统资源做物理删除、重导入与训练记录/资源引用迁移
+- 已新增物理器材资源目录规范：
+  - `docs/references/physical-equipment/`：CSV 初稿、字段规范、resourceCode 约定
+  - `src/assets/images/physical-equipment/`：后续运行时图片目录
+  - 新增四类子目录：`emotional-regulation`、`social-communication`、`fine-motor`、`soothing-aids`
+  - 新规则明确不再推荐按 `legacy_id` 命名图片，改为使用稳定 `resourceCode`
 
 - 已完成 `emotional v1.1` 里程碑归档
 - 已完成并归档 `emotional v1.2`：预置情绪资源包批量导入/导出
