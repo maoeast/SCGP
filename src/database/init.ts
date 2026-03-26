@@ -1494,26 +1494,85 @@ export async function insertEquipmentData(): Promise<void> {
 
 export async function insertEmotionalResourceData(): Promise<void> {
   try {
-    const { EMOTIONAL_DEMO_RESOURCES } = await import('./emotional-resource-data')
+    const {
+      EMOTIONAL_RESOURCE_SEED_LEGACY_SOURCE,
+      EMOTIONAL_SEED_COUNTS,
+      EMOTIONAL_SEED_RESOURCES,
+    } = await import('./emotional-resource-data')
 
     const tagMap = new Map<string, number>()
     let inserted = 0
 
-    const existingEmotionalCount = db.get(
-      `SELECT COUNT(*) AS count
+    const existingEmotionalStats = db.get(
+      `SELECT
+         COUNT(*) AS total_count,
+         SUM(CASE WHEN resource_type = 'emotion_scene' THEN 1 ELSE 0 END) AS emotion_scene_count,
+         SUM(CASE WHEN resource_type = 'care_scene' THEN 1 ELSE 0 END) AS care_scene_count,
+         SUM(CASE WHEN legacy_source = 'emotional_demo_seed' THEN 1 ELSE 0 END) AS demo_seed_count
        FROM sys_training_resource
        WHERE module_code = ?
          AND resource_type IN ('emotion_scene', 'care_scene')
          AND is_active = 1`,
       ['emotional']
-    )?.count || 0
+    ) || {}
+
+    const existingEmotionSceneCount = Number(existingEmotionalStats.emotion_scene_count || 0)
+    const existingCareSceneCount = Number(existingEmotionalStats.care_scene_count || 0)
+    const existingDemoSeedCount = Number(existingEmotionalStats.demo_seed_count || 0)
+    const existingEmotionalCount = (
+      existingDemoSeedCount === 0 &&
+      existingEmotionSceneCount >= EMOTIONAL_SEED_COUNTS.emotionSceneCount &&
+      existingCareSceneCount >= EMOTIONAL_SEED_COUNTS.careSceneCount
+    )
+      ? Number(existingEmotionalStats.total_count || 0)
+      : 0
+
+    if (existingDemoSeedCount > 0) {
+      const demoSeedRows = db.exec(`
+        SELECT id
+        FROM sys_training_resource
+        WHERE module_code = 'emotional'
+          AND resource_type IN ('emotion_scene', 'care_scene')
+          AND legacy_source = 'emotional_demo_seed'
+      `)
+
+      const demoSeedIds = (demoSeedRows?.[0]?.values || []).map((row: any[]) => Number(row[0]))
+      if (demoSeedIds.length > 0) {
+        const placeholders = demoSeedIds.map(() => '?').join(', ')
+        const linkedSessionCount = Number(db.get(
+          `SELECT COUNT(*) AS count
+           FROM emotional_training_session
+           WHERE resource_id IN (${placeholders})`,
+          demoSeedIds
+        )?.count || 0)
+
+        if (linkedSessionCount > 0) {
+          console.warn('[InitDatabase] demo emotional resources already have session records, skip auto replacement.', {
+            demoSeedCount: demoSeedIds.length,
+            linkedSessionCount,
+          })
+          return
+        }
+
+        db.run(
+          `DELETE FROM sys_resource_tag_map WHERE resource_id IN (${placeholders})`,
+          demoSeedIds
+        )
+        db.run(
+          `DELETE FROM sys_training_resource WHERE id IN (${placeholders})`,
+          demoSeedIds
+        )
+
+        console.log('[InitDatabase] removed legacy emotional demo resources:', demoSeedIds.length)
+      }
+    }
 
     if (existingEmotionalCount > 0) {
-      console.log('[InitDatabase] emotional 资源已存在，跳过 demo seed 注入:', existingEmotionalCount)
+      console.log('[InitDatabase] emotional complete resources already exist, skip default seed insert:', existingEmotionalCount)
       return
     }
 
-    for (const resource of EMOTIONAL_DEMO_RESOURCES) {
+    for (const resource of EMOTIONAL_SEED_RESOURCES) {
       const existing = db.get(
         'SELECT id FROM sys_training_resource WHERE module_code = ? AND resource_type = ? AND name = ?',
         ['emotional', resource.resourceType, resource.name]
@@ -1537,7 +1596,7 @@ export async function insertEmotionalResourceData(): Promise<void> {
         resource.coverImage || '',
         0,
         1,
-        'emotional_demo_seed',
+        EMOTIONAL_RESOURCE_SEED_LEGACY_SOURCE,
         JSON.stringify(resource.metadata),
         0,
       ])
@@ -1586,8 +1645,14 @@ export async function insertEmotionalResourceData(): Promise<void> {
       inserted++
     }
 
+    console.log('[InitDatabase] emotional default resources inserted:', {
+      inserted,
+      emotionSceneCount: EMOTIONAL_SEED_COUNTS.emotionSceneCount,
+      careSceneCount: EMOTIONAL_SEED_COUNTS.careSceneCount,
+    })
+
   } catch (error) {
-    console.error('插入 emotional 演示资源失败:', error)
+    console.error('failed to insert emotional default resources:', error)
     throw error
   }
 }
