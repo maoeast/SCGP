@@ -120,10 +120,18 @@ const goBackToMenu = () => {
 }
 
 // 查看游戏记录详情
-const handleViewGameDetail = (recordId: number) => {
+const handleViewGameDetail = (record: any) => {
+  if (currentModuleCode.value === ModuleCode.EMOTIONAL) {
+    router.push({
+      path: '/emotional/report',
+      query: { studentId: String(record.student_id) }
+    })
+    return
+  }
+
   router.push({
     path: '/games/report',
-    query: { recordId }
+    query: { recordId: record.id }
   })
 }
 

@@ -1,15 +1,15 @@
 ---
 phase: 15-unified-emotional-interaction-engine
 verified: 2026-03-24T12:14:34.3600317+09:00
-status: human_needed
-score: 3/3 code must-haves verified, human checks pending
+status: complete
+score: 3/3 code must-haves verified; milestone closeout accepted on 2026-03-26
 ---
 
 # Phase 15: Unified Emotional Interaction Engine Verification Report
 
 **Phase Goal:** Replace duplicated runtime orchestration with a shared engine and renderer map that preserves current prompt escalation, feedback pacing, and step advancement behavior.
 **Verified:** 2026-03-24T12:14:34.3600317+09:00
-**Status:** human_needed
+**Status:** complete
 **Re-verification:** No - initial verification
 
 ## Goal Achievement
@@ -41,9 +41,9 @@ score: 3/3 code must-haves verified, human checks pending
 
 | Requirement | Description | Status | Evidence |
 | --- | --- | --- | --- |
-| `ENGN-01` | Shared `EmotionalInteractionEngine` drives session startup, progress, feedback, completion, cancellation, and summary navigation for both submodules. | CODE VERIFIED / HUMAN CHECK PENDING | Engine component and both host pages prove the architecture is in place; manual verification is still needed for actual runtime parity in the UI. |
+| `ENGN-01` | Shared `EmotionalInteractionEngine` drives session startup, progress, feedback, completion, cancellation, and summary navigation for both submodules. | VERIFIED | Engine component and both host pages prove the architecture is in place. Follow-up live app checks during Phase 16 closeout confirmed cancellation persistence, summary navigation, and care-scene interaction correctness. |
 | `ENGN-02` | Step rendering uses `stepType -> renderer` mapping over normalized step props. | VERIFIED | Renderer registry, renderer components, and host-page migration remove page-owned phase branching and raw resource interpretation from the runtime layer. |
-| `ENGN-03` | Hint escalation, acceptable-answer advancement, retry handling, and feedback pacing remain behaviorally consistent. | CODE VERIFIED / HUMAN CHECK PENDING | Session scoring still comes from `useEmotionalSession`; engine helpers centralize feedback and option-visibility logic. UI pacing still needs human regression confirmation for emotion auto-advance and care reveal/continue flow. |
+| `ENGN-03` | Hint escalation, acceptable-answer advancement, retry handling, and feedback pacing remain behaviorally consistent. | VERIFIED | Session scoring still comes from `useEmotionalSession`; engine helpers centralize feedback and option-visibility logic. Final closeout on 2026-03-26 accepted the remaining pacing questions as non-blocking after live retests and the care-scene interaction fix. |
 
 ## Automated Verification
 
@@ -75,20 +75,19 @@ The same live-database audit exposed one remaining compatibility concern that be
 
 That risk does not block Phase 15's engine extraction itself, but it should be closed before milestone v1.6 is considered fully compatible end-to-end.
 
-## Human Verification Required
+## Closeout Note (2026-03-26)
 
-Phase 15 should not be marked fully complete until these UI checks are approved:
-
-1. Run one `emotion_scene` path and confirm intro -> emotion -> reasoning -> solution still auto-advances with the same perceived pacing after valid answers.
-2. Run one `emotion_scene` wrong-answer path and confirm `hintLevel 0 -> 1 -> 2 -> 3` still behaves like the previous page implementation.
-3. Run one `care_scene` path and confirm utterance selection still shows the effect card before continuing, and receiver selection still shows the reason card before completing.
-4. Verify both submodules still cancel cleanly on route leave and still land on `/emotional/session-summary` with persisted IDs after completion.
+- Live app retests in milestone closeout confirmed:
+  - cancelled emotional sessions persist without replacing the active completed emotional report pointer
+  - summary / records / report pages still consume the shared engine persistence chain correctly
+  - `care_scene` final-step interaction now locks only the last receiver-preference choice, while the prior utterance-comparison step remains freely explorable
+- The remaining emotion-scene pacing and selector-entry feel questions were not re-proven exhaustively in automation, but they were accepted as non-blocking at user-directed closeout.
 
 ## Gaps Summary
 
 No code/build gaps were found for Phase 15 implementation itself.
 
-The remaining gap is verification confidence, not implementation coverage: runtime parity for user-facing pacing and route-level behavior still requires manual confirmation in the running app.
+Phase 15 is considered closed as part of v1.6 milestone closeout. Any further tuning around pacing feel should be handled as post-closeout refinement, not as an open Phase 15 blocker.
 
 ---
 

@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Emotional Engine Refactoring
-status: in_progress
-last_updated: "2026-03-25T22:30:00+09:00"
+status: complete
+last_updated: "2026-03-26T01:45:00+09:00"
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 3
   total_plans: 3
   completed_plans: 3
 ---
@@ -15,14 +15,14 @@ progress:
 
 ## Project Reference
 **Core Value**: SCGP provides special education teachers and clinicians with a comprehensive, offline, local-first assessment and intervention tool.
-**Current Focus**: Phase 15/16 manual verification plus selector-entry UI parity
+**Current Focus**: v1.6 closeout completed; next step is defining the next milestone
 **Plan**: 16-01 executed
 
 ## Current Position
 - **Phase**: 16 Shell Migration & End-to-End Compatibility
 - **Plan**: 16-01
-- **Status**: Phase 16 execution is complete in code and automated verification; milestone closeout is still blocked on the carried manual UI checks from Phases 15 and 16.
-- **Last activity**: 2026-03-25 - Follow-up selector UX work landed in `src/views/emotional/SceneSelector.vue`: `emotion_scene` now uses top summary + quick presets + advanced-filter drawer, and `care_scene` now mirrors the same interaction shell with age + receiver-emotion + care-type filters. `npm run build:web` passes after the selector refactor.
+- **Status**: Milestone v1.6 is closed locally. Code, build, and live-db checks passed; live app retests confirmed cancelled-session persistence, summary/records/report parity, unified training-record routing, and the final `care_scene` selection/reveal interaction. Remaining pacing/selector concerns were accepted at closeout by user instruction rather than treated as blockers.
+- **Last activity**: 2026-03-26 - Final follow-up fixes landed in the emotional renderers and unified training-records flow. The user re-tested successfully and requested milestone closeout; `npm run type-check:emotional` and `npm run build:web` both pass.
 
 ## Latest Shipped Milestone
 - **v1.5 Strict Modular Licensing**
@@ -42,11 +42,9 @@ progress:
   - Authorized modules must be persisted separately from raw license JSON for fast entitlement lookup.
   - DEV mock entitlements are allowed only when no real activation code exists.
 - **Blockers**:
+  - No open blockers remain for local closeout of v1.6.
   - Repository-wide historical TypeScript errors still exist outside the emotional phase scope, so `npm run type-check` remains red even though `npm run type-check:emotional` passes.
-  - Phase 15 and Phase 16 manual UI verification still need to be run for pacing, route-leave cancellation, selector-entry UX parity, and session-summary parity before milestone closeout.
 
 ## Next Action
-- Run the remaining manual verification items listed in `.planning/phases/15-unified-emotional-interaction-engine/15-VERIFICATION.md`.
-- Run the manual-only checks listed in `.planning/phases/16-shell-migration-and-end-to-end-compatibility/16-VALIDATION.md`.
-- Confirm the refactored selector entry UX works in the running app for both `emotion_scene` and `care_scene`, including quick presets, chip removal, and advanced-filter drawer behavior.
-- Decide whether milestone v1.6 can move from execution-complete to phase-complete once the UI parity checks pass.
+- Define the next milestone after v1.6 Emotional Engine Refactoring.
+- If later regression work is needed, treat emotion-scene pacing feel and selector-entry UX parity as post-closeout follow-up checks rather than open milestone blockers.

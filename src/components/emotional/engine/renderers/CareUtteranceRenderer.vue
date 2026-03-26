@@ -16,6 +16,7 @@
         :icon="option.icon"
         :muted="option.muted"
         :highlighted="option.highlighted"
+        :selected="option.selected"
         @select="handleSelect(option.value)"
       />
     </div>
@@ -74,6 +75,7 @@ const utteranceCards = computed(() => getVisibleOptionsByHint(props.step.options
   const metadata = option.metadata as CareUtteranceOptionMetadata | undefined
   const typeMeta = CARE_TYPE_META[metadata?.utteranceType || 'empathy']
   const visualState = getOptionVisualState(option, props.hintLevel)
+  const isSelected = props.selectionState?.selectedValue === option.value
 
   return {
     value: option.value,
@@ -82,7 +84,8 @@ const utteranceCards = computed(() => getVisibleOptionsByHint(props.step.options
     icon: typeMeta.icon,
     typeLabel: typeMeta.label,
     muted: visualState.muted,
-    highlighted: visualState.highlighted,
+    highlighted: visualState.highlighted || isSelected,
+    selected: isSelected,
   }
 }))
 

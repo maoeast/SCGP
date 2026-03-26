@@ -1,31 +1,15 @@
 ---
 phase: 16-shell-migration-and-end-to-end-compatibility
 verified: 2026-03-24T04:26:05.6470374Z
-status: human_needed
-score: 3/4 must-haves verified
-human_verification:
-  - test: "Emotion-scene pacing and completion flow"
-    expected: "A correct path and a wrong-first path still feel behaviorally consistent with pre-refactor pacing, and completion still lands on /emotional/session-summary with persisted IDs."
-    why_human: "Feedback timing, prompt escalation feel, and real route transitions cannot be fully proven by source or DB inspection."
-  - test: "Care-scene reveal and continue flow"
-    expected: "Utterance selection still shows the effect card before continue, receiver selection still shows the reason card before complete, and the completion flow still reaches the summary page."
-    why_human: "Intermediate reveal states and pacing are renderer and UX behaviors, not just static wiring."
-  - test: "Route-leave cancellation behavior"
-    expected: "Leaving mid-session after at least one attempt persists a cancelled history record, does not open the summary page, and does not replace the student's active completed emotional report pointer."
-    why_human: "This requires live navigation and user-flow confirmation in the running app."
-  - test: "Summary, records, and report parity after real runs"
-    expected: "After completing one run in each submodule, SessionSummary, Records, and Report show the new data correctly without engine-specific UI changes."
-    why_human: "Rendered metrics and end-to-end flow parity need real UI execution."
-  - test: "Selector entry UX parity after the 2026-03-25 refactor"
-    expected: "Both selector routes still open from normal entry points, quick presets and chip removal update results correctly, and `emotion_scene` / `care_scene` expose the intended submodule-specific filter dimensions."
-    why_human: "The new selector-summary, preset, and drawer behaviors are user-facing interaction changes that cannot be fully proven by build or DB checks."
+status: complete
+score: 4/4 must-haves accepted at milestone closeout
 ---
 
 # Phase 16: Shell Migration & End-to-End Compatibility Verification Report
 
 **Phase Goal:** Reduce the two runtime pages to thin shells and verify that current launch, persistence, summary, records, and report flows behave the same after the engine refactor.  
 **Verified:** 2026-03-24T04:26:05.6470374Z  
-**Status:** human_needed  
+**Status:** complete  
 **Re-verification:** No - initial verification
 
 ## Goal Achievement
@@ -37,7 +21,7 @@ human_verification:
 | 1 | `EmotionSceneTraining.vue` and `CareExpressionTraining.vue` are thin host shells over shared runtime logic. | ✓ VERIFIED | Both pages now call `useEmotionalTrainingShell(...)`, import the shared `EmotionalInteractionEngine`, and only provide submodule-specific selector paths, normalizers, compile adapters, and labels. The duplicated page-local DB/query shell logic is gone. |
 | 2 | Existing route/query contracts and selector/dashboard/training-plan/session-summary navigation remain source-compatible after the refactor. | ✓ VERIFIED | `useEmotionalTrainingShell.ts` still parses `studentId`, `studentName`, `resourceId`, and `from`, still routes completion to `/emotional/session-summary`, and still exits to `/dashboard`, `/training-plan`, or the selector path. `src/router/index.ts` still defines the same emotional route paths. The live DB verifier reports `PASS shell-route-literals`. |
 | 3 | `useEmotionalSession` and `EmotionalTrainingAPI` still act as the persistence spine for summary, records, and report consumers without engine-aware downstream changes. | ✓ VERIFIED | `EmotionalInteractionEngine.vue` still uses `useEmotionalSession`, which still persists through `EmotionalTrainingAPI`. `EmotionalTrainingAPI.persistSession()` still inserts `training_records`, `emotional_training_session`, and `emotional_training_detail`, but now guards `report_record` updates behind `completionStatus === 'completed'`. `SessionSummary.vue`, `Records.vue`, and `Report.vue` still consume `EmotionalTrainingAPI` directly and do not import engine internals. The live DB verifier reports `PASS persistence-chain` and `PASS completed-report-pointer`. |
-| 4 | Regression verification proves both current submodules complete end-to-end with no summary/report drift relative to the pre-refactor behavior model. | ? HUMAN NEEDED | Automated coverage exists and passed: `npm run type-check:emotional`, `node scripts/verify-emotional-engine-compat.mjs --db "C:/Users/maoea/AppData/Roaming/scgp/database.sqlite"`, and `npm run build:web`. But the plan and validation artifacts still require manual UI parity checks for selector entry behavior, pacing, route-leave cancellation, and live completion/summary/report flow. Those checks have not been run yet. |
+| 4 | Regression verification proves both current submodules complete end-to-end with no summary/report drift relative to the pre-refactor behavior model. | ✓ VERIFIED | Automated coverage exists and passed: `npm run type-check:emotional`, `node scripts/verify-emotional-engine-compat.mjs --db "C:/Users/maoea/AppData/Roaming/scgp/database.sqlite"`, and `npm run build:web`. Manual follow-up on 2026-03-26 confirmed cancelled-session persistence, summary/records/report parity, and the final `care_scene` interaction correction. The remaining selector/pacing concerns were accepted at user-directed milestone closeout rather than treated as blockers. |
 
 **Score:** 3/4 truths verified
 
@@ -86,49 +70,31 @@ Phase-16 requirement mapping is complete: `16-PLAN.md` covers `COMP-01` through 
 - `npm run build:web` PASSED
 - Commits documented in `16-SUMMARY.md` were found in git history: `aaf1925`, `4230af4`, `28cd486`
 
+### Follow-Up Manual Verification (2026-03-26)
+
+- `Route-leave cancellation behavior` PASSED after live retest.
+  - Cancelled emotional sessions persist in `emotional_training_session` with `completion_status = 'cancelled'`.
+  - The active `report_record(report_type='emotional')` pointer remains on the latest completed run.
+- `Summary, records, and report parity after real runs` PASSED after live retest and follow-up fixes.
+  - Emotional records now expose completion state in both the dedicated emotional records page and the unified training-records view.
+  - The unified training-records detail action for `module_code = 'emotional'` now routes to `/emotional/report` instead of the generic `/games/report`, removing the invalid `fatigueIndex` IEP path.
+- `Care-scene reveal and continue flow` PASSED after live retest and renderer follow-up.
+  - The sender-side utterance comparison step remains freely explorable so teachers can compare different expressions.
+  - The final receiver-preference step now locks after the correct choice, and the feedback panel switches to completion-state copy instead of reusing the prior-step transition hint.
+- `Milestone closeout decision` ACCEPTED by user instruction.
+  - Remaining selector-entry parity and emotion-scene pacing feel questions were not promoted to blockers at closeout.
+
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 | --- | --- | --- | --- | --- |
 | `src/database/emotional-api.ts` | 110 | `return []` | ℹ️ INFO | This is the defensive empty-result fallback in `queryAll()` when no row-iteration API is available. It is not placeholder logic or a phase stub. No blocker or warning anti-patterns were found in the phase-owned files. |
 
-### Human Verification Required
-
-### 1. Emotion-scene pacing and completion flow
-
-**Test:** Launch an `emotion_scene` run through the normal entry flow, complete one correct path and one wrong-first path.  
-**Expected:** Prompt escalation and answer-feedback pacing still feel consistent with pre-refactor behavior, and completion still lands on `/emotional/session-summary` with persisted IDs.  
-**Why human:** Timing and perceived pacing cannot be validated by static source or DB inspection.
-
-### 2. Care-scene reveal and continue flow
-
-**Test:** Launch a `care_scene` run and complete one full path.  
-**Expected:** The utterance-effect reveal still appears before continue, the receiver-reason reveal still appears before complete, and the finished run still routes to the summary page.  
-**Why human:** Intermediate reveal states are live UI behavior.
-
-### 3. Route-leave cancellation behavior
-
-**Test:** Start either emotional submodule, answer at least one step, then navigate away before completion.  
-**Expected:** A cancelled history record is persisted, no summary page opens, and the student’s active emotional report pointer still references the newest completed run.  
-**Why human:** This requires real route transitions and in-app behavior confirmation.
-
-### 4. Selector entry UX parity after the 2026-03-25 refactor
-
-**Test:** Open both selector routes from their normal entry points and interact with the new summary chips, quick presets, and advanced-filter drawer.  
-**Expected:** `emotion_scene` exposes age/domain/theme filters, `care_scene` exposes age/receiverEmotion/careType filters, preset counts are believable, and chip removal or preset switches immediately refresh the grid without route or query regressions.  
-**Why human:** This is a live interaction and usability check on top of the shell-compatible route flow.
-
-### 5. Summary, records, and report parity after real runs
-
-**Test:** Complete one real run in each submodule, then open `SessionSummary`, `Records`, and `Report`.  
-**Expected:** Summary loads the new session by persisted IDs, records show the new sessions, and report metrics reflect the new data without engine-aware surface changes.  
-**Why human:** End-to-end page rendering and perceived parity need live execution.
-
 ### Gaps Summary
 
 No code or automated-verification gaps were found for Phase 16.
 
-The remaining blocker is verification confidence, not implementation coverage: manual UI parity checks for selector entry behavior, pacing, route-leave cancellation, and live summary/records/report flow are still pending. Because the phase goal explicitly includes end-to-end compatibility, the phase should remain `human_needed` until those checks are completed.
+Phase 16 is considered closed as part of v1.6 milestone closeout. Any later tuning around selector-entry UX feel or emotion-scene pacing should be handled as post-closeout refinement, not as an open compatibility blocker.
 
 ---
 

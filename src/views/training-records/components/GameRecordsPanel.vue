@@ -46,7 +46,14 @@
       <el-table-column prop="student_name" label="学生姓名" width="120" />
       <el-table-column label="任务" width="150">
         <template #default="{ row }">
-          <el-tag size="small">{{ row.task_name || `任务${row.task_id}` }}</el-tag>
+          <el-tag size="small">{{ getTaskLabel(row) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column v-if="isEmotionalModule" label="状态" width="100">
+        <template #default="{ row }">
+          <el-tag size="small" :type="getCompletionStatusType(row.completion_status)">
+            {{ getCompletionStatusLabel(row.completion_status) }}
+          </el-tag>
         </template>
       </el-table-column>
       <el-table-column label="训练时间" width="180">
@@ -84,7 +91,7 @@
             type="primary"
             size="small"
             link
-            @click="$emit('view-detail', row.id)"
+            @click="$emit('view-detail', row)"
           >
             详情
           </el-button>
@@ -95,7 +102,7 @@
     <!-- 空状态 -->
     <el-empty
       v-if="!loading && records.length === 0"
-      description="暂无游戏训练记录"
+      :description="isEmotionalModule ? '暂无情绪训练记录' : '暂无游戏训练记录'"
     />
 
     <!-- 统计信息 -->
@@ -120,6 +127,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { GameTrainingAPI, StudentAPI } from '@/database/api'
+import { EmotionalTrainingAPI } from '@/database/emotional-api'
+import { ModuleCode } from '@/types/module'
 
 interface Props {
   moduleCode: string
@@ -127,7 +136,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
-  (e: 'view-detail', recordId: number): void
+  (e: 'view-detail', record: any): void
 }>()
 
 // 状态
@@ -136,6 +145,7 @@ const records = ref<any[]>([])
 const students = ref<any[]>([])
 const selectedStudentId = ref<number | undefined>()
 const dateRange = ref<[string, string] | null>(null)
+const isEmotionalModule = computed(() => props.moduleCode === ModuleCode.EMOTIONAL)
 
 // 统计计算 - 平均正确率
 const avgAccuracy = computed(() => {
@@ -156,6 +166,34 @@ const totalDuration = computed(() => {
   const total = records.value.reduce((acc, r) => acc + r.duration, 0)
   return formatDuration(total)
 })
+
+const getTaskLabel = (row: any) => {
+  if (!isEmotionalModule.value) {
+    return row.task_name || `任务${row.task_id}`
+  }
+
+  if (row.session_type === 'emotion_scene') {
+    return row.task_name || '情绪与场景'
+  }
+
+  if (row.session_type === 'care_scene') {
+    return row.task_name || '表达关心'
+  }
+
+  return row.task_name || '情绪训练'
+}
+
+const getCompletionStatusLabel = (status?: string) => {
+  if (status === 'cancelled') return '已取消'
+  if (status === 'interrupted') return '已中断'
+  return '已完成'
+}
+
+const getCompletionStatusType = (status?: string) => {
+  if (status === 'completed') return 'success'
+  if (status === 'cancelled') return 'info'
+  return 'warning'
+}
 
 // 格式化响应时间（毫秒转秒，保留1位小数)
 const formatResponseTime = (ms: number): string => {
@@ -204,6 +242,7 @@ const loadRecords = () => {
   loading.value = true
   try {
     const api = new GameTrainingAPI()
+    const emotionalApi = isEmotionalModule.value ? new EmotionalTrainingAPI() : null
     // 获取指定模块的训练记录
     let allRecords = api.getStudentTrainingRecords(selectedStudentId.value || 0, undefined, props.moduleCode)
 
@@ -223,6 +262,16 @@ const loadRecords = () => {
         ...r,
         student_name: student?.name || '未知'
       }))
+    }
+
+    if (emotionalApi) {
+      allRecords = allRecords.map((record: any) => {
+        const session = emotionalApi.getSessionByTrainingRecordId(record.id)
+        return {
+          ...record,
+          completion_status: session?.completion_status || 'completed',
+        }
+      })
     }
 
     // 日期筛选

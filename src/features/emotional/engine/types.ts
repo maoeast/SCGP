@@ -184,6 +184,7 @@ export interface CareUtteranceSelectionState {
   kind: 'care_utterance'
   canAdvance: boolean
   feedbackCode: EmotionalFeedbackCode
+  selectedValue: string | null
   metadata: CareUtteranceOptionMetadata | null
 }
 
@@ -191,6 +192,7 @@ export interface ReceiverPreferenceSelectionState {
   kind: 'receiver_preference'
   canAdvance: boolean
   feedbackCode: EmotionalFeedbackCode
+  selectedValue: string | null
   metadata: ReceiverPreferenceOptionMetadata | null
 }
 

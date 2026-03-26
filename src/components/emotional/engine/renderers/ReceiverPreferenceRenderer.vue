@@ -16,6 +16,8 @@
         :icon="option.icon"
         :muted="option.muted"
         :highlighted="option.highlighted"
+        :selected="option.selected"
+        :disabled="option.disabled"
         @select="handleSelect(option.value)"
       />
     </div>
@@ -67,20 +69,27 @@ const emit = defineEmits<{
 const receiverCards = computed(() => getVisibleOptionsByHint(props.step.options || [], props.hintLevel).map((option) => {
   const metadata = option.metadata as ReceiverPreferenceOptionMetadata | undefined
   const visualState = getOptionVisualState(option, props.hintLevel)
+  const isLocked = !!props.selectionState?.canAdvance
+  const isSelected = props.selectionState?.selectedValue === option.value
 
   return {
     value: option.value,
     label: option.label,
     supportText: metadata?.reasonText || '',
     icon: metadata?.isComforting ? '😊' : '💭',
-    muted: visualState.muted,
-    highlighted: visualState.highlighted,
+    muted: isLocked ? !isSelected : visualState.muted,
+    highlighted: isLocked ? isSelected : visualState.highlighted,
+    selected: isSelected,
+    disabled: isLocked && !isSelected,
   }
 }))
 
 const selectedMetadata = computed(() => props.selectionState?.metadata || null)
 
 function handleSelect(value: string) {
+  if (props.selectionState?.canAdvance) {
+    return
+  }
   const option = receiverCards.value.find((item) => item.value === value)
   emit('select', { value, label: option?.label, perspective: 'receiver' })
 }

@@ -21,6 +21,7 @@ export interface EmotionalSessionRecordItem {
   hintCount: number
   retryCount: number
   averageHintLevel: number
+  completionStatus: 'completed' | 'cancelled' | 'interrupted'
   createdAt: string
 }
 
@@ -331,6 +332,7 @@ export class EmotionalTrainingAPI {
         s.accuracy_rate,
         s.hint_count,
         s.retry_count,
+        s.completion_status,
         COALESCE((
           SELECT AVG(d.hint_level)
           FROM emotional_training_detail d
@@ -384,6 +386,7 @@ export class EmotionalTrainingAPI {
       hintCount: row.hint_count || 0,
       retryCount: row.retry_count || 0,
       averageHintLevel: round(Number(row.average_hint_level || 0), 2),
+      completionStatus: row.completion_status || 'completed',
       createdAt: row.created_at,
     }))
   }

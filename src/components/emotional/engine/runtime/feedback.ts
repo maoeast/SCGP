@@ -1,6 +1,7 @@
 import type { EmotionalFeedbackMessage } from '@/features/emotional/engine/types'
 import type {
   EmotionalFeedbackCode,
+  EmotionalStepType,
   EmotionalSubModule,
 } from '@/types/emotional'
 
@@ -20,12 +21,23 @@ const CARE_RETRY_DESCRIPTIONS = [
 
 export function buildFeedbackMessage(
   subModule: EmotionalSubModule,
+  stepType: EmotionalStepType,
   canAdvance: boolean,
   feedbackCode: EmotionalFeedbackCode,
   hintLevel: 0 | 1 | 2 | 3,
 ): EmotionalFeedbackMessage {
   if (canAdvance) {
     if (subModule === 'care_scene') {
+      if (stepType === 'receiver_preference') {
+        return {
+          title: '对方已经感受到你的关心',
+          description: feedbackCode === 'acceptable'
+            ? '这是一个可以接受的表达角度，点完成训练结束本次练习。'
+            : '这句话最容易让对方感到被理解，点完成训练结束本次练习。',
+          type: 'success',
+        }
+      }
+
       return {
         title: '你已经表达出了关心',
         description: feedbackCode === 'acceptable'

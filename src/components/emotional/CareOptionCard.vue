@@ -2,9 +2,12 @@
   <button
     type="button"
     class="care-card"
+    :disabled="disabled"
     :class="{
       'care-card--muted': muted,
       'care-card--highlight': highlighted,
+      'care-card--selected': selected,
+      'care-card--disabled': disabled,
     }"
     @click="$emit('select')"
   >
@@ -27,6 +30,8 @@ defineProps<{
   icon: string
   muted?: boolean
   highlighted?: boolean
+  selected?: boolean
+  disabled?: boolean
 }>()
 
 defineEmits<{
@@ -61,6 +66,15 @@ defineEmits<{
 .care-card--highlight {
   border-color: rgba(103, 194, 58, 0.72);
   box-shadow: 0 0 0 3px rgba(103, 194, 58, 0.16);
+}
+
+.care-card--selected {
+  border-color: #67c23a;
+  box-shadow: 0 0 0 3px rgba(103, 194, 58, 0.22);
+}
+
+.care-card--disabled {
+  cursor: not-allowed;
 }
 
 .care-card__visual {
@@ -102,5 +116,10 @@ defineEmits<{
   font-size: 13px;
   color: #909399;
   line-height: 1.6;
+}
+
+.care-card:disabled:hover {
+  transform: none;
+  box-shadow: none;
 }
 </style>

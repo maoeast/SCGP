@@ -89,6 +89,13 @@
               </el-tag>
             </template>
           </el-table-column>
+          <el-table-column label="状态" width="120">
+            <template #default="{ row }">
+              <el-tag :type="row.completionStatus === 'completed' ? 'success' : 'info'">
+                {{ row.completionStatus === 'completed' ? '已完成' : row.completionStatus === 'cancelled' ? '已取消' : '已中断' }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="训练时长" width="120">
             <template #default="{ row }">
               {{ formatDuration(row.durationMs) }}

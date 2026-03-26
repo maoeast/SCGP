@@ -197,6 +197,7 @@ function buildSelectionState(
       kind: 'care_utterance',
       canAdvance,
       feedbackCode: latestAttempt?.feedbackCode || 'retry',
+      selectedValue: latestAttempt?.selectedValue || null,
       metadata: selectedOption?.metadata || null,
     } as CareUtteranceSelectionState
   }
@@ -206,6 +207,7 @@ function buildSelectionState(
       kind: 'receiver_preference',
       canAdvance,
       feedbackCode: latestAttempt?.feedbackCode || 'retry',
+      selectedValue: latestAttempt?.selectedValue || null,
       metadata: selectedOption?.metadata || null,
     } as ReceiverPreferenceSelectionState
   }
@@ -234,6 +236,7 @@ async function handleSelect(payload: EmotionalEngineSubmitInput) {
   const feedbackCode = submitResult.result.feedbackCode || 'retry'
   feedbackMessage.value = buildFeedbackMessage(
     config.subModule,
+    step.stepType,
     submitResult.canAdvance,
     feedbackCode,
     session.currentHintLevel.value,
