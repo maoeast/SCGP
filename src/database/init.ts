@@ -1236,6 +1236,13 @@ export async function initDatabase(): Promise<any> {
       console.warn('[InitDatabase] ⚠️  emotional 演示资源初始化失败:', emotionalResourceError)
     }
 
+    try {
+      await insertPhysicalEquipmentResourceData()
+      console.log('[InitDatabase] ✅ physical-equipment 资源初始化完成')
+    } catch (physicalEquipmentError) {
+      console.warn('[InitDatabase] ⚠️  physical-equipment 资源初始化失败:', physicalEquipmentError)
+    }
+
     return db
   } catch (error) {
     console.error('SQL.js数据库初始化失败:', error)
@@ -1670,6 +1677,232 @@ export async function insertEmotionalResourceData(): Promise<void> {
 
   } catch (error) {
     console.error('failed to insert emotional default resources:', error)
+    throw error
+  }
+}
+
+export async function insertPhysicalEquipmentResourceData(): Promise<void> {
+  try {
+    const {
+      PHYSICAL_EQUIPMENT_SEED_LEGACY_SOURCE,
+      PHYSICAL_EQUIPMENT_SEED_RESOURCES,
+      PHYSICAL_EQUIPMENT_SEED_SUMMARY,
+    } = await import('./physical-equipment-data')
+
+    const existingRows = db.exec(`
+      SELECT id, module_code, name, category, legacy_source, meta_data
+      FROM sys_training_resource
+      WHERE resource_type = 'equipment'
+        AND module_code IN ('sensory', 'emotional', 'social')
+    `)
+
+    const existingByCode = new Map<string, number>()
+    const existingByName = new Map<string, number>()
+    const tagMap = new Map<string, number>()
+    const rowsByCode = new Map<string, Array<{
+      id: number
+      moduleCode: string
+      name: string
+      category: string
+      metadataRaw: string
+    }>>()
+
+    const mergeDuplicateResourceIntoCanonical = (canonicalId: number, duplicateId: number) => {
+      db.run(`
+        INSERT OR IGNORE INTO sys_resource_tag_map (resource_id, tag_id)
+        SELECT ?, tag_id
+        FROM sys_resource_tag_map
+        WHERE resource_id = ?
+      `, [canonicalId, duplicateId])
+
+      db.run('UPDATE equipment_training_records SET equipment_id = ? WHERE equipment_id = ?', [canonicalId, duplicateId])
+      db.run('UPDATE sys_plan_resource_map SET resource_id = ? WHERE resource_id = ?', [canonicalId, duplicateId])
+      db.run('UPDATE sys_favorites SET resource_id = ? WHERE resource_id = ?', [canonicalId, duplicateId])
+      db.run('DELETE FROM sys_resource_tag_map WHERE resource_id = ?', [duplicateId])
+      db.run('DELETE FROM sys_favorites WHERE resource_id = ?', [duplicateId])
+      db.run('DELETE FROM sys_training_resource WHERE id = ?', [duplicateId])
+    }
+
+    for (const row of existingRows?.[0]?.values || []) {
+      const id = Number(row[0] || 0)
+      const moduleCode = String(row[1] || '')
+      const name = String(row[2] || '')
+      const category = typeof row[3] === 'string' ? String(row[3]) : ''
+      const metadataRaw = typeof row[5] === 'string' ? row[5] : ''
+
+      if (id > 0 && moduleCode && name) {
+        existingByName.set(`${moduleCode}:${category}:${name}`, id)
+      }
+
+      if (!metadataRaw) {
+        continue
+      }
+
+      try {
+        const metadata = JSON.parse(metadataRaw) as { resourceCode?: string }
+        const resourceCode = typeof metadata.resourceCode === 'string' ? metadata.resourceCode.trim() : ''
+        if (resourceCode) {
+          const bucket = rowsByCode.get(resourceCode) || []
+          bucket.push({
+            id,
+            moduleCode,
+            name,
+            category,
+            metadataRaw,
+          })
+          rowsByCode.set(resourceCode, bucket)
+        }
+      } catch {
+        // Ignore malformed metadata from unrelated resources.
+      }
+    }
+
+    for (const [resourceCode, rows] of rowsByCode.entries()) {
+      if (rows.length === 0) {
+        continue
+      }
+
+      let canonicalId = rows[0]?.id || 0
+      let canonicalScore = -1
+
+      for (const row of rows) {
+        const tagCount = Number(db.get('SELECT COUNT(*) AS count FROM sys_resource_tag_map WHERE resource_id = ?', [row.id])?.count || 0)
+        const score = tagCount * 10 + row.id
+        if (score > canonicalScore) {
+          canonicalId = row.id
+          canonicalScore = score
+        }
+      }
+
+      if (!canonicalId) {
+        continue
+      }
+
+      existingByCode.set(resourceCode, canonicalId)
+
+      for (const row of rows) {
+        if (row.id === canonicalId) {
+          existingByName.set(`${row.moduleCode}:${row.category}:${row.name}`, row.id)
+          continue
+        }
+
+        mergeDuplicateResourceIntoCanonical(canonicalId, row.id)
+      }
+    }
+
+    const ensureTag = (tagName: string): number | null => {
+      const cacheKey = `ability:${tagName}`
+      const cachedId = tagMap.get(cacheKey)
+      if (cachedId) {
+        return cachedId
+      }
+
+      const existingTag = db.get(
+        'SELECT id FROM sys_tags WHERE domain = ? AND name = ?',
+        ['ability', tagName]
+      )
+
+      let tagId = existingTag?.id ? Number(existingTag.id) : 0
+      if (!tagId) {
+        db.run(
+          'INSERT INTO sys_tags (domain, name, usage_count, is_preset) VALUES (?, ?, ?, ?)',
+          ['ability', tagName, 0, 1]
+        )
+        tagId = Number(db.exec('SELECT last_insert_rowid() as id')?.[0]?.values?.[0]?.[0] || 0)
+      }
+
+      if (tagId) {
+        tagMap.set(cacheKey, tagId)
+        return tagId
+      }
+
+      return null
+    }
+
+    const attachTags = (resourceId: number, tags: string[]) => {
+      for (const tagName of tags) {
+        const tagId = ensureTag(tagName)
+        if (!tagId) {
+          continue
+        }
+
+        db.run(
+          'INSERT OR IGNORE INTO sys_resource_tag_map (resource_id, tag_id) VALUES (?, ?)',
+          [resourceId, tagId]
+        )
+      }
+    }
+
+    let inserted = 0
+    let linked = 0
+
+    for (const resource of PHYSICAL_EQUIPMENT_SEED_RESOURCES) {
+      const resourceCode = resource.metadata.resourceCode
+      const existingId = existingByCode.get(resourceCode) || existingByName.get(`${resource.moduleCode}:${resource.category}:${resource.name}`)
+
+      if (existingId) {
+        if (!existingByCode.has(resourceCode)) {
+          db.run(`
+            UPDATE sys_training_resource
+            SET module_code = ?, resource_type = ?, category = ?, description = ?,
+                is_custom = 0, is_active = 1, legacy_source = ?, meta_data = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `, [
+            resource.moduleCode,
+            resource.resourceType,
+            resource.category,
+            resource.description,
+            PHYSICAL_EQUIPMENT_SEED_LEGACY_SOURCE,
+            JSON.stringify(resource.metadata),
+            existingId,
+          ])
+          existingByCode.set(resourceCode, existingId)
+          linked += 1
+        }
+
+        attachTags(existingId, resource.tags)
+        continue
+      }
+
+      db.run(`
+        INSERT INTO sys_training_resource (
+          module_code, resource_type, name, category, description,
+          cover_image, is_custom, is_active, legacy_source, meta_data, usage_count
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        resource.moduleCode,
+        resource.resourceType,
+        resource.name,
+        resource.category,
+        resource.description,
+        resource.coverImage || '',
+        0,
+        1,
+        PHYSICAL_EQUIPMENT_SEED_LEGACY_SOURCE,
+        JSON.stringify(resource.metadata),
+        0,
+      ])
+
+      const resourceId = Number(db.exec('SELECT last_insert_rowid() as id')?.[0]?.values?.[0]?.[0] || 0)
+      if (!resourceId) {
+        continue
+      }
+
+      existingByCode.set(resourceCode, resourceId)
+      existingByName.set(`${resource.moduleCode}:${resource.category}:${resource.name}`, resourceId)
+      attachTags(resourceId, resource.tags)
+      inserted += 1
+    }
+
+    console.log('[InitDatabase] physical-equipment seed processed:', {
+      inserted,
+      linked,
+      totalCount: PHYSICAL_EQUIPMENT_SEED_SUMMARY.totalCount,
+      byDomain: PHYSICAL_EQUIPMENT_SEED_SUMMARY.byDomain,
+      byModule: PHYSICAL_EQUIPMENT_SEED_SUMMARY.byModule,
+    })
+  } catch (error) {
+    console.error('failed to insert physical-equipment resources:', error)
     throw error
   }
 }

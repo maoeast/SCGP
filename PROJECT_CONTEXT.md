@@ -26,7 +26,7 @@
 | **技术栈**     | Electron + Vue 3 + TypeScript + Vite + SQL.js |
 | **数据库**     | SQLite (通过 sql.js 运行在浏览器端)           |
 | **当前分支**   | `main`                                        |
-| **最后更新**   | 2026-03-26 (emotional 默认切换为完整 80+60 seed，感官器材重置脚本已落地，并新增 physical-equipment 目录规范) |
+| **最后更新**   | 2026-03-26 (physical-equipment CSV 导入方案已落地，emotional 默认完整 seed 与感官器材重置脚本保持有效) |
 | **系统健康度** | ✅ 可运行，所有核心功能正常                   |
 
 ### 项目简介
@@ -55,6 +55,39 @@
 
 ### 最新变更快照 (2026-03-26)
 
+- 已完成 physical-equipment CSV 导入方案：
+  - 新增 `src/database/physical-equipment-parser.ts`
+  - 新增 `src/database/physical-equipment-data.ts`
+  - 当前四份草稿 CSV 已可规范化为 `168` 条系统资源：
+    - `45 emotional-regulation`
+    - `50 social-communication`
+    - `35 fine-motor`
+    - `38 soothing-aids`
+- 已新增 physical-equipment 数据库导入入口：
+  - `scripts/import-physical-equipment-resources.cjs`
+  - npm 命令：`npm run import:physical-equipment -- --yes`
+  - 现有库导入策略为按 `meta_data.resourceCode` 做幂等 upsert，首跑插入、重复执行更新
+- 已完成 physical-equipment 默认 seed 接入：
+  - `src/database/init.ts` 现会在数据库初始化时补齐缺失的四类 physical-equipment 系统资源
+- 已完成前端新规则封面解析：
+  - `ResourceSelector`
+  - `TrainingResources`
+  - `PlanList`
+  - 对新 physical-equipment 资源优先按 metadata / `resourceCode` 找图，不再依赖 `legacy_id`
+- 已明确当前收费与展示分层策略：
+  - 收费 / 授权仍按顶层业务模块：`sensory / emotional / social / life_skills / cognitive`
+  - 不把 `fine-motor`、`soothing-aids` 直接提升为授权层 `moduleCode`
+  - 器材训练与资源中心新增展示大类推导：
+    - `感官训练`
+    - `情绪调节`
+    - `社交沟通`
+    - `生活自理`
+    - `精细动作`
+    - `安抚教具`
+- 当前暂停点：
+  - 尚未对真实本机数据库执行 `npm run import:physical-equipment -- --yes`
+  - 资源中心器材列表已完成“大类标签展示”，但还未继续补完整的大类筛选/过滤体验
+  - 下次续接应先读取仓库根目录 `.continue-here.md`
 - 已完成 `emotional` 默认资源初始化切换：
   - 不再使用 8 条 demo 资源
   - 新库默认写入完整 `80 emotion_scene + 60 care_scene`
@@ -1190,3 +1223,71 @@ function calculateConnersTScore(
 4. **[P4 - 中] 全局类型债评估**
    - 评估当前 `npm run type-check` 中的历史错误面
    - 区分与 emotional v1.1 无关的旧债和后续需要清偿的公共类型问题
+
+---
+
+## 12. 2026-03-26 Follow-up Addendum
+
+- `physical-equipment` 已完成真实本机库导入，目标数据库：`C:\Users\maoea\AppData\Roaming\scgp\database.sqlite`
+- 当前真实库状态已验证：
+  - active `physical_equipment` 资源：`168`
+  - 唯一 `resourceCode`：`168`
+  - duplicate group：`0`
+- 本次会话已完成的真实变更：
+  - `scripts/import-physical-equipment-resources.cjs` 支持真实库导入 + 去重
+  - `src/database/init.ts` 支持启动时 `physical-equipment` 清理 / 合并
+  - `src/database/resource-api.ts` 对 `physical-equipment` 做查询层防御性去重
+  - `src/views/resource-center/TrainingResources.vue`
+  - `src/views/plan/PlanList.vue`
+  - `src/views/equipment/QuickEntry.vue`
+- 用户在 2026-03-26 最新澄清的需求边界：
+  - 保持顶层 `moduleCode` 授权模型不变
+  - `感官统合训练 / 情绪调节 / 社交沟通 / 精细动作 / 安抚教具 / 生活自理` 应作为器材训练模块内部入口组
+  - 当前器材训练页面里只有 `感官统合训练` 和 `情绪调节` 是激活入口
+  - `社交沟通` 尚未正确激活
+  - `精细动作 / 安抚教具 / 生活自理` 尚未添加入口
+- 当前已确认 bug：
+  - `器材训练 -> 感官统合训练 -> 快速录入` 出现了 `fine-motor` 产品
+  - `器材训练 -> 情绪调节 -> 快速录入` 出现了 `soothing-aids` 产品
+- 本次续接已完成的核心修正：
+  - 新增 `src/utils/equipment-training-entry.ts`，正式收口器材训练内部入口组模型
+  - 入口组固定为：
+    - `sensory-integration`
+    - `emotional-regulation`
+    - `social-communication`
+    - `fine-motor`
+    - `soothing-aids`
+    - `life-skills`
+  - 每个入口组都明确绑定：
+    - 顶层授权 `moduleCode`
+    - 允许显示的 equipment catalog-group
+  - `src/views/equipment/EquipmentMenu.vue` 不再直接复用 `ModuleRegistry` 顶层模块卡片，而改为渲染器材训练内部入口组
+  - `src/views/equipment/SelectStudent.vue` 与 `src/views/equipment/QuickEntry.vue` 改为优先使用 `query.entry`，同时保留 `query.module` 兼容旧链路
+  - `src/components/resources/ResourceSelector.vue` 新增 equipment 允许分组过滤口径，Quick Entry 不再只按顶层 `moduleCode` 粗筛
+  - `src/router/index.ts` 对 `/equipment` 路由授权改为按入口组映射回真实顶层 `moduleCode`，保持授权模型不变
+  - Quick Entry 从计划 / 首页携带 `equipmentId` 进入时，若资源真实归属入口组与当前 query 不一致，会自动校正到正确入口组
+- 开发环境授权 mock 已同步统一：
+  - `src/stores/auth.ts` 中开发环境 `allowedModules` 已从 `['sensory', 'emotional']` 扩展为 `['sensory', 'emotional', 'social', 'life_skills']`
+  - 这意味着开发环境下器材训练内部 6 个入口组现在都能按各自映射的顶层授权正常解锁
+- 当前结果：
+  - `感官统合训练` 不再串出 `fine-motor`
+  - `情绪调节` 不再串出 `soothing-aids`
+  - `社交沟通 / 精细动作 / 安抚教具 / 生活自理` 已进入器材训练菜单模型
+  - 顶层授权模型仍保持 `sensory / emotional / social / life_skills / cognitive`
+- 已验证：
+  - `npm run type-check`
+  - `npm run build:web`
+- 当前剩余关注点：
+  - 器材训练记录页 `src/views/equipment/Records.vue` 仍是旧的“非入口组感知”页面；本次未扩展为入口组语义
+  - 若后续要让记录页、训练记录聚合页也完全感知这 6 个内部入口组，需要继续补一轮
+  - 用户在手工验证时又确认了一个当前未修正问题：
+    - 器材训练快速录入页左侧分类标签口径仍不符合要求
+    - 现在显示的是入口组 / catalog-group（如 `sensory-training`）
+    - 用户要求这里改为显示 `docs/references/physical-equipment/` 各模块 CSV 导入文件中的“套装类别”或“类别模块”值
+    - 当前代码真实字段落点：
+      - `src/database/physical-equipment-parser.ts` 会把 `类别名称 / 套装类别 / 类别模块` 归一到 `metadata.sourceCategory`
+      - 当前 Quick Entry / ResourceSelector 还没有按 `metadata.sourceCategory` 生成按钮与过滤
+    - 用户给出的明确示例：
+      - `器材训练 -> 感官统合训练 -> 快速录入`
+      - 正确标签应为：`触觉 / 味嗅觉 / 视觉 / 本体觉 / 综合训练`
+      - 不应继续显示 `sensory-training`

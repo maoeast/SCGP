@@ -20,48 +20,47 @@
     <div class="main-content">
       <div class="module-grid">
         <el-card
-          v-for="module in modules"
-          :key="module.code"
+          v-for="entry in equipmentEntries"
+          :key="entry.code"
           class="module-card"
           :class="{
-            'module-active': module.status === 'active',
-            'module-experimental': module.status === 'experimental',
-            'module-disabled': module.status !== 'active' && module.status !== 'experimental'
+            'module-active': !entry.locked,
+            'module-disabled': entry.locked
           }"
           shadow="hover"
-          @click="handleModuleClick(module)"
+          @click="handleEntryClick(entry)"
         >
           <div class="module-icon" :style="{
-            backgroundColor: module.themeColor + '25',
-            borderColor: module.themeColor + '60',
-            boxShadow: `0 4px 12px ${module.themeColor}30`
+            backgroundColor: entry.themeColor + '25',
+            borderColor: entry.themeColor + '60',
+            boxShadow: `0 4px 12px ${entry.themeColor}30`
           }">
-            <el-icon :size="40" :color="module.themeColor">
-              <component :is="getModuleIcon(module.icon)" />
+            <el-icon :size="40" :color="entry.themeColor">
+              <component :is="getModuleIcon(entry.icon)" />
             </el-icon>
           </div>
 
           <div class="module-info">
-            <h3 class="module-name">{{ module.name }}</h3>
-            <p class="module-description">{{ module.description }}</p>
+            <h3 class="module-name">{{ entry.name }}</h3>
+            <p class="module-description">{{ entry.description }}</p>
 
             <div class="module-meta">
               <el-tag
-                :type="getStatusTagType(module.status)"
+                :type="getStatusTagType(entry.locked ? 'locked' : 'active')"
                 size="small"
               >
-                {{ getStatusLabel(module.status) }}
+                {{ getStatusLabel(entry.locked ? 'locked' : 'active') }}
               </el-tag>
               <span class="resource-count">
-                {{ getResourceCount(module.code) }} 个器材
+                {{ getResourceCount(entry.code) }} 个器材
               </span>
             </div>
           </div>
 
           <!-- 未授权遮罩 -->
-          <div v-if="module.status !== 'active'" class="module-overlay">
+          <div v-if="entry.locked" class="module-overlay">
             <el-icon :size="24"><Lock /></el-icon>
-            <span>{{ module.status === 'experimental' ? '开发中' : '未授权' }}</span>
+            <span>未授权</span>
           </div>
         </el-card>
       </div>
@@ -70,34 +69,46 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, markRaw } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   Lock,
   Sunny,
   ChatDotRound,
-  Reading,
-  Cpu,
-  Orange,
-  MagicStick
+  MagicStick,
+  Operation,
+  MoonNight,
+  House,
 } from '@element-plus/icons-vue'
-import { ModuleRegistry } from '@/core/module-registry'
-import { ModuleCode, type ModuleMetadata } from '@/types/module'
 import { ResourceAPI } from '@/database/resource-api'
+import { useAuthStore } from '@/stores/auth'
+import {
+  getAllEquipmentTrainingEntries,
+  getEquipmentTrainingEntry,
+  matchesEquipmentTrainingEntry,
+  type EquipmentTrainingEntryCode,
+} from '@/utils/equipment-training-entry'
 
-// 模块列表
-const modules = ref<ModuleMetadata[]>([])
+const router = useRouter()
+const authStore = useAuthStore()
+
+const equipmentEntries = computed(() => {
+  return getAllEquipmentTrainingEntries().map((entry) => ({
+    ...entry,
+    locked: !authStore.hasModuleAccess(entry.moduleCode),
+  }))
+})
 
 // 获取模块图标
 const getModuleIcon = (iconName: string) => {
   const iconMap: Record<string, any> = {
-    'Sensation': MagicStick,     // 感官统合 - 魔法棒
-    'Emotion': Sunny,            // 情绪调节 - 太阳
-    'ChatDotRound': ChatDotRound, // 社交沟通 - 对话
-    'Reading': Reading,
-    'Cpu': Cpu,
-    'Orange': Orange
+    MagicStick,
+    Sunny,
+    ChatDotRound,
+    Operation,
+    MoonNight,
+    House,
   }
   return iconMap[iconName] || MagicStick
 }
@@ -106,9 +117,7 @@ const getModuleIcon = (iconName: string) => {
 const getStatusTagType = (status: string) => {
   const typeMap: Record<string, '' | 'success' | 'warning' | 'danger' | 'info'> = {
     'active': 'success',
-    'experimental': 'warning',
-    'coming_soon': 'info',
-    'deprecated': 'danger'
+    'locked': 'info'
   }
   return typeMap[status] || 'info'
 }
@@ -117,49 +126,41 @@ const getStatusTagType = (status: string) => {
 const getStatusLabel = (status: string) => {
   const labelMap: Record<string, string> = {
     'active': '已激活',
-    'experimental': '开发中',
-    'coming_soon': '即将推出',
-    'deprecated': '已弃用'
+    'locked': '未授权'
   }
   return labelMap[status] || status
 }
 
-// 获取模块器材数量
-const getResourceCount = (moduleCode: ModuleCode) => {
+// 获取入口组器材数量
+const getResourceCount = (entryCode: EquipmentTrainingEntryCode) => {
   try {
     const api = new ResourceAPI()
     const resources = api.getResources({
-      moduleCode,
+      moduleCode: getEquipmentTrainingEntry(entryCode).moduleCode,
       resourceType: 'equipment'
     })
-    return resources.length
+    return resources.filter((resource) => matchesEquipmentTrainingEntry(resource, entryCode)).length
   } catch (error) {
-    console.error(`获取模块 ${moduleCode} 器材数量失败:`, error)
+    console.error(`获取器材入口 ${entryCode} 数量失败:`, error)
     return 0
   }
 }
 
-// 处理模块点击
-const handleModuleClick = (module: ModuleMetadata) => {
-  if (module.status !== 'active') {
-    ElMessage.warning(`「${module.name}」模块${module.status === 'experimental' ? '正在开发中' : '尚未激活'}，敬请期待`)
+// 处理入口点击
+const handleEntryClick = (entry: (typeof equipmentEntries.value)[number]) => {
+  if (entry.locked) {
+    ElMessage.warning(`「${entry.name}」未授权，请联系厂商购买`)
     return
   }
 
-  // 跳转到学生选择页面，带上模块参数
   router.push({
     path: `/equipment/select-student`,
-    query: { module: module.code }
+    query: {
+      entry: entry.code,
+      module: entry.moduleCode
+    }
   })
 }
-
-const router = useRouter()
-
-// 初始化
-onMounted(() => {
-  // 获取所有已注册模块
-  modules.value = ModuleRegistry.getAllModules()
-})
 </script>
 
 <style scoped>
@@ -196,10 +197,6 @@ onMounted(() => {
 
 .module-card.module-active:hover {
   box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
-}
-
-.module-card.module-experimental {
-  opacity: 0.85;
 }
 
 .module-card.module-disabled {
@@ -279,7 +276,4 @@ onMounted(() => {
   backdrop-filter: blur(2px);
 }
 
-.module-card.module-experimental .module-overlay {
-  background: rgba(255, 255, 255, 0.7);
-}
 </style>

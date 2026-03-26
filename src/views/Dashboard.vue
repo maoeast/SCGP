@@ -2,8 +2,8 @@
   <div class="page-container dashboard-page" v-loading="loading">
     <div class="page-header">
       <div class="header-left">
-        <h1>特教业务指挥中心</h1>
-        <p class="subtitle">聚焦今天要做的评估、训练与干预提醒，用真实业务数据支持一线特教决策。</p>
+        <h1>首页看板</h1>
+        <p class="subtitle">聚焦今天要做的评估、训练与干预提醒，用真实业务数据支持一线决策。</p>
       </div>
       <div class="header-right">
         <el-button @click="loadDashboard">

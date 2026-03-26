@@ -28,7 +28,7 @@ export interface EntitlementsInfo {
   isFullAccess: boolean
 }
 
-const DEV_MOCK_ALLOWED_MODULES = ['sensory', 'emotional'] as const
+const DEV_MOCK_ALLOWED_MODULES = ['sensory', 'emotional', 'social', 'life_skills'] as const
 const BUSINESS_MODULE_CODES = ['sensory', 'emotional', 'social', 'cognitive', 'life_skills'] as const
 
 export const useAuthStore = defineStore('auth', {
@@ -180,7 +180,9 @@ export const useAuthStore = defineStore('auth', {
 
           this.entitlements.allowedModules = [...DEV_MOCK_ALLOWED_MODULES]
           this.entitlements.source = 'dev-mock'
-          this.entitlements.isFullAccess = false
+          this.entitlements.isFullAccess = (BUSINESS_MODULE_CODES as readonly string[]).every((moduleCode) =>
+            this.entitlements.allowedModules.includes(moduleCode)
+          )
 
           console.log('开发环境已绕过激活校验', {
             machineCode: this.activationInfo.machineCode,

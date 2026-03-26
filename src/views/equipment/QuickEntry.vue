@@ -4,8 +4,8 @@
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item :to="{ path: '/equipment/menu' }">器材训练</el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ path: '/equipment/select-student', query: { module: currentModuleCode } }">
-          {{ currentModule?.name || '选择学生' }}
+        <el-breadcrumb-item :to="{ path: '/equipment/select-student', query: { entry: currentEntryCode, module: currentModuleCode } }">
+          {{ currentEntry.name || '选择学生' }}
         </el-breadcrumb-item>
         <el-breadcrumb-item>快速录入</el-breadcrumb-item>
       </el-breadcrumb>
@@ -14,7 +14,7 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
-        <h1>{{ currentModule?.name || '器材训练' }} - 快速录入</h1>
+        <h1>{{ currentEntry.name || '器材训练' }} - 快速录入</h1>
         <p class="subtitle">
           <span v-if="student">当前学生：<strong>{{ student.name }}</strong></span>
           <span v-else>加载中...</span>
@@ -26,24 +26,24 @@
           <el-icon class="switcher-icon"><Switch /></el-icon>
           <span class="switcher-label">切换模块</span>
           <el-select
-            v-model="currentModuleCode"
+            v-model="currentEntryCode"
             size="default"
             class="module-select"
-            @change="handleModuleChange"
+            @change="handleEntryChange"
           >
             <el-option
-              v-for="mod in activeModules"
-              :key="mod.code"
-              :label="mod.name"
-              :value="mod.code"
+              v-for="entry in availableEntries"
+              :key="entry.code"
+              :label="entry.name"
+              :value="entry.code"
             >
               <div class="module-option">
                 <el-icon :size="16">
-                  <component :is="getModuleIcon(mod.code)" />
+                  <component :is="getModuleIcon(entry.icon)" />
                 </el-icon>
-                <span>{{ mod.name }}</span>
+                <span>{{ entry.name }}</span>
                 <el-tag size="small" type="info" class="resource-count-tag">
-                  {{ getModuleResourceCount(mod.code) }}项
+                  {{ getModuleResourceCount(entry.code) }}项
                 </el-tag>
               </div>
             </el-option>
@@ -58,11 +58,12 @@
 
     <div class="content-wrapper">
       <!-- 左侧：器材选择器 -->
-      <div class="selector-section">
+        <div class="selector-section">
         <ResourceSelector
           v-model="selectedResource"
           v-model:category="selectedCategory"
           :module-code="currentModuleCode"
+          :equipment-catalog-groups="currentEntry.catalogGroups"
           resource-type="equipment"
         />
       </div>
@@ -74,8 +75,8 @@
             <div class="card-header">
               <div class="equipment-info">
                 <span class="equipment-name">{{ selectedResource.name }}</span>
-                <el-tag :type="getCategoryTagType(selectedResource.category || '')" size="small">
-                  {{ getCategoryLabel(selectedResource.category || '') }}
+                <el-tag :type="getCategoryTagType(selectedResource)" size="small">
+                  {{ getCategoryLabel(selectedResource) }}
                 </el-tag>
               </div>
             </div>
@@ -133,11 +134,23 @@ import { ElMessage } from 'element-plus'
 import { CircleCheck, Plus, User, ArrowLeft, MagicStick, Sunny, ChatDotRound, Switch } from '@element-plus/icons-vue'
 import ResourceSelector from '@/components/resources/ResourceSelector.vue'
 import DataEntryForm from '@/components/equipment/DataEntryForm.vue'
-import type { ResourceItem, ModuleMetadata } from '@/types/module'
+import type { ResourceItem } from '@/types/module'
 import { ModuleCode } from '@/types/module'
 import { EquipmentTrainingAPI, StudentAPI } from '@/database/api'
 import { ResourceAPI } from '@/database/resource-api'
-import { ModuleRegistry } from '@/core/module-registry'
+import { useAuthStore } from '@/stores/auth'
+import {
+  getEquipmentCatalogGroupTagType,
+} from '@/utils/equipment-catalog-group'
+import {
+  getAllEquipmentTrainingEntries,
+  getEquipmentTrainingEntry,
+  matchesEquipmentTrainingEntry,
+  resolveEquipmentTrainingEntryCode,
+  resolveEquipmentTrainingEntryCodeFromResource,
+  type EquipmentTrainingEntryCode,
+} from '@/utils/equipment-training-entry'
+import { resolveEquipmentSourceCategory } from '@/utils/physical-equipment-source-category'
 
 // 类型定义
 interface Student {
@@ -150,44 +163,23 @@ interface Student {
   avatar_path?: string
 }
 
-// 简洁的中文标签映射
-const SIMPLE_CATEGORY_LABELS: Record<string, string> = {
-  tactile: '触觉',
-  olfactory: '嗅觉',
-  visual: '视觉',
-  auditory: '听觉',
-  gustatory: '味觉',
-  proprioceptive: '本体觉',
-  integration: '感官综合'
-}
-
-// 分类对应的 Tag 类型
-const CATEGORY_TAG_TYPES: Record<string, '' | 'success' | 'warning' | 'danger' | 'info' | 'primary'> = {
-  tactile: 'danger',
-  olfactory: 'success',
-  visual: 'primary',
-  auditory: 'warning',
-  gustatory: 'info',
-  proprioceptive: '',
-  integration: 'success'
-}
-
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
-// 当前模块代码（从 URL 参数获取，默认 sensory）
-const currentModuleCode = ref<ModuleCode>(
-  ((route.query.module as ModuleCode) || ModuleCode.SENSORY)
+// 当前入口组代码（优先使用新 entry 参数，兼容旧 module 参数）
+const currentEntryCode = ref<EquipmentTrainingEntryCode>(
+  resolveEquipmentTrainingEntryCode(route.query.entry, route.query.module)
 )
 
-// 获取当前模块信息
-const currentModule = computed(() => {
-  return ModuleRegistry.getModule(currentModuleCode.value as ModuleCode)
+const currentEntry = computed(() => {
+  return getEquipmentTrainingEntry(currentEntryCode.value)
 })
 
-// 获取所有活跃模块
-const activeModules = computed(() => {
-  return ModuleRegistry.getActiveModules()
+const currentModuleCode = computed<ModuleCode>(() => currentEntry.value.moduleCode)
+
+const availableEntries = computed(() => {
+  return getAllEquipmentTrainingEntries().filter((entry) => authStore.hasModuleAccess(entry.moduleCode))
 })
 
 // 学生相关状态
@@ -220,57 +212,64 @@ const sourceTagLabel = computed(() => fromDashboard.value ? '来自首页日程'
 const sourceBackLabel = computed(() => fromDashboard.value ? '返回首页' : '返回计划')
 
 // 获取模块图标组件
-const getModuleIcon = (moduleCode: string) => {
+const getModuleIcon = (iconName: string) => {
   const iconMap: Record<string, any> = {
-    [ModuleCode.SENSORY]: MagicStick,     // 感官统合 - 魔法棒
-    [ModuleCode.EMOTIONAL]: Sunny,        // 情绪调节 - 太阳
-    [ModuleCode.SOCIAL]: ChatDotRound     // 社交沟通 - 对话
+    MagicStick,
+    Sunny,
+    ChatDotRound,
+    Operation: MagicStick,
+    MoonNight: Sunny,
+    House: User,
   }
-  return iconMap[moduleCode] || MagicStick
+  return iconMap[iconName] || MagicStick
 }
 
-// 获取模块资源数量
-const getModuleResourceCount = (moduleCode: string): number => {
+// 获取入口组资源数量
+const getModuleResourceCount = (entryCode: EquipmentTrainingEntryCode): number => {
   try {
     const api = new ResourceAPI()
     const resources = api.getResources({
-      moduleCode: moduleCode as ModuleCode,
+      moduleCode: getEquipmentTrainingEntry(entryCode).moduleCode,
       resourceType: 'equipment'
     })
-    return resources.length
+    return resources.filter((resource) => matchesEquipmentTrainingEntry(resource, entryCode)).length
   } catch {
     return 0
   }
 }
 
 // 获取分类标签
-const getCategoryLabel = (category: string) => {
-  return SIMPLE_CATEGORY_LABELS[category] || category
+const getCategoryLabel = (resource: ResourceItem) => {
+  return resolveEquipmentSourceCategory(resource)
 }
 
 // 获取分类 Tag 类型
-const getCategoryTagType = (category: string) => {
-  return CATEGORY_TAG_TYPES[category] || ''
+const getCategoryTagType = (resource: ResourceItem) => {
+  return getEquipmentCatalogGroupTagType(resource)
 }
 
-// 处理模块切换
-const handleModuleChange = (newModuleCode: ModuleCode) => {
+function syncRouteEntry(entryCode: EquipmentTrainingEntryCode) {
+  router.replace({
+    path: `/equipment/quick-entry/${studentId.value}`,
+    query: {
+      entry: entryCode,
+      module: getEquipmentTrainingEntry(entryCode).moduleCode,
+      ...(launchSource.value && { from: launchSource.value }),
+      ...(preselectedEquipmentId.value && { equipmentId: preselectedEquipmentId.value }),
+      ...(planId.value && { planId: planId.value }),
+      ...(resourceName.value && { resourceName: resourceName.value })
+    }
+  })
+}
+
+// 处理入口切换
+const handleEntryChange = (newEntryCode: EquipmentTrainingEntryCode) => {
   // 清空当前选择
   selectedResource.value = null
   selectedCategory.value = 'all'
 
-  // 更新 URL（保持学生ID不变）
-  router.replace({
-    path: `/equipment/quick-entry/${studentId.value}`,
-    query: {
-      module: newModuleCode,
-      ...(launchSource.value && { from: launchSource.value }),
-      ...(preselectedEquipmentId.value && { equipmentId: preselectedEquipmentId.value }),
-      ...(planId.value && { planId: planId.value })
-    }
-  })
-
-  ElMessage.success(`已切换到 ${ModuleRegistry.getModule(newModuleCode)?.name || '器材训练'}`)
+  syncRouteEntry(newEntryCode)
+  ElMessage.success(`已切换到 ${getEquipmentTrainingEntry(newEntryCode).name}`)
 }
 
 // 加载学生信息
@@ -346,7 +345,10 @@ const backToStudentList = () => {
   } else {
     router.push({
       path: '/equipment/select-student',
-      query: { module: currentModuleCode.value }
+      query: {
+        entry: currentEntryCode.value,
+        module: currentModuleCode.value
+      }
     })
   }
 }
@@ -360,7 +362,10 @@ const goBackToStudentList = () => {
   } else {
     router.push({
       path: '/equipment/select-student',
-      query: { module: currentModuleCode.value }
+      query: {
+        entry: currentEntryCode.value,
+        module: currentModuleCode.value
+      }
     })
   }
 }
@@ -374,11 +379,13 @@ const autoSelectEquipment = async () => {
     const resource = api.getResourceById(preselectedEquipmentId.value)
 
     if (resource) {
-      selectedResource.value = resource as unknown as ResourceItem
-      // 设置分类筛选
-      if (resource.category) {
-        selectedCategory.value = resource.category
+      const resourceEntryCode = resolveEquipmentTrainingEntryCodeFromResource(resource)
+      if (resourceEntryCode !== currentEntryCode.value) {
+        currentEntryCode.value = resourceEntryCode
+        syncRouteEntry(resourceEntryCode)
       }
+      selectedResource.value = resource as unknown as ResourceItem
+      selectedCategory.value = resolveEquipmentSourceCategory(resource)
       ElMessage.success(`已自动选择器材「${resource.name}」`)
     } else {
       ElMessage.warning(`未找到预设器材，请手动选择`)
@@ -407,6 +414,13 @@ onMounted(async () => {
     }, 500)
   }
 })
+
+watch(
+  () => [route.query.entry, route.query.module],
+  ([entry, module]) => {
+    currentEntryCode.value = resolveEquipmentTrainingEntryCode(entry, module)
+  }
+)
 </script>
 
 <style scoped>

@@ -28,25 +28,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import StudentSelector from '@/components/common/StudentSelector.vue'
-import { ModuleRegistry } from '@/core/module-registry'
-import type { ModuleMetadata } from '@/types/module'
+import {
+  getEquipmentTrainingEntry,
+  resolveEquipmentTrainingEntryCode,
+} from '@/utils/equipment-training-entry'
 
-// 获取路由参数中的模块代码
 const route = useRoute()
 const router = useRouter()
 
-const moduleCode = computed(() => route.query.module as string || 'sensory')
-
-// 获取模块信息
-const currentModule = computed(() => {
-  return ModuleRegistry.getModule(moduleCode.value as any)
+const currentEntry = computed(() => {
+  return getEquipmentTrainingEntry(route.query.entry, route.query.module)
 })
 
-// 模块名称
-const moduleName = computed(() => currentModule.value?.name || '器材训练')
+const entryCode = computed(() => resolveEquipmentTrainingEntryCode(route.query.entry, route.query.module))
+
+const moduleName = computed(() => currentEntry.value.name || '器材训练')
 
 // 选择学生标题
 const selectStudentTitle = computed(() => `选择学生 - ${moduleName.value}`)
@@ -62,8 +61,10 @@ const equipmentModuleTag = {
 const handleStudentSelect = (student: { id: number }) => {
   router.push({
     path: `/equipment/quick-entry/${student.id}`,
-    query: { module: moduleCode.value }
+    query: {
+      entry: entryCode.value,
+      module: currentEntry.value.moduleCode
+    }
   })
 }
 </script>
-

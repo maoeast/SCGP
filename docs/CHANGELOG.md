@@ -6,6 +6,20 @@
 
 ## [2026-02-27] 最新归档条目（从 PROJECT_CONTEXT.md 迁移）
 
+## [2026-03-26] physical-equipment CSV 导入方案落地
+- 新增 `src/database/physical-equipment-parser.ts` 与 `src/database/physical-equipment-data.ts`
+- 当前四份 physical-equipment CSV 草稿已可规范化为 `168` 条系统资源：
+  - `45 emotional-regulation`
+  - `50 social-communication`
+  - `35 fine-motor`
+  - `38 soothing-aids`
+- `src/database/init.ts` 已支持在数据库启动时补齐缺失的 physical-equipment 系统资源
+- 新增 `scripts/import-physical-equipment-resources.cjs` 与 `npm run import:physical-equipment`
+- `ResourceSelector`、`TrainingResources`、`PlanList` 已支持按 physical-equipment metadata / `resourceCode` 解析新规则封面图
+- 已明确“授权模块层”和“展示大类层”拆分：
+  - 授权继续沿用顶层 `moduleCode`
+  - 器材训练 / 资源中心新增大类推导：`感官训练 / 情绪调节 / 社交沟通 / 生活自理 / 精细动作 / 安抚教具`
+
 ## [2026-03-26] emotional 默认完整 seed 与物理器材目录规范
 - emotional 默认资源初始化已从 8 条 demo 切换为完整 `80 emotion_scene + 60 care_scene`
 - `src/database/init.ts` 已支持在无训练记录时自动清理旧 `emotional_demo_seed` 并替换为完整 seed

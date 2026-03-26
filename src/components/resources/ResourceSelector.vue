@@ -25,7 +25,7 @@
         <img v-else :src="getResourceImage(item)" :alt="item.name" class="resource-image" />
         <div class="resource-info">
           <div class="resource-name">{{ item.name }}</div>
-          <div class="resource-category">{{ getCategoryLabel(item.category) }}</div>
+          <div class="resource-category">{{ getItemCategoryLabel(item) }}</div>
         </div>
       </div>
     </div>
@@ -35,21 +35,19 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { CircleCheckFilled } from '@element-plus/icons-vue'
 import type { ModuleCode, ResourceItem, ResourceQueryOptions } from '@/types/module'
-import { CATEGORY_COLORS, CATEGORY_LABELS } from '@/types/equipment'
-import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
+import { CATEGORY_LABELS } from '@/types/equipment'
 import { ResourceAPI } from '@/database/resource-api'
+import { type EquipmentCatalogGroupCode, resolveEquipmentCatalogGroupCode } from '@/utils/equipment-catalog-group'
+import {
+  buildEquipmentSourceCategoryCounts,
+  resolveEquipmentSourceCategory,
+  sortEquipmentSourceCategoryKeys,
+} from '@/utils/physical-equipment-source-category'
+import { resolveResourceItemCoverImage } from '@/utils/resource-cover'
 
 // 简洁的中文标签映射（用于分类按钮）
 const SIMPLE_CATEGORY_LABELS: Record<string, string> = {
-  tactile: '触觉',
-  olfactory: '嗅觉',
-  visual: '视觉',
-  auditory: '听觉',
-  gustatory: '味觉',
-  proprioceptive: '本体觉',
-  integration: '感官综合',
   // 游戏分类
   audio: '听觉游戏'
 }
@@ -62,6 +60,7 @@ interface Props {
   keyword?: string
   tags?: string[]
   favoritesOnly?: boolean
+  equipmentCatalogGroups?: EquipmentCatalogGroupCode[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -71,7 +70,8 @@ const props = withDefaults(defineProps<Props>(), {
   category: 'all',
   keyword: '',
   tags: undefined,
-  favoritesOnly: false
+  favoritesOnly: false,
+  equipmentCatalogGroups: undefined
 })
 
 const emit = defineEmits<{
@@ -91,14 +91,23 @@ const debounceTimer = ref<number | null>(null)
 
 // 动态生成分类按钮（从 categoryCounts 获取）
 const categoryButtons = computed(() => {
-  const buttons: { key: string; label: string; color: string }[] = []
-  // 遍历 categoryCounts，跳过 'all'
-  for (const [key, count] of Object.entries(categoryCounts.value)) {
+  const buttons: { key: string; label: string }[] = []
+  const entries = Object.entries(categoryCounts.value)
+  const categoryEntries = props.resourceType === 'equipment'
+    ? sortEquipmentSourceCategoryKeys(
+        entries
+          .filter(([key, count]) => key !== 'all' && count > 0)
+          .map(([key]) => key)
+      ).map((key) => [key, categoryCounts.value[key] || 0] as const)
+    : entries.filter(([key, count]) => key !== 'all' && count > 0)
+
+  for (const [key, count] of categoryEntries) {
     if (key !== 'all' && count > 0) {
       buttons.push({
         key,
-        label: SIMPLE_CATEGORY_LABELS[key] || key,
-        color: CATEGORY_COLORS[key as keyof typeof CATEGORY_COLORS] || '#909399'
+        label: props.resourceType === 'equipment'
+          ? key
+          : SIMPLE_CATEGORY_LABELS[key] || key,
       })
     }
   }
@@ -107,6 +116,11 @@ const categoryButtons = computed(() => {
 
 const filteredResources = computed(() => {
   let items = resources.value
+
+  if (props.resourceType === 'equipment' && selectedCategory.value !== 'all') {
+    items = items.filter((item) => resolveEquipmentSourceCategory(item) === selectedCategory.value)
+  }
+
   if (props.tags && props.tags.length > 0) {
     items = items.filter(item => item.tags?.some(tag => props.tags!.includes(tag)))
   }
@@ -139,13 +153,15 @@ const selectResource = (item: ResourceItem) => {
 }
 
 const getResourceImage = (item: ResourceItem) => {
-  // 使用 legacy_id 获取图片（图片文件使用旧表 ID 命名）
-  // 如果没有 legacy_id，使用新表 ID
-  const id = item.legacyId ?? item.id
-  return getEquipmentImageUrl(item.category as any, id, item.name)
+  return resolveResourceItemCoverImage(item)
 }
 
-const getCategoryLabel = (category: string | undefined) => {
+const getItemCategoryLabel = (item: ResourceItem) => {
+  if (props.resourceType === 'equipment') {
+    return resolveEquipmentSourceCategory(item)
+  }
+
+  const category = item.category
   if (!category) return ''
   // 对于卡片中的标签，使用简洁版本
   return SIMPLE_CATEGORY_LABELS[category] || CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] || category
@@ -201,15 +217,23 @@ const loadData = async () => {
     const queryOptions: ResourceQueryOptions = {
       moduleCode: props.moduleCode,
       resourceType: props.resourceType,
-      category: selectedCategory.value !== 'all' ? selectedCategory.value : undefined,
+      category: props.resourceType !== 'equipment' && selectedCategory.value !== 'all'
+        ? selectedCategory.value
+        : undefined,
       keyword: searchKeyword.value || undefined,
       tags: props.tags,
       favoritesOnly: props.favoritesOnly
     }
-    const data = api.value.getResources(queryOptions)
+    let data = api.value.getResources(queryOptions)
+    if (props.resourceType === 'equipment' && props.equipmentCatalogGroups && props.equipmentCatalogGroups.length > 0) {
+      const allowedGroups = new Set(props.equipmentCatalogGroups)
+      data = data.filter((item) => allowedGroups.has(resolveEquipmentCatalogGroupCode(item)))
+    }
+
     resources.value = data
-    const counts = api.value.getCategoryCounts(props.moduleCode, props.resourceType)
-    categoryCounts.value = counts
+    categoryCounts.value = props.resourceType === 'equipment'
+      ? buildEquipmentSourceCategoryCounts(data)
+      : api.value.getCategoryCounts(props.moduleCode, props.resourceType)
   } catch (error: any) {
     console.error('Load failed:', error)
     ElMessage.error('Failed to load resources')
@@ -218,7 +242,7 @@ const loadData = async () => {
   }
 }
 
-watch(() => [props.moduleCode, props.resourceType, props.category, props.tags], () => {
+watch(() => [props.moduleCode, props.resourceType, props.category, props.tags, props.equipmentCatalogGroups], () => {
   selectedCategory.value = props.category || 'all'
   loadData()
 }, { deep: true })

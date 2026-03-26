@@ -374,6 +374,13 @@
                       <el-tag size="small">
                         {{ getModuleLabel(resource.module_code) }}
                       </el-tag>
+                      <el-tag
+                        v-if="resource.resource_type === 'equipment'"
+                        size="small"
+                        effect="plain"
+                      >
+                        {{ getPlanResourceCatalogGroupLabel(resource) }}
+                      </el-tag>
                     </div>
                     <div class="resource-config">
                       <el-row :gutter="12">
@@ -468,6 +475,19 @@
           </el-radio-group>
         </div>
 
+        <div v-if="resourceFilterType === 'equipment'" class="catalog-group-filter">
+          <el-radio-group v-model="resourceFilterCatalogGroup">
+            <el-radio-button label="all">全部分组</el-radio-button>
+            <el-radio-button
+              v-for="group in equipmentCatalogGroupOptions"
+              :key="group.value"
+              :label="group.value"
+            >
+              {{ group.label }}
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+
         <!-- 搜索 -->
         <el-input
           v-model="resourceSearchKeyword"
@@ -483,11 +503,11 @@
 
         <!-- 资源列表 -->
         <div class="resource-selection-list" v-loading="resourceLoading">
-          <el-empty v-if="availableResources.length === 0" description="暂无可用资源" />
+          <el-empty v-if="filteredAvailableResources.length === 0" description="暂无可用资源" />
 
           <div v-else class="resource-grid">
             <div
-              v-for="resource in availableResources"
+              v-for="resource in filteredAvailableResources"
               :key="resource.id"
               class="resource-option"
               :class="{ selected: isResourceSelected(resource.id) }"
@@ -503,6 +523,13 @@
                 <div class="option-meta">
                   <el-tag size="small" type="info">
                     {{ getResourceTypeLabel(resource.resourceType) }}
+                  </el-tag>
+                  <el-tag
+                    v-if="resource.resourceType === 'equipment'"
+                    size="small"
+                    effect="plain"
+                  >
+                    {{ getEquipmentResourceCatalogGroupLabel(resource) }}
                   </el-tag>
                 </div>
               </div>
@@ -603,8 +630,15 @@ import { ResourceAPI } from '@/database/resource-api'
 import { DatabaseAPI, StudentAPI } from '@/database/api'
 import type { ResourceItem } from '@/types/module'
 import { ModuleCode } from '@/types/module'
-import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
+import {
+  EQUIPMENT_CATALOG_GROUPS,
+  EQUIPMENT_CATALOG_GROUP_LABELS,
+  getEquipmentCatalogGroupLabel,
+  resolveEquipmentCatalogGroupCode,
+  type EquipmentCatalogGroupCode,
+} from '@/utils/equipment-catalog-group'
 import { buildTrainingLaunchRoute } from '@/utils/training-launch'
+import { resolveResourceCoverImage, resolveResourceItemCoverImage } from '@/utils/resource-cover'
 
 // 类型定义
 interface Student {
@@ -664,6 +698,7 @@ const selectedResources = ref<SelectedResource[]>([])
 const resourceSelectorVisible = ref(false)
 const resourceFilterModule = ref<'all' | ModuleCode>('all')
 const resourceFilterType = ref('')
+const resourceFilterCatalogGroup = ref<'all' | EquipmentCatalogGroupCode>('all')
 const resourceSearchKeyword = ref('')
 const resourceLoading = ref(false)
 const availableResources = ref<ResourceItem[]>([])
@@ -717,6 +752,24 @@ const filteredPlans = computed(() => {
   }
 
   return result
+})
+
+const equipmentCatalogGroupOptions = computed(() =>
+  EQUIPMENT_CATALOG_GROUPS.map((value) => ({
+    value,
+    label: EQUIPMENT_CATALOG_GROUP_LABELS[value],
+  }))
+)
+
+const filteredAvailableResources = computed(() => {
+  if (resourceFilterType.value !== 'equipment' || resourceFilterCatalogGroup.value === 'all') {
+    return availableResources.value
+  }
+
+  return availableResources.value.filter((resource) =>
+    resource.resourceType === 'equipment'
+    && resolveEquipmentCatalogGroupCode(resource) === resourceFilterCatalogGroup.value
+  )
 })
 
 const parsedLongTermGoals = computed(() => {
@@ -828,6 +881,18 @@ function getResourceTypeLabel(type?: string): string {
   return EXTRA_RESOURCE_TYPE_LABELS[type] || labelMap[type] || type
 }
 
+function getEquipmentResourceCatalogGroupLabel(resource: ResourceItem): string {
+  return getEquipmentCatalogGroupLabel(resource)
+}
+
+function getPlanResourceCatalogGroupLabel(resource: PlanResourceMap): string {
+  return getEquipmentCatalogGroupLabel({
+    moduleCode: resource.module_code,
+    category: resource.category,
+    metadata: resource.meta_data,
+  })
+}
+
 // 获取计划资源列表（从缓存）
 function getPlanResources(planId: number): PlanResourceMap[] {
   return planResourcesMap.value[planId] || []
@@ -868,6 +933,17 @@ function getPlanProgress(plan: TrainingPlan): number {
 }
 
 function getResourceImage(resource: PlanResourceMap): string {
+  if (resource.resource_type === 'equipment') {
+    return resolveResourceCoverImage({
+      resourceType: resource.resource_type,
+      name: resource.resource_name,
+      category: resource.category,
+      coverImage: resource.cover_image,
+      legacyId: Number(resource.legacy_id || 0) || undefined,
+      metadata: resource.meta_data,
+    })
+  }
+
   if (resource.cover_image) {
     if (!String(resource.cover_image).includes('/') && !String(resource.cover_image).startsWith('data:')) {
       return buildEmojiThumbnail(String(resource.cover_image))
@@ -875,15 +951,18 @@ function getResourceImage(resource: PlanResourceMap): string {
     return resource.cover_image
   }
   // 使用默认图片逻辑
-  return getEquipmentImageUrl('tactile', 1, resource.resource_name || '')
+  return buildEmojiThumbnail('📦')
 }
 
 function getResourceItemImage(resource: ResourceItem): string {
+  if (resource.resourceType === 'equipment') {
+    return resolveResourceItemCoverImage(resource)
+  }
+
   if (resource.coverImage && !String(resource.coverImage).includes('/') && !String(resource.coverImage).startsWith('data:')) {
     return buildEmojiThumbnail(String(resource.coverImage))
   }
-  const id = resource.legacyId ?? resource.id
-  return getEquipmentImageUrl(resource.category as any, id, resource.name)
+  return resource.coverImage || buildEmojiThumbnail('📦')
 }
 
 // 筛选处理
@@ -1230,6 +1309,7 @@ function toggleResourceSelection(resource: ResourceItem) {
 }
 
 function confirmResourceSelection() {
+  const addedCount = tempSelectedResources.value.length
   for (const resource of tempSelectedResources.value) {
     selectedResources.value.push({
       id: 0,
@@ -1238,7 +1318,10 @@ function confirmResourceSelection() {
       resource_name: resource.name,
       resource_type: resource.resourceType,
       cover_image: resource.coverImage,
+      legacy_id: resource.legacyId ?? null,
+      meta_data: resource.metadata ? JSON.stringify(resource.metadata) : null,
       module_code: resource.moduleCode,
+      category: resource.category,
       frequency: 3,
       duration_minutes: 15,
       notes: '',
@@ -1249,12 +1332,18 @@ function confirmResourceSelection() {
 
   tempSelectedResources.value = []
   resourceSelectorVisible.value = false
-  ElMessage.success(`已添加 ${tempSelectedResources.value.length || selectedResources.value.length} 个资源`)
+  ElMessage.success(`已添加 ${addedCount} 个资源`)
 }
 
 function removeResource(index: number) {
   selectedResources.value.splice(index, 1)
 }
+
+watch(resourceFilterType, (newType) => {
+  if (newType !== 'equipment') {
+    resourceFilterCatalogGroup.value = 'all'
+  }
+})
 
 // 初始化
 onMounted(() => {
@@ -1638,7 +1727,8 @@ onMounted(() => {
 }
 
 .module-filter,
-.type-filter {
+.type-filter,
+.catalog-group-filter {
   margin-bottom: 16px;
 }
 
@@ -1685,6 +1775,13 @@ onMounted(() => {
 
 .option-info {
   text-align: center;
+}
+
+.option-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
 }
 
 .option-name {

@@ -85,3 +85,54 @@ soothing-aids-weighted-lap-pad-001
 - `src/assets/images/physical-equipment/`
 
 那一侧是运行时目录，只放已经确定可被程序引用的图片资源。
+
+## 当前已落地的导入方案
+
+当前代码已实现以下链路：
+
+- 解析入口：
+  - `src/database/physical-equipment-parser.ts`
+  - `src/database/physical-equipment-data.ts`
+- 数据库落点：
+  - `sys_training_resource`
+  - `sys_tags`
+  - `sys_resource_tag_map`
+- 初始化接入：
+  - `src/database/init.ts`
+- 现有库导入脚本：
+  - `scripts/import-physical-equipment-resources.cjs`
+  - `npm run import:physical-equipment -- --yes`
+
+## 当前草稿 CSV 的真实导入规模
+
+当前四份草稿 CSV 会被规范化为：
+
+- `45 emotional-regulation`
+- `50 social-communication`
+- `35 fine-motor`
+- `38 soothing-aids`
+- 合计 `168` 条系统资源
+
+## resourceCode 生成规则（当前实现）
+
+如果输入 CSV 已显式提供 `resourceCode`，导入链路会直接使用该值。
+
+如果当前草稿 CSV 仍是中文原始列头、尚未提供 `resourceCode`，当前实现会自动生成稳定编码：
+
+```text
+{domain}-box{xx}-seq{yyy}[-variant]
+```
+
+示例：
+
+```text
+emotional-regulation-box01-seq001
+social-communication-box06-seq013
+fine-motor-box18-seq026
+soothing-aids-box29-seq038
+```
+
+说明：
+- 这套编码不再依赖数据库 `legacy_id`
+- 它基于草稿 CSV 的来源结构（domain / box / sequence）生成，便于先完成数据库导入与图片目录占位
+- 后续如果你补齐了显式 `resourceCode` 列，现有导入链路会优先采用人工确定的编码

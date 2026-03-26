@@ -45,6 +45,12 @@ npm run dev
 npm run type-check
 ```
 
+### 导入物理器材资源草稿
+
+```bash
+npm run import:physical-equipment -- --yes
+```
+
 ### 构建前端
 
 ```bash

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
+import { getEquipmentTrainingEntryModuleCode } from '@/utils/equipment-training-entry'
 
 // 路由懒加载
 const Login = () => import('@/views/Login.vue')
@@ -841,9 +842,11 @@ router.beforeEach(async (to, from, next) => {
     if (fromMeta) return fromMeta
 
     if (to.path.startsWith('/emotional')) return 'emotional'
+    if (to.path.startsWith('/equipment')) {
+      return getEquipmentTrainingEntryModuleCode(to.query.entry, to.query.module)
+    }
     if (
       to.path.startsWith('/games') ||
-      to.path.startsWith('/equipment') ||
       to.path.startsWith('/assessment') ||
       to.path.startsWith('/training-records')
     ) {

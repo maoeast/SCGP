@@ -29,7 +29,8 @@
     "build:electron:mac": "npm run build:web && electron-builder --mac",
     "build:electron:linux": "npm run build:web && electron-builder --linux",
     "generate:activation": "node scripts/generate-activation.js",
-    "reset:sensory-equipment": "node scripts/reset-sensory-equipment-resources.cjs"
+    "reset:sensory-equipment": "node scripts/reset-sensory-equipment-resources.cjs",
+    "import:physical-equipment": "node scripts/import-physical-equipment-resources.cjs"
   },
   "build": {
     "appId": "com.sic.ads",

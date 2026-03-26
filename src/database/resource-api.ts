@@ -20,6 +20,51 @@ import type { ModuleCode, ResourceItem, ResourceQueryOptions } from '@/types/mod
  * - 分类统计（用于 UI 显示筛选按钮数量）
  */
 export class ResourceAPI extends DatabaseAPI {
+  private dedupePhysicalEquipmentResources(items: ResourceItem[]): ResourceItem[] {
+    const deduped: ResourceItem[] = []
+    const indexByKey = new Map<string, number>()
+
+    const scoreItem = (item: ResourceItem): number => {
+      const tagScore = Array.isArray(item.tags) ? item.tags.length * 10 : 0
+      const metadataScore = item.metadata ? 5 : 0
+      const customScore = item.isCustom ? 0 : 1
+      return tagScore + metadataScore + customScore
+    }
+
+    for (const item of items) {
+      const resourceCode = typeof item.metadata?.resourceCode === 'string'
+        ? item.metadata.resourceCode.trim()
+        : ''
+      const isPhysicalEquipment = item.resourceType === 'equipment'
+        && item.metadata?.kind === 'physical_equipment'
+        && resourceCode.length > 0
+
+      if (!isPhysicalEquipment) {
+        deduped.push(item)
+        continue
+      }
+
+      const existingIndex = indexByKey.get(resourceCode)
+      if (existingIndex === undefined) {
+        indexByKey.set(resourceCode, deduped.length)
+        deduped.push(item)
+        continue
+      }
+
+      const existingItem = deduped[existingIndex]
+      if (!existingItem) {
+        deduped[existingIndex] = item
+        continue
+      }
+
+      if (scoreItem(item) > scoreItem(existingItem)) {
+        deduped[existingIndex] = item
+      }
+    }
+
+    return deduped
+  }
+
   /**
    * 根据查询选项获取资源列表
    *
@@ -141,8 +186,9 @@ export class ResourceAPI extends DatabaseAPI {
 
     const results = this.query(fullSql, params)
 
-    // 转换为统一的 ResourceItem 格式
-    return results.map((row: any) => this.mapToResourceItem(row))
+    return this.dedupePhysicalEquipmentResources(
+      results.map((row: any) => this.mapToResourceItem(row))
+    )
   }
 
   /**
@@ -230,7 +276,9 @@ export class ResourceAPI extends DatabaseAPI {
     console.log('[ResourceAPI.getAllResourcesForAdmin] Params:', params)
 
     const results = this.query(fullSql, params)
-    return results.map((row: any) => this.mapToResourceItem(row))
+    return this.dedupePhysicalEquipmentResources(
+      results.map((row: any) => this.mapToResourceItem(row))
+    )
   }
 
   /**

@@ -47,6 +47,20 @@
         </el-radio-group>
       </div>
 
+      <div v-if="selectedType === 'equipment'" class="filter-section">
+        <div class="section-title">器材目录分组</div>
+        <el-radio-group v-model="selectedEquipmentCatalogGroup" @change="handleEquipmentCatalogGroupChange">
+          <el-radio-button value="all">全部分组</el-radio-button>
+          <el-radio-button
+            v-for="group in equipmentCatalogGroupOptions"
+            :key="group.value"
+            :value="group.value"
+          >
+            {{ group.label }}
+          </el-radio-button>
+        </el-radio-group>
+      </div>
+
       <!-- 状态筛选 -->
       <div class="filter-section">
         <div class="section-title">状态筛选</div>
@@ -142,7 +156,7 @@
         <el-table-column label="分类" width="100" align="center">
           <template #default="{ row }">
             <el-tag size="small" effect="plain">
-              {{ getCategoryLabel(row.category) }}
+              {{ getResourceCategoryLabel(row) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -643,10 +657,17 @@ import {
 import { ResourceAPI } from '@/database/resource-api'
 import type { ResourceItem, ModuleCode } from '@/types/module'
 import type { CareSceneResourceMeta, EmotionSceneResourceMeta } from '@/types/emotional'
-import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
 import CareExpressionEditor from './editors/CareExpressionEditor.vue'
 import EmotionSceneEditor from './editors/EmotionSceneEditor.vue'
 import EmotionalResourcePackDialog from './components/EmotionalResourcePackDialog.vue'
+import {
+  EQUIPMENT_CATALOG_GROUPS,
+  EQUIPMENT_CATALOG_GROUP_LABELS,
+  getEquipmentCatalogGroupLabel,
+  resolveEquipmentCatalogGroupCode,
+  type EquipmentCatalogGroupCode,
+} from '@/utils/equipment-catalog-group'
+import { resolveResourceItemCoverImage } from '@/utils/resource-cover'
 import {
   normalizeCareSceneEditorModel,
   normalizeEmotionSceneEditorModel,
@@ -703,6 +724,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   cognition: '认知能力',
   social: '社交能力',
   emotional: '情绪管理',
+  'emotional-regulation': '情绪调节',
+  'social-communication': '社交沟通',
+  'fine-motor': '精细动作',
+  'soothing-aids': '安抚教具',
   daily_life: '日常生活',
   peer_interaction: '同伴互动',
   peer_support: '同伴支持',
@@ -720,6 +745,7 @@ const deleting = ref(false)
 const searchKeyword = ref('')
 const selectedModule = ref('sensory')
 const selectedType = ref('')
+const selectedEquipmentCatalogGroup = ref<'all' | EquipmentCatalogGroupCode>('all')
 const selectedStatus = ref<string[]>(['active'])
 const currentPage = ref(1)
 const pageSize = ref(20)
@@ -776,6 +802,13 @@ const currentModuleName = computed(() => {
 const filteredResourcePool = computed(() => {
   let result = allResources.value
 
+  if (selectedType.value === 'equipment' && selectedEquipmentCatalogGroup.value !== 'all') {
+    result = result.filter(resource =>
+      resource.resourceType === 'equipment'
+      && resolveEquipmentCatalogGroupCode(resource) === selectedEquipmentCatalogGroup.value
+    )
+  }
+
   // 状态筛选
   if (selectedStatus.value.includes('active') && !selectedStatus.value.includes('disabled')) {
     result = result.filter(r => r.isActive)
@@ -805,6 +838,13 @@ const customCount = computed(() => filteredResourcePool.value.filter(r => r.isCu
 
 const exportableEmotionalResources = computed(() =>
   filteredResourcePool.value.filter((resource) => isEmotionalResourceType(resource.resourceType))
+)
+
+const equipmentCatalogGroupOptions = computed(() =>
+  EQUIPMENT_CATALOG_GROUPS.map((value) => ({
+    value,
+    label: EQUIPMENT_CATALOG_GROUP_LABELS[value],
+  }))
 )
 
 // 分类选项
@@ -848,22 +888,7 @@ const createRules: FormRules = {
 // 获取缩略图 URL
 function getThumbnailUrl(resource: ResourceItem | null): string {
   if (!resource) return ''
-
-  // 器材类资源使用 legacy_id 加载图片
-  if (resource.resourceType === 'equipment') {
-    const legacyId = resource.legacyId
-    if (legacyId) {
-      const category = resource.category || 'tactile'
-      return getEquipmentImageUrl(category as any, legacyId, resource.name)
-    }
-  }
-
-  // 其他资源使用 cover_image
-  if (resource.coverImage) {
-    return resource.coverImage
-  }
-
-  return ''
+  return resolveResourceItemCoverImage(resource)
 }
 
 // 获取资源类型图标
@@ -898,6 +923,14 @@ function getTypeIconClass(type: string) {
 function getCategoryLabel(category: string | undefined): string {
   if (!category) return '未分类'
   return CATEGORY_LABELS[category] || category
+}
+
+function getResourceCategoryLabel(resource: ResourceItem): string {
+  if (resource.resourceType === 'equipment') {
+    return getEquipmentCatalogGroupLabel(resource)
+  }
+
+  return getCategoryLabel(resource.category)
 }
 
 // 获取建议标签
@@ -1056,6 +1089,10 @@ function loadAvailableTags() {
 function handleFilterChange() {
   currentPage.value = 1
   loadResources()
+}
+
+function handleEquipmentCatalogGroupChange() {
+  currentPage.value = 1
 }
 
 // 分页变化
@@ -1418,6 +1455,12 @@ watch(() => createForm.resourceType, (newType) => {
     createForm.moduleCode = 'emotional'
   }
   ensureCreateEmotionalEditorState(newType)
+})
+
+watch(selectedType, (newType) => {
+  if (newType !== 'equipment') {
+    selectedEquipmentCatalogGroup.value = 'all'
+  }
 })
 
 defineExpose({

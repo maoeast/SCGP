@@ -49,7 +49,10 @@ export interface PlanResourceMap {
   resource_name?: string
   resource_type?: string
   cover_image?: string
+  legacy_id?: number | null
+  meta_data?: string | null
   module_code?: string
+  category?: string
   // 配置字段
   frequency: number | null       // 训练频次（次/周）
   duration_minutes: number | null // 时长建议
@@ -176,6 +179,9 @@ export class PlanAPI extends DatabaseAPI {
         tr.name as resource_name,
         tr.resource_type,
         tr.cover_image,
+        tr.legacy_id,
+        tr.meta_data,
+        tr.category,
         tr.module_code
        FROM sys_plan_resource_map prm
        INNER JOIN sys_training_resource tr ON prm.resource_id = tr.id
@@ -437,6 +443,8 @@ export class PlanAPI extends DatabaseAPI {
         tr.name as resource_name,
         tr.resource_type,
         tr.cover_image,
+        tr.legacy_id,
+        tr.meta_data,
         tr.module_code,
         tr.category
        FROM sys_plan_resource_map prm
