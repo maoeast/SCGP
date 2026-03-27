@@ -1,4 +1,6 @@
 import { getDatabase } from './init';
+import type { ModuleCode } from '@/types/module';
+import { resolveTrainingEntryCode, resolveTrainingEntryCodeFromResource } from '@/utils/training-entry';
 
 // 数据库基础操作类
 // 【Plan B】使用主线程 SQLWrapper，防抖保存已内置
@@ -117,6 +119,45 @@ export class DatabaseAPI {
         console.error('[DatabaseAPI] 强制保存失败:', error)
       }
     }
+  }
+}
+
+function parseResourceMetadata(metaData: unknown): Record<string, any> | undefined {
+  if (!metaData) {
+    return undefined
+  }
+
+  if (typeof metaData !== 'string') {
+    return typeof metaData === 'object' ? metaData as Record<string, any> : undefined
+  }
+
+  try {
+    const parsed = JSON.parse(metaData)
+    return parsed && typeof parsed === 'object' ? parsed as Record<string, any> : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function buildTrainingEntryResource(
+  resourceRow: {
+    module_code?: string
+    resource_type?: string
+    category?: string
+    meta_data?: unknown
+  } | null | undefined,
+  fallback: {
+    moduleCode?: string | null
+    resourceType?: string | null
+    category?: string | null
+    metadata?: unknown
+  } = {}
+) {
+  return {
+    moduleCode: (resourceRow?.module_code || fallback.moduleCode || 'sensory') as ModuleCode,
+    resourceType: resourceRow?.resource_type || fallback.resourceType || 'game',
+    category: resourceRow?.category || fallback.category || '',
+    metadata: parseResourceMetadata(resourceRow?.meta_data ?? fallback.metadata),
   }
 }
 
@@ -1966,6 +2007,7 @@ export class GameTrainingAPI extends DatabaseAPI {
     resource_id?: number | null
     resource_type?: string | null
     session_type?: string | null
+    entry_code?: string | null
     timestamp: number
     duration: number
     accuracy_rate: number
@@ -1981,21 +2023,40 @@ export class GameTrainingAPI extends DatabaseAPI {
     const classId = student?.current_class_id || null
     const className = student?.current_class_name || null
     const moduleCode = data.module_code || 'sensory' // 默认为感官统合模块
+    let entryCode = data.entry_code || null
+
+    if (!entryCode && data.resource_id) {
+      const resourceRow = this.queryOne(
+        'SELECT module_code, resource_type, category, meta_data FROM sys_training_resource WHERE id = ?',
+        [data.resource_id]
+      )
+      entryCode = resolveTrainingEntryCodeFromResource(
+        buildTrainingEntryResource(resourceRow, {
+          moduleCode,
+          resourceType: data.resource_type || data.session_type || 'game',
+        })
+      )
+    }
+
+    if (!entryCode) {
+      entryCode = resolveTrainingEntryCode(data.session_type || data.resource_type, moduleCode)
+    }
 
     const rawDataJson = JSON.stringify(data.raw_data)
     this.execute(`
       INSERT INTO training_records (
         student_id, task_id, resource_id, resource_type, session_type,
-        timestamp, duration, accuracy_rate, avg_response_time, raw_data,
+        entry_code, timestamp, duration, accuracy_rate, avg_response_time, raw_data,
         class_id, class_name, module_code
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       data.student_id,
       data.task_id ?? null,
       data.resource_id ?? null,
       data.resource_type ?? null,
       data.session_type ?? null,
+      entryCode,
       data.timestamp,
       data.duration,
       data.accuracy_rate,
@@ -2011,7 +2072,7 @@ export class GameTrainingAPI extends DatabaseAPI {
   /**
    * 获取学生的所有训练记录
    */
-  getStudentTrainingRecords(studentId: number, taskId?: number, moduleCode?: string): any[] {
+  getStudentTrainingRecords(studentId: number, taskId?: number, moduleCode?: string, entryCode?: string): any[] {
     let sql = `
       SELECT
         tr.id,
@@ -2020,6 +2081,7 @@ export class GameTrainingAPI extends DatabaseAPI {
         tr.resource_id,
         tr.resource_type,
         tr.session_type,
+        tr.entry_code,
         tr.timestamp,
         tr.duration,
         tr.accuracy_rate,
@@ -2050,6 +2112,11 @@ export class GameTrainingAPI extends DatabaseAPI {
       params.push(moduleCode)
     }
 
+    if (entryCode) {
+      sql += ' AND tr.entry_code = ?'
+      params.push(entryCode)
+    }
+
     sql += ' ORDER BY tr.timestamp DESC'
 
     const records = this.query(sql, params)
@@ -2064,6 +2131,7 @@ export class GameTrainingAPI extends DatabaseAPI {
         resourceId: record.resource_id,
         resourceType: record.resource_type,
         sessionType: record.session_type,
+        entryCode: record.entry_code,
         accuracy: record.accuracy_rate,
         avgResponseTime: record.avg_response_time,
         moduleCode: record.module_code,
@@ -2084,6 +2152,7 @@ export class GameTrainingAPI extends DatabaseAPI {
         resource_id,
         resource_type,
         session_type,
+        entry_code,
         timestamp,
         duration,
         accuracy_rate,
@@ -2105,6 +2174,7 @@ export class GameTrainingAPI extends DatabaseAPI {
       resourceId: record.resource_id,
       resourceType: record.resource_type,
       sessionType: record.session_type,
+      entryCode: record.entry_code,
       accuracy: record.accuracy_rate,
       avgResponseTime: record.avg_response_time,
       raw_data: rawData
@@ -2152,6 +2222,19 @@ export class GameTrainingAPI extends DatabaseAPI {
   countRecordsByModule(moduleCode: string, studentId?: number): number {
     let sql = 'SELECT COUNT(*) as count FROM training_records WHERE module_code = ?'
     const params: any[] = [moduleCode]
+
+    if (studentId) {
+      sql += ' AND student_id = ?'
+      params.push(studentId)
+    }
+
+    const result = this.queryOne(sql, params)
+    return result?.count || 0
+  }
+
+  countRecordsByEntry(entryCode: string, studentId?: number): number {
+    let sql = 'SELECT COUNT(*) as count FROM training_records WHERE entry_code = ?'
+    const params: any[] = [entryCode]
 
     if (studentId) {
       sql += ' AND student_id = ?'
@@ -2262,6 +2345,7 @@ export class EquipmentTrainingAPI extends DatabaseAPI {
   createRecord(data: {
     student_id: number
     equipment_id: number
+    entry_code?: string
     score: number
     prompt_level: number
     duration_seconds?: number
@@ -2283,24 +2367,37 @@ export class EquipmentTrainingAPI extends DatabaseAPI {
 
     // 获取器材对应的模块代码
     let moduleCode = data.module_code
+    let entryCode = data.entry_code || null
     if (!moduleCode) {
       const equipment = this.queryOne(
-        'SELECT module_code FROM sys_training_resource WHERE id = ?',
+        'SELECT module_code, resource_type, category, meta_data FROM sys_training_resource WHERE id = ?',
         [data.equipment_id]
       )
       moduleCode = equipment?.module_code || 'sensory'
+
+      if (!entryCode) {
+        entryCode = resolveTrainingEntryCodeFromResource(
+          buildTrainingEntryResource(equipment, {
+            moduleCode,
+            resourceType: 'equipment',
+          })
+        )
+      }
+    } else if (!entryCode) {
+      entryCode = resolveTrainingEntryCode(undefined, moduleCode)
     }
 
     this.execute(`
       INSERT INTO equipment_training_records (
-        student_id, equipment_id, score, prompt_level,
+        student_id, equipment_id, entry_code, score, prompt_level,
         duration_seconds, notes, generated_comment,
         training_date, teacher_name, environment, batch_id,
         class_id, class_name, module_code
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       data.student_id,
       data.equipment_id,
+      entryCode,
       data.score,
       data.prompt_level,
       data.duration_seconds || null,
@@ -2342,6 +2439,7 @@ export class EquipmentTrainingAPI extends DatabaseAPI {
     end_date?: string
     equipment_id?: number
     batch_id?: number
+    entry_code?: string
   }): any[] {
     let sql = `
       SELECT
@@ -2364,10 +2462,12 @@ export class EquipmentTrainingAPI extends DatabaseAPI {
         etr.environment,
         etr.batch_id,
         etr.module_code,
+        etr.entry_code,
         etb.batch_name,
         s.name as student_name,
         etr.created_at,
-        tr.legacy_id
+        tr.legacy_id,
+        tr.meta_data as equipment_meta
       FROM equipment_training_records etr
       LEFT JOIN sys_training_resource tr ON etr.equipment_id = tr.id
       LEFT JOIN equipment_training_batches etb ON etr.batch_id = etb.id
@@ -2394,6 +2494,11 @@ export class EquipmentTrainingAPI extends DatabaseAPI {
     if (options?.batch_id) {
       sql += ` AND etr.batch_id = ?`
       params.push(options.batch_id)
+    }
+
+    if (options?.entry_code) {
+      sql += ` AND etr.entry_code = ?`
+      params.push(options.entry_code)
     }
 
     sql += ` ORDER BY etr.training_date DESC, etr.created_at DESC`
@@ -2585,6 +2690,19 @@ export class EquipmentTrainingAPI extends DatabaseAPI {
   countRecordsByModule(moduleCode: string, studentId?: number): number {
     let sql = 'SELECT COUNT(*) as count FROM equipment_training_records WHERE module_code = ?'
     const params: any[] = [moduleCode]
+
+    if (studentId) {
+      sql += ' AND student_id = ?'
+      params.push(studentId)
+    }
+
+    const result = this.queryOne(sql, params)
+    return result?.count || 0
+  }
+
+  countRecordsByEntry(entryCode: string, studentId?: number): number {
+    let sql = 'SELECT COUNT(*) as count FROM equipment_training_records WHERE entry_code = ?'
+    const params: any[] = [entryCode]
 
     if (studentId) {
       sql += ' AND student_id = ?'

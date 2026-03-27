@@ -4,15 +4,15 @@
     <div class="page-header">
       <div class="header-left">
         <h1>器材训练</h1>
-        <p class="subtitle">选择训练模块开始器材训练</p>
+        <p class="subtitle">选择训练入口组开始器材训练</p>
       </div>
     </div>
 
     <!-- 面包屑导航 -->
     <div class="breadcrumb-wrapper">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/equipment' }">器材训练</el-breadcrumb-item>
-        <el-breadcrumb-item>选择模块</el-breadcrumb-item>
+        <el-breadcrumb separator="/">
+          <el-breadcrumb-item :to="{ path: '/equipment' }">器材训练</el-breadcrumb-item>
+        <el-breadcrumb-item>选择入口</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
 

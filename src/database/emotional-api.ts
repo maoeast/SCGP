@@ -3,6 +3,7 @@ import type {
   PersistEmotionalSessionInput,
   PersistEmotionalSessionResult,
 } from '../types/emotional'
+import { resolveTrainingEntryCode } from '@/utils/training-entry'
 
 export interface EmotionalSessionRecordItem {
   sessionId: number
@@ -158,6 +159,7 @@ export class EmotionalTrainingAPI {
       resourceType: input.resourceType,
       subModule: input.subModule,
     }
+    const entryCode = resolveTrainingEntryCode(undefined, 'emotional')
 
     rawDb.run('BEGIN TRANSACTION')
 
@@ -165,15 +167,16 @@ export class EmotionalTrainingAPI {
       db.run(`
         INSERT INTO training_records (
           student_id, task_id, resource_id, resource_type, session_type,
-          timestamp, duration, accuracy_rate, avg_response_time, raw_data,
+          entry_code, timestamp, duration, accuracy_rate, avg_response_time, raw_data,
           class_id, class_name, module_code
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         input.studentId,
         null,
         input.resourceId,
         input.resourceType,
         input.subModule,
+        entryCode,
         input.startedAt,
         durationMs,
         accuracyRate,

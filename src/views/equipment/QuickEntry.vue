@@ -4,8 +4,8 @@
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item :to="{ path: '/equipment/menu' }">器材训练</el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ path: '/equipment/select-student', query: { entry: currentEntryCode, module: currentModuleCode } }">
-          {{ currentEntry.name || '选择学生' }}
+        <el-breadcrumb-item :to="selectStudentRoute">
+          {{ currentEntry?.name || '选择入口' }}
         </el-breadcrumb-item>
         <el-breadcrumb-item>快速录入</el-breadcrumb-item>
       </el-breadcrumb>
@@ -14,7 +14,7 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
-        <h1>{{ currentEntry.name || '器材训练' }} - 快速录入</h1>
+        <h1>{{ currentEntry?.name || '器材训练' }} - 快速录入</h1>
         <p class="subtitle">
           <span v-if="student">当前学生：<strong>{{ student.name }}</strong></span>
           <span v-else>加载中...</span>
@@ -24,7 +24,7 @@
         <!-- 模块快捷切换器 -->
         <div class="module-switcher">
           <el-icon class="switcher-icon"><Switch /></el-icon>
-          <span class="switcher-label">切换模块</span>
+          <span class="switcher-label">切换入口</span>
           <el-select
             v-model="currentEntryCode"
             size="default"
@@ -58,12 +58,12 @@
 
     <div class="content-wrapper">
       <!-- 左侧：器材选择器 -->
-        <div class="selector-section">
+      <div v-if="currentEntry" class="selector-section">
         <ResourceSelector
           v-model="selectedResource"
           v-model:category="selectedCategory"
           :module-code="currentModuleCode"
-          :equipment-catalog-groups="currentEntry.catalogGroups"
+          :equipment-training-entry="currentEntryCode"
           resource-type="equipment"
         />
       </div>
@@ -146,8 +146,8 @@ import {
   getAllEquipmentTrainingEntries,
   getEquipmentTrainingEntry,
   matchesEquipmentTrainingEntry,
-  resolveEquipmentTrainingEntryCode,
   resolveEquipmentTrainingEntryCodeFromResource,
+  resolveEquipmentTrainingEntryRouteCode,
   type EquipmentTrainingEntryCode,
 } from '@/utils/equipment-training-entry'
 import { resolveEquipmentSourceCategory } from '@/utils/physical-equipment-source-category'
@@ -166,17 +166,32 @@ interface Student {
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+let isRedirectingToMenu = false
 
-// 当前入口组代码（优先使用新 entry 参数，兼容旧 module 参数）
-const currentEntryCode = ref<EquipmentTrainingEntryCode>(
-  resolveEquipmentTrainingEntryCode(route.query.entry, route.query.module)
+// 当前入口组代码（器材训练内部入口，必须显式确定）
+const currentEntryCode = ref<EquipmentTrainingEntryCode | null>(
+  resolveEquipmentTrainingEntryRouteCode(route.query.entry, route.query.module)
 )
 
 const currentEntry = computed(() => {
-  return getEquipmentTrainingEntry(currentEntryCode.value)
+  return currentEntryCode.value ? getEquipmentTrainingEntry(currentEntryCode.value) : null
 })
 
-const currentModuleCode = computed<ModuleCode>(() => currentEntry.value.moduleCode)
+const currentModuleCode = computed<ModuleCode>(() => currentEntry.value?.moduleCode || ModuleCode.SENSORY)
+
+const selectStudentRoute = computed(() => {
+  if (!currentEntryCode.value || !currentEntry.value) {
+    return { path: '/equipment/menu' }
+  }
+
+  return {
+    path: '/equipment/select-student',
+    query: {
+      entry: currentEntryCode.value,
+      module: currentEntry.value.moduleCode
+    }
+  }
+})
 
 const availableEntries = computed(() => {
   return getAllEquipmentTrainingEntries().filter((entry) => authStore.hasModuleAccess(entry.moduleCode))
@@ -248,6 +263,56 @@ const getCategoryTagType = (resource: ResourceItem) => {
   return getEquipmentCatalogGroupTagType(resource)
 }
 
+function resolveEntryFromRoute(): EquipmentTrainingEntryCode | null {
+  return resolveEquipmentTrainingEntryRouteCode(route.query.entry, route.query.module)
+}
+
+function resolveEntryFromPreselectedEquipment(syncRoute = false): EquipmentTrainingEntryCode | null {
+  if (!preselectedEquipmentId.value) {
+    return null
+  }
+
+  try {
+    const api = new ResourceAPI()
+    const resource = api.getResourceById(preselectedEquipmentId.value)
+    if (!resource) {
+      return null
+    }
+
+    const resolvedEntryCode = resolveEquipmentTrainingEntryCodeFromResource(resource)
+    currentEntryCode.value = resolvedEntryCode
+
+    if (syncRoute) {
+      syncRouteEntry(resolvedEntryCode)
+    }
+
+    return resolvedEntryCode
+  } catch (error) {
+    console.error('根据器材资源解析入口失败:', error)
+    return null
+  }
+}
+
+function ensureCurrentEntry(): EquipmentTrainingEntryCode | null {
+  const routeEntryCode = resolveEntryFromRoute()
+  if (routeEntryCode) {
+    currentEntryCode.value = routeEntryCode
+    return routeEntryCode
+  }
+
+  const resourceEntryCode = resolveEntryFromPreselectedEquipment(true)
+  if (resourceEntryCode) {
+    return resourceEntryCode
+  }
+
+  if (!isRedirectingToMenu) {
+    isRedirectingToMenu = true
+    ElMessage.warning('缺少明确的器材训练入口，请先从器材训练菜单选择入口组')
+    router.replace('/equipment/menu')
+  }
+  return null
+}
+
 function syncRouteEntry(entryCode: EquipmentTrainingEntryCode) {
   router.replace({
     path: `/equipment/quick-entry/${studentId.value}`,
@@ -264,6 +329,8 @@ function syncRouteEntry(entryCode: EquipmentTrainingEntryCode) {
 
 // 处理入口切换
 const handleEntryChange = (newEntryCode: EquipmentTrainingEntryCode) => {
+  currentEntryCode.value = newEntryCode
+
   // 清空当前选择
   selectedResource.value = null
   selectedCategory.value = 'all'
@@ -296,7 +363,7 @@ const loadStudent = async () => {
 
 // 处理表单提交
 const handleSubmit = async (data: any) => {
-  if (!selectedResource.value) return
+  if (!selectedResource.value || !currentEntryCode.value || !currentEntry.value) return
 
   submitting.value = true
   try {
@@ -304,11 +371,13 @@ const handleSubmit = async (data: any) => {
     api.createRecord({
       student_id: studentId.value,
       equipment_id: selectedResource.value.id,
+      entry_code: currentEntryCode.value,
       score: data.score,
       prompt_level: data.promptLevel,
       duration_seconds: data.durationSeconds,
       notes: data.notes,
-      training_date: new Date().toISOString()
+      training_date: new Date().toISOString(),
+      module_code: currentEntry.value.moduleCode
     })
 
     if (data.saveAndContinue) {
@@ -342,6 +411,8 @@ const backToStudentList = () => {
     router.push('/dashboard')
   } else if (fromPlan.value) {
     router.push('/training-plan')
+  } else if (!currentEntryCode.value || !currentEntry.value) {
+    router.push('/equipment/menu')
   } else {
     router.push({
       path: '/equipment/select-student',
@@ -359,6 +430,8 @@ const goBackToStudentList = () => {
     router.push('/dashboard')
   } else if (fromPlan.value) {
     router.push('/training-plan')
+  } else if (!currentEntryCode.value || !currentEntry.value) {
+    router.push('/equipment/menu')
   } else {
     router.push({
       path: '/equipment/select-student',
@@ -404,6 +477,10 @@ onMounted(async () => {
     return
   }
 
+  if (!ensureCurrentEntry()) {
+    return
+  }
+
   await loadStudent()
 
   // 如果从计划跳转且指定了器材ID，自动选择
@@ -418,7 +495,10 @@ onMounted(async () => {
 watch(
   () => [route.query.entry, route.query.module],
   ([entry, module]) => {
-    currentEntryCode.value = resolveEquipmentTrainingEntryCode(entry, module)
+    const resolvedEntryCode = resolveEquipmentTrainingEntryRouteCode(entry, module)
+    if (resolvedEntryCode) {
+      currentEntryCode.value = resolvedEntryCode
+    }
   }
 )
 </script>

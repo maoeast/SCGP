@@ -1,5 +1,5 @@
 import type { EquipmentCatalogGroupCode } from '@/utils/equipment-catalog-group'
-import type { ResourceItem } from '@/types/module'
+import { ModuleCode, type ResourceItem } from '@/types/module'
 import {
   type TrainingEntryCode,
   type TrainingEntryDefinition,
@@ -28,6 +28,68 @@ export const getAllEquipmentTrainingEntries = getAllTrainingEntries
 export const getEquipmentTrainingEntry = getTrainingEntry
 export const getEquipmentTrainingEntryModuleCode = getTrainingEntryModuleCode
 export const getEquipmentTrainingEntryCatalogGroups = getTrainingEntryCatalogGroups
+
+const ROUTE_ENTRY_ALIASES: Record<string, EquipmentTrainingEntryCode> = {
+  'sensory-training': 'sensory-integration',
+  'sensory-integration': 'sensory-integration',
+  'emotional-regulation': 'emotional-regulation',
+  'social-communication': 'social-communication',
+  'fine-motor': 'fine-motor',
+  'soothing-aids': 'soothing-aids',
+  'life-skills': 'life-skills',
+}
+
+const UNIQUE_MODULE_ENTRY_MAP: Partial<Record<ModuleCode, EquipmentTrainingEntryCode>> = {
+  [ModuleCode.SOCIAL]: 'social-communication',
+  [ModuleCode.LIFE_SKILLS]: 'life-skills',
+}
+
+function normalizeRouteValue(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+export function normalizeEquipmentTrainingRouteEntryCode(
+  value: unknown
+): EquipmentTrainingEntryCode | null {
+  const normalized = normalizeRouteValue(value)
+  return ROUTE_ENTRY_ALIASES[normalized] || null
+}
+
+export function resolveEquipmentTrainingEntryRouteCode(
+  entryValue?: unknown,
+  moduleValue?: unknown
+): EquipmentTrainingEntryCode | null {
+  const entryCode = normalizeEquipmentTrainingRouteEntryCode(entryValue)
+  if (entryCode) {
+    return entryCode
+  }
+
+  const moduleCode = normalizeRouteValue(moduleValue) as ModuleCode
+  return UNIQUE_MODULE_ENTRY_MAP[moduleCode] || null
+}
+
+export function resolveEquipmentTrainingEntryRouteModuleCode(
+  entryValue?: unknown,
+  moduleValue?: unknown
+): ModuleCode | '' {
+  const entryCode = resolveEquipmentTrainingEntryRouteCode(entryValue, moduleValue)
+  if (entryCode) {
+    return getEquipmentTrainingEntry(entryCode).moduleCode
+  }
+
+  const moduleCode = normalizeRouteValue(moduleValue)
+  switch (moduleCode) {
+    case ModuleCode.SENSORY:
+    case ModuleCode.EMOTIONAL:
+    case ModuleCode.SOCIAL:
+    case ModuleCode.LIFE_SKILLS:
+    case ModuleCode.COGNITIVE:
+    case ModuleCode.RESOURCE:
+      return moduleCode
+    default:
+      return ''
+  }
+}
 
 export function getEquipmentTrainingEntryPrimaryCatalogGroup(
   entryValue?: unknown,

@@ -69,6 +69,7 @@ import { TaskID, type GameSessionData, type GameGridMode, type GameAudioMode } f
 import { GameTrainingAPI, DatabaseAPI } from '@/database/api'
 import { ResourceAPI } from '@/database/resource-api'
 import type { ResourceItem } from '@/types/module'
+import { resolveTrainingEntryCode, resolveTrainingEntryCodeFromResource } from '@/utils/training-entry'
 
 const router = useRouter()
 const route = useRoute()
@@ -81,6 +82,7 @@ const gameResource = ref<ResourceItem | null>(null)
 const studentId = ref<number>(Number(route.query.studentId) || 0)
 const resourceId = ref<number>(Number(route.query.resourceId) || 0)
 const moduleCode = ref<string>((route.query.module as string) || 'sensory')
+const entryCode = ref<string>(resolveTrainingEntryCode(route.query.entry, route.query.module))
 const launchSource = ref<string>((route.query.from as string) || '')
 
 // 从资源加载的游戏配置
@@ -194,6 +196,10 @@ const saveTrainingRecord = async (sessionData: GameSessionData) => {
     const recordId = api.saveTrainingRecord({
       student_id: sessionData.studentId,
       task_id: sessionData.taskId,
+      resource_id: resourceId.value || null,
+      resource_type: gameResource.value?.resourceType || 'game',
+      session_type: gameResource.value?.resourceType || 'game',
+      entry_code: gameResource.value ? resolveTrainingEntryCodeFromResource(gameResource.value) : entryCode.value,
       timestamp: Date.now(),
       duration: sessionData.duration,
       accuracy_rate: sessionData.accuracy,
@@ -274,6 +280,7 @@ const handleGameFinish = async (sessionData: GameSessionData) => {
           recordId: String(recordId),
           studentId: String(sessionData.studentId),
           taskId: String(sessionData.taskId),
+          entry: entryCode.value,
           module: moduleCode.value
         }
       })
@@ -300,7 +307,13 @@ const goBack = () => {
     return
   }
 
-  router.push(`/games/lobby/${studentId.value}?module=${moduleCode.value}`)
+  router.push({
+    path: `/games/lobby/${studentId.value}`,
+    query: {
+      entry: entryCode.value,
+      module: moduleCode.value
+    }
+  })
 }
 
 // ========== 生命周期 ==========

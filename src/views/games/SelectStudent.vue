@@ -112,15 +112,18 @@ import {
 } from '@element-plus/icons-vue'
 import { useStudentStore } from '@/stores/student'
 import AddStudentDialog from '@/components/AddStudentDialog.vue'
-import { ModuleRegistry } from '@/core/module-registry'
-import { ModuleCode } from '@/types/module'
+import {
+  getTrainingEntry,
+  resolveTrainingEntryCode,
+} from '@/utils/training-entry'
 
 const router = useRouter()
 const route = useRoute()
 const studentStore = useStudentStore()
 
-// 当前模块代码
-const currentModuleCode = ref<string>((route.query.module as string) || ModuleCode.SENSORY)
+// 当前训练入口
+const currentEntryCode = ref(resolveTrainingEntryCode(route.query.entry, route.query.module))
+const currentEntry = computed(() => getTrainingEntry(currentEntryCode.value))
 const emotionalTargetPaths = new Set([
   '/emotional/menu',
   '/emotional/emotion-scene/select',
@@ -159,9 +162,7 @@ function resolveEmotionalTargetPath() {
 }
 
 // 获取当前模块信息
-const currentModule = computed(() => {
-  return ModuleRegistry.getModule(currentModuleCode.value as ModuleCode)
-})
+const currentModule = computed(() => currentEntry.value)
 
 // 搜索相关
 const searchText = ref('')
@@ -209,15 +210,16 @@ const handleStudentAdded = async () => {
 
 // 选择学生 - 跳转到游戏大厅
 const selectStudent = (student: any) => {
-  console.log('[SelectStudent] 选择学生:', student.id, '模块:', currentModuleCode.value)
+  console.log('[SelectStudent] 选择学生:', student.id, '入口:', currentEntryCode.value)
 
   const hasExplicitEmotionalTarget = Boolean(route.query.targetPath || route.query.subModule)
 
-  if (currentModuleCode.value === ModuleCode.EMOTIONAL && !hasExplicitEmotionalTarget) {
+  if (currentEntryCode.value === 'emotional-regulation' && !hasExplicitEmotionalTarget) {
     router.push({
       path: `/games/lobby/${student.id}`,
       query: {
-        module: currentModuleCode.value,
+        entry: currentEntryCode.value,
+        module: currentEntry.value.moduleCode,
         studentName: student.name || '',
       },
     })
@@ -226,16 +228,20 @@ const selectStudent = (student: any) => {
 
   // 跳转到游戏大厅
   router.push({
-    path: currentModuleCode.value === ModuleCode.EMOTIONAL
+    path: currentEntryCode.value === 'emotional-regulation'
       ? resolveEmotionalTargetPath()
       : `/games/lobby/${student.id}`,
-    query: currentModuleCode.value === ModuleCode.EMOTIONAL
+    query: currentEntryCode.value === 'emotional-regulation'
       ? {
-          module: currentModuleCode.value,
+          entry: currentEntryCode.value,
+          module: currentEntry.value.moduleCode,
           studentId: String(student.id),
           studentName: student.name || ''
         }
-      : { module: currentModuleCode.value }
+      : {
+          entry: currentEntryCode.value,
+          module: currentEntry.value.moduleCode
+        }
   })
 }
 

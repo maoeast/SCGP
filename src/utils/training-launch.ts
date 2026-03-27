@@ -1,3 +1,8 @@
+import { ResourceAPI } from '@/database/resource-api'
+import { ModuleCode } from '@/types/module'
+import { resolveEquipmentTrainingEntryCodeFromResource } from '@/utils/equipment-training-entry'
+import { resolveTrainingEntryCodeFromResource } from '@/utils/training-entry'
+
 export type TrainingLaunchSource = 'plan' | 'dashboard'
 
 export interface TrainingLaunchContext {
@@ -44,6 +49,42 @@ export function getTrainingLaunchModuleCode(context: TrainingLaunchContext): str
   return context.resourceModuleCode || context.moduleCode || 'sensory'
 }
 
+function resolveEquipmentEntryQuery(
+  context: TrainingLaunchContext,
+  launchModuleCode: string
+): string | undefined {
+  try {
+    const resourceApi = new ResourceAPI()
+    const resource = resourceApi.getResourceById(context.resourceId, launchModuleCode as ModuleCode)
+    if (!resource) {
+      return undefined
+    }
+
+    return resolveEquipmentTrainingEntryCodeFromResource(resource)
+  } catch (error) {
+    console.warn('[buildTrainingLaunchRoute] 解析器材训练入口失败:', error)
+    return undefined
+  }
+}
+
+function resolveTrainingEntryQuery(
+  context: TrainingLaunchContext,
+  launchModuleCode: string
+): string | undefined {
+  try {
+    const resourceApi = new ResourceAPI()
+    const resource = resourceApi.getResourceById(context.resourceId, launchModuleCode as ModuleCode)
+    if (!resource) {
+      return undefined
+    }
+
+    return resolveTrainingEntryCodeFromResource(resource)
+  } catch (error) {
+    console.warn('[buildTrainingLaunchRoute] 解析训练入口失败:', error)
+    return undefined
+  }
+}
+
 export function buildTrainingLaunchRoute(context: TrainingLaunchContext): TrainingLaunchRoute | null {
   const launchModuleCode = getTrainingLaunchModuleCode(context)
   const baseEntries: Array<[string, string | undefined]> = [
@@ -57,6 +98,7 @@ export function buildTrainingLaunchRoute(context: TrainingLaunchContext): Traini
         path: `/equipment/quick-entry/${context.studentId}`,
         query: buildQuery([
           ...baseEntries,
+          ['entry', resolveEquipmentEntryQuery(context, launchModuleCode)],
           ['module', launchModuleCode],
           ['equipmentId', String(context.resourceId)],
           ['resourceName', stringifyQueryValue(context.resourceName)],
@@ -69,6 +111,7 @@ export function buildTrainingLaunchRoute(context: TrainingLaunchContext): Traini
         path: '/games/play',
         query: buildQuery([
           ...baseEntries,
+          ['entry', resolveTrainingEntryQuery(context, launchModuleCode)],
           ['module', launchModuleCode],
           ['studentId', String(context.studentId)],
           ['resourceId', String(context.resourceId)],

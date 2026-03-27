@@ -40,6 +40,14 @@ import { CATEGORY_LABELS } from '@/types/equipment'
 import { ResourceAPI } from '@/database/resource-api'
 import { type EquipmentCatalogGroupCode, resolveEquipmentCatalogGroupCode } from '@/utils/equipment-catalog-group'
 import {
+  type EquipmentTrainingEntryCode,
+  matchesEquipmentTrainingEntry,
+} from '@/utils/equipment-training-entry'
+import {
+  type TrainingEntryCode,
+  matchesTrainingEntryResource,
+} from '@/utils/training-entry'
+import {
   buildEquipmentSourceCategoryCounts,
   resolveEquipmentSourceCategory,
   sortEquipmentSourceCategoryKeys,
@@ -61,6 +69,8 @@ interface Props {
   tags?: string[]
   favoritesOnly?: boolean
   equipmentCatalogGroups?: EquipmentCatalogGroupCode[]
+  equipmentTrainingEntry?: EquipmentTrainingEntryCode | null
+  trainingEntry?: TrainingEntryCode | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -71,7 +81,9 @@ const props = withDefaults(defineProps<Props>(), {
   keyword: '',
   tags: undefined,
   favoritesOnly: false,
-  equipmentCatalogGroups: undefined
+  equipmentCatalogGroups: undefined,
+  equipmentTrainingEntry: null,
+  trainingEntry: null
 })
 
 const emit = defineEmits<{
@@ -225,7 +237,11 @@ const loadData = async () => {
       favoritesOnly: props.favoritesOnly
     }
     let data = api.value.getResources(queryOptions)
-    if (props.resourceType === 'equipment' && props.equipmentCatalogGroups && props.equipmentCatalogGroups.length > 0) {
+    if (props.trainingEntry) {
+      data = data.filter((item) => matchesTrainingEntryResource(item, props.trainingEntry))
+    } else if (props.resourceType === 'equipment' && props.equipmentTrainingEntry) {
+      data = data.filter((item) => matchesEquipmentTrainingEntry(item, props.equipmentTrainingEntry))
+    } else if (props.resourceType === 'equipment' && props.equipmentCatalogGroups && props.equipmentCatalogGroups.length > 0) {
       const allowedGroups = new Set(props.equipmentCatalogGroups)
       data = data.filter((item) => allowedGroups.has(resolveEquipmentCatalogGroupCode(item)))
     }
@@ -242,10 +258,22 @@ const loadData = async () => {
   }
 }
 
-watch(() => [props.moduleCode, props.resourceType, props.category, props.tags, props.equipmentCatalogGroups], () => {
-  selectedCategory.value = props.category || 'all'
-  loadData()
-}, { deep: true })
+watch(
+  () => [
+    props.moduleCode,
+    props.resourceType,
+    props.category,
+    props.tags,
+    props.equipmentCatalogGroups,
+    props.equipmentTrainingEntry,
+    props.trainingEntry
+  ],
+  () => {
+    selectedCategory.value = props.category || 'all'
+    loadData()
+  },
+  { deep: true }
+)
 
 onMounted(() => {
   loadData()

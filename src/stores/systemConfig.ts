@@ -18,6 +18,12 @@ const getDefaultLogo = () => {
 }
 
 const DEFAULT_LOGO = getDefaultLogo()
+const LEGACY_SYSTEM_NAME = '生活自理适应综合训练'
+const CURRENT_SYSTEM_NAME = '星愿能力发展训练系统'
+
+function normalizeSystemName(value: string) {
+  return value === LEGACY_SYSTEM_NAME ? CURRENT_SYSTEM_NAME : value
+}
 
 export const useSystemConfigStore = defineStore('systemConfig', () => {
   // 系统配置
@@ -54,9 +60,15 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
 
         switch (key) {
           case 'system_name':
-            systemName.value = value
+            systemName.value = normalizeSystemName(value)
             // 同步保存到 localStorage 供路由守卫使用
-            localStorage.setItem('systemName', value)
+            localStorage.setItem('systemName', systemName.value)
+            if (systemName.value !== value) {
+              db.run('UPDATE system_config SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?', [
+                systemName.value,
+                key,
+              ])
+            }
             break
           case 'school_name':
             schoolName.value = value
@@ -83,6 +95,7 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
     try {
       const { initDatabase } = await import('@/database/init')
       const db = await initDatabase()
+      const normalizedValue = key === 'system_name' ? normalizeSystemName(value) : value
 
       // 检查配置是否存在
       const existing = db.get('SELECT id FROM system_config WHERE key = ?', [key])
@@ -90,28 +103,28 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
       if (existing) {
         // 更新现有配置
         db.run('UPDATE system_config SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?', [
-          value,
+          normalizedValue,
           key,
         ])
       } else {
         // 插入新配置
         db.run(
           'INSERT INTO system_config (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)',
-          [key, value],
+          [key, normalizedValue],
         )
       }
 
       // 更新本地状态
       if (key === 'system_name') {
-        systemName.value = value
+        systemName.value = normalizedValue
         // 同步保存到 localStorage 供路由守卫使用
-        localStorage.setItem('systemName', value)
+        localStorage.setItem('systemName', normalizedValue)
         // 更新页面标题
-        document.title = value
+        document.title = normalizedValue
       } else if (key === 'school_name') {
-        schoolName.value = value
+        schoolName.value = normalizedValue
       } else if (key === 'logo_path') {
-        logoPath.value = value
+        logoPath.value = normalizedValue
       }
     } catch (error) {
       console.error('更新系统配置失败:', error)

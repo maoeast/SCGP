@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
-import { getEquipmentTrainingEntryModuleCode } from '@/utils/equipment-training-entry'
+import { resolveEquipmentTrainingEntryRouteModuleCode } from '@/utils/equipment-training-entry'
+import { getTrainingEntryModuleCode } from '@/utils/training-entry'
 
 // 路由懒加载
 const Login = () => import('@/views/Login.vue')
@@ -321,8 +322,7 @@ const router = createRouter({
           meta: {
             title: '游戏训练',
             icon: 'gamepad',
-            roles: ['admin', 'teacher'],
-            moduleCode: 'sensory'
+            roles: ['admin', 'teacher']
           }
         },
         {
@@ -378,8 +378,7 @@ const router = createRouter({
           meta: {
             title: '训练记录',
             icon: 'chart-line',
-            roles: ['admin', 'teacher'],
-            moduleCode: 'sensory'
+            roles: ['admin', 'teacher']
           }
         },
         {
@@ -393,7 +392,7 @@ const router = createRouter({
           }
         },
         {
-          path: 'training-records/:moduleCode',
+          path: 'training-records/:entryCode',
           name: 'ModuleTrainingRecords',
           component: ModuleTrainingRecords,
           meta: {
@@ -405,11 +404,11 @@ const router = createRouter({
         // 旧路由重定向（向后兼容）
         {
           path: 'games/records/sensory',
-          redirect: '/training-records/sensory?type=game'
+          redirect: '/training-records/sensory-integration?type=game'
         },
         {
           path: 'training-records/equipment',
-          redirect: '/training-records/sensory?type=equipment'
+          redirect: '/training-records/sensory-integration?type=equipment'
         },
         {
           path: 'games/report',
@@ -429,8 +428,7 @@ const router = createRouter({
           meta: {
             title: '器材训练',
             icon: 'dumbbell',
-            roles: ['admin', 'teacher'],
-            moduleCode: 'sensory'
+            roles: ['admin', 'teacher']
           }
         },
         {
@@ -821,12 +819,21 @@ const router = createRouter({
 
 // 全局路由守卫
 router.beforeEach(async (to, from, next) => {
+  const LEGACY_SYSTEM_NAME = '生活自理适应综合训练'
+  const CURRENT_SYSTEM_NAME = '星愿能力发展训练系统'
+
   // 动态获取系统名称
   const getSystemName = () => {
     // 尝试从 localStorage 获取系统名称
     const stored = localStorage.getItem('systemName')
-    if (stored) return stored
-    return '生活自理适应综合训练'
+    if (stored) {
+      if (stored === LEGACY_SYSTEM_NAME) {
+        localStorage.setItem('systemName', CURRENT_SYSTEM_NAME)
+        return CURRENT_SYSTEM_NAME
+      }
+      return stored
+    }
+    return CURRENT_SYSTEM_NAME
   }
 
   // 设置页面标题
@@ -843,14 +850,23 @@ router.beforeEach(async (to, from, next) => {
 
     if (to.path.startsWith('/emotional')) return 'emotional'
     if (to.path.startsWith('/equipment')) {
-      return getEquipmentTrainingEntryModuleCode(to.query.entry, to.query.module)
+      return resolveEquipmentTrainingEntryRouteModuleCode(to.query.entry, to.query.module)
     }
-    if (
-      to.path.startsWith('/games') ||
-      to.path.startsWith('/assessment') ||
-      to.path.startsWith('/training-records')
-    ) {
+    if (to.path.startsWith('/games')) {
+      return getTrainingEntryModuleCode(to.query.entry, to.query.module)
+    }
+
+    if (to.path.startsWith('/assessment')) {
       return 'sensory'
+    }
+
+    if (to.path.startsWith('/training-records')) {
+      const routeEntryCode = typeof to.params.entryCode === 'string'
+        ? to.params.entryCode
+        : typeof to.params.moduleCode === 'string'
+          ? to.params.moduleCode
+          : ''
+      return getTrainingEntryModuleCode(routeEntryCode)
     }
 
     return ''

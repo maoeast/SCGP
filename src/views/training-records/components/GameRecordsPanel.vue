@@ -49,7 +49,7 @@
           <el-tag size="small">{{ getTaskLabel(row) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column v-if="isEmotionalModule" label="状态" width="100">
+      <el-table-column v-if="isEmotionalEntry" label="状态" width="100">
         <template #default="{ row }">
           <el-tag size="small" :type="getCompletionStatusType(row.completion_status)">
             {{ getCompletionStatusLabel(row.completion_status) }}
@@ -102,7 +102,7 @@
     <!-- 空状态 -->
     <el-empty
       v-if="!loading && records.length === 0"
-      :description="isEmotionalModule ? '暂无情绪训练记录' : '暂无游戏训练记录'"
+      :description="isEmotionalEntry ? '暂无情绪训练记录' : '暂无游戏训练记录'"
     />
 
     <!-- 统计信息 -->
@@ -128,10 +128,10 @@ import { ref, computed, onMounted } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { GameTrainingAPI, StudentAPI } from '@/database/api'
 import { EmotionalTrainingAPI } from '@/database/emotional-api'
-import { ModuleCode } from '@/types/module'
+import { getTrainingEntry, type TrainingEntryCode } from '@/utils/training-entry'
 
 interface Props {
-  moduleCode: string
+  entryCode: TrainingEntryCode
 }
 
 const props = defineProps<Props>()
@@ -145,7 +145,8 @@ const records = ref<any[]>([])
 const students = ref<any[]>([])
 const selectedStudentId = ref<number | undefined>()
 const dateRange = ref<[string, string] | null>(null)
-const isEmotionalModule = computed(() => props.moduleCode === ModuleCode.EMOTIONAL)
+const currentEntry = computed(() => getTrainingEntry(props.entryCode))
+const isEmotionalEntry = computed(() => currentEntry.value.moduleCode === 'emotional')
 
 // 统计计算 - 平均正确率
 const avgAccuracy = computed(() => {
@@ -168,7 +169,7 @@ const totalDuration = computed(() => {
 })
 
 const getTaskLabel = (row: any) => {
-  if (!isEmotionalModule.value) {
+  if (!isEmotionalEntry.value) {
     return row.task_name || `任务${row.task_id}`
   }
 
@@ -242,21 +243,30 @@ const loadRecords = () => {
   loading.value = true
   try {
     const api = new GameTrainingAPI()
-    const emotionalApi = isEmotionalModule.value ? new EmotionalTrainingAPI() : null
-    // 获取指定模块的训练记录
-    let allRecords = api.getStudentTrainingRecords(selectedStudentId.value || 0, undefined, props.moduleCode)
+    const emotionalApi = isEmotionalEntry.value ? new EmotionalTrainingAPI() : null
+    let allRecords: any[] = []
 
     // 如果没有选择学生，获取所有学生的记录
     if (!selectedStudentId.value) {
-      allRecords = []
       for (const student of students.value) {
-        const studentRecords = api.getStudentTrainingRecords(student.id, undefined, props.moduleCode)
+        const studentRecords = api.getStudentTrainingRecords(
+          student.id,
+          undefined,
+          undefined,
+          props.entryCode
+        )
         allRecords.push(...studentRecords.map((r: any) => ({
           ...r,
           student_name: student.name
         })))
       }
     } else {
+      allRecords = api.getStudentTrainingRecords(
+        selectedStudentId.value,
+        undefined,
+        undefined,
+        props.entryCode
+      )
       const student = students.value.find(s => s.id === selectedStudentId.value)
       allRecords = allRecords.map((r: any) => ({
         ...r,

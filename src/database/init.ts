@@ -505,6 +505,7 @@ CREATE TABLE IF NOT EXISTS training_records (
   resource_id INTEGER,
   resource_type TEXT,
   session_type TEXT,
+  entry_code TEXT,
   timestamp INTEGER NOT NULL,
   duration INTEGER NOT NULL,
   accuracy_rate REAL NOT NULL CHECK(accuracy_rate BETWEEN 0 AND 1),
@@ -522,6 +523,7 @@ CREATE INDEX IF NOT EXISTS idx_training_records_student_id ON training_records(s
 CREATE INDEX IF NOT EXISTS idx_training_records_task_id ON training_records(task_id);
 CREATE INDEX IF NOT EXISTS idx_training_records_timestamp ON training_records(timestamp);
 CREATE INDEX IF NOT EXISTS idx_training_records_resource_id ON training_records(resource_id);
+CREATE INDEX IF NOT EXISTS idx_training_records_entry_code ON training_records(entry_code);
 
 -- 器材主数据表 (器材训练模块)
 CREATE TABLE IF NOT EXISTS equipment_catalog (
@@ -541,6 +543,7 @@ CREATE TABLE IF NOT EXISTS equipment_training_records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
   equipment_id INTEGER NOT NULL,
+  entry_code TEXT,
   score INTEGER NOT NULL CHECK(score BETWEEN 1 AND 5),
   prompt_level INTEGER NOT NULL CHECK(prompt_level BETWEEN 1 AND 5),
   duration_seconds INTEGER,
@@ -572,6 +575,7 @@ CREATE INDEX IF NOT EXISTS idx_equipment_training_student ON equipment_training_
 CREATE INDEX IF NOT EXISTS idx_equipment_training_date ON equipment_training_records(training_date);
 CREATE INDEX IF NOT EXISTS idx_equipment_training_equipment ON equipment_training_records(equipment_id);
 CREATE INDEX IF NOT EXISTS idx_equipment_training_batch ON equipment_training_records(batch_id);
+CREATE INDEX IF NOT EXISTS idx_equipment_training_entry_code ON equipment_training_records(entry_code);
 CREATE INDEX IF NOT EXISTS idx_equipment_training_batches_student ON equipment_training_batches(student_id);
 
 -- ============================================
@@ -1307,7 +1311,7 @@ async function insertInitialDataToDB(database: any, options: { tasks?: boolean; 
     // 插入系统默认配置
     database.run(`
       INSERT INTO system_config (key, value, description) VALUES
-      ('system_name', '生活自理适应综合训练', '系统名称'),
+      ('system_name', '星愿能力发展训练系统', '系统名称'),
       ('system_version', '1.0.0', '系统版本'),
       ('auto_backup', 'true', '是否自动备份'),
       ('backup_interval', '7', '备份间隔（天）'),
@@ -1372,7 +1376,7 @@ async function insertInitialData() {
     // 插入系统默认配置
     db.run(`
       INSERT INTO system_config (key, value, description) VALUES
-      ('system_name', '生活自理适应综合训练', '系统名称'),
+      ('system_name', '星愿能力发展训练系统', '系统名称'),
       ('system_version', '1.0.0', '系统版本'),
       ('auto_backup', 'true', '是否自动备份'),
       ('backup_interval', '7', '备份间隔（天）'),
@@ -2397,7 +2401,11 @@ async function initializeClassTables(rawDb: any): Promise<void> {
 
   // Phase 4.6: 训练记录模块重构 - 添加 module_code 字段
   safeAddColumn(rawDb, 'training_records', 'module_code TEXT DEFAULT "sensory"')
+  safeAddColumn(rawDb, 'training_records', 'entry_code TEXT')
   safeAddColumn(rawDb, 'equipment_training_records', 'module_code TEXT DEFAULT "sensory"')
+  safeAddColumn(rawDb, 'equipment_training_records', 'entry_code TEXT')
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_training_records_entry_code ON training_records(entry_code)')
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_equipment_training_entry_code ON equipment_training_records(entry_code)')
 
   console.log('[ClassTables] 班级管理表结构初始化完成')
 }

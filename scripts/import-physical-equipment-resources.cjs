@@ -221,6 +221,22 @@ function getReferenceCount(sql, tableName, columnName, ids) {
   return Number(row?.count || 0)
 }
 
+function mergeDuplicateResourceIntoCanonical(sql, canonicalId, duplicateId) {
+  sql.run(`
+    INSERT OR IGNORE INTO sys_resource_tag_map (resource_id, tag_id)
+    SELECT ?, tag_id
+    FROM sys_resource_tag_map
+    WHERE resource_id = ?
+  `, [canonicalId, duplicateId])
+
+  sql.run('UPDATE equipment_training_records SET equipment_id = ? WHERE equipment_id = ?', [canonicalId, duplicateId])
+  sql.run('UPDATE sys_plan_resource_map SET resource_id = ? WHERE resource_id = ?', [canonicalId, duplicateId])
+  sql.run('UPDATE sys_favorites SET resource_id = ? WHERE resource_id = ?', [canonicalId, duplicateId])
+  sql.run('DELETE FROM sys_resource_tag_map WHERE resource_id = ?', [duplicateId])
+  sql.run('DELETE FROM sys_favorites WHERE resource_id = ?', [duplicateId])
+  sql.run('DELETE FROM sys_training_resource WHERE id = ?', [duplicateId])
+}
+
 async function createBackup(dbPath) {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
   const backupPath = path.join(
@@ -284,6 +300,8 @@ async function main() {
 
   let dedupedCodes = 0
   let removedDuplicateRows = 0
+  let mergedEquipmentRefs = 0
+  let mergedPlanRefs = 0
 
   for (const [resourceCode, rows] of rowsByCode.entries()) {
     if (rows.length <= 1) {
@@ -297,24 +315,19 @@ async function main() {
     const trainingRefs = getReferenceCount(sql, 'equipment_training_records', 'equipment_id', duplicateIds)
     const planRefs = getReferenceCount(sql, 'sys_plan_resource_map', 'resource_id', duplicateIds)
 
-    if (trainingRefs > 0 || planRefs > 0) {
-      throw new Error(
-        `resourceCode ${resourceCode} 存在重复记录且仍被引用，无法安全自动去重`
-      )
-    }
-
     dedupedCodes += 1
     removedDuplicateRows += duplicateIds.length
+    mergedEquipmentRefs += trainingRefs
+    mergedPlanRefs += planRefs
 
     for (const duplicateId of duplicateIds) {
       duplicateIdsToRemove.add(duplicateId)
     }
 
     if (!options.dryRun && duplicateIds.length > 0) {
-      const placeholders = buildInClause(duplicateIds)
-      sql.run(`DELETE FROM sys_resource_tag_map WHERE resource_id IN (${placeholders})`, duplicateIds)
-      sql.run(`DELETE FROM sys_favorites WHERE resource_id IN (${placeholders})`, duplicateIds)
-      sql.run(`DELETE FROM sys_training_resource WHERE id IN (${placeholders})`, duplicateIds)
+      for (const duplicateId of duplicateIds) {
+        mergeDuplicateResourceIntoCanonical(sql, Number(canonicalRow.id || 0), duplicateId)
+      }
     }
 
     existingByCode.set(resourceCode, Number(canonicalRow.id || 0))
@@ -445,6 +458,8 @@ async function main() {
       updated,
       dedupedCodes,
       removedDuplicateRows,
+      mergedEquipmentRefs,
+      mergedPlanRefs,
       dbPath,
     })
     db.close()
@@ -461,6 +476,8 @@ async function main() {
     updated,
     dedupedCodes,
     removedDuplicateRows,
+    mergedEquipmentRefs,
+    mergedPlanRefs,
     dbPath,
     backupPath,
   })

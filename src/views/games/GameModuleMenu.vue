@@ -4,7 +4,7 @@
     <div class="page-header">
       <div class="header-left">
         <h1>游戏训练</h1>
-        <p class="subtitle">选择训练模块开始游戏化训练</p>
+        <p class="subtitle">选择训练入口组开始游戏训练</p>
       </div>
     </div>
 
@@ -12,7 +12,7 @@
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item :to="{ path: '/games' }">游戏训练</el-breadcrumb-item>
-        <el-breadcrumb-item>选择模块</el-breadcrumb-item>
+        <el-breadcrumb-item>选择入口</el-breadcrumb-item>
       </el-breadcrumb>
     </div>
 
@@ -20,46 +20,45 @@
     <div class="main-content">
       <div class="module-grid">
         <el-card
-          v-for="module in modules"
-          :key="module.code"
+          v-for="entry in trainingEntries"
+          :key="entry.code"
           class="module-card"
           :class="{
-            'module-active': module.status === 'active',
-            'module-experimental': module.status === 'experimental',
-            'module-disabled': module.status !== 'active' && module.status !== 'experimental'
+            'module-active': !entry.locked,
+            'module-disabled': entry.locked
           }"
           shadow="hover"
-          @click="handleModuleClick(module)"
+          @click="handleEntryClick(entry)"
         >
           <div class="module-icon" :style="{
-            backgroundColor: module.themeColor + '25',
-            borderColor: module.themeColor + '60',
-            boxShadow: `0 4px 12px ${module.themeColor}30`
+            backgroundColor: entry.themeColor + '25',
+            borderColor: entry.themeColor + '60',
+            boxShadow: `0 4px 12px ${entry.themeColor}30`
           }">
-            <span class="module-emoji">{{ module.emoji }}</span>
+            <span class="module-emoji">{{ getEntryEmoji(entry.code) }}</span>
           </div>
 
           <div class="module-info">
-            <h3 class="module-name">{{ module.name }}</h3>
-            <p class="module-description">{{ module.description }}</p>
+            <h3 class="module-name">{{ entry.name }}</h3>
+            <p class="module-description">{{ entry.description }}</p>
 
             <div class="module-meta">
               <el-tag
-                :type="getStatusTagType(module.status)"
+                :type="getStatusTagType(entry.locked ? 'locked' : 'active')"
                 size="small"
               >
-                {{ getStatusLabel(module.status) }}
+                {{ getStatusLabel(entry.locked ? 'locked' : 'active') }}
               </el-tag>
               <span class="resource-count">
-                {{ getResourceCount(module.code) }} 个游戏
+                {{ getResourceCount(entry.code) }} 个游戏
               </span>
             </div>
           </div>
 
           <!-- 未授权遮罩 -->
-          <div v-if="module.status !== 'active'" class="module-overlay">
+          <div v-if="entry.locked" class="module-overlay">
             <el-icon :size="24"><Lock /></el-icon>
-            <span>{{ module.status === 'experimental' ? '开发中' : '未授权' }}</span>
+            <span>未授权</span>
           </div>
         </el-card>
       </div>
@@ -68,39 +67,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Lock } from '@element-plus/icons-vue'
-import { ModuleRegistry } from '@/core/module-registry'
-import { ModuleCode, type ModuleMetadata } from '@/types/module'
+import { useAuthStore } from '@/stores/auth'
 import { ResourceAPI } from '@/database/resource-api'
 import { getEmotionalGameCount } from './emotional-game-catalog'
+import {
+  getAllTrainingEntries,
+  matchesTrainingEntryResource,
+  type TrainingEntryCode,
+} from '@/utils/training-entry'
 
-// 游戏模块扩展（带 emoji）
-interface GameModule extends ModuleMetadata {
-  emoji: string
+const router = useRouter()
+const authStore = useAuthStore()
+
+const entryEmojis: Record<string, string> = {
+  'sensory-integration': '🎮',
+  'emotional-regulation': '😊',
+  'social-communication': '👥',
+  'fine-motor': '🧩',
+  'soothing-aids': '🫶',
+  'life-skills': '🏠'
 }
 
-// 模块列表
-const modules = ref<GameModule[]>([])
-
-// 模块 emoji 映射
-const moduleEmojis: Record<string, string> = {
-  'sensory': '🎮',
-  'emotional': '😊',
-  'social': '👥',
-  'cognitive': '🧠',
-  'life_skills': '🏠'
-}
+const trainingEntries = computed(() => {
+  return getAllTrainingEntries().map((entry) => ({
+    ...entry,
+    locked: !authStore.hasModuleAccess(entry.moduleCode),
+  }))
+})
 
 // 获取状态标签类型
 const getStatusTagType = (status: string) => {
   const typeMap: Record<string, '' | 'success' | 'warning' | 'danger' | 'info'> = {
     'active': 'success',
-    'experimental': 'warning',
-    'coming_soon': 'info',
-    'deprecated': 'danger'
+    'locked': 'info'
   }
   return typeMap[status] || 'info'
 }
@@ -109,57 +112,54 @@ const getStatusTagType = (status: string) => {
 const getStatusLabel = (status: string) => {
   const labelMap: Record<string, string> = {
     'active': '已激活',
-    'experimental': '开发中',
-    'coming_soon': '即将推出',
-    'deprecated': '已弃用'
+    'locked': '未授权'
   }
   return labelMap[status] || status
 }
 
-// 获取模块游戏数量
-const getResourceCount = (moduleCode: ModuleCode) => {
-  if (moduleCode === ModuleCode.EMOTIONAL) {
+const getEntryEmoji = (entryCode: TrainingEntryCode) => {
+  return entryEmojis[entryCode] || '🎮'
+}
+
+// 获取入口游戏数量
+const getResourceCount = (entryCode: TrainingEntryCode) => {
+  if (entryCode === 'emotional-regulation') {
     return getEmotionalGameCount()
   }
 
   try {
     const api = new ResourceAPI()
+    const entry = trainingEntries.value.find((item) => item.code === entryCode)
+    if (!entry) {
+      return 0
+    }
+
     const resources = api.getResources({
-      moduleCode,
+      moduleCode: entry.moduleCode,
       resourceType: 'game'
     })
-    return resources.length
+    return resources.filter((resource) => matchesTrainingEntryResource(resource, entryCode)).length
   } catch (error) {
-    console.error(`获取模块 ${moduleCode} 游戏数量失败:`, error)
+    console.error(`获取入口 ${entryCode} 游戏数量失败:`, error)
     return 0
   }
 }
 
-// 处理模块点击
-const handleModuleClick = (module: GameModule) => {
-  if (module.status !== 'active') {
-    ElMessage.warning(`「${module.name}」模块${module.status === 'experimental' ? '正在开发中' : '尚未激活'}，敬请期待`)
+// 处理入口点击
+const handleEntryClick = (entry: (typeof trainingEntries.value)[number]) => {
+  if (entry.locked) {
+    ElMessage.warning(`「${entry.name}」未授权，请联系厂商购买`)
     return
   }
 
-  // 跳转到学生选择页面，带上模块参数
   router.push({
     path: `/games/select-student`,
-    query: { module: module.code }
+    query: {
+      entry: entry.code,
+      module: entry.moduleCode
+    }
   })
 }
-
-const router = useRouter()
-
-// 初始化
-onMounted(() => {
-  // 获取所有已注册模块，并添加 emoji
-  const allModules = ModuleRegistry.getAllModules()
-  modules.value = allModules.map(m => ({
-    ...m,
-    emoji: moduleEmojis[m.code] || '🎮'
-  }))
-})
 </script>
 
 <style scoped>
@@ -196,10 +196,6 @@ onMounted(() => {
 
 .module-card.module-active:hover {
   box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
-}
-
-.module-card.module-experimental {
-  opacity: 0.85;
 }
 
 .module-card.module-disabled {
@@ -283,7 +279,4 @@ onMounted(() => {
   backdrop-filter: blur(2px);
 }
 
-.module-card.module-experimental .module-overlay {
-  background: rgba(255, 255, 255, 0.7);
-}
 </style>

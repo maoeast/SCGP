@@ -37,10 +37,10 @@
           @change="loadRecords"
         >
           <el-option
-            v-for="cat in categories"
-            :key="cat.value"
-            :label="cat.label"
-            :value="cat.value"
+            v-for="category in categoryOptions"
+            :key="category"
+            :label="category"
+            :value="category"
           />
         </el-select>
       </div>
@@ -73,8 +73,8 @@
       </el-table-column>
       <el-table-column label="分类" width="80">
         <template #default="{ row }">
-          <el-tag size="small" :type="getCategoryTagType(row.category)">
-            {{ getCategoryLabel(row.category) }}
+          <el-tag size="small" type="info">
+            {{ getCategoryLabel(row) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -141,46 +141,17 @@
 import { ref, computed, onMounted } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { EquipmentTrainingAPI, StudentAPI } from '@/database/api'
+import { type TrainingEntryCode } from '@/utils/training-entry'
+import { resolveEquipmentSourceCategory } from '@/utils/physical-equipment-source-category'
 
 interface Props {
-  moduleCode: string
+  entryCode: TrainingEntryCode
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'view-detail', recordId: number): void
 }>()
-
-// 分类选项
-const categories = [
-  { value: 'tactile', label: '触觉' },
-  { value: 'olfactory', label: '嗅觉' },
-  { value: 'visual', label: '视觉' },
-  { value: 'auditory', label: '听觉' },
-  { value: 'gustatory', label: '味觉' },
-  { value: 'proprioceptive', label: '本体觉' },
-  { value: 'integration', label: '综合' }
-]
-
-const CATEGORY_LABELS: Record<string, string> = {
-  tactile: '触觉',
-  olfactory: '嗅觉',
-  visual: '视觉',
-  auditory: '听觉',
-  gustatory: '味觉',
-  proprioceptive: '本体觉',
-  integration: '综合'
-}
-
-const CATEGORY_TAG_TYPES: Record<string, string> = {
-  tactile: 'danger',
-  olfactory: 'success',
-  visual: 'primary',
-  auditory: 'warning',
-  gustatory: 'info',
-  proprioceptive: '',
-  integration: 'success'
-}
 
 // 状态
 const loading = ref(false)
@@ -189,6 +160,11 @@ const students = ref<any[]>([])
 const selectedStudentId = ref<number | undefined>()
 const dateRange = ref<[string, string] | null>(null)
 const selectedCategory = ref<string | undefined>()
+const categoryOptions = computed(() => {
+  return Array.from(new Set(records.value.map((record) => getCategoryLabel(record)))).sort((left, right) =>
+    left.localeCompare(right, 'zh-Hans-CN')
+  )
+})
 
 // 统计计算
 const avgScore = computed(() => {
@@ -229,12 +205,11 @@ const formatTrainingDate = (date: string | Date) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 // 获取分类标签
-const getCategoryLabel = (category: string) => {
-  return CATEGORY_LABELS[category] || category
-}
-// 获取分类 Tag 类型
-const getCategoryTagType = (category: string) => {
-  return CATEGORY_TAG_TYPES[category] || ''
+const getCategoryLabel = (record: any) => {
+  return resolveEquipmentSourceCategory({
+    category: record.category,
+    metadata: record.equipment_meta,
+  })
 }
 // 获取提示等级标签
 const getPromptLevelLabel = (level: number) => {
@@ -274,11 +249,10 @@ const loadRecords = () => {
       const student = students.value.find(s => s.id === selectedStudentId.value)
       const studentRecords = api.getStudentRecords(selectedStudentId.value, {
         start_date: dateRange.value?.[0],
-        end_date: dateRange.value?.[1]
+        end_date: dateRange.value?.[1],
+        entry_code: props.entryCode,
       })
-      // 筛选模块
-      const moduleRecords = studentRecords.filter((r: any) => r.module_code === props.moduleCode)
-      allRecords = moduleRecords.map((r: any) => ({
+      allRecords = studentRecords.map((r: any) => ({
         ...r,
         student_name: student?.name || '未知'
       }))
@@ -287,11 +261,10 @@ const loadRecords = () => {
       for (const student of students.value) {
         const studentRecords = api.getStudentRecords(student.id, {
           start_date: dateRange.value?.[0],
-          end_date: dateRange.value?.[1]
+          end_date: dateRange.value?.[1],
+          entry_code: props.entryCode,
         })
-        // 筛选模块
-        const moduleRecords = studentRecords.filter((r: any) => r.module_code === props.moduleCode)
-        allRecords.push(...moduleRecords.map((r: any) => ({
+        allRecords.push(...studentRecords.map((r: any) => ({
           ...r,
           student_name: student.name
         })))
@@ -299,7 +272,7 @@ const loadRecords = () => {
     }
     // 分类筛选
     if (selectedCategory.value) {
-      allRecords = allRecords.filter((r: any) => r.category === selectedCategory.value)
+      allRecords = allRecords.filter((r: any) => getCategoryLabel(r) === selectedCategory.value)
     }
     // 按训练日期倒序排列
     allRecords.sort((a: any, b: any) => {

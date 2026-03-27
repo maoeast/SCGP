@@ -4,8 +4,8 @@
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item :to="{ path: '/games/menu' }">游戏训练</el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ path: '/games/select-student', query: { module: currentModuleCode } }">
-          {{ currentModule?.name || '选择学生' }}
+        <el-breadcrumb-item :to="{ path: '/games/select-student', query: { entry: currentEntryCode, module: currentEntry.moduleCode } }">
+          {{ currentEntry?.name || '选择学生' }}
         </el-breadcrumb-item>
         <el-breadcrumb-item>游戏大厅</el-breadcrumb-item>
       </el-breadcrumb>
@@ -14,7 +14,7 @@
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
-        <h1>{{ currentModule?.name || '游戏训练' }} - 游戏大厅</h1>
+        <h1>{{ currentEntry?.name || '游戏训练' }} - 游戏大厅</h1>
         <p class="subtitle">
           <span v-if="student">当前学生：<strong>{{ student.name }}</strong></span>
           <span v-else>加载中...</span>
@@ -23,25 +23,25 @@
       <div class="header-right">
         <!-- 模块快捷切换器 -->
         <div class="module-switcher">
-          <span class="switcher-emoji">{{ getModuleEmoji(currentModuleCode) }}</span>
-          <span class="switcher-label">切换模块</span>
+          <span class="switcher-emoji">{{ getEntryEmoji(currentEntryCode) }}</span>
+          <span class="switcher-label">切换入口</span>
           <el-select
-            v-model="currentModuleCode"
+            v-model="currentEntryCode"
             size="default"
             class="module-select"
-            @change="handleModuleChange"
+            @change="handleEntryChange"
           >
             <el-option
-              v-for="mod in activeModules"
-              :key="mod.code"
-              :label="mod.name"
-              :value="mod.code"
+              v-for="entry in activeEntries"
+              :key="entry.code"
+              :label="entry.name"
+              :value="entry.code"
             >
               <div class="module-option">
-                <span class="option-emoji">{{ getModuleEmoji(mod.code) }}</span>
-                <span>{{ mod.name }}</span>
+                <span class="option-emoji">{{ getEntryEmoji(entry.code) }}</span>
+                <span>{{ entry.name }}</span>
                 <el-tag size="small" type="info" class="resource-count-tag">
-                  {{ getModuleGameCount(mod.code) }}个游戏
+                  {{ getEntryGameCount(entry.code) }}个游戏
                 </el-tag>
               </div>
             </el-option>
@@ -56,7 +56,7 @@
     <div class="content-wrapper">
       <!-- 左侧：游戏选择器 -->
       <div class="selector-section">
-        <template v-if="isEmotionalModule">
+        <template v-if="isEmotionalEntry">
           <div class="emotion-selector">
             <button
               v-for="game in emotionalGames"
@@ -84,14 +84,15 @@
           v-else
           v-model="selectedGame"
           v-model:category="selectedCategory"
-          :module-code="currentModuleCodeValue"
+          :module-code="currentEntry.moduleCode"
+          :training-entry="currentEntryCode"
           resource-type="game"
         />
       </div>
 
       <!-- 右侧：游戏预览卡片 -->
       <div class="preview-section">
-        <template v-if="isEmotionalModule && selectedGame">
+        <template v-if="isEmotionalEntry && selectedGame">
           <el-card class="emotion-preview-card">
             <div class="emotion-preview-header">
               <div
@@ -171,8 +172,15 @@ import type { ResourceItem } from '@/types/module'
 import { ModuleCode } from '@/types/module'
 import { StudentAPI } from '@/database/api'
 import { ResourceAPI } from '@/database/resource-api'
-import { ModuleRegistry } from '@/core/module-registry'
 import { EMOTIONAL_GAME_CATALOG, getEmotionalGameCount } from './emotional-game-catalog'
+import { useAuthStore } from '@/stores/auth'
+import {
+  getAllTrainingEntries,
+  getTrainingEntry,
+  matchesTrainingEntryResource,
+  resolveTrainingEntryCode,
+  type TrainingEntryCode,
+} from '@/utils/training-entry'
 
 // 类型定义
 interface Student {
@@ -185,33 +193,28 @@ interface Student {
   avatar_path?: string
 }
 
-// 模块 Emoji 映射
-const MODULE_EMOJIS: Record<string, string> = {
-  [ModuleCode.SENSORY]: '🎮',
-  [ModuleCode.EMOTIONAL]: '😊',
-  [ModuleCode.SOCIAL]: '👥',
-  [ModuleCode.COGNITIVE]: '🧠',
-  [ModuleCode.LIFE_SKILLS]: '🏠'
+// 入口 Emoji 映射
+const ENTRY_EMOJIS: Record<TrainingEntryCode, string> = {
+  'sensory-integration': '🎮',
+  'emotional-regulation': '😊',
+  'social-communication': '👥',
+  'fine-motor': '🧩',
+  'soothing-aids': '🫶',
+  'life-skills': '🏠'
 }
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
-// 当前模块代码（从 URL 参数获取，默认 sensory）
-const currentModuleCode = ref<string>(
-  (route.query.module as string) || ModuleCode.SENSORY
+// 当前训练入口代码
+const currentEntryCode = ref<TrainingEntryCode>(
+  resolveTrainingEntryCode(route.query.entry, route.query.module)
 )
 
-// 获取当前模块信息
-const currentModule = computed(() => {
-  return ModuleRegistry.getModule(currentModuleCode.value as ModuleCode)
-})
-
-const currentModuleCodeValue = computed(() => currentModuleCode.value as ModuleCode)
-
-// 获取所有活跃模块
-const activeModules = computed(() => {
-  return ModuleRegistry.getActiveModules()
+const currentEntry = computed(() => getTrainingEntry(currentEntryCode.value))
+const activeEntries = computed(() => {
+  return getAllTrainingEntries().filter((entry) => authStore.hasModuleAccess(entry.moduleCode))
 })
 
 // 学生相关状态
@@ -224,27 +227,28 @@ const selectedGame = ref<ResourceItem | null>(null)
 const selectedCategory = ref<string>('all')
 const selectedEmotionalDifficulty = ref<1 | 2 | 3>(1)
 
-const isEmotionalModule = computed(() => currentModuleCode.value === ModuleCode.EMOTIONAL)
+const isEmotionalEntry = computed(() => currentEntryCode.value === 'emotional-regulation')
 const emotionalGames = computed(() => EMOTIONAL_GAME_CATALOG)
 
-// 获取模块 Emoji
-const getModuleEmoji = (moduleCode: string): string => {
-  return MODULE_EMOJIS[moduleCode] || '🎮'
+// 获取入口 Emoji
+const getEntryEmoji = (entryCode: TrainingEntryCode): string => {
+  return ENTRY_EMOJIS[entryCode] || '🎮'
 }
 
-// 获取模块游戏数量
-const getModuleGameCount = (moduleCode: string): number => {
-  if (moduleCode === ModuleCode.EMOTIONAL) {
+// 获取入口游戏数量
+const getEntryGameCount = (entryCode: TrainingEntryCode): number => {
+  if (entryCode === 'emotional-regulation') {
     return getEmotionalGameCount()
   }
 
   try {
     const api = new ResourceAPI()
+    const entry = getTrainingEntry(entryCode)
     const resources = api.getResources({
-      moduleCode: moduleCode as ModuleCode,
+      moduleCode: entry.moduleCode,
       resourceType: 'game'
     })
-    return resources.length
+    return resources.filter((resource) => matchesTrainingEntryResource(resource, entryCode)).length
   } catch {
     return 0
   }
@@ -259,20 +263,24 @@ const getEmotionalPreviewDescription = (game: ResourceItem): string => {
   return game.description || '璇峰厛閫夋嫨涓€涓儏缁皟鑺傛父鎴忋€?'
 }
 
-// 处理模块切换
-const handleModuleChange = (newModuleCode: string) => {
+// 处理入口切换
+const handleEntryChange = (newEntryCode: TrainingEntryCode) => {
   // 清空当前选择
   selectedGame.value = null
   selectedCategory.value = 'all'
   selectedEmotionalDifficulty.value = 1
+  currentEntryCode.value = newEntryCode
 
   // 更新 URL（保持学生ID不变）
   router.replace({
     path: `/games/lobby/${studentId.value}`,
-    query: { module: newModuleCode }
+    query: {
+      entry: newEntryCode,
+      module: getTrainingEntry(newEntryCode).moduleCode
+    }
   })
 
-  ElMessage.success(`已切换到 ${currentModule.value?.name || '游戏训练'}`)
+  ElMessage.success(`已切换到 ${getTrainingEntry(newEntryCode).name}`)
 }
 
 const selectEmotionalGame = (game: ResourceItem) => {
@@ -319,12 +327,13 @@ const handleStartGame = (gameConfig: {
 
   // 构建查询参数
   const query: Record<string, string> = {
-    studentId: String(gameConfig.studentId),
-    resourceId: String(gameConfig.resourceId),
-    taskId: String(gameConfig.taskId),
-    mode: gameConfig.mode,
-    module: currentModuleCode.value
-  }
+      studentId: String(gameConfig.studentId),
+      resourceId: String(gameConfig.resourceId),
+      taskId: String(gameConfig.taskId),
+      mode: gameConfig.mode,
+      entry: currentEntryCode.value,
+      module: currentEntry.value.moduleCode
+    }
 
   // 添加训练配置参数
   if (gameConfig.gridSize !== undefined) query.gridSize = String(gameConfig.gridSize)
@@ -349,11 +358,12 @@ const handleStartEmotionalGame = () => {
     : '/emotional/games/balloon'
 
   router.push({
-    path: entryPath,
-    query: {
-      module: ModuleCode.EMOTIONAL,
-      studentId: String(studentId.value),
-      studentName: student.value?.name || '',
+      path: entryPath,
+      query: {
+        entry: currentEntryCode.value,
+        module: ModuleCode.EMOTIONAL,
+        studentId: String(studentId.value),
+        studentName: student.value?.name || '',
       difficulty: String(selectedEmotionalDifficulty.value),
     },
   })
@@ -363,7 +373,10 @@ const handleStartEmotionalGame = () => {
 const goBackToStudentList = () => {
   router.push({
     path: '/games/select-student',
-    query: { module: currentModuleCode.value }
+    query: {
+      entry: currentEntryCode.value,
+      module: currentEntry.value.moduleCode
+    }
   })
 }
 
@@ -377,15 +390,17 @@ onMounted(async () => {
 
   await loadStudent()
 
-  if (isEmotionalModule.value) {
+  if (isEmotionalEntry.value) {
     selectedGame.value = emotionalGames.value[0] || null
   }
 })
 
-watch(isEmotionalModule, (value) => {
+watch(isEmotionalEntry, (value) => {
   if (value) {
     selectedGame.value = emotionalGames.value[0] || null
     selectedEmotionalDifficulty.value = 1
+  } else {
+    selectedGame.value = null
   }
 })
 </script>
