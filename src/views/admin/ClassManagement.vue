@@ -868,7 +868,7 @@ function getClassTagType(cls: ClassInfo) {
   const ratio = cls.currentEnrollment / cls.maxStudents
   if (ratio >= 0.9) return 'danger'
   if (ratio >= 0.7) return 'warning'
-  return ''
+  return 'success'
 }
 
 function goBack() {

@@ -2093,12 +2093,10 @@ export class GameTrainingAPI extends DatabaseAPI {
         tr.created_at,
         r.name as task_name
       FROM training_records tr
-      LEFT JOIN sys_training_resource r
-        ON (
-          tr.resource_id = r.id
-          OR (tr.resource_id IS NULL AND tr.task_id = r.legacy_id AND r.resource_type = 'game')
-        )
+      LEFT JOIN sys_training_resource r ON tr.resource_id = r.id
       WHERE tr.student_id = ?
+        AND tr.entry_code IS NOT NULL
+        AND TRIM(tr.entry_code) != ''
     `
     const params: any[] = [studentId]
 
@@ -2473,6 +2471,8 @@ export class EquipmentTrainingAPI extends DatabaseAPI {
       LEFT JOIN equipment_training_batches etb ON etr.batch_id = etb.id
       LEFT JOIN student s ON etr.student_id = s.id
       WHERE etr.student_id = ?
+        AND etr.entry_code IS NOT NULL
+        AND TRIM(etr.entry_code) != ''
     `
     const params: any[] = [studentId]
 

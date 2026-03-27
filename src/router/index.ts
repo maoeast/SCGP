@@ -37,14 +37,11 @@ const GameSelectStudent = () => import('@/views/games/SelectStudent.vue')
 const GameLobby = () => import('@/views/games/GameLobby.vue')
 const GamePlay = () => import('@/views/games/GamePlay.vue')
 const IEPReport = () => import('@/views/games/IEPReport.vue')
-const TrainingRecords = () => import('@/views/games/TrainingRecords.vue')
-const SensoryTrainingRecords = () => import('@/views/games/SensoryTrainingRecords.vue')
 const EmotionalMenu = () => import('@/views/emotional/Menu.vue')
 const EmotionalSceneSelector = () => import('@/views/emotional/SceneSelector.vue')
 const EmotionSceneTraining = () => import('@/views/emotional/EmotionSceneTraining.vue')
 const CareExpressionTraining = () => import('@/views/emotional/CareExpressionTraining.vue')
 const EmotionalSessionSummary = () => import('@/views/emotional/SessionSummary.vue')
-const EmotionalRecords = () => import('@/views/emotional/Records.vue')
 const EmotionalReport = () => import('@/views/emotional/Report.vue')
 const BalloonBreathingPage = () => import('@/views/emotional/games/BalloonBreathingPage.vue')
 const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
@@ -257,8 +254,7 @@ const router = createRouter({
         },
         {
           path: 'emotional/records',
-          name: 'EmotionalRecords',
-          component: EmotionalRecords,
+          redirect: '/training-records/emotional-regulation?type=game',
           meta: {
             title: '情绪模块训练记录',
             hideInMenu: true,

@@ -80,7 +80,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 function getRouteEntryCode() {
-  return resolveTrainingEntryCode(route.params.entryCode, route.params.moduleCode)
+  return resolveTrainingEntryCode(route.params.entryCode)
 }
 
 // 当前入口代码
@@ -123,15 +123,18 @@ const goBackToMenu = () => {
 const handleViewGameDetail = (record: any) => {
   if (currentEntry.value.moduleCode === 'emotional') {
     router.push({
-      path: '/emotional/report',
-      query: { studentId: String(record.student_id) }
+      path: '/emotional/session-summary',
+      query: {
+        studentId: String(record.student_id),
+        trainingRecordId: String(record.id),
+      }
     })
     return
   }
 
   router.push({
     path: '/games/report',
-    query: { recordId: record.id }
+    query: { recordId: String(record.id) }
   })
 }
 
@@ -148,7 +151,7 @@ const handleViewEquipmentDetail = (record: any) => {
 }
 
 // 监听路由参数变化
-watch(() => [route.params.entryCode, route.params.moduleCode], () => {
+watch(() => route.params.entryCode, () => {
   currentEntryCode.value = getRouteEntryCode()
 })
 

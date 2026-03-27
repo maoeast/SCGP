@@ -2189,10 +2189,26 @@ function safeAddColumn(database: any, tableName: string, columnDef: string): voi
 
 function tableSqlContains(database: any, tableName: string, expectedSqlFragment: string): boolean {
   try {
-    const row = database.get(
-      `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?`,
-      [tableName]
-    )
+    let row: any = null
+
+    if (database && typeof database.get === 'function') {
+      row = database.get(
+        `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?`,
+        [tableName]
+      )
+    } else if (database && typeof database.prepare === 'function') {
+      const stmt = database.prepare(
+        `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?`
+      )
+      try {
+        stmt.bind([tableName])
+        if (stmt.step()) {
+          row = stmt.getAsObject()
+        }
+      } finally {
+        stmt.free()
+      }
+    }
 
     return typeof row?.sql === 'string' && row.sql.includes(expectedSqlFragment)
   } catch (error) {

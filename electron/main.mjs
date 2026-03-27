@@ -118,6 +118,26 @@ async function initResourceDir() {
 
 // 保持对窗口对象的全局引用，如果不这样做，当JavaScript对象被垃圾回收时，窗口将自动关闭
 let mainWindow = null
+const atomicDatabaseWriteQueues = new Map()
+
+function queueAtomicDatabaseWrite(dbPath, task) {
+  const previous = atomicDatabaseWriteQueues.get(dbPath)
+  if (previous && isDev) {
+    safeLog('[AtomicWrite] Queued behind in-flight write:', dbPath)
+  }
+
+  const queuedPromise = (previous || Promise.resolve())
+    .catch(() => undefined)
+    .then(task)
+    .finally(() => {
+      if (atomicDatabaseWriteQueues.get(dbPath) === queuedPromise) {
+        atomicDatabaseWriteQueues.delete(dbPath)
+      }
+    })
+
+  atomicDatabaseWriteQueues.set(dbPath, queuedPromise)
+  return queuedPromise
+}
 
 function createWindow() {
   // 创建浏览器窗口（全屏模式）
@@ -738,6 +758,8 @@ ipcMain.handle('save-database-atomic', async (event, dbBuffer, dbName = 'databas
   const dbPath = path.join(userDataPath, dbName)
   const tmpPath = dbPath + '.tmp'
 
+  return queueAtomicDatabaseWrite(dbPath, async () => {
+
   if (isDev) {
     safeLog('[AtomicWrite] 开始原子写入:', {
       dbPath,
@@ -785,6 +807,7 @@ ipcMain.handle('save-database-atomic', async (event, dbBuffer, dbName = 'databas
       tmpPath // 返回 tmp 路径以便手动恢复
     }
   }
+  })
 })
 
 /**
