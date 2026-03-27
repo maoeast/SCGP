@@ -64,6 +64,21 @@
 - 首页用户可见标题已改为：`首页看板`
 - 首页副标题已改为：`聚焦今天要做的评估、训练与干预提醒，用真实业务数据支持一线决策。`
 
+### 3.3 training-entry hard-cut 当前进度
+
+- `training_records` 与 `equipment_training_records` 已补齐 `entry_code`
+- 游戏训练新写入已写入 `entry_code`
+- 器材训练新写入已写入 `entry_code`
+- 训练记录菜单 / 统计 / 面板已按 `entry_code` 统计与筛选
+- `src/views/equipment/Records.vue` 已改为 entry-aware 记录页
+- `ModuleTrainingRecords -> EquipmentRecords` 已能携带 `recordId` 进入对应记录
+- clean local dev DB 已重建并完成最小写入验证：
+  - 1 条游戏记录验证 `entry_code = emotional-regulation`
+  - 1 条器材记录验证 `entry_code = fine-motor`
+- `SQLWrapper` 已修复“保存后错误重复再触发保存”的状态机问题
+- `equipment_training_records` 的当前 schema/init 口径已改回正确资源主线：
+  - `equipment_id -> sys_training_resource(id)`
+
 ## 4. 当前活跃未完成主线
 
 当前下一条真正的大改动，不是单页修补，而是：
@@ -85,10 +100,14 @@
 
 当前尚未完成的关键点：
 
-- `training_records` 仍没有 `entry_code`
-- `equipment_training_records` 仍没有 `entry_code`
-- 游戏训练链仍主要按顶层 `module` 工作
-- 训练记录页面仍主要按顶层 `moduleCode` 工作
+- 旧历史记录 hard-cut 的最终收口方案还未完全明确：
+  - 直接物理删除，或
+  - 提供一次明确 reset 路径
+- 仍需继续排查是否还有 remaining old module-based record/detail flow
+- 游戏资源真实覆盖仍不完整：
+  - 当前真实可用仍以 sensory games + emotional scenes / care scenes 为主
+  - `social-communication / fine-motor / soothing-aids / life-skills` 还不是完整游戏内容交付态
+- 如后续仍复现原子写入竞态日志，再继续收口 Electron Main 的 `save-database-atomic` 串行化
 
 ## 5. 当前明确决策
 
@@ -100,6 +119,7 @@
   - `cognitive`
 - `fine-motor`、`soothing-aids` 等属于内部训练入口，不是顶层授权模块
 - 新资源匹配与图片解析优先按 `meta_data.resourceCode`
+- 旧记录不做“旧 `module_code` 推断到新 `entry_code`”兼容层
 - 文档与结论必须以当前代码现实为准，不以旧规划或目标态替代现状
 
 ## 6. 当前推荐读取顺序

@@ -111,6 +111,18 @@
           <span v-else class="no-comment">暂无评语</span>
         </template>
       </el-table-column>
+      <el-table-column label="操作" width="90" fixed="right">
+        <template #default="{ row }">
+          <el-button
+            type="primary"
+            size="small"
+            link
+            @click="emit('view-detail', row)"
+          >
+            详情
+          </el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <!-- 空状态 -->
@@ -138,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { EquipmentTrainingAPI, StudentAPI } from '@/database/api'
 import { type TrainingEntryCode } from '@/utils/training-entry'
@@ -150,7 +162,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
-  (e: 'view-detail', recordId: number): void
+  (e: 'view-detail', record: any): void
 }>()
 
 // 状态
@@ -289,6 +301,14 @@ onMounted(async () => {
   await loadStudents()
   loadRecords()
 })
+
+watch(
+  () => props.entryCode,
+  () => {
+    selectedCategory.value = undefined
+    loadRecords()
+  }
+)
 </script>
 <style scoped>
 .records-panel {

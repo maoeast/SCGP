@@ -1,23 +1,51 @@
-<!-- 器材训练记录页面 -->
 <template>
   <div class="page-container">
-    <!-- 页面头部 -->
+    <div class="breadcrumb-wrapper">
+      <el-breadcrumb separator="/">
+        <el-breadcrumb-item :to="{ path: '/equipment/menu' }">器材训练</el-breadcrumb-item>
+        <el-breadcrumb-item>器材训练记录</el-breadcrumb-item>
+      </el-breadcrumb>
+    </div>
+
     <div class="page-header">
       <div class="header-left">
         <h1>器材训练记录</h1>
-        <p class="subtitle">查看学生的器材训练历史与表现</p>
+        <p class="subtitle">
+          <span v-if="currentEntry">当前入口：{{ currentEntry.name }}</span>
+          <span v-else>查看学生在各训练入口下的器材训练历史与表现</span>
+        </p>
       </div>
       <div class="header-right">
-        <el-button type="success" :icon="Document" @click="exportAllIEP" :disabled="!studentId || records.length === 0">
+        <div class="module-switcher">
+          <el-icon class="switcher-icon"><Switch /></el-icon>
+          <span class="switcher-label">训练入口</span>
+          <el-select
+            v-model="selectedEntryCode"
+            size="default"
+            class="module-select"
+            @change="handleEntryChange"
+          >
+            <el-option label="全部入口" value="" />
+            <el-option
+              v-for="entry in availableEntries"
+              :key="entry.code"
+              :label="entry.name"
+              :value="entry.code"
+            />
+          </el-select>
+        </div>
+        <el-button type="success" :icon="Document" @click="exportAllIEP" :disabled="!canExport">
           导出报告
         </el-button>
-        <el-button type="primary" :icon="Plus" @click="goToQuickEntry" :disabled="!studentId">
+        <el-button type="primary" :icon="Plus" @click="goToQuickEntry" :disabled="!canCreateRecord">
           新增记录
+        </el-button>
+        <el-button :icon="ArrowLeft" @click="goBack">
+          返回
         </el-button>
       </div>
     </div>
 
-    <!-- 筛选区域 -->
     <div class="filter-section">
       <el-row :gutter="16">
         <el-col :span="6">
@@ -26,8 +54,8 @@
             placeholder="选择学生"
             clearable
             filterable
-            @change="onStudentChange"
             style="width: 100%"
+            @change="handleStudentChange"
           >
             <el-option
               v-for="student in validStudents"
@@ -41,19 +69,16 @@
           <el-select
             v-model="filters.category"
             placeholder="选择分类"
-            clearable
-            @change="loadRecords"
             :disabled="!studentId"
             style="width: 100%"
           >
             <el-option label="全部分类" value="" />
-            <el-option label="触觉系统" value="tactile" />
-            <el-option label="嗅觉系统" value="olfactory" />
-            <el-option label="视觉系统" value="visual" />
-            <el-option label="听觉系统" value="auditory" />
-            <el-option label="味觉系统" value="gustatory" />
-            <el-option label="本体觉系统" value="proprioceptive" />
-            <el-option label="感官综合" value="integration" />
+            <el-option
+              v-for="category in categoryOptions"
+              :key="category"
+              :label="category"
+              :value="category"
+            />
           </el-select>
         </el-col>
         <el-col :span="8">
@@ -65,18 +90,19 @@
             end-placeholder="结束日期"
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
-            @change="loadRecords"
             :disabled="!studentId"
             style="width: 100%"
           />
         </el-col>
-        <el-col :span="4">
+        <el-col :span="5" class="filter-actions">
+          <el-tag v-if="studentInfo" type="info" effect="plain">
+            当前学生：{{ studentInfo.name }}
+          </el-tag>
           <el-button :icon="Refresh" @click="resetFilters" :disabled="!studentId">重置筛选</el-button>
         </el-col>
       </el-row>
     </div>
 
-    <!-- 未选择学生提示 -->
     <div v-if="!studentId" class="empty-student">
       <el-empty description="请先选择学生查看训练记录" :image-size="200">
         <template #image>
@@ -85,12 +111,12 @@
       </el-empty>
     </div>
 
-    <!-- 记录列表 -->
     <div v-else v-loading="loading" class="records-list">
       <el-card
         v-for="record in records"
+        :id="`equipment-record-${record.id}`"
         :key="record.id"
-        class="record-card"
+        :class="['record-card', { 'record-card--highlighted': record.id === highlightedRecordId }]"
         shadow="hover"
       >
         <div class="record-header">
@@ -100,7 +126,15 @@
               <div class="equipment-name">{{ record.equipment_name }}</div>
               <div class="equipment-meta">
                 <el-tag size="small" :type="getCategoryTagType(record.category)">
-                  {{ getCategoryLabel(record.category) }}
+                  {{ getCategoryLabel(record) }}
+                </el-tag>
+                <el-tag
+                  v-if="!selectedEntryCode"
+                  size="small"
+                  effect="plain"
+                  :type="getRecordEntryTagType(record)"
+                >
+                  {{ getRecordEntryLabel(record) }}
                 </el-tag>
                 <span class="record-date">{{ formatDate(record.training_date) }}</span>
               </div>
@@ -123,6 +157,14 @@
         </div>
 
         <div class="record-actions">
+          <el-button
+            v-if="!selectedEntryCode && resolveRecordEntryCode(record)"
+            text
+            type="success"
+            @click="jumpToRecordEntry(record)"
+          >
+            按该入口查看
+          </el-button>
           <el-button text type="primary" :icon="Document" @click="viewIEP(record)">
             查看评语
           </el-button>
@@ -137,11 +179,10 @@
         description="暂无训练记录"
         :image-size="200"
       >
-        <el-button type="primary" @click="goToQuickEntry">新增记录</el-button>
+        <el-button type="primary" @click="goToQuickEntry" :disabled="!canCreateRecord">新增记录</el-button>
       </el-empty>
     </div>
 
-    <!-- IEP 评语对话框 -->
     <el-dialog
       v-model="iepDialogVisible"
       title="IEP 训练评语"
@@ -175,22 +216,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Refresh, Document, Delete, User } from '@element-plus/icons-vue'
-import type { EquipmentTrainingRecordWithEquipment } from '@/types/equipment'
-import type { EquipmentCategory } from '@/types/equipment'
+import { ArrowLeft, Delete, Document, Plus, Refresh, Switch, User } from '@element-plus/icons-vue'
+import type { EquipmentCategory, EquipmentTrainingRecordWithEquipment } from '@/types/equipment'
 import { EquipmentTrainingAPI, StudentAPI } from '@/database/api'
 import { IEPGenerator } from '@/utils/iep-generator'
-import { getEquipmentDomainName } from '@/utils/iep-templates'
 import { exportEquipmentIEPToWord, type EquipmentIEPExportData } from '@/utils/docxExporter'
 import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
+import { useAuthStore } from '@/stores/auth'
+import {
+  getAllEquipmentTrainingEntries,
+  getEquipmentTrainingEntry,
+  resolveEquipmentTrainingEntryRouteCode,
+  type EquipmentTrainingEntryCode,
+} from '@/utils/equipment-training-entry'
+import {
+  resolveEquipmentSourceCategory,
+  sortEquipmentSourceCategoryKeys,
+} from '@/utils/physical-equipment-source-category'
 
-const route = useRoute()
-const router = useRouter()
-
-// 类型定义
 interface Student {
   id: number
   name: string
@@ -201,196 +247,143 @@ interface Student {
   avatar_path?: string
 }
 
-// 状态
+type EquipmentRecordItem = EquipmentTrainingRecordWithEquipment & {
+  entry_code?: string | null
+  module_code?: string | null
+  equipment_meta?: string | null
+}
+
+const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
+
 const studentId = ref<number | null>(null)
+const selectedEntryCode = ref<EquipmentTrainingEntryCode | ''>('')
+const highlightedRecordId = ref<number | null>(null)
 const students = ref<Student[]>([])
-const loading = ref(false)
-const records = ref<EquipmentTrainingRecordWithEquipment[]>([])
 const studentInfo = ref<Student | null>(null)
+const loading = ref(false)
+const allRecords = ref<EquipmentRecordItem[]>([])
+
 const filters = reactive({
   category: '',
-  dateRange: null as [string, string] | null
+  dateRange: null as [string, string] | null,
 })
 
-// IEP 对话框
 const iepDialogVisible = ref(false)
 const generatingIEP = ref(false)
 const currentIEP = ref<any>(null)
 
-// 过滤有效的学生
 const validStudents = computed(() => {
   return students.value.filter((student) =>
     student &&
     typeof student === 'object' &&
     student.id != null &&
-    student.name
+    student.name,
   )
 })
 
-// 获取分类标签
-const getCategoryLabel = (category: string) => {
-  const labels: Record<string, string> = {
-    tactile: '触觉',
-    olfactory: '嗅觉',
-    visual: '视觉',
-    auditory: '听觉',
-    gustatory: '味觉',
-    proprioceptive: '本体觉',
-    integration: '感官综合'
-  }
-  return labels[category] || category
-}
-
-// 获取分类标签类型
-const getCategoryTagType = (category: string) => {
-  const types: Record<string, any> = {
-    tactile: 'danger',
-    olfactory: 'success',
-    visual: 'primary',
-    auditory: 'warning',
-    gustatory: 'info',
-    proprioceptive: '',
-    integration: 'success'
-  }
-  return types[category] || ''
-}
-
-// 获取辅助等级标签
-const getPromptLevelLabel = (level: number) => {
-  const labels: Record<number, string> = {
-    1: '独立完成',
-    2: '口头提示',
-    3: '视觉提示',
-    4: '手触引导',
-    5: '身体辅助'
-  }
-  return labels[level] || ''
-}
-
-// 格式化日期
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-// 获取器材图片 URL
-const getEquipmentImage = (record: EquipmentTrainingRecordWithEquipment) => {
-  const id = record.legacy_id || record.equipment_id
-  return getEquipmentImageUrl(record.category as EquipmentCategory, id, record.equipment_name)
-}
-
-const toEquipmentCatalog = (record: EquipmentTrainingRecordWithEquipment) => ({
-  id: record.equipment_id,
-  name: record.equipment_name,
-  category: record.category,
-  sub_category: record.sub_category,
-  description: record.description || '',
-  ability_tags: ensureArray(record.ability_tags),
-  image_url: getEquipmentImage(record),
-  is_active: 1,
-  created_at: record.created_at || record.training_date
+const availableEntries = computed(() => {
+  return getAllEquipmentTrainingEntries().filter((entry) => authStore.hasModuleAccess(entry.moduleCode))
 })
 
-// 加载学生列表
-const loadStudents = async () => {
-  try {
-    const api = new StudentAPI()
-    students.value = await api.getAllStudents()
-  } catch (error: any) {
-    console.error('加载学生列表失败:', error)
-    ElMessage.error('加载学生列表失败')
+const currentEntry = computed(() => {
+  return selectedEntryCode.value ? getEquipmentTrainingEntry(selectedEntryCode.value) : null
+})
+
+const categoryOptions = computed(() => {
+  const categories = allRecords.value.map((record) => getCategoryLabel(record))
+  return sortEquipmentSourceCategoryKeys(Array.from(new Set(categories.filter(Boolean))))
+})
+
+const records = computed(() => {
+  let filtered = [...allRecords.value]
+
+  if (filters.category) {
+    filtered = filtered.filter((record) => getCategoryLabel(record) === filters.category)
+  }
+
+  return filtered.sort((left, right) =>
+    new Date(right.training_date).getTime() - new Date(left.training_date).getTime(),
+  )
+})
+
+const canCreateRecord = computed(() => {
+  return Boolean(studentId.value && selectedEntryCode.value && currentEntry.value)
+})
+
+const canExport = computed(() => {
+  return Boolean(studentId.value && records.value.length > 0)
+})
+
+function parseRouteStudentId(): number | null {
+  const value = route.params.studentId
+  const parsed = typeof value === 'string' ? Number.parseInt(value, 10) : Number.NaN
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function parseRouteEntryCode(): EquipmentTrainingEntryCode | '' {
+  return resolveEquipmentTrainingEntryRouteCode(route.query.entry, route.query.module) || ''
+}
+
+function parseRouteRecordId(): number | null {
+  const value = route.query.recordId
+  const parsed = typeof value === 'string' ? Number.parseInt(value, 10) : Number.NaN
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function buildRouteLocation(
+  nextStudentId: number | null = studentId.value,
+  nextEntryCode: EquipmentTrainingEntryCode | '' = selectedEntryCode.value,
+  nextRecordId: number | null = null,
+) {
+  const query: Record<string, string> = {}
+
+  if (nextEntryCode) {
+    query.entry = nextEntryCode
+    query.module = getEquipmentTrainingEntry(nextEntryCode).moduleCode
+  }
+
+  if (nextRecordId) {
+    query.recordId = String(nextRecordId)
+  }
+
+  return {
+    name: 'EquipmentRecords',
+    params: nextStudentId ? { studentId: nextStudentId } : {},
+    query,
   }
 }
 
-// 加载学生信息
-const loadStudentInfo = async () => {
-  if (!studentId.value) {
-    studentInfo.value = null
-    return
+function resolveRecordEntryCode(record: Pick<EquipmentRecordItem, 'entry_code'>): EquipmentTrainingEntryCode | null {
+  if (typeof record.entry_code !== 'string') {
+    return null
   }
 
-  try {
-    const api = new StudentAPI()
-    studentInfo.value = await api.getStudentById(studentId.value)
-  } catch (error: any) {
-    console.error('加载学生信息失败:', error)
-    studentInfo.value = null
-  }
+  return resolveEquipmentTrainingEntryRouteCode(record.entry_code, undefined)
 }
 
-// 学生选择变化
-const onStudentChange = (newStudentId: number | null) => {
-  // 关键修复：用新的学生ID更新路由，保持状态一致性
-  if (newStudentId) {
-    router.replace({
-      name: 'EquipmentRecords',
-      params: { studentId: newStudentId }
-    })
-    // loadRecords() 会由 watch(route.params.studentId) 自动触发
-  } else {
-    // 清空选择，跳转到无参数的页面
-    router.replace({ name: 'EquipmentRecords', params: {} })
-  }
+function getRecordEntryLabel(record: EquipmentRecordItem): string {
+  const entryCode = resolveRecordEntryCode(record)
+  return entryCode ? getEquipmentTrainingEntry(entryCode).name : '未标记入口'
 }
 
-// 加载记录
-const loadRecords = async () => {
-  if (!studentId.value) {
-    records.value = []
-    return
+function getRecordEntryTagType(record: EquipmentRecordItem): '' | 'success' | 'warning' | 'primary' | 'info' {
+  const entryCode = resolveRecordEntryCode(record)
+  if (!entryCode) {
+    return 'info'
   }
 
-  loading.value = true
-  try {
-    const api = new EquipmentTrainingAPI()
-    const data = api.getStudentRecords(studentId.value)
-
-    // 解析 ability_tags JSON 字符串为数组
-    const parsedData = data.map(record => ({
-      ...record,
-      ability_tags: record.ability_tags ? JSON.parse(record.ability_tags) : []
-    }))
-
-    // 应用筛选
-    let filtered = parsedData
-    if (filters.category) {
-      filtered = filtered.filter(r => r.category === filters.category)
-    }
-    if (filters.dateRange) {
-      const [start, end] = filters.dateRange
-      filtered = filtered.filter(r => {
-        const date = r.training_date.split('T')[0]
-        return date >= start && date <= end
-      })
-    }
-
-    // 按日期倒序排列
-    records.value = filtered.sort((a, b) =>
-      new Date(b.training_date).getTime() - new Date(a.training_date).getTime()
-    )
-  } catch (error: any) {
-    ElMessage.error('加载记录失败：' + error.message)
-  } finally {
-    loading.value = false
-  }
+  const moduleCode = getEquipmentTrainingEntry(entryCode).moduleCode
+  if (moduleCode === 'sensory') return 'success'
+  if (moduleCode === 'emotional') return 'warning'
+  if (moduleCode === 'social') return 'primary'
+  return 'info'
 }
 
-// 重置筛选
-const resetFilters = () => {
-  filters.category = ''
-  filters.dateRange = null
-  loadRecords()
-}
-
-// 确保 ability_tags 是数组类型
-const ensureArray = (value: any): string[] => {
+function ensureArray(value: unknown): string[] {
   if (Array.isArray(value)) return value
+
   if (typeof value === 'string') {
     try {
       const parsed = JSON.parse(value)
@@ -399,41 +392,205 @@ const ensureArray = (value: any): string[] => {
       return []
     }
   }
+
   return []
 }
 
-// 查看 IEP
-const viewIEP = async (record: EquipmentTrainingRecordWithEquipment) => {
+function getCategoryLabel(record: Pick<EquipmentRecordItem, 'category' | 'equipment_meta'>): string {
+  let metadata: Record<string, any> | undefined
+  if (record.equipment_meta) {
+    try {
+      metadata = JSON.parse(record.equipment_meta)
+    } catch {
+      metadata = undefined
+    }
+  }
+
+  return resolveEquipmentSourceCategory({
+    category: record.category,
+    metadata,
+  })
+}
+
+function getCategoryTagType(category: string): '' | 'danger' | 'success' | 'primary' | 'warning' | 'info' {
+  const types: Record<string, '' | 'danger' | 'success' | 'primary' | 'warning' | 'info'> = {
+    tactile: 'danger',
+    olfactory: 'success',
+    visual: 'primary',
+    auditory: 'warning',
+    gustatory: 'info',
+    proprioceptive: '',
+    integration: 'success',
+  }
+  return types[category] || 'info'
+}
+
+function getPromptLevelLabel(level: number): string {
+  const labels: Record<number, string> = {
+    1: '独立完成',
+    2: '口头提示',
+    3: '视觉提示',
+    4: '手触引导',
+    5: '身体辅助',
+  }
+  return labels[level] || ''
+}
+
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function getEquipmentImage(record: EquipmentRecordItem): string {
+  const id = record.legacy_id || record.equipment_id
+  return getEquipmentImageUrl(record.category as EquipmentCategory, id, record.equipment_name)
+}
+
+function toEquipmentCatalog(record: EquipmentRecordItem) {
+  return {
+    id: record.equipment_id,
+    name: record.equipment_name,
+    category: record.category,
+    sub_category: record.sub_category,
+    description: record.description || '',
+    ability_tags: ensureArray(record.ability_tags),
+    image_url: getEquipmentImage(record),
+    is_active: 1,
+    created_at: record.created_at || record.training_date,
+  }
+}
+
+async function loadStudents() {
+  try {
+    const api = new StudentAPI()
+    students.value = await api.getAllStudents()
+  } catch (error) {
+    console.error('加载学生列表失败:', error)
+    ElMessage.error('加载学生列表失败')
+  }
+}
+
+async function loadStudentInfo() {
+  if (!studentId.value) {
+    studentInfo.value = null
+    return
+  }
+
+  try {
+    const api = new StudentAPI()
+    studentInfo.value = await api.getStudentById(studentId.value)
+  } catch (error) {
+    console.error('加载学生信息失败:', error)
+    studentInfo.value = null
+  }
+}
+
+async function focusHighlightedRecord() {
+  if (!highlightedRecordId.value) {
+    return
+  }
+
+  if (!records.value.some((record) => record.id === highlightedRecordId.value)) {
+    return
+  }
+
+  await nextTick()
+  const element = document.getElementById(`equipment-record-${highlightedRecordId.value}`)
+  if (!element) {
+    return
+  }
+
+  element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
+async function loadRecords() {
+  if (!studentId.value) {
+    allRecords.value = []
+    return
+  }
+
+  loading.value = true
+  try {
+    const api = new EquipmentTrainingAPI()
+    const data = api.getStudentRecords(studentId.value, {
+      start_date: filters.dateRange?.[0],
+      end_date: filters.dateRange?.[1],
+      entry_code: selectedEntryCode.value || undefined,
+    })
+
+    allRecords.value = data.map((record) => ({
+      ...record,
+      ability_tags: ensureArray(record.ability_tags),
+    }))
+
+    await focusHighlightedRecord()
+  } catch (error: any) {
+    console.error('加载记录失败:', error)
+    ElMessage.error('加载记录失败：' + error.message)
+  } finally {
+    loading.value = false
+  }
+}
+
+function handleStudentChange(newStudentId: number | null) {
+  highlightedRecordId.value = null
+  router.replace(buildRouteLocation(newStudentId, selectedEntryCode.value, null))
+}
+
+function handleEntryChange(newEntryCode: EquipmentTrainingEntryCode | '') {
+  highlightedRecordId.value = null
+  router.replace(buildRouteLocation(studentId.value, newEntryCode, null))
+}
+
+function resetFilters() {
+  filters.category = ''
+  filters.dateRange = null
+  loadRecords()
+}
+
+function jumpToRecordEntry(record: EquipmentRecordItem) {
+  const entryCode = resolveRecordEntryCode(record)
+  if (!entryCode) {
+    return
+  }
+
+  router.replace(buildRouteLocation(studentId.value, entryCode, record.id))
+}
+
+async function viewIEP(record: EquipmentRecordItem) {
   generatingIEP.value = true
   iepDialogVisible.value = true
   currentIEP.value = null
 
   try {
-      const report = IEPGenerator.generateEquipmentReport({
-        studentName: record.student_name || '学生',
-        equipment: toEquipmentCatalog(record),
-        score: record.score,
+    currentIEP.value = IEPGenerator.generateEquipmentReport({
+      studentName: record.student_name || studentInfo.value?.name || '学生',
+      equipment: toEquipmentCatalog(record),
+      score: record.score,
       promptLevel: record.prompt_level,
       duration_seconds: record.duration_seconds,
       training_date: record.training_date,
-      notes: record.notes
+      notes: record.notes,
     })
-
-    currentIEP.value = report
   } catch (error: any) {
     ElMessage.error('生成评语失败：' + error.message)
     currentIEP.value = {
       performance: '生成评语时出错',
       suggestions: [],
-      generatedComment: '暂时无法生成评语，请稍后重试'
+      generatedComment: '暂时无法生成评语，请稍后重试',
     }
   } finally {
     generatingIEP.value = false
   }
 }
 
-// 导出所有记录的 IEP 报告
-const exportAllIEP = async () => {
+async function exportAllIEP() {
   if (records.value.length === 0) {
     ElMessage.warning('暂无记录可导出')
     return
@@ -447,17 +604,15 @@ const exportAllIEP = async () => {
   try {
     ElMessage.info('正在生成报告...')
 
-    // 计算分类统计
     const categoryBreakdown: Record<string, number> = {}
-    records.value.forEach(r => {
-      categoryBreakdown[r.category] = (categoryBreakdown[r.category] || 0) + 1
+    records.value.forEach((record) => {
+      const category = getCategoryLabel(record)
+      categoryBreakdown[category] = (categoryBreakdown[category] || 0) + 1
     })
 
-    // 计算平均分
-    const totalScore = records.value.reduce((sum, r) => sum + r.score, 0)
+    const totalScore = records.value.reduce((sum, record) => sum + record.score, 0)
     const averageScore = records.value.length > 0 ? totalScore / records.value.length : 0
 
-    // 计算年龄
     const calculateAge = (birthday: string) => {
       if (!birthday) return 0
       const birth = new Date(birthday)
@@ -465,156 +620,78 @@ const exportAllIEP = async () => {
       let age = today.getFullYear() - birth.getFullYear()
       const monthDiff = today.getMonth() - birth.getMonth()
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-        age--
+        age -= 1
       }
       return age
     }
 
-    // 准备导出数据
     const exportData: EquipmentIEPExportData = {
       student: {
         name: studentInfo.value.name,
         gender: studentInfo.value.gender === '男' ? '男' : '女',
         age: calculateAge(studentInfo.value.birthday),
-        birthday: studentInfo.value.birthday
+        birthday: studentInfo.value.birthday,
       },
       reportDate: new Date().toLocaleDateString('zh-CN'),
-      records: await Promise.all(records.value.map(async (record) => {
+      records: records.value.map((record) => {
         const report = IEPGenerator.generateEquipmentReport({
-          studentName: record.student_name || '学生',
+          studentName: record.student_name || studentInfo.value?.name || '学生',
           equipment: toEquipmentCatalog(record),
           score: record.score,
           promptLevel: record.prompt_level,
           duration_seconds: record.duration_seconds,
           training_date: record.training_date,
-          notes: record.notes
+          notes: record.notes,
         })
 
         return {
           equipmentName: record.equipment_name,
-          categoryName: getCategoryLabel(record.category),
+          categoryName: getCategoryLabel(record),
           score: record.score,
           promptLevel: getPromptLevelLabel(record.prompt_level),
           trainingDate: new Date(record.training_date).toLocaleDateString('zh-CN'),
           notes: record.notes,
           performance: report.performance,
-          suggestions: report.suggestions
+          suggestions: report.suggestions,
         }
-      })),
+      }),
       summary: {
         totalRecords: records.value.length,
         categoryBreakdown,
-        averageScore
-      }
+        averageScore,
+      },
     }
 
-    // 生成文件名
-    const filename = `${studentInfo.value.name}_器材训练IEP报告_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}`
+    const entrySuffix = currentEntry.value ? `_${currentEntry.value.name}` : ''
+    const filename = `${studentInfo.value.name}${entrySuffix}_器材训练IEP报告_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}`
 
-    // 导出 Word
     await exportEquipmentIEPToWord(exportData, filename)
-
     ElMessage.success('报告导出成功')
   } catch (error: any) {
     ElMessage.error('导出失败：' + error.message)
   }
 }
 
-// 导出当前查看的单条记录 IEP
-const exportIEP = async () => {
+async function exportIEP() {
   if (!currentIEP.value || !studentInfo.value) {
     ElMessage.warning('请先选择一条记录查看评语')
     return
   }
 
-  try {
-    ElMessage.info('正在生成报告...')
-
-    // 计算分类统计
-    const categoryBreakdown: Record<string, number> = {}
-    records.value.forEach(r => {
-      categoryBreakdown[r.category] = (categoryBreakdown[r.category] || 0) + 1
-    })
-
-    // 计算平均分
-    const totalScore = records.value.reduce((sum, r) => sum + r.score, 0)
-    const averageScore = records.value.length > 0 ? totalScore / records.value.length : 0
-
-    // 计算年龄
-    const calculateAge = (birthday: string) => {
-      if (!birthday) return 0
-      const birth = new Date(birthday)
-      const today = new Date()
-      let age = today.getFullYear() - birth.getFullYear()
-      const monthDiff = today.getMonth() - birth.getMonth()
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-        age--
-      }
-      return age
-    }
-
-    // 准备导出数据 - 导出所有筛选后的记录
-    const exportData: EquipmentIEPExportData = {
-      student: {
-        name: studentInfo.value.name,
-        gender: studentInfo.value.gender === '男' ? '男' : '女',
-        age: calculateAge(studentInfo.value.birthday),
-        birthday: studentInfo.value.birthday
-      },
-      reportDate: new Date().toLocaleDateString('zh-CN'),
-      records: await Promise.all(records.value.map(async (record) => {
-        const report = IEPGenerator.generateEquipmentReport({
-          studentName: record.student_name || '学生',
-          equipment: toEquipmentCatalog(record),
-          score: record.score,
-          promptLevel: record.prompt_level,
-          duration_seconds: record.duration_seconds,
-          training_date: record.training_date,
-          notes: record.notes
-        })
-
-        return {
-          equipmentName: record.equipment_name,
-          categoryName: getCategoryLabel(record.category),
-          score: record.score,
-          promptLevel: getPromptLevelLabel(record.prompt_level),
-          trainingDate: new Date(record.training_date).toLocaleDateString('zh-CN'),
-          notes: record.notes,
-          performance: report.performance,
-          suggestions: report.suggestions
-        }
-      })),
-      summary: {
-        totalRecords: records.value.length,
-        categoryBreakdown,
-        averageScore
-      }
-    }
-
-    // 生成文件名
-    const filename = `${studentInfo.value.name}_器材训练IEP报告_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}`
-
-    // 导出 Word
-    await exportEquipmentIEPToWord(exportData, filename)
-
-    ElMessage.success('报告导出成功')
-    iepDialogVisible.value = false
-  } catch (error: any) {
-    ElMessage.error('导出失败：' + error.message)
-  }
+  await exportAllIEP()
+  iepDialogVisible.value = false
 }
 
-// 删除记录
-const deleteRecord = async (record: EquipmentTrainingRecordWithEquipment) => {
+async function deleteRecord(record: EquipmentRecordItem) {
   try {
     await ElMessageBox.confirm('确定要删除这条训练记录吗？', '提示', {
-      type: 'warning'
+      type: 'warning',
     })
 
     const api = new EquipmentTrainingAPI()
     api.deleteRecord(record.id)
     ElMessage.success('删除成功')
-    loadRecords()
+    await loadRecords()
   } catch (error: any) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败：' + error.message)
@@ -622,65 +699,85 @@ const deleteRecord = async (record: EquipmentTrainingRecordWithEquipment) => {
   }
 }
 
-// 导航
-const goToQuickEntry = () => {
-  if (!studentId.value) return
-  router.push(`/equipment/quick-entry/${studentId.value}`)
+function goToQuickEntry() {
+  if (!studentId.value || !selectedEntryCode.value) {
+    ElMessage.warning('请先选择学生和训练入口')
+    return
+  }
+
+  const entry = getEquipmentTrainingEntry(selectedEntryCode.value)
+  router.push({
+    path: `/equipment/quick-entry/${studentId.value}`,
+    query: {
+      entry: selectedEntryCode.value,
+      module: entry.moduleCode,
+    },
+  })
+}
+
+function goBack() {
+  if (window.history.length > 1) {
+    router.back()
+    return
+  }
+
+  router.push('/equipment/menu')
+}
+
+async function syncFromRoute() {
+  studentId.value = parseRouteStudentId()
+  selectedEntryCode.value = parseRouteEntryCode()
+  highlightedRecordId.value = parseRouteRecordId()
+
+  await loadStudentInfo()
+  await loadRecords()
 }
 
 onMounted(async () => {
-  // 加载学生列表
   await loadStudents()
-
-  // 从路由参数获取学生 ID
-  const paramStudentId = route.params.studentId
-  if (paramStudentId) {
-    studentId.value = parseInt(paramStudentId as string)
-    await loadStudentInfo()
-    loadRecords()
-  }
+  await syncFromRoute()
 })
 
-// 监听路由参数变化，自动加载记录
 watch(
-  () => route.params.studentId,
-  async (newStudentId) => {
-    if (newStudentId) {
-      const id = parseInt(newStudentId as string)
-      // 只有当 studentId 真正变化时才更新
-      if (studentId.value !== id) {
-        studentId.value = id
-        await loadStudentInfo()
-        loadRecords()
-      }
-    } else {
-      // 路由参数被清空
-      studentId.value = null
-      studentInfo.value = null
-      records.value = []
-    }
-  }
+  () => [route.params.studentId, route.query.entry, route.query.module, route.query.recordId],
+  async () => {
+    await syncFromRoute()
+  },
+)
+
+watch(
+  () => filters.dateRange,
+  () => {
+    loadRecords()
+  },
 )
 </script>
 
 <style scoped>
-/* 未选择学生提示 */
+.filter-section {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
 .empty-student {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 60px;
 }
 
-/* 筛选区域下拉框宽度 */
-.filter-section :deep(.el-select) {
-  width: 100%;
-}
-
-/* 记录列表 */
 .records-list {
   flex: 1;
   overflow-y: auto;
@@ -690,13 +787,20 @@ watch(
 }
 
 .record-card {
-  border-radius: 8px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.record-card--highlighted {
+  border-color: #67c23a;
+  box-shadow: 0 0 0 2px rgba(103, 194, 58, 0.18);
 }
 
 .record-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 16px;
   margin-bottom: 12px;
 }
 
@@ -711,6 +815,7 @@ watch(
   height: 56px;
   border-radius: 8px;
   object-fit: cover;
+  background: #f5f7fa;
 }
 
 .equipment-name {
@@ -723,12 +828,18 @@ watch(
 .equipment-meta {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 13px;
   color: #909399;
 }
 
+.record-date {
+  white-space: nowrap;
+}
+
 .score-display {
+  min-width: 180px;
   text-align: right;
 }
 
@@ -796,5 +907,36 @@ watch(
   border-radius: 6px;
   white-space: pre-wrap;
   line-height: 1.8;
+}
+
+.module-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #f0f9eb 0%, #e1f3d8 100%);
+  border: 1px solid #c2e7b0;
+  border-radius: 8px;
+}
+
+.switcher-icon {
+  color: #67c23a;
+  font-size: 18px;
+}
+
+.switcher-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #67c23a;
+}
+
+.module-select {
+  width: 180px;
+}
+
+.module-select :deep(.el-input__wrapper) {
+  background-color: #fff;
+  border-color: #67c23a;
+  box-shadow: 0 0 0 1px #67c23a inset;
 }
 </style>

@@ -141,7 +141,8 @@ const handleViewEquipmentDetail = (record: any) => {
     path: `/equipment/records/${record.student_id}`,
     query: {
       entry: currentEntryCode.value,
-      module: currentEntry.value.moduleCode
+      module: currentEntry.value.moduleCode,
+      recordId: String(record.id),
     }
   })
 }

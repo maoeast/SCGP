@@ -555,7 +555,7 @@ CREATE TABLE IF NOT EXISTS equipment_training_records (
   batch_id INTEGER,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id),
-  FOREIGN KEY (equipment_id) REFERENCES equipment_catalog(id)
+  FOREIGN KEY (equipment_id) REFERENCES sys_training_resource(id)
 );
 
 -- 器材训练批次表 (器材训练模块 - 可选)
@@ -2187,6 +2187,110 @@ function safeAddColumn(database: any, tableName: string, columnDef: string): voi
   }
 }
 
+function tableSqlContains(database: any, tableName: string, expectedSqlFragment: string): boolean {
+  try {
+    const row = database.get(
+      `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?`,
+      [tableName]
+    )
+
+    return typeof row?.sql === 'string' && row.sql.includes(expectedSqlFragment)
+  } catch (error) {
+    console.warn(`[InitDatabase] 检查表结构失败: ${tableName} - ${error}`)
+    return false
+  }
+}
+
+function migrateEquipmentTrainingRecordResourceForeignKey(rawDb: any): void {
+  if (!tableSqlContains(rawDb, 'equipment_training_records', 'REFERENCES equipment_catalog(id)')) {
+    return
+  }
+
+  console.log('[InitDatabase] 检测到 equipment_training_records 仍引用旧 equipment_catalog 外键，开始重建表结构...')
+
+  rawDb.run('PRAGMA foreign_keys = OFF')
+
+  try {
+    rawDb.run('DROP TABLE IF EXISTS equipment_training_records_new')
+    rawDb.run(`
+      CREATE TABLE equipment_training_records_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        equipment_id INTEGER NOT NULL,
+        entry_code TEXT,
+        score INTEGER NOT NULL CHECK(score BETWEEN 1 AND 5),
+        prompt_level INTEGER NOT NULL CHECK(prompt_level BETWEEN 1 AND 5),
+        duration_seconds INTEGER,
+        notes TEXT,
+        generated_comment TEXT,
+        training_date TEXT NOT NULL,
+        teacher_name TEXT,
+        environment TEXT,
+        batch_id INTEGER,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        class_id INTEGER,
+        class_name TEXT,
+        module_code TEXT DEFAULT 'sensory',
+        FOREIGN KEY (student_id) REFERENCES student(id),
+        FOREIGN KEY (equipment_id) REFERENCES sys_training_resource(id)
+      )
+    `)
+
+    rawDb.run(`
+      INSERT INTO equipment_training_records_new (
+        id,
+        student_id,
+        equipment_id,
+        entry_code,
+        score,
+        prompt_level,
+        duration_seconds,
+        notes,
+        generated_comment,
+        training_date,
+        teacher_name,
+        environment,
+        batch_id,
+        created_at,
+        class_id,
+        class_name,
+        module_code
+      )
+      SELECT
+        id,
+        student_id,
+        equipment_id,
+        entry_code,
+        score,
+        prompt_level,
+        duration_seconds,
+        notes,
+        generated_comment,
+        training_date,
+        teacher_name,
+        environment,
+        batch_id,
+        created_at,
+        class_id,
+        class_name,
+        COALESCE(module_code, 'sensory')
+      FROM equipment_training_records
+    `)
+
+    rawDb.run('DROP TABLE equipment_training_records')
+    rawDb.run('ALTER TABLE equipment_training_records_new RENAME TO equipment_training_records')
+    rawDb.run('CREATE INDEX IF NOT EXISTS idx_equipment_training_student ON equipment_training_records(student_id)')
+    rawDb.run('CREATE INDEX IF NOT EXISTS idx_equipment_training_date ON equipment_training_records(training_date)')
+    rawDb.run('CREATE INDEX IF NOT EXISTS idx_equipment_training_equipment ON equipment_training_records(equipment_id)')
+    rawDb.run('CREATE INDEX IF NOT EXISTS idx_equipment_training_batch ON equipment_training_records(batch_id)')
+    rawDb.run('CREATE INDEX IF NOT EXISTS idx_equipment_training_entry_code ON equipment_training_records(entry_code)')
+
+    console.log('[InitDatabase] equipment_training_records 外键迁移完成')
+  } finally {
+    rawDb.run('PRAGMA foreign_keys = ON')
+  }
+}
+
 /**
  * 初始化系统表结构
  *
@@ -2404,6 +2508,7 @@ async function initializeClassTables(rawDb: any): Promise<void> {
   safeAddColumn(rawDb, 'training_records', 'entry_code TEXT')
   safeAddColumn(rawDb, 'equipment_training_records', 'module_code TEXT DEFAULT "sensory"')
   safeAddColumn(rawDb, 'equipment_training_records', 'entry_code TEXT')
+  migrateEquipmentTrainingRecordResourceForeignKey(rawDb)
   rawDb.run('CREATE INDEX IF NOT EXISTS idx_training_records_entry_code ON training_records(entry_code)')
   rawDb.run('CREATE INDEX IF NOT EXISTS idx_equipment_training_entry_code ON equipment_training_records(entry_code)')
 

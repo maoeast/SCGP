@@ -6,6 +6,21 @@
 
 ## [2026-02-27] 最新归档条目（从 PROJECT_CONTEXT.md 迁移）
 
+## [2026-03-27] training-entry hard-cut 收口与 clean DB 验证
+- `src/views/equipment/Records.vue` 已改为 entry-aware：
+  - 支持 `entry / module / recordId` 路由状态
+  - 支持入口切换
+  - 支持从训练记录模块按具体记录跳转并高亮定位
+- `src/views/training-records/ModuleTrainingRecords.vue`、`GameRecordsPanel.vue`、`EquipmentRecordsPanel.vue` 已继续收口 entry-based 记录详情流
+- clean local dev DB 已重建，并在重建库上验证：
+  - 游戏记录可写入 `entry_code`
+  - 器材记录可写入 `entry_code`
+- `src/database/init.ts` 已修正 `equipment_training_records.equipment_id` 的当前 schema/init 口径：
+  - 从旧 `equipment_catalog(id)` 回到当前资源主线 `sys_training_resource(id)`
+- `src/database/sql-wrapper.ts` 已修复保存状态机问题：
+  - 避免保存成功后因错误 dirty 状态再次自触发保存
+  - 降低 `database.sqlite.tmp -> database.sqlite` 原子写入竞态导致的 `ENOENT` 风险
+
 ## [2026-03-26] physical-equipment CSV 导入方案落地
 - 新增 `src/database/physical-equipment-parser.ts` 与 `src/database/physical-equipment-data.ts`
 - 当前四份 physical-equipment CSV 草稿已可规范化为 `168` 条系统资源：

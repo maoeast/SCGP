@@ -124,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { GameTrainingAPI, StudentAPI } from '@/database/api'
 import { EmotionalTrainingAPI } from '@/database/emotional-api'
@@ -308,6 +308,13 @@ onMounted(async () => {
   await loadStudents()
   loadRecords()
 })
+
+watch(
+  () => props.entryCode,
+  () => {
+    loadRecords()
+  }
+)
 </script>
 
 <style scoped>
