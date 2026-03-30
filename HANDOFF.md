@@ -41,7 +41,7 @@
 ## 当前活跃工作
 
 - 当前唯一有效续接入口：`.continue-here.md`
-- 当前续接范围：`training-resource copy workflow landed, final copy pass pending, and resource-center runtime verification`
+- 当前续接范围：`resource-center init duplication fixed, sensory equipment tag backfill landed, and full runtime verification plus final copy pass pending`
 - 如果 `.continue-here.md` 与其他文档冲突：
   - 当前任务以 `.continue-here.md` 为准
   - 边界与规则以 `AGENTS.md` 为准

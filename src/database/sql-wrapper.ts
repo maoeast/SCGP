@@ -257,6 +257,10 @@ export class SQLWrapper {
     return this.db
   }
 
+  hasPendingChanges(): boolean {
+    return this.isDirty || this.pendingSave || this.isSaving || this.saveTimer !== null
+  }
+
   async saveNow(): Promise<void> {
     if (this.saveTimer !== null) {
       clearTimeout(this.saveTimer)

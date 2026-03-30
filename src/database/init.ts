@@ -792,6 +792,27 @@ CREATE TABLE IF NOT EXISTS sys_app_settings (
 // 数据库实例
 let db: any = null;
 let SQL: any = null;
+let initPromise: Promise<any> | null = null;
+
+function getLastInsertedRowId(): number {
+  if (!db) {
+    return 0
+  }
+
+  if (typeof db.lastInsertId === 'function') {
+    return Number(db.lastInsertId() || 0)
+  }
+
+  return Number(db.get?.('SELECT last_insert_rowid() as id', [])?.id || 0)
+}
+
+function queryRows<T extends Record<string, any>>(sql: string, params: any[] = []): T[] {
+  if (!db || typeof db.all !== 'function') {
+    return []
+  }
+
+  return db.all(sql, params) as T[]
+}
 
 // 创建表结构（内部使用原始数据库）
 function createTablesInternal(rawDb: any) {
@@ -830,8 +851,19 @@ function autoSave() {
 
 // 初始化数据库
 export async function initDatabase(): Promise<any> {
-  try {
-    console.log('[InitDatabase] 🔄 开始初始化数据库...')
+  if (db) {
+    console.log('[InitDatabase] ♻️ 复用已初始化数据库实例')
+    return db
+  }
+
+  if (initPromise) {
+    console.log('[InitDatabase] ⏳ 复用进行中的数据库初始化流程')
+    return initPromise
+  }
+
+  initPromise = (async (): Promise<any> => {
+    try {
+      console.log('[InitDatabase] 🔄 开始初始化数据库...')
 
     // 步骤 1: 通过 Electron IPC 加载数据库文件
     let dbBuffer: Uint8Array | null = null
@@ -1250,15 +1282,30 @@ export async function initDatabase(): Promise<any> {
       console.warn('[InitDatabase] ⚠️  physical-equipment 资源初始化失败:', physicalEquipmentError)
     }
 
-    return db
-  } catch (error) {
-    console.error('SQL.js数据库初始化失败:', error)
-    // 降级到Mock数据库
-    console.log('降级使用Mock数据库')
-    const { MockDatabase, createMockData } = await import('./mock-db')
-    db = new MockDatabase()
-    createMockData(db)
-    return db
+      if (typeof db?.hasPendingChanges === 'function'
+        && typeof db?.saveNow === 'function'
+        && db.hasPendingChanges()) {
+        console.log('[InitDatabase] 💾 初始化阶段存在待保存变更，立即落盘...')
+        await db.saveNow()
+        console.log('[InitDatabase] ✅ 初始化阶段变更已保存')
+      }
+
+      return db
+    } catch (error) {
+      console.error('SQL.js数据库初始化失败:', error)
+      // 降级到Mock数据库
+      console.log('降级使用Mock数据库')
+      const { MockDatabase, createMockData } = await import('./mock-db')
+      db = new MockDatabase()
+      createMockData(db)
+      return db
+    }
+  })()
+
+  try {
+    return await initPromise
+  } finally {
+    initPromise = null
   }
 }
 
@@ -1394,71 +1441,109 @@ async function insertInitialData() {
 // 插入器材目录数据（Phase 1.4.3 重构：写入新表结构）
 export async function insertEquipmentData(): Promise<void> {
   try {
-    const existingEquipmentCount = db.get(
+    // 动态导入器材数据
+    const { EQUIPMENT_DATA } = await import('./equipment-data')
+    const existingRows = queryRows<{
+      id: number
+      name: string
+      legacy_id: number | null
+    }>(
       `
-        SELECT COUNT(*) AS count
+        SELECT id, name, legacy_id
         FROM sys_training_resource
         WHERE module_code = ?
           AND resource_type = ?
-          AND is_active = 1
       `,
       ['sensory', 'equipment']
-    )?.count || 0
-
-    if (existingEquipmentCount > 0) {
-      console.log('[insertEquipmentData] 检测到已有感官器材资源，跳过旧版 seed 注入:', existingEquipmentCount)
-      createDefaultAdminAccount(db)
-      return
-    }
-
-    // 动态导入器材数据
-    const { EQUIPMENT_DATA } = await import('./equipment-data')
+    )
 
     // 标签缓存：tagName -> tagId
     const tagMap = new Map<string, number>()
+    const existingByName = new Map<string, number>()
+    const existingByLegacyId = new Map<number, number>()
+    let inserted = 0
+    let updated = 0
+    let tagLinks = 0
 
-    // 第一步：插入 sys_training_resource 表
+    for (const row of existingRows) {
+      const id = Number(row.id || 0)
+      const name = typeof row.name === 'string' ? row.name.trim() : ''
+      const legacyId = Number(row.legacy_id || 0)
+
+      if (id > 0 && name && !existingByName.has(name)) {
+        existingByName.set(name, id)
+      }
+
+      if (id > 0 && legacyId > 0 && !existingByLegacyId.has(legacyId)) {
+        existingByLegacyId.set(legacyId, id)
+      }
+    }
+
+    // 第一步：同步 sys_training_resource 表
     // 使用序号作为 legacy_id（对应图片文件名：{category}-{id}.webp）
     let legacyIdCounter = 1
     for (const equipment of EQUIPMENT_DATA) {
       try {
-        // 检查是否已存在同名资源
-        const existing = db.get('SELECT id FROM sys_training_resource WHERE name = ? AND resource_type = ?', [equipment.name, 'equipment'])
-        if (existing) {
-          console.log(`[insertEquipmentData] 跳过已存在: ${equipment.name}`)
-          continue
+        const existingId = existingByName.get(equipment.name) || existingByLegacyId.get(legacyIdCounter)
+        let resourceId = Number(existingId || 0)
+
+        if (resourceId > 0) {
+          db.run(`
+            UPDATE sys_training_resource
+            SET module_code = ?, resource_type = ?, name = ?, category = ?, description = ?,
+                cover_image = ?, is_custom = 0, is_active = ?, legacy_id = ?, legacy_source = ?, meta_data = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `, [
+            'sensory',
+            'equipment',
+            equipment.name,
+            equipment.category,
+            equipment.description || '',
+            equipment.image_url || '',
+            equipment.is_active ?? 1,
+            legacyIdCounter,
+            'equipment_data',
+            JSON.stringify({
+              original_category: equipment.category,
+              original_sub_category: equipment.sub_category
+            }),
+            resourceId,
+          ])
+          updated += 1
+        } else {
+          db.run(`
+            INSERT INTO sys_training_resource (
+              module_code, resource_type, name, category, description,
+              cover_image, is_custom, is_active, legacy_id, legacy_source, meta_data
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `, [
+            'sensory',
+            'equipment',
+            equipment.name,
+            equipment.category,
+            equipment.description || '',
+            equipment.image_url || '',
+            0,
+            equipment.is_active ?? 1,
+            legacyIdCounter,
+            'equipment_data',
+            JSON.stringify({
+              original_category: equipment.category,
+              original_sub_category: equipment.sub_category
+            })
+          ])
+
+          resourceId = getLastInsertedRowId()
+          if (!resourceId) {
+            console.error(`[insertEquipmentData] 获取ID失败: ${equipment.name}`)
+            continue
+          }
+          inserted += 1
         }
 
-        // 插入资源记录（包裹在 try-catch 中）
-        db.run(`
-          INSERT INTO sys_training_resource (
-            module_code, resource_type, name, category, description,
-            cover_image, is_custom, is_active, legacy_id, legacy_source, meta_data
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-          'sensory',                         // module_code
-          'equipment',                        // resource_type
-          equipment.name,                      // name
-          equipment.category,                  // category (使用原始分类而非 sub_category)
-          equipment.description || '',          // description
-          equipment.image_url || '',           // cover_image
-          0,                                  // is_custom
-          equipment.is_active ?? 1,           // is_active
-          legacyIdCounter,                    // legacy_id (用于图片加载：{category}-{legacy_id}.webp)
-          'equipment_data',                   // legacy_source
-          JSON.stringify({                   // meta_data
-            original_category: equipment.category,
-            original_sub_category: equipment.sub_category
-          })
-        ])
-
-        // 获取新插入的资源 ID（严格验证结果结构）
-        const result = db.exec('SELECT last_insert_rowid() as id')
-        if (!result || result.length === 0 || !result[0].values || result[0].values.length === 0) {
-          console.error(`[insertEquipmentData] 获取ID失败: ${equipment.name}`)
-          continue
-        }
-        const resourceId = result[0].values[0][0]
+        existingByName.set(equipment.name, resourceId)
+        existingByLegacyId.set(legacyIdCounter, resourceId)
 
         // 第二步：处理标签（sys_tags + sys_resource_tag_map）
         if (resourceId && equipment.ability_tags && equipment.ability_tags.length > 0) {
@@ -1479,12 +1564,11 @@ export async function insertEquipmentData(): Promise<void> {
                 } else {
                   // 创建新标签
                   db.run('INSERT INTO sys_tags (domain, name, usage_count, is_preset) VALUES (?, ?, ?, ?)', ['ability', tagName, 0, 1])
-                  const newTagResult = db.exec('SELECT last_insert_rowid() as id')
-                  if (!newTagResult || newTagResult.length === 0 || !newTagResult[0].values || newTagResult[0].values.length === 0) {
+                  tagId = getLastInsertedRowId()
+                  if (!tagId) {
                     console.error(`[insertEquipmentData] 创建标签失败: ${tagName}`)
                     continue
                   }
-                  tagId = newTagResult[0].values[0][0]
                 }
 
                 // 缓存标签 ID
@@ -1496,6 +1580,7 @@ export async function insertEquipmentData(): Promise<void> {
               // 第三步：创建资源-标签关联
               if (tagId) {
                 db.run('INSERT OR IGNORE INTO sys_resource_tag_map (resource_id, tag_id) VALUES (?, ?)', [resourceId, tagId])
+                tagLinks += 1
               }
             } catch (tagError: any) {
               console.warn(`[insertEquipmentData] 处理标签失败 ${tagName}:`, tagError.message)
@@ -1511,7 +1596,13 @@ export async function insertEquipmentData(): Promise<void> {
       }
     }
 
-    console.log(`✅ 器材数据插入成功: ${EQUIPMENT_DATA.length} 种器材（新表结构）`)
+    console.log('[insertEquipmentData] 感官器材资源同步完成:', {
+      total: EQUIPMENT_DATA.length,
+      existing: existingRows.length,
+      inserted,
+      updated,
+      tagLinks,
+    })
 
     // 创建默认管理员账户
     createDefaultAdminAccount(db)
@@ -1543,7 +1634,7 @@ export async function insertEmotionalResourceData(): Promise<void> {
     )?.count || 0)
 
     if (existingDemoSeedCount > 0) {
-      const demoSeedRows = db.exec(`
+      const demoSeedRows = queryRows<{ id: number }>(`
         SELECT id
         FROM sys_training_resource
         WHERE module_code = 'emotional'
@@ -1551,7 +1642,7 @@ export async function insertEmotionalResourceData(): Promise<void> {
           AND legacy_source = 'emotional_demo_seed'
       `)
 
-      const demoSeedIds = (demoSeedRows?.[0]?.values || []).map((row: any[]) => Number(row[0]))
+      const demoSeedIds = demoSeedRows.map((row) => Number(row.id || 0)).filter((id) => id > 0)
       if (demoSeedIds.length > 0) {
         const placeholders = demoSeedIds.map(() => '?').join(', ')
         const linkedSessionCount = Number(db.get(
@@ -1582,7 +1673,12 @@ export async function insertEmotionalResourceData(): Promise<void> {
       }
     }
 
-    const existingRows = db.exec(`
+    const existingRows = queryRows<{
+      id: number
+      resource_type: string
+      name: string
+      meta_data: string | null
+    }>(`
       SELECT id, resource_type, name, meta_data
       FROM sys_training_resource
       WHERE module_code = 'emotional'
@@ -1609,11 +1705,11 @@ export async function insertEmotionalResourceData(): Promise<void> {
       db.run('DELETE FROM sys_training_resource WHERE id = ?', [duplicateId])
     }
 
-    for (const row of existingRows?.[0]?.values || []) {
-      const id = Number(row[0] || 0)
-      const resourceType = String(row[1] || '')
-      const name = String(row[2] || '')
-      const metadataRaw = typeof row[3] === 'string' ? row[3] : ''
+    for (const row of existingRows) {
+      const id = Number(row.id || 0)
+      const resourceType = String(row.resource_type || '')
+      const name = String(row.name || '')
+      const metadataRaw = typeof row.meta_data === 'string' ? row.meta_data : ''
 
       if (!id || !resourceType || !name) {
         continue
@@ -1703,8 +1799,7 @@ export async function insertEmotionalResourceData(): Promise<void> {
           0,
         ])
 
-        const result = db.exec('SELECT last_insert_rowid() as id')
-        resourceId = Number(result?.[0]?.values?.[0]?.[0] || 0)
+        resourceId = getLastInsertedRowId()
         didInsert = resourceId > 0
       }
 
@@ -1734,8 +1829,7 @@ export async function insertEmotionalResourceData(): Promise<void> {
               'INSERT INTO sys_tags (domain, name, usage_count, is_preset) VALUES (?, ?, ?, ?)',
               ['ability', tagName, 0, 1]
             )
-            const tagResult = db.exec('SELECT last_insert_rowid() as id')
-            tagId = tagResult?.[0]?.values?.[0]?.[0]
+            tagId = getLastInsertedRowId()
           }
 
           if (tagId) {
@@ -1776,7 +1870,11 @@ export async function insertEmotionalGameResourceData(): Promise<void> {
       EMOTIONAL_GAME_RESOURCE_SEED_LEGACY_SOURCE,
     } = await import('../data/emotional-game-catalog')
 
-    const existingRows = db.exec(`
+    const existingRows = queryRows<{
+      id: number
+      name: string
+      meta_data: string | null
+    }>(`
       SELECT id, name, meta_data
       FROM sys_training_resource
       WHERE module_code = 'emotional'
@@ -1790,10 +1888,10 @@ export async function insertEmotionalGameResourceData(): Promise<void> {
     let inserted = 0
     let updated = 0
 
-    for (const row of existingRows?.[0]?.values || []) {
-      const id = Number(row[0] || 0)
-      const name = typeof row[1] === 'string' ? row[1].trim() : ''
-      const metadataRaw = typeof row[2] === 'string' ? row[2] : ''
+    for (const row of existingRows) {
+      const id = Number(row.id || 0)
+      const name = typeof row.name === 'string' ? row.name.trim() : ''
+      const metadataRaw = typeof row.meta_data === 'string' ? row.meta_data : ''
 
       if (id > 0 && name) {
         existingByName.set(name, id)
@@ -1836,8 +1934,7 @@ export async function insertEmotionalGameResourceData(): Promise<void> {
         ['ability', tagName, 0, 1]
       )
 
-      const tagResult = db.exec('SELECT last_insert_rowid() as id')
-      const tagId = Number(tagResult?.[0]?.values?.[0]?.[0] || 0)
+      const tagId = getLastInsertedRowId()
       if (!tagId) {
         return null
       }
@@ -1894,8 +1991,7 @@ export async function insertEmotionalGameResourceData(): Promise<void> {
           0,
         ])
 
-        const result = db.exec('SELECT last_insert_rowid() as id')
-        resourceId = Number(result?.[0]?.values?.[0]?.[0] || 0)
+        resourceId = getLastInsertedRowId()
         didInsert = resourceId > 0
       }
 
@@ -1944,7 +2040,14 @@ export async function insertPhysicalEquipmentResourceData(): Promise<void> {
       PHYSICAL_EQUIPMENT_SEED_SUMMARY,
     } = await import('./physical-equipment-data')
 
-    const existingRows = db.exec(`
+    const existingRows = queryRows<{
+      id: number
+      module_code: string
+      name: string
+      category: string | null
+      legacy_source: string | null
+      meta_data: string | null
+    }>(`
       SELECT id, module_code, name, category, legacy_source, meta_data
       FROM sys_training_resource
       WHERE resource_type = 'equipment'
@@ -1978,12 +2081,12 @@ export async function insertPhysicalEquipmentResourceData(): Promise<void> {
       db.run('DELETE FROM sys_training_resource WHERE id = ?', [duplicateId])
     }
 
-    for (const row of existingRows?.[0]?.values || []) {
-      const id = Number(row[0] || 0)
-      const moduleCode = String(row[1] || '')
-      const name = String(row[2] || '')
-      const category = typeof row[3] === 'string' ? String(row[3]) : ''
-      const metadataRaw = typeof row[5] === 'string' ? row[5] : ''
+    for (const row of existingRows) {
+      const id = Number(row.id || 0)
+      const moduleCode = String(row.module_code || '')
+      const name = String(row.name || '')
+      const category = typeof row.category === 'string' ? String(row.category) : ''
+      const metadataRaw = typeof row.meta_data === 'string' ? row.meta_data : ''
 
       if (id > 0 && moduleCode && name) {
         existingByName.set(`${moduleCode}:${category}:${name}`, id)
@@ -2063,7 +2166,7 @@ export async function insertPhysicalEquipmentResourceData(): Promise<void> {
           'INSERT INTO sys_tags (domain, name, usage_count, is_preset) VALUES (?, ?, ?, ?)',
           ['ability', tagName, 0, 1]
         )
-        tagId = Number(db.exec('SELECT last_insert_rowid() as id')?.[0]?.values?.[0]?.[0] || 0)
+        tagId = getLastInsertedRowId()
       }
 
       if (tagId) {
@@ -2138,7 +2241,7 @@ export async function insertPhysicalEquipmentResourceData(): Promise<void> {
         0,
       ])
 
-      const resourceId = Number(db.exec('SELECT last_insert_rowid() as id')?.[0]?.values?.[0]?.[0] || 0)
+      const resourceId = getLastInsertedRowId()
       if (!resourceId) {
         continue
       }
