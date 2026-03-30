@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.6
 milestone_name: Emotional Engine Refactoring
 status: complete
-last_updated: "2026-03-26T01:45:00+09:00"
+last_updated: "2026-03-30T10:51:58.5997100+09:00"
 progress:
   total_phases: 3
   completed_phases: 3
@@ -15,14 +15,14 @@ progress:
 
 ## Project Reference
 **Core Value**: SCGP provides special education teachers and clinicians with a comprehensive, offline, local-first assessment and intervention tool.
-**Current Focus**: v1.6 closeout completed; next step is defining the next milestone
+**Current Focus**: v1.6 remains closed; paused follow-up work has shifted to training-record hard-cut cleanup closeout and resource-center redesign planning
 **Plan**: 16-01 executed
 
 ## Current Position
 - **Phase**: 16 Shell Migration & End-to-End Compatibility
 - **Plan**: 16-01
-- **Status**: Milestone v1.6 is closed locally. Code, build, and live-db checks passed; live app retests confirmed cancelled-session persistence, summary/records/report parity, unified training-record routing, and the final `care_scene` selection/reveal interaction. Remaining pacing/selector concerns were accepted at closeout by user instruction rather than treated as blockers.
-- **Last activity**: 2026-03-26 - Final follow-up fixes landed in the emotional renderers and unified training-records flow. The user re-tested successfully and requested milestone closeout; `npm run type-check:emotional` and `npm run build:web` both pass.
+- **Status**: Milestone v1.6 is still closed locally. After closeout, additional repository-level cleanup landed around training-record hard-cut flow, legacy record-page removal, and main-process atomic-write serialization. No new formal milestone has been started yet.
+- **Last activity**: 2026-03-30 - Unified training-record cleanup was tightened further, old record pages were removed, a hard-cut reset script was added, `save-database-atomic` was serialized per DB path, warning-level issues in `init.ts` and `ClassManagement.vue` were cleaned, `node scripts/hard-cut-training-records.cjs --dry-run` reported no legacy entry-less rows in the local dev DB, and `npm run type-check` passed. Resource-center training-resource / teaching-material redesign requirements were analyzed but not yet implemented.
 
 ## Latest Shipped Milestone
 - **v1.5 Strict Modular Licensing**
@@ -43,7 +43,7 @@ progress:
   - DEV mock entitlements are allowed only when no real activation code exists.
 - **Blockers**:
   - No open blockers remain for local closeout of v1.6.
-  - Repository-wide historical TypeScript errors still exist outside the emotional phase scope, so `npm run type-check` remains red even though `npm run type-check:emotional` passes.
+  - The next real risk is resource-center follow-up: old teaching-material seed data will repopulate unless `init.ts` -> `resource-data.ts` auto-injection is disabled before physical deletion.
 
 ## Next Action
 - Define the next milestone after v1.6 Emotional Engine Refactoring.
