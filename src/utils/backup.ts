@@ -38,6 +38,8 @@ export class BackupManager {
       'train_log',
       'resource_meta',
       'teacher_fav',
+      'teaching_material',
+      'teaching_material_favorite',
       'system_config',
       'activation',
     ]

@@ -2464,6 +2464,9 @@ export function initImportedResources(db: any): void {
 
 // 初始化资源数据（主入口函数）
 export function initResourceData(db: any): void {
+  console.log('[resource-data] legacy teaching-material seed disabled')
+  void db
+  return
   console.log('开始初始化资源数据...')
 
   // 先初始化导入的资源数据（211条）

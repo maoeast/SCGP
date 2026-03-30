@@ -20,43 +20,29 @@
 
       <!-- 业务模块 -->
       <div class="filter-section">
-        <div class="section-title">业务模块</div>
-        <el-radio-group v-model="selectedModule" @change="handleFilterChange">
+        <div class="section-title">业务分组</div>
+        <el-radio-group v-model="selectedBusinessGroup" @change="handleFilterChange">
           <el-radio-button
-            v-for="module in availableModules"
-            :key="module.code"
-            :value="module.code"
+            v-for="group in businessGroupOptions"
+            :key="group.code"
+            :value="group.code"
           >
-            {{ module.name }}
+            {{ group.name }}
           </el-radio-button>
         </el-radio-group>
       </div>
 
       <!-- 资源类型 -->
       <div class="filter-section">
-        <div class="section-title">资源类型</div>
-        <el-radio-group v-model="selectedType" @change="handleFilterChange">
+        <div class="section-title">展示类型</div>
+        <el-radio-group v-model="selectedDisplayType" @change="handleFilterChange">
           <el-radio-button value="">全部</el-radio-button>
           <el-radio-button
-            v-for="type in resourceTypes"
+            v-for="type in displayTypeOptions"
             :key="type.code"
             :value="type.code"
           >
             {{ type.name }}
-          </el-radio-button>
-        </el-radio-group>
-      </div>
-
-      <div v-if="selectedType === 'equipment'" class="filter-section">
-        <div class="section-title">器材目录分组</div>
-        <el-radio-group v-model="selectedEquipmentCatalogGroup" @change="handleEquipmentCatalogGroupChange">
-          <el-radio-button value="all">全部分组</el-radio-button>
-          <el-radio-button
-            v-for="group in equipmentCatalogGroupOptions"
-            :key="group.value"
-            :value="group.value"
-          >
-            {{ group.label }}
           </el-radio-button>
         </el-radio-group>
       </div>
@@ -90,7 +76,7 @@
           <span class="current-module">{{ currentModuleName }}</span>
         </div>
         <div class="toolbar-right" v-if="!readOnly">
-          <template v-if="selectedModule === 'emotional'">
+          <template v-if="isEmotionalBusinessGroup">
             <el-button plain @click="openResourcePackDialog('import')">
               导入资源包
             </el-button>
@@ -152,8 +138,8 @@
           </template>
         </el-table-column>
 
-        <!-- 分类 -->
-        <el-table-column label="分类" width="100" align="center">
+        <!-- 业务分组 -->
+        <el-table-column label="业务分组" width="120" align="center">
           <template #default="{ row }">
             <el-tag size="small" effect="plain">
               {{ getResourceCategoryLabel(row) }}
@@ -657,16 +643,20 @@ import {
 import { ResourceAPI } from '@/database/resource-api'
 import type { ResourceItem, ModuleCode } from '@/types/module'
 import type { CareSceneResourceMeta, EmotionSceneResourceMeta } from '@/types/emotional'
+import { useAuthStore } from '@/stores/auth'
 import CareExpressionEditor from './editors/CareExpressionEditor.vue'
 import EmotionSceneEditor from './editors/EmotionSceneEditor.vue'
 import EmotionalResourcePackDialog from './components/EmotionalResourcePackDialog.vue'
 import {
-  EQUIPMENT_CATALOG_GROUPS,
-  EQUIPMENT_CATALOG_GROUP_LABELS,
-  getEquipmentCatalogGroupLabel,
-  resolveEquipmentCatalogGroupCode,
-  type EquipmentCatalogGroupCode,
-} from '@/utils/equipment-catalog-group'
+  getAccessibleTrainingResourceBusinessGroups,
+  getTrainingResourceBusinessGroupLabel,
+  getTrainingResourceBusinessGroupModuleCode,
+  isVisibleTrainingResource,
+  resolveTrainingResourceBusinessGroupCode,
+  resolveTrainingResourceDisplayType,
+  type TrainingResourceBusinessGroupCode,
+  type TrainingResourceDisplayType,
+} from '@/utils/resource-center-business'
 import { resolveResourceItemCoverImage } from '@/utils/resource-cover'
 import {
   normalizeCareSceneEditorModel,
@@ -682,6 +672,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   readOnly: false
 })
+
+const authStore = useAuthStore()
 
 // ========== 数据定义 ==========
 
@@ -702,6 +694,11 @@ const resourceTypes = [
   { code: 'flashcard', name: '闪卡' },
   { code: 'emotion_scene', name: '情绪场景' },
   { code: 'care_scene', name: '表达关心' }
+]
+
+const displayTypeOptions: Array<{ code: TrainingResourceDisplayType; name: string }> = [
+  { code: 'equipment', name: '器材' },
+  { code: 'game', name: '游戏' },
 ]
 
 const EMOTIONAL_RESOURCE_TYPE_SET = new Set(['emotion_scene', 'care_scene'])
@@ -743,9 +740,8 @@ const deleting = ref(false)
 
 // 筛选状态
 const searchKeyword = ref('')
-const selectedModule = ref('sensory')
-const selectedType = ref('')
-const selectedEquipmentCatalogGroup = ref<'all' | EquipmentCatalogGroupCode>('all')
+const selectedBusinessGroup = ref<TrainingResourceBusinessGroupCode>('sensory-training')
+const selectedDisplayType = ref<'' | TrainingResourceDisplayType>('')
 const selectedStatus = ref<string[]>(['active'])
 const currentPage = ref(1)
 const pageSize = ref(20)
@@ -792,21 +788,39 @@ const resourcePackDialogMode = ref<'import' | 'export'>('export')
 
 // ========== 计算属性 ==========
 
+const businessGroupOptions = computed(() =>
+  getAccessibleTrainingResourceBusinessGroups(authStore.hasModuleAccess).map((code) => ({
+    code,
+    name: getTrainingResourceBusinessGroupLabel(code),
+  }))
+)
+
+const currentModuleCode = computed<ModuleCode | null>(() => {
+  if (businessGroupOptions.value.length === 0) {
+    return null
+  }
+
+  return getTrainingResourceBusinessGroupModuleCode(selectedBusinessGroup.value)
+})
+
+const isEmotionalBusinessGroup = computed(() => currentModuleCode.value === 'emotional')
+
 // 当前模块名称
 const currentModuleName = computed(() => {
-  const module = availableModules.find(m => m.code === selectedModule.value)
-  return module ? module.name : '训练资源'
+  const group = businessGroupOptions.value.find((item) => item.code === selectedBusinessGroup.value)
+  return group ? group.name : '训练资源'
 })
 
 // 筛选后的资源列表
 const filteredResourcePool = computed(() => {
-  let result = allResources.value
+  let result = allResources.value.filter((resource) => isVisibleTrainingResource(resource))
 
-  if (selectedType.value === 'equipment' && selectedEquipmentCatalogGroup.value !== 'all') {
-    result = result.filter(resource =>
-      resource.resourceType === 'equipment'
-      && resolveEquipmentCatalogGroupCode(resource) === selectedEquipmentCatalogGroup.value
-    )
+  result = result.filter((resource) =>
+    resolveTrainingResourceBusinessGroupCode(resource) === selectedBusinessGroup.value
+  )
+
+  if (selectedDisplayType.value) {
+    result = result.filter((resource) => resolveTrainingResourceDisplayType(resource) === selectedDisplayType.value)
   }
 
   // 状态筛选
@@ -838,13 +852,6 @@ const customCount = computed(() => filteredResourcePool.value.filter(r => r.isCu
 
 const exportableEmotionalResources = computed(() =>
   filteredResourcePool.value.filter((resource) => isEmotionalResourceType(resource.resourceType))
-)
-
-const equipmentCatalogGroupOptions = computed(() =>
-  EQUIPMENT_CATALOG_GROUPS.map((value) => ({
-    value,
-    label: EQUIPMENT_CATALOG_GROUP_LABELS[value],
-  }))
 )
 
 // 分类选项
@@ -895,6 +902,7 @@ function getThumbnailUrl(resource: ResourceItem | null): string {
 function getTypeIcon(type: string) {
   const iconMap: Record<string, any> = {
     equipment: Box,
+    game: VideoPlay,
     document: Document,
     video: VideoPlay,
     flashcard: Picture,
@@ -909,6 +917,7 @@ function getTypeIcon(type: string) {
 function getTypeIconClass(type: string) {
   const classMap: Record<string, string> = {
     equipment: 'type-equipment',
+    game: 'type-game',
     document: 'type-document',
     video: 'type-video',
     flashcard: 'type-flashcard',
@@ -919,18 +928,8 @@ function getTypeIconClass(type: string) {
   return classMap[type] || classMap.default
 }
 
-// 获取分类标签
-function getCategoryLabel(category: string | undefined): string {
-  if (!category) return '未分类'
-  return CATEGORY_LABELS[category] || category
-}
-
 function getResourceCategoryLabel(resource: ResourceItem): string {
-  if (resource.resourceType === 'equipment') {
-    return getEquipmentCatalogGroupLabel(resource)
-  }
-
-  return getCategoryLabel(resource.category)
+  return getTrainingResourceBusinessGroupLabel(resolveTrainingResourceBusinessGroupCode(resource))
 }
 
 // 获取建议标签
@@ -944,6 +943,18 @@ function getSuggestedTags(): string[] {
 
 function isEmotionalResourceType(resourceType?: string): boolean {
   return !!resourceType && EMOTIONAL_RESOURCE_TYPE_SET.has(resourceType)
+}
+
+function resolveDefaultCreateResourceType(): string {
+  if (selectedBusinessGroup.value === 'emotional-behavior') {
+    return 'emotion_scene'
+  }
+
+  if (selectedDisplayType.value === 'equipment') {
+    return 'equipment'
+  }
+
+  return isEmotionalBusinessGroup.value ? 'emotion_scene' : 'equipment'
 }
 
 function ensureCreateEmotionalEditorState(resourceType: string) {
@@ -1039,17 +1050,18 @@ function handleSearchDebounced() {
 
 // 加载资源列表
 async function loadResources() {
+  if (!currentModuleCode.value) {
+    allResources.value = []
+    return
+  }
+
   loading.value = true
   try {
     const api = new ResourceAPI()
 
     // 构建查询选项
     const options: any = {
-      moduleCode: selectedModule.value as ModuleCode
-    }
-
-    if (selectedType.value) {
-      options.resourceType = selectedType.value
+      moduleCode: currentModuleCode.value
     }
 
     if (searchKeyword.value) {
@@ -1089,10 +1101,6 @@ function loadAvailableTags() {
 function handleFilterChange() {
   currentPage.value = 1
   loadResources()
-}
-
-function handleEquipmentCatalogGroupChange() {
-  currentPage.value = 1
 }
 
 // 分页变化
@@ -1149,8 +1157,8 @@ async function handleStatusChange(resource: ResourceItem, active: boolean) {
 function handleCreate() {
   if (props.readOnly) return
   // 设置默认值为当前选中的模块
-  createForm.moduleCode = selectedModule.value
-  createForm.resourceType = selectedType.value || (selectedModule.value === 'emotional' ? 'emotion_scene' : 'equipment')
+  createForm.moduleCode = currentModuleCode.value || 'sensory'
+  createForm.resourceType = resolveDefaultCreateResourceType()
   ensureCreateEmotionalEditorState(createForm.resourceType)
   createDialogVisible.value = true
 }
@@ -1187,8 +1195,8 @@ async function handleSaveCreate() {
       ElMessage.success(`资源创建成功: ${createForm.name}`)
       createDialogVisible.value = false
 
-      // 如果创建的资源属于当前筛选的模块，刷新列表
-      if (createForm.moduleCode === selectedModule.value) {
+      // 如果创建的资源属于当前筛选的业务分组主模块，刷新列表
+      if (createForm.moduleCode === currentModuleCode.value) {
         loadResources()
       }
     }
@@ -1434,7 +1442,7 @@ async function handleRestore(resource: ResourceItem) {
 }
 
 function openResourcePackDialog(mode: 'import' | 'export') {
-  if (props.readOnly || selectedModule.value !== 'emotional') return
+  if (props.readOnly || !isEmotionalBusinessGroup.value) return
   resourcePackDialogMode.value = mode
   resourcePackDialogVisible.value = true
 }
@@ -1457,11 +1465,11 @@ watch(() => createForm.resourceType, (newType) => {
   ensureCreateEmotionalEditorState(newType)
 })
 
-watch(selectedType, (newType) => {
-  if (newType !== 'equipment') {
-    selectedEquipmentCatalogGroup.value = 'all'
+watch(businessGroupOptions, (groups) => {
+  if (!groups.some((group) => group.code === selectedBusinessGroup.value)) {
+    selectedBusinessGroup.value = groups[0]?.code || 'sensory-training'
   }
-})
+}, { immediate: true })
 
 defineExpose({
   loadResources
@@ -1632,6 +1640,11 @@ defineExpose({
 .type-equipment {
   background: #ecf5ff;
   color: #409eff;
+}
+
+.type-game {
+  background: #f4ecff;
+  color: #7c3aed;
 }
 
 .type-document {
