@@ -6,6 +6,7 @@
 
 ### 启动入口
 
+- [HANDOFF.md](/home/DONG/Mycode/SCGP/HANDOFF.md)
 - [docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
 - [README.md](/home/DONG/Mycode/SCGP/README.md)
 - [.continue-here.md](/home/DONG/Mycode/SCGP/.continue-here.md)
@@ -66,6 +67,7 @@
 使用说明、模板说明与运维辅助文档。
 
 - [2026-03-18-emotional-resource-pack-excel-template-guide.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-18-emotional-resource-pack-excel-template-guide.md)
+- [2026-03-30-training-resource-copy-workflow.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-30-training-resource-copy-workflow.md)
 - [2026-03-12-gsd-token-efficient-workflow.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-12-gsd-token-efficient-workflow.md)
 - [activation-code-generator.md](/home/DONG/Mycode/SCGP/docs/guides/activation-code-generator.md)
 - [activation-system-guide.md](/home/DONG/Mycode/SCGP/docs/guides/activation-system-guide.md)
@@ -94,16 +96,17 @@
 
 默认新会话：
 
-1. [docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
-2. [README.md](/home/DONG/Mycode/SCGP/README.md)
-3. [.continue-here.md](/home/DONG/Mycode/SCGP/.continue-here.md)
+1. [HANDOFF.md](/home/DONG/Mycode/SCGP/HANDOFF.md)
+2. [docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
+3. [README.md](/home/DONG/Mycode/SCGP/README.md)
+4. [.continue-here.md](/home/DONG/Mycode/SCGP/.continue-here.md)
 
 按需补读：
 
-4. [PROJECT_CONTEXT.md](/home/DONG/Mycode/SCGP/PROJECT_CONTEXT.md)
-5. [docs/planning/2026-03-13-scgp-current-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-13-scgp-current-prd.md)
-6. [docs/reports/2026-03-13-scgp-prd-gap-analysis.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-13-scgp-prd-gap-analysis.md)
-7. [重构实施技术规范.md](/home/DONG/Mycode/SCGP/%E9%87%8D%E6%9E%84%E5%AE%9E%E6%96%BD%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83.md)
+5. [PROJECT_CONTEXT.md](/home/DONG/Mycode/SCGP/PROJECT_CONTEXT.md)
+6. [docs/planning/2026-03-13-scgp-current-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-13-scgp-current-prd.md)
+7. [docs/reports/2026-03-13-scgp-prd-gap-analysis.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-13-scgp-prd-gap-analysis.md)
+8. [重构实施技术规范.md](/home/DONG/Mycode/SCGP/%E9%87%8D%E6%9E%84%E5%AE%9E%E6%96%BD%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83.md)
 
 ## 说明
 

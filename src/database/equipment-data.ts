@@ -9,6 +9,8 @@
 
 import type { EquipmentCatalog } from '@/types/equipment'
 import { CATEGORY_COLORS } from '@/types/equipment'
+import { getTrainingResourceCopyOverride } from '@/data/generated-training-resource-copy'
+import { buildSensoryEquipmentResourceCopyKey } from '@/utils/training-resource-copy'
 
 /**
  * 生成颜色占位符图片 URL（后备方案）
@@ -30,7 +32,7 @@ function generatePlaceholderImageUrl(category: string, name: string): string {
 /**
  * 63种器材数据
  */
-export const EQUIPMENT_DATA: Omit<EquipmentCatalog, 'id' | 'created_at'>[] = [
+const BASE_EQUIPMENT_DATA: Omit<EquipmentCatalog, 'id' | 'created_at'>[] = [
   {
     category: 'tactile',
     sub_category: '触觉材料套装',
@@ -599,3 +601,13 @@ export const EQUIPMENT_DATA: Omit<EquipmentCatalog, 'id' | 'created_at'>[] = [
     is_active: 1
   }
 ]
+
+export const EQUIPMENT_DATA: Omit<EquipmentCatalog, 'id' | 'created_at'>[] = BASE_EQUIPMENT_DATA.map((item, index) => {
+  const override = getTrainingResourceCopyOverride(buildSensoryEquipmentResourceCopyKey(index + 1))
+
+  return {
+    ...item,
+    name: override?.name || item.name,
+    description: override ? override.description : item.description,
+  }
+})

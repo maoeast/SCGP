@@ -17,6 +17,11 @@ import type {
   EmotionalSceneDomain,
   EmotionalSolutionRank,
 } from '@/types/emotional'
+import { getTrainingResourceCopyOverride } from '@/data/generated-training-resource-copy'
+import {
+  buildCareSceneResourceCopyKey,
+  buildEmotionSceneResourceCopyKey,
+} from '@/utils/training-resource-copy'
 
 type EmotionalSeedMetadata = EmotionSceneResourceMeta | CareSceneResourceMeta
 
@@ -376,15 +381,22 @@ const emotionResources: EmotionalSeedResource[] = rawEmotionScenes.map((rawScene
     taxonomy?.themeCategory,
     metadata.sceneDomain,
   ])
+  const override = getTrainingResourceCopyOverride(
+    buildEmotionSceneResourceCopyKey(metadata.sceneCode)
+  )
+  const title = override?.name || metadata.title
 
   return {
     resourceType: 'emotion_scene',
-    name: metadata.title,
+    name: title,
     category: taxonomy?.themeCategory || tags[0] || 'imported_emotion_scene',
-    description: normalizeString(rawScene.description, metadata.title),
+    description: override ? override.description : normalizeString(rawScene.description, metadata.title),
     coverImage: metadata.imageUrl || '',
     tags,
-    metadata,
+    metadata: {
+      ...metadata,
+      title,
+    },
   }
 })
 
@@ -395,15 +407,22 @@ const careResources: EmotionalSeedResource[] = rawCareScenes.map((rawScene, inde
     metadata.careType,
     metadata.receiverEmotion,
   ])
+  const override = getTrainingResourceCopyOverride(
+    buildCareSceneResourceCopyKey(metadata.sceneCode)
+  )
+  const title = override?.name || metadata.title
 
   return {
     resourceType: 'care_scene',
-    name: metadata.title,
+    name: title,
     category: tags[0] || 'imported_care_scene',
-    description: normalizeString(rawScene.description, metadata.title),
+    description: override ? override.description : normalizeString(rawScene.description, metadata.title),
     coverImage: metadata.imageUrl || '',
     tags,
-    metadata,
+    metadata: {
+      ...metadata,
+      title,
+    },
   }
 })
 

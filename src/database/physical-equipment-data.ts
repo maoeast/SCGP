@@ -9,6 +9,8 @@ import {
   type PhysicalEquipmentSeedResource,
   type PhysicalEquipmentSeedSummary,
 } from './physical-equipment-parser'
+import { getTrainingResourceCopyOverride } from '@/data/generated-training-resource-copy'
+import { buildPhysicalEquipmentResourceCopyKey } from '@/utils/training-resource-copy'
 
 const sourceInputs: PhysicalEquipmentSeedInput[] = [
   {
@@ -37,6 +39,16 @@ const parsed = createPhysicalEquipmentSeedResources(sourceInputs)
 
 export { PHYSICAL_EQUIPMENT_SEED_LEGACY_SOURCE }
 
-export const PHYSICAL_EQUIPMENT_SEED_RESOURCES: PhysicalEquipmentSeedResource[] = parsed.resources
+export const PHYSICAL_EQUIPMENT_SEED_RESOURCES: PhysicalEquipmentSeedResource[] = parsed.resources.map((resource) => {
+  const override = getTrainingResourceCopyOverride(
+    buildPhysicalEquipmentResourceCopyKey(resource.metadata.resourceCode)
+  )
+
+  return {
+    ...resource,
+    name: override?.name || resource.name,
+    description: override ? override.description : resource.description,
+  }
+})
 
 export const PHYSICAL_EQUIPMENT_SEED_SUMMARY: PhysicalEquipmentSeedSummary = parsed.summary

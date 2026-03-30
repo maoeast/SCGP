@@ -1214,23 +1214,26 @@ export async function initDatabase(): Promise<any> {
 
     // ========== 游戏资源迁移 ==========
     try {
-      const { needsGameMigration, runGameMigration } = await import('./migration/migrate-games-to-resources')
-      if (needsGameMigration()) {
-        console.log('[InitDatabase] 🔄 检测到需要迁移游戏资源，自动运行迁移...')
-        const result = await runGameMigration()
-        if (result.success) {
-          console.log('[InitDatabase] ✅ 游戏资源迁移成功:', result.message)
-          if (result.verification) {
-            console.log('[InitDatabase] 📊 游戏统计:', result.verification.stats)
-          }
-        } else {
-          console.warn('[InitDatabase] ⚠️  游戏资源迁移失败:', result.message)
+      const { runGameMigration } = await import('./migration/migrate-games-to-resources')
+      console.log('[InitDatabase] 🔄 同步感官游戏资源...')
+      const result = await runGameMigration()
+      if (result.success) {
+        console.log('[InitDatabase] ✅ 游戏资源迁移成功:', result.message)
+        if (result.verification) {
+          console.log('[InitDatabase] 📊 游戏统计:', result.verification.stats)
         }
       } else {
-        console.log('[InitDatabase] ✅ 游戏资源已是最新，无需迁移')
+        console.warn('[InitDatabase] ⚠️  游戏资源迁移失败:', result.message)
       }
     } catch (gameMigrationError) {
       console.warn('[InitDatabase] ⚠️  游戏资源迁移检查失败:', gameMigrationError)
+    }
+
+    try {
+      await insertEmotionalGameResourceData()
+      console.log('[InitDatabase] ✅ emotional 调节游戏资源初始化完成')
+    } catch (emotionalGameResourceError) {
+      console.warn('[InitDatabase] ⚠️  emotional 调节游戏资源初始化失败:', emotionalGameResourceError)
     }
 
     try {
@@ -1319,8 +1322,6 @@ async function insertInitialDataToDB(database: any, options: { tasks?: boolean; 
     `)
 
     // 插入资源数据
-    const { initResourceData } = await import('./resource-data')
-    initResourceData(database)
 
     console.log('初始数据插入成功')
   } catch (error) {
@@ -1530,30 +1531,16 @@ export async function insertEmotionalResourceData(): Promise<void> {
 
     const tagMap = new Map<string, number>()
     let inserted = 0
+    let updated = 0
 
-    const existingEmotionalStats = db.get(
-      `SELECT
-         COUNT(*) AS total_count,
-         SUM(CASE WHEN resource_type = 'emotion_scene' THEN 1 ELSE 0 END) AS emotion_scene_count,
-         SUM(CASE WHEN resource_type = 'care_scene' THEN 1 ELSE 0 END) AS care_scene_count,
-         SUM(CASE WHEN legacy_source = 'emotional_demo_seed' THEN 1 ELSE 0 END) AS demo_seed_count
+    const existingDemoSeedCount = Number(db.get(
+      `SELECT COUNT(*) AS count
        FROM sys_training_resource
        WHERE module_code = ?
          AND resource_type IN ('emotion_scene', 'care_scene')
-         AND is_active = 1`,
+         AND legacy_source = 'emotional_demo_seed'`,
       ['emotional']
-    ) || {}
-
-    const existingEmotionSceneCount = Number(existingEmotionalStats.emotion_scene_count || 0)
-    const existingCareSceneCount = Number(existingEmotionalStats.care_scene_count || 0)
-    const existingDemoSeedCount = Number(existingEmotionalStats.demo_seed_count || 0)
-    const existingEmotionalCount = (
-      existingDemoSeedCount === 0 &&
-      existingEmotionSceneCount >= EMOTIONAL_SEED_COUNTS.emotionSceneCount &&
-      existingCareSceneCount >= EMOTIONAL_SEED_COUNTS.careSceneCount
-    )
-      ? Number(existingEmotionalStats.total_count || 0)
-      : 0
+    )?.count || 0)
 
     if (existingDemoSeedCount > 0) {
       const demoSeedRows = db.exec(`
@@ -1595,46 +1582,140 @@ export async function insertEmotionalResourceData(): Promise<void> {
       }
     }
 
-    if (existingEmotionalCount > 0) {
-      console.log('[InitDatabase] emotional complete resources already exist, skip default seed insert:', existingEmotionalCount)
-      return
+    const existingRows = db.exec(`
+      SELECT id, resource_type, name, meta_data
+      FROM sys_training_resource
+      WHERE module_code = 'emotional'
+        AND resource_type IN ('emotion_scene', 'care_scene')
+    `)
+
+    const existingByStableKey = new Map<string, number>()
+    const existingByName = new Map<string, number>()
+    const rowsByStableKey = new Map<string, Array<{ id: number; resourceType: string; name: string }>>()
+
+    const mergeDuplicateResourceIntoCanonical = (canonicalId: number, duplicateId: number) => {
+      db.run(`
+        INSERT OR IGNORE INTO sys_resource_tag_map (resource_id, tag_id)
+        SELECT ?, tag_id
+        FROM sys_resource_tag_map
+        WHERE resource_id = ?
+      `, [canonicalId, duplicateId])
+
+      db.run('UPDATE emotional_training_session SET resource_id = ? WHERE resource_id = ?', [canonicalId, duplicateId])
+      db.run('UPDATE sys_plan_resource_map SET resource_id = ? WHERE resource_id = ?', [canonicalId, duplicateId])
+      db.run('UPDATE sys_favorites SET resource_id = ? WHERE resource_id = ?', [canonicalId, duplicateId])
+      db.run('DELETE FROM sys_resource_tag_map WHERE resource_id = ?', [duplicateId])
+      db.run('DELETE FROM sys_favorites WHERE resource_id = ?', [duplicateId])
+      db.run('DELETE FROM sys_training_resource WHERE id = ?', [duplicateId])
     }
 
-    for (const resource of EMOTIONAL_SEED_RESOURCES) {
-      const existing = db.get(
-        'SELECT id FROM sys_training_resource WHERE module_code = ? AND resource_type = ? AND name = ?',
-        ['emotional', resource.resourceType, resource.name]
-      )
+    for (const row of existingRows?.[0]?.values || []) {
+      const id = Number(row[0] || 0)
+      const resourceType = String(row[1] || '')
+      const name = String(row[2] || '')
+      const metadataRaw = typeof row[3] === 'string' ? row[3] : ''
 
-      if (existing) {
+      if (!id || !resourceType || !name) {
         continue
       }
 
-      db.run(`
-        INSERT INTO sys_training_resource (
-          module_code, resource_type, name, category, description,
-          cover_image, is_custom, is_active, legacy_source, meta_data, usage_count
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        'emotional',
-        resource.resourceType,
-        resource.name,
-        resource.category,
-        resource.description,
-        resource.coverImage || '',
-        0,
-        1,
-        EMOTIONAL_RESOURCE_SEED_LEGACY_SOURCE,
-        JSON.stringify(resource.metadata),
-        0,
-      ])
+      existingByName.set(`${resourceType}:${name}`, id)
 
-      const result = db.exec('SELECT last_insert_rowid() as id')
-      const resourceId = result?.[0]?.values?.[0]?.[0]
+      if (!metadataRaw) {
+        continue
+      }
+
+      try {
+        const metadata = JSON.parse(metadataRaw) as { sceneCode?: string }
+        const sceneCode = typeof metadata.sceneCode === 'string' ? metadata.sceneCode.trim() : ''
+        if (!sceneCode) {
+          continue
+        }
+
+        const stableKey = `${resourceType}:${sceneCode}`
+        const bucket = rowsByStableKey.get(stableKey) || []
+        bucket.push({ id, resourceType, name })
+        rowsByStableKey.set(stableKey, bucket)
+      } catch {
+        // Ignore malformed metadata from unrelated rows.
+      }
+    }
+
+    for (const [stableKey, rows] of rowsByStableKey.entries()) {
+      const canonicalId = rows[0]?.id || 0
+      if (!canonicalId) {
+        continue
+      }
+
+      existingByStableKey.set(stableKey, canonicalId)
+
+      for (const row of rows.slice(1)) {
+        mergeDuplicateResourceIntoCanonical(canonicalId, row.id)
+      }
+    }
+
+    for (const resource of EMOTIONAL_SEED_RESOURCES) {
+      const sceneCode = typeof resource.metadata?.sceneCode === 'string'
+        ? resource.metadata.sceneCode.trim()
+        : ''
+      const stableKey = sceneCode ? `${resource.resourceType}:${sceneCode}` : ''
+      const existingId = (stableKey ? existingByStableKey.get(stableKey) : undefined)
+        || existingByName.get(`${resource.resourceType}:${resource.name}`)
+
+      let resourceId = Number(existingId || 0)
+      let didInsert = false
+
+      if (resourceId) {
+        db.run(`
+          UPDATE sys_training_resource
+          SET module_code = ?, resource_type = ?, name = ?, category = ?, description = ?,
+              cover_image = ?, is_custom = 0, is_active = 1, legacy_source = ?, meta_data = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `, [
+          'emotional',
+          resource.resourceType,
+          resource.name,
+          resource.category,
+          resource.description,
+          resource.coverImage || '',
+          EMOTIONAL_RESOURCE_SEED_LEGACY_SOURCE,
+          JSON.stringify(resource.metadata),
+          resourceId,
+        ])
+        updated += 1
+      } else {
+        db.run(`
+          INSERT INTO sys_training_resource (
+            module_code, resource_type, name, category, description,
+            cover_image, is_custom, is_active, legacy_source, meta_data, usage_count
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          'emotional',
+          resource.resourceType,
+          resource.name,
+          resource.category,
+          resource.description,
+          resource.coverImage || '',
+          0,
+          1,
+          EMOTIONAL_RESOURCE_SEED_LEGACY_SOURCE,
+          JSON.stringify(resource.metadata),
+          0,
+        ])
+
+        const result = db.exec('SELECT last_insert_rowid() as id')
+        resourceId = Number(result?.[0]?.values?.[0]?.[0] || 0)
+        didInsert = resourceId > 0
+      }
 
       if (!resourceId) {
         continue
       }
+
+      if (stableKey) {
+        existingByStableKey.set(stableKey, resourceId)
+      }
+      existingByName.set(`${resource.resourceType}:${resource.name}`, resourceId)
 
       for (const tagName of resource.tags) {
         const tagKey = `ability:${tagName}`
@@ -1670,17 +1751,187 @@ export async function insertEmotionalResourceData(): Promise<void> {
         }
       }
 
-      inserted++
+      if (didInsert) {
+        inserted += 1
+      }
     }
 
     console.log('[InitDatabase] emotional default resources inserted:', {
       inserted,
+      updated,
       emotionSceneCount: EMOTIONAL_SEED_COUNTS.emotionSceneCount,
       careSceneCount: EMOTIONAL_SEED_COUNTS.careSceneCount,
     })
 
   } catch (error) {
     console.error('failed to insert emotional default resources:', error)
+    throw error
+  }
+}
+
+export async function insertEmotionalGameResourceData(): Promise<void> {
+  try {
+    const {
+      EMOTIONAL_GAME_CATALOG_SEED,
+      EMOTIONAL_GAME_RESOURCE_SEED_LEGACY_SOURCE,
+    } = await import('../data/emotional-game-catalog')
+
+    const existingRows = db.exec(`
+      SELECT id, name, meta_data
+      FROM sys_training_resource
+      WHERE module_code = 'emotional'
+        AND resource_type = 'game'
+    `)
+
+    const existingByGameCode = new Map<string, number>()
+    const existingByName = new Map<string, number>()
+
+    const tagMap = new Map<string, number>()
+    let inserted = 0
+    let updated = 0
+
+    for (const row of existingRows?.[0]?.values || []) {
+      const id = Number(row[0] || 0)
+      const name = typeof row[1] === 'string' ? row[1].trim() : ''
+      const metadataRaw = typeof row[2] === 'string' ? row[2] : ''
+
+      if (id > 0 && name) {
+        existingByName.set(name, id)
+      }
+
+      if (!metadataRaw) {
+        continue
+      }
+
+      try {
+        const metadata = JSON.parse(metadataRaw) as { gameCode?: string }
+        const gameCode = typeof metadata.gameCode === 'string' ? metadata.gameCode.trim() : ''
+        if (gameCode) {
+          existingByGameCode.set(gameCode, id)
+        }
+      } catch {
+        // Ignore malformed metadata.
+      }
+    }
+
+    const ensureAbilityTagId = (tagName: string): number | null => {
+      const tagKey = `ability:${tagName}`
+      const cached = tagMap.get(tagKey)
+      if (cached) {
+        return cached
+      }
+
+      const existingTag = db.get(
+        'SELECT id FROM sys_tags WHERE domain = ? AND name = ?',
+        ['ability', tagName]
+      )
+
+      if (existingTag?.id) {
+        tagMap.set(tagKey, existingTag.id)
+        return existingTag.id
+      }
+
+      db.run(
+        'INSERT INTO sys_tags (domain, name, usage_count, is_preset) VALUES (?, ?, ?, ?)',
+        ['ability', tagName, 0, 1]
+      )
+
+      const tagResult = db.exec('SELECT last_insert_rowid() as id')
+      const tagId = Number(tagResult?.[0]?.values?.[0]?.[0] || 0)
+      if (!tagId) {
+        return null
+      }
+
+      tagMap.set(tagKey, tagId)
+      return tagId
+    }
+
+    for (const resource of EMOTIONAL_GAME_CATALOG_SEED) {
+      const gameCode = typeof resource.metadata?.gameCode === 'string'
+        ? resource.metadata.gameCode.trim()
+        : ''
+      const existingId = (gameCode ? existingByGameCode.get(gameCode) : undefined)
+        || existingByName.get(resource.name)
+
+      let resourceId = Number(existingId || 0)
+      let didInsert = false
+
+      if (resourceId) {
+        db.run(`
+          UPDATE sys_training_resource
+          SET module_code = ?, resource_type = ?, name = ?, category = ?, description = ?,
+              cover_image = ?, is_custom = 0, is_active = 1, legacy_source = ?, meta_data = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `, [
+          'emotional',
+          'game',
+          resource.name,
+          resource.category,
+          resource.description,
+          resource.coverImage || '',
+          EMOTIONAL_GAME_RESOURCE_SEED_LEGACY_SOURCE,
+          JSON.stringify(resource.metadata),
+          resourceId,
+        ])
+        updated += 1
+      } else {
+        db.run(`
+          INSERT INTO sys_training_resource (
+            module_code, resource_type, name, category, description,
+            cover_image, is_custom, is_active, legacy_source, meta_data, usage_count
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          'emotional',
+          'game',
+          resource.name,
+          resource.category,
+          resource.description,
+          resource.coverImage || '',
+          0,
+          1,
+          EMOTIONAL_GAME_RESOURCE_SEED_LEGACY_SOURCE,
+          JSON.stringify(resource.metadata),
+          0,
+        ])
+
+        const result = db.exec('SELECT last_insert_rowid() as id')
+        resourceId = Number(result?.[0]?.values?.[0]?.[0] || 0)
+        didInsert = resourceId > 0
+      }
+
+      if (!resourceId) {
+        continue
+      }
+
+      if (gameCode) {
+        existingByGameCode.set(gameCode, resourceId)
+      }
+      existingByName.set(resource.name, resourceId)
+
+      for (const tagName of resource.tags) {
+        const tagId = ensureAbilityTagId(tagName)
+        if (!tagId) {
+          continue
+        }
+
+        db.run(
+          'INSERT OR IGNORE INTO sys_resource_tag_map (resource_id, tag_id) VALUES (?, ?)',
+          [resourceId, tagId]
+        )
+      }
+
+      if (didInsert) {
+        inserted += 1
+      }
+    }
+
+    console.log('[InitDatabase] emotional regulation game resources synced:', {
+      inserted,
+      updated,
+      total: EMOTIONAL_GAME_CATALOG_SEED.length,
+    })
+  } catch (error) {
+    console.error('failed to insert emotional regulation game resources:', error)
     throw error
   }
 }
@@ -2358,6 +2609,81 @@ async function initializeSysTables(rawDb: any): Promise<void> {
  */
 async function initializeEmotionalTables(rawDb: any): Promise<void> {
   rawDb.run(emotionalSchemaSQL)
+  await initializeTeachingMaterialTables(rawDb)
+  clearLegacyTeachingMaterialData(rawDb)
+}
+
+async function initializeTeachingMaterialTables(rawDb: any): Promise<void> {
+  rawDb.run(`
+    CREATE TABLE IF NOT EXISTS teaching_material (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      dimension_code TEXT NOT NULL CHECK(dimension_code IN (
+        'sensory-training',
+        'emotional-regulation',
+        'social-communication',
+        'life-skills',
+        'fine-motor',
+        'soothing-aids'
+      )),
+      module_code TEXT NOT NULL CHECK(module_code IN ('sensory', 'emotional', 'social', 'life_skills')),
+      file_name TEXT NOT NULL,
+      file_type TEXT NOT NULL,
+      file_path TEXT NOT NULL UNIQUE,
+      file_size_bytes INTEGER NOT NULL DEFAULT 0,
+      tags TEXT,
+      description TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+
+  rawDb.run(`
+    CREATE TABLE IF NOT EXISTS teaching_material_favorite (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      material_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, material_id),
+      FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+      FOREIGN KEY (material_id) REFERENCES teaching_material(id) ON DELETE CASCADE
+    )
+  `)
+
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_dimension ON teaching_material(dimension_code)')
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_module ON teaching_material(module_code)')
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_updated ON teaching_material(updated_at DESC)')
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_favorite_user ON teaching_material_favorite(user_id)')
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_favorite_material ON teaching_material_favorite(material_id)')
+}
+
+function clearLegacyTeachingMaterialData(rawDb: any): void {
+  const legacyMaterialCount = getSqlJsTableCount(rawDb, 'resource_meta')
+  const legacyFavoriteCount = getSqlJsTableCount(rawDb, 'teacher_fav')
+
+  if (legacyFavoriteCount > 0) {
+    rawDb.run('DELETE FROM teacher_fav')
+  }
+
+  if (legacyMaterialCount > 0) {
+    rawDb.run('DELETE FROM resource_meta')
+  }
+
+  if (legacyMaterialCount > 0 || legacyFavoriteCount > 0) {
+    console.log('[InitDatabase] cleaned legacy teaching materials:', {
+      resourceMeta: legacyMaterialCount,
+      teacherFav: legacyFavoriteCount,
+    })
+  }
+}
+
+function getSqlJsTableCount(rawDb: any, tableName: string): number {
+  try {
+    const result = rawDb.exec(`SELECT COUNT(*) FROM ${tableName}`)
+    return Number(result?.[0]?.values?.[0]?.[0] || 0)
+  } catch {
+    return 0
+  }
 }
 
 async function initializeClassTables(rawDb: any): Promise<void> {

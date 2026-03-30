@@ -29,6 +29,9 @@
     "build:electron:mac": "npm run build:web && electron-builder --mac",
     "build:electron:linux": "npm run build:web && electron-builder --linux",
     "generate:activation": "node scripts/generate-activation.js",
+    "resource-copy:export": "node scripts/export-training-resource-copy-template.cjs",
+    "resource-copy:build": "node scripts/build-training-resource-copy.cjs",
+    "resource-copy:sync": "node scripts/sync-training-resource-copy.cjs",
     "reset:legacy-training-records": "node scripts/hard-cut-training-records.cjs",
     "reset:sensory-equipment": "node scripts/reset-sensory-equipment-resources.cjs",
     "import:physical-equipment": "node scripts/import-physical-equipment-resources.cjs"

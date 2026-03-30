@@ -1,5 +1,9 @@
 # SCGP
 
+> 职责：项目总览，提供产品概述、目录结构、常用命令和主要文档入口。
+> 何时阅读：需要快速理解项目整体形态、开发命令和文档导航时。
+> 不负责：替代 `.continue-here.md` 提供当前任务交接，或替代 `AGENTS.md` 提供仓库规则。
+
 星愿能力发展平台（Stellar Competency Growth Platform）。
 
 这是一个面向特殊教育与康复场景的本地优先桌面应用，当前技术栈为 `Electron + Vue 3 + TypeScript + Vite + SQL.js`。系统覆盖学生档案、能力评估、训练计划、游戏训练、器材训练、资源中心、报告生成、激活与系统管理等模块。
@@ -51,6 +55,24 @@ npm run type-check
 npm run import:physical-equipment -- --yes
 ```
 
+### 训练资源文案主表导出
+
+```bash
+npm run resource-copy:export -- --out .tmp/training-resource-copy.csv
+```
+
+### 训练资源文案映射生成
+
+```bash
+npm run resource-copy:build
+```
+
+### 同步当前本地数据库中的训练资源文案
+
+```bash
+npm run resource-copy:sync -- --dry-run
+```
+
 ### 构建前端
 
 ```bash
@@ -82,15 +104,18 @@ npm run build:electron
 
 ## 文档入口
 
+- 交接入口：[HANDOFF.md](/home/DONG/Mycode/SCGP/HANDOFF.md)
 - 文档总索引：[docs/INDEX.md](/home/DONG/Mycode/SCGP/docs/INDEX.md)
 - 文档治理说明：[docs/DOCS_GUIDE.md](/home/DONG/Mycode/SCGP/docs/DOCS_GUIDE.md)
 - 轻量启动上下文：[docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
+- 训练资源统一文案操作说明：[docs/guides/2026-03-30-training-resource-copy-workflow.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-30-training-resource-copy-workflow.md)
 - 当前续接入口：[.continue-here.md](/home/DONG/Mycode/SCGP/.continue-here.md)
 - 当前项目上下文：[PROJECT_CONTEXT.md](/home/DONG/Mycode/SCGP/PROJECT_CONTEXT.md)
 - 历史上下文归档：[docs/logs/2026-03-26-project-context-archive.md](/home/DONG/Mycode/SCGP/docs/logs/2026-03-26-project-context-archive.md)
 
 ## 当前最重要的文档
 
+- [HANDOFF.md](/home/DONG/Mycode/SCGP/HANDOFF.md)
 - [AGENTS.md](/home/DONG/Mycode/SCGP/AGENTS.md)
 - [docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
 - [docs/planning/2026-03-13-scgp-current-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-13-scgp-current-prd.md)
@@ -113,4 +138,4 @@ npm run build:electron
 - `docs/logs/2026-03-26-project-context-archive.md`：从旧 `PROJECT_CONTEXT.md` 迁出的历史归档摘要，不作为默认首读入口。
 - `docs/planning/prd.md`：原始需求基线，主要反映“生活自理适应综合训练系统”阶段，不等同于当前 SCGP 平台范围。
 - `docs/guides/系统使用说明书.md`、`docs/guides/系统参数技术文档.md`：历史交付型文档，当前仅作为参考材料，不作为单一事实来源。
-- 如果你要快速理解当前项目，优先看 `AGENTS.md`、`docs/planning/2026-03-23-scgp-context-bootstrap.md`、`README.md` 和 `.continue-here.md`，再按任务补读其他大文档。
+- 如果你要快速理解当前项目，优先看 `HANDOFF.md`、`AGENTS.md`、`docs/planning/2026-03-23-scgp-context-bootstrap.md`、`README.md` 和 `.continue-here.md`，再按任务补读其他大文档。
