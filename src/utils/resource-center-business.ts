@@ -51,6 +51,68 @@ export function getAccessibleTeachingMaterialDimensions(
   return TEACHING_MATERIAL_DIMENSION_CODES.filter((code) => hasModuleAccess(getTeachingMaterialModuleCode(code)))
 }
 
+export const TEACHING_MATERIAL_FILE_CATEGORY_CODES = [
+  'all',
+  'video',
+  'image',
+  'document',
+  'other',
+] as const
+
+export type TeachingMaterialFileCategoryCode = typeof TEACHING_MATERIAL_FILE_CATEGORY_CODES[number]
+
+export const TEACHING_MATERIAL_FILE_CATEGORY_LABELS: Record<TeachingMaterialFileCategoryCode, string> = {
+  all: '全部类型',
+  video: '视频',
+  image: '图片',
+  document: '文档',
+  other: '其他',
+}
+
+const TEACHING_MATERIAL_VIDEO_TYPES = new Set(['mp4', 'avi', 'mov', 'wmv', 'webm', 'mkv', 'm4v'])
+const TEACHING_MATERIAL_IMAGE_TYPES = new Set(['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'])
+const TEACHING_MATERIAL_DOCUMENT_TYPES = new Set([
+  'pdf',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'ppt',
+  'pptx',
+  'txt',
+  'rtf',
+  'csv',
+])
+
+export function getTeachingMaterialFileCategoryLabel(code: TeachingMaterialFileCategoryCode): string {
+  return TEACHING_MATERIAL_FILE_CATEGORY_LABELS[code]
+}
+
+export function resolveTeachingMaterialFileCategory(fileType: string): Exclude<TeachingMaterialFileCategoryCode, 'all'> {
+  const normalizedType = normalizeTeachingMaterialFileType(fileType)
+
+  if (TEACHING_MATERIAL_VIDEO_TYPES.has(normalizedType)) {
+    return 'video'
+  }
+
+  if (TEACHING_MATERIAL_IMAGE_TYPES.has(normalizedType)) {
+    return 'image'
+  }
+
+  if (TEACHING_MATERIAL_DOCUMENT_TYPES.has(normalizedType)) {
+    return 'document'
+  }
+
+  return 'other'
+}
+
+function normalizeTeachingMaterialFileType(fileType: string): string {
+  return String(fileType || '')
+    .trim()
+    .replace(/^\./, '')
+    .toLowerCase()
+}
+
 export const TRAINING_RESOURCE_BUSINESS_GROUP_CODES = [
   'sensory-training',
   'emotional-behavior',

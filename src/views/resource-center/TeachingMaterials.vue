@@ -79,6 +79,23 @@
         </div>
       </div>
 
+      <div class="file-category-filter">
+        <span class="filter-label">资料类型</span>
+        <el-radio-group
+          :model-value="materialsStore.currentFileCategory"
+          size="small"
+          @change="selectFileCategory"
+        >
+          <el-radio-button
+            v-for="category in fileCategoryOptions"
+            :key="category"
+            :label="category"
+          >
+            {{ getFileCategoryLabel(category) }} ({{ getMaterialCountByCategory(category) }})
+          </el-radio-button>
+        </el-radio-group>
+      </div>
+
       <div v-if="materialsStore.isLoading" class="state-panel">
         <el-icon class="is-loading" :size="48"><Loading /></el-icon>
         <p>正在加载教学资料...</p>
@@ -105,9 +122,14 @@
           <div class="material-body">
             <div class="material-top">
               <h4>{{ material.title }}</h4>
-              <el-tag size="small" effect="plain">
-                {{ getDimensionLabel(material.dimensionCode) }}
-              </el-tag>
+              <div class="material-badges">
+                <el-tag size="small" effect="plain">
+                  {{ getDimensionLabel(material.dimensionCode) }}
+                </el-tag>
+                <el-tag size="small" type="success" effect="plain">
+                  {{ getFileCategoryLabel(resolveFileCategory(material.fileType)) }}
+                </el-tag>
+              </div>
             </div>
 
             <p class="description">{{ material.description || '暂无描述' }}</p>
@@ -172,7 +194,7 @@
       <div v-else class="state-panel empty-state">
         <el-icon :size="64"><FolderOpened /></el-icon>
         <h3>暂无教学资料</h3>
-        <p>当前维度下还没有可用资料。</p>
+        <p>{{ getEmptyStateDescription() }}</p>
         <el-button
           v-if="!readOnly"
           type="primary"
@@ -329,6 +351,10 @@
               <span>{{ selectedMaterial.fileType.toUpperCase() }}</span>
             </div>
             <div class="meta-item">
+              <label>资料类别</label>
+              <span>{{ getFileCategoryLabel(resolveFileCategory(selectedMaterial.fileType)) }}</span>
+            </div>
+            <div class="meta-item">
               <label>文件大小</label>
               <span>{{ formatFileSize(selectedMaterial.fileSizeBytes) }}</span>
             </div>
@@ -391,7 +417,11 @@ import { useTeachingMaterialsStore } from '@/stores/teaching-materials'
 import { resourceImporter } from '@/utils/resource-importer'
 import { teachingMaterialFileManager } from '@/utils/teaching-material-file-manager'
 import {
+  TEACHING_MATERIAL_FILE_CATEGORY_CODES,
+  getTeachingMaterialFileCategoryLabel,
   getTeachingMaterialDimensionLabel,
+  resolveTeachingMaterialFileCategory,
+  type TeachingMaterialFileCategoryCode,
   type TeachingMaterialDimensionCode,
 } from '@/utils/resource-center-business'
 import type { TeachingMaterialItem } from '@/database/teaching-materials-api'
@@ -408,6 +438,7 @@ const materialsStore = useTeachingMaterialsStore()
 const readOnly = computed(() => props.readOnly)
 
 const filteredMaterials = computed(() => materialsStore.filteredMaterials)
+const fileCategoryOptions = TEACHING_MATERIAL_FILE_CATEGORY_CODES
 const showUploadDialog = ref(false)
 const showBatchImportDialog = ref(false)
 const showDetailDialog = ref(false)
@@ -450,16 +481,36 @@ function getDimensionLabel(dimensionCode: TeachingMaterialDimensionCode): string
   return getTeachingMaterialDimensionLabel(dimensionCode)
 }
 
+function getFileCategoryLabel(categoryCode: TeachingMaterialFileCategoryCode): string {
+  return getTeachingMaterialFileCategoryLabel(categoryCode)
+}
+
+function resolveFileCategory(fileType: string): Exclude<TeachingMaterialFileCategoryCode, 'all'> {
+  return resolveTeachingMaterialFileCategory(fileType)
+}
+
 function getCurrentDescription(): string {
-  if (!materialsStore.currentDimension) {
-    return '教学资料按 6 个业务维度管理，授权仍然回落到真实 moduleCode。'
+  const categorySuffix = materialsStore.currentFileCategory === 'all'
+    ? ''
+    : ` 当前按${materialsStore.currentFileCategoryName}筛选。`
+
+  if (materialsStore.showFavoritesOnly) {
+    return `当前显示收藏教学资料，可继续按资料类型筛选。${categorySuffix}`
   }
 
-  return DIMENSION_DESCRIPTIONS[materialsStore.currentDimension]
+  if (!materialsStore.currentDimension) {
+    return `教学资料按 6 个业务维度管理，并支持视频、图片、文档等类型筛选。授权仍然回落到真实 moduleCode。${categorySuffix}`
+  }
+
+  return `${DIMENSION_DESCRIPTIONS[materialsStore.currentDimension]}${categorySuffix}`
 }
 
 function selectDimension(dimensionCode: TeachingMaterialDimensionCode | null) {
   materialsStore.setDimension(dimensionCode)
+}
+
+function selectFileCategory(categoryCode: string | number | boolean) {
+  materialsStore.setFileCategory(categoryCode as TeachingMaterialFileCategoryCode)
 }
 
 function handleSearch(event: Event) {
@@ -469,6 +520,30 @@ function handleSearch(event: Event) {
 
 function getMaterialCountByDimension(dimensionCode: TeachingMaterialDimensionCode): number {
   return materialsStore.materials.filter((item) => item.dimensionCode === dimensionCode).length
+}
+
+function getMaterialCountByCategory(categoryCode: TeachingMaterialFileCategoryCode): number {
+  return materialsStore.fileCategoryCounts[categoryCode]
+}
+
+function getEmptyStateDescription(): string {
+  if (materialsStore.showFavoritesOnly) {
+    if (materialsStore.currentFileCategory !== 'all') {
+      return `当前还没有收藏的${materialsStore.currentFileCategoryName}资料。`
+    }
+
+    return '当前还没有收藏的教学资料。'
+  }
+
+  if (materialsStore.currentFileCategory !== 'all') {
+    return `当前筛选维度下暂无${materialsStore.currentFileCategoryName}资料。`
+  }
+
+  if (materialsStore.currentDimension) {
+    return '当前维度下还没有可用资料。'
+  }
+
+  return '当前还没有可用教学资料。'
 }
 
 function formatFileSize(sizeBytes?: number): string {
@@ -507,16 +582,16 @@ function formatDate(value?: string): string {
 
 function getFileIcon(type: string) {
   const lowerType = type.toLowerCase()
-  if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(lowerType)) {
+  if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv'].includes(lowerType)) {
     return Document
   }
-  if (['mp4', 'avi', 'mov', 'wmv', 'webm'].includes(lowerType)) {
+  if (['mp4', 'avi', 'mov', 'wmv', 'webm', 'mkv', 'm4v'].includes(lowerType)) {
     return VideoPlay
   }
   if (['mp3', 'wav', 'flac', 'aac'].includes(lowerType)) {
     return Headset
   }
-  if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(lowerType)) {
+  if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(lowerType)) {
     return Picture
   }
   return Files
@@ -525,10 +600,10 @@ function getFileIcon(type: string) {
 function getFileIconColor(type: string): string {
   const lowerType = type.toLowerCase()
   if (['pdf'].includes(lowerType)) return '#d14343'
-  if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(lowerType)) return '#3b82f6'
-  if (['mp4', 'avi', 'mov', 'wmv', 'webm'].includes(lowerType)) return '#7c3aed'
+  if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv'].includes(lowerType)) return '#3b82f6'
+  if (['mp4', 'avi', 'mov', 'wmv', 'webm', 'mkv', 'm4v'].includes(lowerType)) return '#7c3aed'
   if (['mp3', 'wav', 'flac', 'aac'].includes(lowerType)) return '#ea580c'
-  if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(lowerType)) return '#0ea5e9'
+  if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(lowerType)) return '#0ea5e9'
   return '#64748b'
 }
 
@@ -823,6 +898,20 @@ defineExpose({
   color: #909399;
 }
 
+.file-category-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.filter-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #606266;
+}
+
 .source-folder {
   display: flex;
   flex-direction: column;
@@ -904,6 +993,13 @@ defineExpose({
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 8px;
+}
+
+.material-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .material-top h4 {

@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-03-30
+> last_updated: 2026-03-31
 
 > 职责：新会话总入口，只负责把你导向正确文档。
 > 何时阅读：每次进入仓库、准备续接工作或需要快速建立上下文时。
@@ -41,7 +41,7 @@
 ## 当前活跃工作
 
 - 当前唯一有效续接入口：`.continue-here.md`
-- 当前续接范围：`resource-center init duplication fixed, sensory equipment tag backfill landed, and full runtime verification plus final copy pass pending`
+- 当前续接范围：`resource-center smoke verification completed, teaching-material file-category filter landed, and teaching-material runtime verification plus final copy pass pending`
 - 如果 `.continue-here.md` 与其他文档冲突：
   - 当前任务以 `.continue-here.md` 为准
   - 边界与规则以 `AGENTS.md` 为准
@@ -67,4 +67,4 @@
 
 ## 最后更新
 
-- 2026-03-30
+- 2026-03-31

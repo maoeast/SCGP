@@ -8,8 +8,11 @@ import {
 } from '@/database/teaching-materials-api'
 import {
   getAccessibleTeachingMaterialDimensions,
+  getTeachingMaterialFileCategoryLabel,
   getTeachingMaterialDimensionLabel,
   getTeachingMaterialModuleCode,
+  resolveTeachingMaterialFileCategory,
+  type TeachingMaterialFileCategoryCode,
   type TeachingMaterialDimensionCode,
 } from '@/utils/resource-center-business'
 import { teachingMaterialFileManager } from '@/utils/teaching-material-file-manager'
@@ -20,6 +23,7 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
 
   const materials = ref<TeachingMaterialItem[]>([])
   const currentDimension = ref<TeachingMaterialDimensionCode | null>(null)
+  const currentFileCategory = ref<TeachingMaterialFileCategoryCode>('all')
   const searchKeyword = ref('')
   const isLoading = ref(false)
   const error = ref<string | null>(null)
@@ -35,11 +39,43 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
     return getTeachingMaterialDimensionLabel(currentDimension.value)
   })
 
-  const filteredMaterials = computed(() => {
+  const currentFileCategoryName = computed(() => getTeachingMaterialFileCategoryLabel(currentFileCategory.value))
+
+  const scopedMaterials = computed(() => {
     let result = materials.value
 
     if (currentDimension.value) {
       result = result.filter((item) => item.dimensionCode === currentDimension.value)
+    }
+
+    if (showFavoritesOnly.value) {
+      result = result.filter((item) => item.isFavorite)
+    }
+
+    return result
+  })
+
+  const fileCategoryCounts = computed<Record<TeachingMaterialFileCategoryCode, number>>(() => {
+    const counts: Record<TeachingMaterialFileCategoryCode, number> = {
+      all: scopedMaterials.value.length,
+      video: 0,
+      image: 0,
+      document: 0,
+      other: 0,
+    }
+
+    scopedMaterials.value.forEach((item) => {
+      counts[resolveTeachingMaterialFileCategory(item.fileType)] += 1
+    })
+
+    return counts
+  })
+
+  const filteredMaterials = computed(() => {
+    let result = scopedMaterials.value
+
+    if (currentFileCategory.value !== 'all') {
+      result = result.filter((item) => resolveTeachingMaterialFileCategory(item.fileType) === currentFileCategory.value)
     }
 
     if (searchKeyword.value) {
@@ -51,10 +87,6 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
           || tagText.includes(keyword)
           || (item.description || '').toLowerCase().includes(keyword)
       })
-    }
-
-    if (showFavoritesOnly.value) {
-      result = result.filter((item) => item.isFavorite)
     }
 
     return result
@@ -150,7 +182,12 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
 
   function setDimension(dimensionCode: TeachingMaterialDimensionCode | null) {
     currentDimension.value = dimensionCode
+    currentFileCategory.value = 'all'
     showFavoritesOnly.value = false
+  }
+
+  function setFileCategory(fileCategory: TeachingMaterialFileCategoryCode) {
+    currentFileCategory.value = fileCategory
   }
 
   function setSearchKeyword(keyword: string) {
@@ -161,6 +198,7 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
   function toggleFavoritesView() {
     showFavoritesOnly.value = !showFavoritesOnly.value
     currentDimension.value = null
+    currentFileCategory.value = 'all'
     searchKeyword.value = ''
   }
 
@@ -176,7 +214,10 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
     materials,
     currentDimension,
     currentDimensionName,
+    currentFileCategory,
+    currentFileCategoryName,
     dimensions,
+    fileCategoryCounts,
     searchKeyword,
     isLoading,
     error,
@@ -188,6 +229,7 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
     toggleFavorite,
     openMaterial,
     setDimension,
+    setFileCategory,
     setSearchKeyword,
     toggleFavoritesView,
     clearError,

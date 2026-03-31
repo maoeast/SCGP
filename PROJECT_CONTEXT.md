@@ -151,3 +151,21 @@
   - `resourceCode`
 - Important constraint:
   - do not casually reorder `src/database/equipment-data.ts`, because current sensory-equipment copy keys still depend on the legacy array order
+
+## 9. 2026-03-31 Resource-Center Follow-up
+
+- resource-center smoke verification is now confirmed against the live local dev DB:
+  - after app relaunch and `Ctrl+R`, `emotion_scene = 80`
+  - after app relaunch and `Ctrl+R`, `care_scene = 60`
+  - sensory `equipment_data` resources checked for ability-tag coverage: `63 / 63`
+- teaching materials now have a second-layer UI filter in addition to business dimension:
+  - `video`
+  - `image`
+  - `document`
+  - `other`
+- important implementation boundary:
+  - second-layer teaching-material categories are derived from existing `file_type`
+  - do not add a separate persisted category field unless future runtime verification proves `file_type` is insufficient
+- important zero-state constraint:
+  - the teaching-material file-category filter should remain visible even when `teaching_material` is empty
+  - current local dev DB still has `0` teaching-material rows, so non-zero category counts still need runtime verification with imported files
