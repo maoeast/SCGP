@@ -9,6 +9,8 @@ export interface Student {
   student_no?: string
   disorder?: string
   avatar_path?: string
+  current_class_id?: number | null
+  current_class_name?: string | null
   created_at: string
   updated_at: string
 }

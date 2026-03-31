@@ -487,7 +487,18 @@ export class StudentAPI extends DatabaseAPI {
   // 获取所有学生
   async getAllStudents(): Promise<any[]> {
     const result = await this.queryAsync(`
-      SELECT id, name, gender, birthday, student_no, disorder, avatar_path, created_at
+      SELECT
+        id,
+        name,
+        gender,
+        birthday,
+        student_no,
+        disorder,
+        avatar_path,
+        current_class_id,
+        current_class_name,
+        created_at,
+        updated_at
       FROM student
       ORDER BY created_at DESC
     `);
@@ -540,7 +551,18 @@ export class StudentAPI extends DatabaseAPI {
   // 搜索学生
   async searchStudents(keyword: string): Promise<any[]> {
     return await this.queryAsync(`
-      SELECT id, name, gender, birthday, student_no, disorder, avatar_path, created_at
+      SELECT
+        id,
+        name,
+        gender,
+        birthday,
+        student_no,
+        disorder,
+        avatar_path,
+        current_class_id,
+        current_class_name,
+        created_at,
+        updated_at
       FROM student
       WHERE name LIKE ? OR disorder LIKE ? OR student_no LIKE ?
       ORDER BY name

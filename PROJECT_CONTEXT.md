@@ -233,3 +233,26 @@
     - `emotional`
     - `social`
     - `life_skills`
+
+## 13. 2026-03-31 Student Management UI Alignment and Data Boundaries
+
+- `src/views/Students.vue` is now aligned to the same admin-page visual language used by:
+  - `src/views/admin/ClassManagement.vue`
+  - `src/views/admin/StudentClassAssignment.vue`
+- student-management now relies on current class snapshot fields already stored on `student`:
+  - `current_class_id`
+  - `current_class_name`
+  - these fields are now included in the student list query path through:
+    - `src/database/api.ts`
+    - `src/stores/student.ts`
+- important avatar boundary:
+  - active student-management UI only allows two display states:
+    - real uploaded photo
+    - gender-colored initial avatar fallback
+  - do not reintroduce a third grey generic avatar state in new student-list UI work
+- important data-entry boundary:
+  - `src/components/AddStudentDialog.vue` no longer auto-generates and persists placeholder avatar images into `avatar_path`
+  - newly saved or edited diagnosis values are normalized to the current nine canonical diagnosis categories used by the student-management filters and color pills
+- important compatibility boundary:
+  - historical rows may still contain older long-form diagnosis strings or previously generated fallback avatar data URLs
+  - current page/dialog behavior normalizes these at display/edit time; no destructive migration has been run

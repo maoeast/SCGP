@@ -57,15 +57,15 @@
           <label for="disorder">诊断类型</label>
           <select id="disorder" v-model="studentForm.disorder">
             <option value="">请选择</option>
-            <option value="视力障碍（盲、低视力）">视力障碍（盲、低视力）</option>
-            <option value="听力障碍（聋、重听）">听力障碍（聋、重听）</option>
+            <option value="视力障碍">视力障碍</option>
+            <option value="听力障碍">听力障碍</option>
             <option value="言语障碍">言语障碍</option>
             <option value="智力障碍">智力障碍</option>
             <option value="肢体障碍">肢体障碍</option>
-            <option value="精神障碍（ASD / ADHD / EBD）">精神障碍（ASD / ADHD / EBD）</option>
+            <option value="精神障碍">精神障碍</option>
             <option value="多重障碍">多重障碍</option>
             <option value="学习障碍">学习障碍</option>
-            <option value="发育迟缓（0-6岁）">发育迟缓（0-6岁）</option>
+            <option value="发育迟缓">发育迟缓</option>
           </select>
         </div>
 
@@ -246,6 +246,21 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : '未知错误'
 }
 
+function normalizeDiagnosisValue(value?: string): string {
+  const normalized = value?.replace(/\s+/g, '').trim() || ''
+  if (!normalized) return ''
+  if (normalized.includes('视力障碍')) return '视力障碍'
+  if (normalized.includes('听力障碍')) return '听力障碍'
+  if (normalized.includes('言语障碍') || normalized.includes('语言障碍')) return '言语障碍'
+  if (normalized.includes('智力障碍')) return '智力障碍'
+  if (normalized.includes('肢体障碍')) return '肢体障碍'
+  if (normalized.includes('精神障碍') || normalized.includes('ASD') || normalized.includes('ADHD') || normalized.includes('EBD')) return '精神障碍'
+  if (normalized.includes('多重障碍')) return '多重障碍'
+  if (normalized.includes('学习障碍')) return '学习障碍'
+  if (normalized.includes('发育迟缓')) return '发育迟缓'
+  return value?.trim() || ''
+}
+
 function triggerAvatarUpload() {
   avatarInput.value?.click()
 }
@@ -399,24 +414,8 @@ const submitStudentForm = async () => {
       studentForm.value.student_no = `STU${Date.now()}`
     }
 
-    let finalAvatarPath = avatarPreview.value
-    if (!finalAvatarPath && studentForm.value.name) {
-      const canvas = document.createElement('canvas')
-      canvas.width = 200
-      canvas.height = 200
-      const context = canvas.getContext('2d')
-
-      if (context) {
-        context.fillStyle = '#4CAF50'
-        context.fillRect(0, 0, 200, 200)
-        context.fillStyle = 'white'
-        context.font = 'bold 80px Arial'
-        context.textAlign = 'center'
-        context.textBaseline = 'middle'
-        context.fillText(studentForm.value.name.charAt(0), 100, 100)
-        finalAvatarPath = canvas.toDataURL('image/png')
-      }
-    }
+    studentForm.value.disorder = normalizeDiagnosisValue(studentForm.value.disorder)
+    const finalAvatarPath = avatarPreview.value
 
     if (props.editingStudent) {
       const { classId: _classId, ...studentData } = studentForm.value
@@ -467,7 +466,7 @@ const initializeForm = () => {
       gender: props.editingStudent.gender || '',
       birthday: props.editingStudent.birthday || '',
       student_no: props.editingStudent.student_no || '',
-      disorder: props.editingStudent.disorder || '',
+      disorder: normalizeDiagnosisValue(props.editingStudent.disorder),
       classId: null
     }
     avatarPreview.value = props.editingStudent.avatar_path || ''
