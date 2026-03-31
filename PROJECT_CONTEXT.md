@@ -1,108 +1,134 @@
 # PROJECT_CONTEXT.md
 
-> 鑱岃矗锛氬綋鍓嶆湁鏁堢殑鍏ㄥ眬涓婁笅鏂囨憳瑕侊紝琛ュ厖椤圭洰浜嬪疄銆佷富绾胯繘灞曞拰褰撳墠鍐崇瓥銆?> 浣曟椂闃呰锛氳瀹?`AGENTS.md` 涓?`.continue-here.md` 鍚庯紝浠嶉渶瑕佽ˉ鍏ㄥ叏灞€鑳屾櫙鏃躲€?> 涓嶈礋璐ｏ細鎵挎媴鍘嗗彶娴佹按鏃ュ織锛涘巻鍙插唴瀹瑰簲杞叆 `docs/logs/`銆乣docs/CHANGELOG.md` 鎴?git history銆?
-> 鐢ㄩ€旓細褰撳墠鏈夋晥鍗忎綔涓婁笅鏂囨憳瑕併€?> 璇诲彇绛栫暐锛氫笉鍐嶄綔涓烘瘡娆℃柊浼氳瘽榛樿棣栬鏂囦欢銆傞粯璁ゅ厛璇?`AGENTS.md`銆乣docs/planning/2026-03-23-scgp-context-bootstrap.md`銆乣README.md`锛涘彧鏈夊湪闇€瑕佸欢缁伐浣滆儗鏅椂鍐嶈鏈枃浠躲€?> 鍘嗗彶璇存槑锛氭棫鐗堥暱绡囧伐浣滄棩蹇椾笌闃舵娴佹按宸蹭粠楂橀鍏ュ彛绉诲嚭锛屽巻鍙叉憳瑕佽 `docs/logs/2026-03-26-project-context-archive.md`锛屾洿缁嗚妭鐨勫畬鎴愰」瑙?`docs/CHANGELOG.md` 涓?git history銆?
-## 1. 褰撳墠椤圭洰浜嬪疄
+> 职责：当前有效的全局上下文摘要，补充项目事实、主线进展和当前决策。
+> 何时阅读：读完 `AGENTS.md` 与 `.continue-here.md` 后，仍需要补全全局背景时。
+> 不负责：承担历史流水日志；历史内容应转入 `docs/logs/`、`docs/CHANGELOG.md` 或 git history。
+>
+> 用途：当前有效协作上下文摘要。
+> 读取策略：不再作为每次新会话默认首读文件。默认先读 `AGENTS.md`、`docs/planning/2026-03-23-scgp-context-bootstrap.md`、`README.md`；只有在需要延续工作背景时再读本文件。
+> 历史说明：旧版长篇工作日志与阶段流水已从高频入口移出，历史摘要见 `docs/logs/2026-03-26-project-context-archive.md`，更细节的完成项见 `docs/CHANGELOG.md` 或 git history。
 
-- 褰撳墠姝ｅ紡浜у搧鍚嶇О锛歚SCGP / 鏄熸効鑳藉姏鍙戝睍骞冲彴`
-- 鍘嗗彶闃舵鍚嶇О锛?  - `鐢熸椿鑷悊閫傚簲缁煎悎璁粌绯荤粺`
-  - `鎰熷畼鑳藉姏鍙戝睍绯荤粺 (SIC-ADS)`
-- 鎶€鏈爤锛歚Electron + Vue 3 + TypeScript + Vite + SQL.js`
-- 褰撳墠鏁版嵁搴撲富绾匡細娓叉煋杩涚▼鍐?`sql.js` + `SQLWrapper` 闃叉姈淇濆瓨
-- 褰撳墠鎸佷箙鍖栦富绾匡細娓叉煋杩涚▼瀵煎嚭鏁版嵁搴擄紝缁?IPC 浜ょ粰 Electron Main 鍘熷瓙鍐欏叆
-- 褰撳墠璧勬簮涓绘ā鍨嬶細`sys_training_resource + sys_tags + sys_resource_tag_map`
-- 褰撳墠璇勪及涓婚摼锛歚AssessmentContainer + ScaleDriver`
-- 褰撳墠妯″潡绯荤粺锛氬凡鏈?`ModuleRegistry`
-- 褰撳墠璺敱鐜板疄锛氫粛浠ラ潤鎬佽矾鐢辫〃涓轰富锛屼笉鏄敞鍐岃〃鍔ㄦ€佽閰?
-## 2. 褰撳墠浜у搧鐜板疄
+## 1. 当前项目事实
 
-褰撳墠浠ｇ爜涓荤嚎宸茬粡鍏峰浠ヤ笅鍙繍琛岃兘鍔涳細
+- 当前正式产品名称：`SCGP / 星愿能力发展平台`
+- 历史阶段名称：
+  - `生活自理适应综合训练系统`
+  - `感官能力发展系统 (SIC-ADS)`
+- 技术栈：`Electron + Vue 3 + TypeScript + Vite + SQL.js`
+- 当前数据库主线：渲染进程内 `sql.js` + `SQLWrapper` 防抖保存
+- 当前持久化主线：渲染进程导出数据库，经 IPC 交给 Electron Main 原子写入
+- 当前资源主模型：`sys_training_resource + sys_tags + sys_resource_tag_map`
+- 当前评估主链：`AssessmentContainer + ScaleDriver`
+- 当前模块系统：已有 `ModuleRegistry`
+- 当前路由现实：仍以静态路由表为主，不是注册表动态装配
 
-- 瀛︾敓绠＄悊
-- 鑳藉姏璇勪及
-- 娓告垙璁粌
-- 鍣ㄦ潗璁粌
-- 璁粌璁板綍
-- 璁粌璁″垝
-- 鎶ュ憡鐢熸垚
-- 璧勬簮涓績
-- 绯荤粺绠＄悊
-- 鐝骇绠＄悊涓庡鐢熷垎鐝?- 鏈湴璐﹀彿鐧诲綍銆佹縺娲汇€佹洿鏂版帴鍏ャ€佸浠芥仮澶?
-蹇呴』鎸佺画璁颁綇鐨勭幇瀹烇細
+## 2. 当前产品现实
 
-- `sensory` 浠嶆槸褰撳墠鏈€瀹屾暣鐨勪笟鍔′富閾?- `emotional` 宸叉湁鍙繍琛岄摼璺紝浣嗕粛澶勪簬鎸佺画琛ュ叏涓?- `social`銆乣life_skills` 绛変粛涓嶆槸瀹屾暣鍙氦浠樻ā鍧?- 涓嶈鎶婃湭鏉ユā鍧楃洰鏍囨€佸啓鎴愬綋鍓嶅凡瀹炵幇鐜扮姸
+当前代码主线已经具备以下可运行能力：
 
-## 3. 褰撳墠宸茬‘璁ょ殑閲嶈鍙樻洿
+- 学生管理
+- 能力评估
+- 游戏训练
+- 器材训练
+- 训练记录
+- 训练计划
+- 报告生成
+- 资源中心
+- 系统管理
+- 班级管理与学生分班
+- 本地账号登录、激活、更新接入、备份恢复
 
-### 3.1 鍣ㄦ潗璁粌鍏ュ彛涓?physical-equipment
+必须持续记住的现实：
 
-- physical-equipment CSV 瀵煎叆閾捐矾宸茶惤鍦?- 褰撳墠鍥涗唤 physical-equipment 鑽夌 CSV 宸茶鑼冨寲鍏ュ簱
-- 鍣ㄦ潗璁粌鍐呴儴鍏ュ彛宸插浐瀹氫负 6 涓細
+- `sensory` 仍是当前最完整的业务主链
+- `emotional` 已有可运行链路，但仍处于持续补全中
+- `social`、`life_skills` 等仍不是完整可交付模块
+- 不要把未来模块目标态写成当前已实现现状
+
+## 3. 当前已确认的重要变更
+
+### 3.1 器材训练入口与 `physical-equipment`
+
+- physical-equipment CSV 导入链路已落地
+- 当前四份 physical-equipment 草稿 CSV 已规范化入库
+- 器材训练内部入口已固定为 6 个：
   - `sensory-integration`
   - `emotional-regulation`
   - `social-communication`
   - `fine-motor`
   - `soothing-aids`
   - `life-skills`
-- 椤跺眰鎺堟潈妯″瀷淇濇寔涓嶅彉锛?  - 浠嶆寜鐪熷疄涓氬姟 `moduleCode`
-  - `fine-motor` / `soothing-aids` 娌℃湁琚彁鍗囦负椤跺眰鎺堟潈妯″潡
-- 鍣ㄦ潗璁粌蹇€熷綍鍏ュ乏渚у垎绫诲凡鏀逛负鐪熷疄婧愬垎绫诲彛寰勶紝涓嶅啀鏄剧ず `catalog-group / entry-group` 鏍囩
+- 顶层授权模型保持不变：
+  - 仍按真实业务 `moduleCode`
+  - `fine-motor` / `soothing-aids` 没有被提升为顶层授权模块
+- 器材训练快速录入左侧分类已改为真实源分类口径，不再显示 `catalog-group / entry-group` 标签
 
-### 3.2 棣栭〉
+### 3.2 首页
 
-- 棣栭〉鐢ㄦ埛鍙鏍囬宸叉敼涓猴細`棣栭〉鐪嬫澘`
-- 棣栭〉鍓爣棰樺凡鏀逛负锛歚鑱氱劍浠婂ぉ瑕佸仛鐨勮瘎浼般€佽缁冧笌骞查鎻愰啋锛岀敤鐪熷疄涓氬姟鏁版嵁鏀寔涓€绾垮喅绛栥€俙
+- 首页用户可见标题已改为：`首页看板`
+- 首页副标题已改为：`聚焦今天要做的评估、训练与干预提醒，用真实业务数据支持一线决策。`
 
-### 3.3 training-entry hard-cut 褰撳墠杩涘害
+### 3.3 training-entry hard-cut 当前进度
 
-- `training_records` 涓?`equipment_training_records` 宸茶ˉ榻?`entry_code`
-- 娓告垙璁粌鏂板啓鍏ュ凡鍐欏叆 `entry_code`
-- 鍣ㄦ潗璁粌鏂板啓鍏ュ凡鍐欏叆 `entry_code`
-- 璁粌璁板綍鑿滃崟 / 缁熻 / 闈㈡澘宸叉寜 `entry_code` 缁熻涓庣瓫閫?- `src/views/equipment/Records.vue` 宸叉敼涓?entry-aware 璁板綍椤?- `ModuleTrainingRecords -> EquipmentRecords` 宸茶兘鎼哄甫 `recordId` 杩涘叆瀵瑰簲璁板綍
-- clean local dev DB 宸查噸寤哄苟瀹屾垚鏈€灏忓啓鍏ラ獙璇侊細
-  - 1 鏉℃父鎴忚褰曢獙璇?`entry_code = emotional-regulation`
-  - 1 鏉″櫒鏉愯褰曢獙璇?`entry_code = fine-motor`
-- `SQLWrapper` 宸蹭慨澶嶁€滀繚瀛樺悗閿欒閲嶅鍐嶈Е鍙戜繚瀛樷€濈殑鐘舵€佹満闂
-- `equipment_training_records` 鐨勫綋鍓?schema/init 鍙ｅ緞宸叉敼鍥炴纭祫婧愪富绾匡細
+- `training_records` 与 `equipment_training_records` 已补齐 `entry_code`
+- 游戏训练新写入已写入 `entry_code`
+- 器材训练新写入已写入 `entry_code`
+- 训练记录菜单 / 统计 / 面板已按 `entry_code` 统计与筛选
+- `src/views/equipment/Records.vue` 已改为 entry-aware 记录页
+- `ModuleTrainingRecords -> EquipmentRecords` 已能携带 `recordId` 进入对应记录
+- clean local dev DB 已重建并完成最小写入验证：
+  - 1 条游戏记录验证 `entry_code = emotional-regulation`
+  - 1 条器材记录验证 `entry_code = fine-motor`
+- `SQLWrapper` 已修复“保存后错误重复再触发保存”的状态机问题
+- `equipment_training_records` 的当前 schema/init 口径已改回正确资源主线：
   - `equipment_id -> sys_training_resource(id)`
 
-## 4. 褰撳墠娲昏穬鏈畬鎴愪富绾?
-褰撳墠涓嬩竴鏉＄湡姝ｇ殑澶ф敼鍔紝涓嶆槸鍗曢〉淇ˉ锛岃€屾槸锛?
-- 缁熶竴 `娓告垙璁粌 / 鍣ㄦ潗璁粌 / 璁粌璁板綍`
-- 鏀跺彛涓哄悓涓€濂?6 涓?internal training entries
+## 4. 当前活跃未完成主线
 
-褰撳墠宸茬‘璁ょ殑瀹炴柦杈圭晫锛?
-- 涓嶈€冭檻鏃ц缁冭褰曞吋瀹?- 鏃ц缁?/ 娓告垙 / 鍣ㄦ潗璁板綍鍏佽鐗╃悊鍒犻櫎
-- 涓嶅仛鈥滄棫 `module_code` 鎺ㄦ柇鍒版柊 entry鈥濆吋瀹瑰眰
-- 淇濇寔椤跺眰 `moduleCode` 鎺堟潈妯″瀷涓嶅彉
+当前下一条真正的大改动，不是单页修补，而是：
 
-褰撳墠宸插仛鐨勫噯澶囷細
+- 统一 `游戏训练 / 器材训练 / 训练记录`
+- 收口为同一套 6 个 internal training entries
 
-- 宸叉柊澧炲叡浜叆鍙ｆā鍨嬭捣鐐癸細`src/utils/training-entry.ts`
-- `src/utils/equipment-training-entry.ts` 宸茶鏀舵暃涓哄吋瀹瑰寘瑁呭眰
+当前已确认的实施边界：
 
-褰撳墠灏氭湭瀹屾垚鐨勫叧閿偣锛?
-- 鏃у巻鍙茶褰?hard-cut 鐨勬渶缁堟敹鍙ｆ柟妗堣繕鏈畬鍏ㄦ槑纭細
-  - 鐩存帴鐗╃悊鍒犻櫎锛屾垨
-  - 鎻愪緵涓€娆℃槑纭?reset 璺緞
-- 浠嶉渶缁х画鎺掓煡鏄惁杩樻湁 remaining old module-based record/detail flow
-- 娓告垙璧勬簮鐪熷疄瑕嗙洊浠嶄笉瀹屾暣锛?  - 褰撳墠鐪熷疄鍙敤浠嶄互 sensory games + emotional scenes / care scenes 涓轰富
-  - `social-communication / fine-motor / soothing-aids / life-skills` 杩樹笉鏄畬鏁存父鎴忓唴瀹逛氦浠樻€?- 濡傚悗缁粛澶嶇幇鍘熷瓙鍐欏叆绔炴€佹棩蹇楋紝鍐嶇户缁敹鍙?Electron Main 鐨?`save-database-atomic` 涓茶鍖?
-## 5. 褰撳墠鏄庣‘鍐崇瓥
+- 不考虑旧训练记录兼容
+- 旧训练 / 游戏 / 器材记录允许物理删除
+- 不做“旧 `module_code` 推断到新 entry”兼容层
+- 保持顶层 `moduleCode` 授权模型不变
 
-- 椤跺眰鏀惰垂 / 鎺堟潈缁х画鎸夌湡瀹炰笟鍔℃ā鍧楋細
+当前已做的准备：
+
+- 已新增共享入口模型起点：`src/utils/training-entry.ts`
+- `src/utils/equipment-training-entry.ts` 已被收敛为兼容包装层
+
+当前尚未完成的关键点：
+
+- 旧历史记录 hard-cut 的最终收口方案还未完全明确：
+  - 直接物理删除，或
+  - 提供一次明确 reset 路径
+- 仍需继续排查是否还有 remaining old module-based record/detail flow
+- 游戏资源真实覆盖仍不完整：
+  - 当前真实可用仍以 sensory games + emotional scenes / care scenes 为主
+  - `social-communication / fine-motor / soothing-aids / life-skills` 还不是完整游戏内容交付态
+- 如后续仍复现原子写入竞态日志，再继续收口 Electron Main 的 `save-database-atomic` 串行化
+
+## 5. 当前明确决策
+
+- 顶层收费 / 授权继续按真实业务模块：
   - `sensory`
   - `emotional`
   - `social`
   - `life_skills`
   - `cognitive`
-- `fine-motor`銆乣soothing-aids` 绛夊睘浜庡唴閮ㄨ缁冨叆鍙ｏ紝涓嶆槸椤跺眰鎺堟潈妯″潡
-- 鏂拌祫婧愬尮閰嶄笌鍥剧墖瑙ｆ瀽浼樺厛鎸?`meta_data.resourceCode`
-- 鏃ц褰曚笉鍋氣€滄棫 `module_code` 鎺ㄦ柇鍒版柊 `entry_code`鈥濆吋瀹瑰眰
-- 鏂囨。涓庣粨璁哄繀椤讳互褰撳墠浠ｇ爜鐜板疄涓哄噯锛屼笉浠ユ棫瑙勫垝鎴栫洰鏍囨€佹浛浠ｇ幇鐘?
-## 6. 褰撳墠鎺ㄨ崘璇诲彇椤哄簭
+- `fine-motor`、`soothing-aids` 等属于内部训练入口，不是顶层授权模块
+- 新资源匹配与图片解析优先按 `meta_data.resourceCode`
+- 旧记录不做“旧 `module_code` 推断到新 `entry_code`”兼容层
+- 文档与结论必须以当前代码现实为准，不以旧规划或目标态替代现状
 
-榛樿鏂颁細璇濓細
+## 6. 当前推荐读取顺序
+
+默认新会话：
 
 1. `HANDOFF.md`
 2. `AGENTS.md`
@@ -110,20 +136,22 @@
 4. `README.md`
 5. `.continue-here.md`
 
-鎸夐渶鍐嶈锛?
+按需再读：
+
 6. `PROJECT_CONTEXT.md`
 7. `docs/planning/2026-03-13-scgp-current-prd.md`
 8. `docs/reports/2026-03-13-scgp-prd-gap-analysis.md`
 9. `重构实施技术规范.md`
 
-## 7. 缁存姢瑙勫垯
+## 7. 维护规则
 
-- 鏈枃浠跺彧淇濈暀褰撳墠鏈夋晥涓婁笅鏂囷紝涓嶅啀绉疮闀挎祦姘存棩蹇?- 宸插畬鎴愬巻鍙蹭簨椤逛紭鍏堣繘鍏ワ細
+- 本文件只保留当前有效上下文，不再积累长流水日志
+- 已完成历史事项优先进入：
   - `docs/CHANGELOG.md`
   - `docs/logs/2026-03-26-project-context-archive.md`
   - git history
 - `HANDOFF.md` is now the single top-level routing doc for new sessions and should stay short
-- 濡傛灉鏈枃浠跺啀娆℃槑鏄捐啫鑳€锛屽簲缁х画鎶婂巻鍙插唴瀹硅縼鍑猴紝鑰屼笉鏄湪杩欓噷鍫嗙Н
+- 如果本文件再次明显膨胀，应继续把历史内容迁出，而不是在这里堆积
 
 ## 8. 2026-03-30 Working Update
 
@@ -204,6 +232,7 @@
   - preschool: `小班 / 中班 / 大班`
   - school age: `一年级 ~ 六年级`
   - post-school age: `七年级（初一）~ 九年级（初三）`
+
 ## 12. 2026-03-31 Date-Picker Standardization and Training-Plan Module Ownership
 
 - Element Plus global locale is now configured to `zh-cn` in:
@@ -256,3 +285,25 @@
 - important compatibility boundary:
   - historical rows may still contain older long-form diagnosis strings or previously generated fallback avatar data URLs
   - current page/dialog behavior normalizes these at display/edit time; no destructive migration has been run
+
+## 14. 2026-03-31 Shared Student Display Components
+
+- shared student presentation primitives now live in:
+  - `src/components/student/StudentAvatar.vue`
+  - `src/components/student/DiagnosisTag.vue`
+  - `src/components/student/StudentId.vue`
+  - shared normalization / formatting logic: `src/utils/student-display.ts`
+- important display boundary:
+  - student avatar presentation in the shared layer only allows:
+    - real uploaded photo
+    - gender-toned initial avatar fallback
+  - do not reintroduce green default avatars, grey generic placeholders, or legacy cartoon-style student avatars in pages that have moved to the shared layer
+- current landed consumers include:
+  - `src/components/AddStudentDialog.vue`
+  - `src/views/StudentDetail.vue`
+  - `src/views/games/SelectStudent.vue`
+  - `src/components/common/StudentSelector.vue`
+  - `src/views/Students.vue`
+- important scope constraint:
+  - this round only unified the targeted student-management/detail/selector flows
+  - other student-bearing pages may still use older local rendering until they are explicitly migrated

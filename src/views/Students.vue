@@ -95,22 +95,20 @@
       <div v-if="filteredStudents.length > 0" class="students-grid">
         <article v-for="student in filteredStudents" :key="student.id" class="student-card">
           <div class="student-card__top">
-            <div class="student-card__identity">
-              <div class="student-avatar" :class="getStudentAvatarClass(student.gender)">
-                <img
-                  v-if="hasDisplayAvatar(student)"
-                  :src="student.avatar_path"
-                  :alt="student.name"
-                />
-                <span v-else>{{ getStudentInitial(student.name) }}</span>
-              </div>
+              <div class="student-card__identity">
+              <StudentAvatar
+                :name="student.name"
+                :gender="student.gender"
+                :avatar-url="student.avatar_path"
+                size="md"
+              />
 
               <div class="student-card__heading">
                 <h3>{{ student.name }}</h3>
                 <div class="student-card__meta">
                   <span>{{ student.gender }}</span>
                   <span>{{ getAge(student.birthday) }}岁</span>
-                  <span>{{ formatStudentNo(student.student_no) }}</span>
+                  <StudentId :id="student.student_no" />
                 </div>
               </div>
             </div>
@@ -136,13 +134,7 @@
 
           <div class="student-card__body">
             <div class="student-card__chip-row">
-              <span
-                class="diagnosis-pill"
-                :class="{ 'is-muted': !resolveDiagnosisType(student.disorder) }"
-                :style="getDiagnosisChipStyle(student)"
-              >
-                {{ getDiagnosisDisplay(student) }}
-              </span>
+              <DiagnosisTag :type="student.disorder" />
             </div>
 
             <div class="student-card__info-row">
@@ -220,39 +212,28 @@ import { MoreFilled, Plus, Search, Upload } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 import AddStudentDialog from '@/components/AddStudentDialog.vue'
+import StudentAvatar from '@/components/student/StudentAvatar.vue'
+import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
+import StudentId from '@/components/student/StudentId.vue'
 import { classAPI } from '@/database/class-api'
 import { useStudentStore, type Student } from '@/stores/student'
 import type { ClassInfo } from '@/types/class'
+import {
+  DIAGNOSIS_OPTIONS,
+  type DiagnosisType,
+  getDiagnosisDisplay,
+  getStudentAge,
+  resolveDiagnosisType,
+} from '@/utils/student-display'
 
 type GenderFilter = '' | '男' | '女'
-const diagnosisOptions = [
-  { label: '视力障碍', value: '视力障碍' },
-  { label: '听力障碍', value: '听力障碍' },
-  { label: '言语障碍', value: '言语障碍' },
-  { label: '智力障碍', value: '智力障碍' },
-  { label: '肢体障碍', value: '肢体障碍' },
-  { label: '精神障碍', value: '精神障碍' },
-  { label: '多重障碍', value: '多重障碍' },
-  { label: '学习障碍', value: '学习障碍' },
-  { label: '发育迟缓', value: '发育迟缓' }
-] as const
-
-type DiagnosisType = typeof diagnosisOptions[number]['value']
+const diagnosisOptions = DIAGNOSIS_OPTIONS.map(value => ({
+  label: value,
+  value,
+}))
 type DiagnosisFilter = DiagnosisType | ''
 
 interface StudentListItem extends Student {}
-
-const diagnosisStyleMap: Record<DiagnosisType, { background: string; color: string; border: string }> = {
-  视力障碍: { background: '#E6F1FB', color: '#0C447C', border: '#B5D4F4' },
-  听力障碍: { background: '#EEEDFE', color: '#3C3489', border: '#AFA9EC' },
-  言语障碍: { background: '#E1F5EE', color: '#085041', border: '#9FE1CB' },
-  智力障碍: { background: '#FAEEDA', color: '#633806', border: '#FAC775' },
-  肢体障碍: { background: '#EAF3DE', color: '#27500A', border: '#C0DD97' },
-  精神障碍: { background: '#FBEAF0', color: '#72243E', border: '#F4C0D1' },
-  多重障碍: { background: '#FCEBEB', color: '#791F1F', border: '#F7C1C1' },
-  学习障碍: { background: '#E6F1FB', color: '#185FA5', border: '#85B7EB' },
-  发育迟缓: { background: '#FAEEDA', color: '#854F0B', border: '#EF9F27' }
-}
 
 const genderTabs: Array<{ label: string; value: GenderFilter }> = [
   { label: '全部', value: '' },
@@ -295,7 +276,7 @@ const filteredStudents = computed(() => {
       return true
     }
 
-    const diagnosisLabel = getDiagnosisDisplay(student).toLowerCase()
+    const diagnosisLabel = getDiagnosisDisplay(student.disorder).toLowerCase()
     const currentClassName = (student.current_class_name || '').toLowerCase()
 
     return (
@@ -326,86 +307,13 @@ const summaryStats = computed(() => {
   }
 })
 
-function normalizeDiagnosisText(value: string): string {
-  return value.replace(/\s+/g, '').trim()
-}
-
-function resolveDiagnosisType(disorder?: string | null): DiagnosisType | '' {
-  const raw = disorder?.trim()
-  if (!raw) return ''
-
-  const normalized = normalizeDiagnosisText(raw)
-
-  if (normalized.includes('视力障碍')) return '视力障碍'
-  if (normalized.includes('听力障碍')) return '听力障碍'
-  if (normalized.includes('言语障碍') || normalized.includes('语言障碍')) return '言语障碍'
-  if (normalized.includes('智力障碍')) return '智力障碍'
-  if (normalized.includes('肢体障碍')) return '肢体障碍'
-  if (normalized.includes('精神障碍') || normalized.includes('ASD') || normalized.includes('ADHD') || normalized.includes('EBD')) return '精神障碍'
-  if (normalized.includes('多重障碍')) return '多重障碍'
-  if (normalized.includes('学习障碍')) return '学习障碍'
-  if (normalized.includes('发育迟缓')) return '发育迟缓'
-
-  return ''
-}
-
-function getDiagnosisDisplay(student: StudentListItem): string {
-  return resolveDiagnosisType(student.disorder) || student.disorder?.trim() || '未诊断'
-}
-
-function getDiagnosisChipStyle(student: StudentListItem) {
-  const diagnosisType = resolveDiagnosisType(student.disorder)
-  if (!diagnosisType) return undefined
-
-  const style = diagnosisStyleMap[diagnosisType]
-  return {
-    background: style.background,
-    color: style.color,
-    borderColor: style.border
-  }
-}
-
-// 旧逻辑会把首字母头像生成成极短的 PNG data URL 存库，这里按“未上传头像”处理。
-function isGeneratedFallbackAvatar(avatarPath?: string | null): boolean {
-  return Boolean(avatarPath && avatarPath.startsWith('data:image/png;base64,') && avatarPath.length < 12000)
-}
-
-function hasDisplayAvatar(student: StudentListItem): boolean {
-  return Boolean(student.avatar_path && !isGeneratedFallbackAvatar(student.avatar_path))
-}
-
-function getStudentInitial(name: string): string {
-  return name?.trim().charAt(0).toUpperCase() || '?'
-}
-
-function getStudentAvatarClass(gender: string): string {
-  return gender === '女' ? 'is-female' : 'is-male'
-}
-
 function getAge(birthday: string): number {
-  if (!birthday) return 0
-
-  const birth = new Date(birthday)
-  const today = new Date()
-  let age = today.getFullYear() - birth.getFullYear()
-  const monthDiff = today.getMonth() - birth.getMonth()
-
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--
-  }
-
-  return age
+  return getStudentAge(birthday)
 }
 
 function formatDate(dateString?: string | null): string {
   if (!dateString) return '-'
   return new Date(dateString).toLocaleDateString('zh-CN')
-}
-
-function formatStudentNo(studentNo?: string | null): string {
-  const normalized = studentNo?.trim()
-  if (!normalized) return '未设置学号'
-  return `STU…${normalized.slice(-6)}`
 }
 
 function formatClassOptionLabel(cls: ClassInfo): string {
@@ -745,35 +653,6 @@ onMounted(async () => {
   min-width: 0;
 }
 
-.student-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  overflow: hidden;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.student-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.student-avatar.is-male {
-  background: #e6f1fb;
-  color: #185fa5;
-}
-
-.student-avatar.is-female {
-  background: #fbeaf0;
-  color: #993556;
-}
-
 .student-card__heading {
   display: flex;
   flex-direction: column;
@@ -836,7 +715,6 @@ onMounted(async () => {
   flex-wrap: wrap;
 }
 
-.diagnosis-pill,
 .student-class-badge {
   display: inline-flex;
   align-items: center;
@@ -846,16 +724,6 @@ onMounted(async () => {
   border: 1px solid transparent;
   font-size: 13px;
   line-height: 1;
-}
-
-.diagnosis-pill {
-  max-width: 100%;
-}
-
-.diagnosis-pill.is-muted {
-  background: #f4f4f5;
-  color: #909399;
-  border-color: #e4e7ed;
 }
 
 .student-class-badge.is-unassigned {

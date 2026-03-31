@@ -57,15 +57,9 @@
           <label for="disorder">诊断类型</label>
           <select id="disorder" v-model="studentForm.disorder">
             <option value="">请选择</option>
-            <option value="视力障碍">视力障碍</option>
-            <option value="听力障碍">听力障碍</option>
-            <option value="言语障碍">言语障碍</option>
-            <option value="智力障碍">智力障碍</option>
-            <option value="肢体障碍">肢体障碍</option>
-            <option value="精神障碍">精神障碍</option>
-            <option value="多重障碍">多重障碍</option>
-            <option value="学习障碍">学习障碍</option>
-            <option value="发育迟缓">发育迟缓</option>
+            <option v-for="option in diagnosisOptions" :key="option" :value="option">
+              {{ option }}
+            </option>
           </select>
         </div>
 
@@ -85,17 +79,16 @@
         <div class="form-group">
           <label>头像</label>
           <div class="avatar-upload">
-            <div class="avatar-preview" v-if="avatarPreview">
-              <img :src="avatarPreview" alt="头像预览" />
-              <button type="button" class="btn-remove" @click="removeAvatar">
+            <div class="avatar-preview-shell">
+              <StudentAvatar
+                :name="studentForm.name"
+                :gender="studentForm.gender || undefined"
+                :avatar-url="avatarPreview || undefined"
+                size="lg"
+              />
+              <button v-if="avatarPreview" type="button" class="btn-remove" @click="removeAvatar">
                 <i class="fas fa-xmark"></i>
               </button>
-            </div>
-            <div class="avatar-placeholder" v-else-if="!studentForm.name">
-              <i class="fas fa-user"></i>
-            </div>
-            <div class="avatar-text" v-else>
-              {{ studentForm.name.charAt(0) }}
             </div>
             <input
               ref="avatarInput"
@@ -186,6 +179,8 @@ import { classAPI } from '@/database/class-api'
 import { getCurrentAcademicYear } from '@/types/class'
 import type { ClassInfo } from '@/types/class'
 import { STANDARD_DATE_PICKER_PROPS, disableFutureDates } from '@/utils/date-picker'
+import StudentAvatar from '@/components/student/StudentAvatar.vue'
+import { DIAGNOSIS_OPTIONS } from '@/utils/student-display'
 
 const emit = defineEmits<{
   close: []
@@ -219,6 +214,7 @@ const props = defineProps<{
 
 const studentStore = useStudentStore()
 const standardDatePickerProps = STANDARD_DATE_PICKER_PROPS
+const diagnosisOptions = DIAGNOSIS_OPTIONS
 
 const saving = ref(false)
 const avatarPreview = ref('')
@@ -618,42 +614,15 @@ onUnmounted(() => {
   gap: 20px;
 }
 
-.avatar-preview,
-.avatar-placeholder,
-.avatar-text {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.avatar-preview-shell {
   position: relative;
-}
-
-.avatar-text {
-  background: #4CAF50;
-  color: white;
-  font-size: 36px;
-  font-weight: bold;
-}
-
-.avatar-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.avatar-placeholder i {
-  font-size: 32px;
-  color: #999;
+  display: inline-flex;
 }
 
 .btn-remove {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: -6px;
+  right: -6px;
   width: 24px;
   height: 24px;
   border: none;

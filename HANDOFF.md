@@ -19,7 +19,7 @@
 ## 当前活跃工作
 
 - 当前唯一有效续接入口：`.continue-here.md`
-- 当前续接范围：`StudentClassAssignment UI refresh is landed and accepted; no active blocker remains`
+- 当前续接范围：`shared student display components are landed; awaiting user review or the next concrete task`
 - 如果 `.continue-here.md` 与其他文档冲突：
   - 当前任务以 `.continue-here.md` 为准
   - 规则边界以 `AGENTS.md` 为准

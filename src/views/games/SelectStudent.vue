@@ -59,23 +59,26 @@
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="student in filteredStudents"
-                :key="student.id"
-                @click="selectStudent(student)"
-                class="student-row"
-              >
-                <td>
-                  <el-avatar :size="50" :src="student.avatar_path">
-                    {{ student.name?.charAt(0) || '?' }}
-                  </el-avatar>
+            <tr
+              v-for="student in filteredStudents"
+              :key="student.id"
+              @click="selectStudent(student)"
+              class="student-row"
+            >
+                <td class="student-table__avatar-cell">
+                  <StudentAvatar
+                    :name="student.name"
+                    :gender="student.gender"
+                    :avatar-url="student.avatar_path"
+                    size="sm"
+                  />
                 </td>
                 <td>{{ student.name }}</td>
-                <td>{{ student.student_no || '-' }}</td>
+                <td><StudentId :id="student.student_no" :full="true" /></td>
                 <td>{{ student.gender }}</td>
-                <td>{{ formatDate(student.birthday) }}</td>
-                <td>{{ calculateAge(student.birthday) }}岁</td>
-                <td>{{ student.disorder || '-' }}</td>
+                <td>{{ formatStudentDate(student.birthday) }}</td>
+                <td>{{ getStudentAge(student.birthday) }}岁</td>
+                <td><DiagnosisTag :type="student.disorder" /></td>
                 <td>
                   <el-button
                     type="primary"
@@ -112,10 +115,14 @@ import {
 } from '@element-plus/icons-vue'
 import { useStudentStore } from '@/stores/student'
 import AddStudentDialog from '@/components/AddStudentDialog.vue'
+import StudentAvatar from '@/components/student/StudentAvatar.vue'
+import StudentId from '@/components/student/StudentId.vue'
+import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
 import {
   getTrainingEntry,
   resolveTrainingEntryCode,
 } from '@/utils/training-entry'
+import { formatStudentDate, getStudentAge } from '@/utils/student-display'
 
 const router = useRouter()
 const route = useRoute()
@@ -245,25 +252,6 @@ const selectStudent = (student: any) => {
   })
 }
 
-// 格式化日期
-const formatDate = (date: string) => {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString('zh-CN')
-}
-
-// 计算年龄
-const calculateAge = (birthday: string) => {
-  if (!birthday) return ''
-  const birth = new Date(birthday)
-  const today = new Date()
-  let age = today.getFullYear() - birth.getFullYear()
-  const monthDiff = today.getMonth() - birth.getMonth()
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--
-  }
-  return age
-}
-
 // 初始化
 onMounted(async () => {
   loading.value = true
@@ -327,5 +315,9 @@ onMounted(async () => {
 
 .student-row:last-child td {
   border-bottom: none;
+}
+
+.student-table__avatar-cell {
+  width: 68px;
 }
 </style>

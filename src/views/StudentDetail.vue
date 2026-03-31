@@ -15,16 +15,22 @@
       <!-- 左侧：基本信息 -->
       <el-col :span="8">
         <el-card class="student-info-card">
-          <div class="student-avatar">
-            <el-avatar :size="120" :src="student?.avatar_path">
-              {{ student?.name?.charAt(0) || '?' }}
-            </el-avatar>
+          <div class="student-profile">
+            <StudentAvatar
+              :name="student?.name"
+              :gender="student?.gender"
+              :avatar-url="student?.avatar_path"
+              size="lg"
+            />
+            <div class="student-profile__summary">
+              <h2>{{ student?.name || '未命名' }}</h2>
+              <StudentId :id="student?.student_no" :full="true" />
+            </div>
           </div>
-          <h2>{{ student?.name || '未命名' }}</h2>
           <div class="info-items">
             <div class="info-item">
               <span class="label">学号：</span>
-              <span class="value">{{ student?.student_no || '未设置' }}</span>
+              <StudentId class="value" :id="student?.student_no" :full="true" />
             </div>
             <div class="info-item">
               <span class="label">性别：</span>
@@ -32,19 +38,19 @@
             </div>
             <div class="info-item">
               <span class="label">年龄：</span>
-              <span class="value">{{ calculateAge(student?.birthday) }}岁</span>
+              <span class="value">{{ student?.birthday ? `${getStudentAge(student?.birthday)}岁` : '-' }}</span>
             </div>
             <div class="info-item">
               <span class="label">出生日期：</span>
-              <span class="value">{{ formatDate(student?.birthday) }}</span>
+              <span class="value">{{ formatStudentDate(student?.birthday) }}</span>
             </div>
             <div class="info-item">
               <span class="label">诊断类型：</span>
-              <span class="value">{{ student?.disorder || '未诊断' }}</span>
+              <DiagnosisTag class="value" :type="student?.disorder" />
             </div>
             <div class="info-item">
               <span class="label">创建时间：</span>
-              <span class="value">{{ formatDate(student?.created_at) }}</span>
+              <span class="value">{{ formatStudentDate(student?.created_at) }}</span>
             </div>
           </div>
         </el-card>
@@ -95,7 +101,7 @@
               >
                 <div class="record-header">
                   <span class="record-type">{{ record.scale_type === 'sm' ? 'S-M量表' : 'WeeFIM量表' }}</span>
-                  <span class="record-date">{{ formatDate(record.created_at) }}</span>
+                  <span class="record-date">{{ formatStudentDate(record.created_at) }}</span>
                 </div>
                 <div class="record-details">
                   <span class="record-score">得分：{{ record.score || '-' }}</span>
@@ -125,7 +131,11 @@ import { ElMessage } from 'element-plus'
 import { ArrowLeft, Edit } from '@element-plus/icons-vue'
 import { useStudentStore } from '@/stores/student'
 import AddStudentDialog from '@/components/AddStudentDialog.vue'
+import StudentAvatar from '@/components/student/StudentAvatar.vue'
+import StudentId from '@/components/student/StudentId.vue'
+import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
 import { SMAssessmentAPI, WeeFIMAPI, ConnersPSQAPI, ConnersTRSAPI, CSIRSAPI, EquipmentTrainingAPI } from '@/database/api'
+import { formatStudentDate, getStudentAge } from '@/utils/student-display'
 
 const router = useRouter()
 const route = useRoute()
@@ -185,32 +195,6 @@ const viewAssessmentReport = (record: any) => {
       }
     })
   }
-}
-
-// 获取分数类型
-const getScoreType = (score: number) => {
-  if (score >= 80) return 'success'
-  if (score >= 60) return 'warning'
-  return 'danger'
-}
-
-// 计算年龄
-const calculateAge = (birthday: string) => {
-  if (!birthday) return 0
-  const birth = new Date(birthday)
-  const today = new Date()
-  let age = today.getFullYear() - birth.getFullYear()
-  const monthDiff = today.getMonth() - birth.getMonth()
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--
-  }
-  return age
-}
-
-// 格式化日期
-const formatDate = (date: string) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString('zh-CN')
 }
 
 // 加载学生详情
@@ -351,16 +335,28 @@ onMounted(async () => {
 }
 
 .student-info-card {
+  border-radius: 16px;
+}
+
+.student-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
   text-align: center;
 }
 
-.student-avatar {
-  margin-bottom: 20px;
+.student-profile__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
 }
 
 .student-info-card h2 {
-  margin: 0 0 20px 0;
-  color: #333;
+  margin: 0;
+  color: #303133;
 }
 
 .info-items {
@@ -383,8 +379,12 @@ onMounted(async () => {
 }
 
 .info-item .value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
   color: #333;
   font-weight: 500;
+  text-align: right;
 }
 
 .stats-row {
