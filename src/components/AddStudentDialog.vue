@@ -2,7 +2,7 @@
   <div class="dialog-overlay" @click.self="$emit('close')">
     <div class="dialog-content">
       <div class="dialog-header">
-        <h2>{{ props.editingStudent ? '缂栬緫瀛︾敓' : '娣诲姞瀛︾敓' }}</h2>
+        <h2>{{ props.editingStudent ? '编辑学生' : '添加学生' }}</h2>
         <button class="btn-close" @click="$emit('close')">
           <i class="fas fa-xmark"></i>
         </button>
@@ -83,10 +83,10 @@
         </div>
 
         <div class="form-group">
-          <label>澶村儚</label>
+          <label>头像</label>
           <div class="avatar-upload">
             <div class="avatar-preview" v-if="avatarPreview">
-              <img :src="avatarPreview" alt="澶村儚棰勮" />
+              <img :src="avatarPreview" alt="头像预览" />
               <button type="button" class="btn-remove" @click="removeAvatar">
                 <i class="fas fa-xmark"></i>
               </button>
@@ -107,38 +107,35 @@
             <div class="avatar-buttons">
               <button type="button" class="btn-upload" @click="showCameraMenu">
                 <i class="fas fa-camera"></i>
-                澶村儚
+                头像
               </button>
               <div v-if="cameraMenuVisible" class="camera-menu">
                 <button type="button" @click="openCamera">
                   <i class="fas fa-camera"></i>
-                  鎷嶇収
+                  拍照
                 </button>
                 <button type="button" @click="triggerAvatarUpload">
                   <i class="fas fa-arrow-up-from-bracket"></i>
-                  鏈湴涓婁紶
+                  本地上传
                 </button>
               </div>
             </div>
           </div>
         </div>
+        <div class="dialog-footer">
+          <button type="button" class="btn-secondary" @click="$emit('close')">取消</button>
+          <button type="submit" class="btn-primary" :disabled="saving">
+            {{ saving ? '保存中...' : '保存' }}
+          </button>
+        </div>
       </form>
-
-      <div class="dialog-footer">
-        <button type="button" class="btn-secondary" @click="$emit('close')">
-          鍙栨秷
-        </button>
-        <button type="submit" class="btn-primary" :disabled="saving">
-          {{ saving ? '淇濆瓨涓?..' : '淇濆瓨' }}
-        </button>
-      </div>
     </div>
 
-    <!-- 鎽勫儚澶村璇濇 -->
+    <!-- 摄像头对话框 -->
     <div v-if="showCameraDialog" class="dialog-overlay">
       <div class="camera-dialog">
         <div class="dialog-header">
-          <h2>鎷嶇収</h2>
+          <h2>拍照</h2>
           <button @click="closeCameraDialog" class="btn-close">
             <i class="fas fa-xmark"></i>
           </button>
@@ -162,16 +159,16 @@
               class="btn-capture"
             >
               <i class="fas fa-camera"></i>
-              鎷嶇収
+              拍照
             </button>
             <div v-else class="photo-actions">
               <button @click="retakePhoto" class="btn-secondary">
                 <i class="fas fa-redo"></i>
-                閲嶆媿
+                重拍
               </button>
               <button @click="confirmPhoto" class="btn-primary">
                 <i class="fas fa-check"></i>
-                纭
+                确认
               </button>
             </div>
           </div>
@@ -246,7 +243,7 @@ function createEmptyStudentForm(): StudentFormState {
 }
 
 function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : '鏈煡閿欒'
+  return error instanceof Error ? error.message : '未知错误'
 }
 
 function triggerAvatarUpload() {
@@ -262,7 +259,7 @@ const studentForm = ref<StudentFormState>({
   classId: null as number | null
 })
 
-// 鏂规硶
+// 方法
 const handleAvatarChange = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (file) {
@@ -281,12 +278,12 @@ const removeAvatar = () => {
   }
 }
 
-// 澶村儚鑿滃崟鐩稿叧
+// 头像菜单相关
 const showCameraMenu = () => {
   cameraMenuVisible.value = !cameraMenuVisible.value
 }
 
-// 鍏抽棴鎽勫儚澶村璇濇
+// 关闭摄像头对话框
 const closeCameraDialog = async () => {
   showCameraDialog.value = false
   photoTaken.value = false
@@ -305,7 +302,7 @@ const openCamera = async () => {
     if (!hasCamera) {
       ElMessage.warning('\u672a\u68c0\u6d4b\u5230\u6444\u50cf\u5934\u8bbe\u5907\uff0c\u8bf7\u4f7f\u7528\u6587\u4ef6\u4e0a\u4f20\u65b9\u5f0f')
       cameraMenuVisible.value = false
-      // 鑷姩瑙﹀彂鏂囦欢涓婁紶
+      // 自动触发文件上传
       setTimeout(() => {
         triggerAvatarUpload()
       }, 100)
@@ -326,7 +323,7 @@ const openCamera = async () => {
       cameraVideo.value.srcObject = stream
     }
   } catch (error: unknown) {
-    console.error('鏃犳硶璁块棶鎽勫儚澶?', error)
+    console.error('无法访问摄像头:', error)
     closeCameraDialog()
 
     const errorName = typeof error === 'object' && error !== null && 'name' in error
@@ -334,9 +331,9 @@ const openCamera = async () => {
       : ''
 
     if (errorName === 'NotFoundError') {
-      ElMessage.warning('鏈壘鍒版憚鍍忓ご璁惧锛岃浣跨敤鏂囦欢涓婁紶鏂瑰紡')
+      ElMessage.warning('未找到摄像头设备，请使用文件上传方式')
     } else if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
-      ElMessage.warning('鎽勫儚澶存潈闄愯鎷掔粷锛岃鍦ㄦ祻瑙堝櫒璁剧疆涓厑璁歌闂憚鍍忓ご锛屾垨浣跨敤鏂囦欢涓婁紶鏂瑰紡')
+      ElMessage.warning('摄像头权限被拒绝，请在浏览器设置中允许访问摄像头，或使用文件上传方式')
     } else if (errorName === 'NotReadableError') {
       ElMessage.error('\u6444\u50cf\u5934\u88ab\u5176\u4ed6\u5e94\u7528\u5360\u7528\uff0c\u8bf7\u5173\u95ed\u5176\u4ed6\u4f7f\u7528\u6444\u50cf\u5934\u7684\u7a0b\u5e8f\u540e\u91cd\u8bd5')
     } else {
@@ -349,7 +346,7 @@ const openCamera = async () => {
   }
 }
 
-// 鎷嶇収
+// 拍照
 const takePhoto = () => {
   if (cameraVideo.value && cameraCanvas.value) {
     const video = cameraVideo.value
@@ -365,12 +362,12 @@ const takePhoto = () => {
   }
 }
 
-// 閲嶆媿
+// 重拍
 const retakePhoto = () => {
   photoTaken.value = false
 }
 
-// 纭鐓х墖
+// 确认照片
 const confirmPhoto = () => {
   if (cameraCanvas.value) {
     avatarPreview.value = cameraCanvas.value.toDataURL('image/jpeg', 0.8)
@@ -479,21 +476,21 @@ const initializeForm = () => {
   }
 }
 
-// 鍔犺浇鍙敤鐝骇鍒楄〃
+// 加载可用班级列表
 const loadAvailableClasses = () => {
   try {
     const academicYear = getCurrentAcademicYear()
     availableClasses.value = classAPI.getClasses({
       academicYear,
-      status: 1  // 鍙樉绀烘縺娲荤殑鐝骇
+      status: 1  // 只显示激活的班级
     })
   } catch (error) {
-    console.error('鍔犺浇鐝骇鍒楄〃澶辫触:', error)
+    console.error('加载班级列表失败:', error)
     availableClasses.value = []
   }
 }
 
-// 鐢熷懡鍛ㄦ湡
+// 生命周期
 onMounted(() => {
   initializeForm()
   loadAvailableClasses()
