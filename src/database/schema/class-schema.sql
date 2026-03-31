@@ -7,6 +7,22 @@
 -- =====================================================
 -- 1. 班级表 (sys_class)
 -- =====================================================
+CREATE TABLE IF NOT EXISTS sys_academic_year (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  academic_year TEXT NOT NULL UNIQUE,
+  start_date TEXT NOT NULL,
+  end_date TEXT NOT NULL,
+  is_active INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_academic_year_value
+  ON sys_academic_year(academic_year);
+
+CREATE INDEX IF NOT EXISTS idx_academic_year_active
+  ON sys_academic_year(is_active);
+
 CREATE TABLE IF NOT EXISTS sys_class (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,                    -- 班级名称: "1年级1班", "2年级3班"

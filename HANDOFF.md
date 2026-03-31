@@ -41,7 +41,7 @@
 ## 当前活跃工作
 
 - 当前唯一有效续接入口：`.continue-here.md`
-- 当前续接范围：`training workspace scroll fix and equipment quick-entry duration-minute input are landed, while resource-center runtime verification and final copy pass remain pending`
+- 当前续接范围：`class-management grade/module expansion and independent academic-year management are landed; manual runtime verification is pending`
 - 如果 `.continue-here.md` 与其他文档冲突：
   - 当前任务以 `.continue-here.md` 为准
   - 边界与规则以 `AGENTS.md` 为准

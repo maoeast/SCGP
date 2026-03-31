@@ -187,3 +187,20 @@
   - wheel scrolling should stop at the pane boundary via `overscroll-behavior: contain`
 - reference doc:
   - `docs/reports/2026-03-31-training-workspace-layout-scroll-guideline.md`
+
+## 11. 2026-03-31 Class Management Academic-Year Source
+
+- class management now has an independent academic-year source:
+  - table: `sys_academic_year`
+  - init path: `src/database/init.ts`
+  - API surface: `src/database/class-api.ts`
+- important boundary:
+  - academic years are no longer inferred only from existing classes
+  - admins can create academic years before any class exists
+  - editing an academic year now propagates to:
+    - `sys_class.academic_year`
+    - `student_class_history.academic_year`
+- current class-management grade taxonomy now spans 12 levels:
+  - preschool: `小班 / 中班 / 大班`
+  - school age: `一年级 ~ 六年级`
+  - post-school age: `七年级（初一）~ 九年级（初三）`

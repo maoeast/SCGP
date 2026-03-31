@@ -14,6 +14,7 @@ import type {
   GradeLevel,
   ClassNumber
 } from '../../types/class'
+import { GRADE_LEVELS, getGradeLabel, LAST_GRADE_LEVEL } from '../../types/class'
 
 /**
  * 测试学生数据模板
@@ -41,7 +42,7 @@ export interface ClassTestDataConfig {
  */
 export const DEFAULT_TEST_CONFIG: ClassTestDataConfig = {
   academicYears: ['2023-2024', '2024-2025'],
-  gradesPerYear: [1, 2, 3, 4, 5, 6],
+  gradesPerYear: [...GRADE_LEVELS],
   classesPerGrade: 3,
   studentsPerClass: 20,
   maxStudents: 50
@@ -67,7 +68,7 @@ export function generateTestStudents(count: number, baseGradeLevel: GradeLevel):
     const gender = Math.random() > 0.5 ? '男' : '女'
 
     // 根据年级生成合理的生日
-    const age = 6 + baseGradeLevel
+    const age = baseGradeLevel + 2
     const birthYear = currentYear - age
     const birthMonth = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')
     const birthDay = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')
@@ -116,7 +117,7 @@ export class ClassTestDataGenerator {
 
       // 为每个年级创建班级
       for (const gradeLevel of this.config.gradesPerYear) {
-        console.log(`[ClassTestDataGenerator]   创建 ${gradeLevel} 年级班级...`)
+        console.log(`[ClassTestDataGenerator]   创建 ${getGradeLabel(gradeLevel)}班级...`)
 
         // 创建班级
         for (let i = 1; i <= this.config.classesPerGrade; i++) {
@@ -210,7 +211,7 @@ export class ClassTestDataGenerator {
       createNewClasses: false
     })
 
-    console.log(`[ClassTestDataGenerator] 升级完成: ${result} 名学生升级, 0 名学生毕业`)
+    console.log(`[ClassTestDataGenerator] 升级完成: 共处理 ${result} 名学生，${getGradeLabel(LAST_GRADE_LEVEL)}已按毕业逻辑处理`)
 
     return {
       upgraded: result,

@@ -7,6 +7,10 @@
         <p class="subtitle">管理全校行政班级与学生分配</p>
       </div>
       <div class="header-right">
+        <el-button v-if="isAdmin" @click="showAcademicYearManagementDialog">
+          <el-icon><Calendar /></el-icon>
+          学年管理
+        </el-button>
         <el-button type="primary" @click="showCreateDialog">
           <el-icon><Plus /></el-icon>
           新建班级
@@ -26,7 +30,7 @@
             <el-select v-model="filterYear" placeholder="选择学年" @change="loadData">
               <el-option label="全部学年" value="" />
               <el-option
-                v-for="year in academicYears"
+                v-for="year in academicYearOptions"
                 :key="year"
                 :label="year"
                 :value="year"
@@ -36,12 +40,18 @@
           <el-col :span="6">
             <el-select v-model="filterGrade" placeholder="选择年级" @change="loadData">
               <el-option label="全部年级" value="" />
-              <el-option
-                v-for="grade in grades"
-                :key="grade.value"
-                :label="grade.label"
-                :value="grade.value"
-              />
+              <el-option-group
+                v-for="group in gradeGroups"
+                :key="group.label"
+                :label="group.label"
+              >
+                <el-option
+                  v-for="grade in group.options"
+                  :key="grade.value"
+                  :label="grade.label"
+                  :value="grade.value"
+                />
+              </el-option-group>
             </el-select>
           </el-col>
           <el-col :span="6">
@@ -183,7 +193,7 @@
           <el-table-column label="班级" prop="className" width="120" />
           <el-table-column label="年级" width="80">
             <template #default="{ row }">
-              {{ row.gradeLevel }}年级
+              {{ formatGradeLabel(row.gradeLevel) }}
             </template>
           </el-table-column>
           <el-table-column label="在籍人数" prop="totalStudents" width="80" />
@@ -216,23 +226,29 @@
     >
       <el-form :model="classForm" :rules="classRules" ref="classFormRef" label-width="100px">
         <el-form-item label="学年" prop="academicYear">
-          <el-select v-model="classForm.academicYear" placeholder="选择学年">
-            <el-option
-              v-for="year in academicYears"
-              :key="year"
-              :label="year"
-              :value="year"
+            <el-select v-model="classForm.academicYear" placeholder="选择学年">
+              <el-option
+                v-for="year in academicYearOptions"
+                :key="year"
+                :label="year"
+                :value="year"
             />
           </el-select>
         </el-form-item>
         <el-form-item label="年级" prop="gradeLevel">
           <el-select v-model="classForm.gradeLevel" placeholder="选择年级">
-            <el-option
-              v-for="grade in grades"
-              :key="grade.value"
-              :label="grade.label"
-              :value="grade.value"
-            />
+            <el-option-group
+              v-for="group in gradeGroups"
+              :key="group.label"
+              :label="group.label"
+            >
+              <el-option
+                v-for="grade in group.options"
+                :key="grade.value"
+                :label="grade.label"
+                :value="grade.value"
+              />
+            </el-option-group>
           </el-select>
         </el-form-item>
         <el-form-item label="班号" prop="classNumber">
@@ -276,23 +292,33 @@
     >
       <el-form :model="batchForm" :rules="batchRules" ref="batchFormRef" label-width="100px">
         <el-form-item label="学年" prop="academicYear">
-          <el-select v-model="batchForm.academicYear" placeholder="选择学年">
-            <el-option
-              v-for="year in academicYears"
-              :key="year"
-              :label="year"
-              :value="year"
+            <el-select v-model="batchForm.academicYear" placeholder="选择学年">
+              <el-option
+                v-for="year in academicYearOptions"
+                :key="year"
+                :label="year"
+                :value="year"
             />
           </el-select>
         </el-form-item>
         <el-form-item label="年级范围" prop="grades">
           <el-checkbox-group v-model="batchForm.grades">
-            <el-checkbox :value="1">1年级</el-checkbox>
-            <el-checkbox :value="2">2年级</el-checkbox>
-            <el-checkbox :value="3">3年级</el-checkbox>
-            <el-checkbox :value="4">4年级</el-checkbox>
-            <el-checkbox :value="5">5年级</el-checkbox>
-            <el-checkbox :value="6">6年级</el-checkbox>
+            <div
+              v-for="group in gradeGroups"
+              :key="group.label"
+              class="grade-group"
+            >
+              <div class="grade-group__label">{{ group.label }}</div>
+              <div class="grade-group__options">
+                <el-checkbox
+                  v-for="grade in group.options"
+                  :key="grade.value"
+                  :value="grade.value"
+                >
+                  {{ grade.label }}
+                </el-checkbox>
+              </div>
+            </div>
           </el-checkbox-group>
         </el-form-item>
         <el-form-item label="每个年级班数" prop="classesPerGrade">
@@ -308,6 +334,68 @@
       </template>
     </el-dialog>
 
+    <el-dialog
+      v-model="academicYearManagementVisible"
+      title="学年管理"
+      width="760px"
+    >
+      <div class="academic-year-toolbar">
+        <el-button type="primary" @click="showAcademicYearFormDialog()">
+          新增学年
+        </el-button>
+      </div>
+
+      <el-table :data="academicYears" stripe>
+        <el-table-column prop="academicYear" label="学年" min-width="130" />
+        <el-table-column prop="startDate" label="开始日期" width="120" />
+        <el-table-column prop="endDate" label="结束日期" width="120" />
+        <el-table-column prop="classCount" label="班级数" width="90" />
+        <el-table-column prop="studentCount" label="学生数" width="90" />
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.isActive ? 'success' : 'info'">
+              {{ row.isActive ? '当前学年' : '普通学年' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100">
+          <template #default="{ row }">
+            <el-button text type="primary" @click="showAcademicYearFormDialog(row)">
+              编辑
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+
+    <el-dialog
+      v-model="academicYearFormDialogVisible"
+      :title="academicYearForm.id ? '编辑学年' : '新增学年'"
+      width="420px"
+    >
+      <el-form
+        ref="academicYearFormRef"
+        :model="academicYearForm"
+        :rules="academicYearRules"
+        label-width="100px"
+      >
+        <el-form-item label="学年" prop="academicYear">
+          <el-input
+            v-model="academicYearForm.academicYear"
+            placeholder="例如 2026-2027"
+            maxlength="9"
+          />
+        </el-form-item>
+        <el-form-item label="设为当前学年">
+          <el-switch v-model="academicYearForm.isActive" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="academicYearFormDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveAcademicYear">确定</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 班级学生列表对话框 -->
     <el-dialog
       v-model="studentsDialogVisible"
@@ -316,7 +404,7 @@
     >
       <div class="class-info">
         <el-descriptions :column="3" border>
-          <el-descriptions-item label="年级">{{ currentClass?.gradeLevel }}年级</el-descriptions-item>
+          <el-descriptions-item label="年级">{{ currentClass ? formatGradeLabel(currentClass.gradeLevel) : '-' }}</el-descriptions-item>
           <el-descriptions-item label="班号">{{ currentClass?.classNumber }}班</el-descriptions-item>
           <el-descriptions-item label="在籍人数">{{ students.length }}人</el-descriptions-item>
         </el-descriptions>
@@ -404,17 +492,24 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import {
-  School, Plus, DocumentCopy
-} from '@element-plus/icons-vue'
+import { Plus, DocumentCopy, Calendar } from '@element-plus/icons-vue'
 import { classAPI } from '@/database/class-api'
-import { generateClassName } from '@/types/class'
+import {
+  DEFAULT_GRADE_LEVEL,
+  GRADE_LEVELS,
+  GRADE_OPTION_GROUPS,
+  generateClassName,
+  getGradeLabel
+} from '@/types/class'
 import { useAuthStore } from '@/stores/auth'
-import { ModuleRegistry } from '@/core/module-registry'
+import { getAllTrainingEntries, type TrainingEntryCode } from '@/utils/training-entry'
 import type {
   ClassInfo,
   CreateClassParams,
   UpdateClassParams,
+  AcademicYearInfo,
+  CreateAcademicYearParams,
+  UpdateAcademicYearParams,
   GradeLevel,
   ClassNumber,
   AcademicYear,
@@ -429,16 +524,18 @@ const authStore = useAuthStore()
 // ========== 状态 ==========
 
 const filterYear = ref<AcademicYear>('')
-const filterGrade = ref<string>('')
-const filterModule = ref<string>('all')  // 新增：模块筛选
+const filterGrade = ref<GradeLevel | ''>('')
+const filterModule = ref<'all' | TrainingEntryCode>('all')
 const classes = ref<ClassInfo[]>([])
-const academicYears = ref<AcademicYear[]>([])
+const academicYears = ref<AcademicYearInfo[]>([])
 
 // 统计数据状态
 const statistics = ref<UnifiedClassStatistics[]>([])
 
 const classDialogVisible = ref(false)
 const batchDialogVisible = ref(false)
+const academicYearManagementVisible = ref(false)
+const academicYearFormDialogVisible = ref(false)
 const studentsDialogVisible = ref(false)
 const teacherDialogVisible = ref(false)
 const isEditMode = ref(false)
@@ -448,17 +545,29 @@ const currentClassTeachers = ref<ClassTeacher[]>([])
 const availableTeachers = ref<Array<{ id: number; name: string; username: string }>>([])
 const selectedTeacherId = ref<number | null>(null)
 
+const academicYearOptions = computed(() => academicYears.value.map(item => item.academicYear))
+const preferredAcademicYear = computed<AcademicYear>(() =>
+  academicYears.value.find(item => item.isActive)?.academicYear
+  || academicYearOptions.value[0]
+  || getCurrentAcademicYear()
+)
+
 // ========== 可用模块列表 ==========
 const availableModules = computed(() => {
-  // ModuleRegistry 已经是单例实例，直接使用
-  return ModuleRegistry.getActiveModules()
+  return getAllTrainingEntries().filter(entry => authStore.hasModuleAccess(entry.moduleCode))
+})
+
+const selectedTrainingEntry = computed(() => {
+  if (filterModule.value === 'all') {
+    return null
+  }
+
+  return availableModules.value.find(module => module.code === filterModule.value) ?? null
 })
 
 // 当前模块名称（用于显示）
 const currentModuleName = computed(() => {
-  if (filterModule.value === 'all') return '全部模块'
-  const module = availableModules.value.find(m => m.code === filterModule.value)
-  return module?.name || filterModule.value
+  return selectedTrainingEntry.value?.name || '全部模块'
 })
 
 // ========== 计算属性 ==========
@@ -483,12 +592,6 @@ const averageScore = computed(() => {
   const scores = statistics.value.filter(s => s.averageScore !== null).map(s => s.averageScore!)
   if (scores.length === 0) return null
   return scores.reduce((sum, s) => sum + s, 0) / scores.length
-})
-
-// 平均分显示文本
-const averageScoreText = computed(() => {
-  if (averageScore.value === null) return '—'
-  return averageScore.value.toFixed(1)
 })
 
 // 平均分提示信息
@@ -518,9 +621,15 @@ interface ClassForm {
   customName: string
 }
 
+interface AcademicYearFormState {
+  id?: number
+  academicYear: AcademicYear
+  isActive: boolean
+}
+
 const classForm = ref<ClassForm>({
   academicYear: getCurrentAcademicYear(),
-  gradeLevel: 1,
+  gradeLevel: DEFAULT_GRADE_LEVEL,
   classNumber: 1,
   maxStudents: 50,
   useCustomName: false,
@@ -529,21 +638,18 @@ const classForm = ref<ClassForm>({
 
 const batchForm = ref({
   academicYear: getCurrentAcademicYear(),
-  grades: [1] as GradeLevel[],
+  grades: [DEFAULT_GRADE_LEVEL] as GradeLevel[],
   classesPerGrade: 3,
   maxStudents: 50
 })
 
-// ========== 计算属性 ==========
+const academicYearForm = ref<AcademicYearFormState>({
+  academicYear: getCurrentAcademicYear(),
+  isActive: false
+})
 
-const grades = [
-  { label: '1年级', value: 1 },
-  { label: '2年级', value: 2 },
-  { label: '3年级', value: 3 },
-  { label: '4年级', value: 4 },
-  { label: '5年级', value: 5 },
-  { label: '6年级', value: 6 }
-]
+// ========== 计算属性 ==========
+const gradeGroups = GRADE_OPTION_GROUPS
 
 const classNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as ClassNumber[]
 
@@ -559,7 +665,7 @@ const classGroups = computed(() => {
   for (const cls of classes.value) {
     if (!groups[cls.gradeLevel]) {
       groups[cls.gradeLevel] = {
-        gradeLabel: `${cls.gradeLevel}年级`,
+        gradeLabel: getGradeLabel(cls.gradeLevel),
         gradeLevel: cls.gradeLevel,
         classes: []
       }
@@ -607,8 +713,20 @@ const batchRules: FormRules = {
   classesPerGrade: [{ required: true, message: '请输入每个年级班数', trigger: 'blur' }]
 }
 
+const academicYearRules: FormRules = {
+  academicYear: [
+    { required: true, message: '请输入学年', trigger: 'blur' },
+    {
+      pattern: /^\d{4}-\d{4}$/,
+      message: '学年格式必须为 YYYY-YYYY',
+      trigger: 'blur'
+    }
+  ]
+}
+
 const classFormRef = ref<FormInstance>()
 const batchFormRef = ref<FormInstance>()
+const academicYearFormRef = ref<FormInstance>()
 
 // ========== 方法 ==========
 
@@ -619,19 +737,26 @@ function getCurrentAcademicYear(): AcademicYear {
   return month >= 9 ? `${year}-${year + 1}` : `${year - 1}-${year}`
 }
 
+async function loadAcademicYears() {
+  try {
+    academicYears.value = classAPI.getAcademicYears()
+
+    if (filterYear.value && !academicYearOptions.value.includes(filterYear.value)) {
+      filterYear.value = ''
+    }
+  } catch (error: any) {
+    ElMessage.error('加载学年列表失败: ' + error.message)
+  }
+}
+
 // 加载班级列表
 async function loadData() {
   try {
     const options: any = {}
     if (filterYear.value) options.academicYear = filterYear.value
-    if (filterGrade.value) options.gradeLevel = parseInt(filterGrade.value)
+    if (filterGrade.value !== '') options.gradeLevel = filterGrade.value
 
     classes.value = classAPI.getClasses(options)
-
-    // 提取所有学年
-    const yearSet = new Set<AcademicYear>()
-    classes.value.forEach(cls => yearSet.add(cls.academicYear))
-    academicYears.value = Array.from(yearSet).sort()
 
     // 加载统计数据
     loadStatistics()
@@ -644,11 +769,11 @@ async function loadData() {
 function loadStatistics() {
   try {
     const options: any = {}
-    if (filterModule.value && filterModule.value !== 'all') {
-      options.moduleCode = filterModule.value
+    if (selectedTrainingEntry.value) {
+      options.moduleCode = selectedTrainingEntry.value.moduleCode
     }
     if (filterYear.value) options.academicYear = filterYear.value
-    if (filterGrade.value) options.gradeLevel = parseInt(filterGrade.value)
+    if (filterGrade.value !== '') options.gradeLevel = filterGrade.value
 
     statistics.value = classAPI.getStatistics(options)
 
@@ -670,11 +795,22 @@ function formatDate(dateStr: string): string {
   return `${date.getMonth() + 1}/${date.getDate()}`
 }
 
+function formatGradeLabel(gradeLevel: number): string {
+  return getGradeLabel(gradeLevel)
+}
+
+function getSuggestedAcademicYear(): AcademicYear {
+  const latestAcademicYear = academicYearOptions.value[0] || getCurrentAcademicYear()
+  const [startYear] = latestAcademicYear.split('-').map(Number)
+  const safeStartYear = startYear || new Date().getFullYear()
+  return `${safeStartYear + 1}-${safeStartYear + 2}`
+}
+
 function showCreateDialog() {
   isEditMode.value = false
   classForm.value = {
-    academicYear: getCurrentAcademicYear(),
-    gradeLevel: 1,
+    academicYear: preferredAcademicYear.value,
+    gradeLevel: DEFAULT_GRADE_LEVEL,
     classNumber: 1,
     maxStudents: 50,
     useCustomName: false,
@@ -729,6 +865,7 @@ async function saveClass() {
       }
 
       classDialogVisible.value = false
+      await loadAcademicYears()
       loadData()
     } catch (error: any) {
       // 针对不同类型的错误显示不同的提示
@@ -773,8 +910,8 @@ async function deleteClass(cls: ClassInfo) {
 
 function showBatchCreateDialog() {
   batchForm.value = {
-    academicYear: getCurrentAcademicYear(),
-    grades: [1, 2, 3, 4, 5, 6],
+    academicYear: preferredAcademicYear.value,
+    grades: [...GRADE_LEVELS] as GradeLevel[],
     classesPerGrade: 3,
     maxStudents: 50
   }
@@ -817,6 +954,7 @@ async function batchCreateClasses() {
       }
 
       batchDialogVisible.value = false
+      await loadAcademicYears()
       loadData()
     } catch (error: any) {
       const errorMessage = error.message || String(error)
@@ -828,6 +966,59 @@ async function batchCreateClasses() {
       })
 
       console.error('[ClassManagement] 批量创建班级失败:', error)
+    }
+  })
+}
+
+function showAcademicYearManagementDialog() {
+  loadAcademicYears()
+  academicYearManagementVisible.value = true
+}
+
+function showAcademicYearFormDialog(record?: AcademicYearInfo) {
+  academicYearForm.value = record
+    ? {
+      id: record.id,
+      academicYear: record.academicYear,
+      isActive: record.isActive
+    }
+    : {
+      academicYear: getSuggestedAcademicYear(),
+      isActive: academicYears.value.length === 0
+    }
+
+  academicYearFormDialogVisible.value = true
+}
+
+async function saveAcademicYear() {
+  if (!academicYearFormRef.value) return
+
+  await academicYearFormRef.value.validate(async (valid) => {
+    if (!valid) return
+
+    try {
+      if (academicYearForm.value.id) {
+        const params: UpdateAcademicYearParams = {
+          id: academicYearForm.value.id,
+          academicYear: academicYearForm.value.academicYear.trim(),
+          isActive: academicYearForm.value.isActive
+        }
+        await classAPI.updateAcademicYear(params)
+        ElMessage.success('学年更新成功')
+      } else {
+        const params: CreateAcademicYearParams = {
+          academicYear: academicYearForm.value.academicYear.trim(),
+          isActive: academicYearForm.value.isActive
+        }
+        await classAPI.createAcademicYear(params)
+        ElMessage.success('学年创建成功')
+      }
+
+      academicYearFormDialogVisible.value = false
+      await loadAcademicYears()
+      await loadData()
+    } catch (error: any) {
+      ElMessage.error('学年保存失败: ' + error.message)
     }
   })
 }
@@ -869,10 +1060,6 @@ function getClassTagType(cls: ClassInfo) {
   if (ratio >= 0.9) return 'danger'
   if (ratio >= 0.7) return 'warning'
   return 'success'
-}
-
-function goBack() {
-  router.back()
 }
 
 // ========== 老师分配 ==========
@@ -950,6 +1137,7 @@ function removeTeacher(teacher: ClassTeacher) {
 // ========== 生命周期 ==========
 
 onMounted(() => {
+  loadAcademicYears()
   loadData()
 })
 </script>
@@ -1028,5 +1216,29 @@ onMounted(() => {
 
 .class-info {
   margin-bottom: 20px;
+}
+
+.academic-year-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.grade-group {
+  width: 100%;
+  padding: 8px 0;
+}
+
+.grade-group__label {
+  margin-bottom: 8px;
+  color: #606266;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.grade-group__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
 }
 </style>

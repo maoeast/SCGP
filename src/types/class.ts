@@ -14,12 +14,61 @@ export type AcademicYear = string
 /**
  * 年级级别
  */
-export type GradeLevel = 1 | 2 | 3 | 4 | 5 | 6
+export const GRADE_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const
+
+export type GradeLevel = typeof GRADE_LEVELS[number]
 
 /**
  * 班号
  */
 export type ClassNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10
+
+export type GradeStage = 'preschool' | 'schoolAge' | 'postSchoolAge'
+
+export interface GradeOption {
+  value: GradeLevel
+  label: string
+  stage: GradeStage
+}
+
+export const GRADE_OPTIONS: GradeOption[] = [
+  { value: 1, label: '小班', stage: 'preschool' },
+  { value: 2, label: '中班', stage: 'preschool' },
+  { value: 3, label: '大班', stage: 'preschool' },
+  { value: 4, label: '一年级', stage: 'schoolAge' },
+  { value: 5, label: '二年级', stage: 'schoolAge' },
+  { value: 6, label: '三年级', stage: 'schoolAge' },
+  { value: 7, label: '四年级', stage: 'schoolAge' },
+  { value: 8, label: '五年级', stage: 'schoolAge' },
+  { value: 9, label: '六年级', stage: 'schoolAge' },
+  { value: 10, label: '七年级（初一）', stage: 'postSchoolAge' },
+  { value: 11, label: '八年级（初二）', stage: 'postSchoolAge' },
+  { value: 12, label: '九年级（初三）', stage: 'postSchoolAge' }
+]
+
+export const GRADE_STAGE_LABELS: Record<GradeStage, string> = {
+  preschool: '学龄前',
+  schoolAge: '学龄期',
+  postSchoolAge: '学龄后'
+}
+
+export const GRADE_OPTION_GROUPS = [
+  {
+    label: GRADE_STAGE_LABELS.preschool,
+    options: GRADE_OPTIONS.filter(option => option.stage === 'preschool')
+  },
+  {
+    label: GRADE_STAGE_LABELS.schoolAge,
+    options: GRADE_OPTIONS.filter(option => option.stage === 'schoolAge')
+  },
+  {
+    label: GRADE_STAGE_LABELS.postSchoolAge,
+    options: GRADE_OPTIONS.filter(option => option.stage === 'postSchoolAge')
+  }
+] as const
+
+export const DEFAULT_GRADE_LEVEL: GradeLevel = 4
+export const LAST_GRADE_LEVEL: GradeLevel = 12
 
 /**
  * 班级状态
@@ -222,17 +271,44 @@ export interface ClassStudentItem {
  * 学年信息
  */
 export interface AcademicYearInfo {
+  id: number
   academicYear: AcademicYear
   startDate: string               // "2023-09-01"
   endDate: string                 // "2024-08-31"
   isActive: boolean               // 是否当前学年
+  classCount: number
+  studentCount: number
+}
+
+export interface CreateAcademicYearParams {
+  academicYear: AcademicYear
+  isActive?: boolean
+}
+
+export interface UpdateAcademicYearParams {
+  id: number
+  academicYear: AcademicYear
+  isActive?: boolean
 }
 
 /**
  * 工具函数：生成班级名称
  */
 export function generateClassName(gradeLevel: GradeLevel, classNumber: ClassNumber): string {
-  return `${gradeLevel}年级${classNumber}班`
+  return `${getGradeLabel(gradeLevel)}${classNumber}班`
+}
+
+export function getGradeLabel(gradeLevel: number): string {
+  return GRADE_OPTIONS.find(option => option.value === gradeLevel)?.label ?? `${gradeLevel}年级`
+}
+
+export function getGradeStageLabel(gradeLevel: number): string {
+  const stage = GRADE_OPTIONS.find(option => option.value === gradeLevel)?.stage
+  return stage ? GRADE_STAGE_LABELS[stage] : '未分组'
+}
+
+export function isValidGradeLevel(value: number): value is GradeLevel {
+  return GRADE_LEVELS.includes(value as GradeLevel)
 }
 
 /**
@@ -251,6 +327,17 @@ export function parseAcademicYear(academicYear: AcademicYear): {
     startDate: `${start ?? new Date().getFullYear()}-09-01`,
     endDate: `${end ?? new Date().getFullYear() + 1}-08-31`
   }
+}
+
+export function isValidAcademicYearFormat(academicYear: string): boolean {
+  const match = academicYear.match(/^(\d{4})-(\d{4})$/)
+  if (!match) {
+    return false
+  }
+
+  const startYear = Number(match[1])
+  const endYear = Number(match[2])
+  return endYear === startYear + 1
 }
 
 /**

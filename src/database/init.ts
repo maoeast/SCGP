@@ -2661,6 +2661,84 @@ function migrateEquipmentTrainingRecordResourceForeignKey(rawDb: any): void {
   }
 }
 
+function getCurrentAcademicYearString(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() + 1
+  return month >= 9 ? `${year}-${year + 1}` : `${year - 1}-${year}`
+}
+
+function getNextAcademicYearString(): string {
+  const currentAcademicYear = getCurrentAcademicYearString()
+  const [startYear] = currentAcademicYear.split('-').map(Number)
+  const safeStartYear = startYear || new Date().getFullYear()
+  return `${safeStartYear + 1}-${safeStartYear + 2}`
+}
+
+function deriveAcademicYearBounds(academicYear: string): { startDate: string; endDate: string } | null {
+  const match = academicYear.match(/^(\d{4})-(\d{4})$/)
+  if (!match) {
+    return null
+  }
+
+  const startYear = Number(match[1])
+  const endYear = Number(match[2])
+  if (endYear !== startYear + 1) {
+    return null
+  }
+
+  return {
+    startDate: `${startYear}-09-01`,
+    endDate: `${endYear}-08-31`
+  }
+}
+
+function extractAcademicYearsFromTable(rawDb: any, tableName: string): string[] {
+  try {
+    const result = rawDb.exec(`SELECT DISTINCT academic_year FROM ${tableName} WHERE academic_year IS NOT NULL`)
+    if (!Array.isArray(result) || result.length === 0) {
+      return []
+    }
+
+    return (result[0]?.values || [])
+      .map((row: any[]) => String(row[0] || '').trim())
+      .filter((value: string) => value.length > 0)
+  } catch {
+    return []
+  }
+}
+
+function syncAcademicYearTable(rawDb: any): void {
+  const currentAcademicYear = getCurrentAcademicYearString()
+  const seedYears = new Set<string>([
+    currentAcademicYear,
+    getNextAcademicYearString(),
+    ...extractAcademicYearsFromTable(rawDb, 'sys_class'),
+    ...extractAcademicYearsFromTable(rawDb, 'student_class_history')
+  ])
+
+  for (const academicYear of seedYears) {
+    const bounds = deriveAcademicYearBounds(academicYear)
+    if (!bounds) {
+      continue
+    }
+
+    rawDb.run(`
+      INSERT INTO sys_academic_year (academic_year, start_date, end_date, is_active)
+      VALUES (?, ?, ?, 0)
+      ON CONFLICT(academic_year) DO NOTHING
+    `, [academicYear, bounds.startDate, bounds.endDate])
+  }
+
+  const activeResult = rawDb.exec('SELECT COUNT(*) FROM sys_academic_year WHERE is_active = 1')
+  const activeCount = Number(activeResult?.[0]?.values?.[0]?.[0] || 0)
+
+  if (activeCount === 0) {
+    rawDb.run('UPDATE sys_academic_year SET is_active = 0')
+    rawDb.run('UPDATE sys_academic_year SET is_active = 1, updated_at = CURRENT_TIMESTAMP WHERE academic_year = ?', [currentAcademicYear])
+  }
+}
+
 /**
  * 初始化系统表结构
  *
@@ -2793,6 +2871,16 @@ async function initializeClassTables(rawDb: any): Promise<void> {
   console.log('[ClassTables] 开始初始化班级管理表结构...')
 
   // 1. 班级表 (sys_class)
+  rawDb.run(`CREATE TABLE IF NOT EXISTS sys_academic_year (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    academic_year TEXT NOT NULL UNIQUE,
+    start_date TEXT NOT NULL,
+    end_date TEXT NOT NULL,
+    is_active INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`)
+
   rawDb.run(`CREATE TABLE IF NOT EXISTS sys_class (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -2840,6 +2928,8 @@ async function initializeClassTables(rawDb: any): Promise<void> {
 
   // 4. 创建索引
   const indexStatements = [
+    `CREATE INDEX IF NOT EXISTS idx_academic_year_value ON sys_academic_year(academic_year)`,
+    `CREATE INDEX IF NOT EXISTS idx_academic_year_active ON sys_academic_year(is_active)`,
     `CREATE INDEX IF NOT EXISTS idx_class_year_grade ON sys_class(academic_year, grade_level, class_number)`,
     `CREATE INDEX IF NOT EXISTS idx_class_status ON sys_class(status)`,
     `CREATE INDEX IF NOT EXISTS idx_sch_student_current ON student_class_history(student_id, is_current)`,
@@ -2860,6 +2950,8 @@ async function initializeClassTables(rawDb: any): Promise<void> {
   }
 
   // 5. 创建触发器
+  syncAcademicYearTable(rawDb)
+
   rawDb.run(`CREATE TRIGGER IF NOT EXISTS trg_class_enrollment_increment
     AFTER INSERT ON student_class_history
     WHEN NEW.is_current = 1

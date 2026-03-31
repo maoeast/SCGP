@@ -99,7 +99,7 @@
                 <span>选择学年</span>
                 <el-select v-model="viewYear" @change="loadClassView">
                   <el-option
-                    v-for="year in academicYears"
+                    v-for="year in academicYearOptions"
                     :key="year"
                     :label="year"
                     :value="year"
@@ -122,7 +122,7 @@
                   </el-tag>
                 </div>
                 <div class="class-info">
-                  <p>{{ cls.gradeLevel }}年级 | {{ cls.classNumber }}班</p>
+                  <p>{{ formatGradeLabel(cls.gradeLevel) }} | {{ cls.classNumber }}班</p>
                 </div>
               </div>
             </div>
@@ -141,7 +141,7 @@
         <el-form-item label="选择学年" prop="academicYear">
           <el-select v-model="assignForm.academicYear" placeholder="选择学年">
             <el-option
-              v-for="year in academicYears"
+              v-for="year in academicYearOptions"
               :key="year"
               :label="year"
               :value="year"
@@ -196,8 +196,8 @@
         style="margin-bottom: 20px"
       >
         <ul>
-          <li>1-5年级学生将自动升级到下一年级</li>
-          <li>6年级学生将标记为毕业</li>
+          <li>{{ getGradeUpgradeRangeText() }}学生将自动升级到下一年级或下一学段</li>
+          <li>{{ formatGradeLabel(LAST_GRADE_LEVEL) }}学生将标记为毕业</li>
           <li>请确保新学年的班级已创建</li>
         </ul>
       </el-alert>
@@ -206,7 +206,7 @@
         <el-form-item label="新学年" prop="academicYear">
           <el-select v-model="upgradeForm.academicYear" placeholder="选择新学年">
             <el-option
-              v-for="year in academicYears"
+              v-for="year in academicYearOptions"
               :key="year"
               :label="year"
               :value="year"
@@ -267,21 +267,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { User, Plus, Top } from '@element-plus/icons-vue'
+import { Plus, Top } from '@element-plus/icons-vue'
 import { classAPI } from '@/database/class-api'
-import type {
-  ClassInfo,
-  AcademicYear,
-  ClassChangeRequest,
-  GradeUpgradeRequest,
-  StudentClassInfo,
-  ClassChangeReason
-} from '@/types/class'
+import { getGradeLabel, LAST_GRADE_LEVEL } from '@/types/class'
+import type { ClassInfo, AcademicYear, AcademicYearInfo, GradeUpgradeRequest } from '@/types/class'
 import { getDatabase } from '@/database/init'
 
-const router = useRouter()
 const db = getDatabase()
 
 // ========== 状态 ==========
@@ -294,7 +286,7 @@ const viewYear = ref<AcademicYear>(getCurrentAcademicYear())
 const students = ref<any[]>([])
 const allClasses = ref<ClassInfo[]>([])
 const classViewData = ref<ClassInfo[]>([])
-const academicYears = ref<AcademicYear[]>([])
+const academicYears = ref<AcademicYearInfo[]>([])
 
 const selectedStudents = ref<any[]>([])
 const currentStudent = ref<any>(null)
@@ -321,6 +313,17 @@ const upgradeForm = ref({
 })
 
 // ========== 计算属性 ==========
+
+const academicYearOptions = computed(() => academicYears.value.map(item => item.academicYear))
+const preferredAcademicYear = computed<AcademicYear>(() =>
+  academicYears.value.find(item => item.isActive)?.academicYear
+  || academicYearOptions.value[0]
+  || getCurrentAcademicYear()
+)
+const preferredNextAcademicYear = computed<AcademicYear>(() =>
+  academicYearOptions.value.find(year => year > preferredAcademicYear.value)
+  || getNextAcademicYear()
+)
 
 const availableClasses = computed(() => {
   return allClasses.value.filter(cls => cls.academicYear === assignForm.value.academicYear)
@@ -369,6 +372,26 @@ function getCurrentAcademicYear(): AcademicYear {
   return month >= 9 ? `${year}-${year + 1}` : `${year - 1}-${year}`
 }
 
+async function loadAcademicYears() {
+  try {
+    academicYears.value = classAPI.getAcademicYears()
+
+    if (viewYear.value && !academicYearOptions.value.includes(viewYear.value)) {
+      viewYear.value = preferredAcademicYear.value
+    }
+  } catch (error: any) {
+    ElMessage.error('加载学年列表失败: ' + error.message)
+  }
+}
+
+function formatGradeLabel(gradeLevel: number): string {
+  return getGradeLabel(gradeLevel)
+}
+
+function getGradeUpgradeRangeText(): string {
+  return `${formatGradeLabel(1)}至${formatGradeLabel(LAST_GRADE_LEVEL - 1)}`
+}
+
 async function loadStudents() {
   try {
     let sql = 'SELECT id, name, gender, birthday, current_class_id, current_class_name FROM student WHERE 1=1'
@@ -395,11 +418,6 @@ async function loadStudents() {
 
 function loadClasses() {
   allClasses.value = classAPI.getClasses()
-
-  // 提取所有学年
-  const yearSet = new Set<AcademicYear>()
-  allClasses.value.forEach(cls => yearSet.add(cls.academicYear))
-  academicYears.value = Array.from(yearSet).sort()
 }
 
 function loadClassView() {
@@ -414,7 +432,7 @@ function showAssignDialog(student: any) {
   currentStudent.value = student
   isBatchAssign.value = false
   assignForm.value = {
-    academicYear: getCurrentAcademicYear(),
+    academicYear: preferredAcademicYear.value,
     classId: 0,
     enrollmentDate: new Date().toISOString().split('T')[0]
   }
@@ -424,7 +442,7 @@ function showAssignDialog(student: any) {
 function showBatchAssignDialog() {
   isBatchAssign.value = true
   assignForm.value = {
-    academicYear: getCurrentAcademicYear(),
+    academicYear: preferredAcademicYear.value,
     classId: 0,
     enrollmentDate: new Date().toISOString().split('T')[0]
   }
@@ -471,7 +489,7 @@ async function confirmAssign() {
 
 function showUpgradeDialog() {
   upgradeForm.value = {
-    academicYear: getNextAcademicYear(),
+    academicYear: preferredNextAcademicYear.value,
     upgradeDate: new Date().toISOString().split('T')[0] ?? new Date().toISOString().slice(0, 10),
     createNewClasses: true
   }
@@ -497,7 +515,7 @@ async function confirmUpgrade() {
         createNewClasses: upgradeForm.value.createNewClasses
       }
 
-      const count = classAPI.upgradeGrade(request)
+      const count = await classAPI.upgradeGrade(request)
       ElMessage.success(`学年升级完成，共处理 ${count} 名学生`)
 
       upgradeDialogVisible.value = false
@@ -548,6 +566,7 @@ function getClassTagType(cls: ClassInfo) {
 // ========== 生命周期 ==========
 
 onMounted(() => {
+  loadAcademicYears()
   loadStudents()
   loadClasses()
   loadClassView()

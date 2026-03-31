@@ -6,7 +6,15 @@
  */
 
 import { getDatabase } from './init'
-import { generateClassName, CLASS_CONFIG, ClassChangeReason } from '@/types/class'
+import {
+  generateClassName,
+  CLASS_CONFIG,
+  ClassChangeReason,
+  getGradeLabel,
+  LAST_GRADE_LEVEL,
+  isValidAcademicYearFormat,
+  parseAcademicYear
+} from '@/types/class'
 import { useAuthStore } from '@/stores/auth'
 import type {
   ClassInfo,
@@ -21,6 +29,9 @@ import type {
   StudentClassInfo,
   ClassStudentItem,
   AcademicYear,
+  AcademicYearInfo,
+  CreateAcademicYearParams,
+  UpdateAcademicYearParams,
   GradeLevel,
   ClassNumber,
   ClassStatus,
@@ -55,6 +66,138 @@ export class ClassAPI {
     }
   }
 
+  // ==================== 学年管理 ====================
+
+  getAcademicYears(): AcademicYearInfo[] {
+    try {
+      const rows = this.db.all(`
+        SELECT
+          ay.id,
+          ay.academic_year,
+          ay.start_date,
+          ay.end_date,
+          ay.is_active,
+          COUNT(DISTINCT c.id) AS class_count,
+          COUNT(DISTINCT sch.student_id) AS student_count
+        FROM sys_academic_year ay
+        LEFT JOIN sys_class c ON c.academic_year = ay.academic_year
+        LEFT JOIN student_class_history sch ON sch.academic_year = ay.academic_year
+        GROUP BY ay.id, ay.academic_year, ay.start_date, ay.end_date, ay.is_active
+        ORDER BY ay.start_date DESC, ay.academic_year DESC
+      `)
+
+      return rows.map((row: any) => ({
+        id: row.id,
+        academicYear: row.academic_year,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        isActive: row.is_active === 1,
+        classCount: row.class_count || 0,
+        studentCount: row.student_count || 0
+      }))
+    } catch (error) {
+      console.warn('[ClassAPI] 获取学年列表失败，回退到班级反推:', error)
+      const yearSet = new Set<AcademicYear>()
+      this.getClasses().forEach(cls => yearSet.add(cls.academicYear))
+
+      return Array.from(yearSet)
+        .sort()
+        .reverse()
+        .map((academicYear, index) => {
+          const parsed = parseAcademicYear(academicYear)
+          return {
+            id: index + 1,
+            academicYear,
+            startDate: parsed.startDate,
+            endDate: parsed.endDate,
+            isActive: academicYear === this.getCurrentAcademicYearString(),
+            classCount: 0,
+            studentCount: 0
+          }
+        })
+    }
+  }
+
+  async createAcademicYear(params: CreateAcademicYearParams): Promise<number> {
+    const academicYear = params.academicYear.trim()
+    this.assertAcademicYearFormat(academicYear)
+
+    const existing = this.db.get(
+      'SELECT id FROM sys_academic_year WHERE academic_year = ?',
+      [academicYear]
+    )
+    if (existing) {
+      throw new Error('该学年已存在')
+    }
+
+    const { startDate, endDate } = parseAcademicYear(academicYear)
+
+    if (params.isActive) {
+      this.db.run('UPDATE sys_academic_year SET is_active = 0')
+    }
+
+    const result = this.db.run(`
+      INSERT INTO sys_academic_year (academic_year, start_date, end_date, is_active)
+      VALUES (?, ?, ?, ?)
+    `, [academicYear, startDate, endDate, params.isActive ? 1 : 0])
+
+    await this.forceSave()
+
+    return result.lastInsertRowid
+  }
+
+  async updateAcademicYear(params: UpdateAcademicYearParams): Promise<boolean> {
+    const academicYear = params.academicYear.trim()
+    this.assertAcademicYearFormat(academicYear)
+
+    const existing = this.db.get(
+      'SELECT id, academic_year FROM sys_academic_year WHERE id = ?',
+      [params.id]
+    )
+    if (!existing) {
+      throw new Error('学年不存在')
+    }
+
+    const conflict = this.db.get(
+      'SELECT id FROM sys_academic_year WHERE academic_year = ? AND id != ?',
+      [academicYear, params.id]
+    )
+    if (conflict) {
+      throw new Error('目标学年已存在，无法合并')
+    }
+
+    const { startDate, endDate } = parseAcademicYear(academicYear)
+    const originalAcademicYear = existing.academic_year as AcademicYear
+
+    if (params.isActive) {
+      this.db.run('UPDATE sys_academic_year SET is_active = 0 WHERE id != ?', [params.id])
+    }
+
+    this.db.run(`
+      UPDATE sys_academic_year
+      SET academic_year = ?, start_date = ?, end_date = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [academicYear, startDate, endDate, params.isActive ? 1 : 0, params.id])
+
+    if (originalAcademicYear !== academicYear) {
+      this.db.run(`
+        UPDATE sys_class
+        SET academic_year = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE academic_year = ?
+      `, [academicYear, originalAcademicYear])
+
+      this.db.run(`
+        UPDATE student_class_history
+        SET academic_year = ?
+        WHERE academic_year = ?
+      `, [academicYear, originalAcademicYear])
+    }
+
+    await this.forceSave()
+
+    return true
+  }
+
   // ==================== 班级 CRUD ====================
 
   /**
@@ -64,6 +207,7 @@ export class ClassAPI {
    */
   async createClass(params: CreateClassParams): Promise<number> {
     const { gradeLevel, classNumber, academicYear, maxStudents = CLASS_CONFIG.DEFAULT_MAX_STUDENTS, name: customName } = params
+    await this.ensureAcademicYearExists(academicYear)
     // 如果提供了自定义名称，使用自定义名称；否则自动生成
     const name = customName || generateClassName(gradeLevel, classNumber)
 
@@ -74,7 +218,7 @@ export class ClassAPI {
     `, [academicYear, gradeLevel, classNumber])
 
     if (existing) {
-      throw new Error(`当前学年已存在 ${gradeLevel}年级${classNumber}班（${existing.name}），请勿重复创建`)
+      throw new Error(`当前学年已存在 ${generateClassName(gradeLevel, classNumber)}（${existing.name}），请勿重复创建`)
     }
 
     // ========== 执行插入 ==========
@@ -105,7 +249,7 @@ export class ClassAPI {
       } catch (error: any) {
         // 如果是班级已存在的错误，记录并跳过
         if (error.message.includes('已存在')) {
-          skipped.push(`${params.gradeLevel}年级${params.classNumber}班`)
+          skipped.push(generateClassName(params.gradeLevel, params.classNumber))
         } else {
           // 其他错误重新抛出
           throw error
@@ -397,8 +541,8 @@ export class ClassAPI {
     for (const student of currentStudents) {
       const newGradeLevel = student.grade_level + 1 as GradeLevel
 
-      // 如果超过6年级，标记为毕业
-      if (newGradeLevel > 6) {
+      // 如果超过当前最高年级，标记为毕业
+      if (newGradeLevel > LAST_GRADE_LEVEL) {
         this.db.run(`
           UPDATE student_class_history
           SET is_current = 0, leave_date = ?, leave_reason = ?
@@ -442,7 +586,7 @@ export class ClassAPI {
         `, [academicYear, newGradeLevel])
 
         if (!existingClass) {
-          throw new Error(`找不到 ${newGradeLevel} 年级班级，请先创建班级`)
+          throw new Error(`找不到 ${getGradeLabel(newGradeLevel)}班级，请先创建班级`)
         }
         newClassId = existingClass.id
       }
@@ -736,6 +880,31 @@ export class ClassAPI {
   }
 
   // ==================== 工具方法 ====================
+
+  private async ensureAcademicYearExists(academicYear: AcademicYear): Promise<void> {
+    const existing = this.db.get(
+      'SELECT id FROM sys_academic_year WHERE academic_year = ?',
+      [academicYear]
+    )
+    if (existing) {
+      return
+    }
+
+    await this.createAcademicYear({ academicYear })
+  }
+
+  private assertAcademicYearFormat(academicYear: string): void {
+    if (!isValidAcademicYearFormat(academicYear)) {
+      throw new Error('学年格式必须为 YYYY-YYYY，且后一年需比前一年大 1')
+    }
+  }
+
+  private getCurrentAcademicYearString(): AcademicYear {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth() + 1
+    return month >= 9 ? `${year}-${year + 1}` : `${year - 1}-${year}`
+  }
 
   /**
    * 映射数据库行到 ClassInfo

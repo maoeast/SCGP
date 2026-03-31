@@ -30,12 +30,13 @@
         <div class="control-group">
           <label>年级范围</label>
           <el-checkbox-group v-model="testConfig.grades">
-            <el-checkbox :value="1">1年级</el-checkbox>
-            <el-checkbox :value="2">2年级</el-checkbox>
-            <el-checkbox :value="3">3年级</el-checkbox>
-            <el-checkbox :value="4">4年级</el-checkbox>
-            <el-checkbox :value="5">5年级</el-checkbox>
-            <el-checkbox :value="6">6年级</el-checkbox>
+            <el-checkbox
+              v-for="grade in gradeOptions"
+              :key="grade.value"
+              :value="grade.value"
+            >
+              {{ grade.label }}
+            </el-checkbox>
           </el-checkbox-group>
         </div>
 
@@ -205,7 +206,7 @@
                 <td>{{ item.id }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.academicYear }}</td>
-                <td>{{ item.gradeLevel }}年级</td>
+                <td>{{ formatGradeLabel(item.gradeLevel) }}</td>
                 <td>{{ item.currentEnrollment }}</td>
                 <td>{{ item.maxStudents }}</td>
                 <td>
@@ -256,12 +257,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ClassAPI } from '@/database/class-api'
-import { ClassTestDataGenerator, generateTestStudentsForGrade } from '@/database/test/class-test-data'
+import { ClassTestDataGenerator } from '@/database/test/class-test-data'
 import type { ClassInfo, StudentClassHistory } from '@/types/class'
-import { getCurrentAcademicYear } from '@/types/class'
+import { GRADE_LEVELS, GRADE_OPTIONS, getCurrentAcademicYear, getGradeLabel } from '@/types/class'
 
 // API 实例
 let classAPI: ClassAPI | null = null
@@ -273,10 +274,11 @@ const logContainer = ref<HTMLElement>()
 
 // 测试配置
 const availableYears = ['2023-2024', '2024-2025', '2025-2026']
+const gradeOptions = GRADE_OPTIONS
 
 const testConfig = reactive({
   academicYear: getCurrentAcademicYear(),
-  grades: [1, 2, 3, 4, 5, 6] as number[],
+  grades: [...GRADE_LEVELS] as number[],
   classesPerGrade: 3,
   studentsPerClass: 20
 })
@@ -297,6 +299,10 @@ const assignmentConfig = reactive({
 const testData = ref<ClassInfo[]>([])
 const classHistory = ref<StudentClassHistory[]>([])
 const statistics = ref<any>(null)
+
+function formatGradeLabel(gradeLevel: number): string {
+  return getGradeLabel(gradeLevel)
+}
 
 /**
  * 添加日志
