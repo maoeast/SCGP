@@ -109,6 +109,7 @@ npm run build:electron
 - 文档治理说明：[docs/DOCS_GUIDE.md](/home/DONG/Mycode/SCGP/docs/DOCS_GUIDE.md)
 - 轻量启动上下文：[docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
 - 训练资源统一文案操作说明：[docs/guides/2026-03-30-training-resource-copy-workflow.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-30-training-resource-copy-workflow.md)
+- 训练工作台双栏滚动布局规范：[docs/reports/2026-03-31-training-workspace-layout-scroll-guideline.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-31-training-workspace-layout-scroll-guideline.md)
 - 当前续接入口：[.continue-here.md](/home/DONG/Mycode/SCGP/.continue-here.md)
 - 当前项目上下文：[PROJECT_CONTEXT.md](/home/DONG/Mycode/SCGP/PROJECT_CONTEXT.md)
 - 历史上下文归档：[docs/logs/2026-03-26-project-context-archive.md](/home/DONG/Mycode/SCGP/docs/logs/2026-03-26-project-context-archive.md)

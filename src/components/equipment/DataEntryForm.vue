@@ -59,14 +59,15 @@
     <!-- 训练时长 (可选) -->
     <el-form-item label="训练时长">
       <el-input-number
-        v-model="formData.durationSeconds"
-        :min="0"
-        :max="7200"
-        :step="30"
+        v-model="formData.durationMinutes"
+        :min="1"
+        :max="120"
+        :step="1"
         :precision="0"
+        :value-on-clear="3"
         controls-position="right"
       />
-      <span class="unit-label">秒</span>
+      <span class="unit-label">分</span>
     </el-form-item>
 
     <!-- 备注 (可选) -->
@@ -157,7 +158,7 @@ const formRef = ref<FormInstance>()
 const formData = reactive({
   score: 3,
   promptLevel: 1,
-  durationSeconds: undefined as number | undefined,
+  durationMinutes: 3 as number | undefined,
   notes: ''
 })
 
@@ -189,10 +190,17 @@ const handleSubmit = async (saveAndContinue: boolean) => {
 
   await formRef.value.validate((valid) => {
     if (valid) {
+      const normalizedDurationMinutes = typeof formData.durationMinutes === 'number'
+        && Number.isFinite(formData.durationMinutes)
+        ? Math.max(1, Math.round(formData.durationMinutes))
+        : undefined
+
       emit('submit', {
         score: formData.score,
         promptLevel: formData.promptLevel,
-        durationSeconds: formData.durationSeconds,
+        durationSeconds: normalizedDurationMinutes !== undefined
+          ? normalizedDurationMinutes * 60
+          : undefined,
         notes: formData.notes || undefined,
         saveAndContinue
       })
@@ -204,7 +212,7 @@ const handleSubmit = async (saveAndContinue: boolean) => {
 const resetForm = () => {
   formData.score = 3
   formData.promptLevel = 1
-  formData.durationSeconds = undefined
+  formData.durationMinutes = 3
   formData.notes = ''
   formRef.value?.clearValidate()
 }

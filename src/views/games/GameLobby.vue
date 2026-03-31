@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container workspace-page">
     <!-- 面包屑导航 -->
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
@@ -53,9 +53,9 @@
       </div>
     </div>
 
-    <div class="content-wrapper">
+    <div class="content-wrapper workspace-split">
       <!-- 左侧：游戏选择器 -->
-      <div class="selector-section">
+      <div class="selector-section workspace-pane">
         <template v-if="isEmotionalEntry">
           <div class="emotion-selector">
             <button
@@ -91,9 +91,9 @@
       </div>
 
       <!-- 右侧：游戏预览卡片 -->
-      <div class="preview-section">
+      <div class="preview-section workspace-pane">
         <template v-if="isEmotionalEntry && selectedGame">
-          <el-card class="emotion-preview-card">
+          <el-card class="emotion-preview-card workspace-pane-card">
             <div class="emotion-preview-header">
               <div
                 class="emotion-preview-emoji"
@@ -142,6 +142,7 @@
 
         <GamePreviewCard
           v-else-if="selectedGame"
+          class="workspace-pane-card"
           :game="selectedGame"
           :student-id="studentId"
           @start-game="handleStartGame"
@@ -407,22 +408,16 @@ watch(isEmotionalEntry, (value) => {
 
 <style scoped>
 .content-wrapper {
-  flex: 1;
-  display: flex;
-  gap: 20px;
-  overflow: hidden;
+  min-height: 0;
 }
 
 .selector-section {
-  flex: 1;
-  overflow-y: auto;
+  display: flex;
 }
 
 .preview-section {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
 }
 
 .emotion-selector {
@@ -483,10 +478,6 @@ watch(isEmotionalEntry, (value) => {
 .emotion-game-copy span {
   font-size: 13px;
   color: #909399;
-}
-
-.emotion-preview-card {
-  height: fit-content;
 }
 
 .emotion-preview-header {

@@ -169,3 +169,21 @@
 - important zero-state constraint:
   - the teaching-material file-category filter should remain visible even when `teaching_material` is empty
   - current local dev DB still has `0` teaching-material rows, so non-zero category counts still need runtime verification with imported files
+
+## 10. 2026-03-31 Training Workspace Layout Fix
+
+- equipment quick-entry and game lobby now share a split-workspace scroll pattern:
+  - page root: `workspace-page`
+  - split container: `workspace-split`
+  - left/right panes: `workspace-pane`
+  - top-aligned content cards: `workspace-pane-card`
+- implementation landed in:
+  - `src/assets/layout.css`
+  - `src/views/equipment/QuickEntry.vue`
+  - `src/views/games/GameLobby.vue`
+- behavior target:
+  - left resource lists scroll independently
+  - right data-entry / preview pane stays in the visible workspace instead of being pushed off-screen by outer-page scrolling
+  - wheel scrolling should stop at the pane boundary via `overscroll-behavior: contain`
+- reference doc:
+  - `docs/reports/2026-03-31-training-workspace-layout-scroll-guideline.md`

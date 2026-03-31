@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container workspace-page">
     <!-- 面包屑导航 -->
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
@@ -56,9 +56,9 @@
       </div>
     </div>
 
-    <div class="content-wrapper">
+    <div class="content-wrapper workspace-split">
       <!-- 左侧：器材选择器 -->
-      <div v-if="currentEntry" class="selector-section">
+      <div v-if="currentEntry" class="selector-section workspace-pane">
         <ResourceSelector
           v-model="selectedResource"
           v-model:category="selectedCategory"
@@ -69,8 +69,8 @@
       </div>
 
       <!-- 右侧：录入表单 -->
-      <div class="form-section">
-        <el-card v-if="selectedResource" class="form-card">
+      <div class="form-section workspace-pane">
+        <el-card v-if="selectedResource" class="form-card workspace-pane-card">
           <template #header>
             <div class="card-header">
               <div class="equipment-info">
@@ -505,26 +505,16 @@ watch(
 
 <style scoped>
 .content-wrapper {
-  flex: 1;
-  display: flex;
-  gap: 20px;
-  overflow: hidden;
+  min-height: 0;
 }
 
 .selector-section {
-  flex: 1;
-  overflow-y: auto;
+  display: flex;
 }
 
 .form-section {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-}
-
-.form-card {
-  height: fit-content;
 }
 
 .card-header {
