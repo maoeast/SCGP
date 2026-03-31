@@ -10,7 +10,7 @@
  */
 
 import { DatabaseAPI } from './api'
-import type { ModuleCode } from '@/types/module'
+import type { TrainingPlanStoredModuleCode } from '@/utils/training-plan-module'
 
 // ========== 类型定义 ==========
 
@@ -27,7 +27,7 @@ export interface TrainingPlan {
   name: string
   student_id: number
   student_name?: string  // JOIN 查询时填充
-  module_code: ModuleCode | 'all'
+  module_code: TrainingPlanStoredModuleCode
   start_date: string
   end_date: string
   status: PlanStatus
@@ -67,7 +67,7 @@ export interface PlanResourceMap {
 export interface CreatePlanParams {
   name: string
   student_id: number
-  module_code?: ModuleCode | 'all'
+  module_code?: TrainingPlanStoredModuleCode
   start_date: string
   end_date: string
   status?: PlanStatus
@@ -81,7 +81,7 @@ export interface CreatePlanParams {
  */
 export interface UpdatePlanParams {
   name?: string
-  module_code?: ModuleCode | 'all'
+  module_code?: TrainingPlanStoredModuleCode
   start_date?: string
   end_date?: string
   status?: PlanStatus
@@ -212,7 +212,7 @@ export class PlanAPI extends DatabaseAPI {
    */
   getAllPlans(options?: {
     status?: PlanStatus
-    module_code?: ModuleCode | 'all'
+    module_code?: TrainingPlanStoredModuleCode
     limit?: number
     offset?: number
   }): TrainingPlan[] {

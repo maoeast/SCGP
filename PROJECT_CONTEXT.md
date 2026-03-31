@@ -204,3 +204,32 @@
   - preschool: `小班 / 中班 / 大班`
   - school age: `一年级 ~ 六年级`
   - post-school age: `七年级（初一）~ 九年级（初三）`
+## 12. 2026-03-31 Date-Picker Standardization and Training-Plan Module Ownership
+
+- Element Plus global locale is now configured to `zh-cn` in:
+  - `src/main.ts`
+- shared date-picker defaults now live in:
+  - `src/utils/date-picker.ts`
+- important UI constraint:
+  - new or updated active business pages should reuse:
+    - `STANDARD_DATE_PICKER_PROPS`
+    - `STANDARD_DATE_RANGE_PICKER_PROPS`
+  - avoid adding new ad-hoc date-picker props unless behavior genuinely needs to differ
+- active business pages aligned this round include:
+  - `src/views/plan/PlanList.vue`
+  - `src/views/Reports.vue`
+  - `src/components/AddStudentDialog.vue`
+  - `src/views/equipment/Records.vue`
+  - `src/views/admin/StudentClassAssignment.vue`
+  - `src/views/training-records/components/EquipmentRecordsPanel.vue`
+  - `src/views/training-records/components/GameRecordsPanel.vue`
+- training-plan ownership is no longer treated as only `all / sensory / emotional / social`
+- normalized training-plan module values now live in:
+  - `src/utils/training-plan-module.ts`
+- important compatibility boundary:
+  - preserve old stored values through normalization instead of destructive migration
+  - supported legacy aliases include:
+    - `sensory`
+    - `emotional`
+    - `social`
+    - `life_skills`

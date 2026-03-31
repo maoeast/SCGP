@@ -93,6 +93,7 @@
           <el-date-picker
             v-model="upgradeConfig.upgradeDate"
             type="date"
+            v-bind="standardDatePickerProps"
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
           />
@@ -263,9 +264,11 @@ import { ClassAPI } from '@/database/class-api'
 import { ClassTestDataGenerator } from '@/database/test/class-test-data'
 import type { ClassInfo, StudentClassHistory } from '@/types/class'
 import { GRADE_LEVELS, GRADE_OPTIONS, getCurrentAcademicYear, getGradeLabel } from '@/types/class'
+import { STANDARD_DATE_PICKER_PROPS } from '@/utils/date-picker'
 
 // API 实例
 let classAPI: ClassAPI | null = null
+const standardDatePickerProps = STANDARD_DATE_PICKER_PROPS
 
 // UI 状态
 const loading = ref(false)

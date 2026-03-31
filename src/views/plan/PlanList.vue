@@ -28,11 +28,12 @@
         </el-col>
         <el-col :span="6">
           <el-select v-model="filterModule" placeholder="归属模块" clearable @change="handleFilterChange">
-            <el-option label="全部模块" value="" />
-            <el-option label="综合计划" value="all" />
-            <el-option label="感官训练" value="sensory" />
-            <el-option label="情绪调节" value="emotional" />
-            <el-option label="社交互动" value="social" />
+            <el-option
+              v-for="option in trainingPlanFilterModuleOptions"
+              :key="option.value || 'all-modules'"
+              :label="option.label"
+              :value="option.value"
+            />
           </el-select>
         </el-col>
         <el-col :span="12">
@@ -206,10 +207,12 @@
               <el-col :span="12">
                 <el-form-item label="归属模块" prop="module_code">
                   <el-select v-model="planForm.module_code" placeholder="请选择模块" style="width: 100%">
-                    <el-option label="综合计划" value="all" />
-                    <el-option label="感官训练" value="sensory" />
-                    <el-option label="情绪调节" value="emotional" />
-                    <el-option label="社交互动" value="social" />
+                    <el-option
+                      v-for="option in trainingPlanModuleOptions"
+                      :key="option.value"
+                      :label="option.label"
+                      :value="option.value"
+                    />
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -245,6 +248,7 @@
               <el-date-picker
                 v-model="planForm.dateRange"
                 type="daterange"
+                v-bind="standardDateRangePickerProps"
                 range-separator="至"
                 start-placeholder="开始日期"
                 end-placeholder="结束日期"
@@ -639,6 +643,16 @@ import {
 } from '@/utils/equipment-catalog-group'
 import { buildTrainingLaunchRoute } from '@/utils/training-launch'
 import { resolveResourceCoverImage, resolveResourceItemCoverImage } from '@/utils/resource-cover'
+import {
+  TRAINING_PLAN_FILTER_MODULE_OPTIONS,
+  TRAINING_PLAN_MODULE_OPTIONS,
+  getTrainingPlanModuleLabel,
+  matchesTrainingPlanModule,
+  normalizeTrainingPlanModuleCode,
+  type TrainingPlanFilterModuleCode,
+  type TrainingPlanModuleCode,
+} from '@/utils/training-plan-module'
+import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 
 // 类型定义
 interface Student {
@@ -663,7 +677,7 @@ const planResourceCounts = ref<Record<number, number>>({})
 
 // 筛选状态
 const filterStatus = ref('')
-const filterModule = ref('')
+const filterModule = ref<TrainingPlanFilterModuleCode>('')
 const searchKeyword = ref('')
 
 // 弹窗状态
@@ -676,7 +690,7 @@ const planFormRef = ref<FormInstance>()
 const planForm = ref({
   name: '',
   student_id: null as number | null,
-  module_code: 'all' as 'all' | ModuleCode,
+  module_code: 'all' as TrainingPlanModuleCode,
   dateRange: [] as string[],
   description: '',
   long_term_goals: [] as string[],
@@ -730,6 +744,9 @@ const planApi = new PlanAPI()
 const dbApi = new DatabaseAPI()
 const studentApi = new StudentAPI()
 const router = useRouter()
+const trainingPlanFilterModuleOptions = TRAINING_PLAN_FILTER_MODULE_OPTIONS
+const trainingPlanModuleOptions = TRAINING_PLAN_MODULE_OPTIONS
+const standardDateRangePickerProps = STANDARD_DATE_RANGE_PICKER_PROPS
 
 // 计算属性
 const filteredPlans = computed(() => {
@@ -740,7 +757,7 @@ const filteredPlans = computed(() => {
   }
 
   if (filterModule.value) {
-    result = result.filter(p => p.module_code === filterModule.value)
+    result = result.filter(p => matchesTrainingPlanModule(p.module_code, filterModule.value))
   }
 
   if (searchKeyword.value) {
@@ -860,14 +877,7 @@ function getStatusLabel(status: PlanStatus): string {
 }
 
 function getModuleLabel(moduleCode?: string): string {
-  const labelMap: Record<string, string> = {
-    all: '综合计划',
-    sensory: '感官训练',
-    emotional: '情绪调节',
-    social: '社交互动'
-  }
-  if (!moduleCode) return '未分类'
-  return labelMap[moduleCode] || moduleCode
+  return getTrainingPlanModuleLabel(moduleCode)
 }
 
 function getResourceTypeLabel(type?: string): string {
@@ -1035,7 +1045,7 @@ function handleEditPlan(plan: TrainingPlan) {
   planForm.value = {
     name: plan.name,
     student_id: plan.student_id,
-    module_code: plan.module_code,
+    module_code: normalizeTrainingPlanModuleCode(plan.module_code) || 'all',
     dateRange: [plan.start_date, plan.end_date],
     description: plan.description || '',
     long_term_goals: longTermGoals,
@@ -1073,7 +1083,7 @@ async function handleSavePlan(targetStatus: PlanStatus = 'draft') {
       // 更新计划
       planApi.updatePlan(editingPlan.value.id, {
         name: planForm.value.name,
-        module_code: planForm.value.module_code as any,
+        module_code: planForm.value.module_code,
         start_date: planForm.value.dateRange[0] ?? '',
         end_date: planForm.value.dateRange[1] ?? '',
         description: planForm.value.description,
@@ -1105,7 +1115,7 @@ async function handleSavePlan(targetStatus: PlanStatus = 'draft') {
       const planId = planApi.createPlan({
         name: planForm.value.name,
         student_id: planForm.value.student_id!,
-        module_code: planForm.value.module_code as any,
+        module_code: planForm.value.module_code,
         start_date: planForm.value.dateRange[0] ?? '',
         end_date: planForm.value.dateRange[1] ?? '',
         description: planForm.value.description,

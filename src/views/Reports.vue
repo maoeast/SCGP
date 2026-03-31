@@ -66,6 +66,8 @@
             <el-date-picker
               v-model="dateRange"
               type="daterange"
+              v-bind="standardDateRangePickerProps"
+              class="shared-date-range-picker"
               range-separator="至"
               start-placeholder="开始日期"
               end-placeholder="结束日期"
@@ -257,9 +259,11 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { RefreshRight } from '@element-plus/icons-vue'
 import { useStudentStore } from '@/stores/student'
 import { ReportAPI } from '@/database/api'
+import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 
 const router = useRouter()
 const studentStore = useStudentStore()
+const standardDateRangePickerProps = STANDARD_DATE_RANGE_PICKER_PROPS
 
 const filters = ref({
   student_id: '',
@@ -476,6 +480,10 @@ onMounted(async () => {
   font-weight: 500;
   color: #606266;
   white-space: nowrap;
+}
+
+.shared-date-range-picker {
+  width: 100%;
 }
 
 .stats-row {

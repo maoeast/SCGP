@@ -1,14 +1,14 @@
-<template>
+﻿<template>
   <div class="dialog-overlay" @click.self="$emit('close')">
     <div class="dialog-content">
       <div class="dialog-header">
-        <h2>{{ props.editingStudent ? '编辑学生' : '添加学生' }}</h2>
+        <h2>{{ props.editingStudent ? '缂栬緫瀛︾敓' : '娣诲姞瀛︾敓' }}</h2>
         <button class="btn-close" @click="$emit('close')">
           <i class="fas fa-xmark"></i>
         </button>
       </div>
 
-      <form @submit.prevent="handleSubmit" class="dialog-body">
+      <form @submit.prevent="submitStudentForm" class="dialog-body">
         <div class="form-group">
           <label for="name">姓名 <span class="required">*</span></label>
           <input
@@ -32,12 +32,13 @@
 
           <div class="form-group">
             <label for="birthday">出生日期 <span class="required">*</span></label>
-            <input
+            <el-date-picker
               id="birthday"
               v-model="studentForm.birthday"
               type="date"
-              required
-              :max="new Date().toISOString().split('T')[0]"
+              v-bind="standardDatePickerProps"
+              class="form-date-picker"
+              :disabled-date="disableFutureDates"
             />
           </div>
         </div>
@@ -48,7 +49,7 @@
             id="studentNo"
             v-model="studentForm.student_no"
             type="text"
-            placeholder="可选，自动生成"
+            placeholder="可选，留空则自动生成"
           />
         </div>
 
@@ -56,15 +57,15 @@
           <label for="disorder">诊断类型</label>
           <select id="disorder" v-model="studentForm.disorder">
             <option value="">请选择</option>
-            <option value="视力障碍（盲、低视力（一级至四级））">视力障碍（盲、低视力（一级至四级））</option>
-            <option value="听力障碍（聋（一级）、重听（二级至四级））">听力障碍（聋（一级）、重听（二级至四级））</option>
-            <option value="言语障碍（失语、构音障碍、嗓音障碍、言语流畅度障碍（口吃））">言语障碍（失语、构音障碍、嗓音障碍、言语流畅度障碍（口吃））</option>
+            <option value="视力障碍（盲、低视力）">视力障碍（盲、低视力）</option>
+            <option value="听力障碍（聋、重听）">听力障碍（聋、重听）</option>
+            <option value="言语障碍">言语障碍</option>
             <option value="智力障碍">智力障碍</option>
-            <option value="肢体障碍（脑瘫、脊髓损伤、截肢、先天性肢体畸形）">肢体障碍（脑瘫、脊髓损伤、截肢、先天性肢体畸形）</option>
-            <option value="精神障碍（孤独症谱系障碍（ASD）、注意缺陷多动障碍（ADHD）、情绪行为障碍（EBD））">精神障碍（孤独症谱系障碍（ASD）、注意缺陷多动障碍（ADHD）、情绪行为障碍（EBD））</option>
+            <option value="肢体障碍">肢体障碍</option>
+            <option value="精神障碍（ASD / ADHD / EBD）">精神障碍（ASD / ADHD / EBD）</option>
             <option value="多重障碍">多重障碍</option>
             <option value="学习障碍">学习障碍</option>
-            <option value="发育迟缓（0-6岁婴幼儿）">发育迟缓（0-6岁婴幼儿）</option>
+            <option value="发育迟缓（0-6岁）">发育迟缓（0-6岁）</option>
           </select>
         </div>
 
@@ -77,15 +78,15 @@
             </option>
           </select>
           <small v-if="availableClasses.length === 0" class="text-muted">
-            当前学年无可用班级，请先创建班级
+            当前学年暂无可用班级，请先创建班级。
           </small>
         </div>
 
         <div class="form-group">
-          <label>头像</label>
+          <label>澶村儚</label>
           <div class="avatar-upload">
             <div class="avatar-preview" v-if="avatarPreview">
-              <img :src="avatarPreview" alt="头像预览" />
+              <img :src="avatarPreview" alt="澶村儚棰勮" />
               <button type="button" class="btn-remove" @click="removeAvatar">
                 <i class="fas fa-xmark"></i>
               </button>
@@ -106,16 +107,16 @@
             <div class="avatar-buttons">
               <button type="button" class="btn-upload" @click="showCameraMenu">
                 <i class="fas fa-camera"></i>
-                头像
+                澶村儚
               </button>
               <div v-if="cameraMenuVisible" class="camera-menu">
                 <button type="button" @click="openCamera">
                   <i class="fas fa-camera"></i>
-                  拍照
+                  鎷嶇収
                 </button>
                 <button type="button" @click="triggerAvatarUpload">
                   <i class="fas fa-arrow-up-from-bracket"></i>
-                  本地上传
+                  鏈湴涓婁紶
                 </button>
               </div>
             </div>
@@ -125,19 +126,19 @@
 
       <div class="dialog-footer">
         <button type="button" class="btn-secondary" @click="$emit('close')">
-          取消
+          鍙栨秷
         </button>
-        <button type="submit" class="btn-primary" @click="handleSubmit" :disabled="saving">
-          {{ saving ? '保存中...' : '保存' }}
+        <button type="submit" class="btn-primary" :disabled="saving">
+          {{ saving ? '淇濆瓨涓?..' : '淇濆瓨' }}
         </button>
       </div>
     </div>
 
-    <!-- 摄像头对话框 -->
+    <!-- 鎽勫儚澶村璇濇 -->
     <div v-if="showCameraDialog" class="dialog-overlay">
       <div class="camera-dialog">
         <div class="dialog-header">
-          <h2>拍照</h2>
+          <h2>鎷嶇収</h2>
           <button @click="closeCameraDialog" class="btn-close">
             <i class="fas fa-xmark"></i>
           </button>
@@ -161,16 +162,16 @@
               class="btn-capture"
             >
               <i class="fas fa-camera"></i>
-              拍照
+              鎷嶇収
             </button>
             <div v-else class="photo-actions">
               <button @click="retakePhoto" class="btn-secondary">
                 <i class="fas fa-redo"></i>
-                重拍
+                閲嶆媿
               </button>
               <button @click="confirmPhoto" class="btn-primary">
                 <i class="fas fa-check"></i>
-                确认
+                纭
               </button>
             </div>
           </div>
@@ -187,13 +188,14 @@ import { useStudentStore } from '@/stores/student'
 import { classAPI } from '@/database/class-api'
 import { getCurrentAcademicYear } from '@/types/class'
 import type { ClassInfo } from '@/types/class'
+import { STANDARD_DATE_PICKER_PROPS, disableFutureDates } from '@/utils/date-picker'
 
 const emit = defineEmits<{
   close: []
   saved: []
 }>()
 
-type StudentGender = '男' | '女'
+type StudentGender = '\u7537' | '\u5973'
 
 interface EditableStudent {
   id: number
@@ -219,8 +221,8 @@ const props = defineProps<{
 }>()
 
 const studentStore = useStudentStore()
+const standardDatePickerProps = STANDARD_DATE_PICKER_PROPS
 
-// 响应式数据
 const saving = ref(false)
 const avatarPreview = ref('')
 const avatarInput = ref<HTMLInputElement | null>(null)
@@ -244,7 +246,7 @@ function createEmptyStudentForm(): StudentFormState {
 }
 
 function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : '未知错误'
+  return error instanceof Error ? error.message : '鏈煡閿欒'
 }
 
 function triggerAvatarUpload() {
@@ -260,7 +262,7 @@ const studentForm = ref<StudentFormState>({
   classId: null as number | null
 })
 
-// 方法
+// 鏂规硶
 const handleAvatarChange = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (file) {
@@ -279,12 +281,12 @@ const removeAvatar = () => {
   }
 }
 
-// 头像菜单相关
+// 澶村儚鑿滃崟鐩稿叧
 const showCameraMenu = () => {
   cameraMenuVisible.value = !cameraMenuVisible.value
 }
 
-// 关闭摄像头对话框
+// 鍏抽棴鎽勫儚澶村璇濇
 const closeCameraDialog = async () => {
   showCameraDialog.value = false
   photoTaken.value = false
@@ -295,17 +297,15 @@ const closeCameraDialog = async () => {
   }
 }
 
-// 打开摄像头
 const openCamera = async () => {
   try {
-    // 先检查是否有摄像头设备
     const devices = await navigator.mediaDevices.enumerateDevices()
     const hasCamera = devices.some(device => device.kind === 'videoinput')
 
     if (!hasCamera) {
-      ElMessage.warning('未检测到摄像头设备，请使用文件上传方式')
+      ElMessage.warning('\u672a\u68c0\u6d4b\u5230\u6444\u50cf\u5934\u8bbe\u5907\uff0c\u8bf7\u4f7f\u7528\u6587\u4ef6\u4e0a\u4f20\u65b9\u5f0f')
       cameraMenuVisible.value = false
-      // 自动触发文件上传
+      // 鑷姩瑙﹀彂鏂囦欢涓婁紶
       setTimeout(() => {
         triggerAvatarUpload()
       }, 100)
@@ -326,32 +326,30 @@ const openCamera = async () => {
       cameraVideo.value.srcObject = stream
     }
   } catch (error: unknown) {
-    console.error('无法访问摄像头:', error)
+    console.error('鏃犳硶璁块棶鎽勫儚澶?', error)
     closeCameraDialog()
 
-    // 根据错误类型提供不同的提示
     const errorName = typeof error === 'object' && error !== null && 'name' in error
       ? String(error.name)
       : ''
 
     if (errorName === 'NotFoundError') {
-      ElMessage.warning('未找到摄像头设备，请使用文件上传方式')
+      ElMessage.warning('鏈壘鍒版憚鍍忓ご璁惧锛岃浣跨敤鏂囦欢涓婁紶鏂瑰紡')
     } else if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
-      ElMessage.warning('摄像头权限被拒绝，请在浏览器设置中允许访问摄像头，或使用文件上传方式')
+      ElMessage.warning('鎽勫儚澶存潈闄愯鎷掔粷锛岃鍦ㄦ祻瑙堝櫒璁剧疆涓厑璁歌闂憚鍍忓ご锛屾垨浣跨敤鏂囦欢涓婁紶鏂瑰紡')
     } else if (errorName === 'NotReadableError') {
-      ElMessage.error('摄像头被其他应用占用，请关闭其他使用摄像头的程序后重试')
+      ElMessage.error('\u6444\u50cf\u5934\u88ab\u5176\u4ed6\u5e94\u7528\u5360\u7528\uff0c\u8bf7\u5173\u95ed\u5176\u4ed6\u4f7f\u7528\u6444\u50cf\u5934\u7684\u7a0b\u5e8f\u540e\u91cd\u8bd5')
     } else {
-      ElMessage.error(`无法访问摄像头: ${getErrorMessage(error)}`)
+      ElMessage.error(`\u65e0\u6cd5\u8bbf\u95ee\u6444\u50cf\u5934: ${getErrorMessage(error)}`)
     }
 
-    // 自动切换到文件上传
     setTimeout(() => {
       triggerAvatarUpload()
     }, 500)
   }
 }
 
-// 拍照
+// 鎷嶇収
 const takePhoto = () => {
   if (cameraVideo.value && cameraCanvas.value) {
     const video = cameraVideo.value
@@ -367,12 +365,12 @@ const takePhoto = () => {
   }
 }
 
-// 重拍
+// 閲嶆媿
 const retakePhoto = () => {
   photoTaken.value = false
 }
 
-// 确认照片
+// 纭鐓х墖
 const confirmPhoto = () => {
   if (cameraCanvas.value) {
     avatarPreview.value = cameraCanvas.value.toDataURL('image/jpeg', 0.8)
@@ -380,9 +378,14 @@ const confirmPhoto = () => {
   }
 }
 
-const handleSubmit = async () => {
+const submitStudentForm = async () => {
   try {
     saving.value = true
+
+    if (!studentForm.value.name.trim()) {
+      ElMessage.error('请输入学生姓名')
+      return
+    }
 
     const normalizedGender = studentForm.value.gender
     if (normalizedGender !== '男' && normalizedGender !== '女') {
@@ -390,54 +393,49 @@ const handleSubmit = async () => {
       return
     }
 
-    // 如果没有填写学号，自动生成
+    if (!studentForm.value.birthday) {
+      ElMessage.error('请选择出生日期')
+      return
+    }
+
     if (!studentForm.value.student_no) {
       studentForm.value.student_no = `STU${Date.now()}`
     }
 
-    // 如果没有头像且有姓名，生成文字头像
     let finalAvatarPath = avatarPreview.value
     if (!finalAvatarPath && studentForm.value.name) {
-      // 创建一个canvas来生成文字头像
       const canvas = document.createElement('canvas')
       canvas.width = 200
       canvas.height = 200
       const context = canvas.getContext('2d')
 
       if (context) {
-        // 背景色
         context.fillStyle = '#4CAF50'
         context.fillRect(0, 0, 200, 200)
-
-        // 文字
         context.fillStyle = 'white'
         context.font = 'bold 80px Arial'
         context.textAlign = 'center'
         context.textBaseline = 'middle'
         context.fillText(studentForm.value.name.charAt(0), 100, 100)
-
         finalAvatarPath = canvas.toDataURL('image/png')
       }
     }
 
     if (props.editingStudent) {
-      // 编辑模式
       const { classId: _classId, ...studentData } = studentForm.value
       await studentStore.updateStudent(props.editingStudent.id, {
         ...studentData,
         gender: normalizedGender,
-        avatar_path: finalAvatarPath || ''
+        avatar_path: finalAvatarPath || '',
       })
     } else {
-      // 添加模式 - 先排除 classId（不属于 student 表字段）
       const { classId, ...studentData } = studentForm.value
       const studentId = await studentStore.addStudent({
         ...studentData,
         gender: normalizedGender,
-        avatar_path: finalAvatarPath || ''
+        avatar_path: finalAvatarPath || '',
       })
 
-      // 如果选择了班级，将学生分配到班级
       if (classId && studentForm.value.name) {
         try {
           const academicYear = getCurrentAcademicYear()
@@ -451,7 +449,6 @@ const handleSubmit = async () => {
           )
         } catch (error: unknown) {
           console.warn('班级分配失败:', error)
-          // 班级分配失败不影响学生创建
           alert('学生添加成功，但班级分配失败：' + getErrorMessage(error))
         }
       }
@@ -466,7 +463,6 @@ const handleSubmit = async () => {
   }
 }
 
-// 初始化表单数据
 const initializeForm = () => {
   if (props.editingStudent) {
     studentForm.value = {
@@ -483,21 +479,21 @@ const initializeForm = () => {
   }
 }
 
-// 加载可用班级列表
+// 鍔犺浇鍙敤鐝骇鍒楄〃
 const loadAvailableClasses = () => {
   try {
     const academicYear = getCurrentAcademicYear()
     availableClasses.value = classAPI.getClasses({
       academicYear,
-      status: 1  // 只显示激活的班级
+      status: 1  // 鍙樉绀烘縺娲荤殑鐝骇
     })
   } catch (error) {
-    console.error('加载班级列表失败:', error)
+    console.error('鍔犺浇鐝骇鍒楄〃澶辫触:', error)
     availableClasses.value = []
   }
 }
 
-// 生命周期
+// 鐢熷懡鍛ㄦ湡
 onMounted(() => {
   initializeForm()
   loadAvailableClasses()
@@ -602,6 +598,22 @@ onUnmounted(() => {
 .form-group select:focus {
   outline: none;
   border-color: #4CAF50;
+}
+
+.form-date-picker {
+  width: 100%;
+}
+
+.form-date-picker :deep(.el-input__wrapper) {
+  min-height: 42px;
+  border-radius: 5px;
+  box-shadow: 0 0 0 1px #ddd inset;
+  padding: 0 15px;
+}
+
+.form-date-picker :deep(.el-input__wrapper:hover),
+.form-date-picker :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #4CAF50 inset;
 }
 
 .avatar-upload {

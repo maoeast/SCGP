@@ -85,6 +85,7 @@
           <el-date-picker
             v-model="filters.dateRange"
             type="daterange"
+            v-bind="standardDateRangePickerProps"
             range-separator="至"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
@@ -226,6 +227,7 @@ import { IEPGenerator } from '@/utils/iep-generator'
 import { exportEquipmentIEPToWord, type EquipmentIEPExportData } from '@/utils/docxExporter'
 import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
 import { useAuthStore } from '@/stores/auth'
+import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 import {
   getAllEquipmentTrainingEntries,
   getEquipmentTrainingEntry,
@@ -256,6 +258,7 @@ type EquipmentRecordItem = EquipmentTrainingRecordWithEquipment & {
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const standardDateRangePickerProps = STANDARD_DATE_RANGE_PICKER_PROPS
 
 const studentId = ref<number | null>(null)
 const selectedEntryCode = ref<EquipmentTrainingEntryCode | ''>('')

@@ -9,8 +9,11 @@ import { initializeBuiltinModules } from './core/module-registry'
 import { initializeStrategies } from './core/strategies-init'
 import { useAuthStore } from './stores/auth'
 import ElementPlus from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import dayjs from 'dayjs'
+import 'dayjs/locale/zh-cn'
 
 // 全局页面布局规范 CSS
 import './assets/layout.css'
@@ -18,6 +21,7 @@ import './assets/layout.css'
 import App from './App.vue'
 
 const app = createApp(App)
+dayjs.locale('zh-cn')
 
 // 初始化数据库
 async function initializeApp() {
@@ -105,7 +109,9 @@ async function initializeApp() {
     // 使用插件
     app.use(pinia)
     app.use(router)
-    app.use(ElementPlus)
+    app.use(ElementPlus, {
+      locale: zhCn,
+    })
 
     // 注册所有图标
     for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

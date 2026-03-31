@@ -21,6 +21,7 @@
         <el-date-picker
           v-model="dateRange"
           type="daterange"
+          v-bind="standardDateRangePickerProps"
           range-separator="至"
           start-placeholder="开始日期"
           end-placeholder="结束日期"
@@ -129,6 +130,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import { GameTrainingAPI, StudentAPI } from '@/database/api'
 import { EmotionalTrainingAPI } from '@/database/emotional-api'
 import { getTrainingEntry, type TrainingEntryCode } from '@/utils/training-entry'
+import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 
 interface Props {
   entryCode: TrainingEntryCode
@@ -145,6 +147,7 @@ const records = ref<any[]>([])
 const students = ref<any[]>([])
 const selectedStudentId = ref<number | undefined>()
 const dateRange = ref<[string, string] | null>(null)
+const standardDateRangePickerProps = STANDARD_DATE_RANGE_PICKER_PROPS
 const currentEntry = computed(() => getTrainingEntry(props.entryCode))
 const isEmotionalEntry = computed(() => currentEntry.value.moduleCode === 'emotional')
 

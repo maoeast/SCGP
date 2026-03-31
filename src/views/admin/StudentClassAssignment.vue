@@ -168,6 +168,7 @@
           <el-date-picker
             v-model="assignForm.enrollmentDate"
             type="date"
+            v-bind="standardDatePickerProps"
             placeholder="选择日期"
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
@@ -217,6 +218,7 @@
           <el-date-picker
             v-model="upgradeForm.upgradeDate"
             type="date"
+            v-bind="standardDatePickerProps"
             placeholder="选择日期"
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
@@ -273,6 +275,7 @@ import { classAPI } from '@/database/class-api'
 import { getGradeLabel, LAST_GRADE_LEVEL } from '@/types/class'
 import type { ClassInfo, AcademicYear, AcademicYearInfo, GradeUpgradeRequest } from '@/types/class'
 import { getDatabase } from '@/database/init'
+import { STANDARD_DATE_PICKER_PROPS } from '@/utils/date-picker'
 
 const db = getDatabase()
 
@@ -293,6 +296,7 @@ const currentStudent = ref<any>(null)
 
 const assignDialogVisible = ref(false)
 const upgradeDialogVisible = ref(false)
+const standardDatePickerProps = STANDARD_DATE_PICKER_PROPS
 const historyDialogVisible = ref(false)
 const isBatchAssign = ref(false)
 

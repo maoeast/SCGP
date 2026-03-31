@@ -1,4 +1,5 @@
 import { DatabaseAPI } from './api'
+import { getTrainingPlanModuleLabel } from '@/utils/training-plan-module'
 
 export interface DashboardOverview {
   studentCount: number
@@ -371,16 +372,7 @@ export class DashboardAPI extends DatabaseAPI {
   }
 
   private getModuleLabel(moduleCode: string): string {
-    const labels: Record<string, string> = {
-      all: '综合训练',
-      sensory: '感官训练',
-      emotional: '情绪行为',
-      social: '社交互动',
-      cognitive: '认知训练',
-      life_skills: '生活技能',
-    }
-
-    return labels[moduleCode] || moduleCode || '训练模块'
+    return getTrainingPlanModuleLabel(moduleCode) || '训练模块'
   }
 
   private getSessionLabel(moduleCode: string, sessionLabel: string): string {
