@@ -1,298 +1,454 @@
 <template>
-  <div class="page-container">
-    <div class="page-header">
+  <div class="page-container scgp-admin-page reports-page">
+    <div class="page-header reports-header">
       <div class="header-left">
+        <span class="reports-kicker">统一报告中心</span>
         <h1>报告中心</h1>
-        <p class="subtitle">查看和管理评估、训练与情绪模块报告。</p>
+        <p class="subtitle">统一查看和管理评估、训练与情绪模块报告，减少跨模块查找成本。</p>
       </div>
       <div class="header-right">
         <el-button
           type="warning"
           :icon="RefreshRight"
-          @click="migrateData"
           :loading="migrating"
+          @click="migrateData"
         >
           {{ migrating ? '迁移中...' : '迁移历史数据' }}
         </el-button>
       </div>
     </div>
 
-    <div class="filter-section">
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <div class="filter-item">
-            <label>学生：</label>
-            <el-select
-              v-model="filters.student_id"
-              placeholder="全部学生"
-              clearable
-              @change="handleFilter"
-            >
-              <el-option
-                v-for="student in students"
-                :key="student.id"
-                :label="student.name"
-                :value="student.id"
-              />
-            </el-select>
-          </div>
-        </el-col>
-        <el-col :span="6">
-          <div class="filter-item">
-            <label>报告类型：</label>
-            <el-select
-              v-model="filters.report_type"
-              placeholder="全部类型"
-              clearable
-              @change="handleFilter"
-            >
-              <el-option label="S-M 评估报告" value="sm" />
-              <el-option label="WeeFIM 评估报告" value="weefim" />
-              <el-option label="CSIRS 评估报告" value="csirs" />
-              <el-option label="Conners PSQ 报告" value="conners-psq" />
-              <el-option label="Conners TRS 报告" value="conners-trs" />
-              <el-option label="SDQ 评估报告" value="sdq" />
-              <el-option label="SRS-2 评估报告" value="srs2" />
-              <el-option label="CBCL 评估报告" value="cbcl" />
-              <el-option label="情绪行为调节模块报告" value="emotional" />
-              <el-option label="IEP 报告" value="iep" />
-              <el-option label="训练报告" value="training" />
-            </el-select>
-          </div>
-        </el-col>
-        <el-col :span="8">
-          <div class="filter-item">
-            <label>时间范围：</label>
-            <el-date-picker
-              v-model="dateRange"
-              type="daterange"
-              v-bind="standardDateRangePickerProps"
-              class="shared-date-range-picker"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              format="YYYY-MM-DD"
-              value-format="YYYY-MM-DD"
-              @change="handleFilter"
-            />
-          </div>
-        </el-col>
-        <el-col :span="4">
-          <el-button type="primary" @click="handleFilter">
-            <i class="fas fa-search"></i> 查询
-          </el-button>
-        </el-col>
-      </el-row>
-    </div>
+    <section class="reports-hero scgp-surface">
+      <div class="reports-hero__copy">
+        <span class="reports-kicker reports-kicker--soft">当前视图</span>
+        <h2>{{ heroTitle }}</h2>
+        <p>{{ heroDescription }}</p>
 
-    <el-row :gutter="20" class="stats-row">
-      <el-col :span="4">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon blue"><i class="fas fa-file-lines"></i></div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.total }}</div>
-              <div class="stat-label">报告总数</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="4">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon orange"><i class="fas fa-clipboard-check"></i></div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.sm_count }}</div>
-              <div class="stat-label">S-M</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="4">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon green"><i class="fas fa-chart-line"></i></div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.weefim_count }}</div>
-              <div class="stat-label">WeeFIM</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="4">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon pink"><i class="fas fa-puzzle-piece"></i></div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.csirs_count || 0 }}</div>
-              <div class="stat-label">CSIRS</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="4">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon purple"><i class="fas fa-child"></i></div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.conners_psq_count || 0 }}</div>
-              <div class="stat-label">Conners PSQ</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="4">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon indigo"><i class="fas fa-chalkboard-user"></i></div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.conners_trs_count || 0 }}</div>
-              <div class="stat-label">Conners TRS</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <el-row :gutter="20" class="stats-row secondary-stats-row">
-      <el-col :span="6">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon amber"><i class="fas fa-face-smile"></i></div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.sdq_count }}</div>
-              <div class="stat-label">SDQ</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon cyan"><i class="fas fa-people-arrows"></i></div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.srs2_count }}</div>
-              <div class="stat-label">SRS-2</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon teal"><i class="fas fa-brain"></i></div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.cbcl_count }}</div>
-              <div class="stat-label">CBCL</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon emerald"><i class="fas fa-heart-circle-check"></i></div>
-            <div class="stat-info">
-              <div class="stat-value">{{ statistics.emotional_count }}</div>
-              <div class="stat-label">情绪模块</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <el-card class="report-list-card">
-      <template #header>
-        <div class="list-header">
-          <span>报告列表</span>
-          <el-tag type="info">共 {{ reportList.length }} 条记录</el-tag>
+        <div class="reports-summary-chips">
+          <span class="reports-summary-chip">学生：{{ currentStudentLabel }}</span>
+          <span class="reports-summary-chip">类型：{{ currentReportTypeLabel }}</span>
+          <span class="reports-summary-chip">时间：{{ currentDateRangeLabel }}</span>
+          <span class="reports-summary-chip">最近生成：{{ latestReportDisplay }}</span>
         </div>
-      </template>
+      </div>
 
-      <el-table :data="reportList" style="width: 100%" v-loading="loading">
+      <div class="reports-hero__metrics">
+        <article
+          v-for="metric in primaryMetrics"
+          :key="metric.label"
+          :class="['reports-metric-card', `reports-metric-card--${metric.tone}`]"
+        >
+          <div class="reports-metric-card__label">{{ metric.label }}</div>
+          <div class="reports-metric-card__value">{{ metric.value }}</div>
+          <div class="reports-metric-card__hint">{{ metric.hint }}</div>
+        </article>
+      </div>
+    </section>
+
+    <section class="reports-filters scgp-surface scgp-filter-surface">
+      <div class="reports-section-header">
+        <div>
+          <span class="reports-kicker reports-kicker--muted">筛选条件</span>
+          <h2>报告检索</h2>
+          <p>按学生、报告类型和时间范围快速定位目标报告。</p>
+        </div>
+      </div>
+
+      <div class="reports-filter-toolbar">
+        <div class="reports-filter-field">
+          <label>学生</label>
+          <el-select
+            v-model="filters.student_id"
+            placeholder="全部学生"
+            clearable
+            @change="handleFilter"
+          >
+            <el-option
+              v-for="student in students"
+              :key="student.id"
+              :label="student.name"
+              :value="student.id"
+            />
+          </el-select>
+        </div>
+
+        <div class="reports-filter-field">
+          <label>报告类型</label>
+          <el-select
+            v-model="filters.report_type"
+            placeholder="全部类型"
+            clearable
+            @change="handleFilter"
+          >
+            <el-option
+              v-for="option in reportTypeOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
+        </div>
+
+        <div class="reports-filter-field reports-filter-field--wide">
+          <label>时间范围</label>
+          <el-date-picker
+            v-model="dateRange"
+            type="daterange"
+            v-bind="standardDateRangePickerProps"
+            class="shared-date-range-picker"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            @change="handleDateRangeChange"
+          />
+        </div>
+
+        <div class="reports-quick-range" role="tablist" aria-label="时间快捷筛选">
+          <button
+            v-for="preset in QUICK_RANGE_OPTIONS"
+            :key="preset.key"
+            type="button"
+            class="reports-range-pill"
+            :class="{ 'is-active': activeDatePreset === preset.key }"
+            @click="applyQuickRange(preset.key)"
+          >
+            {{ preset.label }}
+          </button>
+        </div>
+
+        <div class="reports-filter-actions">
+          <el-button type="primary" :icon="Search" @click="handleFilter">查询</el-button>
+          <el-button @click="resetFilters">重置</el-button>
+        </div>
+      </div>
+    </section>
+
+    <section class="reports-distribution">
+      <article class="reports-distribution-panel scgp-surface">
+        <div class="reports-section-header reports-section-header--compact">
+          <div>
+            <span class="reports-kicker reports-kicker--muted">类型分布</span>
+            <h2>评估报告</h2>
+            <p>当前筛选结果下的各量表报告数量。</p>
+          </div>
+          <strong class="reports-distribution-total">{{ assessmentReportCount }} 份</strong>
+        </div>
+
+        <div class="reports-type-grid reports-type-grid--assessment">
+          <article
+            v-for="item in assessmentTypeCards"
+            :key="item.key"
+            :class="['reports-type-card', `reports-type-card--${item.tone}`]"
+          >
+            <span class="reports-type-card__name">{{ item.label }}</span>
+            <strong class="reports-type-card__count">{{ item.value }}</strong>
+          </article>
+        </div>
+      </article>
+
+      <article class="reports-distribution-panel scgp-surface">
+        <div class="reports-section-header reports-section-header--compact">
+          <div>
+            <span class="reports-kicker reports-kicker--muted">类型分布</span>
+            <h2>训练与干预报告</h2>
+            <p>情绪模块、IEP 与训练报告统一收口展示。</p>
+          </div>
+          <strong class="reports-distribution-total">{{ interventionReportCount }} 份</strong>
+        </div>
+
+        <div class="reports-type-grid reports-type-grid--intervention">
+          <article
+            v-for="item in interventionTypeCards"
+            :key="item.key"
+            :class="['reports-type-card', `reports-type-card--${item.tone}`]"
+          >
+            <span class="reports-type-card__name">{{ item.label }}</span>
+            <strong class="reports-type-card__count">{{ item.value }}</strong>
+          </article>
+        </div>
+      </article>
+    </section>
+
+    <section class="main-content scgp-page-panel reports-table-panel">
+      <div class="reports-table-header">
+        <div>
+          <span class="reports-kicker reports-kicker--muted">结果列表</span>
+          <h2>报告列表</h2>
+          <p>支持查看、跳转报告详情，以及清理不再需要的历史记录。</p>
+        </div>
+        <div class="reports-table-header__summary">
+          <span>当前结果</span>
+          <strong>{{ reportList.length }} 条</strong>
+        </div>
+      </div>
+
+      <el-table
+        :data="reportList"
+        style="width: 100%"
+        v-loading="loading"
+        class="reports-table"
+        empty-text=""
+      >
         <el-table-column prop="id" label="ID" width="80" />
+
         <el-table-column prop="title" label="报告标题" min-width="250" />
-        <el-table-column label="学生姓名" width="120">
+
+        <el-table-column label="学生姓名" min-width="140">
           <template #default="scope">
-            {{ scope.row.student_name }}
+            <span class="reports-student-name">{{ scope.row.student_name }}</span>
           </template>
         </el-table-column>
+
         <el-table-column label="报告类型" width="170">
           <template #default="scope">
-            <el-tag :type="getReportTypeTagType(scope.row.report_type)">
+            <el-tag :type="getReportTypeTagType(scope.row.report_type)" effect="plain">
               {{ getReportTypeName(scope.row.report_type) }}
             </el-tag>
           </template>
         </el-table-column>
+
         <el-table-column label="创建时间" width="180">
           <template #default="scope">
             {{ formatDate(scope.row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="320" fixed="right">
+
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="scope">
-            <el-button type="primary" size="small" @click="viewReport(scope.row)">
-              <i class="fas fa-eye"></i> 查看
-            </el-button>
-            <el-button type="success" size="small" @click="downloadReport(scope.row)">
-              <i class="fas fa-download"></i> 下载
-            </el-button>
-            <el-button type="danger" size="small" @click="deleteReport(scope.row)">
-              <i class="fas fa-trash"></i> 删除
-            </el-button>
+            <div class="report-actions">
+              <el-button class="report-action-button" round type="primary" plain @click="viewReport(scope.row)">
+                查看
+              </el-button>
+              <el-button class="report-action-button" round @click="downloadReport(scope.row)">
+                下载
+              </el-button>
+              <el-button class="report-action-button" round type="danger" plain @click="deleteReport(scope.row)">
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
       <el-empty
         v-if="!loading && reportList.length === 0"
-        description="暂无报告记录"
+        description="当前筛选条件下暂无报告记录"
       />
-    </el-card>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { RefreshRight } from '@element-plus/icons-vue'
+import { RefreshRight, Search } from '@element-plus/icons-vue'
 import { useStudentStore } from '@/stores/student'
 import { ReportAPI } from '@/database/api'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
+
+interface ReportTypeOption {
+  value: string
+  label: string
+  category: 'assessment' | 'intervention'
+  tone: 'blue' | 'teal' | 'amber' | 'coral'
+}
+
+interface ReportStatistics {
+  total: number
+  sm_count: number
+  weefim_count: number
+  csirs_count: number
+  conners_psq_count: number
+  conners_trs_count: number
+  sdq_count: number
+  srs2_count: number
+  cbcl_count: number
+  emotional_count: number
+  iep_count: number
+  training_count: number
+}
+
+type QuickRangeKey = 'all' | 'week' | 'month' | ''
+
+const REPORT_TYPE_OPTIONS: ReportTypeOption[] = [
+  { value: 'sm', label: 'S-M 评估报告', category: 'assessment', tone: 'blue' },
+  { value: 'weefim', label: 'WeeFIM 评估报告', category: 'assessment', tone: 'teal' },
+  { value: 'csirs', label: 'CSIRS 评估报告', category: 'assessment', tone: 'coral' },
+  { value: 'conners-psq', label: 'Conners PSQ 报告', category: 'assessment', tone: 'amber' },
+  { value: 'conners-trs', label: 'Conners TRS 报告', category: 'assessment', tone: 'blue' },
+  { value: 'sdq', label: 'SDQ 评估报告', category: 'assessment', tone: 'amber' },
+  { value: 'srs2', label: 'SRS-2 评估报告', category: 'assessment', tone: 'teal' },
+  { value: 'cbcl', label: 'CBCL 评估报告', category: 'assessment', tone: 'coral' },
+  { value: 'emotional', label: '情绪行为调节模块报告', category: 'intervention', tone: 'amber' },
+  { value: 'iep', label: 'IEP 报告', category: 'intervention', tone: 'blue' },
+  { value: 'training', label: '训练报告', category: 'intervention', tone: 'teal' },
+]
+
+const QUICK_RANGE_OPTIONS = [
+  { key: 'all', label: '全部' },
+  { key: 'week', label: '本周' },
+  { key: 'month', label: '本月' },
+] as const satisfies ReadonlyArray<{ key: Exclude<QuickRangeKey, ''>; label: string }>
 
 const router = useRouter()
 const studentStore = useStudentStore()
 const standardDateRangePickerProps = STANDARD_DATE_RANGE_PICKER_PROPS
 
 const filters = ref({
-  student_id: '',
-  report_type: ''
+  student_id: '' as string | number,
+  report_type: '',
 })
 
 const dateRange = ref<[string, string] | null>(null)
+const activeDatePreset = ref<QuickRangeKey>('all')
 
 const students = ref<any[]>([])
 const reportList = ref<any[]>([])
-const statistics = ref({
-  total: 0,
-  sm_count: 0,
-  weefim_count: 0,
-  csirs_count: 0,
-  conners_psq_count: 0,
-  conners_trs_count: 0,
-  sdq_count: 0,
-  srs2_count: 0,
-  cbcl_count: 0,
-  emotional_count: 0,
-  iep_count: 0,
-  training_count: 0
-})
 const loading = ref(false)
 const migrating = ref(false)
 
-const getReportTypeTagType = (type: string) => {
-  const typeMap: Record<string, string> = {
+const reportTypeOptions = REPORT_TYPE_OPTIONS
+const reportTypeMap = new Map(REPORT_TYPE_OPTIONS.map((item) => [item.value, item]))
+
+const statistics = computed<ReportStatistics>(() => deriveReportStatistics(reportList.value))
+const assessmentReportCount = computed(() =>
+  statistics.value.sm_count
+  + statistics.value.weefim_count
+  + statistics.value.csirs_count
+  + statistics.value.conners_psq_count
+  + statistics.value.conners_trs_count
+  + statistics.value.sdq_count
+  + statistics.value.srs2_count
+  + statistics.value.cbcl_count,
+)
+const interventionReportCount = computed(() =>
+  statistics.value.emotional_count
+  + statistics.value.iep_count
+  + statistics.value.training_count,
+)
+
+const currentStudentLabel = computed(() => {
+  if (!filters.value.student_id) return '全部学生'
+  const currentStudent = students.value.find((item) => item.id === filters.value.student_id)
+  return currentStudent?.name || '指定学生'
+})
+
+const currentReportTypeLabel = computed(() => {
+  if (!filters.value.report_type) return '全部类型'
+  return reportTypeMap.get(filters.value.report_type)?.label || '指定类型'
+})
+
+const currentDateRangeLabel = computed(() => {
+  if (!dateRange.value?.[0] || !dateRange.value?.[1]) return '不限时间'
+  return `${dateRange.value[0]} 至 ${dateRange.value[1]}`
+})
+
+const hasActiveFilters = computed(() =>
+  Boolean(filters.value.student_id || filters.value.report_type || dateRange.value?.[0] || dateRange.value?.[1]),
+)
+
+const latestReportDisplay = computed(() => {
+  const latest = reportList.value[0]?.created_at
+  return latest ? formatDate(latest) : '暂无'
+})
+
+const heroTitle = computed(() =>
+  hasActiveFilters.value
+    ? `当前筛选下共 ${reportList.value.length} 份报告`
+    : `统一管理 ${statistics.value.total} 份报告`,
+)
+
+const heroDescription = computed(() => {
+  if (!hasActiveFilters.value) {
+    return '将评估、训练与情绪模块报告统一收口，方便按学生和时间快速检索、跳转与清理。'
+  }
+
+  return `当前按“${currentStudentLabel.value} / ${currentReportTypeLabel.value} / ${currentDateRangeLabel.value}”筛选结果展示。`
+})
+
+const primaryMetrics = computed(() => ([
+  {
+    label: '当前结果',
+    value: reportList.value.length,
+    hint: '当前筛选条件下的报告条数',
+    tone: 'blue',
+  },
+  {
+    label: '评估报告',
+    value: assessmentReportCount.value,
+    hint: '量表与评估类报告汇总',
+    tone: 'teal',
+  },
+  {
+    label: '训练与干预',
+    value: interventionReportCount.value,
+    hint: '情绪模块、IEP 与训练报告',
+    tone: 'amber',
+  },
+  {
+    label: '最近生成',
+    value: latestReportDisplay.value,
+    hint: '按当前结果排序后的最新报告时间',
+    tone: 'coral',
+  },
+]))
+
+const assessmentTypeCards = computed(() => [
+  { key: 'sm', label: 'S-M', value: statistics.value.sm_count, tone: 'blue' as const },
+  { key: 'weefim', label: 'WeeFIM', value: statistics.value.weefim_count, tone: 'teal' as const },
+  { key: 'csirs', label: 'CSIRS', value: statistics.value.csirs_count, tone: 'coral' as const },
+  { key: 'conners-psq', label: 'Conners PSQ', value: statistics.value.conners_psq_count, tone: 'amber' as const },
+  { key: 'conners-trs', label: 'Conners TRS', value: statistics.value.conners_trs_count, tone: 'blue' as const },
+  { key: 'sdq', label: 'SDQ', value: statistics.value.sdq_count, tone: 'amber' as const },
+  { key: 'srs2', label: 'SRS-2', value: statistics.value.srs2_count, tone: 'teal' as const },
+  { key: 'cbcl', label: 'CBCL', value: statistics.value.cbcl_count, tone: 'coral' as const },
+])
+
+const interventionTypeCards = computed(() => [
+  { key: 'emotional', label: '情绪模块', value: statistics.value.emotional_count, tone: 'amber' as const },
+  { key: 'iep', label: 'IEP 报告', value: statistics.value.iep_count, tone: 'blue' as const },
+  { key: 'training', label: '训练报告', value: statistics.value.training_count, tone: 'teal' as const },
+])
+
+function deriveReportStatistics(records: any[]): ReportStatistics {
+  const next: ReportStatistics = {
+    total: 0,
+    sm_count: 0,
+    weefim_count: 0,
+    csirs_count: 0,
+    conners_psq_count: 0,
+    conners_trs_count: 0,
+    sdq_count: 0,
+    srs2_count: 0,
+    cbcl_count: 0,
+    emotional_count: 0,
+    iep_count: 0,
+    training_count: 0,
+  }
+
+  records.forEach((row) => {
+    next.total += 1
+    if (row.report_type === 'sm') next.sm_count += 1
+    if (row.report_type === 'weefim') next.weefim_count += 1
+    if (row.report_type === 'csirs') next.csirs_count += 1
+    if (row.report_type === 'conners-psq') next.conners_psq_count += 1
+    if (row.report_type === 'conners-trs') next.conners_trs_count += 1
+    if (row.report_type === 'sdq') next.sdq_count += 1
+    if (row.report_type === 'srs2') next.srs2_count += 1
+    if (row.report_type === 'cbcl') next.cbcl_count += 1
+    if (row.report_type === 'emotional') next.emotional_count += 1
+    if (row.report_type === 'iep') next.iep_count += 1
+    if (row.report_type === 'training') next.training_count += 1
+  })
+
+  return next
+}
+
+function getReportTypeTagType(type: string) {
+  const typeMap: Record<string, 'warning' | 'success' | 'danger' | 'primary' | 'info'> = {
     sm: 'warning',
     weefim: 'success',
     csirs: 'danger',
@@ -303,41 +459,72 @@ const getReportTypeTagType = (type: string) => {
     cbcl: 'success',
     emotional: 'warning',
     iep: 'danger',
-    training: 'primary'
+    training: 'primary',
   }
   return typeMap[type] || 'info'
 }
 
-const getReportTypeName = (type: string) => {
-  const nameMap: Record<string, string> = {
-    sm: 'S-M 评估报告',
-    weefim: 'WeeFIM 评估报告',
-    csirs: 'CSIRS 评估报告',
-    'conners-psq': 'Conners PSQ 报告',
-    'conners-trs': 'Conners TRS 报告',
-    sdq: 'SDQ 评估报告',
-    srs2: 'SRS-2 评估报告',
-    cbcl: 'CBCL 评估报告',
-    emotional: '情绪行为调节模块报告',
-    iep: 'IEP 报告',
-    training: '训练报告'
-  }
-  return nameMap[type] || '未知类型'
+function getReportTypeName(type: string) {
+  return reportTypeMap.get(type)?.label || '未知类型'
 }
 
-const formatDate = (dateString: string) => {
+function formatDate(dateString: string) {
   if (!dateString) return '-'
   const date = new Date(dateString)
+  if (Number.isNaN(date.getTime())) return dateString
+
   return date.toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   })
 }
 
-const loadStudents = async () => {
+function formatDateString(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function getCurrentWeekRange(): [string, string] {
+  const today = new Date()
+  const day = today.getDay() === 0 ? 7 : today.getDay()
+  const start = new Date(today)
+  start.setHours(0, 0, 0, 0)
+  start.setDate(today.getDate() - day + 1)
+  const end = new Date(start)
+  end.setDate(start.getDate() + 6)
+  return [formatDateString(start), formatDateString(end)]
+}
+
+function getCurrentMonthRange(): [string, string] {
+  const today = new Date()
+  const start = new Date(today.getFullYear(), today.getMonth(), 1)
+  const end = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+  return [formatDateString(start), formatDateString(end)]
+}
+
+function getPresetRange(preset: Exclude<QuickRangeKey, ''>) {
+  if (preset === 'all') return null
+  if (preset === 'week') return getCurrentWeekRange()
+  return getCurrentMonthRange()
+}
+
+function matchesRange(source: [string, string] | null, target: [string, string]) {
+  return Boolean(source && source[0] === target[0] && source[1] === target[1])
+}
+
+function resolveActiveDatePreset(range: [string, string] | null): QuickRangeKey {
+  if (!range?.[0] || !range?.[1]) return 'all'
+  if (matchesRange(range, getCurrentWeekRange())) return 'week'
+  if (matchesRange(range, getCurrentMonthRange())) return 'month'
+  return ''
+}
+
+async function loadStudents() {
   try {
     await studentStore.loadStudents()
     students.value = studentStore.students
@@ -347,12 +534,12 @@ const loadStudents = async () => {
   }
 }
 
-const loadReports = async () => {
+async function loadReports() {
   loading.value = true
   try {
     const api = new ReportAPI()
-
     const params: any = {}
+
     if (filters.value.student_id) {
       params.student_id = filters.value.student_id
     }
@@ -365,8 +552,6 @@ const loadReports = async () => {
     }
 
     reportList.value = api.getReportList(params)
-    const selectedStudentId = filters.value.student_id ? Number(filters.value.student_id) : undefined
-    statistics.value = api.getReportStatistics(selectedStudentId)
   } catch (error) {
     console.error('加载报告列表失败:', error)
     ElMessage.error('加载报告列表失败')
@@ -375,11 +560,30 @@ const loadReports = async () => {
   }
 }
 
-const handleFilter = () => {
+function handleFilter() {
   loadReports()
 }
 
-const viewReport = (report: any) => {
+function applyQuickRange(preset: Exclude<QuickRangeKey, ''>) {
+  activeDatePreset.value = preset
+  dateRange.value = getPresetRange(preset)
+  loadReports()
+}
+
+function handleDateRangeChange(value: [string, string] | null) {
+  activeDatePreset.value = resolveActiveDatePreset(value)
+  loadReports()
+}
+
+function resetFilters() {
+  filters.value.student_id = ''
+  filters.value.report_type = ''
+  dateRange.value = null
+  activeDatePreset.value = 'all'
+  loadReports()
+}
+
+function viewReport(report: any) {
   const routeMap: Record<string, string> = {
     sm: `/assessment/sm/report?assessId=${report.assess_id}&studentId=${report.student_id}`,
     weefim: `/assessment/weefim/report?assessId=${report.assess_id}&studentId=${report.student_id}`,
@@ -399,15 +603,16 @@ const viewReport = (report: any) => {
     router.push(target)
     return
   }
+
   ElMessage.warning('该类型报告暂未实现')
 }
 
-const downloadReport = (report: any) => {
+function downloadReport(report: any) {
   viewReport(report)
   ElMessage.info('请在报告页面执行下载或导出操作')
 }
 
-const deleteReport = async (report: any) => {
+async function deleteReport(report: any) {
   try {
     await ElMessageBox.confirm(
       `确定要删除报告“${report.title}”吗？`,
@@ -415,8 +620,8 @@ const deleteReport = async (report: any) => {
       {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        type: 'warning'
-      }
+        type: 'warning',
+      },
     )
 
     const api = new ReportAPI()
@@ -431,7 +636,7 @@ const deleteReport = async (report: any) => {
   }
 }
 
-const migrateData = async () => {
+async function migrateData() {
   try {
     await ElMessageBox.confirm(
       '此操作将为历史评估数据创建对应的报告记录，不会删除已有数据。',
@@ -439,8 +644,8 @@ const migrateData = async () => {
       {
         confirmButtonText: '开始迁移',
         cancelButtonText: '取消',
-        type: 'warning'
-      }
+        type: 'warning',
+      },
     )
 
     migrating.value = true
@@ -470,125 +675,420 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.filter-item {
-  display: flex;
+.reports-page {
+  gap: 20px;
+}
+
+.reports-header {
+  margin-bottom: 0;
+}
+
+.reports-kicker {
+  display: inline-flex;
   align-items: center;
+  width: fit-content;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--scgp-border-strong);
+  background: rgba(255, 255, 255, 0.82);
+  color: #7b8796;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.reports-kicker--soft {
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.reports-kicker--muted {
+  background: var(--scgp-surface-soft);
+}
+
+.reports-hero,
+.reports-distribution-panel,
+.reports-filters {
+  padding: 24px;
+}
+
+.reports-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+  gap: 22px;
+}
+
+.reports-hero__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.reports-hero__copy h2 {
+  margin: 0;
+  color: var(--scgp-text);
+  font-size: clamp(28px, 2.6vw, 36px);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+
+.reports-hero__copy p {
+  margin: 0;
+  color: var(--scgp-muted);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.reports-summary-chips {
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
-.filter-item label {
-  font-weight: 500;
-  color: #606266;
-  white-space: nowrap;
+.reports-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--scgp-border);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  color: var(--scgp-muted);
+  font-size: 12px;
+}
+
+.reports-hero__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.reports-metric-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 146px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--scgp-border);
+  background: #ffffff;
+}
+
+.reports-metric-card__label {
+  color: var(--scgp-muted);
+  font-size: 13px;
+}
+
+.reports-metric-card__value {
+  color: var(--scgp-text);
+  font-size: clamp(30px, 2.5vw, 40px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.reports-metric-card__hint {
+  color: var(--scgp-subtle);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.reports-metric-card--blue {
+  background: linear-gradient(180deg, #f4f8ff 0%, #ffffff 100%);
+}
+
+.reports-metric-card--teal {
+  background: linear-gradient(180deg, #eefbf8 0%, #ffffff 100%);
+}
+
+.reports-metric-card--amber {
+  background: linear-gradient(180deg, #fff8ea 0%, #ffffff 100%);
+}
+
+.reports-metric-card--coral {
+  background: linear-gradient(180deg, #fff4ee 0%, #ffffff 100%);
+}
+
+.reports-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.reports-section-header h2 {
+  margin: 10px 0 0;
+  color: var(--scgp-text);
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.reports-section-header p {
+  margin: 8px 0 0;
+  color: var(--scgp-muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.reports-section-header--compact h2 {
+  font-size: 22px;
+}
+
+.reports-filter-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.reports-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 180px;
+  flex: 1 1 180px;
+}
+
+.reports-filter-field--wide {
+  min-width: 280px;
+  flex: 1.6 1 320px;
+}
+
+.reports-filter-field label {
+  color: var(--scgp-muted);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .shared-date-range-picker {
   width: 100%;
 }
 
-.stats-row {
-  margin-top: 0;
-}
-
-.secondary-stats-row {
-  margin-top: 20px;
-}
-
-.stat-card {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.stat-content {
+.reports-filter-actions {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
+  margin-left: auto;
 }
 
-.stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
+.reports-quick-range {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: white;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.stat-icon.blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.stat-icon.orange {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.stat-icon.green {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.stat-icon.purple {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.stat-icon.teal {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-}
-
-.stat-icon.pink {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-}
-
-.stat-icon.indigo {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.stat-icon.amber {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
-
-.stat-icon.cyan {
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-}
-
-.stat-icon.emerald {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: 600;
-  color: #303133;
+.reports-range-pill {
+  border: 1px solid rgba(220, 223, 230, 0.9);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--scgp-muted);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
   line-height: 1;
-  margin-bottom: 5px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.22s ease;
 }
 
-.stat-label {
-  font-size: 14px;
-  color: #909399;
+.reports-range-pill:hover {
+  color: var(--scgp-text);
+  border-color: #afcfff;
+  transform: translateY(-1px);
 }
 
-.report-list-card {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.reports-range-pill.is-active {
+  color: #2f74d0;
+  border-color: #66a8ff;
+  background: #eef5ff;
+  box-shadow: 0 10px 20px rgba(102, 168, 255, 0.12);
 }
 
-.list-header {
+.reports-distribution {
+  display: grid;
+  grid-template-columns: 1.25fr 0.9fr;
+  gap: 20px;
+}
+
+.reports-distribution-total {
+  color: var(--scgp-text);
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.reports-type-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.reports-type-grid--assessment {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.reports-type-grid--intervention {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.reports-type-card {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 92px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--scgp-border);
+  background: #ffffff;
+}
+
+.reports-type-card__name {
+  color: var(--scgp-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.reports-type-card__count {
+  color: var(--scgp-text);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.reports-type-card--blue {
+  background: linear-gradient(180deg, #f4f8ff 0%, #ffffff 100%);
+}
+
+.reports-type-card--teal {
+  background: linear-gradient(180deg, #eefbf8 0%, #ffffff 100%);
+}
+
+.reports-type-card--amber {
+  background: linear-gradient(180deg, #fff8ea 0%, #ffffff 100%);
+}
+
+.reports-type-card--coral {
+  background: linear-gradient(180deg, #fff4ee 0%, #ffffff 100%);
+}
+
+.reports-table-panel {
+  padding: 24px;
+}
+
+.reports-table-header {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
 }
 
-:deep(.el-button) {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
+.reports-table-header h2 {
+  margin: 10px 0 0;
+  color: var(--scgp-text);
+  font-size: 24px;
+  line-height: 1.15;
 }
 
-:deep(.el-button i) {
+.reports-table-header p {
+  margin: 8px 0 0;
+  color: var(--scgp-muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.reports-table-header__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 112px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--scgp-border);
+  background: var(--scgp-surface-soft);
+  color: var(--scgp-muted);
   font-size: 12px;
+}
+
+.reports-table-header__summary strong {
+  color: var(--scgp-text);
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.reports-table :deep(.el-table__header th) {
+  background: #fbfcfe;
+  color: var(--scgp-muted);
+  font-weight: 600;
+}
+
+.reports-table :deep(.el-table__body td) {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.reports-student-name {
+  color: var(--scgp-text);
+  font-weight: 500;
+}
+
+.report-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.report-action-button {
+  min-height: 34px;
+}
+
+@media (max-width: 1280px) {
+  .reports-hero,
+  .reports-distribution {
+    grid-template-columns: 1fr;
+  }
+
+  .reports-type-grid--assessment {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .reports-page {
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .reports-hero,
+  .reports-distribution-panel,
+  .reports-filters,
+  .reports-table-panel {
+    padding: 18px;
+  }
+
+  .reports-hero__metrics,
+  .reports-type-grid--assessment,
+  .reports-type-grid--intervention {
+    grid-template-columns: 1fr;
+  }
+
+  .reports-section-header,
+  .reports-table-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .reports-filter-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .reports-quick-range {
+    width: 100%;
+  }
+
+  .reports-filter-actions :deep(.el-button) {
+    flex: 1 1 0;
+  }
 }
 </style>

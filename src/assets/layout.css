@@ -4,6 +4,31 @@
  * 标杆：PlanList.vue
  */
 
+:root {
+  --scgp-bg: #f5f7fa;
+  --scgp-bg-soft: #f8fbff;
+  --scgp-surface: #ffffff;
+  --scgp-surface-soft: #f7fafc;
+  --scgp-border: #e6ebf2;
+  --scgp-border-strong: #d9e2ee;
+  --scgp-text: #303133;
+  --scgp-muted: #606266;
+  --scgp-subtle: #909399;
+  --scgp-primary: #5f89d9;
+  --scgp-primary-soft: #edf4ff;
+  --scgp-coral: #da8166;
+  --scgp-coral-soft: #fff1ea;
+  --scgp-teal: #2f9f93;
+  --scgp-teal-soft: #e8f7f4;
+  --scgp-success: #2aa071;
+  --scgp-warning: #ba7517;
+  --scgp-danger: #d85d55;
+  --scgp-radius-lg: 18px;
+  --scgp-radius-xl: 22px;
+  --scgp-shadow-soft: 0 18px 44px rgba(143, 169, 204, 0.12);
+  --scgp-shadow-sm: 0 10px 30px rgba(143, 169, 204, 0.1);
+}
+
 /* ========================================
    全局页面标准外层容器
    ======================================== */
@@ -14,6 +39,79 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+}
+
+/* ========================================
+   SCGP 共享视觉语言
+   用于逐步统一核心业务页面的颜色、字号、卡片和交互语义
+   ======================================== */
+.scgp-admin-page {
+  background:
+    radial-gradient(circle at top right, rgba(102, 168, 255, 0.12), transparent 26%),
+    linear-gradient(180deg, var(--scgp-bg-soft) 0%, var(--scgp-bg) 34%, var(--scgp-bg) 100%);
+}
+
+.scgp-surface {
+  background: var(--scgp-surface);
+  border: 1px solid var(--scgp-border);
+  border-radius: var(--scgp-radius-xl);
+  box-shadow: var(--scgp-shadow-soft);
+}
+
+.scgp-admin-page .page-header .header-left h1 {
+  color: var(--scgp-text);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.scgp-admin-page .page-header .subtitle {
+  color: var(--scgp-muted);
+  line-height: 1.6;
+}
+
+.scgp-admin-page .page-header .header-right .el-button {
+  min-height: 40px;
+  border-radius: 999px;
+}
+
+.scgp-admin-page .page-header .header-right .el-button--primary {
+  box-shadow: 0 12px 24px rgba(95, 137, 217, 0.18);
+}
+
+.scgp-admin-page .scgp-filter-surface.filter-section {
+  padding: 16px 18px;
+  border: 1px solid var(--scgp-border);
+  border-radius: var(--scgp-radius-lg);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--scgp-shadow-sm);
+}
+
+.scgp-admin-page .scgp-page-panel.main-content,
+.scgp-admin-page .scgp-page-panel.content {
+  border: 1px solid var(--scgp-border);
+  border-radius: var(--scgp-radius-xl);
+  box-shadow: var(--scgp-shadow-soft);
+}
+
+.scgp-admin-page .scgp-summary-card.summary-card {
+  min-height: 120px;
+  padding: 20px 22px;
+  border: 1px solid var(--scgp-border);
+  border-radius: var(--scgp-radius-lg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 251, 255, 0.98) 100%);
+  box-shadow: 0 10px 24px rgba(143, 169, 204, 0.08);
+}
+
+.scgp-admin-page .scgp-summary-card.summary-card .summary-card__label {
+  color: var(--scgp-muted);
+  font-size: 13px;
+}
+
+.scgp-admin-page .scgp-summary-card.summary-card .summary-card__value {
+  color: var(--scgp-text);
+  font-size: clamp(32px, 2.6vw, 42px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
 }
 
 /* ========================================

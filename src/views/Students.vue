@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container student-management-page">
+  <div class="page-container scgp-admin-page student-management-page">
     <div class="page-header student-management-header">
       <div class="header-left">
         <h1>学生管理</h1>
@@ -17,7 +17,7 @@
       </div>
     </div>
 
-    <section class="filter-section student-filter-section">
+    <section class="filter-section scgp-filter-surface student-filter-section">
       <div class="filter-toolbar">
         <div class="student-search">
           <el-input
@@ -72,26 +72,26 @@
       </div>
     </section>
 
-    <section class="stats-row" aria-label="学生统计概览">
-      <article class="summary-card">
+    <section class="stats-row scgp-stats-row" aria-label="学生统计概览">
+      <article class="summary-card scgp-summary-card">
         <div class="summary-card__label">学生总数</div>
         <div class="summary-card__value">{{ summaryStats.total }}</div>
       </article>
-      <article class="summary-card">
+      <article class="summary-card scgp-summary-card">
         <div class="summary-card__label">已分班</div>
         <div class="summary-card__value">{{ summaryStats.assigned }}</div>
       </article>
-      <article class="summary-card">
+      <article class="summary-card scgp-summary-card">
         <div class="summary-card__label">未分班</div>
         <div class="summary-card__value">{{ summaryStats.unassigned }}</div>
       </article>
-      <article class="summary-card">
+      <article class="summary-card scgp-summary-card">
         <div class="summary-card__label">本月新增</div>
         <div class="summary-card__value">{{ summaryStats.newThisMonth }}</div>
       </article>
     </section>
 
-    <div class="main-content" v-loading="studentStore.loading">
+    <div class="main-content scgp-page-panel" v-loading="studentStore.loading">
       <div v-if="filteredStudents.length > 0" class="students-grid">
         <article v-for="student in filteredStudents" :key="student.id" class="student-card">
           <div class="student-card__top">

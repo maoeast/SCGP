@@ -19,7 +19,7 @@ Usually those three files are enough to resume work safely.
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `Student detail page now includes assessment, equipment-training, and game-training record lists; runtime verification is still pending`
+- active work scope: `SCGP core admin/workbench UI unification started; StudentDetail, Dashboard, and Reports are aligned to the shared visual language; ResourceCenter is the next target`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

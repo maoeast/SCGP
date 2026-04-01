@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container student-class-page">
+  <div class="page-container scgp-admin-page student-class-page">
     <div class="page-header">
       <div class="header-left">
         <h1>学生分班</h1>
@@ -17,7 +17,7 @@
       </div>
     </div>
 
-    <section class="filter-section student-filter-section">
+    <section class="filter-section scgp-filter-surface student-filter-section">
       <div class="filter-toolbar">
         <div class="status-pill-list" role="tablist" aria-label="学生状态筛选">
           <button
@@ -68,7 +68,7 @@
       </div>
     </section>
 
-    <div class="main-content">
+    <div class="main-content scgp-page-panel">
       <el-tabs v-model="activeTab" class="tabs">
         <el-tab-pane label="分班管理" name="assign">
           <el-card shadow="never" class="student-list-card">

@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container class-management-page">
+  <div class="page-container scgp-admin-page class-management-page">
     <div class="page-header class-management-header">
       <div class="header-left">
         <h1>班级管理</h1>
@@ -21,8 +21,8 @@
       </div>
     </div>
 
-    <div class="content class-management-content">
-      <section class="filter-section class-filter-section">
+    <div class="content scgp-page-panel class-management-content">
+      <section class="filter-section scgp-filter-surface class-filter-section">
         <div class="filter-toolbar">
           <div class="grade-pill-list" role="tablist" aria-label="年级筛选">
             <button
@@ -46,20 +46,20 @@
         </div>
       </section>
 
-      <section class="stats-row" aria-label="班级统计概览">
-        <article class="summary-card">
+      <section class="stats-row scgp-stats-row" aria-label="班级统计概览">
+        <article class="summary-card scgp-summary-card">
           <div class="summary-card__label">总训练次数</div>
           <div class="summary-card__value">{{ totalTrainingCount }}</div>
         </article>
-        <article class="summary-card">
+        <article class="summary-card scgp-summary-card">
           <div class="summary-card__label">总评估次数</div>
           <div class="summary-card__value">{{ totalAssessmentCount }}</div>
         </article>
-        <article class="summary-card">
+        <article class="summary-card scgp-summary-card">
           <div class="summary-card__label">平均分</div>
           <div class="summary-card__value">{{ displayAverageScore }}</div>
         </article>
-        <article class="summary-card">
+        <article class="summary-card scgp-summary-card">
           <div class="summary-card__label">活跃班级</div>
           <div class="summary-card__value">{{ activeClassesCount }}</div>
         </article>

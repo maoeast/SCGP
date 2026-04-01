@@ -1,7 +1,8 @@
 <template>
-  <div class="page-container dashboard-page" v-loading="loading">
-    <div class="page-header">
+  <div class="page-container scgp-admin-page dashboard-page" v-loading="loading">
+    <div class="page-header dashboard-header">
       <div class="header-left">
+        <span class="dashboard-kicker">实时总览</span>
         <h1>首页看板</h1>
         <p class="subtitle">聚焦今天要做的评估、训练与干预提醒，用真实业务数据支持一线决策。</p>
       </div>
@@ -13,202 +14,254 @@
       </div>
     </div>
 
-    <section class="top-section">
-      <div class="metrics-grid">
-        <el-card
+    <section class="dashboard-hero scgp-surface">
+      <div class="dashboard-hero__main">
+        <span class="dashboard-kicker dashboard-kicker--soft">今日焦点</span>
+        <h2>{{ focusPanel.title }}</h2>
+        <p>{{ focusPanel.description }}</p>
+
+        <div class="dashboard-highlight-grid">
+          <article
+            v-for="highlight in heroHighlights"
+            :key="highlight.label"
+            class="dashboard-highlight"
+          >
+            <span class="dashboard-highlight__label">{{ highlight.label }}</span>
+            <strong class="dashboard-highlight__value">{{ highlight.value }}</strong>
+          </article>
+        </div>
+      </div>
+
+      <div class="dashboard-hero__metrics">
+        <article
           v-for="metric in metrics"
           :key="metric.label"
-          shadow="hover"
-          class="metric-card"
+          :class="['hero-metric-card', `hero-metric-card--${metric.tone}`]"
         >
-          <div class="metric-icon" :style="{ background: metric.background, color: metric.color }">
-            <el-icon :size="24">
-              <component :is="metric.icon" />
-            </el-icon>
+          <div class="hero-metric-card__top">
+            <span class="hero-metric-card__icon">
+              <el-icon :size="18">
+                <component :is="metric.icon" />
+              </el-icon>
+            </span>
+            <span class="hero-metric-card__label">{{ metric.label }}</span>
           </div>
-          <div class="metric-body">
-            <span class="metric-label">{{ metric.label }}</span>
-            <strong class="metric-value">{{ metric.value }}</strong>
-            <span class="metric-hint">{{ metric.hint }}</span>
-          </div>
-        </el-card>
+
+          <strong class="hero-metric-card__value">{{ metric.value }}</strong>
+          <span class="hero-metric-card__hint">{{ metric.hint }}</span>
+        </article>
       </div>
     </section>
 
-    <section class="quick-section">
-      <div class="section-title">
-        <h2>快捷操作区</h2>
-        <span>高频业务入口</span>
+    <section class="dashboard-surface scgp-surface">
+      <div class="dashboard-section-header">
+        <div>
+          <span class="dashboard-kicker dashboard-kicker--muted">工作入口</span>
+          <h2>快捷操作区</h2>
+          <p>将高频业务入口收口到一个区域，减少在模块之间来回切换。</p>
+        </div>
       </div>
+
       <div class="quick-grid">
-        <el-card
+        <button
           v-for="action in quickActions"
           :key="action.label"
-          shadow="hover"
-          class="quick-card"
-          :class="{ 'quick-card--locked': isActionLocked(action) }"
+          type="button"
+          :class="[
+            'quick-card',
+            `quick-card--${action.tone}`,
+            { 'is-locked': isActionLocked(action) },
+          ]"
           @click="goTo(action)"
         >
-          <div class="quick-icon" :style="{ background: action.background, color: action.color }">
+          <div class="quick-card__topline">
+            <span class="quick-card__badge">
+              {{ isActionLocked(action) ? '未授权' : '推荐入口' }}
+            </span>
+            <el-icon class="quick-card__arrow"><ArrowRight /></el-icon>
+          </div>
+
+          <div class="quick-card__icon">
             <el-icon :size="24">
               <component :is="action.icon" />
             </el-icon>
           </div>
-          <div class="quick-body">
-            <h3>
-              {{ action.label }}
-              <span v-if="isActionLocked(action)" class="quick-lock">🔒</span>
-            </h3>
+
+          <div class="quick-card__body">
+            <h3>{{ action.label }}</h3>
             <p>{{ action.description }}</p>
           </div>
-          <el-icon class="quick-arrow"><ArrowRight /></el-icon>
-        </el-card>
+        </button>
       </div>
     </section>
 
-    <section class="board-section">
-      <el-row :gutter="20" class="board-row">
-        <el-col :xs="24" :lg="13">
-          <el-card class="board-card schedule-card" shadow="never">
-            <template #header>
-              <div class="board-header">
-                <div>
-                  <h2>今日训练日程</h2>
-                  <p>当前处于执行周期内的真实训练计划</p>
-                </div>
-                <el-tag type="primary" effect="light">{{ snapshot.overview.todayTaskCount }} 项</el-tag>
-              </div>
-            </template>
+    <section class="dashboard-board">
+      <article class="dashboard-surface scgp-surface schedule-panel">
+        <div class="dashboard-panel-header">
+          <div>
+            <span class="dashboard-kicker dashboard-kicker--muted">执行工作台</span>
+            <h2>今日训练日程</h2>
+            <p>当前处于执行周期内的真实训练计划，可直接从这里发起训练。</p>
+          </div>
+          <div class="dashboard-panel-header__side">
+            <span class="dashboard-panel-count">{{ snapshot.overview.todayTaskCount }} 项</span>
+          </div>
+        </div>
 
-            <el-empty
-              v-if="snapshot.schedule.length === 0"
-              description="今日暂无训练安排"
-            />
+        <el-empty
+          v-if="snapshot.schedule.length === 0"
+          description="今日暂无训练安排"
+        />
 
-            <div v-else class="schedule-list">
-              <div
-                v-for="item in snapshot.schedule"
-                :key="item.planId"
-                class="schedule-item"
-              >
-                <div class="student-avatar">
-                  <img v-if="item.avatarPath" :src="item.avatarPath" :alt="item.studentName" />
-                  <el-icon v-else><UserFilled /></el-icon>
-                </div>
+        <div v-else class="schedule-list">
+          <article
+            v-for="item in snapshot.schedule"
+            :key="item.planId"
+            class="schedule-item"
+          >
+            <div class="schedule-item__main">
+              <StudentAvatar
+                :name="item.studentName"
+                :avatar-url="item.avatarPath || undefined"
+                size="md"
+              />
 
-                <div class="schedule-main">
-                  <div class="schedule-topline">
-                    <h3>{{ item.studentName }}</h3>
-                    <el-tag size="small" effect="light">{{ getModuleLabel(item.moduleCode) }}</el-tag>
-                  </div>
-                  <p class="schedule-plan">{{ item.planName }}</p>
-                  <div class="schedule-meta">
-                    <span>周期：{{ formatDateRange(item.startDate, item.endDate) }}</span>
-                    <span>资源：{{ item.resourceCount }} 项</span>
-                    <span v-if="item.launchResourceName">首项：{{ item.launchResourceName }}</span>
-                  </div>
+              <div class="schedule-item__content">
+                <div class="schedule-item__topline">
+                  <h3>{{ item.studentName }}</h3>
+                  <el-tag size="small" effect="plain">{{ getModuleLabel(item.moduleCode) }}</el-tag>
                 </div>
 
-                <div class="schedule-action">
-                  <el-button
-                    type="primary"
-                    plain
-                    :disabled="!item.launchResourceId || !item.launchResourceType"
-                    @click="openPlanModule(item)"
-                  >
-                    <el-icon><VideoPlay /></el-icon>
-                    开始训练
-                  </el-button>
+                <p class="schedule-item__plan">{{ item.planName }}</p>
+
+                <div class="schedule-item__meta">
+                  <span>周期：{{ formatDateRange(item.startDate, item.endDate) }}</span>
+                  <span>资源：{{ item.resourceCount }} 项</span>
+                  <span v-if="item.launchResourceName">首项：{{ item.launchResourceName }}</span>
                 </div>
               </div>
             </div>
-          </el-card>
-        </el-col>
 
-        <el-col :xs="24" :lg="11">
-          <div class="right-column">
-            <el-card class="board-card anomaly-card" shadow="never">
-              <template #header>
-                <div class="board-header">
-                  <div>
-                    <h2>本周异常预警</h2>
-                    <p>过去 7 天内需要关注的训练波动</p>
-                  </div>
-                  <el-tag type="danger" effect="light">{{ snapshot.overview.weeklyAnomalyCount }} 条</el-tag>
-                </div>
-              </template>
+            <div class="schedule-item__actions">
+              <el-button
+                type="primary"
+                plain
+                :disabled="!item.launchResourceId || !item.launchResourceType"
+                @click="openPlanModule(item)"
+              >
+                <el-icon><VideoPlay /></el-icon>
+                开始训练
+              </el-button>
+            </div>
+          </article>
+        </div>
+      </article>
 
-              <el-empty
-                v-if="snapshot.anomalies.length === 0"
-                description="本周干预数据平稳"
-              />
-
-              <div v-else class="alert-list compact">
-                <div
-                  v-for="item in displayedAnomalies"
-                  :key="item.id"
-                  class="alert-item anomaly"
-                >
-                  <div class="alert-marker danger"></div>
-                  <div class="alert-body">
-                    <div class="alert-title-row">
-                      <h3>{{ item.studentName }}</h3>
-                      <span class="alert-time">{{ formatDateTime(item.createdAt) }}</span>
-                    </div>
-                    <p class="alert-desc">
-                      {{ item.moduleLabel }} / {{ item.sessionLabel }} · {{ item.reason }}
-                    </p>
-                    <div class="alert-metrics">
-                      <span v-if="item.accuracyRate !== null">正确率 {{ formatPercent(item.accuracyRate) }}</span>
-                      <span v-if="item.averageHintLevel !== null">平均提示 {{ item.averageHintLevel.toFixed(1) }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </el-card>
-
-            <el-card class="board-card assistant-card" shadow="never">
-              <template #header>
-                <div class="board-header">
-                  <div>
-                    <h2>智能特教助理</h2>
-                    <p>基于真实评估缺口的干预建议</p>
-                  </div>
-                  <el-tag type="warning" effect="light">{{ snapshot.assessmentAlerts.length }} 条</el-tag>
-                </div>
-              </template>
-
-              <el-empty
-                v-if="snapshot.assessmentAlerts.length === 0"
-                description="当前暂无待评估预警"
-              />
-
-              <div v-else class="alert-list">
-                <div
-                  v-for="item in displayedAssessmentAlerts"
-                  :key="item.studentId"
-                  class="alert-item assistant"
-                >
-                  <div class="alert-marker warning"></div>
-                  <div class="alert-body">
-                    <div class="alert-title-row">
-                      <h3>{{ item.studentName }}</h3>
-                      <span class="alert-time">
-                        {{ item.lastAssessmentAt ? `上次评估：${formatDate(item.lastAssessmentAt)}` : '尚无评估记录' }}
-                      </span>
-                    </div>
-                    <p class="alert-desc">{{ item.suggestion }}</p>
-                    <div class="alert-metrics">
-                      <span v-if="item.disorder">{{ item.disorder }}</span>
-                      <span v-if="item.daysSinceLastAssessment !== null">间隔 {{ item.daysSinceLastAssessment }} 天</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </el-card>
+      <div class="dashboard-board__stack">
+        <article class="dashboard-surface scgp-surface alert-panel">
+          <div class="dashboard-panel-header">
+            <div>
+              <span class="dashboard-kicker dashboard-kicker--muted">风险提示</span>
+              <h2>本周异常预警</h2>
+              <p>过去 7 天内需要关注的训练波动，优先查看低正确率与高提示依赖。</p>
+            </div>
+            <div class="dashboard-panel-header__side">
+              <span class="dashboard-panel-count dashboard-panel-count--danger">
+                {{ snapshot.overview.weeklyAnomalyCount }} 条
+              </span>
+            </div>
           </div>
-        </el-col>
-      </el-row>
+
+          <el-empty
+            v-if="snapshot.anomalies.length === 0"
+            description="本周干预数据平稳"
+          />
+
+          <div v-else class="alert-list">
+            <article
+              v-for="item in displayedAnomalies"
+              :key="item.id"
+              class="alert-item alert-item--danger"
+            >
+              <span class="alert-item__accent"></span>
+
+              <StudentAvatar
+                :name="item.studentName"
+                :avatar-url="item.avatarPath || undefined"
+                size="md"
+              />
+
+              <div class="alert-item__body">
+                <div class="alert-item__topline">
+                  <h3>{{ item.studentName }}</h3>
+                  <span class="alert-item__time">{{ formatDateTime(item.createdAt) }}</span>
+                </div>
+
+                <p class="alert-item__desc">
+                  {{ item.moduleLabel }} / {{ item.sessionLabel }} · {{ item.reason }}
+                </p>
+
+                <div class="alert-item__meta">
+                  <span v-if="item.accuracyRate !== null">正确率 {{ formatPercent(item.accuracyRate) }}</span>
+                  <span v-if="item.averageHintLevel !== null">平均提示 {{ item.averageHintLevel.toFixed(1) }}</span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </article>
+
+        <article class="dashboard-surface scgp-surface alert-panel">
+          <div class="dashboard-panel-header">
+            <div>
+              <span class="dashboard-kicker dashboard-kicker--muted">评估提醒</span>
+              <h2>智能特教助理</h2>
+              <p>根据真实评估缺口提供优先干预建议，帮助尽快补齐学生评估基线。</p>
+            </div>
+            <div class="dashboard-panel-header__side">
+              <span class="dashboard-panel-count dashboard-panel-count--warning">
+                {{ snapshot.assessmentAlerts.length }} 条
+              </span>
+            </div>
+          </div>
+
+          <el-empty
+            v-if="snapshot.assessmentAlerts.length === 0"
+            description="当前暂无待评估预警"
+          />
+
+          <div v-else class="alert-list">
+            <article
+              v-for="item in displayedAssessmentAlerts"
+              :key="item.studentId"
+              class="alert-item alert-item--warning"
+            >
+              <span class="alert-item__accent"></span>
+
+              <StudentAvatar
+                :name="item.studentName"
+                :avatar-url="item.avatarPath || undefined"
+                size="md"
+              />
+
+              <div class="alert-item__body">
+                <div class="alert-item__topline">
+                  <h3>{{ item.studentName }}</h3>
+                  <span class="alert-item__time">
+                    {{ item.lastAssessmentAt ? `上次评估：${formatDate(item.lastAssessmentAt)}` : '尚无评估记录' }}
+                  </span>
+                </div>
+
+                <p class="alert-item__desc">{{ item.suggestion }}</p>
+
+                <div class="alert-item__meta">
+                  <span v-if="item.disorder">{{ item.disorder }}</span>
+                  <span v-if="item.daysSinceLastAssessment !== null">间隔 {{ item.daysSinceLastAssessment }} 天</span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </article>
+      </div>
     </section>
   </div>
 </template>
@@ -225,10 +278,11 @@ import {
   MagicStick,
   Monitor,
   RefreshRight,
-  UserFilled,
   VideoPlay,
   Warning,
+  UserFilled,
 } from '@element-plus/icons-vue'
+import StudentAvatar from '@/components/student/StudentAvatar.vue'
 import {
   DashboardAPI,
   type DashboardScheduleItem,
@@ -236,6 +290,11 @@ import {
 } from '@/database/dashboard-api'
 import { resolveTrainingLaunch } from '@/utils/training-launch'
 import { useAuthStore } from '@/stores/auth'
+
+type DashboardTone = 'blue' | 'amber' | 'green' | 'coral'
+type QuickActionTone = 'blue' | 'teal' | 'coral' | 'green'
+
+const BUSINESS_MODULE_TOTAL = 5
 
 const router = useRouter()
 const dashboardApi = new DashboardAPI()
@@ -269,32 +328,28 @@ const metrics = computed(() => ([
     value: snapshot.value.overview.studentCount,
     hint: '当前系统内在册学生',
     icon: UserFilled,
-    background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
-    color: '#0369a1',
+    tone: 'blue' as DashboardTone,
   },
   {
     label: '待评估提醒',
     value: snapshot.value.overview.pendingAssessmentCount,
     hint: '超过 6 个月未评估或尚无评估记录',
     icon: EditPen,
-    background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-    color: '#b45309',
+    tone: 'amber' as DashboardTone,
   },
   {
     label: '今日训练任务',
     value: snapshot.value.overview.todayTaskCount,
     hint: '今日处于执行周期内的训练计划',
     icon: Calendar,
-    background: 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)',
-    color: '#15803d',
+    tone: 'green' as DashboardTone,
   },
   {
     label: '本周异常预警',
     value: snapshot.value.overview.weeklyAnomalyCount,
     hint: '低正确率或高提示依赖',
     icon: Warning,
-    background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
-    color: '#b91c1c',
+    tone: 'coral' as DashboardTone,
   },
 ]))
 
@@ -305,8 +360,7 @@ const quickActions = [
     path: '/assessment',
     moduleCode: 'sensory',
     icon: EditPen,
-    background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-    color: '#1d4ed8',
+    tone: 'blue' as QuickActionTone,
   },
   {
     label: '启动感官游戏',
@@ -314,8 +368,7 @@ const quickActions = [
     path: '/games/menu',
     moduleCode: 'sensory',
     icon: Monitor,
-    background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
-    color: '#6d28d9',
+    tone: 'teal' as QuickActionTone,
   },
   {
     label: '情绪场景训练',
@@ -323,8 +376,7 @@ const quickActions = [
     path: '/emotional/menu',
     moduleCode: 'emotional',
     icon: MagicStick,
-    background: 'linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)',
-    color: '#c2410c',
+    tone: 'coral' as QuickActionTone,
   },
   {
     label: '录入训练记录',
@@ -332,13 +384,62 @@ const quickActions = [
     path: '/training-records/menu',
     moduleCode: 'sensory',
     icon: DataAnalysis,
-    background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-    color: '#15803d',
+    tone: 'green' as QuickActionTone,
   },
 ]
 
 const displayedAnomalies = computed(() => snapshot.value.anomalies.slice(0, 4))
 const displayedAssessmentAlerts = computed(() => snapshot.value.assessmentAlerts.slice(0, 4))
+const accessibleModuleCount = computed(() => new Set(authStore.allowedModules).size)
+
+const focusPanel = computed(() => {
+  const overview = snapshot.value.overview
+
+  if (overview.todayTaskCount > 0) {
+    return {
+      title: `今天有 ${overview.todayTaskCount} 项训练任务待执行`,
+      description: '优先从今日日程区直接发起训练，减少在计划、学生与资源之间反复跳转。',
+    }
+  }
+
+  if (overview.weeklyAnomalyCount > 0) {
+    return {
+      title: `本周发现 ${overview.weeklyAnomalyCount} 条异常预警`,
+      description: '建议先查看异常波动学生，确认是否存在训练难度不匹配或提示依赖上升。',
+    }
+  }
+
+  if (overview.pendingAssessmentCount > 0) {
+    return {
+      title: `当前有 ${overview.pendingAssessmentCount} 条待评估提醒`,
+      description: '建议优先补齐长期未评估或尚未建立基线的学生档案，避免干预决策缺少依据。',
+    }
+  }
+
+  return {
+    title: '今天的训练节奏相对平稳',
+    description: '当前没有待处理的训练日程或显著预警，可以从快捷入口进入日常业务。',
+  }
+})
+
+const heroHighlights = computed(() => ([
+  {
+    label: '当前学生',
+    value: `${snapshot.value.overview.studentCount} 名`,
+  },
+  {
+    label: '已授权模块',
+    value: `${accessibleModuleCount.value}/${BUSINESS_MODULE_TOTAL}`,
+  },
+  {
+    label: '待评估',
+    value: `${snapshot.value.overview.pendingAssessmentCount} 条`,
+  },
+  {
+    label: '本周预警',
+    value: `${snapshot.value.overview.weeklyAnomalyCount} 条`,
+  },
+]))
 
 const isActionLocked = (action: { moduleCode: string }) => !authStore.hasModuleAccess(action.moduleCode)
 
@@ -371,7 +472,7 @@ function openPlanModule(item: DashboardScheduleItem) {
       resourceName: item.launchResourceName || undefined,
       resourceModuleCode: item.launchResourceModuleCode || undefined,
     },
-    authStore.hasModuleAccess
+    authStore.hasModuleAccess,
   )
 
   if (!resolution.authorized) {
@@ -392,6 +493,8 @@ function formatPercent(value: number) {
 }
 
 function formatDate(value: string) {
+  if (!value) return '-'
+
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {
     return value
@@ -401,10 +504,14 @@ function formatDate(value: string) {
 
 function formatDateRange(startDate: string, endDate: string) {
   if (!startDate && !endDate) return '进行中'
+  if (!startDate) return `至 ${formatDate(endDate)}`
+  if (!endDate) return `${formatDate(startDate)} 起`
   return `${formatDate(startDate)} - ${formatDate(endDate)}`
 }
 
 function formatDateTime(value: string) {
+  if (!value) return '-'
+
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {
     return value
@@ -432,198 +539,348 @@ onMounted(() => {
 
 <style scoped>
 .dashboard-page {
-  gap: 24px;
-  background:
-    radial-gradient(circle at top left, rgba(56, 189, 248, 0.08), transparent 30%),
-    radial-gradient(circle at top right, rgba(34, 197, 94, 0.08), transparent 28%),
-    linear-gradient(180deg, #f8fbff 0%, #f3f6fb 100%);
+  gap: 20px;
 }
 
-.top-section,
-.quick-section,
-.board-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.dashboard-header {
+  margin-bottom: 0;
 }
 
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.metric-card {
-  border: none;
-  border-radius: 18px;
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
-}
-
-.metric-card :deep(.el-card__body) {
-  display: flex;
+.dashboard-kicker {
+  display: inline-flex;
   align-items: center;
-  gap: 18px;
-  padding: 22px 24px;
-}
-
-.metric-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.metric-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.metric-label {
-  font-size: 13px;
-  color: #64748b;
-}
-
-.metric-value {
-  font-size: 32px;
-  line-height: 1.1;
-  color: #0f172a;
-}
-
-.metric-hint {
+  width: fit-content;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--scgp-border-strong);
+  background: rgba(255, 255, 255, 0.82);
+  color: #7b8796;
   font-size: 12px;
-  color: #94a3b8;
+  line-height: 1;
 }
 
-.section-title {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+.dashboard-kicker--soft {
+  background: rgba(255, 255, 255, 0.68);
 }
 
-.section-title h2 {
-  margin: 0;
-  font-size: 20px;
-  color: #0f172a;
+.dashboard-kicker--muted {
+  background: var(--scgp-surface-soft);
 }
 
-.section-title span {
-  font-size: 13px;
-  color: #64748b;
+.dashboard-hero,
+.dashboard-surface {
+  padding: 24px;
 }
 
-.quick-grid {
+.dashboard-hero {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.95fr);
+  gap: 22px;
 }
 
-.quick-card {
-  cursor: pointer;
-  border: none;
+.dashboard-hero__main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dashboard-hero__main h2 {
+  margin: 0;
+  color: var(--scgp-text);
+  font-size: clamp(28px, 2.7vw, 36px);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+
+.dashboard-hero__main p {
+  margin: 0;
+  max-width: 620px;
+  color: var(--scgp-muted);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.dashboard-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.dashboard-highlight {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--scgp-border);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.dashboard-highlight__label {
+  color: var(--scgp-subtle);
+  font-size: 12px;
+}
+
+.dashboard-highlight__value {
+  color: var(--scgp-text);
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.dashboard-hero__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.hero-metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 144px;
+  padding: 18px;
   border-radius: 18px;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.07);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border: 1px solid var(--scgp-border);
+  background: #ffffff;
 }
 
-.quick-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.11);
-}
-
-.quick-card.quick-card--locked {
-  opacity: 0.72;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-}
-
-.quick-card.quick-card--locked:hover {
-  transform: none;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.07);
-}
-
-.quick-card :deep(.el-card__body) {
+.hero-metric-card__top {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
+  gap: 10px;
 }
 
-.quick-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  display: flex;
+.hero-metric-card__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 14px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
 
-.quick-body {
-  flex: 1;
-}
-
-.quick-body h3 {
-  margin: 0 0 4px;
-  font-size: 16px;
-  color: #0f172a;
-}
-
-.quick-lock {
-  margin-left: 6px;
-  font-size: 14px;
-}
-
-.quick-body p {
-  margin: 0;
+.hero-metric-card__label {
+  color: var(--scgp-muted);
   font-size: 13px;
+}
+
+.hero-metric-card__value {
+  color: var(--scgp-text);
+  font-size: clamp(34px, 3vw, 42px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.hero-metric-card__hint {
+  color: var(--scgp-subtle);
+  font-size: 12px;
   line-height: 1.6;
-  color: #64748b;
 }
 
-.quick-arrow {
-  color: #94a3b8;
+.hero-metric-card--blue .hero-metric-card__icon {
+  background: var(--scgp-primary-soft);
+  color: var(--scgp-primary);
 }
 
-.board-row {
-  width: 100%;
-  margin: 0 !important;
+.hero-metric-card--amber .hero-metric-card__icon {
+  background: #fff5dd;
+  color: var(--scgp-warning);
 }
 
-.board-card {
-  border: none;
-  border-radius: 20px;
-  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
+.hero-metric-card--green .hero-metric-card__icon {
+  background: #eaf8f0;
+  color: var(--scgp-success);
 }
 
-.board-card :deep(.el-card__header) {
-  padding: 20px 22px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+.hero-metric-card--coral .hero-metric-card__icon {
+  background: var(--scgp-coral-soft);
+  color: var(--scgp-coral);
 }
 
-.board-card :deep(.el-card__body) {
-  padding: 20px 22px;
-}
-
-.board-header {
+.dashboard-section-header,
+.dashboard-panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
 }
 
-.board-header h2 {
-  margin: 0;
-  font-size: 18px;
-  color: #0f172a;
+.dashboard-section-header h2,
+.dashboard-panel-header h2 {
+  margin: 10px 0 0;
+  color: var(--scgp-text);
+  font-size: 24px;
+  line-height: 1.15;
 }
 
-.board-header p {
-  margin: 6px 0 0;
+.dashboard-section-header p,
+.dashboard-panel-header p {
+  margin: 8px 0 0;
+  color: var(--scgp-muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.dashboard-panel-header__side {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-panel-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--scgp-primary-soft);
+  color: var(--scgp-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dashboard-panel-count--danger {
+  background: #fff1ea;
+  color: var(--scgp-coral);
+}
+
+.dashboard-panel-count--warning {
+  background: #fff5dd;
+  color: var(--scgp-warning);
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.quick-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 214px;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid var(--scgp-border);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.quick-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 36px rgba(143, 169, 204, 0.16);
+}
+
+.quick-card.is-locked {
+  opacity: 0.74;
+}
+
+.quick-card.is-locked:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.quick-card__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.quick-card__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid currentColor;
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.92;
+}
+
+.quick-card__arrow {
+  color: var(--scgp-subtle);
+}
+
+.quick-card__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quick-card__body h3 {
+  margin: 0;
+  color: var(--scgp-text);
+  font-size: 17px;
+}
+
+.quick-card__body p {
+  margin: 0;
+  color: var(--scgp-muted);
   font-size: 13px;
-  color: #64748b;
+  line-height: 1.7;
+}
+
+.quick-card--blue {
+  color: var(--scgp-primary);
+}
+
+.quick-card--blue .quick-card__icon {
+  background: var(--scgp-primary-soft);
+}
+
+.quick-card--teal {
+  color: var(--scgp-teal);
+}
+
+.quick-card--teal .quick-card__icon {
+  background: var(--scgp-teal-soft);
+}
+
+.quick-card--coral {
+  color: var(--scgp-coral);
+}
+
+.quick-card--coral .quick-card__icon {
+  background: var(--scgp-coral-soft);
+}
+
+.quick-card--green {
+  color: var(--scgp-success);
+}
+
+.quick-card--green .quick-card__icon {
+  background: #eaf8f0;
+}
+
+.dashboard-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(340px, 0.92fr);
+  gap: 20px;
+}
+
+.dashboard-board__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .schedule-list,
@@ -631,168 +888,178 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  margin-top: 18px;
 }
 
 .schedule-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--scgp-border);
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbfe 100%);
+}
+
+.schedule-item__main {
+  display: flex;
+  align-items: center;
   gap: 14px;
-  padding: 16px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(241, 245, 249, 0.9));
-  border: 1px solid rgba(148, 163, 184, 0.16);
-}
-
-.student-avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  overflow: hidden;
-  background: linear-gradient(135deg, #dbeafe, #eff6ff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #2563eb;
-  flex-shrink: 0;
-}
-
-.student-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.schedule-main {
-  min-width: 0;
-}
-
-.schedule-topline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.schedule-topline h3 {
-  margin: 0;
-  font-size: 16px;
-  color: #0f172a;
-}
-
-.schedule-plan {
-  margin: 0 0 8px;
-  font-size: 14px;
-  color: #334155;
-}
-
-.schedule-meta {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  color: #64748b;
-}
-
-.schedule-action {
-  display: flex;
-  align-items: center;
-}
-
-.right-column {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.alert-item {
-  display: flex;
-  gap: 12px;
-  padding: 14px 0;
-}
-
-.alert-item + .alert-item {
-  border-top: 1px dashed rgba(148, 163, 184, 0.26);
-}
-
-.alert-marker {
-  width: 10px;
-  border-radius: 999px;
-  flex-shrink: 0;
-}
-
-.alert-marker.danger {
-  background: linear-gradient(180deg, #ef4444, #f97316);
-}
-
-.alert-marker.warning {
-  background: linear-gradient(180deg, #f59e0b, #f97316);
-}
-
-.alert-body {
   min-width: 0;
   flex: 1;
 }
 
-.alert-title-row {
+.schedule-item__content {
+  min-width: 0;
+}
+
+.schedule-item__topline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.schedule-item__topline h3 {
+  margin: 0;
+  color: var(--scgp-text);
+  font-size: 16px;
+}
+
+.schedule-item__plan {
+  margin: 0 0 8px;
+  color: var(--scgp-text);
+  font-size: 14px;
+}
+
+.schedule-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--scgp-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.schedule-item__actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.alert-item + .alert-item {
+  border-top: 1px dashed rgba(217, 226, 238, 0.92);
+}
+
+.alert-item__accent {
+  width: 8px;
+  min-height: 54px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.alert-item--danger .alert-item__accent {
+  background: linear-gradient(180deg, #f16f52 0%, #da8166 100%);
+}
+
+.alert-item--warning .alert-item__accent {
+  background: linear-gradient(180deg, #e5a53c 0%, #ba7517 100%);
+}
+
+.alert-item__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.alert-item__topline {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
-.alert-title-row h3 {
+.alert-item__topline h3 {
   margin: 0;
+  color: var(--scgp-text);
   font-size: 15px;
-  color: #0f172a;
 }
 
-.alert-time {
+.alert-item__time {
+  color: var(--scgp-subtle);
   font-size: 12px;
-  color: #94a3b8;
   white-space: nowrap;
 }
 
-.alert-desc {
+.alert-item__desc {
   margin: 6px 0 8px;
+  color: var(--scgp-muted);
   font-size: 13px;
-  line-height: 1.6;
-  color: #475569;
+  line-height: 1.7;
 }
 
-.alert-metrics {
+.alert-item__meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px 10px;
+  color: var(--scgp-muted);
   font-size: 12px;
-  color: #64748b;
 }
 
 @media (max-width: 1280px) {
-  .metrics-grid,
+  .dashboard-hero,
+  .dashboard-board {
+    grid-template-columns: 1fr;
+  }
+
   .quick-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
-  .metrics-grid,
+  .dashboard-page {
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .dashboard-hero,
+  .dashboard-surface {
+    padding: 18px;
+  }
+
+  .dashboard-highlight-grid,
+  .dashboard-hero__metrics,
   .quick-grid {
     grid-template-columns: 1fr;
   }
 
-  .schedule-item {
-    grid-template-columns: 1fr;
-  }
-
-  .schedule-action {
-    justify-content: flex-start;
-  }
-
-  .alert-title-row,
-  .board-header,
-  .section-title {
+  .dashboard-section-header,
+  .dashboard-panel-header,
+  .alert-item__topline {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .schedule-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .schedule-item__main {
+    align-items: flex-start;
+  }
+
+  .schedule-item__actions :deep(.el-button) {
+    width: 100%;
   }
 }
 </style>
