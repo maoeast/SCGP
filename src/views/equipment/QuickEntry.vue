@@ -384,7 +384,6 @@ const handleSubmit = async (data: any) => {
       // 保存并继续：不弹窗，直接清空选择继续录入
       ElMessage.success('保存成功')
       selectedResource.value = null
-      selectedCategory.value = 'all'
     } else {
       // 仅保存：显示成功对话框
       successDialogVisible.value = true
@@ -401,7 +400,6 @@ const continueWithSameStudent = () => {
   successDialogVisible.value = false
   // 清空选择，保留学生上下文
   selectedResource.value = null
-  selectedCategory.value = 'all'
 }
 
 // 返回学生列表（器材训练学生选择页）
