@@ -109,8 +109,6 @@
                 :src="getThumbnailUrl(row)"
                 fit="cover"
                 class="thumbnail-img"
-                :preview-src-list="[getThumbnailUrl(row)]"
-                :hide-on-click-modal="true"
               >
                 <template #error>
                   <div class="thumbnail-placeholder">
@@ -285,12 +283,15 @@
         <!-- 封面预览 -->
         <el-form-item label="封面图片">
           <div class="cover-preview">
-            <div class="preview-image" v-if="getThumbnailUrl(editingResource)">
+            <div
+              v-if="getThumbnailUrl(editingResource)"
+              class="preview-image"
+              @click="openImagePreview(getThumbnailUrl(editingResource), editingResource?.name)"
+            >
               <el-image
                 :src="getThumbnailUrl(editingResource)"
                 fit="contain"
                 class="preview-img"
-                :preview-src-list="[getThumbnailUrl(editingResource)]"
               />
             </div>
             <div v-else class="preview-placeholder">
@@ -448,6 +449,27 @@
           确认删除
         </el-button>
       </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="imagePreviewVisible"
+      :title="imagePreviewTitle"
+      width="fit-content"
+      append-to-body
+      align-center
+      destroy-on-close
+      modal-class="resource-cover-preview-modal"
+      class="resource-cover-preview-dialog"
+      @closed="resetImagePreview"
+    >
+      <div class="resource-cover-preview-shell">
+        <img
+          v-if="imagePreviewUrl"
+          :src="imagePreviewUrl"
+          :alt="imagePreviewTitle"
+          class="resource-cover-preview-image"
+        />
+      </div>
     </el-dialog>
 
     <!-- 新建资源弹窗 - 仅管理员模式 -->
@@ -785,6 +807,9 @@ const newCreateTag = ref('')
 const creating = ref(false)
 const resourcePackDialogVisible = ref(false)
 const resourcePackDialogMode = ref<'import' | 'export'>('export')
+const imagePreviewVisible = ref(false)
+const imagePreviewUrl = ref('')
+const imagePreviewTitle = ref('封面预览')
 
 // ========== 计算属性 ==========
 
@@ -896,6 +921,19 @@ const createRules: FormRules = {
 function getThumbnailUrl(resource: ResourceItem | null): string {
   if (!resource) return ''
   return resolveResourceItemCoverImage(resource)
+}
+
+function openImagePreview(url: string, title?: string | null) {
+  if (!url) return
+  imagePreviewUrl.value = url
+  imagePreviewTitle.value = title?.trim() || '封面预览'
+  imagePreviewVisible.value = true
+}
+
+function resetImagePreview() {
+  imagePreviewVisible.value = false
+  imagePreviewUrl.value = ''
+  imagePreviewTitle.value = '封面预览'
 }
 
 // 获取资源类型图标
@@ -1122,7 +1160,9 @@ function handleRowClick(row: ResourceItem) {
 // 图片预览
 function handlePreviewImage(row: ResourceItem) {
   if (row.resourceType !== 'equipment') return
-  // el-image 组件自带预览功能
+  const previewUrl = getThumbnailUrl(row)
+  if (!previewUrl) return
+  openImagePreview(previewUrl, row.name)
 }
 
 // 状态切换
@@ -1741,6 +1781,7 @@ defineExpose({
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid #ebeef5;
+  cursor: zoom-in;
 }
 
 .preview-img {
@@ -1764,6 +1805,48 @@ defineExpose({
 
 .upload-btn {
   margin-top: 4px;
+}
+
+.resource-cover-preview-dialog :deep(.el-dialog) {
+  width: fit-content;
+  max-width: min(92vw, 1120px);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.2);
+}
+
+.resource-cover-preview-dialog :deep(.el-dialog__header) {
+  padding: 18px 22px 0;
+}
+
+.resource-cover-preview-dialog :deep(.el-dialog__body) {
+  padding: 12px 22px 22px;
+}
+
+.resource-cover-preview-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 2vw, 20px);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  overflow: hidden;
+}
+
+.resource-cover-preview-image {
+  display: block;
+  max-width: min(84vw, 960px);
+  max-height: calc(86vh - 140px);
+  object-fit: contain;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+}
+
+:global(.resource-cover-preview-modal) {
+  background: rgba(15, 23, 42, 0.58);
 }
 
 .lock-icon {
