@@ -23,6 +23,7 @@
       <div class="filter-toolbar">
         <div class="filter-toolbar__controls">
           <el-select
+            v-if="showStudentFilter"
             v-model="selectedStudentId"
             size="small"
             placeholder="选择学生"
@@ -99,10 +100,18 @@
       stripe
       class="records-table"
       style="width: 100%"
-      max-height="500"
+      :max-height="tableMaxHeightValue"
       empty-text=""
     >
-      <el-table-column prop="student_name" label="学生姓名" width="100" />
+      <el-table-column v-if="showStudentColumn" prop="student_name" label="学生姓名" width="100" />
+
+      <el-table-column v-if="showEntryColumn" label="训练入口" width="140">
+        <template #default="{ row }">
+          <el-tag size="small" effect="plain" type="info">
+            {{ getEntryLabel(row) }}
+          </el-tag>
+        </template>
+      </el-table-column>
 
       <el-table-column label="器材名称" min-width="180" show-overflow-tooltip>
         <template #default="{ row }">
@@ -185,10 +194,13 @@ import { Refresh } from '@element-plus/icons-vue'
 import { EquipmentTrainingAPI, StudentAPI } from '@/database/api'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 import { resolveEquipmentSourceCategory } from '@/utils/physical-equipment-source-category'
-import { type TrainingEntryCode } from '@/utils/training-entry'
+import { getTrainingEntry, type TrainingEntryCode } from '@/utils/training-entry'
 
 interface Props {
-  entryCode: TrainingEntryCode
+  entryCode?: TrainingEntryCode
+  studentId?: number
+  hideStudentFilter?: boolean
+  tableMaxHeight?: number | string
 }
 
 type QuickRangeKey = 'all' | 'week' | 'month' | ''
@@ -200,7 +212,11 @@ const QUICK_RANGE_OPTIONS = [
   { key: 'month', label: '本月' },
 ] as const satisfies ReadonlyArray<{ key: Exclude<QuickRangeKey, ''>; label: string }>
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  hideStudentFilter: false,
+  tableMaxHeight: 500,
+})
+
 const emit = defineEmits<{
   (e: 'view-detail', record: any): void
 }>()
@@ -208,12 +224,18 @@ const emit = defineEmits<{
 const loading = ref(false)
 const records = ref<any[]>([])
 const students = ref<any[]>([])
-const selectedStudentId = ref<number | undefined>()
+const selectedStudentId = ref<number | undefined>(props.studentId || undefined)
 const dateRange = ref<[string, string] | null>(null)
 const selectedCategory = ref<string | undefined>()
 const activeDatePreset = ref<QuickRangeKey>('all')
 const categoryOptions = ref<string[]>([])
 const standardDateRangePickerProps = STANDARD_DATE_RANGE_PICKER_PROPS
+
+const isFixedStudentMode = computed(() => Number(props.studentId || 0) > 0)
+const showStudentFilter = computed(() => !props.hideStudentFilter && !isFixedStudentMode.value)
+const showStudentColumn = computed(() => !isFixedStudentMode.value)
+const showEntryColumn = computed(() => !props.entryCode)
+const tableMaxHeightValue = computed(() => props.tableMaxHeight)
 
 const avgScore = computed(() => {
   if (records.value.length === 0) return 0
@@ -221,28 +243,28 @@ const avgScore = computed(() => {
   return sum / records.value.length
 })
 
-const avgScoreDisplay = computed(() => (records.value.length > 0 ? `${avgScore.value.toFixed(1)} 分` : '—'))
+const avgScoreDisplay = computed(() => (records.value.length > 0 ? `${avgScore.value.toFixed(1)} 分` : '-'))
 
 const totalDuration = computed(() => {
   const total = records.value.reduce((acc, record) => acc + Number(record.duration_seconds || 0), 0)
   return formatDuration(total)
 })
 
-const equipmentCount = computed(() => new Set(records.value.map(record => record.equipment_id)).size)
+const equipmentCount = computed(() => new Set(records.value.map((record) => record.equipment_id)).size)
 
-const formatDuration = (seconds: number) => {
+function formatDuration(seconds: number) {
   const safeSeconds = Math.max(0, Number(seconds || 0))
   const minutes = Math.floor(safeSeconds / 60)
   const remainingSeconds = safeSeconds % 60
 
   if (minutes > 0) {
-    return `${minutes}分${remainingSeconds}秒`
+    return `${minutes}分 ${remainingSeconds}秒`
   }
 
   return `${remainingSeconds}秒`
 }
 
-const formatDateTimeToMinute = (value: number | string | Date | null | undefined) => {
+function formatDateTimeToMinute(value: number | string | Date | null | undefined) {
   if (value === null || value === undefined || value === '') return '-'
 
   const date = value instanceof Date ? value : new Date(value)
@@ -258,14 +280,14 @@ const formatDateTimeToMinute = (value: number | string | Date | null | undefined
   return `${year}-${month}-${day} ${hours}:${minutes}`
 }
 
-const formatDateString = (date: Date) => {
+function formatDateString(date: Date) {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
 
-const getCurrentWeekRange = (): [string, string] => {
+function getCurrentWeekRange(): [string, string] {
   const today = new Date()
   const day = today.getDay() === 0 ? 7 : today.getDay()
   const start = new Date(today)
@@ -276,54 +298,58 @@ const getCurrentWeekRange = (): [string, string] => {
   return [formatDateString(start), formatDateString(end)]
 }
 
-const getCurrentMonthRange = (): [string, string] => {
+function getCurrentMonthRange(): [string, string] {
   const today = new Date()
   const start = new Date(today.getFullYear(), today.getMonth(), 1)
   const end = new Date(today.getFullYear(), today.getMonth() + 1, 0)
   return [formatDateString(start), formatDateString(end)]
 }
 
-const getPresetRange = (preset: Exclude<QuickRangeKey, ''>) => {
+function getPresetRange(preset: Exclude<QuickRangeKey, ''>) {
   if (preset === 'all') return null
   if (preset === 'week') return getCurrentWeekRange()
   return getCurrentMonthRange()
 }
 
-const matchesRange = (source: [string, string] | null, target: [string, string]) => {
+function matchesRange(source: [string, string] | null, target: [string, string]) {
   return Boolean(source && source[0] === target[0] && source[1] === target[1])
 }
 
-const resolveActiveDatePreset = (range: [string, string] | null): QuickRangeKey => {
+function resolveActiveDatePreset(range: [string, string] | null): QuickRangeKey {
   if (!range?.[0] || !range?.[1]) return 'all'
   if (matchesRange(range, getCurrentWeekRange())) return 'week'
   if (matchesRange(range, getCurrentMonthRange())) return 'month'
   return ''
 }
 
-const applyQuickRange = (preset: Exclude<QuickRangeKey, ''>) => {
+function applyQuickRange(preset: Exclude<QuickRangeKey, ''>) {
   activeDatePreset.value = preset
   dateRange.value = getPresetRange(preset)
   loadRecords()
 }
 
-const handleDateRangeChange = (value: [string, string] | null) => {
+function handleDateRangeChange(value: [string, string] | null) {
   activeDatePreset.value = resolveActiveDatePreset(value)
   loadRecords()
 }
 
-const getCategoryLabel = (record: any) => {
+function getCategoryLabel(record: any) {
   return resolveEquipmentSourceCategory({
     category: record.category,
     metadata: record.equipment_meta,
   })
 }
 
-const getEquipmentInitial = (equipmentName?: string) => {
+function getEntryLabel(record: any) {
+  return getTrainingEntry(record.entry_code, record.module_code).name
+}
+
+function getEquipmentInitial(equipmentName?: string) {
   const normalized = typeof equipmentName === 'string' ? equipmentName.trim() : ''
   return normalized ? normalized.charAt(0) : '器'
 }
 
-const getPromptLevelMeta = (level: number): { label: string; tone: PromptTone } => {
+function getPromptLevelMeta(level: number): { label: string; tone: PromptTone } {
   const safeLevel = Number(level || 0)
 
   if (safeLevel <= 1) {
@@ -331,13 +357,17 @@ const getPromptLevelMeta = (level: number): { label: string; tone: PromptTone } 
   }
 
   if (safeLevel <= 3) {
-    return { label: '言语提示', tone: 'verbal' }
+    return { label: '语言提示', tone: 'verbal' }
   }
 
   return { label: '身体协助', tone: 'physical' }
 }
 
-const loadStudents = async () => {
+async function loadStudents() {
+  if (isFixedStudentMode.value) {
+    return
+  }
+
   try {
     const api = new StudentAPI()
     students.value = await api.getAllStudents()
@@ -346,15 +376,21 @@ const loadStudents = async () => {
   }
 }
 
-const loadRecords = () => {
+function loadRecords() {
   loading.value = true
 
   try {
     const api = new EquipmentTrainingAPI()
     let allRecords: any[] = []
 
-    if (selectedStudentId.value) {
-      const student = students.value.find(item => item.id === selectedStudentId.value)
+    if (isFixedStudentMode.value && props.studentId) {
+      allRecords = api.getStudentRecords(props.studentId, {
+        start_date: dateRange.value?.[0],
+        end_date: dateRange.value?.[1],
+        entry_code: props.entryCode,
+      })
+    } else if (selectedStudentId.value) {
+      const student = students.value.find((item) => item.id === selectedStudentId.value)
       const studentRecords = api.getStudentRecords(selectedStudentId.value, {
         start_date: dateRange.value?.[0],
         end_date: dateRange.value?.[1],
@@ -382,21 +418,24 @@ const loadRecords = () => {
       }
     }
 
-    categoryOptions.value = Array.from(new Set(allRecords.map(record => getCategoryLabel(record)))).sort((left, right) =>
+    categoryOptions.value = Array.from(new Set(allRecords.map((record) => getCategoryLabel(record)))).sort((left, right) =>
       left.localeCompare(right, 'zh-Hans-CN'),
     )
 
     if (selectedCategory.value) {
-      allRecords = allRecords.filter(record => getCategoryLabel(record) === selectedCategory.value)
+      allRecords = allRecords.filter((record) => getCategoryLabel(record) === selectedCategory.value)
     }
 
     allRecords.sort((left: any, right: any) => {
-      return new Date(right.training_date).getTime() - new Date(left.training_date).getTime()
+      const rightTime = new Date(`${right.training_date} 23:59:59`).getTime()
+      const leftTime = new Date(`${left.training_date} 23:59:59`).getTime()
+      return rightTime - leftTime
     })
 
     records.value = allRecords
   } catch (error) {
-    console.error('加载记录失败:', error)
+    console.error('加载训练记录失败:', error)
+    records.value = []
   } finally {
     loading.value = false
   }
@@ -408,9 +447,11 @@ onMounted(async () => {
 })
 
 watch(
-  () => props.entryCode,
-  () => {
+  () => [props.entryCode, props.studentId],
+  async () => {
+    selectedStudentId.value = props.studentId || undefined
     selectedCategory.value = undefined
+    await loadStudents()
     loadRecords()
   },
 )

@@ -1,8 +1,7 @@
 <template>
   <div class="student-detail-page">
-    <!-- 页面标题和操作 -->
     <div class="page-header">
-      <el-button @click="goBack" :icon="ArrowLeft">返回</el-button>
+      <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
       <h1>学生详情</h1>
       <div class="header-actions">
         <el-button type="primary" :icon="Edit" @click="editStudent">
@@ -11,9 +10,8 @@
       </div>
     </div>
 
-    <el-row :gutter="20" v-loading="loading">
-      <!-- 左侧：基本信息 -->
-      <el-col :span="8">
+    <el-row :gutter="20" v-loading="loading" class="overview-row">
+      <el-col :xs="24" :lg="8">
         <el-card class="student-info-card">
           <div class="student-profile">
             <StudentAvatar
@@ -27,94 +25,121 @@
               <StudentId :id="student?.student_no" :full="true" />
             </div>
           </div>
+
           <div class="info-items">
             <div class="info-item">
-              <span class="label">学号：</span>
+              <span class="label">学号</span>
               <StudentId class="value" :id="student?.student_no" :full="true" />
             </div>
             <div class="info-item">
-              <span class="label">性别：</span>
+              <span class="label">性别</span>
               <span class="value">{{ student?.gender || '未设置' }}</span>
             </div>
             <div class="info-item">
-              <span class="label">年龄：</span>
-              <span class="value">{{ student?.birthday ? `${getStudentAge(student?.birthday)}岁` : '-' }}</span>
+              <span class="label">年龄</span>
+              <span class="value">{{ student?.birthday ? `${getStudentAge(student.birthday)}岁` : '-' }}</span>
             </div>
             <div class="info-item">
-              <span class="label">出生日期：</span>
+              <span class="label">出生日期</span>
               <span class="value">{{ formatStudentDate(student?.birthday) }}</span>
             </div>
             <div class="info-item">
-              <span class="label">诊断类型：</span>
+              <span class="label">诊断类型</span>
               <DiagnosisTag class="value" :type="student?.disorder" />
             </div>
             <div class="info-item">
-              <span class="label">创建时间：</span>
+              <span class="label">创建时间</span>
               <span class="value">{{ formatStudentDate(student?.created_at) }}</span>
             </div>
           </div>
         </el-card>
       </el-col>
 
-      <!-- 右侧：记录统计 -->
-      <el-col :span="16">
-        <!-- 统计卡片 -->
-        <el-row :gutter="20" class="stats-row">
-          <el-col :span="12">
-            <el-card class="stat-card" @click="activeTab = 'assessments'">
-              <div class="stat-content">
-                <div class="stat-icon assessment">
-                  <i class="fas fa-clipboard-check"></i>
-                </div>
-                <div class="stat-info">
-                  <div class="stat-number">{{ assessmentCount }}</div>
-                  <div class="stat-label">评估记录</div>
-                </div>
+      <el-col :xs="24" :lg="16">
+        <div class="stats-grid">
+          <el-card
+            :class="['stat-card', { 'stat-card--active': activeTab === 'assessments' }]"
+            @click="activeTab = 'assessments'"
+          >
+            <div class="stat-content">
+              <div class="stat-icon assessment">
+                <i class="fas fa-clipboard-check"></i>
               </div>
-            </el-card>
-          </el-col>
-          <el-col :span="12">
-            <el-card class="stat-card" @click="goToEquipmentRecords">
-              <div class="stat-content">
-                <div class="stat-icon equipment">
-                  <i class="fas fa-dumbbell"></i>
-                </div>
-                <div class="stat-info">
-                  <div class="stat-number">{{ equipmentCount }}</div>
-                  <div class="stat-label">器材训练</div>
-                </div>
+              <div class="stat-info">
+                <div class="stat-number">{{ assessmentCount }}</div>
+                <div class="stat-label">评估记录</div>
               </div>
-            </el-card>
-          </el-col>
-        </el-row>
-
-        <!-- 记录列表 -->
-        <el-tabs v-model="activeTab" class="records-tabs">
-          <el-tab-pane label="评估记录" name="assessments">
-            <el-empty v-if="assessmentRecords.length === 0" description="暂无评估记录" />
-            <div v-else class="record-list">
-              <el-card
-                v-for="record in assessmentRecords"
-                :key="record.id"
-                class="record-card"
-                shadow="hover"
-              >
-                <div class="record-header">
-                  <span class="record-type">{{ record.scale_type === 'sm' ? 'S-M量表' : 'WeeFIM量表' }}</span>
-                  <span class="record-date">{{ formatStudentDate(record.created_at) }}</span>
-                </div>
-                <div class="record-details">
-                  <span class="record-score">得分：{{ record.score || '-' }}</span>
-                  <el-button type="text" @click="viewAssessmentReport(record)">查看报告</el-button>
-                </div>
-              </el-card>
             </div>
-          </el-tab-pane>
-        </el-tabs>
+          </el-card>
+
+          <el-card
+            :class="['stat-card', { 'stat-card--active': activeTab === 'equipment' }]"
+            @click="activeTab = 'equipment'"
+          >
+            <div class="stat-content">
+              <div class="stat-icon equipment">
+                <i class="fas fa-dumbbell"></i>
+              </div>
+              <div class="stat-info">
+                <div class="stat-number">{{ equipmentCount }}</div>
+                <div class="stat-label">器材训练</div>
+              </div>
+            </div>
+          </el-card>
+
+          <el-card
+            :class="['stat-card', { 'stat-card--active': activeTab === 'games' }]"
+            @click="activeTab = 'games'"
+          >
+            <div class="stat-content">
+              <div class="stat-icon game">
+                <i class="fas fa-gamepad"></i>
+              </div>
+              <div class="stat-info">
+                <div class="stat-number">{{ gameCount }}</div>
+                <div class="stat-label">游戏训练</div>
+              </div>
+            </div>
+          </el-card>
+        </div>
       </el-col>
     </el-row>
 
-    <!-- 编辑学生对话框 -->
+    <el-card v-if="student?.id" class="records-card">
+      <template #header>
+        <div class="records-card__header">
+          <div>
+            <h2>相关记录</h2>
+            <p>查看该学生的评估、器材训练和游戏训练历史。</p>
+          </div>
+        </div>
+      </template>
+
+      <el-tabs v-model="activeTab" class="records-tabs">
+        <el-tab-pane :label="`评估记录 (${assessmentCount})`" name="assessments" lazy>
+          <AssessmentRecordsPanel :student-id="student.id" :table-max-height="520" />
+        </el-tab-pane>
+
+        <el-tab-pane :label="`器材训练 (${equipmentCount})`" name="equipment" lazy>
+          <EquipmentRecordsPanel
+            :student-id="student.id"
+            :hide-student-filter="true"
+            :table-max-height="520"
+            @view-detail="viewEquipmentRecord"
+          />
+        </el-tab-pane>
+
+        <el-tab-pane :label="`游戏训练 (${gameCount})`" name="games" lazy>
+          <GameRecordsPanel
+            :student-id="student.id"
+            :hide-student-filter="true"
+            :table-max-height="520"
+            @view-detail="viewGameRecord"
+          />
+        </el-tab-pane>
+      </el-tabs>
+    </el-card>
+
     <AddStudentDialog
       v-if="showEditDialog"
       :editing-student="student"
@@ -125,87 +150,98 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Edit } from '@element-plus/icons-vue'
-import { useStudentStore } from '@/stores/student'
 import AddStudentDialog from '@/components/AddStudentDialog.vue'
+import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
 import StudentAvatar from '@/components/student/StudentAvatar.vue'
 import StudentId from '@/components/student/StudentId.vue'
-import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
-import { SMAssessmentAPI, WeeFIMAPI, ConnersPSQAPI, ConnersTRSAPI, CSIRSAPI, EquipmentTrainingAPI } from '@/database/api'
+import { EquipmentTrainingAPI, GameTrainingAPI } from '@/database/api'
+import { useStudentStore } from '@/stores/student'
 import { formatStudentDate, getStudentAge } from '@/utils/student-display'
+import { getTrainingEntry } from '@/utils/training-entry'
+import AssessmentRecordsPanel from '@/views/student-detail/components/AssessmentRecordsPanel.vue'
+import { getStudentAssessmentRecords } from '@/views/student-detail/assessment-records'
+import EquipmentRecordsPanel from '@/views/training-records/components/EquipmentRecordsPanel.vue'
+import GameRecordsPanel from '@/views/training-records/components/GameRecordsPanel.vue'
 
 const router = useRouter()
 const route = useRoute()
 const studentStore = useStudentStore()
 
-// 响应式数据
 const loading = ref(false)
 const student = ref<any>(null)
-const activeTab = ref('assessments')
+const activeTab = ref<'assessments' | 'equipment' | 'games'>('assessments')
 const showEditDialog = ref(false)
 
-// 记录数据
-const assessmentRecords = ref<any[]>([])
-
-// 统计数据
 const assessmentCount = ref(0)
 const equipmentCount = ref(0)
+const gameCount = ref(0)
 
-// 返回上一页
-const goBack = () => {
+function goBack() {
   router.back()
 }
 
-// 编辑学生
-const editStudent = () => {
+function editStudent() {
   showEditDialog.value = true
 }
 
-// 跳转到器材训练记录
-const goToEquipmentRecords = () => {
-  router.push(`/equipment/records/${student.value?.id}`)
-}
-
-// 处理学生更新
-const handleStudentUpdated = async () => {
+async function handleStudentUpdated() {
   showEditDialog.value = false
   await loadStudentDetail()
   ElMessage.success('学生信息更新成功')
 }
 
-// 查看评估报告
-const viewAssessmentReport = (record: any) => {
-  if (record.scale_type === 'sm') {
-    router.push({
-      path: '/assessment/sm/report',
-      query: {
-        studentId: student.value?.id.toString(),
-        assessId: record.assess_id.toString()
-      }
-    })
-  } else if (record.scale_type === 'weefim') {
-    router.push({
-      path: '/assessment/weefim/report',
-      query: {
-        studentId: student.value?.id.toString(),
-        assessId: record.assess_id.toString()
-      }
-    })
-  }
+function viewEquipmentRecord(record: any) {
+  const entry = getTrainingEntry(record.entry_code, record.module_code)
+
+  router.push({
+    path: `/equipment/records/${student.value?.id}`,
+    query: {
+      entry: entry.code,
+      module: entry.moduleCode,
+      recordId: String(record.id),
+    },
+  })
 }
 
-// 加载学生详情
-const loadStudentDetail = async () => {
+function viewGameRecord(record: any) {
+  const entry = getTrainingEntry(record.entry_code, record.module_code)
+
+  if (entry.moduleCode === 'emotional') {
+    router.push({
+      path: '/emotional/session-summary',
+      query: {
+        studentId: String(record.student_id),
+        trainingRecordId: String(record.id),
+      },
+    })
+    return
+  }
+
+  router.push({
+    path: '/games/report',
+    query: {
+      recordId: String(record.id),
+      studentId: String(record.student_id),
+    },
+  })
+}
+
+async function loadStudentDetail() {
   try {
     loading.value = true
-    const studentId = route.params.id as string
+    const studentId = Number(route.params.id)
 
-    // 加载学生基本信息
-    const students = studentStore.students
-    student.value = students.find(s => s.id === parseInt(studentId))
+    if (!studentId) {
+      ElMessage.error('缺少学生 ID')
+      router.back()
+      return
+    }
+
+    student.value = studentStore.students.find((item) => item.id === studentId) || null
 
     if (!student.value) {
       ElMessage.error('未找到该学生信息')
@@ -213,95 +249,23 @@ const loadStudentDetail = async () => {
       return
     }
 
-    // 加载评估记录
+    assessmentCount.value = getStudentAssessmentRecords(studentId).length
+
     try {
-      const smAPI = new SMAssessmentAPI()
-      const weefimAPI = new WeeFIMAPI()
-      const connersPSQAPI = new ConnersPSQAPI()
-      const connersTRSAPI = new ConnersTRSAPI()
-      const csirsAPI = new CSIRSAPI()
-
-      // 加载各类评估记录
-      const smAssessments = smAPI.getStudentAssessments(parseInt(studentId))
-      const weefimAssessments = weefimAPI.getStudentAssessments(parseInt(studentId))
-      const connersPSQAssessments = connersPSQAPI.getStudentAssessments(parseInt(studentId))
-      const connersTRSAssessments = connersTRSAPI.getStudentAssessments(parseInt(studentId))
-      const csirsAssessments = csirsAPI.getStudentAssessments(parseInt(studentId))
-
-      // 格式化各类评估记录
-      const smRecords = smAssessments.map((a: any) => ({
-        id: `sm-${a.id}`,
-        scale_type: 'sm',
-        score: a.sq_score,
-        raw_score: a.raw_score,
-        level: a.level,
-        created_at: a.end_time,
-        assess_id: a.id
-      }))
-
-      const weefimRecords = weefimAssessments.map((a: any) => ({
-        id: `weefim-${a.id}`,
-        scale_type: 'weefim',
-        score: a.total_score,
-        level: a.level,
-        created_at: a.end_time,
-        assess_id: a.id
-      }))
-
-      const connersPSQRecords = connersPSQAssessments.map((a: any) => ({
-        id: `conners-psq-${a.id}`,
-        scale_type: 'conners-psq',
-        score: a.total_score,
-        level: a.level,
-        created_at: a.assess_date,
-        assess_id: a.id
-      }))
-
-      const connersTRSRecords = connersTRSAssessments.map((a: any) => ({
-        id: `conners-trs-${a.id}`,
-        scale_type: 'conners-trs',
-        score: a.total_score,
-        level: a.level,
-        created_at: a.assess_date,
-        assess_id: a.id
-      }))
-
-      const csirsRecords = csirsAssessments.map((a: any) => ({
-        id: `csirs-${a.id}`,
-        scale_type: 'csirs',
-        score: a.total_score,
-        level: a.level,
-        created_at: a.assess_date,
-        assess_id: a.id
-      }))
-
-      // 合并所有评估记录并按时间排序
-      assessmentRecords.value = [
-        ...smRecords,
-        ...weefimRecords,
-        ...connersPSQRecords,
-        ...connersTRSRecords,
-        ...csirsRecords
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-
-      console.log('加载的评估记录:', assessmentRecords.value)
-    } catch (error) {
-      console.error('加载评估记录失败:', error)
-      assessmentRecords.value = []
-    }
-
-    assessmentCount.value = assessmentRecords.value.length
-
-    // 加载器材训练记录数量
-    try {
-      const equipmentAPI = new EquipmentTrainingAPI()
-      const equipmentRecords = equipmentAPI.getStudentRecords(parseInt(studentId))
-      equipmentCount.value = equipmentRecords.length
+      const equipmentApi = new EquipmentTrainingAPI()
+      equipmentCount.value = equipmentApi.getStudentRecords(studentId).length
     } catch (error) {
       console.error('加载器材训练记录失败:', error)
       equipmentCount.value = 0
     }
 
+    try {
+      const gameApi = new GameTrainingAPI()
+      gameCount.value = gameApi.getStudentTrainingRecords(studentId).length
+    } catch (error) {
+      console.error('加载游戏训练记录失败:', error)
+      gameCount.value = 0
+    }
   } catch (error) {
     console.error('加载学生详情失败:', error)
     ElMessage.error('加载学生详情失败')
@@ -310,11 +274,17 @@ const loadStudentDetail = async () => {
   }
 }
 
-// 组件挂载时加载数据
 onMounted(async () => {
   await studentStore.loadStudents()
   await loadStudentDetail()
 })
+
+watch(
+  () => route.params.id,
+  async () => {
+    await loadStudentDetail()
+  },
+)
 </script>
 
 <style scoped>
@@ -332,6 +302,15 @@ onMounted(async () => {
 .page-header h1 {
   margin: 0;
   flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.overview-row {
+  margin-bottom: 20px;
 }
 
 .student-info-card {
@@ -387,12 +366,25 @@ onMounted(async () => {
   text-align: right;
 }
 
-.stats-row {
-  margin-bottom: 20px;
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .stat-card {
-  cursor: default;
+  cursor: pointer;
+  border-radius: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-card--active {
+  border-color: #89b4ff;
+  box-shadow: 0 12px 28px rgba(47, 116, 208, 0.14);
 }
 
 .stat-content {
@@ -420,6 +412,10 @@ onMounted(async () => {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
+.stat-icon.game {
+  background: linear-gradient(135deg, #36cfc9 0%, #2f74d0 100%);
+}
+
 .stat-info {
   flex: 1;
 }
@@ -435,60 +431,29 @@ onMounted(async () => {
   font-size: 14px;
 }
 
-.records-tabs {
-  margin-top: 20px;
+.records-card {
+  border-radius: 18px;
 }
 
-.record-list {
+.records-card__header {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.record-card {
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.record-card:hover {
-  transform: translateY(-2px);
-}
-
-.record-header {
-  display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  gap: 16px;
 }
 
-.record-type, .record-task {
-  font-weight: 500;
-  color: #333;
+.records-card__header h2 {
+  margin: 0;
+  font-size: 20px;
 }
 
-.record-date {
-  color: #999;
-  font-size: 14px;
+.records-card__header p {
+  margin: 6px 0 0;
+  color: #606266;
 }
 
-.record-details {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.record-score {
-  color: #666;
-}
-
-.record-level {
-  color: #666;
-  font-size: 14px;
-}
-
-.record-period {
-  color: #666;
-  font-size: 14px;
+.records-tabs {
+  margin-top: 0;
 }
 
 @media (max-width: 768px) {
@@ -497,8 +462,12 @@ onMounted(async () => {
     align-items: flex-start;
   }
 
-  .stats-row .el-col {
-    margin-bottom: 10px;
+  .header-actions {
+    width: 100%;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
