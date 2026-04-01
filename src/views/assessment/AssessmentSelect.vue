@@ -202,6 +202,102 @@
             开始评估
           </el-button>
         </el-card>
+
+        <!-- 儿童发育行为评估量表占位卡片 -->
+        <el-card
+          class="scale-card placeholder-card"
+          shadow="hover"
+        >
+          <div class="scale-card-badge">即将上线</div>
+          <div class="scale-icon dev-behavior-icon">
+            <el-icon size="60"><Opportunity /></el-icon>
+          </div>
+          <h3 class="scale-title">儿童发育行为评估量表</h3>
+          <p class="scale-subtitle">(儿心量表-II)</p>
+          <div class="scale-info">
+            <ul>
+              <li>适用年龄：0 - 6岁</li>
+              <li>题目数量：261道</li>
+              <li>评估维度：大运动、精细运动、适应能力、语言、社会行为</li>
+              <li>评估时间：约30-40分钟</li>
+            </ul>
+          </div>
+          <el-button disabled size="large" class="scale-btn coming-soon-btn">
+            即将上线
+          </el-button>
+        </el-card>
+
+        <!-- TGMD-3占位卡片 -->
+        <el-card
+          class="scale-card placeholder-card"
+          shadow="hover"
+        >
+          <div class="scale-card-badge">即将上线</div>
+          <div class="scale-icon tgmd-icon">
+            <el-icon size="60"><TrophyBase /></el-icon>
+          </div>
+          <h3 class="scale-title">大肌肉动作发展测验</h3>
+          <p class="scale-subtitle">(TGMD-3)</p>
+          <div class="scale-info">
+            <ul>
+              <li>适用年龄：3 - 11岁</li>
+              <li>题目数量：13项动作技能</li>
+              <li>评估维度：移动技能（6项）、球类技能（7项）</li>
+              <li>评估时间：约15-20分钟</li>
+            </ul>
+          </div>
+          <el-button disabled size="large" class="scale-btn coming-soon-btn">
+            即将上线
+          </el-button>
+        </el-card>
+
+        <!-- GMFM占位卡片 -->
+        <el-card
+          class="scale-card placeholder-card"
+          shadow="hover"
+        >
+          <div class="scale-card-badge">即将上线</div>
+          <div class="scale-icon gmfm-icon">
+            <el-icon size="60"><Operation /></el-icon>
+          </div>
+          <h3 class="scale-title">粗大运动功能评定量表</h3>
+          <p class="scale-subtitle">(GMFM)</p>
+          <div class="scale-info">
+            <ul>
+              <li>适用年龄：5个月 - 16岁</li>
+              <li>题目数量：88项</li>
+              <li>评估维度：卧位与翻身、坐位、爬与跪、站立、行走跑跳</li>
+              <li>评估时间：约45-60分钟</li>
+            </ul>
+          </div>
+          <el-button disabled size="large" class="scale-btn coming-soon-btn">
+            即将上线
+          </el-button>
+        </el-card>
+
+        <!-- FMDA占位卡片 -->
+        <el-card
+          class="scale-card placeholder-card"
+          shadow="hover"
+        >
+          <div class="scale-card-badge">即将上线</div>
+          <div class="scale-icon fmda-icon">
+            <el-icon size="60"><EditPen /></el-icon>
+          </div>
+          <h3 class="scale-title">小肌肉功能发展评估量表</h3>
+          <p class="scale-subtitle">(FMDA)</p>
+          <div class="scale-info">
+            <ul>
+              <li>适用年龄：0 - 6岁</li>
+              <li>题目数量：87项</li>
+              <li>评估维度：抓握能力、手眼协调、双手协作、操作精确性</li>
+              <li>评估时间：约20-30分钟</li>
+            </ul>
+          </div>
+          <el-button disabled size="large" class="scale-btn coming-soon-btn">
+            即将上线
+          </el-button>
+        </el-card>
       </div>
 
       <!-- 评估说明 -->
@@ -230,7 +326,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding, Stamp, Avatar, DataAnalysis } from '@element-plus/icons-vue'
+import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding, Stamp, Avatar, DataAnalysis, Opportunity, TrophyBase, Operation, EditPen } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
@@ -314,6 +410,26 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
   color: white;
 }
 
+.dev-behavior-icon {
+  background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%);
+  color: white;
+}
+
+.tgmd-icon {
+  background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+  color: white;
+}
+
+.gmfm-icon {
+  background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+  color: white;
+}
+
+.fmda-icon {
+  background: linear-gradient(135deg, #654ea3 0%, #eaafc8 100%);
+  color: white;
+}
+
 .scale-title {
   margin: 0 0 10px 0;
   font-size: 24px;
@@ -355,6 +471,33 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
   width: 200px;
   height: 50px;
   font-size: 18px;
+}
+
+.placeholder-card {
+  position: relative;
+  opacity: 0.85;
+}
+
+.scale-card-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #FAEEDA;
+  color: #633806;
+  border: 0.5px solid #FAC775;
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.coming-soon-btn.is-disabled,
+.coming-soon-btn.is-disabled:hover,
+.coming-soon-btn.is-disabled:focus {
+  background: var(--color-background-secondary, #ffffff);
+  color: var(--color-text-tertiary, #c0c4cc);
+  border: 0.5px solid var(--color-border-secondary, #dcdfe6);
+  cursor: not-allowed;
 }
 
 .notice-card {

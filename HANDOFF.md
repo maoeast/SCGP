@@ -19,7 +19,7 @@
 ## 当前活跃工作
 
 - 当前唯一有效续接入口：`.continue-here.md`
-- 当前续接范围：`module training records page UI refresh is landed; awaiting runtime review or follow-up polish`
+- 当前续接范围：`Assessment page placeholder scale cards are landed; awaiting runtime visual verification`
 - 如果 `.continue-here.md` 与其他文档冲突：
   - 当前任务以 `.continue-here.md` 为准
   - 规则边界以 `AGENTS.md` 为准
