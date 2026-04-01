@@ -42,6 +42,7 @@ const EmotionalSceneSelector = () => import('@/views/emotional/SceneSelector.vue
 const EmotionSceneTraining = () => import('@/views/emotional/EmotionSceneTraining.vue')
 const CareExpressionTraining = () => import('@/views/emotional/CareExpressionTraining.vue')
 const EmotionalSessionSummary = () => import('@/views/emotional/SessionSummary.vue')
+const EmotionalGameRecordDetail = () => import('@/views/emotional/GameRecordDetail.vue')
 const EmotionalReport = () => import('@/views/emotional/Report.vue')
 const BalloonBreathingPage = () => import('@/views/emotional/games/BalloonBreathingPage.vue')
 const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
@@ -248,6 +249,16 @@ const router = createRouter({
           component: EmotionalSessionSummary,
           meta: {
             title: '情绪模块会话总结',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/game-record',
+          name: 'EmotionalGameRecordDetail',
+          component: EmotionalGameRecordDetail,
+          meta: {
+            title: '情绪小游戏记录详情',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

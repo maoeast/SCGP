@@ -2,7 +2,6 @@
   <div class="page-container scgp-admin-page reports-page">
     <div class="page-header reports-header">
       <div class="header-left">
-        <span class="reports-kicker">统一报告中心</span>
         <h1>报告中心</h1>
         <p class="subtitle">统一查看和管理评估、训练与情绪模块报告，减少跨模块查找成本。</p>
       </div>
@@ -18,42 +17,7 @@
       </div>
     </div>
 
-    <section class="reports-hero scgp-surface">
-      <div class="reports-hero__copy">
-        <span class="reports-kicker reports-kicker--soft">当前视图</span>
-        <h2>{{ heroTitle }}</h2>
-        <p>{{ heroDescription }}</p>
-
-        <div class="reports-summary-chips">
-          <span class="reports-summary-chip">学生：{{ currentStudentLabel }}</span>
-          <span class="reports-summary-chip">类型：{{ currentReportTypeLabel }}</span>
-          <span class="reports-summary-chip">时间：{{ currentDateRangeLabel }}</span>
-          <span class="reports-summary-chip">最近生成：{{ latestReportDisplay }}</span>
-        </div>
-      </div>
-
-      <div class="reports-hero__metrics">
-        <article
-          v-for="metric in primaryMetrics"
-          :key="metric.label"
-          :class="['reports-metric-card', `reports-metric-card--${metric.tone}`]"
-        >
-          <div class="reports-metric-card__label">{{ metric.label }}</div>
-          <div class="reports-metric-card__value">{{ metric.value }}</div>
-          <div class="reports-metric-card__hint">{{ metric.hint }}</div>
-        </article>
-      </div>
-    </section>
-
     <section class="reports-filters scgp-surface scgp-filter-surface">
-      <div class="reports-section-header">
-        <div>
-          <span class="reports-kicker reports-kicker--muted">筛选条件</span>
-          <h2>报告检索</h2>
-          <p>按学生、报告类型和时间范围快速定位目标报告。</p>
-        </div>
-      </div>
-
       <div class="reports-filter-toolbar">
         <div class="reports-filter-field">
           <label>学生</label>
@@ -129,7 +93,6 @@
       <article class="reports-distribution-panel scgp-surface">
         <div class="reports-section-header reports-section-header--compact">
           <div>
-            <span class="reports-kicker reports-kicker--muted">类型分布</span>
             <h2>评估报告</h2>
             <p>当前筛选结果下的各量表报告数量。</p>
           </div>
@@ -142,8 +105,10 @@
             :key="item.key"
             :class="['reports-type-card', `reports-type-card--${item.tone}`]"
           >
+            <span v-if="item.isPlaceholder" class="reports-type-card__badge">占位</span>
             <span class="reports-type-card__name">{{ item.label }}</span>
             <strong class="reports-type-card__count">{{ item.value }}</strong>
+            <span v-if="item.isPlaceholder" class="reports-type-card__meta">评估入口已占位，报告链路未开发</span>
           </article>
         </div>
       </article>
@@ -151,7 +116,6 @@
       <article class="reports-distribution-panel scgp-surface">
         <div class="reports-section-header reports-section-header--compact">
           <div>
-            <span class="reports-kicker reports-kicker--muted">类型分布</span>
             <h2>训练与干预报告</h2>
             <p>情绪模块、IEP 与训练报告统一收口展示。</p>
           </div>
@@ -174,7 +138,6 @@
     <section class="main-content scgp-page-panel reports-table-panel">
       <div class="reports-table-header">
         <div>
-          <span class="reports-kicker reports-kicker--muted">结果列表</span>
           <h2>报告列表</h2>
           <p>支持查看、跳转报告详情，以及清理不再需要的历史记录。</p>
         </div>
@@ -256,6 +219,17 @@ interface ReportTypeOption {
   tone: 'blue' | 'teal' | 'amber' | 'coral'
 }
 
+type AssessmentCardTone = 'blue' | 'teal' | 'amber' | 'coral' | 'placeholder'
+type AssessmentStatisticsKey =
+  | 'sm_count'
+  | 'weefim_count'
+  | 'csirs_count'
+  | 'conners_psq_count'
+  | 'conners_trs_count'
+  | 'sdq_count'
+  | 'srs2_count'
+  | 'cbcl_count'
+
 interface ReportStatistics {
   total: number
   sm_count: number
@@ -292,6 +266,27 @@ const QUICK_RANGE_OPTIONS = [
   { key: 'week', label: '本周' },
   { key: 'month', label: '本月' },
 ] as const satisfies ReadonlyArray<{ key: Exclude<QuickRangeKey, ''>; label: string }>
+
+const ASSESSMENT_CARD_DEFINITIONS: Array<{
+  key: string
+  label: string
+  tone: AssessmentCardTone
+  valueKey?: AssessmentStatisticsKey
+  isPlaceholder?: boolean
+}> = [
+  { key: 'sm', label: 'S-M', tone: 'blue', valueKey: 'sm_count' },
+  { key: 'weefim', label: 'WeeFIM', tone: 'teal', valueKey: 'weefim_count' },
+  { key: 'csirs', label: 'CSIRS', tone: 'coral', valueKey: 'csirs_count' },
+  { key: 'conners-psq', label: 'Conners PSQ', tone: 'amber', valueKey: 'conners_psq_count' },
+  { key: 'conners-trs', label: 'Conners TRS', tone: 'blue', valueKey: 'conners_trs_count' },
+  { key: 'sdq', label: 'SDQ', tone: 'amber', valueKey: 'sdq_count' },
+  { key: 'srs2', label: 'SRS-2', tone: 'teal', valueKey: 'srs2_count' },
+  { key: 'cbcl', label: 'CBCL', tone: 'coral', valueKey: 'cbcl_count' },
+  { key: 'child-development-behavior', label: '儿心量表-II', tone: 'placeholder', isPlaceholder: true },
+  { key: 'tgmd-3', label: 'TGMD-3', tone: 'placeholder', isPlaceholder: true },
+  { key: 'gmfm', label: 'GMFM', tone: 'placeholder', isPlaceholder: true },
+  { key: 'fmda', label: 'FMDA', tone: 'placeholder', isPlaceholder: true },
+]
 
 const router = useRouter()
 const studentStore = useStudentStore()
@@ -330,82 +325,12 @@ const interventionReportCount = computed(() =>
   + statistics.value.training_count,
 )
 
-const currentStudentLabel = computed(() => {
-  if (!filters.value.student_id) return '全部学生'
-  const currentStudent = students.value.find((item) => item.id === filters.value.student_id)
-  return currentStudent?.name || '指定学生'
-})
-
-const currentReportTypeLabel = computed(() => {
-  if (!filters.value.report_type) return '全部类型'
-  return reportTypeMap.get(filters.value.report_type)?.label || '指定类型'
-})
-
-const currentDateRangeLabel = computed(() => {
-  if (!dateRange.value?.[0] || !dateRange.value?.[1]) return '不限时间'
-  return `${dateRange.value[0]} 至 ${dateRange.value[1]}`
-})
-
-const hasActiveFilters = computed(() =>
-  Boolean(filters.value.student_id || filters.value.report_type || dateRange.value?.[0] || dateRange.value?.[1]),
+const assessmentTypeCards = computed(() =>
+  ASSESSMENT_CARD_DEFINITIONS.map((item) => ({
+    ...item,
+    value: item.valueKey ? statistics.value[item.valueKey] : 0,
+  })),
 )
-
-const latestReportDisplay = computed(() => {
-  const latest = reportList.value[0]?.created_at
-  return latest ? formatDate(latest) : '暂无'
-})
-
-const heroTitle = computed(() =>
-  hasActiveFilters.value
-    ? `当前筛选下共 ${reportList.value.length} 份报告`
-    : `统一管理 ${statistics.value.total} 份报告`,
-)
-
-const heroDescription = computed(() => {
-  if (!hasActiveFilters.value) {
-    return '将评估、训练与情绪模块报告统一收口，方便按学生和时间快速检索、跳转与清理。'
-  }
-
-  return `当前按“${currentStudentLabel.value} / ${currentReportTypeLabel.value} / ${currentDateRangeLabel.value}”筛选结果展示。`
-})
-
-const primaryMetrics = computed(() => ([
-  {
-    label: '当前结果',
-    value: reportList.value.length,
-    hint: '当前筛选条件下的报告条数',
-    tone: 'blue',
-  },
-  {
-    label: '评估报告',
-    value: assessmentReportCount.value,
-    hint: '量表与评估类报告汇总',
-    tone: 'teal',
-  },
-  {
-    label: '训练与干预',
-    value: interventionReportCount.value,
-    hint: '情绪模块、IEP 与训练报告',
-    tone: 'amber',
-  },
-  {
-    label: '最近生成',
-    value: latestReportDisplay.value,
-    hint: '按当前结果排序后的最新报告时间',
-    tone: 'coral',
-  },
-]))
-
-const assessmentTypeCards = computed(() => [
-  { key: 'sm', label: 'S-M', value: statistics.value.sm_count, tone: 'blue' as const },
-  { key: 'weefim', label: 'WeeFIM', value: statistics.value.weefim_count, tone: 'teal' as const },
-  { key: 'csirs', label: 'CSIRS', value: statistics.value.csirs_count, tone: 'coral' as const },
-  { key: 'conners-psq', label: 'Conners PSQ', value: statistics.value.conners_psq_count, tone: 'amber' as const },
-  { key: 'conners-trs', label: 'Conners TRS', value: statistics.value.conners_trs_count, tone: 'blue' as const },
-  { key: 'sdq', label: 'SDQ', value: statistics.value.sdq_count, tone: 'amber' as const },
-  { key: 'srs2', label: 'SRS-2', value: statistics.value.srs2_count, tone: 'teal' as const },
-  { key: 'cbcl', label: 'CBCL', value: statistics.value.cbcl_count, tone: 'coral' as const },
-])
 
 const interventionTypeCards = computed(() => [
   { key: 'emotional', label: '情绪模块', value: statistics.value.emotional_count, tone: 'amber' as const },
@@ -683,130 +608,9 @@ onMounted(async () => {
   margin-bottom: 0;
 }
 
-.reports-kicker {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid var(--scgp-border-strong);
-  background: rgba(255, 255, 255, 0.82);
-  color: #7b8796;
-  font-size: 12px;
-  line-height: 1;
-}
-
-.reports-kicker--soft {
-  background: rgba(255, 255, 255, 0.68);
-}
-
-.reports-kicker--muted {
-  background: var(--scgp-surface-soft);
-}
-
-.reports-hero,
 .reports-distribution-panel,
 .reports-filters {
   padding: 24px;
-}
-
-.reports-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
-  gap: 22px;
-}
-
-.reports-hero__copy {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.reports-hero__copy h2 {
-  margin: 0;
-  color: var(--scgp-text);
-  font-size: clamp(28px, 2.6vw, 36px);
-  line-height: 1.12;
-  letter-spacing: -0.03em;
-}
-
-.reports-hero__copy p {
-  margin: 0;
-  color: var(--scgp-muted);
-  font-size: 15px;
-  line-height: 1.75;
-}
-
-.reports-summary-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.reports-summary-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid var(--scgp-border);
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  color: var(--scgp-muted);
-  font-size: 12px;
-}
-
-.reports-hero__metrics {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.reports-metric-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 10px;
-  min-height: 146px;
-  padding: 18px;
-  border-radius: 18px;
-  border: 1px solid var(--scgp-border);
-  background: #ffffff;
-}
-
-.reports-metric-card__label {
-  color: var(--scgp-muted);
-  font-size: 13px;
-}
-
-.reports-metric-card__value {
-  color: var(--scgp-text);
-  font-size: clamp(30px, 2.5vw, 40px);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.04em;
-}
-
-.reports-metric-card__hint {
-  color: var(--scgp-subtle);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.reports-metric-card--blue {
-  background: linear-gradient(180deg, #f4f8ff 0%, #ffffff 100%);
-}
-
-.reports-metric-card--teal {
-  background: linear-gradient(180deg, #eefbf8 0%, #ffffff 100%);
-}
-
-.reports-metric-card--amber {
-  background: linear-gradient(180deg, #fff8ea 0%, #ffffff 100%);
-}
-
-.reports-metric-card--coral {
-  background: linear-gradient(180deg, #fff4ee 0%, #ffffff 100%);
 }
 
 .reports-section-header {
@@ -839,7 +643,7 @@ onMounted(async () => {
   align-items: flex-end;
   gap: 14px;
   flex-wrap: wrap;
-  margin-top: 18px;
+  margin-top: 0;
 }
 
 .reports-filter-field {
@@ -932,8 +736,10 @@ onMounted(async () => {
 }
 
 .reports-type-card {
+  position: relative;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 8px;
   min-height: 92px;
   padding: 16px;
@@ -954,6 +760,28 @@ onMounted(async () => {
   line-height: 1;
 }
 
+.reports-type-card__badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid #f2d39a;
+  background: #fff7e7;
+  color: #9a6507;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.reports-type-card__meta {
+  color: var(--scgp-subtle);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .reports-type-card--blue {
   background: linear-gradient(180deg, #f4f8ff 0%, #ffffff 100%);
 }
@@ -968,6 +796,12 @@ onMounted(async () => {
 
 .reports-type-card--coral {
   background: linear-gradient(180deg, #fff4ee 0%, #ffffff 100%);
+}
+
+.reports-type-card--placeholder {
+  border-style: dashed;
+  border-color: #d7dee8;
+  background: linear-gradient(180deg, #fbfcfe 0%, #ffffff 100%);
 }
 
 .reports-table-panel {
@@ -1043,12 +877,18 @@ onMounted(async () => {
 }
 
 @media (max-width: 1280px) {
-  .reports-hero,
   .reports-distribution {
     grid-template-columns: 1fr;
   }
 
   .reports-type-grid--assessment {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .reports-type-grid--assessment,
+  .reports-type-grid--intervention {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1059,14 +899,12 @@ onMounted(async () => {
     padding: 16px;
   }
 
-  .reports-hero,
   .reports-distribution-panel,
   .reports-filters,
   .reports-table-panel {
     padding: 18px;
   }
 
-  .reports-hero__metrics,
   .reports-type-grid--assessment,
   .reports-type-grid--intervention {
     grid-template-columns: 1fr;

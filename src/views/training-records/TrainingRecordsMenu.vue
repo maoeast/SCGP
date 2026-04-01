@@ -95,6 +95,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { GameTrainingAPI, EquipmentTrainingAPI } from '@/database/api'
+import { EmotionalGamesAPI } from '@/database/emotional-games-api'
 import {
   getAllTrainingEntries,
   type TrainingEntryCode,
@@ -105,6 +106,7 @@ const authStore = useAuthStore()
 
 // 记录数量缓存
 const gameApi = new GameTrainingAPI()
+const emotionalGamesApi = new EmotionalGamesAPI()
 const equipmentApi = new EquipmentTrainingAPI()
 
 const trainingEntries = computed(() => {
@@ -147,7 +149,7 @@ const getStatusLabel = (status: string) => {
 
 // 获取游戏训练记录数量
 const getGameRecordCount = (entryCode: TrainingEntryCode): number => {
-  return gameApi.countRecordsByEntry(entryCode)
+  return gameApi.countRecordsByEntry(entryCode) + emotionalGamesApi.countRecordsByEntry(entryCode)
 }
 
 // 获取器材训练记录数量

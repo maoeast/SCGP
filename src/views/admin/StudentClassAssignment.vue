@@ -605,7 +605,17 @@ async function loadAcademicYears() {
 
 async function loadStudents() {
   try {
-    let sql = 'SELECT id, name, gender, birthday, current_class_id, current_class_name FROM student WHERE 1=1'
+    let sql = `
+      SELECT
+        id,
+        name,
+        gender,
+        birthday,
+        current_class_id AS currentClassId,
+        current_class_name AS currentClassName
+      FROM student
+      WHERE 1=1
+    `
     const params: Array<string | number> = []
 
     if (filterStatus.value === 'unassigned') {

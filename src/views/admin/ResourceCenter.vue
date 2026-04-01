@@ -1,121 +1,97 @@
 <template>
-  <div class="page-container">
-    <!-- 页面头部 -->
-    <div class="page-header">
+  <div class="page-container resource-center-page">
+    <div class="page-header resource-center-header">
       <div class="header-left">
         <h1>资源中心</h1>
-        <p class="subtitle">统一管理系统康复资源与教师教学资料</p>
-      </div>
-      <div class="header-right">
-        <el-tag :type="isAdmin ? 'danger' : 'info'" size="small">
-          {{ isAdmin ? '管理员模式' : '只读模式' }}
-        </el-tag>
+        <p class="subtitle">统一管理训练资源与教学资料，在同一入口完成浏览、维护、导入与素材目录管理。</p>
       </div>
     </div>
 
-    <!-- Tab 切换区 -->
     <el-tabs v-model="activeTab" class="resource-tabs" @tab-change="handleTabChange">
       <el-tab-pane label="训练资源" name="training">
         <template #label>
           <span class="tab-label">
             <el-icon><Box /></el-icon>
-            训练资源
+            <span>训练资源</span>
           </span>
         </template>
       </el-tab-pane>
+
       <el-tab-pane label="教学资料" name="teaching">
         <template #label>
           <span class="tab-label">
             <el-icon><FolderOpened /></el-icon>
-            教学资料
+            <span>教学资料</span>
           </span>
         </template>
       </el-tab-pane>
     </el-tabs>
 
-    <!-- 内容区 -->
-    <div class="tab-content">
-      <TrainingResources
-        v-if="activeTab === 'training'"
-        :read-only="!isAdmin"
-        ref="trainingResourcesRef"
-      />
-      <TeachingMaterials
-        v-if="activeTab === 'teaching'"
-        :read-only="!isAdmin"
-        ref="teachingMaterialsRef"
-      />
+    <div class="resource-center-body">
+      <TrainingResources v-if="activeTab === 'training'" :read-only="!isAdmin" />
+      <TeachingMaterials v-if="activeTab === 'teaching'" :read-only="!isAdmin" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Box, FolderOpened } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import TrainingResources from '@/views/resource-center/TrainingResources.vue'
 import TeachingMaterials from '@/views/resource-center/TeachingMaterials.vue'
 
-// ========== 路由与状态 ==========
+type ResourceCenterTab = 'training' | 'teaching'
+
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-// ========== 响应式状态 ==========
-const activeTab = ref('training')
-const trainingResourcesRef = ref()
-const teachingMaterialsRef = ref()
+const activeTab = ref<ResourceCenterTab>('training')
 
-// ========== 计算属性 ==========
+const isAdmin = computed(() => authStore.isAdmin)
 
-// 判断是否为管理员
-const isAdmin = computed(() => {
-  return authStore.isAdmin
-})
-
-// ========== 方法 ==========
-
-// Tab 切换处理
 function handleTabChange(tabName: string) {
-  // 更新 URL 参数，但不触发导航
+  if (!['training', 'teaching'].includes(tabName)) {
+    return
+  }
+
   router.replace({
-    query: { ...route.query, tab: tabName }
+    query: { ...route.query, tab: tabName },
   })
 }
 
-// 从 URL 恢复 Tab 状态
 function restoreTabFromUrl() {
   const tabParam = route.query.tab as string
-  if (tabParam && ['training', 'teaching'].includes(tabParam)) {
+  if (tabParam === 'training' || tabParam === 'teaching') {
     activeTab.value = tabParam
   }
 }
-
-// ========== 生命周期 ==========
 
 onMounted(() => {
   restoreTabFromUrl()
 })
 
-// 监听路由变化
 watch(() => route.query.tab, (newTab) => {
-  if (newTab && ['training', 'teaching'].includes(newTab as string)) {
-    activeTab.value = newTab as string
+  if (newTab === 'training' || newTab === 'teaching') {
+    activeTab.value = newTab
   }
 })
 </script>
 
 <style scoped>
-.header-right .el-tag {
-  align-self: flex-end;
+.resource-center-page {
+  gap: 14px;
+  padding-top: 18px;
 }
 
-/* Tab 样式 */
+.resource-center-header {
+  margin-bottom: 0;
+}
+
 .resource-tabs {
-  background: white;
-  padding: 0 20px;
-  border-bottom: 1px solid #ebeef5;
+  padding: 0 4px;
 }
 
 .resource-tabs :deep(.el-tabs__header) {
@@ -123,37 +99,50 @@ watch(() => route.query.tab, (newTab) => {
 }
 
 .resource-tabs :deep(.el-tabs__nav-wrap::after) {
-  display: none;
+  background: rgba(217, 226, 238, 0.86);
 }
 
 .resource-tabs :deep(.el-tabs__item) {
-  font-size: 15px;
-  padding: 0 24px;
-  height: 48px;
-  line-height: 48px;
+  height: 46px;
+  padding: 0 18px;
 }
 
-.resource-tabs :deep(.el-tabs__item.is-active) {
-  font-weight: 600;
+.resource-tabs :deep(.el-tabs__active-bar) {
+  height: 3px;
+  border-radius: 999px;
 }
 
 .tab-label {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  font-size: 14px;
 }
 
-/* 内容区 */
-.tab-content {
+.resource-center-body {
   flex: 1;
-  overflow: hidden;
+  min-height: 0;
   display: flex;
-  flex-direction: column;
+  overflow: hidden;
 }
 
-/* 确保子组件能正确填充 */
-.tab-content > * {
+.resource-center-body > * {
   flex: 1;
-  overflow: hidden;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .resource-center-page {
+    gap: 12px;
+    padding: 14px 16px 16px;
+  }
+
+  .resource-tabs {
+    padding: 0;
+  }
+
+  .resource-tabs :deep(.el-tabs__item) {
+    padding: 0 12px;
+  }
 }
 </style>

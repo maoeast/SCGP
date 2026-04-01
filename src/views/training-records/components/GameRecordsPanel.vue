@@ -123,18 +123,19 @@
 
       <el-table-column label="正确率" width="170">
         <template #default="{ row }">
-          <div class="accuracy-cell">
+          <div v-if="getAccuracyPercent(row.accuracy_rate) !== null" class="accuracy-cell">
             <div class="accuracy-track" aria-hidden="true">
               <div
                 class="accuracy-fill"
                 :style="{
                   width: `${getAccuracyPercent(row.accuracy_rate)}%`,
-                  background: getAccuracyColor(getAccuracyPercent(row.accuracy_rate)),
+                  background: getAccuracyColor(getAccuracyPercent(row.accuracy_rate) || 0),
                 }"
               />
             </div>
             <span class="accuracy-value">{{ getAccuracyPercent(row.accuracy_rate) }}%</span>
           </div>
+          <span v-else class="metric-empty">-</span>
         </template>
       </el-table-column>
 
@@ -152,8 +153,14 @@
 
       <el-table-column label="操作" width="108" fixed="right">
         <template #default="{ row }">
-          <button type="button" class="detail-pill-button" @click="emit('view-detail', row)">
-            查看详情
+          <button
+            type="button"
+            class="detail-pill-button"
+            :class="{ 'is-disabled': !supportsRecordDetail(row) }"
+            :disabled="!supportsRecordDetail(row)"
+            @click="handleViewDetail(row)"
+          >
+            {{ supportsRecordDetail(row) ? '查看详情' : '暂无详情' }}
           </button>
         </template>
       </el-table-column>
@@ -170,6 +177,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { EmotionalTrainingAPI } from '@/database/emotional-api'
+import { EmotionalGamesAPI } from '@/database/emotional-games-api'
 import { GameTrainingAPI, StudentAPI } from '@/database/api'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 import { getTrainingEntry, type TrainingEntryCode } from '@/utils/training-entry'
@@ -205,30 +213,46 @@ const selectedStudentId = ref<number | undefined>(props.studentId || undefined)
 const dateRange = ref<[string, string] | null>(null)
 const activeDatePreset = ref<QuickRangeKey>('all')
 const standardDateRangePickerProps = STANDARD_DATE_RANGE_PICKER_PROPS
+const gameTrainingApi = new GameTrainingAPI()
+const emotionalGamesApi = new EmotionalGamesAPI()
 
 const currentEntry = computed(() => (props.entryCode ? getTrainingEntry(props.entryCode) : null))
 const isFixedStudentMode = computed(() => Number(props.studentId || 0) > 0)
+const isEmotionalRegulationEntry = computed(() => currentEntry.value?.code === 'emotional-regulation')
+const shouldIncludeEmotionalGameRecords = computed(() => !props.entryCode || isEmotionalRegulationEntry.value)
 const isEmotionalEntry = computed(() => currentEntry.value?.moduleCode === 'emotional')
 const showStudentFilter = computed(() => !props.hideStudentFilter && !isFixedStudentMode.value)
 const showStudentColumn = computed(() => !isFixedStudentMode.value)
 const showEntryColumn = computed(() => !props.entryCode)
 const tableMaxHeightValue = computed(() => props.tableMaxHeight)
 
+function hasNumericMetric(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+}
+
 const avgAccuracy = computed(() => {
-  if (records.value.length === 0) return 0
-  const sum = records.value.reduce((acc, record) => acc + Number(record.accuracy_rate || 0), 0)
-  return Math.round((sum / records.value.length) * 100)
+  const source = records.value
+    .map((record) => record.accuracy_rate)
+    .filter((value): value is number => hasNumericMetric(value))
+
+  if (source.length === 0) return null
+  const sum = source.reduce((acc, value) => acc + value, 0)
+  return Math.round((sum / source.length) * 100)
 })
 
-const avgAccuracyDisplay = computed(() => (records.value.length > 0 ? `${avgAccuracy.value}%` : '-'))
+const avgAccuracyDisplay = computed(() => (avgAccuracy.value !== null ? `${avgAccuracy.value}%` : '-'))
 
 const avgResponseTime = computed(() => {
-  if (records.value.length === 0) return 0
-  const sum = records.value.reduce((acc, record) => acc + Number(record.avg_response_time || 0), 0)
-  return Math.round(sum / records.value.length)
+  const source = records.value
+    .map((record) => record.avg_response_time)
+    .filter((value): value is number => hasNumericMetric(value))
+
+  if (source.length === 0) return null
+  const sum = source.reduce((acc, value) => acc + value, 0)
+  return Math.round(sum / source.length)
 })
 
-const avgResponseTimeDisplay = computed(() => (records.value.length > 0 ? formatResponseTime(avgResponseTime.value) : '-'))
+const avgResponseTimeDisplay = computed(() => formatResponseTime(avgResponseTime.value))
 
 const totalDuration = computed(() => {
   const total = records.value.reduce((acc, record) => acc + Number(record.duration || 0), 0)
@@ -239,10 +263,22 @@ function resolveRecordEntry(row: any) {
   return getTrainingEntry(row.entry_code, row.module_code)
 }
 
+function isStandaloneEmotionalGameRecord(row: any) {
+  return row.record_source === 'emotional_game'
+}
+
 function isEmotionalRecord(row: any) {
+  if (isStandaloneEmotionalGameRecord(row)) {
+    return true
+  }
+
   return resolveRecordEntry(row).moduleCode === 'emotional'
     || row.session_type === 'emotion_scene'
     || row.session_type === 'care_scene'
+}
+
+function isEmotionalSessionRecord(row: any) {
+  return isEmotionalRecord(row) && !isStandaloneEmotionalGameRecord(row)
 }
 
 function getEntryLabel(row: any) {
@@ -267,6 +303,7 @@ function getTaskLabel(row: any) {
 
 function getCompletionStatusLabel(status?: string) {
   if (status === 'cancelled') return '已取消'
+  if (status === 'aborted') return '已中断'
   if (status === 'interrupted') return '已中断'
   return '已完成'
 }
@@ -274,11 +311,16 @@ function getCompletionStatusLabel(status?: string) {
 function getCompletionStatusType(status?: string) {
   if (status === 'completed') return 'success'
   if (status === 'cancelled') return 'info'
+  if (status === 'aborted') return 'warning'
   return 'warning'
 }
 
-function formatResponseTime(ms: number): string {
-  const safeMs = Number(ms || 0)
+function formatResponseTime(ms: number | null | undefined): string {
+  if (!hasNumericMetric(ms)) {
+    return '-'
+  }
+
+  const safeMs = Number(ms)
   if (safeMs < 1000) {
     return `${safeMs}ms`
   }
@@ -315,7 +357,11 @@ function formatDuration(ms: number) {
   return `${remainingSeconds}秒`
 }
 
-function getAccuracyPercent(rate: number) {
+function getAccuracyPercent(rate: number | null | undefined) {
+  if (!hasNumericMetric(rate)) {
+    return null
+  }
+
   const percent = Math.round(Number(rate || 0) * 100)
   return Math.max(0, Math.min(100, percent))
 }
@@ -379,6 +425,38 @@ function handleDateRangeChange(value: [string, string] | null) {
   loadRecords()
 }
 
+function mapStudentName(recordsToMap: any[], studentName: string) {
+  return recordsToMap.map((record: any) => ({
+    ...record,
+    student_name: record.student_name || studentName || '未知',
+  }))
+}
+
+function getStudentGameRecords(studentId: number, studentName?: string) {
+  let nextRecords = gameTrainingApi.getStudentTrainingRecords(studentId, undefined, undefined, props.entryCode)
+
+  if (shouldIncludeEmotionalGameRecords.value) {
+    nextRecords = [
+      ...nextRecords,
+      ...emotionalGamesApi.getStudentRecords(studentId),
+    ]
+  }
+
+  return studentName ? mapStudentName(nextRecords, studentName) : nextRecords
+}
+
+function supportsRecordDetail(row: any) {
+  return Boolean(row?.id)
+}
+
+function handleViewDetail(row: any) {
+  if (!supportsRecordDetail(row)) {
+    return
+  }
+
+  emit('view-detail', row)
+}
+
 async function loadStudents() {
   if (isFixedStudentMode.value) {
     return
@@ -396,34 +474,23 @@ function loadRecords() {
   loading.value = true
 
   try {
-    const api = new GameTrainingAPI()
     let allRecords: any[] = []
 
     if (isFixedStudentMode.value && props.studentId) {
-      allRecords = api.getStudentTrainingRecords(props.studentId, undefined, undefined, props.entryCode)
+      allRecords = getStudentGameRecords(props.studentId)
     } else if (selectedStudentId.value) {
-      allRecords = api.getStudentTrainingRecords(selectedStudentId.value, undefined, undefined, props.entryCode)
       const student = students.value.find((item) => item.id === selectedStudentId.value)
-      allRecords = allRecords.map((record: any) => ({
-        ...record,
-        student_name: student?.name || '未知',
-      }))
+      allRecords = getStudentGameRecords(selectedStudentId.value, student?.name || '未知')
     } else {
       for (const student of students.value) {
-        const studentRecords = api.getStudentTrainingRecords(student.id, undefined, undefined, props.entryCode)
-        allRecords.push(
-          ...studentRecords.map((record: any) => ({
-            ...record,
-            student_name: student.name,
-          })),
-        )
+        allRecords.push(...getStudentGameRecords(student.id, student.name))
       }
     }
 
-    if (allRecords.some((record) => isEmotionalRecord(record))) {
+    if (allRecords.some((record) => isEmotionalSessionRecord(record))) {
       const emotionalApi = new EmotionalTrainingAPI()
       allRecords = allRecords.map((record: any) => {
-        if (!isEmotionalRecord(record)) {
+        if (!isEmotionalSessionRecord(record)) {
           return record
         }
 
@@ -438,10 +505,13 @@ function loadRecords() {
     if (dateRange.value?.[0] && dateRange.value?.[1]) {
       const startDate = new Date(dateRange.value[0]).getTime()
       const endDate = new Date(`${dateRange.value[1]} 23:59:59`).getTime()
-      allRecords = allRecords.filter((record: any) => record.timestamp >= startDate && record.timestamp <= endDate)
+      allRecords = allRecords.filter((record: any) => {
+        const timestamp = Number(record.timestamp)
+        return Number.isFinite(timestamp) && timestamp >= startDate && timestamp <= endDate
+      })
     }
 
-    allRecords.sort((left: any, right: any) => right.timestamp - left.timestamp)
+    allRecords.sort((left: any, right: any) => Number(right.timestamp || 0) - Number(left.timestamp || 0))
     records.value = allRecords
   } catch (error) {
     console.error('加载训练记录失败:', error)
@@ -677,6 +747,11 @@ watch(
   white-space: nowrap;
 }
 
+.metric-empty {
+  color: #909399;
+  font-size: 12px;
+}
+
 .detail-pill-button {
   border: 0.5px solid #b5d4f4;
   background: #e6f1fb;
@@ -693,6 +768,14 @@ watch(
   background: #dcebf9;
   border-color: #98c0ea;
   color: #0c447c;
+}
+
+.detail-pill-button.is-disabled,
+.detail-pill-button:disabled {
+  border-color: #dcdfe6;
+  background: #f5f7fa;
+  color: #909399;
+  cursor: not-allowed;
 }
 
 @media (max-width: 1100px) {

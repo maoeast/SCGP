@@ -7,6 +7,7 @@ import type {
 } from '@/types/emotional/games'
 
 type DbLike = {
+  all?: (sql: string, params?: any[]) => any[]
   get: (sql: string, params?: any[]) => any
   run: (sql: string, params?: any[]) => any
   getRawDB?: () => any
@@ -31,6 +32,39 @@ interface PersistEmotionGameSessionResult {
   badgeUnlockCount?: number
 }
 
+export interface EmotionalGameTrainingRecordItem {
+  id: number
+  student_id: number
+  task_id: null
+  task_name: string
+  resource_id: null
+  resource_type: 'game'
+  session_type: 'emotion_game'
+  entry_code: 'emotional-regulation'
+  timestamp: number
+  duration: number
+  difficulty_level: EmotionGameDifficulty
+  accuracy_rate: number | null
+  avg_response_time: number | null
+  raw_data: Record<string, any>
+  class_id: null
+  class_name: null
+  module_code: 'emotional'
+  created_at: string
+  completion_status: EmotionGameCompletionStatus
+  game_code: EmotionGameCode
+  record_source: 'emotional_game'
+}
+
+const EMOTIONAL_GAME_ENTRY_CODE = 'emotional-regulation'
+
+const EMOTIONAL_GAME_TITLE_MAP: Record<EmotionGameCode, string> = {
+  G01_BALLOON: '深呼吸热气球',
+  G03_FOREST: '音量魔法森林',
+  G04_WIPE_ICE: '擦亮坏心情',
+  G07_MONSTER: '喂食情绪小怪兽',
+}
+
 function getActiveDb(): DbLike {
   const activeDb = (window as Window & { db?: DbLike }).db
   if (!activeDb) {
@@ -43,6 +77,34 @@ function getRawDb(db: DbLike) {
   return typeof db.getRawDB === 'function' ? db.getRawDB() : db
 }
 
+function queryAll(db: DbLike, sql: string, params: any[] = []) {
+  if (typeof db.all === 'function') {
+    return db.all(sql, params)
+  }
+
+  const rawDb = getRawDb(db)
+
+  if (typeof rawDb.all === 'function') {
+    return rawDb.all(sql, params)
+  }
+
+  if (typeof rawDb.prepare === 'function') {
+    const stmt = rawDb.prepare(sql)
+    if (params.length > 0 && typeof stmt.bind === 'function') {
+      stmt.bind(params.map((param) => param === undefined ? null : param))
+    }
+
+    const rows: any[] = []
+    while (stmt.step()) {
+      rows.push(stmt.getAsObject())
+    }
+    stmt.free()
+    return rows
+  }
+
+  return []
+}
+
 function getLastInsertId(db: DbLike): number {
   if (typeof db.lastInsertId === 'function') {
     return db.lastInsertId()
@@ -50,6 +112,147 @@ function getLastInsertId(db: DbLike): number {
 
   const row = db.get('SELECT last_insert_rowid() as id')
   return row?.id || 0
+}
+
+function parsePerformanceData(raw: unknown): Record<string, any> {
+  if (!raw) {
+    return {}
+  }
+
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return {}
+    }
+  }
+
+  if (typeof raw === 'object') {
+    return raw as Record<string, any>
+  }
+
+  return {}
+}
+
+function averageNumericValues(values: unknown): number | null {
+  if (!Array.isArray(values)) {
+    return null
+  }
+
+  const normalized = values
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value) && value >= 0)
+
+  if (normalized.length === 0) {
+    return null
+  }
+
+  return Math.round(normalized.reduce((sum, value) => sum + value, 0) / normalized.length)
+}
+
+function deriveAccuracyRate(
+  gameCode: EmotionGameCode,
+  performanceData: Record<string, any>,
+  completionStatus: EmotionGameCompletionStatus,
+): number | null {
+  switch (gameCode) {
+    case 'G01_BALLOON': {
+      const successfulCycles = Number(performanceData.successful_cycles || 0)
+      const failedReleases = Number(performanceData.failed_releases || 0)
+      const autoReleaseCount = Number(performanceData.auto_release_count || 0)
+      const totalAttempts = successfulCycles + failedReleases + autoReleaseCount
+      if (totalAttempts > 0) {
+        return successfulCycles / totalAttempts
+      }
+      break
+    }
+    case 'G03_FOREST': {
+      const targetHits = Number(performanceData.target_hits || 0)
+      const warningCount = Number(performanceData.warning_count || 0)
+      const totalChecks = targetHits + warningCount
+      if (totalChecks > 0) {
+        return targetHits / totalChecks
+      }
+
+      const stableVoiceMs = Number(performanceData.stable_voice_ms || 0)
+      const difficultyGoalMs = Number(performanceData.difficulty_goal_ms || 0)
+      if (difficultyGoalMs > 0) {
+        return Math.max(0, Math.min(1, stableVoiceMs / difficultyGoalMs))
+      }
+      break
+    }
+    case 'G04_WIPE_ICE': {
+      const clearedRatioPeak = Number(performanceData.cleared_ratio_peak)
+      if (Number.isFinite(clearedRatioPeak)) {
+        return Math.max(0, Math.min(1, clearedRatioPeak))
+      }
+      break
+    }
+    case 'G07_MONSTER': {
+      const correctDrops = Number(performanceData.correct_drops || 0)
+      const wrongDrops = Number(performanceData.wrong_drops || 0)
+      const totalDrops = correctDrops + wrongDrops
+      if (totalDrops > 0) {
+        return correctDrops / totalDrops
+      }
+      break
+    }
+  }
+
+  return completionStatus === 'completed' ? 1 : null
+}
+
+function deriveAvgResponseTime(
+  gameCode: EmotionGameCode,
+  performanceData: Record<string, any>,
+): number | null {
+  switch (gameCode) {
+    case 'G01_BALLOON':
+      return averageNumericValues(performanceData.inhale_samples_ms)
+    case 'G03_FOREST': {
+      const stableVoiceMs = Number(performanceData.stable_voice_ms || 0)
+      const targetHits = Number(performanceData.target_hits || 0)
+      if (stableVoiceMs > 0 && targetHits > 0) {
+        return Math.round(stableVoiceMs / targetHits)
+      }
+      return null
+    }
+    default:
+      return null
+  }
+}
+
+function normalizeTrainingRecord(row: any): EmotionalGameTrainingRecordItem {
+  const performanceData = parsePerformanceData(row.performance_data)
+  const completionStatus = (row.completion_status || 'completed') as EmotionGameCompletionStatus
+  const gameCode = row.game_code as EmotionGameCode
+  const startedAt = Date.parse(row.start_time || row.created_at || '')
+  const createdAt = row.created_at || row.start_time || ''
+  const timestamp = Number.isFinite(startedAt) ? startedAt : 0
+
+  return {
+    id: Number(row.id),
+    student_id: Number(row.student_id),
+    task_id: null,
+    task_name: EMOTIONAL_GAME_TITLE_MAP[gameCode] || '情绪小游戏',
+    resource_id: null,
+    resource_type: 'game',
+    session_type: 'emotion_game',
+    entry_code: EMOTIONAL_GAME_ENTRY_CODE,
+    timestamp,
+    duration: Number(row.duration_ms || 0),
+    difficulty_level: Number(row.difficulty_level || 1) as EmotionGameDifficulty,
+    accuracy_rate: deriveAccuracyRate(gameCode, performanceData, completionStatus),
+    avg_response_time: deriveAvgResponseTime(gameCode, performanceData),
+    raw_data: performanceData,
+    class_id: null,
+    class_name: null,
+    module_code: 'emotional',
+    created_at: createdAt,
+    completion_status: completionStatus,
+    game_code: gameCode,
+    record_source: 'emotional_game',
+  }
 }
 
 export class EmotionalGamesAPI {
@@ -165,5 +368,48 @@ export class EmotionalGamesAPI {
       ...row,
       performance_data: row.performance_data ? JSON.parse(row.performance_data) : {},
     }
+  }
+
+  getRecordById(recordId: number): EmotionalGameTrainingRecordItem | null {
+    const row = getActiveDb().get(`
+      SELECT *
+      FROM game_emotion_records
+      WHERE id = ?
+    `, [recordId])
+
+    if (!row) {
+      return null
+    }
+
+    return normalizeTrainingRecord(row)
+  }
+
+  getStudentRecords(studentId: number): EmotionalGameTrainingRecordItem[] {
+    const db = getActiveDb()
+    const rows = queryAll(db, `
+      SELECT *
+      FROM game_emotion_records
+      WHERE student_id = ?
+      ORDER BY created_at DESC, id DESC
+    `, [studentId])
+
+    return rows.map(normalizeTrainingRecord)
+  }
+
+  countRecordsByEntry(entryCode: string, studentId?: number): number {
+    if (entryCode !== EMOTIONAL_GAME_ENTRY_CODE) {
+      return 0
+    }
+
+    let sql = 'SELECT COUNT(*) as count FROM game_emotion_records WHERE 1 = 1'
+    const params: any[] = []
+
+    if (studentId) {
+      sql += ' AND student_id = ?'
+      params.push(studentId)
+    }
+
+    const result = getActiveDb().get(sql, params)
+    return Number(result?.count || 0)
   }
 }

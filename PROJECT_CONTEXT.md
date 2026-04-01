@@ -307,3 +307,61 @@
 - important scope constraint:
   - this round only unified the targeted student-management/detail/selector flows
   - other student-bearing pages may still use older local rendering until they are explicitly migrated
+
+## 15. 2026-04-01 Reports Center Simplification and Assessment Placeholder Boundary
+
+- `src/views/Reports.vue` was simplified again after direct UI review:
+  - remove the top hero / overview summary block
+  - remove redundant filter-section heading copy
+  - remove small section kicker pills such as `统一报告中心 / 类型分布 / 结果列表`
+- important current-product boundary:
+  - the assessment distribution area in `Reports.vue` must reflect current code reality, not target scope
+  - current implemented report-producing scales are only:
+    - `sm`
+    - `weefim`
+    - `csirs`
+    - `conners-psq`
+    - `conners-trs`
+    - `sdq`
+    - `srs2`
+    - `cbcl`
+  - the remaining assessment cards currently shown in the assessment entry page are still placeholders only:
+    - `儿心量表-II`
+    - `TGMD-3`
+    - `GMFM`
+    - `FMDA`
+- important presentation constraint:
+  - do not present those 4 placeholder scales as already implemented report chains
+  - zero-count placeholder cards in the reports page are only a current-state reminder, not evidence of delivered reporting capability
+- `src/views/admin/ResourceCenter.vue` top-level shell should remain lightweight:
+  - keep the page title / description and tab strip
+  - avoid reintroducing hero / overview blocks unless the user explicitly asks for them
+
+## 16. 2026-04-01 Emotional Mini-Game Record Bridge and Unified Training-Record Boundary
+
+- emotional mini-game records from `game_emotion_records` are now surfaced in the existing training-record UI through:
+  - `src/database/emotional-games-api.ts`
+  - `src/views/training-records/components/GameRecordsPanel.vue`
+- training-record counts that should now include emotional mini-game records:
+  - `src/views/training-records/TrainingRecordsMenu.vue`
+  - `src/views/training-records/ModuleTrainingRecords.vue`
+  - `src/views/StudentDetail.vue`
+- a lightweight emotional mini-game record detail page now exists:
+  - `src/views/emotional/GameRecordDetail.vue`
+  - route: `/emotional/game-record`
+- important current-product boundary:
+  - emotional mini-games are now visible in user-facing training-record lists and counts
+  - but they are still not part of a fully unified write architecture
+  - current code reality remains split across:
+    - `training_records`
+    - `equipment_training_records`
+    - `emotional_training_session`
+    - `game_emotion_records`
+- important next-step planning boundary:
+  - the current implementation plan for the long-term fix is:
+    - `docs/planning/2026-04-01-unified-training-record-schema-plan.md`
+  - that document describes the target direction:
+    - unified `training_session` main table
+    - family detail tables
+    - staged dual-write migration
+  - it is a current plan, not current implementation reality

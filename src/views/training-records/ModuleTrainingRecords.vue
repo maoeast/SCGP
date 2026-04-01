@@ -77,6 +77,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Switch, MagicStick, Sunny, ChatDotRound, Operation, MoonNight, House } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { EquipmentTrainingAPI, GameTrainingAPI } from '@/database/api'
+import { EmotionalGamesAPI } from '@/database/emotional-games-api'
 import {
   getAllTrainingEntries,
   getTrainingEntry,
@@ -90,6 +91,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const gameApi = new GameTrainingAPI()
+const emotionalGamesApi = new EmotionalGamesAPI()
 const equipmentApi = new EquipmentTrainingAPI()
 
 function getRouteEntryCode() {
@@ -110,7 +112,9 @@ const getModuleIcon = (iconName: string) => {
 }
 
 const getEntryRecordCount = (entryCode: TrainingEntryCode) => {
-  return gameApi.countRecordsByEntry(entryCode) + equipmentApi.countRecordsByEntry(entryCode)
+  return gameApi.countRecordsByEntry(entryCode)
+    + emotionalGamesApi.countRecordsByEntry(entryCode)
+    + equipmentApi.countRecordsByEntry(entryCode)
 }
 
 // 当前入口代码
@@ -151,6 +155,17 @@ const goBackToMenu = () => {
 
 // 查看游戏记录详情
 const handleViewGameDetail = (record: any) => {
+  if (record.record_source === 'emotional_game') {
+    router.push({
+      path: '/emotional/game-record',
+      query: {
+        recordId: String(record.id),
+        studentId: String(record.student_id),
+      }
+    })
+    return
+  }
+
   if (currentEntry.value.moduleCode === 'emotional') {
     router.push({
       path: '/emotional/session-summary',

@@ -9,7 +9,6 @@
           </el-button>
 
           <div class="header-copy">
-            <span class="section-kicker">学生档案</span>
             <h1>学生详情</h1>
             <p class="subtitle">
               {{ student?.name || '当前学生' }} · 查看基本资料、分班状态与评估训练记录
@@ -38,7 +37,6 @@
           </div>
 
           <div class="profile-card__identity">
-            <span class="section-kicker section-kicker--soft">档案概览</span>
             <h2>{{ student?.name || '未命名' }}</h2>
 
             <div class="profile-card__meta">
@@ -74,7 +72,6 @@
       <article class="overview-card">
         <div class="overview-card__intro">
           <div class="overview-card__copy">
-            <span class="section-kicker section-kicker--soft">记录导航</span>
             <h2>{{ activeTabMeta.title }}</h2>
             <p>{{ activeTabMeta.description }}</p>
           </div>
@@ -131,7 +128,6 @@
       <div class="records-shell">
         <div class="records-shell__header">
           <div class="records-shell__title">
-            <span class="section-kicker section-kicker--muted">记录工作台</span>
             <h2>相关记录</h2>
             <p>按学生维度查看评估、器材训练和游戏训练历史，支持直接跳转到明细页。</p>
           </div>
@@ -188,6 +184,7 @@ import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
 import StudentAvatar from '@/components/student/StudentAvatar.vue'
 import StudentId from '@/components/student/StudentId.vue'
 import { EquipmentTrainingAPI, GameTrainingAPI } from '@/database/api'
+import { EmotionalGamesAPI } from '@/database/emotional-games-api'
 import { useStudentStore, type Student } from '@/stores/student'
 import { formatStudentDate, getStudentAge } from '@/utils/student-display'
 import { getTrainingEntry } from '@/utils/training-entry'
@@ -295,6 +292,17 @@ function viewEquipmentRecord(record: any) {
 }
 
 function viewGameRecord(record: any) {
+  if (record.record_source === 'emotional_game') {
+    router.push({
+      path: '/emotional/game-record',
+      query: {
+        recordId: String(record.id),
+        studentId: String(record.student_id),
+      },
+    })
+    return
+  }
+
   const entry = getTrainingEntry(record.entry_code, record.module_code)
 
   if (entry.moduleCode === 'emotional') {
@@ -348,7 +356,8 @@ async function loadStudentDetail() {
 
     try {
       const gameApi = new GameTrainingAPI()
-      gameCount.value = gameApi.getStudentTrainingRecords(studentId).length
+      const emotionalGamesApi = new EmotionalGamesAPI()
+      gameCount.value = gameApi.getStudentTrainingRecords(studentId).length + emotionalGamesApi.getStudentRecords(studentId).length
     } catch (error) {
       console.error('加载游戏训练记录失败:', error)
       gameCount.value = 0
@@ -422,28 +431,6 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.section-kicker {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid #dfe8f3;
-  background: rgba(255, 255, 255, 0.78);
-  color: #7b8796;
-  font-size: 12px;
-  line-height: 1;
-}
-
-.section-kicker--soft {
-  background: rgba(255, 255, 255, 0.62);
-}
-
-.section-kicker--muted {
-  background: #f7f9fc;
 }
 
 .header-copy h1 {

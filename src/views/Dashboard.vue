@@ -2,7 +2,6 @@
   <div class="page-container scgp-admin-page dashboard-page" v-loading="loading">
     <div class="page-header dashboard-header">
       <div class="header-left">
-        <span class="dashboard-kicker">实时总览</span>
         <h1>首页看板</h1>
         <p class="subtitle">聚焦今天要做的评估、训练与干预提醒，用真实业务数据支持一线决策。</p>
       </div>
@@ -16,7 +15,6 @@
 
     <section class="dashboard-hero scgp-surface">
       <div class="dashboard-hero__main">
-        <span class="dashboard-kicker dashboard-kicker--soft">今日焦点</span>
         <h2>{{ focusPanel.title }}</h2>
         <p>{{ focusPanel.description }}</p>
 
@@ -56,7 +54,6 @@
     <section class="dashboard-surface scgp-surface">
       <div class="dashboard-section-header">
         <div>
-          <span class="dashboard-kicker dashboard-kicker--muted">工作入口</span>
           <h2>快捷操作区</h2>
           <p>将高频业务入口收口到一个区域，减少在模块之间来回切换。</p>
         </div>
@@ -99,7 +96,6 @@
       <article class="dashboard-surface scgp-surface schedule-panel">
         <div class="dashboard-panel-header">
           <div>
-            <span class="dashboard-kicker dashboard-kicker--muted">执行工作台</span>
             <h2>今日训练日程</h2>
             <p>当前处于执行周期内的真实训练计划，可直接从这里发起训练。</p>
           </div>
@@ -161,7 +157,6 @@
         <article class="dashboard-surface scgp-surface alert-panel">
           <div class="dashboard-panel-header">
             <div>
-              <span class="dashboard-kicker dashboard-kicker--muted">风险提示</span>
               <h2>本周异常预警</h2>
               <p>过去 7 天内需要关注的训练波动，优先查看低正确率与高提示依赖。</p>
             </div>
@@ -213,7 +208,6 @@
         <article class="dashboard-surface scgp-surface alert-panel">
           <div class="dashboard-panel-header">
             <div>
-              <span class="dashboard-kicker dashboard-kicker--muted">评估提醒</span>
               <h2>智能特教助理</h2>
               <p>根据真实评估缺口提供优先干预建议，帮助尽快补齐学生评估基线。</p>
             </div>
@@ -544,28 +538,6 @@ onMounted(() => {
 
 .dashboard-header {
   margin-bottom: 0;
-}
-
-.dashboard-kicker {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid var(--scgp-border-strong);
-  background: rgba(255, 255, 255, 0.82);
-  color: #7b8796;
-  font-size: 12px;
-  line-height: 1;
-}
-
-.dashboard-kicker--soft {
-  background: rgba(255, 255, 255, 0.68);
-}
-
-.dashboard-kicker--muted {
-  background: var(--scgp-surface-soft);
 }
 
 .dashboard-hero,
