@@ -15,7 +15,6 @@
         <p class="subtitle">查看该训练入口的游戏记录与器材记录</p>
       </div>
       <div class="header-right">
-        <!-- 入口快捷切换器 -->
         <div class="module-switcher">
           <el-icon class="switcher-icon"><Switch /></el-icon>
           <span class="switcher-label">切换入口</span>
@@ -23,6 +22,7 @@
             v-model="currentEntryCode"
             size="default"
             class="module-select"
+            popper-class="training-entry-switcher-popper"
             @change="handleEntryChange"
           >
             <el-option
@@ -30,11 +30,21 @@
               :key="entry.code"
               :label="entry.name"
               :value="entry.code"
-            />
+            >
+              <div class="module-option">
+                <el-icon class="module-option__icon" :size="16">
+                  <component :is="getModuleIcon(entry.icon)" />
+                </el-icon>
+                <span class="module-option__label">{{ entry.name }}</span>
+                <el-tag size="small" type="info" class="resource-count-tag">
+                  {{ getEntryRecordCount(entry.code) }}项
+                </el-tag>
+              </div>
+            </el-option>
           </el-select>
         </div>
         <el-button @click="goBackToMenu" :icon="ArrowLeft">
-          返回
+          返回列表
         </el-button>
       </div>
     </div>
@@ -62,10 +72,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Switch } from '@element-plus/icons-vue'
+import { ArrowLeft, Switch, MagicStick, Sunny, ChatDotRound, Operation, MoonNight, House } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
+import { EquipmentTrainingAPI, GameTrainingAPI } from '@/database/api'
 import {
   getAllTrainingEntries,
   getTrainingEntry,
@@ -78,9 +89,28 @@ import EquipmentRecordsPanel from './components/EquipmentRecordsPanel.vue'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const gameApi = new GameTrainingAPI()
+const equipmentApi = new EquipmentTrainingAPI()
 
 function getRouteEntryCode() {
   return resolveTrainingEntryCode(route.params.entryCode)
+}
+
+const getModuleIcon = (iconName: string) => {
+  const iconMap: Record<string, any> = {
+    MagicStick,
+    Sunny,
+    ChatDotRound,
+    Operation,
+    MoonNight,
+    House,
+  }
+
+  return iconMap[iconName] || MagicStick
+}
+
+const getEntryRecordCount = (entryCode: TrainingEntryCode) => {
+  return gameApi.countRecordsByEntry(entryCode) + equipmentApi.countRecordsByEntry(entryCode)
 }
 
 // 当前入口代码
@@ -161,22 +191,15 @@ watch(() => route.query.type, (newType) => {
     activeTab.value = newType
   }
 })
-
-onMounted(() => {
-  // 初始化
-})
 </script>
 
 <style scoped>
-/* Tab 样式 */
 .records-tabs {
-  background: #fff;
-  border-radius: 8px;
-  padding: 16px;
+  background: transparent;
 }
 
 .records-tabs :deep(.el-tabs__header) {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .records-tabs :deep(.el-tabs__item) {
@@ -184,7 +207,6 @@ onMounted(() => {
   font-weight: 500;
 }
 
-/* 模块切换器样式 */
 .module-switcher {
   display: flex;
   align-items: center;
@@ -234,5 +256,42 @@ onMounted(() => {
 
 .module-select :deep(.el-input__wrapper.is-focus) {
   box-shadow: 0 0 0 1px #85ce61 inset, 0 0 0 3px rgba(103, 194, 58, 0.2);
+}
+
+.module-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.module-option__icon {
+  color: #6f7b86;
+  flex-shrink: 0;
+}
+
+.module-option__label {
+  min-width: 0;
+  color: #303133;
+}
+
+.resource-count-tag {
+  margin-left: auto;
+}
+
+@media (max-width: 768px) {
+  .header-right {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .module-switcher {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .module-select {
+    width: 156px;
+  }
 }
 </style>

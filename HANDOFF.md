@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-03-31
+> last_updated: 2026-04-01
 
 > 职责：新会话总入口，只负责把你导向当前有效文档。
 > 何时阅读：每次进入仓库、准备续接工作、或需要快速建立当前上下文时。
@@ -19,7 +19,7 @@
 ## 当前活跃工作
 
 - 当前唯一有效续接入口：`.continue-here.md`
-- 当前续接范围：`shared student display components are landed; awaiting user review or the next concrete task`
+- 当前续接范围：`module training records page UI refresh is landed; awaiting runtime review or follow-up polish`
 - 如果 `.continue-here.md` 与其他文档冲突：
   - 当前任务以 `.continue-here.md` 为准
   - 规则边界以 `AGENTS.md` 为准

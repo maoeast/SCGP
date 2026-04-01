@@ -1,249 +1,342 @@
 <template>
   <div class="records-panel">
-    <!-- 筛选区 -->
-    <div class="filter-section">
-      <div class="filter-left">
-        <el-select
-          v-model="selectedStudentId"
-          placeholder="选择学生"
-          clearable
-          filterable
-          style="width: 200px"
-          @change="loadRecords"
-        >
-          <el-option
-            v-for="student in students"
-            :key="student.id"
-            :label="student.name"
-            :value="student.id"
-          />
-        </el-select>
-        <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          v-bind="standardDateRangePickerProps"
-          range-separator="至"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          format="YYYY-MM-DD"
-          value-format="YYYY-MM-DD"
-          style="width: 260px"
-          @change="loadRecords"
-        />
-        <el-select
-          v-model="selectedCategory"
-          placeholder="选择分类"
-          clearable
-          style="width: 140px"
-          @change="loadRecords"
-        >
-          <el-option
-            v-for="category in categoryOptions"
-            :key="category"
-            :label="category"
-            :value="category"
-          />
-        </el-select>
-      </div>
-      <div class="filter-right">
-        <el-button :icon="Refresh" @click="loadRecords">刷新</el-button>
+    <section class="stats-row" aria-label="器材训练记录统计概览">
+      <article class="summary-card">
+        <div class="summary-card__label">总记录数</div>
+        <div class="summary-card__value">{{ records.length }}</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">平均得分</div>
+        <div class="summary-card__value">{{ avgScoreDisplay }}</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">总训练时长</div>
+        <div class="summary-card__value">{{ totalDuration }}</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">涉及器材种数</div>
+        <div class="summary-card__value">{{ equipmentCount }}</div>
+      </article>
+    </section>
+
+    <div class="filter-section records-filter-section">
+      <div class="filter-toolbar">
+        <div class="filter-toolbar__controls">
+          <el-select
+            v-model="selectedStudentId"
+            size="small"
+            placeholder="选择学生"
+            clearable
+            filterable
+            class="student-filter"
+            @change="loadRecords"
+          >
+            <el-option
+              v-for="student in students"
+              :key="student.id"
+              :label="student.name"
+              :value="student.id"
+            />
+          </el-select>
+
+          <el-select
+            v-model="selectedCategory"
+            size="small"
+            placeholder="选择分类"
+            clearable
+            class="category-filter"
+            @change="loadRecords"
+          >
+            <el-option
+              v-for="category in categoryOptions"
+              :key="category"
+              :label="category"
+              :value="category"
+            />
+          </el-select>
+
+          <div class="date-filter-group">
+            <el-date-picker
+              v-model="dateRange"
+              type="daterange"
+              size="small"
+              v-bind="standardDateRangePickerProps"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              class="date-range-filter"
+              @change="handleDateRangeChange"
+            />
+
+            <div class="filter-toolbar__divider" aria-hidden="true" />
+
+            <div class="quick-range-list" role="tablist" aria-label="日期快捷筛选">
+              <button
+                v-for="preset in QUICK_RANGE_OPTIONS"
+                :key="preset.key"
+                type="button"
+                class="range-pill"
+                :class="{ 'is-active': activeDatePreset === preset.key }"
+                @click="applyQuickRange(preset.key)"
+              >
+                {{ preset.label }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <el-button class="refresh-button" size="small" :icon="Refresh" @click="loadRecords">
+          刷新
+        </el-button>
       </div>
     </div>
 
-    <!-- 数据表格 -->
     <el-table
       v-loading="loading"
       :data="records"
       stripe
+      class="records-table"
       style="width: 100%"
       max-height="500"
+      empty-text=""
     >
       <el-table-column prop="student_name" label="学生姓名" width="100" />
-      <el-table-column label="器材名称" min-width="150">
+
+      <el-table-column label="器材名称" min-width="180" show-overflow-tooltip>
         <template #default="{ row }">
           <div class="equipment-cell">
-            <el-avatar
-              v-if="row.equipment_image"
-              :src="row.equipment_image"
-              :size="32"
-              shape="square"
-            />
-            <span>{{ row.equipment_name }}</span>
+            <span class="equipment-initial">{{ getEquipmentInitial(row.equipment_name) }}</span>
+            <span class="equipment-name">{{ row.equipment_name }}</span>
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="分类" width="80">
+
+      <el-table-column label="分类" width="92">
         <template #default="{ row }">
-          <el-tag size="small" type="info">
+          <el-tag size="small" effect="plain" type="info">
             {{ getCategoryLabel(row) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="得分" width="100">
+
+      <el-table-column label="得分" width="114">
         <template #default="{ row }">
           <el-rate
-            v-model="row.score"
+            :model-value="Number(row.score || 0)"
             disabled
             :max="5"
             size="small"
+            :colors="['#BA7517', '#BA7517', '#BA7517']"
+            disabled-void-color="#E5E7EB"
           />
         </template>
       </el-table-column>
-      <el-table-column label="提示等级" width="90">
+
+      <el-table-column label="提示等级" width="110">
         <template #default="{ row }">
-          <el-tag :type="getPromptLevelType(row.prompt_level)" size="small">
-            {{ getPromptLevelLabel(row.prompt_level) }}
-          </el-tag>
+          <span
+            class="prompt-pill"
+            :class="`prompt-pill--${getPromptLevelMeta(row.prompt_level).tone}`"
+          >
+            {{ getPromptLevelMeta(row.prompt_level).label }}
+          </span>
         </template>
       </el-table-column>
-      <el-table-column label="训练时长" width="90">
+
+      <el-table-column label="训练时长" width="100">
         <template #default="{ row }">
           {{ formatDuration(row.duration_seconds) }}
         </template>
       </el-table-column>
-      <el-table-column label="训练日期" width="180">
+
+      <el-table-column label="训练日期" width="156">
         <template #default="{ row }">
-          {{ formatTrainingDate(row.training_date) }}
+          <span class="time-text">{{ formatDateTimeToMinute(row.training_date) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="评语" min-width="200">
+
+      <el-table-column label="评语" min-width="220" show-overflow-tooltip>
         <template #default="{ row }">
-          <span v-if="row.generated_comment">{{ row.generated_comment }}</span>
-          <span v-else class="no-comment">暂无评语</span>
+          <span v-if="row.generated_comment" class="comment-text">{{ row.generated_comment }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="90" fixed="right">
+
+      <el-table-column label="操作" width="108" fixed="right">
         <template #default="{ row }">
-          <el-button
-            type="primary"
-            size="small"
-            link
-            @click="emit('view-detail', row)"
-          >
-            详情
-          </el-button>
+          <button type="button" class="detail-pill-button" @click="emit('view-detail', row)">
+            查看详情
+          </button>
         </template>
       </el-table-column>
     </el-table>
 
-    <!-- 空状态 -->
     <el-empty
       v-if="!loading && records.length === 0"
       description="暂无器材训练记录"
     />
-
-    <!-- 统计信息 -->
-    <div v-if="records.length > 0" class="stats-section">
-      <el-descriptions :column="4" border size="small">
-        <el-descriptions-item label="总记录数">{{ records.length }}</el-descriptions-item>
-        <el-descriptions-item label="平均得分">
-          {{ avgScore.toFixed(1) }} 分
-        </el-descriptions-item>
-        <el-descriptions-item label="总训练时长">
-          {{ totalDuration }}
-        </el-descriptions-item>
-        <el-descriptions-item label="涉及器材">
-          {{ equipmentCount }} 种
-        </el-descriptions-item>
-      </el-descriptions>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
 import { EquipmentTrainingAPI, StudentAPI } from '@/database/api'
-import { type TrainingEntryCode } from '@/utils/training-entry'
-import { resolveEquipmentSourceCategory } from '@/utils/physical-equipment-source-category'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
+import { resolveEquipmentSourceCategory } from '@/utils/physical-equipment-source-category'
+import { type TrainingEntryCode } from '@/utils/training-entry'
 
 interface Props {
   entryCode: TrainingEntryCode
 }
+
+type QuickRangeKey = 'all' | 'week' | 'month' | ''
+type PromptTone = 'independent' | 'verbal' | 'physical'
+
+const QUICK_RANGE_OPTIONS = [
+  { key: 'all', label: '全部' },
+  { key: 'week', label: '本周' },
+  { key: 'month', label: '本月' },
+] as const satisfies ReadonlyArray<{ key: Exclude<QuickRangeKey, ''>; label: string }>
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'view-detail', record: any): void
 }>()
 
-// 状态
 const loading = ref(false)
 const records = ref<any[]>([])
 const students = ref<any[]>([])
 const selectedStudentId = ref<number | undefined>()
 const dateRange = ref<[string, string] | null>(null)
-const standardDateRangePickerProps = STANDARD_DATE_RANGE_PICKER_PROPS
 const selectedCategory = ref<string | undefined>()
-const categoryOptions = computed(() => {
-  return Array.from(new Set(records.value.map((record) => getCategoryLabel(record)))).sort((left, right) =>
-    left.localeCompare(right, 'zh-Hans-CN')
-  )
-})
+const activeDatePreset = ref<QuickRangeKey>('all')
+const categoryOptions = ref<string[]>([])
+const standardDateRangePickerProps = STANDARD_DATE_RANGE_PICKER_PROPS
 
-// 统计计算
 const avgScore = computed(() => {
   if (records.value.length === 0) return 0
-  const sum = records.value.reduce((acc, r) => acc + r.score, 0)
+  const sum = records.value.reduce((acc, record) => acc + Number(record.score || 0), 0)
   return sum / records.value.length
 })
 
+const avgScoreDisplay = computed(() => (records.value.length > 0 ? `${avgScore.value.toFixed(1)} 分` : '—'))
+
 const totalDuration = computed(() => {
-  const total = records.value.reduce((acc, r) => acc + (r.duration_seconds || 0), 0)
+  const total = records.value.reduce((acc, record) => acc + Number(record.duration_seconds || 0), 0)
   return formatDuration(total)
 })
-const equipmentCount = computed(() => {
-  const uniqueIds = new Set(records.value.map(r => r.equipment_id))
-  return uniqueIds.size
-})
 
-// 格式化时长
+const equipmentCount = computed(() => new Set(records.value.map(record => record.equipment_id)).size)
+
 const formatDuration = (seconds: number) => {
-  if (!seconds) return '-'
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
+  const safeSeconds = Math.max(0, Number(seconds || 0))
+  const minutes = Math.floor(safeSeconds / 60)
+  const remainingSeconds = safeSeconds % 60
+
   if (minutes > 0) {
     return `${minutes}分${remainingSeconds}秒`
   }
+
   return `${remainingSeconds}秒`
 }
-// 格式化训练日期
-const formatTrainingDate = (date: string | Date) => {
-  if (!date) return '-'
-  const d = new Date(date)
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  const hours = String(d.getHours()).padStart(2, '0')
-  const minutes = String(d.getMinutes()).padStart(2, '0')
-  const seconds = String(d.getSeconds()).padStart(2, '0')
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+
+const formatDateTimeToMinute = (value: number | string | Date | null | undefined) => {
+  if (value === null || value === undefined || value === '') return '-'
+
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return typeof value === 'string' ? value : '-'
+  }
+
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}`
 }
-// 获取分类标签
+
+const formatDateString = (date: Date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const getCurrentWeekRange = (): [string, string] => {
+  const today = new Date()
+  const day = today.getDay() === 0 ? 7 : today.getDay()
+  const start = new Date(today)
+  start.setHours(0, 0, 0, 0)
+  start.setDate(today.getDate() - day + 1)
+  const end = new Date(start)
+  end.setDate(start.getDate() + 6)
+  return [formatDateString(start), formatDateString(end)]
+}
+
+const getCurrentMonthRange = (): [string, string] => {
+  const today = new Date()
+  const start = new Date(today.getFullYear(), today.getMonth(), 1)
+  const end = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+  return [formatDateString(start), formatDateString(end)]
+}
+
+const getPresetRange = (preset: Exclude<QuickRangeKey, ''>) => {
+  if (preset === 'all') return null
+  if (preset === 'week') return getCurrentWeekRange()
+  return getCurrentMonthRange()
+}
+
+const matchesRange = (source: [string, string] | null, target: [string, string]) => {
+  return Boolean(source && source[0] === target[0] && source[1] === target[1])
+}
+
+const resolveActiveDatePreset = (range: [string, string] | null): QuickRangeKey => {
+  if (!range?.[0] || !range?.[1]) return 'all'
+  if (matchesRange(range, getCurrentWeekRange())) return 'week'
+  if (matchesRange(range, getCurrentMonthRange())) return 'month'
+  return ''
+}
+
+const applyQuickRange = (preset: Exclude<QuickRangeKey, ''>) => {
+  activeDatePreset.value = preset
+  dateRange.value = getPresetRange(preset)
+  loadRecords()
+}
+
+const handleDateRangeChange = (value: [string, string] | null) => {
+  activeDatePreset.value = resolveActiveDatePreset(value)
+  loadRecords()
+}
+
 const getCategoryLabel = (record: any) => {
   return resolveEquipmentSourceCategory({
     category: record.category,
     metadata: record.equipment_meta,
   })
 }
-// 获取提示等级标签
-const getPromptLevelLabel = (level: number) => {
-  const labels: Record<number, string> = {
-    1: '完全独立',
-    2: '少量提示',
-    3: '部分提示',
-    4: '大量提示',
-    5: '完全辅助'
+
+const getEquipmentInitial = (equipmentName?: string) => {
+  const normalized = typeof equipmentName === 'string' ? equipmentName.trim() : ''
+  return normalized ? normalized.charAt(0) : '器'
+}
+
+const getPromptLevelMeta = (level: number): { label: string; tone: PromptTone } => {
+  const safeLevel = Number(level || 0)
+
+  if (safeLevel <= 1) {
+    return { label: '完全独立', tone: 'independent' }
   }
-  return labels[level] || `等级${level}`
+
+  if (safeLevel <= 3) {
+    return { label: '言语提示', tone: 'verbal' }
+  }
+
+  return { label: '身体协助', tone: 'physical' }
 }
-// 获取提示等级类型
-const getPromptLevelType = (level: number) => {
-  if (level <= 2) return 'success'
-  if (level <= 3) return 'warning'
-  return 'danger'
-}
-// 加载学生列表
+
 const loadStudents = async () => {
   try {
     const api = new StudentAPI()
@@ -252,47 +345,55 @@ const loadStudents = async () => {
     console.error('加载学生列表失败:', error)
   }
 }
-// 加载记录
+
 const loadRecords = () => {
   loading.value = true
+
   try {
     const api = new EquipmentTrainingAPI()
-    // 获取指定模块的器材训练记录
     let allRecords: any[] = []
+
     if (selectedStudentId.value) {
-      // 获取指定学生的记录
-      const student = students.value.find(s => s.id === selectedStudentId.value)
+      const student = students.value.find(item => item.id === selectedStudentId.value)
       const studentRecords = api.getStudentRecords(selectedStudentId.value, {
         start_date: dateRange.value?.[0],
         end_date: dateRange.value?.[1],
         entry_code: props.entryCode,
       })
-      allRecords = studentRecords.map((r: any) => ({
-        ...r,
-        student_name: student?.name || '未知'
+
+      allRecords = studentRecords.map((record: any) => ({
+        ...record,
+        student_name: student?.name || '未知',
       }))
     } else {
-      // 获取所有学生的记录
       for (const student of students.value) {
         const studentRecords = api.getStudentRecords(student.id, {
           start_date: dateRange.value?.[0],
           end_date: dateRange.value?.[1],
           entry_code: props.entryCode,
         })
-        allRecords.push(...studentRecords.map((r: any) => ({
-          ...r,
-          student_name: student.name
-        })))
+
+        allRecords.push(
+          ...studentRecords.map((record: any) => ({
+            ...record,
+            student_name: student.name,
+          })),
+        )
       }
     }
-    // 分类筛选
+
+    categoryOptions.value = Array.from(new Set(allRecords.map(record => getCategoryLabel(record)))).sort((left, right) =>
+      left.localeCompare(right, 'zh-Hans-CN'),
+    )
+
     if (selectedCategory.value) {
-      allRecords = allRecords.filter((r: any) => getCategoryLabel(r) === selectedCategory.value)
+      allRecords = allRecords.filter(record => getCategoryLabel(record) === selectedCategory.value)
     }
-    // 按训练日期倒序排列
-    allRecords.sort((a: any, b: any) => {
-      return new Date(b.training_date).getTime() - new Date(a.training_date).getTime()
+
+    allRecords.sort((left: any, right: any) => {
+      return new Date(right.training_date).getTime() - new Date(left.training_date).getTime()
     })
+
     records.value = allRecords
   } catch (error) {
     console.error('加载记录失败:', error)
@@ -300,6 +401,7 @@ const loadRecords = () => {
     loading.value = false
   }
 }
+
 onMounted(async () => {
   await loadStudents()
   loadRecords()
@@ -310,39 +412,297 @@ watch(
   () => {
     selectedCategory.value = undefined
     loadRecords()
-  }
+  },
 )
 </script>
+
 <style scoped>
 .records-panel {
-  padding: 0;
-}
-.filter-section {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding: 16px;
-  background: #f5f7fa;
-  border-radius: 8px;
+  flex-direction: column;
+  gap: 16px;
 }
-.filter-left {
-  display: flex;
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
+
+.summary-card {
+  padding: 12px 14px;
+  border: none;
+  border-radius: var(--border-radius-md, 8px);
+  background: var(--color-background-secondary, #ffffff);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 90px;
+}
+
+.summary-card__label {
+  color: var(--color-text-secondary, #606266);
+  font-size: 13px;
+}
+
+.summary-card__value {
+  color: var(--color-text-primary, #303133);
+  font-size: clamp(24px, 2.2vw, 34px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.records-filter-section {
+  margin-bottom: 0;
+  padding: 14px 16px;
+  background: var(--color-background-secondary, #ffffff);
+  box-shadow: none;
+}
+
+.filter-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-toolbar__controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.student-filter {
+  width: 164px;
+  flex: 0 0 auto;
+}
+
+.category-filter {
+  width: 140px;
+  flex: 0 0 auto;
+}
+
+.date-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.filter-toolbar__divider {
+  width: 1px;
+  height: 32px;
+  background: #dcdfe6;
+  flex-shrink: 0;
+}
+
+.quick-range-list {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.range-pill {
+  border: 1px solid rgba(220, 223, 230, 0.9);
+  background: rgba(255, 255, 255, 0.88);
+  color: #606266;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.range-pill:hover {
+  color: #303133;
+  border-color: #afcfff;
+  transform: translateY(-1px);
+}
+
+.range-pill.is-active {
+  color: #2f74d0;
+  border-color: #66a8ff;
+  background: #eef5ff;
+  box-shadow: 0 10px 20px rgba(102, 168, 255, 0.12);
+}
+
+.refresh-button {
+  margin-left: auto;
+  border: 0.5px solid var(--color-border-secondary, #dcdfe6);
+  background: var(--color-background-primary, #ffffff);
+  color: var(--color-text-secondary, #606266);
+  border-radius: 999px;
+  padding-inline: 14px;
+}
+
+.refresh-button:hover {
+  border-color: #afcfff;
+  color: #2f74d0;
+  background: #eef5ff;
+}
+
+.student-filter :deep(.el-input__wrapper),
+.category-filter :deep(.el-input__wrapper),
+.date-range-filter :deep(.el-input__wrapper),
+.date-range-filter :deep(.el-range-editor.el-input__wrapper) {
+  min-height: 34px;
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px rgba(220, 223, 230, 0.9) inset;
+}
+
+.date-range-filter {
+  width: 252px;
+}
+
+.date-range-filter :deep(.el-range-input) {
+  width: 100px;
+  font-size: 13px;
+}
+
+.records-table :deep(.el-table__header th) {
+  background: #fbfcfe;
+  color: #606266;
+  font-weight: 600;
+}
+
+.records-table :deep(.el-table__body td) {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
 .equipment-cell {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-width: 0;
 }
-.stats-section {
-  margin-top: 16px;
-  padding: 16px;
-  background: #f5f7fa;
-  border-radius: 8px;
+
+.equipment-initial {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #e6f1fb;
+  border: 0.5px solid #b5d4f4;
+  color: #0c447c;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
 }
-.no-comment {
-  color: #909399;
-  font-style: italic;
+
+.equipment-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 0.5px solid transparent;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.prompt-pill--independent {
+  background: #e1f5ee;
+  color: #085041;
+  border-color: #9fe1cb;
+}
+
+.prompt-pill--verbal {
+  background: #faeeda;
+  color: #633806;
+  border-color: #fac775;
+}
+
+.prompt-pill--physical {
+  background: #fcebeb;
+  color: #791f1f;
+  border-color: #f7c1c1;
+}
+
+.time-text {
+  color: var(--color-text-secondary, #606266);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.comment-text {
+  color: var(--color-text-primary, #303133);
+}
+
+.detail-pill-button {
+  border: 0.5px solid #b5d4f4;
+  background: #e6f1fb;
+  color: #185fa5;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.detail-pill-button:hover {
+  background: #dcebf9;
+  border-color: #98c0ea;
+  color: #0c447c;
+}
+
+@media (max-width: 1100px) {
+  .stats-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-toolbar {
+    align-items: stretch;
+  }
+
+  .filter-toolbar__controls {
+    width: 100%;
+  }
+
+  .student-filter,
+  .category-filter,
+  .date-range-filter {
+    width: 100%;
+  }
+
+  .date-filter-group {
+    width: 100%;
+  }
+
+  .filter-toolbar__divider {
+    display: none;
+  }
+
+  .refresh-button {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 </style>
