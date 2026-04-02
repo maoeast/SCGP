@@ -366,7 +366,7 @@
     - staged dual-write migration
   - it is a current plan, not current implementation reality
 
-## 17. 2026-04-02 Unified Training-Session Phase A and Emotional Dual-Write Start
+## 17. 2026-04-02 Unified Training-Session Phase A and Full Legacy Write Dual-Write Coverage
 
 - `training_session` unified summary main table is now part of current code reality:
   - schema + indexes landed in `src/database/init.ts`
@@ -383,17 +383,27 @@
   - emotional mini-game writes in `src/database/emotional-games-api.ts`
     - old write remains in `game_emotion_records`
     - unified summary now also writes to `training_session`
+  - sensory game writes in `GameTrainingAPI.saveTrainingRecord()` within `src/database/api.ts`
+    - old write remains in `training_records`
+    - unified summary now also writes to `training_session`
+  - equipment writes in `EquipmentTrainingAPI.createRecord()` within `src/database/api.ts`
+    - old write remains in `equipment_training_records`
+    - unified summary now also writes to `training_session`
 - a lightweight unified query scaffold now exists:
   - `TrainingSessionAPI` in `src/database/api.ts`
+- important write-path safety boundary:
+  - sensory game and equipment dual-write are now wrapped in the same transaction scope as the legacy insert
+  - this avoids leaving a new legacy row behind when `training_session` upsert fails
 - important current-product boundary:
   - `training_session` is not yet the sole summary fact source
-  - sensory game writes are not dual-writing yet
-  - equipment writes are not dual-writing yet
   - no user-facing read chain has switched to `training_session` yet
     - training-record list / menu
     - student detail counts / lists
     - dashboard aggregates
     - reports
 - current next action:
-  - connect `GameTrainingAPI.saveTrainingRecord()` to `TrainingSessionWriter`
-  - then connect equipment writes
+  - first run runtime smoke verification for the newly completed sensory game / equipment dual-write paths
+  - then start switching the first safe user-facing read chain onto `training_session`
+  - candidate first consumers remain:
+    - training-record list / menu
+    - student detail counts / lists
