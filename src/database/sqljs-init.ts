@@ -444,8 +444,13 @@ async function createSchemaAndData(db: any): Promise<void> {
     // 插入系统默认配置
     db.run(`
       INSERT INTO system_config (key, value, description) VALUES
-      ('system_name', '感官综合训练与评估', '系统名称'),
+      ('system_name', '星愿能力发展训练系统', '系统名称'),
       ('system_version', '1.0.0', '系统版本'),
+      ('login_theme_variant', 'classic-blue', '登录页主题预设'),
+      ('theme_primary_color', '#2f6fd6', '登录页主色'),
+      ('brand_panel_title', '评估、训练与报告协同工作台', '登录页品牌主标题'),
+      ('brand_panel_subtitle', '为学校和康复团队提供清晰、稳定、可持续维护的日常入口。', '登录页品牌副标题'),
+      ('brand_panel_description', '统一进入学生管理、能力评估、训练计划、训练记录与报告生成，让一线工作更聚焦。', '登录页品牌说明'),
       ('auto_backup', 'true', '是否自动备份'),
       ('backup_interval', '7', '备份间隔（天）'),
       ('trial_days', '7', '试用天数');

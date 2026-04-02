@@ -8,6 +8,7 @@ import { initDatabase } from './database/init'
 import { initializeBuiltinModules } from './core/module-registry'
 import { initializeStrategies } from './core/strategies-init'
 import { useAuthStore } from './stores/auth'
+import { useSystemConfigStore } from './stores/systemConfig'
 import ElementPlus from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import 'element-plus/dist/index.css'
@@ -112,6 +113,10 @@ async function initializeApp() {
     app.use(ElementPlus, {
       locale: zhCn,
     })
+
+    const systemConfigStore = useSystemConfigStore()
+    systemConfigStore.applyTheme()
+    await systemConfigStore.loadConfig()
 
     // 注册所有图标
     for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

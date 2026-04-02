@@ -56,6 +56,68 @@
 
       <section class="system-settings-section">
         <div class="scgp-section-heading">
+          <h3>登录页品牌与主题</h3>
+          <p>配置登录页主色、品牌区文案与学校入口展示信息。</p>
+        </div>
+        <div class="system-settings-section__body">
+          <el-form :model="settings" label-width="150px" class="settings-form">
+            <el-form-item label="主题预设">
+              <el-select v-model="settings.loginThemeVariant" class="system-settings-field">
+                <el-option
+                  v-for="option in loginThemeOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="主色">
+              <div class="system-settings-inline">
+                <el-color-picker v-model="settings.themePrimaryColor" />
+                <el-input v-model="settings.themePrimaryColor" class="system-settings-color-input" />
+                <span class="system-settings-help">建议使用蓝色系，按钮与聚焦态会同步更新。</span>
+              </div>
+            </el-form-item>
+            <el-form-item label="品牌主标题">
+              <el-input
+                v-model="settings.brandPanelTitle"
+                placeholder="请输入登录页品牌主标题"
+              />
+            </el-form-item>
+            <el-form-item label="品牌副标题">
+              <el-input
+                v-model="settings.brandPanelSubtitle"
+                placeholder="请输入登录页品牌副标题"
+              />
+            </el-form-item>
+            <el-form-item label="品牌说明">
+              <el-input
+                v-model="settings.brandPanelDescription"
+                type="textarea"
+                :rows="4"
+                placeholder="请输入登录页品牌区说明文案"
+              />
+            </el-form-item>
+          </el-form>
+
+          <section class="login-theme-preview">
+            <div class="login-theme-preview__brand">
+              <span class="login-theme-preview__badge">{{ currentThemeLabel }}</span>
+              <h4>{{ settings.brandPanelTitle }}</h4>
+              <p class="login-theme-preview__subtitle">{{ settings.brandPanelSubtitle }}</p>
+              <p class="login-theme-preview__description">{{ settings.brandPanelDescription }}</p>
+            </div>
+
+            <div class="login-theme-preview__card">
+              <span class="login-theme-preview__eyebrow">登录按钮预览</span>
+              <button type="button" class="login-theme-preview__button">登录系统</button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="system-settings-section">
+        <div class="scgp-section-heading">
           <h3>备份设置</h3>
         </div>
         <div class="system-settings-section__body">
@@ -111,11 +173,17 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Check } from '@element-plus/icons-vue'
 import { initDatabase } from '@/database/init'
 import { useSystemConfigStore } from '@/stores/systemConfig'
+import {
+  LOGIN_THEME_PRESETS,
+  applyLoginThemeVariables,
+  normalizeHexColor,
+  normalizeLoginThemeVariant,
+} from '@/utils/login-theme'
 
 const systemConfigStore = useSystemConfigStore()
 
@@ -125,14 +193,33 @@ const logoPreviewUrl = ref('')
 const logoFile = ref<File | null>(null)
 
 const settings = reactive({
-  systemName: '感官综合训练与评估',
+  systemName: '星愿能力发展训练系统',
   systemVersion: '1.0.0',
   schoolName: '',
+  loginThemeVariant: 'classic-blue',
+  themePrimaryColor: '#2f6fd6',
+  brandPanelTitle: '评估、训练与报告协同工作台',
+  brandPanelSubtitle: '为学校和康复团队提供清晰、稳定、可持续维护的日常入口。',
+  brandPanelDescription: '统一进入学生管理、能力评估、训练计划、训练记录与报告生成，让一线工作更聚焦。',
   autoBackup: true,
   backupInterval: 7,
   defaultReportFormat: 'pdf',
   includeStudentAvatar: true,
   reportHeader: '',
+})
+
+const loginThemeOptions = Object.entries(LOGIN_THEME_PRESETS).map(([value, preset]) => ({
+  value,
+  label: preset.label,
+}))
+
+const originalThemeSnapshot = ref({
+  variant: systemConfigStore.loginThemeVariant,
+  primaryColor: systemConfigStore.themePrimaryColor,
+})
+
+const currentThemeLabel = computed(() => {
+  return LOGIN_THEME_PRESETS[normalizeLoginThemeVariant(settings.loginThemeVariant)]?.label || '经典蓝'
 })
 
 const loadSettings = async () => {
@@ -160,6 +247,21 @@ const loadSettings = async () => {
         case 'logo_path':
           logoPreviewUrl.value = value
           break
+        case 'login_theme_variant':
+          settings.loginThemeVariant = normalizeLoginThemeVariant(value)
+          break
+        case 'theme_primary_color':
+          settings.themePrimaryColor = normalizeHexColor(value, '#2f6fd6')
+          break
+        case 'brand_panel_title':
+          settings.brandPanelTitle = value
+          break
+        case 'brand_panel_subtitle':
+          settings.brandPanelSubtitle = value
+          break
+        case 'brand_panel_description':
+          settings.brandPanelDescription = value
+          break
         case 'auto_backup':
           settings.autoBackup = value === 'true'
           break
@@ -177,6 +279,11 @@ const loadSettings = async () => {
           break
       }
     })
+
+    originalThemeSnapshot.value = {
+      variant: normalizeLoginThemeVariant(settings.loginThemeVariant),
+      primaryColor: normalizeHexColor(settings.themePrimaryColor, '#2f6fd6'),
+    }
   } catch (error) {
     console.error('加载系统设置失败:', error)
   }
@@ -197,6 +304,11 @@ const handleSave = async () => {
       logo_path: logoPreviewUrl.value,
       auto_backup: settings.autoBackup.toString(),
       backup_interval: settings.backupInterval.toString(),
+      login_theme_variant: normalizeLoginThemeVariant(settings.loginThemeVariant),
+      theme_primary_color: normalizeHexColor(settings.themePrimaryColor, '#2f6fd6'),
+      brand_panel_title: settings.brandPanelTitle,
+      brand_panel_subtitle: settings.brandPanelSubtitle,
+      brand_panel_description: settings.brandPanelDescription,
       default_report_format: settings.defaultReportFormat,
       include_student_avatar: settings.includeStudentAvatar.toString(),
       report_header: settings.reportHeader,
@@ -224,6 +336,10 @@ const handleSave = async () => {
     }
 
     await systemConfigStore.loadConfig()
+    originalThemeSnapshot.value = {
+      variant: systemConfigStore.loginThemeVariant,
+      primaryColor: systemConfigStore.themePrimaryColor,
+    }
 
     ElMessage.success('系统设置保存成功')
     logoFile.value = null
@@ -281,6 +397,20 @@ const removeLogo = () => {
 onMounted(() => {
   loadSettings()
 })
+
+watch(
+  () => [settings.loginThemeVariant, settings.themePrimaryColor],
+  ([variant, primaryColor]) => {
+    applyLoginThemeVariables({
+      variant: normalizeLoginThemeVariant(variant),
+      primaryColor: normalizeHexColor(primaryColor, '#2f6fd6'),
+    })
+  },
+)
+
+onUnmounted(() => {
+  applyLoginThemeVariables(originalThemeSnapshot.value)
+})
 </script>
 
 <style scoped>
@@ -320,6 +450,14 @@ onMounted(() => {
   line-height: 1.6;
 }
 
+.system-settings-field {
+  width: 240px;
+}
+
+.system-settings-color-input {
+  width: 160px;
+}
+
 .logo-upload {
   display: flex;
   flex-direction: column;
@@ -345,6 +483,85 @@ onMounted(() => {
   right: 5px;
 }
 
+.login-theme-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 18px;
+  margin-top: 6px;
+}
+
+.login-theme-preview__brand,
+.login-theme-preview__card {
+  border: 1px solid var(--login-border, #dbe5f0);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.login-theme-preview__brand {
+  padding: 24px;
+  color: #ffffff;
+  background:
+    linear-gradient(160deg, var(--login-brand-start, #1f4f9b) 0%, var(--login-brand-end, #17396f) 100%);
+}
+
+.login-theme-preview__badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--login-brand-badge-bg, rgba(236, 244, 255, 0.14));
+  color: var(--login-brand-badge-text, #dceaff);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.login-theme-preview__brand h4 {
+  margin: 14px 0 10px;
+  font-size: 22px;
+}
+
+.login-theme-preview__subtitle,
+.login-theme-preview__description {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.login-theme-preview__subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+}
+
+.login-theme-preview__description {
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+}
+
+.login-theme-preview__card {
+  padding: 24px;
+  background: linear-gradient(180deg, var(--login-surface-soft, #f7fafd) 0%, #ffffff 100%);
+}
+
+.login-theme-preview__eyebrow {
+  color: var(--login-primary, #2f6fd6);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.login-theme-preview__button {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 18px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--login-primary, #2f6fd6) 0%, var(--login-primary-hover, #275fb8) 100%);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
 :deep(.el-form-item) {
   margin-bottom: 20px;
 }
@@ -353,5 +570,11 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+}
+
+@media (max-width: 960px) {
+  .login-theme-preview {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

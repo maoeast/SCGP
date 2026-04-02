@@ -1,5 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import {
+  DEFAULT_LOGIN_PRIMARY_COLOR,
+  DEFAULT_LOGIN_THEME_VARIANT,
+  applyLoginThemeVariables,
+  normalizeHexColor,
+  normalizeLoginThemeVariant,
+  type LoginThemeVariant,
+} from '@/utils/login-theme'
 
 // 默认 Logo 路径（使用 public 目录下的图片）
 // 在 Electron 环境中，需要使用相对路径，因为打包后使用 file:// 协议
@@ -19,17 +27,28 @@ const getDefaultLogo = () => {
 
 const DEFAULT_LOGO = getDefaultLogo()
 const LEGACY_SYSTEM_NAME = '生活自理适应综合训练'
+const LEGACY_SYSTEM_NAME_ALT = '感官综合训练与评估'
 const CURRENT_SYSTEM_NAME = '星愿能力发展训练系统'
+const DEFAULT_BRAND_PANEL_TITLE = '评估、训练与报告协同工作台'
+const DEFAULT_BRAND_PANEL_SUBTITLE = '为学校和康复团队提供清晰、稳定、可持续维护的日常入口。'
+const DEFAULT_BRAND_PANEL_DESCRIPTION = '统一进入学生管理、能力评估、训练计划、训练记录与报告生成，让一线工作更聚焦。'
 
 function normalizeSystemName(value: string) {
-  return value === LEGACY_SYSTEM_NAME ? CURRENT_SYSTEM_NAME : value
+  return value === LEGACY_SYSTEM_NAME || value === LEGACY_SYSTEM_NAME_ALT
+    ? CURRENT_SYSTEM_NAME
+    : value
 }
 
 export const useSystemConfigStore = defineStore('systemConfig', () => {
   // 系统配置
-  const systemName = ref('感官综合训练与评估')
+  const systemName = ref(CURRENT_SYSTEM_NAME)
   const schoolName = ref('')
   const logoPath = ref('')
+  const loginThemeVariant = ref<LoginThemeVariant>(DEFAULT_LOGIN_THEME_VARIANT)
+  const themePrimaryColor = ref(DEFAULT_LOGIN_PRIMARY_COLOR)
+  const brandPanelTitle = ref(DEFAULT_BRAND_PANEL_TITLE)
+  const brandPanelSubtitle = ref(DEFAULT_BRAND_PANEL_SUBTITLE)
+  const brandPanelDescription = ref(DEFAULT_BRAND_PANEL_DESCRIPTION)
   const loading = ref(false)
 
   // 计算属性：获取显示用的 Logo 路径（优先使用数据库中的，否则使用默认的）
@@ -42,10 +61,26 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
     return DEFAULT_LOGO
   })
 
+  const applyTheme = () => {
+    applyLoginThemeVariables({
+      variant: loginThemeVariant.value,
+      primaryColor: themePrimaryColor.value,
+    })
+  }
+
   // 加载系统配置
   const loadConfig = async () => {
     loading.value = true
     try {
+      systemName.value = CURRENT_SYSTEM_NAME
+      schoolName.value = ''
+      logoPath.value = ''
+      loginThemeVariant.value = DEFAULT_LOGIN_THEME_VARIANT
+      themePrimaryColor.value = DEFAULT_LOGIN_PRIMARY_COLOR
+      brandPanelTitle.value = DEFAULT_BRAND_PANEL_TITLE
+      brandPanelSubtitle.value = DEFAULT_BRAND_PANEL_SUBTITLE
+      brandPanelDescription.value = DEFAULT_BRAND_PANEL_DESCRIPTION
+
       const { initDatabase } = await import('@/database/init')
       const db = await initDatabase()
 
@@ -76,6 +111,21 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
           case 'logo_path':
             logoPath.value = value
             break
+          case 'login_theme_variant':
+            loginThemeVariant.value = normalizeLoginThemeVariant(value)
+            break
+          case 'theme_primary_color':
+            themePrimaryColor.value = normalizeHexColor(value, DEFAULT_LOGIN_PRIMARY_COLOR)
+            break
+          case 'brand_panel_title':
+            brandPanelTitle.value = value || DEFAULT_BRAND_PANEL_TITLE
+            break
+          case 'brand_panel_subtitle':
+            brandPanelSubtitle.value = value || DEFAULT_BRAND_PANEL_SUBTITLE
+            break
+          case 'brand_panel_description':
+            brandPanelDescription.value = value || DEFAULT_BRAND_PANEL_DESCRIPTION
+            break
         }
       })
 
@@ -83,8 +133,11 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
       if (systemName.value) {
         document.title = systemName.value
       }
+
+      applyTheme()
     } catch (error) {
       console.error('加载系统配置失败:', error)
+      applyTheme()
     } finally {
       loading.value = false
     }
@@ -95,7 +148,15 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
     try {
       const { initDatabase } = await import('@/database/init')
       const db = await initDatabase()
-      const normalizedValue = key === 'system_name' ? normalizeSystemName(value) : value
+      let normalizedValue = value
+
+      if (key === 'system_name') {
+        normalizedValue = normalizeSystemName(value)
+      } else if (key === 'login_theme_variant') {
+        normalizedValue = normalizeLoginThemeVariant(value)
+      } else if (key === 'theme_primary_color') {
+        normalizedValue = normalizeHexColor(value, DEFAULT_LOGIN_PRIMARY_COLOR)
+      }
 
       // 检查配置是否存在
       const existing = db.get('SELECT id FROM system_config WHERE key = ?', [key])
@@ -125,6 +186,18 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
         schoolName.value = normalizedValue
       } else if (key === 'logo_path') {
         logoPath.value = normalizedValue
+      } else if (key === 'login_theme_variant') {
+        loginThemeVariant.value = normalizeLoginThemeVariant(normalizedValue)
+        applyTheme()
+      } else if (key === 'theme_primary_color') {
+        themePrimaryColor.value = normalizeHexColor(normalizedValue, DEFAULT_LOGIN_PRIMARY_COLOR)
+        applyTheme()
+      } else if (key === 'brand_panel_title') {
+        brandPanelTitle.value = normalizedValue || DEFAULT_BRAND_PANEL_TITLE
+      } else if (key === 'brand_panel_subtitle') {
+        brandPanelSubtitle.value = normalizedValue || DEFAULT_BRAND_PANEL_SUBTITLE
+      } else if (key === 'brand_panel_description') {
+        brandPanelDescription.value = normalizedValue || DEFAULT_BRAND_PANEL_DESCRIPTION
       }
     } catch (error) {
       console.error('更新系统配置失败:', error)
@@ -136,8 +209,14 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
     systemName,
     schoolName,
     logoPath,
+    loginThemeVariant,
+    themePrimaryColor,
+    brandPanelTitle,
+    brandPanelSubtitle,
+    brandPanelDescription,
     displayLogoPath,
     loading,
+    applyTheme,
     loadConfig,
     updateConfig,
   }
