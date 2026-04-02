@@ -19,7 +19,7 @@ Usually those three files are enough to resume work safely.
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `page-style unification execution is now landed in code reality for training-records, resource-center, training entry pages, assessment entry pages, and system management pages; the next active step is auditing remaining non-excluded backend pages to decide whether another shell-convergence slice is needed`
+- active work scope: `componentized login-page redesign is now landed in current code reality with system-config-driven login theme and brand-panel settings; the next active step is manual Electron runtime verification and deciding whether activation page should align to the same entry-theme direction`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

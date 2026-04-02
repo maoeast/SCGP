@@ -492,3 +492,44 @@
   - `npm run type-check` passed in the current shell after the system-management slice landed
   - the current conversation did not rerun `vite build`
   - historical note: earlier page-style slices were verified with Node 24 because some environments still resolved `/usr/bin/node` (`v18.19.1`)
+
+## 20. 2026-04-02 Login Entry Redesign and Config-Driven Theme Controls
+
+- the login entry redesign requested in this conversation is now part of current code reality:
+  - `src/views/Login.vue`
+- the login entry is now componentized into:
+  - `src/components/login/SchoolPanel.vue`
+  - `src/components/login/LoginCard.vue`
+  - `src/components/login/InputField.vue`
+  - `src/components/login/PrimaryButton.vue`
+- current login layout direction is now:
+  - left brand panel + right login form
+  - desktop target ratio around `40 / 60`
+  - narrow-width fallback to stacked layout
+- important visual boundary:
+  - current login page direction is a clean blue education-system entry
+  - do not reintroduce purple-heavy palettes or animated AI-style login backgrounds
+- a reusable login theme variable helper now exists:
+  - `src/utils/login-theme.ts`
+- system config now owns login-entry theme and brand fields through:
+  - `src/stores/systemConfig.ts`
+- app bootstrap now applies login-entry theme variables through:
+  - `src/main.ts`
+- system settings can now edit login-entry theme / brand content in:
+  - `src/views/system/SystemSettings.vue`
+- current persisted keys added to `system_config` include:
+  - `login_theme_variant`
+  - `theme_primary_color`
+  - `brand_panel_title`
+  - `brand_panel_subtitle`
+  - `brand_panel_description`
+- important scope boundary:
+  - this is a login-entry theme system, not a full-site theming engine
+  - do not describe current code reality as global platform theme switching
+- important follow-up boundary:
+  - `Activation.vue` was not aligned in this conversation
+  - any future entry-flow visual convergence should be a deliberate follow-up slice after runtime verification
+- verification status:
+  - `npm run type-check` passed
+  - this conversation did not rerun `vite build`
+  - this conversation did not complete manual Electron runtime QA
