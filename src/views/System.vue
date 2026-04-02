@@ -1,51 +1,53 @@
 <template>
-  <div class="page-container">
-    <!-- 页面头部 -->
-    <div class="page-header">
+  <div class="page-container scgp-admin-page system-page">
+    <div class="page-header system-page__header">
       <div class="header-left">
         <h1>系统管理</h1>
-        <p class="subtitle">用户管理、数据备份与系统配置</p>
+        <p class="subtitle">集中管理用户权限、数据备份、系统配置与本机运行状态。</p>
       </div>
     </div>
 
-    <!-- 选项卡 -->
-    <el-tabs v-model="activeTab" class="system-tabs">
-      <!-- 用户管理 -->
+    <el-tabs v-model="activeTab" class="system-tabs scgp-underlined-tabs">
       <el-tab-pane label="用户管理" name="users">
-        <UserManagement />
+        <div class="system-tab-panel scgp-tab-panel">
+          <UserManagement />
+        </div>
       </el-tab-pane>
 
-      <!-- 数据备份与恢复 -->
       <el-tab-pane label="数据备份" name="backup">
-        <div class="backup-section">
-          <h2>
-            <i class="fas fa-database"></i>
-            数据备份与恢复
-          </h2>
-          <div class="backup-cards">
-            <!-- 备份卡片 -->
-            <div class="backup-card">
-              <div class="card-header">
-                <h3>数据备份</h3>
-                <p>将系统数据导出为加密备份文件</p>
-              </div>
-              <div class="card-body">
-                <button @click="handleBackup" class="btn btn-primary" :disabled="isBackingUp">
-                  <i class="fas fa-arrow-down-to-bracket"></i>
-                  {{ isBackingUp ? '备份中...' : '立即备份' }}
-                </button>
-                <p class="help-text">备份文件包含所有学生信息、评估记录和训练数据</p>
-              </div>
+        <div class="system-tab-panel scgp-tab-panel">
+          <div class="scgp-content-toolbar">
+            <div class="scgp-content-toolbar__main">
+              <h2 class="scgp-content-toolbar__title">数据备份与恢复</h2>
+              <p class="scgp-content-toolbar__description">
+                导出当前系统数据，或从备份文件恢复学生、评估与训练记录。
+              </p>
             </div>
+          </div>
 
-            <!-- 恢复卡片 -->
-            <div class="backup-card">
-              <div class="card-header">
-                <h3>数据恢复</h3>
-                <p>从备份文件恢复系统数据</p>
+          <div class="system-card-grid">
+            <section class="system-card scgp-surface">
+              <div class="scgp-section-heading">
+                <h3>数据备份</h3>
+                <p>将当前系统数据导出为备份文件，便于迁移、归档或恢复。</p>
               </div>
-              <div class="card-body">
-                <div class="upload-area">
+
+              <div class="system-card__body">
+                <el-button type="primary" :loading="isBackingUp" @click="handleBackup">
+                  {{ isBackingUp ? '备份中...' : '立即备份' }}
+                </el-button>
+                <p class="system-help-text">备份文件包含学生信息、评估记录、训练记录与系统配置。</p>
+              </div>
+            </section>
+
+            <section class="system-card scgp-surface">
+              <div class="scgp-section-heading">
+                <h3>数据恢复</h3>
+                <p>选择备份文件并检查内容概览，再执行完整恢复。</p>
+              </div>
+
+              <div class="system-card__body">
+                <div class="system-upload-row">
                   <input
                     ref="fileInput"
                     type="file"
@@ -53,13 +55,11 @@
                     @change="handleFileSelect"
                     style="display: none"
                   />
-                  <button @click="triggerFileSelect" class="btn btn-secondary">
-                    <i class="fas fa-arrow-up-from-bracket"></i>
-                    选择备份文件
-                  </button>
-                  <span v-if="selectedFile" class="file-name">{{ selectedFile.name }}</span>
+                  <el-button plain @click="triggerFileSelect">选择备份文件</el-button>
+                  <span v-if="selectedFile" class="system-file-name">{{ selectedFile.name }}</span>
                 </div>
-                <div v-if="backupInfo" class="backup-info">
+
+                <div v-if="backupInfo" class="system-backup-info">
                   <h4>备份文件信息</h4>
                   <ul>
                     <li>记录数：{{ backupInfo.totalRecords }}</li>
@@ -67,86 +67,103 @@
                     <li>系统：{{ backupInfo.systemName }}</li>
                   </ul>
                 </div>
-                <button
+
+                <div class="scgp-warning-block">
+                  恢复数据将覆盖当前所有数据，请确认备份文件来源和版本无误后再执行。
+                </div>
+
+                <el-button
                   v-if="selectedFile"
+                  type="danger"
+                  :loading="isRestoring"
                   @click="handleRestore"
-                  class="btn btn-danger"
-                  :disabled="isRestoring"
                 >
-                  <i class="fas fa-clock-rotate-left"></i>
                   {{ isRestoring ? '恢复中...' : '恢复数据' }}
-                </button>
-                <p class="help-text warning">警告：恢复数据将覆盖当前所有数据，请谨慎操作</p>
+                </el-button>
               </div>
-            </div>
+            </section>
           </div>
         </div>
       </el-tab-pane>
 
-      <!-- 系统设置 -->
       <el-tab-pane label="系统设置" name="settings">
-        <SystemSettings />
+        <div class="system-tab-panel scgp-tab-panel">
+          <SystemSettings />
+        </div>
       </el-tab-pane>
 
-      <!-- 开发者调试（仅开发环境显示） -->
       <el-tab-pane v-if="isDevMode" label="开发者调试" name="devtools">
-        <div class="devtools-section">
-          <h2>
-            <i class="fas fa-wrench"></i>
-            开发者工具
-          </h2>
-          <div class="devtools-cards">
-            <!-- 清空数据卡片 -->
-            <div class="devtools-card danger">
-              <div class="card-header">
-                <h3>清空所有数据</h3>
-                <p>删除所有数据并重新初始化系统</p>
-              </div>
-              <div class="card-body">
-                <button @click="handleClearAllData" class="btn btn-danger" :disabled="isClearing">
-                  <i class="fas fa-trash"></i>
-                  {{ isClearing ? '清空中...' : '清空所有数据' }}
-                </button>
-                <p class="help-text warning">
-                  警告：此操作将清空所有学生、评估、训练记录等数据，且无法恢复！
-                </p>
-              </div>
+        <div class="system-tab-panel scgp-tab-panel">
+          <div class="scgp-content-toolbar">
+            <div class="scgp-content-toolbar__main">
+              <h2 class="scgp-content-toolbar__title">开发者调试</h2>
+              <p class="scgp-content-toolbar__description">
+                提供本机维护与更新入口，高风险操作应仅在确认环境后执行。
+              </p>
             </div>
+          </div>
 
-            <!-- 软件更新 -->
-            <div class="devtools-card primary">
-              <div class="card-header">
-                <h3>软件更新</h3>
-                <p>检查并安装应用更新</p>
+          <div class="system-card-grid">
+            <section class="system-card scgp-surface system-card--danger">
+              <div class="scgp-section-heading">
+                <h3>清空所有数据</h3>
+                <p>删除所有业务数据并在刷新后重新初始化系统，仅保留默认基础状态。</p>
               </div>
-              <div class="card-body">
+              <div class="system-card__body">
+                <div class="scgp-warning-block">
+                  此操作不可恢复，将清空学生、评估、训练记录、计划及大部分本地配置。
+                </div>
+                <el-button type="danger" :loading="isClearing" @click="handleClearAllData">
+                  {{ isClearing ? '清空中...' : '清空所有数据' }}
+                </el-button>
+              </div>
+            </section>
+
+            <section class="system-card scgp-surface">
+              <div class="scgp-section-heading">
+                <h3>软件更新</h3>
+                <p>检查当前版本状态并在可用时安装应用更新。</p>
+              </div>
+              <div class="system-card__body">
                 <UpdatePanel />
               </div>
-            </div>
+            </section>
           </div>
         </div>
       </el-tab-pane>
 
-      <!-- 关于系统 -->
       <el-tab-pane label="关于" name="about">
-        <div class="about-section">
-          <h2>
-            <i class="fas fa-circle-info"></i>
-            关于系统
-          </h2>
-          <div class="about-card">
-            <div class="about-info">
-              <h3>{{ systemName }}</h3>
-              <p>版本：{{ systemVersion }}</p>
-              <p>激活状态：{{ activationStatus }}</p>
-              <p>机器码：{{ machineCode }}</p>
-              <button @click="copyMachineCode" class="btn btn-sm btn-outline">
-                <i class="fas fa-copy"></i>
-                复制机器码
-              </button>
-              <p class="copyright">{{ copyright }}</p>
+        <div class="system-tab-panel scgp-tab-panel">
+          <div class="scgp-content-toolbar">
+            <div class="scgp-content-toolbar__main">
+              <h2 class="scgp-content-toolbar__title">关于系统</h2>
+              <p class="scgp-content-toolbar__description">查看当前安装信息、激活状态与设备机器码。</p>
             </div>
           </div>
+
+          <section class="system-card scgp-surface system-about-card">
+            <div class="system-about-card__header">
+              <h3>{{ systemName }}</h3>
+              <el-button plain @click="copyMachineCode">复制机器码</el-button>
+            </div>
+
+            <dl class="system-about-list">
+              <div class="system-about-list__row">
+                <dt>版本</dt>
+                <dd>{{ systemVersion }}</dd>
+              </div>
+              <div class="system-about-list__row">
+                <dt>激活状态</dt>
+                <dd>{{ activationStatus }}</dd>
+              </div>
+              <div class="system-about-list__row">
+                <dt>机器码</dt>
+                <dd class="system-about-list__value">{{ machineCode }}</dd>
+              </div>
+            </dl>
+
+            <p class="system-about-card__copyright">{{ copyright }}</p>
+          </section>
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -154,34 +171,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { backupManager } from '@/utils/backup'
-import { ElMessageBox } from 'element-plus'
 import UserManagement from './system/UserManagement.vue'
 import SystemSettings from './system/SystemSettings.vue'
 import UpdatePanel from './updates/UpdatePanel.vue'
 
 const authStore = useAuthStore()
 
-// 当前选项卡
 const activeTab = ref('users')
 
-// 备份相关
 const isBackingUp = ref(false)
 const isRestoring = ref(false)
 const selectedFile = ref<File | null>(null)
 const backupInfo = ref<any>(null)
 const fileInput = ref<HTMLInputElement>()
 
-// 系统信息（从 package.json 读取）
 const systemName = ref('')
 const systemVersion = ref('')
 const copyright = ref('')
 
-// 开发者工具相关
 const isClearing = ref(false)
-// 检测是否为开发环境
 const isDevMode = computed(() => {
   return (
     import.meta.env.DEV ||
@@ -190,24 +202,19 @@ const isDevMode = computed(() => {
   )
 })
 
-// 从 package.json 加载系统信息
 const loadPackageInfo = async () => {
   try {
-    // 直接使用静态数据（与 package.json 保持一致）
-    // 因为在打包后的 Electron 环境中，无法动态读取 package.json
     systemName.value = '感官综合训练与评估'
     systemVersion.value = '1.0.0'
     copyright.value = '©2013-2026 杭州炫灿科技有限公司'
   } catch (error) {
     console.error('加载 package.json 失败:', error)
-    // 使用默认值
     systemName.value = '感官综合训练与评估'
     systemVersion.value = '1.0.0'
     copyright.value = '©2013-2026 杭州炫灿科技有限公司'
   }
 }
 
-// 计算属性
 const activationStatus = computed(() => {
   if (authStore.activationInfo.isActivated) {
     return authStore.activationInfo.isInTrial ? '试用期内' : '已激活'
@@ -217,15 +224,14 @@ const activationStatus = computed(() => {
 
 const machineCode = computed(() => authStore.activationInfo.machineCode)
 
-// 备份数据
 const handleBackup = async () => {
   try {
     isBackingUp.value = true
     await backupManager.downloadBackup()
-    alert('备份成功！')
+    ElMessage.success('备份成功')
   } catch (error) {
     console.error('备份失败:', error)
-    alert('备份失败，请重试')
+    ElMessage.error('备份失败，请重试')
   } finally {
     isBackingUp.value = false
   }
@@ -235,7 +241,6 @@ const triggerFileSelect = () => {
   fileInput.value?.click()
 }
 
-// 选择文件
 const handleFileSelect = async (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
@@ -246,18 +251,16 @@ const handleFileSelect = async (event: Event) => {
 
   selectedFile.value = file
 
-  // 读取备份信息
   try {
     const content = await backupManager.loadBackupFromFile(file)
     backupInfo.value = backupManager.getBackupInfo(content)
   } catch (error) {
     console.error('读取备份文件失败:', error)
     backupInfo.value = null
-    alert('备份文件格式错误')
+    ElMessage.error('备份文件格式错误')
   }
 }
 
-// 恢复数据
 const handleRestore = async () => {
   if (!selectedFile.value) return
 
@@ -267,31 +270,29 @@ const handleRestore = async () => {
     isRestoring.value = true
     const content = await backupManager.loadBackupFromFile(selectedFile.value)
     await backupManager.importData(content, { overwrite: true })
-    alert('数据恢复成功！')
+    ElMessage.success('数据恢复成功')
     selectedFile.value = null
     backupInfo.value = null
   } catch (error) {
     console.error('恢复失败:', error)
-    alert('恢复失败：' + (error as Error).message)
+    ElMessage.error('恢复失败：' + (error as Error).message)
   } finally {
     isRestoring.value = false
   }
 }
 
-// 复制机器码
 const copyMachineCode = async () => {
   try {
     await navigator.clipboard.writeText(machineCode.value)
-    alert('机器码已复制到剪贴板')
+    ElMessage.success('机器码已复制到剪贴板')
   } catch (error) {
     console.error('复制失败:', error)
+    ElMessage.error('复制失败，请重试')
   }
 }
 
-// 清空所有数据
 const handleClearAllData = async () => {
   try {
-    // 第一步确认
     await ElMessageBox.confirm(
       '此操作将清空所有数据，包括：\n\n' +
         '• 所有学生信息\n' +
@@ -310,7 +311,6 @@ const handleClearAllData = async () => {
       },
     )
 
-    // 第二步确认 - 输入验证
     try {
       const promptResult = await ElMessageBox.prompt('请输入 "DELETE" 来确认此操作：', '二次确认', {
         confirmButtonText: '确定',
@@ -321,362 +321,210 @@ const handleClearAllData = async () => {
         ? (promptResult as { value: string }).value
         : ''
 
-      // 手动验证输入
       if (value !== 'DELETE') {
         await ElMessageBox.alert('输入错误，操作已取消', '验证失败', { type: 'warning' })
         return
       }
     } catch {
-      return // 用户取消
+      return
     }
 
-    // 设置清空标志
     sessionStorage.setItem('__CLEAR_ALL_DATA__', 'true')
 
     console.log('✅ 用户确认清空，准备重新加载页面...')
 
-    // 直接重新加载页面，让页面在加载时清空数据
     window.location.reload()
   } catch (error) {
-    // 用户取消操作，不显示错误
     if ((error as any) !== 'cancel' && (error as any)?.message !== 'cancel') {
       console.error('清空数据失败:', error)
     }
   }
 }
 
-// 初始化
 onMounted(() => {
   loadPackageInfo()
 })
 </script>
 
 <style scoped>
-/* Tab 样式 */
 .system-tabs {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  min-height: 0;
+  padding: 0 4px 18px;
 }
 
 :deep(.el-tabs__content) {
-  padding-top: 20px;
+  padding-top: 18px;
 }
 
-/* 备份区域样式 */
-.backup-section h2 {
-  margin: 0 0 20px 0;
-  color: #333;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.system-page {
+  gap: 14px;
+  padding-top: 18px;
 }
 
-.backup-section h2 i {
-  color: #667eea;
+.system-page__header {
+  margin-bottom: 0;
 }
 
-.backup-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.backup-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.card-header {
-  padding: 20px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.card-header h3 {
-  margin: 0 0 8px 0;
-  color: #333;
-  font-size: 18px;
-}
-
-.card-header p {
-  margin: 0;
-  color: #666;
-  font-size: 14px;
-}
-
-.card-body {
-  padding: 20px;
+.system-tab-panel {
   display: flex;
   flex-direction: column;
+  gap: 18px;
+}
+
+.system-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 16px;
 }
 
-/* 按钮样式 */
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
-  align-self: flex-start;
-}
-
-.btn-primary {
-  background: #667eea;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #5a67d8;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #5a6268;
-}
-
-.btn-danger {
-  background: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #c82333;
-}
-
-.btn-outline {
-  background: transparent;
-  color: #667eea;
-  border: 1px solid #667eea;
-}
-
-.btn-outline:hover {
-  background: #667eea;
-  color: white;
-}
-
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 12px;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* 帮助文本 */
-.help-text {
-  margin: 0;
-  font-size: 12px;
-  color: #999;
-}
-
-.help-text.warning {
-  color: #dc3545;
-}
-
-.help-text.info {
-  color: #409eff;
-}
-
-/* 文件上传 */
-.upload-area {
+.system-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  padding: 18px;
 }
 
-.file-name {
-  color: #666;
-  font-size: 14px;
+.system-card--danger {
+  border-color: #f2c3c3;
 }
 
-/* 备份信息 */
-.backup-info {
-  padding: 12px;
-  background: #f0f0f0;
-  border-radius: 4px;
+.system-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
 }
 
-.backup-info h4 {
-  margin: 0 0 8px 0;
-  font-size: 14px;
-  color: #333;
-}
-
-.backup-info ul {
+.system-help-text {
   margin: 0;
-  padding-left: 20px;
+  color: var(--scgp-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.system-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.system-file-name {
+  color: var(--scgp-muted);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.system-backup-info {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f7f9fc;
+  border: 1px solid rgba(217, 226, 238, 0.9);
+}
+
+.system-backup-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: var(--scgp-text);
+}
+
+.system-backup-info ul {
+  margin: 0;
+  padding-left: 18px;
   list-style-type: disc;
 }
 
-.backup-info li {
-  font-size: 12px;
-  color: #666;
+.system-backup-info li {
   margin-bottom: 4px;
+  color: var(--scgp-muted);
+  font-size: 12px;
 }
 
-/* 关于区域 */
-.about-section h2 {
-  margin: 0 0 20px 0;
-  color: #333;
-  font-size: 20px;
+.system-about-card {
+  padding: 20px 22px;
+}
+
+.system-about-card__header {
   display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.about-section h2 i {
-  color: #667eea;
-}
-
-.about-card {
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.about-info h3 {
-  margin: 0 0 16px 0;
-  color: #333;
-}
-
-.about-info p {
-  margin: 8px 0;
-  color: #666;
-}
-
-.about-info .copyright {
-  margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid #e0e0e0;
-  font-size: 13px;
-  color: #999;
-}
-
-/* 开发者工具区域样式 */
-.devtools-section h2 {
-  margin: 0 0 20px 0;
-  color: #333;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.devtools-section h2 i {
-  color: #f39c12;
-}
-
-.devtools-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.devtools-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.devtools-card.danger {
-  border-color: #dc3545;
-}
-
-.devtools-card.danger .card-header {
-  background: #fee;
-}
-
-.devtools-card.info {
-  border-color: #17a2b8;
-}
-
-.devtools-card.info .card-header {
-  background: #e8f8f9;
-}
-
-.devtools-card.success {
-  border-color: #67c23a;
-}
-
-.devtools-card.success .card-header {
-  background: #f0f9ff;
-}
-
-.devtools-card.primary {
-  border-color: #409eff;
-}
-
-.devtools-card.primary .card-header {
-  background: #ecf5ff;
-}
-
-.btn-info {
-  background: #409eff;
-  color: white;
-}
-
-.btn-info:hover {
-  background: #337ecc;
-}
-
-/* 迁移工具按钮组 */
-.migration-tools {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.migration-tools button {
-  flex: 1;
-}
-
-/* 统计列表样式 */
-.stats-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.stat-item {
-  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: #f8f9fa;
-  border-radius: 4px;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(217, 226, 238, 0.9);
 }
 
-.stat-label {
-  color: #666;
+.system-about-card__header h3 {
+  margin: 0;
+  color: var(--scgp-text);
+  font-size: 18px;
+}
+
+.system-about-list {
+  margin: 0;
+}
+
+.system-about-list__row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(244, 246, 250, 0.95);
+}
+
+.system-about-list__row:last-child {
+  border-bottom: none;
+}
+
+.system-about-list dt {
+  color: var(--scgp-muted);
+  font-size: 13px;
+}
+
+.system-about-list dd {
+  margin: 0;
+  color: var(--scgp-text);
   font-size: 14px;
 }
 
-.stat-value {
-  color: #333;
-  font-weight: 600;
-  font-size: 16px;
+.system-about-list__value {
+  word-break: break-all;
+}
+
+.system-about-card__copyright {
+  margin: 18px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid rgba(217, 226, 238, 0.9);
+  font-size: 13px;
+  color: var(--scgp-muted);
 }
 
 :deep(.el-button) {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+}
+
+@media (max-width: 768px) {
+  .system-page {
+    gap: 12px;
+    padding: 14px 16px 16px;
+  }
+
+  .system-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .system-about-card__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .system-about-list__row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
 }
 </style>

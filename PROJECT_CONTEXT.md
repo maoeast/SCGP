@@ -469,13 +469,19 @@
     - `src/views/equipment/SelectStudent.vue`
     - `src/views/emotional/SceneSelector.vue`
     - `src/views/assessment/AssessmentSelect.vue`
-- important current-product boundary:
-  - this is still not full-site style unification
-  - the current pending backend business-page slice is:
+  - system management chain:
     - `src/views/System.vue`
     - `src/views/system/UserManagement.vue`
     - `src/views/system/SystemSettings.vue`
+- important current-product boundary:
+  - this is still not full-site style unification
+  - the previous pending backend business-page slice on system management pages is now landed in current code reality
   - immersive gameplay, report pages, and `AssessmentContainer` remain excluded from the admin-page shell target
+- important system-management execution boundary:
+  - `System.vue` is now the only page-level shell for the system-management route
+  - `system/UserManagement.vue` and `system/SystemSettings.vue` should stay as embedded tab panels, not reintroduce their own page headers
+  - user-management destructive actions are intentionally visually downgraded behind a dropdown
+  - backup restore warnings should continue to use the shared warning-block direction instead of reverting to bare red helper text
 - important shared-component boundary:
   - `src/components/common/StudentSelector.vue` is now the active shell for:
     - assessment student selection
@@ -483,7 +489,6 @@
     - equipment training student selection
   - future changes there affect all three chains and must preserve route-specific handoff logic
 - verification status for the current UI-execution slices:
-  - `npm run type-check` passes when the shell resolves Node 24
-  - `vite build` passes when explicitly using:
-    - `/home/DONG/.config/nvm/versions/node/v24.14.0/bin/node`
-  - Codex default shell still resolves `/usr/bin/node` (`v18.19.1`), so build verification should continue using the explicit Node 24 path unless shell init is changed
+  - `npm run type-check` passed in the current shell after the system-management slice landed
+  - the current conversation did not rerun `vite build`
+  - historical note: earlier page-style slices were verified with Node 24 because some environments still resolved `/usr/bin/node` (`v18.19.1`)
