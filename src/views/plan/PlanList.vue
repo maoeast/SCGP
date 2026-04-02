@@ -1,10 +1,9 @@
 <template>
-  <div class="page-container">
-    <!-- 页面头部 -->
+  <div class="page-container scgp-admin-page plan-list-page">
     <div class="page-header">
       <div class="header-left">
         <h1>训练计划</h1>
-        <p class="subtitle">IEP 个性化教育计划管理，承接评估结果，编排跨模块训练资源</p>
+        <p class="subtitle">IEP 个性化教育计划管理，承接评估结果与跨模块训练资源编排 · 共 {{ filteredPlans.length }} 个计划</p>
       </div>
       <div class="header-right">
         <el-button type="primary" @click="handleCreatePlan">
@@ -14,20 +13,25 @@
       </div>
     </div>
 
-    <!-- 筛选区域 -->
-    <div class="filter-section">
-      <el-row :gutter="16">
-        <el-col :span="6">
-          <el-select v-model="filterStatus" placeholder="计划状态" clearable @change="handleFilterChange">
-            <el-option label="全部状态" value="" />
-            <el-option label="草稿" value="draft" />
-            <el-option label="执行中" value="active" />
-            <el-option label="已完成" value="completed" />
-            <el-option label="已归档" value="archived" />
-          </el-select>
-        </el-col>
-        <el-col :span="6">
-          <el-select v-model="filterModule" placeholder="归属模块" clearable @change="handleFilterChange">
+    <section class="filter-section scgp-filter-surface plan-filter-section">
+      <div class="filter-toolbar">
+        <div class="status-pill-list" role="tablist" aria-label="计划状态筛选">
+          <button
+            v-for="tab in statusTabs"
+            :key="tab.value || 'all'"
+            type="button"
+            class="status-pill"
+            :class="{ 'is-active': filterStatus === tab.value }"
+            @click="filterStatus = tab.value"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+
+        <div class="filter-toolbar__divider" aria-hidden="true" />
+
+        <div class="compact-selects">
+          <el-select v-model="filterModule" class="compact-select" placeholder="归属模块" clearable @change="handleFilterChange">
             <el-option
               v-for="option in trainingPlanFilterModuleOptions"
               :key="option.value || 'all-modules'"
@@ -35,78 +39,138 @@
               :value="option.value"
             />
           </el-select>
-        </el-col>
-        <el-col :span="12">
+
+          <el-select
+            v-model="filterStudentId"
+            class="compact-select"
+            placeholder="学生"
+            clearable
+            filterable
+            @change="handleFilterChange"
+          >
+            <el-option
+              v-for="student in studentList"
+              :key="student.id"
+              :label="student.name"
+              :value="student.id"
+            />
+          </el-select>
+        </div>
+
+        <div class="filter-toolbar__divider" aria-hidden="true" />
+
+        <div class="plan-search">
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索计划名称..."
             clearable
+            placeholder="搜索计划名称…"
             @keyup.enter="handleSearch"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
-        </el-col>
-      </el-row>
-    </div>
+        </div>
+      </div>
+    </section>
 
-    <!-- 计划列表 -->
-    <div class="plan-list" v-loading="loading">
+    <section class="stats-row" aria-label="训练计划统计概览">
+      <article class="summary-card">
+        <div class="summary-card__label">计划总数</div>
+        <div class="summary-card__value">
+          <span class="summary-card__number">{{ summaryStats.total }}</span>
+          <span class="summary-card__unit">个</span>
+        </div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">执行中</div>
+        <div class="summary-card__value">
+          <span class="summary-card__number">{{ summaryStats.active }}</span>
+          <span class="summary-card__unit">个</span>
+        </div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">待开始</div>
+        <div class="summary-card__value">
+          <span class="summary-card__number">{{ summaryStats.pending }}</span>
+          <span class="summary-card__unit">个</span>
+        </div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">涉及学生数</div>
+        <div class="summary-card__value">
+          <span class="summary-card__number">{{ summaryStats.students }}</span>
+          <span class="summary-card__unit">人</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="plan-list main-content scgp-page-panel" v-loading="loading">
       <el-empty v-if="filteredPlans.length === 0" description="暂无训练计划">
         <el-button type="primary" @click="handleCreatePlan">创建第一个计划</el-button>
       </el-empty>
 
       <div v-else class="plan-cards">
-        <div
+        <article
           v-for="plan in filteredPlans"
           :key="plan.id"
           class="plan-card"
-          :class="{ 'active-plan': plan.status === 'active' }"
+          :class="{ 'plan-card--active': plan.status === 'active' }"
         >
-          <!-- 卡片主体：点击查看详情 -->
-          <div class="card-main" @click="handleViewPlan(plan)">
-            <div class="card-header">
-              <div class="plan-name">{{ plan.name }}</div>
-              <el-tag :type="getStatusType(plan.status)" size="small">
+          <div class="plan-card__main" @click="handleViewPlan(plan)">
+            <div class="plan-card__summary">
+              <span class="plan-status-badge" :class="getStatusBadgeClass(plan.status)">
                 {{ getStatusLabel(plan.status) }}
-              </el-tag>
+              </span>
+              <h3 class="plan-card__title" :title="plan.name">{{ plan.name }}</h3>
+              <p class="plan-card__module">{{ getModuleLabel(plan.module_code) }}</p>
             </div>
 
-            <div class="card-body">
-              <div class="info-row">
-                <el-icon><User /></el-icon>
-                <span>{{ plan.student_name || `学生 #${plan.student_id}` }}</span>
+            <div class="plan-card__meta">
+              <div class="plan-card__student-row">
+                <StudentAvatar
+                  :name="studentLookup[plan.student_id]?.name || plan.student_name"
+                  :gender="studentLookup[plan.student_id]?.gender"
+                  :avatar-url="studentLookup[plan.student_id]?.avatar_path"
+                  size="sm"
+                />
+                <span class="plan-card__student-name">{{ studentLookup[plan.student_id]?.name || plan.student_name || `学生 #${plan.student_id}` }}</span>
+                <DiagnosisTag :type="studentLookup[plan.student_id]?.disorder" />
               </div>
-              <div class="info-row">
+
+              <div class="plan-card__date-row">
                 <el-icon><Calendar /></el-icon>
                 <span>{{ formatDateRange(plan.start_date, plan.end_date) }}</span>
-                <!-- 进度条 -->
-                <el-progress
-                  v-if="plan.status === 'active'"
-                  :percentage="getPlanProgress(plan)"
-                  :stroke-width="6"
-                  :show-text="false"
-                  class="progress-bar"
-                />
               </div>
-              <div class="info-row">
-                <el-icon><Collection /></el-icon>
-                <span>{{ getModuleLabel(plan.module_code) }}</span>
+
+              <div class="plan-progress">
+                <div class="plan-progress__meta">
+                  <span>计划进度</span>
+                  <strong>{{ getPlanProgress(plan) }}%</strong>
+                </div>
+                <div class="plan-progress__track" aria-hidden="true">
+                  <div class="plan-progress__fill" :style="{ width: `${getPlanProgress(plan)}%` }" />
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- 今日训练推荐区域（仅执行中的计划显示） -->
           <div v-if="plan.status === 'active'" class="today-training-section" @click.stop>
-            <div class="section-title">
-              <el-icon><Sunny /></el-icon>
-              <span>今日训练推荐</span>
-              <el-tag size="small" type="info">{{ getPlanResourceCount(plan.id) }} 项</el-tag>
+            <div class="today-training__header">
+              <div class="today-training__title">
+                <el-icon><Sunny /></el-icon>
+                <span>今日训练推荐</span>
+              </div>
+              <span class="today-training__count">{{ getPlanResourceCount(plan.id) }} 项</span>
             </div>
-            <div class="resource-icons">
+
+            <div v-if="getPlanResourceCount(plan.id) === 0" class="no-resources-hint">
+              暂未添加训练资源
+            </div>
+
+            <div v-else class="resource-recommendations">
               <el-tooltip
-                v-for="resource in getPlanResources(plan.id)"
+                v-for="resource in getVisiblePlanResources(plan.id)"
                 :key="resource.resource_id"
                 placement="top"
                 :show-after="300"
@@ -128,63 +192,76 @@
                     </div>
                   </div>
                 </template>
-                <div
-                  class="resource-icon-wrapper"
-                  :class="{
-                    'completed-today': isResourceCompletedToday(plan.student_id, resource.resource_id),
-                    [getResourceTypeClass(resource.resource_type)]: true
-                  }"
-                  @click="handleLaunchTraining(plan, resource)"
+                <button
+                  type="button"
+                  class="resource-recommendation-item"
+                  :class="{ 'is-completed': isResourceCompletedToday(plan.student_id, resource.resource_id) }"
+                  @click.stop="handleLaunchTraining(plan, resource)"
                 >
-                  <img
-                    :src="getResourceImage(resource)"
-                    :alt="resource.resource_name"
-                    class="resource-thumb"
-                  />
-                  <div class="type-indicator">
-                    <el-icon v-if="resource.resource_type === 'equipment'"><Basketball /></el-icon>
-                    <el-icon v-else-if="resource.resource_type === 'game'"><VideoPlay /></el-icon>
-                    <el-icon v-else><Document /></el-icon>
-                  </div>
-                  <!-- 今日完成标记 -->
-                  <div v-if="isResourceCompletedToday(plan.student_id, resource.resource_id)" class="completed-badge">
-                    <el-icon><Check /></el-icon>
-                  </div>
-                </div>
+                  <span class="resource-thumb-shell" :class="{ 'has-image': Boolean(getPlanResourceCoverImage(resource)) }">
+                    <img
+                      v-if="getPlanResourceCoverImage(resource)"
+                      :src="getPlanResourceCoverImage(resource)"
+                      :alt="resource.resource_name"
+                      class="resource-thumb"
+                    />
+                    <span v-else class="resource-thumb-fallback">{{ getResourceInitial(resource.resource_name) }}</span>
+                    <span
+                      v-if="isResourceCompletedToday(plan.student_id, resource.resource_id)"
+                      class="resource-completed-badge"
+                    >
+                      <el-icon><Check /></el-icon>
+                    </span>
+                  </span>
+                  <span class="resource-recommendation-item__name" :title="resource.resource_name">{{ resource.resource_name }}</span>
+                </button>
               </el-tooltip>
 
-              <!-- 无资源提示 -->
-              <div v-if="getPlanResourceCount(plan.id) === 0" class="no-resources-hint">
-                暂未添加训练资源
-              </div>
+              <button
+                v-if="getOverflowResourceCount(plan.id) > 0"
+                type="button"
+                class="resource-overflow-indicator"
+                :title="`还有 ${getOverflowResourceCount(plan.id)} 个资源，点击查看详情`"
+                @click.stop="handleViewPlan(plan)"
+              >
+                +{{ getOverflowResourceCount(plan.id) }}
+              </button>
             </div>
           </div>
 
-          <div class="card-footer">
-            <div class="resource-count">
-              <el-icon><FolderOpened /></el-icon>
-              <span>{{ getPlanResourceCount(plan.id) }} 个资源</span>
-            </div>
-            <div class="actions">
+          <div class="plan-card__footer">
+            <span class="plan-card__resource-count">{{ getPlanResourceCount(plan.id) }} 个资源</span>
+            <div class="plan-card__actions">
               <el-button
                 v-if="plan.status === 'draft'"
-                type="success"
-                size="small"
+                class="plan-primary-action"
                 @click.stop="handleStartPlan(plan)"
               >
                 开始执行
               </el-button>
-              <el-button text size="small" @click.stop="handleEditPlan(plan)">
-                <el-icon><Edit /></el-icon>
-              </el-button>
-              <el-button text size="small" @click.stop="handleDeletePlan(plan)">
-                <el-icon><Delete /></el-icon>
-              </el-button>
+
+              <el-dropdown
+                trigger="click"
+                popper-class="plan-card__menu-dropdown"
+                @command="handlePlanMenuCommand(plan, $event)"
+              >
+                <el-button class="plan-card__menu-button" text circle @click.stop>
+                  <el-icon><MoreFilled /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                    <el-dropdown-item command="delete" class="plan-card__menu-item--danger">
+                      删除
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </div>
           </div>
-        </div>
+        </article>
       </div>
-    </div>
+    </section>
 
     <!-- 新建/编辑计划弹窗 -->
     <el-dialog
@@ -626,12 +703,11 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import {
-  Plus, Search, User, Calendar, Collection, FolderOpened, Edit, Delete, Check,
-  Sunny, Basketball, VideoPlay, Document
+  Plus, Search, Calendar, Delete, Check, Sunny, MoreFilled
 } from '@element-plus/icons-vue'
 import { PlanAPI, type TrainingPlan, type PlanStatus, type PlanResourceMap } from '@/database/plan-api'
 import { ResourceAPI } from '@/database/resource-api'
-import { DatabaseAPI, StudentAPI } from '@/database/api'
+import { StudentAPI } from '@/database/api'
 import type { ResourceItem } from '@/types/module'
 import { ModuleCode } from '@/types/module'
 import {
@@ -653,11 +729,15 @@ import {
   type TrainingPlanModuleCode,
 } from '@/utils/training-plan-module'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
+import StudentAvatar from '@/components/student/StudentAvatar.vue'
+import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
 
 // 类型定义
 interface Student {
   id: number
   name: string
+  gender?: 'male' | 'female' | '男' | '女'
+  disorder?: string
   student_no?: string
   avatar_path?: string
 }
@@ -678,7 +758,14 @@ const planResourceCounts = ref<Record<number, number>>({})
 // 筛选状态
 const filterStatus = ref('')
 const filterModule = ref<TrainingPlanFilterModuleCode>('')
+const filterStudentId = ref<number | ''>('')
 const searchKeyword = ref('')
+const statusTabs = [
+  { label: '全部', value: '' },
+  { label: '执行中', value: 'active' },
+  { label: '待开始', value: 'draft' },
+  { label: '已完成', value: 'completed' },
+] as const
 
 // 弹窗状态
 const createDialogVisible = ref(false)
@@ -734,14 +821,8 @@ const EXTRA_RESOURCE_TYPE_LABELS: Record<string, string> = {
   care_scene: '表达关心',
 }
 
-const EXTRA_RESOURCE_TYPE_CLASSES: Record<string, string> = {
-  emotion_scene: 'type-emotion-scene',
-  care_scene: 'type-care-scene',
-}
-
 // API 实例
 const planApi = new PlanAPI()
-const dbApi = new DatabaseAPI()
 const studentApi = new StudentAPI()
 const router = useRouter()
 const trainingPlanFilterModuleOptions = TRAINING_PLAN_FILTER_MODULE_OPTIONS
@@ -760,8 +841,12 @@ const filteredPlans = computed(() => {
     result = result.filter(p => matchesTrainingPlanModule(p.module_code, filterModule.value))
   }
 
+  if (filterStudentId.value !== '') {
+    result = result.filter(p => p.student_id === filterStudentId.value)
+  }
+
   if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
+    const keyword = searchKeyword.value.trim().toLowerCase()
     result = result.filter(p =>
       p.name.toLowerCase().includes(keyword) ||
       (p.description && p.description.toLowerCase().includes(keyword))
@@ -770,6 +855,23 @@ const filteredPlans = computed(() => {
 
   return result
 })
+
+const summaryStats = computed(() => {
+  const source = filteredPlans.value
+  return {
+    total: source.length,
+    active: source.filter(plan => plan.status === 'active').length,
+    pending: source.filter(plan => plan.status === 'draft').length,
+    students: new Set(source.map(plan => plan.student_id)).size,
+  }
+})
+
+const studentLookup = computed<Record<number, Student>>(() =>
+  studentList.value.reduce((acc, student) => {
+    acc[student.id] = student
+    return acc
+  }, {} as Record<number, Student>)
+)
 
 const equipmentCatalogGroupOptions = computed(() =>
   EQUIPMENT_CATALOG_GROUPS.map((value) => ({
@@ -855,6 +957,19 @@ function getPlanResourceCount(planId: number): number {
   return planResourceCounts.value[planId] || 0
 }
 
+function getVisiblePlanResources(planId: number): PlanResourceMap[] {
+  const resources = getPlanResources(planId)
+  if (resources.length <= 4) {
+    return resources
+  }
+  return resources.slice(0, 3)
+}
+
+function getOverflowResourceCount(planId: number): number {
+  const resources = getPlanResources(planId)
+  return resources.length > 4 ? resources.length - 3 : 0
+}
+
 // 工具方法
 function getStatusType(status: PlanStatus): 'info' | 'warning' | 'success' | '' {
   const typeMap: Record<PlanStatus, 'info' | 'warning' | 'success' | ''> = {
@@ -874,6 +989,16 @@ function getStatusLabel(status: PlanStatus): string {
     archived: '已归档'
   }
   return labelMap[status] || status
+}
+
+function getStatusBadgeClass(status: PlanStatus): string {
+  const classMap: Record<PlanStatus, string> = {
+    active: 'plan-status-badge--active',
+    draft: 'plan-status-badge--draft',
+    completed: 'plan-status-badge--completed',
+    archived: 'plan-status-badge--archived',
+  }
+  return classMap[status] || 'plan-status-badge--draft'
 }
 
 function getModuleLabel(moduleCode?: string): string {
@@ -913,24 +1038,14 @@ function isResourceCompletedToday(studentId: number, resourceId: number): boolea
   return todayCompletedResources.value.has(`${studentId}-${resourceId}`)
 }
 
-// 获取资源类型的 CSS 类名
-function getResourceTypeClass(type?: string): string {
-  const classMap: Record<string, string> = {
-    equipment: 'type-equipment',
-    game: 'type-game',
-    flashcard: 'type-flashcard',
-    document: 'type-document'
-  }
-  if (!type) return ''
-  return EXTRA_RESOURCE_TYPE_CLASSES[type] || classMap[type] || ''
-}
-
 function formatDateRange(start: string, end: string): string {
   if (!start || !end) return '-'
-  return `${start} ~ ${end}`
+  return `${start} → ${end}`
 }
 
 function getPlanProgress(plan: TrainingPlan): number {
+  if (plan.status === 'draft') return 0
+  if (plan.status === 'completed' || plan.status === 'archived') return 100
   if (!plan.start_date || !plan.end_date) return 0
   const start = new Date(plan.start_date).getTime()
   const end = new Date(plan.end_date).getTime()
@@ -940,6 +1055,35 @@ function getPlanProgress(plan: TrainingPlan): number {
   if (now > end) return 100
 
   return Math.round(((now - start) / (end - start)) * 100)
+}
+
+function getPlanResourceCoverImage(resource: PlanResourceMap): string {
+  if (resource.resource_type === 'equipment') {
+    return resolveResourceCoverImage({
+      resourceType: resource.resource_type,
+      name: resource.resource_name,
+      category: resource.category,
+      coverImage: resource.cover_image,
+      legacyId: Number(resource.legacy_id || 0) || undefined,
+      metadata: resource.meta_data,
+    })
+  }
+
+  const coverImage = String(resource.cover_image || '').trim()
+  if (!coverImage) {
+    return ''
+  }
+
+  if (!coverImage.includes('/') && !coverImage.startsWith('data:') && !coverImage.startsWith('blob:')) {
+    return ''
+  }
+
+  return coverImage
+}
+
+function getResourceInitial(name?: string | null): string {
+  const trimmed = String(name || '').trim()
+  return trimmed ? trimmed.charAt(0) : '训'
 }
 
 function getResourceImage(resource: PlanResourceMap): string {
@@ -992,6 +1136,17 @@ function buildEmojiThumbnail(symbol: string): string {
 
 function handleSearch() {
   // 搜索由计算属性自动处理
+}
+
+function handlePlanMenuCommand(plan: TrainingPlan, command: string) {
+  if (command === 'edit') {
+    handleEditPlan(plan)
+    return
+  }
+
+  if (command === 'delete') {
+    handleDeletePlan(plan)
+  }
 }
 
 // 目标管理
@@ -1363,12 +1518,142 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 计划列表 */
+.plan-filter-section {
+  margin-bottom: 20px;
+}
+
+.filter-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.status-pill-list {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.status-pill-list::-webkit-scrollbar {
+  height: 6px;
+}
+
+.status-pill-list::-webkit-scrollbar-thumb {
+  background: rgba(164, 157, 146, 0.55);
+  border-radius: 999px;
+}
+
+.status-pill {
+  border: 1px solid rgba(191, 200, 214, 0.95);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--color-text-secondary, #606266);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.status-pill:hover {
+  color: var(--scgp-text);
+  border-color: #afcfff;
+  transform: translateY(-1px);
+}
+
+.status-pill.is-active {
+  color: #2f74d0;
+  border-color: #66a8ff;
+  background: #edf4ff;
+  box-shadow: 0 10px 20px rgba(102, 168, 255, 0.12);
+}
+
+.filter-toolbar__divider {
+  width: 1px;
+  height: 32px;
+  background: #dcdfe6;
+  flex-shrink: 0;
+}
+
+.compact-selects {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.compact-selects :deep(.el-select) {
+  width: 170px;
+}
+
+.compact-selects :deep(.el-input__wrapper) {
+  min-height: 40px;
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px rgba(220, 223, 230, 0.9) inset;
+}
+
+.plan-search {
+  width: 180px;
+  margin-left: auto;
+}
+
+.plan-search :deep(.el-input__wrapper) {
+  min-height: 40px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(220, 223, 230, 0.9) inset;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  min-height: 108px;
+  padding: 20px 22px;
+  border-radius: 12px;
+  background: var(--color-background-secondary, #ffffff);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.summary-card__label {
+  color: var(--color-text-secondary, #606266);
+  font-size: 13px;
+}
+
+.summary-card__value {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.summary-card__number {
+  color: var(--scgp-text);
+  font-size: clamp(34px, 2.8vw, 42px);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.summary-card__unit {
+  color: var(--color-text-secondary, #606266);
+  font-size: 14px;
+  line-height: 1.2;
+  padding-bottom: 4px;
+}
+
 .plan-list {
-  background: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  min-height: 400px;
+  min-height: 420px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.94);
 }
 
 .plan-cards {
@@ -1378,120 +1663,241 @@ onMounted(() => {
 }
 
 .plan-card {
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
-  padding: 16px;
-  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  min-height: 268px;
+  border-radius: 12px;
+  border: 0.5px solid #e4e7ed;
+  background: #fff;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
 }
 
 .plan-card:hover {
-  border-color: #409eff;
-  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.2);
+  border-color: #cadcf3;
+  box-shadow: 0 10px 24px rgba(120, 147, 181, 0.12);
+  transform: translateY(-1px);
 }
 
-.plan-card.active-plan {
-  border-color: #67c23a;
-  background: linear-gradient(to bottom, #f0f9eb, #fff);
+.plan-card--active {
+  border-color: #185fa5;
 }
 
-.card-main {
+.plan-card__main {
   cursor: pointer;
+  padding: 16px 16px 0;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
+.plan-card__summary {
+  position: relative;
+  padding-right: 80px;
+  margin-bottom: 14px;
+}
+
+.plan-status-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 12px;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 0.5px solid transparent;
+  font-size: 11px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.plan-name {
+.plan-status-badge--active {
+  background: #e1f5ee;
+  color: #085041;
+  border-color: #9fe1cb;
+}
+
+.plan-status-badge--draft,
+.plan-status-badge--archived {
+  background: #f1efe8;
+  color: #5f5e5a;
+  border-color: #d3d1c7;
+}
+
+.plan-status-badge--completed {
+  background: #e6f1fb;
+  color: #0c447c;
+  border-color: #b5d4f4;
+}
+
+.plan-card__title {
+  margin: 0;
+  color: var(--scgp-text);
   font-size: 16px;
+  line-height: 1.45;
   font-weight: 600;
-  color: #303133;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.card-body {
-  margin-bottom: 12px;
+.plan-card__module {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--color-text-secondary, #606266);
 }
 
-.info-row {
+.plan-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.plan-card__student-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.plan-card__student-name {
   font-size: 14px;
-  color: #606266;
+  font-weight: 600;
+  color: var(--scgp-text);
 }
 
-.info-row .el-icon {
-  color: #909399;
-}
-
-.progress-bar {
-  flex: 1;
-  margin-left: 8px;
-}
-
-/* 今日训练推荐区域 */
-.today-training-section {
-  margin: 12px 0;
-  padding: 12px;
-  background: linear-gradient(135deg, #f0f9eb 0%, #e1f3d8 100%);
-  border-radius: 8px;
-  border: 1px solid #c2e7b0;
-}
-
-.section-title {
+.plan-card__date-row {
   display: flex;
   align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary, #606266);
+}
+
+.plan-card__date-row .el-icon {
+  color: var(--color-text-tertiary, #909399);
+  font-size: 14px;
+}
+
+.plan-progress {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
+}
+
+.plan-progress__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--color-text-secondary, #606266);
+}
+
+.plan-progress__meta strong {
+  color: #185fa5;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.plan-progress__track {
+  height: 4px;
+  border-radius: 999px;
+  background: #ebeef5;
+  overflow: hidden;
+}
+
+.plan-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #185fa5;
+}
+
+.today-training-section {
+  margin: 0 16px 0;
+  padding: 10px 12px;
+  border-radius: var(--border-radius-md, 8px);
+  background: var(--color-background-secondary, #ffffff);
+}
+
+.today-training__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 10px;
+}
+
+.today-training__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
-  font-weight: 500;
-  color: #67c23a;
+  font-weight: 600;
+  color: #185fa5;
 }
 
-.section-title .el-icon {
-  font-size: 16px;
+.today-training__title .el-icon {
+  font-size: 15px;
 }
 
-.resource-icons {
+.today-training__count {
+  font-size: 12px;
+  color: var(--color-text-secondary, #606266);
+}
+
+.resource-recommendations {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.resource-icon-wrapper {
-  position: relative;
-  width: 56px;
-  height: 56px;
-  border-radius: 8px;
-  overflow: hidden;
+.resource-recommendation-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: var(--border-radius-md, 8px);
+  border: 0.5px solid var(--color-border-secondary, #dcdfe6);
+  background: var(--color-background-primary, #ffffff);
   cursor: pointer;
-  border: 2px solid transparent;
-  transition: all 0.2s;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.resource-icon-wrapper:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.resource-recommendation-item:hover {
+  border-color: #b5d4f4;
+  box-shadow: 0 6px 16px rgba(24, 95, 165, 0.12);
+  transform: translateY(-1px);
 }
 
-.resource-icon-wrapper.type-equipment {
-  border-color: #409eff;
+.resource-recommendation-item.is-completed {
+  background: #f6fbff;
+  border-color: #b5d4f4;
 }
 
-.resource-icon-wrapper.type-game {
-  border-color: #e6a23c;
+.resource-thumb-shell,
+.resource-overflow-indicator {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 
-.resource-icon-wrapper.type-flashcard {
-  border-color: #909399;
+.resource-thumb-shell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #e6f1fb;
+  border: 0.5px solid #b5d4f4;
+  color: #185fa5;
 }
 
-.resource-icon-wrapper.type-document {
-  border-color: #67c23a;
+.resource-thumb-shell.has-image {
+  background: #ffffff;
 }
 
 .resource-thumb {
@@ -1500,63 +1906,63 @@ onMounted(() => {
   object-fit: cover;
 }
 
-.type-indicator {
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 18px;
-  height: 18px;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 10px;
+.resource-thumb-fallback {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
 }
 
-.completed-badge {
+.resource-completed-badge {
   position: absolute;
   top: -4px;
   right: -4px;
-  width: 20px;
-  height: 20px;
-  background: #67c23a;
-  border-radius: 50%;
-  display: flex;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #185fa5;
+  color: #fff;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  box-shadow: 0 2px 6px rgba(24, 95, 165, 0.24);
+}
+
+.resource-completed-badge .el-icon {
+  font-size: 10px;
+}
+
+.resource-recommendation-item__name {
+  max-width: 6em;
   font-size: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  animation: badge-pop 0.3s ease;
+  color: var(--color-text-secondary, #606266);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-@keyframes badge-pop {
-  0% { transform: scale(0); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
+.resource-overflow-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0.5px solid var(--color-border-secondary, #dcdfe6);
+  background: var(--color-background-primary, #ffffff);
+  color: var(--color-text-secondary, #606266);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
 }
 
-.resource-icon-wrapper.completed-today {
-  opacity: 0.7;
-}
-
-.resource-icon-wrapper.completed-today::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(103, 194, 58, 0.2);
-  pointer-events: none;
+.resource-overflow-indicator:hover {
+  border-color: #b5d4f4;
+  color: #185fa5;
 }
 
 .no-resources-hint {
   font-size: 12px;
-  color: #909399;
-  padding: 8px 0;
+  color: var(--color-text-secondary, #606266);
 }
 
-/* 资源提示框样式 */
 .resource-tooltip {
   max-width: 280px;
 }
@@ -1591,25 +1997,124 @@ onMounted(() => {
   border-top: 1px dashed #dcdfe6;
 }
 
-.card-footer {
+.plan-card__footer {
+  margin-top: auto;
+  padding: 12px 16px 14px;
+  border-top: 0.5px solid #ebeef5;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid #ebeef5;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.resource-count {
+.plan-card__resource-count {
+  font-size: 12px;
+  color: var(--color-text-tertiary, #909399);
+}
+
+.plan-card__actions {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 13px;
+  gap: 8px;
+}
+
+.plan-primary-action {
+  min-height: 28px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 0.5px solid #b5d4f4;
+  background: #e6f1fb;
+  color: #185fa5;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.plan-primary-action:hover {
+  border-color: #9bc5ef;
+  background: #dcecff;
+  color: #0f4c8d;
+}
+
+.plan-card__menu-button {
   color: #909399;
 }
 
-.actions {
-  display: flex;
-  gap: 8px;
+.plan-card__menu-button:hover {
+  color: #185fa5;
+}
+
+:deep(.plan-card__menu-dropdown .plan-card__menu-item--danger) {
+  color: #f56c6c;
+}
+
+:deep(.plan-card__menu-dropdown .plan-card__menu-item--danger:hover) {
+  color: #f56c6c;
+  background: #fef0f0;
+}
+
+@media (max-width: 900px) {
+  .stats-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plan-search {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-toolbar {
+    align-items: stretch;
+  }
+
+  .filter-toolbar__divider {
+    display: none;
+  }
+
+  .compact-selects {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .compact-selects :deep(.el-select) {
+    width: 100%;
+  }
+
+  .status-pill-list {
+    width: 100%;
+  }
+
+  .plan-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-card__footer {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 560px) {
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-list {
+    padding: 16px;
+  }
+
+  .plan-card__summary {
+    padding-right: 0;
+  }
+
+  .plan-status-badge {
+    position: static;
+    margin-bottom: 8px;
+  }
+
+  .plan-card__title {
+    margin-top: 2px;
+  }
 }
 
 /* 弹窗样式 */

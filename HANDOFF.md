@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-01
+> last_updated: 2026-04-02
 
 > Responsibility: top-level handoff entry for new sessions.
 > Read when: entering the repo or resuming work and needing the fastest route to current context.
@@ -19,7 +19,7 @@ Usually those three files are enough to resume work safely.
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `emotional mini-game records now surface in training records; runtime verification of the new record bridge is next; unified training-session schema planning is complete and implementation is the next architecture track`
+- active work scope: `training-plan page UI is now aligned with the current SCGP admin visual language and has passed verification; unified training-session Phase A is the next architecture track`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`
