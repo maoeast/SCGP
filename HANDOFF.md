@@ -19,7 +19,7 @@ Usually those three files are enough to resume work safely.
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `training-plan page UI is now aligned with the current SCGP admin visual language and has passed verification; unified training-session Phase A is the next architecture track`
+- active work scope: `training_session unified summary Phase A is landed; emotional scene and emotional mini-game writes now dual-write into training_session, and sensory/equipment dual-write is the next track`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

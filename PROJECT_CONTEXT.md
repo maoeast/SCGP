@@ -365,3 +365,35 @@
     - family detail tables
     - staged dual-write migration
   - it is a current plan, not current implementation reality
+
+## 17. 2026-04-02 Unified Training-Session Phase A and Emotional Dual-Write Start
+
+- `training_session` unified summary main table is now part of current code reality:
+  - schema + indexes landed in `src/database/init.ts`
+  - init-time schema ensure path also lives in `src/database/init.ts`
+- a shared unified summary writer now exists:
+  - `src/database/training-session-writer.ts`
+- important migration identity boundary:
+  - `source_table + source_record_id` is now the idempotent source key for unified summary upsert
+  - new staged dual-write paths should reuse the shared writer instead of hand-rolling inserts
+- current dual-write coverage now includes:
+  - emotional scene writes in `src/database/emotional-api.ts`
+    - old write remains in `training_records`
+    - unified summary now also writes to `training_session`
+  - emotional mini-game writes in `src/database/emotional-games-api.ts`
+    - old write remains in `game_emotion_records`
+    - unified summary now also writes to `training_session`
+- a lightweight unified query scaffold now exists:
+  - `TrainingSessionAPI` in `src/database/api.ts`
+- important current-product boundary:
+  - `training_session` is not yet the sole summary fact source
+  - sensory game writes are not dual-writing yet
+  - equipment writes are not dual-writing yet
+  - no user-facing read chain has switched to `training_session` yet
+    - training-record list / menu
+    - student detail counts / lists
+    - dashboard aggregates
+    - reports
+- current next action:
+  - connect `GameTrainingAPI.saveTrainingRecord()` to `TrainingSessionWriter`
+  - then connect equipment writes

@@ -5,6 +5,7 @@ import type {
   EmotionGameDifficulty,
   GameEmotionRecord,
 } from '@/types/emotional/games'
+import { TrainingSessionWriter } from './training-session-writer'
 
 type DbLike = {
   all?: (sql: string, params?: any[]) => any[]
@@ -222,6 +223,26 @@ function deriveAvgResponseTime(
   }
 }
 
+function deriveEndedAt(startedAt: string, durationMs: number): string | null {
+  const startedTimestamp = Date.parse(startedAt)
+  if (!Number.isFinite(startedTimestamp)) {
+    return null
+  }
+
+  return new Date(startedTimestamp + Math.max(0, durationMs)).toISOString()
+}
+
+function pickScalarSummaryMetrics(performanceData: Record<string, any>): Record<string, string | number | boolean | null> {
+  return Object.fromEntries(
+    Object.entries(performanceData).filter(([, value]) =>
+      value === null ||
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ),
+  )
+}
+
 function normalizeTrainingRecord(row: any): EmotionalGameTrainingRecordItem {
   const performanceData = parsePerformanceData(row.performance_data)
   const completionStatus = (row.completion_status || 'completed') as EmotionGameCompletionStatus
@@ -259,6 +280,14 @@ export class EmotionalGamesAPI {
   async persistSession(input: PersistEmotionGameSessionInput): Promise<PersistEmotionGameSessionResult> {
     const db = getActiveDb()
     const rawDb = getRawDb(db)
+    const student = db.get(
+      'SELECT current_class_id, current_class_name FROM student WHERE id = ?',
+      [input.studentId]
+    )
+    const classId = student?.current_class_id || null
+    const className = student?.current_class_name || null
+    const accuracyRate = deriveAccuracyRate(input.gameCode, input.performanceData, input.completionStatus)
+    const avgResponseTimeMs = deriveAvgResponseTime(input.gameCode, input.performanceData)
 
     rawDb.run('BEGIN TRANSACTION')
 
@@ -284,6 +313,33 @@ export class EmotionalGamesAPI {
       if (input.completionStatus === 'completed' && input.badge) {
         badgeResult = this.upsertBadge(db, input.studentId, input.gameCode, input.badge)
       }
+
+      new TrainingSessionWriter(db).upsertSession({
+        studentId: input.studentId,
+        moduleCode: 'emotional',
+        entryCode: EMOTIONAL_GAME_ENTRY_CODE,
+        sessionFamily: 'emotional_game',
+        resourceType: 'game',
+        taskNameSnapshot: EMOTIONAL_GAME_TITLE_MAP[input.gameCode] || '情绪小游戏',
+        classId,
+        className,
+        startedAt: input.startedAt,
+        endedAt: deriveEndedAt(input.startedAt, input.durationMs),
+        durationMs: input.durationMs,
+        completionStatus: input.completionStatus,
+        accuracyRate,
+        avgResponseTimeMs,
+        summaryPayload: {
+          gameCode: input.gameCode,
+          difficultyLevel: input.difficultyLevel,
+          badgeCode: input.badge?.badgeCode || null,
+          badgeName: input.badge?.badgeName || null,
+          badgeUnlockCount: badgeResult?.unlockCount || null,
+          metrics: pickScalarSummaryMetrics(input.performanceData || {}),
+        },
+        sourceTable: 'game_emotion_records',
+        sourceRecordId: recordId,
+      })
 
       rawDb.run('COMMIT')
 

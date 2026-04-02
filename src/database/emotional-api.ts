@@ -4,6 +4,7 @@ import type {
   PersistEmotionalSessionResult,
 } from '../types/emotional'
 import { resolveTrainingEntryCode } from '@/utils/training-entry'
+import { TrainingSessionWriter } from './training-session-writer'
 
 export interface EmotionalSessionRecordItem {
   sessionId: number
@@ -140,9 +141,14 @@ export class EmotionalTrainingAPI {
       'SELECT name, current_class_id, current_class_name FROM student WHERE id = ?',
       [input.studentId]
     )
+    const resource = db.get(
+      'SELECT name FROM sys_training_resource WHERE id = ?',
+      [input.resourceId]
+    )
     const classId = student?.current_class_id || null
     const className = student?.current_class_name || null
     const studentName = student?.name || `学生${input.studentId}`
+    const taskNameSnapshot = resource?.name || input.summary.sessionType || input.subModule
 
     const durationMs = Math.max(0, input.endedAt - input.startedAt)
     const accuracyRate = input.summary.questionCount > 0
@@ -188,6 +194,27 @@ export class EmotionalTrainingAPI {
       ])
 
       const trainingRecordId = getLastInsertId(db)
+
+      new TrainingSessionWriter(db).upsertSession({
+        studentId: input.studentId,
+        moduleCode: 'emotional',
+        entryCode,
+        sessionFamily: 'emotional_scene',
+        resourceId: input.resourceId,
+        resourceType: input.resourceType,
+        taskNameSnapshot,
+        classId,
+        className,
+        startedAt: toIsoString(input.startedAt),
+        endedAt: toIsoString(input.endedAt),
+        durationMs,
+        completionStatus: input.completionStatus,
+        accuracyRate,
+        avgResponseTimeMs: avgResponseTime,
+        summaryPayload: summaryRawData,
+        sourceTable: 'training_records',
+        sourceRecordId: trainingRecordId,
+      })
 
       db.run(`
         INSERT INTO emotional_training_session (

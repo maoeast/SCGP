@@ -578,6 +578,47 @@ CREATE INDEX IF NOT EXISTS idx_equipment_training_batch ON equipment_training_re
 CREATE INDEX IF NOT EXISTS idx_equipment_training_entry_code ON equipment_training_records(entry_code);
 CREATE INDEX IF NOT EXISTS idx_equipment_training_batches_student ON equipment_training_batches(student_id);
 
+-- 统一训练记录主表（Phase A）
+CREATE TABLE IF NOT EXISTS training_session (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  module_code TEXT NOT NULL,
+  entry_code TEXT NOT NULL,
+  session_family TEXT NOT NULL,
+  resource_id INTEGER,
+  resource_type TEXT,
+  task_id INTEGER,
+  task_name_snapshot TEXT,
+  class_id INTEGER,
+  class_name TEXT,
+  started_at TEXT NOT NULL,
+  ended_at TEXT,
+  duration_ms INTEGER NOT NULL DEFAULT 0,
+  completion_status TEXT NOT NULL DEFAULT 'completed'
+    CHECK(completion_status IN ('completed', 'cancelled', 'interrupted', 'aborted')),
+  accuracy_rate REAL
+    CHECK(accuracy_rate IS NULL OR accuracy_rate BETWEEN 0 AND 1),
+  avg_response_time_ms INTEGER,
+  summary_payload TEXT,
+  source_table TEXT NOT NULL,
+  source_record_id INTEGER NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id),
+  FOREIGN KEY (task_id) REFERENCES task(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_training_session_student_started
+  ON training_session(student_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_training_session_module_entry_started
+  ON training_session(module_code, entry_code, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_training_session_family_started
+  ON training_session(session_family, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_training_session_completion_started
+  ON training_session(completion_status, started_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_training_session_source_record
+  ON training_session(source_table, source_record_id);
+
 -- ============================================
 -- Phase 1.3: Schema 迁移 - 系统核心表定义
 -- ============================================
@@ -928,6 +969,7 @@ export async function initDatabase(): Promise<any> {
 
     // 创建表结构
     db.run(schemaSQL)
+    initializeTrainingSessionTables(rawDb)
 
     // 数据迁移：为现有表添加新字段或修改表结构
     if (!isNewDb) {
@@ -2658,6 +2700,86 @@ function migrateEquipmentTrainingRecordResourceForeignKey(rawDb: any): void {
     console.log('[InitDatabase] equipment_training_records 外键迁移完成')
   } finally {
     rawDb.run('PRAGMA foreign_keys = ON')
+  }
+}
+
+function initializeTrainingSessionTables(rawDb: any): void {
+  rawDb.run(`
+    CREATE TABLE IF NOT EXISTS training_session (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      student_id INTEGER NOT NULL,
+      module_code TEXT NOT NULL,
+      entry_code TEXT NOT NULL,
+      session_family TEXT NOT NULL,
+      resource_id INTEGER,
+      resource_type TEXT,
+      task_id INTEGER,
+      task_name_snapshot TEXT,
+      class_id INTEGER,
+      class_name TEXT,
+      started_at TEXT NOT NULL,
+      ended_at TEXT,
+      duration_ms INTEGER NOT NULL DEFAULT 0,
+      completion_status TEXT NOT NULL DEFAULT 'completed'
+        CHECK(completion_status IN ('completed', 'cancelled', 'interrupted', 'aborted')),
+      accuracy_rate REAL
+        CHECK(accuracy_rate IS NULL OR accuracy_rate BETWEEN 0 AND 1),
+      avg_response_time_ms INTEGER,
+      summary_payload TEXT,
+      source_table TEXT NOT NULL,
+      source_record_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (student_id) REFERENCES student(id),
+      FOREIGN KEY (task_id) REFERENCES task(id)
+    )
+  `)
+
+  // 修复潜在的半成品本地 schema：约束收紧通过 CREATE TABLE 兜底，
+  // 缺失列则用保守定义补齐，避免旧库因实验性结构导致初始化失败。
+  const requiredColumns = [
+    { name: 'module_code', definition: 'module_code TEXT' },
+    { name: 'entry_code', definition: 'entry_code TEXT' },
+    { name: 'session_family', definition: 'session_family TEXT' },
+    { name: 'resource_id', definition: 'resource_id INTEGER' },
+    { name: 'resource_type', definition: 'resource_type TEXT' },
+    { name: 'task_id', definition: 'task_id INTEGER' },
+    { name: 'task_name_snapshot', definition: 'task_name_snapshot TEXT' },
+    { name: 'class_id', definition: 'class_id INTEGER' },
+    { name: 'class_name', definition: 'class_name TEXT' },
+    { name: 'started_at', definition: 'started_at TEXT' },
+    { name: 'ended_at', definition: 'ended_at TEXT' },
+    { name: 'duration_ms', definition: 'duration_ms INTEGER DEFAULT 0' },
+    { name: 'completion_status', definition: 'completion_status TEXT DEFAULT "completed"' },
+    { name: 'accuracy_rate', definition: 'accuracy_rate REAL' },
+    { name: 'avg_response_time_ms', definition: 'avg_response_time_ms INTEGER' },
+    { name: 'summary_payload', definition: 'summary_payload TEXT' },
+    { name: 'source_table', definition: 'source_table TEXT' },
+    { name: 'source_record_id', definition: 'source_record_id INTEGER' },
+    { name: 'created_at', definition: 'created_at TEXT DEFAULT CURRENT_TIMESTAMP' },
+    { name: 'updated_at', definition: 'updated_at TEXT DEFAULT CURRENT_TIMESTAMP' },
+  ]
+
+  for (const column of requiredColumns) {
+    if (!columnExists(rawDb, 'training_session', column.name)) {
+      safeAddColumn(rawDb, 'training_session', column.definition)
+    }
+  }
+
+  const indexStatements = [
+    'CREATE INDEX IF NOT EXISTS idx_training_session_student_started ON training_session(student_id, started_at DESC)',
+    'CREATE INDEX IF NOT EXISTS idx_training_session_module_entry_started ON training_session(module_code, entry_code, started_at DESC)',
+    'CREATE INDEX IF NOT EXISTS idx_training_session_family_started ON training_session(session_family, started_at DESC)',
+    'CREATE INDEX IF NOT EXISTS idx_training_session_completion_started ON training_session(completion_status, started_at DESC)',
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_training_session_source_record ON training_session(source_table, source_record_id)',
+  ]
+
+  for (const statement of indexStatements) {
+    try {
+      rawDb.run(statement)
+    } catch (error: any) {
+      console.warn('[InitDatabase] training_session 索引创建警告:', error.message)
+    }
   }
 }
 

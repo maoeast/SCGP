@@ -139,6 +139,23 @@ function parseResourceMetadata(metaData: unknown): Record<string, any> | undefin
   }
 }
 
+function parseJsonObject(value: unknown): Record<string, any> | null {
+  if (!value) {
+    return null
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      return parsed && typeof parsed === 'object' ? parsed as Record<string, any> : null
+    } catch {
+      return null
+    }
+  }
+
+  return typeof value === 'object' ? value as Record<string, any> : null
+}
+
 function buildTrainingEntryResource(
   resourceRow: {
     module_code?: string
@@ -159,6 +176,33 @@ function buildTrainingEntryResource(
     category: resourceRow?.category || fallback.category || '',
     metadata: parseResourceMetadata(resourceRow?.meta_data ?? fallback.metadata),
   }
+}
+
+export interface TrainingSessionRecord {
+  id: number
+  student_id: number
+  student_name?: string
+  module_code: string
+  entry_code: string
+  session_family: string
+  resource_id: number | null
+  resource_name?: string | null
+  resource_type: string | null
+  task_id: number | null
+  task_name_snapshot: string | null
+  class_id: number | null
+  class_name: string | null
+  started_at: string
+  ended_at: string | null
+  duration_ms: number
+  completion_status: string
+  accuracy_rate: number | null
+  avg_response_time_ms: number | null
+  summary_payload: Record<string, any> | null
+  source_table: string
+  source_record_id: number
+  created_at: string
+  updated_at: string
 }
 
 // 用户相关操作
@@ -2266,6 +2310,154 @@ export class GameTrainingAPI extends DatabaseAPI {
   }
 }
 
+export class TrainingSessionAPI extends DatabaseAPI {
+  private mapRecord(row: any): TrainingSessionRecord {
+    return {
+      ...row,
+      summary_payload: parseJsonObject(row.summary_payload),
+    }
+  }
+
+  listSessions(options: {
+    studentId?: number
+    moduleCode?: string
+    entryCode?: string
+    sessionFamily?: string
+    completionStatus?: string
+    sourceTable?: string
+    startDate?: string
+    endDate?: string
+    limit?: number
+    offset?: number
+  } = {}): TrainingSessionRecord[] {
+    let sql = `
+      SELECT
+        ts.*,
+        s.name AS student_name,
+        r.name AS resource_name
+      FROM training_session ts
+      LEFT JOIN student s ON ts.student_id = s.id
+      LEFT JOIN sys_training_resource r ON ts.resource_id = r.id
+      WHERE 1 = 1
+    `
+    const params: any[] = []
+
+    if (options.studentId !== undefined) {
+      sql += ' AND ts.student_id = ?'
+      params.push(options.studentId)
+    }
+
+    if (options.moduleCode) {
+      sql += ' AND ts.module_code = ?'
+      params.push(options.moduleCode)
+    }
+
+    if (options.entryCode) {
+      sql += ' AND ts.entry_code = ?'
+      params.push(options.entryCode)
+    }
+
+    if (options.sessionFamily) {
+      sql += ' AND ts.session_family = ?'
+      params.push(options.sessionFamily)
+    }
+
+    if (options.completionStatus) {
+      sql += ' AND ts.completion_status = ?'
+      params.push(options.completionStatus)
+    }
+
+    if (options.sourceTable) {
+      sql += ' AND ts.source_table = ?'
+      params.push(options.sourceTable)
+    }
+
+    if (options.startDate) {
+      sql += ' AND ts.started_at >= ?'
+      params.push(options.startDate)
+    }
+
+    if (options.endDate) {
+      sql += ' AND ts.started_at <= ?'
+      params.push(options.endDate)
+    }
+
+    sql += ' ORDER BY ts.started_at DESC, ts.id DESC'
+
+    if (options.limit !== undefined) {
+      sql += ' LIMIT ?'
+      params.push(options.limit)
+
+      if (options.offset !== undefined) {
+        sql += ' OFFSET ?'
+        params.push(options.offset)
+      }
+    }
+
+    return this.query(sql, params).map((row: any) => this.mapRecord(row))
+  }
+
+  getSessionById(id: number): TrainingSessionRecord | null {
+    const row = this.queryOne(`
+      SELECT
+        ts.*,
+        s.name AS student_name,
+        r.name AS resource_name
+      FROM training_session ts
+      LEFT JOIN student s ON ts.student_id = s.id
+      LEFT JOIN sys_training_resource r ON ts.resource_id = r.id
+      WHERE ts.id = ?
+    `, [id])
+
+    return row ? this.mapRecord(row) : null
+  }
+
+  countSessions(options: {
+    studentId?: number
+    moduleCode?: string
+    entryCode?: string
+    sessionFamily?: string
+    completionStatus?: string
+    sourceTable?: string
+  } = {}): number {
+    let sql = 'SELECT COUNT(*) as count FROM training_session ts WHERE 1 = 1'
+    const params: any[] = []
+
+    if (options.studentId !== undefined) {
+      sql += ' AND ts.student_id = ?'
+      params.push(options.studentId)
+    }
+
+    if (options.moduleCode) {
+      sql += ' AND ts.module_code = ?'
+      params.push(options.moduleCode)
+    }
+
+    if (options.entryCode) {
+      sql += ' AND ts.entry_code = ?'
+      params.push(options.entryCode)
+    }
+
+    if (options.sessionFamily) {
+      sql += ' AND ts.session_family = ?'
+      params.push(options.sessionFamily)
+    }
+
+    if (options.completionStatus) {
+      sql += ' AND ts.completion_status = ?'
+      params.push(options.completionStatus)
+    }
+
+    if (options.sourceTable) {
+      sql += ' AND ts.source_table = ?'
+      params.push(options.sourceTable)
+    }
+
+    const result = this.queryOne(sql, params)
+    return Number(result?.count || 0)
+  }
+}
+
 /**
  * 器材目录 API
  *
@@ -2744,6 +2936,7 @@ export default {
   CSIRSAPI,
   CBCLAssessmentAPI,
   GameTrainingAPI,
+  TrainingSessionAPI,
   ResourceAPI,
   ReportAPI,
   EquipmentAPI,
