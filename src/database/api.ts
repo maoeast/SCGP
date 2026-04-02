@@ -1,6 +1,7 @@
 import { getDatabase } from './init';
 import type { ModuleCode } from '@/types/module';
 import { resolveTrainingEntryCode, resolveTrainingEntryCodeFromResource } from '@/utils/training-entry';
+import { TrainingSessionWriter } from './training-session-writer';
 
 // 数据库基础操作类
 // 【Plan B】使用主线程 SQLWrapper，防抖保存已内置
@@ -156,8 +157,107 @@ function parseJsonObject(value: unknown): Record<string, any> | null {
   return typeof value === 'object' ? value as Record<string, any> : null
 }
 
+function getTransactionalDb(db: any) {
+  return typeof db?.getRawDB === 'function' ? db.getRawDB() : db
+}
+
+function toIsoStringFromTimestamp(value: number | null | undefined): string {
+  const normalized = Number(value)
+  if (Number.isFinite(normalized)) {
+    return new Date(normalized).toISOString()
+  }
+
+  return new Date().toISOString()
+}
+
+function normalizeDateTimeToIso(value: string | null | undefined): string {
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value)
+    if (Number.isFinite(parsed)) {
+      return new Date(parsed).toISOString()
+    }
+  }
+
+  return new Date().toISOString()
+}
+
+function deriveEndedAt(startedAt: string, durationMs: number): string | null {
+  const startedTimestamp = Date.parse(startedAt)
+  if (!Number.isFinite(startedTimestamp)) {
+    return null
+  }
+
+  return new Date(startedTimestamp + Math.max(0, durationMs)).toISOString()
+}
+
+function normalizeDurationMsFromSeconds(value: number | null | undefined): number {
+  const normalized = Number(value)
+  if (!Number.isFinite(normalized)) {
+    return 0
+  }
+
+  return Math.max(0, Math.round(normalized * 1000))
+}
+
+function buildGameTrainingSummaryPayload(rawData: any): Record<string, any> | null {
+  if (!rawData || typeof rawData !== 'object') {
+    return null
+  }
+
+  const payload: Record<string, any> = {}
+
+  if (Number.isFinite(rawData.totalTrials)) {
+    payload.totalTrials = Number(rawData.totalTrials)
+  }
+
+  if (Number.isFinite(rawData.correctTrials)) {
+    payload.correctTrials = Number(rawData.correctTrials)
+  }
+
+  if (rawData.errors && typeof rawData.errors === 'object') {
+    payload.errors = rawData.errors
+  }
+
+  if (rawData.behavior && typeof rawData.behavior === 'object') {
+    payload.behavior = rawData.behavior
+  }
+
+  if (rawData.rhythmStats && typeof rawData.rhythmStats === 'object') {
+    payload.rhythmStats = rawData.rhythmStats
+  }
+
+  if (rawData.trackingStats && typeof rawData.trackingStats === 'object') {
+    payload.trackingStats = rawData.trackingStats
+  }
+
+  return Object.keys(payload).length > 0 ? payload : null
+}
+
+function buildEquipmentTrainingSummaryPayload(data: {
+  score: number
+  prompt_level: number
+  duration_seconds?: number
+  notes?: string
+  generated_comment?: string
+  teacher_name?: string
+  environment?: string
+  batch_id?: number
+}): Record<string, any> {
+  return {
+    score: data.score,
+    promptLevel: data.prompt_level,
+    durationSeconds: data.duration_seconds ?? null,
+    notes: data.notes || null,
+    generatedComment: data.generated_comment || null,
+    teacherName: data.teacher_name || null,
+    environment: data.environment || null,
+    batchId: data.batch_id || null,
+  }
+}
+
 function buildTrainingEntryResource(
   resourceRow: {
+    name?: string
     module_code?: string
     resource_type?: string
     category?: string
@@ -2090,12 +2190,17 @@ export class GameTrainingAPI extends DatabaseAPI {
     const className = student?.current_class_name || null
     const moduleCode = data.module_code || 'sensory' // 默认为感官统合模块
     let entryCode = data.entry_code || null
+    const resourceRow = data.resource_id
+      ? this.queryOne(
+          'SELECT name, module_code, resource_type, category, meta_data FROM sys_training_resource WHERE id = ?',
+          [data.resource_id]
+        )
+      : null
+    const taskRow = data.task_id
+      ? this.queryOne('SELECT name FROM task WHERE id = ?', [data.task_id])
+      : null
 
-    if (!entryCode && data.resource_id) {
-      const resourceRow = this.queryOne(
-        'SELECT module_code, resource_type, category, meta_data FROM sys_training_resource WHERE id = ?',
-        [data.resource_id]
-      )
+    if (!entryCode && resourceRow) {
       entryCode = resolveTrainingEntryCodeFromResource(
         buildTrainingEntryResource(resourceRow, {
           moduleCode,
@@ -2108,31 +2213,75 @@ export class GameTrainingAPI extends DatabaseAPI {
       entryCode = resolveTrainingEntryCode(data.session_type || data.resource_type, moduleCode)
     }
 
+    const resolvedEntryCode = entryCode || resolveTrainingEntryCode(data.session_type || data.resource_type, moduleCode)
     const rawDataJson = JSON.stringify(data.raw_data)
-    this.execute(`
-      INSERT INTO training_records (
+    const durationMs = normalizeDurationMsFromSeconds(data.duration)
+    const startedAt = toIsoStringFromTimestamp(data.timestamp)
+    const resourceType = data.resource_type ?? data.session_type ?? 'game'
+    const taskNameSnapshot = taskRow?.name || resourceRow?.name || null
+    const rawDb = getTransactionalDb(this.db)
+
+    rawDb.run('BEGIN TRANSACTION')
+
+    try {
+      this.execute(`
+        INSERT INTO training_records (
         student_id, task_id, resource_id, resource_type, session_type,
         entry_code, timestamp, duration, accuracy_rate, avg_response_time, raw_data,
         class_id, class_name, module_code
       )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      data.student_id,
-      data.task_id ?? null,
-      data.resource_id ?? null,
-      data.resource_type ?? null,
-      data.session_type ?? null,
-      entryCode,
-      data.timestamp,
-      data.duration,
-      data.accuracy_rate,
-      data.avg_response_time,
-      rawDataJson,
-      classId,
-      className,
-      moduleCode
-    ])
-    return this.getLastInsertId()
+      `, [
+        data.student_id,
+        data.task_id ?? null,
+        data.resource_id ?? null,
+        data.resource_type ?? null,
+        data.session_type ?? null,
+        resolvedEntryCode,
+        data.timestamp,
+        data.duration,
+        data.accuracy_rate,
+        data.avg_response_time,
+        rawDataJson,
+        classId,
+        className,
+        moduleCode
+      ])
+
+      const recordId = this.getLastInsertId()
+
+      new TrainingSessionWriter(this.db).upsertSession({
+        studentId: data.student_id,
+        moduleCode,
+        entryCode: resolvedEntryCode,
+        sessionFamily: 'game',
+        resourceId: data.resource_id ?? null,
+        resourceType,
+        taskId: data.task_id ?? null,
+        taskNameSnapshot,
+        classId,
+        className,
+        startedAt,
+        endedAt: deriveEndedAt(startedAt, durationMs),
+        durationMs,
+        completionStatus: 'completed',
+        accuracyRate: data.accuracy_rate,
+        avgResponseTimeMs: data.avg_response_time,
+        summaryPayload: buildGameTrainingSummaryPayload(data.raw_data),
+        sourceTable: 'training_records',
+        sourceRecordId: recordId,
+      })
+
+      rawDb.run('COMMIT')
+      return recordId
+    } catch (error) {
+      try {
+        rawDb.run('ROLLBACK')
+      } catch {
+        // ignore rollback failures
+      }
+      throw error
+    }
   }
 
   /**
@@ -2576,15 +2725,15 @@ export class EquipmentTrainingAPI extends DatabaseAPI {
     )
     const classId = student?.current_class_id || null
     const className = student?.current_class_name || null
+    const equipment = this.queryOne(
+      'SELECT name, module_code, resource_type, category, meta_data FROM sys_training_resource WHERE id = ?',
+      [data.equipment_id]
+    )
 
     // 获取器材对应的模块代码
     let moduleCode = data.module_code
     let entryCode = data.entry_code || null
     if (!moduleCode) {
-      const equipment = this.queryOne(
-        'SELECT module_code, resource_type, category, meta_data FROM sys_training_resource WHERE id = ?',
-        [data.equipment_id]
-      )
       moduleCode = equipment?.module_code || 'sensory'
 
       if (!entryCode) {
@@ -2599,31 +2748,71 @@ export class EquipmentTrainingAPI extends DatabaseAPI {
       entryCode = resolveTrainingEntryCode(undefined, moduleCode)
     }
 
-    this.execute(`
-      INSERT INTO equipment_training_records (
-        student_id, equipment_id, entry_code, score, prompt_level,
-        duration_seconds, notes, generated_comment,
-        training_date, teacher_name, environment, batch_id,
-        class_id, class_name, module_code
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      data.student_id,
-      data.equipment_id,
-      entryCode,
-      data.score,
-      data.prompt_level,
-      data.duration_seconds || null,
-      data.notes || null,
-      data.generated_comment || null,
-      data.training_date,
-      data.teacher_name || null,
-      data.environment || null,
-      data.batch_id || null,
-      classId,
-      className,
-      moduleCode
-    ])
-    return this.getLastInsertId()
+    const resolvedModuleCode = moduleCode || 'sensory'
+    const resolvedEntryCode = entryCode || resolveTrainingEntryCode(undefined, resolvedModuleCode)
+    const startedAt = normalizeDateTimeToIso(data.training_date)
+    const durationMs = normalizeDurationMsFromSeconds(data.duration_seconds)
+    const rawDb = getTransactionalDb(this.db)
+
+    rawDb.run('BEGIN TRANSACTION')
+
+    try {
+      this.execute(`
+        INSERT INTO equipment_training_records (
+          student_id, equipment_id, entry_code, score, prompt_level,
+          duration_seconds, notes, generated_comment,
+          training_date, teacher_name, environment, batch_id,
+          class_id, class_name, module_code
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        data.student_id,
+        data.equipment_id,
+        resolvedEntryCode,
+        data.score,
+        data.prompt_level,
+        data.duration_seconds || null,
+        data.notes || null,
+        data.generated_comment || null,
+        data.training_date,
+        data.teacher_name || null,
+        data.environment || null,
+        data.batch_id || null,
+        classId,
+        className,
+        resolvedModuleCode
+      ])
+
+      const recordId = this.getLastInsertId()
+
+      new TrainingSessionWriter(this.db).upsertSession({
+        studentId: data.student_id,
+        moduleCode: resolvedModuleCode,
+        entryCode: resolvedEntryCode,
+        sessionFamily: 'equipment',
+        resourceId: data.equipment_id,
+        resourceType: equipment?.resource_type || 'equipment',
+        taskNameSnapshot: equipment?.name || null,
+        classId,
+        className,
+        startedAt,
+        endedAt: deriveEndedAt(startedAt, durationMs),
+        durationMs,
+        completionStatus: 'completed',
+        summaryPayload: buildEquipmentTrainingSummaryPayload(data),
+        sourceTable: 'equipment_training_records',
+        sourceRecordId: recordId,
+      })
+
+      rawDb.run('COMMIT')
+      return recordId
+    } catch (error) {
+      try {
+        rawDb.run('ROLLBACK')
+      } catch {
+        // ignore rollback failures
+      }
+      throw error
+    }
   }
 
   /**
