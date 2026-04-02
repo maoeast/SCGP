@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container scgp-admin-page">
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
@@ -9,7 +9,7 @@
     </div>
 
     <!-- 量表选择区 -->
-    <div class="main-content">
+    <div class="main-content scgp-page-panel assessment-select-panel">
       <div class="scale-cards">
         <!-- S-M量表卡片 -->
         <el-card
@@ -301,7 +301,7 @@
       </div>
 
       <!-- 评估说明 -->
-      <el-card class="notice-card">
+      <el-card class="notice-card scgp-page-panel" shadow="never">
         <template #header>
           <div class="notice-header">
             <el-icon><InfoFilled /></el-icon>
@@ -341,23 +341,33 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
 </script>
 
 <style scoped>
+.assessment-select-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
 /* 量表卡片网格 */
 .scale-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 30px;
-  margin-bottom: 30px;
 }
 
 .scale-card {
   cursor: pointer;
-  transition: transform 0.3s;
+  border: 1px solid #e6ebf2;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 251, 255, 0.98) 100%);
+  box-shadow: 0 16px 34px rgba(143, 169, 204, 0.12);
+  transition: transform 0.3s, box-shadow 0.3s;
   text-align: center;
   padding: 30px;
 }
 
 .scale-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 22px 42px rgba(143, 169, 204, 0.18);
 }
 
 .scale-icon {
@@ -501,7 +511,7 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
 }
 
 .notice-card {
-  margin-top: 40px;
+  border-radius: 22px;
 }
 
 .notice-header {
@@ -523,5 +533,33 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
 .notice-content li {
   padding: 5px 0;
   color: #606266;
+}
+
+@media (max-width: 768px) {
+  .scale-cards {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .scale-card {
+    padding: 22px 18px;
+  }
+
+  .scale-icon {
+    width: 96px;
+    height: 96px;
+  }
+
+  .scale-title {
+    font-size: 20px;
+  }
+
+  .scale-subtitle {
+    font-size: 16px;
+  }
+
+  .scale-btn {
+    width: 100%;
+  }
 }
 </style>

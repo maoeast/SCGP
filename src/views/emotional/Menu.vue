@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container scgp-admin-page">
     <div class="page-header">
       <div class="header-left">
         <h1>情绪行为</h1>
@@ -7,17 +7,17 @@
       </div>
     </div>
 
-    <div class="main-content">
-      <div class="module-grid">
+    <div class="main-content scgp-page-panel scgp-page-panel--flush">
+      <div class="module-grid scgp-selection-grid">
         <el-card
           v-for="card in trainingCards"
           :key="card.path"
-          class="module-card module-active"
+          class="module-card module-active scgp-selection-card"
           shadow="hover"
           @click="goTo(card.path, card.subModule)"
         >
           <div
-            class="module-icon"
+            class="module-icon scgp-selection-card__icon"
             :style="{
               backgroundColor: `${card.themeColor}25`,
               borderColor: `${card.themeColor}60`,
@@ -29,11 +29,11 @@
             </el-icon>
           </div>
 
-          <div class="module-info">
-            <h3 class="module-name">{{ card.title }}</h3>
-            <p class="module-description">{{ card.description }}</p>
+          <div class="module-info scgp-selection-card__info">
+            <h3 class="module-name scgp-selection-card__title">{{ card.title }}</h3>
+            <p class="module-description scgp-selection-card__description">{{ card.description }}</p>
 
-            <div class="module-meta">
+            <div class="module-meta scgp-selection-card__meta">
               <el-tag size="small" type="success">训练子模块</el-tag>
             </div>
           </div>
@@ -99,25 +99,11 @@ function goTo(path: string, subModule?: string) {
 </script>
 
 <style scoped>
-.main-content {
-  padding: 24px;
-}
-
-.module-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
-}
-
 .module-card {
-  position: relative;
   cursor: pointer;
-  transition: all 0.3s ease;
-  overflow: hidden;
 }
 
 .module-card:hover {
-  transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
 }
 
@@ -125,45 +111,4 @@ function goTo(path: string, subModule?: string) {
   border-color: var(--el-color-primary);
 }
 
-.module-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
-  margin: 20px auto 16px;
-  border: 2px solid;
-  transition: all 0.3s ease;
-}
-
-.module-card:hover .module-icon {
-  transform: scale(1.08);
-}
-
-.module-info {
-  text-align: center;
-  padding: 0 16px 20px;
-}
-
-.module-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-  margin: 0 0 8px;
-}
-
-.module-description {
-  font-size: 13px;
-  color: #909399;
-  margin: 0 0 16px;
-  line-height: 1.7;
-  min-height: 44px;
-}
-
-.module-meta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 </style>

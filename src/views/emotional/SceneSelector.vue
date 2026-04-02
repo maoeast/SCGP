@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container scgp-admin-page">
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item :to="{ path: '/emotional' }">情绪行为</el-breadcrumb-item>
@@ -19,16 +19,16 @@
       </div>
     </div>
 
-    <div class="main-content">
-      <div class="toolbar">
-        <div class="toolbar-copy">
+    <div class="main-content scgp-page-panel">
+      <div class="toolbar scgp-content-toolbar">
+        <div class="toolbar-copy scgp-content-toolbar__group">
           <el-tag size="large" effect="light">{{ studentName || `学生 #${studentId}` }}</el-tag>
           <span class="scene-count">
             {{ isEmotionSceneSelector ? `筛后 ${filteredScenes.length} / ${scenes.length} 个情绪场景` : `筛后 ${filteredScenes.length} / ${scenes.length} 个关心情境` }}
           </span>
         </div>
 
-        <div class="toolbar-actions">
+        <div class="toolbar-actions scgp-content-toolbar__group">
           <el-button :icon="RefreshRight" plain @click="loadScenes">刷新</el-button>
           <el-button type="primary" plain @click="goToResourceCenter">前往资源中心</el-button>
         </div>
@@ -1061,10 +1061,6 @@ watch(
 }
 
 .toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
   margin-bottom: 20px;
   padding: 16px 18px;
   border-radius: 18px;
@@ -1289,13 +1285,6 @@ watch(
   border: 1px dashed #d7e3f1;
 }
 
-.toolbar-copy,
-.toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
 .scene-count {
   color: #606266;
   font-size: 14px;
@@ -1389,7 +1378,6 @@ watch(
 }
 
 @media (max-width: 768px) {
-  .toolbar,
   .toolbar-copy,
   .toolbar-actions,
   .scene-topline,

@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container scgp-admin-page">
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
@@ -17,20 +17,21 @@
     </div>
 
     <!-- 模块卡片网格 -->
-    <div class="main-content">
-      <div class="module-grid">
+    <div class="main-content scgp-page-panel scgp-page-panel--flush">
+      <div class="module-grid scgp-selection-grid">
         <el-card
           v-for="entry in equipmentEntries"
           :key="entry.code"
-          class="module-card"
+          class="module-card scgp-selection-card"
           :class="{
             'module-active': !entry.locked,
-            'module-disabled': entry.locked
+            'module-disabled': entry.locked,
+            'scgp-selection-card--disabled': entry.locked
           }"
           shadow="hover"
           @click="handleEntryClick(entry)"
         >
-          <div class="module-icon" :style="{
+          <div class="module-icon scgp-selection-card__icon" :style="{
             backgroundColor: entry.themeColor + '25',
             borderColor: entry.themeColor + '60',
             boxShadow: `0 4px 12px ${entry.themeColor}30`
@@ -40,11 +41,11 @@
             </el-icon>
           </div>
 
-          <div class="module-info">
-            <h3 class="module-name">{{ entry.name }}</h3>
-            <p class="module-description">{{ entry.description }}</p>
+          <div class="module-info scgp-selection-card__info">
+            <h3 class="module-name scgp-selection-card__title">{{ entry.name }}</h3>
+            <p class="module-description scgp-selection-card__description">{{ entry.description }}</p>
 
-            <div class="module-meta">
+            <div class="module-meta scgp-selection-card__meta">
               <el-tag
                 :type="getStatusTagType(entry.locked ? 'locked' : 'active')"
                 size="small"
@@ -58,7 +59,7 @@
           </div>
 
           <!-- 未授权遮罩 -->
-          <div v-if="entry.locked" class="module-overlay">
+          <div v-if="entry.locked" class="module-overlay scgp-selection-card__overlay">
             <el-icon :size="24"><Lock /></el-icon>
             <span>未授权</span>
           </div>
@@ -164,31 +165,9 @@ const handleEntryClick = (entry: (typeof equipmentEntries.value)[number]) => {
 </script>
 
 <style scoped>
-/* 面包屑样式 */
-.breadcrumb-wrapper {
-  padding: 12px 24px;
-  background: #fff;
-  border-bottom: 1px solid #ebeef5;
-}
-
-/* 模块网格布局 */
-.module-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
-  padding: 24px;
-}
-
 /* 模块卡片 */
 .module-card {
-  position: relative;
   cursor: pointer;
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
-
-.module-card:hover {
-  transform: translateY(-4px);
 }
 
 .module-card.module-active {
@@ -200,80 +179,11 @@ const handleEntryClick = (entry: (typeof equipmentEntries.value)[number]) => {
 }
 
 .module-card.module-disabled {
-  opacity: 0.6;
   cursor: not-allowed;
-}
-
-/* 模块图标区域 */
-.module-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
-  margin: 20px auto 16px;
-  border: 2px solid;
-  transition: all 0.3s ease;
-}
-
-.module-card:hover .module-icon {
-  transform: scale(1.08);
-}
-
-/* 模块信息区域 */
-.module-info {
-  text-align: center;
-  padding: 0 16px 20px;
-}
-
-.module-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-  margin: 0 0 8px;
-}
-
-.module-description {
-  font-size: 13px;
-  color: #909399;
-  margin: 0 0 16px;
-  line-height: 1.5;
-  min-height: 36px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* 模块元信息 */
-.module-meta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
 }
 
 .resource-count {
   font-size: 12px;
   color: #909399;
 }
-
-/* 未授权遮罩 */
-.module-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: #909399;
-  backdrop-filter: blur(2px);
-}
-
 </style>

@@ -1,20 +1,21 @@
 <template>
-  <div class="student-selector">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <el-button @click="goBack" :icon="ArrowLeft">返回</el-button>
-          <h2>{{ title }}</h2>
-        </div>
-      </template>
+  <div class="page-container scgp-admin-page student-selector-page">
+    <div class="page-header">
+      <div class="header-left">
+        <h1>{{ title }}</h1>
+        <p class="subtitle">{{ moduleTag?.description || '选择学生开始对应训练或评估。' }}</p>
+      </div>
+      <div class="header-right">
+        <el-button @click="goBack" :icon="ArrowLeft">返回</el-button>
+      </div>
+    </div>
 
-      <!-- 模块信息标签（可选） -->
+    <div class="main-content scgp-page-panel student-selector-panel">
       <div v-if="moduleTag" class="module-info">
         <el-tag :type="moduleTag.type" size="large">{{ moduleTag.label }}</el-tag>
         <span class="module-desc">{{ moduleTag.description }}</span>
       </div>
 
-      <!-- 学生搜索与筛选 -->
       <div class="student-search">
         <el-input
           v-model="searchText"
@@ -28,16 +29,18 @@
         </el-button>
       </div>
 
-      <!-- 空状态 -->
-      <el-empty
-        v-if="!loading && filteredStudents.length === 0"
-        description="暂无学生数据"
-      >
-        <el-button type="primary" @click="showAddDialog">添加新学生</el-button>
-      </el-empty>
+      <div v-if="!loading && filteredStudents.length === 0" class="student-selector-empty scgp-empty-panel">
+        <el-empty class="scgp-empty-state" description="暂无学生数据">
+          <el-button type="primary" @click="showAddDialog">添加新学生</el-button>
+        </el-empty>
+      </div>
 
-      <!-- 学生列表 -->
-      <div v-else-if="filteredStudents.length > 0" v-loading="loading" element-loading-text="加载中...">
+      <div
+        v-else-if="filteredStudents.length > 0"
+        v-loading="loading"
+        element-loading-text="加载中..."
+        class="student-table-shell"
+      >
         <table class="student-table">
           <thead>
             <tr>
@@ -84,9 +87,8 @@
           </tbody>
         </table>
       </div>
-    </el-card>
+    </div>
 
-    <!-- 快速添加学生对话框 -->
     <AddStudentDialog
       v-if="addDialogVisible"
       @close="addDialogVisible = false"
@@ -235,18 +237,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.student-selector {
-  padding: 20px;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.card-header h2 {
-  margin: 0;
+.student-selector-page {
+  min-height: 100%;
 }
 
 .module-info {
@@ -255,13 +247,18 @@ onMounted(async () => {
   gap: 15px;
   margin-bottom: 20px;
   padding: 15px;
-  background: #f5f7fa;
-  border-radius: 4px;
+  background: rgba(248, 251, 255, 0.96);
+  border-radius: 16px;
+  border: 1px solid rgba(217, 226, 238, 0.92);
 }
 
 .module-desc {
   color: #606266;
   font-size: 14px;
+}
+
+.student-selector-panel {
+  padding: 20px;
 }
 
 .student-search {
@@ -270,21 +267,36 @@ onMounted(async () => {
   margin-bottom: 20px;
 }
 
-.student-search .el-input {
+.student-search :deep(.el-input__wrapper) {
+  min-height: 40px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(220, 223, 230, 0.9) inset;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.student-search :deep(.el-input__wrapper:hover),
+.student-search :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px rgba(102, 168, 255, 0.88) inset;
+}
+
+.student-search :deep(.el-input) {
   flex: 1;
+}
+
+.student-table-shell {
+  overflow: auto;
+  border: 1px solid #e6ebf2;
+  border-radius: 18px;
 }
 
 .student-table {
   width: 100%;
   border-collapse: collapse;
   background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .student-table th {
-  background-color: #f5f7fa;
+  background-color: #fbfcfe;
   padding: 12px;
   text-align: left;
   font-weight: 600;
@@ -306,11 +318,27 @@ onMounted(async () => {
   background-color: #f5f7fa;
 }
 
+.student-selector-empty {
+  min-height: 320px;
+}
+
 .student-row:last-child td {
   border-bottom: none;
 }
 
 .student-table__avatar-cell {
   width: 68px;
+}
+
+@media (max-width: 768px) {
+  .student-selector-panel {
+    padding: 16px;
+  }
+
+  .module-info,
+  .student-search {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 </style>

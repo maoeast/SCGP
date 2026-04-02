@@ -1,30 +1,10 @@
 <template>
-  <div class="page-container">
-    <!-- 面包屑导航 -->
-    <div class="breadcrumb-wrapper">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/equipment/menu' }">器材训练</el-breadcrumb-item>
-        <el-breadcrumb-item>选择学生</el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
-
-    <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="header-left">
-        <h1>选择学生</h1>
-        <p class="subtitle">{{ moduleName }} - 选择需要训练的学生</p>
-      </div>
-    </div>
-
-    <!-- 学生选择器 -->
-    <div class="main-content">
-      <StudentSelector
-        :title="selectStudentTitle"
-        :module-tag="equipmentModuleTag"
-        @select="handleStudentSelect"
-      />
-    </div>
-  </div>
+  <StudentSelector
+    :title="selectStudentTitle"
+    back-route="/equipment/menu"
+    :module-tag="equipmentModuleTag"
+    @select="handleStudentSelect"
+  />
 </template>
 
 <script setup lang="ts">

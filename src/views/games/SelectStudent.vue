@@ -1,132 +1,39 @@
 <template>
-  <div class="page-container">
-    <!-- 面包屑导航 -->
-    <div class="breadcrumb-wrapper">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/games/menu' }">游戏训练</el-breadcrumb-item>
-        <el-breadcrumb-item>选择学生</el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
-
-    <!-- 页面头部 -->
-    <div class="page-header">
-      <div class="header-left">
-        <h1>{{ currentModule?.name || '游戏训练' }} - 选择学生</h1>
-        <p class="subtitle">选择要参加游戏训练的学生</p>
-      </div>
-      <div class="header-right">
-        <el-button @click="goBack" :icon="ArrowLeft">返回</el-button>
-      </div>
-    </div>
-
-    <div class="main-content">
-      <el-card class="student-card">
-        <!-- 搜索区域 -->
-        <div class="student-search">
-          <el-input
-            v-model="searchText"
-            placeholder="搜索学生姓名或学号"
-            :prefix-icon="Search"
-            clearable
-            @input="handleSearch"
-          />
-          <el-button type="primary" :icon="Plus" @click="showAddDialog">
-            添加新学生
-          </el-button>
-        </div>
-
-        <!-- 空状态 -->
-        <el-empty
-          v-if="!loading && filteredStudents.length === 0"
-          description="暂无学生数据"
-        >
-          <el-button type="primary" @click="showAddDialog">添加新学生</el-button>
-        </el-empty>
-
-        <!-- 学生列表 -->
-        <div v-else-if="filteredStudents.length > 0" v-loading="loading" element-loading-text="加载中...">
-          <table class="student-table">
-            <thead>
-              <tr>
-                <th>照片</th>
-                <th>姓名</th>
-                <th>学号</th>
-                <th>性别</th>
-                <th>出生日期</th>
-                <th>年龄</th>
-                <th>诊断类型</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-            <tr
-              v-for="student in filteredStudents"
-              :key="student.id"
-              @click="selectStudent(student)"
-              class="student-row"
-            >
-                <td class="student-table__avatar-cell">
-                  <StudentAvatar
-                    :name="student.name"
-                    :gender="student.gender"
-                    :avatar-url="student.avatar_path"
-                    size="sm"
-                  />
-                </td>
-                <td>{{ student.name }}</td>
-                <td><StudentId :id="student.student_no" :full="true" /></td>
-                <td>{{ student.gender }}</td>
-                <td>{{ formatStudentDate(student.birthday) }}</td>
-                <td>{{ getStudentAge(student.birthday) }}岁</td>
-                <td><DiagnosisTag :type="student.disorder" /></td>
-                <td>
-                  <el-button
-                    type="primary"
-                    :icon="Right"
-                    circle
-                    @click.stop="selectStudent(student)"
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </el-card>
-    </div>
-
-    <!-- 快速添加学生对话框 -->
-    <AddStudentDialog
-      v-if="addDialogVisible"
-      @close="addDialogVisible = false"
-      @saved="handleStudentAdded"
-    />
-  </div>
+  <StudentSelector
+    :title="pageTitle"
+    back-route="/games/menu"
+    :module-tag="currentModuleTag"
+    @select="handleSelectStudent"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import {
-  ArrowLeft,
-  Search,
-  Plus,
-  Right
-} from '@element-plus/icons-vue'
-import { useStudentStore } from '@/stores/student'
-import AddStudentDialog from '@/components/AddStudentDialog.vue'
-import StudentAvatar from '@/components/student/StudentAvatar.vue'
-import StudentId from '@/components/student/StudentId.vue'
-import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
+import StudentSelector from '@/components/common/StudentSelector.vue'
 import {
   getTrainingEntry,
   resolveTrainingEntryCode,
 } from '@/utils/training-entry'
-import { formatStudentDate, getStudentAge } from '@/utils/student-display'
+
+interface Student {
+  id: number
+  name: string
+  gender: '男' | '女'
+  birthday: string
+  student_no?: string
+  disorder?: string
+  avatar_path?: string
+}
+
+interface ModuleTag {
+  type: 'primary' | 'success' | 'warning' | 'danger' | 'info'
+  label: string
+  description: string
+}
 
 const router = useRouter()
 const route = useRoute()
-const studentStore = useStudentStore()
 
 // 当前训练入口
 const currentEntryCode = ref(resolveTrainingEntryCode(route.query.entry, route.query.module))
@@ -171,52 +78,16 @@ function resolveEmotionalTargetPath() {
 // 获取当前模块信息
 const currentModule = computed(() => currentEntry.value)
 
-// 搜索相关
-const searchText = ref('')
+const pageTitle = computed(() => `${currentModule.value?.name || '游戏训练'} · 选择学生`)
 
-// 加载状态
-const loading = ref(false)
-
-// 学生列表
-const students = computed(() => studentStore.students || [])
-
-// 过滤后的学生列表
-const filteredStudents = computed(() => {
-  if (!searchText.value) return students.value
-  const search = searchText.value.toLowerCase()
-  return students.value.filter(
-    s =>
-      s.name?.toLowerCase().includes(search) ||
-      s.student_no?.toLowerCase().includes(search)
-  )
-})
-
-// 添加学生对话框
-const addDialogVisible = ref(false)
-
-// 返回上一页
-const goBack = () => {
-  router.push('/games/menu')
-}
-
-// 搜索处理
-const handleSearch = () => {
-  // 搜索逻辑已通过 computed 实现
-}
-
-// 显示添加对话框
-const showAddDialog = () => {
-  addDialogVisible.value = true
-}
-
-// 处理学生添加成功
-const handleStudentAdded = async () => {
-  addDialogVisible.value = false
-  ElMessage.success('添加成功')
-}
+const currentModuleTag = computed<ModuleTag>(() => ({
+  type: currentEntry.value?.moduleCode === 'emotional' ? 'warning' : 'primary',
+  label: currentModule.value?.name || '游戏训练',
+  description: '选择学生后进入对应训练入口，开始游戏训练。',
+}))
 
 // 选择学生 - 跳转到游戏大厅
-const selectStudent = (student: any) => {
+const handleSelectStudent = (student: Student) => {
   console.log('[SelectStudent] 选择学生:', student.id, '入口:', currentEntryCode.value)
 
   const hasExplicitEmotionalTarget = Boolean(route.query.targetPath || route.query.subModule)
@@ -251,73 +122,4 @@ const selectStudent = (student: any) => {
         }
   })
 }
-
-// 初始化
-onMounted(async () => {
-  loading.value = true
-  try {
-    await studentStore.loadStudents()
-  } catch (error) {
-    console.error('加载学生列表失败:', error)
-    ElMessage.error('加载学生列表失败')
-  } finally {
-    loading.value = false
-  }
-})
 </script>
-
-<style scoped>
-.student-card {
-  margin: 24px;
-}
-
-.student-search {
-  display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.student-search .el-input {
-  flex: 1;
-}
-
-.student-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.student-table th {
-  background-color: #f5f7fa;
-  padding: 12px;
-  text-align: left;
-  font-weight: 600;
-  color: #303133;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.student-table td {
-  padding: 12px;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.student-row {
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.student-row:hover {
-  background-color: #f5f7fa;
-}
-
-.student-row:last-child td {
-  border-bottom: none;
-}
-
-.student-table__avatar-cell {
-  width: 68px;
-}
-</style>
