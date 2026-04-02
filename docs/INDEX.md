@@ -31,6 +31,7 @@
 - [2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
 - [2026-03-13-scgp-current-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-13-scgp-current-prd.md)
 - [2026-03-16-emotional-module-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-16-emotional-module-prd.md)
+- [2026-04-02-page-style-unification-todo.md](./planning/2026-04-02-page-style-unification-todo.md)
 - [2026-04-01-unified-training-record-schema-plan.md](/home/DONG/Mycode/SCGP/docs/planning/2026-04-01-unified-training-record-schema-plan.md)
 - [2026-03-12-emotional-module-execution-prompt.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-12-emotional-module-execution-prompt.md)
 - [emotion-games-dev-guidelines.md](/home/DONG/Mycode/SCGP/docs/planning/emotion-games-dev-guidelines.md)

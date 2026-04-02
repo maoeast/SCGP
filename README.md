@@ -108,6 +108,7 @@ npm run build:electron
 - 文档总索引：[docs/INDEX.md](/home/DONG/Mycode/SCGP/docs/INDEX.md)
 - 文档治理说明：[docs/DOCS_GUIDE.md](/home/DONG/Mycode/SCGP/docs/DOCS_GUIDE.md)
 - 轻量启动上下文：[docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
+- 页面风格统一改造 TODO：[docs/planning/2026-04-02-page-style-unification-todo.md](./docs/planning/2026-04-02-page-style-unification-todo.md)
 - 统一训练记录主表方案计划：[docs/planning/2026-04-01-unified-training-record-schema-plan.md](/home/DONG/Mycode/SCGP/docs/planning/2026-04-01-unified-training-record-schema-plan.md)
 - 训练资源统一文案操作说明：[docs/guides/2026-03-30-training-resource-copy-workflow.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-30-training-resource-copy-workflow.md)
 - 训练工作台双栏滚动布局规范：[docs/reports/2026-03-31-training-workspace-layout-scroll-guideline.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-31-training-workspace-layout-scroll-guideline.md)
