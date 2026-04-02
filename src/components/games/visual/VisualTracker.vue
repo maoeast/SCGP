@@ -299,8 +299,8 @@
         <span>👁️ 眼动追踪模式</span>
       </div>
 
-      <button class="btn-primary" @click="$emit('finish', sessionData)">
-        查看完整报告 📊
+      <button class="btn-primary" disabled>
+        正在生成完整报告...
       </button>
     </div>
   </div>
@@ -1163,6 +1163,7 @@ function startGame() {
 }
 
 function endGame() {
+  if (gameEnded.value) return
   gameEnded.value = true
   isTracking.value = false
 
@@ -1189,6 +1190,8 @@ function endGame() {
     cameraStream.getTracks().forEach(track => track.stop())
     cameraStream = null
   }
+
+  emit('finish', sessionData.value)
 }
 
 // ==================== 窗口大小变化处理 ====================

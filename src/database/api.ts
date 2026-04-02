@@ -2197,7 +2197,7 @@ export class GameTrainingAPI extends DatabaseAPI {
         )
       : null
     const taskRow = data.task_id
-      ? this.queryOne('SELECT name FROM task WHERE id = ?', [data.task_id])
+      ? this.queryOne('SELECT id, name FROM task WHERE id = ?', [data.task_id])
       : null
 
     if (!entryCode && resourceRow) {
@@ -2218,6 +2218,7 @@ export class GameTrainingAPI extends DatabaseAPI {
     const durationMs = normalizeDurationMsFromSeconds(data.duration)
     const startedAt = toIsoStringFromTimestamp(data.timestamp)
     const resourceType = data.resource_type ?? data.session_type ?? 'game'
+    const persistedTaskId = taskRow?.id ? Number(taskRow.id) : null
     const taskNameSnapshot = taskRow?.name || resourceRow?.name || null
     const rawDb = getTransactionalDb(this.db)
 
@@ -2257,7 +2258,7 @@ export class GameTrainingAPI extends DatabaseAPI {
         sessionFamily: 'game',
         resourceId: data.resource_id ?? null,
         resourceType,
-        taskId: data.task_id ?? null,
+        taskId: persistedTaskId,
         taskNameSnapshot,
         classId,
         className,

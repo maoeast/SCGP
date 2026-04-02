@@ -101,8 +101,8 @@
           <span class="value">{{ avgResponseTime }}ms</span>
         </div>
       </div>
-      <button class="btn-primary" @click="$emit('finish', sessionData)">
-        查看详细报告
+      <button class="btn-primary" disabled>
+        正在生成详细报告...
       </button>
     </div>
 
@@ -534,8 +534,10 @@ function showFeedback(type: 'success' | 'error', message: string) {
  * 结束游戏
  */
 function endGame() {
+  if (gameEnded.value) return
   gameEnded.value = true
   clearInterval(timerInterval.value!)
+  emit('finish', sessionData.value)
 }
 
 /**

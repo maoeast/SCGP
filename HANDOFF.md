@@ -19,7 +19,7 @@ Usually those three files are enough to resume work safely.
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `training_session unified summary write coverage is now complete for emotional scene, emotional mini-game, sensory game, and equipment; runtime smoke verification and the first read-chain migration are the next track`
+- active work scope: `training_session unified summary write coverage is now complete for emotional scene, emotional mini-game, sensory game, and equipment; sensory game auto-save and local DB smoke verification are confirmed, and the first read-chain migration is the next track`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

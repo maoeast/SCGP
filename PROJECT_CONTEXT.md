@@ -389,11 +389,23 @@
   - equipment writes in `EquipmentTrainingAPI.createRecord()` within `src/database/api.ts`
     - old write remains in `equipment_training_records`
     - unified summary now also writes to `training_session`
+- important sensory-game runtime boundary:
+  - sensory game persistence now triggers at the actual `endGame()` completion path in:
+    - `src/components/games/visual/GameGrid.vue`
+    - `src/components/games/audio/GameAudio.vue`
+    - `src/components/games/visual/VisualTracker.vue`
+  - it no longer depends on the user clicking a second result-page “查看详细报告” button to persist the training record
 - a lightweight unified query scaffold now exists:
   - `TrainingSessionAPI` in `src/database/api.ts`
 - important write-path safety boundary:
   - sensory game and equipment dual-write are now wrapped in the same transaction scope as the legacy insert
   - this avoids leaving a new legacy row behind when `training_session` upsert fails
+- important current-schema boundary:
+  - current local DB reality still allows sensory game records while `task` table is empty
+  - so `training_session.task_id` for sensory games must only be written when the referenced `task` row truly exists
+- runtime verification status now confirmed in the live local DB:
+  - one real sensory game run now produces the expected `training_records` + `training_session` rows
+  - one real equipment quick-entry now produces the expected `equipment_training_records` + `training_session` rows
 - important current-product boundary:
   - `training_session` is not yet the sole summary fact source
   - no user-facing read chain has switched to `training_session` yet
@@ -402,8 +414,7 @@
     - dashboard aggregates
     - reports
 - current next action:
-  - first run runtime smoke verification for the newly completed sensory game / equipment dual-write paths
-  - then start switching the first safe user-facing read chain onto `training_session`
+  - start switching the first safe user-facing read chain onto `training_session`
   - candidate first consumers remain:
     - training-record list / menu
     - student detail counts / lists
