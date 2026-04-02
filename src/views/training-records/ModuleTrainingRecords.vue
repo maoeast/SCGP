@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container scgp-admin-page">
     <!-- 面包屑导航 -->
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
@@ -15,13 +15,13 @@
         <p class="subtitle">查看该训练入口的游戏记录与器材记录</p>
       </div>
       <div class="header-right">
-        <div class="module-switcher">
-          <el-icon class="switcher-icon"><Switch /></el-icon>
-          <span class="switcher-label">切换入口</span>
+        <div class="module-switcher scgp-switcher scgp-switcher--success">
+          <el-icon class="switcher-icon scgp-switcher__icon scgp-switcher__icon--pulse"><Switch /></el-icon>
+          <span class="switcher-label scgp-switcher__label">切换入口</span>
           <el-select
             v-model="currentEntryCode"
             size="default"
-            class="module-select"
+            class="module-select scgp-switcher__select"
             popper-class="training-entry-switcher-popper"
             @change="handleEntryChange"
           >
@@ -50,8 +50,8 @@
     </div>
 
     <!-- Tab 切换 -->
-    <div class="main-content">
-      <el-tabs v-model="activeTab" class="records-tabs" @tab-change="handleTabChange">
+    <div class="main-content scgp-page-panel scgp-tab-panel">
+      <el-tabs v-model="activeTab" class="records-tabs scgp-segment-tabs" @tab-change="handleTabChange">
         <el-tab-pane label="游戏训练记录" name="game">
           <GameRecordsPanel
             v-if="activeTab === 'game'"
@@ -209,70 +209,6 @@ watch(() => route.query.type, (newType) => {
 </script>
 
 <style scoped>
-.records-tabs {
-  background: transparent;
-}
-
-.records-tabs :deep(.el-tabs__header) {
-  margin-bottom: 16px;
-}
-
-.records-tabs :deep(.el-tabs__item) {
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.module-switcher {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #f0f9eb 0%, #e1f3d8 100%);
-  border: 1px solid #c2e7b0;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.module-switcher:hover {
-  background: linear-gradient(135deg, #e1f3d8 0%, #d4edda 100%);
-  box-shadow: 0 2px 8px rgba(103, 194, 58, 0.2);
-}
-
-.switcher-icon {
-  color: #67c23a;
-  font-size: 18px;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-.switcher-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #67c23a;
-}
-
-.module-select {
-  width: 160px;
-}
-
-.module-select :deep(.el-input__wrapper) {
-  background-color: #fff;
-  border-color: #67c23a;
-  box-shadow: 0 0 0 1px #67c23a inset;
-}
-
-.module-select :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #85ce61 inset;
-}
-
-.module-select :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px #85ce61 inset, 0 0 0 3px rgba(103, 194, 58, 0.2);
-}
-
 .module-option {
   display: flex;
   align-items: center;
@@ -298,15 +234,6 @@ watch(() => route.query.type, (newType) => {
   .header-right {
     width: 100%;
     flex-wrap: wrap;
-  }
-
-  .module-switcher {
-    flex: 1 1 100%;
-    justify-content: space-between;
-  }
-
-  .module-select {
-    width: 156px;
   }
 }
 </style>

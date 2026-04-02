@@ -1,27 +1,27 @@
 <template>
-  <div class="records-panel">
-    <section class="stats-row" aria-label="器材训练记录统计概览">
-      <article class="summary-card">
+  <div class="records-panel scgp-records-stack">
+    <section class="stats-row scgp-stats-grid" aria-label="器材训练记录统计概览">
+      <article class="summary-card scgp-summary-card">
         <div class="summary-card__label">总记录数</div>
         <div class="summary-card__value">{{ records.length }}</div>
       </article>
-      <article class="summary-card">
+      <article class="summary-card scgp-summary-card">
         <div class="summary-card__label">平均得分</div>
         <div class="summary-card__value">{{ avgScoreDisplay }}</div>
       </article>
-      <article class="summary-card">
+      <article class="summary-card scgp-summary-card">
         <div class="summary-card__label">总训练时长</div>
         <div class="summary-card__value">{{ totalDuration }}</div>
       </article>
-      <article class="summary-card">
+      <article class="summary-card scgp-summary-card">
         <div class="summary-card__label">涉及器材种数</div>
         <div class="summary-card__value">{{ equipmentCount }}</div>
       </article>
     </section>
 
-    <div class="filter-section records-filter-section">
-      <div class="filter-toolbar">
-        <div class="filter-toolbar__controls">
+    <div class="filter-section records-filter-section scgp-filter-surface scgp-toolbar-panel">
+      <div class="filter-toolbar scgp-toolbar">
+        <div class="filter-toolbar__controls scgp-toolbar__controls">
           <el-select
             v-if="showStudentFilter"
             v-model="selectedStudentId"
@@ -29,7 +29,7 @@
             placeholder="选择学生"
             clearable
             filterable
-            class="student-filter"
+            class="student-filter scgp-field-control scgp-field-control--student"
             @change="loadRecords"
           >
             <el-option
@@ -45,7 +45,7 @@
             size="small"
             placeholder="选择分类"
             clearable
-            class="category-filter"
+            class="category-filter scgp-field-control scgp-field-control--category"
             @change="loadRecords"
           >
             <el-option
@@ -56,7 +56,7 @@
             />
           </el-select>
 
-          <div class="date-filter-group">
+          <div class="date-filter-group scgp-toolbar__group">
             <el-date-picker
               v-model="dateRange"
               type="daterange"
@@ -67,18 +67,18 @@
               end-placeholder="结束日期"
               format="YYYY-MM-DD"
               value-format="YYYY-MM-DD"
-              class="date-range-filter"
+              class="date-range-filter scgp-date-range"
               @change="handleDateRangeChange"
             />
 
-            <div class="filter-toolbar__divider" aria-hidden="true" />
+            <div class="filter-toolbar__divider scgp-toolbar__divider" aria-hidden="true" />
 
-            <div class="quick-range-list" role="tablist" aria-label="日期快捷筛选">
+            <div class="quick-range-list scgp-range-list" role="tablist" aria-label="日期快捷筛选">
               <button
                 v-for="preset in QUICK_RANGE_OPTIONS"
                 :key="preset.key"
                 type="button"
-                class="range-pill"
+                class="range-pill scgp-range-pill"
                 :class="{ 'is-active': activeDatePreset === preset.key }"
                 @click="applyQuickRange(preset.key)"
               >
@@ -88,7 +88,7 @@
           </div>
         </div>
 
-        <el-button class="refresh-button" size="small" :icon="Refresh" @click="loadRecords">
+        <el-button class="refresh-button scgp-refresh-button" size="small" :icon="Refresh" @click="loadRecords">
           刷新
         </el-button>
       </div>
@@ -98,7 +98,7 @@
       v-loading="loading"
       :data="records"
       stripe
-      class="records-table"
+      class="records-table scgp-records-table"
       style="width: 100%"
       :max-height="tableMaxHeightValue"
       empty-text=""
@@ -174,7 +174,7 @@
 
       <el-table-column label="操作" width="108" fixed="right">
         <template #default="{ row }">
-          <button type="button" class="detail-pill-button" @click="emit('view-detail', row)">
+          <button type="button" class="detail-pill-button scgp-detail-button" @click="emit('view-detail', row)">
             查看详情
           </button>
         </template>
@@ -183,6 +183,7 @@
 
     <el-empty
       v-if="!loading && records.length === 0"
+      class="scgp-empty-state"
       description="暂无器材训练记录"
     />
   </div>
@@ -458,169 +459,6 @@ watch(
 </script>
 
 <style scoped>
-.records-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.summary-card {
-  padding: 12px 14px;
-  border: none;
-  border-radius: var(--border-radius-md, 8px);
-  background: var(--color-background-secondary, #ffffff);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 18px;
-  min-height: 90px;
-}
-
-.summary-card__label {
-  color: var(--color-text-secondary, #606266);
-  font-size: 13px;
-}
-
-.summary-card__value {
-  color: var(--color-text-primary, #303133);
-  font-size: clamp(24px, 2.2vw, 34px);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.04em;
-}
-
-.records-filter-section {
-  margin-bottom: 0;
-  padding: 14px 16px;
-  background: var(--color-background-secondary, #ffffff);
-  box-shadow: none;
-}
-
-.filter-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.filter-toolbar__controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-  flex-wrap: wrap;
-}
-
-.student-filter {
-  width: 164px;
-  flex: 0 0 auto;
-}
-
-.category-filter {
-  width: 140px;
-  flex: 0 0 auto;
-}
-
-.date-filter-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.filter-toolbar__divider {
-  width: 1px;
-  height: 32px;
-  background: #dcdfe6;
-  flex-shrink: 0;
-}
-
-.quick-range-list {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.range-pill {
-  border: 1px solid rgba(220, 223, 230, 0.9);
-  background: rgba(255, 255, 255, 0.88);
-  color: #606266;
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 13px;
-  line-height: 1;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.22s ease;
-}
-
-.range-pill:hover {
-  color: #303133;
-  border-color: #afcfff;
-  transform: translateY(-1px);
-}
-
-.range-pill.is-active {
-  color: #2f74d0;
-  border-color: #66a8ff;
-  background: #eef5ff;
-  box-shadow: 0 10px 20px rgba(102, 168, 255, 0.12);
-}
-
-.refresh-button {
-  margin-left: auto;
-  border: 0.5px solid var(--color-border-secondary, #dcdfe6);
-  background: var(--color-background-primary, #ffffff);
-  color: var(--color-text-secondary, #606266);
-  border-radius: 999px;
-  padding-inline: 14px;
-}
-
-.refresh-button:hover {
-  border-color: #afcfff;
-  color: #2f74d0;
-  background: #eef5ff;
-}
-
-.student-filter :deep(.el-input__wrapper),
-.category-filter :deep(.el-input__wrapper),
-.date-range-filter :deep(.el-input__wrapper),
-.date-range-filter :deep(.el-range-editor.el-input__wrapper) {
-  min-height: 34px;
-  border-radius: 14px;
-  box-shadow: 0 0 0 1px rgba(220, 223, 230, 0.9) inset;
-}
-
-.date-range-filter {
-  width: 252px;
-}
-
-.date-range-filter :deep(.el-range-input) {
-  width: 100px;
-  font-size: 13px;
-}
-
-.records-table :deep(.el-table__header th) {
-  background: #fbfcfe;
-  color: #606266;
-  font-weight: 600;
-}
-
-.records-table :deep(.el-table__body td) {
-  padding-top: 14px;
-  padding-bottom: 14px;
-}
-
 .equipment-cell {
   display: flex;
   align-items: center;
@@ -688,62 +526,5 @@ watch(
 
 .comment-text {
   color: var(--color-text-primary, #303133);
-}
-
-.detail-pill-button {
-  border: 0.5px solid #b5d4f4;
-  background: #e6f1fb;
-  color: #185fa5;
-  border-radius: 999px;
-  font-size: 11px;
-  line-height: 1;
-  padding: 3px 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.detail-pill-button:hover {
-  background: #dcebf9;
-  border-color: #98c0ea;
-  color: #0c447c;
-}
-
-@media (max-width: 1100px) {
-  .stats-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .stats-row {
-    grid-template-columns: 1fr;
-  }
-
-  .filter-toolbar {
-    align-items: stretch;
-  }
-
-  .filter-toolbar__controls {
-    width: 100%;
-  }
-
-  .student-filter,
-  .category-filter,
-  .date-range-filter {
-    width: 100%;
-  }
-
-  .date-filter-group {
-    width: 100%;
-  }
-
-  .filter-toolbar__divider {
-    display: none;
-  }
-
-  .refresh-button {
-    margin-left: 0;
-    width: 100%;
-  }
 }
 </style>

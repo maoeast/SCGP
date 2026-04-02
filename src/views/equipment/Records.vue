@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container scgp-admin-page">
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item :to="{ path: '/equipment/menu' }">器材训练</el-breadcrumb-item>
@@ -16,13 +16,13 @@
         </p>
       </div>
       <div class="header-right">
-        <div class="module-switcher">
-          <el-icon class="switcher-icon"><Switch /></el-icon>
-          <span class="switcher-label">训练入口</span>
+        <div class="module-switcher scgp-switcher scgp-switcher--success">
+          <el-icon class="switcher-icon scgp-switcher__icon"><Switch /></el-icon>
+          <span class="switcher-label scgp-switcher__label">训练入口</span>
           <el-select
             v-model="selectedEntryCode"
             size="default"
-            class="module-select"
+            class="module-select scgp-switcher__select scgp-switcher__select--wide"
             @change="handleEntryChange"
           >
             <el-option label="全部入口" value="" />
@@ -46,7 +46,7 @@
       </div>
     </div>
 
-    <div class="filter-section">
+    <div class="filter-section scgp-filter-surface scgp-toolbar-panel">
       <el-row :gutter="16">
         <el-col :span="6">
           <el-select
@@ -104,15 +104,15 @@
       </el-row>
     </div>
 
-    <div v-if="!studentId" class="empty-student">
-      <el-empty description="请先选择学生查看训练记录" :image-size="200">
+    <div v-if="!studentId" class="empty-student scgp-empty-panel">
+      <el-empty class="scgp-empty-state" description="请先选择学生查看训练记录" :image-size="200">
         <template #image>
           <el-icon :size="120" color="#c0c4cc"><User /></el-icon>
         </template>
       </el-empty>
     </div>
 
-    <div v-else v-loading="loading" class="records-list">
+    <div v-else v-loading="loading" class="records-list scgp-page-panel">
       <el-card
         v-for="record in records"
         :id="`equipment-record-${record.id}`"
@@ -177,6 +177,7 @@
 
       <el-empty
         v-if="!loading && records.length === 0"
+        class="scgp-empty-state"
         description="暂无训练记录"
         :image-size="200"
       >
@@ -757,28 +758,11 @@ watch(
 </script>
 
 <style scoped>
-.filter-section {
-  margin-bottom: 16px;
-  padding: 16px;
-  background: #fff;
-  border-radius: 12px;
-}
-
 .filter-actions {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 12px;
-}
-
-.empty-student {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  border-radius: 12px;
-  padding: 60px;
 }
 
 .records-list {
@@ -787,6 +771,7 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 16px;
 }
 
 .record-card {
@@ -912,34 +897,4 @@ watch(
   line-height: 1.8;
 }
 
-.module-switcher {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #f0f9eb 0%, #e1f3d8 100%);
-  border: 1px solid #c2e7b0;
-  border-radius: 8px;
-}
-
-.switcher-icon {
-  color: #67c23a;
-  font-size: 18px;
-}
-
-.switcher-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #67c23a;
-}
-
-.module-select {
-  width: 180px;
-}
-
-.module-select :deep(.el-input__wrapper) {
-  background-color: #fff;
-  border-color: #67c23a;
-  box-shadow: 0 0 0 1px #67c23a inset;
-}
 </style>
