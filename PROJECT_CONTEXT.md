@@ -418,3 +418,28 @@
   - candidate first consumers remain:
     - training-record list / menu
     - student detail counts / lists
+
+## 18. 2026-04-02 Page-Style Unification Planning Boundary
+
+- a page-style unification execution TODO now exists:
+  - `docs/planning/2026-04-02-page-style-unification-todo.md`
+- important current-code boundary:
+  - shared page-style foundation already exists in current code reality through:
+    - `src/assets/layout.css`
+    - `src/assets/main.css`
+    - `src/assets/base.css`
+    - `src/utils/date-picker.ts`
+  - but full-site page-style unification is not yet landed
+- first-wave execution boundary:
+  - prioritize backend business pages first
+  - start from shared layout/style primitives before page-by-page migration
+  - initial target chain is:
+    - `training-records`
+    - `equipment/Records`
+    - then `resource-center`
+- important exclusion boundary:
+  - do not force the admin-page shell onto:
+    - login / activation / not-found pages
+    - gameplay and immersive emotional mini-games
+    - `AssessmentContainer`
+    - report pages
