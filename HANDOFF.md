@@ -19,7 +19,7 @@ Usually those three files are enough to resume work safely.
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `page-style unification planning doc is now landed; no UI code changes have landed yet, and the first execution wave should start by extending shared layout primitives before migrating the training-record pages`
+- active work scope: `page-style unification execution is already partially landed in code reality for training-records, resource-center, training entry pages, and assessment entry pages; the next active slice is system management page-shell unification after the current uncommitted UI wave is reviewed and committed`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

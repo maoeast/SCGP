@@ -443,3 +443,47 @@
     - gameplay and immersive emotional mini-games
     - `AssessmentContainer`
     - report pages
+
+## 19. 2026-04-02 Page-Style Unification Execution Progress
+
+- page-style unification is no longer only a planning boundary; partial execution is now landed in current code reality
+- shared layout/style primitives in current active use now include additional page-shell support in:
+  - `src/assets/layout.css`
+- current landed execution slices include:
+  - training-record chain:
+    - `src/views/training-records/TrainingRecordsMenu.vue`
+    - `src/views/training-records/ModuleTrainingRecords.vue`
+    - `src/views/training-records/components/GameRecordsPanel.vue`
+    - `src/views/training-records/components/EquipmentRecordsPanel.vue`
+    - `src/views/equipment/Records.vue`
+  - resource-center chain:
+    - `src/views/admin/ResourceCenter.vue`
+    - `src/views/resource-center/TrainingResources.vue`
+    - `src/views/resource-center/TeachingMaterials.vue`
+  - training entry / selector / assessment entry chain:
+    - `src/views/games/GameModuleMenu.vue`
+    - `src/views/equipment/EquipmentMenu.vue`
+    - `src/views/emotional/Menu.vue`
+    - `src/components/common/StudentSelector.vue`
+    - `src/views/games/SelectStudent.vue`
+    - `src/views/equipment/SelectStudent.vue`
+    - `src/views/emotional/SceneSelector.vue`
+    - `src/views/assessment/AssessmentSelect.vue`
+- important current-product boundary:
+  - this is still not full-site style unification
+  - the current pending backend business-page slice is:
+    - `src/views/System.vue`
+    - `src/views/system/UserManagement.vue`
+    - `src/views/system/SystemSettings.vue`
+  - immersive gameplay, report pages, and `AssessmentContainer` remain excluded from the admin-page shell target
+- important shared-component boundary:
+  - `src/components/common/StudentSelector.vue` is now the active shell for:
+    - assessment student selection
+    - game training student selection
+    - equipment training student selection
+  - future changes there affect all three chains and must preserve route-specific handoff logic
+- verification status for the current UI-execution slices:
+  - `npm run type-check` passes when the shell resolves Node 24
+  - `vite build` passes when explicitly using:
+    - `/home/DONG/.config/nvm/versions/node/v24.14.0/bin/node`
+  - Codex default shell still resolves `/usr/bin/node` (`v18.19.1`), so build verification should continue using the explicit Node 24 path unless shell init is changed
