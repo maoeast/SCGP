@@ -1,12 +1,12 @@
 <template>
-  <div class="teaching-materials">
-    <div class="sidebar">
-      <div class="sidebar-header">
+  <div class="teaching-materials scgp-split-layout">
+    <div class="sidebar scgp-side-panel">
+      <div class="sidebar-header scgp-side-panel__header">
         <el-icon><FolderOpened /></el-icon>
         <span>业务维度</span>
       </div>
 
-      <div class="dimension-list">
+      <div class="dimension-list scgp-side-panel__body">
         <div
           class="dimension-item"
           :class="{ active: materialsStore.currentDimension === null }"
@@ -31,9 +31,9 @@
       </div>
     </div>
 
-    <div class="main-content">
-      <div class="toolbar">
-        <div class="toolbar-left">
+    <div class="main-content scgp-content-panel">
+      <div class="toolbar scgp-content-toolbar">
+        <div class="toolbar-left scgp-content-toolbar__group">
           <el-input
             v-model="materialsStore.searchKeyword"
             placeholder="搜索教学资料..."
@@ -52,7 +52,7 @@
           </el-button>
         </div>
 
-        <div v-if="!readOnly" class="toolbar-right">
+        <div v-if="!readOnly" class="toolbar-right scgp-content-toolbar__group">
           <el-button :icon="FolderOpened" @click="chooseSourceFolder">
             {{ sourceFolderPath ? '更换素材目录' : '选择素材目录' }}
           </el-button>
@@ -68,7 +68,7 @@
         </div>
       </div>
 
-      <div class="content-header">
+      <div class="content-header scgp-content-heading">
         <div>
           <h3>{{ materialsStore.currentDimensionName }}</h3>
           <p>{{ getCurrentDescription() }}</p>
@@ -79,7 +79,7 @@
         </div>
       </div>
 
-      <div class="file-category-filter">
+      <div class="file-category-filter scgp-inline-filter">
         <span class="filter-label">资料类型</span>
         <el-radio-group
           :model-value="materialsStore.currentFileCategory"
@@ -96,18 +96,18 @@
         </el-radio-group>
       </div>
 
-      <div v-if="materialsStore.isLoading" class="state-panel">
+      <div v-if="materialsStore.isLoading" class="state-panel scgp-state-panel">
         <el-icon class="is-loading" :size="48"><Loading /></el-icon>
         <p>正在加载教学资料...</p>
       </div>
 
-      <div v-else-if="materialsStore.error" class="state-panel error-state">
+      <div v-else-if="materialsStore.error" class="state-panel error-state scgp-state-panel scgp-state-panel--danger">
         <el-icon :size="48"><WarningFilled /></el-icon>
         <p>{{ materialsStore.error }}</p>
         <el-button type="primary" @click="materialsStore.clearError()">关闭</el-button>
       </div>
 
-      <div v-else-if="filteredMaterials.length > 0" class="material-grid">
+      <div v-else-if="filteredMaterials.length > 0" class="material-grid scgp-card-grid">
         <article
           v-for="material in filteredMaterials"
           :key="material.id"
@@ -191,7 +191,7 @@
         </article>
       </div>
 
-      <div v-else class="state-panel empty-state">
+      <div v-else class="state-panel empty-state scgp-state-panel">
         <el-icon :size="64"><FolderOpened /></el-icon>
         <h3>暂无教学资料</h3>
         <p>{{ getEmptyStateDescription() }}</p>
@@ -785,38 +785,16 @@ defineExpose({
 
 <style scoped>
 .teaching-materials {
-  display: flex;
   height: 100%;
-  gap: 16px;
-  background: #f5f7fa;
 }
 
 .sidebar {
   width: 250px;
   flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
 .sidebar-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #ebeef5;
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-}
-
-.dimension-list {
-  flex: 1;
-  overflow-y: auto;
 }
 
 .dimension-item {
@@ -852,36 +830,14 @@ defineExpose({
 
 .main-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
 
 .toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding-bottom: 12px;
   margin-bottom: 16px;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.toolbar-left,
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
 }
 
 .content-header {
-  display: flex;
-  justify-content: space-between;
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -899,10 +855,6 @@ defineExpose({
 }
 
 .file-category-filter {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
   margin-bottom: 16px;
 }
 
@@ -932,11 +884,6 @@ defineExpose({
 }
 
 .state-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   color: #909399;
 }
 
@@ -954,12 +901,7 @@ defineExpose({
 }
 
 .material-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 16px;
-  overflow-y: auto;
-  padding-right: 8px;
+  min-height: 0;
 }
 
 .material-card {
@@ -1137,18 +1079,6 @@ defineExpose({
 }
 
 @media (max-width: 960px) {
-  .teaching-materials {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-  }
-
-  .content-header {
-    flex-direction: column;
-  }
-
   .source-folder {
     max-width: none;
     text-align: left;

@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container resource-center-page">
+  <div class="page-container scgp-admin-page resource-center-page">
     <div class="page-header resource-center-header">
       <div class="header-left">
         <h1>资源中心</h1>
@@ -7,10 +7,10 @@
       </div>
     </div>
 
-    <el-tabs v-model="activeTab" class="resource-tabs" @tab-change="handleTabChange">
+    <el-tabs v-model="activeTab" class="resource-tabs scgp-underlined-tabs" @tab-change="handleTabChange">
       <el-tab-pane label="训练资源" name="training">
         <template #label>
-          <span class="tab-label">
+          <span class="tab-label scgp-tab-label">
             <el-icon><Box /></el-icon>
             <span>训练资源</span>
           </span>
@@ -19,7 +19,7 @@
 
       <el-tab-pane label="教学资料" name="teaching">
         <template #label>
-          <span class="tab-label">
+          <span class="tab-label scgp-tab-label">
             <el-icon><FolderOpened /></el-icon>
             <span>教学资料</span>
           </span>
@@ -27,7 +27,7 @@
       </el-tab-pane>
     </el-tabs>
 
-    <div class="resource-center-body">
+    <div class="resource-center-body scgp-page-panel scgp-page-panel--flush">
       <TrainingResources v-if="activeTab === 'training'" :read-only="!isAdmin" />
       <TeachingMaterials v-if="activeTab === 'teaching'" :read-only="!isAdmin" />
     </div>
@@ -90,35 +90,6 @@ watch(() => route.query.tab, (newTab) => {
   margin-bottom: 0;
 }
 
-.resource-tabs {
-  padding: 0 4px;
-}
-
-.resource-tabs :deep(.el-tabs__header) {
-  margin: 0;
-}
-
-.resource-tabs :deep(.el-tabs__nav-wrap::after) {
-  background: rgba(217, 226, 238, 0.86);
-}
-
-.resource-tabs :deep(.el-tabs__item) {
-  height: 46px;
-  padding: 0 18px;
-}
-
-.resource-tabs :deep(.el-tabs__active-bar) {
-  height: 3px;
-  border-radius: 999px;
-}
-
-.tab-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-}
-
 .resource-center-body {
   flex: 1;
   min-height: 0;
@@ -135,14 +106,6 @@ watch(() => route.query.tab, (newTab) => {
   .resource-center-page {
     gap: 12px;
     padding: 14px 16px 16px;
-  }
-
-  .resource-tabs {
-    padding: 0;
-  }
-
-  .resource-tabs :deep(.el-tabs__item) {
-    padding: 0 12px;
   }
 }
 </style>

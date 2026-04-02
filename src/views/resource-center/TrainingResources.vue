@@ -1,8 +1,8 @@
 <template>
-  <div class="training-resources">
+  <div class="training-resources scgp-split-layout">
     <!-- 左侧筛选面板 -->
-    <div class="filter-panel">
-      <div class="filter-header">
+    <div class="filter-panel scgp-side-panel">
+      <div class="filter-header scgp-side-panel__header">
         <el-icon><Filter /></el-icon>
         <span>筛选条件</span>
       </div>
@@ -57,7 +57,7 @@
       </div>
 
       <!-- 统计信息 -->
-      <div class="filter-footer">
+      <div class="filter-footer scgp-side-panel__footer">
         <el-divider />
         <div class="stats-info">
           <span>共 <strong>{{ totalResources }}</strong> 条资源</span>
@@ -69,13 +69,13 @@
     </div>
 
     <!-- 主内容区 -->
-    <div class="main-content">
+    <div class="main-content scgp-content-panel">
       <!-- 顶部工具栏 -->
-      <div class="toolbar">
-        <div class="toolbar-left">
+      <div class="toolbar scgp-content-toolbar">
+        <div class="toolbar-left scgp-content-toolbar__group">
           <span class="current-module">{{ currentModuleName }}</span>
         </div>
-        <div class="toolbar-right" v-if="!readOnly">
+        <div class="toolbar-right scgp-content-toolbar__group" v-if="!readOnly">
           <template v-if="isEmotionalBusinessGroup">
             <el-button plain @click="openResourcePackDialog('import')">
               导入资源包
@@ -1518,34 +1518,17 @@ defineExpose({
 
 <style scoped>
 .training-resources {
-  display: flex;
   height: 100%;
-  background: #f5f7fa;
-  gap: 16px;
 }
 
 /* 左侧筛选面板 */
 .filter-panel {
   width: 250px;
-  background: white;
-  border-radius: 8px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
 }
 
 .filter-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
   margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #ebeef5;
 }
 
 .filter-section {
@@ -1608,28 +1591,13 @@ defineExpose({
 /* 主内容区 */
 .main-content {
   flex: 1;
-  background: white;
-  border-radius: 8px;
-  padding: 16px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
 .toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .current-module {
