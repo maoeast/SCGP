@@ -1,134 +1,189 @@
 <template>
-  <div class="profile-page">
-    <!-- 页面标题 -->
-    <div class="page-header">
-      <h1>个人资料</h1>
-      <p class="subtitle">管理您的个人信息和密码</p>
+  <div class="page-container scgp-admin-page profile-page">
+    <div class="page-header profile-page__header">
+      <div class="header-left">
+        <h1>个人资料</h1>
+        <p class="subtitle">管理当前账号的基础信息、密码和最近登录记录。</p>
+      </div>
+
+      <div class="header-right">
+        <el-button plain :loading="loadingLogs" @click="loadLoginLogs">
+          <i class="fas fa-rotate"></i>
+          刷新日志
+        </el-button>
+      </div>
     </div>
 
-    <!-- 个人信息卡片 -->
-    <el-card class="info-card">
-      <template #header>
-        <div class="card-header">
-          <i class="fas fa-user-circle"></i>
-          <span>基本信息</span>
+    <section class="scgp-stats-grid profile-stats" aria-label="个人资料概览">
+      <article class="summary-card scgp-summary-card">
+        <div class="summary-card__label">当前账号</div>
+        <div class="summary-card__value summary-card__value--compact">{{ profileForm.username || '-' }}</div>
+      </article>
+
+      <article class="summary-card scgp-summary-card">
+        <div class="summary-card__label">当前角色</div>
+        <div class="summary-card__value summary-card__value--compact">{{ roleName }}</div>
+      </article>
+
+      <article class="summary-card scgp-summary-card">
+        <div class="summary-card__label">激活状态</div>
+        <div class="summary-card__value summary-card__value--compact">{{ activationLabel }}</div>
+      </article>
+
+      <article class="summary-card scgp-summary-card">
+        <div class="summary-card__label">最近登录</div>
+        <div class="summary-card__value summary-card__value--compact">{{ latestLoginLabel }}</div>
+      </article>
+    </section>
+
+    <section class="profile-grid">
+      <section class="scgp-page-panel profile-panel">
+        <div class="scgp-content-toolbar">
+          <div class="scgp-content-toolbar__main">
+            <h2 class="scgp-content-toolbar__title">基本信息</h2>
+            <p class="scgp-content-toolbar__description">
+              用户名保持只读，姓名和邮箱将同步更新到当前登录账号。
+            </p>
+          </div>
+
+          <span class="scgp-pill-tag scgp-pill-tag--purple profile-pill">{{ roleName }}</span>
         </div>
-      </template>
 
-      <el-form :model="profileForm" :rules="profileRules" ref="profileFormRef" label-width="100px" class="profile-form">
-        <el-form-item label="用户名">
-          <el-input v-model="profileForm.username" disabled>
-            <template #prepend>
-              <i class="fas fa-user"></i>
-            </template>
-          </el-input>
-          <div class="form-tip">用户名不可修改</div>
-        </el-form-item>
+        <el-form
+          ref="profileFormRef"
+          :model="profileForm"
+          :rules="profileRules"
+          label-width="100px"
+          class="profile-form"
+        >
+          <el-form-item label="用户名">
+            <el-input v-model="profileForm.username" disabled>
+              <template #prepend>
+                <i class="fas fa-user"></i>
+              </template>
+            </el-input>
+            <div class="form-tip">用户名不可修改。</div>
+          </el-form-item>
 
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="profileForm.name" placeholder="请输入您的姓名">
-            <template #prepend>
-              <i class="fas fa-id-card"></i>
-            </template>
-          </el-input>
-        </el-form-item>
+          <el-form-item label="姓名" prop="name">
+            <el-input v-model="profileForm.name" placeholder="请输入您的姓名">
+              <template #prepend>
+                <i class="fas fa-id-card"></i>
+              </template>
+            </el-input>
+          </el-form-item>
 
-        <el-form-item label="角色">
-          <el-input v-model="roleName" disabled>
-            <template #prepend>
-              <i class="fas fa-shield-halved"></i>
-            </template>
-          </el-input>
-        </el-form-item>
+          <el-form-item label="角色">
+            <el-input v-model="roleName" disabled>
+              <template #prepend>
+                <i class="fas fa-shield-halved"></i>
+              </template>
+            </el-input>
+          </el-form-item>
 
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="profileForm.email" placeholder="请输入邮箱（可选）">
-            <template #prepend>
-              <i class="fas fa-envelope"></i>
-            </template>
-          </el-input>
-        </el-form-item>
+          <el-form-item label="邮箱" prop="email">
+            <el-input v-model="profileForm.email" placeholder="请输入邮箱（可选）">
+              <template #prepend>
+                <i class="fas fa-envelope"></i>
+              </template>
+            </el-input>
+          </el-form-item>
 
-        <el-form-item>
-          <el-button type="primary" :loading="saving" @click="handleSaveProfile">
-            <i class="fas fa-save"></i> 保存修改
-          </el-button>
-          <el-button @click="loadProfile">
-            <i class="fas fa-rotate-left"></i> 重置
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+          <el-form-item class="profile-form__actions">
+            <el-button type="primary" :loading="saving" @click="handleSaveProfile">
+              <i class="fas fa-save"></i>
+              保存修改
+            </el-button>
+            <el-button @click="loadProfile">
+              <i class="fas fa-rotate-left"></i>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </section>
 
-    <!-- 修改密码卡片 -->
-    <el-card class="password-card">
-      <template #header>
-        <div class="card-header">
-          <i class="fas fa-key"></i>
-          <span>修改密码</span>
+      <section class="scgp-page-panel profile-panel">
+        <div class="scgp-content-toolbar">
+          <div class="scgp-content-toolbar__main">
+            <h2 class="scgp-content-toolbar__title">修改密码</h2>
+            <p class="scgp-content-toolbar__description">
+              新密码长度不少于 6 位，修改成功后会自动退出并要求重新登录。
+            </p>
+          </div>
         </div>
-      </template>
 
-      <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="100px" class="password-form">
-        <el-form-item label="当前密码" prop="oldPassword">
-          <el-input
-            v-model="passwordForm.oldPassword"
-            type="password"
-            placeholder="请输入当前密码"
-            show-password
-          >
-            <template #prepend>
-              <i class="fas fa-lock"></i>
-            </template>
-          </el-input>
-        </el-form-item>
+        <el-form
+          ref="passwordFormRef"
+          :model="passwordForm"
+          :rules="passwordRules"
+          label-width="100px"
+          class="password-form"
+        >
+          <el-form-item label="当前密码" prop="oldPassword">
+            <el-input
+              v-model="passwordForm.oldPassword"
+              type="password"
+              placeholder="请输入当前密码"
+              show-password
+            >
+              <template #prepend>
+                <i class="fas fa-lock"></i>
+              </template>
+            </el-input>
+          </el-form-item>
 
-        <el-form-item label="新密码" prop="newPassword">
-          <el-input
-            v-model="passwordForm.newPassword"
-            type="password"
-            placeholder="请输入新密码（至少6位）"
-            show-password
-          >
-            <template #prepend>
-              <i class="fas fa-key"></i>
-            </template>
-          </el-input>
-          <div class="form-tip">密码长度不能少于 6 个字符</div>
-        </el-form-item>
+          <el-form-item label="新密码" prop="newPassword">
+            <el-input
+              v-model="passwordForm.newPassword"
+              type="password"
+              placeholder="请输入新密码（至少6位）"
+              show-password
+            >
+              <template #prepend>
+                <i class="fas fa-key"></i>
+              </template>
+            </el-input>
+            <div class="form-tip">密码长度不能少于 6 个字符。</div>
+          </el-form-item>
 
-        <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input
-            v-model="passwordForm.confirmPassword"
-            type="password"
-            placeholder="请再次输入新密码"
-            show-password
-          >
-            <template #prepend>
-              <i class="fas fa-check-double"></i>
-            </template>
-          </el-input>
-        </el-form-item>
+          <el-form-item label="确认密码" prop="confirmPassword">
+            <el-input
+              v-model="passwordForm.confirmPassword"
+              type="password"
+              placeholder="请再次输入新密码"
+              show-password
+            >
+              <template #prepend>
+                <i class="fas fa-check-double"></i>
+              </template>
+            </el-input>
+          </el-form-item>
 
-        <el-form-item>
-          <el-button type="warning" :loading="changingPassword" @click="handleChangePassword">
-            <i class="fas fa-rotate"></i> 修改密码
-          </el-button>
-          <el-button @click="resetPasswordForm">
-            <i class="fas fa-rotate-left"></i> 重置
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+          <el-form-item class="profile-form__actions">
+            <el-button type="warning" :loading="changingPassword" @click="handleChangePassword">
+              <i class="fas fa-rotate"></i>
+              修改密码
+            </el-button>
+            <el-button @click="resetPasswordForm">
+              <i class="fas fa-rotate-left"></i>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </section>
+    </section>
 
-    <!-- 登录日志卡片 -->
-    <el-card class="logs-card">
-      <template #header>
-        <div class="card-header">
-          <i class="fas fa-clock-rotate-left"></i>
-          <span>登录日志</span>
+    <section class="scgp-page-panel profile-panel profile-panel--logs">
+      <div class="scgp-content-toolbar">
+        <div class="scgp-content-toolbar__main">
+          <h2 class="scgp-content-toolbar__title">登录日志</h2>
+          <p class="scgp-content-toolbar__description">默认显示最近 20 条登录记录，用于排查当前账号的登录情况。</p>
         </div>
-      </template>
+
+        <div class="scgp-content-toolbar__actions">
+          <span class="profile-log-count">共 {{ loginLogs.length }} 条</span>
+        </div>
+      </div>
 
       <div v-if="loadingLogs" class="loading-wrapper">
         <el-skeleton :rows="5" animated />
@@ -137,8 +192,8 @@
       <el-table
         v-else
         :data="loginLogs"
+        class="scgp-records-table profile-log-table"
         stripe
-        style="width: 100%"
         :empty-text="loginLogs.length === 0 ? '暂无登录记录' : ''"
       >
         <el-table-column prop="login_time" label="登录时间" width="180">
@@ -164,7 +219,7 @@
           </template>
         </el-table-column>
       </el-table>
-    </el-card>
+    </section>
   </div>
 </template>
 
@@ -207,6 +262,23 @@ const passwordForm = reactive({
 // 角色名称
 const roleName = computed(() => {
   return authStore.user?.role === 'admin' ? '管理员' : '教师'
+})
+
+const activationLabel = computed(() => {
+  if (authStore.activationInfo.isActivated) {
+    return authStore.activationInfo.isInTrial ? '试用中' : '已激活'
+  }
+  if (authStore.activationInfo.isInTrial) {
+    return '试用中'
+  }
+  return '未激活'
+})
+
+const latestLoginLabel = computed(() => {
+  if (!loginLogs.value.length) {
+    return '暂无记录'
+  }
+  return formatLoginTime(loginLogs.value[0].login_time)
 })
 
 // 个人信息表单验证规则
@@ -366,63 +438,55 @@ onMounted(() => {
 .profile-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 20px;
-  max-width: 900px;
-  margin: 0 auto;
+  gap: 20px;
 }
 
-.page-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.page-header h1 {
-  font-size: 32px;
-  background: linear-gradient(135deg, #3498db, #2ecc71);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 8px;
-  font-weight: 700;
-}
-
-.page-header .subtitle {
-  font-size: 14px;
-  color: #666;
+.profile-stats {
   margin: 0;
 }
 
-.card-header {
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.profile-panel {
+  padding: 22px;
+}
+
+.profile-panel--logs {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.card-header i {
-  color: #3498db;
-}
-
-.info-card,
-.password-card,
-.logs-card {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+.profile-pill {
+  align-self: flex-start;
 }
 
 .profile-form,
 .password-form {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
+  padding-top: 18px;
+}
+
+.profile-form__actions :deep(.el-form-item__content) {
+  gap: 12px;
 }
 
 .form-tip {
   font-size: 12px;
   color: #909399;
   margin-top: 4px;
+}
+
+.profile-log-count {
+  color: #606266;
+  font-size: 13px;
+}
+
+.profile-log-table {
+  width: 100%;
 }
 
 :deep(.el-input-group__prepend) {
@@ -447,17 +511,16 @@ onMounted(() => {
 }
 
 .loading-wrapper {
-  padding: 20px 0;
+  padding: 6px 0;
 }
 
 @media (max-width: 768px) {
-  .profile-page {
-    padding: 10px;
+  .profile-grid {
+    grid-template-columns: 1fr;
   }
 
-  .profile-form,
-  .password-form {
-    padding: 10px;
+  .profile-panel {
+    padding: 18px;
   }
 }
 </style>
