@@ -606,7 +606,7 @@
   - current restore still accepts legacy backup payload version `1.0`
 - current verification status:
   - `npm run type-check` passed after the backup changes landed
-  - a fresh manual end-to-end backup/restore round-trip for the patched implementation is still pending
+  - a fresh manual end-to-end backup/restore round-trip for the patched implementation has now been verified by the user
 
 ## 23. 2026-04-03 Admin UI Consistency Cleanup for Filters and Entry Menus
 
@@ -633,3 +633,22 @@
 - verification status:
   - `npm run type-check` passed after the cleanup landed
   - this conversation did not complete a fresh manual visual QA pass for all affected pages
+
+## 24. 2026-04-03 FMDA Fine-Motor Integration Boundary
+
+- `FMDA` is not implemented yet in current code reality; this conversation only completed repo-wide architecture scan and integration planning against the provided reference PRD
+- important architecture boundary:
+  - do not assume the repo already has generic `items`, `assessments`, and `assessment_records` tables described in the external FMDA PRD
+  - current assessment mainline remains:
+    - `AssessmentContainer + ScaleDriver + per-scale persistence tables + report_record`
+- planned safe integration path:
+  - register new scale key `fine_motor` in the unified assessment entry chain and driver registry
+  - reuse `AssessmentContainer` and `QuestionCard`
+  - add `FineMotorDriver`
+  - add `fine_motor_assess` and `fine_motor_assess_detail`
+  - persist `is_auto_filled` in FMDA detail records
+  - add `fine_motor` to `report_record.report_type` and explicit report routing
+- important UI boundary:
+  - FMDA `2 / 1 / 0` scoring should be rendered through the current option-driven question UI, not a brand-new standalone assessment page unless runtime verification proves reuse is insufficient
+- important current-product boundary:
+  - `FMDA` remains placeholder-only in the assessment entry and report aggregate UIs until the above implementation lands

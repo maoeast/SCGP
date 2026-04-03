@@ -19,7 +19,7 @@ Usually those three files are enough to resume work safely.
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `login entry runtime render and config persistence are already verified; backup/restore schema coverage is patched in code; this conversation also landed admin UI cleanup for class-management shell layering, pill hover clipping, and redundant entry-page breadcrumbs; the next active step remains backup/restore round-trip QA plus spot-checking those affected pages`
+- active work scope: `backup/restore round-trip QA is now confirmed passed; current active work has shifted to FMDA fine-motor scale integration; this conversation completed architecture scan and a code-realistic reuse plan, while the next active step is first-pass fine_motor implementation on top of the existing assessment mainline`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`
