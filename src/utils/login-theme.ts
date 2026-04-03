@@ -16,33 +16,33 @@ export interface LoginThemeConfig {
 }
 
 export const DEFAULT_LOGIN_THEME_VARIANT: LoginThemeVariant = 'classic-blue'
-export const DEFAULT_LOGIN_PRIMARY_COLOR = '#2f6fd6'
+export const DEFAULT_LOGIN_PRIMARY_COLOR = '#4d8bbd'
 
 export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = {
   'classic-blue': {
-    label: '经典蓝',
-    primary: '#2f6fd6',
-    brandStart: '#1f4f9b',
-    brandEnd: '#17396f',
-    brandSoft: '#ecf4ff',
+    label: '湖蓝',
+    primary: '#4d8bbd',
+    brandStart: '#5b8698',
+    brandEnd: '#8ebfc7',
+    brandSoft: '#f0f7f8',
     badgeBackground: 'rgba(236, 244, 255, 0.14)',
     badgeText: '#dceaff',
   },
   'campus-blue': {
-    label: '校园蓝',
-    primary: '#2f80ed',
-    brandStart: '#205fa7',
-    brandEnd: '#163d73',
-    brandSoft: '#eef6ff',
+    label: '深青',
+    primary: '#4f92a2',
+    brandStart: '#527b83',
+    brandEnd: '#87b6bb',
+    brandSoft: '#eef7f6',
     badgeBackground: 'rgba(238, 246, 255, 0.16)',
     badgeText: '#e4f0ff',
   },
   'clear-sky': {
-    label: '晴空蓝',
-    primary: '#3b82c4',
-    brandStart: '#2a6ca3',
-    brandEnd: '#18446f',
-    brandSoft: '#eef8ff',
+    label: '晴雾蓝',
+    primary: '#5b97bc',
+    brandStart: '#6b92a2',
+    brandEnd: '#a4c7d0',
+    brandSoft: '#f4f9fa',
     badgeBackground: 'rgba(238, 248, 255, 0.18)',
     badgeText: '#edf6ff',
   },
@@ -129,11 +129,13 @@ export function applyLoginThemeVariables(config: Partial<LoginThemeConfig> = {})
   const style = document.documentElement.style
 
   style.setProperty('--login-primary', primary)
-  style.setProperty('--login-primary-hover', mixHexColors(primary, '#163d73', 0.18))
+  style.setProperty('--login-primary-hover', mixHexColors(primary, preset.brandStart, 0.22))
   style.setProperty('--login-primary-soft', mixHexColors(primary, '#ffffff', 0.88))
   style.setProperty('--login-primary-border', mixHexColors(primary, '#ffffff', 0.72))
   style.setProperty('--login-primary-ring', colorToRgba(primary, 0.18))
-  style.setProperty('--login-page-bg', `linear-gradient(135deg, ${mixHexColors(preset.brandSoft, '#ffffff', 0.32)} 0%, #f3f7fc 100%)`)
+  style.setProperty('--login-page-bg', `linear-gradient(135deg, ${mixHexColors(preset.brandSoft, '#ffffff', 0.2)} 0%, ${mixHexColors(preset.brandSoft, '#ffffff', 0.64)} 100%)`)
+  style.setProperty('--login-page-bg-start', mixHexColors(preset.brandSoft, '#ffffff', 0.2))
+  style.setProperty('--login-page-bg-end', mixHexColors(preset.brandSoft, '#ffffff', 0.64))
   style.setProperty('--login-brand-start', preset.brandStart)
   style.setProperty('--login-brand-end', preset.brandEnd)
   style.setProperty('--login-brand-soft', preset.brandSoft)

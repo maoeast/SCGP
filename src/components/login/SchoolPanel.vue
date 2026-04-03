@@ -1,47 +1,26 @@
 <template>
   <section class="school-panel">
-    <div class="school-panel__identity">
-      <div class="school-panel__logo-shell">
+    <span class="school-panel__decor school-panel__decor--halo" aria-hidden="true"></span>
+    <span class="school-panel__decor school-panel__decor--stars" aria-hidden="true"></span>
+    <span class="school-panel__decor school-panel__decor--orbit" aria-hidden="true"></span>
+    <span class="school-panel__decor school-panel__decor--wave" aria-hidden="true"></span>
+
+    <div class="school-panel__header">
+      <div class="school-panel__logo-wrap">
         <img v-if="logoSrc" :src="logoSrc" alt="系统 Logo" class="school-panel__logo" />
         <span v-else class="school-panel__logo-fallback">{{ fallbackMark }}</span>
       </div>
+    </div>
 
-      <div class="school-panel__heading">
-        <span class="school-panel__eyebrow">SCGP 教育平台</span>
-        <h1>{{ systemName }}</h1>
-        <p v-if="schoolName" class="school-panel__school">{{ schoolName }}</p>
+    <div class="school-panel__title-stage">
+      <h1 class="school-panel__title">{{ displaySystemName }}</h1>
+    </div>
+
+    <div class="school-panel__meta-stage">
+      <div class="school-panel__copy">
+        <p class="school-panel__school">{{ schoolLabel }}</p>
+        <p class="school-panel__tagline">{{ descriptionText }}</p>
       </div>
-    </div>
-
-    <div class="school-panel__copy">
-      <span class="school-panel__badge">本地部署 · 稳定运行</span>
-      <h2>{{ brandTitle }}</h2>
-      <p class="school-panel__subtitle">{{ brandSubtitle }}</p>
-      <p class="school-panel__description">{{ brandDescription }}</p>
-    </div>
-
-    <div class="school-panel__grid" aria-label="系统能力概览">
-      <article class="school-panel__feature">
-        <i class="fas fa-clipboard-list school-panel__feature-icon" aria-hidden="true"></i>
-        <div>
-          <strong>能力评估</strong>
-          <span>统一进入量表、评估记录与结果回顾。</span>
-        </div>
-      </article>
-      <article class="school-panel__feature">
-        <i class="fas fa-layer-group school-panel__feature-icon" aria-hidden="true"></i>
-        <div>
-          <strong>训练协同</strong>
-          <span>衔接游戏训练、器材训练和训练计划执行。</span>
-        </div>
-      </article>
-      <article class="school-panel__feature">
-        <i class="fas fa-file-lines school-panel__feature-icon" aria-hidden="true"></i>
-        <div>
-          <strong>报告归档</strong>
-          <span>保留学生发展记录，支持教师日常复盘与输出。</span>
-        </div>
-      </article>
     </div>
   </section>
 </template>
@@ -53,8 +32,6 @@ interface Props {
   logoSrc: string
   systemName: string
   schoolName?: string
-  brandTitle: string
-  brandSubtitle: string
   brandDescription: string
 }
 
@@ -65,190 +42,276 @@ const props = withDefaults(defineProps<Props>(), {
 const fallbackMark = computed(() => {
   return (props.systemName || 'SCGP').trim().slice(0, 1).toUpperCase()
 })
+
+const schoolLabel = computed(() => {
+  return props.schoolName?.trim() || 'XX学校'
+})
+
+const displaySystemName = computed(() => {
+  return (props.systemName || '星愿能力发展训练系统').trim()
+})
+
+const descriptionText = computed(() => {
+  const candidates = [props.brandDescription]
+    .map(item => item?.trim() || '')
+    .filter(Boolean)
+
+  return candidates[0] || '为学校及康复团队，提供科学、稳定、持续的评估训练方案'
+})
 </script>
 
 <style scoped>
 .school-panel {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 28px;
   height: 100%;
-  padding: clamp(28px, 3vw, 42px);
+  padding: 60px 72px 60px 68px;
+  box-sizing: border-box;
+  overflow: hidden;
   color: #ffffff;
   background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.16), transparent 26%),
-    linear-gradient(160deg, var(--login-brand-start, #1f4f9b) 0%, var(--login-brand-end, #17396f) 100%);
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.16), transparent 22%),
+    radial-gradient(circle at 86% 18%, rgba(255, 255, 255, 0.08), transparent 18%),
+    linear-gradient(160deg, var(--login-brand-start, #5b8698) 0%, var(--login-brand-end, #8ebfc7) 100%);
 }
 
-.school-panel::after {
-  content: '';
+.school-panel__decor {
   position: absolute;
-  right: -80px;
-  bottom: -80px;
-  width: 240px;
-  height: 240px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
   pointer-events: none;
 }
 
-.school-panel__identity {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  position: relative;
+.school-panel__decor--halo {
+  left: -22px;
+  bottom: -28px;
+  width: 236px;
+  height: 236px;
+  border-radius: 44% 56% 60% 40% / 42% 40% 60% 58%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.school-panel__decor--stars {
+  top: 78px;
+  right: 40px;
+  width: 180px;
+  height: 180px;
+  opacity: 0.48;
+  background:
+    radial-gradient(circle at 18px 22px, rgba(255, 255, 255, 0.92) 0 1.2px, transparent 1.3px),
+    radial-gradient(circle at 88px 30px, rgba(255, 255, 255, 0.72) 0 1.6px, transparent 1.8px),
+    radial-gradient(circle at 138px 62px, rgba(255, 255, 255, 0.9) 0 1.2px, transparent 1.4px),
+    radial-gradient(circle at 42px 96px, rgba(255, 255, 255, 0.68) 0 1.4px, transparent 1.6px),
+    radial-gradient(circle at 120px 116px, rgba(255, 255, 255, 0.8) 0 1.5px, transparent 1.7px),
+    radial-gradient(circle at 82px 148px, rgba(255, 255, 255, 0.62) 0 1.2px, transparent 1.4px);
+}
+
+.school-panel__decor--orbit {
+  top: 126px;
+  right: -34px;
+  width: 240px;
+  height: 168px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-left-color: transparent;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  transform: rotate(-14deg);
+}
+
+.school-panel__decor--wave {
+  right: -38px;
+  bottom: 120px;
+  width: 248px;
+  height: 248px;
+  border-radius: 42% 58% 56% 44% / 44% 44% 56% 56%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-right-color: transparent;
+  border-top-color: rgba(255, 255, 255, 0.08);
+  transform: rotate(20deg);
+}
+
+.school-panel__header,
+.school-panel__title-stage,
+.school-panel__meta-stage {
+  position: absolute;
   z-index: 1;
 }
 
-.school-panel__logo-shell {
+.school-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  top: 42px;
+  left: 48px;
+}
+
+.school-panel__logo-wrap {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 88px;
+  justify-content: flex-start;
   height: 88px;
-  flex-shrink: 0;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(6px);
+  width: 88px;
 }
 
 .school-panel__logo {
-  max-width: 64px;
-  max-height: 64px;
+  max-width: 88px;
+  max-height: 88px;
   object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(10, 28, 56, 0.2));
 }
 
 .school-panel__logo-fallback {
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
 }
 
-.school-panel__heading {
+.school-panel__title-stage {
+  display: flex;
+  justify-content: center;
+  top: 188px;
+  left: 50%;
+  width: calc(100% - 120px);
+  transform: translateX(-50%);
+}
+
+.school-panel__copy {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  min-width: 0;
+  align-items: center;
+  gap: 14px;
+  width: min(100%, 280px);
+  text-align: center;
 }
 
-.school-panel__eyebrow {
-  color: var(--login-brand-badge-text, #dceaff);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.school-panel__heading h1 {
+.school-panel__title {
   margin: 0;
-  font-size: clamp(28px, 2.6vw, 36px);
-  line-height: 1.2;
+  max-width: min(100%, 420px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(36px, 2.9vw, 44px);
+  font-weight: 800;
+  font-family: 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  line-height: 1.18;
   letter-spacing: -0.03em;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.school-panel__meta-stage {
+  display: flex;
+  justify-content: center;
+  bottom: 92px;
+  left: 50%;
+  width: calc(100% - 136px);
+  transform: translateX(-50%);
 }
 
 .school-panel__school {
   margin: 0;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 15px;
-}
-
-.school-panel__copy {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 460px;
-}
-
-.school-panel__badge {
   display: inline-flex;
   align-items: center;
-  align-self: flex-start;
-  min-height: 32px;
-  padding: 0 14px;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 16px;
   border-radius: 999px;
-  background: var(--login-brand-badge-bg, rgba(236, 244, 255, 0.14));
-  color: var(--login-brand-badge-text, #dceaff);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.school-panel__copy h2 {
-  margin: 0;
-  font-size: clamp(24px, 2.2vw, 32px);
-  line-height: 1.3;
-  letter-spacing: -0.03em;
-}
-
-.school-panel__subtitle {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.92);
   font-size: 15px;
-  line-height: 1.7;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
-.school-panel__description {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.74);
-  font-size: 14px;
-  line-height: 1.8;
-}
-
-.school-panel__grid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 14px;
-}
-
-.school-panel__feature {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.school-panel__feature-icon {
-  margin-top: 3px;
-  color: #ffffff;
-  font-size: 16px;
-}
-
-.school-panel__feature strong {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.school-panel__feature span {
-  display: block;
-  color: rgba(255, 255, 255, 0.76);
+.school-panel__tagline {
+  margin: 2px 0 0;
+  width: min(100%, 280px);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.72;
+  text-align: center;
+  white-space: normal;
 }
 
 @media (max-width: 768px) {
   .school-panel {
-    gap: 20px;
-    min-height: 0;
+    min-height: 260px;
+    padding: 36px 28px;
   }
 
-  .school-panel__identity {
-    align-items: flex-start;
+  .school-panel__decor--stars {
+    top: 72px;
+    right: 20px;
+    width: 120px;
+    height: 120px;
   }
 
-  .school-panel__logo-shell {
-    width: 72px;
-    height: 72px;
-    border-radius: 20px;
+  .school-panel__decor--orbit {
+    top: 112px;
+    right: -64px;
+    width: 180px;
+    height: 128px;
+  }
+
+  .school-panel__decor--wave {
+    right: -56px;
+    bottom: 84px;
+    width: 170px;
+    height: 170px;
+  }
+
+  .school-panel__header,
+  .school-panel__title-stage,
+  .school-panel__meta-stage {
+    display: flex;
+    justify-content: center;
+  }
+
+  .school-panel__header {
+    top: 28px;
+    left: 28px;
+    justify-content: flex-start;
+  }
+
+  .school-panel__logo {
+    max-width: 96px;
+    max-height: 96px;
+  }
+
+  .school-panel__logo-wrap {
+    height: 96px;
+    width: 96px;
+  }
+
+  .school-panel__logo-fallback {
+    font-size: 58px;
+  }
+
+  .school-panel__title-stage {
+    top: 148px;
+    width: calc(100% - 48px);
+  }
+
+  .school-panel__copy {
+    gap: 12px;
+    align-items: center;
+    width: min(100%, 248px);
+    text-align: center;
+  }
+
+  .school-panel__title {
+    max-width: min(100%, 320px);
+    font-size: 30px;
+    line-height: 1.2;
+  }
+
+  .school-panel__meta-stage {
+    bottom: 32px;
+    width: calc(100% - 48px);
+  }
+
+  .school-panel__tagline {
+    width: min(100%, 228px);
+    text-align: center;
   }
 }
 </style>

@@ -3,11 +3,9 @@
     <div class="login-layout">
       <div class="login-layout__brand">
         <SchoolPanel
-          :logo-src="systemConfigStore.displayLogoPath"
+          :logo-src="systemConfigStore.displayLoginLogoPath"
           :system-name="systemConfigStore.systemName || defaultSystemName"
-          :school-name="systemConfigStore.schoolName"
-          :brand-title="systemConfigStore.brandPanelTitle"
-          :brand-subtitle="systemConfigStore.brandPanelSubtitle"
+          :school-name="systemConfigStore.schoolName || defaultSchoolName"
           :brand-description="systemConfigStore.brandPanelDescription"
         />
       </div>
@@ -18,6 +16,7 @@
           v-model:password="loginForm.password"
           v-model:remember="loginForm.remember"
           :loading="isLogging"
+          :submit-disabled="isLoginButtonDisabled"
           :error-message="loginError"
           @submit="handleLogin"
           @emergency-reset="handleEmergencyReset"
@@ -28,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import LoginCard from '@/components/login/LoginCard.vue'
@@ -39,6 +38,8 @@ import { useSystemConfigStore } from '@/stores/systemConfig'
 
 const REMEMBERED_USERNAME_KEY = 'scgp_login_username'
 const defaultSystemName = '星愿能力发展训练系统'
+const defaultSchoolName = 'XX学校'
+const defaultTagline = '为学校及康复团队，提供科学、稳定、持续的评估训练方案'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -53,6 +54,7 @@ const loginForm = ref({
 
 const isLogging = ref(false)
 const loginError = ref('')
+const isLoginButtonDisabled = ref(true)
 
 const restoreRememberedUsername = () => {
   const rememberedUsername = localStorage.getItem(REMEMBERED_USERNAME_KEY)
@@ -116,6 +118,14 @@ const handleEmergencyReset = async () => {
   }
 }
 
+watch(
+  [() => loginForm.value.username, () => loginForm.value.password],
+  ([username, password]) => {
+    isLoginButtonDisabled.value = !username.trim() || !password.trim()
+  },
+  { immediate: true },
+)
+
 onMounted(async () => {
   await systemConfigStore.loadConfig()
   restoreRememberedUsername()
@@ -136,24 +146,26 @@ onMounted(async () => {
 <style scoped>
 .login-shell {
   min-height: 100vh;
-  padding: 20px;
+  padding: 18px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--login-page-bg, linear-gradient(135deg, #eef4fb 0%, #f6f9fc 100%));
+  background:
+    radial-gradient(circle at top left, rgba(43, 108, 176, 0.12), transparent 22%),
+    linear-gradient(135deg, var(--login-page-bg-start, #eef4fb) 0%, var(--login-page-bg-end, #f6f9fc) 100%);
 }
 
 .login-layout {
-  width: min(1180px, 100%);
-  min-height: min(760px, calc(100vh - 40px));
+  width: min(1200px, 100%);
+  min-height: min(736px, calc(100vh - 36px));
   display: grid;
-  grid-template-columns: minmax(340px, 40fr) minmax(420px, 60fr);
-  border: 1px solid var(--login-border, #dbe5f0);
-  border-radius: 30px;
+  grid-template-columns: minmax(400px, 45fr) minmax(440px, 55fr);
+  border: 1px solid rgba(219, 229, 240, 0.9);
+  border-radius: 32px;
   overflow: hidden;
   background: var(--login-surface, #ffffff);
-  box-shadow: 0 28px 60px rgba(24, 57, 111, 0.12);
+  box-shadow: 0 32px 72px rgba(24, 57, 111, 0.13);
 }
 
 .login-layout__brand {
@@ -164,10 +176,10 @@ onMounted(async () => {
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: clamp(24px, 4vw, 48px);
+  justify-content: flex-start;
+  padding: clamp(32px, 4.8vw, 60px) clamp(32px, 4.8vw, 64px) clamp(32px, 4.8vw, 60px) clamp(28px, 4vw, 48px);
   background:
-    radial-gradient(circle at top left, rgba(47, 111, 214, 0.05), transparent 28%),
+    radial-gradient(circle at left center, rgba(47, 111, 214, 0.08), transparent 24%),
     linear-gradient(180deg, var(--login-surface-soft, #f7fafd) 0%, var(--login-surface, #ffffff) 100%);
 }
 
@@ -178,6 +190,7 @@ onMounted(async () => {
   }
 
   .login-layout__form {
+    justify-content: center;
     padding-top: 0;
   }
 }

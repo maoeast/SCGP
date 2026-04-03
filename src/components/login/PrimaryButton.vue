@@ -29,23 +29,23 @@ withDefaults(defineProps<Props>(), {
 <style scoped>
 .primary-button {
   width: 100%;
-  min-height: 50px;
+  min-height: 52px;
   border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--login-primary, #2f6fd6) 0%, var(--login-primary-hover, #275fb8) 100%);
+  border-radius: 8px;
+  background: #185FA5;
   color: #ffffff;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 16px 28px rgba(30, 78, 150, 0.18);
+  box-shadow: 0 18px 34px rgba(30, 78, 150, 0.2);
   transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
 
 .primary-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  filter: brightness(1.02);
-  box-shadow: 0 20px 36px rgba(30, 78, 150, 0.22);
+  background: #154f8a;
+  box-shadow: 0 24px 40px rgba(30, 78, 150, 0.24);
 }
 
 .primary-button:focus-visible {
@@ -54,9 +54,11 @@ withDefaults(defineProps<Props>(), {
 }
 
 .primary-button:disabled {
+  background: #c8d8ea;
+  color: #ffffff;
   cursor: not-allowed;
-  opacity: 0.72;
   box-shadow: none;
   transform: none;
+  filter: none;
 }
 </style>

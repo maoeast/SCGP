@@ -23,9 +23,9 @@
           <el-form :model="settings" label-width="150px" class="settings-form">
             <el-form-item label="系统 Logo">
               <div class="logo-upload">
-                <div v-if="logoPreviewUrl" class="logo-preview">
-                  <img :src="logoPreviewUrl" alt="Logo预览" />
-                  <el-button type="danger" size="small" @click="removeLogo" class="remove-btn">
+                <div v-if="systemLogoPreviewUrl" class="logo-preview">
+                  <img :src="systemLogoPreviewUrl" alt="Logo预览" />
+                  <el-button type="danger" size="small" @click="removeSystemLogo" class="remove-btn">
                     删除
                   </el-button>
                 </div>
@@ -34,7 +34,7 @@
                   :auto-upload="false"
                   :show-file-list="false"
                   accept="image/*"
-                  :on-change="handleLogoChange"
+                  :on-change="handleSystemLogoChange"
                 >
                   <el-button plain>选择 Logo 图片</el-button>
                 </el-upload>
@@ -61,6 +61,26 @@
         </div>
         <div class="system-settings-section__body">
           <el-form :model="settings" label-width="150px" class="settings-form">
+            <el-form-item label="登录页 Logo">
+              <div class="logo-upload">
+                <div v-if="loginLogoPreviewUrl" class="logo-preview logo-preview--square">
+                  <img :src="loginLogoPreviewUrl" alt="登录页Logo预览" />
+                  <el-button type="danger" size="small" @click="removeLoginLogo" class="remove-btn">
+                    删除
+                  </el-button>
+                </div>
+                <el-upload
+                  v-else
+                  :auto-upload="false"
+                  :show-file-list="false"
+                  accept="image/*"
+                  :on-change="handleLoginLogoChange"
+                >
+                  <el-button plain>选择登录页 Logo</el-button>
+                </el-upload>
+                <span class="system-settings-help">推荐尺寸：160x160 像素，支持 PNG、JPG 格式。</span>
+              </div>
+            </el-form-item>
             <el-form-item label="主题预设">
               <el-select v-model="settings.loginThemeVariant" class="system-settings-field">
                 <el-option
@@ -78,18 +98,6 @@
                 <span class="system-settings-help">建议使用蓝色系，按钮与聚焦态会同步更新。</span>
               </div>
             </el-form-item>
-            <el-form-item label="品牌主标题">
-              <el-input
-                v-model="settings.brandPanelTitle"
-                placeholder="请输入登录页品牌主标题"
-              />
-            </el-form-item>
-            <el-form-item label="品牌副标题">
-              <el-input
-                v-model="settings.brandPanelSubtitle"
-                placeholder="请输入登录页品牌副标题"
-              />
-            </el-form-item>
             <el-form-item label="品牌说明">
               <el-input
                 v-model="settings.brandPanelDescription"
@@ -103,8 +111,11 @@
           <section class="login-theme-preview">
             <div class="login-theme-preview__brand">
               <span class="login-theme-preview__badge">{{ currentThemeLabel }}</span>
-              <h4>{{ settings.brandPanelTitle }}</h4>
-              <p class="login-theme-preview__subtitle">{{ settings.brandPanelSubtitle }}</p>
+              <div v-if="loginLogoPreviewUrl" class="login-theme-preview__logo">
+                <img :src="loginLogoPreviewUrl" alt="登录页品牌Logo预览" />
+              </div>
+              <h4>{{ settings.systemName }}</h4>
+              <p class="login-theme-preview__subtitle">{{ settings.schoolName || 'XX学校' }}</p>
               <p class="login-theme-preview__description">{{ settings.brandPanelDescription }}</p>
             </div>
 
@@ -179,6 +190,7 @@ import { Check } from '@element-plus/icons-vue'
 import { initDatabase } from '@/database/init'
 import { useSystemConfigStore } from '@/stores/systemConfig'
 import {
+  DEFAULT_LOGIN_PRIMARY_COLOR,
   LOGIN_THEME_PRESETS,
   applyLoginThemeVariables,
   normalizeHexColor,
@@ -189,17 +201,17 @@ const systemConfigStore = useSystemConfigStore()
 
 const saving = ref(false)
 
-const logoPreviewUrl = ref('')
-const logoFile = ref<File | null>(null)
+const systemLogoPreviewUrl = ref('')
+const systemLogoFile = ref<File | null>(null)
+const loginLogoPreviewUrl = ref('')
+const loginLogoFile = ref<File | null>(null)
 
 const settings = reactive({
   systemName: '星愿能力发展训练系统',
   systemVersion: '1.0.0',
   schoolName: '',
   loginThemeVariant: 'classic-blue',
-  themePrimaryColor: '#2f6fd6',
-  brandPanelTitle: '评估、训练与报告协同工作台',
-  brandPanelSubtitle: '为学校和康复团队提供清晰、稳定、可持续维护的日常入口。',
+  themePrimaryColor: DEFAULT_LOGIN_PRIMARY_COLOR,
   brandPanelDescription: '统一进入学生管理、能力评估、训练计划、训练记录与报告生成，让一线工作更聚焦。',
   autoBackup: true,
   backupInterval: 7,
@@ -219,7 +231,7 @@ const originalThemeSnapshot = ref({
 })
 
 const currentThemeLabel = computed(() => {
-  return LOGIN_THEME_PRESETS[normalizeLoginThemeVariant(settings.loginThemeVariant)]?.label || '经典蓝'
+  return LOGIN_THEME_PRESETS[normalizeLoginThemeVariant(settings.loginThemeVariant)]?.label || '湖蓝'
 })
 
 const loadSettings = async () => {
@@ -245,19 +257,16 @@ const loadSettings = async () => {
           settings.schoolName = value
           break
         case 'logo_path':
-          logoPreviewUrl.value = value
+          systemLogoPreviewUrl.value = value
+          break
+        case 'login_logo_path':
+          loginLogoPreviewUrl.value = value
           break
         case 'login_theme_variant':
           settings.loginThemeVariant = normalizeLoginThemeVariant(value)
           break
         case 'theme_primary_color':
-          settings.themePrimaryColor = normalizeHexColor(value, '#2f6fd6')
-          break
-        case 'brand_panel_title':
-          settings.brandPanelTitle = value
-          break
-        case 'brand_panel_subtitle':
-          settings.brandPanelSubtitle = value
+          settings.themePrimaryColor = normalizeHexColor(value, DEFAULT_LOGIN_PRIMARY_COLOR)
           break
         case 'brand_panel_description':
           settings.brandPanelDescription = value
@@ -282,7 +291,7 @@ const loadSettings = async () => {
 
     originalThemeSnapshot.value = {
       variant: normalizeLoginThemeVariant(settings.loginThemeVariant),
-      primaryColor: normalizeHexColor(settings.themePrimaryColor, '#2f6fd6'),
+      primaryColor: normalizeHexColor(settings.themePrimaryColor, DEFAULT_LOGIN_PRIMARY_COLOR),
     }
   } catch (error) {
     console.error('加载系统设置失败:', error)
@@ -292,8 +301,12 @@ const loadSettings = async () => {
 const handleSave = async () => {
   saving.value = true
   try {
-    if (logoFile.value) {
-      await saveLogo()
+    if (systemLogoFile.value) {
+      systemLogoPreviewUrl.value = await readFileAsDataUrl(systemLogoFile.value)
+    }
+
+    if (loginLogoFile.value) {
+      loginLogoPreviewUrl.value = await readFileAsDataUrl(loginLogoFile.value)
     }
 
     const db = await initDatabase()
@@ -301,13 +314,12 @@ const handleSave = async () => {
     const configMap: Record<string, string> = {
       system_name: settings.systemName,
       school_name: settings.schoolName,
-      logo_path: logoPreviewUrl.value,
+      logo_path: systemLogoPreviewUrl.value,
+      login_logo_path: loginLogoPreviewUrl.value,
       auto_backup: settings.autoBackup.toString(),
       backup_interval: settings.backupInterval.toString(),
       login_theme_variant: normalizeLoginThemeVariant(settings.loginThemeVariant),
-      theme_primary_color: normalizeHexColor(settings.themePrimaryColor, '#2f6fd6'),
-      brand_panel_title: settings.brandPanelTitle,
-      brand_panel_subtitle: settings.brandPanelSubtitle,
+      theme_primary_color: normalizeHexColor(settings.themePrimaryColor, DEFAULT_LOGIN_PRIMARY_COLOR),
       brand_panel_description: settings.brandPanelDescription,
       default_report_format: settings.defaultReportFormat,
       include_student_avatar: settings.includeStudentAvatar.toString(),
@@ -342,7 +354,8 @@ const handleSave = async () => {
     }
 
     ElMessage.success('系统设置保存成功')
-    logoFile.value = null
+    systemLogoFile.value = null
+    loginLogoFile.value = null
   } catch (error) {
     console.error('保存系统设置失败:', error)
     ElMessage.error('保存失败，请重试')
@@ -351,47 +364,63 @@ const handleSave = async () => {
   }
 }
 
-const handleLogoChange = (file: any) => {
-  const selectedFile = file.raw
+const ensureImageFile = (selectedFile: File) => {
   if (!selectedFile.type.startsWith('image/')) {
     ElMessage.error('请选择图片文件')
-    return
+    return false
   }
   if (selectedFile.size > 2 * 1024 * 1024) {
     ElMessage.error('图片大小不能超过2MB')
+    return false
+  }
+  return true
+}
+
+const readFileAsDataUrl = (file: File) => {
+  const reader = new FileReader()
+  return new Promise<string>((resolve, reject) => {
+    reader.onload = (e) => resolve(e.target?.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+const handleSystemLogoChange = (file: any) => {
+  const selectedFile = file.raw
+  if (!ensureImageFile(selectedFile)) {
     return
   }
 
-  logoFile.value = selectedFile
+  systemLogoFile.value = selectedFile
   const reader = new FileReader()
   reader.onload = (e) => {
-    logoPreviewUrl.value = e.target?.result as string
+    systemLogoPreviewUrl.value = e.target?.result as string
   }
   reader.readAsDataURL(selectedFile)
 }
 
-const saveLogo = async () => {
-  if (!logoFile.value) return
-
-  try {
-    const reader = new FileReader()
-    const promise = new Promise<string>((resolve, reject) => {
-      reader.onload = (e) => resolve(e.target?.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(logoFile.value!)
-    })
-
-    const base64 = await promise
-    logoPreviewUrl.value = base64
-  } catch (error) {
-    console.error('保存Logo失败:', error)
-    throw error
+const handleLoginLogoChange = (file: any) => {
+  const selectedFile = file.raw
+  if (!ensureImageFile(selectedFile)) {
+    return
   }
+
+  loginLogoFile.value = selectedFile
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    loginLogoPreviewUrl.value = e.target?.result as string
+  }
+  reader.readAsDataURL(selectedFile)
 }
 
-const removeLogo = () => {
-  logoPreviewUrl.value = ''
-  logoFile.value = null
+const removeSystemLogo = () => {
+  systemLogoPreviewUrl.value = ''
+  systemLogoFile.value = null
+}
+
+const removeLoginLogo = () => {
+  loginLogoPreviewUrl.value = ''
+  loginLogoFile.value = null
 }
 
 onMounted(() => {
@@ -403,7 +432,7 @@ watch(
   ([variant, primaryColor]) => {
     applyLoginThemeVariables({
       variant: normalizeLoginThemeVariant(variant),
-      primaryColor: normalizeHexColor(primaryColor, '#2f6fd6'),
+      primaryColor: normalizeHexColor(primaryColor, DEFAULT_LOGIN_PRIMARY_COLOR),
     })
   },
 )
@@ -477,6 +506,11 @@ onUnmounted(() => {
   border-radius: 4px;
 }
 
+.logo-preview--square img {
+  max-width: 128px;
+  max-height: 128px;
+}
+
 .logo-preview .remove-btn {
   position: absolute;
   top: 5px;
@@ -504,6 +538,24 @@ onUnmounted(() => {
     linear-gradient(160deg, var(--login-brand-start, #1f4f9b) 0%, var(--login-brand-end, #17396f) 100%);
 }
 
+.login-theme-preview__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-top: 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.login-theme-preview__logo img {
+  max-width: 56px;
+  max-height: 56px;
+  object-fit: contain;
+}
+
 .login-theme-preview__badge {
   display: inline-flex;
   align-items: center;
@@ -517,7 +569,7 @@ onUnmounted(() => {
 }
 
 .login-theme-preview__brand h4 {
-  margin: 14px 0 10px;
+  margin: 14px 0 8px;
   font-size: 22px;
 }
 

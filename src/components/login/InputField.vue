@@ -73,11 +73,11 @@ const handleInput = (event: Event) => {
 
 .input-field__input {
   width: 100%;
-  min-height: 48px;
+  min-height: 52px;
   padding: 0 16px 0 44px;
   border: 1px solid var(--login-border, #dbe5f0);
-  border-radius: 14px;
-  background: var(--login-surface, #ffffff);
+  border-radius: 16px;
+  background: var(--login-surface-soft, #f7fafd);
   color: var(--login-text, #1f2937);
   font-size: 15px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;

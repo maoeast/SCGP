@@ -533,3 +533,44 @@
   - `npm run type-check` passed
   - this conversation did not rerun `vite build`
   - this conversation did not complete manual Electron runtime QA
+
+## 21. 2026-04-03 Login Entry UI Refinement and Login-Logo Config Split
+
+- the login entry UI was further refined in current code reality:
+  - `src/views/Login.vue`
+  - `src/components/login/SchoolPanel.vue`
+  - `src/components/login/LoginCard.vue`
+  - `src/components/login/InputField.vue`
+  - `src/components/login/PrimaryButton.vue`
+- important current visual boundary:
+  - the left brand panel is now tuned by explicit positioned stages instead of one flow-layout brand stack:
+    - top-left logo stage
+    - mid title stage
+    - lower school / description stage
+  - future adjustments there should treat those stages as independent layout anchors, not merge them back into a single flex flow by default
+- important current config boundary:
+  - system logo and login-page logo are now separate settings
+  - persisted keys now distinguish:
+    - global system logo: `logo_path`
+    - login-entry logo: `login_logo_path`
+  - the active login page reads the login-specific asset through:
+    - `src/stores/systemConfig.ts`
+    - `src/views/Login.vue`
+- important simplification boundary:
+  - login-page branding settings no longer expose configurable `brand_panel_title` or `brand_panel_subtitle`
+  - current login brand text should resolve from:
+    - system name
+    - school name
+    - `brand_panel_description`
+  - old historical `system_config` rows may still contain the removed keys, but current code intentionally ignores them instead of running a destructive cleanup migration
+- current system-settings execution boundary:
+  - global system logo remains under `基本设置`
+  - login-page logo now lives under `登录页品牌与主题`
+  - landed in:
+    - `src/views/system/SystemSettings.vue`
+- verification status:
+  - `npm run type-check` passed
+  - this conversation still did not rerun `vite build`
+  - this conversation still did not complete manual Electron runtime QA for:
+    - independent system-logo / login-logo persistence after relaunch
+    - screenshot-level positioning of login left-panel title / school / description blocks

@@ -1,12 +1,11 @@
 <template>
   <section class="login-card">
     <div class="login-card__header">
-      <span class="login-card__eyebrow">账号登录</span>
-      <h2>欢迎回来</h2>
-      <p>请输入账号和密码，进入当前学校的评估与训练工作区。</p>
+      <h2>用户登录</h2>
+      <p>请输入账号和密码进入系统</p>
     </div>
 
-    <form class="login-card__form" @submit.prevent="emit('submit')">
+    <form class="login-card__form" @submit.prevent="handleSubmit">
       <InputField
         :model-value="username"
         label="用户名"
@@ -45,12 +44,12 @@
         type="submit"
         label="登录系统"
         :loading="loading"
+        :disabled="submitDisabled"
         loading-text="登录中..."
       />
     </form>
 
     <div class="login-card__footer">
-      <span>如无法登录，请联系系统管理员确认账号状态。</span>
       <button type="button" class="login-card__link" @click="emit('emergency-reset')">
         重置管理员密码
       </button>
@@ -67,11 +66,13 @@ interface Props {
   password: string
   remember: boolean
   loading?: boolean
+  submitDisabled?: boolean
   errorMessage?: string
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   loading: false,
+  submitDisabled: false,
   errorMessage: '',
 })
 
@@ -86,40 +87,40 @@ const emit = defineEmits<{
 const handleRememberChange = (event: Event) => {
   emit('update:remember', (event.target as HTMLInputElement).checked)
 }
+
+const handleSubmit = () => {
+  if (props.loading || props.submitDisabled) {
+    return
+  }
+
+  emit('submit')
+}
 </script>
 
 <style scoped>
 .login-card {
-  width: min(460px, 100%);
+  width: min(464px, 100%);
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  padding: clamp(28px, 3vw, 38px);
+  gap: 26px;
+  padding: 36px;
   border: 1px solid var(--login-border, #dbe5f0);
-  border-radius: 26px;
-  background: var(--login-surface, #ffffff);
-  box-shadow: 0 24px 46px rgba(20, 55, 110, 0.08);
+  border-radius: 28px;
+  background: linear-gradient(180deg, var(--login-surface, #ffffff) 0%, #fbfdff 100%);
+  box-shadow: 0 28px 70px rgba(20, 55, 110, 0.14), 0 10px 24px rgba(20, 55, 110, 0.08);
   box-sizing: border-box;
 }
 
 .login-card__header {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.login-card__eyebrow {
-  color: var(--login-primary, #2f6fd6);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  gap: 10px;
 }
 
 .login-card__header h2 {
   margin: 0;
   color: var(--login-text, #1f2937);
-  font-size: 30px;
+  font-size: 22px;
   line-height: 1.2;
   letter-spacing: -0.03em;
 }
@@ -128,13 +129,14 @@ const handleRememberChange = (event: Event) => {
   margin: 0;
   color: var(--login-muted, #5f6b7a);
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.6;
+  max-width: 20em;
 }
 
 .login-card__form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .login-card__meta {
@@ -171,36 +173,32 @@ const handleRememberChange = (event: Event) => {
 .login-card__footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  color: var(--login-muted, #5f6b7a);
-  font-size: 12px;
-  line-height: 1.6;
+  justify-content: flex-start;
+  min-height: 20px;
 }
 
 .login-card__link {
   border: none;
   padding: 0;
   background: transparent;
-  color: var(--login-primary, #2f6fd6);
+  color: #FBFDFF;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
 }
 
 .login-card__link:hover {
-  color: var(--login-primary-hover, #275fb8);
+  color: #9aa0a8;
 }
 
 @media (max-width: 768px) {
   .login-card {
-    padding: 24px 20px;
+    padding: 24px;
     border-radius: 22px;
   }
 
   .login-card__header h2 {
-    font-size: 26px;
+    font-size: 22px;
   }
 }
 </style>

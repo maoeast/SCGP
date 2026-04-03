@@ -29,8 +29,6 @@ const DEFAULT_LOGO = getDefaultLogo()
 const LEGACY_SYSTEM_NAME = '生活自理适应综合训练'
 const LEGACY_SYSTEM_NAME_ALT = '感官综合训练与评估'
 const CURRENT_SYSTEM_NAME = '星愿能力发展训练系统'
-const DEFAULT_BRAND_PANEL_TITLE = '评估、训练与报告协同工作台'
-const DEFAULT_BRAND_PANEL_SUBTITLE = '为学校和康复团队提供清晰、稳定、可持续维护的日常入口。'
 const DEFAULT_BRAND_PANEL_DESCRIPTION = '统一进入学生管理、能力评估、训练计划、训练记录与报告生成，让一线工作更聚焦。'
 
 function normalizeSystemName(value: string) {
@@ -44,20 +42,24 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
   const systemName = ref(CURRENT_SYSTEM_NAME)
   const schoolName = ref('')
   const logoPath = ref('')
+  const loginLogoPath = ref('')
   const loginThemeVariant = ref<LoginThemeVariant>(DEFAULT_LOGIN_THEME_VARIANT)
   const themePrimaryColor = ref(DEFAULT_LOGIN_PRIMARY_COLOR)
-  const brandPanelTitle = ref(DEFAULT_BRAND_PANEL_TITLE)
-  const brandPanelSubtitle = ref(DEFAULT_BRAND_PANEL_SUBTITLE)
   const brandPanelDescription = ref(DEFAULT_BRAND_PANEL_DESCRIPTION)
   const loading = ref(false)
 
   // 计算属性：获取显示用的 Logo 路径（优先使用数据库中的，否则使用默认的）
   const displayLogoPath = computed(() => {
-    // 如果数据库中有自定义 logo，使用自定义的
     if (logoPath.value) {
       return logoPath.value
     }
-    // 否则使用默认 logo
+    return DEFAULT_LOGO
+  })
+
+  const displayLoginLogoPath = computed(() => {
+    if (loginLogoPath.value) {
+      return loginLogoPath.value
+    }
     return DEFAULT_LOGO
   })
 
@@ -75,10 +77,9 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
       systemName.value = CURRENT_SYSTEM_NAME
       schoolName.value = ''
       logoPath.value = ''
+      loginLogoPath.value = ''
       loginThemeVariant.value = DEFAULT_LOGIN_THEME_VARIANT
       themePrimaryColor.value = DEFAULT_LOGIN_PRIMARY_COLOR
-      brandPanelTitle.value = DEFAULT_BRAND_PANEL_TITLE
-      brandPanelSubtitle.value = DEFAULT_BRAND_PANEL_SUBTITLE
       brandPanelDescription.value = DEFAULT_BRAND_PANEL_DESCRIPTION
 
       const { initDatabase } = await import('@/database/init')
@@ -111,17 +112,14 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
           case 'logo_path':
             logoPath.value = value
             break
+          case 'login_logo_path':
+            loginLogoPath.value = value
+            break
           case 'login_theme_variant':
             loginThemeVariant.value = normalizeLoginThemeVariant(value)
             break
           case 'theme_primary_color':
             themePrimaryColor.value = normalizeHexColor(value, DEFAULT_LOGIN_PRIMARY_COLOR)
-            break
-          case 'brand_panel_title':
-            brandPanelTitle.value = value || DEFAULT_BRAND_PANEL_TITLE
-            break
-          case 'brand_panel_subtitle':
-            brandPanelSubtitle.value = value || DEFAULT_BRAND_PANEL_SUBTITLE
             break
           case 'brand_panel_description':
             brandPanelDescription.value = value || DEFAULT_BRAND_PANEL_DESCRIPTION
@@ -186,16 +184,14 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
         schoolName.value = normalizedValue
       } else if (key === 'logo_path') {
         logoPath.value = normalizedValue
+      } else if (key === 'login_logo_path') {
+        loginLogoPath.value = normalizedValue
       } else if (key === 'login_theme_variant') {
         loginThemeVariant.value = normalizeLoginThemeVariant(normalizedValue)
         applyTheme()
       } else if (key === 'theme_primary_color') {
         themePrimaryColor.value = normalizeHexColor(normalizedValue, DEFAULT_LOGIN_PRIMARY_COLOR)
         applyTheme()
-      } else if (key === 'brand_panel_title') {
-        brandPanelTitle.value = normalizedValue || DEFAULT_BRAND_PANEL_TITLE
-      } else if (key === 'brand_panel_subtitle') {
-        brandPanelSubtitle.value = normalizedValue || DEFAULT_BRAND_PANEL_SUBTITLE
       } else if (key === 'brand_panel_description') {
         brandPanelDescription.value = normalizedValue || DEFAULT_BRAND_PANEL_DESCRIPTION
       }
@@ -209,12 +205,12 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
     systemName,
     schoolName,
     logoPath,
+    loginLogoPath,
     loginThemeVariant,
     themePrimaryColor,
-    brandPanelTitle,
-    brandPanelSubtitle,
     brandPanelDescription,
     displayLogoPath,
+    displayLoginLogoPath,
     loading,
     applyTheme,
     loadConfig,
