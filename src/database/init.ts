@@ -127,6 +127,39 @@ CREATE TABLE IF NOT EXISTS weefim_assess_detail (
   FOREIGN KEY (question_id) REFERENCES weefim_question(id)
 );
 
+-- 小肌肉功能发展评估主表
+CREATE TABLE IF NOT EXISTS fine_motor_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,
+  total_score INTEGER NOT NULL,
+  standard_score INTEGER NOT NULL,
+  level TEXT NOT NULL,
+  level_code TEXT,
+  total_max_score INTEGER NOT NULL,
+  total_mastery_rate REAL NOT NULL,
+  domain_results TEXT NOT NULL,
+  iep_targets TEXT NOT NULL DEFAULT '[]',
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+-- 小肌肉功能发展评估详情表
+CREATE TABLE IF NOT EXISTS fine_motor_assess_detail (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  assess_id INTEGER NOT NULL,
+  question_id INTEGER NOT NULL,
+  dimension TEXT NOT NULL,
+  score INTEGER NOT NULL CHECK(score IN (0, 1, 2)),
+  answer_time INTEGER DEFAULT 0,
+  is_auto_filled INTEGER NOT NULL DEFAULT 0 CHECK(is_auto_filled IN (0, 1)),
+  auto_fill_reason TEXT CHECK(auto_fill_reason IN ('basal', 'ceiling') OR auto_fill_reason IS NULL),
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (assess_id) REFERENCES fine_motor_assess(id)
+);
+
 -- 训练任务分类表
 CREATE TABLE IF NOT EXISTS task_category (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -288,7 +321,7 @@ CREATE INDEX IF NOT EXISTS idx_login_log_time ON login_log(login_time DESC);
 CREATE TABLE IF NOT EXISTS report_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
-  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional')),
+  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor')),
   assess_id INTEGER,
   plan_id INTEGER,
   training_record_id INTEGER,
@@ -487,6 +520,8 @@ CREATE TABLE IF NOT EXISTS activation (
 CREATE INDEX IF NOT EXISTS idx_student_name ON student(name);
 CREATE INDEX IF NOT EXISTS idx_sm_assess_student ON sm_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_weefim_assess_student ON weefim_assess(student_id);
+CREATE INDEX IF NOT EXISTS idx_fine_motor_assess_student ON fine_motor_assess(student_id);
+CREATE INDEX IF NOT EXISTS idx_fine_motor_assess_detail_assess ON fine_motor_assess_detail(assess_id);
 CREATE INDEX IF NOT EXISTS idx_csirs_assess_student ON csirs_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_csirs_assess_detail_assess ON csirs_assess_detail(assess_id);
 CREATE INDEX IF NOT EXISTS idx_conners_psq_assess_student ON conners_psq_assess(student_id);

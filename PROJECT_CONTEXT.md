@@ -259,6 +259,27 @@
   - preserve old stored values through normalization instead of destructive migration
   - supported legacy aliases include:
 
+## 13. 2026-04-03 FMDA End-to-End First Runnable Chain
+
+- `fine_motor` FMDA is now wired through the current assessment mainline:
+  - unified assessment entry
+  - `FineMotorDriver`
+  - per-scale persistence tables
+  - `report_record`
+  - report route + report page
+- persistence now lands in:
+  - `fine_motor_assess`
+  - `fine_motor_assess_detail`
+- important FMDA persistence boundary:
+  - `fine_motor_assess_detail` must retain `is_auto_filled`
+  - `auto_fill_reason` is also persisted to preserve basal/ceiling provenance
+- current FMDA report page now reads persisted data and config interpretation from:
+  - `src/views/assessment/fine-motor/Report.vue`
+  - `src/config/feedbackConfig.js -> ASSESSMENT_LIBRARY.fine_motor_preschool`
+- important current-state boundary:
+  - FMDA code chain is now closed in repo reality
+  - but runtime QA is still pending, so do not describe FMDA as runtime-verified until a real assessment flow has been completed and checked end to end
+
     - `sensory`
     - `emotional`
     - `social`
@@ -673,3 +694,28 @@
 - important persistence constraint:
   - FMDA detail persistence must preserve `metadata.is_auto_filled`
   - otherwise manual `0` and ceiling auto-filled `0` will collapse into the same meaning and break IEP target extraction
+
+## 26. 2026-04-03 FMDA First End-to-End Runnable Chain
+
+- `fine_motor` FMDA now has a closed code chain in current repo reality:
+  - unified assessment entry
+  - `FineMotorDriver`
+  - `fine_motor_assess`
+  - `fine_motor_assess_detail`
+  - `report_record.report_type = 'fine_motor'`
+  - report route + report page
+- FMDA persistence now lands through:
+  - `src/database/init.ts`
+  - `src/database/api.ts -> FineMotorAssessmentAPI`
+  - `src/views/assessment/AssessmentContainer.vue`
+- important persistence boundary:
+  - `fine_motor_assess_detail` must retain:
+    - `is_auto_filled`
+    - `auto_fill_reason`
+  - reason: basal/ceiling auto-fill provenance must survive persistence so report interpretation and IEP target extraction remain correct
+- FMDA report rendering now reads persisted data and config interpretation from:
+  - `src/views/assessment/fine-motor/Report.vue`
+  - `src/config/feedbackConfig.js -> ASSESSMENT_LIBRARY.fine_motor_preschool`
+- important current-state boundary:
+  - FMDA code wiring is now closed
+  - but runtime QA is still pending, so do not describe FMDA as runtime-verified until a real assessment flow has been completed and checked end to end

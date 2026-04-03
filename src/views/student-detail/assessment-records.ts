@@ -4,6 +4,7 @@ import {
   ConnersPSQAPI,
   ConnersTRSAPI,
   CSIRSAPI,
+  FineMotorAssessmentAPI,
   SMAssessmentAPI,
   WeeFIMAPI,
 } from '@/database/api'
@@ -86,6 +87,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
   const connersPSQApi = new ConnersPSQAPI()
   const connersTRSApi = new ConnersTRSAPI()
   const cbclApi = new CBCLAssessmentAPI()
+  const fineMotorApi = new FineMotorAssessmentAPI()
 
   const smRecords = smApi.getStudentAssessments(studentId).map((record: any) => ({
     id: `sm-${record.id}`,
@@ -206,7 +208,16 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))
 
-  const fineMotorRecords: StudentAssessmentRecord[] = []
+  const fineMotorRecords = fineMotorApi.getStudentAssessments(studentId).map((record: any) => ({
+    id: `fine_motor-${record.id}`,
+    studentId,
+    assessId: record.id,
+    scaleType: 'fine_motor' as const,
+    scaleLabel: SCALE_LABEL_MAP.fine_motor,
+    scoreText: `总分 ${formatNullableNumber(record.total_score)} / 掌握率 ${formatNullableNumber(record.standard_score)}%`,
+    levelText: formatLevel(record.level),
+    createdAt: record.end_time || record.created_at || record.start_time || '',
+  }))
 
   return [
     ...smRecords,

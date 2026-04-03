@@ -122,7 +122,7 @@ import type {
 } from '@/types/assessment'
 import { calculateAgeInMonths } from '@/types/assessment'
 import { getDriverByScaleCode } from '@/strategies/assessment'
-import { StudentAPI, SMAssessmentAPI, CSIRSAPI, WeeFIMAPI, ReportAPI, ConnersPSQAPI, ConnersTRSAPI } from '@/database/api'
+import { StudentAPI, SMAssessmentAPI, CSIRSAPI, WeeFIMAPI, ReportAPI, ConnersPSQAPI, ConnersTRSAPI, FineMotorAssessmentAPI } from '@/database/api'
 import { getDatabase } from '@/database/init'
 
 // 子组件
@@ -652,6 +652,8 @@ async function saveGenericAssessment(startTime: string, endTime: string) {
     await saveSRS2Assessment(startTime, endTime)
   } else if (scale === 'cbcl') {
     await saveCBCLAssessment(startTime, endTime)
+  } else if (scale === 'fine_motor') {
+    await saveFineMotorAssessment(startTime, endTime)
   } else {
     console.warn(`[AssessmentContainer] 未实现的量表保存逻辑: ${scale}`)
   }
@@ -1059,6 +1061,56 @@ async function saveCBCLAssessment(startTime: string, endTime: string) {
   })
 
   console.log('[AssessmentContainer] CBCL 评估保存成功, ID:', assessId.value)
+}
+
+async function saveFineMotorAssessment(startTime: string, endTime: string) {
+  if (!student.value || !scoreResult.value) return
+
+  const fineMotorApi = new FineMotorAssessmentAPI()
+  const extraData = scoreResult.value.extraData as any
+  const orderedDetails = Object.entries(state.value.answers)
+    .map(([questionId, answer]) => {
+      const question = questions.value.find((item) => String(item.id) === String(questionId))
+
+      return {
+        question_id: parseInt(questionId, 10),
+        dimension: question?.dimension || '',
+        score: answer.score,
+        answer_time: answer.responseTime || 0,
+        is_auto_filled: answer.metadata?.is_auto_filled === true,
+        auto_fill_reason: answer.metadata?.auto_fill_reason || null,
+      }
+    })
+    .sort((left, right) => left.question_id - right.question_id)
+
+  assessId.value = fineMotorApi.saveAssessment({
+    assessment: {
+      student_id: student.value.id,
+      age_months: student.value.ageInMonths,
+      total_score: scoreResult.value.totalScore || 0,
+      standard_score: scoreResult.value.standardScore || 0,
+      level: scoreResult.value.level,
+      level_code: scoreResult.value.levelCode || null,
+      total_max_score: extraData?.totalMaxScore || 0,
+      total_mastery_rate: extraData?.totalMasteryRate || 0,
+      domain_results: extraData?.domainResults || [],
+      iep_targets: extraData?.iepTargets || [],
+      start_time: startTime,
+      end_time: endTime,
+    },
+    details: orderedDetails,
+  })
+
+  const reportApi = new ReportAPI()
+  reportApi.saveReportRecord({
+    student_id: student.value.id,
+    report_type: 'fine_motor',
+    assess_id: assessId.value ?? undefined,
+    module_code: 'sensory',
+    title: `${student.value.name} - 小肌肉功能发展评估报告`,
+  })
+
+  console.log('[AssessmentContainer] Fine Motor 评估保存成功, ID:', assessId.value)
 }
 
 // ========== 导航处理 ==========

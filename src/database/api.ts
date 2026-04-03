@@ -2,6 +2,7 @@ import { getDatabase } from './init';
 import type { ModuleCode } from '@/types/module';
 import { resolveTrainingEntryCode, resolveTrainingEntryCodeFromResource } from '@/utils/training-entry';
 import { TrainingSessionWriter } from './training-session-writer';
+import { FINE_MOTOR_QUESTIONS } from './fine-motor-questions';
 
 // 数据库基础操作类
 // 【Plan B】使用主线程 SQLWrapper，防抖保存已内置
@@ -155,6 +156,23 @@ function parseJsonObject(value: unknown): Record<string, any> | null {
   }
 
   return typeof value === 'object' ? value as Record<string, any> : null
+}
+
+function parseJsonArray<T>(value: unknown): T[] {
+  if (!value) {
+    return []
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value)
+      return Array.isArray(parsed) ? parsed as T[] : []
+    } catch {
+      return []
+    }
+  }
+
+  return Array.isArray(value) ? value as T[] : []
 }
 
 function getTransactionalDb(db: any) {
@@ -971,6 +989,195 @@ export class WeeFIMAPI extends DatabaseAPI {
   }
 }
 
+type FineMotorAutoFillReason = 'basal' | 'ceiling' | null
+
+interface FineMotorAssessmentInput {
+  student_id: number
+  age_months: number
+  total_score: number
+  standard_score: number
+  level: string
+  level_code?: string | null
+  total_max_score: number
+  total_mastery_rate: number
+  domain_results: unknown
+  iep_targets: unknown
+  start_time: string
+  end_time?: string | null
+}
+
+interface FineMotorAssessmentDetailInput {
+  question_id: number
+  dimension: string
+  score: number
+  answer_time?: number
+  is_auto_filled?: boolean
+  auto_fill_reason?: FineMotorAutoFillReason
+}
+
+const FINE_MOTOR_QUESTION_MAP = new Map(
+  FINE_MOTOR_QUESTIONS.map((question) => [question.id, question]),
+)
+
+export class FineMotorAssessmentAPI extends DatabaseAPI {
+  saveAssessment(data: {
+    assessment: FineMotorAssessmentInput
+    details: FineMotorAssessmentDetailInput[]
+  }): number {
+    const rawDb = getTransactionalDb(this.db)
+    rawDb.run('BEGIN TRANSACTION')
+
+    try {
+      const assessId = this.createAssessment(data.assessment)
+      this.saveAssessmentDetails(assessId, data.details)
+      rawDb.run('COMMIT')
+      return assessId
+    } catch (error) {
+      try {
+        rawDb.run('ROLLBACK')
+      } catch {
+        // ignore rollback failures
+      }
+      throw error
+    }
+  }
+
+  createAssessment(assessment: FineMotorAssessmentInput): number {
+    this.execute(`
+      INSERT INTO fine_motor_assess (
+        student_id, age_months, total_score, standard_score,
+        level, level_code, total_max_score, total_mastery_rate,
+        domain_results, iep_targets, start_time, end_time
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      assessment.student_id,
+      assessment.age_months,
+      assessment.total_score,
+      assessment.standard_score,
+      assessment.level,
+      assessment.level_code || null,
+      assessment.total_max_score,
+      assessment.total_mastery_rate,
+      JSON.stringify(assessment.domain_results ?? []),
+      JSON.stringify(assessment.iep_targets ?? []),
+      assessment.start_time,
+      assessment.end_time || null,
+    ])
+
+    return this.getLastInsertId()
+  }
+
+  saveAssessmentDetails(assessId: number, details: FineMotorAssessmentDetailInput[]): void {
+    details.forEach((detail) => {
+      this.execute(`
+        INSERT INTO fine_motor_assess_detail (
+          assess_id, question_id, dimension, score,
+          answer_time, is_auto_filled, auto_fill_reason
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [
+        assessId,
+        detail.question_id,
+        detail.dimension,
+        detail.score,
+        detail.answer_time || 0,
+        detail.is_auto_filled ? 1 : 0,
+        detail.auto_fill_reason || null,
+      ])
+    })
+  }
+
+  getAssessment(assessId: number): any | null {
+    const record = this.queryOne(`
+      SELECT
+        a.id,
+        a.student_id,
+        a.age_months,
+        a.total_score,
+        a.standard_score,
+        a.level,
+        a.level_code,
+        a.total_max_score,
+        a.total_mastery_rate,
+        a.domain_results,
+        a.iep_targets,
+        a.start_time,
+        a.end_time,
+        a.created_at,
+        s.name as student_name,
+        s.gender as student_gender,
+        s.birthday as student_birthday
+      FROM fine_motor_assess a
+      LEFT JOIN student s ON a.student_id = s.id
+      WHERE a.id = ?
+    `, [assessId])
+
+    if (!record) {
+      return null
+    }
+
+    return {
+      ...record,
+      domain_results: parseJsonArray(record.domain_results),
+      iep_targets: parseJsonArray(record.iep_targets),
+    }
+  }
+
+  getAssessmentDetails(assessId: number): any[] {
+    const details = this.query(`
+      SELECT
+        question_id,
+        dimension,
+        score,
+        answer_time,
+        is_auto_filled,
+        auto_fill_reason,
+        created_at
+      FROM fine_motor_assess_detail
+      WHERE assess_id = ?
+      ORDER BY question_id
+    `, [assessId])
+
+    return details.map((detail: any) => {
+      const question = FINE_MOTOR_QUESTION_MAP.get(Number(detail.question_id))
+
+      return {
+        ...detail,
+        is_auto_filled: Number(detail.is_auto_filled) === 1,
+        title: question?.title || '',
+        item_code: question?.itemCode || null,
+        dimension_name: question?.dimensionName || detail.dimension,
+        reference_age_min_months: question?.referenceAge?.minMonths ?? null,
+        reference_age_max_months: question?.referenceAge?.maxMonths ?? null,
+        iep_goal: question?.iepGoal || null,
+        expert_advice: question?.expertAdvice || null,
+      }
+    })
+  }
+
+  getStudentAssessments(studentId: number): any[] {
+    return this.query(`
+      SELECT
+        id,
+        student_id,
+        age_months,
+        total_score,
+        standard_score,
+        level,
+        level_code,
+        total_max_score,
+        total_mastery_rate,
+        start_time,
+        end_time,
+        created_at
+      FROM fine_motor_assess
+      WHERE student_id = ?
+      ORDER BY created_at DESC
+    `, [studentId])
+  }
+}
+
 // CSIRS评估相关操作
 export class CSIRSAPI extends DatabaseAPI {
   /**
@@ -1742,6 +1949,10 @@ export class ReportAPI extends DatabaseAPI {
       return 'emotional'
     }
 
+    if (reportType === 'fine_motor') {
+      return 'sensory'
+    }
+
     return null
   }
 
@@ -1750,7 +1961,7 @@ export class ReportAPI extends DatabaseAPI {
    */
   saveReportRecord(record: {
     student_id: number
-    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional'
+    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional' | 'fine_motor'
     assess_id?: number
     plan_id?: number
     training_record_id?: number
@@ -1880,6 +2091,7 @@ export class ReportAPI extends DatabaseAPI {
     sdq_count: number
     srs2_count: number
     cbcl_count: number
+    fine_motor_count: number
     emotional_count: number
     iep_count: number
     training_count: number
@@ -1906,6 +2118,7 @@ export class ReportAPI extends DatabaseAPI {
       sdq_count: 0,
       srs2_count: 0,
       cbcl_count: 0,
+      fine_motor_count: 0,
       emotional_count: 0,
       iep_count: 0,
       training_count: 0
@@ -1921,6 +2134,7 @@ export class ReportAPI extends DatabaseAPI {
       if (row.report_type === 'sdq') stats.sdq_count = row.count
       if (row.report_type === 'srs2') stats.srs2_count = row.count
       if (row.report_type === 'cbcl') stats.cbcl_count = row.count
+      if (row.report_type === 'fine_motor') stats.fine_motor_count = row.count
       if (row.report_type === 'emotional') stats.emotional_count = row.count
       if (row.report_type === 'iep') stats.iep_count = row.count
       if (row.report_type === 'training') stats.training_count = row.count
@@ -1942,6 +2156,7 @@ export class ReportAPI extends DatabaseAPI {
     sdq_migrated: number
     srs2_migrated: number
     cbcl_migrated: number
+    fine_motor_migrated: number
     total: number
   } {
     let smMigrated = 0
@@ -1952,6 +2167,7 @@ export class ReportAPI extends DatabaseAPI {
     let sdqMigrated = 0
     let srs2Migrated = 0
     let cbclMigrated = 0
+    let fineMotorMigrated = 0
 
     try {
       // 迁移 S-M 评估记录
@@ -2143,7 +2359,30 @@ export class ReportAPI extends DatabaseAPI {
         cbclMigrated++
       })
 
-      console.log(`✅ 数据迁移完成: S-M ${smMigrated} 条, WeeFIM ${weefimMigrated} 条, CSIRS ${csirsMigrated} 条, Conners PSQ ${connersPSQMigrated} 条, Conners TRS ${connersTRSMigrated} 条, SDQ ${sdqMigrated} 条, SRS-2 ${srs2Migrated} 条, CBCL ${cbclMigrated} 条`)
+      const fineMotorAssessments = this.query(`
+        SELECT
+          fa.id,
+          fa.student_id,
+          fa.created_at,
+          s.name as student_name
+        FROM fine_motor_assess fa
+        LEFT JOIN student s ON fa.student_id = s.id
+        WHERE NOT EXISTS (
+          SELECT 1 FROM report_record rr
+          WHERE rr.report_type = 'fine_motor' AND rr.assess_id = fa.id
+        )
+      `)
+
+      fineMotorAssessments.forEach((assessment: any) => {
+        const title = `小肌肉功能发展评估报告_${assessment.student_name}_${new Date(assessment.created_at).toLocaleDateString()}`
+        this.execute(
+          'INSERT INTO report_record (student_id, report_type, assess_id, title, module_code, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+          [assessment.student_id, 'fine_motor', assessment.id, title, 'sensory', assessment.created_at]
+        )
+        fineMotorMigrated++
+      })
+
+      console.log(`✅ 数据迁移完成: S-M ${smMigrated} 条, WeeFIM ${weefimMigrated} 条, CSIRS ${csirsMigrated} 条, Conners PSQ ${connersPSQMigrated} 条, Conners TRS ${connersTRSMigrated} 条, SDQ ${sdqMigrated} 条, SRS-2 ${srs2Migrated} 条, CBCL ${cbclMigrated} 条, FMDA ${fineMotorMigrated} 条`)
     } catch (error) {
       console.error('❌ 数据迁移失败:', error)
     }
@@ -2157,7 +2396,8 @@ export class ReportAPI extends DatabaseAPI {
       sdq_migrated: sdqMigrated,
       srs2_migrated: srs2Migrated,
       cbcl_migrated: cbclMigrated,
-      total: smMigrated + weefimMigrated + csirsMigrated + connersPSQMigrated + connersTRSMigrated + sdqMigrated + srs2Migrated + cbclMigrated
+      fine_motor_migrated: fineMotorMigrated,
+      total: smMigrated + weefimMigrated + csirsMigrated + connersPSQMigrated + connersTRSMigrated + sdqMigrated + srs2Migrated + cbclMigrated + fineMotorMigrated
     }
   }
 }
