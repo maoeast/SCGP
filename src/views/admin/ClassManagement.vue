@@ -21,7 +21,7 @@
       </div>
     </div>
 
-    <div class="content scgp-page-panel class-management-content">
+    <div class="class-management-content">
       <section class="filter-section scgp-filter-surface class-filter-section">
         <div class="filter-toolbar">
           <div class="grade-pill-list" role="tablist" aria-label="年级筛选">
@@ -65,62 +65,64 @@
         </article>
       </section>
 
-      <TransitionGroup name="stage-section" tag="div" class="class-stage-list">
-        <section v-for="group in stageGroups" :key="group.stage" class="class-stage">
-          <div class="class-stage__header">
-            <h2>{{ group.label }}</h2>
-            <span>{{ group.classes.length }} 个班级</span>
-          </div>
-          <TransitionGroup name="class-card" tag="div" class="class-grid">
-            <article
-              v-for="cls in group.classes"
-              :key="cls.id"
-              class="class-card"
-              :class="{ 'is-inactive': cls.status !== ACTIVE_CLASS_STATUS }"
-            >
-              <div class="class-card__top">
-                <h3>{{ cls.name }}</h3>
-                <div class="class-card__top-actions">
-                  <el-tooltip :content="getClassStatusText(cls.status)" placement="top">
-                    <span class="status-dot" :class="getClassStatusClass(cls.status)" />
-                  </el-tooltip>
-                  <el-dropdown
-                    trigger="click"
-                    popper-class="class-card__menu-dropdown"
-                    @command="handleClassMenuCommand(cls, $event)"
-                  >
-                    <el-button class="class-card__menu-button" text circle @click.stop>
-                      <el-icon><MoreFilled /></el-icon>
-                    </el-button>
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item command="delete" class="class-card__menu-item--danger">
-                          删除
-                        </el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
+      <div class="main-content scgp-page-panel class-management-main">
+        <TransitionGroup name="stage-section" tag="div" class="class-stage-list">
+          <section v-for="group in stageGroups" :key="group.stage" class="class-stage">
+            <div class="class-stage__header">
+              <h2>{{ group.label }}</h2>
+              <span>{{ group.classes.length }} 个班级</span>
+            </div>
+            <TransitionGroup name="class-card" tag="div" class="class-grid">
+              <article
+                v-for="cls in group.classes"
+                :key="cls.id"
+                class="class-card"
+                :class="{ 'is-inactive': cls.status !== ACTIVE_CLASS_STATUS }"
+              >
+                <div class="class-card__top">
+                  <h3>{{ cls.name }}</h3>
+                  <div class="class-card__top-actions">
+                    <el-tooltip :content="getClassStatusText(cls.status)" placement="top">
+                      <span class="status-dot" :class="getClassStatusClass(cls.status)" />
+                    </el-tooltip>
+                    <el-dropdown
+                      trigger="click"
+                      popper-class="class-card__menu-dropdown"
+                      @command="handleClassMenuCommand(cls, $event)"
+                    >
+                      <el-button class="class-card__menu-button" text circle @click.stop>
+                        <el-icon><MoreFilled /></el-icon>
+                      </el-button>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item command="delete" class="class-card__menu-item--danger">
+                            删除
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+                  </div>
                 </div>
-              </div>
-              <div class="class-card__middle">
-                <div class="class-card__enrollment">在籍 {{ cls.currentEnrollment }}/{{ cls.maxStudents }} 人</div>
-                <div class="capacity-progress" aria-hidden="true">
-                  <div class="capacity-progress__fill" :style="{ width: `${getEnrollmentPercent(cls)}%` }" />
+                <div class="class-card__middle">
+                  <div class="class-card__enrollment">在籍 {{ cls.currentEnrollment }}/{{ cls.maxStudents }} 人</div>
+                  <div class="capacity-progress" aria-hidden="true">
+                    <div class="capacity-progress__fill" :style="{ width: `${getEnrollmentPercent(cls)}%` }" />
+                  </div>
+                  <div class="class-card__capacity">{{ getEnrollmentPercent(cls) }}% 满员率</div>
                 </div>
-                <div class="class-card__capacity">{{ getEnrollmentPercent(cls) }}% 满员率</div>
-              </div>
-              <div class="class-card__actions">
-                <el-button class="card-action-button" round @click="viewClassStudents(cls)">学生</el-button>
-                <el-button v-if="isAdmin" class="card-action-button" round @click="manageClassTeachers(cls)">分配老师</el-button>
-                <el-button class="card-action-button" round @click="editClass(cls)">编辑</el-button>
-              </div>
-            </article>
-          </TransitionGroup>
-        </section>
-      </TransitionGroup>
+                <div class="class-card__actions">
+                  <el-button class="card-action-button" round @click="viewClassStudents(cls)">学生</el-button>
+                  <el-button v-if="isAdmin" class="card-action-button" round @click="manageClassTeachers(cls)">分配老师</el-button>
+                  <el-button class="card-action-button" round @click="editClass(cls)">编辑</el-button>
+                </div>
+              </article>
+            </TransitionGroup>
+          </section>
+        </TransitionGroup>
 
-      <div v-if="stageGroups.length === 0" class="class-empty-state">
-        <el-empty description="当前筛选条件下暂无班级" />
+        <div v-if="stageGroups.length === 0" class="class-empty-state">
+          <el-empty description="当前筛选条件下暂无班级" />
+        </div>
       </div>
     </div>
 
@@ -710,6 +712,12 @@ onMounted(() => {
   gap: 20px;
 }
 
+.class-management-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .class-filter-section {
   padding: 16px;
   border: none;
@@ -733,7 +741,7 @@ onMounted(() => {
   flex: 1;
   min-width: 0;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 2px 0;
 }
 
 .grade-pill-list::-webkit-scrollbar {

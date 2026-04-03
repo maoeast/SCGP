@@ -7,15 +7,6 @@
         <p class="subtitle">选择训练入口组开始器材训练</p>
       </div>
     </div>
-
-    <!-- 面包屑导航 -->
-    <div class="breadcrumb-wrapper">
-        <el-breadcrumb separator="/">
-          <el-breadcrumb-item :to="{ path: '/equipment' }">器材训练</el-breadcrumb-item>
-        <el-breadcrumb-item>选择入口</el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
-
     <!-- 模块卡片网格 -->
     <div class="main-content scgp-page-panel scgp-page-panel--flush">
       <div class="module-grid scgp-selection-grid">

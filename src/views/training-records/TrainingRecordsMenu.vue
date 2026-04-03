@@ -1,13 +1,5 @@
 <template>
   <div class="page-container scgp-admin-page">
-    <!-- 面包屑导航 -->
-    <div class="breadcrumb-wrapper">
-      <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/training-records' }">训练记录</el-breadcrumb-item>
-        <el-breadcrumb-item>选择入口</el-breadcrumb-item>
-      </el-breadcrumb>
-    </div>
-
     <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">

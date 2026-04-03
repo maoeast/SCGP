@@ -521,7 +521,7 @@ onMounted(async () => {
   gap: 10px;
   min-width: 0;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 2px 0;
 }
 
 .gender-pill-list::-webkit-scrollbar {
