@@ -570,7 +570,40 @@
     - `src/views/system/SystemSettings.vue`
 - verification status:
   - `npm run type-check` passed
+  - login-entry actual render has now been manually verified
+  - independent system-logo / login-logo persistence after relaunch has now been manually verified
   - this conversation still did not rerun `vite build`
-  - this conversation still did not complete manual Electron runtime QA for:
-    - independent system-logo / login-logo persistence after relaunch
-    - screenshot-level positioning of login left-panel title / school / description blocks
+
+## 22. 2026-04-03 Backup/Restore Coverage Closure for Current Live Schema
+
+- `src/utils/backup.ts` no longer backs up a stale hard-coded table whitelist
+- backup export now discovers current sqlite user tables from `sqlite_master`, with only explicit transient migration tables excluded
+- important current-product effect:
+  - backup coverage should now include current live business data such as:
+    - `sys_academic_year`
+    - `sys_class`
+    - `student_class_history`
+    - `sys_class_teachers`
+    - `report_record`
+    - `training_records`
+    - `equipment_training_records`
+    - `training_session`
+    - `sys_training_plan`
+    - `sys_plan_resource_map`
+    - emotional training tables already present in current schema
+- restore behavior was tightened in current code reality:
+  - overwrite restore now clears target tables even when the backup copy for that table is empty
+  - restore temporarily disables foreign-key enforcement for bulk replay, then runs `PRAGMA foreign_key_check`
+  - restore now fails fast if the backup contains tables unknown to the current client schema
+- important class-data boundary:
+  - post-restore reconciliation now recalculates:
+    - `student.current_class_id`
+    - `student.current_class_name`
+    - `sys_class.current_enrollment`
+  - reason: class-history replay and enrollment triggers can otherwise leave derived class state inconsistent
+- backup payload compatibility boundary:
+  - new exports now write version `2.0`
+  - current restore still accepts legacy backup payload version `1.0`
+- current verification status:
+  - `npm run type-check` passed after the backup changes landed
+  - a fresh manual end-to-end backup/restore round-trip for the patched implementation is still pending

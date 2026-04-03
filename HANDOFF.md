@@ -19,7 +19,7 @@ Usually those three files are enough to resume work safely.
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `login entry UI refinement and login-logo/system-logo config split are now landed in current code reality; the next active step is manual Electron runtime verification for left-brand positioning and independent logo persistence, then deciding whether activation page should align to the same entry-theme direction`
+- active work scope: `login entry runtime render and config persistence have now been verified; the next active step is backup/restore round-trip QA after the backup pipeline was updated to cover current live schema including class, plan, report, and training-record data`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

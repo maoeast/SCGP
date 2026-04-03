@@ -20,7 +20,7 @@
             <div class="scgp-content-toolbar__main">
               <h2 class="scgp-content-toolbar__title">数据备份与恢复</h2>
               <p class="scgp-content-toolbar__description">
-                导出当前系统数据，或从备份文件恢复学生、评估与训练记录。
+                导出当前系统完整业务数据，或从备份文件恢复班级、学生、计划、报告与训练记录。
               </p>
             </div>
           </div>
@@ -36,7 +36,7 @@
                 <el-button type="primary" :loading="isBackingUp" @click="handleBackup">
                   {{ isBackingUp ? '备份中...' : '立即备份' }}
                 </el-button>
-                <p class="system-help-text">备份文件包含学生信息、评估记录、训练记录与系统配置。</p>
+                <p class="system-help-text">备份文件覆盖当前数据库中的班级、分班、计划、报告、训练记录、资源与系统配置。</p>
               </div>
             </section>
 
