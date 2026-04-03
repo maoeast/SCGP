@@ -1,0 +1,701 @@
+SIC-ADS
+├── AGENTS.md
+├── CLAUDE.md
+├── CLAUDE.md.bak
+├── GSD指令手册.md
+├── HANDOFF.md
+├── PROJECT_CONTEXT.md
+├── README.md
+├── assets
+│   └── resources
+│       ├── README.md
+│       ├── docs
+│       │   ├── 【倒水】3 张排序图.pdf
+│       │   ├── 【刷牙】4 张排序图.pdf
+│       │   ├── 【取款机】5 张排序图.pdf
+│       │   ├── 【受伤】2 张排序图.pdf
+│       │   ├── 【坐公交车】4 张排序图.pdf
+│       │   ├── 【如厕】6 步顺序图.pdf
+│       │   ├── 【字母】3 张排序图.pdf
+│       │   ├── 【就医】4 张排序图.pdf
+│       │   ├── 【扔垃圾】2 张排序图.pdf
+│       │   ├── 【数字】6 张排序图.pdf
+│       │   ├── 【洗手】6 张排序图.pdf
+│       │   ├── 【洗碗】4 张排序图.pdf
+│       │   ├── 【生病】4 张排序图.pdf
+│       │   ├── 【穿衣服】5步顺序图.pdf
+│       │   ├── 【行李箱】3张排序图.pdf
+│       │   ├── 【起床】4 张排序图.pdf
+│       │   ├── 喂食刷牙小游戏.pdf
+│       │   ├── 生活自理-8个自闭症儿童的自理能力训练项目.docx
+│       │   ├── 生活自理-刷牙-家庭康复训练实操课.docx
+│       │   ├── 生活自理-十项家庭康复训练的课题（没有详细拆解内容）.docx
+│       │   ├── 生活自理-吃饭（家庭康复训练实操）.docx
+│       │   ├── 生活自理-喝水、刷牙、其他步骤拆分.doc
+│       │   ├── 生活自理-喝水（家庭康复训练实操）.docx
+│       │   ├── 生活自理-家庭康复训练实操教程（包含步骤拆解）.doc
+│       │   ├── 生活自理-技巧-需配合生活自理-六个生活自理的基础家庭训练项目使用.docx
+│       │   ├── 生活自理-提高孩子生活自理的十种方法（纯理论）.doc
+│       │   ├── 生活自理-生活自理训练方法附教案.docx
+│       │   ├── 生活自理-穿（脱）衣服（家庭康复训练实操）.doc
+│       │   ├── 生活自理-纠正偏食（家庭康复训练实操）.doc
+│       │   ├── 生活自理-自闭症儿童家庭训练计划.pdf
+│       │   ├── 生活自理-自闭症家庭生活自理评价标准.docx
+│       │   ├── 生活自理常用的三种训练方法.ppt
+│       │   ├── 生活自理训练-技巧.doc
+│       │   ├── 男孩刷牙翻翻书.pdf
+│       │   ├── 示例文档.pdf
+│       │   ├── 自闭儿生活自理能力训练法01.pdf
+│       │   ├── 自闭儿生活自理能力训练法02.pdf
+│       │   ├── 自闭儿生活自理能力训练法03.pdf
+│       │   ├── 自闭儿生活自理能力训练法04.pdf
+│       │   ├── 自闭儿生活自理能力训练法05.pdf
+│       │   ├── 自闭儿生活自理能力训练法06.pdf
+│       │   ├── 自闭儿生活自理能力训练法07.pdf
+│       │   ├── 自闭儿生活自理能力训练法08.pdf
+│       │   ├── 自闭儿生活自理能力训练法09.pdf
+│       │   ├── 自闭儿生活自理能力训练法10.pdf
+│       │   ├── 自闭儿生活自理能力训练法11.pdf
+│       │   ├── 自闭儿生活自理能力训练法12.pdf
+│       │   ├── 自闭儿生活自理能力训练法13.pdf
+│       │   ├── 自闭儿生活自理能力训练法14.pdf
+│       │   ├── 自闭儿生活自理能力训练法15.pdf
+│       │   ├── 自闭儿生活自理能力训练法16.pdf
+│       │   ├── 自闭儿生活自理能力训练法17.pdf
+│       │   ├── 自闭儿生活自理能力训练法18.pdf
+│       │   └── 自闭儿生活自理能力训练法19.pdf
+│       └── images
+│           ├── 倒水
+│           ├── 刷牙
+│           ├── 取款机
+│           ├── 受伤
+│           ├── 坐公交车
+│           ├── 字母
+│           ├── 孩子如厕
+│           ├── 就医
+│           ├── 扔垃圾
+│           ├── 数字
+│           ├── 洗手
+│           ├── 洗碗
+│           ├── 生病
+│           ├── 穿衣服
+│           ├── 自闭症孩子生活自理步骤分解训练图卡
+│           └── 行李箱
+├── build
+│   ├── icon.ico
+│   └── installer.nsh
+├── care_scenes_database.json
+├── dev-cert.pem
+├── dev-key.pem
+├── docs
+│   ├── CHANGELOG.md
+│   ├── DOCS_GUIDE.md
+│   ├── INDEX.md
+│   ├── SOLVED_ISSUES.md
+│   ├── analysis
+│   │   └── statistics-score-consistency.md
+│   ├── architecture
+│   │   ├── 2026-03-12-emotional-module-data-design.md
+│   │   ├── 2026-03-12-emotional-module-page-and-route-design.md
+│   │   ├── audit-report.md
+│   │   ├── data-flow-diagram.md
+│   │   └── 源码加密混淆技术方案.md
+│   ├── guides
+│   │   ├── 2026-03-12-gsd-token-efficient-workflow.md
+│   │   ├── 2026-03-18-emotional-resource-pack-excel-template-guide.md
+│   │   ├── 2026-03-30-training-resource-copy-workflow.md
+│   │   ├── GSD最小操作手册.md
+│   │   ├── activation-code-generator.md
+│   │   ├── activation-system-guide.md
+│   │   ├── 系统使用说明书.md
+│   │   └── 系统参数技术文档.md
+│   ├── planning
+│   │   ├── 2026-03-12-emotional-module-execution-prompt.md
+│   │   ├── 2026-03-13-scgp-current-prd.md
+│   │   ├── 2026-03-16-emotional-module-prd.md
+│   │   ├── 2026-03-18-unified-assessment-word-export-milestone-plan.md
+│   │   ├── 2026-03-20-emotion-games-prd.md
+│   │   ├── 2026-03-23-scgp-context-bootstrap.md
+│   │   ├── 2026-04-01-unified-training-record-schema-plan.md
+│   │   ├── emotion-games-dev-guidelines.md
+│   │   ├── mvp-games-playtest-tuning-guide.md
+│   │   ├── prd.md
+│   │   ├── 情绪交互引擎统一 V1.6.md
+│   │   ├── 感官训练PRD.md
+│   │   └── 报告生成模块技术方案.md
+│   ├── plans
+│   │   ├── 2025-01-28-csirs-assessment-module.md
+│   │   ├── 2025-01-29-conners-psq-trs-assessment.md
+│   │   ├── 2025-02-05-refactor-implementation-plan.md
+│   │   ├── 2025-02-17-assessment-module-refactor-design.md
+│   │   ├── 2026-02-04-equipment-training-module.md
+│   │   ├── 2026-03-12-emotional-module-gsd-execution-sequence.md
+│   │   ├── 2026-03-12-emotional-module-implementation-plan.md
+│   │   └── 2026-03-13-scgp-executable-roadmap.md
+│   ├── references
+│   │   ├── Conners 量表及评分标准.docx
+│   │   ├── Conners 量表评语建议.md
+│   │   ├── SCQ(社交沟通问卷).pdf
+│   │   ├── SRS-2 报告引擎.js
+│   │   ├── SRS-2 题目优化全集.md
+│   │   ├── emotion-scene
+│   │   │   ├── current-emotion-scenes-export.json
+│   │   │   ├── emotion-scene-category-audit-2026-03-24.csv
+│   │   │   ├── emotion-scene-category-audit-2026-03-24.md
+│   │   │   ├── emotion-scene-category-draft-2026-03-24.csv
+│   │   │   ├── emotion-scene-category-draft-2026-03-24.md
+│   │   │   ├── emotion-scene-taxonomy-2026-03-24.csv
+│   │   │   ├── emotion-scene-taxonomy-2026-03-24.md
+│   │   │   ├── emotion-scenes-merged-candidate.json
+│   │   │   ├── emotion-scenes-new24-renumbered.json
+│   │   │   ├── emotion-scenes-new24.json
+│   │   │   ├── emotion-scenes-removed-24.json
+│   │   │   ├── emotion_scene_import_spec.md
+│   │   │   ├── emotion_scene_import_template.json
+│   │   │   └── 情绪场景.csv
+│   │   ├── feedbackConfig.js
+│   │   ├── physical-equipment
+│   │   │   ├── README.md
+│   │   │   ├── emotional-regulation
+│   │   │   ├── fine-motor
+│   │   │   ├── physical-equipment-import-template.csv
+│   │   │   ├── social-communication
+│   │   │   ├── soothing-aids
+│   │   │   └── 感官综合发展资源功能描述导入.csv
+│   │   ├── resource-copy
+│   │   │   └── 2026-03-30-training-resource-copy.csv
+│   │   ├── sdq_total_score_rules.json
+│   │   ├── 儿童感觉统合能力发展评定量表58道题目.docx
+│   │   ├── 儿童感觉统合能力发展评定量表原始分与标准分转换表.xlsx
+│   │   ├── 儿童行为量表（CBCL）- 2026数字化题目.md
+│   │   ├── 儿童行为量表（CBCL）报告解释生成引擎.js
+│   │   ├── 儿童行为量表（CBCL）自动计分引擎.js
+│   │   ├── 儿童适应性行为评定量表(CABR).pdf
+│   │   ├── 情绪行为调节资源包功能描述.xlsx
+│   │   ├── 感官综合发展资源功能描述.xlsx
+│   │   ├── 感觉统合能力发展评定量表.txt
+│   │   ├── 架构设计与集成规划-CBCL(儿童行为量表)评估模块.txt
+│   │   ├── 社交反应量表第二版（SRS-2）.pdf
+│   │   ├── 社交沟通互动教具功能描述.xlsx
+│   │   ├── 评语建议.txt
+│   │   ├── 请务必在系统界面显著位置标注：“所有量表结果仅供教育支持参考，不能作为医学诊断依据。如发现显著异常，请前往正规医院发育行为科或精神心理科就诊。”.txt
+│   │   ├── 长处与困难问卷(SDQ)学生版.pdf
+│   │   └── 长处和困难问卷（SDQ）完全使用指南：从题目解析到结果应用.pdf
+│   ├── reports
+│   │   ├── 2026-03-11-assessment-cleanup.md
+│   │   ├── 2026-03-13-scgp-prd-gap-analysis.md
+│   │   ├── 2026-03-20-emotion-games-layout-debug-lessons.md
+│   │   └── 2026-03-31-training-workspace-layout-scroll-guideline.md
+│   └── tech-design
+│       └── 激活系统.md
+├── electron
+│   ├── handlers
+│   │   └── update.js
+│   ├── main.mjs
+│   ├── preload.cjs
+│   └── preload.mjs
+├── env.d.ts
+├── eslint.config.ts
+├── final_emotion_scenes.json
+├── index.html
+├── package-lock.json
+├── package.json
+├── ping -n 5 127.0.0.1 nul 2&1
+├── public
+│   ├── favicon.ico
+│   ├── fontawesome
+│   │   ├── LICENSE.txt
+│   │   ├── css
+│   │   │   ├── all.css
+│   │   │   ├── all.min.css
+│   │   │   ├── brands.css
+│   │   │   ├── brands.min.css
+│   │   │   ├── fontawesome.css
+│   │   │   ├── fontawesome.min.css
+│   │   │   ├── regular.css
+│   │   │   ├── regular.min.css
+│   │   │   ├── solid.css
+│   │   │   ├── solid.min.css
+│   │   │   ├── svg-with-js.css
+│   │   │   ├── svg-with-js.min.css
+│   │   │   ├── v4-font-face.css
+│   │   │   ├── v4-font-face.min.css
+│   │   │   ├── v4-shims.css
+│   │   │   ├── v4-shims.min.css
+│   │   │   ├── v5-font-face.css
+│   │   │   └── v5-font-face.min.css
+│   │   ├── js
+│   │   │   ├── all.js
+│   │   │   ├── all.min.js
+│   │   │   ├── brands.js
+│   │   │   ├── brands.min.js
+│   │   │   ├── conflict-detection.js
+│   │   │   ├── conflict-detection.min.js
+│   │   │   ├── fontawesome.js
+│   │   │   ├── fontawesome.min.js
+│   │   │   ├── regular.js
+│   │   │   ├── regular.min.js
+│   │   │   ├── solid.js
+│   │   │   ├── solid.min.js
+│   │   │   ├── v4-shims.js
+│   │   │   └── v4-shims.min.js
+│   │   ├── less
+│   │   │   ├── _animated.less
+│   │   │   ├── _bordered-pulled.less
+│   │   │   ├── _core.less
+│   │   │   ├── _fixed-width.less
+│   │   │   ├── _icons.less
+│   │   │   ├── _list.less
+│   │   │   ├── _mixins.less
+│   │   │   ├── _rotated-flipped.less
+│   │   │   ├── _screen-reader.less
+│   │   │   ├── _shims.less
+│   │   │   ├── _sizing.less
+│   │   │   ├── _stacked.less
+│   │   │   ├── _variables.less
+│   │   │   ├── brands.less
+│   │   │   ├── fontawesome.less
+│   │   │   ├── regular.less
+│   │   │   ├── solid.less
+│   │   │   └── v4-shims.less
+│   │   ├── metadata
+│   │   │   ├── categories.yml
+│   │   │   ├── icon-families.json
+│   │   │   ├── icon-families.yml
+│   │   │   ├── icons.json
+│   │   │   ├── icons.yml
+│   │   │   ├── shims.json
+│   │   │   ├── shims.yml
+│   │   │   └── sponsors.yml
+│   │   ├── scss
+│   │   │   ├── _animated.scss
+│   │   │   ├── _bordered-pulled.scss
+│   │   │   ├── _core.scss
+│   │   │   ├── _fixed-width.scss
+│   │   │   ├── _functions.scss
+│   │   │   ├── _icons.scss
+│   │   │   ├── _list.scss
+│   │   │   ├── _mixins.scss
+│   │   │   ├── _rotated-flipped.scss
+│   │   │   ├── _screen-reader.scss
+│   │   │   ├── _shims.scss
+│   │   │   ├── _sizing.scss
+│   │   │   ├── _stacked.scss
+│   │   │   ├── _variables.scss
+│   │   │   ├── brands.scss
+│   │   │   ├── fontawesome.scss
+│   │   │   ├── regular.scss
+│   │   │   ├── solid.scss
+│   │   │   └── v4-shims.scss
+│   │   ├── sprites
+│   │   │   ├── brands.svg
+│   │   │   ├── regular.svg
+│   │   │   └── solid.svg
+│   │   ├── svgs
+│   │   │   ├── brands
+│   │   │   ├── regular
+│   │   │   └── solid
+│   │   └── webfonts
+│   │       ├── fa-brands-400.ttf
+│   │       ├── fa-brands-400.woff2
+│   │       ├── fa-regular-400.ttf
+│   │       ├── fa-regular-400.woff2
+│   │       ├── fa-solid-900.ttf
+│   │       ├── fa-solid-900.woff2
+│   │       ├── fa-v4compatibility.ttf
+│   │       └── fa-v4compatibility.woff2
+│   ├── fontawesome-local.css
+│   ├── icon.ico
+│   ├── public-key.pem
+│   ├── sql-wasm.js
+│   ├── sql-wasm.wasm
+│   ├── sql.js-loader.js
+│   ├── tasks
+│   │   ├── ASK_DIRECTIONS_001_cover.jpg
+│   │   ├── BLOW_NOSE_001_cover.jpg
+│   │   ├── BOY_URINATE_001_cover.jpg
+│   │   ├── BRUSH_TEETH_001_cover.jpg
+│   │   ├── BUTTON_UNBUTTON_001_cover.jpg
+│   │   ├── COMB_HAIR_001_cover.jpg
+│   │   ├── CROSS_ROAD_001_cover.jpg
+│   │   ├── DEFECATE_001_cover.jpg
+│   │   ├── DRINK_WATER_001_cover.jpg
+│   │   ├── EAT_CHOPSTICKS_001_cover.jpg
+│   │   ├── EAT_SPOON_001_cover.jpg
+│   │   ├── EXPRESS_TOILET_001_cover.jpg
+│   │   ├── FOLD_CLOTHES_001_cover.jpg
+│   │   ├── GIRL_URINATE_001_cover.jpg
+│   │   ├── MAKE_BED_001_cover.jpg
+│   │   ├── PACK_SCHOOLBAG_001_cover.jpg
+│   │   ├── SQUEEZE_TOOTHPASTE_001_cover.jpg
+│   │   ├── SUPERMARKET_SHOPPING_001_cover.jpg
+│   │   ├── SWEEP_FLOOR_001_cover.jpg
+│   │   ├── TAKE_BUS_001_cover.jpg
+│   │   ├── TAKE_OFF_PANTS_001_cover.jpg
+│   │   ├── TAKE_OFF_SHIRT_001_cover.jpg
+│   │   ├── TAKE_SHOWER_001_cover.jpg
+│   │   ├── TIE_SHOELACES_001_cover.jpg
+│   │   ├── WASH_FACE_001_cover.jpg
+│   │   ├── WASH_HANDS_001_cover.jpg
+│   │   ├── WEAR_PANTS_001_cover.jpg
+│   │   ├── WEAR_SHIRT_001_cover.jpg
+│   │   ├── WEAR_SHOES_001_cover.jpg
+│   │   ├── WEAR_SOCKS_001_cover.jpg
+│   │   └── WIPE_TABLE_001_cover.jpg
+│   ├── wallpaper.jpg
+│   ├── webgazer.js
+│   ├── worker-test.html
+│   └── xcatslogo.png
+├── scripts
+│   ├── apply-emotion-scene-taxonomy.mjs
+│   ├── apply-merged-emotion-scenes.mjs
+│   ├── build-training-resource-copy.cjs
+│   ├── clean-debug.js
+│   ├── conners-tscore-verification.ts
+│   ├── dev-start.js
+│   ├── export-current-emotion-scenes.mjs
+│   ├── export-resources.cjs
+│   ├── export-training-resource-copy-template.cjs
+│   ├── fix-cover-paths.cjs
+│   ├── generate-activation.js
+│   ├── hard-cut-training-records.cjs
+│   ├── import-physical-equipment-resources.cjs
+│   ├── init-resources.js
+│   ├── merge-emotion-scenes-for-review.mjs
+│   ├── refresh-emotion-scene-labels.mjs
+│   ├── replace-alert-confirm.js
+│   ├── replace-emotional-scenes.mjs
+│   ├── reset-database.js
+│   ├── reset-sensory-equipment-resources.cjs
+│   ├── sync-training-resource-copy.cjs
+│   └── verify-emotional-engine-compat.mjs
+├── sdq_assess.db
+├── src
+│   ├── App.vue
+│   ├── assets
+│   │   ├── base.css
+│   │   ├── images
+│   │   │   ├── equipment
+│   │   │   └── physical-equipment
+│   │   ├── layout.css
+│   │   └── main.css
+│   ├── components
+│   │   ├── AboutDialog.vue
+│   │   ├── AddStudentDialog.vue
+│   │   ├── FilePreview.vue
+│   │   ├── ResourceUpload.vue
+│   │   ├── TheWelcome.vue
+│   │   ├── WelcomeItem.vue
+│   │   ├── common
+│   │   │   └── StudentSelector.vue
+│   │   ├── emotional
+│   │   │   ├── CareOptionCard.vue
+│   │   │   ├── EmotionSelector.vue
+│   │   │   ├── PerspectiveSwitchView.vue
+│   │   │   ├── ReasoningCard.vue
+│   │   │   ├── charts
+│   │   │   ├── engine
+│   │   │   └── games
+│   │   ├── equipment
+│   │   │   └── DataEntryForm.vue
+│   │   ├── games
+│   │   │   ├── GamePreviewCard.vue
+│   │   │   ├── audio
+│   │   │   └── visual
+│   │   ├── icons
+│   │   │   ├── IconCommunity.vue
+│   │   │   ├── IconDocumentation.vue
+│   │   │   ├── IconEcosystem.vue
+│   │   │   ├── IconSupport.vue
+│   │   │   └── IconTooling.vue
+│   │   ├── resources
+│   │   │   └── ResourceSelector.vue
+│   │   └── student
+│   │       ├── DiagnosisTag.vue
+│   │       ├── StudentAvatar.vue
+│   │       └── StudentId.vue
+│   ├── composables
+│   │   └── useEmotionalSession.ts
+│   ├── config
+│   │   ├── feedbackConfig.7z
+│   │   ├── feedbackConfig.d.ts
+│   │   ├── feedbackConfig.js
+│   │   └── icons.ts
+│   ├── core
+│   │   ├── module-registry.ts
+│   │   └── strategies-init.ts
+│   ├── data
+│   │   ├── emotional-game-catalog.ts
+│   │   ├── generated-training-resource-copy.ts
+│   │   └── sensory-game-seed.ts
+│   ├── database
+│   │   ├── api.ts
+│   │   ├── cbcl-norms.ts
+│   │   ├── cbcl-questions.ts
+│   │   ├── class-api.ts
+│   │   ├── conners-norms.ts
+│   │   ├── conners-psq-questions.ts
+│   │   ├── conners-scoring.ts
+│   │   ├── conners-trs-questions.ts
+│   │   ├── csirs-conversion.ts
+│   │   ├── csirs-questions.ts
+│   │   ├── dashboard-api.ts
+│   │   ├── database-loader.ts
+│   │   ├── database.ts
+│   │   ├── emotional-api.ts
+│   │   ├── emotional-games-api.ts
+│   │   ├── emotional-resource-data.ts
+│   │   ├── equipment-data.ts
+│   │   ├── equipment-test-data.ts
+│   │   ├── indexeddb-storage.ts
+│   │   ├── init-sqljs.ts
+│   │   ├── init.ts
+│   │   ├── migrate-report-constraints.ts
+│   │   ├── migration
+│   │   │   ├── add-module-code.sql
+│   │   │   ├── compatibility-adapter.ts
+│   │   │   ├── diagnostic.ts
+│   │   │   ├── migrate-emotional-foundation.ts
+│   │   │   ├── migrate-games-to-resources.ts
+│   │   │   ├── migrate-module-code.ts
+│   │   │   ├── migrate-to-resource.ts
+│   │   │   ├── migration-test-data.ts
+│   │   │   ├── migration-verification.ts
+│   │   │   ├── migration-view-utils.ts
+│   │   │   ├── rollback-migration.sql
+│   │   │   ├── schema-migration.ts
+│   │   │   └── test-statistics-verification.sql
+│   │   ├── mock-data.ts
+│   │   ├── mock-db.ts
+│   │   ├── physical-equipment-data.ts
+│   │   ├── physical-equipment-parser.ts
+│   │   ├── plan-api.ts
+│   │   ├── resource-api.ts
+│   │   ├── resource-data.ts
+│   │   ├── schema
+│   │   │   ├── class-schema.sql
+│   │   │   ├── emotional-schema.sql
+│   │   │   └── sys-tables.sql
+│   │   ├── schema.sql
+│   │   ├── sdq-questions.ts
+│   │   ├── sm-norms.ts
+│   │   ├── sm-questions.ts
+│   │   ├── sql-wrapper.ts
+│   │   ├── sqljs-init.ts
+│   │   ├── sqljs-loader.ts
+│   │   ├── srs2-norms.ts
+│   │   ├── srs2-questions.ts
+│   │   ├── teaching-materials-api.ts
+│   │   ├── test
+│   │   │   ├── class-snapshot-verification.ts
+│   │   │   └── class-test-data.ts
+│   │   ├── test-sql.js
+│   │   ├── test-weefim-levels.ts
+│   │   ├── verification
+│   │   │   └── statistics-verification.ts
+│   │   ├── weefim-assessment-example.ts
+│   │   ├── weefim-assessment-guide.md
+│   │   ├── weefim-assessment-mapper.ts
+│   │   ├── weefim-assessment-parser.ts
+│   │   ├── weefim-data.ts
+│   │   └── weefim-scoring-criteria.ts
+│   ├── features
+│   │   └── emotional
+│   │       ├── adapters
+│   │       ├── emotion-catalog.ts
+│   │       ├── engine
+│   │       └── runtime
+│   ├── main.ts
+│   ├── router
+│   │   └── index.ts
+│   ├── services
+│   │   └── UpdateService.ts
+│   ├── stores
+│   │   ├── assessment.ts
+│   │   ├── auth.ts
+│   │   ├── counter.ts
+│   │   ├── index.ts
+│   │   ├── resource.ts
+│   │   ├── student.ts
+│   │   ├── systemConfig.ts
+│   │   └── teaching-materials.ts
+│   ├── strategies
+│   │   ├── SensoryIEPStrategy.ts
+│   │   └── assessment
+│   │       ├── BaseDriver.ts
+│   │       ├── CBCLDriver.ts
+│   │       ├── CSIRSDriver.ts
+│   │       ├── ConnersPSQDriver.ts
+│   │       ├── ConnersTRSDriver.ts
+│   │       ├── SDQDriver.ts
+│   │       ├── SMDriver.ts
+│   │       ├── SRS2Driver.ts
+│   │       ├── WeeFIMDriver.ts
+│   │       └── index.ts
+│   ├── types
+│   │   ├── assessment.ts
+│   │   ├── cbcl.ts
+│   │   ├── class.ts
+│   │   ├── conners.ts
+│   │   ├── crypto-js.d.ts
+│   │   ├── csirs.ts
+│   │   ├── electron.d.ts
+│   │   ├── emotional
+│   │   │   └── games.ts
+│   │   ├── emotional.ts
+│   │   ├── equipment.ts
+│   │   ├── games.ts
+│   │   ├── module.ts
+│   │   ├── physical-equipment.ts
+│   │   ├── sdq.ts
+│   │   ├── sqljs.d.ts
+│   │   ├── srs2.ts
+│   │   └── webgazer.d.ts
+│   ├── utils
+│   │   ├── activation-manager.ts
+│   │   ├── assessment-word-builders.ts
+│   │   ├── backup.ts
+│   │   ├── check-conners-data.ts
+│   │   ├── crypto.ts
+│   │   ├── date-picker.ts
+│   │   ├── docxExporter.ts
+│   │   ├── emotional-resource-pack.ts
+│   │   ├── equipment-catalog-group.ts
+│   │   ├── equipment-training-entry.ts
+│   │   ├── export-word.ts
+│   │   ├── exportUtils.ts
+│   │   ├── iep-generator-refactored.ts
+│   │   ├── iep-generator.ts
+│   │   ├── iep-templates.ts
+│   │   ├── image-processor.ts
+│   │   ├── license-manager.ts
+│   │   ├── media-url.ts
+│   │   ├── pdfExportWorker.ts
+│   │   ├── physical-equipment-source-category.ts
+│   │   ├── printHelper.ts
+│   │   ├── reportExporter.ts
+│   │   ├── reportTemplates.ts
+│   │   ├── resource-center-business.ts
+│   │   ├── resource-cover.ts
+│   │   ├── resource-importer.ts
+│   │   ├── resource-importer.ts.bak
+│   │   ├── resource-manager.ts
+│   │   ├── simplePdfExport.ts
+│   │   ├── simpleReportPrinter.ts
+│   │   ├── student-display.ts
+│   │   ├── teaching-material-file-manager.ts
+│   │   ├── training-entry.ts
+│   │   ├── training-launch.ts
+│   │   ├── training-plan-module.ts
+│   │   └── training-resource-copy.ts
+│   ├── views
+│   │   ├── AboutView.vue
+│   │   ├── Activation.vue
+│   │   ├── ActivationAdmin.vue
+│   │   ├── Assessment.vue
+│   │   ├── Dashboard.vue
+│   │   ├── HomeView.vue
+│   │   ├── Layout.vue
+│   │   ├── Login.vue
+│   │   ├── NotFound.vue
+│   │   ├── Profile.vue
+│   │   ├── Reports.vue
+│   │   ├── Resources.vue
+│   │   ├── SQLTest.vue
+│   │   ├── SQLTest.vue.backup
+│   │   ├── StudentDetail.vue
+│   │   ├── Students.vue
+│   │   ├── System.vue
+│   │   ├── WeeFIMTest.vue
+│   │   ├── _archived
+│   │   │   ├── assessment
+│   │   │   ├── devtools
+│   │   │   └── games
+│   │   ├── admin
+│   │   │   ├── ClassManagement.vue
+│   │   │   ├── ResourceCenter.vue
+│   │   │   ├── ResourceManager.vue
+│   │   │   └── StudentClassAssignment.vue
+│   │   ├── assessment
+│   │   │   ├── AssessmentContainer.vue
+│   │   │   ├── AssessmentSelect.vue
+│   │   │   ├── SelectStudent.vue
+│   │   │   ├── cbcl
+│   │   │   ├── components
+│   │   │   ├── conners-psq
+│   │   │   ├── conners-trs
+│   │   │   ├── csirs
+│   │   │   ├── sdq
+│   │   │   ├── sm
+│   │   │   ├── srs2
+│   │   │   └── weefim
+│   │   ├── devtools
+│   │   │   ├── BenchmarkRunner.vue
+│   │   │   ├── ClassManagementTest.vue
+│   │   │   ├── ClassSnapshotTestLite.vue
+│   │   │   ├── ClassSnapshotVerification.vue
+│   │   │   ├── MigrationVerification.vue
+│   │   │   ├── ModuleDevTools.vue
+│   │   │   ├── SchemaMigration.vue
+│   │   │   └── WorkerTest.vue
+│   │   ├── emotional
+│   │   │   ├── CareExpressionTraining.vue
+│   │   │   ├── EmotionSceneTraining.vue
+│   │   │   ├── GameRecordDetail.vue
+│   │   │   ├── Menu.vue
+│   │   │   ├── Report.vue
+│   │   │   ├── SceneSelector.vue
+│   │   │   ├── SessionSummary.vue
+│   │   │   └── games
+│   │   ├── equipment
+│   │   │   ├── EquipmentMenu.vue
+│   │   │   ├── QuickEntry.vue
+│   │   │   ├── Records.vue
+│   │   │   └── SelectStudent.vue
+│   │   ├── games
+│   │   │   ├── GameLobby.vue
+│   │   │   ├── GameModuleMenu.vue
+│   │   │   ├── GamePlay.vue
+│   │   │   ├── IEPReport.vue
+│   │   │   ├── SelectStudent.vue
+│   │   │   └── emotional-game-catalog.ts
+│   │   ├── plan
+│   │   │   └── PlanList.vue
+│   │   ├── resource-center
+│   │   │   ├── TeachingMaterials.vue
+│   │   │   ├── TrainingResources.vue
+│   │   │   ├── components
+│   │   │   └── editors
+│   │   ├── student-detail
+│   │   │   ├── assessment-records.ts
+│   │   │   └── components
+│   │   ├── system
+│   │   │   ├── SystemSettings.vue
+│   │   │   └── UserManagement.vue
+│   │   ├── training-records
+│   │   │   ├── ModuleTrainingRecords.vue
+│   │   │   ├── TrainingRecordsMenu.vue
+│   │   │   └── components
+│   │   └── updates
+│   │       └── UpdatePanel.vue
+│   └── workers
+│       ├── bridge-sql-wrapper.ts
+│       ├── command-queue.ts
+│       ├── db-bridge.ts
+│       ├── db.worker.ts
+│       └── types
+│           └── worker-messages.ts
+├── test-sdq-e2e.py
+├── tests
+│   ├── convert.js
+│   ├── old_80_scenes.json
+│   └── performance
+│       ├── benchmark-core.ts
+│       ├── benchmarks.ts
+│       └── types.ts
+├── tsconfig.app.json
+├── tsconfig.emotional.json
+├── tsconfig.json
+├── tsconfig.node.json
+├── vite.config.ts
+└── 重构实施技术规范.md
