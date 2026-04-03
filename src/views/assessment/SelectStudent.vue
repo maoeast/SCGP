@@ -34,7 +34,7 @@ const router = useRouter()
 const route = useRoute()
 
 // 有效的量表类型
-const validScales = ['sm', 'weefim', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl'] as const
+const validScales = ['sm', 'weefim', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'fine_motor'] as const
 type ScaleType = typeof validScales[number]
 
 // 当前量表类型
@@ -54,7 +54,8 @@ const pageTitle = computed(() => {
     'conners-trs': '选择评估学生 - Conners教师问卷',
     'sdq': '选择评估学生 - SDQ长处和困难问卷',
     'srs2': '选择评估学生 - SRS-2社交反应量表',
-    'cbcl': '选择评估学生 - CBCL儿童行为量表'
+    'cbcl': '选择评估学生 - CBCL儿童行为量表',
+    'fine_motor': '选择评估学生 - 小肌肉功能发展评估量表'
   }
   return titles[scaleType.value]
 })
@@ -101,6 +102,11 @@ const currentModuleTag = computed<ModuleTag>(() => {
       type: 'success',
       label: 'CBCL 儿童行为量表',
       description: '评估儿童社会能力与行为问题'
+    },
+    'fine_motor': {
+      type: 'warning',
+      label: '小肌肉功能发展评估量表',
+      description: '评估儿童精细动作与手部操作能力发展水平'
     }
   }
   return tags[scaleType.value]

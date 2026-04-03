@@ -258,6 +258,7 @@
 - important compatibility boundary:
   - preserve old stored values through normalization instead of destructive migration
   - supported legacy aliases include:
+
     - `sensory`
     - `emotional`
     - `social`
@@ -634,9 +635,9 @@
   - `npm run type-check` passed after the cleanup landed
   - this conversation did not complete a fresh manual visual QA pass for all affected pages
 
-## 24. 2026-04-03 FMDA Fine-Motor Integration Boundary
+## 24. 2026-04-03 FMDA Fine-Motor Integration Boundary Snapshot
 
-- `FMDA` is not implemented yet in current code reality; this conversation only completed repo-wide architecture scan and integration planning against the provided reference PRD
+- this section records the integration boundary established before the first FMDA code slice landed; current implementation reality is tracked in section 25
 - important architecture boundary:
   - do not assume the repo already has generic `items`, `assessments`, and `assessment_records` tables described in the external FMDA PRD
   - current assessment mainline remains:
@@ -651,4 +652,24 @@
 - important UI boundary:
   - FMDA `2 / 1 / 0` scoring should be rendered through the current option-driven question UI, not a brand-new standalone assessment page unless runtime verification proves reuse is insufficient
 - important current-product boundary:
-  - `FMDA` remains placeholder-only in the assessment entry and report aggregate UIs until the above implementation lands
+  - even after the first code slice landed, FMDA still should not be described as fully delivered until persistence and report-record wiring land
+
+## 25. 2026-04-03 FMDA Assessment First Slice
+
+- `fine_motor` is now a real assessment scale code in the current UI chain:
+  - assessment select
+  - select student
+  - strategy registry
+  - report center mappings
+  - student-detail report jump mappings
+- the generated FMDA question bank now lives in:
+  - `src/database/fine-motor-questions.ts`
+- current FMDA driver reality:
+  - `src/strategies/assessment/FineMotorDriver.ts` is no longer a placeholder
+  - it now implements per-domain start-point selection, basal/ceiling auto-fill, mastery-rate status mapping, and IEP target extraction
+- important boundary:
+  - this is not yet the full FMDA delivery chain
+  - `fine_motor_assess` / `fine_motor_assess_detail` persistence and `report_record.report_type = 'fine_motor'` wiring are still pending
+- important persistence constraint:
+  - FMDA detail persistence must preserve `metadata.is_auto_filled`
+  - otherwise manual `0` and ceiling auto-filled `0` will collapse into the same meaning and break IEP target extraction

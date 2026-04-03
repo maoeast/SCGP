@@ -83,6 +83,7 @@ const SRS2Report = () => import('@/views/assessment/srs2/Report.vue')
 
 // CBCL 报告页面
 const CBCLReport = () => import('@/views/assessment/cbcl/Report.vue')
+const FineMotorReport = () => import('@/views/assessment/fine-motor/Report.vue')
 
 // 通用评估容器（Phase 4 重构）
 const AssessmentContainer = () => import('@/views/assessment/AssessmentContainer.vue')
@@ -532,6 +533,10 @@ const router = createRouter({
           path: 'assessment/cbcl/:studentId',
           redirect: (to: any) => `/assessment/unified/cbcl/${to.params.studentId}`
         },
+        {
+          path: 'assessment/fine_motor/:studentId',
+          redirect: (to: any) => `/assessment/unified/fine_motor/${to.params.studentId}`
+        },
         // ===== 报告页面（保留） =====
         {
           path: 'assessment/sm/report',
@@ -619,6 +624,16 @@ const router = createRouter({
           component: CBCLReport,
           meta: {
             title: 'CBCL儿童行为量表评估报告',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'assessment/fine_motor/report/:assessId',
+          name: 'FineMotorReport',
+          component: FineMotorReport,
+          meta: {
+            title: '小肌肉功能发展评估量表报告',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

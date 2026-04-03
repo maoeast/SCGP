@@ -1,0 +1,2253 @@
+/**
+ * FMDA 小肌肉功能发展评估量表题库
+ *
+ * 数据来源：
+ * - docs/references/FMDA/小肌肉功能发展评估量表.csv
+ * - docs/references/FMDA/小肌肉功能发展评估量表单项评语专家建议数据.txt
+ */
+
+import type { ScaleOption, ScaleQuestion } from '@/types/assessment'
+
+export type FineMotorDimensionCode =
+  | 'hand_grasp'
+  | 'finger_dexterity'
+  | 'bilateral_coordination'
+  | 'vmi'
+  | 'pre_writing'
+  | 'self_care'
+
+export interface FineMotorDimensionDefinition {
+  code: FineMotorDimensionCode
+  label: string
+  itemStart: number
+  itemEnd: number
+}
+
+export interface FineMotorScoreFeedback {
+  mastered: string | null
+  partial: string | null
+  unmastered: string | null
+}
+
+export interface FineMotorQuestionData {
+  id: number
+  itemCode: string
+  dimension: FineMotorDimensionCode
+  dimensionName: string
+  title: string
+  observation: string
+  referenceAge: {
+    label: string
+    minMonths: number | null
+    maxMonths: number | null
+  }
+  sourceStatus: 'aligned'
+  sourceNotes: string | null
+  expertSourceTitle: string
+  expertSourceAge: string
+  scoreFeedback: FineMotorScoreFeedback
+  expertAdvice: string | null
+  iepGoal: string | null
+}
+
+export const FINE_MOTOR_DIMENSIONS: FineMotorDimensionDefinition[] = [
+  {
+    "code": "hand_grasp",
+    "label": "手部抓握",
+    "itemStart": 1,
+    "itemEnd": 15
+  },
+  {
+    "code": "finger_dexterity",
+    "label": "手指灵活性",
+    "itemStart": 16,
+    "itemEnd": 31
+  },
+  {
+    "code": "bilateral_coordination",
+    "label": "双手协调",
+    "itemStart": 32,
+    "itemEnd": 46
+  },
+  {
+    "code": "vmi",
+    "label": "视动整合",
+    "itemStart": 47,
+    "itemEnd": 66
+  },
+  {
+    "code": "pre_writing",
+    "label": "前书写技能",
+    "itemStart": 67,
+    "itemEnd": 78
+  },
+  {
+    "code": "self_care",
+    "label": "生活自理精细动作",
+    "itemStart": 79,
+    "itemEnd": 88
+  }
+]
+
+export const FINE_MOTOR_OPTIONS: ScaleOption[] = [
+  {
+    "value": 2,
+    "label": "掌握",
+    "description": "可稳定独立完成该项目",
+    "score": 2
+  },
+  {
+    "value": 1,
+    "label": "部分",
+    "description": "已出现萌芽或需提示/协助",
+    "score": 1
+  },
+  {
+    "value": 0,
+    "label": "未掌握",
+    "description": "目前尚不能完成该项目",
+    "score": 0
+  }
+]
+
+export const FINE_MOTOR_QUESTIONS: FineMotorQuestionData[] = [
+  {
+    "id": 1,
+    "itemCode": "fine_motor_001",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "全手掌握持积木",
+    "observation": "观察儿童以全手掌抓握方形积木，评估基础握力及手指屈曲功能。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "全手掌握持积木",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能自然且有力地张开全手掌包裹并抓握方形积木，基础抓握力量发育良好，展现出安全、稳定的手部探索意愿。",
+      "partial": "儿童在尝试抓握时，手掌张开幅度不足或握力偏弱，积木容易滑落；或在接触硬物时表现出轻微的触觉回避（敏感）。",
+      "unmastered": "儿童尚未建立主动抓握的意识，或手部长期呈握拳状，缺乏手掌伸展和基础包裹动作。"
+    },
+    "expertAdvice": "孩子们的小手需要被温柔地“唤醒”。建议家长在洗澡时用海绵球轻轻按摩孩子的手心，降低触觉防御。平时多提供柔软、大小适中的毛绒球或触觉球，用夸张、鼓励的语气引导孩子：“我们把大苹果抓紧咯！”",
+    "iepGoal": "在教师提供口语鼓励和手部触觉唤醒后，儿童能主动张开手掌，使用全手掌握持边长3-5cm的积木持续5秒，不掉落。"
+  },
+  {
+    "id": 2,
+    "itemCode": "fine_motor_002",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "桡侧指腹捏",
+    "observation": "观察儿童以拇指与食指/中指的桡侧（靠近拇指一侧）对捏细小积木。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "桡侧指腹捏",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能熟练调动拇指与食指/中指的桡侧（靠近拇指一侧的指腹）对捏细小积木，手部尺侧（小指侧）与桡侧开始出现良好的功能分化。",
+      "partial": "儿童能捏起积木，但往往需要借助无名指或小指的共同参与，或者手部整体僵硬，虎口未完全打开，桡侧力量仍在发展中。",
+      "unmastered": "儿童试图用手掌边缘或整个手掌去扒拉积木，无法将力量集中在拇指和食指/中指的指腹上。"
+    },
+    "expertAdvice": "尺桡侧分化是手部精细动作的重要里程碑。我们可以让孩子在手里（小指和无名指处）先藏一个硬币或小纸团（固定尺侧），然后再用拇指和食指去捏取桌上的小积木。这能有效帮助孩子学会单独控制桡侧手指。",
+    "iepGoal": "在小指和无名指卷曲固定（如握住小纸团）的状态下，儿童能使用拇指与食指/中指指腹，连续从桌面上捏起5块边长约2cm的小方块。"
+  },
+  {
+    "id": 3,
+    "itemCode": "fine_motor_003",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "三指捏取小物件",
+    "observation": "观察儿童以拇指、食指及中指指腹捏起桌上的小物件（如糖果大小）。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "三指捏取小物件",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能精准协调拇指、食指及中指的指腹力量，轻松捏起糖果大小的物件，展现出良好的三指协同及早期握笔雏形的准备。",
+      "partial": "儿童在捏取时，有时会用上四根手指，或者中指未能有效提供支撑（仅靠拇食指），动作略显费力，精准度有待提高。",
+      "unmastered": "儿童面对小物件时，仍习惯性地使用全手掌覆盖并向手心方向耙抓，尚未发展出指腹捏取的能力。"
+    },
+    "expertAdvice": "这个阶段的孩子最喜欢“喂食”游戏。准备一个带有小开口的纸盒（画成小怪兽的嘴巴），让孩子用三根手指捏起小毛绒球或大号通心粉去“喂小怪兽”。游戏能极大地激发他们的主动尝试意愿。",
+    "iepGoal": "在“喂小动物”的情境游戏中，儿童能持续使用拇、食、中三指的指腹，捏起10个直径约1.5cm的小毛绒球并投入容器中，准确率达80%。"
+  },
+  {
+    "id": 4,
+    "itemCode": "fine_motor_004",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "拇食指精确指尖捏",
+    "observation": "观察儿童以拇指指尖与食指指尖精确夹捏微小物件（如小串珠）。",
+    "referenceAge": {
+      "label": "3-4岁",
+      "minMonths": 36,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "拇食指精确指尖捏",
+    "expertSourceAge": "3-4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能精确运用拇指与食指指尖进行微小物件的夹捏，视觉追踪与手部动作配合默契，指尖分离与控制能力发育成熟。",
+      "partial": "儿童在捏取微小物件时，仍倾向于使用指腹（而非指尖）接触，或在夹捏瞬间需要依靠桌面作为手部支撑，指尖独立发力稍显不足。",
+      "unmastered": "儿童无法将拇指与食指独立分离开来，面对微小物件无从下手，或尝试用指甲去抠。"
+    },
+    "expertAdvice": "保护好孩子探索微小事物的好奇心！我们可以把训练变成“小鸟捉虫”的游戏，在面团或软泥里半掩埋几粒绿豆或串珠，鼓励孩子用拇食指假装“小鸟嘴巴”去精确地啄取出来，这能同时提供触觉反馈。",
+    "iepGoal": "在视觉示范下，儿童能仅使用拇指和食指指尖，从桌面上连续捏起5个微小物件（如小串珠或绿豆），转移距离至少10cm且中途不掉落。"
+  },
+  {
+    "id": 5,
+    "itemCode": "fine_motor_005",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "三指抓握蜡笔",
+    "observation": "观察儿童以拇指、食指及中指抓握蜡笔涂鸦，评估基础握笔姿势。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "三指抓握蜡笔",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能以拇指、食指及中指自然抓握蜡笔进行涂鸦，虎口呈张开状态，为未来更高级的书写姿势奠定了良好基础。",
+      "partial": "儿童勉强能用三指拿笔，但虎口紧闭，手指僵硬；或者握笔位置太靠上/靠下，画画时主要依靠整个手臂的挥动而非手腕的配合。",
+      "unmastered": "儿童仍采用原始的“一把抓”（握拳状）姿势握持蜡笔，拇指朝上或朝下，缺乏手指的分工配合。"
+    },
+    "expertAdvice": "对于特殊孩子，长条形的笔往往难以控制。请将蜡笔折断，只保留约3-4厘米的长度。短小的蜡笔会自然“强迫”孩子只能用三根手指去抓握，这比反复口头纠正姿势要有效、温和得多。",
+    "iepGoal": "提供长度不超过4cm的短粗蜡笔，儿童能自发采用拇指、食指和中指抓握的姿势，在A4画纸上进行连续30秒的自由涂鸦。"
+  },
+  {
+    "id": 6,
+    "itemCode": "fine_motor_006",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "成熟三指握笔",
+    "observation": "观察儿童以成熟的三脚架姿势（动态或静态）握持铅笔，手指位置适当。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "成熟三指握笔",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童已建立成熟的动态或静态三脚架握笔姿势，拇指、食指和中指分工明确，虎口打开，能灵活控制笔杆，握笔基础扎实。",
+      "partial": "儿童目前处于过渡阶段，可能仍使用四指握笔，或者虽然用了三指但虎口紧闭（手指僵硬捏着笔），主要依靠手腕或手臂带动笔，容易产生疲劳感。",
+      "unmastered": "儿童仍停留在全手掌一把抓的方式握笔，手部小肌肉群力量及足弓发育尚未成熟，未表现出指尖抓握意识。"
+    },
+    "expertAdvice": "不要急于纠正孩子的手指位置，强行的掰正反而会引发孩子的抗拒。我们可以使用粗三角铅笔，或者在笔杆上套一个可爱的“海豚握笔器”作为视觉和触觉的辅助。多让孩子用喷壶浇花，能有效锻炼打开虎口的力量。",
+    "iepGoal": "在三角粗铅笔或握笔器的辅助下，儿童能以虎口打开的三指姿势握笔，进行连线或涂色活动持续2分钟，期间无需成人重新调整握姿。"
+  },
+  {
+    "id": 7,
+    "itemCode": "fine_motor_007",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "正确持剪刀姿势",
+    "observation": "观察儿童拇指穿入上环、食中指穿入下环，以正确姿势握持儿童剪刀。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "正确持剪刀姿势",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能准确将拇指穿入上环、食中指穿入下环，刀刃朝前，手臂和手腕姿势稳定，展现出良好的工具操控与手指分离能力。",
+      "partial": "儿童能勉强拿住剪刀，但手指穿环错误（如食指穿上环）；或者剪切时手腕向外翻转，导致刀面无法与纸张垂直，力量运用大打折扣。",
+      "unmastered": "儿童无法将手指正确穿入剪刀环中，双手拿着剪刀盲目拉扯，或对剪刀的开合机制缺乏理解。"
+    },
+    "expertAdvice": "剪刀的握持对空间感知要求极高。教你一个小妙招：用马克笔在孩子的拇指指甲盖上画一个大大的“笑脸”。告诉孩子：“剪纸的时候，大拇指上的笑脸要一直看着自己哦！” 另外，初期强烈推荐使用带有弹簧辅助自动弹开的儿童安全剪刀，减少肌肉疲劳。",
+    "iepGoal": "在成人“笑脸朝上”的口语提示下，儿童能正确将手指穿入剪刀环中，保持手腕不外翻的姿势，连续进行5次空剪（开合）动作。"
+  },
+  {
+    "id": 8,
+    "itemCode": "fine_motor_008",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "正确握持汤勺",
+    "observation": "观察儿童以惯用手握持汤勺，勺柄方向及握持位置符合进食功能需求。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "正确握持汤勺",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能以惯用手自然握持勺柄中下部，勺柄方向正确，手腕具备基础的旋前/旋后控制力，能顺利完成舀取并送入口中的动作。",
+      "partial": "儿童握勺位置太靠近勺头或太靠近柄端，导致力臂不佳、食物容易洒漏；或使用全掌向下握持的“原始握法”，送食时需要抬高整个手臂。",
+      "unmastered": "儿童将勺柄倒置、横握，或者极度排斥使用餐具，无法进行功能性操作，停留在直接用手抓食阶段。"
+    },
+    "expertAdvice": "进食应该是无压力的。我们可以把训练转移到游戏时间，比如玩“用勺子搬运小玻璃珠/决明子”的游戏，消除孩子对洒饭的恐惧。建议为孩子挑选把手较粗、带有一定弯曲度（偏向惯用手侧）的训练勺，降低操作门槛。",
+    "iepGoal": "在提供粗柄儿童勺的就餐或游戏情境下，儿童能以惯用手正确方向握住勺柄（非全掌倒握），连续舀取物品5次，姿势保持稳定。"
+  },
+  {
+    "id": 9,
+    "itemCode": "fine_motor_009",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "握持筷子基本姿势",
+    "observation": "观察儿童尝试以正确方式握持筷子，上方筷子可活动，下方筷子相对固定。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "握持筷子基本姿势",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能尝试以上方筷子活动、下方筷子相对固定的方式握持，展现出非常高级的指内操作、手指分离与力量微调能力。",
+      "partial": "儿童会把两根筷子交叉当成剪刀/夹子使用（经常“打架”），或者需要整个手掌和手臂发力才能勉强夹住物品，手指独立性尚在建立中。",
+      "unmastered": "儿童完全无法单手同时掌控两根筷子，只能当成搅拌棒使用，或双手各拿一根乱戳。"
+    },
+    "expertAdvice": "对特殊孩子来说，筷子是极其复杂的精密工具，我们需要给予他们极大的耐心。先不要用真筷子，可以从用大号镊子或烧烤夹夹取海绵块开始，锻炼虎口控制力。进入筷子阶段时，务必从带有硅胶指环扣的儿童“学习筷”起步。",
+    "iepGoal": "借助带有指环辅助的儿童学习筷，儿童能以基本正确的姿势，从碗中成功夹起3块边长约2-3cm的海绵块或大颗粒食物，并转移到另一个碗中。"
+  },
+  {
+    "id": 10,
+    "itemCode": "fine_motor_010",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "拇食指捏珠入瓶",
+    "observation": "观察儿童以拇食指捏取小珠子并精准放入窄口瓶中，评估捏放控制力。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "拇食指捏珠入瓶",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童“捏”与“放”的动作衔接极为流畅，能精准对准窄口瓶，在恰当的时机松开手指让珠子自由落下，释放控制力与手眼协调极佳。",
+      "partial": "儿童能捏起珠子，但“放”的动作延迟或过早，导致珠子掉在瓶外；或者不敢悬空放，必须把手腕重重地靠在瓶口上才能松开手指。",
+      "unmastered": "儿童不仅捏的动作困难，且不会主动释放（抓握反射残留或控制释放能力不足），珠子常黏在手里掉不下来。"
+    },
+    "expertAdvice": "在精细动作发育中，“松开（放）”其实比“抓紧”更难，它需要大脑神经更高的抑制功能。我们可以把窄口瓶换成开口稍大的透明水杯（里面装半杯水），让孩子听珠子掉入水中“扑通”的声音。这种充满惊喜的听觉反馈，能极大激励孩子主动练习“松手”。",
+    "iepGoal": "在距离窄口瓶口上方约1-2cm的悬空位置，儿童能精准控制拇食指，连续将5颗小珠子主动释放并投入孔径约15mm的瓶中，不掉落于瓶外。"
+  },
+  {
+    "id": 11,
+    "itemCode": "fine_motor_011",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "柱状抓握细长物件",
+    "observation": "观察儿童抓握粉笔等细长物件，拇指与其他四指呈对掌状态。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "柱状抓握细长物件",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能以拇指与其他四指呈完美的“对掌状态”（拇指跨过物件与四指相对），稳固有力地抓握粉笔、鼓槌等细长工具，手掌足弓发育良好。",
+      "partial": "儿童能抓住细长物件，但拇指未能有效对掌（如拇指紧贴在食指侧面，呈内收状），或者抓握过松/过紧，导致工具在操作时容易滑动。",
+      "unmastered": "儿童无法有效抓握细长物件，或仅用手指指尖勉强勾住，手掌缺乏包裹力，未建立圆柱体抓握图式。"
+    },
+    "expertAdvice": "拇指对掌是人类手部进化的重要标志！对于手掌力量偏弱的孩子，可以让他们玩“小木匠敲钉子”的游戏，抓握儿童安全锤去敲击塑料钉。或者在洗澡时，让他们抓握粗长条的海绵去擦洗身体，提供丰富的本体觉反馈。",
+    "iepGoal": "在游戏情境中，儿童能以拇指与四指对掌的柱状抓握姿势，紧握长约15cm的圆柱体工具（如塑料锤或粗彩笔），连续进行10次敲击或涂鸦动作而不脱手。"
+  },
+  {
+    "id": 12,
+    "itemCode": "fine_motor_012",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "握笔控制书写方向",
+    "observation": "观察儿童三指握笔书写或画线时，能有意识地改变笔尖移动方向。",
+    "referenceAge": {
+      "label": "4-5岁",
+      "minMonths": 48,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "握笔控制书写方向",
+    "expertSourceAge": "4-5岁",
+    "scoreFeedback": {
+      "mastered": "儿童不仅能三指握笔，更能在大脑的有意控制下，灵巧地改变笔尖的移动方向（如画折线、转弯），视觉与运动神经传导顺畅。",
+      "partial": "儿童在尝试改变画线方向时，往往不是通过手腕或手指的微调，而是夸张地移动整个手臂，甚至需要靠转动纸张来凑合完成“转弯”。",
+      "unmastered": "儿童的运笔停留在无目的的直线抽动或惯性画圆圈上，缺乏“想画哪里就画向哪里”的有意识方向控制。"
+    },
+    "expertAdvice": "改变方向对孩子的空间规划能力要求很高。请暂时放下枯燥的字帖。我们可以玩“汽车开进停车场”的连线游戏，在纸上画一些障碍物，引导孩子：“哎呀，前面有大石头，小汽车（笔尖）要拐弯啦！” 赋予动作以情境，能极大降低枯燥感。",
+    "iepGoal": "在带有视觉障碍物提示的A4纸上，儿童能有意识地改变握笔书写方向，一笔连贯地画出包含至少2个转角（如“Z”或“L”形）的线条。"
+  },
+  {
+    "id": 13,
+    "itemCode": "fine_motor_013",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "捏取微小物件",
+    "observation": "观察儿童以拇、食、中三指捏起绿豆大小的物件，评估动作精确度及速度。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "捏取微小物件",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能极其精准且迅速地运用拇、食、中三指捏起如绿豆般大小的微小物件，动作流畅无卡顿，手指精细力量与速度俱佳。",
+      "partial": "儿童能捏起绿豆大小的物件，但在瞄准和捏紧的过程中需要反复尝试（掉落多次），动作缓慢，且容易引起手部肌肉紧张。",
+      "unmastered": "儿童面对极小物件完全束手无策，尝试用整个手掌去扫、扒拉，或无法让三指尖聚拢在一点。"
+    },
+    "expertAdvice": "针对精细度与速度的综合训练，我们可以引入“分类游戏”。准备一个制冰盒，将混在一起的黄豆和绿豆分拣开。如果孩子感到挫败，请允许他们用稍大一点的豆子开始。温柔地夸奖：“哇，你的小手像灵巧的夹子一样快！”",
+    "iepGoal": "在托盘桌面操作中，儿童能使用拇、食、中三指捏取，在1分钟内将10粒绿豆大小的物件成功转移入小口容器中。"
+  },
+  {
+    "id": 14,
+    "itemCode": "fine_motor_014",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "指内操作：转动笔杆",
+    "observation": "观察儿童在书写中途，仅通过手指动作转动笔杆调整角度，无需放下笔。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "指内操作：转动笔杆",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童在书写或绘画中途，能灵动自如地仅凭单手手指微调笔杆角度，高级精细动作及本体觉感知能力表现优异。",
+      "partial": "儿童在需要调整笔杆时，必须借助另一只手帮忙，或者动作僵硬、容易使笔掉落，指内小肌肉群的协同性还需提升。",
+      "unmastered": "儿童完全缺乏指内操作的意识，调整笔尖时必须将笔完全放下再重新抓握。"
+    },
+    "expertAdvice": "这是一个极具挑战的高级技能。我们可以和孩子玩“手指爬树”游戏：单手拿着一根铅笔，只用手指的交替动作，让手指从笔的底端“爬”到顶端，再“爬”下来。这能有效激活指内小肌肉的力量。",
+    "iepGoal": "在无物理辅助的情况下，儿童能在单手持笔状态下，仅通过手指的屈伸动作将笔杆转动半圈（180度）以调整笔尖方向，连续成功2次。"
+  },
+  {
+    "id": 15,
+    "itemCode": "fine_motor_015",
+    "dimension": "hand_grasp",
+    "dimensionName": "手部抓握",
+    "title": "抓握配合手腕旋转",
+    "observation": "观察儿童抓握工具时配合手腕的旋前/旋后动作，如拧螺丝或用画笔涂色。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "抓握配合手腕旋转",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童不仅能牢牢抓握工具，同时还能极其自然地调动手腕进行旋前（手心向下）或旋后（手心向上）的动作，如丝滑地拧螺丝或翻转画笔。",
+      "partial": "儿童在旋转工具时，往往需要锁死手腕，靠整个肩膀或手臂的内外旋来代偿（动作看起来像是在摇晃整个上半身）；或者一转动手腕，抓握的工具就会松脱。",
+      "unmastered": "儿童的手腕缺乏旋转灵活性，只能做上下或左右的平移动作，无法完成涉及扭转的功能性任务。"
+    },
+    "expertAdvice": "手腕的灵活旋转是打开许多生活技能（如开门、用钥匙）的“大门”。在日常生活中，多让孩子帮忙“翻面”：比如在厨房帮忙用小铲子翻饼，或者玩纸牌游戏时，让他们单手把牌翻开。",
+    "iepGoal": "儿童能单手抓握儿童塑料螺丝刀，配合手腕的旋前和旋后动作，将大号塑料螺丝拧入带孔底座，完成至少3个完整的旋转周期（360度）。"
+  },
+  {
+    "id": 16,
+    "itemCode": "fine_motor_016",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "穿珠（大孔）",
+    "observation": "观察儿童将大珠子逐一穿入粗线（孔径≥8mm），评估基础的手眼协调。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "双手协调穿大孔珠子",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能熟练配合双手，一手稳定持线，另一手准确将大珠子穿入，展现出良好的基础手眼协调与双手不对称分工能力。",
+      "partial": "儿童能用手指捏住珠子和线，但在对准孔洞或双手交接拉线时存在困难，经常掉落，需要成人从旁协助稳定。",
+      "unmastered": "儿童尚无法理解穿珠的步骤，或手指抓握力量不足，无法同时控制线和珠子。"
+    },
+    "expertAdvice": "穿珠不仅是动作训练，更是专注力的培养。建议初期使用带有硬质引导头（如鞋带）的粗线和孔径较大的木珠。可以赋予游戏意义，例如“给妈妈做一条漂亮的项链”，以情感驱动激发孩子的操作动机。",
+    "iepGoal": "在成人的口语提示和视觉示范下，儿童能使用双手配合，将5个孔径≥8mm的大珠子连续穿入带有硬头的粗线中，过程中掉落不超过1次。"
+  },
+  {
+    "id": 17,
+    "itemCode": "fine_motor_017",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "精准投放（窄口瓶）",
+    "observation": "观察儿童以拇食指捏起珠子，准确投入窄口玻璃瓶（孔径约15mm）中。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "精准投放（窄口瓶）",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童已具备成熟的拇食指指尖捏取能力，能够精准对焦，平稳地将珠子投入窄口瓶中。",
+      "partial": "儿童能捏起珠子，但在投放时手部会颤抖，或使用手掌边缘摩擦瓶口掉入，视觉引导下的空间定位尚在发展中。",
+      "unmastered": "儿童仍习惯用全手掌一把抓取物品，无法分离出拇指和食指进行精细捏取，或无法对准瓶口。"
+    },
+    "expertAdvice": "尊重孩子的发展节奏，若指尖力量不足，可先玩“喂小怪兽吃豆豆”的游戏，先使用广口罐，再逐渐过渡到窄口瓶。提供不同材质（如毛绒球、木珠）以丰富触觉反馈。",
+    "iepGoal": "在视觉辅助下，儿童能运用拇指和食指的指尖捏取，将10颗小珠子准确投入孔径约15mm的窄口瓶中，准确率达80%。"
+  },
+  {
+    "id": 18,
+    "itemCode": "fine_motor_018",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "双手搓圆（彩泥）",
+    "observation": "观察儿童以双手掌心相对搓揉彩泥成光滑球状，评估手掌力量与协调。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "双手搓圆（彩泥）",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能双掌心相对，以匀速、均匀的力度搓揉彩泥，顺利将其塑造成光滑的球状，双手协调性极佳。",
+      "partial": "儿童能做出双手交替搓揉的动作，但因用力不均或动作生硬，彩泥呈不规则的圆柱体或扁平状。",
+      "unmastered": "儿童只能用手指胡乱抓捏彩泥，或双手无法做出反方向的搓揉摩擦动作。"
+    },
+    "expertAdvice": "手掌的本体觉反馈对孩子至关重要。训练前可先让孩子双手摩擦生热（“搓搓小手变暖和”），唤醒手掌感知。使用较软的培乐多彩泥，和孩子一起做“美味的汤圆”，在轻松的氛围中体会掌心施力。",
+    "iepGoal": "在成人的肢体引导（手把手）逐渐撤退下，儿童能用双手掌心相对，在1分钟内将一小块彩泥搓成大致的球形，完成3个。"
+  },
+  {
+    "id": 19,
+    "itemCode": "fine_motor_019",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "掌心压扁彩泥",
+    "observation": "观察儿童用手掌或拇指施力将彩泥压平，评估手部施力与控制。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "掌心压扁彩泥",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能根据意图，准确运用手掌根部或大拇指腹对彩泥施加垂直向下的压力，控力精准。",
+      "partial": "儿童能尝试压扁彩泥，但多依赖整个手臂甚至身体的重力去压，手部小肌肉的主动发力与控制较弱。",
+      "unmastered": "儿童对彩泥的触觉较为敏感/逃避，或不知道如何向下施力，仅停留在轻轻拍打的层面。"
+    },
+    "expertAdvice": "如果孩子有轻微的触觉防御，不要强迫，可隔着透明保鲜膜进行按压。我们可以玩“做披萨饼”的游戏，鼓励孩子用掌根用力“盖章”，增强手部核心力量。",
+    "iepGoal": "在游戏情境中，儿童能主动运用手掌或拇指腹，将5个彩泥球压平至厚度小于1cm的圆饼状。"
+  },
+  {
+    "id": 20,
+    "itemCode": "fine_motor_020",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "逐页翻书",
+    "observation": "观察儿童以拇指和食指捏住单页边缘翻阅图画书，不会一次翻起多页。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "逐页翻书",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能运用拇指和食指轻巧地捏住单页纸张边缘，顺畅地逐页翻阅，精细控制力良好。",
+      "partial": "儿童有翻书的意愿，但偶尔会一次翻起两三页，或需要用整个手掌去搓揉页面才能分开纸张。",
+      "unmastered": "儿童多用手掌一把推开书页，或粗暴撕扯，无法分离出双指进行捏取翻页。"
+    },
+    "expertAdvice": "阅读是一场美丽的探索。建议初期提供带有厚度的纸板书。可以在普通图画书的右下角贴上小块的海绵贴纸或回形针，为孩子提供一个明确的“抓捏点”，降低挫败感。",
+    "iepGoal": "在自主阅读或共读时，儿童能使用拇指和食指捏取页面边缘，连续逐页翻开一本普通图画书的5页，不出现多页连翻的现象。"
+  },
+  {
+    "id": 21,
+    "itemCode": "fine_motor_021",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "拧开瓶盖",
+    "observation": "观察儿童以拇指及四指握住瓶盖，作逆时针旋转动作拧开。",
+    "referenceAge": {
+      "label": "3-4岁",
+      "minMonths": 36,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "拧开瓶盖",
+    "expertSourceAge": "3-4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能一手稳定瓶身，另一手运用拇指及四指形成C型抓握，灵活地逆时针旋转拧开瓶盖。",
+      "partial": "儿童知道拧的动作，但手指握力不足，往往只能拧动半圈就滑脱；或者需要将瓶子抵在肚子上借力。",
+      "unmastered": "儿童尝试直接往上拔瓶盖，缺乏“旋转”的动作概念和手腕的旋后能力。"
+    },
+    "expertAdvice": "建立孩子的自信心从“容易成功”的挑战开始。可以先由成人将瓶盖拧松至最后半圈，让孩子完成最后一步。在瓶子里装入孩子喜欢的小贴纸或零食，将开瓶盖变成一种“寻宝”奖励。",
+    "iepGoal": "给予初始状态已拧松一圈的塑料瓶，儿童能一手握住瓶身，另一手使用手指逆时针旋转，独立将直径3cm的瓶盖完全拧下。"
+  },
+  {
+    "id": 22,
+    "itemCode": "fine_motor_022",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "解开大纽扣",
+    "observation": "观察儿童运用拇指和食指配合，解开衣服上的大纽扣（直径≥15mm）。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "解开大纽扣",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能双手默契配合，一手捏住扣眼边缘，一手将纽扣侧向推出并拉出，动作流畅连贯。",
+      "partial": "儿童能将纽扣推出扣眼一半，但另一只手不会接应拉出，导致纽扣卡在扣眼中。",
+      "unmastered": "儿童会用力拉拽衣服，无法理解纽扣与扣眼之间的空间对应关系。"
+    },
+    "expertAdvice": "脱衣自理是孩子走向独立的标志。先在桌面上使用扣衣板（平面操作）进行练习。告诉孩子“让扣子宝宝从门里走出来”，使用对比强烈的颜色（如红扣子、蓝布）来增强视觉辨识度。",
+    "iepGoal": "在桌面放置扣衣板的情境下，儿童能运用双手协同，在2分钟内独立解开3个直径≥15mm的大纽扣。"
+  },
+  {
+    "id": 23,
+    "itemCode": "fine_motor_023",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "扣上大纽扣",
+    "observation": "观察儿童双手指尖配合，将纽扣穿过扣眼并拉出固定，评估双手精细协调。",
+    "referenceAge": {
+      "label": "4-5岁",
+      "minMonths": 48,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "扣上大纽扣",
+    "expertSourceAge": "4-5岁",
+    "scoreFeedback": {
+      "mastered": "儿童具备极佳的指尖操作与触觉感知能力，能将纽扣半穿过扣眼后，另一手迅速从背面接应并拉紧固定。",
+      "partial": "儿童能将纽扣塞入扣眼，但在背面寻找并拉出纽扣时显得笨拙，过度依赖视觉查看，导致动作变形。",
+      "unmastered": "儿童无法将纽扣对准扣眼，或双手力量不足以将纽扣塞入狭窄的开口。"
+    },
+    "expertAdvice": "扣纽扣比解纽扣需要更高阶的空间想象和指内操作。建议先将扣眼剪稍微大一点，降低阻力。家长可以采用“向后链接法”，即家长把纽扣穿过大半，让孩子练习最后“揪出来”的动作，给予他们成功的体验。",
+    "iepGoal": "在穿着开衫外套的情况下（有镜子作为视觉辅助），儿童能双手配合，成功将3个直径≥15mm的纽扣穿入对应的扣眼并拉出固定。"
+  },
+  {
+    "id": 24,
+    "itemCode": "fine_motor_024",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "桌面搓长条（彩泥）",
+    "observation": "观察儿童用手掌在桌面上将彩泥搓成均匀的长条，评估手掌施力均匀度。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "桌面搓长条（彩泥）",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能利用手掌在桌面上平稳施力，前后滚动彩泥，搓出粗细均匀的长条。",
+      "partial": "儿童能做出前后搓动的姿势，但由于掌心施力不均，长条容易断裂，或呈现一头粗一头细的形状。",
+      "unmastered": "儿童只会向下拍打压扁彩泥，无法做出在桌面上前后推动的动态位移动作。"
+    },
+    "expertAdvice": "感受双手的节奏与力度是这项活动的核心。家长可以握住孩子的手背，一起感受“小火车开向前又开回来”的律动。如果彩泥太滑，可以在稍微粗糙的防滑垫上进行练习。",
+    "iepGoal": "在教师提供“前后推拉”的口令提示下，儿童能用单手或双手手掌在桌面上将一块彩泥搓成长度至少10cm、且无断裂的长条。"
+  },
+  {
+    "id": 25,
+    "itemCode": "fine_motor_025",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "穿珠（小孔）",
+    "observation": "观察儿童将小珠子穿入细线（孔径≤5mm），评估高级精细协调及视觉引导。",
+    "referenceAge": {
+      "label": "4-5岁",
+      "minMonths": 48,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "穿珠（小孔）",
+    "expertSourceAge": "4-5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能熟练地将细线穿过小孔径珠子，展现出优秀的高级精细协调及手眼视觉引导能力。",
+      "partial": "儿童能够捏住小珠子和细线，但在对准孔洞或双手交替拉线时存在困难，手眼协调的精确度有待提升。",
+      "unmastered": "儿童无法用指尖精准捏取小珠子，或无法将视线聚焦在微小的孔洞上。"
+    },
+    "expertAdvice": "降低难度，先从穿大孔径的木珠、通心粉开始。训练时，可让儿童先练习将牙签插入带有小孔的泡沫板中，以提高视觉对准能力。",
+    "iepGoal": "在教师的语言提示和轻微肢体引导下，儿童能使用双手配合，将3个孔径为5mm的小珠子连续穿入硬头细绳中。"
+  },
+  {
+    "id": 26,
+    "itemCode": "fine_motor_026",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "拧螺丝入孔",
+    "observation": "观察儿童以拇、食、中指捏住螺丝，对准孔位后作顺时针旋转拧入。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "拧螺丝入孔",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能以三指（拇、食、中指）稳稳捏住螺丝，精准对位，并使用手腕旋转的力量将其顺时针拧入。",
+      "partial": "儿童能将螺丝放入孔内，但缺乏手指转动的技巧，多依赖手掌向下按压，或只能拧动一圈。",
+      "unmastered": "儿童的手指分化不足，无法做出捏拿螺丝的动作，或完全不理解顺时针旋转的原理。"
+    },
+    "expertAdvice": "这项活动极大地促进了孩子未来的握笔能力。建议提供尺寸较大的彩色木质螺丝玩具。可以念口诀“向右转，紧紧紧”，帮助孩子将动作记忆与方向认知结合起来。",
+    "iepGoal": "在视觉对准后，儿童能运用拇、食、中指捏住大号木质螺丝，顺时针旋转至少3圈将其拧入对应的螺丝孔中。"
+  },
+  {
+    "id": 27,
+    "itemCode": "fine_motor_027",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "拉上拉链",
+    "observation": "观察儿童一手固定拉链底端，另一手捏住拉链头向上拉至顶端。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "拉上拉链",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能熟练进行不对称的双手协作，一手稳稳固定衣服下摆和拉链底端，另一手捏住拉链头平顺向上拉。",
+      "partial": "儿童会向上拉拉链，但常常忘记用辅助手固定底端，导致整件衣服被提起来，拉链卡住。",
+      "unmastered": "儿童无法捏住细小的拉链头，或完全无法完成双手分开工作的任务。"
+    },
+    "expertAdvice": "双手分工是执行复杂生活技能的基础。为了方便孩子抓握，可以在拉链头上系一根彩色短绳或挂一个小圆环。经常提醒孩子“左手踩住刹车（拉住底边），右手踩油门（往上拉）”。",
+    "iepGoal": "在成人帮忙对齐并扣好拉链底部的初始前提下，儿童能一手向下固定衣服底边，另一手捏住拉链头，顺滑地将其向上拉至顶端。"
+  },
+  {
+    "id": 28,
+    "itemCode": "fine_motor_028",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "手指分离动作（逐一伸屈）",
+    "observation": "观察儿童能逐一弯曲和伸展五根手指，如进行“点数手指”动作。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "手指分离动作（逐一伸屈）",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童的大脑能向特定手指发送精确指令，能清晰、独立地逐一弯曲和伸展五根手指，无连带动作。",
+      "partial": "儿童能勉强分离出食指和小指，但在动中指或无名指时，其他手指会不受控制地跟着一起动（溢出动作）。",
+      "unmastered": "儿童只能进行全手的抓握和张开，无法单独伸出任意一根手指（如比划数字“1”）。"
+    },
+    "expertAdvice": "手指的独立性需要神经发育的成熟。我们可以通过唱歌谣（如《手指家族》）结合动作来练习。或者玩“按琴键”游戏，在桌面上画五个圆圈，让孩子像弹钢琴一样用特定的手指去敲击。",
+    "iepGoal": "在儿歌指令的引导下，儿童能模仿教师，双手分别独立伸出食指进行“指认”动作，并能逐一伸出1至3根手指（如数数1、2、3），连带动作不明显。"
+  },
+  {
+    "id": 29,
+    "itemCode": "fine_motor_029",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "手指对捏交替（对指）",
+    "observation": "观察儿童以拇指依次与其他四指指尖快速对捏接触，评估动作流畅度及速度。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "手指对捏交替（对指）",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能极其流畅、快速地用拇指依次与食指、中指、无名指、小指指尖精准对碰，展现出高级的指内运动能力。",
+      "partial": "儿童能完成对指，但速度非常缓慢，需要眼睛紧紧盯着手指，且偶尔会跳过无名指。",
+      "unmastered": "儿童无法让大拇指跨越手掌与其他手指相碰，或只能做到拇指与食指的捏合。"
+    },
+    "expertAdvice": "这是一项极好的健脑练习。为了增加趣味性，可以在孩子的每个指尖上画上不同的表情符号或贴上小贴纸，玩“大拇指先生去拜访邻居”的过家家游戏，在充满爱的互动中完成训练。",
+    "iepGoal": "在视觉监控下，儿童能以拇指为基准，依次与食指、中指、无名指、小指指尖进行接触，完成一次完整的单手正向“对指”动作序列，耗时不超过10秒。"
+  },
+  {
+    "id": 30,
+    "itemCode": "fine_motor_030",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "手指卷纸筒",
+    "observation": "观察儿童用手指灵活地将薄纸卷成圆筒状，评估手指协调性。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "手指卷纸筒",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能双手精细协作，用指尖灵巧地控制薄纸的边缘，均匀施力将其卷成紧致的圆筒状。",
+      "partial": "儿童尝试卷纸，但手指控制力不足，往往把纸压折成扁平状，或者卷得非常松散。",
+      "unmastered": "儿童捏不住薄纸的边缘，或由于动作粗鲁直接将纸张撕破、揉团。"
+    },
+    "expertAdvice": "薄纸操作对力量控制（不能太大也不能太小）要求极高。初始阶段，可以提供一根粗水彩笔作为轴心，让孩子将纸绕着笔杆卷，体会“包裹”与“旋转”结合的感觉。",
+    "iepGoal": "提供一根圆柱体笔杆作为辅助轴心，儿童能用双手指尖捏住A5大小薄纸的边缘，沿笔杆将其卷绕成圆筒状，最后由成人协助粘贴固定。"
+  },
+  {
+    "id": 31,
+    "itemCode": "fine_motor_031",
+    "dimension": "finger_dexterity",
+    "dimensionName": "手指灵活性",
+    "title": "手指捏塑造型（彩泥）",
+    "observation": "观察儿童用手指捏压彩泥，做出简单的平面或立体造型，评估手指精确控制力。",
+    "referenceAge": {
+      "label": "4-5岁",
+      "minMonths": 48,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "手指捏塑造型（彩泥）",
+    "expertSourceAge": "4-5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能综合运用指尖捏、压、拉等高级精细动作，将彩泥塑造出具有清晰特征的简单造型（如小兔子的长耳朵）。",
+      "partial": "儿童有造型的意图，但手指不够灵巧，细节处理粗糙，主要靠手掌的大动作拍打或揉搓。",
+      "unmastered": "儿童只能无目的地撕扯或拍打彩泥，无法用手指塑造出任何具象或几何形状。"
+    },
+    "expertAdvice": "创造力与动手能力是相辅相成的。不要在意孩子做得“像不像”，而是关注他们是否使用了指尖。可以玩“给小刺猬做刺”的游戏，鼓励孩子用大拇指和食指从彩泥球上揪出小尖角。",
+    "iepGoal": "在主题手工活动中，儿童能主动使用大拇指和食指的指尖，通过“捏”和“揪”的动作，在彩泥球上捏出至少3个明显的凸起部分（如模仿动物的耳朵或刺）。"
+  },
+  {
+    "id": 32,
+    "itemCode": "fine_motor_032",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "双手拍手",
+    "observation": "观察儿童双手掌心相对准确拍击，评估双侧肢体同步基础动作。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "双手拍手",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能将双手掌心相对，在中线位置准确、有节奏地拍击，展现出良好的双侧肢体同步整合能力。",
+      "partial": "儿童能做出拍打动作，但经常错位（如手背拍掌心，或只有手指边缘碰到），力度不均，中线意识尚在发展中。",
+      "unmastered": "儿童无法主动将双手在胸前合拢，或对拍手的触觉/听觉反馈感到敏感抗拒。"
+    },
+    "expertAdvice": "拍手是唤醒大脑双侧协同的第一步。建议家长从背后环抱孩子，手把手带着他们伴随节奏明快的儿歌（如《幸福拍手歌》）进行练习。若孩子触觉敏感，可先让他们戴着薄手套拍手，逐渐过渡。",
+    "iepGoal": "在欢快的音乐伴奏和成人的口语鼓励下，儿童能主动将双手放置于身体中线位置，连续且准确地进行掌心对拍动作至少5次。"
+  },
+  {
+    "id": 33,
+    "itemCode": "fine_motor_033",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "双手端物行走",
+    "observation": "观察儿童双手平稳端着托盘或容器行走，评估双侧肢体平衡与协调。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "双手端物行走",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能双手平稳地握住托盘或容器的两侧，在行走时保持双侧肢体平衡，视线能看向前方且物品不掉落。",
+      "partial": "儿童能双手端物，但行走时身体摇晃剧烈，需要全程死死盯着手里的物品，或只能走极短的距离。",
+      "unmastered": "儿童无法双手同时端平容器，常试图单手拎着走，或一走动容器就立刻倾斜导致物品掉落。"
+    },
+    "expertAdvice": "这项技能极大地考验前庭平衡与本体觉的整合。初期训练请使用宽大的轻质托盘，里面放上不易滚动或散落的物品（如毛绒玩具或大号海绵块）。玩“小小送餐员”的游戏，增加使命感。",
+    "iepGoal": "在无障碍物的平整地面上，儿童能双手端着放有一个空塑料杯的小托盘，平稳向前行走3米，杯子不倾倒、不滑落。"
+  },
+  {
+    "id": 34,
+    "itemCode": "fine_motor_034",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "双手配合撕纸",
+    "observation": "观察儿童一手固定纸张，另一手向前后拉扯撕开，评估双手不对称分工。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "双手配合撕纸",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能流畅地执行经典的“不对称分工”：一手捏住纸张向身体方向拉，另一手向外推，轻松将纸撕开。",
+      "partial": "儿童尝试撕纸，但双手只是向两边生拉硬拽（平行用力），或不会利用指尖发力，导致撕纸过程艰难。",
+      "unmastered": "儿童只会单手扯纸，或习惯性将纸张放进嘴里咬，不具备双手反向发力的概念。"
+    },
+    "expertAdvice": "撕纸是绝佳的情绪宣泄和手部力量训练。为了让孩子体验成功，初始阶段请提供极易撕开的材质（如皱纹纸、餐巾纸），或在较硬的纸上预先剪开一个小豁口。可以玩“给小羊撕青草”的假想游戏。",
+    "iepGoal": "提供一张边缘已剪开2cm豁口的彩纸，儿童能运用双手拇指和食指捏住豁口两侧，一前一后反向用力，撕下至少3条纸条。"
+  },
+  {
+    "id": 35,
+    "itemCode": "fine_motor_035",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "双手配合倒水",
+    "observation": "观察儿童一手扶稳水杯，另一手提水壶倒水，评估双手分工与稳定性。",
+    "referenceAge": {
+      "label": "3-4岁",
+      "minMonths": 36,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "双手配合倒水",
+    "expertSourceAge": "3-4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能一手稳稳扶住水杯（辅助手），另一手提水壶倾斜倒水（操作手），不仅能对准杯口，还能控制倒水量。",
+      "partial": "儿童能提起水壶倒水，但经常忘记用另一只手扶住杯子导致杯子倾倒；或者双手配合僵硬，倒水时大量洒在外面。",
+      "unmastered": "儿童双手力量不足以提起水壶，或完全缺乏将液体从一个容器转移到另一个容器的空间对应概念。"
+    },
+    "expertAdvice": "真实的倒水可能会让孩子因怕弄湿而紧张。建议先进行“干倒”练习：用大号量杯将干豆子、通心粉或沙子倒进广口碗里。提示孩子“左手抱住小碗（扶稳），右手提起水壶”。",
+    "iepGoal": "在桌面活动中，儿童能一手主动扶稳塑料小水杯，另一手握住小水壶的把手，将大半壶干豆子准确倒入杯中，洒出桌面不超过3粒。"
+  },
+  {
+    "id": 36,
+    "itemCode": "fine_motor_036",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "双手折纸（边对边）",
+    "observation": "观察儿童将A4纸对齐折叠一次，通过边缘对齐程度评估双手协调性。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "双手折纸（边对边）",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能在桌面上将纸张对折，双手协调配合，使两边边缘基本对齐，并用手指压平折痕。",
+      "partial": "儿童能将纸卷起或压折，但两边边缘明显错开较大距离，或不懂得用另一只手固定纸张来压实折痕。",
+      "unmastered": "儿童只是随意把纸揉成一团，缺乏“折叠”和“对齐”的认知概念。"
+    },
+    "expertAdvice": "空间对齐需要强烈的视觉辅助。家长可以在纸张两端分别画上相同颜色的圆点，告诉孩子“让红色的圆点亲一亲（对准）”。从较硬挺的卡纸开始，因为它比软纸更容易控制。",
+    "iepGoal": "在纸张四角有颜色圆点提示的情况下，儿童能将A4大小的画纸进行一次边对边折叠，使提示点基本重合，并用手掌或手指压出明显折痕。"
+  },
+  {
+    "id": 37,
+    "itemCode": "fine_motor_037",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "双手折纸（角对角）",
+    "observation": "观察儿童将纸张的角对角折成三角形，评估较高级的双手精确协调。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "双手折纸（角对角）",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能跨越纸张的对角线空间，将纸张的顶点精准对齐折成三角形，双手操作精确度高且压痕清晰。",
+      "partial": "儿童试图将角对折，但由于双手配合不够细腻，顶点偏差较大，折出的形状呈梯形或不规则。",
+      "unmastered": "儿童无法理解对角线的空间跨越，只能做简单的平行/边对边折叠，或完全不配合。"
+    },
+    "expertAdvice": "角对角涉及更复杂的几何空间感知。建议先用尺寸较小的正方形折纸（易于掌控），讲一个“给小动物做尖尖屋顶”的故事，让折纸过程充满趣味。",
+    "iepGoal": "独立操作一张15cm*15cm的正方形折纸，儿童能进行一次角对角折叠，双手配合使两个对角顶点重合（偏差不超过1cm），并压平折痕。"
+  },
+  {
+    "id": 38,
+    "itemCode": "fine_motor_038",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "拉开自封袋/密封袋",
+    "observation": "观察儿童一手捏住袋身，另一手拉开自封袋封口，评估双手配合的稳定性。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "拉开自封袋/密封袋",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能一手紧紧抓住袋身作为稳定支点，另一手用指尖捏住封口边缘用力拉开，动作利落。",
+      "partial": "儿童双手都在扯袋身，不知道寻找顶部的封口缝隙；或虽然找到了，但指尖捏力不足，频频打滑拉不开。",
+      "unmastered": "儿童遇到自封袋直接放弃，或试图用牙齿咬开，双手不会协同寻找突破口。"
+    },
+    "expertAdvice": "这是一项极其重要的生活自理技能。可以在袋子里装入孩子最喜欢的零食或小玩具作为内在动机。初期使用带有滑动拉链的大号密封袋，逐步过渡到需要用力掰开的普通自封袋。",
+    "iepGoal": "提供一个装有强化物的中号普通自封袋，儿童能独立寻找封口，一手捏住袋子一侧，另一手捏住另一侧用力拉开，获取内部物品。"
+  },
+  {
+    "id": 39,
+    "itemCode": "fine_motor_039",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "沿直线剪纸",
+    "observation": "观察儿童一手持纸，一手握剪刀，沿直线剪开，评估双手配合剪切能力。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "沿直线剪纸",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能一手持纸并随着剪切进度平稳向前推进纸张，另一手流畅开合剪刀，沿直线剪开。",
+      "partial": "儿童能剪开纸，但拿纸的手（辅助手）停留在原地不动，导致剪到最后纸张扭曲或剪刀卡住。",
+      "unmastered": "儿童双手无法分工，要么只会握剪刀不会拿纸，要么无法做出连续的剪切动作。"
+    },
+    "expertAdvice": "剪刀的使用是双手协调的里程碑。可以形象地比喻：“左手是拿图纸的向导，右手是开挖掘机的司机”。在硬卡纸上画出2-3厘米宽的粗黑线或贴上彩色胶带，为孩子提供清晰的视觉轨道。",
+    "iepGoal": "给予画有粗线条的卡纸，儿童能一手拿纸，一手持剪刀，双手配合连续剪开长达10cm的直线，路线偏离不超出视觉提示线的范围。"
+  },
+  {
+    "id": 40,
+    "itemCode": "fine_motor_040",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "沿曲线剪纸",
+    "observation": "观察儿童按曲线路径剪切，非惯用手配合转动纸张，偏离线条≤5mm。",
+    "referenceAge": {
+      "label": "4-5岁",
+      "minMonths": 48,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "沿曲线剪纸",
+    "expertSourceAge": "4-5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能熟练利用非惯用手转动纸张来适应曲线的弧度，剪刀手保持稳定剪切，动作协调连贯。",
+      "partial": "儿童在遇到曲线时，试图通过扭曲手腕（剪刀手）去追线条，而不是转动纸张，导致剪切困难或偏离线条。",
+      "unmastered": "儿童只能沿直线一刀剪，遇到曲线就会把纸剪断，或者干脆用手撕开。"
+    },
+    "expertAdvice": "核心在于唤醒“辅助手”的动态参与。剪纸前，先玩“双手持盘子开车”的游戏，练习转盘子的动作。在纸上画大弧度的“水波纹”或“蛇形线”，提醒孩子“转动纸，剪刀不动”。",
+    "iepGoal": "面对画有宽约1cm的曲线卡纸，儿童能通过非惯用手主动转动纸张调整方向，沿曲线路径剪切至少15cm的长度，不随意剪断纸边。"
+  },
+  {
+    "id": 41,
+    "itemCode": "fine_motor_041",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "沿轮廓剪圆形",
+    "observation": "观察儿童沿圆形轮廓剪下，形状接近正圆，评估剪切的连贯性及双手动态配合。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "沿轮廓剪圆形",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能在连续剪切的过程中，非惯用手平滑地、小幅度地持续旋转纸张，剪出的形状接近正圆形。",
+      "partial": "儿童剪出的圆形呈多边形，因为他们只会停下来直剪一刀，再转一下纸直剪一刀，缺乏动态的平滑配合。",
+      "unmastered": "儿童进行破坏性剪切，完全无法顺应圆形的轮廓，形状支离破碎。"
+    },
+    "expertAdvice": "圆形剪切要求极高的大脑双侧同步微调能力。可先让孩子用手指描摹圆盘的边缘，感受“圆滑无角”的轨迹。使用较硬的纸盘（纸杯底）让孩子沿着边缘剪，硬质边界能提供触觉引导。",
+    "iepGoal": "提供画有直径10cm粗线圆形的纸张，儿童能运用双手动态配合（一手连贯剪，一手持续转），沿轮廓剪下圆形，最终形状无明显锐角。"
+  },
+  {
+    "id": 42,
+    "itemCode": "fine_motor_042",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "一手按纸一手涂色",
+    "observation": "观察儿童非惯用手按压画纸，惯用手持笔涂色，评估双手稳定分工。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "一手按纸一手涂色",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童在涂色或绘画时，非惯用手会本能地、稳定地平放在画纸上固定，主力手流畅运笔，互不干扰。",
+      "partial": "儿童需要大人的频繁口头提醒才会去按纸，一旦画得投入，辅助手就会移开，导致纸张滑动。",
+      "unmastered": "儿童的非惯用手始终垂在身侧或放在腿上，完全不参与桌面操作，当纸滑动时只会表现出挫败感。"
+    },
+    "expertAdvice": "良好的案头习惯能极大提升专注力。我们可以在画纸的左上角（如果是右撇子）贴一张可爱的“小手印”贴纸，告诉孩子“把你的小手放在这里休息，帮画纸站稳”。",
+    "iepGoal": "在持续3分钟的桌面涂鸦或涂色活动中，儿童能主动将非惯用手放置于纸张边缘进行固定，活动期间纸张明显滑动的次数不超过2次。"
+  },
+  {
+    "id": 43,
+    "itemCode": "fine_motor_043",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "双手悬空搓圆（彩泥）",
+    "observation": "观察儿童双掌相对悬空搓揉彩泥，评估双手掌侧力量协调及节奏配合。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "双手悬空搓圆（彩泥）",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能双臂抬起，掌心相对悬空，以一致的节奏画圆搓揉彩泥，双手掌侧力量协调极佳。",
+      "partial": "儿童能悬空操作，但一只手完全僵硬不动，另一只手在上面画圈摩擦；或只能前后搓成条状，不会画圆。",
+      "unmastered": "儿童手臂力量不足，必须把手架在桌面上才能操作，或者悬空时直接将彩泥捏碎。"
+    },
+    "expertAdvice": "悬空操作极大地考验了肩颈稳定性及核心力量。可以让孩子站起来玩“揉小面团飞上天”的游戏，在胸前的高度进行操作，感受双掌合抱的空间感和摩擦力。",
+    "iepGoal": "撤除桌面支撑，儿童能双臂悬空、双手掌心相对，以画圈的方式连续搓揉彩泥块10秒钟，初步塑造出球体轮廓。"
+  },
+  {
+    "id": 44,
+    "itemCode": "fine_motor_044",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "双手配合穿线",
+    "observation": "观察儿童一手持线头，另一手拿带孔物件引导穿过，评估双侧配合度。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "双手配合穿线",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童一手捏线头，一手拿带孔物件，视线聚焦，不仅能精准对穿，还能在孔洞另一侧利落地接住线头拉出。",
+      "partial": "儿童能把线头塞进孔里，但不懂得放开拿物件的手指去接应线头，导致线头又滑落回去，动作衔接不畅。",
+      "unmastered": "儿童双手动作缺乏视觉的统一监控，两只手各做各的，无法完成将线对准孔洞的交汇动作。"
+    },
+    "expertAdvice": "这项活动需要高度的双侧整合与手眼协调。玩“小火车钻山洞”的游戏，口令引导：“火车头进去啦，快到洞口另一边接住它！”先使用粗直的硬吸管和鞋带进行练习。",
+    "iepGoal": "给予一根鞋带和5个大孔木珠/通心粉，儿童能独立将线头穿入孔洞，并从另一端完全接应拉出，连续成功穿好5个，无中途掉落。"
+  },
+  {
+    "id": 45,
+    "itemCode": "fine_motor_045",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "双手拼插积木",
+    "observation": "观察儿童双手配合进行拼插积木（如乐高）的组装，评估双手力量及方向控制。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "双手拼插积木",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能双手各自持一块积木，轻松判断卡槽方向并对准，均匀施加双臂力量将其压紧拼插在一起。",
+      "partial": "儿童能将两块积木对准，但悬空按压的力量不够，需要把积木放在桌面上死死往下压才能拼合。",
+      "unmastered": "儿童无法将两块积木的方向对齐，或者双手配合不好，只会把积木推倒或扫开。"
+    },
+    "expertAdvice": "拼插不仅是手部力量，更是空间方向感的体现。从阻力较小的大颗粒积木（如得宝）开始。鼓励孩子听积木拼合时发出的“咔哒”声，以此作为成功的听觉强化反馈。",
+    "iepGoal": "在无桌面借力的情况下，儿童能双手悬空持握2块大颗粒拼插积木，通过视觉对齐卡槽，双向发力将其紧密拼合在一起。"
+  },
+  {
+    "id": 46,
+    "itemCode": "fine_motor_046",
+    "dimension": "bilateral_coordination",
+    "dimensionName": "双手协调",
+    "title": "双手系鞋带（打交叉结）",
+    "observation": "观察儿童尝试用双手完成系鞋带的第一步交叉打结动作并拉紧。",
+    "referenceAge": {
+      "label": "5-6岁",
+      "minMonths": 60,
+      "maxMonths": 83
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "双手系鞋带（打交叉结）",
+    "expertSourceAge": "5-6岁",
+    "scoreFeedback": {
+      "mastered": "儿童能熟练地将两根鞋带交叉，一手稳定交点，另一手将一端从下方穿过，随后双手同时向两侧反向拉紧。",
+      "partial": "儿童会把鞋带摆成交叉状（X形），但不知道如何将一根线头从洞中绕行穿出，或者穿出后只拉一根线导致结散开。",
+      "unmastered": "儿童把鞋带胡乱缠绕在一起，完全没有空间上下交叠和“打结”的逻辑顺序。"
+    },
+    "expertAdvice": "这是该领域中难度极高的连贯动作。强力建议使用“双色鞋带法”（如一半红色一半蓝色拼接），结合编口诀：“红蛇绕过蓝树枝，钻进小洞洞，一起用力拉！”，让抽象步骤具象化。",
+    "iepGoal": "在使用两种不同颜色鞋带的练习板上，儿童能独立完成鞋带的交叉、绕孔穿出动作，并用双手同时向外反向用力拉紧，完成一个稳固的初级交叉结。"
+  },
+  {
+    "id": 47,
+    "itemCode": "fine_motor_047",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "仿画水平线",
+    "observation": "观察儿童照样仿画一条横向水平线，线条连贯，偏差角度≤15度。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿画水平线",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能通过视线追踪引导手部运动，平稳地从一侧向另一侧画出连贯的水平线，角度偏差≤15度，具备良好的基础横向空间感知。",
+      "partial": "儿童能画出横向线条，但明显弯曲、断断续续，或角度偏离较大（倾斜），手腕和手臂的稳定性尚在发展中。",
+      "unmastered": "儿童随意乱涂乱画，无明确的方向感，无法理解“横向平移”的视觉指令。"
+    },
+    "expertAdvice": "水平线是跨越身体中线的基础。建议从大动作开始：在墙面上玩“小汽车开直路”的游戏。在纸面练习时，可以在纸的左右两端贴上贴纸（如左边小狗，右边骨头），口语提示“让小狗直直地跑过去找骨头”，赋予线条生命力。",
+    "iepGoal": "给予起止点视觉提示（相距约10cm），儿童能用握笔手从左至右仿画出一条连贯的水平线，偏离水平角度≤15度。"
+  },
+  {
+    "id": 48,
+    "itemCode": "fine_motor_048",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "仿画垂直线",
+    "observation": "观察儿童照样仿画一条纵向垂直线，线条连贯，偏差角度≤15度。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿画垂直线",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能控制画笔，从上到下连贯地画出垂直线，偏差角度≤15度，展现出对重力方向及纵向空间的良好感知。",
+      "partial": "儿童能画出线条，但倾斜明显，或者习惯从下往上画（方向倒置），控笔时的指关节/手腕协调性较弱。",
+      "unmastered": "儿童无法模仿画出单一方向的线条，只会画圈或无规律的短促涂鸦。"
+    },
+    "expertAdvice": "垂直线代表着重力方向。可以先站立玩“下大雨”的游戏，用手指在带有水雾的玻璃上从上往下拉长长的线条。在纸上时，画一朵云和一朵花，告诉孩子“小雨滴落下来浇花啦”，强调“从上往下”的动作记忆。",
+    "iepGoal": "借助“从上往下”的口语指令和视觉示范，儿童能在画纸上仿画出一条连贯的垂直线，长度约5-8cm，偏离角度≤15度。"
+  },
+  {
+    "id": 49,
+    "itemCode": "fine_motor_049",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "仿画圆形",
+    "observation": "观察儿童照样仿画封闭圆形，起止点接近重合，形状接近正圆。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿画圆形",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能平滑地控制笔触方向，画出封闭的圆形，起止点接近重合，形状接近正圆，视觉监控与弧线控笔能力良好。",
+      "partial": "儿童画出的形状像连续的螺旋线，或者未能“封口”闭合，有时画得过于扁长类似不规则土豆形。",
+      "unmastered": "儿童无法画出弧线，或只是用笔尖在纸上戳点代画。"
+    },
+    "expertAdvice": "圆形是儿童最早掌握的封闭图形。初期不要过度纠结“圆不圆”，重点表扬他们的“封口”意识。可以拿圆柱体积木蘸取颜料做拓印，或者画个大大的“甜甜圈”，用夸张的语气说“转一个大大的圈，回家关上门！（闭合）”。",
+    "iepGoal": "在无辅助点线的情况下，儿童能根据视觉范本仿画出一个闭合的类圆形，起止点重合或相交，直径不小于3cm。"
+  },
+  {
+    "id": 50,
+    "itemCode": "fine_motor_050",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "仿画正方形",
+    "observation": "观察儿童照样仿画四边基本相等的封闭图形，四角接近直角。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿画正方形",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能画出四边基本相等的封闭图形，且具备明显的“停顿折角”意识（四个角接近直角），方向控制精确。",
+      "partial": "儿童能画出封闭图形，但拐角处是圆滑的（退化为圆形或椭圆），或四边长短悬殊极大，缺乏运动刹车与变向能力。",
+      "unmastered": "儿童无法画出闭合的四边形，线条散乱或完全无法模仿转角动作。"
+    },
+    "expertAdvice": "拐直角需要高级的认知和运动“刹车”控制。可以利用四根雪糕筒先在桌面上拼搭正方形，建立四条边的空间概念。画的时候家长在旁边拍手打节拍念口诀：“画长线，停！（拐角），画长线，停！”，帮助建立节奏感。",
+    "iepGoal": "提供正方形的视觉范例，儿童能仿画出一个闭合图形，且明显具备四个非圆滑过渡的直角，四边长度大致相近。"
+  },
+  {
+    "id": 51,
+    "itemCode": "fine_motor_051",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "仿画十字",
+    "observation": "观察儿童仿画横竖相交的十字形，评估跨越身体中线及两方向线条控制。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿画十字",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能准确判断相交点，仿画出横竖垂直相交的十字形，评估显示其具备良好的跨越身体中线及双向线条控制力。",
+      "partial": "儿童能画出两条相交线，但形似“X”，或两条线未能完全连贯相交（画到中间停下再画另一边），视空定位发展中。",
+      "unmastered": "儿童只能画互相平行的线条或单一方向线条，无法在视觉引导下完成线条的交叉组合。"
+    },
+    "expertAdvice": "跨越身体中线不仅是画画，更关乎左右脑协作。多进行大动作游戏，如右手摸左脚、左手拍右肩。在黑板上（垂直面）练习画大十字，比在桌面（水平面）上更容易感知方向和视觉对焦。",
+    "iepGoal": "在教师提供“先画横、再从中间画竖”的动作示范下，儿童能在纸上仿画出两条基本垂直且在中心相交的十字图形。"
+  },
+  {
+    "id": 52,
+    "itemCode": "fine_motor_052",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "仿画斜线（左上至右下）",
+    "observation": "观察儿童仿画由左上至右下方向的斜线，角度偏差≤20度。",
+    "referenceAge": {
+      "label": "4-5岁",
+      "minMonths": 48,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿画斜线（左上至右下）",
+    "expertSourceAge": "4-5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能突破垂直/水平框架，准确判断对角空间，平滑画出由左上至右下方向的斜线，角度偏差≤20度。",
+      "partial": "儿童能画出线条，但方向明显趋于垂直或水平，未能理解斜线的空间占位，或者线条呈明显的波浪形。",
+      "unmastered": "儿童完全无法模仿出斜向动作，随意涂画。"
+    },
+    "expertAdvice": "斜线是未来书写汉字（撇/捺）的核心。对角空间对特需孩子较难理解。建议在正方形卡纸的左上角和右下角各贴一张同色贴纸，引导孩子“把红色和红色用直线连起来”，建立视觉锚点。",
+    "iepGoal": "在给出视觉范本后，儿童能仿画出一条从左上至右下方向的斜线，线条连贯无明显停顿，角度偏差不超过20度。"
+  },
+  {
+    "id": 53,
+    "itemCode": "fine_motor_053",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "仿画斜线（右上至左下）",
+    "observation": "观察儿童仿画由右上至左下方向的斜线，角度偏差≤20度。",
+    "referenceAge": {
+      "label": "4-5岁",
+      "minMonths": 48,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿画斜线（右上至左下）",
+    "expertSourceAge": "4-5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能克服手臂内收的动作惯性，准确画出从右上至左下方向的斜线，线条平直，角度偏差≤20度。",
+      "partial": "儿童尝试画斜线，但容易画反（画成左上至右下，方向混淆），或因为手臂回缩控制不佳导致线条弯曲。",
+      "unmastered": "儿童无法完成该方向的模仿，只会画直线或圆圈。"
+    },
+    "expertAdvice": "对于多数右利手的孩子，右上到左下需要向内收缩手臂，动作模式更为复杂。多玩“滑梯”游戏：“小人从高高的右边滑下来啦”。利用触觉沙盘让孩子用食指画斜线，通过沙子的阻力加深肌肉记忆。",
+    "iepGoal": "给出从右上至左下的斜线范本，儿童能准确辨识方向并仿画出相应的斜线，长度至少4cm，偏离角度≤20度。"
+  },
+  {
+    "id": 54,
+    "itemCode": "fine_motor_054",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "仿画三角形",
+    "observation": "观察儿童仿画三边封闭三角形，三角接近尖形，三边基本平直。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿画三角形",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能综合运用斜线与水平线，画出三条边封闭的图形，三个角明显为尖形，各边基本平直，高级图形整合能力优异。",
+      "partial": "儿童能画出封闭图形，但包含曲线或圆润的转角，或者底边未能平直，看起来像“水滴”、“半圆”或不规则多边形。",
+      "unmastered": "儿童无法整合三条不同的线条，线条散乱，图形无法闭合。"
+    },
+    "expertAdvice": "三角形是对斜线、水平线以及停顿能力的终极考验。可以在画板上贴三个点，构成三角形，让孩子像玩“连连看”一样先描点连线。强调“三角形有三个尖尖的角，像一座小山”。",
+    "iepGoal": "无需描点辅助，儿童能看着三角形的视觉范本，独立仿画出一个闭合且具备三个明显尖角的三角形。"
+  },
+  {
+    "id": 55,
+    "itemCode": "fine_motor_055",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "仿画菱形",
+    "observation": "观察儿童仿画四边相近且对角线垂直的菱形，评估复杂的斜线整合能力。",
+    "referenceAge": {
+      "label": "6岁",
+      "minMonths": 72,
+      "maxMonths": 83
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿画菱形",
+    "expertSourceAge": "6岁",
+    "scoreFeedback": {
+      "mastered": "儿童能画出四边相近且对角线感觉垂直的菱形，闭合良好，展现出极复杂的斜线空间对称及视动整合能力。",
+      "partial": "儿童试图画菱形，但由于斜线角度控制不佳，图形严重倾斜变形，或某个角未能闭合，对称感较弱。",
+      "unmastered": "儿童只能画简单的圆形或正方形，完全无法画出由对角斜线相接的菱形结构。"
+    },
+    "expertAdvice": "菱形是基础几何图形仿画中最难的一关。不要急于纸上作画，先让孩子用四根小木棍拼出菱形，感受它的“尖头朝上”。如果画纸上操作困难，家长可以先画一个大大的“十字虚线”作为骨架，让孩子把四个端点连起来。",
+    "iepGoal": "观看菱形范例后，儿童能仿画出一个由四条斜线组成的闭合菱形，上下左右角基本对称，顶点清晰对齐。"
+  },
+  {
+    "id": 56,
+    "itemCode": "fine_motor_056",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "轨迹内描红（直线）",
+    "observation": "观察儿童在两条平行线（间距8mm）内画直线，不超出边界。",
+    "referenceAge": {
+      "label": "3-4岁",
+      "minMonths": 36,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "轨迹内描红（直线）",
+    "expertSourceAge": "3-4岁",
+    "scoreFeedback": {
+      "mastered": "儿童视线能持续且专注地监控笔尖，在线条通道（间距8mm）内平稳移动直线，不超出边界，手眼协调出色。",
+      "partial": "儿童的笔尖会中途滑出轨道1-3次，或者因为运笔速度过快导致线条飞出，视觉追视与手部动作的速度配合不足。",
+      "unmastered": "儿童无视轨道边界，横穿轨道或在纸上随意乱画，缺乏边界意识。"
+    },
+    "expertAdvice": "描红不是机械性训练，而是为了培养“眼到、手到、心到”的专注力。我们可以把8mm的轨道想象成“小汽车的高速公路”。如果孩子总是出界，家长可以用彩色热熔胶在轨道两侧打上边框干透，提供实体的触觉阻力墙，帮助孩子感受边界。",
+    "iepGoal": "给予间距为8mm的两条平行直线轨道（长约15cm），儿童能使用彩色水笔在轨道内从一端画到另一端，线条不出界或越界次数不超过2次。"
+  },
+  {
+    "id": 57,
+    "itemCode": "fine_motor_057",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "轨迹内描红（波浪线）",
+    "observation": "观察儿童在两条波浪形平行线（间距8mm）内描绘曲线，评估视觉追踪及控笔。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "轨迹内描红（波浪线）",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能通过手腕的灵活转动，平滑地跟随波浪线的起伏变化在轨道（间距8mm）内描绘，视觉追踪与运动方向的频繁切换能力强。",
+      "partial": "儿童能在线内画，但在波峰或波谷转弯处动作僵硬，经常出现直线式的“急转弯”或频繁停顿，偶尔越过边界。",
+      "unmastered": "儿童忽略波浪的曲线走势，直接用直线横穿轨道，或手部动作完全跟不上眼睛的观察速度。"
+    },
+    "expertAdvice": "波浪线如同生活中的起伏。我们要教孩子学会在转弯处“减速”。可以先玩“小船在海浪上漂”的假想游戏，让孩子用手在空中画大波浪。在纸面练习时，可以将笔想象成小汽车，提醒孩子“遇到弯道要慢点开哦”。",
+    "iepGoal": "在视觉追踪引导下，儿童能使用彩笔在间距为8mm的波浪形轨道内（长度约15cm）描绘出平滑的曲线，运笔不停顿，出界次数≤2次。"
+  },
+  {
+    "id": 58,
+    "itemCode": "fine_motor_058",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "轨迹内描红（螺旋线）",
+    "observation": "观察儿童在螺旋形引导线（间距6mm）内描绘，由外至内不超出边界。",
+    "referenceAge": {
+      "label": "4-5岁",
+      "minMonths": 48,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "轨迹内描红（螺旋线）",
+    "expertSourceAge": "4-5岁",
+    "scoreFeedback": {
+      "mastered": "儿童展现出高度集中的专注力，能由外向内顺畅地描绘螺旋线（间距6mm），手腕和手指能随着半径的缩小进行精细的微调。",
+      "partial": "儿童能沿着螺旋走势画，但手部经常遮挡视线，或在靠近中心点时因为转弯半径过小而频繁压线、出界。",
+      "unmastered": "儿童看不懂螺旋形的迷宫结构，直接横向跨越线条涂抹，或产生强烈的视觉眩晕与烦躁感放弃任务。"
+    },
+    "expertAdvice": "螺旋线是一场向内心探索的专注力旅程。如果孩子觉得在纸上画很难，可以先用一根长长的粗毛线在桌面上盘一个大大的“蜗牛壳”，让孩子用手指去走一走这个迷宫。这能帮助他们提前建立由外向内不断旋转的肌肉记忆。",
+    "iepGoal": "给予间距6mm的螺旋形迷宫轨道，儿童能持续注视笔尖，由外围起点一笔画至中心终点，期间线条平滑，越线次数不超过3次。"
+  },
+  {
+    "id": 59,
+    "itemCode": "fine_motor_059",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "连线成图",
+    "observation": "观察儿童按顺序用直线将点连接成简单几何图形，评估视觉引导能力。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "连线成图",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童具备良好的“整体-局部”视觉规划能力，能按顺序用直线将分散的各个点连接起来，形成一个完整的几何图形。",
+      "partial": "儿童能把点连起来，但缺乏全局观，经常跳跃乱连（不按顺序），导致最后连出的图形呈交叉网状或无法辨认。",
+      "unmastered": "儿童只在单独的点上画圈涂抹，或者随机乱涂，不理解“点和点可以连接”的空间概念。"
+    },
+    "expertAdvice": "让孤立的点产生联系，是逻辑思维的萌芽。我们不急于用数字或字母连线（避免认知负荷过高），可以用不同颜色渐变的圆点（如从浅红到深红），或用小贴纸（如：让小狗走到骨头，再走到房子），用故事线引导视觉线。",
+    "iepGoal": "给予3-5个带有清晰顺序提示（如数字或箭头）的散点图，儿童能运用视觉引导，依次用直线将点连接，成功构成一个封闭的简单几何图形。"
+  },
+  {
+    "id": 60,
+    "itemCode": "fine_motor_060",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "边界内涂色（大面积）",
+    "observation": "观察儿童涂色时，颜色超出轮廓线的面积不超过20%（轮廓≥3cm）。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "边界内涂色（大面积）",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能运用手臂和手腕的协调动作，在大面积（轮廓≥3cm）内进行反复涂色，具备极强的边界意识，越界部分＜20%。",
+      "partial": "儿童有在轮廓内涂色的意图，但动作幅度过大，不懂得在靠近边缘处“刹车”，导致大面积颜色飞出轮廓；或只涂了中心一小块就停下。",
+      "unmastered": "儿童对边界视而不见，用狂野的挥臂动作大面积涂鸦，或只画出几条单一的线条。"
+    },
+    "expertAdvice": "涂色是情绪的表达，也是运动控制的练习。对于经常“越界”的孩子，建议用厚厚的彩色热熔胶或毛线沿着轮廓粘一圈，给他们一道可以触碰到的“安全围墙”。教导他们策略：“先给房子画一圈围墙（描边），再把里面填满”。",
+    "iepGoal": "提供一个直径不小于3cm的单一几何图形轮廓，儿童能使用蜡笔将内部区域均匀涂满（覆盖率＞80%），且颜色超出边界线的面积控制在20%以内。"
+  },
+  {
+    "id": 61,
+    "itemCode": "fine_motor_061",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "边界内涂色（小面积）",
+    "observation": "观察儿童涂色时，颜色超出轮廓线的面积不超过10%（轮廓≤2cm）。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "边界内涂色（小面积）",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能成功将动作控制中枢从手腕转移到指尖，用细碎的指内运动填满小面积（≤2cm）图形，越界＜10%，控笔极为精确。",
+      "partial": "儿童习惯性使用手腕甚至前臂带动涂色，在处理小面积时动作显得笨拙，导致颜色频繁溢出狭窄的边界。",
+      "unmastered": "儿童用大刀阔斧的涂鸦方式一笔带过，完全无视细小的边界约束。"
+    },
+    "expertAdvice": "这是精细动作走向成熟的标志。提供又短又粗的蜡笔（如折断的粉笔或蜡笔），迫使孩子只能用三指捏住操作，限制手腕的过度活动，从而自然激发出指尖的微小运动。告诉孩子“我们要轻轻地、小步走地给蝴蝶穿上花衣裳”。",
+    "iepGoal": "面对尺寸不超过2cm的小型封闭图形（如花瓣、小星星），儿童能运用手指的精细动作进行填色，颜色饱满且超出轮廓的面积小于10%。"
+  },
+  {
+    "id": 62,
+    "itemCode": "fine_motor_062",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "仿搭积木（3块）",
+    "observation": "观察儿童照样仿搭3块积木的平面或立体造型，位置与方向基本吻合。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿搭积木（3块）",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能仔细观察立体范本，理解积木间的空间关系（上下、并排），准确地照样仿搭出3块积木的造型。",
+      "partial": "儿童能拿3块积木搭在一起，但位置关系错误（例如把桥搭成了单纯的高塔），空间映射能力还在萌芽阶段。",
+      "unmastered": "儿童只会推倒积木，或是单纯敲击、乱扔，缺乏模仿立体搭建的意图。"
+    },
+    "expertAdvice": "三维空间的感知从这里起步。我们在做示范时，一定要坐在孩子的“旁边”而不是“对面”，避免孩子产生镜像视角的混淆。用生动的语言描述空间：“一块红砖做地板，一块蓝砖做屋顶”，让视觉转化为听觉记忆。",
+    "iepGoal": "观看成人用3块积木搭建的简单造型（如一座桥或一列火车）后，儿童能在1分钟内用相同颜色的积木准确复制出相同的空间结构。"
+  },
+  {
+    "id": 63,
+    "itemCode": "fine_motor_063",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "仿搭积木（6块）",
+    "observation": "观察儿童照样仿搭6块积木造型，评估空间认知及视动整合。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿搭积木（6块）",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能解构稍微复杂的立体信息，具备良好的深度和高度感知，能准确将6块积木放置在正确的三维位置上。",
+      "partial": "儿童能搭出底座或部分结构，但对于叠加在上面的层次感到困惑，或者无法对齐边缘，搭建出的模型摇摇欲坠或缺少构件。",
+      "unmastered": "儿童拿到一堆积木后不知所措，只会将它们排成一条长长的直线或堆成一个无序的杂乱土丘。"
+    },
+    "expertAdvice": "6块积木涉及到了大脑的工作记忆。我们可以教孩子“拆解法”：先观察最底层有几块，搭好“一楼”，再观察“二楼”。可以给原模型拍一张照片让孩子对照着看，帮助他们完成从二维图像到三维实体的思维转换。",
+    "iepGoal": "面对由6块积木组成的立体造型（含上下两层结构），儿童能通过视觉观察与分析，独立仿搭出完全一致的模型，积木排列方向与位置无误。"
+  },
+  {
+    "id": 64,
+    "itemCode": "fine_motor_064",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "仿搭积木（9块）",
+    "observation": "观察儿童照样仿搭9块积木造型，包含斜向排列，评估复杂的视觉空间操作。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿搭积木（9块）",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童展现出卓越的高级视觉空间执行力，能处理积木间的遮挡关系和斜向、交错排列，精确重现复杂的9块立体造型。",
+      "partial": "儿童能搭建出大致轮廓，但忽略了内部的错位、留白（空隙）或斜向角度，如果遇到隐藏在背后的积木则完全无法推断出其存在。",
+      "unmastered": "面对复杂的9块积木模型，儿童表现出畏难情绪，拒绝尝试，或只能漫无目的地随意堆叠。"
+    },
+    "expertAdvice": "这不仅仅是动作游戏，更是对观察力和抗挫折能力的极大约战。陪伴孩子时，多用启发式提问：“你觉得这个像小楼梯的地方，是怎么叠上去的？”鼓励他们围着模型走一圈，360度观察，培养真正的立体思维。",
+    "iepGoal": "给予一个包含中空、错位或阶梯状结构的9块积木模型，儿童能多角度观察，并通过不断尝试与视觉比对，独立仿搭出包含相同空间逻辑的复杂造型。"
+  },
+  {
+    "id": 65,
+    "itemCode": "fine_motor_065",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "拼图匹配（4块）",
+    "observation": "观察儿童完成4块独立拼图，评估形状辨识及视觉空间操作能力。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "拼图匹配（4块）",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能理解“部分与整体”的哲学关系，能根据图形边缘线索，主动旋转拼图块并准确将其嵌合/拼接入位，完成4块拼图。",
+      "partial": "儿童知道拼图块需要放在一起，但不会旋转角度，常常使用蛮力硬按，试图把不匹配的边缘强行挤压在一起。",
+      "unmastered": "儿童把拼图块当成普通的咀嚼玩具或投掷物，不理解图案之间可以拼凑出一个完整的画面。"
+    },
+    "expertAdvice": "拼图是修复碎片化世界的魔法。起步阶段，请不要使用相互咬合的复杂拼图，而是使用带有小木柄的“几何形状镶嵌板”。当过渡到图案拼图时，选择色彩对比强烈、每个拼图块上都有明显图案特征（比如动物的头、脚明确分开）的材质。",
+    "iepGoal": "在桌面活动中，儿童能观察图案线索，主动翻转或旋转卡片，独立完成一幅4块（互锁或镶嵌式）的动物/交通工具简单拼图。"
+  },
+  {
+    "id": 66,
+    "itemCode": "fine_motor_066",
+    "dimension": "vmi",
+    "dimensionName": "视动整合",
+    "title": "拼图匹配（8块）",
+    "observation": "观察儿童完成8块或以上拼图，评估较复杂图形辨识及操控精准度。",
+    "referenceAge": {
+      "label": "4-5岁",
+      "minMonths": 48,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "拼图匹配（8块）",
+    "expertSourceAge": "4-5岁",
+    "scoreFeedback": {
+      "mastered": "儿童已内化了高级的视觉辨识策略，能熟练寻找“平直边缘”或“关键色彩”作为线索，流畅操作拼合8块或以上的复杂拼图。",
+      "partial": "儿童能拼出最容易辨认的中心图案2-3块，但在处理背景色块或边缘块时显得迷茫，缺乏寻找“角块”或“边块”的系统性策略，需要大量口头提示。",
+      "unmastered": "面对8块散乱的拼图，儿童感到视觉信息过载，随意堆叠卡片或表现出烦躁而推翻所有拼图。"
+    },
+    "expertAdvice": "面对困难时，教给孩子方法比替他完成更重要。握住孩子的手，温柔地告诉他们：“我们先找出谁有一条直直的、平平的边，它们是保护画面的小城墙。”陪他们一起在杂乱中寻找规律，这是对耐心最好的培养。",
+    "iepGoal": "在无成人直接动手干预的情况下，儿童能运用寻找边缘或颜色匹配的策略，专注且独立地完成一幅包含8-10块组件的互锁型图画拼图，耗时不超过5分钟。"
+  },
+  {
+    "id": 67,
+    "itemCode": "fine_motor_067",
+    "dimension": "pre_writing",
+    "dimensionName": "前书写技能",
+    "title": "握笔姿势与手腕支撑",
+    "observation": "观察儿童握铅笔时，拇、食、中三指位置正确，且有适当的手腕伸展支撑姿势。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "握笔姿势与手腕支撑",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能熟练使用拇指、食指和中指捏握铅笔（动态或静态三指握位），手腕轻微向后伸展并作为支点稳稳靠在桌面上，手指运笔灵活。",
+      "partial": "儿童会使用全掌抓握（拳握法）、四指握或拇指紧紧包裹食指，手腕处于悬空状态或过度弯曲，书写主要靠整个手臂带动。",
+      "unmastered": "儿童无法稳定地握住铅笔，笔经常掉落，或握笔部位极端靠上/靠下，完全不具备书写的物理基础。"
+    },
+    "expertAdvice": "握笔姿势的改变需要极大的耐心，不可强硬掰孩子的手指。建议给孩子提供又短又粗的蜡笔（约3厘米长），这在物理上迫使他们只能用三个指尖去捏。同时，多在黑板或墙面的画纸面上涂鸦，垂直面操作能自然促使手腕后伸。",
+    "iepGoal": "在持续3-5分钟的涂色或画线活动中，儿童能主动采用三指捏的握笔姿势，并保持手腕贴靠在桌面提供支撑。"
+  },
+  {
+    "id": 68,
+    "itemCode": "fine_motor_068",
+    "dimension": "pre_writing",
+    "dimensionName": "前书写技能",
+    "title": "纸张摆放位置",
+    "observation": "观察儿童书写时，纸张放置方向（向惯用手侧轻微倾斜）是否适宜。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "纸张摆放位置",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童在书写前，会有意识地将纸张向非惯用手侧轻微倾斜（右撇子纸张左倾，左撇子右倾），身体保持中正，视线不被手部遮挡。",
+      "partial": "儿童将纸张完全放正（与桌沿平行），为了看清笔尖，他们不得不严重扭曲躯干、歪着头或将头部几乎贴在桌面上书写。",
+      "unmastered": "儿童对纸张的摆放毫无概念，纸张甚至快要掉出桌沿，或在书写时纸张在桌面上不停转动。"
+    },
+    "expertAdvice": "环境的微调往往能带来巨大的改变。我们可以在书桌上用彩色绝缘胶带贴出一个带有适当倾斜角度的“纸张停车位（矩形框）”，告诉孩子：“小画纸要停进这个斜斜的车库里才安全哦。”",
+    "iepGoal": "在桌面书写或绘画活动前，儿童能根据桌面上的视觉提示（如胶带边框），主动将纸张摆放到适宜的倾斜角度。"
+  },
+  {
+    "id": 69,
+    "itemCode": "fine_motor_069",
+    "dimension": "pre_writing",
+    "dimensionName": "前书写技能",
+    "title": "仿写数字 1–5",
+    "observation": "观察儿童仿照示范，在格内书写数字1至5，笔画方向及字形基本正确。",
+    "referenceAge": {
+      "label": "4-5岁",
+      "minMonths": 48,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿写数字 1–5",
+    "expertSourceAge": "4-5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能观察范本，在格子内书写数字1-5，笔画起止点及方向基本正确，字形清晰可辨，无明显镜像现象。",
+      "partial": "儿童写出的数字可勉强辨认，但经常出现镜像（如把3写反，或者5的开口方向颠倒），或者各部分比例严重失调。",
+      "unmastered": "儿童无法理解数字符号的结构，只是盲目地模仿动作，留下无意义的乱涂乱画。"
+    },
+    "expertAdvice": "这个阶段的镜像书写是很正常的发育现象。为了加深正确方向的肌肉记忆，可以玩“背上写字”的游戏，或者让孩子在装满彩沙的托盘里用手指画数字，多感官的刺激比单纯在纸上死记硬背有效得多。",
+    "iepGoal": "给予视觉范例，儿童能在空白方格内独立仿写数字1至5，字形清晰无镜像倒置，正确率达到80%以上。"
+  },
+  {
+    "id": 70,
+    "itemCode": "fine_motor_070",
+    "dimension": "pre_writing",
+    "dimensionName": "前书写技能",
+    "title": "仿写数字 6–10",
+    "observation": "观察儿童仿照示范，在格内书写数字6至10，评估曲线及封口闭合度。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿写数字 6–10",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童不仅能写出这些数字，还能灵活控制弧线（如6、9）和封口闭合（如8、0），数字结构完整。",
+      "partial": "儿童在处理闭合和曲线时遇到困难，例如把“8”写成两个分离的圆圈，把“0”写成不封口的“C”或螺旋线。",
+      "unmastered": "儿童难以仿写带有交叉和闭合曲线的数字，常因为挫折感而拒绝书写这几个数字。"
+    },
+    "expertAdvice": "像“8”和“0”这样的数字涉及更复杂的运动轨迹规划。建议家长打印一些像赛车赛道一样的加粗数字卡片，让孩子推着玩具小汽车在“8”字赛道上“跑两圈”，边跑边体会“交叉”和“转弯”的连贯性。",
+    "iepGoal": "儿童能平滑连贯地仿写数字6、8、9、0，展现出良好的曲线控制力和闭合封口能力。"
+  },
+  {
+    "id": 71,
+    "itemCode": "fine_motor_071",
+    "dimension": "pre_writing",
+    "dimensionName": "前书写技能",
+    "title": "仿写大写英文字母",
+    "observation": "观察儿童仿照示范书写大写字母（如L、T、E、H），评估直线与转折的笔画方向。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿写大写英文字母",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能精准控制由直线构成的字母（如L、T、E、H、F），横竖相交处利落，笔画方向遵循从上到下、从左到右。",
+      "partial": "儿童仿写时线条弯曲，或者笔画搭接不准（例如“T”的横竖不相交，或者像“十”字），未掌握先主后次的笔顺。",
+      "unmastered": "无法辨认其仿写的字母，缺乏直线构图的基本空间概念。"
+    },
+    "expertAdvice": "大写字母是理解空间结构的极好切入点。在纸上书写前，不妨先让孩子用冰棒棍或雪糕筒在桌面上拼搭这些字母。触摸实物能帮助他们理解“一根长的和两根短的”是如何组合成“F”的。",
+    "iepGoal": "观看范本后，儿童能仿写至少5个由直线和直角构成的大写字母，线条相对平直且交叉点位置准确。"
+  },
+  {
+    "id": 72,
+    "itemCode": "fine_motor_072",
+    "dimension": "pre_writing",
+    "dimensionName": "前书写技能",
+    "title": "虚线描红字母",
+    "observation": "观察儿童沿虚线轮廓描写字母，线条保持在虚线范围内，字形完整。",
+    "referenceAge": {
+      "label": "4-5岁",
+      "minMonths": 48,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "虚线描红字母",
+    "expertSourceAge": "4-5岁",
+    "scoreFeedback": {
+      "mastered": "儿童在描红时展现出优秀的视觉监控能力，笔迹绝大部分能覆盖在虚线范围内，描出的字母字形完整饱满。",
+      "partial": "儿童虽然在描红，但常常“脱轨”，或者运笔过快导致笔迹歪歪扭扭；有时只描了一部分虚线就认为画完了。",
+      "unmastered": "儿童无视虚线的存在，把字母当成一个整体轮廓在内部胡乱涂鸦，缺乏“跟踪轨迹”的概念。"
+    },
+    "expertAdvice": "描红对于专注力较弱的孩子可能是枯燥的。我们可以用粗的黄色荧光笔代替黑色的虚线，告诉孩子：“黄色的灯光亮了，我们要用铅笔小车把灯光盖住哦。”清晰的色彩指引能降低视觉疲劳。",
+    "iepGoal": "提供高度为3cm的虚线字母模板，儿童能用铅笔准确描摹，线条偏离虚线轨迹的最大距离不超过3毫米。"
+  },
+  {
+    "id": 73,
+    "itemCode": "fine_motor_073",
+    "dimension": "pre_writing",
+    "dimensionName": "前书写技能",
+    "title": "方格内书写（大小适中）",
+    "observation": "观察儿童在1.5cm方格内书写数字，字体不超出格线，大小占格子的60-80%。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "方格内书写（大小适中）",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能在给定的1.5cm*1.5cm方格内书写数字或字母，字体被完美地限制在框内，大小约占格子的60-80%，空间感极佳。",
+      "partial": "儿童虽然知道要写在格子里，但字往往顶格甚至出框；或者写得极其微小，蜷缩在格子的某一个角落。",
+      "unmastered": "儿童完全无视格子的边界，字体横跨多个方格，无法将视觉边框转化为手部动作的约束。"
+    },
+    "expertAdvice": "空间大小的规划是一个抽象的心理过程。拟人化的比喻最管用：把格子比作“字宝宝的床”。“字宝宝如果长得太大，脚就会伸出床外（出格）；如果太小，看着就可怜。我们要让他睡在床的中间哦。”",
+    "iepGoal": "在画有标准方格的作业纸上独立书写5个数字或字母，儿童能控制字体大小不出格，且充满格内约三分之二的空间。"
+  },
+  {
+    "id": 74,
+    "itemCode": "fine_motor_074",
+    "dimension": "pre_writing",
+    "dimensionName": "前书写技能",
+    "title": "运笔力度控制",
+    "observation": "观察儿童书写时力度适中，不划破纸张，且笔迹清晰可见（不过淡）。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "运笔力度控制",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童书写时向下施加的力度刚刚好，笔迹清晰深浅一致，且纸张背面没有强烈的凸起压痕，手部不易疲劳。",
+      "partial": "力度不均。要么用力过猛（经常折断铅笔尖、擦除时易破、纸背深痕），要么用力过轻（笔尖如同在纸上飘过，字迹极其苍白难以辨认）。",
+      "unmastered": "儿童完全无法控制力量，要么频繁戳破纸张，要么根本无法在纸上留下可见痕迹。"
+    },
+    "expertAdvice": "力度控制源于本体觉反馈。对于写字太重（本体觉迟钝）的孩子，可以在纸下面垫一张较软的鼠标垫，告诉他“如果太用力，纸就会陷进去破掉”。对于写字太轻（力量不足）的孩子，让他们用黑色的软碳笔在带有复写纸的本子上写，通过“必须要印到底下那张纸上”来激发他们用力。",
+    "iepGoal": "在连续书写10个字符的过程中，儿童能维持适中的下笔力度，无划破纸张现象，且字迹整体清晰可读。"
+  },
+  {
+    "id": 75,
+    "itemCode": "fine_motor_075",
+    "dimension": "pre_writing",
+    "dimensionName": "前书写技能",
+    "title": "从左至右书写习惯",
+    "observation": "观察儿童在横向书写时，字符排列具有从左至右的空间顺序意识。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "从左至右书写习惯",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "当面对一张白纸或一行横线时，儿童具备自发的方向意识，能够从左边开始书写，并依次向右边排列字符。",
+      "partial": "儿童会随机从纸的中间或右侧开始写，或者在写完一个字后，不知道将笔尖移向右侧，导致新写的字与旧字重叠。",
+      "unmastered": "书写杂乱无章，毫无线性排列的空间顺序感。"
+    },
+    "expertAdvice": "中文和英文的阅读书写逻辑都是从左到右的。我们可以在纸的左边缘画一个大大的绿色圆点（代表“绿灯，起点”），在右边缘画一个红色圆点（代表“红灯，终点”）。强化“从绿灯出发，开向红灯”的习惯。",
+    "iepGoal": "面对空白的横线书写纸，儿童能在无频繁语言提醒的情况下，自发地将第一个字写在左侧起端，并按从左至右的顺序排列后续字符。"
+  },
+  {
+    "id": 76,
+    "itemCode": "fine_motor_076",
+    "dimension": "pre_writing",
+    "dimensionName": "前书写技能",
+    "title": "仿写基本汉字笔画",
+    "observation": "观察儿童仿写“横”、“竖”、“撇”等基本笔画，起笔、行笔方向正确。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "仿写基本汉字笔画",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能观察并理解汉字的“线条语言”，能仿写“横、竖、撇、捺”，做到横平竖直、起笔和行笔方向（如撇从右上到左下）完全正确。",
+      "partial": "儿童将笔画当成单纯的画画。比如画“横”时从右向左画，画“竖”时从下往上推，或者“撇捺”生硬无弧度，没有“运笔”的概念。",
+      "unmastered": "儿童只能画出无规律的线条，无法区分或模仿汉字的特定笔画。"
+    },
+    "expertAdvice": "汉字的笔画是有生命的。在教笔画时，不要只让孩子死盯纸面。站起来，用整个手臂在空中挥舞出笔画的轨迹！“横”就像一架飞机平稳飞过，“撇”就像滑滑梯快速滑下。大肌肉的动作体验能更好地向小肌肉迁移。",
+    "iepGoal": "在教师演示后，儿童能遵循正确的行笔方向，在田字格内准确仿写“横、竖、撇、捺”四种基本笔画。"
+  },
+  {
+    "id": 77,
+    "itemCode": "fine_motor_077",
+    "dimension": "pre_writing",
+    "dimensionName": "前书写技能",
+    "title": "田字格内仿写汉字",
+    "observation": "观察儿童在2cm田字格内书写简单汉字（如：人、山、大），评估空间占位及比例。",
+    "referenceAge": {
+      "label": "5-6岁",
+      "minMonths": 60,
+      "maxMonths": 83
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "田字格内仿写汉字",
+    "expertSourceAge": "5-6岁",
+    "scoreFeedback": {
+      "mastered": "儿童能熟练利用田字格的横竖中线作为视觉参考系，将简单汉字（如：人、山、大）写在格子中央，空间占位适中，笔画间的比例结构基本匀称。",
+      "partial": "儿童能写出汉字，但对田字格的“定位”功能理解不足。字经常挤在某一个小格子里，或者汉字的部件“散架”了（例如把“大”写得像“一”和“人”分得很开），缺乏整体的聚拢感。",
+      "unmastered": "儿童无视田字格的框架，笔画完全飞出界外，或只会随意堆砌笔画，无法组合成可辨认的汉字结构。"
+    },
+    "expertAdvice": "田字格对孩子来说往往是一张抽象的网。我们需要把它“具象化”。告诉孩子，田字格是一个有四个房间的“大房子”，横竖中线是“十字走廊”。比如写“大”字，那一横要像走钢丝一样踩在横向的走廊上，那一撇一捺要分别伸进左下和右下的房间里。用这种“给字宝宝安排房间”的空间故事，比单纯说“往左一点、往右一点”更有效。",
+    "iepGoal": "给予视觉范例，儿童能在2cm的田字格内独立仿写3个简单的独体字（如“十、人、大”），做到字形不散架，且主体部分基本处于田字格中心位置，不严重偏格。"
+  },
+  {
+    "id": 78,
+    "itemCode": "fine_motor_078",
+    "dimension": "pre_writing",
+    "dimensionName": "前书写技能",
+    "title": "汉字笔顺规则意识",
+    "observation": "观察儿童书写时，主要笔画符合“先横后竖、先撇后捺”等基本规则。",
+    "referenceAge": {
+      "label": "5-6岁",
+      "minMonths": 60,
+      "maxMonths": 83
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "汉字笔顺规则意识",
+    "expertSourceAge": "5-6岁",
+    "scoreFeedback": {
+      "mastered": "儿童在书写时展现出内在的逻辑与节奏，能自发且稳定地遵循“先横后竖、先撇后捺、从上到下、从左到右”等基本笔顺规则。",
+      "partial": "儿童将汉字视作“画图形”，偶尔能碰对笔顺，但更多时候凭借直觉东拼西凑（例如写“十”字时先画竖再画横，或写“人”字先画捺再画撇），需要成人不断口头提示才能按正确顺序书写。",
+      "unmastered": "儿童完全逆向书写（如从下往上、从右往左行笔），或毫无顺序可言，笔顺规则意识尚未建立。"
+    },
+    "expertAdvice": "笔顺绝不是死板的教条，它是古人总结出的“怎样写字手最顺、最省力”的智慧。特需孩子缺乏这种动作预判。我们要把枯燥的规则变成好记的“生活口诀”。比如“先横后竖”可以叫做“先搭桥，再立柱子”；“从上到下”可以叫做“先戴帽子，再穿鞋子”。在初期干预时，家长可以用不同颜色的笔给笔画标上1、2、3的序号，让孩子像玩“按数字连线”一样习惯这种先后顺序。",
+    "iepGoal": "在独立书写包含“横、竖、撇、捺”的基本汉字时，儿童能将“先横后竖”、“先撇后捺”的笔顺规则内化为动作习惯，连续观察其书写5个汉字，笔顺正确率达80%以上。"
+  },
+  {
+    "id": 79,
+    "itemCode": "fine_motor_079",
+    "dimension": "self_care",
+    "dimensionName": "生活自理精细动作",
+    "title": "用勺子独立进食",
+    "observation": "观察儿童以适当握持方式用勺子舀取食物送入口中，且不大量洒漏。",
+    "referenceAge": {
+      "label": "3岁",
+      "minMonths": 36,
+      "maxMonths": 47
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "用勺子独立进食",
+    "expertSourceAge": "3岁",
+    "scoreFeedback": {
+      "mastered": "儿童能以适当的握持姿势（如掌心向下握或三指捏的雏形）稳定抓握勺柄，准确将勺子送入碗中舀取食物，并在送入口中的过程中保持手腕平稳，无明显洒漏。",
+      "partial": "儿童能舀起食物，但在送往口中的过程中，因手腕稳定性不足（无法保持旋后姿势）或手眼协调欠佳，导致食物大量掉落；或者需要低下头去“够”勺子，而不是将勺子送入嘴里。",
+      "unmastered": "儿童只会用手抓取食物，或将勺子当成敲击玩具，缺乏“用工具盛托食物并送入口中”的因果关系和动作规划。"
+    },
+    "expertAdvice": "进食不仅是精细动作，更关乎孩子的自信心。初期请接受他们的“狼藉”。我们可以从浓稠的食物（如土豆泥、酸奶）开始，增加食物在勺子上的附着力。给孩子准备深口且底部带吸盘的碗。我们可以一起玩“小挖掘机运泥土”的游戏，握着孩子的手腕给予轻微的本体觉支持，帮他们感受手腕平稳移动的肌肉记忆。",
+    "iepGoal": "儿童能在进食时，独立使用勺子舀取半固体或块状食物，平稳送入口中，连续5次动作中洒漏不超过1次。"
+  },
+  {
+    "id": 80,
+    "itemCode": "fine_motor_080",
+    "dimension": "self_care",
+    "dimensionName": "生活自理精细动作",
+    "title": "用叉子进食",
+    "observation": "观察儿童用叉子准确叉起块状食物（如水果丁、肉丁）并送入口中。",
+    "referenceAge": {
+      "label": "3-4岁",
+      "minMonths": 36,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "用叉子进食",
+    "expertSourceAge": "3-4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能以优势手稳定握持叉子，准确进行视觉定位，施加向下的力量将块状食物（如水果丁）叉起，并安全送入口中。",
+      "partial": "儿童试图用叉子像勺子一样去“舀”食物，或者在叉食物时力度太轻/方向偏移，无法刺穿食物；有时会将食物推到碗外。",
+      "unmastered": "儿童拿着叉子乱挥，完全没有对准食物向下施力的概念，最终放弃并改用手指抓取。"
+    },
+    "expertAdvice": "叉食物需要孩子具备一定的手眼精准度和向下的控制力。对于力气较弱或视觉空间感知弱的孩子，建议先脱离真实的就餐环境。我们可以用安全钝头叉和培根泥/橡皮泥玩“叉鱼”游戏；在餐桌上，先提供西瓜、香蕉等极易刺穿的软质食物，鼓励孩子说：“瞄准，嘿！叉住啦！”，将动作口诀化。",
+    "iepGoal": "儿童能双手配合（一手扶碗/盘，一手拿叉），准确定位并施加向下力量，成功叉起软质块状食物并送入口中。"
+  },
+  {
+    "id": 81,
+    "itemCode": "fine_motor_081",
+    "dimension": "self_care",
+    "dimensionName": "生活自理精细动作",
+    "title": "用筷子夹取食物",
+    "observation": "观察儿童尝试用筷子夹取较大块食物，虽姿势未完全成熟但具备功能性。",
+    "referenceAge": {
+      "label": "5-6岁",
+      "minMonths": 60,
+      "maxMonths": 83
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "用筷子夹取食物",
+    "expertSourceAge": "5-6岁",
+    "scoreFeedback": {
+      "mastered": "儿童能使用拇指、食指和中指操控一根筷子（动指），并用虎口和无名指固定另一根筷子（静指），开合自如，成功夹取较大块食物（如西蓝花、肉块）。",
+      "partial": "儿童会像握鼓槌一样一把攥住两根筷子（全掌抓握），或者两根筷子经常交叉打架（“剪刀状”），只能勉强扒拉食物，无法稳定夹起。",
+      "unmastered": "儿童只会用筷子去戳/插食物，或者完全两手各拿一根筷子玩耍，手指之间没有分离和分工的意识。"
+    },
+    "expertAdvice": "筷子是极为高级的精细动作，要求手部两侧的分离动作（尺侧稳定，桡侧灵活）。请千万不要因为孩子学不会而责备他们，这需要时间。我们可以先从“大象鼻子/小鸟嘴巴”的夹子游戏开始，用大夹子夹毛绒球。过渡阶段，强烈建议使用带有指环的辅助训练筷，帮助孩子建立“虎口张开、指尖开合”的正确肌肉发力模式。",
+    "iepGoal": "儿童能运用前三指的开合动作操控儿童筷（或训练筷），连续3次成功夹取1.5-2厘米大小的软质食物放入指定容器/口中。"
+  },
+  {
+    "id": 82,
+    "itemCode": "fine_motor_082",
+    "dimension": "self_care",
+    "dimensionName": "生活自理精细动作",
+    "title": "独立穿上衣",
+    "observation": "观察儿童独立穿上套头衫或对襟上衣（不含扣纽扣），评估穿衣动作序列及双手配合。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "独立穿上衣",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能分清衣服的前后，独立将头部钻出领口，两侧手臂准确找到并穿过袖筒，最后将衣服下摆向下拉平。",
+      "partial": "儿童能把头套进去，但在穿袖子时失去空间方向感，经常两只手伸进同一个袖子，或者不会把堆积在胸口的衣服向下拉平。",
+      "unmastered": "儿童对衣服的结构（领口、袖口）毫无概念，只会把衣服像毯子一样披在头上或身上，需要成人完全辅助。"
+    },
+    "expertAdvice": "穿套头衫对很多自闭症或空间感知障碍的孩子来说是个“黑洞”，因为布料遮住眼睛时会引发他们的不安全感。我们可以在衣服前面贴一个孩子最爱的卡通贴纸作为视觉提示。教导口诀：“贴纸朝下放桌上，两手抓起大洞洞，脑袋先从烟囱出，两只小鸟钻出洞口拉窗帘（下拉衣服）。”",
+    "iepGoal": "儿童能在视觉提示下，独立识别套头衫的领口与袖口，完成“套头、双臂穿袖、下拉下摆”的完整穿衣序列。"
+  },
+  {
+    "id": 83,
+    "itemCode": "fine_motor_083",
+    "dimension": "self_care",
+    "dimensionName": "生活自理精细动作",
+    "title": "独立脱上衣",
+    "observation": "观察儿童能独立脱下上衣，评估衣物操控及双手协调。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "独立脱上衣",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能双手交叉抓住衣服下摆向上翻脱，或一手从背后抓住衣领拉过头部，顺利将双臂从袖筒中抽出，独立完成脱衣。",
+      "partial": "儿童能将衣服拉到脖子或头上，但卡在头部无法继续，或者只能拔出一只手臂，另一只手臂被死死缠住，缺乏双侧肢体的协调配合。",
+      "unmastered": "儿童只会用力乱扯胸前的布料，因无法脱下而产生明显的情绪崩溃（烦躁、哭闹）。"
+    },
+    "expertAdvice": "脱衣服需要越过身体中线以及躯干的稳定性。请先使用大两号的旧衣服或宽松短袖进行练习。我通常教孩子们“剥香蕉”法：第一步，把胳膊像小乌龟一样缩回壳里（从袖筒抽出手放进衣服内部）；第二步，抓住领口，像脱掉帽子一样用力向上拔。对于有触觉防御的孩子，动作要干脆利落。",
+    "iepGoal": "儿童能双手协同发力，越过身体中线抓住衣物边缘，通过向上提拉的方式独立将上衣越过头部并抽出双臂。"
+  },
+  {
+    "id": 84,
+    "itemCode": "fine_motor_084",
+    "dimension": "self_care",
+    "dimensionName": "生活自理精细动作",
+    "title": "穿衣时扣纽扣",
+    "observation": "观察儿童在穿着状态下，独立将衣服上的纽扣（≥15mm）扣好。",
+    "referenceAge": {
+      "label": "4-5岁",
+      "minMonths": 48,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "穿衣时扣纽扣",
+    "expertSourceAge": "4-5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能在穿着状态下，一手拿住纽扣，一手捏住扣眼，准确将纽扣一半推入扣眼，然后另一手手指接力将纽扣完全拉出。",
+      "partial": "儿童能把纽扣塞进洞里，但在衣服背面接应的手指不够灵活（缺乏捏握力量），导致纽扣又滑出来；或者经常扣错位（上下不对齐）。",
+      "unmastered": "儿童只会用力拉拽纽扣，不懂得扣眼和纽扣之间的“穿透”关系，缺乏双手的协同配合。"
+    },
+    "expertAdvice": "扣纽扣需要极高的双指捏力（对指动作）和双侧协调。低头看自己的胸前去操作，其实对视觉-运动转换要求很高。我们可以先在桌面上玩“存钱罐投硬币”的游戏。接着，制作一条“纽扣蛇”（一根带大纽扣的丝带和几片开了缝的不织布），让孩子看着手里操作。提示语：“半个月亮钻进门，小手在门后把它拉进屋。”",
+    "iepGoal": "儿童能在无视觉提示下，使用双手拇食指协同捏握，独立完成衣服上3个（≥15mm）纽扣的穿入与拉出动作。"
+  },
+  {
+    "id": 85,
+    "itemCode": "fine_motor_085",
+    "dimension": "self_care",
+    "dimensionName": "生活自理精细动作",
+    "title": "独立穿鞋（粘扣带/魔术贴）",
+    "observation": "观察儿童独立穿鞋，包括分清左右、对准脚部并拉紧粘好魔术贴。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "独立穿鞋（粘扣带/魔术贴）",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能正确区分左右脚，将脚掌完全滑入鞋内，把脚后跟踩实，并用力拉紧魔术贴带子使之贴合粘牢。",
+      "partial": "儿童能把脚伸进去，但常常穿反左右脚；或者脚后跟踩在鞋帮上没有提上来；或者魔术贴只是轻轻搭上，没有用力拉紧导致鞋子松脱。",
+      "unmastered": "儿童把脚放在鞋面上方用力踩压，不懂得如何撑开鞋口，完全无法将脚纳入鞋腔内。"
+    },
+    "expertAdvice": "左右脚的识别是第一大难关。一个温暖的小妙招：拿一张孩子喜欢的贴纸，从中间剪开，分别贴在两只鞋子的内侧边缘，告诉孩子：“当两半贴纸碰在一起亲嘴时，就是穿对啦！” 另外，对于拉不紧魔术贴的孩子，我们要鼓励他们“给鞋子一个大大的拥抱，听刺啦刺啦的声音”。",
+    "iepGoal": "儿童能通过视觉辅助正确区分左右鞋，独立将脚完全穿入鞋内（脚跟到位），并施加拉力将魔术贴牢固粘合。"
+  },
+  {
+    "id": 86,
+    "itemCode": "fine_motor_086",
+    "dimension": "self_care",
+    "dimensionName": "生活自理精细动作",
+    "title": "独立系鞋带（基本交叉结）",
+    "observation": "观察儿童用双手完成系鞋带的基础交叉及打结步骤（可接受未完成蝴蝶结）。",
+    "referenceAge": {
+      "label": "5-6岁",
+      "minMonths": 60,
+      "maxMonths": 83
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "独立系鞋带（基本交叉结）",
+    "expertSourceAge": "5-6岁",
+    "scoreFeedback": {
+      "mastered": "儿童能双手分别捏住一根鞋带，完成交叉（打X），将一根鞋带从下方的洞中穿出，并双手向两侧拉紧，完成基础第一步打结。",
+      "partial": "儿童能摆出交叉的形状，但常常忘记哪根带子该往下钻，手指容易松开导致带子滑落；或者拉紧时力度不够，结很松散。",
+      "unmastered": "儿童只会胡乱将两根带子绕在一起，或者只是向上提拉，完全没有“交叉-穿洞-拉紧”的运动排序能力。"
+    },
+    "expertAdvice": "这是一个包含多步骤动作规划的复杂任务。对于记忆步骤困难的孩子，颜色对比是最好的老师。我们可以把鞋带换成一半红色、一半蓝色。使用童话隐喻：“红蛇和蓝蛇交叉打个大叉叉，红蛇低头钻过桥洞，两条蛇一起往两边拉！”拆解步骤，一次只练一步，多给予赞美，保护他们的探索欲。",
+    "iepGoal": "儿童能在双手协同下，记住并执行三个步骤：将两根鞋带交叉、将其中一端穿过交叉形成的环、双手向外拉紧，完成基础交叉结。"
+  },
+  {
+    "id": 87,
+    "itemCode": "fine_motor_087",
+    "dimension": "self_care",
+    "dimensionName": "生活自理精细动作",
+    "title": "拧水龙头洗手",
+    "observation": "观察儿童用手指/手掌完成旋转式水龙头的开启和关闭动作。",
+    "referenceAge": {
+      "label": "4岁",
+      "minMonths": 48,
+      "maxMonths": 59
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "拧水龙头洗手",
+    "expertSourceAge": "4岁",
+    "scoreFeedback": {
+      "mastered": "儿童能根据需要，用单手或双手的虎口、手指包绕水龙头旋钮，使用手腕旋转的力量（旋前/旋后）顺畅地开启和关闭水龙头。",
+      "partial": "儿童在手湿滑的情况下捏不住旋钮，或者只会用整个手臂前后推拉（缺乏手腕旋转），导致关水时关不紧，一直滴水。",
+      "unmastered": "儿童只会用手掌拍打水龙头，或者试图向外拔旋钮，不理解“旋转改变水流”的机械机制。"
+    },
+    "expertAdvice": "对于许多肌张力偏低的孩子，湿水后的摩擦力减小会让这个动作变得异常沮丧。如果家里的水龙头太紧，建议暂时套上一个摩擦力大的硅胶套，或更换为杠杆式/按压式水龙头，减少挫败感。训练手腕力量可以在洗澡时玩“拧干小毛巾”或“扭开大个儿沐浴露瓶盖”的游戏。",
+    "iepGoal": "儿童能运用手掌及手指的稳定抓握，配合手腕的旋转力量，独立将旋转式水龙头完全关闭至不滴水状态。"
+  },
+  {
+    "id": 88,
+    "itemCode": "fine_motor_088",
+    "dimension": "self_care",
+    "dimensionName": "生活自理精细动作",
+    "title": "独立梳头",
+    "observation": "观察儿童以惯用手握持梳子，完成从额前向脑后梳理的基础动作。",
+    "referenceAge": {
+      "label": "5岁",
+      "minMonths": 60,
+      "maxMonths": 71
+    },
+    "sourceStatus": "aligned",
+    "sourceNotes": null,
+    "expertSourceTitle": "独立梳头",
+    "expertSourceAge": "5岁",
+    "scoreFeedback": {
+      "mastered": "儿童能以优势手正确握持梳柄，将手臂抬高越过头顶或伸向脑后，完成从发根（额前及后脑勺）顺势向下梳理到发尾的动作。",
+      "partial": "儿童只能梳到额头前方的头发，因为肩关节活动度不足或双手协调弱，无法够到后脑勺；或者只是拿着梳子在头发表面轻轻拍打，没有梳透发丝。",
+      "unmastered": "儿童拿反梳子（用背面刮头），或者把梳子当成其他玩具，对“梳理头发”没有功能性认知；或因头部触觉敏感极度抗拒梳子碰到头皮。"
+    },
+    "expertAdvice": "梳头涉及肩关节的极大活动范围（外展和外旋）以及头皮的触觉接受度。对于触觉敏感的孩子，我们要先在手臂、手背上用软毛刷做脱敏游戏。教导梳头时，让孩子坐在大镜子前，获得视觉反馈。我们可以说：“小梳子是除草机，我们要把前面、侧边、还有后面（后脑勺）的乱草都理平哦！”",
+    "iepGoal": "儿童能握持梳子，抬起手臂并弯曲手腕，独立完成涵盖前额、两侧及后脑勺区域的自上而下的梳头动作。"
+  }
+]
+
+export function getFineMotorDimensionDefinition(code: FineMotorDimensionCode) {
+  return FINE_MOTOR_DIMENSIONS.find((item) => item.code === code) || null
+}
+
+export function getFineMotorScaleQuestions(): ScaleQuestion[] {
+  return FINE_MOTOR_QUESTIONS.map((question) => ({
+    id: question.id,
+    dimension: question.dimension,
+    dimensionName: question.dimensionName,
+    content: question.title + '：' + question.observation,
+    options: FINE_MOTOR_OPTIONS,
+    metadata: {
+      itemCode: question.itemCode,
+      title: question.title,
+      observation: question.observation,
+      referenceAge: question.referenceAge,
+      sourceStatus: question.sourceStatus,
+      sourceNotes: question.sourceNotes,
+      expertSourceTitle: question.expertSourceTitle,
+      expertSourceAge: question.expertSourceAge,
+      scoreFeedback: question.scoreFeedback,
+      expertAdvice: question.expertAdvice,
+      iepGoal: question.iepGoal,
+    },
+  }))
+}

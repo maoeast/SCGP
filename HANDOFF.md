@@ -19,7 +19,7 @@ Usually those three files are enough to resume work safely.
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `backup/restore round-trip QA is now confirmed passed; current active work has shifted to FMDA fine-motor scale integration; this conversation completed architecture scan and a code-realistic reuse plan, while the next active step is first-pass fine_motor implementation on top of the existing assessment mainline`
+- active work scope: `FMDA fine-motor integration now has entry wiring, generated question bank, and a first-pass FineMotorDriver with basal/ceiling + mastery-rate + IEP target extraction; the next active step is database persistence and report-record wiring for fine_motor`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

@@ -18,6 +18,7 @@ export type AssessmentScaleType =
   | 'sdq'
   | 'srs2'
   | 'cbcl'
+  | 'fine_motor'
 
 export interface StudentAssessmentRecord {
   id: string
@@ -39,6 +40,7 @@ const SCALE_LABEL_MAP: Record<AssessmentScaleType, string> = {
   sdq: 'SDQ量表',
   srs2: 'SRS-2量表',
   cbcl: 'CBCL量表',
+  fine_motor: '小肌肉功能发展评估量表',
 }
 
 const LEVEL_LABEL_MAP: Record<string, string> = {
@@ -204,6 +206,8 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))
 
+  const fineMotorRecords: StudentAssessmentRecord[] = []
+
   return [
     ...smRecords,
     ...weefimRecords,
@@ -213,6 +217,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     ...sdqRecords,
     ...srs2Records,
     ...cbclRecords,
+    ...fineMotorRecords,
   ].sort((left, right) => getSortTime(right.createdAt) - getSortTime(left.createdAt))
 }
 
@@ -248,6 +253,8 @@ export function buildAssessmentReportRoute(
       return `/assessment/srs2/report/${record.assessId}`
     case 'cbcl':
       return `/assessment/cbcl/report/${record.assessId}`
+    case 'fine_motor':
+      return `/assessment/fine_motor/report/${record.assessId}`
     default:
       return '/assessment'
   }

@@ -275,12 +275,12 @@
           </el-button>
         </el-card>
 
-        <!-- FMDA占位卡片 -->
+        <!-- FMDA量表卡片 -->
         <el-card
-          class="scale-card placeholder-card"
+          class="scale-card"
           shadow="hover"
+          @click="selectScale('fine_motor')"
         >
-          <div class="scale-card-badge">即将上线</div>
           <div class="scale-icon fmda-icon">
             <el-icon size="60"><EditPen /></el-icon>
           </div>
@@ -294,8 +294,8 @@
               <li>评估时间：约20-30分钟</li>
             </ul>
           </div>
-          <el-button disabled size="large" class="scale-btn coming-soon-btn">
-            即将上线
+          <el-button type="primary" size="large" class="scale-btn">
+            开始评估
           </el-button>
         </el-card>
       </div>
@@ -331,7 +331,7 @@ import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding, Stamp, Av
 const router = useRouter()
 
 // 选择量表
-const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq' | 'srs2' | 'cbcl') => {
+const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq' | 'srs2' | 'cbcl' | 'fine_motor') => {
   // 跳转到学生选择页面，传递量表类型参数
   router.push({
     path: '/assessment/select-student',
