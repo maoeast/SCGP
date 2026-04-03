@@ -19,7 +19,7 @@ Usually those three files are enough to resume work safely.
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `login entry runtime render and config persistence have now been verified; the next active step is backup/restore round-trip QA after the backup pipeline was updated to cover current live schema including class, plan, report, and training-record data`
+- active work scope: `login entry runtime render and config persistence are already verified; backup/restore schema coverage is patched in code; this conversation also landed admin UI cleanup for class-management shell layering, pill hover clipping, and redundant entry-page breadcrumbs; the next active step remains backup/restore round-trip QA plus spot-checking those affected pages`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

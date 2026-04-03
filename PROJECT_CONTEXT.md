@@ -607,3 +607,29 @@
 - current verification status:
   - `npm run type-check` passed after the backup changes landed
   - a fresh manual end-to-end backup/restore round-trip for the patched implementation is still pending
+
+## 23. 2026-04-03 Admin UI Consistency Cleanup for Filters and Entry Menus
+
+- class-management shell layering was adjusted to align with student-management:
+  - `src/views/admin/ClassManagement.vue`
+  - important current UI boundary:
+    - do not wrap class-management filter + stats + list content in one extra outer white panel again
+    - keep the page background layering consistent with student-management, while the actual list area stays in its own `main-content` panel
+- filter-pill hover clipping was fixed in the currently affected pages:
+  - `src/views/Students.vue`
+  - `src/views/admin/ClassManagement.vue`
+  - `src/views/admin/StudentClassAssignment.vue`
+  - `src/views/plan/PlanList.vue`
+- important shared UI constraint:
+  - any pill-strip that combines `overflow-x: auto` with hover lift / active outline should keep small vertical safe padding in the scroll container
+  - otherwise the hover border and shadow will be clipped by the filter surface
+- redundant breadcrumb helper text was removed from the current entry-selection pages:
+  - `src/views/games/GameModuleMenu.vue`
+  - `src/views/equipment/EquipmentMenu.vue`
+  - `src/views/training-records/TrainingRecordsMenu.vue`
+- important page-header boundary:
+  - those pages should rely on the main page title + subtitle for orientation
+  - do not reintroduce `模块名 / 选择入口` breadcrumb copy above the header unless a real navigation need appears
+- verification status:
+  - `npm run type-check` passed after the cleanup landed
+  - this conversation did not complete a fresh manual visual QA pass for all affected pages
