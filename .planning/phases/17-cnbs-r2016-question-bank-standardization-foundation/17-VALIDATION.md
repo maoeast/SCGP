@@ -49,7 +49,7 @@ created: 2026-04-04
 ## Wave 0 Requirements
 
 - [ ] `scripts/verify-cnbsr2016-item-bank.mjs` — asserts total items, domain codes, month-group set, and score-weight distribution
-- [ ] `scripts/verify-cnbsr2016-feedback.mjs` — asserts official DQ thresholds, age-bracket keys, and domain feedback coverage
+- [ ] `scripts/verify-cnbsr2016-feedback.mjs` — asserts `src/config/cnbsr2016-thresholds.ts` and `src/config/CNBSR2016FeedbackConfig.js` stay aligned on official DQ thresholds, age-bracket keys, and domain feedback coverage
 
 *Existing repo infrastructure already covers type-check and build verification once the phase-local verifier scripts exist.*
 

@@ -86,11 +86,18 @@ The dedicated type module avoids forcing later driver/report code to import a 26
 
 Phase 17 should not try to redesign this. It only needs to prepare the data contract that later phases will persist.
 
-### Pattern 3: Report Config Library
+### Pattern 3: Heavy CNBS-R2016 Feedback Should Stay Separate
 
-Current report pages read from `src/config/feedbackConfig.js` via `ASSESSMENT_LIBRARY`.
+Current report pages read from `src/config/feedbackConfig.js` via `ASSESSMENT_LIBRARY`, but CNBS-R2016 is already much larger than the existing shared assessment config corpus.
 
-This means Phase 17 should produce a code-ready CNBS-R2016 config shape that can be consumed there later. Even if the final report page lands in Phase 19, the threshold and feedback asset should be normalized now.
+Phase 17 should therefore split CNBS-R2016 config into two layers:
+
+- `src/config/cnbsr2016-thresholds.ts`
+  - lightweight runtime constants for DQ bands, age brackets, and domain labels
+- `src/config/CNBSR2016FeedbackConfig.js`
+  - heavy narrative corpus for overall summaries, domain commentary, IEP suggestions, and expert advice
+
+This keeps future driver logic on a small static import while leaving the large feedback narrative on the CNBS-R2016 report path only. It also avoids turning `src/config/feedbackConfig.js` into a monolithic 300 KB config blob that unrelated scales would parse.
 
 ## Canonical CNBS-R2016 Data Contract
 
@@ -99,6 +106,8 @@ This means Phase 17 should produce a code-ready CNBS-R2016 config shape that can
 ```text
 src/types/cnbsr2016.ts
 src/database/cnbsr2016-questions.ts
+src/config/cnbsr2016-thresholds.ts
+src/config/CNBSR2016FeedbackConfig.js
 scripts/verify-cnbsr2016-item-bank.mjs
 scripts/verify-cnbsr2016-feedback.mjs
 ```
@@ -166,7 +175,7 @@ Phase 17 should create two lightweight Node verifiers, not a runtime OCR path:
      - `PASS score-weights`
 
 2. `scripts/verify-cnbsr2016-feedback.mjs`
-   - reads the CNBS-R2016 config entry used by the app
+   - reads `src/config/cnbsr2016-thresholds.ts` and `src/config/CNBSR2016FeedbackConfig.js`
    - asserts DQ bands reflect the official PDF standard
    - asserts all required age brackets `a1/a2/a3/a4` exist
    - asserts five domains exist in dimension commentary / intervention sections
@@ -193,9 +202,9 @@ Do not start with a giant 261-item paste. Create the types and validation scaffo
 
 Populate the full seed after the verifier exists. This reduces silent mistakes in month groups and weight distribution.
 
-### Task C: Normalize the feedback asset against the official PDF
+### Task C: Normalize the lightweight thresholds and heavy feedback asset together
 
-Do this in the same phase so later driver/report work cannot reintroduce threshold drift.
+Do this in the same phase so later driver/report work cannot reintroduce threshold drift while also keeping the heavy narrative asset out of the shared `feedbackConfig.js` path.
 
 ## Common Pitfalls
 
@@ -239,7 +248,8 @@ Do this in the same phase so later driver/report work cannot reintroduce thresho
 
 - `src/types/cnbsr2016.ts`
 - `src/database/cnbsr2016-questions.ts`
-- `src/config/feedbackConfig.js`
+- `src/config/cnbsr2016-thresholds.ts`
+- `src/config/CNBSR2016FeedbackConfig.js`
 - `scripts/verify-cnbsr2016-item-bank.mjs`
 - `scripts/verify-cnbsr2016-feedback.mjs`
 
@@ -250,6 +260,7 @@ Do this in the same phase so later driver/report work cannot reintroduce thresho
 - `docs/references/儿心量表Ⅱ/CNBSR2016FeedbackConfig.js`
 - `src/database/fine-motor-questions.ts`
 - `src/config/feedbackConfig.js`
+- `src/config/CNBSR2016FeedbackConfig.js`
 
 ## Bottom Line
 
