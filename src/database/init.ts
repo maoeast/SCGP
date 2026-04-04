@@ -160,6 +160,45 @@ CREATE TABLE IF NOT EXISTS fine_motor_assess_detail (
   FOREIGN KEY (assess_id) REFERENCES fine_motor_assess(id)
 );
 
+-- CNBS-R2016评估主表
+CREATE TABLE IF NOT EXISTS cnbsr2016_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,
+  total_mental_age REAL NOT NULL,
+  dq REAL NOT NULL,
+  dq_status TEXT NOT NULL CHECK(dq_status IN ('excellent', 'good', 'normal', 'borderline', 'delayed')),
+  age_bracket TEXT NOT NULL CHECK(age_bracket IN ('a1', 'a2', 'a3', 'a4')),
+  level TEXT NOT NULL,
+  level_code TEXT,
+  domain_results TEXT NOT NULL,
+  domain_feedback TEXT NOT NULL,
+  iep_targets TEXT NOT NULL DEFAULT '[]',
+  iep_interventions TEXT NOT NULL DEFAULT '[]',
+  overall_rule TEXT,
+  expert_clinical TEXT,
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+-- CNBS-R2016评估详情表
+CREATE TABLE IF NOT EXISTS cnbsr2016_assess_detail (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  assess_id INTEGER NOT NULL,
+  question_id INTEGER NOT NULL,
+  dimension TEXT NOT NULL,
+  age_group_months INTEGER NOT NULL,
+  score_weight REAL NOT NULL,
+  score INTEGER NOT NULL CHECK(score IN (0, 1)),
+  answer_time INTEGER DEFAULT 0,
+  is_auto_filled INTEGER NOT NULL DEFAULT 0 CHECK(is_auto_filled IN (0, 1)),
+  auto_fill_reason TEXT CHECK(auto_fill_reason IN ('basal', 'ceiling') OR auto_fill_reason IS NULL),
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (assess_id) REFERENCES cnbsr2016_assess(id)
+);
+
 -- 训练任务分类表
 CREATE TABLE IF NOT EXISTS task_category (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -321,7 +360,7 @@ CREATE INDEX IF NOT EXISTS idx_login_log_time ON login_log(login_time DESC);
 CREATE TABLE IF NOT EXISTS report_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
-  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor')),
+  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016')),
   assess_id INTEGER,
   plan_id INTEGER,
   training_record_id INTEGER,
@@ -492,6 +531,11 @@ CREATE INDEX IF NOT EXISTS idx_cbcl_assess_created ON cbcl_assess(created_at DES
 -- SRS-2评估表索引
 CREATE INDEX IF NOT EXISTS idx_srs2_assess_student ON srs2_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_srs2_assess_created ON srs2_assess(created_at DESC);
+
+-- CNBS-R2016评估表索引
+CREATE INDEX IF NOT EXISTS idx_cnbsr2016_assess_student ON cnbsr2016_assess(student_id);
+CREATE INDEX IF NOT EXISTS idx_cnbsr2016_assess_created ON cnbsr2016_assess(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_cnbsr2016_assess_detail_assess ON cnbsr2016_assess_detail(assess_id);
 
 -- 系统配置表
 CREATE TABLE IF NOT EXISTS system_config (

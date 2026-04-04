@@ -6,6 +6,19 @@
 import { getDatabase } from './init'
 import { captureDependentViews, dropViews, restoreViews } from './migration/migration-view-utils'
 
+function getTableColumns(db: any, tableName: string): string[] {
+  try {
+    const result = db.exec(`PRAGMA table_info(${tableName})`)
+    return (result?.[0]?.values || []).map((row: any[]) => row[1] as string)
+  } catch {
+    return []
+  }
+}
+
+function buildCopyExpression(columns: Set<string>, columnName: string, fallbackSql: string): string {
+  return columns.has(columnName) ? columnName : `${fallbackSql} AS ${columnName}`
+}
+
 /**
  * 迁移 report_record 表的约束
  */
@@ -29,6 +42,7 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
     }
 
     console.log('[迁移] 开始更新 report_record 表约束...')
+    const columns = new Set(getTableColumns(db, 'report_record'))
 
     // 步骤1: 开启事务
     db.run('BEGIN TRANSACTION')
@@ -45,11 +59,14 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
       CREATE TABLE report_record_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_id INTEGER NOT NULL,
-        report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor')),
+        report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016')),
         assess_id INTEGER,
         plan_id INTEGER,
         training_record_id INTEGER,
         title TEXT NOT NULL,
+        class_id INTEGER,
+        class_name TEXT,
+        module_code TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (student_id) REFERENCES student(id),
@@ -61,8 +78,23 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
 
     // 步骤3: 复制数据
     const insertResult = db.run(`
-      INSERT INTO report_record_new (id, student_id, report_type, assess_id, plan_id, training_record_id, title, created_at, updated_at)
-      SELECT id, student_id, report_type, assess_id, plan_id, training_record_id, title, created_at, updated_at
+      INSERT INTO report_record_new (
+        id, student_id, report_type, assess_id, plan_id, training_record_id,
+        title, class_id, class_name, module_code, created_at, updated_at
+      )
+      SELECT
+        ${buildCopyExpression(columns, 'id', 'NULL')},
+        ${buildCopyExpression(columns, 'student_id', 'NULL')},
+        ${buildCopyExpression(columns, 'report_type', "'training'")},
+        ${buildCopyExpression(columns, 'assess_id', 'NULL')},
+        ${buildCopyExpression(columns, 'plan_id', 'NULL')},
+        ${buildCopyExpression(columns, 'training_record_id', 'NULL')},
+        ${buildCopyExpression(columns, 'title', "''")},
+        ${buildCopyExpression(columns, 'class_id', 'NULL')},
+        ${buildCopyExpression(columns, 'class_name', 'NULL')},
+        ${buildCopyExpression(columns, 'module_code', 'NULL')},
+        ${buildCopyExpression(columns, 'created_at', 'CURRENT_TIMESTAMP')},
+        ${buildCopyExpression(columns, 'updated_at', 'CURRENT_TIMESTAMP')}
       FROM report_record
     `)
 
@@ -79,6 +111,8 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
     db.run('CREATE INDEX IF NOT EXISTS idx_report_student ON report_record(student_id)')
     db.run('CREATE INDEX IF NOT EXISTS idx_report_type ON report_record(report_type)')
     db.run('CREATE INDEX IF NOT EXISTS idx_report_created ON report_record(created_at DESC)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_report_record_module_class ON report_record(module_code, class_id)')
+    db.run('CREATE INDEX IF NOT EXISTS idx_report_record_module_date ON report_record(module_code, created_at)')
 
     // 步骤7: 恢复依赖视图
     if (dependentViews.length > 0) {
@@ -90,7 +124,7 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
     db.run('COMMIT')
 
     console.log('[迁移] report_record 表约束更新成功！')
-    console.log('[迁移] 支持的报告类型: sm, weefim, training, iep, csirs, conners-psq, conners-trs, sdq, srs2, cbcl, emotional, fine_motor')
+    console.log('[迁移] 支持的报告类型: sm, weefim, training, iep, csirs, conners-psq, conners-trs, sdq, srs2, cbcl, emotional, fine_motor, cnbsr2016')
 
     return {
       success: true,
@@ -153,6 +187,7 @@ export function needsMigration(): boolean {
       || !sql.includes("'cbcl'")
       || !sql.includes("'emotional'")
       || !sql.includes("'fine_motor'")
+      || !sql.includes("'cnbsr2016'")
   } catch (error) {
     // 如果查询失败，保守地认为不需要迁移
     console.warn('[needsMigration] 检查约束失败，跳过迁移:', error)

@@ -229,6 +229,7 @@ type AssessmentStatisticsKey =
   | 'sdq_count'
   | 'srs2_count'
   | 'cbcl_count'
+  | 'cnbsr2016_count'
   | 'fine_motor_count'
 
 interface ReportStatistics {
@@ -241,6 +242,7 @@ interface ReportStatistics {
   sdq_count: number
   srs2_count: number
   cbcl_count: number
+  cnbsr2016_count: number
   fine_motor_count: number
   emotional_count: number
   iep_count: number
@@ -258,6 +260,7 @@ const REPORT_TYPE_OPTIONS: ReportTypeOption[] = [
   { value: 'sdq', label: 'SDQ 评估报告', category: 'assessment', tone: 'amber' },
   { value: 'srs2', label: 'SRS-2 评估报告', category: 'assessment', tone: 'teal' },
   { value: 'cbcl', label: 'CBCL 评估报告', category: 'assessment', tone: 'coral' },
+  { value: 'cnbsr2016', label: '儿心量表Ⅱ评估报告', category: 'assessment', tone: 'teal' },
   { value: 'fine_motor', label: '小肌肉功能发展评估报告', category: 'assessment', tone: 'blue' },
   { value: 'emotional', label: '情绪行为调节模块报告', category: 'intervention', tone: 'amber' },
   { value: 'iep', label: 'IEP 报告', category: 'intervention', tone: 'blue' },
@@ -321,6 +324,7 @@ const assessmentReportCount = computed(() =>
   + statistics.value.sdq_count
   + statistics.value.srs2_count
   + statistics.value.cbcl_count
+  + statistics.value.cnbsr2016_count
   + statistics.value.fine_motor_count,
 )
 const interventionReportCount = computed(() =>
@@ -353,6 +357,7 @@ function deriveReportStatistics(records: any[]): ReportStatistics {
     sdq_count: 0,
     srs2_count: 0,
     cbcl_count: 0,
+    cnbsr2016_count: 0,
     fine_motor_count: 0,
     emotional_count: 0,
     iep_count: 0,
@@ -369,6 +374,7 @@ function deriveReportStatistics(records: any[]): ReportStatistics {
     if (row.report_type === 'sdq') next.sdq_count += 1
     if (row.report_type === 'srs2') next.srs2_count += 1
     if (row.report_type === 'cbcl') next.cbcl_count += 1
+    if (row.report_type === 'cnbsr2016') next.cnbsr2016_count += 1
     if (row.report_type === 'fine_motor') next.fine_motor_count += 1
     if (row.report_type === 'emotional') next.emotional_count += 1
     if (row.report_type === 'iep') next.iep_count += 1
@@ -388,6 +394,7 @@ function getReportTypeTagType(type: string) {
     sdq: 'warning',
     srs2: 'primary',
     cbcl: 'success',
+    cnbsr2016: 'success',
     fine_motor: 'primary',
     emotional: 'warning',
     iep: 'danger',
@@ -516,6 +523,11 @@ function resetFilters() {
 }
 
 function viewReport(report: any) {
+  if (report.report_type === 'cnbsr2016') {
+    ElMessage.warning('CNBS-R2016 报告页尚未接入，当前阶段仅完成 persistence 与 report_record 闭环')
+    return
+  }
+
   const routeMap: Record<string, string> = {
     sm: `/assessment/sm/report?assessId=${report.assess_id}&studentId=${report.student_id}`,
     weefim: `/assessment/weefim/report?assessId=${report.assess_id}&studentId=${report.student_id}`,

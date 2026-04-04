@@ -122,7 +122,7 @@ import type {
 } from '@/types/assessment'
 import { calculateAgeInMonths } from '@/types/assessment'
 import { getDriverByScaleCode } from '@/strategies/assessment'
-import { StudentAPI, SMAssessmentAPI, CSIRSAPI, WeeFIMAPI, ReportAPI, ConnersPSQAPI, ConnersTRSAPI, FineMotorAssessmentAPI } from '@/database/api'
+import { StudentAPI, SMAssessmentAPI, CSIRSAPI, WeeFIMAPI, ReportAPI, ConnersPSQAPI, ConnersTRSAPI, FineMotorAssessmentAPI, Cnbsr2016AssessmentAPI } from '@/database/api'
 import { getDatabase } from '@/database/init'
 
 // 子组件
@@ -654,6 +654,8 @@ async function saveGenericAssessment(startTime: string, endTime: string) {
     await saveCBCLAssessment(startTime, endTime)
   } else if (scale === 'fine_motor') {
     await saveFineMotorAssessment(startTime, endTime)
+  } else if (scale === 'cnbsr2016') {
+    await saveCnbsr2016Assessment(startTime, endTime)
   } else {
     console.warn(`[AssessmentContainer] 未实现的量表保存逻辑: ${scale}`)
   }
@@ -1113,9 +1115,71 @@ async function saveFineMotorAssessment(startTime: string, endTime: string) {
   console.log('[AssessmentContainer] Fine Motor 评估保存成功, ID:', assessId.value)
 }
 
+async function saveCnbsr2016Assessment(startTime: string, endTime: string) {
+  if (!student.value || !scoreResult.value) return
+
+  const cnbsr2016Api = new Cnbsr2016AssessmentAPI()
+  const extraData = scoreResult.value.extraData as any
+  const orderedDetails = Object.entries(state.value.answers)
+    .map(([questionId, answer]) => {
+      const question = questions.value.find((item) => String(item.id) === String(questionId))
+
+      return {
+        question_id: parseInt(questionId, 10),
+        dimension: question?.dimension || '',
+        age_group_months: Number(question?.metadata?.age_group_months || 0),
+        score_weight: Number(question?.metadata?.score_weight || 0),
+        score: answer.score,
+        answer_time: answer.responseTime || 0,
+        is_auto_filled: answer.metadata?.is_auto_filled === true,
+        auto_fill_reason: answer.metadata?.auto_fill_reason || null,
+      }
+    })
+    .sort((left, right) => left.question_id - right.question_id)
+
+  assessId.value = cnbsr2016Api.saveAssessment({
+    assessment: {
+      student_id: student.value.id,
+      age_months: student.value.ageInMonths,
+      total_mental_age: Number(scoreResult.value.totalScore || 0),
+      dq: Number(extraData?.dq || 0),
+      dq_status: (extraData?.dqStatus || scoreResult.value.levelCode || 'normal'),
+      age_bracket: extraData?.ageBracket || 'a1',
+      level: scoreResult.value.level,
+      level_code: scoreResult.value.levelCode || null,
+      domain_results: extraData?.domainResults || [],
+      domain_feedback: extraData?.domainFeedback || [],
+      iep_targets: extraData?.iepTargets || [],
+      iep_interventions: extraData?.iepInterventions || [],
+      overall_rule: extraData?.overallRule || null,
+      expert_clinical: extraData?.expertClinical || null,
+      start_time: startTime,
+      end_time: endTime,
+    },
+    details: orderedDetails,
+  })
+
+  const reportApi = new ReportAPI()
+  reportApi.saveReportRecord({
+    student_id: student.value.id,
+    report_type: 'cnbsr2016',
+    assess_id: assessId.value ?? undefined,
+    module_code: 'sensory',
+    title: `${student.value.name} - 儿心量表Ⅱ评估报告`,
+  })
+
+  console.log('[AssessmentContainer] CNBS-R2016 评估保存成功, ID:', assessId.value)
+}
+
 // ========== 导航处理 ==========
 
 function handleViewReport() {
+  if (scaleCode.value === 'cnbsr2016') {
+    ElMessage.warning('CNBS-R2016 报告页尚未接入，本次已完成主记录、明细记录和报告记录保存')
+    router.push('/reports')
+    return
+  }
+
   // 不同量表使用不同的路由格式
   if (scaleCode.value === 'sm' || scaleCode.value === 'weefim') {
     // SM 和 WeeFIM 使用 query 参数

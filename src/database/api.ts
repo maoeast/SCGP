@@ -3,6 +3,7 @@ import type { ModuleCode } from '@/types/module';
 import { resolveTrainingEntryCode, resolveTrainingEntryCodeFromResource } from '@/utils/training-entry';
 import { TrainingSessionWriter } from './training-session-writer';
 import { FINE_MOTOR_QUESTIONS } from './fine-motor-questions';
+import { CNBSR2016_QUESTIONS } from './cnbsr2016-questions';
 
 // 数据库基础操作类
 // 【Plan B】使用主线程 SQLWrapper，防抖保存已内置
@@ -1019,6 +1020,42 @@ const FINE_MOTOR_QUESTION_MAP = new Map(
   FINE_MOTOR_QUESTIONS.map((question) => [question.id, question]),
 )
 
+type Cnbsr2016AutoFillReason = 'basal' | 'ceiling' | null
+
+interface Cnbsr2016AssessmentInput {
+  student_id: number
+  age_months: number
+  total_mental_age: number
+  dq: number
+  dq_status: 'excellent' | 'good' | 'normal' | 'borderline' | 'delayed'
+  age_bracket: 'a1' | 'a2' | 'a3' | 'a4'
+  level: string
+  level_code?: string | null
+  domain_results: unknown
+  domain_feedback: unknown
+  iep_targets: unknown
+  iep_interventions: unknown
+  overall_rule?: unknown
+  expert_clinical?: unknown
+  start_time: string
+  end_time?: string | null
+}
+
+interface Cnbsr2016AssessmentDetailInput {
+  question_id: number
+  dimension: string
+  age_group_months: number
+  score_weight: number
+  score: number
+  answer_time?: number
+  is_auto_filled?: boolean
+  auto_fill_reason?: Cnbsr2016AutoFillReason
+}
+
+const CNBSR2016_QUESTION_MAP = new Map(
+  CNBSR2016_QUESTIONS.map((question) => [question.id, question]),
+)
+
 export class FineMotorAssessmentAPI extends DatabaseAPI {
   saveAssessment(data: {
     assessment: FineMotorAssessmentInput
@@ -1172,6 +1209,181 @@ export class FineMotorAssessmentAPI extends DatabaseAPI {
         end_time,
         created_at
       FROM fine_motor_assess
+      WHERE student_id = ?
+      ORDER BY created_at DESC
+    `, [studentId])
+  }
+}
+
+export class Cnbsr2016AssessmentAPI extends DatabaseAPI {
+  saveAssessment(data: {
+    assessment: Cnbsr2016AssessmentInput
+    details: Cnbsr2016AssessmentDetailInput[]
+  }): number {
+    const rawDb = getTransactionalDb(this.db)
+    rawDb.run('BEGIN TRANSACTION')
+
+    try {
+      const assessId = this.createAssessment(data.assessment)
+      this.saveAssessmentDetails(assessId, data.details)
+      rawDb.run('COMMIT')
+      return assessId
+    } catch (error) {
+      try {
+        rawDb.run('ROLLBACK')
+      } catch {
+        // ignore rollback failures
+      }
+      throw error
+    }
+  }
+
+  createAssessment(assessment: Cnbsr2016AssessmentInput): number {
+    this.execute(`
+      INSERT INTO cnbsr2016_assess (
+        student_id, age_months, total_mental_age, dq,
+        dq_status, age_bracket, level, level_code,
+        domain_results, domain_feedback, iep_targets, iep_interventions,
+        overall_rule, expert_clinical, start_time, end_time
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      assessment.student_id,
+      assessment.age_months,
+      assessment.total_mental_age,
+      assessment.dq,
+      assessment.dq_status,
+      assessment.age_bracket,
+      assessment.level,
+      assessment.level_code || null,
+      JSON.stringify(assessment.domain_results ?? []),
+      JSON.stringify(assessment.domain_feedback ?? []),
+      JSON.stringify(assessment.iep_targets ?? []),
+      JSON.stringify(assessment.iep_interventions ?? []),
+      assessment.overall_rule ? JSON.stringify(assessment.overall_rule) : null,
+      assessment.expert_clinical ? JSON.stringify(assessment.expert_clinical) : null,
+      assessment.start_time,
+      assessment.end_time || null,
+    ])
+
+    return this.getLastInsertId()
+  }
+
+  saveAssessmentDetails(assessId: number, details: Cnbsr2016AssessmentDetailInput[]): void {
+    details.forEach((detail) => {
+      this.execute(`
+        INSERT INTO cnbsr2016_assess_detail (
+          assess_id, question_id, dimension, age_group_months,
+          score_weight, score, answer_time, is_auto_filled, auto_fill_reason
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        assessId,
+        detail.question_id,
+        detail.dimension,
+        detail.age_group_months,
+        detail.score_weight,
+        detail.score,
+        detail.answer_time || 0,
+        detail.is_auto_filled ? 1 : 0,
+        detail.auto_fill_reason || null,
+      ])
+    })
+  }
+
+  getAssessment(assessId: number): any | null {
+    const record = this.queryOne(`
+      SELECT
+        a.id,
+        a.student_id,
+        a.age_months,
+        a.total_mental_age,
+        a.dq,
+        a.dq_status,
+        a.age_bracket,
+        a.level,
+        a.level_code,
+        a.domain_results,
+        a.domain_feedback,
+        a.iep_targets,
+        a.iep_interventions,
+        a.overall_rule,
+        a.expert_clinical,
+        a.start_time,
+        a.end_time,
+        a.created_at,
+        s.name as student_name,
+        s.gender as student_gender,
+        s.birthday as student_birthday
+      FROM cnbsr2016_assess a
+      LEFT JOIN student s ON a.student_id = s.id
+      WHERE a.id = ?
+    `, [assessId])
+
+    if (!record) {
+      return null
+    }
+
+    return {
+      ...record,
+      domain_results: parseJsonArray(record.domain_results),
+      domain_feedback: parseJsonArray(record.domain_feedback),
+      iep_targets: parseJsonArray(record.iep_targets),
+      iep_interventions: parseJsonArray(record.iep_interventions),
+      overall_rule: parseJsonObject(record.overall_rule),
+      expert_clinical: parseJsonObject(record.expert_clinical),
+    }
+  }
+
+  getAssessmentDetails(assessId: number): any[] {
+    const details = this.query(`
+      SELECT
+        question_id,
+        dimension,
+        age_group_months,
+        score_weight,
+        score,
+        answer_time,
+        is_auto_filled,
+        auto_fill_reason,
+        created_at
+      FROM cnbsr2016_assess_detail
+      WHERE assess_id = ?
+      ORDER BY question_id
+    `, [assessId])
+
+    return details.map((detail: any) => {
+      const question = CNBSR2016_QUESTION_MAP.get(Number(detail.question_id))
+
+      return {
+        ...detail,
+        is_auto_filled: Number(detail.is_auto_filled) === 1,
+        item_code: question?.itemCode || null,
+        title: question?.title || '',
+        dimension_name: question?.domainName || detail.dimension,
+        age_band: question?.ageBand?.label || null,
+        prompt: question?.prompt || null,
+        pass_criteria: question?.passCriteria || null,
+      }
+    })
+  }
+
+  getStudentAssessments(studentId: number): any[] {
+    return this.query(`
+      SELECT
+        id,
+        student_id,
+        age_months,
+        total_mental_age,
+        dq,
+        dq_status,
+        age_bracket,
+        level,
+        level_code,
+        start_time,
+        end_time,
+        created_at
+      FROM cnbsr2016_assess
       WHERE student_id = ?
       ORDER BY created_at DESC
     `, [studentId])
@@ -1949,7 +2161,7 @@ export class ReportAPI extends DatabaseAPI {
       return 'emotional'
     }
 
-    if (reportType === 'fine_motor') {
+    if (reportType === 'fine_motor' || reportType === 'cnbsr2016') {
       return 'sensory'
     }
 
@@ -1961,7 +2173,7 @@ export class ReportAPI extends DatabaseAPI {
    */
   saveReportRecord(record: {
     student_id: number
-    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional' | 'fine_motor'
+    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional' | 'fine_motor' | 'cnbsr2016'
     assess_id?: number
     plan_id?: number
     training_record_id?: number
@@ -2092,6 +2304,7 @@ export class ReportAPI extends DatabaseAPI {
     srs2_count: number
     cbcl_count: number
     fine_motor_count: number
+    cnbsr2016_count: number
     emotional_count: number
     iep_count: number
     training_count: number
@@ -2119,6 +2332,7 @@ export class ReportAPI extends DatabaseAPI {
       srs2_count: 0,
       cbcl_count: 0,
       fine_motor_count: 0,
+      cnbsr2016_count: 0,
       emotional_count: 0,
       iep_count: 0,
       training_count: 0
@@ -2135,6 +2349,7 @@ export class ReportAPI extends DatabaseAPI {
       if (row.report_type === 'srs2') stats.srs2_count = row.count
       if (row.report_type === 'cbcl') stats.cbcl_count = row.count
       if (row.report_type === 'fine_motor') stats.fine_motor_count = row.count
+      if (row.report_type === 'cnbsr2016') stats.cnbsr2016_count = row.count
       if (row.report_type === 'emotional') stats.emotional_count = row.count
       if (row.report_type === 'iep') stats.iep_count = row.count
       if (row.report_type === 'training') stats.training_count = row.count
@@ -2157,6 +2372,7 @@ export class ReportAPI extends DatabaseAPI {
     srs2_migrated: number
     cbcl_migrated: number
     fine_motor_migrated: number
+    cnbsr2016_migrated: number
     total: number
   } {
     let smMigrated = 0
@@ -2168,6 +2384,7 @@ export class ReportAPI extends DatabaseAPI {
     let srs2Migrated = 0
     let cbclMigrated = 0
     let fineMotorMigrated = 0
+    let cnbsr2016Migrated = 0
 
     try {
       // 迁移 S-M 评估记录
@@ -2382,7 +2599,30 @@ export class ReportAPI extends DatabaseAPI {
         fineMotorMigrated++
       })
 
-      console.log(`✅ 数据迁移完成: S-M ${smMigrated} 条, WeeFIM ${weefimMigrated} 条, CSIRS ${csirsMigrated} 条, Conners PSQ ${connersPSQMigrated} 条, Conners TRS ${connersTRSMigrated} 条, SDQ ${sdqMigrated} 条, SRS-2 ${srs2Migrated} 条, CBCL ${cbclMigrated} 条, FMDA ${fineMotorMigrated} 条`)
+      const cnbsr2016Assessments = this.query(`
+        SELECT
+          ca.id,
+          ca.student_id,
+          ca.created_at,
+          s.name as student_name
+        FROM cnbsr2016_assess ca
+        LEFT JOIN student s ON ca.student_id = s.id
+        WHERE NOT EXISTS (
+          SELECT 1 FROM report_record rr
+          WHERE rr.report_type = 'cnbsr2016' AND rr.assess_id = ca.id
+        )
+      `)
+
+      cnbsr2016Assessments.forEach((assessment: any) => {
+        const title = `儿心量表Ⅱ评估报告_${assessment.student_name}_${new Date(assessment.created_at).toLocaleDateString()}`
+        this.execute(
+          'INSERT INTO report_record (student_id, report_type, assess_id, title, module_code, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+          [assessment.student_id, 'cnbsr2016', assessment.id, title, 'sensory', assessment.created_at]
+        )
+        cnbsr2016Migrated++
+      })
+
+      console.log(`✅ 数据迁移完成: S-M ${smMigrated} 条, WeeFIM ${weefimMigrated} 条, CSIRS ${csirsMigrated} 条, Conners PSQ ${connersPSQMigrated} 条, Conners TRS ${connersTRSMigrated} 条, SDQ ${sdqMigrated} 条, SRS-2 ${srs2Migrated} 条, CBCL ${cbclMigrated} 条, FMDA ${fineMotorMigrated} 条, CNBS-R2016 ${cnbsr2016Migrated} 条`)
     } catch (error) {
       console.error('❌ 数据迁移失败:', error)
     }
@@ -2397,7 +2637,8 @@ export class ReportAPI extends DatabaseAPI {
       srs2_migrated: srs2Migrated,
       cbcl_migrated: cbclMigrated,
       fine_motor_migrated: fineMotorMigrated,
-      total: smMigrated + weefimMigrated + csirsMigrated + connersPSQMigrated + connersTRSMigrated + sdqMigrated + srs2Migrated + cbclMigrated + fineMotorMigrated
+      cnbsr2016_migrated: cnbsr2016Migrated,
+      total: smMigrated + weefimMigrated + csirsMigrated + connersPSQMigrated + connersTRSMigrated + sdqMigrated + srs2Migrated + cbclMigrated + fineMotorMigrated + cnbsr2016Migrated
     }
   }
 }
