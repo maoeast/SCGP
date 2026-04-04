@@ -84,6 +84,7 @@ const SRS2Report = () => import('@/views/assessment/srs2/Report.vue')
 // CBCL 报告页面
 const CBCLReport = () => import('@/views/assessment/cbcl/Report.vue')
 const FineMotorReport = () => import('@/views/assessment/fine-motor/Report.vue')
+const Cnbsr2016Report = () => import('@/views/assessment/cnbsr2016/Report.vue')
 
 // 通用评估容器（Phase 4 重构）
 const AssessmentContainer = () => import('@/views/assessment/AssessmentContainer.vue')
@@ -634,6 +635,16 @@ const router = createRouter({
           component: FineMotorReport,
           meta: {
             title: '小肌肉功能发展评估量表报告',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'assessment/cnbsr2016/report/:assessId',
+          name: 'Cnbsr2016Report',
+          component: Cnbsr2016Report,
+          meta: {
+            title: '儿心量表Ⅱ评估报告',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

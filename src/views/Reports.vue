@@ -288,8 +288,8 @@ const ASSESSMENT_CARD_DEFINITIONS: Array<{
   { key: 'sdq', label: 'SDQ', tone: 'amber', valueKey: 'sdq_count' },
   { key: 'srs2', label: 'SRS-2', tone: 'teal', valueKey: 'srs2_count' },
   { key: 'cbcl', label: 'CBCL', tone: 'coral', valueKey: 'cbcl_count' },
+  { key: 'cnbsr2016', label: '儿心量表Ⅱ', tone: 'teal', valueKey: 'cnbsr2016_count' },
   { key: 'fine_motor', label: 'FMDA', tone: 'blue', valueKey: 'fine_motor_count' },
-  { key: 'child-development-behavior', label: '儿心量表-II', tone: 'placeholder', isPlaceholder: true },
   { key: 'tgmd-3', label: 'TGMD-3', tone: 'placeholder', isPlaceholder: true },
   { key: 'gmfm', label: 'GMFM', tone: 'placeholder', isPlaceholder: true },
 ]
@@ -523,11 +523,6 @@ function resetFilters() {
 }
 
 function viewReport(report: any) {
-  if (report.report_type === 'cnbsr2016') {
-    ElMessage.warning('CNBS-R2016 报告页尚未接入，当前阶段仅完成 persistence 与 report_record 闭环')
-    return
-  }
-
   const routeMap: Record<string, string> = {
     sm: `/assessment/sm/report?assessId=${report.assess_id}&studentId=${report.student_id}`,
     weefim: `/assessment/weefim/report?assessId=${report.assess_id}&studentId=${report.student_id}`,
@@ -537,6 +532,7 @@ function viewReport(report: any) {
     sdq: `/assessment/sdq/report/${report.assess_id}`,
     srs2: `/assessment/srs2/report/${report.assess_id}`,
     cbcl: `/assessment/cbcl/report/${report.assess_id}`,
+    cnbsr2016: `/assessment/cnbsr2016/report/${report.assess_id}`,
     fine_motor: `/assessment/fine_motor/report/${report.assess_id}`,
     emotional: `/emotional/report?studentId=${report.student_id}&reportId=${report.id}`,
     iep: `/games/report?recordId=${report.training_record_id}&studentId=${report.student_id}`,

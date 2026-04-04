@@ -16,10 +16,15 @@ Read in this order:
 
 Usually those three files are enough to resume work safely.
 
+Environment note:
+
+- for Node-based commands in this repo, prefer `/home/DONG/.config/nvm/versions/node/v24.14.0/bin/node`
+- do not fall back to the system default Node 18 unless the user explicitly asks for it
+
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `v1.7 已切到 CNBS-R2016 集成主线；Phase 19 的 persistence 主链已落地，cnbsr2016_assess / detail / report_record 已接通；下一步进入 CNBS-R2016 report 页面与路由闭环`
+- active work scope: `v1.7 已完成 CNBS-R2016 Phase 19：专用报告页、/assessment/cnbsr2016/report/:assessId、报告中心直达、student-detail 直达已闭环；下一步进入 Phase 20 runtime QA 与标准核验`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

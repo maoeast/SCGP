@@ -222,6 +222,26 @@
   - 虽然 driver core 已可运行，但 `cnbsr2016` 还没有 Phase 19 的 persistence / report_record / report 路由闭环
   - 在 Phase 19 落地前，不应把 CNBS-R2016 从占位态切成正式开放入口，避免暴露半成品评估流程
 
+## 8.3 2026-04-04 CNBS-R2016 Phase 19 Update
+
+- Phase 19 已从“persistence 主链落地”推进到“报告页与路由闭环完成”：
+  - `src/views/assessment/cnbsr2016/Report.vue` 已落地
+  - `/assessment/cnbsr2016/report/:assessId` 已接入静态路由表
+  - `src/views/Reports.vue` 已可从报告中心直达 CNBS-R2016 报告
+  - `src/views/student-detail/assessment-records.ts` 已可从学生详情评估记录直达 CNBS-R2016 报告
+  - `src/views/assessment/AssessmentContainer.vue` 完成页“查看报告”已可直接打开 CNBS-R2016 报告页
+- 当前 CNBS-R2016 报告语义已明确：
+  - 必须按 `CA / MA / DQ` 展示，不得套用 FMDA 的 mastery-rate 语义
+  - IEP 提取必须继续区分“手动失败项”与 `auto-filled` 项
+  - `auto-filled` 失败项可展示，但不能混入手动 IEP 目标
+- 当前验证现实：
+  - `npm run type-check` 通过
+  - 直接以 Node 24 调用 Vite 的构建验证通过
+  - `npm run build:web` 仍被仓库脚本层的 `cross-env: Permission denied` 阻塞
+- 当前下一步已切换为：
+  - `Phase 20 runtime QA + standard verification`
+  - 第一动作是对同一份 CNBS-R2016 报告做 completion dialog / report center / student-detail 三入口一致性验证
+
 ## 9. 2026-03-30 Working Update
 
 - A unified training-resource copy workflow is now part of current code reality.

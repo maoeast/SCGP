@@ -1,6 +1,7 @@
 import type { RouteLocationRaw } from 'vue-router'
 import {
   CBCLAssessmentAPI,
+  Cnbsr2016AssessmentAPI,
   ConnersPSQAPI,
   ConnersTRSAPI,
   CSIRSAPI,
@@ -19,6 +20,7 @@ export type AssessmentScaleType =
   | 'sdq'
   | 'srs2'
   | 'cbcl'
+  | 'cnbsr2016'
   | 'fine_motor'
 
 export interface StudentAssessmentRecord {
@@ -41,6 +43,7 @@ const SCALE_LABEL_MAP: Record<AssessmentScaleType, string> = {
   sdq: 'SDQ量表',
   srs2: 'SRS-2量表',
   cbcl: 'CBCL量表',
+  cnbsr2016: '儿心量表Ⅱ',
   fine_motor: '小肌肉功能发展评估量表',
 }
 
@@ -51,6 +54,9 @@ const LEVEL_LABEL_MAP: Record<string, string> = {
   severe: '重度',
   borderline: '临界',
   clinical: '临床',
+  excellent: '优秀',
+  good: '良好',
+  delayed: '智力发育障碍',
 }
 
 function formatNullableNumber(value: unknown): string {
@@ -87,6 +93,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
   const connersPSQApi = new ConnersPSQAPI()
   const connersTRSApi = new ConnersTRSAPI()
   const cbclApi = new CBCLAssessmentAPI()
+  const cnbsr2016Api = new Cnbsr2016AssessmentAPI()
   const fineMotorApi = new FineMotorAssessmentAPI()
 
   const smRecords = smApi.getStudentAssessments(studentId).map((record: any) => ({
@@ -208,6 +215,17 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))
 
+  const cnbsr2016Records = cnbsr2016Api.getStudentAssessments(studentId).map((record: any) => ({
+    id: `cnbsr2016-${record.id}`,
+    studentId,
+    assessId: record.id,
+    scaleType: 'cnbsr2016' as const,
+    scaleLabel: SCALE_LABEL_MAP.cnbsr2016,
+    scoreText: `MA ${formatNullableNumber(record.total_mental_age)}月 / DQ ${formatNullableNumber(record.dq)}`,
+    levelText: formatLevel(record.level_code || record.level),
+    createdAt: record.end_time || record.created_at || record.start_time || '',
+  }))
+
   const fineMotorRecords = fineMotorApi.getStudentAssessments(studentId).map((record: any) => ({
     id: `fine_motor-${record.id}`,
     studentId,
@@ -228,6 +246,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     ...sdqRecords,
     ...srs2Records,
     ...cbclRecords,
+    ...cnbsr2016Records,
     ...fineMotorRecords,
   ].sort((left, right) => getSortTime(right.createdAt) - getSortTime(left.createdAt))
 }
@@ -264,6 +283,8 @@ export function buildAssessmentReportRoute(
       return `/assessment/srs2/report/${record.assessId}`
     case 'cbcl':
       return `/assessment/cbcl/report/${record.assessId}`
+    case 'cnbsr2016':
+      return `/assessment/cnbsr2016/report/${record.assessId}`
     case 'fine_motor':
       return `/assessment/fine_motor/report/${record.assessId}`
     default:

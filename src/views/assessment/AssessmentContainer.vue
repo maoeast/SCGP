@@ -1174,12 +1174,6 @@ async function saveCnbsr2016Assessment(startTime: string, endTime: string) {
 // ========== 导航处理 ==========
 
 function handleViewReport() {
-  if (scaleCode.value === 'cnbsr2016') {
-    ElMessage.warning('CNBS-R2016 报告页尚未接入，本次已完成主记录、明细记录和报告记录保存')
-    router.push('/reports')
-    return
-  }
-
   // 不同量表使用不同的路由格式
   if (scaleCode.value === 'sm' || scaleCode.value === 'weefim') {
     // SM 和 WeeFIM 使用 query 参数
