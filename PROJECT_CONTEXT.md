@@ -189,6 +189,24 @@
   - 执行 Phase 17
   - 第一个动作是先落 `src/types/cnbsr2016.ts`、`src/database/cnbsr2016-questions.ts` 和两个 verifier 脚本，再录入完整 261 项题库
 
+## 8.1 2026-04-04 CNBS-R2016 Phase 17 Execution Update
+
+- Phase 17 已从“规划完成”推进到“代码落地完成”：
+  - `src/types/cnbsr2016.ts`
+  - `src/database/cnbsr2016-questions.ts`
+  - `scripts/verify-cnbsr2016-item-bank.mjs`
+  - `scripts/verify-cnbsr2016-feedback.mjs`
+- 当前代码里已具备 CNBS-R2016 的三块基础资产：
+  - 完整 261 项结构化题库
+  - 轻量 DQ/年龄段运行时阈值配置
+  - 重量级反馈配置与对应 verifier
+- 当前验证状态：
+  - `node scripts/verify-cnbsr2016-item-bank.mjs` 通过
+  - `node scripts/verify-cnbsr2016-feedback.mjs` 通过
+  - `npm run type-check` 通过
+- 当前 Phase 18 的第一个动作已明确：
+  - 基于现有 `AssessmentContainer + ScaleDriver` 主链实现 `Cnbsr2016Driver`
+
 ## 9. 2026-03-30 Working Update
 
 - A unified training-resource copy workflow is now part of current code reality.

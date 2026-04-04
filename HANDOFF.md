@@ -19,7 +19,7 @@ Usually those three files are enough to resume work safely.
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `v1.7 已切到 CNBS-R2016 集成主线，Phase 17 已规划完成；下一步是执行题库数字化、轻量阈值配置和 verifier 脚手架`
+- active work scope: `v1.7 已切到 CNBS-R2016 集成主线；Phase 17 已执行完成，261题题库、轻量阈值和 verifier 已落地；下一步进入 Phase 18 的 Cnbsr2016Driver / basal-ceiling / MA-DQ 评分实现`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

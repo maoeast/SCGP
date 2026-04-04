@@ -1,33 +1,11 @@
-export type Cnbsr2016DomainCode = 'gm' | 'fm' | 'ad' | 'la' | 'sb'
-
-export type Cnbsr2016AgeBracketCode = 'a1' | 'a2' | 'a3' | 'a4'
-
-export type Cnbsr2016DqStatus =
-  | 'excellent'
-  | 'good'
-  | 'normal'
-  | 'borderline'
-  | 'delayed'
-
-export interface Cnbsr2016DomainDefinition {
-  code: Cnbsr2016DomainCode
-  label: string
-}
-
-export interface Cnbsr2016AgeBracketDefinition {
-  code: Cnbsr2016AgeBracketCode
-  label: string
-  minMonths: number
-  maxMonths: number
-}
-
-export interface Cnbsr2016DqBand {
-  status: Cnbsr2016DqStatus
-  label: string
-  minExclusive?: number
-  minInclusive?: number
-  maxInclusive?: number
-}
+import type {
+  Cnbsr2016AgeBracketCode,
+  Cnbsr2016AgeBracketDefinition,
+  Cnbsr2016DomainCode,
+  Cnbsr2016DomainDefinition,
+  Cnbsr2016DqBand,
+  Cnbsr2016DqStatus,
+} from '@/types/cnbsr2016'
 
 export const CNBSR2016_DOMAIN_DEFINITIONS: Cnbsr2016DomainDefinition[] = [
   { code: 'gm', label: '大运动' },
@@ -44,10 +22,10 @@ export const CNBSR2016_AGE_BRACKETS: Cnbsr2016AgeBracketDefinition[] = [
   { code: 'a4', label: '37~72月', minMonths: 37, maxMonths: 72 },
 ]
 
-// Official WS/T 580—2017 DQ ranges:
-// >130 excellent, 110-129 good, 80-109 normal, 70-79 borderline, <70 delayed
+// Runtime implementation uses a fully-covered interval model:
+// >=130 excellent, [110,130) good, [80,110) normal, [70,80) borderline, <70 delayed
 export const CNBSR2016_DQ_BANDS: Cnbsr2016DqBand[] = [
-  { status: 'excellent', label: '优秀', minExclusive: 130 },
+  { status: 'excellent', label: '优秀', minInclusive: 130 },
   { status: 'good', label: '良好', minInclusive: 110, maxInclusive: 129 },
   { status: 'normal', label: '中等', minInclusive: 80, maxInclusive: 109 },
   { status: 'borderline', label: '临界偏低', minInclusive: 70, maxInclusive: 79 },
@@ -63,7 +41,7 @@ export function resolveCnbsr2016AgeBracket(ageMonths: number): Cnbsr2016AgeBrack
 }
 
 export function resolveCnbsr2016DqStatus(dq: number): Cnbsr2016DqStatus {
-  if (dq > 130) return 'excellent'
+  if (dq >= 130) return 'excellent'
   if (dq >= 110 && dq <= 129) return 'good'
   if (dq >= 80 && dq <= 109) return 'normal'
   if (dq >= 70 && dq <= 79) return 'borderline'
