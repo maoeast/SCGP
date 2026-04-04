@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: CNBS-R2016 Assessment Integration
-status: in_progress
-last_updated: "2026-04-04T14:30:00.000Z"
+status: Ready to execute
+last_updated: "2026-04-04T14:12:56.677Z"
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 4
+  total_plans: 1
   completed_plans: 0
   percent: 0
 ---
@@ -17,15 +17,15 @@ progress:
 ## Project Reference
 
 **Core Value**: SCGP provides special education teachers and clinicians with a comprehensive, offline, local-first assessment and intervention tool.
-**Current Focus**: v1.7 CNBS-R2016 assessment integration planning and execution
-**Plan**: Phase 17 not started yet
+**Current Focus**: Phase 17 of v1.7 is planned and ready to execute: CNBS-R2016 question-bank digitization and standards normalization
+**Plan**: 17-01 planned
 
 ## Current Position
 
 - **Phase**: 17 CNBS-R2016 Question Bank & Standardization Foundation
-- **Plan**: —
-- **Status**: Milestone `v1.7 CNBS-R2016 Assessment Integration` has been opened. Requirements and roadmap are being defined around item-bank digitization, unified driver integration, persistence/report wiring, and runtime verification.
-- **Last activity**: 2026-04-04 - Confirmed CNBS-R2016 should reuse the existing assessment mainline, chose the official PDF as the normative DQ-threshold source, and started milestone planning for structured data, driver logic, report integration, and QA.
+- **Plan**: 17-01
+- **Status**: Phase 17 planning is complete. The phase is now ready to execute against the current milestone roadmap.
+- **Last activity**: 2026-04-04 - Wrote `17-RESEARCH.md`, `17-VALIDATION.md`, and `17-PLAN.md`; locked Phase 17 around typed item-bank digitization, verifier scripts, and official-threshold feedback normalization.
 
 ## Latest Shipped Milestone
 
@@ -50,5 +50,5 @@ progress:
 
 ## Next Action
 
-- Plan Phase 17 and digitize the CNBS-R2016 question bank and score-weight model.
+- Execute Phase 17 and digitize the CNBS-R2016 question bank and score-weight model.
 - Keep later candidate work recorded but out of current v1.7 execution scope.
