@@ -47,6 +47,29 @@
 
 ## 3. 当前已确认的重要变更
 
+### 3.0 里程碑状态更新
+
+- `v1.6 Emotional Engine Refactoring` 已于 `2026-04-04` 完成归档
+- 当前活动里程碑已切换为：
+  - `v1.7 CNBS-R2016 Assessment Integration`
+- 当前 v1.7 主线目标：
+  - 将 `0-6岁儿童发育行为评估量表（儿心量表Ⅱ / CNBS-R2016）` 接入现有 `AssessmentContainer + ScaleDriver + per-scale table + report_record` 评估主链
+- 当前 v1.7 明确不纳入范围：
+  - FMDA runtime QA
+  - unified training-record closeout
+  - resource-center redesign
+  - broader platform debt cleanup
+
+### 3.0.1 CNBS-R2016 当前重要约束
+
+- CNBS-R2016 的 DQ 阈值必须以官方 PDF `WS/T 580—2017` 为准，不以旧 PRD / 草稿配置为准
+- CNBS-R2016 当前配置策略已明确拆分为两层：
+  - 轻量运行时配置：`src/config/cnbsr2016-thresholds.ts`
+  - 重量级解释/建议文案：`src/config/CNBSR2016FeedbackConfig.js`
+- 不要把 CNBS-R2016 大体量文案并入 `src/config/feedbackConfig.js`
+  - 原因：会让共享配置文件过大，并让无关量表页面承担额外解析/加载成本
+  - 后续 `Driver` 应只依赖轻量阈值配置，报告页再消费重文案配置
+
 ### 3.1 器材训练入口与 `physical-equipment`
 
 - physical-equipment CSV 导入链路已落地
@@ -153,7 +176,20 @@
 - `HANDOFF.md` is now the single top-level routing doc for new sessions and should stay short
 - 如果本文件再次明显膨胀，应继续把历史内容迁出，而不是在这里堆积
 
-## 8. 2026-03-30 Working Update
+## 8. 2026-04-04 CNBS-R2016 Planning Update
+
+- `.planning/` 已创建 v1.7 的正式规划材料：
+  - `.planning/PROJECT.md`
+  - `.planning/REQUIREMENTS.md`
+  - `.planning/ROADMAP.md`
+  - `.planning/phases/17-cnbs-r2016-question-bank-standardization-foundation/17-RESEARCH.md`
+  - `.planning/phases/17-cnbs-r2016-question-bank-standardization-foundation/17-VALIDATION.md`
+  - `.planning/phases/17-cnbs-r2016-question-bank-standardization-foundation/17-PLAN.md`
+- 当前下一步已明确：
+  - 执行 Phase 17
+  - 第一个动作是先落 `src/types/cnbsr2016.ts`、`src/database/cnbsr2016-questions.ts` 和两个 verifier 脚本，再录入完整 261 项题库
+
+## 9. 2026-03-30 Working Update
 
 - A unified training-resource copy workflow is now part of current code reality.
 - Source of truth for pre-release training-resource copy is:
@@ -180,7 +216,7 @@
 - Important constraint:
   - do not casually reorder `src/database/equipment-data.ts`, because current sensory-equipment copy keys still depend on the legacy array order
 
-## 9. 2026-03-31 Resource-Center Follow-up
+## 10. 2026-03-31 Resource-Center Follow-up
 
 - resource-center smoke verification is now confirmed against the live local dev DB:
   - after app relaunch and `Ctrl+R`, `emotion_scene = 80`
@@ -198,7 +234,7 @@
   - the teaching-material file-category filter should remain visible even when `teaching_material` is empty
   - current local dev DB still has `0` teaching-material rows, so non-zero category counts still need runtime verification with imported files
 
-## 10. 2026-03-31 Training Workspace Layout Fix
+## 11. 2026-03-31 Training Workspace Layout Fix
 
 - equipment quick-entry and game lobby now share a split-workspace scroll pattern:
   - page root: `workspace-page`
@@ -216,7 +252,7 @@
 - reference doc:
   - `docs/reports/2026-03-31-training-workspace-layout-scroll-guideline.md`
 
-## 11. 2026-03-31 Class Management Academic-Year Source
+## 12. 2026-03-31 Class Management Academic-Year Source
 
 - class management now has an independent academic-year source:
   - table: `sys_academic_year`

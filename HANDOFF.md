@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-03
+> last_updated: 2026-04-04
 
 > Responsibility: top-level handoff entry for new sessions.
 > Read when: entering the repo or resuming work and needing the fastest route to current context.
@@ -19,7 +19,7 @@ Usually those three files are enough to resume work safely.
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `FMDA fine-motor integration now has entry wiring, generated question bank, FineMotorDriver, per-scale persistence, report_record wiring, and a config-driven report page; the next active step is runtime QA against the local dev DB and real assessment flow`
+- active work scope: `v1.7 已切到 CNBS-R2016 集成主线，Phase 17 已规划完成；下一步是执行题库数字化、轻量阈值配置和 verifier 脚手架`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`
