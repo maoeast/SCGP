@@ -203,17 +203,17 @@
           </el-button>
         </el-card>
 
-        <!-- 儿童发育行为评估量表占位卡片 -->
+        <!-- 儿童发育行为评估量表卡片 -->
         <el-card
-          class="scale-card placeholder-card"
+          class="scale-card"
           shadow="hover"
+          @click="selectScale('cnbsr2016')"
         >
-          <div class="scale-card-badge">即将上线</div>
           <div class="scale-icon dev-behavior-icon">
             <el-icon size="60"><Opportunity /></el-icon>
           </div>
           <h3 class="scale-title">儿童发育行为评估量表</h3>
-          <p class="scale-subtitle">(儿心量表-II)</p>
+          <p class="scale-subtitle">(儿心量表Ⅱ)</p>
           <div class="scale-info">
             <ul>
               <li>适用年龄：0 - 6岁</li>
@@ -222,8 +222,8 @@
               <li>评估时间：约30-40分钟</li>
             </ul>
           </div>
-          <el-button disabled size="large" class="scale-btn coming-soon-btn">
-            即将上线
+          <el-button type="success" size="large" class="scale-btn">
+            开始评估
           </el-button>
         </el-card>
 
@@ -331,7 +331,7 @@ import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding, Stamp, Av
 const router = useRouter()
 
 // 选择量表
-const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq' | 'srs2' | 'cbcl' | 'fine_motor') => {
+const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq' | 'srs2' | 'cbcl' | 'cnbsr2016' | 'fine_motor') => {
   // 跳转到学生选择页面，传递量表类型参数
   router.push({
     path: '/assessment/select-student',
