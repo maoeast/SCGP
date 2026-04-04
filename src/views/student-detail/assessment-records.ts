@@ -10,6 +10,9 @@ import {
   WeeFIMAPI,
 } from '@/database/api'
 import { getDatabase } from '@/database/init'
+import {
+  buildAssessmentReportRoute as buildSharedAssessmentReportRoute,
+} from '@/features/assessment/report-routes'
 
 export type AssessmentScaleType =
   | 'sm'
@@ -254,40 +257,9 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
 export function buildAssessmentReportRoute(
   record: Pick<StudentAssessmentRecord, 'scaleType' | 'assessId' | 'studentId'>,
 ): RouteLocationRaw {
-  switch (record.scaleType) {
-    case 'sm':
-      return {
-        path: '/assessment/sm/report',
-        query: {
-          assessId: String(record.assessId),
-          studentId: String(record.studentId),
-        },
-      }
-    case 'weefim':
-      return {
-        path: '/assessment/weefim/report',
-        query: {
-          assessId: String(record.assessId),
-          studentId: String(record.studentId),
-        },
-      }
-    case 'csirs':
-      return `/assessment/csirs/report/${record.assessId}`
-    case 'conners-psq':
-      return `/assessment/conners-psq/report/${record.assessId}`
-    case 'conners-trs':
-      return `/assessment/conners-trs/report/${record.assessId}`
-    case 'sdq':
-      return `/assessment/sdq/report/${record.assessId}`
-    case 'srs2':
-      return `/assessment/srs2/report/${record.assessId}`
-    case 'cbcl':
-      return `/assessment/cbcl/report/${record.assessId}`
-    case 'cnbsr2016':
-      return `/assessment/cnbsr2016/report/${record.assessId}`
-    case 'fine_motor':
-      return `/assessment/fine_motor/report/${record.assessId}`
-    default:
-      return '/assessment'
-  }
+  return buildSharedAssessmentReportRoute({
+    scaleType: record.scaleType,
+    assessId: record.assessId,
+    studentId: record.studentId,
+  })
 }

@@ -238,6 +238,29 @@
   - `npm run type-check` 通过
   - 直接以 Node 24 调用 Vite 的构建验证通过
   - `npm run build:web` 仍被仓库脚本层的 `cross-env: Permission denied` 阻塞
+
+## 8.4 2026-04-04 CNBS-R2016 Phase 20 Update
+
+- Phase 20 已完成代码级 runtime QA / standard verification：
+  - 三条报告入口已统一复用共享路由构造器，不再各自硬编码
+  - CNBS-R2016 报告页已改为消费共享 report view-model，不再在页面内散落重复投影逻辑
+  - `scripts/verify-cnbsr2016-phase20-runtime.mjs` 已落地，用于验证三入口一致性与报告关键结果一致性
+  - `.planning/phases/20-cnbs-r2016-runtime-qa-standard-verification/20-VERIFICATION.md` 已记录本阶段验证结论
+- 当前 Phase 20 已验证通过的结果范围：
+  - `CA / 总 MA / 总 DQ`
+  - 五能区 `MA / DQ / 结论`
+  - age bracket commentary
+  - domain feedback
+  - 手动失败 IEP 目标
+  - auto-filled 失败项未混入 IEP
+- 当前新增的重要边界：
+  - 虽然代码级 Phase 20 已通过，但本机运行时数据库中尚无现成 CNBS-R2016 真实记录
+  - 因此仍未完成真实记录的三入口 live click-through UAT
+  - 在该 live UAT 完成前，不得把 CNBS-R2016 从占位态切成正式开放入口
+- 当前验证现实补充：
+  - `/home/DONG/.config/nvm/versions/node/v24.14.0/bin/node node_modules/vue-tsc/bin/vue-tsc --build` 通过
+  - `/home/DONG/.config/nvm/versions/node/v24.14.0/bin/node scripts/verify-cnbsr2016-phase20-runtime.mjs` 通过
+  - `env ELECTRON=true /home/DONG/.config/nvm/versions/node/v24.14.0/bin/node node_modules/vite/bin/vite.js build` 通过
 - 当前下一步已切换为：
   - `Phase 20 runtime QA + standard verification`
   - 第一动作是对同一份 CNBS-R2016 报告做 completion dialog / report center / student-detail 三入口一致性验证

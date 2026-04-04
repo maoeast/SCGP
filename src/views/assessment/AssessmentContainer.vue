@@ -123,6 +123,10 @@ import type {
 import { calculateAgeInMonths } from '@/types/assessment'
 import { getDriverByScaleCode } from '@/strategies/assessment'
 import { StudentAPI, SMAssessmentAPI, CSIRSAPI, WeeFIMAPI, ReportAPI, ConnersPSQAPI, ConnersTRSAPI, FineMotorAssessmentAPI, Cnbsr2016AssessmentAPI } from '@/database/api'
+import {
+  buildAssessmentReportRoute,
+  type AssessmentReportScaleType,
+} from '@/features/assessment/report-routes'
 import { getDatabase } from '@/database/init'
 
 // 子组件
@@ -1174,20 +1178,15 @@ async function saveCnbsr2016Assessment(startTime: string, endTime: string) {
 // ========== 导航处理 ==========
 
 function handleViewReport() {
-  // 不同量表使用不同的路由格式
-  if (scaleCode.value === 'sm' || scaleCode.value === 'weefim') {
-    // SM 和 WeeFIM 使用 query 参数
-    router.push({
-      path: `/assessment/${scaleCode.value}/report`,
-      query: {
-        assessId: assessId.value?.toString(),
-        studentId: student.value?.id?.toString()
-      }
-    })
-  } else {
-    // CSIRS、Conners、SDQ、SRS-2、CBCL 使用路径参数
-    router.push(`/assessment/${scaleCode.value}/report/${assessId.value}`)
+  if (!assessId.value) {
+    return
   }
+
+  router.push(buildAssessmentReportRoute({
+    scaleType: scaleCode.value as AssessmentReportScaleType,
+    assessId: assessId.value,
+    studentId: student.value?.id,
+  }))
 }
 
 function handleExit() {

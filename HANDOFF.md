@@ -24,7 +24,7 @@ Environment note:
 ## Current Active Work
 
 - active handoff source: `.continue-here.md`
-- active work scope: `v1.7 已完成 CNBS-R2016 Phase 19：专用报告页、/assessment/cnbsr2016/report/:assessId、报告中心直达、student-detail 直达已闭环；下一步进入 Phase 20 runtime QA 与标准核验`
+- active work scope: `v1.7 已完成 CNBS-R2016 Phase 20 代码级 runtime QA 与标准核验：三入口路由已统一、报告投影已共享、runtime verification 已落地；下一步是创建一条真实记录并做三入口 live click-through UAT，Phase 20 前仍不得开放正式入口`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

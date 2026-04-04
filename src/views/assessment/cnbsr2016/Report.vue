@@ -301,140 +301,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { Cnbsr2016AssessmentAPI } from '@/database/api'
-import { SCGP_CNBS_R2016_Feedback_Config } from '@/config/CNBSR2016FeedbackConfig'
 import {
-  CNBSR2016_AGE_BRACKETS,
-  CNBSR2016_DOMAIN_DEFINITIONS,
-  CNBSR2016_DQ_BANDS,
-} from '@/config/cnbsr2016-thresholds'
-import type { Cnbsr2016AgeBracketCode, Cnbsr2016DomainCode, Cnbsr2016DqStatus } from '@/types/cnbsr2016'
-
-interface Cnbsr2016AssessmentRecord {
-  id: number
-  student_id: number
-  student_name: string
-  student_gender: string
-  age_months: number
-  total_mental_age: number
-  dq: number
-  dq_status: Cnbsr2016DqStatus
-  age_bracket: Cnbsr2016AgeBracketCode
-  level: string
-  level_code?: string | null
-  domain_results?: DomainResult[]
-  domain_feedback?: DomainFeedback[]
-  iep_targets?: unknown[]
-  iep_interventions?: InterventionRecord[]
-  overall_rule?: OverallRule | null
-  expert_clinical?: ExpertClinical | null
-  start_time?: string
-  end_time?: string
-  created_at?: string
-}
-
-interface DomainResult {
-  code: Cnbsr2016DomainCode
-  name: string
-  itemCount: number
-  passedCount: number
-  failedCount: number
-  autoFilledPassedCount: number
-  autoFilledFailedCount: number
-  mentalAge: number
-  maxMentalAge: number
-  achievementRate: number
-  dq: number
-  dqStatus: Cnbsr2016DqStatus
-  level: string
-}
-
-interface DomainFeedback {
-  domain: Cnbsr2016DomainCode
-  domainName: string
-  dqStatus: Cnbsr2016DqStatus
-  headline: string
-  content: string
-  advice: Array<{ tag: string; text: string }>
-}
-
-interface OverallRule {
-  label?: string
-  summary?: string
-  strengths?: string
-  suggestions?: string
-}
-
-interface ExpertClinical {
-  clinical?: string
-  risk?: string
-  followup?: string
-  referral?: string
-}
-
-interface InterventionRecord {
-  domain: Cnbsr2016DomainCode
-  domainName: string
-  intervention: {
-    short?: string
-    long?: string
-    methods?: string[]
-    home?: string[]
-    freq?: string
-  }
-}
-
-interface AssessmentDetail {
-  question_id: number
-  dimension: Cnbsr2016DomainCode
-  age_group_months: number
-  score_weight: number
-  score: number
-  answer_time: number
-  is_auto_filled: boolean
-  auto_fill_reason: 'basal' | 'ceiling' | null
-  item_code: string | null
-  title: string
-  dimension_name: string
-  age_band: string | null
-  prompt: string | null
-  pass_criteria: string | null
-}
-
-interface DomainRow {
-  code: Cnbsr2016DomainCode
-  name: string
-  mentalAge: number
-  maxMentalAge: number
-  dq: number
-  dqStatus: Cnbsr2016DqStatus
-  level: string
-  passedCount: number
-  failedCount: number
-  manualFailedCount: number
-  autoFilledFailedCount: number
-  autoFilledPassedCount: number
-  headline: string
-  content: string
-  advice: Array<{ tag: string; text: string }>
-}
-
-interface IepTargetItem {
-  questionId: number
-  itemCode: string | null
-  title: string
-  domain: Cnbsr2016DomainCode
-  domainName: string
-  ageGroupMonths: number
-  ageBand: string | null
-  prompt: string | null
-  passCriteria: string | null
-  autoFillReason: 'basal' | 'ceiling' | null
-}
+  buildCnbsr2016ReportViewModel,
+  getCnbsr2016DqStatusLabel,
+  hydrateCnbsr2016AssessmentDetails,
+  type AssessmentDetail,
+  type Cnbsr2016AssessmentRecord,
+  type DomainRow,
+  type ExpertClinical,
+  type IepTargetItem,
+  type OverallRule,
+} from '@/features/assessment/cnbsr2016/report-model'
 
 const route = useRoute()
 const router = useRouter()
@@ -458,176 +340,37 @@ const studentInfo = computed(() => {
   }
 })
 
-const domainResultMap = computed(() => {
-  const map = new Map<Cnbsr2016DomainCode, DomainResult>()
-  for (const item of assessment.value?.domain_results || []) {
-    map.set(item.code, item)
-  }
-  return map
-})
-
-const domainFeedbackMap = computed(() => {
-  const map = new Map<Cnbsr2016DomainCode, DomainFeedback>()
-  for (const item of assessment.value?.domain_feedback || []) {
-    map.set(item.domain, item)
-  }
-  return map
-})
-
-const ageBracketLabel = computed(() => {
-  const code = assessment.value?.age_bracket
-  if (!code) return '-'
-  return CNBSR2016_AGE_BRACKETS.find((item) => item.code === code)?.label || code
-})
-
-const dqBandRangeText = computed(() => {
-  const band = CNBSR2016_DQ_BANDS.find((item) => item.status === assessment.value?.dq_status)
-  if (!band) return '-'
-
-  if (band.minInclusive !== undefined && band.maxInclusive !== undefined) {
-    return `[${band.minInclusive}, ${band.maxInclusive + 1})`
-  }
-  if (band.minInclusive !== undefined) {
-    return `>=${band.minInclusive}`
-  }
-  if (band.maxInclusive !== undefined) {
-    return `<${band.maxInclusive + 1}`
-  }
-  return '-'
-})
-
-const overallRule = computed<OverallRule | null>(() => {
+const reportViewModel = computed(() => {
   if (!assessment.value) return null
-  return assessment.value.overall_rule
-    || SCGP_CNBS_R2016_Feedback_Config.overall_rules?.[assessment.value.age_bracket]?.[assessment.value.dq_status]
-    || null
+  return buildCnbsr2016ReportViewModel({
+    assessment: assessment.value,
+    details: details.value,
+  })
 })
 
-const expertClinical = computed<ExpertClinical | null>(() => {
-  if (!assessment.value) return null
-  return assessment.value.expert_clinical
-    || SCGP_CNBS_R2016_Feedback_Config.expert_clinical?.[assessment.value.age_bracket]?.[assessment.value.dq_status]
-    || null
-})
+const ageBracketLabel = computed(() => reportViewModel.value?.ageBracketLabel || '-')
 
-const hasExpertClinical = computed(() =>
-  Boolean(
-    expertClinical.value?.clinical
-      || expertClinical.value?.risk
-      || expertClinical.value?.followup
-      || expertClinical.value?.referral,
-  ),
-)
+const dqBandRangeText = computed(() => reportViewModel.value?.dqBandRangeText || '-')
 
-const domainRows = computed<DomainRow[]>(() =>
-  CNBSR2016_DOMAIN_DEFINITIONS.map((domain) => {
-    const result = domainResultMap.value.get(domain.code)
-    const feedback = domainFeedbackMap.value.get(domain.code)
-      || (assessment.value
-        ? {
-            domain: domain.code,
-            domainName: domain.label,
-            dqStatus: result?.dqStatus || 'normal',
-            headline:
-              SCGP_CNBS_R2016_Feedback_Config.dimensions?.[domain.code]?.[assessment.value.age_bracket]?.[result?.dqStatus || 'normal']?.headline || '',
-            content:
-              SCGP_CNBS_R2016_Feedback_Config.dimensions?.[domain.code]?.[assessment.value.age_bracket]?.[result?.dqStatus || 'normal']?.content || '',
-            advice:
-              SCGP_CNBS_R2016_Feedback_Config.dimensions?.[domain.code]?.[assessment.value.age_bracket]?.[result?.dqStatus || 'normal']?.advice || [],
-          }
-        : null)
+const overallRule = computed<OverallRule | null>(() => reportViewModel.value?.overallRule || null)
 
-    const domainDetails = details.value.filter((item) => item.dimension === domain.code)
-    const manualFailedCount = domainDetails.filter((item) => item.score === 0 && item.is_auto_filled !== true).length
+const expertClinical = computed<ExpertClinical | null>(() => reportViewModel.value?.expertClinical || null)
 
-    return {
-      code: domain.code,
-      name: result?.name || domain.label,
-      mentalAge: Number(result?.mentalAge || 0),
-      maxMentalAge: Number(result?.maxMentalAge || 0),
-      dq: Number(result?.dq || 0),
-      dqStatus: result?.dqStatus || 'normal',
-      level: result?.level || getDqStatusLabel(result?.dqStatus || 'normal'),
-      passedCount: Number(result?.passedCount || 0),
-      failedCount: Number(result?.failedCount || 0),
-      manualFailedCount,
-      autoFilledFailedCount: Number(result?.autoFilledFailedCount || 0),
-      autoFilledPassedCount: Number(result?.autoFilledPassedCount || 0),
-      headline: feedback?.headline || '',
-      content: feedback?.content || '',
-      advice: Array.isArray(feedback?.advice) ? feedback.advice : [],
-    }
-  }),
-)
+const hasExpertClinical = computed(() => reportViewModel.value?.hasExpertClinical || false)
 
-const manualIepTargets = computed<IepTargetItem[]>(() =>
-  details.value
-    .filter((item) => item.score === 0 && item.is_auto_filled !== true)
-    .map((item) => ({
-      questionId: Number(item.question_id),
-      itemCode: item.item_code,
-      title: item.title,
-      domain: item.dimension,
-      domainName: item.dimension_name,
-      ageGroupMonths: Number(item.age_group_months || 0),
-      ageBand: item.age_band,
-      prompt: item.prompt,
-      passCriteria: item.pass_criteria,
-      autoFillReason: item.auto_fill_reason,
-    }))
-    .sort((left, right) => {
-      const domainOrder = CNBSR2016_DOMAIN_DEFINITIONS.findIndex((item) => item.code === left.domain)
-        - CNBSR2016_DOMAIN_DEFINITIONS.findIndex((item) => item.code === right.domain)
-      if (domainOrder !== 0) {
-        return domainOrder
-      }
-      return left.questionId - right.questionId
-    }),
-)
+const domainRows = computed<DomainRow[]>(() => reportViewModel.value?.domainRows || [])
 
-const autoFilledFailedItems = computed<IepTargetItem[]>(() =>
-  details.value
-    .filter((item) => item.score === 0 && item.is_auto_filled === true)
-    .map((item) => ({
-      questionId: Number(item.question_id),
-      itemCode: item.item_code,
-      title: item.title,
-      domain: item.dimension,
-      domainName: item.dimension_name,
-      ageGroupMonths: Number(item.age_group_months || 0),
-      ageBand: item.age_band,
-      prompt: item.prompt,
-      passCriteria: item.pass_criteria,
-      autoFillReason: item.auto_fill_reason,
-    }))
-    .sort((left, right) => left.questionId - right.questionId),
-)
+const manualIepTargets = computed<IepTargetItem[]>(() => reportViewModel.value?.manualIepTargets || [])
 
-const interventions = computed(() => {
-  const interventionMap = new Map(
-    ((assessment.value?.iep_interventions || []) as InterventionRecord[]).map((item) => [item.domain, item]),
-  )
+const autoFilledFailedItems = computed<IepTargetItem[]>(() => reportViewModel.value?.autoFilledFailedItems || [])
 
-  return domainRows.value
-    .filter((domain) => domain.dqStatus === 'borderline' || domain.dqStatus === 'delayed')
-    .map((domain) => ({
-      domain: domain.code,
-      domainName: domain.name,
-      dqStatus: domain.dqStatus,
-      intervention:
-        interventionMap.get(domain.code)?.intervention
-        || SCGP_CNBS_R2016_Feedback_Config.iep_interventions?.[domain.code]?.[assessment.value?.age_bracket || 'a1']?.[domain.dqStatus]
-        || null,
-    }))
-    .filter((item) => item.intervention)
-})
+const interventions = computed(() => reportViewModel.value?.interventions || [])
 
-function getDqStatusLabel(status: Cnbsr2016DqStatus | string | null | undefined) {
-  if (!status) return '-'
-  return CNBSR2016_DQ_BANDS.find((item) => item.status === status)?.label || String(status)
+function getDqStatusLabel(status: string | null | undefined) {
+  return getCnbsr2016DqStatusLabel(status)
 }
 
-function getStatusTagType(status: Cnbsr2016DqStatus | string | null | undefined): 'success' | 'warning' | 'danger' | 'info' {
+function getStatusTagType(status: string | null | undefined): 'success' | 'warning' | 'danger' | 'info' {
   if (status === 'excellent' || status === 'good') return 'success'
   if (status === 'normal') return 'info'
   if (status === 'borderline') return 'warning'
@@ -675,8 +418,14 @@ function goBack() {
   router.back()
 }
 
+function resetReportState() {
+  assessment.value = null
+  details.value = []
+}
+
 async function loadReport() {
   if (!Number.isFinite(assessId.value) || assessId.value <= 0) {
+    resetReportState()
     ElMessage.error('无效的评估记录 ID')
     return
   }
@@ -686,19 +435,30 @@ async function loadReport() {
     const record = api.getAssessment(assessId.value)
 
     if (!record) {
+      resetReportState()
       ElMessage.error('未找到儿心量表Ⅱ评估记录')
       return
     }
 
     assessment.value = record as Cnbsr2016AssessmentRecord
-    details.value = api.getAssessmentDetails(assessId.value) as AssessmentDetail[]
+    details.value = hydrateCnbsr2016AssessmentDetails(
+      api.getAssessmentDetails(assessId.value) as AssessmentDetail[],
+    )
   } catch (error) {
+    resetReportState()
     console.error('[Cnbsr2016Report] 加载失败:', error)
     ElMessage.error('加载儿心量表Ⅱ报告失败')
   }
 }
 
 onMounted(async () => {
+  await loadReport()
+})
+
+watch(assessId, async (nextValue, previousValue) => {
+  if (nextValue === previousValue) {
+    return
+  }
   await loadReport()
 })
 </script>

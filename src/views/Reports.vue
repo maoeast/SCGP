@@ -210,6 +210,10 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { RefreshRight, Search } from '@element-plus/icons-vue'
 import { useStudentStore } from '@/stores/student'
 import { ReportAPI } from '@/database/api'
+import {
+  buildAssessmentReportRoute,
+  type AssessmentReportScaleType,
+} from '@/features/assessment/report-routes'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 
 interface ReportTypeOption {
@@ -523,17 +527,29 @@ function resetFilters() {
 }
 
 function viewReport(report: any) {
+  const assessmentReportTypes = new Set<AssessmentReportScaleType>([
+    'sm',
+    'weefim',
+    'csirs',
+    'conners-psq',
+    'conners-trs',
+    'sdq',
+    'srs2',
+    'cbcl',
+    'cnbsr2016',
+    'fine_motor',
+  ])
+
+  if (assessmentReportTypes.has(report.report_type as AssessmentReportScaleType)) {
+    router.push(buildAssessmentReportRoute({
+      scaleType: report.report_type as AssessmentReportScaleType,
+      assessId: report.assess_id,
+      studentId: report.student_id,
+    }))
+    return
+  }
+
   const routeMap: Record<string, string> = {
-    sm: `/assessment/sm/report?assessId=${report.assess_id}&studentId=${report.student_id}`,
-    weefim: `/assessment/weefim/report?assessId=${report.assess_id}&studentId=${report.student_id}`,
-    csirs: `/assessment/csirs/report/${report.assess_id}`,
-    'conners-psq': `/assessment/conners-psq/report/${report.assess_id}`,
-    'conners-trs': `/assessment/conners-trs/report/${report.assess_id}`,
-    sdq: `/assessment/sdq/report/${report.assess_id}`,
-    srs2: `/assessment/srs2/report/${report.assess_id}`,
-    cbcl: `/assessment/cbcl/report/${report.assess_id}`,
-    cnbsr2016: `/assessment/cnbsr2016/report/${report.assess_id}`,
-    fine_motor: `/assessment/fine_motor/report/${report.assess_id}`,
     emotional: `/emotional/report?studentId=${report.student_id}&reportId=${report.id}`,
     iep: `/games/report?recordId=${report.training_record_id}&studentId=${report.student_id}`,
     training: `/training/plans/${report.plan_id}`,
