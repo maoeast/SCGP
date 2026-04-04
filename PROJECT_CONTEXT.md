@@ -207,6 +207,21 @@
 - 当前 Phase 18 的第一个动作已明确：
   - 基于现有 `AssessmentContainer + ScaleDriver` 主链实现 `Cnbsr2016Driver`
 
+## 8.2 2026-04-04 CNBS-R2016 Phase 18 Core Driver Update
+
+- `Cnbsr2016Driver` 已落地并注册到共享 assessment driver factory：
+  - `src/strategies/assessment/Cnbsr2016Driver.ts`
+  - `src/strategies/assessment/index.ts`
+- 当前 Phase 18 已实现的核心能力：
+  - 每个能区独立选择起测月龄组
+  - 每个能区独立执行 basal / ceiling 搜索
+  - 自动补齐 `is_auto_filled` / `auto_fill_reason`
+  - 基于 261 项题库计算能区智龄、总智龄 `MA`、发育商 `DQ`
+  - 基于 `src/config/cnbsr2016-thresholds.ts` + `src/config/CNBSR2016FeedbackConfig.js` 生成结构化反馈
+- 当前重要边界：
+  - 虽然 driver core 已可运行，但 `cnbsr2016` 还没有 Phase 19 的 persistence / report_record / report 路由闭环
+  - 在 Phase 19 落地前，不应把 CNBS-R2016 从占位态切成正式开放入口，避免暴露半成品评估流程
+
 ## 9. 2026-03-30 Working Update
 
 - A unified training-resource copy workflow is now part of current code reality.
