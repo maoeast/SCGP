@@ -1,10 +1,23 @@
 # Milestones
 
+## v1.6 Emotional Engine Refactoring (Shipped: 2026-04-04)
+
+**Phases completed:** 3 phases, 3 plans, 9 tasks
+
+**Key accomplishments:**
+
+- Compiled emotion-scene and care-scene resources into one emotional session DSL with normalized intro, reasoning, solution, and care-step metadata
+- Shared emotional interaction engine with renderer-map dispatch, centralized feedback/hint orchestration, and host-mode runtime pages for both emotional submodules
+- Shared emotional training shell, completed-only report pointer updates, and a live-db compatibility verifier that now passes against the current SCGP database
+
+---
+
 ## v1.5 Strict Modular Licensing (Shipped: 2026-03-19)
 
 **Phases completed:** 2 phases, 2 plans, 8 requirements
 
 **Key accomplishments:**
+
 - Strict modular licensing core now requires `am` in the signed payload, persists allowed modules locally, and exposes entitlement checks plus DEV-only mock authorization.
 - Router, sidebar, dashboard, and direct-launch entry points now enforce module authorization while keeping unauthorized modules visible as locked commercial surfaces.
 - Development can now proceed with `sensory + emotional` unlocked in DEV without leaking the bypass into production activation logic.
@@ -16,6 +29,7 @@
 **Phases completed:** 1 phase, 1 plan, 8 requirements
 
 **Key accomplishments:**
+
 - Dashboard now acts as a real special-ed command center with SQL-backed metrics, intervention alerts, and direct schedule launch into training runtime.
 - Today's Schedule is driven by real active plans instead of placeholder homepage content.
 - Weekly anomaly and overdue-assessment reminders are aggregated from real local training and assessment tables.
@@ -28,6 +42,7 @@
 **Phases completed:** 1 phase, 1 plan, 7 requirements
 
 **Key accomplishments:**
+
 - Added a universal payload-based `docx` renderer for assessment reports.
 - Added payload builders covering SDQ, CBCL, SRS2, CSIRS, Conners PSQ/TRS, S-M, and WeeFIM.
 - Migrated all targeted assessment report pages to the new Word export flow.
@@ -41,6 +56,7 @@
 **Phases completed:** 1 phase, 1 plan, 9 requirements
 
 **Key accomplishments:**
+
 - Resource Center emotional management now supports batch import/export without leaving the existing training-resource workflow.
 - Emotional resources can be exchanged as versioned JSON packs while preserving base fields, tags, and normalized typed metadata.
 - Emotional resources can also be exported/imported as relational Excel workbooks with a downloadable template for offline authoring and review.
@@ -54,6 +70,7 @@
 **Phases completed:** 3 phases, 3 plans, 8 requirements
 
 **Key accomplishments:**
+
 - Emotional resources in Resource Center now use visual editors instead of raw JSON textareas.
 - Emotional editor contracts normalize and validate scene metadata before persistence.
 - Teachers now select concrete emotional scenes from a gallery before entering training runtime.
@@ -67,6 +84,7 @@
 **Phases completed:** 5 phases, 9 plans, 9 tasks
 
 **Key accomplishments:**
+
 - Game training mainline was validated against the resource-backed architecture and preserved module-aware launch / record flows.
 - SDQ report flow was stabilized and polished with config-driven expert feedback.
 - CBCL assessment was integrated into the generalized `ScaleDriver` runtime with dedicated reporting.

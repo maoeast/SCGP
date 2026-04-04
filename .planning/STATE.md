@@ -1,50 +1,51 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.6
-milestone_name: Emotional Engine Refactoring
-status: complete
-last_updated: "2026-03-30T10:51:58.5997100+09:00"
+milestone: null
+milestone_name: null
+status: awaiting_next_milestone
+last_updated: "2026-04-04T13:27:12.629Z"
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 3
-  completed_plans: 3
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # STATE
 
 ## Project Reference
+
 **Core Value**: SCGP provides special education teachers and clinicians with a comprehensive, offline, local-first assessment and intervention tool.
-**Current Focus**: v1.6 remains closed; paused follow-up work has shifted to training-record hard-cut cleanup closeout and resource-center redesign planning
-**Plan**: 16-01 executed
+**Current Focus**: Planning the next milestone after v1.6 closeout, with training-record cleanup and resource-center redesign as the strongest candidate inputs
+**Plan**: No active phase or plan
 
 ## Current Position
-- **Phase**: 16 Shell Migration & End-to-End Compatibility
-- **Plan**: 16-01
-- **Status**: Milestone v1.6 is still closed locally. After closeout, additional repository-level cleanup landed around training-record hard-cut flow, legacy record-page removal, and main-process atomic-write serialization. No new formal milestone has been started yet.
-- **Last activity**: 2026-03-30 - Unified training-record cleanup was tightened further, old record pages were removed, a hard-cut reset script was added, `save-database-atomic` was serialized per DB path, warning-level issues in `init.ts` and `ClassManagement.vue` were cleaned, `node scripts/hard-cut-training-records.cjs --dry-run` reported no legacy entry-less rows in the local dev DB, and `npm run type-check` passed. Resource-center training-resource / teaching-material redesign requirements were analyzed but not yet implemented.
+
+- **Phase**: —
+- **Plan**: —
+- **Status**: Milestone `v1.6 Emotional Engine Refactoring` was archived on 2026-04-04. `.planning/ROADMAP.md` and `.planning/REQUIREMENTS.md` were retired so the project is now between milestones.
+- **Last activity**: 2026-04-04 - Archived v1.6 roadmap and requirements, recorded milestone accomplishments in `.planning/MILESTONES.md`, updated project context for post-v1.6 reality, and left phase execution history in `.planning/phases/` for later cleanup if desired.
 
 ## Latest Shipped Milestone
-- **v1.5 Strict Modular Licensing**
-- Delivered strict module-entitlement payload, auth-state enforcement, DEV bypass, and locked router/menu/dashboard entry points.
+
+- **v1.6 Emotional Engine Refactoring**
+- Delivered one shared emotional compile/runtime contract, one shared interaction engine, thin runtime shell pages, completed-only emotional report-pointer updates, and a live-db compatibility verifier.
 
 ## Accumulated Context
+
 - **Decisions**:
   - Compile adapters now own translation from `EmotionSceneResourceMeta` / `CareSceneResourceMeta` into `EmotionalSessionConfig`.
-  - Care-scene `dominantChoiceType` is derived from compiled option metadata instead of raw runtime-page resource lookups.
   - The shared emotional runtime now resolves `scene_intro` through an engine-side renderer key instead of changing persisted `stepType` contracts.
   - Emotional runtime pages now act as hosts that load resources, compile session config, and hand orchestration to `EmotionalInteractionEngine`.
   - Emotional runtime pages now share one route-aware shell composable for query parsing, resource fallback, and exit/session-summary navigation.
-  - Emotional selector entry should stay on one shared page shell, but filter dimensions must remain submodule-specific: `emotion_scene` uses age/domain/theme while `care_scene` uses age/receiverEmotion/careType`.
   - `report_record(report_type='emotional')` must only be updated from completed emotional sessions; cancelled and interrupted sessions still persist history but cannot replace the active report pointer.
   - `scripts/verify-emotional-engine-compat.mjs` is now the live-db compatibility check for shell routes, persistence joins, and completed-report pointer semantics.
-  - Modular licensing does not support legacy full-access fallback; missing `am` is invalid.
-  - Authorized modules must be persisted separately from raw license JSON for fast entitlement lookup.
-  - DEV mock entitlements are allowed only when no real activation code exists.
 - **Blockers**:
-  - No open blockers remain for local closeout of v1.6.
-  - The next real risk is resource-center follow-up: old teaching-material seed data will repopulate unless `init.ts` -> `resource-data.ts` auto-injection is disabled before physical deletion.
+  - No open blockers remain from v1.6 closeout itself.
+  - The next known risk is resource-center follow-up: old teaching-material seed data will repopulate unless `init.ts` -> `resource-data.ts` auto-injection is disabled before physical deletion.
 
 ## Next Action
-- Define the next milestone after v1.6 Emotional Engine Refactoring.
-- If later regression work is needed, treat emotion-scene pacing feel and selector-entry UX parity as post-closeout follow-up checks rather than open milestone blockers.
+
+- Start the next milestone definition workflow.
+- Candidate inputs: unified training-record hard-cut closeout, resource-center redesign and cleanup, and remaining platform route/menu debt.
