@@ -58,11 +58,11 @@ Routes to the update workflow which handles:
 </objective>
 
 <execution_context>
-@./.codex/get-shit-done/workflows/update.md
+@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/update.md
 </execution_context>
 
 <process>
-**Follow the update workflow** from `@./.codex/get-shit-done/workflows/update.md`.
+**Follow the update workflow** from `@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/update.md`.
 
 The workflow handles all logic including:
 1. Installed version detection (local/global)

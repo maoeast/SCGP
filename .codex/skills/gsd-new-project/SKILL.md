@@ -45,6 +45,10 @@ Result parsing:
 - `close_agent(id)` after collecting results from each agent
 </codex_skill_adapter>
 
+<runtime_note>
+**Copilot (VS Code):** Use `vscode_askquestions` wherever this workflow calls `AskUserQuestion`. They are equivalent — `vscode_askquestions` is the VS Code Copilot implementation of the same interactive question API.
+</runtime_note>
+
 <context>
 **Flags:**
 - `--auto` — Automatic mode. After config questions, runs research → requirements → roadmap without further interaction. Expects idea document via @ reference.
@@ -61,18 +65,18 @@ Initialize a new project through unified flow: questioning → research (optiona
 - `.planning/ROADMAP.md` — phase structure
 - `.planning/STATE.md` — project memory
 
-**After this command:** Run `$gsd-plan-phase 1` to start execution.
+**After this command:** Run `/gsd-plan-phase 1` to start execution.
 </objective>
 
 <execution_context>
-@./.codex/get-shit-done/workflows/new-project.md
-@./.codex/get-shit-done/references/questioning.md
-@./.codex/get-shit-done/references/ui-brand.md
-@./.codex/get-shit-done/templates/project.md
-@./.codex/get-shit-done/templates/requirements.md
+@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/new-project.md
+@/home/DONG/Mycode/SCGP/.codex/get-shit-done/references/questioning.md
+@/home/DONG/Mycode/SCGP/.codex/get-shit-done/references/ui-brand.md
+@/home/DONG/Mycode/SCGP/.codex/get-shit-done/templates/project.md
+@/home/DONG/Mycode/SCGP/.codex/get-shit-done/templates/requirements.md
 </execution_context>
 
 <process>
-Execute the new-project workflow from @./.codex/get-shit-done/workflows/new-project.md end-to-end.
+Execute the new-project workflow from @/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/new-project.md end-to-end.
 Preserve all workflow gates (validation, approvals, commits, routing).
 </process>

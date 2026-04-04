@@ -1,0 +1,38 @@
+ PRD & Tech Spec: SCGP-CNBS-R2016 (儿心量表Ⅱ) Integration
+Context: We are integrating the "0-6岁儿童发育行为评估量表 (儿心量表Ⅱ)" into our existing assessment platform. We will reuse the ScaleDriver architecture, database patterns, and UI components established previously.
+Scale Key: cnbsr2016
+1. Database & Data Structure
+Tables: Create cnbsr2016_assess (Main) and cnbsr2016_assess_detail (Records). Detail table MUST include is_auto_filled (INTEGER).
+Item Metadata: Each question in the TS seed file must include:
+domain: 'gm' | 'fm' | 'ad' | 'la' | 'sb'
+age_group_months: The specific month milestone (1, 2...12, 15, 18...36, 42, 48...84).
+score_weight: The mental age points this item is worth if passed (See calculation rules below).
+2. Core Engine: Cnbsr2016Driver.ts Algorithm (CRITICAL)
+This scale uses a Mental Age (MA) and Developmental Quotient (DQ) system, NOT a mastery rate.
+A. Basal & Ceiling Logic (By Age Group, NOT single items)
+Start Point: Start testing at the age_group_months closest to the child's Chronological Age (CA).
+Basal (起点/向前测): Test backward. A Basal is established when ALL items in 2 consecutive age groups within a domain are passed (Score = 1).
+Action: Auto-fill all easier items in this domain with score = 1, is_auto_filled = true.
+Ceiling (终点/向后测): Test forward. A Ceiling is established when ALL items in 2 consecutive age groups within a domain are failed (Score = 0).
+Action: Auto-fill all harder items in this domain with score = 0, is_auto_filled = true. Stop testing this domain.
+B. Scoring Calculation (WS/T 580—2017 Standard)
+Item Weights (智龄分):
+Items in age groups 1~12 months: The domain has 1.0 point total. (If 1 item in domain, it's worth 1.0. If 2 items, each is 0.5).
+Items in age groups 15~36 months: The domain has 3.0 points total. (If 1 item, worth 3.0. If 2 items, each is 1.5).
+Items in age groups 42~84 months: The domain has 6.0 points total. (If 1 item, worth 6.0. If 2 items, each is 3.0).
+Domain Mental Age (能区智龄): Sum of score_weight for all passed items (including auto-filled basal passes).
+Total Mental Age (总智龄 MA): Sum of the 5 Domain Mental Ages / 5.
+Developmental Quotient (发育商 DQ): (Total MA / Chronological Age in months) * 100.
+C. Status Mapping (Based on DQ)
+DQ >= 130 -> excellent (优秀)
+115 <= DQ <= 129 -> good (良好)
+85 <= DQ <= 114 -> normal (正常)
+70 <= DQ <= 84 -> borderline (边界状态/临界偏低)
+DQ < 70 -> delayed (发育迟缓/智力发育障碍)
+3. Feedback Generation (generateFeedback)
+Calculate the child's Chronological Age bracket for the report: a1 (0-12m), a2 (13-24m), a3 (25-36m), a4 (37-72m).
+Use the calculated DQ Status (excellent...delayed) and Age Bracket (a1...a4) to fetch the exact text from the provided SCGP_CNBS_R2016_Feedback_Config.js.
+IEP Extraction: For CNBSR2016, extract items where score === 0 AND is_auto_filled === false as the primary intervention targets.
+4. UI/UX Adjustments
+AssessmentView: If scale_type === 'cnbsr2016', the question card should only show TWO buttons: [通过 (Pass)] and [不通过 (Fail)].
+ReportView: Display the calculated Chronological Age, Total Mental Age (MA), and Developmental Quotient (DQ). Render the rich text from the feedback config.
