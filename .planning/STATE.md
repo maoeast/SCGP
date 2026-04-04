@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: null
-milestone_name: null
-status: awaiting_next_milestone
-last_updated: "2026-04-04T13:27:12.629Z"
+milestone: v1.7
+milestone_name: CNBS-R2016 Assessment Integration
+status: in_progress
+last_updated: "2026-04-04T14:30:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
-  total_plans: 0
+  total_plans: 4
   completed_plans: 0
   percent: 0
 ---
@@ -17,15 +17,15 @@ progress:
 ## Project Reference
 
 **Core Value**: SCGP provides special education teachers and clinicians with a comprehensive, offline, local-first assessment and intervention tool.
-**Current Focus**: Planning the next milestone after v1.6 closeout, with training-record cleanup and resource-center redesign as the strongest candidate inputs
-**Plan**: No active phase or plan
+**Current Focus**: v1.7 CNBS-R2016 assessment integration planning and execution
+**Plan**: Phase 17 not started yet
 
 ## Current Position
 
-- **Phase**: —
+- **Phase**: 17 CNBS-R2016 Question Bank & Standardization Foundation
 - **Plan**: —
-- **Status**: Milestone `v1.6 Emotional Engine Refactoring` was archived on 2026-04-04. `.planning/ROADMAP.md` and `.planning/REQUIREMENTS.md` were retired so the project is now between milestones.
-- **Last activity**: 2026-04-04 - Archived v1.6 roadmap and requirements, recorded milestone accomplishments in `.planning/MILESTONES.md`, updated project context for post-v1.6 reality, and left phase execution history in `.planning/phases/` for later cleanup if desired.
+- **Status**: Milestone `v1.7 CNBS-R2016 Assessment Integration` has been opened. Requirements and roadmap are being defined around item-bank digitization, unified driver integration, persistence/report wiring, and runtime verification.
+- **Last activity**: 2026-04-04 - Confirmed CNBS-R2016 should reuse the existing assessment mainline, chose the official PDF as the normative DQ-threshold source, and started milestone planning for structured data, driver logic, report integration, and QA.
 
 ## Latest Shipped Milestone
 
@@ -41,11 +41,14 @@ progress:
   - Emotional runtime pages now share one route-aware shell composable for query parsing, resource fallback, and exit/session-summary navigation.
   - `report_record(report_type='emotional')` must only be updated from completed emotional sessions; cancelled and interrupted sessions still persist history but cannot replace the active report pointer.
   - `scripts/verify-emotional-engine-compat.mjs` is now the live-db compatibility check for shell routes, persistence joins, and completed-report pointer semantics.
+  - CNBS-R2016 will be integrated through the existing `AssessmentContainer + ScaleDriver + per-scale table + report_record` assessment chain rather than as a separate subsystem.
+  - CNBS-R2016 DQ thresholds and month-group testing rules must follow the official PDF standard, even if earlier PRD/config drafts differ.
+  - FMDA runtime QA, unified training-record closeout, resource-center redesign, and broader platform debt cleanup are recorded as later work, not part of v1.7 scope.
 - **Blockers**:
-  - No open blockers remain from v1.6 closeout itself.
-  - The next known risk is resource-center follow-up: old teaching-material seed data will repopulate unless `init.ts` -> `resource-data.ts` auto-injection is disabled before physical deletion.
+  - No structured CNBS-R2016 item bank exists in code yet; the official PDF must be digitized into a typed seed before driver implementation can be completed.
+  - The CNBSR2016 feedback-config corpus must stay synchronized with the official PDF DQ status thresholds or report conclusions will drift.
 
 ## Next Action
 
-- Start the next milestone definition workflow.
-- Candidate inputs: unified training-record hard-cut closeout, resource-center redesign and cleanup, and remaining platform route/menu debt.
+- Plan Phase 17 and digitize the CNBS-R2016 question bank and score-weight model.
+- Keep later candidate work recorded but out of current v1.7 execution scope.
