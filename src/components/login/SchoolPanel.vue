@@ -67,11 +67,11 @@ const descriptionText = computed(() => {
   padding: 60px 72px 60px 68px;
   box-sizing: border-box;
   overflow: hidden;
-  color: #ffffff;
+  color: #4f3412;
   background:
-    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.16), transparent 22%),
-    radial-gradient(circle at 86% 18%, rgba(255, 255, 255, 0.08), transparent 18%),
-    linear-gradient(160deg, var(--login-brand-start, #5b8698) 0%, var(--login-brand-end, #8ebfc7) 100%);
+    radial-gradient(circle at 18% 78%, rgba(255, 248, 214, 0.34), transparent 24%),
+    radial-gradient(circle at 82% 18%, rgba(255, 219, 132, 0.28), transparent 18%),
+    linear-gradient(160deg, #f2c94c 0%, #f5bf57 38%, #f2994a 100%);
 }
 
 .school-panel__decor {
@@ -85,7 +85,8 @@ const descriptionText = computed(() => {
   width: 236px;
   height: 236px;
   border-radius: 44% 56% 60% 40% / 42% 40% 60% 58%;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.16);
+  filter: blur(4px);
 }
 
 .school-panel__decor--stars {
@@ -93,14 +94,17 @@ const descriptionText = computed(() => {
   right: 40px;
   width: 180px;
   height: 180px;
-  opacity: 0.48;
+  opacity: 0.54;
   background:
-    radial-gradient(circle at 18px 22px, rgba(255, 255, 255, 0.92) 0 1.2px, transparent 1.3px),
-    radial-gradient(circle at 88px 30px, rgba(255, 255, 255, 0.72) 0 1.6px, transparent 1.8px),
-    radial-gradient(circle at 138px 62px, rgba(255, 255, 255, 0.9) 0 1.2px, transparent 1.4px),
-    radial-gradient(circle at 42px 96px, rgba(255, 255, 255, 0.68) 0 1.4px, transparent 1.6px),
-    radial-gradient(circle at 120px 116px, rgba(255, 255, 255, 0.8) 0 1.5px, transparent 1.7px),
-    radial-gradient(circle at 82px 148px, rgba(255, 255, 255, 0.62) 0 1.2px, transparent 1.4px);
+    radial-gradient(circle at 18px 22px, rgba(255, 252, 239, 0.92) 0 1.2px, transparent 1.3px),
+    radial-gradient(circle at 88px 30px, rgba(255, 236, 179, 0.8) 0 1.6px, transparent 1.8px),
+    radial-gradient(circle at 116px 38px, rgba(255, 186, 129, 0.82) 0 2px, transparent 2.2px),
+    radial-gradient(circle at 138px 62px, rgba(255, 255, 255, 0.86) 0 1.2px, transparent 1.4px),
+    radial-gradient(circle at 42px 96px, rgba(255, 249, 227, 0.68) 0 1.4px, transparent 1.6px),
+    radial-gradient(circle at 18px 146px, rgba(255, 210, 149, 0.74) 0 2px, transparent 2.2px),
+    radial-gradient(circle at 120px 116px, rgba(255, 242, 196, 0.8) 0 1.5px, transparent 1.7px),
+    radial-gradient(circle at 82px 148px, rgba(255, 255, 255, 0.58) 0 1.2px, transparent 1.4px);
+  filter: blur(0.2px);
 }
 
 .school-panel__decor--orbit {
@@ -109,9 +113,9 @@ const descriptionText = computed(() => {
   width: 240px;
   height: 168px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-left-color: transparent;
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(255, 255, 255, 0.12);
   transform: rotate(-14deg);
 }
 
@@ -123,7 +127,7 @@ const descriptionText = computed(() => {
   border-radius: 42% 58% 56% 44% / 44% 44% 56% 56%;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-right-color: transparent;
-  border-top-color: rgba(255, 255, 255, 0.08);
+  border-top-color: rgba(255, 245, 213, 0.14);
   transform: rotate(20deg);
 }
 
@@ -154,7 +158,7 @@ const descriptionText = computed(() => {
   max-width: 88px;
   max-height: 88px;
   object-fit: contain;
-  filter: drop-shadow(0 10px 18px rgba(10, 28, 56, 0.2));
+  filter: drop-shadow(0 10px 18px rgba(123, 80, 19, 0.18));
 }
 
 .school-panel__logo-fallback {
@@ -213,10 +217,10 @@ const descriptionText = computed(() => {
   min-height: 34px;
   padding: 0 16px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 252, 239, 0.3);
   white-space: nowrap;
-  color: rgba(255, 255, 255, 0.92);
+  color: #6a4518;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.01em;

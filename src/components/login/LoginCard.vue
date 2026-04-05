@@ -104,10 +104,11 @@ const handleSubmit = () => {
   flex-direction: column;
   gap: 26px;
   padding: 36px;
-  border: 1px solid var(--login-border, #dbe5f0);
+  border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 28px;
-  background: linear-gradient(180deg, var(--login-surface, #ffffff) 0%, #fbfdff 100%);
-  box-shadow: 0 28px 70px rgba(20, 55, 110, 0.14), 0 10px 24px rgba(20, 55, 110, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 250, 255, 0.98) 100%);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 28px 70px rgba(10, 19, 44, 0.18), 0 10px 24px rgba(10, 19, 44, 0.1);
   box-sizing: border-box;
 }
 
@@ -181,14 +182,14 @@ const handleSubmit = () => {
   border: none;
   padding: 0;
   background: transparent;
-  color: #FBFDFF;
+  color: var(--login-muted, #5f6b7a);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
 }
 
 .login-card__link:hover {
-  color: #9aa0a8;
+  color: var(--login-primary, #2f6fd6);
 }
 
 @media (max-width: 768px) {

@@ -1,5 +1,8 @@
 <template>
   <div class="login-shell">
+    <GalaxyBackground class="login-shell__background" />
+    <div class="login-shell__veil"></div>
+
     <div class="login-layout">
       <div class="login-layout__brand">
         <SchoolPanel
@@ -30,6 +33,7 @@
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import GalaxyBackground from '@/components/login/GalaxyBackground.vue'
 import LoginCard from '@/components/login/LoginCard.vue'
 import SchoolPanel from '@/components/login/SchoolPanel.vue'
 import { UserAPI } from '@/database/api'
@@ -145,31 +149,51 @@ onMounted(async () => {
 
 <style scoped>
 .login-shell {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   padding: 18px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  background: #0b0718;
+}
+
+.login-shell__background,
+.login-shell__veil {
+  position: absolute;
+  inset: 0;
+}
+
+.login-shell__veil {
+  pointer-events: none;
+  z-index: 0;
   background:
-    radial-gradient(circle at top left, rgba(43, 108, 176, 0.12), transparent 22%),
-    linear-gradient(135deg, var(--login-page-bg-start, #eef4fb) 0%, var(--login-page-bg-end, #f6f9fc) 100%);
+    radial-gradient(circle at 20% 14%, rgba(255, 246, 214, 0.04), transparent 18%),
+    radial-gradient(circle at 84% 18%, rgba(255, 202, 224, 0.05), transparent 14%),
+    linear-gradient(135deg, rgba(8, 8, 18, 0.04) 0%, rgba(11, 7, 24, 0.14) 100%);
 }
 
 .login-layout {
+  position: relative;
+  z-index: 1;
   width: min(1200px, 100%);
   min-height: min(736px, calc(100vh - 36px));
   display: grid;
   grid-template-columns: minmax(400px, 45fr) minmax(440px, 55fr);
-  border: 1px solid rgba(219, 229, 240, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 32px;
   overflow: hidden;
-  background: var(--login-surface, #ffffff);
-  box-shadow: 0 32px 72px rgba(24, 57, 111, 0.13);
+  background: rgba(13, 7, 24, 0.34);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 36px 100px rgba(2, 6, 23, 0.42);
 }
 
 .login-layout__brand {
   min-width: 0;
+  background: #f2c94c;
 }
 
 .login-layout__form {
@@ -179,8 +203,8 @@ onMounted(async () => {
   justify-content: flex-start;
   padding: clamp(32px, 4.8vw, 60px) clamp(32px, 4.8vw, 64px) clamp(32px, 4.8vw, 60px) clamp(28px, 4vw, 48px);
   background:
-    radial-gradient(circle at left center, rgba(47, 111, 214, 0.08), transparent 24%),
-    linear-gradient(180deg, var(--login-surface-soft, #f7fafd) 0%, var(--login-surface, #ffffff) 100%);
+    radial-gradient(circle at left center, rgba(255, 216, 131, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(255, 251, 246, 0.92) 0%, rgba(255, 255, 255, 0.97) 100%);
 }
 
 @media (max-width: 1024px) {
@@ -203,6 +227,7 @@ onMounted(async () => {
   .login-layout {
     width: 100%;
     border-radius: 24px;
+    background: rgba(14, 12, 30, 0.34);
   }
 
   .login-layout__form {
