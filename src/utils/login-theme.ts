@@ -1,11 +1,27 @@
-export type LoginThemeVariant = 'classic-blue' | 'campus-blue' | 'clear-sky'
+export type LoginThemeVariant = 'warm-glow' | 'calm-blue'
+
+export type LoginThemePreset = {
+  label: string
+  primary: string
+  primaryGradientStart: string
+  primaryGradientEnd: string
+  brandStart: string
+  brandEnd: string
+  brandSoft: string
+  pageBg: string
+  badgeBackground: string
+  badgeText: string
+}
 
 interface LoginThemePreset {
   label: string
   primary: string
+  primaryGradientStart: string
+  primaryGradientEnd: string
   brandStart: string
   brandEnd: string
   brandSoft: string
+  pageBg: string
   badgeBackground: string
   badgeText: string
 }
@@ -15,36 +31,33 @@ export interface LoginThemeConfig {
   primaryColor: string
 }
 
-export const DEFAULT_LOGIN_THEME_VARIANT: LoginThemeVariant = 'classic-blue'
-export const DEFAULT_LOGIN_PRIMARY_COLOR = '#4d8bbd'
+export const DEFAULT_LOGIN_THEME_VARIANT: LoginThemeVariant = 'warm-glow'
+export const DEFAULT_LOGIN_PRIMARY_COLOR = '#E6B93C'
 
 export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = {
-  'classic-blue': {
-    label: '湖蓝',
-    primary: '#4d8bbd',
-    brandStart: '#5b8698',
-    brandEnd: '#8ebfc7',
-    brandSoft: '#f0f7f8',
-    badgeBackground: 'rgba(236, 244, 255, 0.14)',
-    badgeText: '#dceaff',
+  'warm-glow': {
+    label: '暖光',
+    primary: '#E6B93C',
+    primaryGradientStart: '#E6B93C',
+    primaryGradientEnd: '#E38B3A',
+    brandStart: '#F2C94C',
+    brandEnd: '#F2994A',
+    brandSoft: '#FFF8E7',
+    pageBg: '#FFF8E7',
+    badgeBackground: 'rgba(255, 248, 231, 0.3)',
+    badgeText: '#8B6914',
   },
-  'campus-blue': {
-    label: '深青',
-    primary: '#4f92a2',
-    brandStart: '#527b83',
-    brandEnd: '#87b6bb',
-    brandSoft: '#eef7f6',
-    badgeBackground: 'rgba(238, 246, 255, 0.16)',
-    badgeText: '#e4f0ff',
-  },
-  'clear-sky': {
-    label: '晴雾蓝',
-    primary: '#5b97bc',
-    brandStart: '#6b92a2',
-    brandEnd: '#a4c7d0',
-    brandSoft: '#f4f9fa',
-    badgeBackground: 'rgba(238, 248, 255, 0.18)',
-    badgeText: '#edf6ff',
+  'calm-blue': {
+    label: '静蓝',
+    primary: '#3B82F6',
+    primaryGradientStart: '#3B82F6',
+    primaryGradientEnd: '#1D4ED8',
+    brandStart: '#1E3A8A',
+    brandEnd: '#3B82F6',
+    brandSoft: '#EFF6FF',
+    pageBg: '#EFF6FF',
+    badgeBackground: 'rgba(219, 234, 254, 0.5)',
+    badgeText: '#1E40AF',
   },
 }
 
@@ -133,9 +146,9 @@ export function applyLoginThemeVariables(config: Partial<LoginThemeConfig> = {})
   style.setProperty('--login-primary-soft', mixHexColors(primary, '#ffffff', 0.88))
   style.setProperty('--login-primary-border', mixHexColors(primary, '#ffffff', 0.72))
   style.setProperty('--login-primary-ring', colorToRgba(primary, 0.18))
-  style.setProperty('--login-page-bg', `linear-gradient(135deg, ${mixHexColors(preset.brandSoft, '#ffffff', 0.2)} 0%, ${mixHexColors(preset.brandSoft, '#ffffff', 0.64)} 100%)`)
-  style.setProperty('--login-page-bg-start', mixHexColors(preset.brandSoft, '#ffffff', 0.2))
-  style.setProperty('--login-page-bg-end', mixHexColors(preset.brandSoft, '#ffffff', 0.64))
+  style.setProperty('--login-primary-gradient-start', preset.primaryGradientStart)
+  style.setProperty('--login-primary-gradient-end', preset.primaryGradientEnd)
+  style.setProperty('--login-page-bg', preset.pageBg)
   style.setProperty('--login-brand-start', preset.brandStart)
   style.setProperty('--login-brand-end', preset.brandEnd)
   style.setProperty('--login-brand-soft', preset.brandSoft)

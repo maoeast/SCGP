@@ -210,7 +210,7 @@ const settings = reactive({
   systemName: '星愿能力发展训练系统',
   systemVersion: '1.0.0',
   schoolName: '',
-  loginThemeVariant: 'classic-blue',
+  loginThemeVariant: 'warm-glow',
   themePrimaryColor: DEFAULT_LOGIN_PRIMARY_COLOR,
   brandPanelDescription: '统一进入学生管理、能力评估、训练计划、训练记录与报告生成，让一线工作更聚焦。',
   autoBackup: true,
@@ -608,7 +608,7 @@ onUnmounted(() => {
   margin-top: 18px;
   border: none;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--login-primary, #2f6fd6) 0%, var(--login-primary-hover, #275fb8) 100%);
+  background: linear-gradient(90deg, var(--login-primary-gradient-start, #E6B93C), var(--login-primary-gradient-end, #E38B3A));
   color: #ffffff;
   font-size: 15px;
   font-weight: 600;

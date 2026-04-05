@@ -32,29 +32,29 @@ withDefaults(defineProps<Props>(), {
   min-height: 52px;
   border: none;
   border-radius: 8px;
-  background: #185FA5;
+  background: linear-gradient(90deg, var(--login-primary-gradient-start, #E6B93C), var(--login-primary-gradient-end, #E38B3A));
   color: #ffffff;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 18px 34px rgba(30, 78, 150, 0.2);
+  box-shadow: 0 8px 24px rgba(227, 139, 58, 0.3);
   transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
 
 .primary-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: #154f8a;
-  box-shadow: 0 24px 40px rgba(30, 78, 150, 0.24);
+  filter: brightness(1.08);
+  box-shadow: 0 12px 32px rgba(227, 139, 58, 0.4);
 }
 
 .primary-button:focus-visible {
-  outline: 3px solid var(--login-primary-ring, rgba(47, 111, 214, 0.18));
+  outline: 3px solid var(--login-primary-ring, rgba(227, 139, 58, 0.18));
   outline-offset: 2px;
 }
 
 .primary-button:disabled {
-  background: #c8d8ea;
+  background: linear-gradient(90deg, #d4c9a8, #c9b896);
   color: #ffffff;
   cursor: not-allowed;
   box-shadow: none;

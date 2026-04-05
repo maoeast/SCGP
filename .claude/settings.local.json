@@ -168,7 +168,9 @@
       "Bash(claude config get:*)",
       "Bash(claude config set:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(xdg-open:*)",
+      "Bash(google-chrome:*)"
     ]
   }
 }
