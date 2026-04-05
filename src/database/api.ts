@@ -5,6 +5,7 @@ import { TrainingSessionWriter } from './training-session-writer';
 import { FINE_MOTOR_QUESTIONS } from './fine-motor-questions';
 import { CNBSR2016_QUESTIONS } from './cnbsr2016-questions';
 import { GMFM_QUESTIONS } from './gmfm88-questions';
+import { TGMD3_SKILLS } from './tgmd3-questions';
 
 // 数据库基础操作类
 // 【Plan B】使用主线程 SQLWrapper，防抖保存已内置
@@ -1088,6 +1089,47 @@ const GMFM88_QUESTION_MAP = new Map(
   GMFM_QUESTIONS.map((question) => [question.id, question]),
 )
 
+interface Tgmd3AssessmentInput {
+  student_id: number
+  age_months: number
+  gender: string
+  locomotor_score: number
+  locomotor_percent: number
+  locomotor_level?: number | null
+  ball_skills_score: number
+  ball_skills_percent: number
+  ball_skills_level?: number | null
+  total_score: number
+  total_percent: number
+  total_level?: number | null
+  level: string
+  level_code?: string | null
+  domain_results: unknown
+  domain_feedback: unknown
+  skill_results: unknown
+  norm_summary: unknown
+  iep_targets: unknown
+  flags: unknown
+  overall_rule?: unknown
+  start_time: string
+  end_time?: string | null
+}
+
+interface Tgmd3AssessmentDetailInput {
+  question_id: number
+  item_code: string
+  dimension: string
+  score: number
+  max_score: number
+  raw_value: string
+  criteria_snapshot?: unknown
+  answer_time?: number
+}
+
+const TGMD3_QUESTION_MAP = new Map(
+  TGMD3_SKILLS.map((question) => [question.id, question]),
+)
+
 export class FineMotorAssessmentAPI extends DatabaseAPI {
   saveAssessment(data: {
     assessment: FineMotorAssessmentInput
@@ -1579,6 +1621,199 @@ export class Gmfm88AssessmentAPI extends DatabaseAPI {
         end_time,
         created_at
       FROM gmfm_88_assess
+      WHERE student_id = ?
+      ORDER BY created_at DESC
+    `, [studentId])
+  }
+}
+
+export class Tgmd3AssessmentAPI extends DatabaseAPI {
+  saveAssessment(data: {
+    assessment: Tgmd3AssessmentInput
+    details: Tgmd3AssessmentDetailInput[]
+  }): number {
+    const rawDb = getTransactionalDb(this.db)
+    rawDb.run('BEGIN TRANSACTION')
+
+    try {
+      const assessId = this.createAssessment(data.assessment)
+      this.saveAssessmentDetails(assessId, data.details)
+      rawDb.run('COMMIT')
+      return assessId
+    } catch (error) {
+      try {
+        rawDb.run('ROLLBACK')
+      } catch {
+        // ignore rollback failures
+      }
+      throw error
+    }
+  }
+
+  createAssessment(assessment: Tgmd3AssessmentInput): number {
+    this.execute(`
+      INSERT INTO tgmd_3_assess (
+        student_id, age_months, gender, locomotor_score, locomotor_percent,
+        locomotor_level, ball_skills_score, ball_skills_percent, ball_skills_level,
+        total_score, total_percent, total_level, level, level_code,
+        domain_results, domain_feedback, skill_results, norm_summary, iep_targets,
+        flags, overall_rule, start_time, end_time
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      assessment.student_id,
+      assessment.age_months,
+      assessment.gender,
+      assessment.locomotor_score,
+      assessment.locomotor_percent,
+      assessment.locomotor_level ?? null,
+      assessment.ball_skills_score,
+      assessment.ball_skills_percent,
+      assessment.ball_skills_level ?? null,
+      assessment.total_score,
+      assessment.total_percent,
+      assessment.total_level ?? null,
+      assessment.level,
+      assessment.level_code ?? null,
+      JSON.stringify(assessment.domain_results ?? []),
+      JSON.stringify(assessment.domain_feedback ?? []),
+      JSON.stringify(assessment.skill_results ?? []),
+      JSON.stringify(assessment.norm_summary ?? {}),
+      JSON.stringify(assessment.iep_targets ?? []),
+      JSON.stringify(assessment.flags ?? []),
+      assessment.overall_rule ? JSON.stringify(assessment.overall_rule) : null,
+      assessment.start_time,
+      assessment.end_time || null,
+    ])
+
+    return this.getLastInsertId()
+  }
+
+  saveAssessmentDetails(assessId: number, details: Tgmd3AssessmentDetailInput[]): void {
+    details.forEach((detail) => {
+      this.execute(`
+        INSERT INTO tgmd_3_assess_detail (
+          assess_id, question_id, item_code, dimension,
+          score, max_score, raw_value, criteria_snapshot, answer_time
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        assessId,
+        detail.question_id,
+        detail.item_code,
+        detail.dimension,
+        detail.score,
+        detail.max_score,
+        detail.raw_value,
+        JSON.stringify(detail.criteria_snapshot ?? []),
+        detail.answer_time || 0,
+      ])
+    })
+  }
+
+  getAssessment(assessId: number): any | null {
+    const record = this.queryOne(`
+      SELECT
+        a.id,
+        a.student_id,
+        a.age_months,
+        a.gender,
+        a.locomotor_score,
+        a.locomotor_percent,
+        a.locomotor_level,
+        a.ball_skills_score,
+        a.ball_skills_percent,
+        a.ball_skills_level,
+        a.total_score,
+        a.total_percent,
+        a.total_level,
+        a.level,
+        a.level_code,
+        a.domain_results,
+        a.domain_feedback,
+        a.skill_results,
+        a.norm_summary,
+        a.iep_targets,
+        a.flags,
+        a.overall_rule,
+        a.start_time,
+        a.end_time,
+        a.created_at,
+        s.name as student_name,
+        s.gender as student_gender,
+        s.birthday as student_birthday
+      FROM tgmd_3_assess a
+      LEFT JOIN student s ON a.student_id = s.id
+      WHERE a.id = ?
+    `, [assessId])
+
+    if (!record) {
+      return null
+    }
+
+    return {
+      ...record,
+      domain_results: parseJsonArray(record.domain_results),
+      domain_feedback: parseJsonArray(record.domain_feedback),
+      skill_results: parseJsonArray(record.skill_results),
+      norm_summary: parseJsonObject(record.norm_summary),
+      iep_targets: parseJsonArray(record.iep_targets),
+      flags: parseJsonArray(record.flags),
+      overall_rule: parseJsonObject(record.overall_rule),
+    }
+  }
+
+  getAssessmentDetails(assessId: number): any[] {
+    const details = this.query(`
+      SELECT
+        question_id,
+        item_code,
+        dimension,
+        score,
+        max_score,
+        raw_value,
+        criteria_snapshot,
+        answer_time,
+        created_at
+      FROM tgmd_3_assess_detail
+      WHERE assess_id = ?
+      ORDER BY question_id
+    `, [assessId])
+
+    return details.map((detail: any) => {
+      const question = TGMD3_QUESTION_MAP.get(Number(detail.question_id))
+
+      return {
+        ...detail,
+        title: question?.name || '',
+        equipment: question?.equipment || '',
+        guidance: question?.guidance || '',
+        criteria_snapshot: parseJsonArray(detail.criteria_snapshot),
+        dimension_name: question?.dimensionName || detail.dimension,
+      }
+    })
+  }
+
+  getStudentAssessments(studentId: number): any[] {
+    return this.query(`
+      SELECT
+        id,
+        student_id,
+        age_months,
+        gender,
+        locomotor_score,
+        locomotor_level,
+        ball_skills_score,
+        ball_skills_level,
+        total_score,
+        total_percent,
+        total_level,
+        level,
+        level_code,
+        start_time,
+        end_time,
+        created_at
+      FROM tgmd_3_assess
       WHERE student_id = ?
       ORDER BY created_at DESC
     `, [studentId])
@@ -2356,7 +2591,7 @@ export class ReportAPI extends DatabaseAPI {
       return 'emotional'
     }
 
-    if (reportType === 'fine_motor' || reportType === 'cnbsr2016' || reportType === 'gmfm_88') {
+    if (reportType === 'fine_motor' || reportType === 'cnbsr2016' || reportType === 'gmfm_88' || reportType === 'tgmd_3') {
       return 'sensory'
     }
 
@@ -2368,7 +2603,7 @@ export class ReportAPI extends DatabaseAPI {
    */
   saveReportRecord(record: {
     student_id: number
-    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional' | 'fine_motor' | 'cnbsr2016' | 'gmfm_88'
+    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional' | 'fine_motor' | 'cnbsr2016' | 'gmfm_88' | 'tgmd_3'
     assess_id?: number
     plan_id?: number
     training_record_id?: number
@@ -2501,6 +2736,7 @@ export class ReportAPI extends DatabaseAPI {
     fine_motor_count: number
     cnbsr2016_count: number
     gmfm_88_count: number
+    tgmd_3_count: number
     emotional_count: number
     iep_count: number
     training_count: number
@@ -2530,6 +2766,7 @@ export class ReportAPI extends DatabaseAPI {
       fine_motor_count: 0,
       cnbsr2016_count: 0,
       gmfm_88_count: 0,
+      tgmd_3_count: 0,
       emotional_count: 0,
       iep_count: 0,
       training_count: 0
@@ -2548,6 +2785,7 @@ export class ReportAPI extends DatabaseAPI {
       if (row.report_type === 'fine_motor') stats.fine_motor_count = row.count
       if (row.report_type === 'cnbsr2016') stats.cnbsr2016_count = row.count
       if (row.report_type === 'gmfm_88') stats.gmfm_88_count = row.count
+      if (row.report_type === 'tgmd_3') stats.tgmd_3_count = row.count
       if (row.report_type === 'emotional') stats.emotional_count = row.count
       if (row.report_type === 'iep') stats.iep_count = row.count
       if (row.report_type === 'training') stats.training_count = row.count
@@ -2572,6 +2810,7 @@ export class ReportAPI extends DatabaseAPI {
     fine_motor_migrated: number
     cnbsr2016_migrated: number
     gmfm_88_migrated: number
+    tgmd_3_migrated: number
     total: number
   } {
     let smMigrated = 0
@@ -2585,6 +2824,7 @@ export class ReportAPI extends DatabaseAPI {
     let fineMotorMigrated = 0
     let cnbsr2016Migrated = 0
     let gmfm88Migrated = 0
+    let tgmd3Migrated = 0
 
     try {
       // 迁移 S-M 评估记录
@@ -2845,7 +3085,30 @@ export class ReportAPI extends DatabaseAPI {
         gmfm88Migrated++
       })
 
-      console.log(`✅ 数据迁移完成: S-M ${smMigrated} 条, WeeFIM ${weefimMigrated} 条, CSIRS ${csirsMigrated} 条, Conners PSQ ${connersPSQMigrated} 条, Conners TRS ${connersTRSMigrated} 条, SDQ ${sdqMigrated} 条, SRS-2 ${srs2Migrated} 条, CBCL ${cbclMigrated} 条, FMDA ${fineMotorMigrated} 条, CNBS-R2016 ${cnbsr2016Migrated} 条, GMFM-88 ${gmfm88Migrated} 条`)
+      const tgmd3Assessments = this.query(`
+        SELECT
+          ta.id,
+          ta.student_id,
+          ta.created_at,
+          s.name as student_name
+        FROM tgmd_3_assess ta
+        LEFT JOIN student s ON ta.student_id = s.id
+        WHERE NOT EXISTS (
+          SELECT 1 FROM report_record rr
+          WHERE rr.report_type = 'tgmd_3' AND rr.assess_id = ta.id
+        )
+      `)
+
+      tgmd3Assessments.forEach((assessment: any) => {
+        const title = `TGMD-3评估报告_${assessment.student_name}_${new Date(assessment.created_at).toLocaleDateString()}`
+        this.execute(
+          'INSERT INTO report_record (student_id, report_type, assess_id, title, module_code, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+          [assessment.student_id, 'tgmd_3', assessment.id, title, 'sensory', assessment.created_at]
+        )
+        tgmd3Migrated++
+      })
+
+      console.log(`✅ 数据迁移完成: S-M ${smMigrated} 条, WeeFIM ${weefimMigrated} 条, CSIRS ${csirsMigrated} 条, Conners PSQ ${connersPSQMigrated} 条, Conners TRS ${connersTRSMigrated} 条, SDQ ${sdqMigrated} 条, SRS-2 ${srs2Migrated} 条, CBCL ${cbclMigrated} 条, FMDA ${fineMotorMigrated} 条, CNBS-R2016 ${cnbsr2016Migrated} 条, GMFM-88 ${gmfm88Migrated} 条, TGMD-3 ${tgmd3Migrated} 条`)
     } catch (error) {
       console.error('❌ 数据迁移失败:', error)
     }
@@ -2862,7 +3125,8 @@ export class ReportAPI extends DatabaseAPI {
       fine_motor_migrated: fineMotorMigrated,
       cnbsr2016_migrated: cnbsr2016Migrated,
       gmfm_88_migrated: gmfm88Migrated,
-      total: smMigrated + weefimMigrated + csirsMigrated + connersPSQMigrated + connersTRSMigrated + sdqMigrated + srs2Migrated + cbclMigrated + fineMotorMigrated + cnbsr2016Migrated + gmfm88Migrated
+      tgmd_3_migrated: tgmd3Migrated,
+      total: smMigrated + weefimMigrated + csirsMigrated + connersPSQMigrated + connersTRSMigrated + sdqMigrated + srs2Migrated + cbclMigrated + fineMotorMigrated + cnbsr2016Migrated + gmfm88Migrated + tgmd3Migrated
     }
   }
 }

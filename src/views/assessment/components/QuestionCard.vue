@@ -76,7 +76,51 @@
         </div>
       </template>
 
-      <!-- 通用布局（非 CNBS-R2016） -->
+      <!-- TGMD-3 技能总分录入布局 -->
+      <template v-else-if="isTgmd3Layout">
+        <div class="tgmd-title">
+          {{ question.content }}
+        </div>
+
+        <div class="tgmd-meta-grid">
+          <div class="tgmd-meta-card">
+            <div class="tgmd-meta-label">器材准备</div>
+            <div class="tgmd-meta-text">{{ tgmd3Equipment }}</div>
+          </div>
+          <div class="tgmd-meta-card">
+            <div class="tgmd-meta-label">场地路线与测试指导语</div>
+            <div class="tgmd-meta-text">{{ tgmd3Guidance }}</div>
+          </div>
+        </div>
+
+        <div class="tgmd-criteria">
+          <div class="tgmd-criteria-label">观察要点动作标准</div>
+          <ul class="tgmd-criteria-list">
+            <li v-for="(criterion, index) in tgmd3Criteria" :key="`${question.id}-${index}`">
+              {{ criterion }}
+            </li>
+          </ul>
+        </div>
+
+        <div class="tgmd-score-block">
+          <div class="tgmd-score-label">技能总分</div>
+          <div class="tgmd-score-note">每项技能先做1次练习，然后正式测2次，将两次所有动作标准的得分直接相加即为该技能总分。</div>
+          <div class="tgmd-score-grid">
+            <button
+              v-for="option in question.options"
+              :key="option.value"
+              type="button"
+              class="tgmd-score-chip"
+              :class="{ 'is-selected': selectedValue === option.value }"
+              @click="handleAnswerChange(option.value)"
+            >
+              <span class="tgmd-score-chip__value">{{ option.label }}</span>
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <!-- 通用布局（非 CNBS-R2016 / TGMD-3） -->
       <template v-else>
         <!-- 题目内容 -->
         <div class="question-title">
@@ -241,6 +285,23 @@ const cnbsr2016PassCriteria = computed(() => {
   return props.question.metadata?.pass_criteria || ''
 })
 
+const isTgmd3Layout = computed(() => {
+  return props.question.metadata?.scoreType === 'tgmd_3'
+})
+
+const tgmd3Equipment = computed(() => {
+  return props.question.metadata?.equipment || ''
+})
+
+const tgmd3Guidance = computed(() => {
+  return props.question.metadata?.guidance || ''
+})
+
+const tgmd3Criteria = computed<string[]>(() => {
+  const value = props.question.metadata?.criteria
+  return Array.isArray(value) ? value as string[] : []
+})
+
 // 年龄阶段标签
 const ageStageLabel = computed(() => {
   const stage = props.question.metadata?.age_stage
@@ -283,6 +344,8 @@ watch(() => props.isSkipped, (isSkipped) => {
 
 // 处理答案变化
 function handleAnswerChange(value: number | string) {
+  selectedValue.value = value
+
   if (props.question.metadata?.hasDescription) {
     if (value === 0 || value === '0') {
       descriptionText.value = ''
@@ -325,6 +388,12 @@ function playAudio() {
     const parts = [props.question.content]
     if (cnbsr2016Prompt.value) parts.push(`操作方法：${cnbsr2016Prompt.value}`)
     if (cnbsr2016PassCriteria.value) parts.push(`通过要求：${cnbsr2016PassCriteria.value}`)
+    textToSpeak = parts.join('。')
+  } else if (isTgmd3Layout.value) {
+    const parts = [props.question.content]
+    if (tgmd3Equipment.value) parts.push(`器材准备：${tgmd3Equipment.value}`)
+    if (tgmd3Guidance.value) parts.push(`场地路线与测试指导语：${tgmd3Guidance.value}`)
+    if (tgmd3Criteria.value.length) parts.push(`观察要点动作标准：${tgmd3Criteria.value.join('；')}`)
     textToSpeak = parts.join('。')
   }
 
@@ -391,18 +460,122 @@ onBeforeUnmount(() => {
   padding: 10px 0;
 }
 
-/* ====== CNBS-R2016 专用样式 ====== */
+/* ====== TGMD-3 / CNBS-R2016 专用样式 ====== */
 
+.tgmd-title,
 .cnbs-title {
   font-size: 22px;
   font-weight: 700;
   color: #303133;
   margin-bottom: 20px;
   padding: 16px 20px;
-  background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
   border-radius: 12px;
-  border-left: 5px solid #409eff;
   line-height: 1.5;
+}
+
+.tgmd-title {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border-left: 5px solid #f97316;
+}
+
+.tgmd-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.tgmd-meta-card {
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #fffaf5 0%, #fff1df 100%);
+  border: 1px solid #fed7aa;
+}
+
+.tgmd-meta-label,
+.tgmd-criteria-label,
+.tgmd-score-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c2410c;
+  margin-bottom: 8px;
+}
+
+.tgmd-meta-text {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.7;
+}
+
+.tgmd-criteria {
+  margin-bottom: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #fafaf9;
+  border: 1px solid #e7e5e4;
+}
+
+.tgmd-criteria-list {
+  margin: 0;
+  padding-left: 20px;
+  color: #44403c;
+  line-height: 1.8;
+}
+
+.tgmd-score-block {
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #fde68a;
+}
+
+.tgmd-score-note {
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #92400e;
+}
+
+.tgmd-score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 10px;
+}
+
+.tgmd-score-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  border: 1px solid #fcd34d;
+  background: linear-gradient(180deg, #fffef7 0%, #fff7d6 100%);
+  color: #78350f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tgmd-score-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.12);
+}
+
+.tgmd-score-chip.is-selected {
+  border-color: #ea580c;
+  background: linear-gradient(180deg, #ffedd5 0%, #fdba74 100%);
+  color: #7c2d12;
+  box-shadow: 0 8px 20px rgba(234, 88, 12, 0.18);
+}
+
+.tgmd-score-chip__value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cnbs-title {
+  background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
+  border-left: 5px solid #409eff;
 }
 
 .cnbs-info-grid {
@@ -750,10 +923,12 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
+  .tgmd-meta-grid,
   .cnbs-info-grid {
     grid-template-columns: 1fr;
   }
 
+  .tgmd-score-grid,
   .cnbs-answer-row {
     grid-template-columns: 1fr;
     gap: 12px;

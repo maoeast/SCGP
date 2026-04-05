@@ -86,6 +86,7 @@ const CBCLReport = () => import('@/views/assessment/cbcl/Report.vue')
 const FineMotorReport = () => import('@/views/assessment/fine-motor/Report.vue')
 const Cnbsr2016Report = () => import('@/views/assessment/cnbsr2016/Report.vue')
 const Gmfm88Report = () => import('@/views/assessment/gmfm-88/Report.vue')
+const Tgmd3Report = () => import('@/views/assessment/tgmd-3/Report.vue')
 
 // 通用评估容器（Phase 4 重构）
 const AssessmentContainer = () => import('@/views/assessment/AssessmentContainer.vue')
@@ -543,6 +544,10 @@ const router = createRouter({
           path: 'assessment/gmfm_88/:studentId',
           redirect: (to: any) => `/assessment/unified/gmfm_88/${to.params.studentId}`
         },
+        {
+          path: 'assessment/tgmd_3/:studentId',
+          redirect: (to: any) => `/assessment/unified/tgmd_3/${to.params.studentId}`
+        },
         // ===== 报告页面（保留） =====
         {
           path: 'assessment/sm/report',
@@ -660,6 +665,16 @@ const router = createRouter({
           component: Gmfm88Report,
           meta: {
             title: 'GMFM-88评估报告',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'assessment/tgmd_3/report/:assessId',
+          name: 'Tgmd3Report',
+          component: Tgmd3Report,
+          meta: {
+            title: 'TGMD-3评估报告',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

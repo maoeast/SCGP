@@ -8,6 +8,7 @@ import {
   FineMotorAssessmentAPI,
   Gmfm88AssessmentAPI,
   SMAssessmentAPI,
+  Tgmd3AssessmentAPI,
   WeeFIMAPI,
 } from '@/database/api'
 import { getDatabase } from '@/database/init'
@@ -27,6 +28,7 @@ export type AssessmentScaleType =
   | 'cnbsr2016'
   | 'fine_motor'
   | 'gmfm_88'
+  | 'tgmd_3'
 
 export interface StudentAssessmentRecord {
   id: string
@@ -51,6 +53,7 @@ const SCALE_LABEL_MAP: Record<AssessmentScaleType, string> = {
   cnbsr2016: '儿心量表Ⅱ',
   fine_motor: '小肌肉功能发展评估量表',
   gmfm_88: 'GMFM-88粗大运动功能评定量表',
+  tgmd_3: 'TGMD-3大肌肉动作发展测验',
 }
 
 const LEVEL_LABEL_MAP: Record<string, string> = {
@@ -105,6 +108,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
   const cnbsr2016Api = new Cnbsr2016AssessmentAPI()
   const fineMotorApi = new FineMotorAssessmentAPI()
   const gmfm88Api = new Gmfm88AssessmentAPI()
+  const tgmd3Api = new Tgmd3AssessmentAPI()
 
   const smRecords = smApi.getStudentAssessments(studentId).map((record: any) => ({
     id: `sm-${record.id}`,
@@ -258,6 +262,17 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))
 
+  const tgmd3Records = tgmd3Api.getStudentAssessments(studentId).map((record: any) => ({
+    id: `tgmd_3-${record.id}`,
+    studentId,
+    assessId: record.id,
+    scaleType: 'tgmd_3' as const,
+    scaleLabel: SCALE_LABEL_MAP.tgmd_3,
+    scoreText: `总分 ${formatNullableNumber(record.total_score)} / 常模 ${formatNullableNumber(record.total_level)}级`,
+    levelText: formatLevel(record.level_code || record.level),
+    createdAt: record.end_time || record.created_at || record.start_time || '',
+  }))
+
   return [
     ...smRecords,
     ...weefimRecords,
@@ -270,6 +285,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     ...cnbsr2016Records,
     ...fineMotorRecords,
     ...gmfm88Records,
+    ...tgmd3Records,
   ].sort((left, right) => getSortTime(right.createdAt) - getSortTime(left.createdAt))
 }
 

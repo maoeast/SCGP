@@ -236,6 +236,7 @@ type AssessmentStatisticsKey =
   | 'cnbsr2016_count'
   | 'fine_motor_count'
   | 'gmfm_88_count'
+  | 'tgmd_3_count'
 
 interface ReportStatistics {
   total: number
@@ -250,6 +251,7 @@ interface ReportStatistics {
   cnbsr2016_count: number
   fine_motor_count: number
   gmfm_88_count: number
+  tgmd_3_count: number
   emotional_count: number
   iep_count: number
   training_count: number
@@ -269,6 +271,7 @@ const REPORT_TYPE_OPTIONS: ReportTypeOption[] = [
   { value: 'cnbsr2016', label: '儿心量表Ⅱ评估报告', category: 'assessment', tone: 'teal' },
   { value: 'fine_motor', label: '小肌肉功能发展评估报告', category: 'assessment', tone: 'blue' },
   { value: 'gmfm_88', label: 'GMFM-88 评估报告', category: 'assessment', tone: 'coral' },
+  { value: 'tgmd_3', label: 'TGMD-3 评估报告', category: 'assessment', tone: 'amber' },
   { value: 'emotional', label: '情绪行为调节模块报告', category: 'intervention', tone: 'amber' },
   { value: 'iep', label: 'IEP 报告', category: 'intervention', tone: 'blue' },
   { value: 'training', label: '训练报告', category: 'intervention', tone: 'teal' },
@@ -298,7 +301,7 @@ const ASSESSMENT_CARD_DEFINITIONS: Array<{
   { key: 'cnbsr2016', label: '儿心量表Ⅱ', tone: 'teal', valueKey: 'cnbsr2016_count' },
   { key: 'fine_motor', label: 'FMDA', tone: 'blue', valueKey: 'fine_motor_count' },
   { key: 'gmfm_88', label: 'GMFM-88', tone: 'coral', valueKey: 'gmfm_88_count' },
-  { key: 'tgmd-3', label: 'TGMD-3', tone: 'placeholder', isPlaceholder: true },
+  { key: 'tgmd_3', label: 'TGMD-3', tone: 'amber', valueKey: 'tgmd_3_count' },
 ]
 
 const router = useRouter()
@@ -333,7 +336,8 @@ const assessmentReportCount = computed(() =>
   + statistics.value.cbcl_count
   + statistics.value.cnbsr2016_count
   + statistics.value.fine_motor_count
-  + statistics.value.gmfm_88_count,
+  + statistics.value.gmfm_88_count
+  + statistics.value.tgmd_3_count,
 )
 const interventionReportCount = computed(() =>
   statistics.value.emotional_count
@@ -368,6 +372,7 @@ function deriveReportStatistics(records: any[]): ReportStatistics {
     cnbsr2016_count: 0,
     fine_motor_count: 0,
     gmfm_88_count: 0,
+    tgmd_3_count: 0,
     emotional_count: 0,
     iep_count: 0,
     training_count: 0,
@@ -386,6 +391,7 @@ function deriveReportStatistics(records: any[]): ReportStatistics {
     if (row.report_type === 'cnbsr2016') next.cnbsr2016_count += 1
     if (row.report_type === 'fine_motor') next.fine_motor_count += 1
     if (row.report_type === 'gmfm_88') next.gmfm_88_count += 1
+    if (row.report_type === 'tgmd_3') next.tgmd_3_count += 1
     if (row.report_type === 'emotional') next.emotional_count += 1
     if (row.report_type === 'iep') next.iep_count += 1
     if (row.report_type === 'training') next.training_count += 1
@@ -407,6 +413,7 @@ function getReportTypeTagType(type: string) {
     cnbsr2016: 'success',
     fine_motor: 'primary',
     gmfm_88: 'danger',
+    tgmd_3: 'warning',
     emotional: 'warning',
     iep: 'danger',
     training: 'primary',
@@ -546,6 +553,7 @@ function viewReport(report: any) {
     'cnbsr2016',
     'fine_motor',
     'gmfm_88',
+    'tgmd_3',
   ])
 
   if (assessmentReportTypes.has(report.report_type as AssessmentReportScaleType)) {

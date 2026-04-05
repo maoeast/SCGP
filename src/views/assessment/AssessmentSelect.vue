@@ -227,12 +227,12 @@
           </el-button>
         </el-card>
 
-        <!-- TGMD-3占位卡片 -->
+        <!-- TGMD-3量表卡片 -->
         <el-card
-          class="scale-card placeholder-card"
+          class="scale-card"
           shadow="hover"
+          @click="selectScale('tgmd_3')"
         >
-          <div class="scale-card-badge">即将上线</div>
           <div class="scale-icon tgmd-icon">
             <el-icon size="60"><TrophyBase /></el-icon>
           </div>
@@ -240,14 +240,14 @@
           <p class="scale-subtitle">(TGMD-3)</p>
           <div class="scale-info">
             <ul>
-              <li>适用年龄：3 - 11岁</li>
+              <li>适用年龄：3岁0个月 - 10岁11个月</li>
               <li>题目数量：13项动作技能</li>
-              <li>评估维度：移动技能（6项）、球类技能（7项）</li>
+              <li>评估维度：位移技能（6项）、球类技能（7项）</li>
               <li>评估时间：约15-20分钟</li>
             </ul>
           </div>
-          <el-button disabled size="large" class="scale-btn coming-soon-btn">
-            即将上线
+          <el-button type="warning" size="large" class="scale-btn">
+            开始评估
           </el-button>
         </el-card>
 
@@ -331,7 +331,7 @@ import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding, Stamp, Av
 const router = useRouter()
 
 // 选择量表
-const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq' | 'srs2' | 'cbcl' | 'cnbsr2016' | 'fine_motor' | 'gmfm_88') => {
+const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq' | 'srs2' | 'cbcl' | 'cnbsr2016' | 'fine_motor' | 'gmfm_88' | 'tgmd_3') => {
   // 跳转到学生选择页面，传递量表类型参数
   router.push({
     path: '/assessment/select-student',

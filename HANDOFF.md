@@ -33,10 +33,13 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
+**Active follow-up work is now in `.continue-here.md`: TGMD-3 unified assessment implementation has landed and passed core runtime verification.**
+
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- no active blocking work; ready for v1.8+ planning or other platform work
+- current active task is no longer milestone planning; it is TGMD-3 content/runtime closeout
+- first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

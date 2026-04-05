@@ -59,7 +59,7 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
       CREATE TABLE report_record_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_id INTEGER NOT NULL,
-        report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88')),
+        report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88', 'tgmd_3')),
         assess_id INTEGER,
         plan_id INTEGER,
         training_record_id INTEGER,
@@ -124,7 +124,7 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
     db.run('COMMIT')
 
     console.log('[迁移] report_record 表约束更新成功！')
-    console.log('[迁移] 支持的报告类型: sm, weefim, training, iep, csirs, conners-psq, conners-trs, sdq, srs2, cbcl, emotional, fine_motor, cnbsr2016, gmfm_88')
+    console.log('[迁移] 支持的报告类型: sm, weefim, training, iep, csirs, conners-psq, conners-trs, sdq, srs2, cbcl, emotional, fine_motor, cnbsr2016, gmfm_88, tgmd_3')
 
     return {
       success: true,
@@ -189,6 +189,7 @@ export function needsMigration(): boolean {
       || !sql.includes("'fine_motor'")
       || !sql.includes("'cnbsr2016'")
       || !sql.includes("'gmfm_88'")
+      || !sql.includes("'tgmd_3'")
   } catch (error) {
     // 如果查询失败，保守地认为不需要迁移
     console.warn('[needsMigration] 检查约束失败，跳过迁移:', error)

@@ -122,7 +122,7 @@ import type {
 } from '@/types/assessment'
 import { calculateAgeInMonths } from '@/types/assessment'
 import { getDriverByScaleCode } from '@/strategies/assessment'
-import { StudentAPI, SMAssessmentAPI, CSIRSAPI, WeeFIMAPI, ReportAPI, ConnersPSQAPI, ConnersTRSAPI, FineMotorAssessmentAPI, Cnbsr2016AssessmentAPI, Gmfm88AssessmentAPI } from '@/database/api'
+import { StudentAPI, SMAssessmentAPI, CSIRSAPI, WeeFIMAPI, ReportAPI, ConnersPSQAPI, ConnersTRSAPI, FineMotorAssessmentAPI, Cnbsr2016AssessmentAPI, Gmfm88AssessmentAPI, Tgmd3AssessmentAPI } from '@/database/api'
 import {
   buildAssessmentReportRoute,
   type AssessmentReportScaleType,
@@ -662,6 +662,8 @@ async function saveGenericAssessment(startTime: string, endTime: string) {
     await saveCnbsr2016Assessment(startTime, endTime)
   } else if (scale === 'gmfm_88') {
     await saveGmfm88Assessment(startTime, endTime)
+  } else if (scale === 'tgmd_3') {
+    await saveTgmd3Assessment(startTime, endTime)
   } else {
     console.warn(`[AssessmentContainer] 未实现的量表保存逻辑: ${scale}`)
   }
@@ -1228,6 +1230,69 @@ async function saveGmfm88Assessment(startTime: string, endTime: string) {
   })
 
   console.log('[AssessmentContainer] GMFM-88 评估保存成功, ID:', assessId.value)
+}
+
+async function saveTgmd3Assessment(startTime: string, endTime: string) {
+  if (!student.value || !scoreResult.value) return
+
+  const tgmd3Api = new Tgmd3AssessmentAPI()
+  const extraData = scoreResult.value.extraData as any
+  const orderedDetails = Object.entries(state.value.answers)
+    .map(([questionId, answer]) => {
+      const question = questions.value.find((item) => String(item.id) === String(questionId))
+
+      return {
+        question_id: parseInt(questionId, 10),
+        item_code: String(question?.metadata?.itemCode || ''),
+        dimension: question?.dimension || '',
+        score: Number(answer.score || 0),
+        max_score: Number(question?.metadata?.maxScore || 0),
+        raw_value: String(answer.value),
+        criteria_snapshot: Array.isArray(question?.metadata?.criteria) ? question?.metadata?.criteria : [],
+        answer_time: answer.responseTime || 0,
+      }
+    })
+    .sort((left, right) => left.question_id - right.question_id)
+
+  assessId.value = tgmd3Api.saveAssessment({
+    assessment: {
+      student_id: student.value.id,
+      age_months: student.value.ageInMonths,
+      gender: student.value.gender,
+      locomotor_score: Number(extraData?.locomotorScore || 0),
+      locomotor_percent: Number(extraData?.locomotorPercent || 0),
+      locomotor_level: extraData?.locomotorLevel ?? null,
+      ball_skills_score: Number(extraData?.ballSkillsScore || 0),
+      ball_skills_percent: Number(extraData?.ballSkillsPercent || 0),
+      ball_skills_level: extraData?.ballSkillsLevel ?? null,
+      total_score: Number(extraData?.totalRawScore || 0),
+      total_percent: Number(extraData?.totalPercent || 0),
+      total_level: extraData?.totalLevel ?? null,
+      level: scoreResult.value.level,
+      level_code: scoreResult.value.levelCode || null,
+      domain_results: extraData?.domainResults || [],
+      domain_feedback: extraData?.domainFeedback || [],
+      skill_results: extraData?.skillResults || [],
+      norm_summary: extraData?.normSummary || {},
+      iep_targets: extraData?.iepTargets || [],
+      flags: extraData?.flags || [],
+      overall_rule: extraData?.overallRule || null,
+      start_time: startTime,
+      end_time: endTime,
+    },
+    details: orderedDetails,
+  })
+
+  const reportApi = new ReportAPI()
+  reportApi.saveReportRecord({
+    student_id: student.value.id,
+    report_type: 'tgmd_3',
+    assess_id: assessId.value ?? undefined,
+    module_code: 'sensory',
+    title: `${student.value.name} - TGMD-3评估报告`,
+  })
+
+  console.log('[AssessmentContainer] TGMD-3 评估保存成功, ID:', assessId.value)
 }
 
 // ========== 导航处理 ==========

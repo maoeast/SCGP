@@ -235,6 +235,52 @@ CREATE TABLE IF NOT EXISTS gmfm_88_assess_detail (
   FOREIGN KEY (assess_id) REFERENCES gmfm_88_assess(id)
 );
 
+-- TGMD-3评估主表
+CREATE TABLE IF NOT EXISTS tgmd_3_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,
+  gender TEXT NOT NULL,
+  locomotor_score INTEGER NOT NULL,
+  locomotor_percent REAL NOT NULL,
+  locomotor_level INTEGER,
+  ball_skills_score INTEGER NOT NULL,
+  ball_skills_percent REAL NOT NULL,
+  ball_skills_level INTEGER,
+  total_score INTEGER NOT NULL,
+  total_percent REAL NOT NULL,
+  total_level INTEGER,
+  level TEXT NOT NULL,
+  level_code TEXT,
+  domain_results TEXT NOT NULL,
+  domain_feedback TEXT NOT NULL,
+  skill_results TEXT NOT NULL,
+  norm_summary TEXT NOT NULL,
+  iep_targets TEXT NOT NULL DEFAULT '[]',
+  flags TEXT NOT NULL DEFAULT '[]',
+  overall_rule TEXT,
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+-- TGMD-3评估详情表
+CREATE TABLE IF NOT EXISTS tgmd_3_assess_detail (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  assess_id INTEGER NOT NULL,
+  question_id INTEGER NOT NULL,
+  item_code TEXT NOT NULL,
+  dimension TEXT NOT NULL,
+  score INTEGER NOT NULL,
+  max_score INTEGER NOT NULL,
+  raw_value TEXT NOT NULL,
+  criteria_snapshot TEXT NOT NULL DEFAULT '[]',
+  answer_time INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (assess_id) REFERENCES tgmd_3_assess(id)
+);
+
 -- 训练任务分类表
 CREATE TABLE IF NOT EXISTS task_category (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -396,7 +442,7 @@ CREATE INDEX IF NOT EXISTS idx_login_log_time ON login_log(login_time DESC);
 CREATE TABLE IF NOT EXISTS report_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
-  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88')),
+  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88', 'tgmd_3')),
   assess_id INTEGER,
   plan_id INTEGER,
   training_record_id INTEGER,
@@ -575,6 +621,9 @@ CREATE INDEX IF NOT EXISTS idx_cnbsr2016_assess_detail_assess ON cnbsr2016_asses
 CREATE INDEX IF NOT EXISTS idx_gmfm_88_assess_student ON gmfm_88_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_gmfm_88_assess_created ON gmfm_88_assess(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_gmfm_88_assess_detail_assess ON gmfm_88_assess_detail(assess_id);
+CREATE INDEX IF NOT EXISTS idx_tgmd_3_assess_student ON tgmd_3_assess(student_id);
+CREATE INDEX IF NOT EXISTS idx_tgmd_3_assess_created ON tgmd_3_assess(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_tgmd_3_assess_detail_assess ON tgmd_3_assess_detail(assess_id);
 
 -- 系统配置表
 CREATE TABLE IF NOT EXISTS system_config (
@@ -1264,6 +1313,10 @@ export async function initDatabase(): Promise<any> {
           console.log('添加 flags 列到 csirs_assess 表')
           db.run('ALTER TABLE csirs_assess ADD COLUMN flags TEXT')
         }
+
+        // TGMD-3 表结构兼容修复：早期接入版本缺少 domain_feedback 列
+        // 已有数据库会保留旧表结构，因此需要在启动时补齐。
+        safeAddColumn(rawDb, 'tgmd_3_assess', "domain_feedback TEXT NOT NULL DEFAULT '[]'")
 
       } catch (error) {
         console.error('❌ 数据库迁移失败:', error)

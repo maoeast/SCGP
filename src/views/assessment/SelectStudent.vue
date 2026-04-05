@@ -34,7 +34,7 @@ const router = useRouter()
 const route = useRoute()
 
 // 有效的量表类型
-const validScales = ['sm', 'weefim', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'cnbsr2016', 'fine_motor', 'gmfm_88'] as const
+const validScales = ['sm', 'weefim', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'cnbsr2016', 'fine_motor', 'gmfm_88', 'tgmd_3'] as const
 type ScaleType = typeof validScales[number]
 
 // 当前量表类型
@@ -57,7 +57,8 @@ const pageTitle = computed(() => {
     'cbcl': '选择评估学生 - CBCL儿童行为量表',
     'cnbsr2016': '选择评估学生 - 儿心量表Ⅱ',
     'fine_motor': '选择评估学生 - 小肌肉功能发展评估量表',
-    'gmfm_88': '选择评估学生 - GMFM-88粗大运动功能评定量表'
+    'gmfm_88': '选择评估学生 - GMFM-88粗大运动功能评定量表',
+    'tgmd_3': '选择评估学生 - TGMD-3大肌肉动作发展测验'
   }
   return titles[scaleType.value]
 })
@@ -119,6 +120,11 @@ const currentModuleTag = computed<ModuleTag>(() => {
       type: 'danger',
       label: 'GMFM-88 粗大运动功能',
       description: '评估儿童卧位翻身、坐位、爬跪、站立与走跑跳能力'
+    },
+    'tgmd_3': {
+      type: 'warning',
+      label: 'TGMD-3 大肌肉动作',
+      description: '评估儿童位移技能与球类技能发展水平'
     }
   }
   return tags[scaleType.value]
