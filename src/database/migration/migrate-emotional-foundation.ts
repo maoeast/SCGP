@@ -57,7 +57,7 @@ function needsReportRecordMigration(db: any): boolean {
   const tableSql = getTableSql(db, 'report_record')
   if (!tableSql) return false
 
-  return !tableSql.includes("'emotional'") || !tableSql.includes("'fine_motor'") || !tableSql.includes("'cnbsr2016'")
+  return !tableSql.includes("'emotional'") || !tableSql.includes("'fine_motor'") || !tableSql.includes("'cnbsr2016'") || !tableSql.includes("'gmfm_88'")
 }
 
 function buildCopyExpression(columns: Set<string>, columnName: string, fallbackSql: string): string {
@@ -156,7 +156,7 @@ function migrateReportRecord(db: any): number {
     CREATE TABLE report_record_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       student_id INTEGER NOT NULL,
-      report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016')),
+      report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88')),
       assess_id INTEGER,
       plan_id INTEGER,
       training_record_id INTEGER,

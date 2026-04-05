@@ -19,6 +19,7 @@ import { SRS2Driver } from './SRS2Driver'
 import { CBCLDriver } from './CBCLDriver'
 import { FineMotorDriver } from './FineMotorDriver'
 import { Cnbsr2016Driver } from './Cnbsr2016Driver'
+import { Gmfm88Driver } from './Gmfm88Driver'
 
 // 导出基类供其他驱动器继承
 export { BaseDriver } from './BaseDriver'
@@ -35,6 +36,7 @@ const driverRegistry: Record<string, new () => ScaleDriver> = {
   'cbcl': CBCLDriver,
   'fine_motor': FineMotorDriver,
   'cnbsr2016': Cnbsr2016Driver,
+  'gmfm_88': Gmfm88Driver,
 }
 
 // 驱动器实例缓存
@@ -127,3 +129,4 @@ export { SRS2Driver } from './SRS2Driver'
 export { CBCLDriver } from './CBCLDriver'
 export { FineMotorDriver } from './FineMotorDriver'
 export { Cnbsr2016Driver } from './Cnbsr2016Driver'
+export { Gmfm88Driver } from './Gmfm88Driver'

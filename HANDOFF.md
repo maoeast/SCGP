@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-04
+> last_updated: 2026-04-05
 
 > Responsibility: top-level handoff entry for new sessions.
 > Read when: entering the repo or resuming work and needing the fastest route to current context.

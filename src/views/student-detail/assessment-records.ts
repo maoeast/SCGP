@@ -6,6 +6,7 @@ import {
   ConnersTRSAPI,
   CSIRSAPI,
   FineMotorAssessmentAPI,
+  Gmfm88AssessmentAPI,
   SMAssessmentAPI,
   WeeFIMAPI,
 } from '@/database/api'
@@ -25,6 +26,7 @@ export type AssessmentScaleType =
   | 'cbcl'
   | 'cnbsr2016'
   | 'fine_motor'
+  | 'gmfm_88'
 
 export interface StudentAssessmentRecord {
   id: string
@@ -48,6 +50,7 @@ const SCALE_LABEL_MAP: Record<AssessmentScaleType, string> = {
   cbcl: 'CBCL量表',
   cnbsr2016: '儿心量表Ⅱ',
   fine_motor: '小肌肉功能发展评估量表',
+  gmfm_88: 'GMFM-88粗大运动功能评定量表',
 }
 
 const LEVEL_LABEL_MAP: Record<string, string> = {
@@ -60,6 +63,9 @@ const LEVEL_LABEL_MAP: Record<string, string> = {
   excellent: '优秀',
   good: '良好',
   delayed: '智力发育障碍',
+  intensive_support: '基础筑巢期',
+  transitional_growth: '破茧探索期',
+  functional_independence: '展翅飞跃期',
 }
 
 function formatNullableNumber(value: unknown): string {
@@ -98,6 +104,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
   const cbclApi = new CBCLAssessmentAPI()
   const cnbsr2016Api = new Cnbsr2016AssessmentAPI()
   const fineMotorApi = new FineMotorAssessmentAPI()
+  const gmfm88Api = new Gmfm88AssessmentAPI()
 
   const smRecords = smApi.getStudentAssessments(studentId).map((record: any) => ({
     id: `sm-${record.id}`,
@@ -240,6 +247,17 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))
 
+  const gmfm88Records = gmfm88Api.getStudentAssessments(studentId).map((record: any) => ({
+    id: `gmfm_88-${record.id}`,
+    studentId,
+    assessId: record.id,
+    scaleType: 'gmfm_88' as const,
+    scaleLabel: SCALE_LABEL_MAP.gmfm_88,
+    scoreText: `总分 ${formatNullableNumber(record.total_score)}% / 原始 ${formatNullableNumber(record.raw_total_score)}`,
+    levelText: formatLevel(record.level_code || record.level),
+    createdAt: record.end_time || record.created_at || record.start_time || '',
+  }))
+
   return [
     ...smRecords,
     ...weefimRecords,
@@ -251,6 +269,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     ...cbclRecords,
     ...cnbsr2016Records,
     ...fineMotorRecords,
+    ...gmfm88Records,
   ].sort((left, right) => getSortTime(right.createdAt) - getSortTime(left.createdAt))
 }
 

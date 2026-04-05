@@ -85,6 +85,7 @@ const SRS2Report = () => import('@/views/assessment/srs2/Report.vue')
 const CBCLReport = () => import('@/views/assessment/cbcl/Report.vue')
 const FineMotorReport = () => import('@/views/assessment/fine-motor/Report.vue')
 const Cnbsr2016Report = () => import('@/views/assessment/cnbsr2016/Report.vue')
+const Gmfm88Report = () => import('@/views/assessment/gmfm-88/Report.vue')
 
 // 通用评估容器（Phase 4 重构）
 const AssessmentContainer = () => import('@/views/assessment/AssessmentContainer.vue')
@@ -538,6 +539,10 @@ const router = createRouter({
           path: 'assessment/fine_motor/:studentId',
           redirect: (to: any) => `/assessment/unified/fine_motor/${to.params.studentId}`
         },
+        {
+          path: 'assessment/gmfm_88/:studentId',
+          redirect: (to: any) => `/assessment/unified/gmfm_88/${to.params.studentId}`
+        },
         // ===== 报告页面（保留） =====
         {
           path: 'assessment/sm/report',
@@ -645,6 +650,16 @@ const router = createRouter({
           component: Cnbsr2016Report,
           meta: {
             title: '儿心量表Ⅱ评估报告',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'assessment/gmfm_88/report/:assessId',
+          name: 'Gmfm88Report',
+          component: Gmfm88Report,
+          meta: {
+            title: 'GMFM-88评估报告',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

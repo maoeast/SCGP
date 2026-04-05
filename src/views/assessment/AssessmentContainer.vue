@@ -122,7 +122,7 @@ import type {
 } from '@/types/assessment'
 import { calculateAgeInMonths } from '@/types/assessment'
 import { getDriverByScaleCode } from '@/strategies/assessment'
-import { StudentAPI, SMAssessmentAPI, CSIRSAPI, WeeFIMAPI, ReportAPI, ConnersPSQAPI, ConnersTRSAPI, FineMotorAssessmentAPI, Cnbsr2016AssessmentAPI } from '@/database/api'
+import { StudentAPI, SMAssessmentAPI, CSIRSAPI, WeeFIMAPI, ReportAPI, ConnersPSQAPI, ConnersTRSAPI, FineMotorAssessmentAPI, Cnbsr2016AssessmentAPI, Gmfm88AssessmentAPI } from '@/database/api'
 import {
   buildAssessmentReportRoute,
   type AssessmentReportScaleType,
@@ -660,6 +660,8 @@ async function saveGenericAssessment(startTime: string, endTime: string) {
     await saveFineMotorAssessment(startTime, endTime)
   } else if (scale === 'cnbsr2016') {
     await saveCnbsr2016Assessment(startTime, endTime)
+  } else if (scale === 'gmfm_88') {
+    await saveGmfm88Assessment(startTime, endTime)
   } else {
     console.warn(`[AssessmentContainer] 未实现的量表保存逻辑: ${scale}`)
   }
@@ -1173,6 +1175,59 @@ async function saveCnbsr2016Assessment(startTime: string, endTime: string) {
   })
 
   console.log('[AssessmentContainer] CNBS-R2016 评估保存成功, ID:', assessId.value)
+}
+
+async function saveGmfm88Assessment(startTime: string, endTime: string) {
+  if (!student.value || !scoreResult.value) return
+
+  const gmfm88Api = new Gmfm88AssessmentAPI()
+  const extraData = scoreResult.value.extraData as any
+  const orderedDetails = Object.entries(state.value.answers)
+    .map(([questionId, answer]) => {
+      const question = questions.value.find((item) => String(item.id) === String(questionId))
+
+      return {
+        question_id: parseInt(questionId, 10),
+        item_code: String(question?.metadata?.itemCode || ''),
+        dimension: question?.dimension || '',
+        score: answer.score,
+        raw_value: String(answer.value),
+        is_nt: answer.value === 'NT',
+        answer_time: answer.responseTime || 0,
+      }
+    })
+    .sort((left, right) => left.question_id - right.question_id)
+
+  assessId.value = gmfm88Api.saveAssessment({
+    assessment: {
+      student_id: student.value.id,
+      age_months: student.value.ageInMonths,
+      total_score: Number(scoreResult.value.totalScore || 0),
+      raw_total_score: Number(extraData?.totalRawScore || 0),
+      total_max_score: Number(extraData?.totalMaxScore || 0),
+      level: scoreResult.value.level,
+      level_code: scoreResult.value.levelCode || null,
+      domain_results: extraData?.domainResults || [],
+      domain_feedback: extraData?.domainFeedback || [],
+      iep_targets: extraData?.iepTargets || [],
+      flags: extraData?.flags || [],
+      overall_rule: extraData?.overallRule || null,
+      start_time: startTime,
+      end_time: endTime,
+    },
+    details: orderedDetails,
+  })
+
+  const reportApi = new ReportAPI()
+  reportApi.saveReportRecord({
+    student_id: student.value.id,
+    report_type: 'gmfm_88',
+    assess_id: assessId.value ?? undefined,
+    module_code: 'sensory',
+    title: `${student.value.name} - GMFM-88评估报告`,
+  })
+
+  console.log('[AssessmentContainer] GMFM-88 评估保存成功, ID:', assessId.value)
 }
 
 // ========== 导航处理 ==========

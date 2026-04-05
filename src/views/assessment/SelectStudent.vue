@@ -34,7 +34,7 @@ const router = useRouter()
 const route = useRoute()
 
 // 有效的量表类型
-const validScales = ['sm', 'weefim', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'cnbsr2016', 'fine_motor'] as const
+const validScales = ['sm', 'weefim', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'cnbsr2016', 'fine_motor', 'gmfm_88'] as const
 type ScaleType = typeof validScales[number]
 
 // 当前量表类型
@@ -56,7 +56,8 @@ const pageTitle = computed(() => {
     'srs2': '选择评估学生 - SRS-2社交反应量表',
     'cbcl': '选择评估学生 - CBCL儿童行为量表',
     'cnbsr2016': '选择评估学生 - 儿心量表Ⅱ',
-    'fine_motor': '选择评估学生 - 小肌肉功能发展评估量表'
+    'fine_motor': '选择评估学生 - 小肌肉功能发展评估量表',
+    'gmfm_88': '选择评估学生 - GMFM-88粗大运动功能评定量表'
   }
   return titles[scaleType.value]
 })
@@ -113,6 +114,11 @@ const currentModuleTag = computed<ModuleTag>(() => {
       type: 'warning',
       label: '小肌肉功能发展评估量表',
       description: '评估儿童精细动作与手部操作能力发展水平'
+    },
+    'gmfm_88': {
+      type: 'danger',
+      label: 'GMFM-88 粗大运动功能',
+      description: '评估儿童卧位翻身、坐位、爬跪、站立与走跑跳能力'
     }
   }
   return tags[scaleType.value]

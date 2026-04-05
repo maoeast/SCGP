@@ -235,6 +235,7 @@ type AssessmentStatisticsKey =
   | 'cbcl_count'
   | 'cnbsr2016_count'
   | 'fine_motor_count'
+  | 'gmfm_88_count'
 
 interface ReportStatistics {
   total: number
@@ -248,6 +249,7 @@ interface ReportStatistics {
   cbcl_count: number
   cnbsr2016_count: number
   fine_motor_count: number
+  gmfm_88_count: number
   emotional_count: number
   iep_count: number
   training_count: number
@@ -266,6 +268,7 @@ const REPORT_TYPE_OPTIONS: ReportTypeOption[] = [
   { value: 'cbcl', label: 'CBCL 评估报告', category: 'assessment', tone: 'coral' },
   { value: 'cnbsr2016', label: '儿心量表Ⅱ评估报告', category: 'assessment', tone: 'teal' },
   { value: 'fine_motor', label: '小肌肉功能发展评估报告', category: 'assessment', tone: 'blue' },
+  { value: 'gmfm_88', label: 'GMFM-88 评估报告', category: 'assessment', tone: 'coral' },
   { value: 'emotional', label: '情绪行为调节模块报告', category: 'intervention', tone: 'amber' },
   { value: 'iep', label: 'IEP 报告', category: 'intervention', tone: 'blue' },
   { value: 'training', label: '训练报告', category: 'intervention', tone: 'teal' },
@@ -294,8 +297,8 @@ const ASSESSMENT_CARD_DEFINITIONS: Array<{
   { key: 'cbcl', label: 'CBCL', tone: 'coral', valueKey: 'cbcl_count' },
   { key: 'cnbsr2016', label: '儿心量表Ⅱ', tone: 'teal', valueKey: 'cnbsr2016_count' },
   { key: 'fine_motor', label: 'FMDA', tone: 'blue', valueKey: 'fine_motor_count' },
+  { key: 'gmfm_88', label: 'GMFM-88', tone: 'coral', valueKey: 'gmfm_88_count' },
   { key: 'tgmd-3', label: 'TGMD-3', tone: 'placeholder', isPlaceholder: true },
-  { key: 'gmfm', label: 'GMFM', tone: 'placeholder', isPlaceholder: true },
 ]
 
 const router = useRouter()
@@ -329,7 +332,8 @@ const assessmentReportCount = computed(() =>
   + statistics.value.srs2_count
   + statistics.value.cbcl_count
   + statistics.value.cnbsr2016_count
-  + statistics.value.fine_motor_count,
+  + statistics.value.fine_motor_count
+  + statistics.value.gmfm_88_count,
 )
 const interventionReportCount = computed(() =>
   statistics.value.emotional_count
@@ -363,6 +367,7 @@ function deriveReportStatistics(records: any[]): ReportStatistics {
     cbcl_count: 0,
     cnbsr2016_count: 0,
     fine_motor_count: 0,
+    gmfm_88_count: 0,
     emotional_count: 0,
     iep_count: 0,
     training_count: 0,
@@ -380,6 +385,7 @@ function deriveReportStatistics(records: any[]): ReportStatistics {
     if (row.report_type === 'cbcl') next.cbcl_count += 1
     if (row.report_type === 'cnbsr2016') next.cnbsr2016_count += 1
     if (row.report_type === 'fine_motor') next.fine_motor_count += 1
+    if (row.report_type === 'gmfm_88') next.gmfm_88_count += 1
     if (row.report_type === 'emotional') next.emotional_count += 1
     if (row.report_type === 'iep') next.iep_count += 1
     if (row.report_type === 'training') next.training_count += 1
@@ -400,6 +406,7 @@ function getReportTypeTagType(type: string) {
     cbcl: 'success',
     cnbsr2016: 'success',
     fine_motor: 'primary',
+    gmfm_88: 'danger',
     emotional: 'warning',
     iep: 'danger',
     training: 'primary',
@@ -538,6 +545,7 @@ function viewReport(report: any) {
     'cbcl',
     'cnbsr2016',
     'fine_motor',
+    'gmfm_88',
   ])
 
   if (assessmentReportTypes.has(report.report_type as AssessmentReportScaleType)) {

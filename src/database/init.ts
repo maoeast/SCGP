@@ -199,6 +199,42 @@ CREATE TABLE IF NOT EXISTS cnbsr2016_assess_detail (
   FOREIGN KEY (assess_id) REFERENCES cnbsr2016_assess(id)
 );
 
+-- GMFM-88评估主表
+CREATE TABLE IF NOT EXISTS gmfm_88_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,
+  total_score REAL NOT NULL,
+  raw_total_score INTEGER NOT NULL,
+  total_max_score INTEGER NOT NULL,
+  level TEXT NOT NULL,
+  level_code TEXT,
+  domain_results TEXT NOT NULL,
+  domain_feedback TEXT NOT NULL,
+  iep_targets TEXT NOT NULL DEFAULT '[]',
+  flags TEXT NOT NULL DEFAULT '[]',
+  overall_rule TEXT,
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+-- GMFM-88评估详情表
+CREATE TABLE IF NOT EXISTS gmfm_88_assess_detail (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  assess_id INTEGER NOT NULL,
+  question_id INTEGER NOT NULL,
+  item_code TEXT NOT NULL,
+  dimension TEXT NOT NULL,
+  score INTEGER NOT NULL CHECK(score IN (0, 1, 2, 3)),
+  raw_value TEXT NOT NULL,
+  is_nt INTEGER NOT NULL DEFAULT 0 CHECK(is_nt IN (0, 1)),
+  answer_time INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (assess_id) REFERENCES gmfm_88_assess(id)
+);
+
 -- 训练任务分类表
 CREATE TABLE IF NOT EXISTS task_category (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -360,7 +396,7 @@ CREATE INDEX IF NOT EXISTS idx_login_log_time ON login_log(login_time DESC);
 CREATE TABLE IF NOT EXISTS report_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
-  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016')),
+  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88')),
   assess_id INTEGER,
   plan_id INTEGER,
   training_record_id INTEGER,
@@ -536,6 +572,9 @@ CREATE INDEX IF NOT EXISTS idx_srs2_assess_created ON srs2_assess(created_at DES
 CREATE INDEX IF NOT EXISTS idx_cnbsr2016_assess_student ON cnbsr2016_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_cnbsr2016_assess_created ON cnbsr2016_assess(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_cnbsr2016_assess_detail_assess ON cnbsr2016_assess_detail(assess_id);
+CREATE INDEX IF NOT EXISTS idx_gmfm_88_assess_student ON gmfm_88_assess(student_id);
+CREATE INDEX IF NOT EXISTS idx_gmfm_88_assess_created ON gmfm_88_assess(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_gmfm_88_assess_detail_assess ON gmfm_88_assess_detail(assess_id);
 
 -- 系统配置表
 CREATE TABLE IF NOT EXISTS system_config (

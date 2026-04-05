@@ -251,17 +251,17 @@
           </el-button>
         </el-card>
 
-        <!-- GMFM占位卡片 -->
+        <!-- GMFM-88量表卡片 -->
         <el-card
-          class="scale-card placeholder-card"
+          class="scale-card"
           shadow="hover"
+          @click="selectScale('gmfm_88')"
         >
-          <div class="scale-card-badge">即将上线</div>
           <div class="scale-icon gmfm-icon">
             <el-icon size="60"><Operation /></el-icon>
           </div>
           <h3 class="scale-title">粗大运动功能评定量表</h3>
-          <p class="scale-subtitle">(GMFM)</p>
+          <p class="scale-subtitle">(GMFM-88)</p>
           <div class="scale-info">
             <ul>
               <li>适用年龄：5个月 - 16岁</li>
@@ -270,8 +270,8 @@
               <li>评估时间：约45-60分钟</li>
             </ul>
           </div>
-          <el-button disabled size="large" class="scale-btn coming-soon-btn">
-            即将上线
+          <el-button type="primary" size="large" class="scale-btn">
+            开始评估
           </el-button>
         </el-card>
 
@@ -331,7 +331,7 @@ import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding, Stamp, Av
 const router = useRouter()
 
 // 选择量表
-const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq' | 'srs2' | 'cbcl' | 'cnbsr2016' | 'fine_motor') => {
+const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq' | 'srs2' | 'cbcl' | 'cnbsr2016' | 'fine_motor' | 'gmfm_88') => {
   // 跳转到学生选择页面，传递量表类型参数
   router.push({
     path: '/assessment/select-student',

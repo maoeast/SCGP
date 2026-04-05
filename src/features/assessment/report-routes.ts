@@ -11,6 +11,7 @@ export type AssessmentReportScaleType =
   | 'cbcl'
   | 'cnbsr2016'
   | 'fine_motor'
+  | 'gmfm_88'
 
 export interface AssessmentReportRouteInput {
   scaleType: AssessmentReportScaleType
@@ -63,6 +64,8 @@ export function buildAssessmentReportRoute({
       return `/assessment/cnbsr2016/report/${normalizedAssessId}`
     case 'fine_motor':
       return `/assessment/fine_motor/report/${normalizedAssessId}`
+    case 'gmfm_88':
+      return `/assessment/gmfm_88/report/${normalizedAssessId}`
     default:
       return '/assessment'
   }
