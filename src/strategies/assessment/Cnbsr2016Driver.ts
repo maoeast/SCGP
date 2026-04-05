@@ -429,7 +429,7 @@ export class Cnbsr2016Driver extends BaseDriver {
       id: question.id,
       dimension: question.domain,
       dimensionName: `${question.domainName} · ${question.ageBand.label}`,
-      content: [question.title, `操作方法：${question.prompt}`, `通过要求：${question.passCriteria}`].join(' '),
+      content: question.title,
       options: CNBSR2016_PASS_FAIL_OPTIONS,
       metadata: {
         itemCode: question.itemCode,

@@ -24,98 +24,167 @@
     </template>
 
     <div class="question-content">
-      <!-- 题目内容 -->
-      <div class="question-title">
-        {{ question.content }}
-      </div>
+      <!-- CNBS-R2016 专用布局 -->
+      <template v-if="isCnbsr2016Layout">
+        <!-- 题目名称大标题 -->
+        <div class="cnbs-title">
+          {{ question.content }}
+        </div>
 
-      <!-- 语音播放按钮 -->
-      <div class="question-actions" v-if="enableSpeech">
+        <!-- 操作方法 / 通过要求 分两栏 -->
+        <div class="cnbs-info-grid">
+          <div class="cnbs-info-card cnbs-prompt-card">
+            <div class="cnbs-info-label">
+              <span class="cnbs-label-icon">📋</span>
+              <span>操作方法</span>
+            </div>
+            <div class="cnbs-info-text">{{ cnbsr2016Prompt }}</div>
+          </div>
+          <div class="cnbs-info-card cnbs-criteria-card">
+            <div class="cnbs-info-label">
+              <span class="cnbs-label-icon">✓</span>
+              <span>通过要求</span>
+            </div>
+            <div class="cnbs-info-text">{{ cnbsr2016PassCriteria }}</div>
+          </div>
+        </div>
+
+        <!-- 跳过提示 -->
+        <div v-if="isSkipped" class="skip-notice">
+          <el-icon :size="20" color="#909399"><CircleCheck /></el-icon>
+          <span class="skip-text">此题不适用，已自动跳过</span>
+        </div>
+
+        <!-- 通过/不通过 横排双列 -->
+        <div class="cnbs-answer-row" :class="{ 'is-skipped': isSkipped }">
+          <div
+            class="cnbs-option cnbs-option-pass"
+            :class="{ 'is-selected': selectedValue === 1 }"
+            @click="!isSkipped && handleCnbsAnswer(1)"
+          >
+            <span class="cnbs-option-icon">✓</span>
+            <span class="cnbs-option-label">通过</span>
+          </div>
+          <div
+            class="cnbs-option cnbs-option-fail"
+            :class="{ 'is-selected': selectedValue === 0 }"
+            @click="!isSkipped && handleCnbsAnswer(0)"
+          >
+            <span class="cnbs-option-icon">✗</span>
+            <span class="cnbs-option-label">不通过</span>
+          </div>
+        </div>
+      </template>
+
+      <!-- 通用布局（非 CNBS-R2016） -->
+      <template v-else>
+        <!-- 题目内容 -->
+        <div class="question-title">
+          {{ question.content }}
+        </div>
+
+        <!-- 语音播放按钮 -->
+        <div class="question-actions" v-if="enableSpeech">
+          <el-button
+            type="info"
+            :icon="Microphone"
+            @click="playAudio"
+            :loading="isPlaying"
+            plain
+          >
+            {{ isPlaying ? '播放中...' : '朗读题目' }}
+          </el-button>
+        </div>
+
+        <!-- 跳过提示 -->
+        <div v-if="isSkipped" class="skip-notice">
+          <el-icon :size="20" color="#909399"><CircleCheck /></el-icon>
+          <span class="skip-text">此题不适用，已自动跳过</span>
+        </div>
+
+        <!-- 说明内容输入框 -->
+        <div v-if="showDescriptionInput && !isSkipped" class="description-section">
+          <el-divider />
+          <div class="description-label">
+            <el-icon><InfoFilled /></el-icon>
+            <span>请填写具体说明内容：</span>
+          </div>
+          <el-input
+            v-model="descriptionText"
+            type="textarea"
+            :rows="3"
+            placeholder="请详细描述具体情况..."
+            maxlength="500"
+            show-word-limit
+            @blur="handleDescriptionBlur"
+            class="description-input"
+          />
+          <div class="description-hint">
+            提示：选择"无此表现"时无需填写说明
+          </div>
+        </div>
+
+        <!-- 选项列表 -->
+        <div class="answer-options" :class="{ 'is-skipped': isSkipped }">
+          <!-- 垂直排列 -->
+          <el-radio-group
+            v-if="optionsLayout === 'vertical'"
+            v-model="selectedValue"
+            @change="handleAnswerChange"
+            class="vertical-options"
+            :disabled="isSkipped"
+          >
+            <el-radio
+              v-for="option in question.options"
+              :key="option.value"
+              :value="option.value"
+              size="large"
+              class="option-item"
+            >
+              <span class="option-label">{{ option.label }}</span>
+              <span class="option-desc" v-if="option.description">
+                {{ option.description }}
+              </span>
+            </el-radio>
+          </el-radio-group>
+
+          <!-- 横向排列 -->
+          <el-radio-group
+            v-else
+            v-model="selectedValue"
+            @change="handleAnswerChange"
+            class="horizontal-options"
+            :disabled="isSkipped"
+          >
+            <el-radio-button
+              v-for="option in question.options"
+              :key="option.value"
+              :value="option.value"
+              class="answer-option"
+            >
+              <div class="option-content">
+                <span class="option-label">{{ option.label }}</span>
+                <span class="option-desc" v-if="option.description">
+                  {{ option.description }}
+                </span>
+              </div>
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+      </template>
+
+      <!-- CNBS-R2016: 底部朗读按钮 -->
+      <div v-if="isCnbsr2016Layout && enableSpeech" class="cnbs-bottom-row">
         <el-button
           type="info"
           :icon="Microphone"
           @click="playAudio"
           :loading="isPlaying"
           plain
+          size="default"
         >
           {{ isPlaying ? '播放中...' : '朗读题目' }}
         </el-button>
-      </div>
-
-      <!-- 跳过提示 (当题目被跳过时显示) -->
-      <div v-if="isSkipped" class="skip-notice">
-        <el-icon :size="20" color="#909399"><CircleCheck /></el-icon>
-        <span class="skip-text">此题不适用，已自动跳过</span>
-      </div>
-
-      <!-- 说明内容输入框 (仅当题目有 hasDescription 标记且选择了非0选项时显示) -->
-      <div v-if="showDescriptionInput && !isSkipped" class="description-section">
-        <el-divider />
-        <div class="description-label">
-          <el-icon><InfoFilled /></el-icon>
-          <span>请填写具体说明内容：</span>
-        </div>
-        <el-input
-          v-model="descriptionText"
-          type="textarea"
-          :rows="3"
-          placeholder="请详细描述具体情况..."
-          maxlength="500"
-          show-word-limit
-          @blur="handleDescriptionBlur"
-          class="description-input"
-        />
-        <div class="description-hint">
-          提示：选择"无此表现"时无需填写说明
-        </div>
-      </div>
-
-      <!-- 选项列表 -->
-      <div class="answer-options" :class="{ 'is-skipped': isSkipped }">
-        <!-- 使用 Radio Group（适用于单选） -->
-        <el-radio-group
-          v-if="optionsLayout === 'vertical'"
-          v-model="selectedValue"
-          @change="handleAnswerChange"
-          class="vertical-options"
-          :disabled="isSkipped"
-        >
-          <el-radio
-            v-for="option in question.options"
-            :key="option.value"
-            :value="option.value"
-            size="large"
-            class="option-item"
-          >
-            <span class="option-label">{{ option.label }}</span>
-            <span class="option-desc" v-if="option.description">
-              {{ option.description }}
-            </span>
-          </el-radio>
-        </el-radio-group>
-
-        <!-- 使用 Radio Button（适用于横向排列） -->
-        <el-radio-group
-          v-else
-          v-model="selectedValue"
-          @change="handleAnswerChange"
-          class="horizontal-options"
-          :disabled="isSkipped"
-        >
-          <el-radio-button
-            v-for="option in question.options"
-            :key="option.value"
-            :value="option.value"
-            class="answer-option"
-          >
-            <div class="option-content">
-              <span class="option-label">{{ option.label }}</span>
-              <span class="option-desc" v-if="option.description">
-                {{ option.description }}
-              </span>
-            </div>
-          </el-radio-button>
-        </el-radio-group>
       </div>
     </div>
   </el-card>
@@ -126,7 +195,6 @@ import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { Microphone, InfoFilled, CircleCheck } from '@element-plus/icons-vue'
 import type { ScaleQuestion } from '@/types/assessment'
 
-// 答案对象接口（支持说明内容）
 export interface AnswerWithDescription {
   value: number | string
   description?: string
@@ -140,7 +208,7 @@ interface Props {
   optionsLayout?: 'vertical' | 'horizontal'
   enableSpeech?: boolean
   showQuestionId?: boolean
-  isSkipped?: boolean  // 新增：是否跳过此题
+  isSkipped?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -154,15 +222,24 @@ const emit = defineEmits<{
   (e: 'answer', value: number | string | AnswerWithDescription): void
 }>()
 
-// 内部选中值
 const selectedValue = ref<number | string | null>(null)
-// 说明内容
 const descriptionText = ref('')
-
-// 语音播放状态
 const isPlaying = ref(false)
 let speechSynthesis: SpeechSynthesis | null = null
 let currentUtterance: SpeechSynthesisUtterance | null = null
+
+// CNBS-R2016 专用检测
+const isCnbsr2016Layout = computed(() => {
+  return Boolean(props.question.metadata?.prompt !== undefined || props.question.metadata?.pass_criteria !== undefined)
+})
+
+const cnbsr2016Prompt = computed(() => {
+  return props.question.metadata?.prompt || ''
+})
+
+const cnbsr2016PassCriteria = computed(() => {
+  return props.question.metadata?.pass_criteria || ''
+})
 
 // 年龄阶段标签
 const ageStageLabel = computed(() => {
@@ -173,27 +250,30 @@ const ageStageLabel = computed(() => {
 
 // 是否显示说明内容输入框
 const showDescriptionInput = computed(() => {
-  // 只有题目标记了 hasDescription 且选择了非0选项时才显示
   return props.question.metadata?.hasDescription === true &&
          selectedValue.value !== null &&
          selectedValue.value !== 0 &&
          selectedValue.value !== '0'
 })
 
+// CNBS-R2016 答案处理
+function handleCnbsAnswer(value: 0 | 1) {
+  selectedValue.value = value
+  emit('answer', value)
+}
+
 // 监听外部答案变化
 watch(() => props.answer, (newVal) => {
   if (newVal && typeof newVal === 'object' && 'value' in newVal) {
-    // 如果答案是对象格式，提取 value 和 description
     selectedValue.value = newVal.value
     descriptionText.value = newVal.description || ''
   } else {
-    // 简单值格式
     selectedValue.value = newVal ?? null
     descriptionText.value = ''
   }
 }, { immediate: true })
 
-// 监听跳过状态变化 - 如果跳过时没有答案，自动设置答案为0
+// 监听跳过状态变化
 watch(() => props.isSkipped, (isSkipped) => {
   if (isSkipped && selectedValue.value === null) {
     selectedValue.value = 0
@@ -203,9 +283,7 @@ watch(() => props.isSkipped, (isSkipped) => {
 
 // 处理答案变化
 function handleAnswerChange(value: number | string) {
-  // 如果题目需要说明内容，发送对象格式
   if (props.question.metadata?.hasDescription) {
-    // 如果选择的是0（无此表现），清空说明内容
     if (value === 0 || value === '0') {
       descriptionText.value = ''
     }
@@ -214,14 +292,12 @@ function handleAnswerChange(value: number | string) {
       description: descriptionText.value
     })
   } else {
-    // 普通题目，直接发送值
     emit('answer', value)
   }
 }
 
-// 处理说明内容失焦（自动保存）
+// 处理说明内容失焦
 function handleDescriptionBlur() {
-  // 只有当有选项值时才发送
   if (selectedValue.value !== null && props.question.metadata?.hasDescription) {
     emit('answer', {
       value: selectedValue.value,
@@ -243,7 +319,16 @@ function playAudio() {
   }
 
   speechSynthesis = window.speechSynthesis
-  currentUtterance = new SpeechSynthesisUtterance(props.question.content)
+  // CNBS-R2016: 朗读标题 + 操作方法 + 通过要求
+  let textToSpeak = props.question.content
+  if (isCnbsr2016Layout.value) {
+    const parts = [props.question.content]
+    if (cnbsr2016Prompt.value) parts.push(`操作方法：${cnbsr2016Prompt.value}`)
+    if (cnbsr2016PassCriteria.value) parts.push(`通过要求：${cnbsr2016PassCriteria.value}`)
+    textToSpeak = parts.join('。')
+  }
+
+  currentUtterance = new SpeechSynthesisUtterance(textToSpeak)
   currentUtterance.lang = 'zh-CN'
   currentUtterance.rate = 0.9
 
@@ -269,7 +354,6 @@ function stopAudio() {
   isPlaying.value = false
 }
 
-// 组件销毁时停止播放
 onBeforeUnmount(() => {
   stopAudio()
 })
@@ -307,6 +391,167 @@ onBeforeUnmount(() => {
   padding: 10px 0;
 }
 
+/* ====== CNBS-R2016 专用样式 ====== */
+
+.cnbs-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #303133;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
+  border-radius: 12px;
+  border-left: 5px solid #409eff;
+  line-height: 1.5;
+}
+
+.cnbs-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.cnbs-info-card {
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #ebeef5;
+}
+
+.cnbs-prompt-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #86efac;
+}
+
+.cnbs-criteria-card {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border-color: #fdba74;
+}
+
+.cnbs-info-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.cnbs-prompt-card .cnbs-info-label {
+  color: #16a34a;
+}
+
+.cnbs-criteria-card .cnbs-info-label {
+  color: #ea580c;
+}
+
+.cnbs-label-icon {
+  font-size: 14px;
+}
+
+.cnbs-info-text {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.7;
+}
+
+.cnbs-answer-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.cnbs-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  border-radius: 14px;
+  border: 3px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.cnbs-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.cnbs-option-pass {
+  border-color: #86efac;
+}
+
+.cnbs-option-pass:hover {
+  background: #f0fdf4;
+  border-color: #4ade80;
+}
+
+.cnbs-option-pass.is-selected {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border-color: #22c55e;
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+}
+
+.cnbs-option-fail {
+  border-color: #fca5a5;
+}
+
+.cnbs-option-fail:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+}
+
+.cnbs-option-fail.is-selected {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-color: #ef4444;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+}
+
+.cnbs-option-icon {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.cnbs-option-pass .cnbs-option-icon {
+  color: #22c55e;
+}
+
+.cnbs-option-fail .cnbs-option-icon {
+  color: #ef4444;
+}
+
+.cnbs-option-label {
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.cnbs-option.is-selected .cnbs-option-label {
+  font-weight: 700;
+}
+
+.cnbs-answer-row.is-skipped {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.cnbs-bottom-row {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #ebeef5;
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* ====== 通用布局样式 ====== */
+
 .question-title {
   font-size: 18px;
   line-height: 1.8;
@@ -323,7 +568,6 @@ onBeforeUnmount(() => {
   margin-bottom: 20px;
 }
 
-/* 垂直排列选项 - 优化版 */
 .vertical-options {
   display: flex;
   flex-direction: column;
@@ -386,7 +630,6 @@ onBeforeUnmount(() => {
   line-height: 1.6;
 }
 
-/* 横向排列选项 - 优化版 */
 .horizontal-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -429,7 +672,6 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
-/* 选项文字 */
 .option-label {
   font-size: 15px;
   font-weight: 500;
@@ -442,7 +684,6 @@ onBeforeUnmount(() => {
   margin-top: 4px;
 }
 
-/* 跳过提示样式 */
 .skip-notice {
   display: flex;
   align-items: center;
@@ -461,13 +702,11 @@ onBeforeUnmount(() => {
   font-weight: 500;
 }
 
-/* 跳过时选项区域样式 */
 .answer-options.is-skipped {
   opacity: 0.5;
   pointer-events: none;
 }
 
-/* 说明内容输入框样式 */
 .description-section {
   margin: 20px 0;
   padding: 16px 20px;
@@ -511,6 +750,15 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
+  .cnbs-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cnbs-answer-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
   .horizontal-options {
     grid-template-columns: 1fr;
   }
