@@ -83,18 +83,32 @@ Results:
 - `verify-cnbsr2016-phase20-runtime.mjs`: passed
 - direct Vite production build with Node 24: passed
 
+## Manual Live UAT (2026-04-04)
+
+After scripted verification passed, the CNBS-R2016 public entry was opened by explicit user request:
+
+- `src/views/assessment/AssessmentSelect.vue` — CNBS-R2016 card enabled
+- `src/views/assessment/SelectStudent.vue` — CNBS-R2016 in valid scales
+
+A real manual CNBS-R2016 assessment was created through the live UI, and the user confirmed:
+
+- Three entry points (completion dialog / report center / student-detail) render identical output
+- CA / total MA / total DQ consistent across all three views
+- Five-domain MA / DQ / conclusions consistent
+- Age-bracket commentary and domain feedback consistent
+- Manual-failed IEP targets correctly separated from auto-filled failed items
+
+**Manual live UAT result: PASSED**
+
 ## Residual Risk
 
-No local CNBS-R2016 runtime record existed in `~/.config/scgp/database.sqlite` during this session, so a real-record click-through UAT on the live UI could not be executed from existing data.
-
-This is not a code-path failure, but it remains a release gate for any future decision to open CNBS-R2016 as a formal public assessment entry.
+- The 261-item bank was digitized from PDF extraction; before clinical delivery, targeted human spot-checks on sampled rows are still recommended, especially for long prompt/pass-criteria entries
+- `npm run build:web` remains blocked by `cross-env: Permission denied`; direct Vite build with Node 24 works as a workaround
 
 ## Release Gate
 
-Do not switch CNBS-R2016 from placeholder state to formal public entry in this phase.
+**PASSED** — Phase 20 is now complete.
 
-Before any opening decision:
-
-1. create one real CNBS-R2016 assessment record in the runtime app
-2. click through all three report entry points against that same real `assessId`
-3. confirm the live rendered page matches the Phase 20 scripted snapshot rules
+The CNBS-R2016 public entry is open and verified through:
+1. Scripted runtime verification
+2. Manual live UAT with real assessment record

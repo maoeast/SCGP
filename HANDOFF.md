@@ -21,10 +21,22 @@ Environment note:
 - for Node-based commands in this repo, prefer `/home/DONG/.config/nvm/versions/node/v24.14.0/bin/node`
 - do not fall back to the system default Node 18 unless the user explicitly asks for it
 
-## Current Active Work
+## Current Status
+
+**v1.7 CNBS-R2016 Assessment Integration milestone is COMPLETE.**
+
+All four phases (17-20) have landed and passed verification:
+- Phase 17: Question bank digitization + feedback-asset standardization
+- Phase 18: `Cnbsr2016Driver` + basal/ceiling + MA/DQ scoring
+- Phase 19: Persistence + unified entry + report integration
+- Phase 20: Runtime QA + standard verification + **manual live UAT passed (2026-04-04)**
+
+CNBS-R2016 public entry is now **OPEN** and verified.
+
+## Next Session
 
 - active handoff source: `.continue-here.md`
-- active work scope: `v1.7 已完成 CNBS-R2016 Phase 20 代码级 runtime QA 与标准核验；本轮已按用户要求打开 CNBS-R2016 公共评估入口，当前下一步是用户在运行时应用里手工完成一条真实记录的三入口 live click-through UAT，并补 Phase 20 人工运行时结论`
+- no active blocking work; ready for v1.8+ planning or other platform work
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`
