@@ -120,6 +120,9 @@ export interface CareSceneResourceMeta {
   difficultyLevel: 1 | 2 | 3
   careType?: EmotionalCareType
   receiverEmotion?: EmotionalBaseEmotion
+  receiverName?: string
+  emotionChips?: string[]
+  comfortTip?: string
   emotionColorToken?: EmotionalColorToken
   emotionColorHex?: string
   emotionColorLabel?: string

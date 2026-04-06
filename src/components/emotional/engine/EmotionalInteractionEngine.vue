@@ -10,41 +10,67 @@
           <span class="status-label">场景</span>
           <strong>{{ resourceLabel }}</strong>
         </div>
-        <div class="status-item">
+        <div class="status-item status-item--progress">
           <span class="status-label">进度</span>
-          <strong>{{ displayStepIndex }} / {{ totalDisplaySteps }}</strong>
+          <div class="step-dots" :aria-label="`当前第 ${displayStepIndex} 步，共 ${totalDisplaySteps} 步`">
+            <div
+              v-for="item in progressItems"
+              :key="item.index"
+              class="step-dot"
+              :class="{
+                'step-dot--done': item.isDone,
+                'step-dot--current': item.isCurrent,
+              }"
+            >
+              <span v-if="item.isDone">✓</span>
+              <span v-else>{{ item.index + 1 }}</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <el-progress
-        :percentage="progressPercentage"
-        :stroke-width="12"
-        :show-text="false"
-        class="stage-progress"
-      />
-
       <div class="workspace-shell">
-        <Transition name="stage-fade" mode="out-in">
-          <el-card :key="stepKey" class="stage-card" shadow="never">
-            <component
-              :is="currentRendererComponent"
-              v-bind="currentRendererProps"
-              @advance="handleAdvance"
-              @select="handleSelect"
-              @continue="handleContinue"
-            />
-          </el-card>
-        </Transition>
-
-        <el-alert
-          v-if="feedbackMessage"
-          :title="feedbackMessage.title"
-          :description="feedbackMessage.description"
-          :type="feedbackMessage.type"
-          :closable="false"
-          show-icon
-          class="feedback-panel"
+        <SceneSupportPanel
+          v-if="sceneMetadata"
+          :metadata="sceneMetadata"
+          :resource-label="resourceLabel"
+          :active-perspective="activePerspective"
         />
+
+        <div class="workspace-main">
+          <CareStepGuidePanel
+            v-if="isCareScene && sceneMetadata"
+            :receiver-name="sceneMetadata.receiverName"
+            :emotion-chips="sceneMetadata.emotionChips"
+            :comfort-tip="sceneMetadata.comfortTip"
+            :current-step="careGuideStep"
+            :selected-emotion-chip="selectedEmotionChip"
+            :chip-enabled="currentRendererKey === 'care_utterance'"
+            @select-emotion-chip="handleEmotionChipSelect"
+          />
+
+          <Transition name="stage-fade" mode="out-in">
+            <el-card :key="stepKey" class="stage-card" shadow="never">
+              <component
+                :is="currentRendererComponent"
+                v-bind="currentRendererProps"
+                @advance="handleAdvance"
+                @select="handleSelect"
+                @continue="handleContinue"
+              />
+            </el-card>
+          </Transition>
+
+          <el-alert
+            v-if="feedbackMessage"
+            :title="feedbackMessage.title"
+            :description="feedbackMessage.description"
+            :type="feedbackMessage.type"
+            :closable="false"
+            show-icon
+            class="feedback-panel"
+          />
+        </div>
       </div>
     </template>
 
@@ -54,6 +80,8 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import CareStepGuidePanel from '@/components/emotional/engine/CareStepGuidePanel.vue'
+import SceneSupportPanel from '@/components/emotional/engine/SceneSupportPanel.vue'
 import { useEmotionalSession } from '@/composables/useEmotionalSession'
 import { buildFeedbackMessage } from '@/components/emotional/engine/runtime/feedback'
 import {
@@ -92,6 +120,7 @@ const session = useEmotionalSession()
 
 const feedbackMessage = ref<EmotionalFeedbackMessage | null>(null)
 const selectionState = ref<EmotionalRendererSelectionState | null>(null)
+const selectedEmotionChip = ref('')
 const activeConfigSignature = ref('')
 const autoAdvanceTimer = ref<number | null>(null)
 const isTransitioning = ref(false)
@@ -102,16 +131,41 @@ const currentRendererKey = computed(() => currentStep.value ? getRendererKey(cur
 const currentRendererComponent = computed(() => currentRendererKey.value ? emotionalRendererMap[currentRendererKey.value] : null)
 const displayStepIndex = computed(() => session.currentIndex.value + 1)
 const totalDisplaySteps = computed(() => props.sessionConfig?.steps.length || 0)
-const progressPercentage = computed(() => {
-  if (!props.sessionConfig?.steps.length) {
-    return 0
+const isCareScene = computed(() => props.sessionConfig?.subModule === 'care_scene')
+const sceneMetadata = computed(() => {
+  const introStep = props.sessionConfig?.steps.find((step) => step.phase === 'scene_intro')
+  return introStep?.metadata as SceneIntroStepMetadata | null
+})
+const activePerspective = computed<'sender' | 'receiver'>(() => {
+  if (currentStep.value?.perspective === 'receiver' || currentRendererKey.value === 'receiver_preference') {
+    return 'receiver'
   }
 
-  return Math.round((displayStepIndex.value / props.sessionConfig.steps.length) * 100)
+  return 'sender'
+})
+const progressItems = computed(() => Array.from({ length: totalDisplaySteps.value }, (_, index) => ({
+  index,
+  isDone: index < session.currentIndex.value,
+  isCurrent: index === session.currentIndex.value,
+})))
+const careGuideStep = computed<1 | 2 | 3>(() => {
+  if (!isCareScene.value) {
+    return 1
+  }
+
+  if (currentRendererKey.value === 'scene_intro') {
+    return 1
+  }
+
+  if (currentRendererKey.value === 'care_utterance' && !selectedEmotionChip.value) {
+    return 2
+  }
+
+  return 3
 })
 const stepKey = computed(() => {
   const selectionKey = selectionState.value ? `${selectionState.value.kind}:${selectionState.value.canAdvance}` : 'none'
-  return `${currentStep.value?.key || 'empty'}:${currentHintLevel.value}:${selectionKey}`
+  return `${currentStep.value?.key || 'empty'}:${currentHintLevel.value}:${selectionKey}:${selectedEmotionChip.value || 'no-chip'}`
 })
 
 const currentRendererProps = computed(() => {
@@ -132,6 +186,9 @@ const currentRendererProps = computed(() => {
       step: currentStep.value,
       hintLevel: currentHintLevel.value,
       selectionState: selectionState.value?.kind === 'care_utterance' ? selectionState.value : null,
+      receiverName: sceneMetadata.value?.receiverName,
+      selectedEmotionChip: selectedEmotionChip.value,
+      requiresEmotionChip: isCareScene.value,
     }
   }
 
@@ -140,6 +197,8 @@ const currentRendererProps = computed(() => {
       step: currentStep.value,
       hintLevel: currentHintLevel.value,
       selectionState: selectionState.value?.kind === 'receiver_preference' ? selectionState.value : null,
+      receiverName: sceneMetadata.value?.receiverName,
+      selectedEmotionChip: selectedEmotionChip.value,
     }
   }
 
@@ -163,6 +222,7 @@ watch(() => props.sessionConfig, (config) => {
   clearAutoAdvance()
   selectionState.value = null
   feedbackMessage.value = null
+  selectedEmotionChip.value = ''
   isTransitioning.value = false
   session.startSession(config)
 }, { immediate: true })
@@ -183,6 +243,10 @@ function clearTransientState() {
   selectionState.value = null
   feedbackMessage.value = null
   isTransitioning.value = false
+}
+
+function handleEmotionChipSelect(value: string) {
+  selectedEmotionChip.value = value
 }
 
 function buildSelectionState(
@@ -324,7 +388,7 @@ defineExpose({
   gap: 16px;
   padding: 14px 18px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #fff8e1 0%, #eef7ff 100%);
+  background: linear-gradient(135deg, #fff7d9 0%, #ffe8c5 100%);
 }
 
 .status-item {
@@ -334,16 +398,58 @@ defineExpose({
   min-width: 120px;
 }
 
+.status-item--progress {
+  margin-left: auto;
+  min-width: 220px;
+}
+
 .status-label {
   font-size: 12px;
   color: #909399;
 }
 
-.stage-progress {
-  margin-bottom: 8px;
+.step-dots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.step-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 2px solid #d9d6d2;
+  background: #f3efe9;
+  color: #9b938b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.step-dot--current {
+  border-color: #f1b562;
+  background: linear-gradient(135deg, #ffe2ae 0%, #ffd08d 100%);
+  color: #7a4b16;
+  box-shadow: 0 0 0 4px rgba(241, 181, 98, 0.16);
+}
+
+.step-dot--done {
+  border-color: #67c23a;
+  background: #67c23a;
+  color: #fff;
 }
 
 .workspace-shell {
+  display: grid;
+  grid-template-columns: minmax(520px, 1.2fr) minmax(360px, 0.95fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.workspace-main {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -353,6 +459,7 @@ defineExpose({
   border-radius: 28px;
   border: 1px solid #ebeef5;
   min-height: 560px;
+  background: #fff;
 }
 
 .feedback-panel {
@@ -368,5 +475,18 @@ defineExpose({
 .stage-fade-leave-to {
   opacity: 0;
   transform: translateY(10px);
+}
+
+@media (max-width: 1180px) {
+  .workspace-shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  .status-item--progress {
+    margin-left: 0;
+    min-width: 0;
+  }
 }
 </style>

@@ -103,6 +103,71 @@ const getResourceRoot = () => {
   return path.join(userDataPath, 'resources')
 }
 
+const GEMINI_IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-3.1-flash-image-preview'
+
+function getGeminiApiKey() {
+  return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || ''
+}
+
+function sanitizeFileSegment(value, fallback = 'scene') {
+  const normalized = String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return normalized || fallback
+}
+
+function mimeTypeToExtension(mimeType = 'image/png') {
+  if (mimeType.includes('jpeg') || mimeType.includes('jpg')) return 'jpg'
+  if (mimeType.includes('webp')) return 'webp'
+  return 'png'
+}
+
+async function generateGeminiSceneImage(prompt, model) {
+  const apiKey = getGeminiApiKey()
+  if (!apiKey) {
+    throw new Error('缺少 GEMINI_API_KEY 或 GOOGLE_API_KEY，无法生成场景图片')
+  }
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig: {
+        responseModalities: ['TEXT', 'IMAGE'],
+      },
+    }),
+  })
+
+  const payload = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    const errorMessage = payload?.error?.message || `Gemini API 请求失败 (${response.status})`
+    throw new Error(errorMessage)
+  }
+
+  const candidates = Array.isArray(payload?.candidates) ? payload.candidates : []
+  for (const candidate of candidates) {
+    const parts = Array.isArray(candidate?.content?.parts) ? candidate.content.parts : []
+    const inlinePart = parts.find((part) => part?.inlineData?.data)
+    if (inlinePart?.inlineData?.data) {
+      return {
+        base64: inlinePart.inlineData.data,
+        mimeType: inlinePart.inlineData.mimeType || 'image/png',
+      }
+    }
+  }
+
+  throw new Error('Gemini 没有返回可保存的图片数据')
+}
+
 
 // 初始化资源根目录
 async function initResourceDir() {
@@ -566,6 +631,55 @@ ipcMain.handle('LIST_ASSETS', async (event, subDir = '') => {
   } catch (error) {
     if (isDev) console.error('[IPC LIST_ASSETS] 读取失败:', error)
     return { success: false, error: error.message, items: [] }
+  }
+})
+
+ipcMain.handle('ai:generate-scene-images', async (_event, payload) => {
+  try {
+    const resourceType = payload?.resourceType === 'care_scene' ? 'care_scene' : 'emotion_scene'
+    const sceneCode = sanitizeFileSegment(payload?.sceneCode, resourceType)
+    const prompts = Array.isArray(payload?.prompts)
+      ? payload.prompts.filter((item) => typeof item === 'string' && item.trim().length > 0).slice(0, 3)
+      : []
+
+    if (prompts.length === 0) {
+      return { success: false, error: '缺少可用于生成图片的场景提示词' }
+    }
+
+    const resourceRoot = getResourceRoot()
+    const targetDir = path.join(resourceRoot, 'uploaded', 'ai-scenes', resourceType, sceneCode)
+    await fs.mkdir(targetDir, { recursive: true })
+
+    const candidates = []
+    for (let index = 0; index < prompts.length; index += 1) {
+      const prompt = prompts[index]
+      const generated = await generateGeminiSceneImage(prompt, GEMINI_IMAGE_MODEL)
+      const ext = mimeTypeToExtension(generated.mimeType)
+      const fileName = `${Date.now()}-${sceneCode}-${index + 1}-${crypto.randomUUID().slice(0, 8)}.${ext}`
+      const relativePath = path.posix.join('uploaded', 'ai-scenes', resourceType, sceneCode, fileName)
+      const absolutePath = path.join(resourceRoot, relativePath)
+
+      await fs.writeFile(absolutePath, Buffer.from(generated.base64, 'base64'))
+
+      candidates.push({
+        prompt,
+        relativePath,
+        url: `resource:///${relativePath}`,
+        mimeType: generated.mimeType,
+        model: GEMINI_IMAGE_MODEL,
+      })
+    }
+
+    return {
+      success: true,
+      candidates,
+    }
+  } catch (error) {
+    if (isDev) console.error('[IPC ai:generate-scene-images] 失败:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    }
   }
 })
 

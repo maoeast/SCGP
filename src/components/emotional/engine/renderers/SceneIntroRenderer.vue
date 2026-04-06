@@ -1,39 +1,23 @@
 <template>
   <div class="intro-stage">
-    <PerspectiveSwitchView
-      v-if="metadata.variant === 'care_scene' && metadata.speakerPerspectiveText"
-      active-side="sender"
-      title="先看清现在是谁在说，谁在听"
-      :description="metadata.speakerPerspectiveText"
-    />
+    <el-tag effect="light" class="intro-tag">{{ resourceLabel }}</el-tag>
+    <h2 class="intro-title">先看左侧大图，再开始</h2>
+    <p class="intro-description">{{ defaultDescription }}</p>
 
-    <div class="scene-hero">
-      <div class="scene-visual" :style="{ background: activeSceneGradient }">
-        <span class="scene-emoji">{{ sceneEmoji }}</span>
+    <div class="intro-tips">
+      <div class="intro-tip">
+        <span class="intro-tip__badge">1</span>
+        <span>先安静观察场景里发生了什么。</span>
       </div>
-      <div class="scene-copy">
-        <el-tag effect="light" class="scene-tag">{{ resourceLabel }}</el-tag>
-        <h2 class="scene-title">{{ metadata.title }}</h2>
-        <p class="scene-description">{{ metadata.description || defaultDescription }}</p>
+      <div class="intro-tip">
+        <span class="intro-tip__badge">2</span>
+        <span>答题时可以一直看左侧图片和线索，不用着急记住全部内容。</span>
+      </div>
+      <div class="intro-tip">
+        <span class="intro-tip__badge">3</span>
+        <span>{{ metadata.variant === 'care_scene' ? '想一想怎样说会更让人舒服。' : '想一想对方现在是什么心情、为什么会这样。' }}</span>
       </div>
     </div>
-
-    <el-card v-if="metadata.clues?.length" class="clue-card" shadow="never">
-      <template #header>
-        <span>场景线索</span>
-      </template>
-      <div class="clue-list">
-        <el-tag
-          v-for="clue in metadata.clues"
-          :key="clue"
-          effect="plain"
-          size="large"
-          class="clue-tag"
-        >
-          {{ clue }}
-        </el-tag>
-      </div>
-    </el-card>
 
     <div class="action-bar">
       <el-button type="primary" size="large" @click="$emit('advance')">
@@ -45,7 +29,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import PerspectiveSwitchView from '@/components/emotional/PerspectiveSwitchView.vue'
 import type { SceneIntroStepMetadata } from '@/features/emotional/engine/types'
 
 const props = defineProps<{
@@ -58,14 +41,9 @@ defineEmits<{
   (e: 'advance'): void
 }>()
 
-const sceneEmoji = computed(() => props.metadata.sceneVisual.coverImage || '🎭')
-const activeSceneGradient = computed(() => {
-  const hex = props.metadata.sceneVisual.emotionColorHex || '#67C23A'
-  return `linear-gradient(135deg, ${hex}22 0%, ${hex}55 100%)`
-})
 const defaultDescription = computed(() => props.metadata.variant === 'care_scene'
-  ? '请先观察情境，再决定怎样表达关心更合适。'
-  : '请先观察场景，再进入情绪判断。')
+  ? '请先观察左侧情境图，再进入表达关心练习。'
+  : '请先观察左侧场景图，再进入情绪判断。')
 </script>
 
 <style scoped>
@@ -73,78 +51,60 @@ const defaultDescription = computed(() => props.metadata.variant === 'care_scene
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding: 8px 4px;
 }
 
-.scene-hero {
-  display: grid;
-  grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
-  gap: 24px;
-  align-items: center;
-}
-
-.scene-visual {
-  min-height: 220px;
-  border-radius: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.scene-emoji {
-  font-size: 84px;
-}
-
-.scene-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.scene-title {
-  margin: 0;
-  font-size: 32px;
-  color: #303133;
-}
-
-.scene-description {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.8;
-  color: #606266;
-}
-
-.scene-tag {
+.intro-tag {
   width: fit-content;
 }
 
-.clue-card {
-  border-radius: 22px;
-  background: #fafafa;
+.intro-title {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.35;
+  color: #303133;
 }
 
-.clue-list {
+.intro-description {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.9;
+  color: #606266;
+}
+
+.intro-tips {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.clue-tag {
+.intro-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #fff8e1 0%, #eef7ff 100%);
+  color: #303133;
+  line-height: 1.8;
+}
+
+.intro-tip__badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: #409eff;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 15px;
-  padding: 8px 14px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .action-bar {
   display: flex;
   justify-content: flex-end;
-}
-
-@media (max-width: 960px) {
-  .scene-hero {
-    grid-template-columns: 1fr;
-  }
-
-  .scene-visual {
-    min-height: 180px;
-  }
 }
 </style>

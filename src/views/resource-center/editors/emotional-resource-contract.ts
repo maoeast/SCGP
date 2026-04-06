@@ -13,6 +13,9 @@ import type {
   EmotionSceneSolution,
 } from '@/types/emotional'
 import {
+  enrichCareSceneGeneratedFields,
+} from '@/features/emotional/care-scene-generated-fields'
+import {
   EMOTION_COLOR_PRESETS as SHARED_EMOTION_COLOR_PRESETS,
   EMOTIONAL_BASE_EMOTIONS,
   getEmotionCatalogEntry,
@@ -385,13 +388,16 @@ export function normalizeCareSceneEditorModel(
       )
     : []
 
-  return {
+  return enrichCareSceneGeneratedFields({
     sceneCode: normalizeString(model?.sceneCode, `care_scene_${Date.now()}`),
     title: normalizeString(model?.title, resourceName || '新的表达关心场景'),
     imageUrl: normalizeString(model?.imageUrl),
     difficultyLevel: normalizeDifficultyLevel(model?.difficultyLevel),
     careType: normalizeCareType(model?.careType, 'empathy'),
     receiverEmotion,
+    receiverName: normalizeOptionalString(model?.receiverName),
+    emotionChips: normalizeStringArray(model?.emotionChips, []),
+    comfortTip: normalizeOptionalString(model?.comfortTip),
     speakerPerspectiveText: normalizeString(model?.speakerPerspectiveText, '请填写表达者视角文本'),
     receiverPerspectiveText: normalizeString(model?.receiverPerspectiveText, '请填写接收者视角文本'),
     utterances,
@@ -405,7 +411,7 @@ export function normalizeCareSceneEditorModel(
       ? model.tags.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
       : [],
     ...normalizeEmotionColorPayload(receiverEmotion),
-  }
+  })
 }
 
 export function validateCareSceneEditorModel(model: CareSceneResourceMeta): string[] {

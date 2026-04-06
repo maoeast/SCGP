@@ -1,4 +1,7 @@
 import type { CareSceneResourceMeta, EmotionalCareType } from '@/types/emotional'
+import {
+  enrichCareSceneGeneratedFields,
+} from '@/features/emotional/care-scene-generated-fields'
 import type {
   EmotionalCompileContext,
   EmotionalCompiledSessionConfig,
@@ -8,8 +11,9 @@ export function compileCareScene(
   meta: CareSceneResourceMeta,
   context: EmotionalCompileContext,
 ): EmotionalCompiledSessionConfig {
-  const preferredUtteranceIds = new Set(meta.preferredUtteranceIds)
-  const adviceUtteranceIds = meta.utterances
+  const enrichedMeta = enrichCareSceneGeneratedFields(meta)
+  const preferredUtteranceIds = new Set(enrichedMeta.preferredUtteranceIds)
+  const adviceUtteranceIds = enrichedMeta.utterances
     .filter((item) => item.type === 'advice')
     .map((item) => item.id)
 
@@ -19,19 +23,22 @@ export function compileCareScene(
       phase: 'scene_intro',
       stepType: 'care_utterance',
       interactive: false,
-      title: meta.title,
+      title: enrichedMeta.title,
       metadata: {
         variant: 'care_scene',
-        title: meta.title,
+        title: enrichedMeta.title,
         description: context.resourceDescription,
-        speakerPerspectiveText: meta.speakerPerspectiveText,
-        receiverPerspectiveText: meta.receiverPerspectiveText,
+        receiverName: enrichedMeta.receiverName,
+        emotionChips: enrichedMeta.emotionChips,
+        comfortTip: enrichedMeta.comfortTip,
+        speakerPerspectiveText: enrichedMeta.speakerPerspectiveText,
+        receiverPerspectiveText: enrichedMeta.receiverPerspectiveText,
         sceneVisual: {
-          imageUrl: meta.imageUrl,
+          imageUrl: enrichedMeta.imageUrl,
           coverImage: context.coverImage,
-          emotionColorHex: meta.emotionColorHex,
-          emotionColorToken: meta.emotionColorToken,
-          emotionColorLabel: meta.emotionColorLabel,
+          emotionColorHex: enrichedMeta.emotionColorHex,
+          emotionColorToken: enrichedMeta.emotionColorToken,
+          emotionColorLabel: enrichedMeta.emotionColorLabel,
         },
       },
     },
@@ -39,12 +46,15 @@ export function compileCareScene(
       key: 'care_utterance_choice',
       phase: 'solution',
       stepType: 'care_utterance',
-      promptText: meta.speakerPerspectiveText,
+      promptText: enrichedMeta.speakerPerspectiveText,
       perspective: 'sender',
       metadata: {
-        speakerPerspectiveText: meta.speakerPerspectiveText,
+        speakerPerspectiveText: enrichedMeta.speakerPerspectiveText,
+        receiverName: enrichedMeta.receiverName,
+        emotionChips: enrichedMeta.emotionChips,
+        comfortTip: enrichedMeta.comfortTip,
       },
-      options: meta.utterances.map((utterance) => ({
+      options: enrichedMeta.utterances.map((utterance) => ({
         value: utterance.id,
         label: utterance.text,
         isCorrect: preferredUtteranceIds.has(utterance.id),
@@ -56,19 +66,21 @@ export function compileCareScene(
           receiverReactionEmoji: utterance.receiverReactionEmoji,
         },
       })),
-      correctValues: meta.preferredUtteranceIds,
+      correctValues: enrichedMeta.preferredUtteranceIds,
       acceptableValues: adviceUtteranceIds,
     },
     {
       key: 'receiver_preference_choice',
       phase: 'perspective_taking',
       stepType: 'receiver_preference',
-      promptText: meta.receiverPerspectiveText,
+      promptText: enrichedMeta.receiverPerspectiveText,
       perspective: 'receiver',
       metadata: {
-        receiverPerspectiveText: meta.receiverPerspectiveText,
+        receiverPerspectiveText: enrichedMeta.receiverPerspectiveText,
+        receiverName: enrichedMeta.receiverName,
+        comfortTip: enrichedMeta.comfortTip,
       },
-      options: meta.receiverOptions.map((option) => ({
+      options: enrichedMeta.receiverOptions.map((option) => ({
         value: option.id,
         label: option.text,
         isCorrect: option.isComforting,
@@ -78,7 +90,7 @@ export function compileCareScene(
           isComforting: option.isComforting,
         },
       })),
-      correctValues: meta.receiverOptions.filter((option) => option.isComforting).map((option) => option.id),
+      correctValues: enrichedMeta.receiverOptions.filter((option) => option.isComforting).map((option) => option.id),
     },
   ]
 

@@ -1,10 +1,9 @@
 <template>
   <div class="care-stage">
-    <PerspectiveSwitchView
-      active-side="receiver"
-      title="现在换到对方来听"
-      :description="step.promptText || step.metadata.receiverPerspectiveText"
-    />
+    <div class="care-stage__header">
+      <h2 class="care-stage__title">现在换到对方来听</h2>
+      <p class="care-stage__description">{{ stageDescription }}</p>
+    </div>
 
     <div class="option-list">
       <CareOptionCard
@@ -47,7 +46,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import CareOptionCard from '@/components/emotional/CareOptionCard.vue'
-import PerspectiveSwitchView from '@/components/emotional/PerspectiveSwitchView.vue'
 import { getOptionVisualState, getVisibleOptionsByHint } from '@/components/emotional/engine/runtime/visibility'
 import type {
   ReceiverPreferenceOptionMetadata,
@@ -59,6 +57,8 @@ const props = defineProps<{
   step: ReceiverPreferenceStep
   hintLevel: 0 | 1 | 2 | 3
   selectionState?: ReceiverPreferenceSelectionState | null
+  receiverName?: string
+  selectedEmotionChip?: string
 }>()
 
 const emit = defineEmits<{
@@ -85,6 +85,14 @@ const receiverCards = computed(() => getVisibleOptionsByHint(props.step.options 
 }))
 
 const selectedMetadata = computed(() => props.selectionState?.metadata || null)
+const receiverDisplayName = computed(() => props.receiverName || props.step.metadata.receiverName || '这位小朋友')
+const stageDescription = computed(() => {
+  if (props.selectedEmotionChip) {
+    return `如果你是${receiverDisplayName.value}，现在有点“${props.selectedEmotionChip}”，哪句话听起来会更舒服？`
+  }
+
+  return props.step.promptText || props.step.metadata.receiverPerspectiveText
+})
 
 function handleSelect(value: string) {
   if (props.selectionState?.canAdvance) {
@@ -100,6 +108,25 @@ function handleSelect(value: string) {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.care-stage__header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.care-stage__title {
+  margin: 0;
+  font-size: 30px;
+  color: #303133;
+}
+
+.care-stage__description {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #606266;
 }
 
 .option-list {

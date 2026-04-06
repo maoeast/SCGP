@@ -1075,6 +1075,16 @@ function parseMetadataForSave(resourceType: string, source: 'create' | 'edit'): 
   return undefined
 }
 
+function getEmotionalCoverImage(resourceType: string, metadata: Record<string, any> | null | undefined) {
+  if (!isEmotionalResourceType(resourceType) || !metadata) {
+    return undefined
+  }
+
+  return typeof metadata.imageUrl === 'string' && metadata.imageUrl.trim().length > 0
+    ? metadata.imageUrl.trim()
+    : undefined
+}
+
 // 防抖搜索
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 function handleSearchDebounced() {
@@ -1220,6 +1230,7 @@ async function handleSaveCreate() {
     if (isEmotionalResourceType(createForm.resourceType) && metadata === null) {
       return
     }
+    const emotionalCoverImage = getEmotionalCoverImage(createForm.resourceType, metadata)
 
     const resourceId = api.addResource({
       moduleCode: (isEmotionalResourceType(createForm.resourceType) ? 'emotional' : createForm.moduleCode) as ModuleCode,
@@ -1227,6 +1238,7 @@ async function handleSaveCreate() {
       name: createForm.name,
       category: createForm.category,
       description: createForm.description || undefined,
+      coverImage: emotionalCoverImage,
       tags: createForm.tags.length > 0 ? createForm.tags : undefined,
       metadata
     })
@@ -1351,6 +1363,10 @@ async function handleSaveEdit() {
       description: editForm.description,
       tags: editForm.tags,
       metadata
+    }
+    const emotionalCoverImage = getEmotionalCoverImage(editingResource.value.resourceType, metadata)
+    if (emotionalCoverImage) {
+      updateData.coverImage = emotionalCoverImage
     }
 
     // 自定义资源可以更新名称和分类

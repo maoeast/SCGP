@@ -1,9 +1,18 @@
 <template>
   <div class="care-stage">
-    <PerspectiveSwitchView
-      active-side="sender"
-      title="现在轮到我来说"
-      :description="step.promptText || step.metadata.speakerPerspectiveText"
+    <div class="care-stage__header">
+      <h2 class="care-stage__title">现在轮到我来说</h2>
+      <p class="care-stage__description">{{ stageDescription }}</p>
+    </div>
+
+    <el-alert
+      v-if="requiresEmotionChip && !selectedEmotionChip"
+      type="info"
+      :closable="false"
+      show-icon
+      title="先在上面的步骤 2 点一个感受词"
+      :description="`想一想${receiverDisplayName}现在最像哪种感受，再来选一句更贴心的话。`"
+      class="care-stage__alert"
     />
 
     <div class="option-list">
@@ -17,6 +26,7 @@
         :muted="option.muted"
         :highlighted="option.highlighted"
         :selected="option.selected"
+        :disabled="requiresEmotionChip && !selectedEmotionChip"
         @select="handleSelect(option.value)"
       />
     </div>
@@ -46,7 +56,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import CareOptionCard from '@/components/emotional/CareOptionCard.vue'
-import PerspectiveSwitchView from '@/components/emotional/PerspectiveSwitchView.vue'
 import { getOptionVisualState, getVisibleOptionsByHint } from '@/components/emotional/engine/runtime/visibility'
 import type {
   CareUtteranceOptionMetadata,
@@ -64,6 +73,9 @@ const props = defineProps<{
   step: CareUtteranceStep
   hintLevel: 0 | 1 | 2 | 3
   selectionState?: CareUtteranceSelectionState | null
+  receiverName?: string
+  selectedEmotionChip?: string
+  requiresEmotionChip?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -90,8 +102,19 @@ const utteranceCards = computed(() => getVisibleOptionsByHint(props.step.options
 }))
 
 const selectedMetadata = computed(() => props.selectionState?.metadata || null)
+const receiverDisplayName = computed(() => props.receiverName || props.step.metadata.receiverName || '这位小朋友')
+const stageDescription = computed(() => {
+  if (props.selectedEmotionChip) {
+    return `如果${receiverDisplayName.value}现在有点“${props.selectedEmotionChip}”，你会怎么说会更让TA舒服？`
+  }
+
+  return props.step.promptText || props.step.metadata.speakerPerspectiveText
+})
 
 function handleSelect(value: string) {
+  if (props.requiresEmotionChip && !props.selectedEmotionChip) {
+    return
+  }
   const option = utteranceCards.value.find((item) => item.value === value)
   emit('select', { value, label: option?.label, perspective: 'sender' })
 }
@@ -102,6 +125,29 @@ function handleSelect(value: string) {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.care-stage__header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.care-stage__title {
+  margin: 0;
+  font-size: 30px;
+  color: #303133;
+}
+
+.care-stage__description {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #606266;
+}
+
+.care-stage__alert {
+  border-radius: 18px;
 }
 
 .option-list {

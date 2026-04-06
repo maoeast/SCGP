@@ -65,9 +65,33 @@
                 @update:model-value="updateField('imageUrl', $event)"
               >
                 <template #append>
-                  <el-button disabled>上传占位</el-button>
+                  <div class="input-append-actions">
+                    <el-button :loading="isGeneratingImages" @click="handleGenerateImages">AI 生成</el-button>
+                    <el-button disabled>上传占位</el-button>
+                  </div>
                 </template>
               </el-input>
+
+              <p class="field-helper">
+                使用 Gemini 按场景标题、情绪线索和问题解决语境生成写实候选图，适配中国校园 / 家庭 / 公共场所。
+              </p>
+
+              <div v-if="generatedCandidates.length > 0" class="generated-grid">
+                <button
+                  v-for="candidate in generatedCandidates"
+                  :key="candidate.url"
+                  type="button"
+                  class="generated-card"
+                  :class="{ 'generated-card--selected': modelValue.imageUrl === candidate.url }"
+                  @click="applyGeneratedCandidate(candidate)"
+                >
+                  <img :src="candidate.url" :alt="modelValue.title || 'AI 生成候选图'" class="generated-card__image" />
+                  <div class="generated-card__footer">
+                    <span class="generated-card__model">{{ candidate.model }}</span>
+                    <span class="generated-card__action">{{ modelValue.imageUrl === candidate.url ? '当前已选' : '设为场景图' }}</span>
+                  </div>
+                </button>
+              </div>
             </el-form-item>
           </el-col>
 
@@ -446,6 +470,7 @@
 </template>
 
 <script setup lang="ts">
+import { ElMessage } from 'element-plus'
 import { computed, ref } from 'vue'
 import type {
   EmotionalBaseEmotion,
@@ -456,6 +481,11 @@ import type {
   EmotionSceneSolution,
 } from '@/types/emotional'
 import { EMOTIONAL_BASE_EMOTION_OPTIONS } from '@/features/emotional/emotion-catalog'
+import {
+  buildEmotionSceneImagePrompts,
+  generateSceneImages,
+  type GeneratedSceneImageCandidate,
+} from '@/services/scene-image-generation'
 import {
   createEmotionScenePrompt,
   createEmotionScenePromptOption,
@@ -493,6 +523,8 @@ const difficultyOptions = [
 const reasoningTypeOptions = REASONING_TYPE_OPTIONS
 const sceneDomainOptions = SCENE_DOMAIN_OPTIONS
 const solutionRankOptions = SOLUTION_RANK_OPTIONS
+const isGeneratingImages = ref(false)
+const generatedCandidates = ref<GeneratedSceneImageCandidate[]>([])
 
 const colorMeta = computed(() => EMOTION_COLOR_PRESETS[props.modelValue.targetEmotion])
 const validationErrors = computed(() => validateEmotionSceneEditorModel(props.modelValue))
@@ -720,6 +752,28 @@ function updateSolutionOptionalField<K extends keyof EmotionSceneSolution>(
 ) {
   updateSolutionField(solutionIndex, key, (value.trim() ? value : undefined) as EmotionSceneSolution[K])
 }
+
+async function handleGenerateImages() {
+  isGeneratingImages.value = true
+  try {
+    const candidates = await generateSceneImages({
+      sceneCode: props.modelValue.sceneCode || 'emotion-scene',
+      resourceType: 'emotion_scene',
+      prompts: buildEmotionSceneImagePrompts(props.modelValue),
+    })
+    generatedCandidates.value = candidates
+    ElMessage.success(`已生成 ${candidates.length} 张候选图`)
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : 'AI 场景图片生成失败')
+  } finally {
+    isGeneratingImages.value = false
+  }
+}
+
+function applyGeneratedCandidate(candidate: GeneratedSceneImageCandidate) {
+  updateField('imageUrl', candidate.url)
+  ElMessage.success('已将候选图设为场景图片')
+}
 </script>
 
 <style scoped>
@@ -768,6 +822,72 @@ function updateSolutionOptionalField<K extends keyof EmotionSceneSolution>(
   border-radius: 12px;
   color: #606266;
   margin-bottom: 16px;
+}
+
+.input-append-actions {
+  display: flex;
+  align-items: center;
+}
+
+.field-helper {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #909399;
+}
+
+.generated-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.generated-card {
+  border: 2px solid #eadfce;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fffdf8;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.generated-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(242, 170, 76, 0.12);
+}
+
+.generated-card--selected {
+  border-color: #f0b26a;
+  box-shadow: 0 0 0 3px rgba(240, 178, 106, 0.16);
+}
+
+.generated-card__image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  background: #f6f2eb;
+}
+
+.generated-card__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+}
+
+.generated-card__model {
+  font-size: 12px;
+  color: #a07d4f;
+}
+
+.generated-card__action {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6d4d22;
 }
 
 .color-dot {

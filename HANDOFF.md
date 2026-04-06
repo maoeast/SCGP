@@ -33,12 +33,12 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: emotional `care_scene / 表达关心` training UI redesign is in progress, with persistent scene panel, guided 3-step support UI, and runtime-generated `receiverName / emotionChips / comfortTip`.**
+**Active follow-up work is now in `.continue-here.md`: emotional training now includes persistent scene-panel UI and Gemini-based AI scene image generation; `emotion_scene` has passed one full generate→save→training-display verification, and `care_scene` is the next runtime validation target.**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is emotional `care_scene` guided training redesign
+- current active task is emotional training AI scene-image rollout plus `care_scene` guided runtime validation
 - first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

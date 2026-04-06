@@ -36,6 +36,9 @@ export interface SceneIntroStepMetadata {
   title: string
   description?: string
   clues?: string[]
+  receiverName?: string
+  emotionChips?: string[]
+  comfortTip?: string
   speakerPerspectiveText?: string
   receiverPerspectiveText?: string
   sceneVisual: EmotionalSceneVisualInfo
@@ -72,6 +75,9 @@ export interface SolutionChoiceOptionMetadata {
 
 export interface CareUtteranceStepMetadata {
   speakerPerspectiveText: string
+  receiverName?: string
+  emotionChips?: string[]
+  comfortTip?: string
 }
 
 export interface CareUtteranceOptionMetadata {
@@ -83,6 +89,8 @@ export interface CareUtteranceOptionMetadata {
 
 export interface ReceiverPreferenceStepMetadata {
   receiverPerspectiveText: string
+  receiverName?: string
+  comfortTip?: string
 }
 
 export interface ReceiverPreferenceOptionMetadata {

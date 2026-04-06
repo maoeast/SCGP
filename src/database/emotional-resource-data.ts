@@ -18,6 +18,7 @@ import type {
   EmotionalSolutionRank,
 } from '@/types/emotional'
 import { getTrainingResourceCopyOverride } from '@/data/generated-training-resource-copy'
+import { enrichCareSceneGeneratedFields } from '@/features/emotional/care-scene-generated-fields'
 import {
   buildCareSceneResourceCopyKey,
   buildEmotionSceneResourceCopyKey,
@@ -339,13 +340,16 @@ function normalizeCareScene(raw: RawCareScene, index: number): CareSceneResource
   const preferredUtteranceIds = normalizeStringArray(raw.preferredUtteranceIds)
     .filter((utteranceId) => utterances.some((utterance) => utterance.id === utteranceId))
 
-  return {
+  return enrichCareSceneGeneratedFields({
     sceneCode: normalizeString(raw.sceneCode, `care_scene_${index + 1}`),
     title: normalizeString(raw.title, `表达关心 ${index + 1}`),
     imageUrl: normalizeString(raw.imageUrl),
     difficultyLevel: normalizeDifficultyLevel(raw.difficultyLevel),
     careType: normalizeCareType(raw.careType, 'empathy'),
     receiverEmotion,
+    receiverName: normalizeOptionalString(raw.receiverName),
+    emotionChips: normalizeStringArray(raw.emotionChips),
+    comfortTip: normalizeOptionalString(raw.comfortTip),
     emotionColorToken: color.token,
     emotionColorHex: color.hex,
     emotionColorLabel: color.label,
@@ -360,7 +364,7 @@ function normalizeCareScene(raw: RawCareScene, index: number): CareSceneResource
     ageRange: normalizeOptionalString(raw.ageRange),
     abilityLevel: normalizeAbilityLevel(raw.abilityLevel),
     tags: normalizeStringArray(raw.tags),
-  }
+  }, normalizeOptionalString(raw.description))
 }
 
 const rawEmotionScenes = parseJsonArray<RawEmotionScene>(
