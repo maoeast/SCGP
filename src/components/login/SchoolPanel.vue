@@ -67,11 +67,12 @@ const descriptionText = computed(() => {
   padding: 60px 72px 60px 68px;
   box-sizing: border-box;
   overflow: hidden;
-  color: #4f3412;
-  background:
+  color: var(--login-brand-panel-text, #4f3412);
+  background: var(--login-brand-panel-bg,
     radial-gradient(circle at 18% 78%, rgba(255, 248, 214, 0.34), transparent 24%),
     radial-gradient(circle at 82% 18%, rgba(255, 219, 132, 0.28), transparent 18%),
-    linear-gradient(160deg, #f2c94c 0%, #f5bf57 38%, #f2994a 100%);
+    linear-gradient(160deg, #f2c94c 0%, #f5bf57 38%, #f2994a 100%)
+  );
 }
 
 .school-panel__decor {
@@ -218,9 +219,9 @@ const descriptionText = computed(() => {
   padding: 0 16px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.24);
-  background: rgba(255, 252, 239, 0.3);
+  background: var(--login-brand-badge-bg, rgba(255, 252, 239, 0.3));
   white-space: nowrap;
-  color: #6a4518;
+  color: var(--login-brand-badge-text, #6a4518);
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -229,7 +230,7 @@ const descriptionText = computed(() => {
 .school-panel__tagline {
   margin: 2px 0 0;
   width: min(100%, 280px);
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--login-brand-tagline, rgba(255, 255, 255, 0.72));
   font-size: 13px;
   line-height: 1.72;
   text-align: center;

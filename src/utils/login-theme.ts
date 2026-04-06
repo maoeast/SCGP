@@ -1,6 +1,6 @@
 export type LoginThemeVariant = 'warm-glow' | 'calm-blue'
 
-export type LoginThemePreset = {
+export interface LoginThemePreset {
   label: string
   primary: string
   primaryGradientStart: string
@@ -11,19 +11,48 @@ export type LoginThemePreset = {
   pageBg: string
   badgeBackground: string
   badgeText: string
-}
-
-interface LoginThemePreset {
-  label: string
-  primary: string
-  primaryGradientStart: string
-  primaryGradientEnd: string
-  brandStart: string
-  brandEnd: string
-  brandSoft: string
-  pageBg: string
-  badgeBackground: string
-  badgeText: string
+  /** Shell outer background */
+  shellBg: string
+  /** Shell veil gradient (CSS) */
+  shellVeil: string
+  /** Layout container background */
+  layoutBg: string
+  /** Layout border color */
+  layoutBorder: string
+  /** Layout box-shadow (CSS) */
+  layoutShadow: string
+  /** Brand panel gradient (CSS) */
+  brandPanelBg: string
+  /** Brand panel text color */
+  brandPanelText: string
+  /** Brand panel school badge text */
+  brandBadgeText: string
+  /** Brand panel tagline color */
+  brandTagline: string
+  /** Form pane background (CSS) */
+  formPaneBg: string
+  /** Button box-shadow color for glow effect */
+  buttonShadow: string
+  /** Button disabled gradient start */
+  buttonDisabledStart: string
+  /** Button disabled gradient end */
+  buttonDisabledEnd: string
+  /** Galaxy background base color */
+  galaxyBg: string
+  /** Galaxy vignette gradient (CSS) */
+  galaxyVignette: string
+  /** Galaxy particle palette */
+  galaxyParticlePalette: string[]
+  /** Galaxy dust palette */
+  galaxyDustPalette: string[]
+  /** Galaxy background base gradient (CSS) */
+  galaxyBaseGradient: string
+  /** Galaxy lower glow colors */
+  galaxyLowerGlow: string[]
+  /** Galaxy main glow color stops */
+  galaxyMainGlow: string[]
+  /** Galaxy core glow colors */
+  galaxyCoreGlow: string[]
 }
 
 export interface LoginThemeConfig {
@@ -46,18 +75,128 @@ export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = 
     pageBg: '#FFF8E7',
     badgeBackground: 'rgba(255, 248, 231, 0.3)',
     badgeText: '#8B6914',
+    shellBg: '#0b0718',
+    shellVeil:
+      'radial-gradient(circle at 20% 14%, rgba(255, 246, 214, 0.04), transparent 18%), radial-gradient(circle at 84% 18%, rgba(255, 202, 224, 0.05), transparent 14%), linear-gradient(135deg, rgba(8, 8, 18, 0.04) 0%, rgba(11, 7, 24, 0.14) 100%)',
+    layoutBg: 'rgba(13, 7, 24, 0.34)',
+    layoutBorder: 'rgba(255, 255, 255, 0.16)',
+    layoutShadow: '0 36px 100px rgba(2, 6, 23, 0.42)',
+    brandPanelBg:
+      'radial-gradient(circle at 18% 78%, rgba(255, 248, 214, 0.34), transparent 24%), radial-gradient(circle at 82% 18%, rgba(255, 219, 132, 0.28), transparent 18%), linear-gradient(160deg, #f2c94c 0%, #f5bf57 38%, #f2994a 100%)',
+    brandPanelText: '#4f3412',
+    brandBadgeText: '#6a4518',
+    brandTagline: 'rgba(255, 255, 255, 0.72)',
+    formPaneBg:
+      'radial-gradient(circle at left center, rgba(255, 216, 131, 0.08), transparent 24%), linear-gradient(180deg, rgba(255, 251, 246, 0.92) 0%, rgba(255, 255, 255, 0.97) 100%)',
+    buttonShadow: 'rgba(227, 139, 58, 0.3)',
+    buttonDisabledStart: '#d4c9a8',
+    buttonDisabledEnd: '#c9b896',
+    galaxyBg: '#fff8e7',
+    galaxyVignette:
+      'radial-gradient(circle at center, transparent 0 54%, rgba(242, 201, 76, 0.08) 74%, rgba(242, 153, 74, 0.16) 100%), linear-gradient(180deg, rgba(255, 248, 231, 0) 0%, rgba(242, 153, 74, 0.06) 100%)',
+    galaxyParticlePalette: [
+      'rgb(255, 160, 10)',
+      'rgb(255, 120, 0)',
+      'rgb(230, 100, 0)',
+      'rgb(255, 180, 20)',
+      'rgb(200, 80, 0)',
+      'rgb(255, 90, 0)',
+      'rgb(255, 200, 40)',
+      'rgb(240, 140, 0)',
+    ],
+    galaxyDustPalette: [
+      'rgb(255, 160, 10)',
+      'rgb(255, 130, 0)',
+      'rgb(230, 100, 0)',
+      'rgb(255, 190, 30)',
+      'rgb(200, 80, 0)',
+    ],
+    galaxyBaseGradient: '#fff8e7',
+    galaxyLowerGlow: [
+      'rgba(242, 201, 76, 0.12)',
+      'rgba(242, 201, 76, 0.05)',
+      'rgba(242, 201, 76, 0)',
+    ],
+    galaxyMainGlow: [
+      'rgba(255, 216, 138, 0.14)',
+      'rgba(255, 187, 214, 0.12)',
+      'rgba(255, 153, 198, 0.06)',
+      'rgba(255, 153, 198, 0)',
+    ],
+    galaxyCoreGlow: [
+      'rgba(255, 252, 241, 0.9)',
+      'rgba(255, 236, 188, 0.86)',
+      'rgba(255, 210, 140, 0.64)',
+      'rgba(255, 157, 198, 0.34)',
+      'rgba(255, 157, 198, 0)',
+    ],
   },
   'calm-blue': {
     label: '静蓝',
-    primary: '#3B82F6',
-    primaryGradientStart: '#3B82F6',
-    primaryGradientEnd: '#1D4ED8',
-    brandStart: '#1E3A8A',
-    brandEnd: '#3B82F6',
-    brandSoft: '#EFF6FF',
-    pageBg: '#EFF6FF',
-    badgeBackground: 'rgba(219, 234, 254, 0.5)',
-    badgeText: '#1E40AF',
+    primary: '#4FB3BF',
+    primaryGradientStart: '#4FB3BF',
+    primaryGradientEnd: '#3A98A3',
+    brandStart: '#3A98A3',
+    brandEnd: '#4FB3BF',
+    brandSoft: '#DFF4F6',
+    pageBg: '#EDF5F7',
+    badgeBackground: 'rgba(79, 179, 191, 0.18)',
+    badgeText: '#1A4A50',
+    shellBg: '#D6ECF0',
+    shellVeil:
+      'radial-gradient(circle at 20% 14%, rgba(79, 179, 191, 0.12), transparent 18%), radial-gradient(circle at 84% 18%, rgba(166, 221, 224, 0.15), transparent 14%), linear-gradient(135deg, rgba(214, 236, 240, 0.08) 0%, rgba(79, 179, 191, 0.18) 100%)',
+    layoutBg: 'rgba(255, 255, 255, 0.62)',
+    layoutBorder: 'rgba(79, 179, 191, 0.28)',
+    layoutShadow: '0 36px 100px rgba(58, 152, 163, 0.22)',
+    brandPanelBg:
+      'radial-gradient(circle at 18% 78%, rgba(166, 221, 224, 0.5), transparent 24%), radial-gradient(circle at 82% 18%, rgba(123, 198, 185, 0.4), transparent 18%), linear-gradient(160deg, #3A98A3 0%, #4FB3BF 50%, #7BC6B9 100%)',
+    brandPanelText: '#ffffff',
+    brandBadgeText: '#1A4A50',
+    brandTagline: 'rgba(255, 255, 255, 0.85)',
+    formPaneBg:
+      'radial-gradient(circle at left center, rgba(79, 179, 191, 0.1), transparent 24%), linear-gradient(180deg, rgba(244, 250, 251, 0.94) 0%, rgba(255, 255, 255, 0.98) 100%)',
+    buttonShadow: 'rgba(58, 152, 163, 0.35)',
+    buttonDisabledStart: '#b0cdd2',
+    buttonDisabledEnd: '#98bfc4',
+    galaxyBg: '#D6ECF0',
+    galaxyVignette:
+      'radial-gradient(circle at center, transparent 0 54%, rgba(58, 152, 163, 0.12) 74%, rgba(58, 152, 163, 0.22) 100%), linear-gradient(180deg, rgba(214, 236, 240, 0) 0%, rgba(58, 152, 163, 0.1) 100%)',
+    galaxyParticlePalette: [
+      'rgb(79, 179, 191)',
+      'rgb(58, 152, 163)',
+      'rgb(123, 198, 185)',
+      'rgb(166, 221, 224)',
+      'rgb(150, 210, 218)',
+      'rgb(110, 200, 195)',
+      'rgb(200, 238, 240)',
+      'rgb(90, 168, 178)',
+    ],
+    galaxyDustPalette: [
+      'rgb(79, 179, 191)',
+      'rgb(123, 198, 185)',
+      'rgb(166, 221, 224)',
+      'rgb(150, 210, 218)',
+      'rgb(90, 168, 178)',
+    ],
+    galaxyBaseGradient: '#D6ECF0',
+    galaxyLowerGlow: [
+      'rgba(58, 152, 163, 0.18)',
+      'rgba(58, 152, 163, 0.08)',
+      'rgba(58, 152, 163, 0)',
+    ],
+    galaxyMainGlow: [
+      'rgba(79, 179, 191, 0.2)',
+      'rgba(123, 198, 185, 0.16)',
+      'rgba(58, 152, 163, 0.08)',
+      'rgba(58, 152, 163, 0)',
+    ],
+    galaxyCoreGlow: [
+      'rgba(240, 252, 253, 0.92)',
+      'rgba(166, 221, 224, 0.88)',
+      'rgba(79, 179, 191, 0.68)',
+      'rgba(58, 152, 163, 0.38)',
+      'rgba(58, 152, 163, 0)',
+    ],
   },
 }
 
@@ -160,4 +299,17 @@ export function applyLoginThemeVariables(config: Partial<LoginThemeConfig> = {})
   style.setProperty('--login-muted', '#5f6b7a')
   style.setProperty('--login-border', '#dbe5f0')
   style.setProperty('--login-border-strong', '#c6d6e8')
+  style.setProperty('--login-shell-bg', preset.shellBg)
+  style.setProperty('--login-shell-veil', preset.shellVeil)
+  style.setProperty('--login-layout-bg', preset.layoutBg)
+  style.setProperty('--login-layout-border', preset.layoutBorder)
+  style.setProperty('--login-layout-shadow', preset.layoutShadow)
+  style.setProperty('--login-brand-panel-bg', preset.brandPanelBg)
+  style.setProperty('--login-brand-panel-text', preset.brandPanelText)
+  style.setProperty('--login-brand-badge-text', preset.brandBadgeText)
+  style.setProperty('--login-brand-tagline', preset.brandTagline)
+  style.setProperty('--login-form-pane-bg', preset.formPaneBg)
+  style.setProperty('--login-button-shadow', preset.buttonShadow)
+  style.setProperty('--login-button-disabled-start', preset.buttonDisabledStart)
+  style.setProperty('--login-button-disabled-end', preset.buttonDisabledEnd)
 }

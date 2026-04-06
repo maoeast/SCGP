@@ -32,20 +32,20 @@ withDefaults(defineProps<Props>(), {
   min-height: 52px;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(90deg, var(--login-primary-gradient-start, #E6B93C), var(--login-primary-gradient-end, #E38B3A));
+  background: linear-gradient(135deg, var(--login-primary-gradient-start, #E6B93C), var(--login-primary-gradient-end, #E38B3A));
   color: #ffffff;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(227, 139, 58, 0.3);
+  box-shadow: 0 8px 24px var(--login-button-shadow, rgba(227, 139, 58, 0.3));
   transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
 
 .primary-button:hover:not(:disabled) {
   transform: translateY(-1px);
   filter: brightness(1.08);
-  box-shadow: 0 12px 32px rgba(227, 139, 58, 0.4);
+  box-shadow: 0 12px 32px var(--login-button-shadow, rgba(227, 139, 58, 0.4));
 }
 
 .primary-button:focus-visible {
@@ -54,7 +54,7 @@ withDefaults(defineProps<Props>(), {
 }
 
 .primary-button:disabled {
-  background: linear-gradient(90deg, #d4c9a8, #c9b896);
+  background: linear-gradient(90deg, var(--login-button-disabled-start, #d4c9a8), var(--login-button-disabled-end, #c9b896));
   color: #ffffff;
   cursor: not-allowed;
   box-shadow: none;

@@ -1,6 +1,6 @@
 <template>
   <div class="login-shell">
-    <GalaxyBackground class="login-shell__background" />
+    <GalaxyBackground class="login-shell__background" :variant="loginThemeVariant" />
     <div class="login-shell__veil"></div>
 
     <div class="login-layout">
@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import GalaxyBackground from '@/components/login/GalaxyBackground.vue'
@@ -39,6 +39,7 @@ import SchoolPanel from '@/components/login/SchoolPanel.vue'
 import { UserAPI } from '@/database/api'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
+import { normalizeLoginThemeVariant } from '@/utils/login-theme'
 
 const REMEMBERED_USERNAME_KEY = 'scgp_login_username'
 const defaultSystemName = '星愿能力发展训练系统'
@@ -59,6 +60,10 @@ const loginForm = ref({
 const isLogging = ref(false)
 const loginError = ref('')
 const isLoginButtonDisabled = ref(true)
+
+const loginThemeVariant = computed(() =>
+  normalizeLoginThemeVariant(systemConfigStore.loginThemeVariant),
+)
 
 const restoreRememberedUsername = () => {
   const rememberedUsername = localStorage.getItem(REMEMBERED_USERNAME_KEY)
@@ -158,7 +163,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: #0b0718;
+  background: var(--login-shell-bg, #0b0718);
 }
 
 .login-shell__background,
@@ -170,10 +175,11 @@ onMounted(async () => {
 .login-shell__veil {
   pointer-events: none;
   z-index: 0;
-  background:
+  background: var(--login-shell-veil,
     radial-gradient(circle at 20% 14%, rgba(255, 246, 214, 0.04), transparent 18%),
     radial-gradient(circle at 84% 18%, rgba(255, 202, 224, 0.05), transparent 14%),
-    linear-gradient(135deg, rgba(8, 8, 18, 0.04) 0%, rgba(11, 7, 24, 0.14) 100%);
+    linear-gradient(135deg, rgba(8, 8, 18, 0.04) 0%, rgba(11, 7, 24, 0.14) 100%)
+  );
 }
 
 .login-layout {
@@ -183,17 +189,17 @@ onMounted(async () => {
   min-height: min(736px, calc(100vh - 36px));
   display: grid;
   grid-template-columns: minmax(400px, 45fr) minmax(440px, 55fr);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--login-layout-border, rgba(255, 255, 255, 0.16));
   border-radius: 32px;
   overflow: hidden;
-  background: rgba(13, 7, 24, 0.34);
+  background: var(--login-layout-bg, rgba(13, 7, 24, 0.34));
   backdrop-filter: blur(10px);
-  box-shadow: 0 36px 100px rgba(2, 6, 23, 0.42);
+  box-shadow: var(--login-layout-shadow, 0 36px 100px rgba(2, 6, 23, 0.42));
 }
 
 .login-layout__brand {
   min-width: 0;
-  background: #f2c94c;
+  background: var(--login-brand-panel-bg, #f2c94c);
 }
 
 .login-layout__form {
@@ -202,9 +208,10 @@ onMounted(async () => {
   align-items: center;
   justify-content: flex-start;
   padding: clamp(32px, 4.8vw, 60px) clamp(32px, 4.8vw, 64px) clamp(32px, 4.8vw, 60px) clamp(28px, 4vw, 48px);
-  background:
+  background: var(--login-form-pane-bg,
     radial-gradient(circle at left center, rgba(255, 216, 131, 0.08), transparent 24%),
-    linear-gradient(180deg, rgba(255, 251, 246, 0.92) 0%, rgba(255, 255, 255, 0.97) 100%);
+    linear-gradient(180deg, rgba(255, 251, 246, 0.92) 0%, rgba(255, 255, 255, 0.97) 100%)
+  );
 }
 
 @media (max-width: 1024px) {

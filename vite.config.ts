@@ -70,7 +70,8 @@ export default defineConfig({
         // 手动分块策略优化加载性能
         manualChunks: {
           'element-plus': ['element-plus'],
-          'echarts': ['echarts', 'vue-echarts']
+          'echarts': ['echarts', 'vue-echarts'],
+          'three': ['three']
         }
       }
     }
