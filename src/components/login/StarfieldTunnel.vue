@@ -260,7 +260,7 @@ onMounted(() => {
       resizeObserver.observe(containerRef.value)
     }
 
-    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mousemove', handleMouseMove, { passive: true })
   }
 })
 
@@ -281,12 +281,14 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  pointer-events: none;
 }
 
 .starfield-tunnel__canvas {
   display: block;
   width: 100%;
   height: 100%;
+  pointer-events: none;
 }
 
 .starfield-tunnel__vignette {

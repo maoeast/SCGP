@@ -43,7 +43,7 @@ import SchoolPanel from '@/components/login/SchoolPanel.vue'
 import { UserAPI } from '@/database/api'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
-import { normalizeLoginThemeVariant } from '@/utils/login-theme'
+import { applyLoginThemeVariables, normalizeLoginThemeVariant } from '@/utils/login-theme'
 
 const REMEMBERED_USERNAME_KEY = 'scgp_login_username'
 const defaultSystemName = '星愿能力发展训练系统'
@@ -135,6 +135,19 @@ watch(
   [() => loginForm.value.username, () => loginForm.value.password],
   ([username, password]) => {
     isLoginButtonDisabled.value = !username.trim() || !password.trim()
+  },
+  { immediate: true },
+)
+
+watch(
+  () => [systemConfigStore.loginThemeVariant, systemConfigStore.loginCardOpacity, systemConfigStore.loginCustomBgImage],
+  () => {
+    applyLoginThemeVariables({
+      variant: systemConfigStore.loginThemeVariant,
+      cardBgOpacity: systemConfigStore.loginCardOpacity,
+      customBgImage: systemConfigStore.loginCustomBgImage,
+      primaryColor: systemConfigStore.themePrimaryColor,
+    })
   },
   { immediate: true },
 )

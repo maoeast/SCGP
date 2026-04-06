@@ -380,13 +380,29 @@ export function applyLoginThemeVariables(config: Partial<LoginThemeConfig> = {})
   style.setProperty('--login-brand-panel-text', preset.brandPanelText)
   style.setProperty('--login-brand-badge-text', preset.brandBadgeText)
   style.setProperty('--login-brand-tagline', preset.brandTagline)
-  style.setProperty('--login-form-pane-bg', preset.formPaneBg)
+
+  // Card opacity — shared across all themes
+  const cardOpacity = typeof config.cardBgOpacity === 'number' ? config.cardBgOpacity : 0.94
+  const safeOpacity = String(clamp(cardOpacity, 0.3, 1.0))
+  style.setProperty('--login-card-bg-opacity', safeOpacity)
+
+  // For warm-glow / calm-blue, the form pane is near-opaque white, which blocks
+  // the background even when the card is transparent. Apply the same card
+  // opacity to the form pane so the background (starfield) shows through.
+  if (isCustom) {
+    style.setProperty('--login-form-pane-bg', preset.formPaneBg)
+  } else {
+    // Preserve the theme tint colour but use card opacity
+    const tint = variant === 'calm-blue' ? '244,250,251' : '255,251,246'
+    style.setProperty(
+      '--login-form-pane-bg',
+      `linear-gradient(180deg, rgba(${tint},${safeOpacity}) 0%, rgba(255,255,255,${safeOpacity}) 100%)`,
+    )
+  }
+
   style.setProperty('--login-button-shadow', buttonShadow)
   style.setProperty('--login-button-disabled-start', preset.buttonDisabledStart)
   style.setProperty('--login-button-disabled-end', preset.buttonDisabledEnd)
 
-  // Custom theme extra variables
-  const cardOpacity = typeof config.cardBgOpacity === 'number' ? config.cardBgOpacity : 0.94
-  style.setProperty('--login-card-bg-opacity', String(clamp(cardOpacity, 0.3, 1.0)))
   style.setProperty('--login-custom-bg-image', config.customBgImage ? `url(${config.customBgImage})` : 'none')
 }
