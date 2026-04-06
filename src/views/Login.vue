@@ -1,6 +1,10 @@
 <template>
   <div class="login-shell">
-    <GalaxyBackground class="login-shell__background" :variant="loginThemeVariant" />
+    <GalaxyBackground
+      class="login-shell__background"
+      :variant="loginThemeVariant"
+      :custom-bg-image="systemConfigStore.loginCustomBgImage"
+    />
     <div class="login-shell__veil"></div>
 
     <div class="login-layout">

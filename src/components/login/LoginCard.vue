@@ -99,6 +99,7 @@ const handleSubmit = () => {
 
 <style scoped>
 .login-card {
+  --card-opacity: var(--login-card-bg-opacity, 0.94);
   width: min(464px, 100%);
   display: flex;
   flex-direction: column;
@@ -106,7 +107,11 @@ const handleSubmit = () => {
   padding: 36px;
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 28px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 250, 255, 0.98) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, var(--card-opacity)) 0%,
+    rgba(248, 250, 255, var(--card-opacity)) 100%
+  );
   backdrop-filter: blur(14px);
   box-shadow: 0 28px 70px rgba(10, 19, 44, 0.18), 0 10px 24px rgba(10, 19, 44, 0.1);
   box-sizing: border-box;

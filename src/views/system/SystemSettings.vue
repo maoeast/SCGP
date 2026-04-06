@@ -91,11 +91,56 @@
                 />
               </el-select>
             </el-form-item>
-            <el-form-item label="主色">
+            <template v-if="settings.loginThemeVariant === 'custom'">
+              <el-form-item label="背景图片">
+                <div class="logo-upload">
+                  <div v-if="customBgPreviewUrl" class="logo-preview logo-preview--wide">
+                    <img :src="customBgPreviewUrl" alt="背景图片预览" />
+                    <el-button type="danger" size="small" @click="removeCustomBg" class="remove-btn">
+                      删除
+                    </el-button>
+                  </div>
+                  <el-upload
+                    v-else
+                    :auto-upload="false"
+                    :show-file-list="false"
+                    accept="image/*"
+                    :on-change="handleCustomBgChange"
+                  >
+                    <el-button plain>选择背景图片</el-button>
+                  </el-upload>
+                  <span class="system-settings-help">推荐分辨率 1920x1080 及以上，支持 PNG、JPG 格式，不超过 4MB。</span>
+                </div>
+              </el-form-item>
+              <el-form-item label="按钮颜色">
+                <div class="system-settings-inline">
+                  <el-color-picker v-model="settings.themePrimaryColor" />
+                  <el-input v-model="settings.themePrimaryColor" class="system-settings-color-input" />
+                  <span class="system-settings-help">选择登录按钮的主色调。</span>
+                </div>
+              </el-form-item>
+            </template>
+            <template v-else>
+              <el-form-item label="主色">
+                <div class="system-settings-inline">
+                  <el-color-picker v-model="settings.themePrimaryColor" />
+                  <el-input v-model="settings.themePrimaryColor" class="system-settings-color-input" />
+                  <span class="system-settings-help">建议使用蓝色系，按钮与聚焦态会同步更新。</span>
+                </div>
+              </el-form-item>
+            </template>
+            <el-form-item label="卡片透明度">
               <div class="system-settings-inline">
-                <el-color-picker v-model="settings.themePrimaryColor" />
-                <el-input v-model="settings.themePrimaryColor" class="system-settings-color-input" />
-                <span class="system-settings-help">建议使用蓝色系，按钮与聚焦态会同步更新。</span>
+                <el-slider
+                  v-model="settings.loginCardBgOpacity"
+                  :min="30"
+                  :max="100"
+                  :step="1"
+                  :show-tooltip="true"
+                  :format-tooltip="(val: number) => val + '%'"
+                  style="width: 240px"
+                />
+                <span class="system-settings-help">调整登录卡片的背景透明度，值越小越透明。</span>
               </div>
             </el-form-item>
             <el-form-item label="品牌说明">
@@ -108,22 +153,6 @@
             </el-form-item>
           </el-form>
 
-          <section class="login-theme-preview">
-            <div class="login-theme-preview__brand">
-              <span class="login-theme-preview__badge">{{ currentThemeLabel }}</span>
-              <div v-if="loginLogoPreviewUrl" class="login-theme-preview__logo">
-                <img :src="loginLogoPreviewUrl" alt="登录页品牌Logo预览" />
-              </div>
-              <h4>{{ settings.systemName }}</h4>
-              <p class="login-theme-preview__subtitle">{{ settings.schoolName || 'XX学校' }}</p>
-              <p class="login-theme-preview__description">{{ settings.brandPanelDescription }}</p>
-            </div>
-
-            <div class="login-theme-preview__card">
-              <span class="login-theme-preview__eyebrow">登录按钮预览</span>
-              <button type="button" class="login-theme-preview__button">登录系统</button>
-            </div>
-          </section>
         </div>
       </section>
 
@@ -184,7 +213,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Check } from '@element-plus/icons-vue'
 import { initDatabase } from '@/database/init'
@@ -205,6 +234,8 @@ const systemLogoPreviewUrl = ref('')
 const systemLogoFile = ref<File | null>(null)
 const loginLogoPreviewUrl = ref('')
 const loginLogoFile = ref<File | null>(null)
+const customBgPreviewUrl = ref('')
+const customBgFile = ref<File | null>(null)
 
 const settings = reactive({
   systemName: '星愿能力发展训练系统',
@@ -213,6 +244,8 @@ const settings = reactive({
   loginThemeVariant: 'warm-glow',
   themePrimaryColor: DEFAULT_LOGIN_PRIMARY_COLOR,
   brandPanelDescription: '统一进入学生管理、能力评估、训练计划、训练记录与报告生成，让一线工作更聚焦。',
+  loginCustomBgImage: '',
+  loginCardBgOpacity: 92,
   autoBackup: true,
   backupInterval: 7,
   defaultReportFormat: 'pdf',
@@ -228,10 +261,8 @@ const loginThemeOptions = Object.entries(LOGIN_THEME_PRESETS).map(([value, prese
 const originalThemeSnapshot = ref({
   variant: systemConfigStore.loginThemeVariant,
   primaryColor: systemConfigStore.themePrimaryColor,
-})
-
-const currentThemeLabel = computed(() => {
-  return LOGIN_THEME_PRESETS[normalizeLoginThemeVariant(settings.loginThemeVariant)]?.label || '湖蓝'
+  customBgImage: systemConfigStore.loginCustomBgImage,
+  cardBgOpacity: systemConfigStore.loginCardOpacity,
 })
 
 const loadSettings = async () => {
@@ -271,6 +302,13 @@ const loadSettings = async () => {
         case 'brand_panel_description':
           settings.brandPanelDescription = value
           break
+        case 'login_custom_bg_image':
+          settings.loginCustomBgImage = value
+          customBgPreviewUrl.value = value
+          break
+        case 'login_card_opacity':
+          settings.loginCardBgOpacity = Math.round((parseFloat(value) || 0.92) * 100)
+          break
         case 'auto_backup':
           settings.autoBackup = value === 'true'
           break
@@ -292,6 +330,8 @@ const loadSettings = async () => {
     originalThemeSnapshot.value = {
       variant: normalizeLoginThemeVariant(settings.loginThemeVariant),
       primaryColor: normalizeHexColor(settings.themePrimaryColor, DEFAULT_LOGIN_PRIMARY_COLOR),
+      customBgImage: settings.loginCustomBgImage,
+      cardBgOpacity: settings.loginCardBgOpacity / 100,
     }
   } catch (error) {
     console.error('加载系统设置失败:', error)
@@ -309,6 +349,11 @@ const handleSave = async () => {
       loginLogoPreviewUrl.value = await readFileAsDataUrl(loginLogoFile.value)
     }
 
+    if (customBgFile.value) {
+      customBgPreviewUrl.value = await readFileAsDataUrl(customBgFile.value)
+      settings.loginCustomBgImage = customBgPreviewUrl.value
+    }
+
     const db = await initDatabase()
 
     const configMap: Record<string, string> = {
@@ -321,6 +366,8 @@ const handleSave = async () => {
       login_theme_variant: normalizeLoginThemeVariant(settings.loginThemeVariant),
       theme_primary_color: normalizeHexColor(settings.themePrimaryColor, DEFAULT_LOGIN_PRIMARY_COLOR),
       brand_panel_description: settings.brandPanelDescription,
+      login_custom_bg_image: settings.loginThemeVariant === 'custom' ? settings.loginCustomBgImage : '',
+      login_card_opacity: (settings.loginCardBgOpacity / 100).toFixed(2),
       default_report_format: settings.defaultReportFormat,
       include_student_avatar: settings.includeStudentAvatar.toString(),
       report_header: settings.reportHeader,
@@ -351,11 +398,14 @@ const handleSave = async () => {
     originalThemeSnapshot.value = {
       variant: systemConfigStore.loginThemeVariant,
       primaryColor: systemConfigStore.themePrimaryColor,
+      customBgImage: systemConfigStore.loginCustomBgImage,
+      cardBgOpacity: systemConfigStore.loginCardOpacity,
     }
 
     ElMessage.success('系统设置保存成功')
     systemLogoFile.value = null
     loginLogoFile.value = null
+    customBgFile.value = null
   } catch (error) {
     console.error('保存系统设置失败:', error)
     ElMessage.error('保存失败，请重试')
@@ -423,22 +473,51 @@ const removeLoginLogo = () => {
   loginLogoFile.value = null
 }
 
+const handleCustomBgChange = (file: any) => {
+  const selectedFile = file.raw
+  if (!ensureImageFile(selectedFile)) {
+    return
+  }
+
+  customBgFile.value = selectedFile
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    customBgPreviewUrl.value = e.target?.result as string
+    settings.loginCustomBgImage = customBgPreviewUrl.value
+  }
+  reader.readAsDataURL(selectedFile)
+}
+
+const removeCustomBg = () => {
+  customBgPreviewUrl.value = ''
+  customBgFile.value = null
+  settings.loginCustomBgImage = ''
+}
+
 onMounted(() => {
   loadSettings()
 })
 
 watch(
-  () => [settings.loginThemeVariant, settings.themePrimaryColor],
-  ([variant, primaryColor]) => {
+  () => [settings.loginThemeVariant, settings.themePrimaryColor, settings.loginCustomBgImage, settings.loginCardBgOpacity],
+  ([variant, primaryColor, bgImage, cardOpacity]) => {
     applyLoginThemeVariables({
-      variant: normalizeLoginThemeVariant(variant),
-      primaryColor: normalizeHexColor(primaryColor, DEFAULT_LOGIN_PRIMARY_COLOR),
+      variant: normalizeLoginThemeVariant(variant as string),
+      primaryColor: normalizeHexColor(primaryColor as string, DEFAULT_LOGIN_PRIMARY_COLOR),
+      customBgImage: bgImage as string,
+      cardBgOpacity: (cardOpacity as number) / 100,
     })
   },
 )
 
 onUnmounted(() => {
-  applyLoginThemeVariables(originalThemeSnapshot.value)
+  const snapshot = originalThemeSnapshot.value
+  applyLoginThemeVariables({
+    variant: snapshot.variant,
+    primaryColor: snapshot.primaryColor,
+    customBgImage: snapshot.customBgImage,
+    cardBgOpacity: snapshot.cardBgOpacity,
+  })
 })
 </script>
 
@@ -517,103 +596,6 @@ onUnmounted(() => {
   right: 5px;
 }
 
-.login-theme-preview {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-  gap: 18px;
-  margin-top: 6px;
-}
-
-.login-theme-preview__brand,
-.login-theme-preview__card {
-  border: 1px solid var(--login-border, #dbe5f0);
-  border-radius: 18px;
-  overflow: hidden;
-}
-
-.login-theme-preview__brand {
-  padding: 24px;
-  color: #ffffff;
-  background:
-    linear-gradient(160deg, var(--login-brand-start, #1f4f9b) 0%, var(--login-brand-end, #17396f) 100%);
-}
-
-.login-theme-preview__logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  margin-top: 14px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.12);
-  overflow: hidden;
-}
-
-.login-theme-preview__logo img {
-  max-width: 56px;
-  max-height: 56px;
-  object-fit: contain;
-}
-
-.login-theme-preview__badge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: var(--login-brand-badge-bg, rgba(236, 244, 255, 0.14));
-  color: var(--login-brand-badge-text, #dceaff);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.login-theme-preview__brand h4 {
-  margin: 14px 0 8px;
-  font-size: 22px;
-}
-
-.login-theme-preview__subtitle,
-.login-theme-preview__description {
-  margin: 0;
-  line-height: 1.7;
-}
-
-.login-theme-preview__subtitle {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 14px;
-}
-
-.login-theme-preview__description {
-  margin-top: 10px;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 13px;
-}
-
-.login-theme-preview__card {
-  padding: 24px;
-  background: linear-gradient(180deg, var(--login-surface-soft, #f7fafd) 0%, #ffffff 100%);
-}
-
-.login-theme-preview__eyebrow {
-  color: var(--login-primary, #2f6fd6);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-}
-
-.login-theme-preview__button {
-  width: 100%;
-  min-height: 48px;
-  margin-top: 18px;
-  border: none;
-  border-radius: 14px;
-  background: linear-gradient(90deg, var(--login-primary-gradient-start, #E6B93C), var(--login-primary-gradient-end, #E38B3A));
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 600;
-}
-
 :deep(.el-form-item) {
   margin-bottom: 20px;
 }
@@ -622,11 +604,5 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-}
-
-@media (max-width: 960px) {
-  .login-theme-preview {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

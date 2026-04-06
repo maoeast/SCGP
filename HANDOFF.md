@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-06
+> last_updated: 2026-04-05
 
 > Responsibility: top-level handoff entry for new sessions.
 > Read when: entering the repo or resuming work and needing the fastest route to current context.
@@ -33,12 +33,12 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: login page galaxy background refinement has landed and is ready for runtime visual verification.**
+**Active follow-up work is now in `.continue-here.md`: login theme system extended with custom theme (background image upload, card opacity, button color picker), ready for runtime visual verification.**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is no longer milestone planning; it is login page visual/runtime closeout
+- current active task is login page theme system enhancement
 - first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

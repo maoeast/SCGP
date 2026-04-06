@@ -1,4 +1,4 @@
-export type LoginThemeVariant = 'warm-glow' | 'calm-blue'
+export type LoginThemeVariant = 'warm-glow' | 'calm-blue' | 'custom'
 
 export interface LoginThemePreset {
   label: string
@@ -58,6 +58,8 @@ export interface LoginThemePreset {
 export interface LoginThemeConfig {
   variant: LoginThemeVariant
   primaryColor: string
+  customBgImage?: string
+  cardBgOpacity?: number
 }
 
 export const DEFAULT_LOGIN_THEME_VARIANT: LoginThemeVariant = 'warm-glow'
@@ -198,6 +200,70 @@ export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = 
       'rgba(58, 152, 163, 0)',
     ],
   },
+  custom: {
+    label: '自定义',
+    primary: '#E6B93C',
+    primaryGradientStart: '#E6B93C',
+    primaryGradientEnd: '#c99a2e',
+    brandStart: '#f2c94c',
+    brandEnd: '#f2994a',
+    brandSoft: '#FFF8E7',
+    pageBg: '#1a1a2e',
+    badgeBackground: 'rgba(255, 255, 255, 0.15)',
+    badgeText: '#ffffff',
+    shellBg: '#1a1a2e',
+    shellVeil: 'linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%)',
+    layoutBg: 'rgba(255, 255, 255, 0.08)',
+    layoutBorder: 'rgba(255, 255, 255, 0.18)',
+    layoutShadow: '0 36px 100px rgba(0, 0, 0, 0.4)',
+    brandPanelBg:
+      'linear-gradient(160deg, #2d2d44 0%, #3a3a5c 100%)',
+    brandPanelText: '#ffffff',
+    brandBadgeText: '#ffffff',
+    brandTagline: 'rgba(255, 255, 255, 0.7)',
+    formPaneBg: 'rgba(255, 255, 255, 0.06)',
+    buttonShadow: 'rgba(230, 185, 60, 0.3)',
+    buttonDisabledStart: '#8a8a9a',
+    buttonDisabledEnd: '#7a7a8a',
+    galaxyBg: '#1a1a2e',
+    galaxyVignette: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.2) 100%)',
+    galaxyParticlePalette: [
+      'rgb(230, 185, 60)',
+      'rgb(200, 160, 40)',
+      'rgb(180, 140, 30)',
+      'rgb(255, 200, 60)',
+      'rgb(170, 130, 30)',
+      'rgb(210, 170, 50)',
+      'rgb(240, 195, 55)',
+      'rgb(190, 150, 35)',
+    ],
+    galaxyDustPalette: [
+      'rgb(230, 185, 60)',
+      'rgb(200, 160, 40)',
+      'rgb(180, 140, 30)',
+      'rgb(255, 200, 60)',
+      'rgb(170, 130, 30)',
+    ],
+    galaxyBaseGradient: '#1a1a2e',
+    galaxyLowerGlow: [
+      'rgba(230, 185, 60, 0.12)',
+      'rgba(230, 185, 60, 0.05)',
+      'rgba(230, 185, 60, 0)',
+    ],
+    galaxyMainGlow: [
+      'rgba(230, 185, 60, 0.14)',
+      'rgba(200, 160, 40, 0.12)',
+      'rgba(180, 140, 30, 0.06)',
+      'rgba(180, 140, 30, 0)',
+    ],
+    galaxyCoreGlow: [
+      'rgba(255, 255, 240, 0.9)',
+      'rgba(230, 210, 150, 0.86)',
+      'rgba(200, 170, 80, 0.64)',
+      'rgba(180, 140, 60, 0.34)',
+      'rgba(180, 140, 60, 0)',
+    ],
+  },
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -280,13 +346,19 @@ export function applyLoginThemeVariables(config: Partial<LoginThemeConfig> = {})
   const primary = normalizeHexColor(config.primaryColor, preset.primary)
   const style = document.documentElement.style
 
+  const isCustom = variant === 'custom'
+  // For custom theme, derive button gradient directly from user-selected primary color
+  const gradientStart = isCustom ? primary : preset.primaryGradientStart
+  const gradientEnd = isCustom ? mixHexColors(primary, '#000000', 0.18) : preset.primaryGradientEnd
+  const buttonShadow = isCustom ? colorToRgba(primary, 0.3) : preset.buttonShadow
+
   style.setProperty('--login-primary', primary)
   style.setProperty('--login-primary-hover', mixHexColors(primary, preset.brandStart, 0.22))
   style.setProperty('--login-primary-soft', mixHexColors(primary, '#ffffff', 0.88))
   style.setProperty('--login-primary-border', mixHexColors(primary, '#ffffff', 0.72))
   style.setProperty('--login-primary-ring', colorToRgba(primary, 0.18))
-  style.setProperty('--login-primary-gradient-start', preset.primaryGradientStart)
-  style.setProperty('--login-primary-gradient-end', preset.primaryGradientEnd)
+  style.setProperty('--login-primary-gradient-start', gradientStart)
+  style.setProperty('--login-primary-gradient-end', gradientEnd)
   style.setProperty('--login-page-bg', preset.pageBg)
   style.setProperty('--login-brand-start', preset.brandStart)
   style.setProperty('--login-brand-end', preset.brandEnd)
@@ -309,7 +381,12 @@ export function applyLoginThemeVariables(config: Partial<LoginThemeConfig> = {})
   style.setProperty('--login-brand-badge-text', preset.brandBadgeText)
   style.setProperty('--login-brand-tagline', preset.brandTagline)
   style.setProperty('--login-form-pane-bg', preset.formPaneBg)
-  style.setProperty('--login-button-shadow', preset.buttonShadow)
+  style.setProperty('--login-button-shadow', buttonShadow)
   style.setProperty('--login-button-disabled-start', preset.buttonDisabledStart)
   style.setProperty('--login-button-disabled-end', preset.buttonDisabledEnd)
+
+  // Custom theme extra variables
+  const cardOpacity = typeof config.cardBgOpacity === 'number' ? config.cardBgOpacity : 0.94
+  style.setProperty('--login-card-bg-opacity', String(clamp(cardOpacity, 0.3, 1.0)))
+  style.setProperty('--login-custom-bg-image', config.customBgImage ? `url(${config.customBgImage})` : 'none')
 }

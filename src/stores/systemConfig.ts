@@ -46,6 +46,8 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
   const loginThemeVariant = ref<LoginThemeVariant>(DEFAULT_LOGIN_THEME_VARIANT)
   const themePrimaryColor = ref(DEFAULT_LOGIN_PRIMARY_COLOR)
   const brandPanelDescription = ref(DEFAULT_BRAND_PANEL_DESCRIPTION)
+  const loginCustomBgImage = ref('')
+  const loginCardOpacity = ref(0.92)
   const loading = ref(false)
 
   // 计算属性：获取显示用的 Logo 路径（优先使用数据库中的，否则使用默认的）
@@ -67,6 +69,8 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
     applyLoginThemeVariables({
       variant: loginThemeVariant.value,
       primaryColor: themePrimaryColor.value,
+      customBgImage: loginCustomBgImage.value,
+      cardBgOpacity: loginCardOpacity.value,
     })
   }
 
@@ -81,6 +85,8 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
       loginThemeVariant.value = DEFAULT_LOGIN_THEME_VARIANT
       themePrimaryColor.value = DEFAULT_LOGIN_PRIMARY_COLOR
       brandPanelDescription.value = DEFAULT_BRAND_PANEL_DESCRIPTION
+      loginCustomBgImage.value = ''
+      loginCardOpacity.value = 0.92
 
       const { initDatabase } = await import('@/database/init')
       const db = await initDatabase()
@@ -123,6 +129,12 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
             break
           case 'brand_panel_description':
             brandPanelDescription.value = value || DEFAULT_BRAND_PANEL_DESCRIPTION
+            break
+          case 'login_custom_bg_image':
+            loginCustomBgImage.value = value || ''
+            break
+          case 'login_card_opacity':
+            loginCardOpacity.value = Math.min(Math.max(parseFloat(value) || 0.92, 0.3), 1.0)
             break
         }
       })
@@ -194,6 +206,12 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
         applyTheme()
       } else if (key === 'brand_panel_description') {
         brandPanelDescription.value = normalizedValue || DEFAULT_BRAND_PANEL_DESCRIPTION
+      } else if (key === 'login_custom_bg_image') {
+        loginCustomBgImage.value = normalizedValue
+        applyTheme()
+      } else if (key === 'login_card_opacity') {
+        loginCardOpacity.value = Math.min(Math.max(parseFloat(normalizedValue) || 0.92, 0.3), 1.0)
+        applyTheme()
       }
     } catch (error) {
       console.error('更新系统配置失败:', error)
@@ -209,6 +227,8 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
     loginThemeVariant,
     themePrimaryColor,
     brandPanelDescription,
+    loginCustomBgImage,
+    loginCardOpacity,
     displayLogoPath,
     displayLoginLogoPath,
     loading,
