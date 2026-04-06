@@ -64,6 +64,7 @@ const EMOTIONAL_GAME_TITLE_MAP: Record<EmotionGameCode, string> = {
   G03_FOREST: '音量魔法森林',
   G04_WIPE_ICE: '擦亮坏心情',
   G07_MONSTER: '喂食情绪小怪兽',
+  G08_ENERGY_BALL: '表情能量球',
 }
 
 function getActiveDb(): DbLike {
@@ -276,10 +277,68 @@ function normalizeTrainingRecord(row: any): EmotionalGameTrainingRecordItem {
   }
 }
 
+/**
+ * 运行时迁移: 如果 game_emotion_records 的 CHECK 约束不包含新游戏代码，重建表
+ * SQLite 不支持 ALTER CONSTRAINT，只能 rename → create → copy → drop
+ */
+function ensureGameCodeConstraint(rawDb: any, gameCode: string): void {
+  try {
+    // Probe: try a lightweight INSERT-then-ROLLBACK to test the constraint
+    rawDb.run('SAVEPOINT _constraint_probe')
+    try {
+      rawDb.run(
+        `INSERT INTO game_emotion_records (student_id, game_code, start_time, duration_ms, difficulty_level, completion_status, performance_data)
+         VALUES (-1, ?, '', 0, 1, 'aborted', '{}')`,
+        [gameCode],
+      )
+      // Constraint accepts this game code — no migration needed
+      rawDb.run('ROLLBACK TO _constraint_probe')
+      rawDb.run('RELEASE _constraint_probe')
+      return
+    } catch {
+      rawDb.run('ROLLBACK TO _constraint_probe')
+      rawDb.run('RELEASE _constraint_probe')
+    }
+
+    // Constraint rejected → rebuild the table
+    console.log(`[EmotionalGamesAPI] 迁移 game_emotion_records 以支持 ${gameCode}`)
+    rawDb.run('ALTER TABLE game_emotion_records RENAME TO _game_emotion_records_old')
+    rawDb.run(`
+      CREATE TABLE game_emotion_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        game_code TEXT NOT NULL
+          CHECK(game_code IN ('G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER', 'G08_ENERGY_BALL')),
+        start_time TEXT NOT NULL,
+        duration_ms INTEGER NOT NULL,
+        difficulty_level INTEGER DEFAULT 1
+          CHECK(difficulty_level IN (1, 2, 3)),
+        completion_status TEXT NOT NULL
+          CHECK(completion_status IN ('completed', 'aborted')),
+        performance_data TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES student(id)
+      )
+    `)
+    rawDb.run(`INSERT INTO game_emotion_records SELECT * FROM _game_emotion_records_old`)
+    rawDb.run('DROP TABLE _game_emotion_records_old')
+    rawDb.run(`CREATE INDEX IF NOT EXISTS idx_game_emotion_records_student ON game_emotion_records(student_id, created_at DESC)`)
+    rawDb.run(`CREATE INDEX IF NOT EXISTS idx_game_emotion_records_code ON game_emotion_records(game_code, created_at DESC)`)
+    console.log('[EmotionalGamesAPI] ✅ game_emotion_records 迁移完成')
+  } catch (err) {
+    console.error('[EmotionalGamesAPI] ❌ game_emotion_records 迁移失败:', err)
+    throw err
+  }
+}
+
 export class EmotionalGamesAPI {
   async persistSession(input: PersistEmotionGameSessionInput): Promise<PersistEmotionGameSessionResult> {
     const db = getActiveDb()
     const rawDb = getRawDb(db)
+
+    // Ensure the CHECK constraint supports this game code
+    ensureGameCodeConstraint(rawDb, input.gameCode)
+
     const student = db.get(
       'SELECT current_class_id, current_class_name FROM student WHERE id = ?',
       [input.studentId]

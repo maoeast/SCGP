@@ -3091,8 +3091,50 @@ async function initializeSysTables(rawDb: any): Promise<void> {
  */
 async function initializeEmotionalTables(rawDb: any): Promise<void> {
   rawDb.run(emotionalSchemaSQL)
+  migrateEmotionalGameCodeConstraint(rawDb)
   await initializeTeachingMaterialTables(rawDb)
   clearLegacyTeachingMaterialData(rawDb)
+}
+
+/**
+ * 迁移: 扩展 game_emotion_records.game_code CHECK 约束以支持 G08_ENERGY_BALL
+ *
+ * SQLite 不支持 ALTER CONSTRAINT，需要重建表。
+ * 仅在检测到旧约束时执行（安全幂等）。
+ */
+function migrateEmotionalGameCodeConstraint(rawDb: any): void {
+  try {
+    const testRow = rawDb.exec(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='game_emotion_records'"
+    )
+    const createSql = testRow?.[0]?.values?.[0]?.[0] as string | undefined
+    if (createSql && createSql.includes('G07_MONSTER') && !createSql.includes('G08_ENERGY_BALL')) {
+      rawDb.run('ALTER TABLE game_emotion_records RENAME TO _game_emotion_records_old')
+      rawDb.run(`
+        CREATE TABLE game_emotion_records (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          student_id INTEGER NOT NULL,
+          game_code TEXT NOT NULL
+            CHECK(game_code IN ('G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER', 'G08_ENERGY_BALL')),
+          start_time TEXT NOT NULL,
+          duration_ms INTEGER NOT NULL,
+          difficulty_level INTEGER DEFAULT 1
+            CHECK(difficulty_level IN (1, 2, 3)),
+          completion_status TEXT NOT NULL
+            CHECK(completion_status IN ('completed', 'aborted')),
+          performance_data TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (student_id) REFERENCES student(id)
+        )
+      `)
+      rawDb.run(`INSERT INTO game_emotion_records SELECT * FROM _game_emotion_records_old`)
+      rawDb.run('DROP TABLE _game_emotion_records_old')
+      rawDb.run(`CREATE INDEX IF NOT EXISTS idx_game_emotion_records_student ON game_emotion_records(student_id, created_at DESC)`)
+      rawDb.run(`CREATE INDEX IF NOT EXISTS idx_game_emotion_records_code ON game_emotion_records(game_code, created_at DESC)`)
+    }
+  } catch {
+    // Table doesn't exist yet — schema.sql will create it with correct constraints
+  }
 }
 
 async function initializeTeachingMaterialTables(rawDb: any): Promise<void> {

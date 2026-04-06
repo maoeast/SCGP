@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS game_emotion_records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
   game_code TEXT NOT NULL
-    CHECK(game_code IN ('G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER')),
+    CHECK(game_code IN ('G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER', 'G08_ENERGY_BALL')),
   start_time TEXT NOT NULL,
   duration_ms INTEGER NOT NULL,
   difficulty_level INTEGER DEFAULT 1
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS student_badges (
   badge_code TEXT NOT NULL,
   badge_name TEXT NOT NULL,
   game_code TEXT NOT NULL
-    CHECK(game_code IN ('G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER')),
+    CHECK(game_code IN ('G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER', 'G08_ENERGY_BALL')),
   unlock_count INTEGER DEFAULT 1,
   first_earned_at TEXT DEFAULT CURRENT_TIMESTAMP,
   last_earned_at TEXT DEFAULT CURRENT_TIMESTAMP,

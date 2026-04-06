@@ -3,6 +3,7 @@ export type EmotionGameCode =
   | 'G03_FOREST'
   | 'G04_WIPE_ICE'
   | 'G07_MONSTER'
+  | 'G08_ENERGY_BALL'
 
 export type EmotionGameDifficulty = 1 | 2 | 3
 

@@ -48,6 +48,7 @@ const BalloonBreathingPage = () => import('@/views/emotional/games/BalloonBreath
 const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
 const WipeSadnessPage = () => import('@/views/emotional/games/WipeSadnessPage.vue')
 const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterPage.vue')
+const EnergyBallPage = () => import('@/views/emotional/games/EnergyBallPage.vue')
 
 // 训练记录模块（Phase 4.6 重构）
 const TrainingRecordsMenu = () => import('@/views/training-records/TrainingRecordsMenu.vue')
@@ -322,6 +323,16 @@ const router = createRouter({
           component: EmotionMonsterPage,
           meta: {
             title: '喂食情绪小怪兽',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/games/energy-ball',
+          name: 'EnergyBallGame',
+          component: EnergyBallPage,
+          meta: {
+            title: '表情能量球',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }
