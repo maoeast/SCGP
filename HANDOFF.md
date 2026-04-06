@@ -33,12 +33,12 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: login theme system extended with custom theme (background image upload, card opacity, button color picker), ready for runtime visual verification.**
+**Active follow-up work is now in `.continue-here.md`: emotional `care_scene / 表达关心` training UI redesign is in progress, with persistent scene panel, guided 3-step support UI, and runtime-generated `receiverName / emotionChips / comfortTip`.**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is login page theme system enhancement
+- current active task is emotional `care_scene` guided training redesign
 - first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
