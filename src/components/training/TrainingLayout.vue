@@ -88,9 +88,8 @@ const backgroundStyle = computed(() => {
   display: flex;
   flex-direction: column;
   background:
-    linear-gradient(180deg, rgb(15 23 42 / 32%) 0%, rgb(15 23 42 / 56%) 100%),
-    rgb(0 0 0 / 40%);
-  backdrop-filter: blur(8px);
+    linear-gradient(180deg, rgb(15 23 42 / 12%) 0%, rgb(15 23 42 / 8%) 36%, rgb(0 0 0 / 44%) 100%),
+    rgb(0 0 0 / 18%);
 }
 
 .training-header {
@@ -113,9 +112,8 @@ const backgroundStyle = computed(() => {
   gap: 10px;
   padding: 12px 16px;
   border-radius: 999px;
-  background: rgb(255 255 255 / 14%);
+  background: rgb(15 23 42 / 26%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
-  backdrop-filter: blur(14px);
 }
 
 .progress-pill {
@@ -171,7 +169,6 @@ const backgroundStyle = computed(() => {
   box-shadow:
     inset 0 0 0 1px rgb(255 255 255 / 18%),
     0 14px 28px rgb(15 23 42 / 28%);
-  backdrop-filter: blur(14px);
   transition:
     transform 0.2s ease,
     background-color 0.2s ease;

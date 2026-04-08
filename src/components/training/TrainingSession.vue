@@ -17,11 +17,7 @@
 
     <SceneIntroStep v-else-if="store.currentStepIndex === 0" />
 
-    <div v-else-if="store.currentStepIndex >= 1 && store.currentStepIndex <= 4" class="question-placeholder">
-      <span class="placeholder-kicker">Step {{ store.currentStepIndex }}</span>
-      <h2>答题区占位</h2>
-      <p>{{ store.parsedQuestionText || '下一阶段将在这里接入正式的答题交互。' }}</p>
-    </div>
+    <QuestionStep v-else-if="store.currentStepIndex >= 1 && store.currentStepIndex <= 4" />
 
     <div v-else class="question-placeholder is-finished">
       <span class="placeholder-kicker">Session End</span>
@@ -38,6 +34,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ExitConfirmDialog from '@/components/training/ExitConfirmDialog.vue'
+import QuestionStep from '@/components/training/QuestionStep.vue'
 import SceneIntroStep from '@/components/training/SceneIntroStep.vue'
 import TrainingLayout from '@/components/training/TrainingLayout.vue'
 import { useTrainingStore } from '@/stores/useTrainingStore'

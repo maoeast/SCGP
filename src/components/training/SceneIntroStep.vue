@@ -97,11 +97,10 @@ onBeforeUnmount(() => {
   max-width: min(100%, 240px);
   padding: 14px 18px;
   border-radius: 20px;
-  background: rgb(15 23 42 / 36%);
+  background: rgb(15 23 42 / 28%);
   box-shadow:
     inset 0 0 0 1px rgb(255 255 255 / 16%),
     0 18px 36px rgb(15 23 42 / 26%);
-  backdrop-filter: blur(16px);
 }
 
 .name-badge-label {
@@ -130,11 +129,10 @@ onBeforeUnmount(() => {
   max-width: 760px;
   padding: 28px 30px;
   border-radius: 32px;
-  background: linear-gradient(180deg, rgb(15 23 42 / 48%) 0%, rgb(15 23 42 / 28%) 100%);
+  background: linear-gradient(180deg, rgb(15 23 42 / 34%) 0%, rgb(15 23 42 / 18%) 100%);
   box-shadow:
     inset 0 0 0 1px rgb(255 255 255 / 12%),
     0 28px 60px rgb(15 23 42 / 24%);
-  backdrop-filter: blur(18px);
 }
 
 .intro-kicker {

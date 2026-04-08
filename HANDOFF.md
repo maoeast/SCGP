@@ -33,7 +33,7 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: emotion-scene immersive full-screen refactor Phase 4 shell has landed (`src/db/` prototype data layer + `useTrainingStore` + TTS / SFX abstraction + `TrainingSession` / `TrainingLayout` / `SceneIntroStep`), and the next concrete follow-up is Phase 5 dynamic question-step UI.**
+**Active follow-up work is now in `.continue-here.md`: emotion-scene immersive full-screen refactor Phase 5 dynamic question flow has landed (`QuestionPresenter` / `QuestionStep` / `OptionBoard` + real option feedback + lighter background overlay), and the next concrete follow-up is Step 5 result-page integration.**
 
 ## Next Session
 

@@ -1022,3 +1022,56 @@
 - 当前下一步已明确：
   - 开始 Phase 5
   - 第一个动作是创建 Step 1~4 共用的动态答题组件，渲染 `store.currentStepData.options` 并接上 `recordAnswer()` / `nextStep()` 最小闭环
+
+## 32. 2026-04-08 Emotion-Scene Fullscreen Refactor Phase 5 Dynamic Question Flow Landed
+
+- 针对 `docs/planning/情绪场景训练全屏沉浸式重构PRD.md` 的 Phase 5，仓库中已新增真实答题组件：
+  - `src/components/training/QuestionPresenter.vue`
+  - `src/components/training/ImageOptionCard.vue`
+  - `src/components/training/TextOptionBlock.vue`
+  - `src/components/training/OptionBoard.vue`
+  - `src/components/training/QuestionStep.vue`
+  - `src/components/training/training-feedback-sfx.ts`
+- 当前 Phase 5 已落地的运行时闭环：
+  - `src/components/training/TrainingSession.vue` 已用 `QuestionStep` 替换 Step 1~4 占位
+  - `emotion` 题会渲染图片 / 表情卡
+  - `reason / need / response` 会渲染文字选项块
+  - 点击错误选项会执行：
+    - `store.inputLocked = true`
+    - 错误音效
+    - 红框 + `shake`
+    - `store.recordError(...)`
+    - 动画结束后恢复当前题点击
+  - 点击正确选项会执行：
+    - `store.inputLocked = true`
+    - 正确音效
+    - 绿框 + 勾选态
+    - `store.recordAnswer(...)`
+    - 延时 `store.nextStep()`
+  - `QuestionPresenter.vue` 已接入 `store.parsedQuestionText`
+    - 当前存在 `VITE_EDGE_TTS_ENDPOINT` 时会尝试自动播报
+    - 无 endpoint 时会降级为不可播报态，不阻塞训练
+- 当前新增的重要 UI / 交互边界：
+  - `options.feedback_text` 现在必须被视为当前训练流程的一等反馈信息
+  - 每次点击选项后，页面中央都会显示高对比度反馈气泡
+  - 当前气泡已按用户实测要求改为**常驻显示**
+    - 只会在“再次点击其他选项”或“切换到下一题”时消失 / 被覆盖
+  - 当前背景遮罩策略已收口：
+    - `TrainingLayout.vue` 与 `SceneIntroStep.vue` 已移除 `backdrop-blur`
+    - 优先保证儿童能清晰看到完整场景照片
+    - 文本可读性主要靠轻量顶部透明 + 底部加深渐变维持
+- 当前新增的重要实现边界：
+  - 由于仓库里当前没有现成的答题反馈音频资源，`training-feedback-sfx.ts` 先使用内置 data URI 短提示音驱动 `useSound`
+  - 这属于原型级过渡实现，不应误写成“正式音频资产体系已完成”
+- 当前验证现实：
+  - 用户已完成实际交互测试
+  - 当前用户明确确认：
+    - 背景遮罩问题已修正
+    - `feedback_text` 常驻提示行为已正常
+  - 仓库级 `npm run type-check` 仍被历史旧错误阻塞，位置不变：
+    - `src/components/emotional/games/EnergyBallGame.vue`
+    - `src/components/emotional/games/VisualSupportOverlay.vue`
+    - `src/composables/useEmotionDetector.ts`
+- 当前下一步已明确：
+  - 开始补 Step 5 结算页
+  - 第一个动作是创建真正的结果页组件，把 `calculateStars()`、`saveRecord()` 和返回 / 重玩动作接到当前训练链
