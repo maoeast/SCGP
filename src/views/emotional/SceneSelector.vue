@@ -952,11 +952,13 @@ async function loadScenes() {
 }
 
 function launchScene(resourceId: number) {
+  const scene = filteredScenes.value.find((item) => item.id === resourceId)
   router.push({
     path: trainingPath.value,
     query: {
       ...inheritedQuery.value,
       resourceId: String(resourceId),
+      sceneCode: scene?.resourceCode || '',
     },
   })
 }

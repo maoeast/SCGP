@@ -1,5 +1,5 @@
 import { ref, shallowRef } from 'vue'
-import initSqlJs from 'sql.js'
+import sqlWasmScriptUrl from 'sql.js/dist/sql-wasm.js?url'
 import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url'
 
 import defaultSchemaSql from './schema.sql?raw'
@@ -24,6 +24,8 @@ interface SqlModule {
   Database: new (data?: Uint8Array) => SqlDatabase
 }
 
+type InitSqlJsLoader = (config?: { locateFile?: (fileName: string) => string }) => Promise<SqlModule>
+
 export interface InitDatabaseOptions {
   data?: Uint8Array | ArrayBuffer | null
   schemaSql?: string
@@ -32,11 +34,60 @@ export interface InitDatabaseOptions {
 
 let sqlModulePromise: Promise<SqlModule> | null = null
 
+async function loadSqlInitializer(): Promise<InitSqlJsLoader> {
+  const response = await fetch(sqlWasmScriptUrl)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch sql.js runtime script: ${response.status} ${response.statusText}`)
+  }
+
+  const source = await response.text()
+  const module = { exports: {} as Record<string, unknown> }
+  const evaluator = new Function(
+    'module',
+    'exports',
+    'define',
+    `${source}\nreturn module.exports;`,
+  ) as (
+    module: { exports: Record<string, unknown> },
+    exports: Record<string, unknown>,
+    define: undefined,
+  ) => Record<string, unknown>
+
+  const exported = evaluator(module, module.exports, undefined)
+  const initSqlJs = (
+    exported as {
+      default?: InitSqlJsLoader
+      initSqlJs?: InitSqlJsLoader
+      Module?: InitSqlJsLoader
+    }
+  ).default ?? (
+    exported as {
+      default?: InitSqlJsLoader
+      initSqlJs?: InitSqlJsLoader
+      Module?: InitSqlJsLoader
+    }
+  ).initSqlJs ?? (
+    exported as {
+      default?: InitSqlJsLoader
+      initSqlJs?: InitSqlJsLoader
+      Module?: InitSqlJsLoader
+    }
+  ).Module
+
+  if (typeof initSqlJs !== 'function') {
+    throw new Error('Failed to resolve sql.js initializer from runtime script')
+  }
+
+  return initSqlJs
+}
+
 async function loadSqlModule(): Promise<SqlModule> {
   if (!sqlModulePromise) {
-    sqlModulePromise = initSqlJs({
-      locateFile: () => sqlWasmUrl,
-    }) as Promise<SqlModule>
+    sqlModulePromise = loadSqlInitializer().then((initSqlJs) => {
+      return initSqlJs({
+        locateFile: () => sqlWasmUrl,
+      })
+    })
   }
 
   return sqlModulePromise

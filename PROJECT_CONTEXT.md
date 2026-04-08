@@ -986,3 +986,39 @@
 - 当前下一步已明确：
   - 开始 Phase 4
   - 第一个动作是先创建 `TrainingSession.vue` 和 `TrainingLayout.vue`，把 `useTrainingStore` 接到 intro 壳子与退出弹窗
+
+## 31. 2026-04-08 Emotion-Scene Fullscreen Refactor Phase 4 UI Shell Landed
+
+- 针对 `docs/planning/情绪场景训练全屏沉浸式重构PRD.md` 的 Phase 4，仓库中已新增全屏 UI 壳子：
+  - `src/components/training/ExitConfirmDialog.vue`
+  - `src/components/training/TrainingLayout.vue`
+  - `src/components/training/SceneIntroStep.vue`
+  - `src/components/training/TrainingSession.vue`
+- 当前 Phase 4 已落地的入口改动：
+  - `src/views/emotional/EmotionSceneTraining.vue` 当前已直接渲染 `TrainingSession`
+  - `src/views/emotional/SceneSelector.vue` 进入训练时会额外透传 `sceneCode`
+- 当前已验证通过的运行时闭环：
+  - 新训练页可初始化 `src/db/` 原型库
+  - 可按 `sceneCode` 成功加载真实 80 条 `emotion_scene` 中的任一场景
+  - `TrainingLayout` 可显示场景背景图、进度占位与退出按钮
+  - `SceneIntroStep` 可显示角色名、引导文案与 mock clues，并通过 `store.nextStep()` 进入 Step 1
+  - Step 1 页面已能显示来自原型库的 `parsedQuestionText`
+- 当前重要边界：
+  - Phase 4 只交付了全屏壳子与引导页，**没有**交付 Step 1~4 的正式答题组件
+  - 当前 `currentStepIndex = 1..4` 仍渲染“答题区占位”，不要误写成完整训练流程已交付
+  - 当前 `/emotional/emotion-scene` 已被原型链暂时接管；这是一种过渡态，不是旧主线完全退场的正式结论
+- 当前新增的重要兼容约束：
+  - `src/db/useDatabase.ts` 当前不能直接依赖 `sql.js` 包入口的默认导出
+  - 原因：在当前 Vite 浏览器运行时中，`sql-wasm-browser.js` 的默认导出与 `import('sql.js')` 返回形态都已实际复现不稳定
+  - 当前处理：运行时加载 `sql.js/dist/sql-wasm.js` 脚本文本，并手动执行 CommonJS 包装后解析 initializer
+  - 这属于原型链兼容层；后续若升级 `sql.js` / Vite 或引入更稳定封装，应优先收口
+- 当前验证现实：
+  - 新训练页已可进入，不再因 `sql.js` 默认导出错误而白屏
+  - 页面截图已确认：点击 intro 后可进入 Step 1，但当前只显示“答题区占位”
+  - 仓库级 `npm run type-check` 仍被历史旧错误阻塞，位置不变：
+    - `src/components/emotional/games/EnergyBallGame.vue`
+    - `src/components/emotional/games/VisualSupportOverlay.vue`
+    - `src/composables/useEmotionDetector.ts`
+- 当前下一步已明确：
+  - 开始 Phase 5
+  - 第一个动作是创建 Step 1~4 共用的动态答题组件，渲染 `store.currentStepData.options` 并接上 `recordAnswer()` / `nextStep()` 最小闭环
