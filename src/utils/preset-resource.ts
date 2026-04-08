@@ -6,6 +6,8 @@ const LEGACY_PREFIX_MAPPINGS: Array<{ source: string; target: string }> = [
   { source: 'assets/resources/', target: '' },
   { source: '/assets/scenes/', target: 'images/emotional-scenes/' },
   { source: 'assets/scenes/', target: 'images/emotional-scenes/' },
+  { source: '/assets/care_scenes/', target: 'images/care-scenes/' },
+  { source: 'assets/care_scenes/', target: 'images/care-scenes/' },
   { source: '/images/', target: 'images/' },
   { source: 'images/', target: 'images/' },
   { source: '/docs/', target: 'docs/' },
