@@ -33,12 +33,12 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: `emotion_scene` 80-scene and `care_scene` 60-scene top-level image paths are both normalized to preset resource strategy; the next concrete follow-up is `care_scene` runtime display verification.**
+**Active follow-up work is now in `.continue-here.md`: emotion-scene immersive full-screen refactor Phase 1 data layer has landed (`src/db/schema.sql` + real 80-scene migration + verification scripts), and the next concrete follow-up is Phase 1 structure review before starting Phase 2 Pinia Store.**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is emotional scene-image preset path verification for `care_scene` runtime display
+- current active task is emotion-scene immersive refactor Phase 1 review / handoff
 - first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

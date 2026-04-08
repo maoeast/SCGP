@@ -878,3 +878,38 @@
   - `emotion_scene` 和 `care_scene` 两条资源链已统一到同一套预置资源策略
   - `assets/care_scenes/` 原始素材目录未提交到主线，运行时只消费 `assets/resources/images/care-scenes/` 中的规范化副本
   - `care_scene` AI 配图端到端联调仍然未跑完
+
+## 29. 2026-04-08 Emotion-Scene Fullscreen Refactor Phase 1 Prototype Boundary
+
+- 针对 `docs/planning/情绪场景训练全屏沉浸式重构PRD.md` 的 Phase 1，仓库中已新增一套**独立原型数据层**：
+  - `src/db/schema.sql`
+  - `src/db/migrateLegacyData.ts`
+  - `src/db/useDatabase.ts`
+- 当前重要边界：
+  - 这是为全屏沉浸式重构准备的 Phase 1 原型链
+  - **不是**当前产品主线 `src/database/` 的替代品
+  - 当前情绪模块运行时主线仍然是现有 `sys_training_resource + metadata JSON + emotional engine`
+- 当前真实 80 条 `emotion_scene` 已可通过迁移脚本投影到新关系表：
+  - source of truth:
+    - `docs/references/current-emotion-scenes-export.json`
+  - generated support file:
+    - `docs/references/emotion-scene-character-names.json`
+- 当前 Phase 1 迁移策略已明确：
+  - 历史真实数据只原生提供 `cause / need` 两类 prompt
+  - Step 1 `emotion` 与 Step 4 `response` 在迁移时动态补齐
+  - 历史题干在迁移层统一收口为 `{name}` 占位符
+  - `character_name` 通过 `scene_code -> character_name` 映射补齐；缺失时默认 `小朋友`
+- 当前 `hints` 的重要边界：
+  - `hints` 表在 Phase 1 仅保留结构
+  - 当前真实 80 场景没有 prompt 级 hint 文本
+  - 前端后续应使用 `recommended_hint_ceiling` + 通用 hint 话术兜底，而不是假设 DB 已有具体 hint 内容
+- 当前验证现实：
+  - `scripts/verify-emotion-scene-phase1.mjs` 已通过
+  - 迁移结果为：
+    - `80` scenes
+    - `240` clues
+    - `320` steps
+    - `1040` options
+- 当前下一步已明确：
+  - 等待用户确认 Phase 1 数据结构
+  - Phase 2 第一个动作将是起 `Pinia Store` 骨架，而不是继续修改 Schema

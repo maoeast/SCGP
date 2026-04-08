@@ -19,6 +19,8 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "type-check:emotional": "vue-tsc --noEmit -p tsconfig.emotional.json",
+    "refresh:emotion-scene-names": "node scripts/refresh-emotion-scene-character-names.mjs",
+    "verify:emotion-scene-phase1": "node scripts/verify-emotion-scene-phase1.mjs",
     "lint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
     "electron": "electron .",
