@@ -33,12 +33,12 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: emotion-scene immersive full-screen refactor Phase 1 data layer has landed (`src/db/schema.sql` + real 80-scene migration + verification scripts), and the next concrete follow-up is Phase 1 structure review before starting Phase 2 Pinia Store.**
+**Active follow-up work is now in `.continue-here.md`: emotion-scene immersive full-screen refactor Phase 1~3 have landed (`src/db/` prototype data layer + `useTrainingStore` + TTS / SFX abstraction), and the next concrete follow-up is Phase 4 UI skeleton.**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is emotion-scene immersive refactor Phase 1 review / handoff
+- current active task is emotion-scene immersive refactor Phase 4 preparation / handoff
 - first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

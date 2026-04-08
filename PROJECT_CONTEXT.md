@@ -913,3 +913,76 @@
 - 当前下一步已明确：
   - 等待用户确认 Phase 1 数据结构
   - Phase 2 第一个动作将是起 `Pinia Store` 骨架，而不是继续修改 Schema
+
+## 30. 2026-04-08 Emotion-Scene Fullscreen Refactor Phase 2-3 State and Media Foundation
+
+- 针对 `docs/planning/情绪场景训练全屏沉浸式重构PRD.md` 的 Phase 2，仓库中已新增核心状态机：
+  - `src/stores/useTrainingStore.ts`
+- 当前 `useTrainingStore` 已落地的核心能力：
+  - `currentStepIndex` 采用 PRD 明确口径：
+    - `0 = 引导`
+    - `1-4 = 四个答题步骤`
+    - `5 = 结算`
+  - 已接入：
+    - `scene`
+    - `steps`
+    - `hintLevelPerStep`
+    - `answers`
+    - `inputLocked`
+    - `isTransitioning`
+    - `isExitModalVisible`
+    - `availableTTSEngine`
+  - 已实现：
+    - `currentStepData`
+    - `parsedQuestionText`
+    - `loadScene(sceneCode)`
+    - `nextStep()`
+    - `recordError()`
+    - `recordAnswer()`
+    - `calculateStars()`
+    - `saveRecord()`
+    - `toggleExitModal()`
+    - `exitTraining()`
+    - `forceNext()`
+    - `forceReset()`
+    - `forceEnd()`
+- 当前重要状态边界：
+  - `forceReset()` 只重置当前步骤错误计数，不重置整个训练流程
+  - `parsedQuestionText` 是 `{name}` 占位符替换后的唯一题干出口，后续 UI 与 TTS 都应消费它，而不是消费原始 DB 文本
+  - Store 内已预留 `watch(currentStepIndex, ...)` 的 TTS 中断占位；真正 TTS 接线尚未开始
+- 针对 PRD 的 Phase 3，仓库中已新增媒体抽象层：
+  - `src/services/tts/ITTSService.ts`
+  - `src/services/tts/EdgeTTSService.ts`
+  - `src/services/tts/index.ts`
+  - `src/composables/useSound.ts`
+- 当前 Phase 3 已落地的技术事实：
+  - 已引入 `Howler` 作为全局 SFX 基础依赖
+  - `ITTSService` 已支持：
+    - `play(text, signal?)`
+    - `stop()`
+    - `pause()`
+    - `resume()`
+    - `isAvailable(signal?)`
+  - `EdgeTTSService` 已支持：
+    - `AbortSignal` 中断
+    - 播放前自动停止旧实例
+    - `audioUrl` 和 `audioBase64` 双返回形态兼容
+    - `ObjectURL` 生命周期释放
+  - `useSound` 已提供：
+    - 惰性创建 `Howl`
+    - `play / stop / pause / resume`
+    - `fade / mute / setVolume`
+    - `stopAll / muteAll / setGlobalVolume`
+- 当前重要媒体边界：
+  - Phase 3 只完成前端抽象层，并未完成 `EdgeTTS -> Electron / 本地服务` 的真实接口对接
+  - 当前没有 `CosyVoice` 或 `WebSpeech` fallback 实现；只是为后续扩展预留了 `availableTTSEngine` 状态位
+  - 当前也还没有把 `useSound` 接入情绪场景训练的新页面触发点
+- 当前验证现实：
+  - 本轮新增代码相关的 TypeScript 报错已收敛
+  - 仓库级 `npm run type-check` 仍被历史旧错误阻塞，主要位置：
+    - `src/components/emotional/games/EnergyBallGame.vue`
+    - `src/components/emotional/games/VisualSupportOverlay.vue`
+    - `src/composables/useEmotionDetector.ts`
+- 当前下一步已明确：
+  - 开始 Phase 4
+  - 第一个动作是先创建 `TrainingSession.vue` 和 `TrainingLayout.vue`，把 `useTrainingStore` 接到 intro 壳子与退出弹窗
