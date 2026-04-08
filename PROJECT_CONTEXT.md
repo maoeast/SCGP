@@ -1075,3 +1075,23 @@
 - 当前下一步已明确：
   - 开始补 Step 5 结算页
   - 第一个动作是创建真正的结果页组件，把 `calculateStars()`、`saveRecord()` 和返回 / 重玩动作接到当前训练链
+
+## 33. 2026-04-08 Care-Scene Immersive Refactor Planning Boundary
+
+- 当前 `care_scene` 的现实仍然是：
+  - 入口：`src/views/emotional/CareExpressionTraining.vue`
+  - 运行时主链：`src/components/emotional/engine/EmotionalInteractionEngine.vue`
+  - 当前尚未接入新的 `src/components/training/*` 沉浸式链路
+- 本轮已新增两份当前有效的实施文档：
+  - `docs/planning/2026-04-08-care-scene-immersive-refactor-plan.md`
+  - `docs/plans/2026-04-08-care-scene-immersive-execution-plan.md`
+- 当前已明确的重要边界：
+  - `care_scene` 可以改造成与 `emotion_scene` 一致的沉浸式全屏体验
+  - 但**不应**把 `care_scene` 生硬塞进当前 `emotion_scene` 四步原型表
+  - 正确路线应是：
+    - 先完成并验收 `emotion_scene` 沉浸式链路
+    - 再抽通用沉浸式运行时
+    - 再启动 `care_scene` 代码改造
+- 当前下一步优先级保持不变：
+  - 先补 `emotion_scene` Step 5 结算页
+  - `care_scene` 暂不进入实现阶段
