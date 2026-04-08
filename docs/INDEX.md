@@ -31,6 +31,8 @@
 - [2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
 - [2026-03-13-scgp-current-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-13-scgp-current-prd.md)
 - [2026-03-16-emotional-module-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-16-emotional-module-prd.md)
+- [情绪场景训练全屏沉浸式重构PRD.md](./planning/情绪场景训练全屏沉浸式重构PRD.md)
+- [2026-04-08-care-scene-immersive-refactor-plan.md](./planning/2026-04-08-care-scene-immersive-refactor-plan.md)
 - [2026-04-02-page-style-unification-todo.md](./planning/2026-04-02-page-style-unification-todo.md)
 - [2026-04-01-unified-training-record-schema-plan.md](/home/DONG/Mycode/SCGP/docs/planning/2026-04-01-unified-training-record-schema-plan.md)
 - [2026-03-12-emotional-module-execution-prompt.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-12-emotional-module-execution-prompt.md)
@@ -43,6 +45,7 @@
 
 - [2026-03-13-scgp-executable-roadmap.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-13-scgp-executable-roadmap.md)
 - [2026-03-12-emotional-module-implementation-plan.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-12-emotional-module-implementation-plan.md)
+- [2026-04-08-care-scene-immersive-execution-plan.md](./plans/2026-04-08-care-scene-immersive-execution-plan.md)
 - [2026-03-12-emotional-module-gsd-execution-sequence.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-12-emotional-module-gsd-execution-sequence.md)
 - [2026-02-04-equipment-training-module.md](/home/DONG/Mycode/SCGP/docs/plans/2026-02-04-equipment-training-module.md)
 - [2025-02-05-refactor-implementation-plan.md（历史实施计划）](/home/DONG/Mycode/SCGP/docs/plans/2025-02-05-refactor-implementation-plan.md)
