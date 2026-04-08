@@ -23,6 +23,7 @@ import {
   normalizeEmotionalBaseEmotion,
   normalizeEmotionalBaseEmotionList,
 } from '@/features/emotional/emotion-catalog'
+import { normalizePresetResourcePathForStorage } from '@/utils/preset-resource'
 
 export const DEFAULT_EMOTION_OPTIONS: EmotionalBaseEmotion[] = [...EMOTIONAL_BASE_EMOTIONS]
 export const EMOTION_COLOR_PRESETS = SHARED_EMOTION_COLOR_PRESETS
@@ -270,7 +271,7 @@ export function normalizeEmotionSceneEditorModel(
   return {
     sceneCode: normalizeString(model?.sceneCode, `emotion_scene_${Date.now()}`),
     title: normalizeString(model?.title, resourceName || '新的情绪场景'),
-    imageUrl: normalizeString(model?.imageUrl),
+    imageUrl: normalizePresetResourcePathForStorage(model?.imageUrl),
     difficultyLevel: normalizeDifficultyLevel(model?.difficultyLevel),
     targetEmotion,
     sceneDomain: normalizeSceneDomain(model?.sceneDomain),
@@ -391,7 +392,7 @@ export function normalizeCareSceneEditorModel(
   return enrichCareSceneGeneratedFields({
     sceneCode: normalizeString(model?.sceneCode, `care_scene_${Date.now()}`),
     title: normalizeString(model?.title, resourceName || '新的表达关心场景'),
-    imageUrl: normalizeString(model?.imageUrl),
+    imageUrl: normalizePresetResourcePathForStorage(model?.imageUrl),
     difficultyLevel: normalizeDifficultyLevel(model?.difficultyLevel),
     careType: normalizeCareType(model?.careType, 'empathy'),
     receiverEmotion,

@@ -301,6 +301,7 @@ import {
   normalizeCareSceneEditorModel,
   normalizeEmotionSceneEditorModel,
 } from '@/views/resource-center/editors/emotional-resource-contract'
+import { isDisplayImageLike, resolvePresetResourceUrl } from '@/utils/preset-resource'
 
 interface SceneCard {
   id: number
@@ -865,11 +866,11 @@ function resolveCover(value: string | undefined, fallbackEmoji: string) {
   }
 
   const trimmed = value.trim()
-  const looksLikeUrl = trimmed.includes('://') || trimmed.startsWith('/') || trimmed.startsWith('data:') || /\.(png|jpe?g|gif|webp|svg)$/i.test(trimmed)
+  const looksLikeUrl = isDisplayImageLike(trimmed)
 
   if (looksLikeUrl) {
     return {
-      coverImageUrl: trimmed,
+      coverImageUrl: resolvePresetResourceUrl(trimmed),
       coverEmoji: fallbackEmoji,
     }
   }

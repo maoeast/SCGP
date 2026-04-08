@@ -3,7 +3,7 @@ import path from 'node:path'
 
 const REPO_ROOT = process.cwd()
 const EMOTION_SCENE_REFERENCE_DIR = path.join(REPO_ROOT, 'docs', 'references', 'emotion-scene')
-const EXPORT_PATH = path.join(EMOTION_SCENE_REFERENCE_DIR, 'current-emotion-scenes-export.json')
+const EXPORT_PATH = path.join(REPO_ROOT, 'docs', 'references', 'current-emotion-scenes-export.json')
 const NEW24_PATH = path.join(EMOTION_SCENE_REFERENCE_DIR, 'emotion-scenes-new24.json')
 const RENumbered_PATH = path.join(EMOTION_SCENE_REFERENCE_DIR, 'emotion-scenes-new24-renumbered.json')
 const MERGED_PATH = path.join(EMOTION_SCENE_REFERENCE_DIR, 'emotion-scenes-merged-candidate.json')

@@ -439,7 +439,7 @@ import {
 } from '@element-plus/icons-vue'
 import { ResourceAPI } from '@/database/resource-api'
 import type { ResourceItem, ModuleCode } from '@/types/module'
-import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
+import { resolveResourceItemCoverImage } from '@/utils/resource-cover'
 
 // ========== 数据定义 ==========
 
@@ -567,22 +567,7 @@ const editRules: FormRules = {
 // 获取缩略图 URL
 function getThumbnailUrl(resource: ResourceItem | null): string {
   if (!resource) return ''
-
-  // 器材类资源使用 legacy_id 加载图片
-  if (resource.resourceType === 'equipment') {
-    const legacyId = resource.legacyId
-    if (legacyId) {
-      const category = resource.category || 'tactile'
-      return getEquipmentImageUrl(category as any, legacyId, resource.name)
-    }
-  }
-
-  // 其他资源使用 cover_image
-  if (resource.coverImage) {
-    return resource.coverImage
-  }
-
-  return ''
+  return resolveResourceItemCoverImage(resource)
 }
 
 // 获取资源类型图标

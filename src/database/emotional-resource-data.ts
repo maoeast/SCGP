@@ -1,4 +1,4 @@
-import currentEmotionScenesRaw from '../../docs/references/emotion-scene/current-emotion-scenes-export.json?raw'
+import currentEmotionScenesRaw from '../../docs/references/current-emotion-scenes-export.json?raw'
 import emotionTaxonomyRaw from '../../docs/references/emotion-scene/emotion-scene-taxonomy-2026-03-24.csv?raw'
 import careScenesRaw from '../../care_scenes_database.json?raw'
 import type {
@@ -19,6 +19,7 @@ import type {
 } from '@/types/emotional'
 import { getTrainingResourceCopyOverride } from '@/data/generated-training-resource-copy'
 import { enrichCareSceneGeneratedFields } from '@/features/emotional/care-scene-generated-fields'
+import { normalizePresetResourcePathForStorage } from '@/utils/preset-resource'
 import {
   buildCareSceneResourceCopyKey,
   buildEmotionSceneResourceCopyKey,
@@ -315,7 +316,7 @@ function normalizeEmotionScene(raw: RawEmotionScene, index: number): EmotionScen
   return {
     sceneCode,
     title: normalizeString(raw.title, `情绪场景 ${index + 1}`),
-    imageUrl: normalizeString(raw.imageUrl),
+    imageUrl: normalizePresetResourcePathForStorage(raw.imageUrl),
     difficultyLevel: normalizeDifficultyLevel(raw.difficultyLevel),
     targetEmotion,
     sceneDomain: normalizeSceneDomain(raw.sceneDomain) || taxonomy?.sceneDomain,
@@ -343,7 +344,7 @@ function normalizeCareScene(raw: RawCareScene, index: number): CareSceneResource
   return enrichCareSceneGeneratedFields({
     sceneCode: normalizeString(raw.sceneCode, `care_scene_${index + 1}`),
     title: normalizeString(raw.title, `表达关心 ${index + 1}`),
-    imageUrl: normalizeString(raw.imageUrl),
+    imageUrl: normalizePresetResourcePathForStorage(raw.imageUrl),
     difficultyLevel: normalizeDifficultyLevel(raw.difficultyLevel),
     careType: normalizeCareType(raw.careType, 'empathy'),
     receiverEmotion,

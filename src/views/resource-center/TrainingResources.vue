@@ -680,6 +680,7 @@ import {
   type TrainingResourceDisplayType,
 } from '@/utils/resource-center-business'
 import { resolveResourceItemCoverImage } from '@/utils/resource-cover'
+import { normalizePresetResourcePathForStorage } from '@/utils/preset-resource'
 import {
   normalizeCareSceneEditorModel,
   normalizeEmotionSceneEditorModel,
@@ -1081,7 +1082,7 @@ function getEmotionalCoverImage(resourceType: string, metadata: Record<string, a
   }
 
   return typeof metadata.imageUrl === 'string' && metadata.imageUrl.trim().length > 0
-    ? metadata.imageUrl.trim()
+    ? normalizePresetResourcePathForStorage(metadata.imageUrl)
     : undefined
 }
 

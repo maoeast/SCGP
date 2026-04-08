@@ -834,3 +834,27 @@
 - important current-state boundary:
   - FMDA code wiring is now closed
   - but runtime QA is still pending, so do not describe FMDA as runtime-verified until a real assessment flow has been completed and checked end to end
+
+## 27. 2026-04-08 Emotion-Scene Seed Canonicalization and Preset Image Path Strategy
+
+- `emotion_scene` 当前唯一 canonical seed 已切到：
+  - `docs/references/current-emotion-scenes-export.json`
+- 仓库中重复旧副本：
+  - `docs/references/emotion-scene/current-emotion-scenes-export.json`
+  - 已从当前主线移除，避免继续形成双事实源
+- `emotion_scene` 当前 seed 数据边界已明确：
+  - 80 条顶层场景图保留
+  - `prompts.options[].imageUrl` 与 `solutions[].imageUrl` 已从 canonical seed 去除
+  - 原因：当前训练 runtime 不消费这两类嵌套图片，继续保留只会制造大量无效静态资源债
+- 当前顶层场景图路径策略已统一为逻辑预置资源路径：
+  - `images/emotional-scenes/<file>`
+- 当前情绪场景图运行时解析已通过共享层收口到：
+  - `src/utils/preset-resource.ts`
+  - `src/utils/resource-cover.ts`
+- 当前打包边界已更新：
+  - `electron-builder` 会通过 `build.extraResources` 打包 `assets/resources`
+  - 这意味着 `docs/references/current-emotion-scenes-export.json` 只是构建期 seed 来源，不是安装包运行时对 `docs/` 目录的直接依赖
+- 当前重要现实边界：
+  - `emotion_scene` 已完成 preset-image 路径收口
+  - `care_scene` 还没有追平到同一套顶层图片策略
+  - 当前本地 `assets/care_scenes/` 仍属于未规范化原始素材目录，文件名与 `care_scenes_database.json` 现有路径不一致，不能误写成已经完成收口

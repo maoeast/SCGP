@@ -93,7 +93,7 @@ const TAXONOMY = {
 }
 
 const REFERENCE_FILES = [
-  path.join(EMOTION_SCENE_REFERENCE_DIR, 'current-emotion-scenes-export.json'),
+  path.join(REPO_ROOT, 'docs', 'references', 'current-emotion-scenes-export.json'),
   path.join(EMOTION_SCENE_REFERENCE_DIR, 'emotion-scenes-merged-candidate.json'),
 ]
 

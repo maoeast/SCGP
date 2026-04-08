@@ -1058,27 +1058,24 @@ function getPlanProgress(plan: TrainingPlan): number {
 }
 
 function getPlanResourceCoverImage(resource: PlanResourceMap): string {
-  if (resource.resource_type === 'equipment') {
-    return resolveResourceCoverImage({
-      resourceType: resource.resource_type,
-      name: resource.resource_name,
-      category: resource.category,
-      coverImage: resource.cover_image,
-      legacyId: Number(resource.legacy_id || 0) || undefined,
-      metadata: resource.meta_data,
-    })
-  }
+  const resolved = resolveResourceCoverImage({
+    resourceType: resource.resource_type,
+    name: resource.resource_name,
+    category: resource.category,
+    coverImage: resource.cover_image,
+    legacyId: Number(resource.legacy_id || 0) || undefined,
+    metadata: resource.meta_data,
+  })
 
-  const coverImage = String(resource.cover_image || '').trim()
-  if (!coverImage) {
+  if (!resolved) {
     return ''
   }
 
-  if (!coverImage.includes('/') && !coverImage.startsWith('data:') && !coverImage.startsWith('blob:')) {
+  if (!resolved.includes('/') && !resolved.startsWith('data:') && !resolved.startsWith('blob:') && !resolved.includes('://')) {
     return ''
   }
 
-  return coverImage
+  return resolved
 }
 
 function getResourceInitial(name?: string | null): string {
@@ -1087,36 +1084,34 @@ function getResourceInitial(name?: string | null): string {
 }
 
 function getResourceImage(resource: PlanResourceMap): string {
-  if (resource.resource_type === 'equipment') {
-    return resolveResourceCoverImage({
-      resourceType: resource.resource_type,
-      name: resource.resource_name,
-      category: resource.category,
-      coverImage: resource.cover_image,
-      legacyId: Number(resource.legacy_id || 0) || undefined,
-      metadata: resource.meta_data,
-    })
-  }
+  const resolved = resolveResourceCoverImage({
+    resourceType: resource.resource_type,
+    name: resource.resource_name,
+    category: resource.category,
+    coverImage: resource.cover_image,
+    legacyId: Number(resource.legacy_id || 0) || undefined,
+    metadata: resource.meta_data,
+  })
 
-  if (resource.cover_image) {
-    if (!String(resource.cover_image).includes('/') && !String(resource.cover_image).startsWith('data:')) {
-      return buildEmojiThumbnail(String(resource.cover_image))
+  if (resolved) {
+    if (!String(resolved).includes('/') && !String(resolved).startsWith('data:') && !String(resolved).includes('://')) {
+      return buildEmojiThumbnail(String(resolved))
     }
-    return resource.cover_image
+    return resolved
   }
   // 使用默认图片逻辑
   return buildEmojiThumbnail('📦')
 }
 
 function getResourceItemImage(resource: ResourceItem): string {
-  if (resource.resourceType === 'equipment') {
-    return resolveResourceItemCoverImage(resource)
+  const resolved = resolveResourceItemCoverImage(resource)
+  if (resolved) {
+    if (!String(resolved).includes('/') && !String(resolved).startsWith('data:') && !String(resolved).includes('://')) {
+      return buildEmojiThumbnail(String(resolved))
+    }
+    return resolved
   }
-
-  if (resource.coverImage && !String(resource.coverImage).includes('/') && !String(resource.coverImage).startsWith('data:')) {
-    return buildEmojiThumbnail(String(resource.coverImage))
-  }
-  return resource.coverImage || buildEmojiThumbnail('📦')
+  return buildEmojiThumbnail('📦')
 }
 
 // 筛选处理

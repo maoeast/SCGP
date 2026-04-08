@@ -75,6 +75,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { SceneIntroStepMetadata } from '@/features/emotional/engine/types'
+import { isDisplayImageLike, resolvePresetResourceUrl } from '@/utils/preset-resource'
 
 const props = defineProps<{
   metadata: SceneIntroStepMetadata
@@ -88,13 +89,10 @@ function resolveVisualSource(value?: string) {
   }
 
   const trimmed = value.trim()
-  const looksLikeUrl = trimmed.includes('://')
-    || trimmed.startsWith('/')
-    || trimmed.startsWith('data:')
-    || /\.(png|jpe?g|gif|webp|svg)$/i.test(trimmed)
+  const looksLikeUrl = isDisplayImageLike(trimmed)
 
   if (looksLikeUrl) {
-    return { imageUrl: trimmed, emoji: '' }
+    return { imageUrl: resolvePresetResourceUrl(trimmed), emoji: '' }
   }
 
   return { imageUrl: '', emoji: trimmed }

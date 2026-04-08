@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-06
+> last_updated: 2026-04-08
 
 > Responsibility: top-level handoff entry for new sessions.
 > Read when: entering the repo or resuming work and needing the fastest route to current context.
@@ -33,7 +33,7 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: emotional training now includes persistent scene-panel UI and Gemini-based AI scene image generation; `emotion_scene` has passed one full generate→save→training-display verification, and `care_scene` is the next runtime validation target.**
+**Active follow-up work is now in `.continue-here.md`: `emotion_scene` 80-scene seed canonicalization and preset-image path strategy are now landed; the next concrete follow-up is `care_scene` top-level image normalization plus runtime verification.**
 
 ## Next Session
 

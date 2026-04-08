@@ -180,7 +180,7 @@ async function loadPhysicalEquipmentRows(jiti, helpers, overrides) {
 
 async function loadEmotionalSceneRows(helpers, overrides) {
   const emotionRaw = await fs.readFile(
-    path.join(REPO_ROOT, 'docs', 'references', 'emotion-scene', 'current-emotion-scenes-export.json'),
+    path.join(REPO_ROOT, 'docs', 'references', 'current-emotion-scenes-export.json'),
     'utf8'
   )
   const careRaw = await fs.readFile(

@@ -3,6 +3,7 @@ import { getPhysicalEquipmentImageUrl } from '@/assets/images/physical-equipment
 import type { EquipmentCategory } from '@/types/equipment'
 import type { ResourceItem } from '@/types/module'
 import type { PhysicalEquipmentDomain, PhysicalEquipmentResourceMeta } from '@/types/physical-equipment'
+import { resolvePresetResourceUrl } from '@/utils/preset-resource'
 
 interface ResourceCoverLike {
   resourceType?: string
@@ -64,7 +65,7 @@ export function resolveResourceCoverImage(resource: ResourceCoverLike | null | u
     }
   }
 
-  return resource.coverImage || ''
+  return resolvePresetResourceUrl(resource.coverImage || '')
 }
 
 export function resolveResourceItemCoverImage(resource: ResourceItem | null | undefined): string {
