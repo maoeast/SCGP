@@ -855,6 +855,26 @@
   - `electron-builder` 会通过 `build.extraResources` 打包 `assets/resources`
   - 这意味着 `docs/references/current-emotion-scenes-export.json` 只是构建期 seed 来源，不是安装包运行时对 `docs/` 目录的直接依赖
 - 当前重要现实边界：
-  - `emotion_scene` 已完成 preset-image 路径收口
-  - `care_scene` 还没有追平到同一套顶层图片策略
-  - 当前本地 `assets/care_scenes/` 仍属于未规范化原始素材目录，文件名与 `care_scenes_database.json` 现有路径不一致，不能误写成已经完成收口
+  - `emotion_scene` 已完成 preset-image 路径收口（80/60 顶层场景图已验证通过）
+  - `care_scene` 已追平到同一套顶层图片策略（见 section 28）
+
+## 28. 2026-04-08 Care-Scene Seed Normalization and Preset Image Path Strategy
+
+- `care_scenes_database.json` 已修复为合法 60 条 JSON 数组：
+  - 原文件为多个 JSON 数组/对象拼接的残损结构，60 条虽全部存在但无法被标准 `JSON.parse` 解析
+  - 已通过状态机提取所有顶层对象并重建为合法数组
+- `care_scene` 60 条 imageUrl 已从旧路径切换到逻辑预置资源路径：
+  - 旧路径：`/assets/care_scenes/careN_xxx.jpg`
+  - 新路径：`images/care-scenes/care-scene-N_xxx.png`
+  - 60/60 全部命中本地文件，缺失数为 0
+- 60 张顶层场景图已复制到预置资源目录：
+  - `assets/resources/images/care-scenes/`
+- `preset-resource.ts` 已新增旧路径兼容映射：
+  - `/assets/care_scenes/` → `images/care-scenes/`
+  - 原因：已持久化到 DB 的旧路径记录仍需在运行时正确解析
+- 运行时验证已通过：
+  - `care_scene` 训练页场景图可正常显示
+- 当前重要现实边界：
+  - `emotion_scene` 和 `care_scene` 两条资源链已统一到同一套预置资源策略
+  - `assets/care_scenes/` 原始素材目录未提交到主线，运行时只消费 `assets/resources/images/care-scenes/` 中的规范化副本
+  - `care_scene` AI 配图端到端联调仍然未跑完
