@@ -16,15 +16,6 @@
         </p>
       </div>
 
-      <div class="clue-cloud" aria-live="polite">
-        <span
-          v-for="(clue, index) in visibleClues"
-          :key="`${clue}-${index}`"
-          class="clue-chip"
-        >
-          {{ clue }}
-        </span>
-      </div>
     </div>
 
     <div class="intro-footer">
@@ -41,15 +32,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed } from 'vue'
 
 import { useTrainingStore } from '@/stores/useTrainingStore'
 
 const store = useTrainingStore()
-
-const DEFAULT_CLUES = ['面部肌肉放松', '图书平铺在腿上'] as const
-const visibleClues = ref<string[]>([])
-const timers: number[] = []
 
 const characterName = computed(() => {
   return store.scene?.character_name?.trim() || '小朋友'
@@ -57,43 +44,6 @@ const characterName = computed(() => {
 
 const sceneDescription = computed(() => {
   return store.scene?.description?.trim() || '请认真观察人物、表情和周围线索，准备进入下一步。'
-})
-
-const sourceClues = computed(() => {
-  const tags = store.scene?.tags
-    ?.map((tag) => tag.trim())
-    .filter((tag) => tag.length > 0)
-    .slice(0, 4) || []
-
-  return tags.length > 0 ? tags : [...DEFAULT_CLUES]
-})
-
-function clearTimers(): void {
-  timers.forEach((timerId) => window.clearTimeout(timerId))
-  timers.length = 0
-}
-
-function startClueSequence(clues: string[]): void {
-  clearTimers()
-  visibleClues.value = []
-  clues.forEach((clue, index) => {
-    const timerId = window.setTimeout(() => {
-      visibleClues.value = [...visibleClues.value, clue]
-    }, (index + 1) * 800)
-    timers.push(timerId)
-  })
-}
-
-watch(
-  () => `${store.scene?.scene_code ?? 'unknown'}:${sourceClues.value.join('|')}`,
-  () => {
-    startClueSequence(sourceClues.value)
-  },
-  { immediate: true },
-)
-
-onBeforeUnmount(() => {
-  clearTimers()
 })
 </script>
 
@@ -140,7 +90,7 @@ onBeforeUnmount(() => {
 
 .intro-body {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   align-items: end;
   flex: 1;
@@ -177,30 +127,6 @@ onBeforeUnmount(() => {
   margin-right: 6px;
   font-weight: 700;
   color: rgb(255 255 255 / 78%);
-}
-
-.clue-cloud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  align-content: flex-end;
-  justify-content: flex-start;
-  min-height: 180px;
-  padding: 18px;
-}
-
-.clue-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 14px 18px;
-  border-radius: 999px;
-  font-size: 15px;
-  font-weight: 700;
-  color: #082f49;
-  background: linear-gradient(135deg, rgb(255 255 255 / 94%) 0%, rgb(186 230 253 / 94%) 100%);
-  box-shadow: 0 18px 36px rgb(8 47 73 / 18%);
-  opacity: 0;
-  animation: clue-fade-in 0.48s ease forwards;
 }
 
 .intro-footer {
@@ -242,18 +168,6 @@ onBeforeUnmount(() => {
   opacity: 0.7;
 }
 
-@keyframes clue-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.94);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 @media (max-width: 960px) {
   .intro-step {
     padding: 8px 4px 16px;
@@ -277,11 +191,6 @@ onBeforeUnmount(() => {
   .intro-description {
     font-size: 16px;
     line-height: 1.8;
-  }
-
-  .clue-cloud {
-    min-height: 120px;
-    padding: 4px 6px 0;
   }
 
   .ready-button {
