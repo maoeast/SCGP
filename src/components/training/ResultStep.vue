@@ -1,8 +1,7 @@
 <template>
   <section class="result-step">
     <div class="result-shell">
-      <span class="result-kicker">Step 5 · 训练完成</span>
-      <h1 class="result-title">太棒了，今天的观察训练完成了。</h1>
+      <h1 class="result-title">恭喜你，今天的小考验全都通过啦，为你鼓掌！</h1>
       <p class="result-description">
         {{ summaryText }}
       </p>
@@ -64,14 +63,14 @@ const earnedStars = computed(() => store.calculateStars())
 const totalHintCount = computed(() => store.hintLevelPerStep.reduce((sum, level) => sum + level, 0))
 const summaryText = computed(() => {
   if (earnedStars.value === 3) {
-    return '你几乎没有依赖提示就完成了整条训练链，观察和判断都很稳定。'
+    return '你真的很用心哦，顺利通过了所有的考验，真为你骄傲！'
   }
 
   if (earnedStars.value === 2) {
     return '你已经抓住了大部分关键线索，再多观察一点点，就能拿到满星。'
   }
 
-  return '你坚持完成了所有题目，下一轮再继续练习，就会更熟练。'
+  return '休息一下吧，下次我们再一起玩，你会变得更厉害哦！'
 })
 
 const saveStatusText = computed(() => {
@@ -131,35 +130,19 @@ onMounted(() => {
   padding: 40px 36px 34px;
   border-radius: 40px;
   text-align: center;
-  color: #fff;
-  background:
-    radial-gradient(circle at top, rgb(254 240 138 / 0.3), transparent 34%),
-    radial-gradient(circle at 20% 20%, rgb(251 191 36 / 0.18), transparent 24%),
-    linear-gradient(145deg, rgb(21 94 117 / 0.9) 0%, rgb(37 99 235 / 0.82) 45%, rgb(124 58 237 / 0.78) 100%);
+  color: #2b2118;
+  background: rgb(255 248 235 / 0.8);
   box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.16),
-    0 28px 64px rgb(15 23 42 / 0.26);
-}
-
-.result-kicker {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 9px 16px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #0f172a;
-  background: linear-gradient(135deg, #fef08a 0%, #fde68a 45%, #ffffff 100%);
-  box-shadow: 0 14px 28px rgb(254 240 138 / 0.2);
+    inset 0 0 0 1px rgb(255 255 255 / 0.72),
+    0 24px 52px rgb(122 88 36 / 0.18);
+  backdrop-filter: blur(10px);
 }
 
 .result-title {
-  margin: 18px 0 14px;
+  margin: 0 0 14px;
   font-size: clamp(34px, 5vw, 60px);
   line-height: 1.08;
+  color: #2b2118;
 }
 
 .result-description {
@@ -167,7 +150,7 @@ onMounted(() => {
   max-width: 36em;
   font-size: 18px;
   line-height: 1.85;
-  color: rgb(255 255 255 / 0.88);
+  color: rgb(64 47 33 / 0.82);
   text-wrap: balance;
 }
 
@@ -185,17 +168,19 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgb(255 255 255 / 0.58);
-  background: rgb(255 255 255 / 0.12);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+  color: #9a7b55;
+  background: rgb(255 255 255 / 0.78);
+  box-shadow:
+    inset 0 0 0 1px rgb(244 230 210 / 0.8),
+    0 18px 34px rgb(122 88 36 / 0.1);
 }
 
 .star-chip.is-earned {
-  color: #7c2d12;
-  background: linear-gradient(180deg, #fff7cc 0%, #fde68a 44%, #f59e0b 100%);
+  color: #f59e0b;
+  background: #ffe5a3;
   box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.52),
-    0 24px 42px rgb(245 158 11 / 0.24);
+    inset 0 0 0 1px rgb(255 255 255 / 0.48),
+    0 24px 42px rgb(245 158 11 / 0.32);
   animation: star-pop 720ms cubic-bezier(0.2, 0.9, 0.22, 1) both;
   animation-delay: var(--star-delay);
 }
@@ -203,7 +188,7 @@ onMounted(() => {
 .star-icon {
   font-size: clamp(56px, 10vw, 100px);
   line-height: 1;
-  text-shadow: 0 10px 28px rgb(255 255 255 / 0.3);
+  text-shadow: none;
 }
 
 .result-meta {
@@ -221,20 +206,20 @@ onMounted(() => {
   justify-content: center;
   gap: 8px;
   text-align: left;
-  background: rgb(15 23 42 / 0.22);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.62);
+  box-shadow: inset 0 0 0 1px rgb(244 230 210 / 0.7);
 }
 
 .meta-card.is-saving {
-  background: rgb(8 145 178 / 0.22);
+  background: rgb(254 240 138 / 0.38);
 }
 
 .meta-card.is-saved {
-  background: rgb(22 163 74 / 0.2);
+  background: rgb(134 239 172 / 0.28);
 }
 
 .meta-card.is-error {
-  background: rgb(220 38 38 / 0.18);
+  background: rgb(254 202 202 / 0.38);
 }
 
 .meta-label {
@@ -242,7 +227,7 @@ onMounted(() => {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgb(255 255 255 / 0.66);
+  color: rgb(120 87 53 / 0.72);
 }
 
 .meta-card strong {
@@ -284,17 +269,17 @@ onMounted(() => {
 }
 
 .result-button.is-primary {
-  color: #0f172a;
-  background: linear-gradient(135deg, #fef08a 0%, #86efac 52%, #7dd3fc 100%);
-  box-shadow: 0 20px 40px rgb(125 211 252 / 0.24);
+  color: #2b2118;
+  background: #f7c948;
+  box-shadow: 0 20px 40px rgb(245 158 11 / 0.24);
 }
 
 .result-button.is-secondary {
-  color: #fff;
-  background: rgb(15 23 42 / 0.28);
+  color: #2b2118;
+  background: rgb(255 255 255 / 0.68);
   box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.18),
-    0 20px 40px rgb(15 23 42 / 0.16);
+    inset 0 0 0 1px rgb(244 230 210 / 0.7),
+    0 20px 40px rgb(122 88 36 / 0.18);
 }
 
 @keyframes star-pop {

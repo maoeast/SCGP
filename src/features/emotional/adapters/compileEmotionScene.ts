@@ -82,7 +82,7 @@ export function compileEmotionScene(
       key: 'solution_choice',
       phase: 'solution',
       stepType: 'solution_choice',
-      promptText: '下面哪种回应更合适？',
+      promptText: '你觉得他现在应该怎么办呀？',
       metadata: {
         displayIntent: 'supportive_response',
       },

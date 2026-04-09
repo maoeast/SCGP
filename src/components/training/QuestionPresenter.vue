@@ -1,7 +1,6 @@
 <template>
   <section class="question-presenter" aria-live="polite">
     <div class="question-copy">
-      <span class="question-kicker">STEP {{ store.currentStepIndex }} · 听题并作答</span>
       <h1 class="question-title">{{ questionText }}</h1>
     </div>
 
@@ -10,7 +9,8 @@
       class="speaker-button"
       :class="{ 'is-speaking': isSpeaking, 'is-disabled': !canReplay }"
       :disabled="!canReplay"
-      aria-label="朗读题目"
+      :aria-label="speakerAriaLabel"
+      :title="speakerAriaLabel"
       @click="replayQuestion"
     >
       <span class="speaker-icon" aria-hidden="true">
@@ -25,11 +25,14 @@
             stroke-width="2"
             stroke-linecap="round"
           />
+          <path
+            v-if="isSpeaking"
+            d="M18.5 7.5C20.1667 8.83333 21 10.6667 21 13C21 15.3333 20.1667 17.1667 18.5 18.5"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
         </svg>
-      </span>
-      <span class="speaker-copy">
-        <strong>{{ isSpeaking ? '正在播放' : '点击播放' }}</strong>
-        <small>{{ isSpeaking ? '题目朗读中' : '听老师读题' }}</small>
       </span>
     </button>
   </section>
@@ -59,6 +62,14 @@ const activeUtterance = shallowRef<SpeechSynthesisUtterance | null>(null)
 
 const questionText = computed(() => {
   return store.parsedQuestionText.trim() || '请根据当前场景回答问题。'
+})
+
+const speakerAriaLabel = computed(() => {
+  if (!canReplay.value) {
+    return '当前无法播放题目朗读'
+  }
+
+  return isSpeaking.value ? '题目朗读播放中' : '播放题目朗读'
 })
 
 const canReplay = computed(() => {
@@ -177,7 +188,7 @@ onBeforeUnmount(() => {
 .question-presenter {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px;
+  gap: 16px;
   padding: 22px 24px;
   border-radius: 30px;
   background: linear-gradient(180deg, rgb(15 23 42 / 58%) 0%, rgb(15 23 42 / 34%) 100%);
@@ -188,25 +199,12 @@ onBeforeUnmount(() => {
   align-items: start;
 }
 
-.question-kicker {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #082f49;
-  background: linear-gradient(135deg, #fde68a 0%, #bfdbfe 100%);
-}
-
 .question-copy {
   min-width: 0;
 }
 
 .question-title {
-  margin: 16px 0 0;
+  margin: 0;
   font-size: clamp(30px, 4.2vw, 50px);
   line-height: 1.2;
   color: #fff;
@@ -216,17 +214,15 @@ onBeforeUnmount(() => {
 .speaker-button {
   position: relative;
   isolation: isolate;
-  min-width: 176px;
+  width: 72px;
+  height: 72px;
   border: 0;
-  border-radius: 22px;
-  padding: 16px 18px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
+  border-radius: 24px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
   flex: 0 0 auto;
   align-self: flex-start;
-  text-align: left;
   color: #082f49;
   cursor: pointer;
   background: linear-gradient(135deg, rgb(255 255 255 / 96%) 0%, rgb(191 219 254 / 98%) 100%);
@@ -240,8 +236,8 @@ onBeforeUnmount(() => {
 }
 
 .speaker-icon {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 16px;
   display: grid;
   place-items: center;
@@ -251,17 +247,9 @@ onBeforeUnmount(() => {
 }
 
 .speaker-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: block;
-}
-
-.speaker-copy {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  align-items: flex-start;
-  gap: 2px;
 }
 
 .speaker-button::after {
@@ -288,19 +276,6 @@ onBeforeUnmount(() => {
 
 .speaker-button.is-speaking::after {
   animation: speaker-ripple 1.3s ease-out infinite;
-}
-
-.speaker-copy strong {
-  font-size: 16px;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.speaker-copy small {
-  font-size: 12px;
-  font-weight: 700;
-  color: rgb(8 47 73 / 72%);
-  white-space: nowrap;
 }
 
 @keyframes speaker-ripple {
@@ -330,9 +305,8 @@ onBeforeUnmount(() => {
   }
 
   .speaker-button {
-    width: 100%;
-    min-width: 0;
-    justify-content: center;
+    width: 64px;
+    height: 64px;
   }
 
   .question-title {

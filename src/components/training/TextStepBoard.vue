@@ -10,11 +10,12 @@
 
     <div v-else class="text-step-grid">
       <button
-        v-for="option in currentStep.options"
+        v-for="(option, index) in currentStep.options"
         :key="option.id"
         type="button"
         class="text-option-card"
         :class="{
+          'is-selected': submittedOptionId === option.id,
           'is-error': submittedOptionId === option.id && feedbackState === 'error',
           'is-success': submittedOptionId === option.id && feedbackState === 'success',
           'is-locked': store.inputLocked && submittedOptionId !== option.id,
@@ -22,7 +23,7 @@
         :disabled="store.inputLocked || (submittedOptionId === option.id && feedbackState === 'success')"
         @click="submitOption(option.id)"
       >
-        <span class="text-option-badge" aria-hidden="true">{{ getLeadingIcon(option.content) }}</span>
+        <span class="text-option-badge" aria-hidden="true">{{ getOptionLabel(index) }}</span>
         <span class="text-option-copy">{{ option.content }}</span>
         <span
           v-if="submittedOptionId === option.id && feedbackState === 'success'"
@@ -99,21 +100,17 @@ function resetBoardState(): void {
   feedbackState.value = 'idle'
 }
 
-function getLeadingIcon(content: string): string {
-  const normalized = content.trim()
-  if (normalized.includes('老师') || normalized.includes('帮助')) {
-    return '🧭'
-  }
+function getOptionLabel(index: number): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  let cursor = index
+  let label = ''
 
-  if (normalized.includes('安慰') || normalized.includes('陪')) {
-    return '💛'
-  }
+  do {
+    label = alphabet[cursor % 26] + label
+    cursor = Math.floor(cursor / 26) - 1
+  } while (cursor >= 0)
 
-  if (normalized.includes('深呼吸') || normalized.includes('冷静')) {
-    return '🌿'
-  }
-
-  return '✦'
+  return label
 }
 
 function submitOption(optionId: number): void {
@@ -190,6 +187,10 @@ onBeforeUnmount(() => {
   width: 100%;
   display: flex;
   justify-content: center;
+  align-items: flex-end;
+  flex: 1;
+  min-height: 0;
+  padding: 12px 0 28px;
 }
 
 .text-step-empty {
@@ -205,7 +206,7 @@ onBeforeUnmount(() => {
 }
 
 .text-step-grid {
-  width: min(100%, 980px);
+  width: min(100%, 840px);
   display: grid;
   gap: 18px;
 }
@@ -213,10 +214,10 @@ onBeforeUnmount(() => {
 .text-option-card {
   position: relative;
   width: 100%;
-  min-height: 108px;
+  min-height: 104px;
   border: 2px solid rgb(255 255 255 / 12%);
   border-radius: 28px;
-  padding: 16px 20px;
+  padding: 16px 20px 16px 18px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 18px;
@@ -239,6 +240,13 @@ onBeforeUnmount(() => {
 .text-option-card:hover:not(:disabled) {
   transform: translateY(-2px);
   border-color: rgb(125 211 252 / 72%);
+}
+
+.text-option-card.is-selected {
+  border-color: rgb(125 211 252 / 72%);
+  box-shadow:
+    inset 0 0 0 1px rgb(191 219 254 / 12%),
+    0 20px 40px rgb(15 23 42 / 22%);
 }
 
 .text-option-card:disabled {
@@ -268,22 +276,30 @@ onBeforeUnmount(() => {
 }
 
 .text-option-badge {
-  width: 64px;
-  height: 64px;
-  border-radius: 20px;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
   display: grid;
   place-items: center;
-  font-size: 30px;
+  font-size: 24px;
+  font-weight: 900;
+  color: rgb(255 255 255 / 88%);
+  background: rgb(255 255 255 / 10%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%);
+  border: 1px solid rgb(255 255 255 / 18%);
+}
+
+.text-option-card.is-selected .text-option-badge {
   color: #082f49;
-  background: linear-gradient(135deg, #fef08a 0%, #bfdbfe 100%);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 82%);
+  background: linear-gradient(135deg, #fde68a 0%, #bfdbfe 100%);
+  border-color: transparent;
 }
 
 .text-option-copy {
-  font-size: clamp(20px, 2.4vw, 28px);
+  font-size: clamp(19px, 2.2vw, 26px);
   font-weight: 800;
-  line-height: 1.38;
-  text-align: center;
+  line-height: 1.45;
+  text-align: left;
   text-wrap: balance;
 }
 
@@ -303,6 +319,18 @@ onBeforeUnmount(() => {
   box-shadow: 0 12px 24px rgb(22 163 74 / 30%);
 }
 
+.text-option-card.is-success .text-option-badge {
+  color: #fff;
+  background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+  border-color: transparent;
+}
+
+.text-option-card.is-error .text-option-badge {
+  color: #fff;
+  background: linear-gradient(135deg, #fb923c 0%, #ef4444 100%);
+  border-color: transparent;
+}
+
 @keyframes option-shake {
   0%,
   100% {
@@ -319,6 +347,10 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 900px) {
+  .text-step-board {
+    padding-bottom: 18px;
+  }
+
   .text-step-grid {
     gap: 16px;
   }
@@ -334,7 +366,7 @@ onBeforeUnmount(() => {
     width: 54px;
     height: 54px;
     border-radius: 18px;
-    font-size: 26px;
+    font-size: 22px;
   }
 
   .text-option-copy {

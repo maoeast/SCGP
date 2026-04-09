@@ -29,7 +29,7 @@
           type="button"
           class="exit-trigger"
           aria-label="退出训练"
-          @click="store.toggleExitModal(true)"
+          @click="handleExit"
         >
           <span>X</span>
         </button>
@@ -58,6 +58,15 @@ const progressSteps = [1, 2, 3, 4] as const
 const sceneTitle = computed(() => {
   return store.scene?.title?.trim() || '情绪场景训练'
 })
+
+function handleExit(): void {
+  if (store.currentStepIndex === 5) {
+    store.exitTraining()
+    return
+  }
+
+  store.toggleExitModal(true)
+}
 
 const backgroundStyle = computed(() => {
   const backgroundImage = resolvePresetResourceUrl(store.scene?.background_image_url || '')
@@ -94,9 +103,7 @@ const backgroundStyle = computed(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background:
-    linear-gradient(180deg, rgb(15 23 42 / 12%) 0%, rgb(15 23 42 / 8%) 36%, rgb(0 0 0 / 44%) 100%),
-    rgb(0 0 0 / 18%);
+  background: rgb(0 0 0 / 20%);
 }
 
 .training-header {

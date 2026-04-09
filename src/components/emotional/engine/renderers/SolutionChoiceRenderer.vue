@@ -1,6 +1,6 @@
 <template>
   <ReasoningCard
-    title="下面哪种回应更合适？"
+    title="你觉得他现在应该怎么办呀？"
     subtitle="请选择对他人更有帮助、更让人舒服的做法。"
     :options="solutionOptions"
     :hint-level="hintLevel"

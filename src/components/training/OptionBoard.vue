@@ -110,7 +110,7 @@ function submitEmotionOption(optionId: number): void {
     store.showRewardOverlay = true
     correctSound.play()
     emit('feedback', {
-      text: selectedOption.feedback_text?.trim() || '答对了，继续观察场景里的线索吧。',
+      text: selectedOption.feedback_text?.trim() || '观察的真仔细，让我们继续吧。',
       tone: 'success',
       durationMs: TRAINING_SUCCESS_FEEDBACK_MS,
     })

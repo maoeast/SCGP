@@ -68,7 +68,7 @@ export interface LegacyMigrationOptions {
 }
 
 const DEFAULT_EMOTION_STEP_TEXT = '你觉得他现在是什么心情？'
-const DEFAULT_RESPONSE_STEP_TEXT = '下面哪种回应更合适？'
+const DEFAULT_RESPONSE_STEP_TEXT = '你觉得他现在应该怎么办呀？'
 const DEFAULT_CHARACTER_NAME = '小朋友'
 const NAME_SENTENCE_PREFIXES = [
   '为什么',

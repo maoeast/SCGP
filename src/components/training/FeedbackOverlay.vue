@@ -2,8 +2,7 @@
   <Transition name="reward-overlay">
     <div v-if="store.showRewardOverlay" class="feedback-overlay" aria-hidden="true">
       <div class="overlay-burst">
-        <span class="burst-title">太棒了！</span>
-        <span class="burst-subtitle">你答对啦</span>
+        <span class="burst-title">👍 你真棒</span>
       </div>
 
       <span
@@ -91,9 +90,7 @@ const floatingStars = computed(() => {
   padding: 18px 26px;
   border-radius: 28px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
   color: #0f172a;
   background: linear-gradient(135deg, rgb(255 255 255 / 0.96) 0%, rgb(254 240 138 / 0.96) 52%, rgb(187 247 208 / 0.96) 100%);
   box-shadow:
@@ -106,11 +103,6 @@ const floatingStars = computed(() => {
   font-size: clamp(32px, 5vw, 54px);
   font-weight: 900;
   line-height: 1;
-}
-
-.burst-subtitle {
-  font-size: clamp(18px, 2.5vw, 26px);
-  font-weight: 800;
 }
 
 .confetti-piece {

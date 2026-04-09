@@ -9,9 +9,9 @@
 
     <div class="intro-body">
       <div class="intro-copy-card">
-        <span class="intro-kicker">Step 0 · 先观察</span>
-        <h1 class="intro-title">先看看发生了什么，再准备回答问题。</h1>
+        <h1 class="intro-title">准备好了吗？我们先来看看发生了什么事吧！</h1>
         <p class="intro-description">
+          <span class="intro-description-label">【教学目标】</span>
           {{ sceneDescription }}
         </p>
       </div>
@@ -34,7 +34,7 @@
         :disabled="store.inputLocked"
         @click="store.nextStep()"
       >
-        我看好了 ->
+        我准备好了
       </button>
     </div>
   </section>
@@ -158,20 +158,8 @@ onBeforeUnmount(() => {
     0 28px 60px rgb(15 23 42 / 24%);
 }
 
-.intro-kicker {
-  display: inline-block;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #0f172a;
-  background: linear-gradient(135deg, #bfdbfe 0%, #fef08a 100%);
-}
-
 .intro-title {
-  margin: 18px 0 14px;
+  margin: 0 0 14px;
   font-size: clamp(34px, 5vw, 58px);
   line-height: 1.08;
 }
@@ -181,7 +169,14 @@ onBeforeUnmount(() => {
   max-width: 32em;
   font-size: 18px;
   line-height: 1.9;
-  color: rgb(255 255 255 / 82%);
+  color: rgb(255 255 255 / 72%);
+}
+
+.intro-description-label {
+  display: inline-block;
+  margin-right: 6px;
+  font-weight: 700;
+  color: rgb(255 255 255 / 78%);
 }
 
 .clue-cloud {
@@ -222,11 +217,11 @@ onBeforeUnmount(() => {
   font-size: clamp(24px, 3vw, 34px);
   font-weight: 800;
   letter-spacing: 0.01em;
-  color: #082f49;
+  color: #fff;
   cursor: pointer;
-  background: linear-gradient(135deg, #fef08a 0%, #86efac 52%, #7dd3fc 100%);
+  background: #f7c948;
   box-shadow:
-    0 24px 54px rgb(125 211 252 / 26%),
+    0 24px 54px rgb(245 158 11 / 24%),
     inset 0 1px 0 rgb(255 255 255 / 70%);
   transition:
     transform 0.2s ease,
