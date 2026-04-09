@@ -38,7 +38,7 @@ CNBS-R2016 public entry is now **OPEN** and verified.
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is emotion-scene immersive refactor Phase 5 preparation / handoff
+- current active task is emotion-scene immersive refactor Phase 6 follow-up: Step 1 final visual polish after Step 2~4 text-option regression fix
 - first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

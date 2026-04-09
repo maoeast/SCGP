@@ -4,7 +4,7 @@
       当前步骤还没有可用选项。
     </div>
 
-    <div v-else-if="currentStep.step_type === 'emotion'" class="emotion-board">
+    <div v-else class="emotion-board">
       <div class="option-grid is-emotion">
         <ImageOptionCard
           v-for="option in currentStep.options"
@@ -17,17 +17,6 @@
         />
       </div>
     </div>
-
-    <div v-else class="option-grid is-text">
-      <template>
-        <TextOptionBlock
-          v-for="option in currentStep.options"
-          :key="option.id"
-          :option="option"
-          @feedback="$emit('feedback', $event)"
-        />
-      </template>
-    </div>
   </section>
 </template>
 
@@ -38,7 +27,6 @@ import { useSound } from '@/composables/useSound'
 import { useTrainingStore } from '@/stores/useTrainingStore'
 
 import ImageOptionCard from './ImageOptionCard.vue'
-import TextOptionBlock from './TextOptionBlock.vue'
 import {
   TRAINING_CORRECT_SFX,
   TRAINING_ERROR_FEEDBACK_MS,
@@ -57,7 +45,14 @@ const emit = defineEmits<{
 
 const store = useTrainingStore()
 
-const currentStep = computed(() => store.currentStepData)
+const currentStep = computed(() => {
+  const step = store.currentStepData
+  if (!step || step.step_type !== 'emotion') {
+    return null
+  }
+
+  return step
+})
 const selectedEmotionOptionId = ref<number | null>(null)
 const submittedEmotionOptionId = ref<number | null>(null)
 const emotionFeedbackState = ref<'idle' | 'error' | 'success'>('idle')
@@ -201,11 +196,6 @@ onBeforeUnmount(() => {
   align-items: stretch;
   justify-content: center;
   justify-items: stretch;
-}
-
-.option-grid.is-text {
-  grid-template-columns: minmax(0, 1fr);
-  max-width: 980px;
 }
 
 @media (max-width: 900px) {

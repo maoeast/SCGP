@@ -79,6 +79,7 @@ const backgroundStyle = computed(() => {
 
 <style scoped>
 .training-layout {
+  height: 100vh;
   min-height: 100vh;
   position: relative;
   overflow: hidden;
@@ -88,9 +89,11 @@ const backgroundStyle = computed(() => {
 }
 
 .training-overlay {
+  height: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background:
     linear-gradient(180deg, rgb(15 23 42 / 12%) 0%, rgb(15 23 42 / 8%) 36%, rgb(0 0 0 / 44%) 100%),
     rgb(0 0 0 / 18%);
@@ -212,9 +215,11 @@ const backgroundStyle = computed(() => {
 
 .training-main {
   flex: 1;
+  min-height: 0;
   display: flex;
   align-items: stretch;
   justify-content: center;
+  overflow: hidden;
   padding: 12px 20px 20px;
   transition: opacity 0.2s ease;
 }
@@ -282,6 +287,17 @@ const backgroundStyle = computed(() => {
     width: 46px;
     height: 46px;
     border-radius: 16px;
+  }
+}
+
+@supports (height: 100dvh) {
+  .training-layout {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  .training-overlay {
+    min-height: 100dvh;
   }
 }
 </style>

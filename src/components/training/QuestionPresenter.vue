@@ -1,40 +1,37 @@
 <template>
   <section class="question-presenter" aria-live="polite">
-    <div class="question-head">
-      <span class="question-kicker">STEP {{ store.currentStepIndex }} · 听题并作答</span>
-
-      <button
-        type="button"
-        class="speaker-button"
-        :class="{ 'is-speaking': isSpeaking, 'is-disabled': !canReplay }"
-        :disabled="!canReplay"
-        aria-label="朗读题目"
-        @click="replayQuestion"
-      >
-        <span class="speaker-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="M5 14H8L13 18V6L8 10H5V14Z"
-              fill="currentColor"
-            />
-            <path
-              d="M16 9.5C17.3333 10.3889 18 11.5556 18 13C18 14.4444 17.3333 15.6111 16 16.5"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-          </svg>
-        </span>
-        <span class="speaker-copy">
-          <strong>{{ isSpeaking ? '正在播放' : '点击播放' }}</strong>
-          <small>{{ isSpeaking ? '题目朗读中' : '听老师读题' }}</small>
-        </span>
-      </button>
-    </div>
-
     <div class="question-copy">
+      <span class="question-kicker">STEP {{ store.currentStepIndex }} · 听题并作答</span>
       <h1 class="question-title">{{ questionText }}</h1>
     </div>
+
+    <button
+      type="button"
+      class="speaker-button"
+      :class="{ 'is-speaking': isSpeaking, 'is-disabled': !canReplay }"
+      :disabled="!canReplay"
+      aria-label="朗读题目"
+      @click="replayQuestion"
+    >
+      <span class="speaker-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M5 14H8L13 18V6L8 10H5V14Z"
+            fill="currentColor"
+          />
+          <path
+            d="M16 9.5C17.3333 10.3889 18 11.5556 18 13C18 14.4444 17.3333 15.6111 16 16.5"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </span>
+      <span class="speaker-copy">
+        <strong>{{ isSpeaking ? '正在播放' : '点击播放' }}</strong>
+        <small>{{ isSpeaking ? '题目朗读中' : '听老师读题' }}</small>
+      </span>
+    </button>
   </section>
 </template>
 
@@ -178,8 +175,8 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .question-presenter {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 18px;
   padding: 22px 24px;
   border-radius: 30px;
@@ -188,13 +185,7 @@ onBeforeUnmount(() => {
     inset 0 0 0 1px rgb(255 255 255 / 14%),
     0 24px 56px rgb(15 23 42 / 26%);
   backdrop-filter: blur(18px);
-}
-
-.question-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
+  align-items: start;
 }
 
 .question-kicker {
@@ -215,9 +206,9 @@ onBeforeUnmount(() => {
 }
 
 .question-title {
-  margin: 0;
-  font-size: clamp(32px, 4.6vw, 56px);
-  line-height: 1.18;
+  margin: 16px 0 0;
+  font-size: clamp(30px, 4.2vw, 50px);
+  line-height: 1.2;
   color: #fff;
   text-wrap: balance;
 }
@@ -333,13 +324,9 @@ onBeforeUnmount(() => {
 
 @media (max-width: 900px) {
   .question-presenter {
+    grid-template-columns: 1fr;
     padding: 22px 20px;
     border-radius: 24px;
-  }
-
-  .question-head {
-    flex-direction: column;
-    align-items: stretch;
   }
 
   .speaker-button {

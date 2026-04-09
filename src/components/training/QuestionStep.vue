@@ -1,5 +1,10 @@
 <template>
-  <section class="question-step">
+  <section
+    class="question-step"
+    :class="{
+      'is-text-step': store.currentStepData?.step_type !== 'emotion',
+    }"
+  >
     <div class="question-step-shell">
       <Transition name="feedback-toast">
         <div
@@ -54,7 +59,14 @@
       </Transition>
 
       <QuestionPresenter />
-      <OptionBoard @feedback="handleFeedback" />
+      <OptionBoard
+        v-if="store.currentStepData?.step_type === 'emotion'"
+        @feedback="handleFeedback"
+      />
+      <TextStepBoard
+        v-else
+        @feedback="handleFeedback"
+      />
     </div>
   </section>
 </template>
@@ -66,6 +78,7 @@ import { useTrainingStore } from '@/stores/useTrainingStore'
 
 import OptionBoard from './OptionBoard.vue'
 import QuestionPresenter from './QuestionPresenter.vue'
+import TextStepBoard from './TextStepBoard.vue'
 
 interface FeedbackToastPayload {
   id: number
@@ -114,6 +127,7 @@ onBeforeUnmount(() => {
   display: flex;
   min-height: 0;
   padding: 10px 8px 18px;
+  overflow: hidden;
 }
 
 .question-step-shell {
@@ -123,6 +137,15 @@ onBeforeUnmount(() => {
   grid-template-rows: auto minmax(0, 1fr);
   gap: 28px;
   min-height: 0;
+  overflow: hidden;
+}
+
+.question-step.is-text-step .question-step-shell {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 22px;
+  overflow: visible;
 }
 
 .feedback-toast {
@@ -234,6 +257,10 @@ onBeforeUnmount(() => {
   }
 
   .question-step-shell {
+    gap: 18px;
+  }
+
+  .question-step.is-text-step .question-step-shell {
     gap: 18px;
   }
 
