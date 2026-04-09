@@ -1,23 +1,40 @@
 <template>
   <section class="question-presenter" aria-live="polite">
-    <div class="question-copy">
-      <span class="question-kicker">Step {{ store.currentStepIndex }} · 听题并作答</span>
-      <h1 class="question-title">{{ questionText }}</h1>
+    <div class="question-head">
+      <span class="question-kicker">STEP {{ store.currentStepIndex }} · 听题并作答</span>
+
+      <button
+        type="button"
+        class="speaker-button"
+        :class="{ 'is-speaking': isSpeaking, 'is-disabled': !canReplay }"
+        :disabled="!canReplay"
+        aria-label="朗读题目"
+        @click="replayQuestion"
+      >
+        <span class="speaker-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M5 14H8L13 18V6L8 10H5V14Z"
+              fill="currentColor"
+            />
+            <path
+              d="M16 9.5C17.3333 10.3889 18 11.5556 18 13C18 14.4444 17.3333 15.6111 16 16.5"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+        </span>
+        <span class="speaker-copy">
+          <strong>{{ isSpeaking ? '正在播放' : '点击播放' }}</strong>
+          <small>{{ isSpeaking ? '题目朗读中' : '听老师读题' }}</small>
+        </span>
+      </button>
     </div>
 
-    <button
-      type="button"
-      class="speaker-button"
-      :class="{ 'is-speaking': isSpeaking, 'is-disabled': !canReplay }"
-      :disabled="!canReplay"
-      aria-label="朗读题目"
-      @click="replayQuestion"
-    >
-      <span class="speaker-icon" aria-hidden="true">{{ isSpeaking ? '🔊' : '🔈' }}</span>
-      <span class="speaker-copy">
-        {{ isSpeaking ? '正在播报' : canReplay ? '再听一遍' : '暂不可播报' }}
-      </span>
-    </button>
+    <div class="question-copy">
+      <h1 class="question-title">{{ questionText }}</h1>
+    </div>
   </section>
 </template>
 
@@ -41,13 +58,15 @@ const ttsService = edgeTtsEndpoint
 
 const activeAbortController = shallowRef<AbortController | null>(null)
 const isSpeaking = ref(false)
+const activeUtterance = shallowRef<SpeechSynthesisUtterance | null>(null)
 
 const questionText = computed(() => {
   return store.parsedQuestionText.trim() || '请根据当前场景回答问题。'
 })
 
 const canReplay = computed(() => {
-  return Boolean(ttsService && store.currentStepData && questionText.value)
+  const hasWebSpeech = typeof window !== 'undefined' && 'speechSynthesis' in window
+  return Boolean(store.currentStepData && questionText.value && (ttsService || hasWebSpeech))
 })
 
 function isAbortError(error: unknown): boolean {
@@ -61,12 +80,16 @@ function stopQuestionPlayback(): void {
   }
 
   activeAbortController.value = null
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    window.speechSynthesis.cancel()
+  }
+  activeUtterance.value = null
   ttsService?.stop()
   isSpeaking.value = false
 }
 
 async function playQuestion(): Promise<void> {
-  if (!ttsService || !store.currentStepData || !questionText.value) {
+  if (!store.currentStepData || !questionText.value) {
     store.$patch({
       availableTTSEngine: null,
     })
@@ -74,6 +97,38 @@ async function playQuestion(): Promise<void> {
   }
 
   stopQuestionPlayback()
+
+  if (!ttsService && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(questionText.value)
+    utterance.lang = 'zh-CN'
+    utterance.rate = 0.92
+    utterance.pitch = 1
+    activeUtterance.value = utterance
+    isSpeaking.value = true
+    store.$patch({
+      availableTTSEngine: 'webspeech',
+    })
+
+    await new Promise<void>((resolve) => {
+      utterance.onend = () => resolve()
+      utterance.onerror = () => resolve()
+      window.speechSynthesis.cancel()
+      window.speechSynthesis.speak(utterance)
+    })
+
+    if (activeUtterance.value === utterance) {
+      activeUtterance.value = null
+    }
+    isSpeaking.value = false
+    return
+  }
+
+  if (!ttsService) {
+    store.$patch({
+      availableTTSEngine: null,
+    })
+    return
+  }
 
   const controller = new AbortController()
   activeAbortController.value = controller
@@ -123,11 +178,10 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .question-presenter {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
-  align-items: center;
-  padding: 26px 28px;
+  padding: 22px 24px;
   border-radius: 30px;
   background: linear-gradient(180deg, rgb(15 23 42 / 58%) 0%, rgb(15 23 42 / 34%) 100%);
   box-shadow:
@@ -136,8 +190,11 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(18px);
 }
 
-.question-copy {
-  min-width: 0;
+.question-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
 }
 
 .question-kicker {
@@ -153,10 +210,14 @@ onBeforeUnmount(() => {
   background: linear-gradient(135deg, #fde68a 0%, #bfdbfe 100%);
 }
 
+.question-copy {
+  min-width: 0;
+}
+
 .question-title {
-  margin: 16px 0 0;
-  font-size: clamp(28px, 4.4vw, 48px);
-  line-height: 1.24;
+  margin: 0;
+  font-size: clamp(32px, 4.6vw, 56px);
+  line-height: 1.18;
   color: #fff;
   text-wrap: balance;
 }
@@ -164,25 +225,52 @@ onBeforeUnmount(() => {
 .speaker-button {
   position: relative;
   isolation: isolate;
-  min-width: 148px;
+  min-width: 176px;
   border: 0;
-  border-radius: 24px;
-  padding: 18px 20px;
+  border-radius: 22px;
+  padding: 16px 18px;
   display: inline-flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  text-align: left;
   color: #082f49;
   cursor: pointer;
-  background: linear-gradient(135deg, rgb(255 255 255 / 94%) 0%, rgb(186 230 253 / 96%) 100%);
+  background: linear-gradient(135deg, rgb(255 255 255 / 96%) 0%, rgb(191 219 254 / 98%) 100%);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 85%),
-    0 20px 34px rgb(8 47 73 / 16%);
+    inset 0 1px 0 rgb(255 255 255 / 88%),
+    0 20px 36px rgb(8 47 73 / 16%);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
     opacity 0.2s ease;
+}
+
+.speaker-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: #082f49;
+  background: linear-gradient(135deg, #fef08a 0%, #86efac 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 80%);
+}
+
+.speaker-icon svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.speaker-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-items: flex-start;
+  gap: 2px;
 }
 
 .speaker-button::after {
@@ -204,20 +292,23 @@ onBeforeUnmount(() => {
 }
 
 .speaker-button.is-disabled {
-  opacity: 0.62;
+  opacity: 0.82;
 }
 
 .speaker-button.is-speaking::after {
   animation: speaker-ripple 1.3s ease-out infinite;
 }
 
-.speaker-icon {
-  font-size: 30px;
+.speaker-copy strong {
+  font-size: 16px;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
-.speaker-copy {
-  font-size: 14px;
-  font-weight: 800;
+.speaker-copy small {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgb(8 47 73 / 72%);
   white-space: nowrap;
 }
 
@@ -242,15 +333,18 @@ onBeforeUnmount(() => {
 
 @media (max-width: 900px) {
   .question-presenter {
-    grid-template-columns: 1fr;
     padding: 22px 20px;
     border-radius: 24px;
+  }
+
+  .question-head {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .speaker-button {
     width: 100%;
     min-width: 0;
-    flex-direction: row;
     justify-content: center;
   }
 

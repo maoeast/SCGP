@@ -1095,3 +1095,39 @@
 - 当前下一步优先级保持不变：
   - 先补 `emotion_scene` Step 5 结算页
   - `care_scene` 暂不进入实现阶段
+
+## 34. 2026-04-09 Emotion-Scene Phase 6 Result Page and Immersive Shell Update
+
+- 针对 `emotion_scene` 沉浸式训练链，Phase 6 已完成代码落地：
+  - `src/components/training/ResultStep.vue`
+  - `src/components/training/FeedbackOverlay.vue`
+  - `src/components/training/TeacherControlPanel.vue`
+  - `src/components/training/TrainingSession.vue`
+  - `src/stores/useTrainingStore.ts`
+- 当前已确认的运行时能力：
+  - Step 5 不再是占位，而是真正的结果页
+  - 结果页 `onMounted` 会自动调用 `store.saveRecord()`
+  - 结果页当前具备写库防重，不会因重复挂载重复插入记录
+  - 正确作答时会触发全屏奖励层
+  - `Ctrl + Alt + S` 可切出教师控制台，支持跳题 / 重置本题 / 强制结算
+- 当前新增的重要壳层边界：
+  - `src/router/index.ts` 已给 `EmotionSceneTraining` 标记 `meta.immersiveShell = true`
+  - `src/views/Layout.vue` 在该标记下会隐藏侧边栏、顶部栏和内容区默认 padding
+  - 这意味着 `emotion_scene` 当前是“吃满整个应用窗口”的沉浸式训练页，而不是嵌在后台管理壳中的普通业务页
+  - 但这**不等于**训练页已单独接管系统级窗口全屏；当前仍依赖 Electron 主窗口既有的 `fullscreen: true`
+- 当前新增的重要交互边界：
+  - `QuestionPresenter.vue` 当前优先尝试 `EdgeTTS`，无 endpoint 时会回退到 `Web Speech`
+  - 这是当前可用性兜底，不应写成正式 TTS 后端方案已验收
+  - `QuestionStep.vue` 的 `feedback_text` 当前采用机器人伴学助手式提示气泡
+  - 奖励主文案卡片已放到页面中央，避免与提示气泡叠压
+- 当前 Step 1 的最新 UI 现实：
+  - 顶部 `Step 1~4` 已改为圆点式进度
+  - 场景名称当前常驻在顶部中央
+  - 情绪题卡片区正在按 `3 × 2` 规整触摸布局打磨
+  - 颜色标签文字已从情绪卡片内移除，改为选中态整卡高亮
+  - 一个关键最新决策是：
+    - **Step 1 不允许增加“确认选择”按钮**
+    - 当前已回退为“单击卡片即作答”，原因是额外确认会增加孩子的认知负担
+- 当前重要现实边界：
+  - Step 1 页面结构仍处于用户截图驱动的 live preview 微调阶段，尚未形成最终视觉验收结论
+  - `care_scene` 仍未接入上述 `immersiveShell + Phase 6` 新链路

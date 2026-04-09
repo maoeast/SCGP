@@ -2,6 +2,7 @@ import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 
 import { useDatabase, type SqlResultSet } from '@/db/useDatabase'
+import router from '@/router'
 
 type TrainingFlowIndex = 0 | 1 | 2 | 3 | 4 | 5
 type QuestionStepIndex = 1 | 2 | 3 | 4
@@ -237,7 +238,10 @@ export const useTrainingStore = defineStore('training', () => {
   const inputLocked = ref(false)
   const isTransitioning = ref(false)
   const isExitModalVisible = ref(false)
+  const showRewardOverlay = ref(false)
   const availableTTSEngine = ref<TTSEngine>(null)
+  const questionResetSeed = ref(0)
+  const savedRecordId = ref<number | null>(null)
 
   const currentStepData = computed<StepData | null>(() => {
     const activeStepIndex = toQuestionStepIndex(currentStepIndex.value)
@@ -265,13 +269,20 @@ export const useTrainingStore = defineStore('training', () => {
     console.log('TODO: Call ttsService.stop() here')
   })
 
-  function resetRuntimeState(): void {
-    currentStepIndex.value = INTRO_STEP_INDEX
+  function bumpQuestionResetSeed(): void {
+    questionResetSeed.value += 1
+  }
+
+  function resetRuntimeState(nextStepIndex: TrainingFlowIndex = INTRO_STEP_INDEX): void {
+    currentStepIndex.value = nextStepIndex
     hintLevelPerStep.value = cloneDefaultHintLevels()
     answers.value = {}
     inputLocked.value = false
     isTransitioning.value = false
     isExitModalVisible.value = false
+    showRewardOverlay.value = false
+    savedRecordId.value = null
+    bumpQuestionResetSeed()
   }
 
   async function ensurePrototypeDatabaseReady(): Promise<void> {
@@ -473,6 +484,7 @@ export const useTrainingStore = defineStore('training', () => {
 
     inputLocked.value = true
     isTransitioning.value = true
+    showRewardOverlay.value = false
 
     try {
       await delay(TRANSITION_DURATION_MS)
@@ -541,6 +553,10 @@ export const useTrainingStore = defineStore('training', () => {
       throw new Error('Cannot save training record before a scene is loaded.')
     }
 
+    if (savedRecordId.value !== null) {
+      return savedRecordId.value
+    }
+
     await ensurePrototypeDatabaseReady()
 
     const stars = calculateStars()
@@ -557,24 +573,37 @@ export const useTrainingStore = defineStore('training', () => {
     )
 
     const recordRow = selectRows<{ id: SqlRowValue }>('SELECT last_insert_rowid() AS id LIMIT 1')[0]
-    return toNumber(recordRow?.id ?? 0)
+    savedRecordId.value = toNumber(recordRow?.id ?? 0)
+    return savedRecordId.value
   }
 
   function toggleExitModal(show: boolean): void {
     isExitModalVisible.value = show
   }
 
+  function resolveSelectorPath(): string {
+    return router.currentRoute.value.path.includes('/care-expression')
+      ? '/emotional/care-expression/select'
+      : '/emotional/emotion-scene/select'
+  }
+
   function exitTraining(): void {
+    const nextQuery = { ...router.currentRoute.value.query }
+
     isExitModalVisible.value = false
-    inputLocked.value = false
-    isTransitioning.value = false
-    console.log('exitTraining: TODO route back to /home in Phase 4')
+    resetRuntimeState()
+    void router.push({
+      path: resolveSelectorPath(),
+      query: nextQuery,
+    })
   }
 
   function forceNext(): void {
     currentStepIndex.value = toTrainingFlowIndex(currentStepIndex.value + 1)
     inputLocked.value = false
     isTransitioning.value = false
+    isExitModalVisible.value = false
+    showRewardOverlay.value = false
   }
 
   function forceReset(): void {
@@ -586,6 +615,15 @@ export const useTrainingStore = defineStore('training', () => {
     const nextLevels = [...hintLevelPerStep.value] as HintLevelPerStep
     nextLevels[activeStepIndex - 1] = 0
     hintLevelPerStep.value = nextLevels
+
+    const nextAnswers = { ...answers.value }
+    delete nextAnswers[activeStepIndex]
+    answers.value = nextAnswers
+
+    inputLocked.value = false
+    isTransitioning.value = false
+    showRewardOverlay.value = false
+    bumpQuestionResetSeed()
   }
 
   function forceEnd(): void {
@@ -593,6 +631,11 @@ export const useTrainingStore = defineStore('training', () => {
     inputLocked.value = false
     isTransitioning.value = false
     isExitModalVisible.value = false
+    showRewardOverlay.value = false
+  }
+
+  function restartTraining(): void {
+    resetRuntimeState(1)
   }
 
   return {
@@ -604,7 +647,9 @@ export const useTrainingStore = defineStore('training', () => {
     inputLocked,
     isTransitioning,
     isExitModalVisible,
+    showRewardOverlay,
     availableTTSEngine,
+    questionResetSeed,
     currentStepData,
     parsedQuestionText,
     loadScene,
@@ -618,5 +663,6 @@ export const useTrainingStore = defineStore('training', () => {
     forceNext,
     forceReset,
     forceEnd,
+    restartTraining,
   }
 })

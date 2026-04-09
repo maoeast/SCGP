@@ -1,7 +1,7 @@
 <template>
-  <div class="layout-container">
+  <div class="layout-container" :class="{ 'is-immersive': isImmersiveRoute }">
     <!-- 侧边栏 -->
-    <div class="sidebar" :class="{ collapsed: sidebarCollapsed }">
+    <div v-if="!isImmersiveRoute" class="sidebar" :class="{ collapsed: sidebarCollapsed }">
       <!-- Logo 区域 -->
       <div class="sidebar-logo">
         <img :src="systemConfigStore.displayLogoPath" alt="Logo" />
@@ -42,9 +42,9 @@
     </div>
 
     <!-- 主内容区 -->
-    <div class="main-container">
+    <div class="main-container" :class="{ 'is-immersive': isImmersiveRoute }">
       <!-- 顶部栏 -->
-      <header class="header">
+      <header v-if="!isImmersiveRoute" class="header">
         <div class="header-left">
           <button class="toggle-btn" @click="toggleSidebar">
             <i class="fas fa-bars"></i>
@@ -65,7 +65,7 @@
       </header>
 
       <!-- 内容区 -->
-      <main class="content">
+      <main class="content" :class="{ 'is-immersive': isImmersiveRoute }">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" />
@@ -152,6 +152,8 @@ const pageTitle = computed(() => {
   }
   return route.meta.title || '感官综合训练与评估'
 })
+
+const isImmersiveRoute = computed(() => route.meta.immersiveShell === true)
 
 // 判断是否激活
 const isActive = (path: string) => {
@@ -245,6 +247,10 @@ onMounted(() => {
   display: flex;
   height: 100vh;
   background: #f5f7fa;
+}
+
+.layout-container.is-immersive {
+  background: #000;
 }
 
 .sidebar {
@@ -394,6 +400,10 @@ onMounted(() => {
   overflow: hidden;
 }
 
+.main-container.is-immersive {
+  min-width: 0;
+}
+
 .header {
   height: 60px;
   background: white;
@@ -487,6 +497,12 @@ onMounted(() => {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
+}
+
+.content.is-immersive {
+  padding: 0;
+  overflow: hidden;
+  background: #000;
 }
 
 /* 过渡动画 */

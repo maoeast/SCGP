@@ -225,7 +225,8 @@ const router = createRouter({
           meta: {
             title: '情绪与场景训练',
             hideInMenu: true,
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
           }
         },
         {

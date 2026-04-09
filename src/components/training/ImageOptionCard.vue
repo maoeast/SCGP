@@ -3,167 +3,115 @@
     type="button"
     class="image-option-card"
     :class="{
+      'is-selected': selected && feedbackState === 'idle',
       'is-error': visualState === 'error',
       'is-success': visualState === 'success',
-      'is-locked': store.inputLocked && visualState === 'idle',
+      'is-locked': disabled && visualState === 'idle',
     }"
-    :disabled="store.inputLocked || visualState === 'success'"
-    @click="handleSelect"
+    :disabled="disabled || visualState === 'success'"
+    :style="selectionStyle"
+    @click="$emit('select')"
   >
-    <span v-if="visualState === 'success'" class="success-check" aria-hidden="true">✓</span>
-
-    <span class="option-emoji" aria-hidden="true">{{ emoji }}</span>
+    <span v-if="displayEmoji" class="option-emoji" aria-hidden="true">{{ displayEmoji }}</span>
     <strong class="option-label">{{ option.content }}</strong>
-    <span class="option-color" :style="colorLabelStyle">{{ option.color_label || '情绪线索' }}</span>
   </button>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed } from 'vue'
 
-import { useSound } from '@/composables/useSound'
 import { getEmotionCatalogEntry } from '@/features/emotional/emotion-catalog'
-import { useTrainingStore, type OptionData } from '@/stores/useTrainingStore'
-
-import {
-  TRAINING_CORRECT_SFX,
-  TRAINING_ERROR_FEEDBACK_MS,
-  TRAINING_ERROR_RESET_MS,
-  TRAINING_ERROR_SFX,
-  TRAINING_SUCCESS_FEEDBACK_MS,
-} from './training-feedback-sfx'
+import type { OptionData } from '@/stores/useTrainingStore'
 
 const props = defineProps<{
   option: OptionData
+  selected?: boolean
+  feedbackState?: 'idle' | 'error' | 'success'
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
-  feedback: [payload: {
-    text: string
-    tone: 'success' | 'error'
-    durationMs: number
-  }]
+  select: []
 }>()
 
-const store = useTrainingStore()
+const SAFE_EMOJI_BY_ICON_NAME: Record<string, string> = {
+  calm: '🙂',
+  happy: '😊',
+  sad: '😢',
+  angry: '😠',
+  scared: '😨',
+  embarrassed: '😳',
+  shy: '😊',
+  proud: '😄',
+}
 
-const visualState = ref<'idle' | 'error' | 'success'>('idle')
-const timers: number[] = []
+function sanitizeIconName(raw: string | null): string | null {
+  if (!raw) {
+    return null
+  }
 
-const correctSound = useSound({
-  src: TRAINING_CORRECT_SFX,
-  volume: 0.4,
-})
+  const normalized = raw
+    .replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2060\ufeff]/g, '')
+    .trim()
+    .toLowerCase()
 
-const errorSound = useSound({
-  src: TRAINING_ERROR_SFX,
-  volume: 0.45,
-})
+  if (!normalized || normalized.length <= 1) {
+    return null
+  }
 
-const emoji = computed(() => {
-  if (props.option.icon_name) {
-    return getEmotionCatalogEntry(props.option.icon_name, 'calm').emoji
+  return normalized
+}
+
+const displayEmoji = computed(() => {
+  const normalizedIconName = sanitizeIconName(props.option.icon_name)
+  if (normalizedIconName && SAFE_EMOJI_BY_ICON_NAME[normalizedIconName]) {
+    return SAFE_EMOJI_BY_ICON_NAME[normalizedIconName]
+  }
+
+  if (normalizedIconName) {
+    const catalogEmoji = getEmotionCatalogEntry(normalizedIconName, 'calm').emoji?.trim()
+    if (catalogEmoji && !/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2060\ufeff]/.test(catalogEmoji)) {
+      return catalogEmoji === '🫣' ? '😊' : catalogEmoji
+    }
   }
 
   return '🙂'
 })
 
-const colorLabelStyle = computed(() => {
-  return props.option.color_hex
-    ? {
-      color: props.option.color_hex,
-    }
-    : undefined
-})
-
-function clearTimers(): void {
-  timers.forEach((timerId) => window.clearTimeout(timerId))
-  timers.length = 0
+function withAlpha(hex: string, alpha: string): string {
+  const normalized = hex.trim()
+  return /^#[0-9a-f]{6}$/i.test(normalized) ? `${normalized}${alpha}` : normalized
 }
 
-function schedule(callback: () => void, delayMs: number): void {
-  const timerId = window.setTimeout(callback, delayMs)
-  timers.push(timerId)
-}
-
-function resetVisualState(): void {
-  clearTimers()
-  visualState.value = 'idle'
-}
-
-function handleSelect(): void {
-  if (store.inputLocked || visualState.value === 'success') {
-    return
+const selectionStyle = computed(() => {
+  const accent = props.option.color_hex?.trim()
+  if (!accent) {
+    return undefined
   }
 
-  store.$patch({
-    inputLocked: true,
-  })
-
-  clearTimers()
-
-  if (props.option.is_correct) {
-    visualState.value = 'success'
-    correctSound.play()
-    emit('feedback', {
-      text: props.option.feedback_text?.trim() || '答对了，继续观察场景里的线索吧。',
-      tone: 'success',
-      durationMs: TRAINING_SUCCESS_FEEDBACK_MS,
-    })
-
-    schedule(() => {
-      store.recordAnswer(Number(store.currentStepIndex), props.option.id)
-      void store.nextStep()
-    }, TRAINING_SUCCESS_FEEDBACK_MS)
-
-    return
+  return {
+    '--emotion-accent': accent,
+    '--emotion-accent-soft': withAlpha(accent, '26'),
+    '--emotion-accent-border': withAlpha(accent, '88'),
   }
-
-  visualState.value = 'error'
-  errorSound.play()
-  emit('feedback', {
-    text: props.option.feedback_text?.trim() || '再仔细看一看画面和线索哦。',
-    tone: 'error',
-    durationMs: TRAINING_ERROR_RESET_MS,
-  })
-
-  schedule(() => {
-    store.recordError(Number(store.currentStepIndex))
-  }, TRAINING_ERROR_FEEDBACK_MS)
-
-  schedule(() => {
-    visualState.value = 'idle'
-    store.$patch({
-      inputLocked: false,
-    })
-  }, TRAINING_ERROR_RESET_MS)
-}
-
-watch(
-  () => store.currentStepData?.id,
-  () => {
-    resetVisualState()
-  },
-)
-
-onBeforeUnmount(() => {
-  clearTimers()
 })
+
+const visualState = computed(() => props.feedbackState ?? 'idle')
 </script>
 
 <style scoped>
 .image-option-card {
   position: relative;
-  width: min(100%, 240px);
-  min-height: 240px;
+  width: 100%;
+  min-height: 210px;
   border: 2px solid rgb(226 232 240 / 78%);
   border-radius: 28px;
-  padding: 26px 20px 22px;
+  padding: 24px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 14px;
   text-align: center;
   cursor: pointer;
   background: rgb(255 255 255 / 95%);
@@ -177,20 +125,25 @@ onBeforeUnmount(() => {
     background-color 0.2s ease;
 }
 
-.image-option-card:hover:not(:disabled) {
-  transform: translateY(-3px);
-  border-color: rgb(125 211 252 / 90%);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 90%),
-    0 28px 48px rgb(15 23 42 / 18%);
-}
-
 .image-option-card:disabled {
   cursor: default;
 }
 
+.image-option-card:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
 .image-option-card.is-locked {
   opacity: 0.82;
+}
+
+.image-option-card.is-selected {
+  border-width: 3px;
+  border-color: var(--emotion-accent-border, rgb(125 211 252 / 90%));
+  background: linear-gradient(180deg, #ffffff 0%, var(--emotion-accent-soft, rgb(191 219 254 / 28%)) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 92%),
+    0 24px 44px rgb(15 23 42 / 16%);
 }
 
 .image-option-card.is-error {
@@ -210,37 +163,23 @@ onBeforeUnmount(() => {
     0 22px 42px rgb(22 163 74 / 18%);
 }
 
-.success-check {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-size: 18px;
-  font-weight: 900;
-  color: #fff;
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  box-shadow: 0 12px 24px rgb(22 163 74 / 30%);
-}
-
 .option-emoji {
   font-size: clamp(56px, 8vw, 82px);
   line-height: 1;
+  min-height: 1em;
+  transition: transform 0.18s ease;
+}
+
+.image-option-card.is-selected .option-emoji,
+.image-option-card.is-success .option-emoji {
+  transform: scale(1.08);
 }
 
 .option-label {
-  font-size: clamp(22px, 3vw, 30px);
-  line-height: 1.25;
+  font-size: clamp(22px, 2.7vw, 30px);
+  line-height: 1.22;
+  font-weight: 900;
   color: #0f172a;
-}
-
-.option-color {
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
 }
 
 @keyframes option-shake {
@@ -260,10 +199,13 @@ onBeforeUnmount(() => {
 
 @media (max-width: 900px) {
   .image-option-card {
-    width: 100%;
-    min-height: 190px;
-    padding: 20px 18px;
+    min-height: 170px;
+    padding: 20px 14px;
     border-radius: 24px;
+  }
+
+  .option-label {
+    font-size: clamp(18px, 3vw, 24px);
   }
 }
 </style>

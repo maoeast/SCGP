@@ -3,21 +3,25 @@
     <div class="training-overlay">
       <header class="training-header">
         <div class="progress-stage">
-          <div v-if="showProgress" class="progress-shell">
+          <div class="progress-shell" role="list" aria-label="训练进度">
             <div
               v-for="step in progressSteps"
               :key="step"
-              class="progress-pill"
+              class="progress-dot"
               :class="{
                 'is-active': store.currentStepIndex === step,
-                'is-complete': store.currentStepIndex > step,
+                'is-complete': store.currentStepIndex > step || store.currentStepIndex === 5,
               }"
-            >
-              Step {{ step }}
-            </div>
+              :aria-label="`Step ${step}`"
+              role="listitem"
+            />
           </div>
-          <div v-else class="progress-placeholder">
-            沉浸式训练引导中
+        </div>
+
+        <div class="scene-stage">
+          <div class="scene-chip">
+            <span class="scene-chip-label">当前场景</span>
+            <strong>{{ sceneTitle }}</strong>
           </div>
         </div>
 
@@ -51,8 +55,8 @@ import { resolvePresetResourceUrl } from '@/utils/preset-resource'
 const store = useTrainingStore()
 const progressSteps = [1, 2, 3, 4] as const
 
-const showProgress = computed(() => {
-  return store.currentStepIndex >= 1 && store.currentStepIndex <= 4
+const sceneTitle = computed(() => {
+  return store.scene?.title?.trim() || '情绪场景训练'
 })
 
 const backgroundStyle = computed(() => {
@@ -93,7 +97,8 @@ const backgroundStyle = computed(() => {
 }
 
 .training-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
@@ -108,50 +113,72 @@ const backgroundStyle = computed(() => {
 
 .progress-shell {
   display: inline-flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
-  padding: 12px 16px;
+  padding: 12px 14px;
   border-radius: 999px;
   background: rgb(15 23 42 / 26%);
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 16%);
 }
 
-.progress-pill {
-  min-width: 82px;
+.progress-dot {
+  width: 14px;
+  height: 14px;
   border-radius: 999px;
-  padding: 8px 14px;
-  text-align: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: rgb(255 255 255 / 76%);
-  background: rgb(255 255 255 / 8%);
+  background: rgb(255 255 255 / 22%);
   transition:
     transform 0.22s ease,
     background-color 0.22s ease,
-    color 0.22s ease;
+    width 0.22s ease;
 }
 
-.progress-pill.is-active {
-  color: #0f172a;
-  background: linear-gradient(135deg, #fef08a 0%, #f9a8d4 100%);
+.progress-dot.is-active {
+  width: 42px;
+  background: linear-gradient(135deg, #fdba74 0%, #fb7185 100%);
   transform: translateY(-1px);
 }
 
-.progress-pill.is-complete {
-  color: #e0f2fe;
-  background: rgb(34 197 94 / 28%);
+.progress-dot.is-complete {
+  background: #22c55e;
 }
 
-.progress-placeholder {
-  padding: 10px 16px;
+.scene-stage {
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.scene-chip {
+  min-width: min(100%, 320px);
+  max-width: min(100%, 560px);
+  padding: 12px 18px;
   border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: rgb(255 255 255 / 80%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  background: rgb(15 23 42 / 30%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 12%),
+    0 18px 34px rgb(15 23 42 / 16%);
+}
+
+.scene-chip-label {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: rgb(255 255 255 / 10%);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 14%);
+  color: rgb(255 255 255 / 66%);
+}
+
+.scene-chip strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 800;
 }
 
 .exit-trigger {
@@ -217,7 +244,13 @@ const backgroundStyle = computed(() => {
 
 @media (max-width: 768px) {
   .training-header {
+    grid-template-columns: 1fr auto;
     padding: 16px 16px 0;
+  }
+
+  .scene-stage {
+    grid-column: 1 / -1;
+    order: 3;
   }
 
   .training-main {
@@ -230,10 +263,19 @@ const backgroundStyle = computed(() => {
     border-radius: 24px;
   }
 
-  .progress-pill {
-    min-width: 70px;
-    padding: 7px 12px;
-    font-size: 12px;
+  .progress-dot {
+    width: 12px;
+    height: 12px;
+  }
+
+  .progress-dot.is-active {
+    width: 34px;
+  }
+
+  .scene-chip {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 14px;
   }
 
   .exit-trigger {

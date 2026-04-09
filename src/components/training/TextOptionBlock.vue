@@ -102,6 +102,7 @@ function handleSelect(): void {
 
   if (props.option.is_correct) {
     visualState.value = 'success'
+    store.showRewardOverlay = true
     correctSound.play()
     emit('feedback', {
       text: props.option.feedback_text?.trim() || '做得很好，我们继续下一题。',
@@ -138,7 +139,7 @@ function handleSelect(): void {
 }
 
 watch(
-  () => store.currentStepData?.id,
+  () => `${store.currentStepData?.id ?? 'none'}-${store.questionResetSeed}`,
   () => {
     resetVisualState()
   },

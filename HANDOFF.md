@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-08
+> last_updated: 2026-04-09
 
 > Responsibility: top-level handoff entry for new sessions.
 > Read when: entering the repo or resuming work and needing the fastest route to current context.
@@ -33,7 +33,7 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: emotion-scene immersive full-screen refactor Phase 5 dynamic question flow has landed (`QuestionPresenter` / `QuestionStep` / `OptionBoard` + real option feedback + lighter background overlay), the next concrete follow-up is Step 5 result-page integration, and the follow-up `care_scene` immersive refactor has now been documented but not started in code.**
+**Active follow-up work is now in `.continue-here.md`: emotion-scene immersive refactor has progressed through Phase 6 (real result page + reward overlay + teacher control + immersive shell hiding app chrome), and the active follow-up has shifted to the final live visual polish of Step 1 layout / touch interaction; `care_scene` immersive refactor is still documented but not started in code.**
 
 ## Next Session
 

@@ -41,13 +41,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 import { useTrainingStore } from '@/stores/useTrainingStore'
 
 const store = useTrainingStore()
 
-const mockClues = ['面部肌肉放松', '图书平铺在腿上'] as const
+const DEFAULT_CLUES = ['面部肌肉放松', '图书平铺在腿上'] as const
 const visibleClues = ref<string[]>([])
 const timers: number[] = []
 
@@ -59,18 +59,41 @@ const sceneDescription = computed(() => {
   return store.scene?.description?.trim() || '请认真观察人物、表情和周围线索，准备进入下一步。'
 })
 
-onMounted(() => {
+const sourceClues = computed(() => {
+  const tags = store.scene?.tags
+    ?.map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0)
+    .slice(0, 4) || []
+
+  return tags.length > 0 ? tags : [...DEFAULT_CLUES]
+})
+
+function clearTimers(): void {
+  timers.forEach((timerId) => window.clearTimeout(timerId))
+  timers.length = 0
+}
+
+function startClueSequence(clues: string[]): void {
+  clearTimers()
   visibleClues.value = []
-  mockClues.forEach((clue, index) => {
+  clues.forEach((clue, index) => {
     const timerId = window.setTimeout(() => {
       visibleClues.value = [...visibleClues.value, clue]
     }, (index + 1) * 800)
     timers.push(timerId)
   })
-})
+}
+
+watch(
+  () => `${store.scene?.scene_code ?? 'unknown'}:${sourceClues.value.join('|')}`,
+  () => {
+    startClueSequence(sourceClues.value)
+  },
+  { immediate: true },
+)
 
 onBeforeUnmount(() => {
-  timers.forEach((timerId) => window.clearTimeout(timerId))
+  clearTimers()
 })
 </script>
 
@@ -181,7 +204,8 @@ onBeforeUnmount(() => {
   color: #082f49;
   background: linear-gradient(135deg, rgb(255 255 255 / 94%) 0%, rgb(186 230 253 / 94%) 100%);
   box-shadow: 0 18px 36px rgb(8 47 73 / 18%);
-  animation: clue-pop 0.45s ease;
+  opacity: 0;
+  animation: clue-fade-in 0.48s ease forwards;
 }
 
 .intro-footer {
@@ -223,7 +247,7 @@ onBeforeUnmount(() => {
   opacity: 0.7;
 }
 
-@keyframes clue-pop {
+@keyframes clue-fade-in {
   from {
     opacity: 0;
     transform: translateY(12px) scale(0.94);

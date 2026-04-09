@@ -55,4 +55,4 @@ export const TRAINING_ERROR_SFX = createToneDataUri(220, 170, { volume: 0.32 })
 
 export const TRAINING_ERROR_FEEDBACK_MS = 150
 export const TRAINING_ERROR_RESET_MS = 320
-export const TRAINING_SUCCESS_FEEDBACK_MS = 300
+export const TRAINING_SUCCESS_FEEDBACK_MS = 1500

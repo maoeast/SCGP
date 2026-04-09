@@ -19,11 +19,10 @@
 
     <QuestionStep v-else-if="store.currentStepIndex >= 1 && store.currentStepIndex <= 4" />
 
-    <div v-else class="question-placeholder is-finished">
-      <span class="placeholder-kicker">Session End</span>
-      <h2>训练完成占位</h2>
-      <p>当前 Phase 4 仅交付壳子与引导页，后续结算页将在下一阶段接入。</p>
-    </div>
+    <ResultStep v-else />
+
+    <FeedbackOverlay />
+    <TeacherControlPanel :visible="isTeacherPanelVisible" @close="isTeacherPanelVisible = false" />
 
     <ExitConfirmDialog />
   </TrainingLayout>
@@ -34,8 +33,11 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import ExitConfirmDialog from '@/components/training/ExitConfirmDialog.vue'
+import FeedbackOverlay from '@/components/training/FeedbackOverlay.vue'
 import QuestionStep from '@/components/training/QuestionStep.vue'
+import ResultStep from '@/components/training/ResultStep.vue'
 import SceneIntroStep from '@/components/training/SceneIntroStep.vue'
+import TeacherControlPanel from '@/components/training/TeacherControlPanel.vue'
 import TrainingLayout from '@/components/training/TrainingLayout.vue'
 import { useTrainingStore } from '@/stores/useTrainingStore'
 
@@ -45,6 +47,7 @@ const store = useTrainingStore()
 
 const isLoading = ref(false)
 const loadError = ref('')
+const isTeacherPanelVisible = ref(false)
 
 const sceneCode = computed(() => {
   const raw = Array.isArray(route.query.sceneCode)
@@ -76,7 +79,7 @@ async function hydrateScene(): Promise<void> {
 function handleKeydown(event: KeyboardEvent): void {
   if (event.ctrlKey && event.altKey && event.key.toLowerCase() === 's') {
     event.preventDefault()
-    console.log('触发教师面板')
+    isTeacherPanelVisible.value = !isTeacherPanelVisible.value
   }
 }
 
@@ -90,6 +93,7 @@ function goBackToSelector(): void {
 }
 
 watch(sceneCode, () => {
+  isTeacherPanelVisible.value = false
   void hydrateScene()
 })
 
@@ -99,13 +103,13 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  isTeacherPanelVisible.value = false
   window.removeEventListener('keydown', handleKeydown)
 })
 </script>
 
 <style scoped>
-.session-status-card,
-.question-placeholder {
+.session-status-card {
   margin: auto;
   width: min(100%, 760px);
   padding: 32px;
@@ -122,17 +126,9 @@ onBeforeUnmount(() => {
   background: linear-gradient(180deg, rgb(127 29 29 / 72%) 0%, rgb(69 10 10 / 56%) 100%);
 }
 
-.question-placeholder {
-  text-align: center;
-}
-
-.question-placeholder.is-finished {
-  background: linear-gradient(180deg, rgb(12 74 110 / 56%) 0%, rgb(15 23 42 / 38%) 100%);
-}
-
 .status-kicker,
 .placeholder-kicker {
-  display: inline-block;
+  display: inline-flex;
   padding: 8px 14px;
   border-radius: 999px;
   font-size: 12px;
@@ -143,15 +139,13 @@ onBeforeUnmount(() => {
   background: linear-gradient(135deg, #bfdbfe 0%, #fef08a 100%);
 }
 
-.session-status-card h2,
-.question-placeholder h2 {
+.session-status-card h2 {
   margin: 16px 0 12px;
   font-size: clamp(28px, 4vw, 40px);
   line-height: 1.15;
 }
 
-.session-status-card p,
-.question-placeholder p {
+.session-status-card p {
   margin: 0;
   font-size: 17px;
   line-height: 1.85;
@@ -172,15 +166,13 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
-  .session-status-card,
-  .question-placeholder {
+  .session-status-card {
     width: 100%;
     padding: 24px 20px;
     border-radius: 24px;
   }
 
-  .session-status-card p,
-  .question-placeholder p {
+  .session-status-card p {
     font-size: 15px;
     line-height: 1.75;
   }

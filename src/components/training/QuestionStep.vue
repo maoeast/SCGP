@@ -13,10 +13,43 @@
           role="status"
           aria-live="polite"
         >
-          <span class="feedback-toast-icon" aria-hidden="true">
-            {{ activeToast.tone === 'success' ? '🌟' : '💡' }}
-          </span>
-          <span class="feedback-toast-copy">{{ activeToast.text }}</span>
+          <div class="feedback-toast-avatar" aria-hidden="true">
+            <svg
+              v-if="activeToast.tone === 'success'"
+              class="feedback-toast-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M5 12.5L9.2 16.7L19 7.5"
+                stroke="currentColor"
+                stroke-width="3.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+
+            <svg
+              v-else
+              class="feedback-toast-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M12 6.5V13"
+                stroke="currentColor"
+                stroke-width="3.2"
+                stroke-linecap="round"
+              />
+              <circle cx="12" cy="17.2" r="1.6" fill="currentColor" />
+            </svg>
+          </div>
+          <div class="feedback-toast-copy">
+            <strong class="feedback-toast-title">
+              {{ activeToast.tone === 'success' ? '太棒了！' : '再试一次' }}
+            </strong>
+            <span class="feedback-toast-body">{{ activeToast.text }}</span>
+          </div>
         </div>
       </Transition>
 
@@ -64,7 +97,7 @@ function handleFeedback(payload: FeedbackEventPayload): void {
 }
 
 watch(
-  () => store.currentStepData?.id,
+  () => `${store.currentStepData?.id ?? 'none'}-${store.questionResetSeed}`,
   () => {
     hideToast()
   },
@@ -94,46 +127,91 @@ onBeforeUnmount(() => {
 
 .feedback-toast {
   position: absolute;
-  top: 10px;
+  top: 112px;
   left: 50%;
   z-index: 3;
-  width: min(100%, 680px);
+  width: fit-content;
+  max-width: 600px;
   padding: 20px 24px;
-  border-radius: 26px;
+  border-radius: 20px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  text-align: center;
+  align-items: flex-start;
+  gap: 16px;
+  text-align: left;
   transform: translateX(-50%);
-  box-shadow: 0 28px 52px rgb(15 23 42 / 26%);
+  box-shadow: 0 10px 25px rgb(15 23 42 / 12%);
 }
 
 .feedback-toast.is-success {
   color: #14532d;
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  background: #e8f5e9;
   box-shadow:
-    inset 0 0 0 2px rgb(34 197 94 / 22%),
-    0 28px 52px rgb(22 163 74 / 18%);
+    inset 0 0 0 1px rgb(34 197 94 / 16%),
+    0 10px 25px rgb(34 197 94 / 12%);
 }
 
 .feedback-toast.is-error {
-  color: #7c2d12;
-  background: linear-gradient(135deg, #ffedd5 0%, #fdba74 100%);
+  color: #9a3412;
+  background: #fff3e0;
   box-shadow:
-    inset 0 0 0 2px rgb(249 115 22 / 24%),
-    0 28px 52px rgb(249 115 22 / 18%);
+    inset 0 0 0 1px rgb(249 115 22 / 16%),
+    0 10px 25px rgb(249 115 22 / 12%);
+}
+
+.feedback-toast-avatar {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 8px 18px rgb(15 23 42 / 12%);
+}
+
+.feedback-toast.is-success .feedback-toast-avatar {
+  background: linear-gradient(135deg, #86efac 0%, #34d399 100%);
+}
+
+.feedback-toast.is-error .feedback-toast-avatar {
+  background: linear-gradient(135deg, #fdba74 0%, #fb923c 100%);
 }
 
 .feedback-toast-icon {
-  font-size: 28px;
-  line-height: 1;
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 
 .feedback-toast-copy {
-  font-size: clamp(20px, 2.7vw, 28px);
-  font-weight: 900;
-  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 0 1 auto;
+  max-width: 480px;
+}
+
+.feedback-toast-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.feedback-toast.is-success .feedback-toast-title {
+  color: #166534;
+}
+
+.feedback-toast.is-error .feedback-toast-title {
+  color: #c2410c;
+}
+
+.feedback-toast-body {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #3f3f46;
   text-wrap: balance;
 }
 
@@ -160,14 +238,29 @@ onBeforeUnmount(() => {
   }
 
   .feedback-toast {
-    top: 0;
-    width: calc(100% - 8px);
-    padding: 18px 16px;
-    border-radius: 22px;
+    top: 96px;
+    width: min(calc(100% - 12px), 100%);
+    padding: 18px 18px;
+    gap: 12px;
+    border-radius: 18px;
   }
 
-  .feedback-toast-copy {
-    font-size: clamp(18px, 5vw, 22px);
+  .feedback-toast-avatar {
+    width: 44px;
+    height: 44px;
+  }
+
+  .feedback-toast-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .feedback-toast-title {
+    font-size: 18px;
+  }
+
+  .feedback-toast-body {
+    font-size: 15px;
   }
 }
 </style>
