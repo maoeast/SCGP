@@ -41,20 +41,26 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 
-import { createEdgeTTSService } from '@/services/tts'
+import { createEdgeTTSService, createEdgeTTSServiceIPC } from '@/services/tts'
 import { useTrainingStore } from '@/stores/useTrainingStore'
 
 const store = useTrainingStore()
 
+// TTS 优先级：IPC（Electron 内嵌） > HTTP 端点（旧方式） > Web Speech API
+const hasIpcTTS = typeof window !== 'undefined'
+  && typeof (window as any).electronAPI?.ttsSynthesize === 'function'
+
 const edgeTtsEndpoint = (import.meta.env.VITE_EDGE_TTS_ENDPOINT as string | undefined)?.trim() ?? ''
 const edgeTtsHealthcheckUrl = (import.meta.env.VITE_EDGE_TTS_HEALTHCHECK_URL as string | undefined)?.trim() ?? ''
 
-const ttsService = edgeTtsEndpoint
-  ? createEdgeTTSService({
-    endpoint: edgeTtsEndpoint,
-    healthcheckUrl: edgeTtsHealthcheckUrl || undefined,
-  })
-  : null
+const ttsService = hasIpcTTS
+  ? createEdgeTTSServiceIPC()
+  : edgeTtsEndpoint
+    ? createEdgeTTSService({
+      endpoint: edgeTtsEndpoint,
+      healthcheckUrl: edgeTtsHealthcheckUrl || undefined,
+    })
+    : null
 
 const activeAbortController = shallowRef<AbortController | null>(null)
 const isSpeaking = ref(false)
@@ -142,7 +148,7 @@ async function playQuestion(): Promise<void> {
   activeAbortController.value = controller
   isSpeaking.value = true
   store.$patch({
-    availableTTSEngine: 'edge',
+    availableTTSEngine: hasIpcTTS ? 'edge-ipc' : 'edge',
   })
 
   try {

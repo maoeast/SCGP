@@ -109,6 +109,19 @@
 - `equipment_training_records` 的当前 schema/init 口径已改回正确资源主线：
   - `equipment_id -> sys_training_resource(id)`
 
+### 3.4 Emotional immersive rework planning update
+
+- `2026-04-06` 已新增情绪模块沉浸式训练改造规划：
+  - `docs/planning/2026-04-06-emotional-immersive-training-rework-plan.md`
+- 当前已锁定的情绪模块改造方向：
+  - `care_scene` 目标是固定 3 个沉浸式全屏阶段
+  - `emotion_scene` 不限制屏数，按场景推理链决定 stage 数量
+  - 多图场景支持必须作为一级结构约束提前设计
+  - 新资源字段、鼓励反馈与引导文案必须符合中国儿童/青少年的真实语境
+- 当前重要边界：
+  - 本次先完成规划和文档沉淀，不在一个会话内直接铺开全部实现
+  - 后续应先补 `stage` 层流程模型，再进入具体 UI 与资源编辑器改造
+
 ## 4. 当前活跃未完成主线
 
 当前下一条真正的大改动，不是单页修补，而是：

@@ -188,6 +188,17 @@ export interface ElectronAPI {
 
   // ========== 软件更新 API ==========
   /**
+   * TTS 语音合成（通过 Electron Main 进程内嵌 msedge-tts）
+   * @param text - 要合成的文本
+   * @param options - 可选参数：voice、rate、pitch
+   * @returns Promise<TTSResult> - 合成结果，success 时 audio 为 MP3 音频 Uint8Array
+   */
+  ttsSynthesize: (
+    text: string,
+    options?: { voice?: string; rate?: string; pitch?: string }
+  ) => Promise<TTSResult & { audioBase64?: string }>
+
+  /**
    * 通用 IPC 调用方法
    * @param channel - IPC 通道名称
    * @param args - 参数列表
@@ -251,6 +262,15 @@ export interface DatabaseExistsResult {
   exists: boolean
   size?: number
   modifiedTime?: string
+}
+
+/**
+ * TTS 语音合成结果
+ */
+export interface TTSResult {
+  success: boolean
+  audioBase64?: string
+  error?: string
 }
 
 /**

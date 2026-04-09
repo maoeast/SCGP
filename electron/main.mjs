@@ -29,6 +29,23 @@ async function loadUpdateHandlers() {
   }
 }
 
+// ========== TTS 语音合成功能 ==========
+// 延迟加载 msedge-tts
+let ttsHandlersLoaded = false
+
+async function loadTTSHandlers() {
+  if (ttsHandlersLoaded) return
+  try {
+    const ttsModule = await import('./handlers/tts.mjs')
+    ttsModule.initTTSHandlers(ipcMain)
+    ttsHandlersLoaded = true
+    console.log('[TTS] TTS 处理器模块已加载')
+  } catch (error) {
+    console.warn('[TTS] TTS 处理器模块加载失败:', error.message)
+    console.warn('[TTS] 语音合成功能将不可用')
+  }
+}
+
 // 更可靠的开发环境检测：通过 app.isPackaged 或命令行参数判断
 const isDev = !app.isPackaged || process.env.NODE_ENV === 'development'
 if (isDev) {
@@ -387,6 +404,9 @@ app.whenReady().then(async () => {
       console.error('[Update] 更新处理器初始化失败:', error)
     }
   }
+
+  // ========== 初始化 TTS 语音合成功能 ==========
+  await loadTTSHandlers()
 
   // 创建窗口
   createWindow()

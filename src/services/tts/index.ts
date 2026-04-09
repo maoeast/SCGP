@@ -6,3 +6,4 @@ export type {
 } from './ITTSService'
 
 export { createEdgeTTSService } from './EdgeTTSService'
+export { createEdgeTTSServiceIPC } from './EdgeTTSServiceIPC'

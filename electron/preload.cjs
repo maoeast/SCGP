@@ -61,7 +61,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveDatabaseAtomic: (dbBuffer, dbName) => ipcRenderer.invoke('save-database-atomic', dbBuffer, dbName),
 
   // 获取数据库文件状态
-  getDatabaseStats: (dbName) => ipcRenderer.invoke('get-database-stats', dbName)
+  getDatabaseStats: (dbName) => ipcRenderer.invoke('get-database-stats', dbName),
+
+  // ========== TTS 语音合成 ==========
+  ttsSynthesize: (text, options) => ipcRenderer.invoke('tts:synthesize', { text, ...options })
 })
 
 // 注意：由于我们已启用 contextIsolation，上面的 fallback 代码实际上不会执行
@@ -93,6 +96,8 @@ if (!process.contextIsolated) {
     deleteDatabaseBackup: (filePath) => Promise.resolve({ success: true }),
     // Phase 1.4 原子写入API模拟
     saveDatabaseAtomic: (dbBuffer, dbName) => Promise.resolve({ success: true }),
-    getDatabaseStats: (dbName) => Promise.resolve({ exists: false })
+    getDatabaseStats: (dbName) => Promise.resolve({ exists: false }),
+    // TTS 语音合成API模拟
+    ttsSynthesize: (text, options) => Promise.resolve({ success: false, error: 'mock' })
   }
 }

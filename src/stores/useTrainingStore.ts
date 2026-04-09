@@ -7,7 +7,7 @@ import router from '@/router'
 type TrainingFlowIndex = 0 | 1 | 2 | 3 | 4 | 5
 type QuestionStepIndex = 1 | 2 | 3 | 4
 type HintLevelPerStep = [number, number, number, number]
-type TTSEngine = 'edge' | 'cosyvoice' | 'webspeech' | null
+type TTSEngine = 'edge' | 'edge-ipc' | 'cosyvoice' | 'webspeech' | null
 type SqlRowValue = string | number | null | Uint8Array
 
 interface SceneRow {

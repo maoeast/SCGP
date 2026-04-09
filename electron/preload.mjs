@@ -64,6 +64,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getDatabaseStats: (dbName) => ipcRenderer.invoke('get-database-stats', dbName),
 
   // ========== 软件更新 API ==========
+  // TTS 语音合成
+  ttsSynthesize: (text, options) => ipcRenderer.invoke('tts:synthesize', { text, ...options }),
+
   // 更新相关 IPC 调用
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
 
@@ -137,6 +140,8 @@ if (!process.contextIsolated) {
     deleteDatabaseBackup: (filePath) => Promise.resolve({ success: true }),
     // Phase 1.4 原子写入API模拟
     saveDatabaseAtomic: (dbBuffer, dbName) => Promise.resolve({ success: true }),
-    getDatabaseStats: (dbName) => Promise.resolve({ exists: false })
+    getDatabaseStats: (dbName) => Promise.resolve({ exists: false }),
+    // TTS 语音合成API模拟
+    ttsSynthesize: (text, options) => Promise.resolve({ success: false, error: 'mock' })
   }
 }

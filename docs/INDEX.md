@@ -33,6 +33,7 @@
 - [2026-03-16-emotional-module-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-16-emotional-module-prd.md)
 - [情绪场景训练全屏沉浸式重构PRD.md](./planning/情绪场景训练全屏沉浸式重构PRD.md)
 - [2026-04-08-care-scene-immersive-refactor-plan.md](./planning/2026-04-08-care-scene-immersive-refactor-plan.md)
+- [2026-04-06-emotional-immersive-training-rework-plan.md](/home/DONG/Mycode/SCGP/docs/planning/2026-04-06-emotional-immersive-training-rework-plan.md)
 - [2026-04-02-page-style-unification-todo.md](./planning/2026-04-02-page-style-unification-todo.md)
 - [2026-04-01-unified-training-record-schema-plan.md](/home/DONG/Mycode/SCGP/docs/planning/2026-04-01-unified-training-record-schema-plan.md)
 - [2026-03-12-emotional-module-execution-prompt.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-12-emotional-module-execution-prompt.md)
