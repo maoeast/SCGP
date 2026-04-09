@@ -1,0 +1,24 @@
+ - 迁移脚本会从 docs/references/emotion-scene-character-names.json 读取 scene_code -> character_name
+  - 当前 80 个场景默认都预置成 小朋友
+  - 迁移写库时，character_name 一定非空
+  - 题干里的显式人名或“他/她”仍会被替换成 {name}，所以后续你只要补名字映射，UI 就会自动显示成对应名字
+
+  我已经加了两个脚本：
+
+  - scripts/refresh-emotion-scene-character-names.mjs
+  - scripts/verify-emotion-scene-phase1.mjs
+
+  以及迁移入口已经接上名字映射：
+
+  - src/db/migrateLegacyData.ts
+
+  - 所有 character_name 非空
+  - scene-1 现在写入的是 小朋友
+  - scene-1 的题干已变成 {name}为什么觉得平静？、{name}现在需要什么？
+
+  你后面只需要这样用：
+
+  1. 编辑 docs/references/emotion-scene-character-names.json，把对应场景改成真实名字，比如 "scene-1": "小明"
+  2. 运行 npm run refresh:emotion-scene-names
+  3. 重新跑迁移或重新初始化库
+  4. 用 npm run verify:emotion-scene-phase1 再验一次
