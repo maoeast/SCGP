@@ -107,10 +107,14 @@ npm run build:electron
 - 交接入口：[HANDOFF.md](/home/DONG/Mycode/SCGP/HANDOFF.md)
 - 文档总索引：[docs/INDEX.md](/home/DONG/Mycode/SCGP/docs/INDEX.md)
 - 文档治理说明：[docs/DOCS_GUIDE.md](/home/DONG/Mycode/SCGP/docs/DOCS_GUIDE.md)
+- 文档目录总览 HTML：[docs/guides/2026-04-10-repo-document-catalog.html](/home/DONG/Mycode/SCGP/docs/guides/2026-04-10-repo-document-catalog.html)
 - 轻量启动上下文：[docs/planning/2026-03-23-scgp-context-bootstrap.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-23-scgp-context-bootstrap.md)
 - 页面风格统一改造 TODO：[docs/planning/2026-04-02-page-style-unification-todo.md](./docs/planning/2026-04-02-page-style-unification-todo.md)
 - 统一训练记录主表方案计划：[docs/planning/2026-04-01-unified-training-record-schema-plan.md](/home/DONG/Mycode/SCGP/docs/planning/2026-04-01-unified-training-record-schema-plan.md)
 - 训练资源统一文案操作说明：[docs/guides/2026-03-30-training-resource-copy-workflow.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-30-training-resource-copy-workflow.md)
+- care_scene 数据结构说明：[docs/references/care-scene/care_scenes_schema.md](/home/DONG/Mycode/SCGP/docs/references/care-scene/care_scenes_schema.md)
+- care_scene 描述辅表：[docs/references/care-scene/care-scene-description.csv](/home/DONG/Mycode/SCGP/docs/references/care-scene/care-scene-description.csv)
+- SQL.js 持久化专题方案：[docs/tech-design/sql_js_持久化模块标准实现方案_V1.1.md](/home/DONG/Mycode/SCGP/docs/tech-design/sql_js_%E6%8C%81%E4%B9%85%E5%8C%96%E6%A8%A1%E5%9D%97%E6%A0%87%E5%87%86%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88_V1.1.md)
 - 训练工作台双栏滚动布局规范：[docs/reports/2026-03-31-training-workspace-layout-scroll-guideline.md](/home/DONG/Mycode/SCGP/docs/reports/2026-03-31-training-workspace-layout-scroll-guideline.md)
 - 当前续接入口：[.continue-here.md](/home/DONG/Mycode/SCGP/.continue-here.md)
 - 当前项目上下文：[PROJECT_CONTEXT.md](/home/DONG/Mycode/SCGP/PROJECT_CONTEXT.md)
@@ -140,6 +144,7 @@ npm run build:electron
 - `.continue-here.md`：当前唯一有效续接任务说明，适合新会话继续未完成工作时优先读取。
 - `PROJECT_CONTEXT.md`：当前有效协作上下文摘要，不再保存长篇阶段流水。
 - `docs/logs/2026-03-26-project-context-archive.md`：从旧 `PROJECT_CONTEXT.md` 迁出的历史归档摘要，不作为默认首读入口。
+- `docs/guides/2026-04-10-repo-document-catalog.html`：可直接在浏览器打开的文档总览页，适合快速浏览每份入口/专题文档的大概内容、作用和位置。
 - `docs/planning/prd.md`：原始需求基线，主要反映“生活自理适应综合训练系统”阶段，不等同于当前 SCGP 平台范围。
 - `docs/guides/系统使用说明书.md`、`docs/guides/系统参数技术文档.md`：历史交付型文档，当前仅作为参考材料，不作为单一事实来源。
 - 如果你要快速理解当前项目，优先看 `HANDOFF.md`、`AGENTS.md`、`docs/planning/2026-03-23-scgp-context-bootstrap.md`、`README.md` 和 `.continue-here.md`，再按任务补读其他大文档。

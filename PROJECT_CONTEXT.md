@@ -138,8 +138,17 @@
   - `receiverName` / `emotionChips` / `comfortTip` 仍保留，但已降级为兼容 / 推导字段，不再是作者态源字段
   - `care_scene` Step 1 情绪识别必须直接消费 JSON 中配置的 `emotionOptions[]`，不应再由 runtime 随机生成基础情绪选项
   - 资源中心保存 `care_scene` 时，资源主表 `description` 与 `meta_data.description` 必须同步，避免形成两套口径
+- `2026-04-10` 当前已完成的阻塞清理：
+  - 仓库级 `npm run type-check` 已恢复通过
+    - 历史阻塞点 `src/components/emotional/games/EnergyBallGame.vue`
+    - 历史阻塞点 `src/components/emotional/games/VisualSupportOverlay.vue`
+    - 历史阻塞点 `src/composables/useEmotionDetector.ts`
+  - 本地 DB `/home/DONG/.config/scgp/database.sqlite` 已完成 `care_scene` metadata 实机核对
+    - `care_scenes_database.json` 源条数 = 64
+    - 本地 `sys_training_resource` 中 `care_scene` 条数 = 64
+    - 未发现 `sceneCode / name / description / specificEmotionToken / specificEmotionLabel / emotionOptions[4] / legacy_source` 缺口
+    - 未发现资源主表 `description` 与 `meta_data.description` 不一致
 - 当前仍未完成：
-  - 本地 DB metadata 是否已按新 schema 回填，尚未完成实机确认
   - 默认 `care_scene` 入口尚未切到沉浸式链路
   - `care_scene` 正式训练记录闭环尚未接入
 

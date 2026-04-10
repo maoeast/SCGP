@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SCGP 文档目录总览</title>
+  <style>
+    :root {
+      --bg: #f5f2ea;
+      --panel: #fffdf8;
+      --panel-alt: #f7f0e3;
+      --line: #d9cdb8;
+      --text: #2a241c;
+      --muted: #6e6252;
+      --accent: #8b5e34;
+      --accent-soft: #ede0cf;
+      --current: #2f7d4b;
+      --history: #8f5a2a;
+      --reference: #2d5f87;
+      --shadow: 0 18px 40px rgba(54, 39, 22, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+      background:
+        radial-gradient(circle at top left, rgba(139, 94, 52, 0.12), transparent 32%),
+        linear-gradient(180deg, #f8f4ec 0%, var(--bg) 100%);
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    .page {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    .hero {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(255, 253, 248, 0.96), rgba(247, 240, 227, 0.96));
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(1.8rem, 2.2vw, 2.8rem);
+      letter-spacing: 0.02em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 860px;
+    }
+
+    .meta-strip,
+    .nav-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.75);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .nav-strip a {
+      text-decoration: none;
+      color: var(--accent);
+      font-weight: 600;
+      background: var(--accent-soft);
+    }
+
+    .section {
+      margin-top: 28px;
+    }
+
+    .section h2 {
+      margin: 0 0 14px;
+      font-size: 1.35rem;
+    }
+
+    .section-note {
+      margin: 0 0 16px;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-head {
+      padding: 18px 20px 14px;
+      background: linear-gradient(180deg, rgba(237, 224, 207, 0.75), rgba(255, 253, 248, 0));
+      border-bottom: 1px solid rgba(217, 205, 184, 0.6);
+    }
+
+    .card-head h3 {
+      margin: 0;
+      font-size: 1.12rem;
+      word-break: break-word;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .badge.current {
+      background: rgba(47, 125, 75, 0.12);
+      color: var(--current);
+    }
+
+    .badge.history {
+      background: rgba(143, 90, 42, 0.12);
+      color: var(--history);
+    }
+
+    .badge.reference {
+      background: rgba(45, 95, 135, 0.12);
+      color: var(--reference);
+    }
+
+    .badge.entry {
+      background: rgba(139, 94, 52, 0.14);
+      color: var(--accent);
+    }
+
+    .card-body {
+      padding: 18px 20px 20px;
+    }
+
+    .label {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .summary,
+    .note {
+      margin: 0 0 14px;
+    }
+
+    .note {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--panel-alt);
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: 84px 1fr;
+      gap: 8px 12px;
+      margin: 0;
+      font-size: 0.94rem;
+    }
+
+    dt {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    dd {
+      margin: 0;
+      word-break: break-word;
+    }
+
+    .path {
+      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.88rem;
+    }
+
+    .open-link {
+      display: inline-block;
+      margin-top: 14px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .open-link:hover {
+      text-decoration: underline;
+    }
+
+    footer {
+      margin-top: 28px;
+      padding: 20px 22px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 253, 248, 0.78);
+      color: var(--muted);
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        width: min(100vw - 20px, 1180px);
+        padding-top: 20px;
+      }
+
+      .hero,
+      .card-body,
+      .card-head,
+      footer {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      dl {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>SCGP 文档目录总览</h1>
+      <p>
+        这个页面聚合了本轮整理后的文档集合，分成“保留在根目录的入口文档”和“已归档到 <code>docs/</code> 的专题/参考文档”两组。
+        每张卡片都给出该文件的大概内容、作用、当前位置、Git 创建时间、最近更新时间、文件大小和行数，方便直接判断应该先读哪份文档。
+      </p>
+      <div class="meta-strip">
+        <span class="chip">文档总数：14</span>
+        <span class="chip">根目录入口文档：7</span>
+        <span class="chip">已归档文档：7</span>
+        <span class="chip">生成日期：2026-04-10</span>
+      </div>
+      <div class="nav-strip">
+        <a class="chip" href="#root-entry">根目录入口文档</a>
+        <a class="chip" href="#relocated">已归档专题与参考文档</a>
+      </div>
+    </section>
+
+    <section class="section" id="root-entry">
+      <h2>根目录入口文档</h2>
+      <p class="section-note">
+        这组文件保留在根目录，是因为它们承担仓库启动、当前任务接力、全局上下文或根级技术规范职责。
+      </p>
+      <div class="grid">
+        <article class="card">
+          <div class="card-head">
+            <h3>AGENTS.md</h3>
+            <div class="badges">
+              <span class="badge entry">根目录入口</span>
+              <span class="badge current">现行规则</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">仓库级规则入口，定义事实来源优先级、阅读顺序、产品边界、代码约束和协作口径。</p>
+            <div class="note">适合作为“进入仓库后先读什么、什么算当前事实、哪些能力还没真正完成”的裁定文档。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/AGENTS.md</dd>
+              <dt>文件名</dt><dd>AGENTS.md</dd>
+              <dt>创建时间</dt><dd>2026-03-16</dd>
+              <dt>最近更新</dt><dd>2026-03-30</dd>
+              <dt>大小</dt><dd>6,554 bytes / 174 lines</dd>
+            </dl>
+            <a class="open-link" href="../../AGENTS.md">打开文档</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>HANDOFF.md</h3>
+            <div class="badges">
+              <span class="badge entry">根目录入口</span>
+              <span class="badge current">现行路由</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">新会话或续接会话的顶层路由文档，告诉代理先读哪三份文件，并说明当前里程碑和下一次启动的第一动作。</p>
+            <div class="note">内容很短，适合会话刚开始快速定向；它不提供细节，而是把你路由到 AGENTS、.continue-here 和 PROJECT_CONTEXT。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/HANDOFF.md</dd>
+              <dt>文件名</dt><dd>HANDOFF.md</dd>
+              <dt>创建时间</dt><dd>2026-03-16</dd>
+              <dt>最近更新</dt><dd>2026-04-10</dd>
+              <dt>大小</dt><dd>2,473 bytes / 68 lines</dd>
+            </dl>
+            <a class="open-link" href="../../HANDOFF.md">打开文档</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>.continue-here.md</h3>
+            <div class="badges">
+              <span class="badge entry">根目录入口</span>
+              <span class="badge current">当前任务</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">当前对话的唯一有效交接文件，记录当前任务状态、已完成项、未完成项、下一步动作、风险和关键决策。</p>
+            <div class="note">当前内容聚焦 emotional 模块 care_scene schema 对齐，已写明 type-check 恢复通过、本地 DB metadata 已核对，下一步是 Electron smoke。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/.continue-here.md</dd>
+              <dt>文件名</dt><dd>.continue-here.md</dd>
+              <dt>创建时间</dt><dd>2026-03-26</dd>
+              <dt>最近更新</dt><dd>2026-04-10</dd>
+              <dt>大小</dt><dd>7,791 bytes / 135 lines</dd>
+            </dl>
+            <a class="open-link" href="../../.continue-here.md">打开文档</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>PROJECT_CONTEXT.md</h3>
+            <div class="badges">
+              <span class="badge entry">根目录入口</span>
+              <span class="badge current">全局上下文</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">当前有效的全局上下文摘要，覆盖产品现实、架构事实、活动里程碑、关键决策与阶段性更新。</p>
+            <div class="note">这是全局背景汇总，不是当前任务交接本身；内容较长，适合在 AGENTS 和 .continue-here 之后按需展开阅读。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/PROJECT_CONTEXT.md</dd>
+              <dt>文件名</dt><dd>PROJECT_CONTEXT.md</dd>
+              <dt>创建时间</dt><dd>2026-02-27</dd>
+              <dt>最近更新</dt><dd>2026-04-10</dd>
+              <dt>大小</dt><dd>63,595 bytes / 1,231 lines</dd>
+            </dl>
+            <a class="open-link" href="../../PROJECT_CONTEXT.md">打开文档</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>README.md</h3>
+            <div class="badges">
+              <span class="badge entry">根目录入口</span>
+              <span class="badge current">项目总览</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">项目总览文档，介绍 SCGP 的产品定位、常用命令、目录结构和主要文档入口。</p>
+            <div class="note">适合第一次接触仓库或需要快速查命令时使用；它不是当前任务真相源，但能快速建立整体轮廓。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/README.md</dd>
+              <dt>文件名</dt><dd>README.md</dd>
+              <dt>创建时间</dt><dd>2026-02-27</dd>
+              <dt>最近更新</dt><dd>2026-04-02</dd>
+              <dt>大小</dt><dd>7,332 bytes / 146 lines</dd>
+            </dl>
+            <a class="open-link" href="../../README.md">打开文档</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>CLAUDE.md</h3>
+            <div class="badges">
+              <span class="badge entry">根目录入口</span>
+              <span class="badge current">代理入口</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">Claude Code 的仓库级工作入口，说明启动顺序、冲突裁定、实现约束、风格偏好、验证基线和文档维护规则。</p>
+            <div class="note">它是面向 Claude/Codex 类代理的协作说明，不是业务需求文档；当前内容已对齐 SCGP 的主线架构和文档读法。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/CLAUDE.md</dd>
+              <dt>文件名</dt><dd>CLAUDE.md</dd>
+              <dt>创建时间</dt><dd>2026-02-27</dd>
+              <dt>最近更新</dt><dd>2026-03-30</dd>
+              <dt>大小</dt><dd>6,851 bytes / 212 lines</dd>
+            </dl>
+            <a class="open-link" href="../../CLAUDE.md">打开文档</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>重构实施技术规范.md</h3>
+            <div class="badges">
+              <span class="badge entry">根目录入口</span>
+              <span class="badge current">技术规范</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">SCGP 当前落地态与目标态并存的核心技术规范，覆盖架构原则、数据库设计、资源管理、持久化和技术债处理口径。</p>
+            <div class="note">这份文档既讲“当前已落地”，也讲“目标态”，阅读时要注意不要把未来态误认成现状。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/重构实施技术规范.md</dd>
+              <dt>文件名</dt><dd>重构实施技术规范.md</dd>
+              <dt>创建时间</dt><dd>2026-02-27</dd>
+              <dt>最近更新</dt><dd>2026-03-20</dd>
+              <dt>大小</dt><dd>35,526 bytes / 951 lines</dd>
+            </dl>
+            <a class="open-link" href="../../重构实施技术规范.md">打开文档</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="relocated">
+      <h2>已归档专题与参考文档</h2>
+      <p class="section-note">
+        这组文件原先位于根目录，但不属于入口级文档，现已按内容性质归档到 <code>docs/</code> 对应子目录。
+      </p>
+      <div class="grid">
+        <article class="card">
+          <div class="card-head">
+            <h3>docs/guides/GSD指令手册.md</h3>
+            <div class="badges">
+              <span class="badge reference">辅助说明</span>
+              <span class="badge history">混合历史内容</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">GSD 工作流指令说明，介绍 `plan-phase / execute-phase / verifier` 等命令，并夹带了一批历史执行指令样例。</p>
+            <div class="note">内容并非当前仓库规则真相源，且含旧示例与过时建议；阅读时应以根目录 `AGENTS.md`、`CLAUDE.md` 和 `HANDOFF.md` 为准。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/docs/guides/GSD指令手册.md</dd>
+              <dt>文件名</dt><dd>GSD指令手册.md</dd>
+              <dt>创建时间</dt><dd>2026-03-04</dd>
+              <dt>最近更新</dt><dd>2026-03-09</dd>
+              <dt>大小</dt><dd>12,265 bytes / 225 lines</dd>
+            </dl>
+            <a class="open-link" href="./GSD指令手册.md">打开文档</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>docs/plans/SCGP-CNBS-R2016_todo.md</h3>
+            <div class="badges">
+              <span class="badge reference">阶段计划</span>
+              <span class="badge history">早期清单</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">CNBS-R2016 集成的早期 milestone TODO 清单，按“数据库 / 题库 / 引擎 / UI / 报告”五个里程碑拆分任务。</p>
+            <div class="note">当前项目状态已经推进到 `.planning/` 和 `PROJECT_CONTEXT.md` 中更完整的 v1.7 材料，这份文档更适合作为早期规划痕迹参考。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/docs/plans/SCGP-CNBS-R2016_todo.md</dd>
+              <dt>文件名</dt><dd>SCGP-CNBS-R2016_todo.md</dd>
+              <dt>创建时间</dt><dd>2026-04-04</dd>
+              <dt>最近更新</dt><dd>2026-04-04</dd>
+              <dt>大小</dt><dd>3,890 bytes / 63 lines</dd>
+            </dl>
+            <a class="open-link" href="../plans/SCGP-CNBS-R2016_todo.md">打开文档</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>docs/references/care-scene/care_scenes_schema.md</h3>
+            <div class="badges">
+              <span class="badge reference">数据字典</span>
+              <span class="badge current">当前相关</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">`care_scenes_database.json` 的结构说明文档，逐段解释顶层字段、情绪矩阵、三个互动题型以及前端设计建议。</p>
+            <div class="note">适合作为 `care_scene` 的作者态参考和 UI/交互辅助说明，但代码真相仍要以当前类型定义和实现为准。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/docs/references/care-scene/care_scenes_schema.md</dd>
+              <dt>文件名</dt><dd>care_scenes_schema.md</dd>
+              <dt>创建时间</dt><dd>2026-04-10</dd>
+              <dt>最近更新</dt><dd>2026-04-10</dd>
+              <dt>大小</dt><dd>7,586 bytes / 94 lines</dd>
+            </dl>
+            <a class="open-link" href="../references/care-scene/care_scenes_schema.md">打开文档</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>docs/references/care-scene/care-scene-description.csv</h3>
+            <div class="badges">
+              <span class="badge reference">参考数据</span>
+              <span class="badge current">当前相关</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">按 `resourceKey / name / title / description` 组织的 care-scene 简表，可用于快速核对标题、角色名和描述文案。</p>
+            <div class="note">它更像便于人工浏览和文案核查的辅表，不是运行时单一真相源；表尾 `care-scene-61` 到 `care-scene-64` 的 description 目前仍是很短的占位式句子。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/docs/references/care-scene/care-scene-description.csv</dd>
+              <dt>文件名</dt><dd>care-scene-description.csv</dd>
+              <dt>创建时间</dt><dd>2026-04-10</dd>
+              <dt>最近更新</dt><dd>2026-04-10</dd>
+              <dt>大小</dt><dd>13,635 bytes / 65 lines</dd>
+            </dl>
+            <a class="open-link" href="../references/care-scene/care-scene-description.csv">打开文档</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>docs/tech-design/sql_js_持久化模块标准实现方案_V1.1.md</h3>
+            <div class="badges">
+              <span class="badge reference">专题技术设计</span>
+              <span class="badge current">当前相关</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">围绕 `sql.js` 持久化链路的专题技术方案，详细拆解 `SQLWrapper`、`preload`、主进程原子写入和异常恢复策略。</p>
+            <div class="note">适合需要深挖数据库持久化实现细节时阅读，内容比根目录的《重构实施技术规范》更聚焦、更底层。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/docs/tech-design/sql_js_持久化模块标准实现方案_V1.1.md</dd>
+              <dt>文件名</dt><dd>sql_js_持久化模块标准实现方案_V1.1.md</dd>
+              <dt>创建时间</dt><dd>2026-04-03</dd>
+              <dt>最近更新</dt><dd>2026-04-03</dd>
+              <dt>大小</dt><dd>12,009 bytes / 300 lines</dd>
+            </dl>
+            <a class="open-link" href="../tech-design/sql_js_持久化模块标准实现方案_V1.1.md">打开文档</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>docs/logs/tree.txt</h3>
+            <div class="badges">
+              <span class="badge history">历史快照</span>
+              <span class="badge reference">目录清单</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">一次仓库目录结构的文本快照，记录了当时根目录、`docs/`、资源目录和子目录展开情况。</p>
+            <div class="note">这是静态快照，不会自动跟随仓库变化更新。适合在需要追溯“某个时间点目录长什么样”时参考，不适合拿来判断当前目录现实。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/docs/logs/tree.txt</dd>
+              <dt>文件名</dt><dd>tree.txt</dd>
+              <dt>创建时间</dt><dd>2026-04-03</dd>
+              <dt>最近更新</dt><dd>2026-04-03</dd>
+              <dt>大小</dt><dd>30,880 bytes / 701 lines</dd>
+            </dl>
+            <a class="open-link" href="../logs/tree.txt">打开文档</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h3>docs/logs/CLAUDE.md.bak</h3>
+            <div class="badges">
+              <span class="badge history">历史备份</span>
+              <span class="badge reference">旧代理规则</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="label">作用</p>
+            <p class="summary">旧版 `CLAUDE.md` 备份，内容仍带有 `SIC-ADS` 历史路径、`better-sqlite3`、Tailwind 等早期技术假设。</p>
+            <div class="note">明显不是当前仓库协作规则真相源，适合纯历史追溯；不要再把它当成今天的代理启动规则来用。</div>
+            <dl>
+              <dt>位置</dt><dd class="path">/docs/logs/CLAUDE.md.bak</dd>
+              <dt>文件名</dt><dd>CLAUDE.md.bak</dd>
+              <dt>创建时间</dt><dd>2026-02-27</dd>
+              <dt>最近更新</dt><dd>2026-02-27</dd>
+              <dt>大小</dt><dd>5,595 bytes / 161 lines</dd>
+            </dl>
+            <a class="open-link" href="../logs/CLAUDE.md.bak">打开文档</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <footer>
+      口径说明：
+      “创建时间”和“最近更新”优先取 Git 历史；本页对文档作用与摘要的描述基于本轮实际阅读后的人工整理，不替代代码与现行入口文档的事实裁定。
+    </footer>
+  </main>
+</body>
+</html>

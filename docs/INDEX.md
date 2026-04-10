@@ -21,6 +21,7 @@
 - [DOCS_GUIDE.md](/home/DONG/Mycode/SCGP/docs/DOCS_GUIDE.md)
 - [CHANGELOG.md](/home/DONG/Mycode/SCGP/docs/CHANGELOG.md)
 - [SOLVED_ISSUES.md](/home/DONG/Mycode/SCGP/docs/SOLVED_ISSUES.md)
+- [2026-04-10-repo-document-catalog.html](/home/DONG/Mycode/SCGP/docs/guides/2026-04-10-repo-document-catalog.html)
 
 ## 目录结构
 
@@ -47,6 +48,7 @@
 - [2026-03-13-scgp-executable-roadmap.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-13-scgp-executable-roadmap.md)
 - [2026-03-12-emotional-module-implementation-plan.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-12-emotional-module-implementation-plan.md)
 - [2026-04-08-care-scene-immersive-execution-plan.md](./plans/2026-04-08-care-scene-immersive-execution-plan.md)
+- [SCGP-CNBS-R2016_todo.md（CNBS-R2016 早期 TODO 清单，历史/参考）](/home/DONG/Mycode/SCGP/docs/plans/SCGP-CNBS-R2016_todo.md)
 - [2026-03-12-emotional-module-gsd-execution-sequence.md](/home/DONG/Mycode/SCGP/docs/plans/2026-03-12-emotional-module-gsd-execution-sequence.md)
 - [2026-02-04-equipment-training-module.md](/home/DONG/Mycode/SCGP/docs/plans/2026-02-04-equipment-training-module.md)
 - [2025-02-05-refactor-implementation-plan.md（历史实施计划）](/home/DONG/Mycode/SCGP/docs/plans/2025-02-05-refactor-implementation-plan.md)
@@ -65,21 +67,33 @@
 
 参考资料、导入源、导出结果与资源规范。
 
+- `docs/references/care-scene/`
 - `docs/references/emotion-scene/`
 - `docs/references/physical-equipment/`
+- [docs/references/care-scene/care_scenes_schema.md](/home/DONG/Mycode/SCGP/docs/references/care-scene/care_scenes_schema.md)
+- [docs/references/care-scene/care-scene-description.csv](/home/DONG/Mycode/SCGP/docs/references/care-scene/care-scene-description.csv)
 - [docs/references/physical-equipment/README.md](/home/DONG/Mycode/SCGP/docs/references/physical-equipment/README.md)
 
 ### `docs/guides`
 
 使用说明、模板说明与运维辅助文档。
 
+- [2026-04-10-repo-document-catalog.html](/home/DONG/Mycode/SCGP/docs/guides/2026-04-10-repo-document-catalog.html)
 - [2026-03-18-emotional-resource-pack-excel-template-guide.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-18-emotional-resource-pack-excel-template-guide.md)
 - [2026-03-30-training-resource-copy-workflow.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-30-training-resource-copy-workflow.md)
 - [2026-03-12-gsd-token-efficient-workflow.md](/home/DONG/Mycode/SCGP/docs/guides/2026-03-12-gsd-token-efficient-workflow.md)
+- [GSD指令手册.md（GSD 工作流辅助说明，非当前仓库规则真相源）](/home/DONG/Mycode/SCGP/docs/guides/GSD指令手册.md)
 - [activation-code-generator.md](/home/DONG/Mycode/SCGP/docs/guides/activation-code-generator.md)
 - [activation-system-guide.md](/home/DONG/Mycode/SCGP/docs/guides/activation-system-guide.md)
 - [系统使用说明书.md（历史交付稿）](/home/DONG/Mycode/SCGP/docs/guides/%E7%B3%BB%E7%BB%9F%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E%E4%B9%A6.md)
 - [系统参数技术文档.md（历史交付稿）](/home/DONG/Mycode/SCGP/docs/guides/%E7%B3%BB%E7%BB%9F%E5%8F%82%E6%95%B0%E6%8A%80%E6%9C%AF%E6%96%87%E6%A1%A3.md)
+
+### `docs/tech-design`
+
+专题技术实现方案与底层设计约束。
+
+- [sql_js_持久化模块标准实现方案_V1.1.md](/home/DONG/Mycode/SCGP/docs/tech-design/sql_js_%E6%8C%81%E4%B9%85%E5%8C%96%E6%A8%A1%E5%9D%97%E6%A0%87%E5%87%86%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88_V1.1.md)
+- [激活系统.md](/home/DONG/Mycode/SCGP/docs/tech-design/%E6%BF%80%E6%B4%BB%E7%B3%BB%E7%BB%9F.md)
 
 ### `docs/architecture`
 
@@ -95,6 +109,7 @@
 历史归档摘要与专题日志，不作为默认首读入口。
 
 - [2026-03-26-project-context-archive.md](/home/DONG/Mycode/SCGP/docs/logs/2026-03-26-project-context-archive.md)
+- [tree.txt（历史目录快照）](/home/DONG/Mycode/SCGP/docs/logs/tree.txt)
 - [2026-02-27-phase4.4-archived-files.md](/home/DONG/Mycode/SCGP/docs/logs/2026-02-27-phase4.4-archived-files.md)
 - [font-awesome-6-upgrade-summary.md](/home/DONG/Mycode/SCGP/docs/logs/font-awesome-6-upgrade-summary.md)
 - [font-awesome-root-cause-analysis.md](/home/DONG/Mycode/SCGP/docs/logs/font-awesome-root-cause-analysis.md)

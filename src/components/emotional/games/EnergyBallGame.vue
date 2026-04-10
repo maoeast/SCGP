@@ -215,7 +215,7 @@ interface LevelConfig {
   color: string
 }
 
-const levels: LevelConfig[] = [
+const levels: [LevelConfig, ...LevelConfig[]] = [
   { target: 'Happy', title: '点亮太阳', subtitle: '笑一笑，让太阳亮起来', emoji: '☀️', color: '#ffd93d' },
   { target: 'Surprised', title: '吹走乌云', subtitle: '张大嘴巴，吹走乌云', emoji: '🌤️', color: '#74b9ff' },
   { target: 'Angry', title: '平息小火山', subtitle: '皱皱眉，再深呼吸', emoji: '🌋', color: '#ff6b6b' },
@@ -239,8 +239,9 @@ const detector = useEmotionDetector({
 
 // ---- Computed ----
 
-const currentTarget = computed(() => levels[levelIndex.value].target)
-const levelTheme = computed(() => levels[levelIndex.value])
+const currentLevel = computed<LevelConfig>(() => levels[levelIndex.value] ?? levels[0])
+const currentTarget = computed(() => currentLevel.value.target)
+const levelTheme = computed(() => currentLevel.value)
 const difficultyThreshold = computed(() => {
   if (props.difficulty === 1) return 0.35
   if (props.difficulty === 2) return 0.5

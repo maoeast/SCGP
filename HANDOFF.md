@@ -33,12 +33,12 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: `care_scene` schema alignment has landed across type contract, seed normalization, resource metadata, resource-center editor, selector UI, and immersive runtime. Next step is triggering local DB metadata upsert and re-running Electron smoke on the updated chain.**
+**Active follow-up work is now in `.continue-here.md`: `care_scene` schema alignment blocker cleanup is complete, local DB metadata has been verified, and repo document cleanup + HTML catalog have landed. Next step is re-running Electron smoke on the updated `care_scene` chain, then deciding default-entry switch and record closeout.**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is verifying the landed `care_scene` schema alignment against local DB + Electron runtime
+- current active task is finishing the post-alignment `care_scene` runtime closeout after DB verification and docs cleanup
 - first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

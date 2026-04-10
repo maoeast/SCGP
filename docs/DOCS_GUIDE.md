@@ -19,12 +19,17 @@
 
 ### 根目录
 
-根目录只保留少量入口级文档：
+根目录只保留少量入口级文档与代理协作文档：
 
 - `README.md`
 - `AGENTS.md`（代理入口，不属于业务需求文档）
+- `HANDOFF.md`
+- `.continue-here.md`
 - `PROJECT_CONTEXT.md`
+- `CLAUDE.md`
 - `重构实施技术规范.md`
+
+其他非入口文档应整理到 `docs/` 对应目录，不应继续堆在根目录。
 
 ### `docs/`
 
@@ -44,6 +49,8 @@
   - 原始量表资料、外部参考文件、脚本样例、导入源文件
 - `docs/analysis/`
   - 专项分析文档
+- `docs/tech-design/`
+  - 专题技术实现方案、实现标准与底层设计约束
 
 ## 单一事实来源
 
@@ -58,7 +65,7 @@
 
 ## 新增文档时的规则
 
-- 如果文档是“当前怎么做”，优先放 `guides/`、`architecture/`、`planning/`、`plans/`
+- 如果文档是“当前怎么做”，优先放 `guides/`、`architecture/`、`planning/`、`plans/`、`tech-design/`
 - 如果文档是“今天做了什么”，放 `reports/`
 - 如果文档是“原始资料/脚本/外部文档/题库整理”，放 `references/`
 - 不要把新文档直接堆在 `docs/` 根目录

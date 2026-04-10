@@ -9,18 +9,18 @@
     <g v-if="activeEmotion === 'Happy'" class="guide-group happy-guide">
       <!-- Left mouth corner glow -->
       <circle
-        v-if="lm(faceIndices.mouthLeft)"
-        :cx="lm(faceIndices.mouthLeft).x * width"
-        :cy="lm(faceIndices.mouthLeft).y * height"
+        v-if="mouthLeft"
+        :cx="(mouthLeft?.x ?? 0) * width"
+        :cy="(mouthLeft?.y ?? 0) * height"
         r="8"
         class="glow-dot"
         :class="{ active: scores.Happy > threshold }"
       />
       <!-- Right mouth corner glow -->
       <circle
-        v-if="lm(faceIndices.mouthRight)"
-        :cx="lm(faceIndices.mouthRight).x * width"
-        :cy="lm(faceIndices.mouthRight).y * height"
+        v-if="mouthRight"
+        :cx="(mouthRight?.x ?? 0) * width"
+        :cy="(mouthRight?.y ?? 0) * height"
         r="8"
         class="glow-dot"
         :class="{ active: scores.Happy > threshold }"
@@ -34,26 +34,26 @@
         :stroke-dashoffset="smileDashOffset"
       />
       <!-- Stretch arrows pointing up from mouth corners -->
-      <g class="stretch-arrow left-arrow" v-if="scores.Happy > 0.15">
+      <g class="stretch-arrow left-arrow" v-if="mouthLeft && scores.Happy > 0.15">
         <line
-          :x1="lm(faceIndices.mouthLeft)!.x * width"
-          :y1="lm(faceIndices.mouthLeft)!.y * height"
-          :x2="lm(faceIndices.mouthLeft)!.x * width - 6"
-          :y2="lm(faceIndices.mouthLeft)!.y * height - 20"
+          :x1="(mouthLeft?.x ?? 0) * width"
+          :y1="(mouthLeft?.y ?? 0) * height"
+          :x2="(mouthLeft?.x ?? 0) * width - 6"
+          :y2="(mouthLeft?.y ?? 0) * height - 20"
         />
         <polyline
-          :points="arrowHead(lm(faceIndices.mouthLeft)!, 'left')"
+          :points="mouthLeft ? arrowHead(mouthLeft, 'left') : ''"
         />
       </g>
-      <g class="stretch-arrow right-arrow" v-if="scores.Happy > 0.15">
+      <g class="stretch-arrow right-arrow" v-if="mouthRight && scores.Happy > 0.15">
         <line
-          :x1="lm(faceIndices.mouthRight)!.x * width"
-          :y1="lm(faceIndices.mouthRight)!.y * height"
-          :x2="lm(faceIndices.mouthRight)!.x * width + 6"
-          :y2="lm(faceIndices.mouthRight)!.y * height - 20"
+          :x1="(mouthRight?.x ?? 0) * width"
+          :y1="(mouthRight?.y ?? 0) * height"
+          :x2="(mouthRight?.x ?? 0) * width + 6"
+          :y2="(mouthRight?.y ?? 0) * height - 20"
         />
         <polyline
-          :points="arrowHead(lm(faceIndices.mouthRight)!, 'right')"
+          :points="mouthRight ? arrowHead(mouthRight, 'right') : ''"
         />
       </g>
     </g>
@@ -71,16 +71,16 @@
       />
       <!-- Eye widen indicators -->
       <circle
-        v-if="lm(faceIndices.leftEyeOuter)"
-        :cx="lm(faceIndices.leftEyeOuter).x * width"
-        :cy="lm(faceIndices.leftEyeOuter).y * height"
+        v-if="leftEyeOuter"
+        :cx="(leftEyeOuter?.x ?? 0) * width"
+        :cy="(leftEyeOuter?.y ?? 0) * height"
         r="5"
         class="eye-indicator"
       />
       <circle
-        v-if="lm(faceIndices.rightEyeOuter)"
-        :cx="lm(faceIndices.rightEyeOuter).x * width"
-        :cy="lm(faceIndices.rightEyeOuter).y * height"
+        v-if="rightEyeOuter"
+        :cx="(rightEyeOuter?.x ?? 0) * width"
+        :cy="(rightEyeOuter?.y ?? 0) * height"
         r="5"
         class="eye-indicator"
       />
@@ -89,51 +89,51 @@
     <!-- Angry: downward arrows above inner eyebrows -->
     <g v-if="activeEmotion === 'Angry'" class="guide-group angry-guide">
       <!-- Left brow arrow -->
-      <g v-if="lm(faceIndices.leftInnerBrow)" class="brow-arrow">
+      <g v-if="leftInnerBrow" class="brow-arrow">
         <line
-          :x1="lm(faceIndices.leftInnerBrow).x * width"
-          :y1="lm(faceIndices.leftInnerBrow).y * height - 24"
-          :x2="lm(faceIndices.leftInnerBrow).x * width"
-          :y2="lm(faceIndices.leftInnerBrow).y * height - 4"
+          :x1="(leftInnerBrow?.x ?? 0) * width"
+          :y1="(leftInnerBrow?.y ?? 0) * height - 24"
+          :x2="(leftInnerBrow?.x ?? 0) * width"
+          :y2="(leftInnerBrow?.y ?? 0) * height - 4"
           :stroke="angryColor"
           stroke-width="3"
           stroke-linecap="round"
         />
         <polygon
-          :points="browArrowHead(lm(faceIndices.leftInnerBrow), 'down')"
+          :points="leftInnerBrow ? browArrowHead(leftInnerBrow, 'down') : ''"
           :fill="angryColor"
         />
       </g>
       <!-- Right brow arrow -->
-      <g v-if="lm(faceIndices.rightInnerBrow)" class="brow-arrow">
+      <g v-if="rightInnerBrow" class="brow-arrow">
         <line
-          :x1="lm(faceIndices.rightInnerBrow).x * width"
-          :y1="lm(faceIndices.rightInnerBrow).y * height - 24"
-          :x2="lm(faceIndices.rightInnerBrow).x * width"
-          :y2="lm(faceIndices.rightInnerBrow).y * height - 4"
+          :x1="(rightInnerBrow?.x ?? 0) * width"
+          :y1="(rightInnerBrow?.y ?? 0) * height - 24"
+          :x2="(rightInnerBrow?.x ?? 0) * width"
+          :y2="(rightInnerBrow?.y ?? 0) * height - 4"
           :stroke="angryColor"
           stroke-width="3"
           stroke-linecap="round"
         />
         <polygon
-          :points="browArrowHead(lm(faceIndices.rightInnerBrow), 'down')"
+          :points="rightInnerBrow ? browArrowHead(rightInnerBrow, 'down') : ''"
           :fill="angryColor"
         />
       </g>
       <!-- Intensity glow on brow area -->
       <circle
-        v-if="lm(faceIndices.leftInnerBrow)"
-        :cx="lm(faceIndices.leftInnerBrow).x * width"
-        :cy="lm(faceIndices.leftInnerBrow).y * height"
+        v-if="leftInnerBrow"
+        :cx="(leftInnerBrow?.x ?? 0) * width"
+        :cy="(leftInnerBrow?.y ?? 0) * height"
         :r="12 * scores.Angry"
         :opacity="scores.Angry * 0.6"
         :fill="angryColor"
         class="intensity-pulse"
       />
       <circle
-        v-if="lm(faceIndices.rightInnerBrow)"
-        :cx="lm(faceIndices.rightInnerBrow).x * width"
-        :cy="lm(faceIndices.rightInnerBrow).y * height"
+        v-if="rightInnerBrow"
+        :cx="(rightInnerBrow?.x ?? 0) * width"
+        :cy="(rightInnerBrow?.y ?? 0) * height"
         :r="12 * scores.Angry"
         :opacity="scores.Angry * 0.6"
         :fill="angryColor"
@@ -244,6 +244,13 @@ const angryColor = '#ff6b6b'
 function lm(index: number): FaceLandmarkPoint | undefined {
   return props.landmarks[index]
 }
+
+const mouthLeft = computed(() => lm(faceIndices.mouthLeft))
+const mouthRight = computed(() => lm(faceIndices.mouthRight))
+const leftEyeOuter = computed(() => lm(faceIndices.leftEyeOuter))
+const rightEyeOuter = computed(() => lm(faceIndices.rightEyeOuter))
+const leftInnerBrow = computed(() => lm(faceIndices.leftInnerBrow))
+const rightInnerBrow = computed(() => lm(faceIndices.rightInnerBrow))
 
 /** Midpoint between upper and lower lip — mouth opening center. */
 const mouthCenter = computed<FaceLandmarkPoint | undefined>(() => {

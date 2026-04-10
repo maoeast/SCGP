@@ -236,9 +236,17 @@ export function useEmotionDetector(options: EmotionDetectorOptions = {}): Emotio
         landmarks.value = result.faceLandmarks[0] as FaceLandmarkPoint[]
 
         if (result.faceBlendshapes && result.faceBlendshapes.length > 0) {
-          const categories = result.faceBlendshapes[0].categories.map(
-            (c: any) => ({ categoryName: c.categoryName ?? c.displayName, score: c.score })
-          )
+          const firstBlendshape = result.faceBlendshapes[0]
+          const categories = firstBlendshape?.categories?.map((category) => ({
+            categoryName: category.categoryName ?? category.displayName,
+            score: category.score,
+          }))
+
+          if (!categories || categories.length === 0) {
+            animationFrameId = requestAnimationFrame(detectLoop)
+            return
+          }
+
           const rawBlendshapes = extractBlendshapes(categories)
           blendshapes.value = rawBlendshapes
 
