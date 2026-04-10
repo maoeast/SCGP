@@ -1,14 +1,16 @@
 [
   {
     "sceneCode": "care-scene-1",
-    "title": "好朋友的玩具坏了",
+    "name": "小明",
+    "title": "好朋友的玩具不小心摔坏了",
+    "description": "识别同伴失去心爱物品时的伤感，理解意外损坏带来的沮丧。通过语言安慰或协助修理来表达关怀，锻炼社交共情能力。",
     "imageUrl": "images/care-scenes/care-scene-1_broken_toy.png",
     "difficultyLevel": 1,
     "careType": "empathy",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "你的好朋友小明最喜欢的玩具汽车摔坏了，他坐在地上难过地哭泣。这时候你应该怎么表达关心？",
+    "speakerPerspectiveText": "好朋友小明最喜欢的玩具汽车摔坏了，他坐在地上难过地哭泣。这时候你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，如果你最心爱的玩具坏了，哭得很伤心。这时候朋友走过来，你最希望他做什么？",
     "utterances": [
       {
@@ -59,20 +61,46 @@
     "abilityLevel": "primary",
     "tags": [
       "同伴交往",
-      "安慰",
-      "物品损坏"
+      "物品损坏",
+      "共情安慰"
+    ],
+    "specificEmotionToken": "heartbroken",
+    "specificEmotionLabel": "伤心/心碎",
+    "emotionOptions": [
+      {
+        "text": "极度紧张",
+        "isCorrect": false,
+        "feedbackText": "他并没有像要上台表演那样紧张得发抖哦。再试一次吧！"
+      },
+      {
+        "text": "崩溃/大哭",
+        "isCorrect": false,
+        "feedbackText": "他还没有到彻底崩溃大哭的程度哦。再找找看有没有更准确的心情标签？"
+      },
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "伤心/心碎",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-2",
-    "title": "同学跑步摔倒了",
+    "name": "小华",
+    "title": "同学跑步时不慎摔倒受伤",
+    "description": "识别同伴意外受伤后的疼痛与惊恐，理解身体不适引发的负面情绪。通过主动搀扶或寻求医护人员帮助，展现救助意识与体恤之心。",
     "imageUrl": "images/care-scenes/care-scene-2_fall_down.png",
     "difficultyLevel": 1,
     "careType": "action",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "上体育课时，同桌小华跑步不小心摔倒了，膝盖擦破了皮，疼得掉眼泪。你应该怎么表达关心？",
+    "speakerPerspectiveText": "上体育课时，小华跑步不小心摔倒了，膝盖擦破了皮，疼得掉眼泪。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，如果你在操场上摔倒了非常疼，别人都在玩。这时候，你最希望同学怎么对你？",
     "utterances": [
       {
@@ -87,7 +115,7 @@
         "id": "u2",
         "type": "empathy",
         "text": "“摔破皮流血了，一定很疼吧？”",
-        "effect": "你的话让他觉得痛苦被看见了，他感到了温暖。",
+        "effect": "你这么一说，他觉得你很懂他的疼，心里就不那么难受了。",
         "receiverReactionText": "嗯，真的很疼",
         "receiverReactionEmoji": "😭"
       },
@@ -123,13 +151,39 @@
     "abilityLevel": "primary",
     "tags": [
       "同伴交往",
-      "受伤",
-      "帮助"
+      "意外受伤",
+      "实际帮助"
+    ],
+    "specificEmotionToken": "in_pain",
+    "specificEmotionLabel": "疼痛/委屈",
+    "emotionOptions": [
+      {
+        "text": "焦虑/焦急",
+        "isCorrect": false,
+        "feedbackText": "他现在不是急得团团转的那种感觉。我们再仔细看看发生了什么？"
+      },
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": false,
+        "feedbackText": "他并没有觉得很丢脸或者没面子哦。再看看其他选项，他是不是有别的心事？"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "疼痛/委屈",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-3",
-    "title": "妈妈下班回家很累",
+    "name": "妈妈",
+    "title": "妈妈下班回家极度疲惫",
+    "description": "识别长辈经历高强度工作后的疲惫感，理解成人世界的辛劳与压力。通过主动倒水、按摩或保持安静，表达体贴与孝敬之心。",
     "imageUrl": "images/care-scenes/care-scene-3_tired_mom.png",
     "difficultyLevel": 2,
     "careType": "action",
@@ -187,27 +241,53 @@
     "abilityLevel": "middle",
     "tags": [
       "家庭亲情",
-      "疲惫",
-      "感恩"
+      "长辈疲惫",
+      "体贴照顾"
+    ],
+    "specificEmotionToken": "exhausted",
+    "specificEmotionLabel": "极度疲惫",
+    "emotionOptions": [
+      {
+        "text": "崩溃/大哭",
+        "isCorrect": false,
+        "feedbackText": "他还没有到彻底崩溃大哭的程度哦。再找找看有没有更准确的心情标签？"
+      },
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      },
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": false,
+        "feedbackText": "他并没有觉得很丢脸或者没面子哦。再看看其他选项，他是不是有别的心事？"
+      },
+      {
+        "text": "极度疲惫",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-4",
-    "title": "好朋友比赛输了",
+    "name": "小华",
+    "title": "好朋友拔河比赛输了",
+    "description": "识别同伴努力后遭遇失败的挫败感，理解其渴望获胜的心理预期。通过拍拍肩膀、递水或肯定其出色表现，提供温暖的情感支持。",
     "imageUrl": "images/care-scenes/care-scene-4_lost_game.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "学校的拔河比赛结束了，你最好的朋友所在的队伍输了。他坐在操场边，低着头很不甘心。你应该怎么表达关心？",
+    "speakerPerspectiveText": "学校的拔河比赛结束了，小华所在的队伍输了。他坐在操场边，低着头很不甘心。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你拼尽全力却输掉了重要的比赛，心里很受挫。这时候，你最希望朋友对你说什么？",
     "utterances": [
       {
         "id": "u1",
         "type": "advice",
         "text": "“别难过了，输了就输了，下次比赛再赢回来就行了。”",
-        "effect": "这句鼓励的话是对的，但有时候太快讲大道理，会让对方觉得你站着说话不腰疼。",
+        "effect": "这个建议本身是好的，但在别人情绪还在蓝区（极度悲伤）时，他们的大脑是听不进去大道理的。我们需要先用共情把他们拉回绿区，再给出建议。",
         "receiverReactionText": "可是这次我真的很想赢",
         "receiverReactionEmoji": "😔"
       },
@@ -252,19 +332,45 @@
     "tags": [
       "同伴交往",
       "比赛挫折",
-      "共情"
+      "共情肯定"
+    ],
+    "specificEmotionToken": "frustrated",
+    "specificEmotionLabel": "挫败/不甘",
+    "emotionOptions": [
+      {
+        "text": "焦虑/焦急",
+        "isCorrect": false,
+        "feedbackText": "他现在不是急得团团转的那种感觉。我们再仔细看看发生了什么？"
+      },
+      {
+        "text": "挫败/不甘",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": false,
+        "feedbackText": "这件事其实不是他的错，他也没有觉得不好意思。我们再猜猜看？"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-5",
-    "title": "同学忘带了重要的作业",
+    "name": "小明",
+    "title": "同桌忘带了重要的作业本",
+    "description": "识别同伴因疏忽产生的慌乱与焦虑，理解其面对潜在惩罚的畏惧心理。通过言语安抚或协助其向老师说明情况，展现同理心与社交援护能力。",
     "imageUrl": "images/care-scenes/care-scene-5_forgot_homework.png",
     "difficultyLevel": 2,
     "careType": "advice",
     "receiverEmotion": "scared",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "马上就要上数学课了，同桌翻遍了书包发现没带数学作业本，急得满头大汗，害怕被老师批评。你应该怎么表达关心？",
+    "speakerPerspectiveText": "马上就要上数学课了，同桌小明翻遍了书包发现没带数学作业本，急得满头大汗，害怕被老师批评。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你马上要面临老师的严厉检查却忘带了东西，急得像热锅上的蚂蚁。这时候你最需要什么帮助？",
     "utterances": [
       {
@@ -313,21 +419,47 @@
     "ageRange": "7-12",
     "abilityLevel": "middle",
     "tags": [
-      "同伴交往",
-      "危机解决",
-      "诚实"
+      "校园生活",
+      "忘带物品",
+      "缓解焦虑"
+    ],
+    "specificEmotionToken": "anxious",
+    "specificEmotionLabel": "焦虑/焦急",
+    "emotionOptions": [
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "伤心/难过",
+        "isCorrect": false,
+        "feedbackText": "他看起来可能有些不舒服，但其实他不是难过得想哭哦。再仔细想想他遇到什么事了？"
+      },
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": false,
+        "feedbackText": "他并没有觉得很丢脸或者没面子哦。再看看其他选项，他是不是有别的心事？"
+      },
+      {
+        "text": "焦虑/焦急",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-6",
+    "name": "小明",
     "title": "同桌不小心把水洒在裤子上",
+    "description": "识别同伴因形象受损产生的狼狈感，理解其害怕被注视的社交压力。通过递送干纸巾、帮忙遮挡视线等方式，维护同伴的体面与尊严。",
     "imageUrl": "images/care-scenes/care-scene-6_spilled_water.png",
     "difficultyLevel": 1,
     "careType": "action",
     "receiverEmotion": "embarrassed",
     "emotionColorToken": "yellow",
     "emotionColorLabel": "黄区",
-    "speakerPerspectiveText": "课间，同桌喝水时不小心把水杯碰倒了，水洒了一裤子。大家都看过来，他脸红红的觉得很丢人。你应该怎么表达关心？",
+    "speakerPerspectiveText": "课间，同桌小明喝水时不小心把水杯碰倒了，水洒了一裤子。大家都看过来，他脸红红的觉得很丢人。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你在教室里当着大家的面把裤子弄湿了，觉得非常尴尬丢脸。这时候你最希望同桌怎么做？",
     "utterances": [
       {
@@ -377,28 +509,54 @@
     "ageRange": "4-8",
     "abilityLevel": "primary",
     "tags": [
-      "同伴交往",
-      "化解尴尬",
-      "提供帮助"
+      "校园生活",
+      "生理尴尬",
+      "隐私保护"
+    ],
+    "specificEmotionToken": "ashamed",
+    "specificEmotionLabel": "羞耻/窘迫",
+    "emotionOptions": [
+      {
+        "text": "焦虑/焦急",
+        "isCorrect": false,
+        "feedbackText": "他现在不是急得团团转的那种感觉。我们再仔细看看发生了什么？"
+      },
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      },
+      {
+        "text": "伤心/难过",
+        "isCorrect": false,
+        "feedbackText": "他看起来可能有些不舒服，但其实他不是难过得想哭哦。再仔细想想他遇到什么事了？"
+      },
+      {
+        "text": "羞耻/窘迫",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-7",
-    "title": "好朋友搭的积木被推倒了",
+    "name": "小杰",
+    "title": "好朋友搭的积木被同学撞倒",
+    "description": "识别同伴努力成果瞬间化为乌有的惊愕与伤心，理解其劳动价值被否定的痛苦。通过主动协助重建积木，展示坚定且持久的支持。",
     "imageUrl": "images/care-scenes/care-scene-7_knocked_blocks.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "angry",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "你的好朋友辛辛苦苦搭了一个很高的积木城堡，结果被旁边跑过的同学撞倒了。好朋友气得握紧拳头大叫。你应该怎么表达关心？",
+    "speakerPerspectiveText": "你的好朋友小杰辛辛苦苦搭了一个很高的积木城堡，结果被旁边跑过的同学撞倒了。小杰气得握紧拳头大叫。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你花了很久做好的东西被别人毁掉了，你气得快要爆炸了。这时候你希望好朋友对你说什么？",
     "utterances": [
       {
         "id": "u1",
         "type": "advice",
         "text": "“哎呀别生气了，积木倒了我们再重新搭一个不就行了。”",
-        "effect": "这否认了他的愤怒情绪。在别人非常生气时叫他“别生气”，会让他觉得你不理解他的心血被毁的痛苦。",
+        "effect": "这个建议忽视了对方当下的愤怒。在情绪红区时，讲大道理是无效的，他需要的是你先接纳他的情绪，等他回到绿区后再讨论重建的问题。",
         "receiverReactionText": "可是我搭了半个小时！你根本不懂！",
         "receiverReactionEmoji": "😡"
       },
@@ -442,20 +600,46 @@
     "abilityLevel": "middle",
     "tags": [
       "同伴交往",
-      "共情愤怒",
-      "支持"
+      "心血被毁",
+      "共情愤怒"
+    ],
+    "specificEmotionToken": "furious",
+    "specificEmotionLabel": "愤怒/气炸",
+    "emotionOptions": [
+      {
+        "text": "极度疲惫",
+        "isCorrect": false,
+        "feedbackText": "他并不是因为干了很多活而觉得累哦。再看看他的表情，是不是有别的感觉？"
+      },
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      },
+      {
+        "text": "害羞/不好意思",
+        "isCorrect": false,
+        "feedbackText": "他不是因为害羞而躲起来哦。再看看他是不是遇到了其他的麻烦？"
+      },
+      {
+        "text": "愤怒/气炸",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-8",
-    "title": "妹妹害怕打雷闪电",
+    "name": "小雪",
+    "title": "妹妹害怕打雷闪电躲在角落",
+    "description": "识别幼童面对极端自然现象的本能恐惧，理解其感官过载带来的心理压力。通过捂住耳朵、紧紧拥抱并给予简单的科学解释，消解其内心的不安。",
     "imageUrl": "images/care-scenes/care-scene-8_thunder_fear.png",
     "difficultyLevel": 1,
     "careType": "action",
     "receiverEmotion": "scared",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "外面突然打了一个巨大的响雷，妹妹吓得尖叫一声，捂着耳朵躲在沙发角落里发抖。作为哥哥/姐姐，你应该怎么关心她？",
+    "speakerPerspectiveText": "外面突然打了一个巨大的响雷，妹妹小雪吓得尖叫一声，捂着耳朵躲在沙发角落里发抖。作为哥哥/姐姐，你应该怎么关心她？",
     "receiverPerspectiveText": "想象一下，你突然遇到了一件极其可怕的事情，吓得浑身发抖。这时候你希望家人怎么对待你？",
     "utterances": [
       {
@@ -506,13 +690,39 @@
     "abilityLevel": "primary",
     "tags": [
       "家庭亲情",
-      "消除恐惧",
-      "身体接触"
+      "自然恐惧",
+      "提供安全感"
+    ],
+    "specificEmotionToken": "terrified",
+    "specificEmotionLabel": "惊恐/害怕",
+    "emotionOptions": [
+      {
+        "text": "害羞/不好意思",
+        "isCorrect": false,
+        "feedbackText": "他不是因为害羞而躲起来哦。再看看他是不是遇到了其他的麻烦？"
+      },
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      },
+      {
+        "text": "失望/落寞",
+        "isCorrect": false,
+        "feedbackText": "他好像不是因为没得到喜欢的东西而感到失望。我们再换一个试试看？"
+      },
+      {
+        "text": "惊恐/害怕",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-9",
-    "title": "同学弄丢了心爱的钢笔",
+    "name": "小华",
+    "title": "同学弄丢了最心爱的钢笔",
+    "description": "识别同伴丢失心爱之物产生的懊悔与忧伤，理解该物品承载的情感价值。通过积极协助寻找或主动借出文具，表达对同伴的深深体恤。",
     "imageUrl": "images/care-scenes/care-scene-9_lost_pen.png",
     "difficultyLevel": 2,
     "careType": "action",
@@ -571,19 +781,45 @@
     "tags": [
       "同伴交往",
       "物品丢失",
-      "实际帮助"
+      "陪伴寻找"
+    ],
+    "specificEmotionToken": "distressed",
+    "specificEmotionLabel": "焦急/痛心",
+    "emotionOptions": [
+      {
+        "text": "惊恐/害怕",
+        "isCorrect": false,
+        "feedbackText": "虽然事情有些麻烦，但他并没有像遇到大怪物那样害怕哦。再试一次！"
+      },
+      {
+        "text": "焦急/痛心",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "极度紧张",
+        "isCorrect": false,
+        "feedbackText": "他并没有像要上台表演那样紧张得发抖哦。再试一次吧！"
+      },
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-10",
-    "title": "朋友回答错问题被笑话",
+    "name": "小明",
+    "title": "好朋友回答错问题被全班嘲笑",
+    "description": "识别同伴在公共场合受挫时的羞愧感，理解被嘲笑所带来的社交压力。通过言语维护或私下安慰，帮助对方缓解难堪。",
     "imageUrl": "images/care-scenes/care-scene-10_wrong_answer.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "embarrassed",
     "emotionColorToken": "yellow",
     "emotionColorLabel": "黄区",
-    "speakerPerspectiveText": "上课时，你的好朋友站起来回答问题，结果答得完全不对，全班同学都在笑他。他红着脸坐下，恨不得找个地缝钻进去。你应该怎么关心他？",
+    "speakerPerspectiveText": "上课时，你的好朋友小明站起来回答问题，结果答得完全不对，全班同学都在笑他。他红着脸坐下，恨不得找个地缝钻进去。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，你在全班面前出了洋相，被大家哄堂大笑，觉得非常丢脸尴尬。你希望好朋友怎么对待你？",
     "utterances": [
       {
@@ -632,27 +868,53 @@
     "ageRange": "7-12",
     "abilityLevel": "middle",
     "tags": [
-      "同伴交往",
-      "化解尴尬",
+      "校园生活",
+      "当众出丑",
       "私下安慰"
+    ],
+    "specificEmotionToken": "humiliated",
+    "specificEmotionLabel": "屈辱/无地自容",
+    "emotionOptions": [
+      {
+        "text": "暴怒/抓狂",
+        "isCorrect": false,
+        "feedbackText": "他并没有气得要发大脾气或者摔东西哦。再感受一下他真正的心情？"
+      },
+      {
+        "text": "屈辱/无地自容",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "孤单/思乡",
+        "isCorrect": false,
+        "feedbackText": "他身边可能有朋友在，并不是觉得孤单哦。再猜猜他真正的心情吧！"
+      },
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-11",
-    "title": "同学忘带午餐饿肚子",
+    "name": "小华",
+    "title": "同桌忘带午餐饿肚子",
+    "description": "识别同伴忍受饥饿时的困窘，理解忘带物品引发的焦虑。通过分享食物或寻求老师帮助，展现同情心与利他精神。",
     "imageUrl": "images/care-scenes/care-scene-11_forgot_lunch.png",
     "difficultyLevel": 2,
     "careType": "action",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "中午吃饭时，同桌发现自己忘带午餐盒了。他摸着咕咕叫的肚子，看着别人吃饭，委屈得快要掉眼泪了。你应该怎么表达关心？",
+    "speakerPerspectiveText": "中午吃饭时，同桌小华发现自己忘带午餐盒了。他摸着咕咕叫的肚子，看着别人吃饭，委屈得快要掉眼泪了。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，大家都在吃香喷喷的午饭，只有你一个人饿着肚子看着，觉得又饿又委屈。这时候你最希望同桌怎么做？",
     "utterances": [
       {
         "id": "u1",
         "type": "advice",
-        "text": "“你昨天晚上怎么不装进书包里？下次一定要提前装好啊。”",
+        "text": "“你今天早上怎么不装进书包里？下次一定要提前装好啊。”",
         "effect": "在别人遇到困难时当“事后诸葛亮”去指责对方，不仅不能解决他现在的饥饿，还会让他更加难过。",
         "receiverReactionText": "我知道错了，可是我现在好饿...",
         "receiverReactionEmoji": "😞"
@@ -695,21 +957,47 @@
     "ageRange": "7-12",
     "abilityLevel": "middle",
     "tags": [
-      "同伴交往",
-      "分享",
-      "实际帮助"
+      "校园生活",
+      "忍受饥饿",
+      "慷慨分享"
+    ],
+    "specificEmotionToken": "helpless",
+    "specificEmotionLabel": "委屈/无助",
+    "emotionOptions": [
+      {
+        "text": "极度紧张",
+        "isCorrect": false,
+        "feedbackText": "他并没有像要上台表演那样紧张得发抖哦。再试一次吧！"
+      },
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "惊恐/害怕",
+        "isCorrect": false,
+        "feedbackText": "虽然事情有些麻烦，但他并没有像遇到大怪物那样害怕哦。再试一次！"
+      },
+      {
+        "text": "委屈/无助",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-12",
-    "title": "弟弟的气球爆炸了",
+    "name": "小天",
+    "title": "弟弟的心爱气球爆炸了",
+    "description": "识别幼童面对突发声响的惊吓，以及失去玩具时的哭闹。通过拥抱、转移注意力或补偿新玩具，培养对弱小者的保护意识。",
     "imageUrl": "images/care-scenes/care-scene-12_popped_balloon.png",
     "difficultyLevel": 1,
     "careType": "empathy",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "弟弟拿着刚买的卡通气球开心地跑，结果气球不小心碰到树枝“砰”地一声爆炸了。弟弟吓了一跳，然后坐在地上大哭起来。你应该怎么关心他？",
+    "speakerPerspectiveText": "弟弟小天拿着刚买的卡通气球开心地跑，结果气球不小心碰到树枝“砰”地一声爆炸了。弟弟吓了一跳，然后坐在地上大哭起来。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，你最喜欢的玩具突然坏了，你伤心得大哭。这时候你最希望哥哥/姐姐怎么对你？",
     "utterances": [
       {
@@ -760,20 +1048,46 @@
     "abilityLevel": "primary",
     "tags": [
       "家庭亲情",
-      "物品损坏",
+      "玩具损坏",
       "情绪确认"
+    ],
+    "specificEmotionToken": "upset",
+    "specificEmotionLabel": "惊吓/难过",
+    "emotionOptions": [
+      {
+        "text": "惊吓/难过",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": false,
+        "feedbackText": "他并没有觉得很丢脸或者没面子哦。再看看其他选项，他是不是有别的心事？"
+      },
+      {
+        "text": "崩溃/大哭",
+        "isCorrect": false,
+        "feedbackText": "他还没有到彻底崩溃大哭的程度哦。再找找看有没有更准确的心情标签？"
+      },
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-13",
-    "title": "好朋友上台前紧张发抖",
+    "name": "小明",
+    "title": "好朋友上台演讲前紧张发抖",
+    "description": "识别同伴面对他人评价时的焦虑与恐惧，理解其生理应激反应。通过握手、引导深呼吸或给予肯定，帮助同伴缓解压力。",
     "imageUrl": "images/care-scenes/care-scene-13_nervous_friend.png",
     "difficultyLevel": 2,
     "careType": "advice",
     "receiverEmotion": "scared",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "还有三分钟就要轮到好朋友上台表演演讲了。他站在后台，手里拿着稿子，紧张得浑身发抖，说话都结巴了。你应该怎么表达关心？",
+    "speakerPerspectiveText": "还有三分钟就要轮到小明上台表演演讲了。他站在后台，手里拿着稿子，紧张得浑身发抖，说话都结巴了。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你马上要上台面对全校同学，心里怕得要命，感觉快要晕倒了。这时候你最希望朋友怎么帮助你？",
     "utterances": [
       {
@@ -822,14 +1136,40 @@
     "ageRange": "7-12",
     "abilityLevel": "middle",
     "tags": [
-      "同伴交往",
-      "克服恐惧",
-      "缓解紧张"
+      "校园生活",
+      "上台紧张",
+      "提供支撑"
+    ],
+    "specificEmotionToken": "nervous",
+    "specificEmotionLabel": "极度紧张",
+    "emotionOptions": [
+      {
+        "text": "极度紧张",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "极度疲惫",
+        "isCorrect": false,
+        "feedbackText": "他并不是因为干了很多活而觉得累哦。再看看他的表情，是不是有别的感觉？"
+      },
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": false,
+        "feedbackText": "这件事其实不是他的错，他也没有觉得不好意思。我们再猜猜看？"
+      },
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-14",
-    "title": "同学的美术作业被恶意破坏",
+    "name": "小华",
+    "title": "同学的美术作业被恶意泼水",
+    "description": "识别同伴劳动成果受损后的愤怒与委屈，理解其遭遇不公时的心理落差。通过共同维权或协助重画，给予坚定的情感支持。",
     "imageUrl": "images/care-scenes/care-scene-14_ruined_drawing.png",
     "difficultyLevel": 3,
     "careType": "empathy",
@@ -886,21 +1226,47 @@
     "ageRange": "13-17",
     "abilityLevel": "advanced",
     "tags": [
-      "同伴交往",
-      "共情愤怒",
+      "校园生活",
+      "遭遇破坏",
       "寻求公正"
+    ],
+    "specificEmotionToken": "furious",
+    "specificEmotionLabel": "愤怒/心痛",
+    "emotionOptions": [
+      {
+        "text": "极度疲惫",
+        "isCorrect": false,
+        "feedbackText": "他并不是因为干了很多活而觉得累哦。再看看他的表情，是不是有别的感觉？"
+      },
+      {
+        "text": "害羞/不好意思",
+        "isCorrect": false,
+        "feedbackText": "他不是因为害羞而躲起来哦。再看看他是不是遇到了其他的麻烦？"
+      },
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "愤怒/心痛",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-15",
-    "title": "走廊里书本撒了一地",
+    "name": "小杰",
+    "title": "同学在走廊不慎把书撒了一地",
+    "description": "识别同伴面对突发状况时的手足无措，理解其渴望被帮助的心理需求。通过主动弯腰帮忙捡拾并整理书本，展现协作精神与善意。",
     "imageUrl": "images/care-scenes/care-scene-15_dropped_books.png",
     "difficultyLevel": 2,
     "careType": "action",
     "receiverEmotion": "embarrassed",
     "emotionColorToken": "yellow",
     "emotionColorLabel": "黄区",
-    "speakerPerspectiveText": "课间走廊里，一个同学不小心没抱稳，十几本书“哗啦”一声全部掉在地上散开了。周围路过的人都在看他，他脸红得像苹果一样蹲在地上捡。你应该怎么做？",
+    "speakerPerspectiveText": "课间走廊里，小杰不小心没抱稳，十几本书“哗啦”一声全部掉在地上散开了。周围路过的人都在看他，他脸红得像苹果一样蹲在地上捡。你应该怎么做？",
     "receiverPerspectiveText": "想象一下，你在人来人往的走廊里不小心把东西撒了一地，所有人都盯着你看，你觉得极度尴尬无地自容。这时候你希望别人怎么做？",
     "utterances": [
       {
@@ -950,20 +1316,46 @@
     "abilityLevel": "middle",
     "tags": [
       "校园生活",
-      "化解尴尬",
-      "实际帮助"
+      "突发意外",
+      "化解尴尬"
+    ],
+    "specificEmotionToken": "flustered",
+    "specificEmotionLabel": "慌乱/窘迫",
+    "emotionOptions": [
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "慌乱/窘迫",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "惊恐/害怕",
+        "isCorrect": false,
+        "feedbackText": "虽然事情有些麻烦，但他并没有像遇到大怪物那样害怕哦。再试一次！"
+      },
+      {
+        "text": "伤心/难过",
+        "isCorrect": false,
+        "feedbackText": "他看起来可能有些不舒服，但其实他不是难过得想哭哦。再仔细想想他遇到什么事了？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-16",
-    "title": "上课不小心叫老师“妈妈”",
+    "name": "小华",
+    "title": "同桌上课口误叫老师“妈妈”",
+    "description": "识别同伴因口误引发的极度尴尬与羞怯，理解社交失误带来的心理压力。通过不嘲笑、自然转移话题等方式，保护他人的尊严。",
     "imageUrl": "images/care-scenes/care-scene-16_call_teacher_mom.png",
     "difficultyLevel": 1,
     "careType": "empathy",
     "receiverEmotion": "embarrassed",
     "emotionColorToken": "yellow",
     "emotionColorLabel": "黄区",
-    "speakerPerspectiveText": "上课回答问题时，同桌一紧张，大声对着女老师喊了一声“妈妈！”全班瞬间哄堂大笑。同桌立刻捂住通红的脸，恨不得钻进抽屉里。你应该怎么表达关心？",
+    "speakerPerspectiveText": "上课回答问题时，小华一紧张，大声对着女老师喊了一声“妈妈！”全班瞬间哄堂大笑。同桌立刻捂住通红的脸，恨不得钻进抽屉里。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你一不小心把老师喊成了妈妈，全班都在笑你，你觉得丢脸极了。这时候你最希望同桌怎么对你？",
     "utterances": [
       {
@@ -1013,26 +1405,52 @@
     "abilityLevel": "middle",
     "tags": [
       "校园生活",
-      "化解尴尬",
-      "共情"
+      "口误出丑",
+      "自我暴露解围"
+    ],
+    "specificEmotionToken": "ashamed",
+    "specificEmotionLabel": "羞愧/丢脸",
+    "emotionOptions": [
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "伤心/难过",
+        "isCorrect": false,
+        "feedbackText": "他看起来可能有些不舒服，但其实他不是难过得想哭哦。再仔细想想他遇到什么事了？"
+      },
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      },
+      {
+        "text": "崩溃/大哭",
+        "isCorrect": false,
+        "feedbackText": "他还没有到彻底崩溃大哭的程度哦。再找找看有没有更准确的心情标签？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-17",
-    "title": "同学的仓鼠生病了",
+    "name": "小明",
+    "title": "同学心爱的鹦鹉生了重病",
+    "description": "识别同伴面对宠物生病时的担忧与无助，理解人与动物之间的情感连接。通过言语安抚或分享养护知识，给予情感上的慰藉。",
     "imageUrl": "images/care-scenes/care-scene-17_sick_hamster.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "课间，你的好朋友趴在桌子上偷偷抹眼泪。他告诉你，他养了很久的小仓鼠生了重病，可能快不行了。你应该怎么表达关心？",
+    "speakerPerspectiveText": "课间，小明趴在桌子上偷偷抹眼泪。他告诉你，他养了很久的小鹦鹉生了重病，可能快不行了。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你最心爱的小宠物生病了，你特别害怕失去它，心里很难过。你希望朋友怎么安慰你？",
     "utterances": [
       {
         "id": "u1",
         "type": "advice",
-        "text": "“别哭了，一只仓鼠才几块钱，死了让你妈妈再给你买一只一模一样的就行了。”",
+        "text": "“别哭了，一只鹦鹉才几块钱，死了让你妈妈再给你买一只一模一样的就行了。”",
         "effect": "这是极度冷漠的话！宠物是有感情的生命，不能用钱衡量，这样说会让他觉得你根本不懂他的爱。",
         "receiverReactionText": "它不是能随便换的玩具！你根本不懂！",
         "receiverReactionEmoji": "😠"
@@ -1061,7 +1479,7 @@
     "receiverOptions": [
       {
         "id": "ro1",
-        "text": "朋友坐过来拍着我的背，说他知道我有多喜欢那只仓鼠。",
+        "text": "朋友坐过来拍着我的背，说他知道我有多喜欢那只鹦鹉。",
         "isComforting": true,
         "reasonText": "理解我的伤心，尊重我对宠物的感情，这才是好朋友该做的事。"
       },
@@ -1078,19 +1496,45 @@
     "tags": [
       "同伴交往",
       "宠物生病",
-      "倾听与陪伴"
+      "倾听陪伴"
+    ],
+    "specificEmotionToken": "worried",
+    "specificEmotionLabel": "担忧/心痛",
+    "emotionOptions": [
+      {
+        "text": "担忧/心痛",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      },
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": false,
+        "feedbackText": "他并没有觉得很丢脸或者没面子哦。再看看其他选项，他是不是有别的心事？"
+      },
+      {
+        "text": "暴怒/抓狂",
+        "isCorrect": false,
+        "feedbackText": "他并没有气得要发大脾气或者摔东西哦。再感受一下他真正的心情？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-18",
-    "title": "害怕去医务室涂药",
+    "name": "小华",
+    "title": "朋友害怕去医务室涂药",
+    "description": "识别同伴对疼痛及医疗环境的抗拒与胆怯，理解负面预期带来的心理压力。通过陪伴就医或鼓励其勇敢面对，提供心理支持。",
     "imageUrl": "images/care-scenes/care-scene-18_scared_clinic.png",
     "difficultyLevel": 1,
     "careType": "advice",
     "receiverEmotion": "scared",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "体育课上，同学摔破了膝盖，被老师叫去医务室涂碘伏。他站在医务室门口，吓得紧紧抓着门框不敢进去，浑身发抖。作为陪同的朋友，你应该怎么表达关心？",
+    "speakerPerspectiveText": "体育课上，小华摔破了膝盖，被老师叫去医务室涂碘伏。他站在医务室门口，吓得紧紧抓着门框不敢进去，浑身发抖。作为陪同的朋友，你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你受了伤站在医务室门口，想到涂药会非常疼，你害怕得不敢进去。这时候你最希望陪你的同学怎么做？",
     "utterances": [
       {
@@ -1140,21 +1584,47 @@
     "ageRange": "7-12",
     "abilityLevel": "primary",
     "tags": [
-      "同伴交往",
-      "克服恐惧",
-      "提供安全感"
+      "校园生活",
+      "医疗恐惧",
+      "安全感支撑"
+    ],
+    "specificEmotionToken": "fearful",
+    "specificEmotionLabel": "畏惧/害怕",
+    "emotionOptions": [
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "慌乱/不知所措",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有慌得手忙脚乱哦。再仔细观察一下他的动作？"
+      },
+      {
+        "text": "畏惧/害怕",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "失望/落寞",
+        "isCorrect": false,
+        "feedbackText": "他好像不是因为没得到喜欢的东西而感到失望。我们再换一个试试看？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-19",
-    "title": "借给别人的书被撕破了",
+    "name": "小明",
+    "title": "朋友借出的书被撕破了",
+    "description": "识别同伴因过失产生的内疚与不安，理解其弄坏物品后的复杂心情。通过表达宽容或商讨修补方案，练习情绪克制与包容。",
     "imageUrl": "images/care-scenes/care-scene-19_torn_book_returned.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "angry",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "你的朋友好心把最喜欢的漫画书借给别人，结果还回来的时候封面被撕破了一大个口子。他气得满脸通红，把书狠狠摔在桌子上。你应该怎么关心他？",
+    "speakerPerspectiveText": "小明好心把最喜欢的漫画书借给别人，结果还回来的时候封面被撕破了一大个口子。他气得满脸通红，把书狠狠摔在桌子上。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，你好心把宝贝借给别人，对方却随意弄坏了它。你气得快要爆炸了，这时候你希望同桌对你说什么？",
     "utterances": [
       {
@@ -1205,20 +1675,46 @@
     "abilityLevel": "middle",
     "tags": [
       "同伴交往",
-      "共情愤怒",
-      "权益维护"
+      "权益受损",
+      "共同维权"
+    ],
+    "specificEmotionToken": "resentful",
+    "specificEmotionLabel": "气愤/心疼",
+    "emotionOptions": [
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": false,
+        "feedbackText": "他并没有觉得很丢脸或者没面子哦。再看看其他选项，他是不是有别的心事？"
+      },
+      {
+        "text": "伤心/难过",
+        "isCorrect": false,
+        "feedbackText": "他看起来可能有些不舒服，但其实他不是难过得想哭哦。再仔细想想他遇到什么事了？"
+      },
+      {
+        "text": "气愤/心疼",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-20",
-    "title": "没被邀请去生日派对",
+    "name": "小明",
+    "title": "朋友没被邀请去生日派对",
+    "description": "识别同伴被排挤或忽视时的落寞感，理解社交缺失引发的自我怀疑。通过主动陪伴或组织小活动，温暖并治愈对方的心灵。",
     "imageUrl": "images/care-scenes/care-scene-20_not_invited.png",
     "difficultyLevel": 3,
     "careType": "action",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "班里的同学周末要办生日派对，很多人都在开心地讨论。你的好朋友没有收到邀请卡，他趴在走廊的栏杆上，看起来非常失落和孤独。你应该怎么关心他？",
+    "speakerPerspectiveText": "班里的同学周末要办生日派对，很多人都在开心地讨论。小明没有收到邀请卡，他趴在走廊的栏杆上，看起来非常失落和孤独。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，大家都在兴高采烈地讨论周末的派对，只有你没有被邀请，感觉自己被彻底孤立了。你希望好朋友怎么安慰你？",
     "utterances": [
       {
@@ -1268,21 +1764,47 @@
     "ageRange": "13-17",
     "abilityLevel": "advanced",
     "tags": [
-      "校园社交",
-      "化解孤独",
+      "同伴交往",
+      "社交排斥",
       "替代陪伴"
+    ],
+    "specificEmotionToken": "left_out",
+    "specificEmotionLabel": "孤立/被排斥",
+    "emotionOptions": [
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "崩溃/大哭",
+        "isCorrect": false,
+        "feedbackText": "他还没有到彻底崩溃大哭的程度哦。再找找看有没有更准确的心情标签？"
+      },
+      {
+        "text": "孤立/被排斥",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": false,
+        "feedbackText": "这件事其实不是他的错，他也没有觉得不好意思。我们再猜猜看？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-21",
-    "title": "好朋友要转学离开了",
+    "name": "小明",
+    "title": "好朋友即将转学离开伤心落泪",
+    "description": "识别同伴面临离别时的忧伤情绪，理解长期陪伴的珍贵。通过交换礼物或深情告别，表达对友谊的珍视与真切关怀。",
     "imageUrl": "images/care-scenes/care-scene-21_friend_moving.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "你的好朋友告诉你，他下学期就要转学去别的城市了。他坐在操场边低着头，想到要离开大家，特别难过地掉眼泪。你应该怎么表达关心？",
+    "speakerPerspectiveText": "小明告诉你，他下学期就要转学去别的城市了。他坐在操场边低着头，想到要离开大家，特别难过地掉眼泪。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你马上要离开熟悉的朋友和学校去一个完全陌生的地方，心里非常舍不得和害怕。这时候你最希望朋友怎么对你？",
     "utterances": [
       {
@@ -1334,20 +1856,46 @@
     "tags": [
       "同伴交往",
       "分离焦虑",
-      "共情"
+      "共情不舍"
+    ],
+    "specificEmotionToken": "reluctant",
+    "specificEmotionLabel": "不舍/悲伤",
+    "emotionOptions": [
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "不舍/悲伤",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": false,
+        "feedbackText": "这件事其实不是他的错，他也没有觉得不好意思。我们再猜猜看？"
+      },
+      {
+        "text": "焦虑/焦急",
+        "isCorrect": false,
+        "feedbackText": "他现在不是急得团团转的那种感觉。我们再仔细看看发生了什么？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-22",
-    "title": "同桌被老师冤枉作弊",
+    "name": "小华",
+    "title": "同桌被老师误解作弊挨批",
+    "description": "识别同伴遭遇不实指控时的愤懑与孤立感，理解失去公正的痛苦。通过表达信任或协助寻找证据，给予充满正义感的情感声援。",
     "imageUrl": "images/care-scenes/care-scene-22_wrongly_accused.png",
     "difficultyLevel": 3,
     "careType": "action",
     "receiverEmotion": "angry",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "考试时，同桌明明只是在低头捡橡皮，却被老师误以为在看小抄，严厉地批评了他。同桌坐在座位上，气得满脸通红，咬紧牙关发抖。你应该怎么关心他？",
-    "receiverPerspectiveText": "想象一下，你明明什么坏事都没做，却被当众冤枉成骗子，你气得想大喊大叫证明清白。这时候你希望同桌怎么帮你？",
+    "speakerPerspectiveText": "考试时，同桌小华只是在低头捡橡皮，却被老师误以为在看小抄，严厉地批评了他。小华坐在座位上，满脸通红，咬紧牙关发抖。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你明明什么坏事都没做，却被当众误解，你气得想大喊大叫证明清白。这时候你希望同桌怎么帮你？",
     "utterances": [
       {
         "id": "u1",
@@ -1397,20 +1945,46 @@
     "abilityLevel": "advanced",
     "tags": [
       "校园生活",
-      "遭遇不公",
-      "支持与作证"
+      "遭遇冤枉",
+      "信任作证"
+    ],
+    "specificEmotionToken": "wronged",
+    "specificEmotionLabel": "委屈/愤怒",
+    "emotionOptions": [
+      {
+        "text": "慌乱/不知所措",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有慌得手忙脚乱哦。再仔细观察一下他的动作？"
+      },
+      {
+        "text": "委屈/愤怒",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "伤心/难过",
+        "isCorrect": false,
+        "feedbackText": "他看起来可能有些不舒服，但其实他不是难过得想哭哦。再仔细想想他遇到什么事了？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-23",
-    "title": "教室突然停电一片漆黑",
+    "name": "小华",
+    "title": "同桌害怕教室突然停电",
+    "description": "识别环境突变引发的集体恐慌与不安全感，理解置身黑暗中的焦虑。通过言语安抚或紧握同伴的手，共同克服对未知的恐惧。",
     "imageUrl": "images/care-scenes/care-scene-23_sudden_blackout.png",
     "difficultyLevel": 1,
     "careType": "action",
     "receiverEmotion": "scared",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "晚自习时，教室突然停电，变得一片漆黑。同桌特别怕黑，吓得尖叫了一声，紧紧抓住你的胳膊发抖。你应该怎么表达关心？",
+    "speakerPerspectiveText": "晚自习时，教室突然停电，变得一片漆黑。小华特别怕黑，吓得尖叫了一声，紧紧抓住你的胳膊发抖。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你特别怕黑，突然周围什么都看不见了，像掉进黑洞里一样，心里非常害怕。你希望旁边的人怎么做？",
     "utterances": [
       {
@@ -1461,20 +2035,46 @@
     "abilityLevel": "primary",
     "tags": [
       "校园生活",
-      "突发状况",
-      "提供安全感"
+      "黑暗恐惧",
+      "提供光源与陪伴"
+    ],
+    "specificEmotionToken": "terrified",
+    "specificEmotionLabel": "惊恐/无助",
+    "emotionOptions": [
+      {
+        "text": "害羞/不好意思",
+        "isCorrect": false,
+        "feedbackText": "他不是因为害羞而躲起来哦。再看看他是不是遇到了其他的麻烦？"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "极度疲惫",
+        "isCorrect": false,
+        "feedbackText": "他并不是因为干了很多活而觉得累哦。再看看他的表情，是不是有别的感觉？"
+      },
+      {
+        "text": "惊恐/无助",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-24",
-    "title": "安静时肚子发出咕噜叫声",
+    "name": "小杰",
+    "title": "同学安静时肚子发出咕噜叫声",
+    "description": "识别同伴因生理反应引发的局促与难为情，理解其对他人目光的敏感。通过假装没听见或用幽默化解，缓解对方的社交压力。",
     "imageUrl": "images/care-scenes/care-scene-24_stomach_growl.png",
     "difficultyLevel": 2,
     "careType": "action",
     "receiverEmotion": "embarrassed",
     "emotionColorToken": "yellow",
     "emotionColorLabel": "黄区",
-    "speakerPerspectiveText": "图书馆里非常安静。同桌的肚子突然发出超大声的“咕噜噜”叫声。周围人都转头看他，他羞得满脸通红，把头埋在书里。你应该怎么关心他？",
+    "speakerPerspectiveText": "图书馆里非常安静。小杰的肚子突然发出超大声的“咕噜噜”叫声。周围人都转头看他，他羞得满脸通红，把头埋在书里。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，在安静的地方，你的身体发出了奇怪的声音被所有人围观，你恨不得找个地缝钻进去。这时候你希望同桌怎么做？",
     "utterances": [
       {
@@ -1526,18 +2126,44 @@
       "校园生活",
       "生理尴尬",
       "隐私保护"
+    ],
+    "specificEmotionToken": "awkward",
+    "specificEmotionLabel": "尴尬/难堪",
+    "emotionOptions": [
+      {
+        "text": "焦虑/焦急",
+        "isCorrect": false,
+        "feedbackText": "他现在不是急得团团转的那种感觉。我们再仔细看看发生了什么？"
+      },
+      {
+        "text": "尴尬/难堪",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "孤单/思乡",
+        "isCorrect": false,
+        "feedbackText": "他身边可能有朋友在，并不是觉得孤单哦。再猜猜他真正的心情吧！"
+      },
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-25",
-    "title": "辛苦种的小番茄枯死了",
+    "name": "小杰",
+    "title": "同学辛苦种的小番茄枯死了",
+    "description": "识别同伴付出努力后希望落空的悲伤，理解其面对生命凋零的感触。通过共同分析原因或鼓励重新播种，给予精神上的支持。",
     "imageUrl": "images/care-scenes/care-scene-25_dead_plant.png",
     "difficultyLevel": 1,
     "careType": "empathy",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "自然科学课上，同学每天认真浇水照顾的小番茄苗不知道为什么枯死了。他看着干枯变黄的叶子，伤心地掉眼泪。你应该怎么表达关心？",
+    "speakerPerspectiveText": "自然科学课上，小杰每天认真浇水照顾的小番茄苗不知道为什么枯死了。他看着干枯变黄的叶子，伤心地掉眼泪。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你付出了很多心血、每天照顾的小植物突然死掉了，所有的努力都白费了，你非常难过。你希望别人怎么安慰你？",
     "utterances": [
       {
@@ -1590,18 +2216,44 @@
       "校园生活",
       "心血白费",
       "共情与分享"
+    ],
+    "specificEmotionToken": "disappointed",
+    "specificEmotionLabel": "失望/痛心",
+    "emotionOptions": [
+      {
+        "text": "慌乱/不知所措",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有慌得手忙脚乱哦。再仔细观察一下他的动作？"
+      },
+      {
+        "text": "暴怒/抓狂",
+        "isCorrect": false,
+        "feedbackText": "他并没有气得要发大脾气或者摔东西哦。再感受一下他真正的心情？"
+      },
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      },
+      {
+        "text": "失望/痛心",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-26",
-    "title": "画的画被同学嘲笑难看",
+    "name": "小明",
+    "title": "朋友画的画被同学当面嘲笑",
+    "description": "识别同伴创作受贬低后的沮丧与自卑，理解言语攻击带来的伤害。通过发现画作的优点并给予真诚夸奖，帮助同伴重建自信。",
     "imageUrl": "images/care-scenes/care-scene-26_mocked_drawing.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "美术课上，你的好朋友认真画了一幅画，却被几个路过的同学指着大笑说“画得真丑”。他紧紧抓着画纸，低着头委屈得快哭了。你应该怎么表达关心？",
+    "speakerPerspectiveText": "美术课上，小明认真画了一幅画，却被几个路过的同学指着大笑说“画得真丑”。他紧紧抓着画纸，低着头委屈得快哭了。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你很用心做出的作品，别人不仅不欣赏，还当面大声嘲笑你。你觉得非常委屈和难过，这时候你希望朋友怎么对你？",
     "utterances": [
       {
@@ -1651,21 +2303,47 @@
     "ageRange": "7-12",
     "abilityLevel": "middle",
     "tags": [
-      "同伴交往",
+      "校园生活",
       "作品被嘲笑",
-      "建立自信"
+      "重建自信"
+    ],
+    "specificEmotionToken": "hurt",
+    "specificEmotionLabel": "委屈/受伤",
+    "emotionOptions": [
+      {
+        "text": "暴怒/抓狂",
+        "isCorrect": false,
+        "feedbackText": "他并没有气得要发大脾气或者摔东西哦。再感受一下他真正的心情？"
+      },
+      {
+        "text": "委屈/受伤",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": false,
+        "feedbackText": "他并没有觉得很丢脸或者没面子哦。再看看其他选项，他是不是有别的心事？"
+      },
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-27",
+    "name": "小雪",
     "title": "妹妹晚上怕黑不敢睡觉",
+    "description": "识别幼童对未知的恐惧，理解黑暗环境引发的焦虑心理。通过讲故事、陪伴或打开小夜灯，展现作为兄长的责任感与关怀。",
     "imageUrl": "images/care-scenes/care-scene-27_scared_of_dark.png",
     "difficultyLevel": 1,
     "careType": "action",
     "receiverEmotion": "scared",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "晚上到了睡觉时间，房间灯一关，妹妹就吓得大哭起来，紧紧抱着枕头说房间里有怪物不敢睡。作为哥哥/姐姐，你应该怎么关心她？",
+    "speakerPerspectiveText": "晚上到了睡觉时间，房间灯一关，妹妹小雪就吓得大哭起来，紧紧抱着枕头说房间里有怪物不敢睡。作为哥哥/姐姐，你应该怎么关心她？",
     "receiverPerspectiveText": "想象一下，周围黑乎乎的，你觉得角落里随时会跑出可怕的东西，吓得睡不着觉。你希望家里人怎么帮助你？",
     "utterances": [
       {
@@ -1718,18 +2396,44 @@
       "家庭亲情",
       "黑暗恐惧",
       "提供安全感"
+    ],
+    "specificEmotionToken": "fearful",
+    "specificEmotionLabel": "害怕/缺乏安全感",
+    "emotionOptions": [
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      },
+      {
+        "text": "极度紧张",
+        "isCorrect": false,
+        "feedbackText": "他并没有像要上台表演那样紧张得发抖哦。再试一次吧！"
+      },
+      {
+        "text": "害怕/缺乏安全感",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "伤心/难过",
+        "isCorrect": false,
+        "feedbackText": "他看起来可能有些不舒服，但其实他不是难过得想哭哦。再仔细想想他遇到什么事了？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-28",
-    "title": "在食堂不小心打翻了餐盘",
+    "name": "小杰",
+    "title": "同学在拥挤食堂打翻了餐盘",
+    "description": "识别同伴在公共场合失误时的狼狈与不安，理解被众人注视带来的压力。通过递纸巾、协助清理或帮忙重新打饭，提供及时的援助。",
     "imageUrl": "images/care-scenes/care-scene-28_spilled_food_tray.png",
     "difficultyLevel": 2,
     "careType": "action",
     "receiverEmotion": "embarrassed",
     "emotionColorToken": "yellow",
     "emotionColorLabel": "黄区",
-    "speakerPerspectiveText": "中午在拥挤的食堂里，同学脚下一滑，餐盘掉在地上，饭菜撒了一地，还溅到了自己的鞋子上。周围人都转头看他，他脸红到了脖子根，不知所措地站在原地。你应该怎么做？",
+    "speakerPerspectiveText": "中午在拥挤的食堂里，小杰脚下一滑，餐盘掉在地上，饭菜撒了一地，还溅到了自己的鞋子上。周围人都转头看他，他脸红到了脖子根，不知所措地站在原地。你应该怎么做？",
     "receiverPerspectiveText": "想象一下，你在人多的地方打翻了饭菜，又脏又丢脸，所有人都盯着你看，你觉得极度尴尬。这时候你最希望别人怎么对待你？",
     "utterances": [
       {
@@ -1779,20 +2483,46 @@
     "abilityLevel": "middle",
     "tags": [
       "校园生活",
-      "化解尴尬",
-      "实际行动"
+      "食堂出丑",
+      "实际救援"
+    ],
+    "specificEmotionToken": "overwhelmed",
+    "specificEmotionLabel": "崩溃/极度窘迫",
+    "emotionOptions": [
+      {
+        "text": "孤单/思乡",
+        "isCorrect": false,
+        "feedbackText": "他身边可能有朋友在，并不是觉得孤单哦。再猜猜他真正的心情吧！"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "崩溃/极度窘迫",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "惊恐/害怕",
+        "isCorrect": false,
+        "feedbackText": "虽然事情有些麻烦，但他并没有像遇到大怪物那样害怕哦。再试一次！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-29",
+    "name": "小明",
     "title": "好朋友在街上被父母大声训斥",
+    "description": "识别同伴当众受责备时的难堪与自尊受挫，理解家庭冲突引发的恐惧。通过事后宽慰或假装没看见，小心保护其社交尊严。",
     "imageUrl": "images/care-scenes/care-scene-29_scolded_by_parents.png",
     "difficultyLevel": 3,
     "careType": "action",
     "receiverEmotion": "embarrassed",
     "emotionColorToken": "yellow",
     "emotionColorLabel": "黄区",
-    "speakerPerspectiveText": "放学路上，你好朋友的妈妈因为成绩的事，在大街上当着很多路人的面大声训斥他。他低着头，脸涨得通红，眼泪在眼眶里打转。作为同行的人，你应该怎么关心他？",
+    "speakerPerspectiveText": "放学路上，小明的妈妈因为成绩的事，在大街上当着很多路人的面大声训斥他。他低着头，脸涨得通红，眼泪在眼眶里打转。作为同行的人，你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，你当着外人和好朋友的面，被家长指着鼻子大骂，你觉得自己的自尊心被踩在了地上。这时候你希望好朋友怎么做？",
     "utterances": [
       {
@@ -1842,20 +2572,46 @@
     "abilityLevel": "advanced",
     "tags": [
       "同伴交往",
-      "维护自尊",
-      "隐私保护"
+      "长辈当街训斥",
+      "维护自尊"
+    ],
+    "specificEmotionToken": "humiliated",
+    "specificEmotionLabel": "屈辱/无面子",
+    "emotionOptions": [
+      {
+        "text": "惊恐/害怕",
+        "isCorrect": false,
+        "feedbackText": "虽然事情有些麻烦，但他并没有像遇到大怪物那样害怕哦。再试一次！"
+      },
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "屈辱/无面子",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "委屈/无助",
+        "isCorrect": false,
+        "feedbackText": "他现在不是觉得委屈哦。仔细看看他心里最强烈的感觉是什么？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-30",
-    "title": "接力赛掉棒导致班级输了",
+    "name": "小明",
+    "title": "同学接力赛掉棒自责大哭",
+    "description": "识别同伴因失误产生的深深自责与内疚，理解集体荣誉受损带来的巨大压力。通过“不怪你”等言语安慰，给予理解与情感包容。",
     "imageUrl": "images/care-scenes/care-scene-30_dropped_baton.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "学校运动会上，好朋友在最后冲刺接力时脚下一滑掉棒了，导致你们班最后拿了倒数第一。他蹲在跑道边，深深埋着头自责地大哭起来。你应该怎么关心他？",
+    "speakerPerspectiveText": "学校运动会上，小明在最后冲刺接力时脚下一滑掉棒了，导致你们班最后拿了倒数第一。他蹲在跑道边，深深埋着头自责地大哭起来。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，因为你一个人的失误，害得全班同学的努力都白费了。你极度内疚和难过，怕大家怪你。这时候你最希望听到什么？",
     "utterances": [
       {
@@ -1908,18 +2664,44 @@
       "校园生活",
       "失误自责",
       "团队包容"
+    ],
+    "specificEmotionToken": "guilty",
+    "specificEmotionLabel": "内疚/自责",
+    "emotionOptions": [
+      {
+        "text": "内疚/自责",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "愤怒/气炸",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有气得像小火山爆发哦。再体会一下他到底是害怕还是尴尬呢？"
+      },
+      {
+        "text": "慌乱/不知所措",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有慌得手忙脚乱哦。再仔细观察一下他的动作？"
+      },
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-31",
-    "title": "同学在教室里突然呕吐",
+    "name": "小杰",
+    "title": "同桌生病在教室里突然呕吐",
+    "description": "识别同伴生病时的虚弱与难堪，克服对污物的本能回避。通过递纸巾、倒热水或及时告知老师，展现出高水平的同理心与关爱能力。",
     "imageUrl": "images/care-scenes/care-scene-31_vomit_class.png",
     "difficultyLevel": 2,
     "careType": "action",
     "receiverEmotion": "embarrassed",
     "emotionColorToken": "yellow",
     "emotionColorLabel": "黄区",
-    "speakerPerspectiveText": "上课时，同桌突然觉得不舒服，吐了一地。周围的同学纷纷捂着鼻子躲开。同桌脸色苍白，觉得又难受又丢脸，快要哭了。你应该怎么表达关心？",
+    "speakerPerspectiveText": "上课时，小杰突然觉得不舒服，吐了一地。周围的同学纷纷捂着鼻子躲开。同桌脸色苍白，觉得又难受又丢脸，快要哭了。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你生病没忍住当众吐了，弄脏了教室，大家都嫌弃地看着你。你觉得难受极了，这时候你最希望同桌怎么做？",
     "utterances": [
       {
@@ -1971,20 +2753,45 @@
     "tags": [
       "校园生活",
       "突发生病",
-      "化解尴尬",
-      "实际行动"
+      "实际照顾"
+    ],
+    "specificEmotionToken": "sick_and_ashamed",
+    "specificEmotionLabel": "虚弱/羞愧",
+    "emotionOptions": [
+      {
+        "text": "愤怒/气炸",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有气得像小火山爆发哦。再体会一下他到底是害怕还是尴尬呢？"
+      },
+      {
+        "text": "伤心/难过",
+        "isCorrect": false,
+        "feedbackText": "他看起来可能有些不舒服，但其实他不是难过得想哭哦。再仔细想想他遇到什么事了？"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "虚弱/羞愧",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-32",
-    "title": "想加入游戏被拒绝",
+    "name": "小明",
+    "title": "朋友想加入游戏被无情拒绝",
+    "description": "识别同伴遭遇社交排斥时的失落与孤立感，理解其渴望融入群体的心理需求。通过主动发出邀请或协调游戏角色，传递接纳与关怀。",
     "imageUrl": "images/care-scenes/care-scene-32_rejected_game.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "课间，你的好朋友想加入同学们的足球游戏，但被同学以“人满了”为由拒绝了。他低着头，非常失落地走到操场边坐下。你应该怎么关心他？",
+    "speakerPerspectiveText": "课间，小明想加入同学们的足球游戏，但被同学以“人满了”为由拒绝了。他低着头，非常失落地走到操场边坐下。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，你鼓起勇气想和大家一起玩，却被当面拒绝，感觉自己被排挤了。这时候你希望好朋友怎么安慰你？",
     "utterances": [
       {
@@ -2035,20 +2842,46 @@
     "abilityLevel": "middle",
     "tags": [
       "同伴交往",
-      "被拒绝",
-      "替代陪伴"
+      "被拒加入",
+      "替代接纳"
+    ],
+    "specificEmotionToken": "rejected",
+    "specificEmotionLabel": "被排斥/失落",
+    "emotionOptions": [
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "愤怒/气炸",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有气得像小火山爆发哦。再体会一下他到底是害怕还是尴尬呢？"
+      },
+      {
+        "text": "被排斥/失落",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": false,
+        "feedbackText": "这件事其实不是他的错，他也没有觉得不好意思。我们再猜猜看？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-33",
-    "title": "玩桌游输了气得掀桌子",
+    "name": "小明",
+    "title": "朋友玩桌游输了气得掀桌子",
+    "description": "识别同伴因好胜心受挫引发的情绪失控，理解其挫折承受力的不足。通过冷静安抚或提议中场休息，引导对方逐渐平复心情。",
     "imageUrl": "images/care-scenes/care-scene-33_flipped_board_game.png",
     "difficultyLevel": 3,
     "careType": "empathy",
     "receiverEmotion": "angry",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "你和朋友一起玩大富翁，朋友连续几次运气不好输掉了很多钱。他气得满脸通红，大叫一声一把将棋盘掀翻了。面对愤怒的朋友，你应该怎么做？",
+    "speakerPerspectiveText": "你和小明一起玩游戏，小明连续几次运气不好输掉了。他气得满脸通红，大叫一声一把将棋盘掀翻了。面对愤怒的朋友，你应该怎么做？",
     "receiverPerspectiveText": "想象一下，你玩游戏一直输，觉得特别不公平，气得情绪失控摔了东西。虽然知道不对，但心里全是火。你希望对面的人怎么对你？",
     "utterances": [
       {
@@ -2101,18 +2934,44 @@
       "同伴交往",
       "情绪失控",
       "叫停与安抚"
+    ],
+    "specificEmotionToken": "frustrated",
+    "specificEmotionLabel": "挫败/恼怒",
+    "emotionOptions": [
+      {
+        "text": "孤单/思乡",
+        "isCorrect": false,
+        "feedbackText": "他身边可能有朋友在，并不是觉得孤单哦。再猜猜他真正的心情吧！"
+      },
+      {
+        "text": "挫败/恼怒",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": false,
+        "feedbackText": "这件事其实不是他的错，他也没有觉得不好意思。我们再猜猜看？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-34",
-    "title": "不小心打碎了老师的花盆",
+    "name": "小轩",
+    "title": "朋友不小心打碎老师的花盆",
+    "description": "识别同伴犯错后的惶恐与害怕情绪，理解其面对权威评价时的担忧。通过共同承担责任或商议认错方案，给予坚实的支持。",
     "imageUrl": "images/care-scenes/care-scene-34_broken_plant.png",
     "difficultyLevel": 2,
     "careType": "action",
     "receiverEmotion": "scared",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "课间打闹时，朋友不小心撞倒了老师放在窗台上的最喜欢的花盆。花盆碎了一地，朋友吓得脸色煞白，浑身发抖。你应该怎么关心他？",
+    "speakerPerspectiveText": "课间打闹时，小轩不小心撞倒了老师放在窗台上的最喜欢的花盆。花盆碎了一地，朋友吓得脸色煞白，浑身发抖。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，你闯了一个大祸，马上就要面对老师极其严厉的惩罚，吓得不知所措。这时候你最希望同伴怎么帮你？",
     "utterances": [
       {
@@ -2164,18 +3023,44 @@
       "校园生活",
       "闯祸恐惧",
       "陪伴承担"
+    ],
+    "specificEmotionToken": "panicked",
+    "specificEmotionLabel": "恐慌/不知所措",
+    "emotionOptions": [
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "恐慌/不知所措",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": false,
+        "feedbackText": "他并没有觉得很丢脸或者没面子哦。再看看其他选项，他是不是有别的心事？"
+      },
+      {
+        "text": "失望/落寞",
+        "isCorrect": false,
+        "feedbackText": "他好像不是因为没得到喜欢的东西而感到失望。我们再换一个试试看？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-35",
-    "title": "唱歌时严重破音被笑话",
+    "name": "小华",
+    "title": "朋友唱歌严重破音被全班笑话",
+    "description": "识别同伴表演失误后的尴尬与委屈，理解负面社交评价带来的打击。通过真诚鼓励或分享自身类似的失败经历，帮助其缓解心理压力。",
     "imageUrl": "images/care-scenes/care-scene-35_voice_crack.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "embarrassed",
     "emotionColorToken": "yellow",
     "emotionColorLabel": "黄区",
-    "speakerPerspectiveText": "音乐课上，同学在全班面前独唱，结果到了高音的地方声音突然劈叉了（破音），发出了很滑稽的鸭子叫声。底下的人都在捂嘴笑，他尴尬得满脸通红。你应该怎么做？",
+    "speakerPerspectiveText": "音乐课上，小华在全班面前独唱，结果到了高音的地方声音突然劈叉了（破音），发出了很滑稽的鸭子叫声。底下的人都在捂嘴笑，他尴尬得满脸通红。你应该怎么做？",
     "receiverPerspectiveText": "想象一下，你很认真地在台上表演，结果出了一个极其滑稽的失误，被全班嘲笑，丢脸到了极点。这时候你希望好朋友怎么做？",
     "utterances": [
       {
@@ -2226,21 +3111,46 @@
     "abilityLevel": "middle",
     "tags": [
       "校园生活",
-      "当众出丑",
-      "化解尴尬",
+      "表演失误",
       "正向肯定"
+    ],
+    "specificEmotionToken": "embarrassed",
+    "specificEmotionLabel": "尴尬/下不来台",
+    "emotionOptions": [
+      {
+        "text": "惊恐/害怕",
+        "isCorrect": false,
+        "feedbackText": "虽然事情有些麻烦，但他并没有像遇到大怪物那样害怕哦。再试一次！"
+      },
+      {
+        "text": "委屈/无助",
+        "isCorrect": false,
+        "feedbackText": "他现在不是觉得委屈哦。仔细看看他心里最强烈的感觉是什么？"
+      },
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      },
+      {
+        "text": "尴尬/下不来台",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-36",
-    "title": "心爱的游戏存档被不小心删了",
+    "name": "小明",
+    "title": "朋友心爱的游戏存档被误删",
+    "description": "识别同伴心血付诸东流后的崩溃感，理解个人爱好的重要性。通过耐心倾听抱怨或协助重新通关，表达深深的理解与共情。",
     "imageUrl": "images/care-scenes/care-scene-36_deleted_game_save.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "课间，好朋友趴在桌子上哭得很伤心。他告诉你，他玩了整整半年的游戏账号被弟弟不小心删除了，所有的装备都没了。你应该怎么表达关心？",
+    "speakerPerspectiveText": "课间，小明趴在桌子上哭得很伤心。他告诉你，他玩了整整半年的游戏账号被弟弟不小心删除了，所有的装备都没了。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你付出了无数个日夜、最心爱的虚拟宝贝瞬间化为乌有，你觉得心痛得无法呼吸。这时候你希望同桌怎么安慰你？",
     "utterances": [
       {
@@ -2292,19 +3202,45 @@
     "tags": [
       "同伴交往",
       "虚拟损失",
-      "心血白费"
+      "共情与陪伴"
+    ],
+    "specificEmotionToken": "devastated",
+    "specificEmotionLabel": "崩溃/痛心",
+    "emotionOptions": [
+      {
+        "text": "崩溃/痛心",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "愤怒/气炸",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有气得像小火山爆发哦。再体会一下他到底是害怕还是尴尬呢？"
+      },
+      {
+        "text": "害羞/不好意思",
+        "isCorrect": false,
+        "feedbackText": "他不是因为害羞而躲起来哦。再看看他是不是遇到了其他的麻烦？"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-37",
-    "title": "在操场被高年级同学围观出丑",
+    "name": "小明",
+    "title": "朋友摔倒被高年级同学围观出丑",
+    "description": "识别同伴因表现不佳而产生的自卑感，理解处于弱势时的局促不安。通过挺身而出或带其离开现场，展现朋友间的义气与关怀。",
     "imageUrl": "images/care-scenes/care-scene-37_tripped_older_kids.png",
     "difficultyLevel": 3,
     "careType": "action",
     "receiverEmotion": "embarrassed",
     "emotionColorToken": "yellow",
     "emotionColorLabel": "黄区",
-    "speakerPerspectiveText": "操场上，你的朋友不小心摔了个四脚朝天，口袋里的零食也撒了一地。旁边几个高年级的同学指着他大声笑。他脸红到了脖子根，趴在地上不敢起来。你应该怎么做？",
+    "speakerPerspectiveText": "操场上，小明不小心摔了个四脚朝天，口袋里的零食也撒了一地。旁边几个高年级的同学指着他大声笑。他脸红到了脖子根，趴在地上不敢起来。你应该怎么做？",
     "receiverPerspectiveText": "想象一下，你在比你大、比你厉害的人面前出了个大洋相，觉得极度羞耻和难堪。你最希望朋友怎么帮你？",
     "utterances": [
       {
@@ -2354,20 +3290,46 @@
     "abilityLevel": "advanced",
     "tags": [
       "校园生活",
-      "社交羞耻",
+      "高年级围观",
       "脱离困境"
+    ],
+    "specificEmotionToken": "humiliated",
+    "specificEmotionLabel": "羞耻/无地自容",
+    "emotionOptions": [
+      {
+        "text": "羞耻/无地自容",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "孤单/思乡",
+        "isCorrect": false,
+        "feedbackText": "他身边可能有朋友在，并不是觉得孤单哦。再猜猜他真正的心情吧！"
+      },
+      {
+        "text": "焦虑/焦急",
+        "isCorrect": false,
+        "feedbackText": "他现在不是急得团团转的那种感觉。我们再仔细看看发生了什么？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-38",
-    "title": "秋游时在人群中走散",
+    "name": "小杰",
+    "title": "朋友秋游时在陌生人群中走散",
+    "description": "识别同伴迷路时的极度惊慌与无助，理解脱离集体带来的恐惧感。通过紧紧陪伴、言语安抚并积极寻求大人帮助，助其稳定情绪。",
     "imageUrl": "images/care-scenes/care-scene-38_lost_field_trip.png",
     "difficultyLevel": 2,
     "careType": "action",
     "receiverEmotion": "scared",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "学校秋游时，同学去上了个厕所，出来发现全班都不见了。他一个人站在陌生的地方，吓得满头大汗，快要哭了。你跑回去找到了他，应该怎么表达关心？",
+    "speakerPerspectiveText": "学校秋游时，小杰去上了个厕所，出来发现全班都不见了。他一个人站在陌生的地方，吓得满头大汗，快要哭了。你跑回去找到了他，应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，在一个完全陌生的地方，你发现认识的人全都不见了。你极度恐慌和无助。这时候突然看到了熟悉的朋友，你希望他怎么做？",
     "utterances": [
       {
@@ -2419,19 +3381,45 @@
     "tags": [
       "校园生活",
       "迷路恐慌",
-      "提供安全感"
+      "安全引导"
+    ],
+    "specificEmotionToken": "panicked",
+    "specificEmotionLabel": "惊慌失措",
+    "emotionOptions": [
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "失望/落寞",
+        "isCorrect": false,
+        "feedbackText": "他好像不是因为没得到喜欢的东西而感到失望。我们再换一个试试看？"
+      },
+      {
+        "text": "惊慌失措",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "害羞/不好意思",
+        "isCorrect": false,
+        "feedbackText": "他不是因为害羞而躲起来哦。再看看他是不是遇到了其他的麻烦？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-39",
-    "title": "被同伴诬陷弄坏了道具",
+    "name": "小杰",
+    "title": "朋友被同伴诬陷弄坏了道具",
+    "description": "识别同伴被冤枉时的愤怒与心寒，理解遭遇背叛的心理创伤。通过表达坚定的信任并协助寻找证据，维护友谊中的公平与正义。",
     "imageUrl": "images/care-scenes/care-scene-39_framed_by_peer.png",
     "difficultyLevel": 3,
     "careType": "empathy",
     "receiverEmotion": "angry",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "班级排练话剧时，一个道具坏了。明明不是你朋友弄的，却被另一个同学指着鼻子诬陷是他弄坏的。你朋友气得浑身发抖，攥紧拳头想要打人。你应该怎么关心他？",
+    "speakerPerspectiveText": "班级排练话剧时，一个道具坏了。明明不是你朋友小杰弄的，却被另一个同学指着鼻子说是他弄坏的。你朋友气得浑身发抖，攥紧拳头想要打人。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，你什么都没做却被当众泼了脏水，对方还理直气壮。你愤怒到了极点，准备动手。你希望好朋友怎么做？",
     "utterances": [
       {
@@ -2484,18 +3472,44 @@
       "校园生活",
       "遭遇诬陷",
       "信任与支持"
+    ],
+    "specificEmotionToken": "wronged",
+    "specificEmotionLabel": "委屈/愤怒",
+    "emotionOptions": [
+      {
+        "text": "委屈/愤怒",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "失望/落寞",
+        "isCorrect": false,
+        "feedbackText": "他好像不是因为没得到喜欢的东西而感到失望。我们再换一个试试看？"
+      },
+      {
+        "text": "慌乱/不知所措",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有慌得手忙脚乱哦。再仔细观察一下他的动作？"
+      },
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-40",
-    "title": "父母早上吵了很凶的架",
+    "name": "小华",
+    "title": "同桌因父母早晨激烈吵架伤心",
+    "description": "识别家庭冲突给同伴带来的焦虑与不安全感，理解其内心的忐忑。通过耐心倾听或提议玩游戏来转移注意力，缓解其悲伤情绪。",
     "imageUrl": "images/care-scenes/care-scene-40_parents_fighting.png",
     "difficultyLevel": 3,
     "careType": "action",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "早读课上，你的同桌一言不发地趴在桌子上偷偷掉眼泪。他悄悄告诉你，今天早上出门前，他爸爸妈妈爆发了极其激烈的争吵，还摔了东西。你应该怎么表达关心？",
+    "speakerPerspectiveText": "早读课上，小华一言不发地趴在桌子上偷偷掉眼泪。他悄悄告诉你，今天早上出门前，他爸爸妈妈爆发了极其激烈的争吵，还摔了东西。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你最爱的父母在家里大吵大闹，你觉得特别害怕、无助，甚至觉得是自己的错。到了学校依然很伤心。你希望同桌怎么安慰你？",
     "utterances": [
       {
@@ -2546,14 +3560,39 @@
     "abilityLevel": "advanced",
     "tags": [
       "家庭亲情",
-      "家庭创伤",
-      "安全空间",
-      "倾听"
+      "父母吵架",
+      "安全空间"
+    ],
+    "specificEmotionToken": "helpless",
+    "specificEmotionLabel": "恐惧/无助",
+    "emotionOptions": [
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "崩溃/大哭",
+        "isCorrect": false,
+        "feedbackText": "他还没有到彻底崩溃大哭的程度哦。再找找看有没有更准确的心情标签？"
+      },
+      {
+        "text": "恐惧/无助",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": false,
+        "feedbackText": "这件事其实不是他的错，他也没有觉得不好意思。我们再猜猜看？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-41",
-    "title": "爸爸辛苦做的饭烧焦了",
+    "name": "爸爸",
+    "title": "爸爸辛苦做的饭不小心烧焦了",
+    "description": "识别长辈辛苦付出却未获成功时的尴尬与懊恼，理解其爱心劳动的价值。通过称赞其他菜肴或用幽默化解气氛，表达对家人的包容与爱。",
     "imageUrl": "images/care-scenes/care-scene-41_burnt_food.png",
     "difficultyLevel": 2,
     "careType": "action",
@@ -2613,18 +3652,44 @@
       "家庭亲情",
       "努力白费",
       "肯定付出"
+    ],
+    "specificEmotionToken": "guilty",
+    "specificEmotionLabel": "挫败/自责",
+    "emotionOptions": [
+      {
+        "text": "挫败/自责",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "焦虑/焦急",
+        "isCorrect": false,
+        "feedbackText": "他现在不是急得团团转的那种感觉。我们再仔细看看发生了什么？"
+      },
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": false,
+        "feedbackText": "这件事其实不是他的错，他也没有觉得不好意思。我们再猜猜看？"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-42",
-    "title": "好朋友来家里玩打碎了杯子",
+    "name": "小明",
+    "title": "朋友来家里做客打碎了玻璃杯",
+    "description": "识别朋友做客时不慎犯错的局促与不安，理解其面对社交礼仪时的紧张感。通过“没关系”等贴心宽慰，迅速化解尴尬气氛。",
     "imageUrl": "images/care-scenes/care-scene-42_friend_broke_cup.png",
     "difficultyLevel": 2,
     "careType": "action",
     "receiverEmotion": "scared",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "好朋友来你家做客，喝水时不小心把你家的玻璃杯打碎了。他僵在原地，脸涨得通红，特别害怕你妈妈出来骂他。你应该怎么做？",
+    "speakerPerspectiveText": "小明来你家做客，喝水时不小心把你家的玻璃杯打碎了。他僵在原地，脸涨得通红，特别害怕你妈妈出来骂他。你应该怎么做？",
     "receiverPerspectiveText": "想象一下，你在别人家里做客闯了祸，觉得非常尴尬又害怕大人的责备，恨不得马上逃走。你希望好朋友怎么帮你解围？",
     "utterances": [
       {
@@ -2675,20 +3740,45 @@
     "tags": [
       "同伴交往",
       "做客闯祸",
-      "提供安全感",
-      "担当"
+      "担当与解围"
+    ],
+    "specificEmotionToken": "panicked",
+    "specificEmotionLabel": "惊恐/尴尬",
+    "emotionOptions": [
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      },
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": false,
+        "feedbackText": "他并没有觉得很丢脸或者没面子哦。再看看其他选项，他是不是有别的心事？"
+      },
+      {
+        "text": "惊恐/尴尬",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "孤单/思乡",
+        "isCorrect": false,
+        "feedbackText": "他身边可能有朋友在，并不是觉得孤单哦。再猜猜他真正的心情吧！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-43",
-    "title": "妹妹半夜做噩梦吓哭了",
+    "name": "小雪",
+    "title": "妹妹半夜做噩梦被惊吓大哭",
+    "description": "识别幼童因潜意识恐惧引发的惊恐，理解其无法区分梦境与现实的无助。通过温柔拍抚、开灯并陪伴入睡，给予充足的安全感。",
     "imageUrl": "images/care-scenes/care-scene-43_nightmare_sister.png",
     "difficultyLevel": 1,
     "careType": "action",
     "receiverEmotion": "scared",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "半夜，妹妹因为做了一个可怕的噩梦，突然从床上坐起来大哭，浑身都是汗。作为哥哥/姐姐，你被吵醒了，应该怎么关心她？",
+    "speakerPerspectiveText": "半夜，妹妹小雪因为做了一个可怕的噩梦，突然从床上坐起来大哭，浑身都是汗。作为哥哥/姐姐，你被吵醒了，应该怎么关心她？",
     "receiverPerspectiveText": "想象一下，你在梦里被可怕的怪物追，惊醒后发现周围黑乎乎的，分不清是梦还是现实，特别害怕。你希望家人怎么对你？",
     "utterances": [
       {
@@ -2739,27 +3829,53 @@
     "abilityLevel": "primary",
     "tags": [
       "家庭亲情",
-      "噩梦恐惧",
-      "陪伴"
+      "噩梦惊醒",
+      "陪伴安抚"
+    ],
+    "specificEmotionToken": "terrified",
+    "specificEmotionLabel": "极度惊恐",
+    "emotionOptions": [
+      {
+        "text": "极度疲惫",
+        "isCorrect": false,
+        "feedbackText": "他并不是因为干了很多活而觉得累哦。再看看他的表情，是不是有别的感觉？"
+      },
+      {
+        "text": "极度紧张",
+        "isCorrect": false,
+        "feedbackText": "他并没有像要上台表演那样紧张得发抖哦。再试一次吧！"
+      },
+      {
+        "text": "极度惊恐",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-44",
+    "name": "哥哥",
     "title": "哥哥的房间被亲戚小孩弄乱",
+    "description": "识别家人私人空间被侵犯后的恼火与无奈，理解其物权意识。通过协助整理房间或共同制定规则，表达对家人的理解与支持。",
     "imageUrl": "images/care-scenes/care-scene-44_messy_room_brother.png",
     "difficultyLevel": 3,
     "careType": "empathy",
     "receiverEmotion": "angry",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "过节亲戚来串门，亲戚家的小孩溜进了哥哥/姐姐的房间，把珍藏的漫画和手办翻得乱七八糟。哥哥/姐姐回来看到后，气得攥紧拳头浑身发抖。你应该怎么关心？",
+    "speakerPerspectiveText": "过节亲戚来串门，亲戚家的小孩溜进了哥哥小伟的房间，把珍藏的漫画和手办翻得乱七八糟。哥哥/姐姐回来看到后，气得攥紧拳头浑身发抖。你应该怎么关心？",
     "receiverPerspectiveText": "想象一下，你最私人、最珍贵的领地被别人毫无尊重地破坏了。你火冒三丈。这时候你最希望自家人对你说什么？",
     "utterances": [
       {
         "id": "u1",
         "type": "advice",
         "text": "“算啦，他还是个不懂事的小弟弟嘛，你是大人就让着他点，原谅他吧。”",
-        "effect": "这是经典的道德绑架（Toxic Positivity）！在受害者极度愤怒时劝他大度，等同于背叛，会让他连你也一起恨上。",
+        "effect": "这是经典的道德绑架！在受害者极度愤怒时劝他大度，等同于背叛，会让他连你也一起恨上。",
         "receiverReactionText": "凭什么让我原谅！我的东西被毁了！",
         "receiverReactionEmoji": "😡"
       },
@@ -2803,20 +3919,46 @@
     "abilityLevel": "advanced",
     "tags": [
       "家庭亲情",
-      "边界侵犯",
+      "边界被侵犯",
       "共情愤怒"
+    ],
+    "specificEmotionToken": "furious",
+    "specificEmotionLabel": "暴怒/边界被侵犯",
+    "emotionOptions": [
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "暴怒/边界被侵犯",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "委屈/无助",
+        "isCorrect": false,
+        "feedbackText": "他现在不是觉得委屈哦。仔细看看他心里最强烈的感觉是什么？"
+      },
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": false,
+        "feedbackText": "这件事其实不是他的错，他也没有觉得不好意思。我们再猜猜看？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-45",
-    "title": "周末去游乐园因为暴雨取消",
+    "name": "小明",
+    "title": "朋友因暴雨去不成游乐园",
+    "description": "识别同伴满心期待落空后的沮丧情绪，理解不可抗力带来的无奈。通过提议有趣的室内替代活动，抚平对方的失落感。",
     "imageUrl": "images/care-scenes/care-scene-45_rain_canceled_trip.png",
     "difficultyLevel": 2,
     "careType": "action",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "你的好朋友期待了整整一个月的周末游乐园计划，因为突然的暴雨台风被取消了。他坐在窗前看着大雨，满脸的失落和不甘心。你应该怎么关心他？",
+    "speakerPerspectiveText": "小明期待了整整一个月的周末游乐园计划，因为突然的暴雨台风被取消了。他坐在窗前看着大雨，满脸的失落和不甘心。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，你兴奋了很久、准备了很久的最期待的事情，突然因为不可抗力泡汤了。你像泄了气的皮球一样难过。你希望朋友怎么做？",
     "utterances": [
       {
@@ -2869,11 +4011,37 @@
       "同伴交往",
       "期待落空",
       "替代陪伴"
+    ],
+    "specificEmotionToken": "disappointed",
+    "specificEmotionLabel": "极度失望",
+    "emotionOptions": [
+      {
+        "text": "极度失望",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "害羞/不好意思",
+        "isCorrect": false,
+        "feedbackText": "他不是因为害羞而躲起来哦。再看看他是不是遇到了其他的麻烦？"
+      },
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      },
+      {
+        "text": "惊恐/害怕",
+        "isCorrect": false,
+        "feedbackText": "虽然事情有些麻烦，但他并没有像遇到大怪物那样害怕哦。再试一次！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-46",
-    "title": "爷爷忘记买答应好的零食",
+    "name": "爷爷",
+    "title": "爷爷忘记买答应好的零食很自责",
+    "description": "识别长辈因小疏忽而产生的内疚，理解老年人记忆衰退的无奈。通过主动表示不介意或分享其他食物，表达对长辈的体贴与敬爱。",
     "imageUrl": "images/care-scenes/care-scene-46_grandpa_forgot.png",
     "difficultyLevel": 2,
     "careType": "empathy",
@@ -2932,11 +4100,37 @@
       "家庭亲情",
       "长辈自责",
       "宽容与爱"
+    ],
+    "specificEmotionToken": "guilty",
+    "specificEmotionLabel": "内疚/自责",
+    "emotionOptions": [
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": false,
+        "feedbackText": "他并没有觉得很丢脸或者没面子哦。再看看其他选项，他是不是有别的心事？"
+      },
+      {
+        "text": "内疚/自责",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "崩溃/大哭",
+        "isCorrect": false,
+        "feedbackText": "他还没有到彻底崩溃大哭的程度哦。再找找看有没有更准确的心情标签？"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-47",
-    "title": "妈妈切菜时不小心切到手",
+    "name": "妈妈",
+    "title": "妈妈切菜时不小心切伤了手",
+    "description": "识别家人意外受伤时的疼痛感，理解突发状况带来的家庭紧张氛围。通过主动寻找创可贴或递送纸巾，展现对长辈的体贴与照顾。",
     "imageUrl": "images/care-scenes/care-scene-47_mom_cut_finger.png",
     "difficultyLevel": 1,
     "careType": "action",
@@ -2994,13 +4188,38 @@
     "tags": [
       "家庭亲情",
       "意外受伤",
-      "紧急求助",
-      "实际行动"
+      "紧急求助"
+    ],
+    "specificEmotionToken": "in_pain",
+    "specificEmotionLabel": "疼痛/惊慌",
+    "emotionOptions": [
+      {
+        "text": "慌乱/不知所措",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有慌得手忙脚乱哦。再仔细观察一下他的动作？"
+      },
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      },
+      {
+        "text": "伤心/难过",
+        "isCorrect": false,
+        "feedbackText": "他看起来可能有些不舒服，但其实他不是难过得想哭哦。再仔细想想他遇到什么事了？"
+      },
+      {
+        "text": "疼痛/惊慌",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-48",
-    "title": "爸爸工作文件丢失大发脾气",
+    "name": "爸爸",
+    "title": "爸爸因工作文件丢失大发脾气",
+    "description": "识别长辈遭遇职业压力时的崩溃情绪，理解其发脾气背后的深深挫败感。通过保持安静、递上温水或适时避开冲突，以成熟的方式表达关爱。",
     "imageUrl": "images/care-scenes/care-scene-48_dad_angry_computer.png",
     "difficultyLevel": 3,
     "careType": "action",
@@ -3058,14 +4277,39 @@
     "abilityLevel": "advanced",
     "tags": [
       "家庭亲情",
-      "情绪失控",
-      "留出空间",
-      "非语言安慰"
+      "长辈崩溃",
+      "留出空间"
+    ],
+    "specificEmotionToken": "overwhelmed",
+    "specificEmotionLabel": "烦躁/情绪崩溃",
+    "emotionOptions": [
+      {
+        "text": "烦躁/情绪崩溃",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "孤单/思乡",
+        "isCorrect": false,
+        "feedbackText": "他身边可能有朋友在，并不是觉得孤单哦。再猜猜他真正的心情吧！"
+      },
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "极度紧张",
+        "isCorrect": false,
+        "feedbackText": "他并没有像要上台表演那样紧张得发抖哦。再试一次吧！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-49",
-    "title": "表弟在家族聚餐时打翻果汁",
+    "name": "表弟",
+    "title": "表弟在家族聚餐时打翻果汁出丑",
+    "description": "识别年幼孩子在长辈面前犯错的羞愧感，理解其失误后的巨大心理压力。通过主动递纸巾并协助清理，帮其巧妙化解社交危机。",
     "imageUrl": "images/care-scenes/care-scene-49_spilled_juice_dinner.png",
     "difficultyLevel": 2,
     "careType": "action",
@@ -3122,20 +4366,46 @@
     "abilityLevel": "middle",
     "tags": [
       "家庭亲情",
-      "公众出丑",
+      "家族聚餐出丑",
       "解围与行动"
+    ],
+    "specificEmotionToken": "awkward",
+    "specificEmotionLabel": "尴尬/窘迫",
+    "emotionOptions": [
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      },
+      {
+        "text": "惊恐/害怕",
+        "isCorrect": false,
+        "feedbackText": "虽然事情有些麻烦，但他并没有像遇到大怪物那样害怕哦。再试一次！"
+      },
+      {
+        "text": "孤单/思乡",
+        "isCorrect": false,
+        "feedbackText": "他身边可能有朋友在，并不是觉得孤单哦。再猜猜他真正的心情吧！"
+      },
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-50",
-    "title": "好朋友留宿时想家哭了",
+    "name": "小明",
+    "title": "好朋友留宿时因想家偷偷哭了",
+    "description": "识别同伴在陌生环境中的分离焦虑，理解其对安全感的强烈渴求。通过分享心爱的玩具或温柔的言语陪伴，缓解其思乡之情。",
     "imageUrl": "images/care-scenes/care-scene-50_homesick_sleepover.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "好朋友第一次来你家过夜。晚上关灯后，你听到他在被子里偷偷抽泣。他不好意思地告诉你，他突然很想他的妈妈和自己的床。你应该怎么表达关心？",
+    "speakerPerspectiveText": "小明第一次来你家过夜。晚上关灯后，你听到他在被子里偷偷抽泣。他不好意思地告诉你，他突然很想他的妈妈和自己的床。你应该怎么表达关心？",
     "receiverPerspectiveText": "想象一下，你第一次住在别人家，关灯后突然觉得很不习惯，非常想念家人的温暖。你觉得偷偷哭很丢脸，这时候你希望朋友怎么对你？",
     "utterances": [
       {
@@ -3186,13 +4456,39 @@
     "abilityLevel": "middle",
     "tags": [
       "同伴交往",
-      "思乡难过",
+      "留宿想家",
       "情绪正常化"
+    ],
+    "specificEmotionToken": "homesick",
+    "specificEmotionLabel": "思乡/孤独",
+    "emotionOptions": [
+      {
+        "text": "焦虑/焦急",
+        "isCorrect": false,
+        "feedbackText": "他现在不是急得团团转的那种感觉。我们再仔细看看发生了什么？"
+      },
+      {
+        "text": "思乡/孤独",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "慌乱/不知所措",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有慌得手忙脚乱哦。再仔细观察一下他的动作？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-51",
-    "title": "奶奶弄丢了最珍贵的项链",
+    "name": "奶奶",
+    "title": "奶奶弄丢了最珍贵的旧项链",
+    "description": "识别长辈失去充满回忆之物时的悲恸，理解老年人对旧物的情感珍视。通过耐心的长时间陪同寻找，表达对长辈的深厚情感关怀。",
     "imageUrl": "images/care-scenes/care-scene-51_grandma_lost_necklace.png",
     "difficultyLevel": 2,
     "careType": "action",
@@ -3250,20 +4546,46 @@
     "abilityLevel": "middle",
     "tags": [
       "家庭亲情",
-      "物品丢失",
+      "长辈遗失物品",
       "实际帮助"
+    ],
+    "specificEmotionToken": "distressed",
+    "specificEmotionLabel": "焦急/心疼",
+    "emotionOptions": [
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      },
+      {
+        "text": "慌乱/不知所措",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有慌得手忙脚乱哦。再仔细观察一下他的动作？"
+      },
+      {
+        "text": "焦急/心疼",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "崩溃/大哭",
+        "isCorrect": false,
+        "feedbackText": "他还没有到彻底崩溃大哭的程度哦。再找找看有没有更准确的心情标签？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-52",
-    "title": "牙齿上沾了很大一片菜叶",
+    "name": "小华",
+    "title": "朋友牙齿上沾了大片菜叶",
+    "description": "识别同伴形象受损可能引发的潜在尴尬，理解保护他人隐私的社交艺术。通过私下小声告知或手势暗示，表达细致且体贴的关心。",
     "imageUrl": "images/care-scenes/care-scene-52_spinach_in_teeth.png",
     "difficultyLevel": 3,
     "careType": "action",
     "receiverEmotion": "embarrassed",
     "emotionColorToken": "yellow",
     "emotionColorLabel": "黄区",
-    "speakerPerspectiveText": "午饭后，好朋友在开心地和你说话，你发现他的门牙上沾了一大片绿色的菜叶，非常显眼。如果被别人看到他一定会觉得很丢脸。你应该怎么做？",
+    "speakerPerspectiveText": "午饭后，小华在开心地和你说话，你发现他的门牙上沾了一大片绿色的菜叶，非常显眼。如果被别人看到他一定会觉得很丢脸。你应该怎么做？",
     "receiverPerspectiveText": "想象一下，你顶着牙齿上的大片菜叶在教室里走来走去，大家都看到了却不说，后来你自己在镜子里发现了，觉得尴尬得要命。你希望好朋友当初怎么提醒你？",
     "utterances": [
       {
@@ -3314,13 +4636,38 @@
     "tags": [
       "同伴交往",
       "外貌出丑",
-      "隐私保护",
-      "高情商"
+      "私下提醒"
+    ],
+    "specificEmotionToken": "awkward",
+    "specificEmotionLabel": "尴尬",
+    "emotionOptions": [
+      {
+        "text": "委屈/无助",
+        "isCorrect": false,
+        "feedbackText": "他现在不是觉得委屈哦。仔细看看他心里最强烈的感觉是什么？"
+      },
+      {
+        "text": "暴怒/抓狂",
+        "isCorrect": false,
+        "feedbackText": "他并没有气得要发大脾气或者摔东西哦。再感受一下他真正的心情？"
+      },
+      {
+        "text": "尴尬",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-53",
-    "title": "手工作品被小狗咬坏了",
+    "name": "哥哥",
+    "title": "哥哥的手工作品被小狗咬坏了",
+    "description": "识别同伴创意心血被意外摧毁的崩溃情绪，理解其面对无心之过的无奈。通过主动安慰或协助共同修补，减轻对方的情感伤害。",
     "imageUrl": "images/care-scenes/care-scene-53_dog_ruined_art.png",
     "difficultyLevel": 2,
     "careType": "empathy",
@@ -3380,18 +4727,44 @@
       "家庭亲情",
       "宠物闯祸",
       "共情愤怒"
+    ],
+    "specificEmotionToken": "furious",
+    "specificEmotionLabel": "暴怒/心痛",
+    "emotionOptions": [
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "极度紧张",
+        "isCorrect": false,
+        "feedbackText": "他并没有像要上台表演那样紧张得发抖哦。再试一次吧！"
+      },
+      {
+        "text": "暴怒/心痛",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "极度疲惫",
+        "isCorrect": false,
+        "feedbackText": "他并不是因为干了很多活而觉得累哦。再看看他的表情，是不是有别的感觉？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-54",
-    "title": "同桌极度害怕桌子上的大虫子",
+    "name": "小华",
+    "title": "同桌极度害怕课桌上的大虫子",
+    "description": "识别同伴面对特定恐惧源时的生理性惊恐，理解个体对恐惧感知的差异。通过勇敢地赶走虫子或拉开同伴，提供实际的安全保护。",
     "imageUrl": "images/care-scenes/care-scene-54_scared_of_bug.png",
     "difficultyLevel": 1,
     "careType": "action",
     "receiverEmotion": "scared",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "教室里，同桌发现自己的课桌上趴着一只巨大的黑色甲虫。他天生最怕虫子，吓得尖叫一声跳出座位，靠在墙上浑身发抖不敢过去。你应该怎么做？",
+    "speakerPerspectiveText": "教室里，小华发现自己的课桌上趴着一只巨大的黑色甲虫。他天生最怕虫子，吓得尖叫一声跳出座位，靠在墙上浑身发抖不敢过去。你应该怎么做？",
     "receiverPerspectiveText": "想象一下，你最害怕的东西就放在你的面前，你吓得完全无法思考、浑身僵硬。这时候你最希望身边的人怎么帮你？",
     "utterances": [
       {
@@ -3441,20 +4814,46 @@
     "abilityLevel": "primary",
     "tags": [
       "校园生活",
-      "克服恐惧",
-      "实际帮助"
+      "昆虫恐惧",
+      "实际救援"
+    ],
+    "specificEmotionToken": "terrified",
+    "specificEmotionLabel": "极度惊恐",
+    "emotionOptions": [
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": false,
+        "feedbackText": "他并没有觉得很丢脸或者没面子哦。再看看其他选项，他是不是有别的心事？"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "极度惊恐",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "伤心/难过",
+        "isCorrect": false,
+        "feedbackText": "他看起来可能有些不舒服，但其实他不是难过得想哭哦。再仔细想想他遇到什么事了？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-55",
-    "title": "落选了期待已久的校队",
+    "name": "小明",
+    "title": "朋友落选期待已久的校队",
+    "description": "识别同伴遭遇竞争失败后的失落与自卑，理解其对自我能力的怀疑心理。通过肯定其身上的闪光点并鼓励再次尝试，为其重新注入信心。",
     "imageUrl": "images/care-scenes/care-scene-55_failed_team_tryout.png",
     "difficultyLevel": 3,
     "careType": "empathy",
     "receiverEmotion": "sad",
     "emotionColorToken": "blue",
     "emotionColorLabel": "蓝区",
-    "speakerPerspectiveText": "公告栏前，好朋友在校队选拔的名单里找了三遍，也没有看到自己的名字。他期待并且训练了整整一个月。他垂下肩膀，红着眼眶一言不发。你应该怎么关心他？",
+    "speakerPerspectiveText": "公告栏前，小明在校队选拔的名单里找了三遍，也没有看到自己的名字。他期待并且训练了整整一个月。他垂下肩膀，红着眼眶一言不发。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，你为了一个目标付出了巨大的努力，最后还是失败了。你觉得自己的努力全白费了，非常伤心。你希望好朋友怎么安慰你？",
     "utterances": [
       {
@@ -3504,14 +4903,40 @@
     "ageRange": "13-17",
     "abilityLevel": "advanced",
     "tags": [
-      "同伴交往",
-      "努力落空",
+      "校园生活",
+      "落选校队",
       "肯定价值"
+    ],
+    "specificEmotionToken": "disappointed",
+    "specificEmotionLabel": "挫败/失落",
+    "emotionOptions": [
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": false,
+        "feedbackText": "他并没有觉得很丢脸或者没面子哦。再看看其他选项，他是不是有别的心事？"
+      },
+      {
+        "text": "挫败/失落",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "惊恐/害怕",
+        "isCorrect": false,
+        "feedbackText": "虽然事情有些麻烦，但他并没有像遇到大怪物那样害怕哦。再试一次！"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-56",
+    "name": "爸爸",
     "title": "爸爸在公园不小心滑倒出丑",
+    "description": "识别长辈在公共场合意外失态后的窘迫与痛楚，理解成年人对自尊心的维护需求。通过立马上前搀扶而非嘲笑，展现子女的成熟与懂事。",
     "imageUrl": "images/care-scenes/care-scene-56_dad_slipped.png",
     "difficultyLevel": 2,
     "careType": "action",
@@ -3569,20 +4994,45 @@
     "tags": [
       "家庭亲情",
       "长辈出丑",
-      "化解尴尬",
-      "实际行动"
+      "化解尴尬"
+    ],
+    "specificEmotionToken": "awkward",
+    "specificEmotionLabel": "尴尬/难堪",
+    "emotionOptions": [
+      {
+        "text": "尴尬/难堪",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "得意/自豪",
+        "isCorrect": false,
+        "feedbackText": "这可不是觉得骄傲的时候哦。你觉得他现在遇到什么困难了吗？"
+      },
+      {
+        "text": "惊恐/害怕",
+        "isCorrect": false,
+        "feedbackText": "虽然事情有些麻烦，但他并没有像遇到大怪物那样害怕哦。再试一次！"
+      },
+      {
+        "text": "失望/落寞",
+        "isCorrect": false,
+        "feedbackText": "他好像不是因为没得到喜欢的东西而感到失望。我们再换一个试试看？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-57",
-    "title": "接水时被别人恶意插队",
+    "name": "小明",
+    "title": "朋友接水时被别班同学恶意插队",
+    "description": "识别同伴遭受不公正待遇时的愤怒与无助，理解其面对秩序被破坏的焦虑。通过仗义执言或坚决陪同排队，表达坚定的情感支持。",
     "imageUrl": "images/care-scenes/care-scene-57_cut_in_line_water.png",
     "difficultyLevel": 2,
     "careType": "action",
     "receiverEmotion": "angry",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "下课时，好朋友拿着水杯排了很久的队终于要接水了。突然一个别班的同学强行挤到他前面接水。好朋友气得瞪大了眼睛，紧紧捏着水杯发抖。你应该怎么关心他？",
+    "speakerPerspectiveText": "下课时，小明拿着水杯排了很久的队终于要接水了。突然一个别班的同学强行挤到他前面接水。好朋友气得瞪大了眼睛，紧紧捏着水杯发抖。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，你遵守规则排了半天队，却被不讲理的人强行插队抢了位置。你气得想骂人，你希望好朋友怎么支持你？",
     "utterances": [
       {
@@ -3632,21 +5082,47 @@
     "ageRange": "7-12",
     "abilityLevel": "middle",
     "tags": [
-      "同伴交往",
+      "校园生活",
       "遭遇插队",
       "共同维权"
+    ],
+    "specificEmotionToken": "indignant",
+    "specificEmotionLabel": "愤慨",
+    "emotionOptions": [
+      {
+        "text": "委屈/无助",
+        "isCorrect": false,
+        "feedbackText": "他现在不是觉得委屈哦。仔细看看他心里最强烈的感觉是什么？"
+      },
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      },
+      {
+        "text": "愤慨",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "极度紧张",
+        "isCorrect": false,
+        "feedbackText": "他并没有像要上台表演那样紧张得发抖哦。再试一次吧！"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-58",
-    "title": "走玻璃栈道吓得不敢动",
+    "name": "小明",
+    "title": "朋友走玻璃栈道吓得腿软不敢动",
+    "description": "识别同伴面对恐高情境时的极度焦虑，理解其生理上不受控制的僵直反应。通过牵手陪伴或言语鼓励，帮助对方逐步克服恐惧。",
     "imageUrl": "images/care-scenes/care-scene-58_scared_glass_bridge.png",
     "difficultyLevel": 2,
     "careType": "advice",
     "receiverEmotion": "scared",
     "emotionColorToken": "red",
     "emotionColorLabel": "红区",
-    "speakerPerspectiveText": "周末去爬山，要经过一段透明的玻璃吊桥。好朋友天生恐高，刚走上去两步就吓得腿软，蹲在地上死死抓住栏杆，脸色煞白闭着眼睛。你应该怎么帮助他？",
+    "speakerPerspectiveText": "周末去爬山，要经过一段透明的玻璃吊桥。小明天生恐高，刚走上去两步就吓得腿软，蹲在地上死死抓住栏杆，脸色煞白闭着眼睛。你应该怎么帮助他？",
     "receiverPerspectiveText": "想象一下，你处于万丈深渊的上面，感觉随时会掉下去，极度恐慌浑身无力。这时候你希望同伴怎么帮你脱离险境？",
     "utterances": [
       {
@@ -3697,13 +5173,39 @@
     "abilityLevel": "middle",
     "tags": [
       "同伴交往",
-      "克服恐高",
+      "极度恐高",
       "给予支撑"
+    ],
+    "specificEmotionToken": "terrified",
+    "specificEmotionLabel": "极度恐慌",
+    "emotionOptions": [
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      },
+      {
+        "text": "极度疲惫",
+        "isCorrect": false,
+        "feedbackText": "他并不是因为干了很多活而觉得累哦。再看看他的表情，是不是有别的感觉？"
+      },
+      {
+        "text": "极度恐慌",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "害羞/不好意思",
+        "isCorrect": false,
+        "feedbackText": "他不是因为害羞而躲起来哦。再看看他是不是遇到了其他的麻烦？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-59",
-    "title": "妈妈生病发高烧躺在床上",
+    "name": "妈妈",
+    "title": "妈妈生病发高烧虚弱地躺在床上",
+    "description": "识别家人因身体虚弱产生的不适感，理解其生病时的心理依赖。通过覆盖毛巾、端送温水等实际照顾行为，展现家庭成员间的深深关爱。",
     "imageUrl": "images/care-scenes/care-scene-59_sick_mom_fever.png",
     "difficultyLevel": 1,
     "careType": "action",
@@ -3760,20 +5262,46 @@
     "abilityLevel": "primary",
     "tags": [
       "家庭亲情",
-      "生病照顾",
-      "提供安静"
+      "长辈生病",
+      "提供照顾"
+    ],
+    "specificEmotionToken": "sick",
+    "specificEmotionLabel": "虚弱/难受",
+    "emotionOptions": [
+      {
+        "text": "平静/放松",
+        "isCorrect": false,
+        "feedbackText": "遇到这种事情，他心里其实扑通扑通的，没法平静下来呢。再试一次吧！"
+      },
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": false,
+        "feedbackText": "这件事其实不是他的错，他也没有觉得不好意思。我们再猜猜看？"
+      },
+      {
+        "text": "虚弱/难受",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "崩溃/大哭",
+        "isCorrect": false,
+        "feedbackText": "他还没有到彻底崩溃大哭的程度哦。再找找看有没有更准确的心情标签？"
+      }
     ]
   },
   {
     "sceneCode": "care-scene-60",
-    "title": "同桌穿了不同颜色的两只袜子",
+    "name": "小华",
+    "title": "同桌穿错不同颜色的袜子被笑话",
+    "description": "识别同伴因粗心造成的社交漏洞，理解其可能引发的尴尬预设。通过私下友善提醒或以幽默方式打圆场，巧妙化解对方的窘迫情绪。",
     "imageUrl": "images/care-scenes/care-scene-60_mismatched_socks.png",
     "difficultyLevel": 2,
     "careType": "empathy",
     "receiverEmotion": "embarrassed",
     "emotionColorToken": "yellow",
     "emotionColorLabel": "黄区",
-    "speakerPerspectiveText": "体育课换鞋时，同桌脱下鞋子，大家才发现他今天早上穿错了袜子——一只红色一只蓝色。几个同学指着他的脚笑。同桌赶紧把脚缩回来，羞得脸通红。你应该怎么关心他？",
+    "speakerPerspectiveText": "体育课换鞋时，小华脱下鞋子，大家才发现他今天早上穿错了袜子——一只红色一只蓝色。几个同学指着他的脚笑。同桌赶紧把脚缩回来，羞得脸通红。你应该怎么关心他？",
     "receiverPerspectiveText": "想象一下，你因为早上起晚了出了个很滑稽的洋相被大家发现了，被笑得下不来台。你希望好朋友怎么帮你解围？",
     "utterances": [
       {
@@ -3823,9 +5351,389 @@
     "abilityLevel": "middle",
     "tags": [
       "校园生活",
-      "外貌出丑",
-      "幽默化解",
-      "自我暴露"
+      "穿错袜子",
+      "幽默化解"
+    ],
+    "specificEmotionToken": "awkward",
+    "specificEmotionLabel": "尴尬/窘迫",
+    "emotionOptions": [
+      {
+        "text": "尴尬/窘迫",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      },
+      {
+        "text": "焦虑/焦急",
+        "isCorrect": false,
+        "feedbackText": "他现在不是急得团团转的那种感觉。我们再仔细看看发生了什么？"
+      },
+      {
+        "text": "极度疲惫",
+        "isCorrect": false,
+        "feedbackText": "他并不是因为干了很多活而觉得累哦。再看看他的表情，是不是有别的感觉？"
+      }
+    ]
+  },
+  {
+    "sceneCode": "care-scene-61",
+    "name": "小华",
+    "title": "同桌对突然刺耳的广播声感到痛苦",
+    "description": "识别同伴面对强烈感官刺激时的生理性痛苦与恐惧，理解其感官超载带来的崩溃。通过提供物理遮挡或带离现场，给予最直接的保护与安全感。",
+    "imageUrl": "images/care-scenes/care-scene-61_loud_speaker.png",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "操场上的广播突然发出极其刺耳的电流声。小华对声音非常敏感，他痛苦地捂住耳朵，蹲在地上发抖。你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，突然出现的声音对你来说像针扎一样疼，你觉得世界都要爆炸了，极其害怕。你希望旁边的人怎么帮你？",
+    "utterances": [
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“大家都在操场上，这声音一会儿就停了，你捂着耳朵蹲下太奇怪了，快站起来。”",
+        "effect": "这是对感官超载的严重误解！这种痛苦是真实的生理痛，强迫他表现得“正常”极其残忍。",
+        "receiverReactionText": "(痛苦地缩成一团，根本听不到你在说什么)",
+        "receiverReactionEmoji": "😫"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“这个声音确实好大好难听，吵得人耳朵疼，我知道你现在很难受。”",
+        "effect": "理解他的感受是好的，但在感官崩溃（红区）的当下，他急需的是物理层面的屏蔽，光靠说话不足以帮他脱困。",
+        "receiverReactionText": "我的耳朵好疼...",
+        "receiverReactionEmoji": "😖"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "什么都不问，立刻递给他随身带的隔音耳罩（或帮他紧紧捂住耳朵），挡在他身前带他离开操场。",
+        "effect": "最专业的救援！切断刺激源（物理屏蔽）并带离现场，能最快帮他从红区恢复到安全的绿区。",
+        "receiverReactionText": "谢谢你帮我挡住声音...",
+        "receiverReactionEmoji": "🎧"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u3"
+    ],
+    "receiverOptions": [
+      {
+        "id": "ro1",
+        "text": "同桌马上帮我捂住耳朵，带我走到安静的角落里休息。",
+        "isComforting": true,
+        "reasonText": "在感官超载时，实际的物理保护和安静的环境是我唯一的救命稻草。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌拉着我的手硬要把我拽起来，说大家都看着我呢。",
+        "isComforting": false,
+        "reasonText": "强迫我忍受感官痛苦会让我彻底崩溃，觉得世界充满恶意。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "校园生活",
+      "感官超载",
+      "物理屏蔽"
+    ],
+    "specificEmotionToken": "sensory_overload",
+    "specificEmotionLabel": "感官超载/生理痛苦",
+    "emotionOptions": [
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": false,
+        "feedbackText": "这件事其实不是他的错，他也没有觉得不好意思。我们再猜猜看？"
+      },
+      {
+        "text": "感官超载/生理痛苦",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      },
+      {
+        "text": "极度疲惫",
+        "isCorrect": false,
+        "feedbackText": "他并不是因为干了很多活而觉得累哦。再看看他的表情，是不是有别的感觉？"
+      }
+    ]
+  },
+  {
+    "sceneCode": "care-scene-62",
+    "name": "小杰",
+    "title": "朋友因蓝笔找不到而情绪失控",
+    "description": "识别同伴面对固有秩序被打破时的极度焦虑与愤怒，理解其对可预见性的心理依赖。通过共情接纳并协助寻找替代方案，帮助其重建内心秩序。",
+    "imageUrl": "images/care-scenes/care-scene-62_routine_disrupted.png",
+    "difficultyLevel": 3,
+    "careType": "empathy",
+    "receiverEmotion": "angry",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "小杰每天都必须用那根蓝色的铅笔写字。今天蓝笔找不到了，他急得满脸通红，把铅笔盒摔在地上大喊大叫。你应该怎么关心他？",
+    "receiverPerspectiveText": "想象一下，你心里有一套绝对不能打破的秩序，一旦改变，就觉得天塌下来了，你又气又急。你希望同桌怎么对你？",
+    "utterances": [
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“这有什么好发脾气的，不就是一根笔吗，用红色的或者借别人的一样可以写字啊。”",
+        "effect": "这个建议本身是好的，但在他情绪还在红区时，大脑是听不进去大道理的。我们需要先用共情把他拉回绿区，再给替代建议。",
+        "receiverReactionText": "不一样！我就要那根蓝色的！",
+        "receiverReactionEmoji": "😡"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“我知道那根蓝色的笔对你特别重要，今天突然找不到了，换作谁都会觉得特别着急和生气的。”",
+        "effect": "接纳他的“秩序感被破坏”带来的真实痛苦，不评判他的执着，这能让他的情绪慢慢软化。",
+        "receiverReactionText": "那是我的幸运笔，没有它我写不了字...",
+        "receiverReactionEmoji": "😤"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "“你先深呼吸，我帮你一起在抽屉里找找，如果真的找不到，我这有一根跟它长得很像的蓝笔借给你。”",
+        "effect": "共情接纳之后，陪伴寻找并提供一个视觉上相似的过渡替代方案，帮他重建秩序回到绿区。",
+        "receiverReactionText": "好...你帮我一起找找...",
+        "receiverReactionEmoji": "✏️"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions": [
+      {
+        "id": "ro1",
+        "text": "同桌没有觉得我无理取闹，而是理解我的着急，并帮我一起想办法重建秩序。",
+        "isComforting": true,
+        "reasonText": "当我的固执被理解和包容时，我就有了安全感，愿意尝试接受改变。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌觉得我简直不可理喻，翻了个白眼让我别发神经了。",
+        "isComforting": false,
+        "reasonText": "被否定和贴上“神经病”的标签，会让我的情绪彻底失控。"
+      }
+    ],
+    "recommendedHintCeiling": 3,
+    "ageRange": "7-12",
+    "abilityLevel": "advanced",
+    "tags": [
+      "校园生活",
+      "常规打破",
+      "重建秩序"
+    ],
+    "specificEmotionToken": "dysregulated",
+    "specificEmotionLabel": "失控/秩序焦虑",
+    "emotionOptions": [
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      },
+      {
+        "text": "失控/秩序焦虑",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "失望/落寞",
+        "isCorrect": false,
+        "feedbackText": "他好像不是因为没得到喜欢的东西而感到失望。我们再换一个试试看？"
+      },
+      {
+        "text": "羞愧/丢脸",
+        "isCorrect": false,
+        "feedbackText": "这件事其实不是他的错，他也没有觉得不好意思。我们再猜猜看？"
+      }
+    ]
+  },
+  {
+    "sceneCode": "care-scene-63",
+    "name": "小明",
+    "title": "朋友分享恐龙画册却无人理睬",
+    "description": "识别同伴分享特殊兴趣被忽视时的落寞与孤独，理解其通过独特爱好建立社交连接的渴望。通过主动倾听与好奇提问，赋予对方极大的自我价值感。",
+    "imageUrl": "images/care-scenes/care-scene-63_special_interest.png",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "小明特别喜欢恐龙。下课时他兴奋地拿着恐龙画册想和大家分享，但其他同学都不感兴趣走开了。他看着手里的书，非常失落地站在原地。你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，你把自己最宝贝、最热爱的东西拿出来分享，别人却看都不看就走了，你觉得很受伤。这时候你最希望朋友怎么做？",
+    "utterances": [
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“大家都不喜欢恐龙，你以后别老讲这些了，多聊点大家感兴趣的游戏吧。”",
+        "effect": "要求朋友强行迎合大众，是在扼杀他闪光的独特兴趣，会让他变得更加孤僻。",
+        "receiverReactionText": "可是我只喜欢恐龙...",
+        "receiverReactionEmoji": "😔"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“你这么开心地想和大家分享你最喜欢的恐龙，大家却走开了，这种感觉一定很孤单、很难过。”",
+        "effect": "直接点出他的失落，让他知道自己的分享欲是珍贵的，没被倾听不是他的错。",
+        "receiverReactionText": "嗯，我觉得他们都不喜欢我...",
+        "receiverReactionEmoji": "💧"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "走到他身边，看着他的画册说：“哇，这只是霸王龙吗？你能给我讲讲它的牙齿为什么这么尖吗？”",
+        "effect": "主动参与并对他的“特殊兴趣”展现出好奇心，用专注的倾听赋予他极大的自我价值感！",
+        "receiverReactionText": "(眼睛一亮) 这是因为它要吃肉！我讲给你听！",
+        "receiverReactionEmoji": "🦖"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u3"
+    ],
+    "receiverOptions": [
+      {
+        "id": "ro1",
+        "text": "朋友走过来，很认真地听我讲完恐龙的故事，还夸我知道得很多。",
+        "isComforting": true,
+        "reasonText": "我的热爱被看见、被欣赏，这种专注的陪伴瞬间治愈了我的失落，把我拉回绿区。"
+      },
+      {
+        "id": "ro2",
+        "text": "朋友在旁边说：“真无聊，谁要听这种小孩子的东西。”",
+        "isComforting": false,
+        "reasonText": "对我的爱好冷嘲热讽，让我觉得自己的世界被践踏了。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "同伴交往",
+      "特殊兴趣被无视",
+      "专注倾听"
+    ],
+    "specificEmotionToken": "left_out",
+    "specificEmotionLabel": "被忽视/落寞",
+    "emotionOptions": [
+      {
+        "text": "激动/兴奋",
+        "isCorrect": false,
+        "feedbackText": "他现在的心情并不是激动哦，发生的事情好像不太好，再仔细看看他的表情？"
+      },
+      {
+        "text": "被忽视/落寞",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "惊恐/害怕",
+        "isCorrect": false,
+        "feedbackText": "虽然事情有些麻烦，但他并没有像遇到大怪物那样害怕哦。再试一次！"
+      },
+      {
+        "text": "极度紧张",
+        "isCorrect": false,
+        "feedbackText": "他并没有像要上台表演那样紧张得发抖哦。再试一次吧！"
+      }
+    ]
+  },
+  {
+    "sceneCode": "care-scene-64",
+    "name": "小华",
+    "title": "同桌动作慢被全组人大声催促",
+    "description": "识别同伴在面对群体催促时大脑死机般的恐慌与无助，理解其处理速度受限带来的压力。通过阻挡外界催促并协助拆解任务，提供有力的能力补偿。",
+    "imageUrl": "images/care-scenes/care-scene-64_rushed_by_group.png",
+    "difficultyLevel": 2,
+    "careType": "action",
+    "receiverEmotion": "scared",
+    "emotionColorToken": "red",
+    "emotionColorLabel": "红区",
+    "speakerPerspectiveText": "小组合作做手工时，小华因为动作比较慢，被其他组员大声催促：‘你快点啊！因为你我们组都要垫底了！’小华急得手忙脚乱，满头大汗，快要哭了。你应该怎么做？",
+    "receiverPerspectiveText": "想象一下，你已经很努力在做了，但还是跟不上大家的节奏，被所有人指责拖后腿。你觉得又急又害怕，脑子一片空白。你希望同桌怎么帮你？",
+    "utterances": [
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“你别发呆了，按照他们说的赶紧加快速度做啊！”",
+        "effect": "在别人因为压力而‘大脑死机’（红区）时，继续施加压力和催促，只会让他更加手足无措，彻底陷入瘫痪。",
+        "receiverReactionText": "(手抖得连剪刀都拿不稳了)",
+        "receiverReactionEmoji": "😫"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“大家都这么凶地催你，你现在一定觉得压力好大，特别着急吧。”",
+        "effect": "共情能让他感受到你理解他的委屈，但这并不能帮他解决眼前‘做不完’的实际困境，他依然会面临其他组员的攻击。",
+        "receiverReactionText": "我真的已经尽量快了...",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "挡在他前面说：“大家别催了，越催越慢！小华你慢慢剪这部分，剩下的我来帮你一起做。”",
+        "effect": "极其仗义的‘执行功能补偿’！先帮他阻挡外界压力，再拆解任务并提供实际分担，这能瞬间把他从崩溃的边缘拉回绿区。",
+        "receiverReactionText": "呼...谢谢你帮我，有你帮忙我不慌了。",
+        "receiverReactionEmoji": "🤝"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u3"
+    ],
+    "receiverOptions": [
+      {
+        "id": "ro1",
+        "text": "同桌替我挡住了其他人的催促，并拿走了一部分任务帮我一起做。",
+        "isComforting": true,
+        "reasonText": "在我处理速度跟不上时，有人愿意替我分担并保护我的节奏，这是极大的安全感。"
+      },
+      {
+        "id": "ro2",
+        "text": "同桌也跟着叹气，把我的东西一把抢过去说：‘算了算了，我来做吧，你太慢了。’",
+        "isComforting": false,
+        "reasonText": "虽然帮我做了，但这种嫌弃和剥夺参与感的态度，会让我觉得自己是个彻底的废人。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "校园生活",
+      "处理速度慢",
+      "任务分担"
+    ],
+    "specificEmotionToken": "overwhelmed",
+    "specificEmotionLabel": "大脑死机/崩溃",
+    "emotionOptions": [
+      {
+        "text": "开心/喜悦",
+        "isCorrect": false,
+        "feedbackText": "哎呀，遇到这种事情，他现在可开心不起来哦。我们再看看他是不是遇到麻烦了？"
+      },
+      {
+        "text": "大脑死机/崩溃",
+        "isCorrect": true,
+        "feedbackText": "太棒啦！你非常准确地读懂了他的内心，你是个懂得关心别人的好孩子！"
+      },
+      {
+        "text": "极度疲惫",
+        "isCorrect": false,
+        "feedbackText": "他并不是因为干了很多活而觉得累哦。再看看他的表情，是不是有别的感觉？"
+      },
+      {
+        "text": "慌乱/不知所措",
+        "isCorrect": false,
+        "feedbackText": "他现在并没有慌得手忙脚乱哦。再仔细观察一下他的动作？"
+      }
     ]
   }
 ]
