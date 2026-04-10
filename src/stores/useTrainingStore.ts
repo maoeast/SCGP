@@ -3,10 +3,19 @@ import { defineStore } from 'pinia'
 
 import { useDatabase, type SqlResultSet } from '@/db/useDatabase'
 import router from '@/router'
+import type { EmotionalBaseEmotion, EmotionalCareType } from '@/types/emotional'
 
-type TrainingFlowIndex = 0 | 1 | 2 | 3 | 4 | 5
-type QuestionStepIndex = 1 | 2 | 3 | 4
-type HintLevelPerStep = [number, number, number, number]
+export type TrainingVariant = 'emotion_scene' | 'care_scene'
+export type TrainingPersistenceMode = 'prototype-db' | 'deferred'
+export type TrainingStepType =
+  | 'emotion'
+  | 'reason'
+  | 'need'
+  | 'response'
+  | 'care_emotion'
+  | 'care_utterance'
+  | 'receiver_preference'
+
 type TTSEngine = 'edge' | 'edge-ipc' | 'cosyvoice' | 'webspeech' | null
 type SqlRowValue = string | number | null | Uint8Array
 
@@ -68,6 +77,7 @@ export interface OptionData {
   is_correct: boolean
   is_acceptable: boolean | null
   feedback_text: string | null
+  metadata?: Record<string, unknown>
 }
 
 export interface HintData {
@@ -80,10 +90,10 @@ export interface HintData {
 export interface StepData {
   id: number
   scene_id: number
-  step_index: QuestionStepIndex
+  step_index: number
   question_id: string | null
   question_text: string
-  step_type: 'emotion' | 'reason' | 'need' | 'response'
+  step_type: TrainingStepType
   audio_url: string | null
   options: OptionData[]
   hints: HintData[]
@@ -91,6 +101,8 @@ export interface StepData {
 
 export interface SceneData {
   id: number
+  variant: TrainingVariant
+  persistence_mode: TrainingPersistenceMode
   scene_code: string
   title: string
   description: string | null
@@ -104,12 +116,17 @@ export interface SceneData {
   tags: string[]
   recommended_hint_ceiling: number | null
   created_at: string | null
+  care_type: EmotionalCareType | null
+  receiver_emotion: EmotionalBaseEmotion | null
 }
 
-const INTRO_STEP_INDEX: TrainingFlowIndex = 0
-const RESULT_STEP_INDEX: TrainingFlowIndex = 5
+export interface TrainingSessionPayload {
+  scene: SceneData
+  steps: StepData[]
+}
+
+const INTRO_STEP_INDEX = 0
 const DEFAULT_CHARACTER_NAME = '小朋友'
-const DEFAULT_HINT_LEVELS: HintLevelPerStep = [0, 0, 0, 0]
 const TRANSITION_DURATION_MS = 300
 
 function delay(ms: number): Promise<void> {
@@ -118,8 +135,8 @@ function delay(ms: number): Promise<void> {
   })
 }
 
-function cloneDefaultHintLevels(): HintLevelPerStep {
-  return [...DEFAULT_HINT_LEVELS] as HintLevelPerStep
+function createHintLevels(stepCount: number): number[] {
+  return Array.from({ length: Math.max(stepCount, 0) }, () => 0)
 }
 
 function rowsFromResultSet<T>(resultSets: SqlResultSet[]): T[] {
@@ -211,29 +228,68 @@ function parseTags(value: SqlRowValue): string[] {
   }
 }
 
-function toQuestionStepIndex(value: number): QuestionStepIndex | null {
-  return value >= 1 && value <= 4 ? (value as QuestionStepIndex) : null
+function resolveTrainingStepType(rawValue: SqlRowValue): TrainingStepType {
+  const rawStepType = toStringValue(rawValue)
+
+  switch (rawStepType) {
+    case 'emotion':
+    case 'reason':
+    case 'need':
+    case 'response':
+    case 'care_emotion':
+    case 'care_utterance':
+    case 'receiver_preference':
+      return rawStepType
+    default:
+      return 'reason'
+  }
 }
 
-function toTrainingFlowIndex(value: number): TrainingFlowIndex {
+function isQuestionStepIndex(value: number, questionStepCount: number): boolean {
+  return value >= 1 && value <= questionStepCount
+}
+
+function clampTrainingFlowIndex(value: number, questionStepCount: number): number {
+  const normalizedResultIndex = questionStepCount + 1
   if (value <= INTRO_STEP_INDEX) {
     return INTRO_STEP_INDEX
   }
 
-  if (value >= RESULT_STEP_INDEX) {
-    return RESULT_STEP_INDEX
+  if (value >= normalizedResultIndex) {
+    return normalizedResultIndex
   }
 
-  return value as TrainingFlowIndex
+  return value
+}
+
+function cloneOption(option: OptionData): OptionData {
+  return {
+    ...option,
+    metadata: option.metadata ? { ...option.metadata } : undefined,
+  }
+}
+
+function cloneHint(hint: HintData): HintData {
+  return {
+    ...hint,
+  }
+}
+
+function cloneStep(step: StepData): StepData {
+  return {
+    ...step,
+    options: step.options.map(cloneOption),
+    hints: step.hints.map(cloneHint),
+  }
 }
 
 export const useTrainingStore = defineStore('training', () => {
   const database = useDatabase()
 
-  const currentStepIndex = ref<TrainingFlowIndex>(INTRO_STEP_INDEX)
+  const currentStepIndex = ref<number>(INTRO_STEP_INDEX)
   const scene = ref<SceneData | null>(null)
   const steps = ref<StepData[]>([])
-  const hintLevelPerStep = ref<HintLevelPerStep>(cloneDefaultHintLevels())
+  const hintLevelPerStep = ref<number[]>(createHintLevels(0))
   const answers = ref<Record<number, number>>({})
   const inputLocked = ref(false)
   const isTransitioning = ref(false)
@@ -243,13 +299,15 @@ export const useTrainingStore = defineStore('training', () => {
   const questionResetSeed = ref(0)
   const savedRecordId = ref<number | null>(null)
 
+  const questionStepCount = computed(() => steps.value.length)
+  const resultStepIndex = computed(() => questionStepCount.value + 1)
+
   const currentStepData = computed<StepData | null>(() => {
-    const activeStepIndex = toQuestionStepIndex(currentStepIndex.value)
-    if (!activeStepIndex) {
+    if (!isQuestionStepIndex(currentStepIndex.value, questionStepCount.value)) {
       return null
     }
 
-    return steps.value.find((step) => step.step_index === activeStepIndex) ?? null
+    return steps.value.find((step) => step.step_index === currentStepIndex.value) ?? null
   })
 
   const parsedQuestionText = computed(() => {
@@ -265,6 +323,74 @@ export const useTrainingStore = defineStore('training', () => {
     return hintLevelPerStep.value.reduce((sum, level) => sum + level, 0)
   })
 
+  const isQuestionStepActive = computed(() => {
+    return isQuestionStepIndex(currentStepIndex.value, questionStepCount.value)
+  })
+
+  const supportsRecordPersistence = computed(() => {
+    return scene.value?.persistence_mode === 'prototype-db'
+  })
+
+  const selectedStepOptions = computed(() => {
+    return steps.value
+      .map((step) => {
+        const selectedOptionId = answers.value[step.step_index]
+        const selectedOption = step.options.find((option) => option.id === selectedOptionId) ?? null
+
+        return {
+          step,
+          option: selectedOption,
+        }
+      })
+      .filter((item) => item.option !== null)
+  })
+
+  const selectedCareChoiceType = computed<EmotionalCareType | null>(() => {
+    if (scene.value?.variant !== 'care_scene') {
+      return null
+    }
+
+    const selectedUtterance = selectedStepOptions.value.find((item) => item.step.step_type === 'care_utterance')?.option
+    if (!selectedUtterance?.metadata) {
+      return null
+    }
+
+    const utteranceType = selectedUtterance.metadata.utterance_type
+    return utteranceType === 'empathy' || utteranceType === 'advice' || utteranceType === 'action'
+      ? utteranceType
+      : null
+  })
+
+  const careSessionOutcome = computed<'preferred' | 'acceptable' | 'retry' | null>(() => {
+    if (scene.value?.variant !== 'care_scene') {
+      return null
+    }
+
+    const selectedUtterance = selectedStepOptions.value.find((item) => item.step.step_type === 'care_utterance')?.option
+    if (!selectedUtterance) {
+      return null
+    }
+
+    if (selectedUtterance.is_correct) {
+      return 'preferred'
+    }
+
+    if (selectedUtterance.is_acceptable) {
+      return 'acceptable'
+    }
+
+    return 'retry'
+  })
+
+  const receiverComfortMatched = computed<boolean | null>(() => {
+    if (scene.value?.variant !== 'care_scene') {
+      return null
+    }
+
+    const selectedReceiverOption = selectedStepOptions.value.find((item) => item.step.step_type === 'receiver_preference')?.option
+    return selectedReceiverOption ? selectedReceiverOption.is_correct : null
+  })
+
   watch(currentStepIndex, () => {
     console.log('TODO: Call ttsService.stop() here')
   })
@@ -273,9 +399,9 @@ export const useTrainingStore = defineStore('training', () => {
     questionResetSeed.value += 1
   }
 
-  function resetRuntimeState(nextStepIndex: TrainingFlowIndex = INTRO_STEP_INDEX): void {
-    currentStepIndex.value = nextStepIndex
-    hintLevelPerStep.value = cloneDefaultHintLevels()
+  function resetRuntimeState(nextStepIndex = INTRO_STEP_INDEX, stepCount = questionStepCount.value): void {
+    currentStepIndex.value = clampTrainingFlowIndex(nextStepIndex, stepCount)
+    hintLevelPerStep.value = createHintLevels(stepCount)
     answers.value = {}
     inputLocked.value = false
     isTransitioning.value = false
@@ -300,6 +426,8 @@ export const useTrainingStore = defineStore('training', () => {
   function mapScene(row: SceneRow): SceneData {
     return {
       id: toNumber(row.id),
+      variant: 'emotion_scene',
+      persistence_mode: 'prototype-db',
       scene_code: toStringValue(row.scene_code),
       title: toStringValue(row.title),
       description: toNullableString(row.description),
@@ -313,6 +441,8 @@ export const useTrainingStore = defineStore('training', () => {
       tags: parseTags(row.tags),
       recommended_hint_ceiling: toNullableNumber(row.recommended_hint_ceiling),
       created_at: toNullableString(row.created_at),
+      care_type: null,
+      receiver_emotion: null,
     }
   }
 
@@ -342,20 +472,10 @@ export const useTrainingStore = defineStore('training', () => {
 
   function mapStep(row: StepRow, optionRows: OptionRow[], hintRows: HintRow[]): StepData {
     const stepId = toNumber(row.id)
-    const stepIndex = toQuestionStepIndex(toNumber(row.step_index))
-    if (!stepIndex) {
+    const stepIndex = toNumber(row.step_index)
+    if (!isQuestionStepIndex(stepIndex, Number.MAX_SAFE_INTEGER)) {
       throw new Error(`Invalid step_index detected in prototype database: ${row.step_index}`)
     }
-
-    const rawStepType = toStringValue(row.step_type)
-    const stepType = (
-      rawStepType === 'emotion' ||
-      rawStepType === 'reason' ||
-      rawStepType === 'need' ||
-      rawStepType === 'response'
-    )
-      ? rawStepType
-      : 'reason'
 
     return {
       id: stepId,
@@ -363,7 +483,7 @@ export const useTrainingStore = defineStore('training', () => {
       step_index: stepIndex,
       question_id: toNullableString(row.question_id),
       question_text: toStringValue(row.question_text),
-      step_type: stepType,
+      step_type: resolveTrainingStepType(row.step_type),
       audio_url: toNullableString(row.audio_url),
       options: optionRows
         .filter((option) => toNumber(option.step_id) === stepId)
@@ -382,7 +502,6 @@ export const useTrainingStore = defineStore('training', () => {
     }
 
     await ensurePrototypeDatabaseReady()
-    resetRuntimeState()
 
     const sceneRow = selectRows<SceneRow>(
       `
@@ -411,6 +530,7 @@ export const useTrainingStore = defineStore('training', () => {
     if (!sceneRow) {
       scene.value = null
       steps.value = []
+      resetRuntimeState(INTRO_STEP_INDEX, 0)
       throw new Error(`Scene not found for scene_code: ${normalizedSceneCode}`)
     }
 
@@ -471,14 +591,30 @@ export const useTrainingStore = defineStore('training', () => {
       )
       : []
 
-    scene.value = nextScene
-    steps.value = stepRows
+    const nextSteps = stepRows
       .map((row) => mapStep(row, optionRows, hintRows))
       .sort((left, right) => left.step_index - right.step_index)
+
+    scene.value = nextScene
+    steps.value = nextSteps
+    resetRuntimeState(INTRO_STEP_INDEX, nextSteps.length)
+  }
+
+  function loadSessionPayload(payload: TrainingSessionPayload): void {
+    const nextSteps = payload.steps
+      .map(cloneStep)
+      .sort((left, right) => left.step_index - right.step_index)
+
+    scene.value = {
+      ...payload.scene,
+      tags: [...payload.scene.tags],
+    }
+    steps.value = nextSteps
+    resetRuntimeState(INTRO_STEP_INDEX, nextSteps.length)
   }
 
   async function nextStep(): Promise<void> {
-    if (isTransitioning.value || currentStepIndex.value >= RESULT_STEP_INDEX) {
+    if (isTransitioning.value || currentStepIndex.value >= resultStepIndex.value) {
       return
     }
 
@@ -488,7 +624,7 @@ export const useTrainingStore = defineStore('training', () => {
 
     try {
       await delay(TRANSITION_DURATION_MS)
-      currentStepIndex.value = toTrainingFlowIndex(currentStepIndex.value + 1)
+      currentStepIndex.value = clampTrainingFlowIndex(currentStepIndex.value + 1, questionStepCount.value)
     } finally {
       isTransitioning.value = false
       inputLocked.value = false
@@ -496,26 +632,24 @@ export const useTrainingStore = defineStore('training', () => {
   }
 
   function recordError(stepIndex: number): void {
-    const normalizedStepIndex = toQuestionStepIndex(stepIndex)
-    if (!normalizedStepIndex) {
+    if (!isQuestionStepIndex(stepIndex, questionStepCount.value)) {
       console.warn('recordError ignored an out-of-range step index:', stepIndex)
       return
     }
 
-    const nextLevels = [...hintLevelPerStep.value] as HintLevelPerStep
-    const currentLevel = nextLevels[normalizedStepIndex - 1] ?? 0
-    nextLevels[normalizedStepIndex - 1] = currentLevel + 1
+    const nextLevels = [...hintLevelPerStep.value]
+    const currentLevel = nextLevels[stepIndex - 1] ?? 0
+    nextLevels[stepIndex - 1] = currentLevel + 1
     hintLevelPerStep.value = nextLevels
   }
 
   function recordAnswer(stepIndex: number, optionId: number): void {
-    const normalizedStepIndex = toQuestionStepIndex(stepIndex)
-    if (!normalizedStepIndex) {
+    if (!isQuestionStepIndex(stepIndex, questionStepCount.value)) {
       console.warn('recordAnswer ignored an out-of-range step index:', stepIndex)
       return
     }
 
-    const step = steps.value.find((item) => item.step_index === normalizedStepIndex)
+    const step = steps.value.find((item) => item.step_index === stepIndex)
     if (!step) {
       console.warn('recordAnswer ignored because the step data is not loaded:', stepIndex)
       return
@@ -532,7 +666,7 @@ export const useTrainingStore = defineStore('training', () => {
 
     answers.value = {
       ...answers.value,
-      [normalizedStepIndex]: optionId,
+      [stepIndex]: optionId,
     }
   }
 
@@ -551,6 +685,10 @@ export const useTrainingStore = defineStore('training', () => {
   async function saveRecord(): Promise<number> {
     if (!scene.value) {
       throw new Error('Cannot save training record before a scene is loaded.')
+    }
+
+    if (!supportsRecordPersistence.value) {
+      return 0
     }
 
     if (savedRecordId.value !== null) {
@@ -591,7 +729,7 @@ export const useTrainingStore = defineStore('training', () => {
     const nextQuery = { ...router.currentRoute.value.query }
 
     isExitModalVisible.value = false
-    resetRuntimeState()
+    resetRuntimeState(INTRO_STEP_INDEX, questionStepCount.value)
     void router.push({
       path: resolveSelectorPath(),
       query: nextQuery,
@@ -599,7 +737,7 @@ export const useTrainingStore = defineStore('training', () => {
   }
 
   function forceNext(): void {
-    currentStepIndex.value = toTrainingFlowIndex(currentStepIndex.value + 1)
+    currentStepIndex.value = clampTrainingFlowIndex(currentStepIndex.value + 1, questionStepCount.value)
     inputLocked.value = false
     isTransitioning.value = false
     isExitModalVisible.value = false
@@ -607,17 +745,16 @@ export const useTrainingStore = defineStore('training', () => {
   }
 
   function forceReset(): void {
-    const activeStepIndex = toQuestionStepIndex(currentStepIndex.value)
-    if (!activeStepIndex) {
+    if (!isQuestionStepIndex(currentStepIndex.value, questionStepCount.value)) {
       return
     }
 
-    const nextLevels = [...hintLevelPerStep.value] as HintLevelPerStep
-    nextLevels[activeStepIndex - 1] = 0
+    const nextLevels = [...hintLevelPerStep.value]
+    nextLevels[currentStepIndex.value - 1] = 0
     hintLevelPerStep.value = nextLevels
 
     const nextAnswers = { ...answers.value }
-    delete nextAnswers[activeStepIndex]
+    delete nextAnswers[currentStepIndex.value]
     answers.value = nextAnswers
 
     inputLocked.value = false
@@ -627,7 +764,7 @@ export const useTrainingStore = defineStore('training', () => {
   }
 
   function forceEnd(): void {
-    currentStepIndex.value = RESULT_STEP_INDEX
+    currentStepIndex.value = resultStepIndex.value
     inputLocked.value = false
     isTransitioning.value = false
     isExitModalVisible.value = false
@@ -635,7 +772,8 @@ export const useTrainingStore = defineStore('training', () => {
   }
 
   function restartTraining(): void {
-    resetRuntimeState(1)
+    const firstQuestionStepIndex = questionStepCount.value > 0 ? 1 : INTRO_STEP_INDEX
+    resetRuntimeState(firstQuestionStepIndex, questionStepCount.value)
   }
 
   return {
@@ -650,9 +788,17 @@ export const useTrainingStore = defineStore('training', () => {
     showRewardOverlay,
     availableTTSEngine,
     questionResetSeed,
+    questionStepCount,
+    resultStepIndex,
     currentStepData,
     parsedQuestionText,
+    isQuestionStepActive,
+    supportsRecordPersistence,
+    selectedCareChoiceType,
+    careSessionOutcome,
+    receiverComfortMatched,
     loadScene,
+    loadSessionPayload,
     nextStep,
     recordError,
     recordAnswer,

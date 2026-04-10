@@ -17,6 +17,7 @@
         :class="{
           'is-selected': submittedOptionId === option.id,
           'is-error': submittedOptionId === option.id && feedbackState === 'error',
+          'is-acceptable': submittedOptionId === option.id && feedbackState === 'acceptable',
           'is-success': submittedOptionId === option.id && feedbackState === 'success',
           'is-locked': store.inputLocked && submittedOptionId !== option.id,
         }"
@@ -24,13 +25,22 @@
         @click="submitOption(option.id)"
       >
         <span class="text-option-badge" aria-hidden="true">{{ getOptionLabel(index) }}</span>
-        <span class="text-option-copy">{{ option.content }}</span>
+        <span class="text-option-main">
+          <span class="text-option-head">
+            <span class="text-option-copy">{{ option.content }}</span>
+            <span v-if="getOptionToneLabel(option)" class="text-option-tone">{{ getOptionToneLabel(option) }}</span>
+          </span>
+          <span v-if="getOptionSupportingText(option)" class="text-option-support">
+            {{ getOptionSupportingText(option) }}
+          </span>
+        </span>
         <span
-          v-if="submittedOptionId === option.id && feedbackState === 'success'"
+          v-if="submittedOptionId === option.id && feedbackState !== 'idle'"
           class="text-option-check"
+          :class="{ 'is-acceptable': feedbackState === 'acceptable' }"
           aria-hidden="true"
         >
-          ✓
+          {{ feedbackState === 'acceptable' ? '可' : '✓' }}
         </span>
       </button>
     </div>
@@ -41,7 +51,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 import { useSound } from '@/composables/useSound'
-import { useTrainingStore } from '@/stores/useTrainingStore'
+import { useTrainingStore, type OptionData } from '@/stores/useTrainingStore'
 
 import {
   TRAINING_CORRECT_SFX,
@@ -54,7 +64,7 @@ import {
 const emit = defineEmits<{
   feedback: [payload: {
     text: string
-    tone: 'success' | 'error'
+    tone: 'success' | 'acceptable' | 'error'
     durationMs: number
   }]
 }>()
@@ -63,7 +73,7 @@ const store = useTrainingStore()
 
 const currentStep = computed(() => {
   const step = store.currentStepData
-  if (!step || step.step_type === 'emotion') {
+  if (!step || step.step_type === 'emotion' || step.step_type === 'care_emotion') {
     return null
   }
 
@@ -71,7 +81,7 @@ const currentStep = computed(() => {
 })
 
 const submittedOptionId = ref<number | null>(null)
-const feedbackState = ref<'idle' | 'error' | 'success'>('idle')
+const feedbackState = ref<'idle' | 'error' | 'acceptable' | 'success'>('idle')
 const timers: number[] = []
 
 const correctSound = useSound({
@@ -113,6 +123,34 @@ function getOptionLabel(index: number): string {
   return label
 }
 
+function getOptionToneLabel(option: OptionData): string {
+  const utteranceType = option.metadata?.utterance_type
+  if (utteranceType === 'empathy') {
+    return '共情式'
+  }
+
+  if (utteranceType === 'advice') {
+    return '建议式'
+  }
+
+  if (utteranceType === 'action') {
+    return '行动式'
+  }
+
+  return ''
+}
+
+function getOptionSupportingText(option: OptionData): string {
+  const supportingTextCandidates = [
+    option.metadata?.receiver_reaction_text,
+    option.metadata?.reason_text,
+    option.metadata?.effect,
+  ]
+
+  const supportingText = supportingTextCandidates.find((value) => typeof value === 'string' && value.trim())
+  return typeof supportingText === 'string' ? supportingText.trim() : ''
+}
+
 function submitOption(optionId: number): void {
   if (store.inputLocked || !currentStep.value) {
     return
@@ -138,6 +176,22 @@ function submitOption(optionId: number): void {
     emit('feedback', {
       text: selectedOption.feedback_text?.trim() || '做得很好，我们继续下一题。',
       tone: 'success',
+      durationMs: TRAINING_SUCCESS_FEEDBACK_MS,
+    })
+
+    schedule(() => {
+      store.recordAnswer(Number(store.currentStepIndex), selectedOption.id)
+      void store.nextStep()
+    }, TRAINING_SUCCESS_FEEDBACK_MS)
+
+    return
+  }
+
+  if (selectedOption.is_acceptable) {
+    feedbackState.value = 'acceptable'
+    emit('feedback', {
+      text: selectedOption.feedback_text?.trim() || '这样说也可以，如果再多一点共情，会更贴心。',
+      tone: 'acceptable',
       durationMs: TRAINING_SUCCESS_FEEDBACK_MS,
     })
 
@@ -275,6 +329,15 @@ onBeforeUnmount(() => {
     0 22px 44px rgb(22 163 74 / 20%);
 }
 
+.text-option-card.is-acceptable {
+  border-width: 3px;
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, rgb(146 64 14 / 88%) 0%, rgb(180 83 9 / 72%) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgb(253 230 138 / 24%),
+    0 22px 44px rgb(245 158 11 / 20%);
+}
+
 .text-option-badge {
   width: 58px;
   height: 58px;
@@ -303,6 +366,38 @@ onBeforeUnmount(() => {
   text-wrap: balance;
 }
 
+.text-option-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.text-option-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+
+.text-option-tone {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #78350f;
+  background: rgb(253 230 138 / 0.92);
+}
+
+.text-option-support {
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgb(255 255 255 / 0.72);
+}
+
 .text-option-check {
   position: absolute;
   top: 14px;
@@ -319,9 +414,21 @@ onBeforeUnmount(() => {
   box-shadow: 0 12px 24px rgb(22 163 74 / 30%);
 }
 
+.text-option-check.is-acceptable {
+  color: #78350f;
+  background: linear-gradient(135deg, #fde68a 0%, #f59e0b 100%);
+  box-shadow: 0 12px 24px rgb(245 158 11 / 24%);
+}
+
 .text-option-card.is-success .text-option-badge {
   color: #fff;
   background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+  border-color: transparent;
+}
+
+.text-option-card.is-acceptable .text-option-badge {
+  color: #78350f;
+  background: linear-gradient(135deg, #fde68a 0%, #f59e0b 100%);
   border-color: transparent;
 }
 

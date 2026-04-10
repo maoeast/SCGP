@@ -173,9 +173,9 @@ function replayQuestion(): void {
 }
 
 watch(
-  () => [store.currentStepIndex, store.parsedQuestionText] as const,
-  ([stepIndex, parsedQuestionText]) => {
-    if (stepIndex >= 1 && stepIndex <= 4 && parsedQuestionText.trim()) {
+  () => [store.isQuestionStepActive, store.parsedQuestionText] as const,
+  ([isQuestionStepActive, parsedQuestionText]) => {
+    if (isQuestionStepActive && parsedQuestionText.trim()) {
       void playQuestion()
       return
     }

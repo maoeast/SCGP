@@ -2,7 +2,7 @@
   <section
     class="question-step"
     :class="{
-      'is-text-step': store.currentStepData?.step_type !== 'emotion',
+      'is-text-step': store.currentStepData?.step_type !== 'emotion' && store.currentStepData?.step_type !== 'care_emotion',
     }"
   >
     <div class="question-step-shell">
@@ -13,6 +13,7 @@
           class="feedback-toast"
           :class="{
             'is-success': activeToast.tone === 'success',
+            'is-acceptable': activeToast.tone === 'acceptable',
             'is-error': activeToast.tone === 'error',
           }"
           role="status"
@@ -20,7 +21,7 @@
         >
           <div class="feedback-toast-avatar" aria-hidden="true">
             <svg
-              v-if="activeToast.tone === 'success'"
+              v-if="activeToast.tone !== 'error'"
               class="feedback-toast-icon"
               viewBox="0 0 24 24"
               fill="none"
@@ -51,7 +52,7 @@
           </div>
           <div class="feedback-toast-copy">
             <strong class="feedback-toast-title">
-              {{ activeToast.tone === 'success' ? '太棒了！' : '再试一次' }}
+              {{ resolveToastTitle(activeToast.tone) }}
             </strong>
             <span class="feedback-toast-body">{{ activeToast.text }}</span>
           </div>
@@ -60,7 +61,7 @@
 
       <QuestionPresenter />
       <OptionBoard
-        v-if="store.currentStepData?.step_type === 'emotion'"
+        v-if="store.currentStepData?.step_type === 'emotion' || store.currentStepData?.step_type === 'care_emotion'"
         @feedback="handleFeedback"
       />
       <TextStepBoard
@@ -83,18 +84,30 @@ import TextStepBoard from './TextStepBoard.vue'
 interface FeedbackToastPayload {
   id: number
   text: string
-  tone: 'success' | 'error'
+  tone: 'success' | 'acceptable' | 'error'
 }
 
 interface FeedbackEventPayload {
   text: string
-  tone: 'success' | 'error'
+  tone: 'success' | 'acceptable' | 'error'
   durationMs: number
 }
 
 const store = useTrainingStore()
 const activeToast = ref<FeedbackToastPayload | null>(null)
 let toastSeed = 0
+
+function resolveToastTitle(tone: FeedbackToastPayload['tone']): string {
+  if (tone === 'success') {
+    return '太棒了！'
+  }
+
+  if (tone === 'acceptable') {
+    return '这样也可以'
+  }
+
+  return '再试一次'
+}
 
 function hideToast(): void {
   activeToast.value = null
@@ -173,6 +186,14 @@ onBeforeUnmount(() => {
     0 10px 25px rgb(34 197 94 / 12%);
 }
 
+.feedback-toast.is-acceptable {
+  color: #92400e;
+  background: #fff7e8;
+  box-shadow:
+    inset 0 0 0 1px rgb(245 158 11 / 18%),
+    0 10px 25px rgb(245 158 11 / 12%);
+}
+
 .feedback-toast.is-error {
   color: #9a3412;
   background: #fff3e0;
@@ -195,6 +216,10 @@ onBeforeUnmount(() => {
 
 .feedback-toast.is-success .feedback-toast-avatar {
   background: linear-gradient(135deg, #86efac 0%, #34d399 100%);
+}
+
+.feedback-toast.is-acceptable .feedback-toast-avatar {
+  background: linear-gradient(135deg, #fde68a 0%, #f59e0b 100%);
 }
 
 .feedback-toast.is-error .feedback-toast-avatar {
@@ -224,6 +249,10 @@ onBeforeUnmount(() => {
 
 .feedback-toast.is-success .feedback-toast-title {
   color: #166534;
+}
+
+.feedback-toast.is-acceptable .feedback-toast-title {
+  color: #b45309;
 }
 
 .feedback-toast.is-error .feedback-toast-title {

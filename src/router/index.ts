@@ -41,6 +41,7 @@ const EmotionalMenu = () => import('@/views/emotional/Menu.vue')
 const EmotionalSceneSelector = () => import('@/views/emotional/SceneSelector.vue')
 const EmotionSceneTraining = () => import('@/views/emotional/EmotionSceneTraining.vue')
 const CareExpressionTraining = () => import('@/views/emotional/CareExpressionTraining.vue')
+const CareExpressionImmersiveTraining = () => import('@/views/emotional/CareExpressionImmersiveTraining.vue')
 const EmotionalSessionSummary = () => import('@/views/emotional/SessionSummary.vue')
 const EmotionalGameRecordDetail = () => import('@/views/emotional/GameRecordDetail.vue')
 const EmotionalReport = () => import('@/views/emotional/Report.vue')
@@ -247,6 +248,17 @@ const router = createRouter({
             title: '表达关心训练',
             hideInMenu: true,
             roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/care-expression/immersive',
+          name: 'CareExpressionImmersiveTraining',
+          component: CareExpressionImmersiveTraining,
+          meta: {
+            title: '表达关心训练（沉浸式预览）',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
           }
         },
         {

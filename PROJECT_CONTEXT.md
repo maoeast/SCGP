@@ -1148,3 +1148,53 @@
   - Step 1 页面结构仍处于用户截图驱动的 live preview 微调阶段，尚未形成最终视觉验收结论
   - 后续 Step 1 卡片布局继续调整时，不应再把 Step 2~4 文本题重新并回同一选项板链路；当前分离是为防止“题干还在但文本选项消失”的回归
   - `care_scene` 仍未接入上述 `immersiveShell + Phase 6` 新链路
+
+## 35. 2026-04-10 Care-Scene Immersive First Preview Slice
+
+- `care_scene` 当前已经**不再是“只有文档、尚未开始代码实施”**：
+  - 当前仍保留旧默认入口：
+    - `src/views/emotional/CareExpressionTraining.vue`
+    - `src/components/emotional/engine/EmotionalInteractionEngine.vue`
+  - 但当前仓库中已新增一条**非默认沉浸式预览链**：
+    - `src/views/emotional/CareExpressionImmersiveTraining.vue`
+    - `src/features/emotional/immersive/compileCareSceneImmersive.ts`
+    - `/emotional/care-expression/immersive`
+- 当前 `useTrainingStore` 已从 `emotion_scene` 固定 4 步假设扩展为：
+  - 按步骤数组驱动训练流程
+  - 动态计算结果页索引
+  - 可承载 `care_scene` 的 3 步流程
+- 当前 `care_scene` 预览链已能编译出：
+  - Step 1 感受判断
+  - Step 2 关心表达选择
+  - Step 3 接收者视角判断
+  - Result 结算页
+- 当前 `care_scene` 重要语义边界已在新链中保留：
+  - `preferred`
+  - `acceptable`
+  - `retry`
+- 当前入口边界已明确：
+  - 旧默认入口仍保留，**不能**误写成 `care_scene` 已切换到沉浸式主链
+  - `src/views/emotional/SceneSelector.vue` 已新增 “沉浸式预览” 开关
+  - 开关打开时，`care-expression/select` 点击卡片会进入 `/emotional/care-expression/immersive`
+  - 开关关闭时，仍进入旧 `care_scene` 训练页
+- 当前记录边界：
+  - `care_scene` 预览链的结果页只做总结展示
+  - 正式训练记录尚未接入当前产品主线 persistence
+  - 因此当前只能描述为“第一段预览链已落地”，不能描述为“完整交付”
+
+## 36. 2026-04-10 Electron Dev Startup Stabilization Boundary
+
+- 当前开发联调链已新增专用启动脚本：
+  - `scripts/electron-dev-start.js`
+- 当前 `package.json` 中：
+  - `electron:dev` 已从并行 `concurrently + wait-on` 改为顺序启动器
+- 当前开发环境主进程已新增两条稳定性边界：
+  - `electron/main.mjs` 会在开发环境主动等待 dev server 可访问后再 `loadURL`
+  - `electron/main.mjs` 已将 `console.log / warn / error` 包装为安全输出，避免资源协议等高频日志因 `EPIPE` 直接打崩主进程
+- 当前重要现实边界：
+  - 上述修复已落地到代码
+  - 但用户还未在修复后完成一次新的 Electron live rerun 验证
+  - 因此当前只能描述为“联调稳定性修复已提交，待运行时复验”，不能写成“白屏问题已完全关闭”
+- 当前独立已知问题：
+  - 本地 `msedge-tts` 依赖仍缺失
+  - 这会让 TTS IPC 功能不可用，但当前不应与首页白屏根因混为一谈

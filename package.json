@@ -24,7 +24,7 @@
     "lint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
     "electron": "electron .",
-    "electron:dev": "concurrently \"npm run dev\" \"wait-on --timeout 30000 https://localhost:5173 && electron .\"",
+    "electron:dev": "node scripts/electron-dev-start.js",
     "build:electron": "npm run build:web && electron-builder",
     "build:web": "cross-env ELECTRON=true vite build",
     "build:electron:win": "npm run build:web && electron-builder --win",

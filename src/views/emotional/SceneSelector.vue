@@ -29,6 +29,19 @@
         </div>
 
         <div class="toolbar-actions scgp-content-toolbar__group">
+          <div v-if="isCareSceneSelector" class="preview-toggle">
+            <div class="preview-toggle-copy">
+              <strong>沉浸式预览</strong>
+              <span>{{ immersivePreviewDescription }}</span>
+            </div>
+            <el-switch
+              :model-value="immersivePreviewMode"
+              inline-prompt
+              active-text="开"
+              inactive-text="关"
+              @change="setImmersivePreviewMode"
+            />
+          </div>
           <el-button :icon="RefreshRight" plain @click="loadScenes">刷新</el-button>
           <el-button type="primary" plain @click="goToResourceCenter">前往资源中心</el-button>
         </div>
@@ -288,7 +301,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router'
 import { RefreshRight } from '@element-plus/icons-vue'
 import { StudentAPI } from '@/database/api'
 import { ResourceAPI } from '@/database/resource-api'
@@ -381,6 +394,7 @@ const selectedThemes = ref<string[]>([])
 const selectedReceiverEmotions = ref<EmotionalBaseEmotion[]>([])
 const selectedCareTypes = ref<EmotionalCareType[]>([])
 const showAdvancedFilters = ref(false)
+const immersivePreviewMode = ref(false)
 
 const inheritedQuery = computed(() => ({ ...route.query }))
 const studentId = computed(() => Number(Array.isArray(route.query.studentId) ? route.query.studentId[0] : route.query.studentId || 0))
@@ -395,7 +409,11 @@ const resourceType = computed<'emotion_scene' | 'care_scene'>(() => (
   isEmotionSceneSelector.value ? 'emotion_scene' : 'care_scene'
 ))
 const trainingPath = computed(() => (
-  isEmotionSceneSelector.value ? '/emotional/emotion-scene' : '/emotional/care-expression'
+  isEmotionSceneSelector.value
+    ? '/emotional/emotion-scene'
+    : immersivePreviewMode.value
+      ? '/emotional/care-expression/immersive'
+      : '/emotional/care-expression'
 ))
 const pageTitle = computed(() => (
   isEmotionSceneSelector.value ? '选择情绪场景' : '选择关心情境'
@@ -404,6 +422,11 @@ const pageSubtitle = computed(() => (
   isEmotionSceneSelector.value
     ? '老师先选择一个具体生活场景，再带学生进入情绪识别与推理训练。'
     : '老师先选择一个需要表达关心的情境，再带学生进入双视角练习。'
+))
+const immersivePreviewDescription = computed(() => (
+  immersivePreviewMode.value
+    ? '当前点卡片会进入新沉浸式链路'
+    : '默认仍进入旧训练链路'
 ))
 const defaultDescription = computed(() => (
   isEmotionSceneSelector.value ? '点击卡片开始情绪与场景训练。' : '点击卡片开始表达关心训练。'
@@ -963,6 +986,35 @@ function launchScene(resourceId: number) {
   })
 }
 
+function resolveImmersivePreviewQueryFlag(): boolean {
+  if (!isCareSceneSelector.value) {
+    return false
+  }
+
+  const rawValue = Array.isArray(route.query.immersivePreview)
+    ? route.query.immersivePreview[0]
+    : route.query.immersivePreview
+
+  return rawValue === '1'
+}
+
+async function setImmersivePreviewMode(nextValue: string | number | boolean): Promise<void> {
+  const normalized = nextValue === true || nextValue === 'true' || nextValue === '1' || nextValue === 1
+  immersivePreviewMode.value = normalized && isCareSceneSelector.value
+
+  const nextQuery: LocationQueryRaw = { ...route.query }
+  if (immersivePreviewMode.value) {
+    nextQuery.immersivePreview = '1'
+  } else {
+    delete nextQuery.immersivePreview
+  }
+
+  await router.replace({
+    path: route.path,
+    query: nextQuery,
+  })
+}
+
 function clearFilters() {
   selectedAgeRanges.value = []
   selectedDomains.value = []
@@ -1035,6 +1087,7 @@ function goToResourceCenter() {
 }
 
 onMounted(() => {
+  immersivePreviewMode.value = resolveImmersivePreviewQueryFlag()
   loadScenes()
 })
 
@@ -1046,9 +1099,17 @@ watch(
     }
 
     showAdvancedFilters.value = false
+    immersivePreviewMode.value = resolveImmersivePreviewQueryFlag()
     clearFilters()
     loadScenes()
   }
+)
+
+watch(
+  () => [route.name, route.query.immersivePreview] as const,
+  () => {
+    immersivePreviewMode.value = resolveImmersivePreviewQueryFlag()
+  },
 )
 </script>
 
@@ -1131,6 +1192,34 @@ watch(
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.preview-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid #e6ecf5;
+}
+
+.preview-toggle-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.preview-toggle-copy strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.preview-toggle-copy span {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
 }
 
 .filter-chip-row {

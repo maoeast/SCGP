@@ -24,8 +24,12 @@
           <strong>{{ store.scene?.title || '当前训练场景' }}</strong>
         </div>
         <div class="meta-card">
-          <span class="meta-label">提示次数</span>
-          <strong>{{ totalHintCount }} 次</strong>
+          <span class="meta-label">{{ secondaryMetaLabel }}</span>
+          <strong>{{ secondaryMetaValue }}</strong>
+        </div>
+        <div v-if="isCareScene" class="meta-card">
+          <span class="meta-label">站在对方这边</span>
+          <strong>{{ receiverPerspectiveText }}</strong>
         </div>
         <div class="meta-card" :class="saveStateClass">
           <span class="meta-label">记录状态</span>
@@ -54,14 +58,34 @@ import { useTrainingStore } from '@/stores/useTrainingStore'
 
 const store = useTrainingStore()
 
-const saveState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
+const saveState = ref<'idle' | 'saving' | 'saved' | 'skipped' | 'error'>('idle')
 const saveError = ref('')
 
 const starSlots = [1, 2, 3] as const
+const CARE_TYPE_LABELS: Record<string, string> = {
+  empathy: '共情式',
+  advice: '建议式',
+  action: '行动式',
+}
 
 const earnedStars = computed(() => store.calculateStars())
 const totalHintCount = computed(() => store.hintLevelPerStep.reduce((sum, level) => sum + level, 0))
+const isCareScene = computed(() => store.scene?.variant === 'care_scene')
 const summaryText = computed(() => {
+  if (isCareScene.value) {
+    if (store.careSessionOutcome === 'preferred') {
+      return store.receiverComfortMatched === false
+        ? '你已经说出了很温柔的话。下次再多站在对方这边想一想，会更完整。'
+        : '你已经很会用温柔的话接住别人的感受了，真替对方开心。'
+    }
+
+    if (store.careSessionOutcome === 'acceptable') {
+      return '你已经找到可以接受的说法了。下次如果先更轻一点、更贴近对方感受，会更贴心。'
+    }
+
+    return '你已经开始练习站在别人那边想了。休息一下，下次我们再试着说得更温柔一点。'
+  }
+
   if (earnedStars.value === 3) {
     return '你真的很用心哦，顺利通过了所有的考验，真为你骄傲！'
   }
@@ -78,6 +102,10 @@ const saveStatusText = computed(() => {
     return '正在写入训练记录...'
   }
 
+  if (saveState.value === 'skipped') {
+    return '待接入正式记录'
+  }
+
   if (saveState.value === 'error') {
     return saveError.value || '训练记录保存失败'
   }
@@ -92,12 +120,46 @@ const saveStatusText = computed(() => {
 const saveStateClass = computed(() => {
   return {
     'is-saving': saveState.value === 'saving',
+    'is-skipped': saveState.value === 'skipped',
     'is-error': saveState.value === 'error',
     'is-saved': saveState.value === 'saved',
   }
 })
 
+const secondaryMetaLabel = computed(() => {
+  return isCareScene.value ? '本次关心方式' : '提示次数'
+})
+
+const secondaryMetaValue = computed(() => {
+  if (isCareScene.value) {
+    return store.selectedCareChoiceType ? CARE_TYPE_LABELS[store.selectedCareChoiceType] || '已完成选择' : '等待完成'
+  }
+
+  return `${totalHintCount.value} 次`
+})
+
+const receiverPerspectiveText = computed(() => {
+  if (!isCareScene.value) {
+    return ''
+  }
+
+  if (store.receiverComfortMatched === true) {
+    return '接住了对方'
+  }
+
+  if (store.receiverComfortMatched === false) {
+    return '还可以再想想'
+  }
+
+  return '等待完成'
+})
+
 async function persistRecord(): Promise<void> {
+  if (!store.supportsRecordPersistence) {
+    saveState.value = 'skipped'
+    return
+  }
+
   saveState.value = 'saving'
   saveError.value = ''
 
@@ -193,7 +255,7 @@ onMounted(() => {
 
 .result-meta {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
 }
 
@@ -216,6 +278,10 @@ onMounted(() => {
 
 .meta-card.is-saved {
   background: rgb(134 239 172 / 0.28);
+}
+
+.meta-card.is-skipped {
+  background: rgb(254 240 138 / 0.26);
 }
 
 .meta-card.is-error {

@@ -14,6 +14,14 @@
         <p class="subtitle">围绕“我怎么说”和“别人听起来怎么样”，练习共情、建议和行动支持。</p>
       </div>
       <div class="header-right">
+        <el-button
+          type="primary"
+          plain
+          :disabled="!resource"
+          @click="goToImmersivePreview"
+        >
+          预览沉浸式版
+        </el-button>
         <el-button plain @click="handleExit">结束训练</el-button>
       </div>
     </div>
@@ -44,12 +52,15 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
 import EmotionalInteractionEngine from '@/components/emotional/engine/EmotionalInteractionEngine.vue'
 import { compileCareScene } from '@/features/emotional/adapters'
 import { useEmotionalTrainingShell } from '@/features/emotional/runtime/useEmotionalTrainingShell'
 import { normalizeCareSceneEditorModel } from '@/views/resource-center/editors/emotional-resource-contract'
 
 const selectorPath = '/emotional/care-expression/select'
+const router = useRouter()
 
 const {
   introActionLabel,
@@ -68,6 +79,21 @@ const {
   normalizeResource: normalizeCareSceneEditorModel,
   compileSession: compileCareScene,
 })
+
+function goToImmersivePreview(): void {
+  if (!resource.value) {
+    return
+  }
+
+  void router.push({
+    path: '/emotional/care-expression/immersive',
+    query: {
+      ...inheritedQuery.value,
+      resourceId: String(resource.value.id),
+      sceneCode: resource.value.metadata.sceneCode || '',
+    },
+  })
+}
 </script>
 
 <style scoped>

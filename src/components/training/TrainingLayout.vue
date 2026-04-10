@@ -10,7 +10,7 @@
               class="progress-dot"
               :class="{
                 'is-active': store.currentStepIndex === step,
-                'is-complete': store.currentStepIndex > step || store.currentStepIndex === 5,
+                'is-complete': store.currentStepIndex > step || store.currentStepIndex === store.resultStepIndex,
               }"
               :aria-label="`Step ${step}`"
               role="listitem"
@@ -53,14 +53,16 @@ import { useTrainingStore } from '@/stores/useTrainingStore'
 import { resolvePresetResourceUrl } from '@/utils/preset-resource'
 
 const store = useTrainingStore()
-const progressSteps = [1, 2, 3, 4] as const
+const progressSteps = computed(() => {
+  return Array.from({ length: store.questionStepCount }, (_, index) => index + 1)
+})
 
 const sceneTitle = computed(() => {
   return store.scene?.title?.trim() || '情绪场景训练'
 })
 
 function handleExit(): void {
-  if (store.currentStepIndex === 5) {
+  if (store.currentStepIndex === store.resultStepIndex) {
     store.exitTraining()
     return
   }

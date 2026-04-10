@@ -2,7 +2,7 @@
   <section class="intro-step">
     <div class="intro-topbar">
       <div class="name-badge">
-        <span class="name-badge-label">场景主角</span>
+        <span class="name-badge-label">{{ nameBadgeLabel }}</span>
         <strong>{{ characterName }}</strong>
       </div>
     </div>
@@ -42,8 +42,18 @@ const characterName = computed(() => {
   return store.scene?.character_name?.trim() || '小朋友'
 })
 
+const nameBadgeLabel = computed(() => {
+  return store.scene?.variant === 'care_scene' ? '需要被关心的人' : '场景主角'
+})
+
 const sceneDescription = computed(() => {
-  return store.scene?.description?.trim() || '请认真观察人物、表情和周围线索，准备进入下一步。'
+  if (store.scene?.description?.trim()) {
+    return store.scene.description.trim()
+  }
+
+  return store.scene?.variant === 'care_scene'
+    ? '请认真看看对方发生了什么，再想一想怎样说会更让TA舒服。'
+    : '请认真观察人物、表情和周围线索，准备进入下一步。'
 })
 </script>
 

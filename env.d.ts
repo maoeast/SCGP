@@ -86,6 +86,16 @@ declare global {
         createdTime?: string
       }>
 
+      // TTS 语音合成
+      ttsSynthesize: (
+        text: string,
+        options?: { voice?: string; rate?: string; pitch?: string }
+      ) => Promise<{
+        success: boolean
+        audioBase64?: string
+        error?: string
+      }>
+
       // 通用 IPC / 更新能力
       invoke: (channel: string, ...args: any[]) => Promise<any>
       on: (channel: string, callback: (...args: any[]) => void) => void

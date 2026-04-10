@@ -4,12 +4,17 @@ import { promises as fs } from 'fs'
 import fsSync from 'fs'  // 添加同步 fs 模块
 import crypto from 'crypto'
 import os from 'os'
+import http from 'http'
+import https from 'https'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
 // 在 ES 模块中获取 __dirname 和 __filename
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+const rawConsoleLog = console.log.bind(console)
+const rawConsoleWarn = console.warn.bind(console)
+const rawConsoleError = console.error.bind(console)
 
 // ========== 软件更新功能 ==========
 // 延迟加载 electron-updater
@@ -48,11 +53,62 @@ async function loadTTSHandlers() {
 
 // 更可靠的开发环境检测：通过 app.isPackaged 或命令行参数判断
 const isDev = !app.isPackaged || process.env.NODE_ENV === 'development'
+const devServerUrl = process.env.SCGP_DEV_SERVER_URL
+  || (
+    fsSync.existsSync(path.join(__dirname, '../dev-cert.pem'))
+      && fsSync.existsSync(path.join(__dirname, '../dev-key.pem'))
+      ? 'https://localhost:5173'
+      : 'http://localhost:5173'
+  )
 if (isDev) {
   console.log('Electron 运行模式: 开发模式')
   // 开发环境：忽略自签名证书错误（用于 HTTPS 开发服务器）
   app.commandLine.appendSwitch('ignore-certificate-errors')
   app.commandLine.appendSwitch('allow-insecure-localhost', 'true')
+}
+
+function probeDevServer(urlString) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(urlString)
+    const client = url.protocol === 'https:' ? https : http
+    const request = client.request({
+      hostname: url.hostname,
+      port: url.port,
+      path: '/',
+      method: 'GET',
+      rejectUnauthorized: false,
+    }, (response) => {
+      response.resume()
+      const statusCode = response.statusCode ?? 0
+      if (statusCode > 0 && statusCode < 500) {
+        resolve()
+        return
+      }
+
+      reject(new Error(`Unexpected status code: ${statusCode}`))
+    })
+
+    request.on('error', reject)
+    request.setTimeout(3000, () => {
+      request.destroy(new Error('Timed out while probing dev server'))
+    })
+    request.end()
+  })
+}
+
+async function waitForDevServer(urlString, timeoutMs = 60000) {
+  const startedAt = Date.now()
+
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      await probeDevServer(urlString)
+      return
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 800))
+    }
+  }
+
+  throw new Error(`等待开发服务器超时: ${urlString}`)
 }
 
 /**
@@ -62,23 +118,37 @@ if (isDev) {
  */
 function safeLog(...args) {
   try {
-    console.log(...args)
+    rawConsoleLog(...args)
   } catch (e) {
     // 忽略 EPIPE 错误，静默失败
     if (e.code !== 'EPIPE') {
       // 非 EPIPE 错误尝试写入 stderr
-      try { console.error('safeLog error:', e.message) } catch {}
+      try { rawConsoleError('safeLog error:', e.message) } catch {}
+    }
+  }
+}
+
+function safeWarn(...args) {
+  try {
+    rawConsoleWarn(...args)
+  } catch (e) {
+    if (e.code !== 'EPIPE') {
+      try { rawConsoleError('safeWarn error:', e.message) } catch {}
     }
   }
 }
 
 function safeError(...args) {
   try {
-    console.error(...args)
+    rawConsoleError(...args)
   } catch (e) {
     // 完全静默失败
   }
 }
+
+console.log = safeLog
+console.warn = safeWarn
+console.error = safeError
 
 // ========== Phase 2.1: resource:// 协议注册 ==========
 
@@ -247,19 +317,26 @@ function createWindow() {
     show: false // 先不显示，等加载完成后再显示
   })
 
-  // 加载应用
-  if (isDev) {
-    // 开发环境：加载 Vite 开发服务器（使用 HTTPS）
-    console.log('[Electron] 正在加载 https://localhost:5173')
-    mainWindow.loadURL('https://localhost:5173').catch(err => {
-      console.error('[Electron] 加载失败:', err.message)
-    })
-    // 打开开发者工具以便调试
-    mainWindow.webContents.openDevTools()
-  } else {
-    // 生产环境：加载打包后的 dist/index.html
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
+  async function loadRendererApp() {
+    if (isDev) {
+      try {
+        safeLog(`[Electron] 等待开发服务器: ${devServerUrl}`)
+        await waitForDevServer(devServerUrl)
+        safeLog(`[Electron] 正在加载 ${devServerUrl}`)
+        await mainWindow.loadURL(devServerUrl)
+      } catch (error) {
+        safeError('[Electron] 加载开发页面失败:', error instanceof Error ? error.message : String(error))
+      }
+
+      // 打开开发者工具以便调试
+      mainWindow.webContents.openDevTools()
+      return
+    }
+
+    await mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
   }
+
+  void loadRendererApp()
 
   // 监听加载完成事件
   mainWindow.webContents.on('did-finish-load', () => {
@@ -275,6 +352,12 @@ function createWindow() {
 
   // 当窗口准备好时显示（备用）
   mainWindow.once('ready-to-show', () => {
+    const currentUrl = mainWindow.webContents.getURL()
+    if (isDev && (!currentUrl || currentUrl === 'about:blank')) {
+      safeWarn('[Electron] 跳过空白窗口 ready-to-show，等待开发页面真正加载完成')
+      return
+    }
+
     console.log('[Electron] 窗口 ready-to-show')
     mainWindow.show()
     mainWindow.focus()

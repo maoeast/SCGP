@@ -47,7 +47,7 @@ const store = useTrainingStore()
 
 const currentStep = computed(() => {
   const step = store.currentStepData
-  if (!step || step.step_type !== 'emotion') {
+  if (!step || (step.step_type !== 'emotion' && step.step_type !== 'care_emotion')) {
     return null
   }
 
@@ -86,7 +86,7 @@ function resetEmotionBoardState(): void {
 }
 
 function submitEmotionOption(optionId: number): void {
-  if (store.inputLocked || currentStep.value?.step_type !== 'emotion') {
+  if (store.inputLocked || !currentStep.value) {
     return
   }
 

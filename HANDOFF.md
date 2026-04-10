@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-09
+> last_updated: 2026-04-10
 
 > Responsibility: top-level handoff entry for new sessions.
 > Read when: entering the repo or resuming work and needing the fastest route to current context.
@@ -33,12 +33,12 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: emotion-scene immersive refactor has progressed through Phase 6 (real result page + reward overlay + teacher control + immersive shell hiding app chrome), and the active follow-up has shifted to the final live visual polish of Step 1 layout / touch interaction; `care_scene` immersive refactor is still documented but not started in code.**
+**Active follow-up work is now in `.continue-here.md`: `emotion_scene` immersive refactor is stable; `care_scene` immersive refactor has entered the first preview-slice stage in code, with a non-default preview route and selector toggle now landed. The immediate blocker is Electron dev runtime stability re-verification after the new startup/waiting fixes.**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is emotion-scene immersive refactor Phase 6 follow-up: Step 1 final visual polish after Step 2~4 text-option regression fix
+- current active task is care-scene immersive preview validation + Electron dev startup stabilization re-verification
 - first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

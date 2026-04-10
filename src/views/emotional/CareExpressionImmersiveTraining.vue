@@ -2,8 +2,8 @@
   <TrainingLayout>
     <div v-if="isLoading" class="session-status-card">
       <span class="status-kicker">加载中</span>
-      <h2>正在准备训练场景...</h2>
-      <p>全屏沉浸式训练原型正在初始化场景数据，请稍候。</p>
+      <h2>正在准备关心情境...</h2>
+      <p>沉浸式表达关心训练正在整理当前场景和步骤，请稍候。</p>
     </div>
 
     <div v-else-if="loadError" class="session-status-card is-error">
@@ -11,7 +11,7 @@
       <h2>暂时无法进入训练</h2>
       <p>{{ loadError }}</p>
       <button type="button" class="status-button" @click="goBackToSelector">
-        返回选择场景
+        返回选择情境
       </button>
     </div>
 
@@ -39,7 +39,10 @@ import ResultStep from '@/components/training/ResultStep.vue'
 import SceneIntroStep from '@/components/training/SceneIntroStep.vue'
 import TeacherControlPanel from '@/components/training/TeacherControlPanel.vue'
 import TrainingLayout from '@/components/training/TrainingLayout.vue'
+import { ResourceAPI } from '@/database/resource-api'
+import { compileCareSceneImmersive } from '@/features/emotional/immersive/compileCareSceneImmersive'
 import { useTrainingStore } from '@/stores/useTrainingStore'
+import { normalizeCareSceneEditorModel } from '@/views/resource-center/editors/emotional-resource-contract'
 
 const route = useRoute()
 const router = useRouter()
@@ -49,17 +52,18 @@ const isLoading = ref(false)
 const loadError = ref('')
 const isTeacherPanelVisible = ref(false)
 
-const sceneCode = computed(() => {
-  const raw = Array.isArray(route.query.sceneCode)
-    ? route.query.sceneCode[0]
-    : route.query.sceneCode
+const resourceId = computed(() => {
+  const raw = Array.isArray(route.query.resourceId)
+    ? route.query.resourceId[0]
+    : route.query.resourceId
 
-  return typeof raw === 'string' ? raw.trim() : ''
+  const parsed = Number(raw || 0)
+  return Number.isFinite(parsed) ? parsed : 0
 })
 
-async function hydrateScene(): Promise<void> {
-  if (!sceneCode.value) {
-    loadError.value = '缺少 sceneCode，当前无法从原型库加载情绪场景。请从场景选择页重新进入。'
+async function hydrateSession(): Promise<void> {
+  if (!resourceId.value) {
+    loadError.value = '缺少 resourceId，当前无法加载表达关心训练。请从情境选择页重新进入。'
     return
   }
 
@@ -67,10 +71,25 @@ async function hydrateScene(): Promise<void> {
   loadError.value = ''
 
   try {
-    await store.loadScene(sceneCode.value)
+    const api = new ResourceAPI()
+    const resource = api.getResourceById(resourceId.value)
+
+    if (!resource || resource.resourceType !== 'care_scene') {
+      throw new Error('指定的表达关心资源不存在或已停用，请返回情境选择页重新选择。')
+    }
+
+    const metadata = normalizeCareSceneEditorModel(resource.metadata, resource.name)
+    store.loadSessionPayload(
+      compileCareSceneImmersive(metadata, {
+        resourceId: resource.id,
+        resourceName: resource.name,
+        resourceDescription: resource.description,
+        coverImage: resource.coverImage,
+      }),
+    )
   } catch (error) {
-    console.error('Failed to hydrate immersive training scene:', error)
-    loadError.value = error instanceof Error ? error.message : '训练场景加载失败。'
+    console.error('Failed to hydrate care immersive training session:', error)
+    loadError.value = error instanceof Error ? error.message : '表达关心训练加载失败。'
   } finally {
     isLoading.value = false
   }
@@ -84,26 +103,22 @@ function handleKeydown(event: KeyboardEvent): void {
 }
 
 function goBackToSelector(): void {
-  const selectorPath = route.path.includes('/care-expression')
-    ? '/emotional/care-expression/select'
-    : '/emotional/emotion-scene/select'
-
   router.push({
-    path: selectorPath,
+    path: '/emotional/care-expression/select',
     query: {
       ...route.query,
     },
   })
 }
 
-watch(sceneCode, () => {
+watch(resourceId, () => {
   isTeacherPanelVisible.value = false
-  void hydrateScene()
+  void hydrateSession()
 })
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown)
-  void hydrateScene()
+  void hydrateSession()
 })
 
 onBeforeUnmount(() => {
@@ -130,8 +145,7 @@ onBeforeUnmount(() => {
   background: linear-gradient(180deg, rgb(127 29 29 / 72%) 0%, rgb(69 10 10 / 56%) 100%);
 }
 
-.status-kicker,
-.placeholder-kicker {
+.status-kicker {
   display: inline-flex;
   padding: 8px 14px;
   border-radius: 999px;
