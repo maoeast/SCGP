@@ -33,12 +33,12 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: `emotion_scene` immersive refactor is stable; `care_scene` immersive refactor has entered the first preview-slice stage in code, with a non-default preview route and selector toggle now landed. The immediate blocker is Electron dev runtime stability re-verification after the new startup/waiting fixes.**
+**Active follow-up work is now in `.continue-here.md`: `care_scene` immersive refactor has passed full Electron runtime verification (white screen fix confirmed, select page + immersive preview + intro→3steps→result all working). Electron dev stability fix verified. Next step is adjusting copy/text in `care_scenes_database.json`.**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is care-scene immersive preview validation + Electron dev startup stabilization re-verification
+- current active task is adjusting care_scene copy/text in `care_scenes_database.json`
 - first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
