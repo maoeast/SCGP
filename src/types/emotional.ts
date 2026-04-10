@@ -106,6 +106,12 @@ export interface CareSceneUtterance {
   receiverReactionEmoji?: string
 }
 
+export interface CareSceneEmotionOption {
+  text: string
+  isCorrect: boolean
+  feedbackText: string
+}
+
 export interface CareSceneReceiverOption {
   id: string
   text: string
@@ -115,11 +121,16 @@ export interface CareSceneReceiverOption {
 
 export interface CareSceneResourceMeta {
   sceneCode: string
+  name?: string
   title: string
+  description?: string
   imageUrl: string
   difficultyLevel: 1 | 2 | 3
   careType?: EmotionalCareType
   receiverEmotion?: EmotionalBaseEmotion
+  specificEmotionToken?: string
+  specificEmotionLabel?: string
+  emotionOptions: CareSceneEmotionOption[]
   receiverName?: string
   emotionChips?: string[]
   comfortTip?: string

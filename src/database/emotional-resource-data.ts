@@ -2,6 +2,7 @@ import currentEmotionScenesRaw from '../../docs/references/current-emotion-scene
 import emotionTaxonomyRaw from '../../docs/references/emotion-scene/emotion-scene-taxonomy-2026-03-24.csv?raw'
 import careScenesRaw from '../../care_scenes_database.json?raw'
 import type {
+  CareSceneEmotionOption,
   CareSceneReceiverOption,
   CareSceneResourceMeta,
   CareSceneUtterance,
@@ -90,7 +91,7 @@ const EMOTION_COLORS: Record<EmotionalBaseEmotion, {
   proud: { token: 'gold', hex: '#D4A017', label: '金色区' },
 }
 
-export const EMOTIONAL_RESOURCE_SEED_LEGACY_SOURCE = 'emotional_full_seed_2026_03_26'
+export const EMOTIONAL_RESOURCE_SEED_LEGACY_SOURCE = 'emotional_full_seed_2026_04_10'
 
 function normalizeString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value.trim() : fallback
@@ -144,6 +145,23 @@ function normalizeSolutionRank(value: unknown, fallback: EmotionalSolutionRank):
 
 function normalizeCareType(value: unknown, fallback: EmotionalCareType): EmotionalCareType {
   return CARE_TYPES.has(value as EmotionalCareType) ? value as EmotionalCareType : fallback
+}
+
+function normalizeColorToken(value: unknown): EmotionalColorToken | undefined {
+  if (
+    value === 'green'
+    || value === 'yellow'
+    || value === 'blue'
+    || value === 'red'
+    || value === 'purple'
+    || value === 'gold'
+    || value === 'magenta'
+    || value === 'peach'
+  ) {
+    return value
+  }
+
+  return undefined
 }
 
 function normalizeAbilityLevel(
@@ -298,6 +316,90 @@ function normalizeReceiverOptions(value: unknown): CareSceneReceiverOption[] {
   }))
 }
 
+function normalizeCareEmotionOptions(
+  value: unknown,
+  fallbackLabel: string,
+): CareSceneEmotionOption[] {
+  const normalized = ensureArrayOfObjects<Record<string, unknown>>(value).map((option, optionIndex) => ({
+    text: normalizeString(option.text, optionIndex === 0 ? fallbackLabel || '请填写最准确的感受' : `情绪选项 ${optionIndex + 1}`),
+    isCorrect: option.isCorrect === true,
+    feedbackText: normalizeString(option.feedbackText, option.isCorrect === true ? '太棒啦！你读懂了TA现在的感受。' : '再看看发生了什么，我们再想一想。'),
+  }))
+
+  const fallbackOptions = normalized.length > 0
+    ? normalized
+    : [
+        {
+          text: fallbackLabel || '最准确的感受',
+          isCorrect: true,
+          feedbackText: '太棒啦！你读懂了TA现在的感受。',
+        },
+        {
+          text: '平静/放松',
+          isCorrect: false,
+          feedbackText: 'TA现在并不轻松，我们再看看发生了什么。',
+        },
+        {
+          text: '开心/喜悦',
+          isCorrect: false,
+          feedbackText: '现在不是开心的时候哦，再试一次吧。',
+        },
+        {
+          text: '焦虑/紧张',
+          isCorrect: false,
+          feedbackText: '这个方向还不太对，再看看对方最明显的感受。',
+        },
+      ]
+
+  if (fallbackOptions.some((option) => option.isCorrect)) {
+    return fallbackOptions
+  }
+
+  const nextOptions = [...fallbackOptions]
+  const matchingIndex = nextOptions.findIndex((option) => option.text === fallbackLabel)
+  const correctedIndex = matchingIndex >= 0 ? matchingIndex : 0
+  const current = nextOptions[correctedIndex]
+
+  if (!current) {
+    return nextOptions
+  }
+
+  nextOptions[correctedIndex] = {
+    ...current,
+    isCorrect: true,
+  }
+  return nextOptions
+}
+
+function resolveCareSceneColorPayload(
+  receiverEmotion: EmotionalBaseEmotion,
+  rawToken: unknown,
+  rawLabel: unknown,
+): {
+  emotionColorToken: EmotionalColorToken
+  emotionColorHex: string
+  emotionColorLabel: string
+} {
+  const fallback = EMOTION_COLORS[receiverEmotion]
+  const normalizedToken = normalizeColorToken(rawToken)
+
+  if (!normalizedToken) {
+    return {
+      emotionColorToken: fallback.token,
+      emotionColorHex: fallback.hex,
+      emotionColorLabel: normalizeString(rawLabel, fallback.label),
+    }
+  }
+
+  const byToken = Object.values(EMOTION_COLORS).find((entry) => entry.token === normalizedToken)
+
+  return {
+    emotionColorToken: normalizedToken,
+    emotionColorHex: byToken?.hex || fallback.hex,
+    emotionColorLabel: normalizeString(rawLabel, byToken?.label || fallback.label),
+  }
+}
+
 const emotionTaxonomy = parseEmotionTaxonomy(emotionTaxonomyRaw)
 
 function normalizeEmotionScene(raw: RawEmotionScene, index: number): EmotionSceneResourceMeta {
@@ -336,24 +438,31 @@ function normalizeEmotionScene(raw: RawEmotionScene, index: number): EmotionScen
 
 function normalizeCareScene(raw: RawCareScene, index: number): CareSceneResourceMeta {
   const receiverEmotion = normalizeEmotion(raw.receiverEmotion, 'sad')
-  const color = EMOTION_COLORS[receiverEmotion]
+  const color = resolveCareSceneColorPayload(receiverEmotion, raw.emotionColorToken, raw.emotionColorLabel)
   const utterances = normalizeUtterances(raw.utterances)
   const preferredUtteranceIds = normalizeStringArray(raw.preferredUtteranceIds)
     .filter((utteranceId) => utterances.some((utterance) => utterance.id === utteranceId))
+  const specificEmotionLabel = normalizeOptionalString(raw.specificEmotionLabel)
+  const name = normalizeOptionalString(raw.name) || normalizeOptionalString(raw.receiverName)
 
   return enrichCareSceneGeneratedFields({
     sceneCode: normalizeString(raw.sceneCode, `care_scene_${index + 1}`),
+    name,
     title: normalizeString(raw.title, `表达关心 ${index + 1}`),
+    description: normalizeOptionalString(raw.description),
     imageUrl: normalizePresetResourcePathForStorage(raw.imageUrl),
     difficultyLevel: normalizeDifficultyLevel(raw.difficultyLevel),
     careType: normalizeCareType(raw.careType, 'empathy'),
     receiverEmotion,
+    specificEmotionToken: normalizeOptionalString(raw.specificEmotionToken),
+    specificEmotionLabel,
+    emotionOptions: normalizeCareEmotionOptions(raw.emotionOptions, specificEmotionLabel || ''),
     receiverName: normalizeOptionalString(raw.receiverName),
     emotionChips: normalizeStringArray(raw.emotionChips),
     comfortTip: normalizeOptionalString(raw.comfortTip),
-    emotionColorToken: color.token,
-    emotionColorHex: color.hex,
-    emotionColorLabel: color.label,
+    emotionColorToken: color.emotionColorToken,
+    emotionColorHex: color.emotionColorHex,
+    emotionColorLabel: color.emotionColorLabel,
     speakerPerspectiveText: normalizeString(raw.speakerPerspectiveText, '请从表达者视角思考。'),
     receiverPerspectiveText: normalizeString(raw.receiverPerspectiveText, '请从接收者视角思考。'),
     utterances,

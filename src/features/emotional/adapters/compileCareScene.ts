@@ -27,7 +27,7 @@ export function compileCareScene(
       metadata: {
         variant: 'care_scene',
         title: enrichedMeta.title,
-        description: context.resourceDescription,
+        description: enrichedMeta.description || context.resourceDescription,
         receiverName: enrichedMeta.receiverName,
         emotionChips: enrichedMeta.emotionChips,
         comfortTip: enrichedMeta.comfortTip,

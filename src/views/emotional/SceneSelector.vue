@@ -286,7 +286,9 @@
                   <el-tag v-if="scene.ageRange" size="small" type="info" effect="plain">{{ scene.ageRange }}岁</el-tag>
                   <el-tag v-if="isEmotionSceneSelector && scene.sceneDomain !== '未分类'" size="small" effect="plain">{{ scene.sceneDomain }}</el-tag>
                   <el-tag v-if="isEmotionSceneSelector && scene.themeCategory !== '未分类'" size="small" type="success" effect="plain">{{ scene.themeCategory }}</el-tag>
-                  <el-tag v-if="isCareSceneSelector && scene.receiverEmotionLabel" size="small" type="danger" effect="plain">{{ scene.receiverEmotionLabel }}</el-tag>
+                  <el-tag v-if="isCareSceneSelector && scene.receiverName" size="small" effect="plain">{{ scene.receiverName }}</el-tag>
+                  <el-tag v-if="isCareSceneSelector && scene.specificEmotionLabel" size="small" type="danger" effect="plain">{{ scene.specificEmotionLabel }}</el-tag>
+                  <el-tag v-else-if="isCareSceneSelector && scene.receiverEmotionLabel" size="small" type="danger" effect="plain">{{ scene.receiverEmotionLabel }}</el-tag>
                   <el-tag v-if="isCareSceneSelector && scene.careTypeLabel" size="small" type="success" effect="plain">{{ scene.careTypeLabel }}</el-tag>
                   <el-tag size="small" effect="plain">{{ scene.resourceCode }}</el-tag>
                 </div>
@@ -320,6 +322,8 @@ interface SceneCard {
   id: number
   title: string
   description?: string
+  receiverName?: string
+  specificEmotionLabel?: string
   coverImageUrl?: string
   coverEmoji: string
   coverGradient: string
@@ -919,7 +923,9 @@ function mapResourceToSceneCard(resource: ResourceItem): SceneCard {
   return {
     id: resource.id,
     title: sceneTitle,
-    description: resource.description,
+    description: 'description' in metadata ? metadata.description || resource.description : resource.description,
+    receiverName: 'name' in metadata ? metadata.name || metadata.receiverName : undefined,
+    specificEmotionLabel: 'specificEmotionLabel' in metadata ? metadata.specificEmotionLabel : undefined,
     coverImageUrl: cover.coverImageUrl,
     coverEmoji: cover.coverEmoji,
     coverGradient: `linear-gradient(135deg, ${colorHex}18 0%, ${colorHex}55 100%)`,

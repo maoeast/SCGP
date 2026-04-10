@@ -1,9 +1,11 @@
 import type {
+  CareSceneEmotionOption,
   CareSceneReceiverOption,
   CareSceneResourceMeta,
   CareSceneUtterance,
   EmotionalBaseEmotion,
   EmotionalCareType,
+  EmotionalColorToken,
   EmotionalSceneDomain,
   EmotionalReasoningQuestionType,
   EmotionalSolutionRank,
@@ -83,6 +85,37 @@ const SCENE_DOMAINS = [
   '自然生态',
 ] as const
 
+export const CARE_SCENE_COLOR_TOKEN_PRESETS: Record<EmotionalColorToken, {
+  token: EmotionalColorToken
+  hex: string
+  label: string
+}> = {
+  green: { token: 'green', hex: '#67C23A', label: '绿色区' },
+  yellow: { token: 'yellow', hex: '#E6A23C', label: '黄色区' },
+  blue: { token: 'blue', hex: '#409EFF', label: '蓝色区' },
+  red: { token: 'red', hex: '#F56C6C', label: '红色区' },
+  purple: { token: 'purple', hex: '#7E57C2', label: '紫色区' },
+  gold: { token: 'gold', hex: '#D4A017', label: '金色区' },
+  magenta: { token: 'magenta', hex: '#E64980', label: '玫红区' },
+  peach: { token: 'peach', hex: '#F7B7A3', label: '桃色区' },
+}
+
+export const CARE_SCENE_COLOR_ZONE_OPTIONS = Object.values(CARE_SCENE_COLOR_TOKEN_PRESETS).map((preset) => ({
+  value: preset.token,
+  label: preset.label,
+}))
+
+export const CARE_SCENE_DEFAULT_COLOR_TOKEN_BY_EMOTION: Record<EmotionalBaseEmotion, EmotionalColorToken> = {
+  calm: 'green',
+  happy: 'yellow',
+  sad: 'blue',
+  angry: 'red',
+  scared: 'purple',
+  embarrassed: 'yellow',
+  shy: 'peach',
+  proud: 'gold',
+}
+
 function normalizeString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback
 }
@@ -157,6 +190,45 @@ function normalizeEmotionColorPayload(emotion: EmotionalBaseEmotion) {
   }
 }
 
+function normalizeEmotionColorToken(value: unknown): EmotionalColorToken | undefined {
+  return value === 'green'
+    || value === 'yellow'
+    || value === 'blue'
+    || value === 'red'
+    || value === 'purple'
+    || value === 'gold'
+    || value === 'magenta'
+    || value === 'peach'
+    ? value
+    : undefined
+}
+
+function normalizeCareSceneColorPayload(
+  emotion: EmotionalBaseEmotion,
+  rawToken: unknown,
+  rawHex: unknown,
+  rawLabel: unknown,
+) {
+  const normalizedToken = normalizeEmotionColorToken(rawToken)
+
+  if (!normalizedToken) {
+    const fallbackToken = CARE_SCENE_DEFAULT_COLOR_TOKEN_BY_EMOTION[emotion]
+    const fallbackPreset = CARE_SCENE_COLOR_TOKEN_PRESETS[fallbackToken]
+    return {
+      emotionColorToken: fallbackPreset.token,
+      emotionColorHex: fallbackPreset.hex,
+      emotionColorLabel: fallbackPreset.label,
+    }
+  }
+
+  const preset = CARE_SCENE_COLOR_TOKEN_PRESETS[normalizedToken]
+  return {
+    emotionColorToken: normalizedToken,
+    emotionColorHex: normalizeOptionalString(rawHex) || preset.hex,
+    emotionColorLabel: normalizeOptionalString(rawLabel) || preset.label,
+  }
+}
+
 function normalizePromptOption(
   value: unknown,
   index: number,
@@ -228,6 +300,57 @@ function normalizeUtterance(value: unknown, index: number): CareSceneUtterance {
 
 export function createCareSceneUtterance(index: number): CareSceneUtterance {
   return normalizeUtterance(undefined, index)
+}
+
+function normalizeCareEmotionOption(
+  value: unknown,
+  index: number,
+  fallbackLabel: string,
+  fallbackCorrect = index === 0,
+): CareSceneEmotionOption {
+  const option = value as Partial<CareSceneEmotionOption> | undefined
+  const isCorrect = typeof option?.isCorrect === 'boolean' ? option.isCorrect : fallbackCorrect
+  return {
+    text: normalizeString(
+      option?.text,
+      index === 0 ? (fallbackLabel || '请填写最准确的感受') : `请填写干扰情绪 ${index + 1}`
+    ),
+    isCorrect,
+    feedbackText: normalizeString(
+      option?.feedbackText,
+      isCorrect ? '太棒啦！你读懂了TA现在的感受。' : '再看看发生了什么，我们再想一想。'
+    ),
+  }
+}
+
+function normalizeCareEmotionOptions(value: unknown, fallbackLabel: string): CareSceneEmotionOption[] {
+  const options = Array.isArray(value) && value.length > 0
+    ? value.map((item, index) => normalizeCareEmotionOption(item, index, fallbackLabel, false))
+    : [
+        normalizeCareEmotionOption({ text: fallbackLabel || '请填写最准确的感受', isCorrect: true }, 0, fallbackLabel, true),
+        normalizeCareEmotionOption(undefined, 1, fallbackLabel, false),
+        normalizeCareEmotionOption(undefined, 2, fallbackLabel, false),
+        normalizeCareEmotionOption(undefined, 3, fallbackLabel, false),
+      ]
+
+  if (options.some((option) => option.isCorrect)) {
+    return options
+  }
+
+  const nextOptions = [...options]
+  const current = nextOptions[0]
+  if (current) {
+    nextOptions[0] = {
+      ...current,
+      isCorrect: true,
+    }
+  }
+
+  return nextOptions
+}
+
+export function createCareSceneEmotionOption(index: number, isCorrect = index === 0): CareSceneEmotionOption {
+  return normalizeCareEmotionOption(undefined, index, '', isCorrect)
 }
 
 function normalizeReceiverOption(value: unknown, index: number): CareSceneReceiverOption {
@@ -370,6 +493,9 @@ export function normalizeCareSceneEditorModel(
 ): CareSceneResourceMeta {
   const model = value as Partial<CareSceneResourceMeta> | undefined
   const receiverEmotion = normalizeEmotion(model?.receiverEmotion, 'sad')
+  const authoredName = normalizeOptionalString(model?.name) || normalizeOptionalString(model?.receiverName)
+  const authoredDescription = normalizeOptionalString(model?.description)
+  const specificEmotionLabel = normalizeOptionalString(model?.specificEmotionLabel)
   const utterances = Array.isArray(model?.utterances) && model?.utterances.length > 0
     ? model.utterances.map((item, index) => normalizeUtterance(item, index))
     : [
@@ -377,6 +503,7 @@ export function normalizeCareSceneEditorModel(
         normalizeUtterance({ type: 'advice' }, 1),
         normalizeUtterance({ type: 'action' }, 2),
       ]
+  const emotionOptions = normalizeCareEmotionOptions(model?.emotionOptions, specificEmotionLabel || '')
   const receiverOptions = Array.isArray(model?.receiverOptions) && model?.receiverOptions.length > 0
     ? model.receiverOptions.map((item, index) => normalizeReceiverOption(item, index))
     : [
@@ -391,12 +518,17 @@ export function normalizeCareSceneEditorModel(
 
   return enrichCareSceneGeneratedFields({
     sceneCode: normalizeString(model?.sceneCode, `care_scene_${Date.now()}`),
+    name: authoredName,
     title: normalizeString(model?.title, resourceName || '新的表达关心场景'),
+    description: authoredDescription,
     imageUrl: normalizePresetResourcePathForStorage(model?.imageUrl),
     difficultyLevel: normalizeDifficultyLevel(model?.difficultyLevel),
     careType: normalizeCareType(model?.careType, 'empathy'),
     receiverEmotion,
-    receiverName: normalizeOptionalString(model?.receiverName),
+    specificEmotionToken: normalizeOptionalString(model?.specificEmotionToken),
+    specificEmotionLabel: specificEmotionLabel || emotionOptions.find((option) => option.isCorrect)?.text || undefined,
+    emotionOptions,
+    receiverName: authoredName || normalizeOptionalString(model?.receiverName),
     emotionChips: normalizeStringArray(model?.emotionChips, []),
     comfortTip: normalizeOptionalString(model?.comfortTip),
     speakerPerspectiveText: normalizeString(model?.speakerPerspectiveText, '请填写表达者视角文本'),
@@ -411,8 +543,13 @@ export function normalizeCareSceneEditorModel(
     tags: Array.isArray(model?.tags)
       ? model.tags.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
       : [],
-    ...normalizeEmotionColorPayload(receiverEmotion),
-  })
+    ...normalizeCareSceneColorPayload(
+      receiverEmotion,
+      model?.emotionColorToken,
+      model?.emotionColorHex,
+      model?.emotionColorLabel,
+    ),
+  }, authoredDescription || '')
 }
 
 export function validateCareSceneEditorModel(model: CareSceneResourceMeta): string[] {
@@ -426,8 +563,20 @@ export function validateCareSceneEditorModel(model: CareSceneResourceMeta): stri
     errors.push('请填写情境标题')
   }
 
+  if (!model.name?.trim()) {
+    errors.push('请填写被关心对象称呼')
+  }
+
+  if (!model.description?.trim()) {
+    errors.push('请填写教学目标说明')
+  }
+
   if (!model.sceneCode.trim()) {
     errors.push('请填写场景编码')
+  }
+
+  if (!model.specificEmotionLabel?.trim()) {
+    errors.push('请填写细分情绪标签')
   }
 
   if (!model.speakerPerspectiveText.trim()) {
@@ -437,6 +586,23 @@ export function validateCareSceneEditorModel(model: CareSceneResourceMeta): stri
   if (!model.receiverPerspectiveText.trim()) {
     errors.push('请填写接收者视角提示')
   }
+
+  if (model.emotionOptions.length !== 4) {
+    errors.push('情绪识别需要配置 4 个选项')
+  }
+
+  if (model.emotionOptions.filter((option) => option.isCorrect).length !== 1) {
+    errors.push('情绪识别必须且只能有 1 个正确答案')
+  }
+
+  model.emotionOptions.forEach((option, optionIndex) => {
+    if (!option.text.trim()) {
+      errors.push(`第 ${optionIndex + 1} 个情绪选项缺少文字`)
+    }
+    if (!option.feedbackText.trim()) {
+      errors.push(`第 ${optionIndex + 1} 个情绪选项缺少反馈说明`)
+    }
+  })
 
   if (model.utterances.length === 0) {
     errors.push('请至少配置 1 条表达者视角话术')

@@ -33,12 +33,12 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: `care_scene` immersive refactor has passed full Electron runtime verification (white screen fix confirmed, select page + immersive preview + intro→3steps→result all working). Electron dev stability fix verified. Next step is adjusting copy/text in `care_scenes_database.json`.**
+**Active follow-up work is now in `.continue-here.md`: `care_scene` schema alignment has landed across type contract, seed normalization, resource metadata, resource-center editor, selector UI, and immersive runtime. Next step is triggering local DB metadata upsert and re-running Electron smoke on the updated chain.**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is adjusting care_scene copy/text in `care_scenes_database.json`
+- current active task is verifying the landed `care_scene` schema alignment against local DB + Electron runtime
 - first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

@@ -157,6 +157,69 @@
         </el-row>
 
         <el-row :gutter="16">
+          <el-col :xs="24" :md="8">
+            <el-form-item label="被关心对象称呼" required :error="targetNameError">
+              <el-input
+                :model-value="modelValue.name || ''"
+                placeholder="例如：小明、妈妈、老师"
+                @update:model-value="updateField('name', $event)"
+              />
+            </el-form-item>
+          </el-col>
+
+          <el-col :xs="24" :md="8">
+            <el-form-item label="细分情绪标签" required :error="specificEmotionLabelError">
+              <el-input
+                :model-value="modelValue.specificEmotionLabel || ''"
+                placeholder="例如：伤心/心碎、极度疲惫"
+                @update:model-value="updateField('specificEmotionLabel', $event)"
+              />
+            </el-form-item>
+          </el-col>
+
+          <el-col :xs="24" :md="8">
+            <el-form-item label="细分情绪编码">
+              <el-input
+                :model-value="modelValue.specificEmotionToken || ''"
+                placeholder="例如：heartbroken"
+                @update:model-value="updateField('specificEmotionToken', $event)"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="16">
+          <el-col :xs="24" :md="8">
+            <el-form-item label="情绪色区">
+              <el-select
+                :model-value="colorMeta.token"
+                style="width: 100%"
+                @update:model-value="handleColorZoneChange"
+              >
+                <el-option
+                  v-for="option in colorZoneOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+
+          <el-col :xs="24" :md="16">
+            <el-form-item label="教学目标说明" required :error="descriptionError">
+              <el-input
+                :model-value="modelValue.description || ''"
+                type="textarea"
+                :rows="3"
+                placeholder="请输入本关训练目标、教师提示或行为理解说明"
+                @update:model-value="updateField('description', $event)"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="16">
           <el-col :xs="24" :md="12">
             <el-form-item label="表达者视角提示" required :error="speakerPromptError">
               <el-input
@@ -186,6 +249,55 @@
           <span class="color-dot" :style="{ backgroundColor: colorMeta.hex }"></span>
           <strong>{{ colorMeta.label }}</strong>
           <span>{{ colorMeta.hex }}</span>
+        </div>
+      </el-card>
+
+      <el-card shadow="never" class="editor-card">
+        <template #header>
+          <div class="card-header">
+            <span>情绪识别配置</span>
+            <el-tag size="small" type="warning">固定 4 选 1</el-tag>
+          </div>
+        </template>
+
+        <div class="stack-list">
+          <el-card
+            v-for="(option, optionIndex) in modelValue.emotionOptions"
+            :key="`${optionIndex}-${option.text}`"
+            shadow="never"
+            class="nested-card"
+          >
+            <template #header>
+              <div class="card-header">
+                <span>情绪选项 {{ optionIndex + 1 }}</span>
+                <el-switch
+                  :model-value="option.isCorrect"
+                  inline-prompt
+                  active-text="正确"
+                  inactive-text="干扰"
+                  @update:model-value="setCorrectEmotionOption(optionIndex, $event)"
+                />
+              </div>
+            </template>
+
+            <el-form-item label="选项文字" :error="!option.text.trim() ? '请填写情绪选项文字' : ''">
+              <el-input
+                :model-value="option.text"
+                placeholder="例如：伤心/心碎"
+                @update:model-value="updateEmotionOptionField(optionIndex, 'text', $event)"
+              />
+            </el-form-item>
+
+            <el-form-item label="反馈文案" :error="!option.feedbackText.trim() ? '请填写反馈文案' : ''">
+              <el-input
+                :model-value="option.feedbackText"
+                type="textarea"
+                :rows="2"
+                placeholder="学生点这个选项后要看到的反馈"
+                @update:model-value="updateEmotionOptionField(optionIndex, 'feedbackText', $event)"
+              />
+            </el-form-item>
+          </el-card>
         </div>
       </el-card>
 
@@ -385,10 +497,12 @@
 import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import type {
+  CareSceneEmotionOption,
   CareSceneReceiverOption,
   CareSceneResourceMeta,
   CareSceneUtterance,
   EmotionalBaseEmotion,
+  EmotionalColorToken,
 } from '@/types/emotional'
 import { EMOTIONAL_BASE_EMOTION_OPTIONS } from '@/features/emotional/emotion-catalog'
 import {
@@ -397,10 +511,12 @@ import {
   type GeneratedSceneImageCandidate,
 } from '@/services/scene-image-generation'
 import {
+  CARE_SCENE_DEFAULT_COLOR_TOKEN_BY_EMOTION,
+  CARE_SCENE_COLOR_TOKEN_PRESETS,
+  CARE_SCENE_COLOR_ZONE_OPTIONS,
   CARE_TYPE_OPTIONS,
   createCareSceneReceiverOption,
   createCareSceneUtterance,
-  EMOTION_COLOR_PRESETS,
   validateCareSceneEditorModel,
 } from './emotional-resource-contract'
 
@@ -420,6 +536,7 @@ const emit = defineEmits<{
 const emojiOptions = ['🙂', '😊', '😌', '🤗', '🥹', '💛', '👍', '🌤️']
 
 const emotionOptions: Array<{ value: EmotionalBaseEmotion; label: string }> = EMOTIONAL_BASE_EMOTION_OPTIONS
+const colorZoneOptions = CARE_SCENE_COLOR_ZONE_OPTIONS
 
 const difficultyOptions = [
   { label: '1 级', value: 1 },
@@ -431,10 +548,25 @@ const isGeneratingImages = ref(false)
 const generatedCandidates = ref<GeneratedSceneImageCandidate[]>([])
 
 const careTypeOptions = CARE_TYPE_OPTIONS
-const colorMeta = computed(() => EMOTION_COLOR_PRESETS[props.modelValue.receiverEmotion || 'sad'])
+const colorMeta = computed(() => {
+  const fallbackEmotion = props.modelValue.receiverEmotion || 'sad'
+  const fallbackToken = CARE_SCENE_DEFAULT_COLOR_TOKEN_BY_EMOTION[fallbackEmotion]
+  const fallbackPreset = CARE_SCENE_COLOR_TOKEN_PRESETS[fallbackToken]
+
+  return {
+    token: props.modelValue.emotionColorToken || fallbackPreset.token,
+    hex: props.modelValue.emotionColorHex || fallbackPreset.hex,
+    label: props.modelValue.emotionColorLabel || fallbackPreset.label,
+  }
+})
 const validationErrors = computed(() => validateCareSceneEditorModel(props.modelValue))
 const titleError = computed(() => (!props.modelValue.title.trim() ? '请填写情境标题' : ''))
 const sceneCodeError = computed(() => (!props.modelValue.sceneCode.trim() ? '请填写场景编码' : ''))
+const targetNameError = computed(() => (!props.modelValue.name?.trim() ? '请填写被关心对象称呼' : ''))
+const descriptionError = computed(() => (!props.modelValue.description?.trim() ? '请填写教学目标说明' : ''))
+const specificEmotionLabelError = computed(() => (
+  !props.modelValue.specificEmotionLabel?.trim() ? '请填写细分情绪标签' : ''
+))
 const speakerPromptError = computed(() => (
   !props.modelValue.speakerPerspectiveText.trim() ? '请填写表达者视角提示' : ''
 ))
@@ -454,13 +586,24 @@ function updateField<K extends keyof CareSceneResourceMeta>(key: K, value: CareS
 }
 
 function handleEmotionChange(value: EmotionalBaseEmotion) {
-  const color = EMOTION_COLOR_PRESETS[value]
+  const colorToken = CARE_SCENE_DEFAULT_COLOR_TOKEN_BY_EMOTION[value]
+  const color = CARE_SCENE_COLOR_TOKEN_PRESETS[colorToken]
   emitModel({
     ...props.modelValue,
     receiverEmotion: value,
-    emotionColorToken: color.token,
+    emotionColorToken: colorToken,
     emotionColorHex: color.hex,
     emotionColorLabel: color.label,
+  })
+}
+
+function handleColorZoneChange(value: EmotionalColorToken) {
+  const preset = CARE_SCENE_COLOR_TOKEN_PRESETS[value]
+  emitModel({
+    ...props.modelValue,
+    emotionColorToken: value,
+    emotionColorHex: preset.hex,
+    emotionColorLabel: preset.label,
   })
 }
 
@@ -519,6 +662,60 @@ function updateUtteranceOptionalField<K extends keyof CareSceneUtterance>(
   value: string
 ) {
   updateUtteranceField(utteranceIndex, key, (value.trim() ? value : undefined) as CareSceneUtterance[K])
+}
+
+function updateEmotionOptionField<K extends keyof CareSceneEmotionOption>(
+  optionIndex: number,
+  key: K,
+  value: CareSceneEmotionOption[K]
+) {
+  const nextOptions = [...props.modelValue.emotionOptions]
+  const currentOption = nextOptions[optionIndex]
+  if (!currentOption) return
+
+  nextOptions[optionIndex] = {
+    ...currentOption,
+    [key]: value,
+  }
+
+  emitModel({
+    ...props.modelValue,
+    specificEmotionLabel:
+      key === 'text' && currentOption.isCorrect && typeof value === 'string'
+        ? value
+        : props.modelValue.specificEmotionLabel,
+    emotionOptions: nextOptions,
+  })
+}
+
+function setCorrectEmotionOption(optionIndex: number, checked: boolean | string | number) {
+  const isChecked = Boolean(checked)
+  const nextOptions = props.modelValue.emotionOptions.map((option, index) => ({
+    ...option,
+    isCorrect: isChecked ? index === optionIndex : index === 0,
+  }))
+
+  if (!isChecked && nextOptions[optionIndex]) {
+    nextOptions[optionIndex] = {
+      ...nextOptions[optionIndex],
+      isCorrect: false,
+    }
+  }
+
+  if (!nextOptions.some((option) => option.isCorrect) && nextOptions[0]) {
+    nextOptions[0] = {
+      ...nextOptions[0],
+      isCorrect: true,
+    }
+  }
+
+  const nextSpecificEmotionLabel = nextOptions.find((option) => option.isCorrect)?.text?.trim() || props.modelValue.specificEmotionLabel || ''
+
+  emitModel({
+    ...props.modelValue,
+    specificEmotionLabel: nextSpecificEmotionLabel,
+    emotionOptions: nextOptions,
+  })
 }
 
 function togglePreferredUtterance(utteranceId: string, checked: boolean | string | number) {

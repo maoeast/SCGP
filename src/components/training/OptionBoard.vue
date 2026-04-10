@@ -5,7 +5,10 @@
     </div>
 
     <div v-else class="emotion-board">
-      <div class="option-grid is-emotion">
+      <div
+        class="option-grid is-emotion"
+        :class="{ 'is-care-emotion': currentStep?.step_type === 'care_emotion' }"
+      >
         <ImageOptionCard
           v-for="option in currentStep.options"
           :key="option.id"
@@ -198,6 +201,11 @@ onBeforeUnmount(() => {
   justify-items: stretch;
 }
 
+.option-grid.is-emotion.is-care-emotion {
+  width: min(100%, 840px);
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+
 @media (max-width: 900px) {
   .option-grid {
     gap: 16px;
@@ -206,6 +214,11 @@ onBeforeUnmount(() => {
   .option-grid.is-emotion {
     width: min(100%, 560px);
     grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+
+  .option-grid.is-emotion.is-care-emotion {
+    width: min(100%, 620px);
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
   }
 }
 

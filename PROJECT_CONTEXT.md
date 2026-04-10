@@ -122,6 +122,27 @@
   - 本次先完成规划和文档沉淀，不在一个会话内直接铺开全部实现
   - 后续应先补 `stage` 层流程模型，再进入具体 UI 与资源编辑器改造
 
+### 3.4.1 2026-04-10 care_scene schema alignment update
+
+- `care_scene` 已完成一轮代码级 schema 对齐：
+  - 根目录 `care_scenes_database.json` 现在被视为 `care_scene` 作者态唯一真源
+  - 新字段 `name` / `description` / `specificEmotionToken` / `specificEmotionLabel` / `emotionOptions[]` 已接入：
+    - 类型定义
+    - emotional seed 标准化
+    - `sys_training_resource.meta_data` 回填链
+    - 资源中心编辑器
+    - emotional pack 导入导出
+    - `care_scene` 沉浸式 runtime
+    - 场景选择页展示
+- 当前已确认的重要约束：
+  - `receiverName` / `emotionChips` / `comfortTip` 仍保留，但已降级为兼容 / 推导字段，不再是作者态源字段
+  - `care_scene` Step 1 情绪识别必须直接消费 JSON 中配置的 `emotionOptions[]`，不应再由 runtime 随机生成基础情绪选项
+  - 资源中心保存 `care_scene` 时，资源主表 `description` 与 `meta_data.description` 必须同步，避免形成两套口径
+- 当前仍未完成：
+  - 本地 DB metadata 是否已按新 schema 回填，尚未完成实机确认
+  - 默认 `care_scene` 入口尚未切到沉浸式链路
+  - `care_scene` 正式训练记录闭环尚未接入
+
 ## 4. 当前活跃未完成主线
 
 当前下一条真正的大改动，不是单页修补，而是：

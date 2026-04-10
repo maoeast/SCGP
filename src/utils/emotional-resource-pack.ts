@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx'
 import type {
+  CareSceneEmotionOption,
   CareSceneResourceMeta,
   CareSceneUtterance,
   CareSceneReceiverOption,
@@ -19,7 +20,7 @@ import {
   validateEmotionSceneEditorModel,
 } from '@/views/resource-center/editors/emotional-resource-contract'
 
-export const EMOTIONAL_PACK_SCHEMA_VERSION = 'scgp.emotional-pack.v1' as const
+export const EMOTIONAL_PACK_SCHEMA_VERSION = 'scgp.emotional-pack.v2' as const
 const SHEET_LIST_SEPARATOR = ' | '
 
 export type EmotionalPackFormat = 'json' | 'excel'
@@ -253,8 +254,38 @@ function buildRawCareSceneErrors(metadata: Partial<CareSceneResourceMeta> | unde
     errors.push('缺少 sceneCode')
   }
 
+  if (!metadata?.name || !String(metadata.name).trim()) {
+    errors.push('请填写被关心对象称呼')
+  }
+
+  if (!metadata?.description || !String(metadata.description).trim()) {
+    errors.push('请填写教学目标说明')
+  }
+
   if (metadata?.receiverEmotion && !parseEmotionalBaseEmotion(metadata.receiverEmotion)) {
     errors.push('receiverEmotion 必须属于 8 类正式情绪枚举')
+  }
+
+  if (!metadata?.specificEmotionLabel || !String(metadata.specificEmotionLabel).trim()) {
+    errors.push('请填写细分情绪标签')
+  }
+
+  if (!Array.isArray(metadata?.emotionOptions) || metadata.emotionOptions.length === 0) {
+    errors.push('请至少提供 1 个情绪识别选项')
+  } else {
+    const correctCount = metadata.emotionOptions.filter((option) => normalizeBoolean(option.isCorrect)).length
+    if (correctCount !== 1) {
+      errors.push('情绪识别必须且只能有 1 个正确答案')
+    }
+
+    metadata.emotionOptions.forEach((option, index) => {
+      if (!normalizeString(option.text)) {
+        errors.push(`第 ${index + 1} 个情绪识别选项缺少文字`)
+      }
+      if (!normalizeString(option.feedbackText)) {
+        errors.push(`第 ${index + 1} 个情绪识别选项缺少反馈说明`)
+      }
+    })
   }
 
   if (!metadata?.speakerPerspectiveText || !String(metadata.speakerPerspectiveText).trim()) {
@@ -328,13 +359,15 @@ function normalizePackResource(resource: Partial<EmotionalPackResource>, sourceI
 
   if (resourceType === 'care_scene') {
     const rawMetadata = (resource.metadata || {}) as Partial<CareSceneResourceMeta>
+    const mergedRawMetadata: Partial<CareSceneResourceMeta> = {
+      ...rawMetadata,
+      title: normalizeString(rawMetadata.title, name),
+      description: normalizeString(rawMetadata.description, description || ''),
+      tags,
+    }
     const normalized = syncMetadataTags(
       normalizeCareSceneEditorModel(
-        {
-          ...rawMetadata,
-          title: normalizeString(rawMetadata.title, name),
-          tags,
-        },
+        mergedRawMetadata,
         name
       ),
       tags
@@ -342,7 +375,7 @@ function normalizePackResource(resource: Partial<EmotionalPackResource>, sourceI
 
     const validationErrors = Array.from(new Set([
       ...baseErrors,
-      ...buildRawCareSceneErrors(rawMetadata),
+      ...buildRawCareSceneErrors(mergedRawMetadata),
       ...validateCareSceneEditorModel(normalized),
     ]))
 
@@ -460,6 +493,21 @@ function buildUtteranceRows(resources: EmotionalPackResource[]) {
     })
 }
 
+function buildCareEmotionOptionRows(resources: EmotionalPackResource[]) {
+  return resources
+    .filter((resource) => resource.resourceType === 'care_scene')
+    .flatMap((resource) => {
+      const metadata = resource.metadata as CareSceneResourceMeta
+      return metadata.emotionOptions.map((option, optionIndex) => ({
+        sceneCode: metadata.sceneCode,
+        optionIndex: optionIndex + 1,
+        text: option.text,
+        isCorrect: option.isCorrect ? 1 : 0,
+        feedbackText: option.feedbackText,
+      }))
+    })
+}
+
 function buildReceiverOptionRows(resources: EmotionalPackResource[]) {
   return resources
     .filter((resource) => resource.resourceType === 'care_scene')
@@ -561,6 +609,17 @@ function parseUtteranceRows(rows: Record<string, unknown>[], sceneCode: string):
     }))
 }
 
+function parseCareEmotionOptionRows(rows: Record<string, unknown>[], sceneCode: string): CareSceneEmotionOption[] {
+  return rows
+    .filter((row) => normalizeString(row.sceneCode) === sceneCode)
+    .sort((left, right) => Number(left.optionIndex || 0) - Number(right.optionIndex || 0))
+    .map((row) => ({
+      text: normalizeString(row.text),
+      isCorrect: normalizeBoolean(row.isCorrect),
+      feedbackText: normalizeString(row.feedbackText),
+    }))
+}
+
 function parseReceiverOptionRows(rows: Record<string, unknown>[], sceneCode: string): CareSceneReceiverOption[] {
   return rows
     .filter((row) => normalizeString(row.sceneCode) === sceneCode)
@@ -583,6 +642,7 @@ function parseExcelPack(buffer: ArrayBuffer): EmotionalPackImportResult {
   const promptRows = getSheetRows(workbook, 'emotion_prompts')
   const promptOptionRows = getSheetRows(workbook, 'emotion_prompt_options')
   const solutionRows = getSheetRows(workbook, 'emotion_solutions')
+  const careEmotionOptionRows = getSheetRows(workbook, 'care_emotion_options')
   const utteranceRows = getSheetRows(workbook, 'care_utterances')
   const receiverOptionRows = getSheetRows(workbook, 'care_receiver_options')
 
@@ -600,14 +660,22 @@ function parseExcelPack(buffer: ArrayBuffer): EmotionalPackImportResult {
         tags: normalizeStringList(row.tags),
         metadata: {
           sceneCode,
+          name: normalizeOptionalString(row.careName) || normalizeOptionalString(row.receiverName),
           title: normalizeString(row.title || row.name),
+          description: normalizeOptionalString(row.description),
           imageUrl: normalizeString(row.imageUrl),
           difficultyLevel: normalizeDifficultyLevel(row.difficultyLevel),
           careType: normalizeOptionalString(row.careType) as CareSceneResourceMeta['careType'],
           receiverEmotion: normalizeOptionalString(row.receiverEmotion) as CareSceneResourceMeta['receiverEmotion'],
-          receiverName: normalizeOptionalString(row.receiverName),
+          specificEmotionToken: normalizeOptionalString(row.specificEmotionToken),
+          specificEmotionLabel: normalizeOptionalString(row.specificEmotionLabel),
+          emotionOptions: parseCareEmotionOptionRows(careEmotionOptionRows, sceneCode),
+          receiverName: normalizeOptionalString(row.receiverName) || normalizeOptionalString(row.careName),
           emotionChips: normalizeStringList(row.emotionChips),
           comfortTip: normalizeOptionalString(row.comfortTip),
+          emotionColorToken: normalizeOptionalString(row.emotionColorToken) as CareSceneResourceMeta['emotionColorToken'],
+          emotionColorHex: normalizeOptionalString(row.emotionColorHex),
+          emotionColorLabel: normalizeOptionalString(row.emotionColorLabel),
           speakerPerspectiveText: normalizeString(row.speakerPerspectiveText),
           receiverPerspectiveText: normalizeString(row.receiverPerspectiveText),
           utterances: parseUtteranceRows(utteranceRows, sceneCode),
@@ -763,9 +831,15 @@ export function createEmotionalExcelPackBuffer(resources: ResourceItem[]) {
         emotionClues: joinList(metadata.emotionClues),
         careType: '',
         receiverEmotion: '',
+        careName: '',
+        specificEmotionToken: '',
+        specificEmotionLabel: '',
         receiverName: '',
         emotionChips: '',
         comfortTip: '',
+        emotionColorToken: '',
+        emotionColorHex: '',
+        emotionColorLabel: '',
         speakerPerspectiveText: '',
         receiverPerspectiveText: '',
         preferredUtteranceIds: '',
@@ -778,11 +852,17 @@ export function createEmotionalExcelPackBuffer(resources: ResourceItem[]) {
       sceneDomain: '',
       emotionOptions: '',
       emotionClues: '',
+      careName: metadata.name || metadata.receiverName || '',
       careType: metadata.careType || '',
       receiverEmotion: metadata.receiverEmotion || '',
-      receiverName: metadata.receiverName || '',
+      specificEmotionToken: metadata.specificEmotionToken || '',
+      specificEmotionLabel: metadata.specificEmotionLabel || '',
+      receiverName: metadata.receiverName || metadata.name || '',
       emotionChips: joinList(metadata.emotionChips),
       comfortTip: metadata.comfortTip || '',
+      emotionColorToken: metadata.emotionColorToken || '',
+      emotionColorHex: metadata.emotionColorHex || '',
+      emotionColorLabel: metadata.emotionColorLabel || '',
       speakerPerspectiveText: metadata.speakerPerspectiveText,
       receiverPerspectiveText: metadata.receiverPerspectiveText,
       preferredUtteranceIds: joinList(metadata.preferredUtteranceIds),
@@ -795,7 +875,8 @@ export function createEmotionalExcelPackBuffer(resources: ResourceItem[]) {
       'resourceType', 'sceneCode', 'name', 'title', 'category', 'description', 'coverImage',
       'imageUrl', 'difficultyLevel', 'recommendedHintCeiling', 'ageRange', 'abilityLevel',
       'tags', 'targetEmotion', 'sceneDomain', 'emotionOptions', 'emotionClues', 'careType', 'receiverEmotion',
-      'receiverName', 'emotionChips', 'comfortTip', 'speakerPerspectiveText', 'receiverPerspectiveText',
+      'careName', 'specificEmotionToken', 'specificEmotionLabel', 'receiverName', 'emotionChips', 'comfortTip',
+      'emotionColorToken', 'emotionColorHex', 'emotionColorLabel', 'speakerPerspectiveText', 'receiverPerspectiveText',
       'preferredUtteranceIds',
     ]),
     'resources'
@@ -820,6 +901,13 @@ export function createEmotionalExcelPackBuffer(resources: ResourceItem[]) {
       ? XLSX.utils.json_to_sheet(buildSolutionRows(packResources))
       : createEmptySheet(['sceneCode', 'solutionId', 'text', 'imageUrl', 'suitability', 'explanation']),
     'emotion_solutions'
+  )
+  XLSX.utils.book_append_sheet(
+    workbook,
+    buildCareEmotionOptionRows(packResources).length > 0
+      ? XLSX.utils.json_to_sheet(buildCareEmotionOptionRows(packResources))
+      : createEmptySheet(['sceneCode', 'optionIndex', 'text', 'isCorrect', 'feedbackText']),
+    'care_emotion_options'
   )
   XLSX.utils.book_append_sheet(
     workbook,

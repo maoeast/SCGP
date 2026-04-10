@@ -61,7 +61,7 @@ function buildEmotionSceneCorePrompt(meta: EmotionSceneResourceMeta) {
 }
 
 function buildCareSceneCorePrompt(meta: CareSceneResourceMeta) {
-  const receiverName = normalizeText((meta as CareSceneResourceMeta & { receiverName?: string }).receiverName) || '另一位小朋友'
+  const receiverName = normalizeText(meta.name) || normalizeText(meta.receiverName) || '另一位小朋友'
   const tags = joinKeywords(meta.tags || [])
   const preferredUtterances = meta.utterances
     .filter((utterance) => meta.preferredUtteranceIds.includes(utterance.id))
@@ -73,6 +73,7 @@ function buildCareSceneCorePrompt(meta: CareSceneResourceMeta) {
   return [
     buildSharedPromptPrefix(meta.title, '中国校园、中国家庭或中国社区公共场所'),
     `画面核心：表现“${meta.title}”这一关心情境，重点人物是需要被关心的${receiverName}。`,
+    normalizeText(meta.description) ? `教学目标：${normalizeText(meta.description)}。` : '',
     normalizeText(meta.speakerPerspectiveText) ? `情境描述：${normalizeText(meta.speakerPerspectiveText)}。` : '',
     normalizeText(meta.receiverPerspectiveText) ? `对方感受线索：${normalizeText(meta.receiverPerspectiveText)}。` : '',
     tags ? `关键词：${tags}。` : '',

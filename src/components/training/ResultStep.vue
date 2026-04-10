@@ -27,6 +27,10 @@
           <span class="meta-label">{{ secondaryMetaLabel }}</span>
           <strong>{{ secondaryMetaValue }}</strong>
         </div>
+        <div v-if="isCareScene && specificEmotionLabel" class="meta-card">
+          <span class="meta-label">对方感受</span>
+          <strong>{{ specificEmotionLabel }}</strong>
+        </div>
         <div v-if="isCareScene" class="meta-card">
           <span class="meta-label">站在对方这边</span>
           <strong>{{ receiverPerspectiveText }}</strong>
@@ -73,17 +77,19 @@ const totalHintCount = computed(() => store.hintLevelPerStep.reduce((sum, level)
 const isCareScene = computed(() => store.scene?.variant === 'care_scene')
 const summaryText = computed(() => {
   if (isCareScene.value) {
+    const feelingLabel = specificEmotionLabel.value ? `“${specificEmotionLabel.value}”` : '这份感受'
+
     if (store.careSessionOutcome === 'preferred') {
       return store.receiverComfortMatched === false
-        ? '你已经说出了很温柔的话。下次再多站在对方这边想一想，会更完整。'
-        : '你已经很会用温柔的话接住别人的感受了，真替对方开心。'
+        ? `你已经说出了很温柔的话，也接住了对方${feelingLabel}。下次再多站在对方这边想一想，会更完整。`
+        : `你已经很会用温柔的话接住对方${feelingLabel}，真替TA开心。`
     }
 
     if (store.careSessionOutcome === 'acceptable') {
-      return '你已经找到可以接受的说法了。下次如果先更轻一点、更贴近对方感受，会更贴心。'
+      return `你已经找到可以接受的说法了。下次如果先更轻一点、更贴近对方${feelingLabel}，会更贴心。`
     }
 
-    return '你已经开始练习站在别人那边想了。休息一下，下次我们再试着说得更温柔一点。'
+    return `你已经开始练习站在别人那边想、理解对方${feelingLabel}了。休息一下，下次我们再试着说得更温柔一点。`
   }
 
   if (earnedStars.value === 3) {
@@ -137,6 +143,10 @@ const secondaryMetaValue = computed(() => {
 
   return `${totalHintCount.value} 次`
 })
+
+const specificEmotionLabel = computed(() => (
+  isCareScene.value ? store.scene?.specific_emotion_label || '' : ''
+))
 
 const receiverPerspectiveText = computed(() => {
   if (!isCareScene.value) {

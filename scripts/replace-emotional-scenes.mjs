@@ -72,6 +72,19 @@ function normalizeCareType(value, fallback) {
   return CARE_TYPES.has(value) ? value : fallback
 }
 
+function normalizeColorToken(value) {
+  return (
+    value === 'green'
+    || value === 'yellow'
+    || value === 'blue'
+    || value === 'red'
+    || value === 'purple'
+    || value === 'gold'
+    || value === 'magenta'
+    || value === 'peach'
+  ) ? value : undefined
+}
+
 function ensureArrayOfObjects(value, label) {
   if (!Array.isArray(value)) {
     fail(`${label} 不是数组`)
@@ -198,7 +211,9 @@ function normalizeEmotionScene(raw) {
 
 function normalizeCareScene(raw) {
   const receiverEmotion = normalizeEmotion(raw.receiverEmotion, 'sad')
-  const color = EMOTION_COLORS[receiverEmotion]
+  const fallbackColor = EMOTION_COLORS[receiverEmotion] || EMOTION_COLORS.sad
+  const colorToken = normalizeColorToken(raw.emotionColorToken) || fallbackColor.token
+  const color = Object.values(EMOTION_COLORS).find((item) => item.token === colorToken) || fallbackColor
 
   const utterances = ensureArrayOfObjects(raw.utterances, `${raw.sceneCode || raw.title} utterances`).map((utterance, utteranceIndex) => ({
     id: normalizeString(utterance.id, `utterance_${utteranceIndex + 1}`),
@@ -219,13 +234,31 @@ function normalizeCareScene(raw) {
   const preferredUtteranceIds = normalizeStringArray(raw.preferredUtteranceIds)
     .filter((item) => utterances.some((utterance) => utterance.id === item))
 
+  const specificEmotionLabel = normalizeOptionalString(raw.specificEmotionLabel)
+  const emotionOptions = ensureArrayOfObjects(raw.emotionOptions || [], `${raw.sceneCode || raw.title} emotionOptions`).map((option, optionIndex) => ({
+    text: normalizeString(option.text, optionIndex === 0 ? (specificEmotionLabel || '请填写最准确的感受') : `情绪选项 ${optionIndex + 1}`),
+    isCorrect: option.isCorrect === true,
+    feedbackText: normalizeString(option.feedbackText, option.isCorrect === true ? '太棒啦！你读懂了TA现在的感受。' : '再看看发生了什么，我们再想一想。'),
+  }))
+
   return {
     sceneCode: normalizeString(raw.sceneCode, `care_scene_import_${Date.now()}`),
+    name: normalizeOptionalString(raw.name) || normalizeOptionalString(raw.receiverName),
     title: normalizeString(raw.title, '导入的表达关心场景'),
+    description: normalizeOptionalString(raw.description),
     imageUrl: normalizeString(raw.imageUrl),
     difficultyLevel: normalizeDifficultyLevel(raw.difficultyLevel),
     careType: normalizeCareType(raw.careType, 'empathy'),
     receiverEmotion,
+    specificEmotionToken: normalizeOptionalString(raw.specificEmotionToken),
+    specificEmotionLabel,
+    emotionOptions: emotionOptions.length > 0 ? emotionOptions : [
+      {
+        text: specificEmotionLabel || '最准确的感受',
+        isCorrect: true,
+        feedbackText: '太棒啦！你读懂了TA现在的感受。',
+      },
+    ],
     speakerPerspectiveText: normalizeString(raw.speakerPerspectiveText, '请填写表达者视角提示'),
     receiverPerspectiveText: normalizeString(raw.receiverPerspectiveText, '请填写接收者视角提示'),
     utterances,
@@ -235,9 +268,9 @@ function normalizeCareScene(raw) {
     ageRange: normalizeOptionalString(raw.ageRange),
     abilityLevel: normalizeAbilityLevel(raw.abilityLevel),
     tags: normalizeStringArray(raw.tags),
-    emotionColorToken: color.token,
+    emotionColorToken: colorToken,
     emotionColorHex: color.hex,
-    emotionColorLabel: color.label,
+    emotionColorLabel: normalizeOptionalString(raw.emotionColorLabel) || color.label,
   }
 }
 
@@ -432,7 +465,7 @@ function insertResources(db, resources) {
       resource.coverImage || '',
       1,
       1,
-      'emotional_json_replace_2026_03_23',
+      'emotional_json_replace_2026_04_10',
       JSON.stringify(resource.metadata),
       0,
     ])

@@ -7,11 +7,13 @@ import type {
 
 type CareSceneGeneratedFieldInput = Pick<
   CareSceneResourceMeta,
-  'title'
+  'name'
+  | 'title'
   | 'speakerPerspectiveText'
   | 'receiverPerspectiveText'
   | 'receiverEmotion'
   | 'careType'
+  | 'specificEmotionLabel'
   | 'utterances'
   | 'preferredUtteranceIds'
   | 'tags'
@@ -125,6 +127,11 @@ function findChildName(text: string) {
 }
 
 function deriveReceiverName(input: CareSceneGeneratedFieldInput) {
+  const canonical = normalizeText(input.name)
+  if (canonical) {
+    return canonical
+  }
+
   const manual = normalizeText(input.receiverName)
   if (manual) {
     return manual
@@ -176,6 +183,7 @@ function deriveEmotionChips(input: CareSceneGeneratedFieldInput) {
       : '想被理解'
 
   return uniqueStrings([
+    input.specificEmotionLabel,
     ...specificChips,
     careTypeChip,
     ...baseChips,

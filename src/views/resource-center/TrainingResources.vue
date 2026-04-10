@@ -1086,6 +1086,18 @@ function getEmotionalCoverImage(resourceType: string, metadata: Record<string, a
     : undefined
 }
 
+function resolveResourceDescription(
+  resourceType: string,
+  formDescription: string,
+  metadata: Record<string, any> | null | undefined,
+) {
+  if (resourceType === 'care_scene' && metadata && typeof metadata.description === 'string' && metadata.description.trim()) {
+    return metadata.description.trim()
+  }
+
+  return formDescription || undefined
+}
+
 // 防抖搜索
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 function handleSearchDebounced() {
@@ -1231,6 +1243,7 @@ async function handleSaveCreate() {
     if (isEmotionalResourceType(createForm.resourceType) && metadata === null) {
       return
     }
+    const resolvedDescription = resolveResourceDescription(createForm.resourceType, createForm.description, metadata)
     const emotionalCoverImage = getEmotionalCoverImage(createForm.resourceType, metadata)
 
     const resourceId = api.addResource({
@@ -1238,7 +1251,7 @@ async function handleSaveCreate() {
       resourceType: createForm.resourceType,
       name: createForm.name,
       category: createForm.category,
-      description: createForm.description || undefined,
+      description: resolvedDescription,
       coverImage: emotionalCoverImage,
       tags: createForm.tags.length > 0 ? createForm.tags : undefined,
       metadata
@@ -1333,7 +1346,11 @@ function handleEdit(resource: ResourceItem) {
   editingResource.value = resource
   editForm.name = resource.name
   editForm.category = resource.category || ''
-  editForm.description = resource.description || ''
+  editForm.description = resource.resourceType === 'care_scene'
+    && resource.metadata
+    && typeof (resource.metadata as Record<string, unknown>).description === 'string'
+    ? String((resource.metadata as Record<string, unknown>).description || '')
+    : resource.description || ''
   editForm.tags = [...(resource.tags || [])]
   ensureEditEmotionalEditorState(resource)
   editDialogVisible.value = true
@@ -1358,10 +1375,11 @@ async function handleSaveEdit() {
     if (isEmotionalResourceType(editingResource.value.resourceType) && metadata === null) {
       return
     }
+    const resolvedDescription = resolveResourceDescription(editingResource.value.resourceType, editForm.description, metadata)
 
     // 根据是否为自定义资源决定更新哪些字段
     const updateData: any = {
-      description: editForm.description,
+      description: resolvedDescription,
       tags: editForm.tags,
       metadata
     }
@@ -1391,7 +1409,7 @@ async function handleSaveEdit() {
           ...currentResource,
           name: editForm.name,
           category: editForm.category,
-          description: editForm.description,
+          description: resolvedDescription,
           tags: editForm.tags,
           metadata: metadata ?? currentResource.metadata
         }

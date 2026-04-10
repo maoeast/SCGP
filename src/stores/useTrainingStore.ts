@@ -118,6 +118,8 @@ export interface SceneData {
   created_at: string | null
   care_type: EmotionalCareType | null
   receiver_emotion: EmotionalBaseEmotion | null
+  specific_emotion_token?: string | null
+  specific_emotion_label?: string | null
 }
 
 export interface TrainingSessionPayload {
@@ -443,6 +445,8 @@ export const useTrainingStore = defineStore('training', () => {
       created_at: toNullableString(row.created_at),
       care_type: null,
       receiver_emotion: null,
+      specific_emotion_token: null,
+      specific_emotion_label: null,
     }
   }
 
