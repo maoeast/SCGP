@@ -6,8 +6,11 @@ import type {
   ScaleQuestion,
   ScoreResult,
   StudentContext,
+  PersistContext,
+  PersistResult
 } from '@/types/assessment'
 import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
+import { Gmfm88AssessmentAPI } from '@/database/api'
 import {
   GMFM_DIMENSIONS,
   GMFM_QUESTIONS,
@@ -404,5 +407,64 @@ export class Gmfm88Driver extends BaseDriver {
       levelName: result.level,
       severity: result.severity,
     }
+  }
+
+  // ========== 持久化 ==========
+
+  /**
+   * 持久化 GMFM-88 评估结果到数据库
+   */
+  async persistAssessment(context: PersistContext): Promise<PersistResult> {
+    const { student, state, scoreResult, startTime, endTime } = context
+
+    const gmfm88Api = new Gmfm88AssessmentAPI()
+    const extraData = scoreResult.extraData as any
+    const questions = this.getQuestions(student)
+
+    const orderedDetails = Object.entries(state.answers)
+      .map(([questionId, answer]) => {
+        const question = questions.find((item) => String(item.id) === String(questionId))
+        return {
+          question_id: parseInt(questionId, 10),
+          item_code: String(question?.metadata?.itemCode || ''),
+          dimension: question?.dimension || '',
+          score: answer.score,
+          raw_value: String(answer.value),
+          is_nt: answer.value === 'NT',
+          answer_time: answer.responseTime || 0,
+        }
+      })
+      .sort((left, right) => left.question_id - right.question_id)
+
+    const assessId = gmfm88Api.saveAssessment({
+      assessment: {
+        student_id: student.id,
+        age_months: student.ageInMonths,
+        total_score: Number(scoreResult.totalScore || 0),
+        raw_total_score: Number(extraData?.totalRawScore || 0),
+        total_max_score: Number(extraData?.totalMaxScore || 0),
+        level: scoreResult.level,
+        level_code: scoreResult.levelCode || null,
+        domain_results: extraData?.domainResults || [],
+        domain_feedback: extraData?.domainFeedback || [],
+        iep_targets: extraData?.iepTargets || [],
+        flags: extraData?.flags || [],
+        overall_rule: extraData?.overallRule || null,
+        start_time: startTime,
+        end_time: endTime,
+      },
+      details: orderedDetails,
+    })
+
+    const reportId = this.createReportRecord({
+      studentId: student.id,
+      reportType: 'gmfm_88',
+      assessId,
+      moduleCode: 'sensory',
+      title: `${student.name} - GMFM-88评估报告`,
+    })
+
+    console.log('[Gmfm88Driver] GMFM-88 评估持久化成功, assessId:', assessId)
+    return { assessId, reportId }
   }
 }

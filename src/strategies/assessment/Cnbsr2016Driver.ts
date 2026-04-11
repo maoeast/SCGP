@@ -8,6 +8,8 @@ import type {
   ScaleQuestion,
   ScoreResult,
   StudentContext,
+  PersistContext,
+  PersistResult
 } from '@/types/assessment'
 import {
   SCGP_CNBS_R2016_Feedback_Config,
@@ -28,6 +30,7 @@ import type {
   Cnbsr2016QuestionData,
   Cnbsr2016DqStatus,
 } from '@/types/cnbsr2016'
+import { Cnbsr2016AssessmentAPI } from '@/database/api'
 
 type Cnbsr2016DomainPhase = 'search_basal' | 'search_ceiling' | 'completed'
 
@@ -409,6 +412,68 @@ export class Cnbsr2016Driver extends BaseDriver {
 
   protected getIcon(): string {
     return 'Opportunity'
+  }
+
+  // ========== 持久化 ==========
+
+  /**
+   * 持久化 CNBS-R2016 评估结果到数据库
+   */
+  async persistAssessment(context: PersistContext): Promise<PersistResult> {
+    const { student, state, scoreResult, startTime, endTime } = context
+
+    const cnbsr2016Api = new Cnbsr2016AssessmentAPI()
+    const extraData = scoreResult.extraData as any
+    const questions = this.getQuestions(student)
+
+    const orderedDetails = Object.entries(state.answers)
+      .map(([questionId, answer]) => {
+        const question = questions.find((item) => String(item.id) === String(questionId))
+        return {
+          question_id: parseInt(questionId, 10),
+          dimension: question?.dimension || '',
+          age_group_months: Number(question?.metadata?.age_group_months || 0),
+          score_weight: Number(question?.metadata?.score_weight || 0),
+          score: answer.score,
+          answer_time: answer.responseTime || 0,
+          is_auto_filled: answer.metadata?.is_auto_filled === true,
+          auto_fill_reason: answer.metadata?.auto_fill_reason || null,
+        }
+      })
+      .sort((left, right) => left.question_id - right.question_id)
+
+    const assessId = cnbsr2016Api.saveAssessment({
+      assessment: {
+        student_id: student.id,
+        age_months: student.ageInMonths,
+        total_mental_age: Number(scoreResult.totalScore || 0),
+        dq: Number(extraData?.dq || 0),
+        dq_status: (extraData?.dqStatus || scoreResult.levelCode || 'normal'),
+        age_bracket: extraData?.ageBracket || 'a1',
+        level: scoreResult.level,
+        level_code: scoreResult.levelCode || null,
+        domain_results: extraData?.domainResults || [],
+        domain_feedback: extraData?.domainFeedback || [],
+        iep_targets: extraData?.iepTargets || [],
+        iep_interventions: extraData?.iepInterventions || [],
+        overall_rule: extraData?.overallRule || null,
+        expert_clinical: extraData?.expertClinical || null,
+        start_time: startTime,
+        end_time: endTime,
+      },
+      details: orderedDetails,
+    })
+
+    const reportId = this.createReportRecord({
+      studentId: student.id,
+      reportType: 'cnbsr2016',
+      assessId,
+      moduleCode: 'sensory',
+      title: `${student.name} - 儿心量表Ⅱ评估报告`,
+    })
+
+    console.log('[Cnbsr2016Driver] CNBS-R2016 评估持久化成功, assessId:', assessId)
+    return { assessId, reportId }
   }
 
   private buildOrderedQuestions(): Cnbsr2016QuestionData[] {

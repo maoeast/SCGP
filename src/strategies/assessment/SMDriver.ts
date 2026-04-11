@@ -21,11 +21,14 @@ import type {
   NavigationDecision,
   ScoreResult,
   AssessmentFeedback,
-  DimensionScore
+  DimensionScore,
+  PersistContext,
+  PersistResult
 } from '@/types/assessment'
 import { BaseDriver } from './BaseDriver'
 import { smQuestions, type SMQuestion } from '@/database/sm-questions'
 import { calculateSQScore, getEvaluationLevel } from '@/database/sm-norms'
+import { SMAssessmentAPI } from '@/database/api'
 
 /**
  * S-M 量表驱动器实现
@@ -257,6 +260,57 @@ export class SMDriver extends BaseDriver {
     const questionsFromStart = this.totalQuestions - startIndex
     if (questionsFromStart <= 0) return 100
     return Math.min(100, Math.round((answeredCount / questionsFromStart) * 100))
+  }
+
+  // ========== 持久化 ==========
+
+  /**
+   * 持久化 S-M 量表评估结果到数据库
+   *
+   * 包含：
+   * 1. 创建 sm_assess 主记录
+   * 2. 保存 sm_assess_detail 答题详情
+   * 3. 创建 report_record
+   */
+  async persistAssessment(context: PersistContext): Promise<PersistResult> {
+    const { student, state, scoreResult, startTime, endTime } = context
+
+    const smApi = new SMAssessmentAPI()
+
+    // 1. 创建评估主记录
+    const startStage = state.metadata?.startStage ||
+      this.sortedQuestions[state.currentIndex]?.age_stage || 1
+
+    const assessId = smApi.createAssessment({
+      student_id: student.id,
+      age_stage: startStage,
+      raw_score: scoreResult.totalScore || 0,
+      sq_score: scoreResult.standardScore || 10,
+      level: scoreResult.level,
+      start_time: startTime,
+      end_time: endTime
+    })
+
+    // 2. 保存评估详情
+    for (const [questionId, answer] of Object.entries(state.answers)) {
+      smApi.saveAssessmentDetail({
+        assess_id: assessId,
+        question_id: parseInt(questionId),
+        score: answer.score,
+        answer_time: answer.responseTime || 0
+      })
+    }
+
+    // 3. 创建报告记录
+    const reportId = this.createReportRecord({
+      studentId: student.id,
+      reportType: 'sm',
+      assessId,
+      title: `${student.name} - S-M量表评估报告`
+    })
+
+    console.log('[SMDriver] S-M 评估持久化成功, assessId:', assessId)
+    return { assessId, reportId }
   }
 
   /**

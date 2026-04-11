@@ -320,6 +320,36 @@ export interface ScaleInfo {
 }
 
 // ============================================================
+// 持久化契约（ScaleDriver 写库用）
+// ============================================================
+
+/**
+ * 持久化上下文 —— 从容器传递给 Driver 的写库必须信息
+ */
+export interface PersistContext {
+  /** 学生上下文 */
+  student: StudentContext
+  /** 评估状态（含答案、时间、metadata 等） */
+  state: AssessmentState
+  /** 计算后的评分结果 */
+  scoreResult: ScoreResult
+  /** 评估开始时间（ISO 字符串） */
+  startTime: string
+  /** 评估结束时间（ISO 字符串） */
+  endTime: string
+}
+
+/**
+ * 持久化返回值
+ */
+export interface PersistResult {
+  /** 评估主记录 ID */
+  assessId: number
+  /** 报告记录 ID（可选） */
+  reportId?: number
+}
+
+// ============================================================
 // 量表驱动器契约（核心接口）
 // ============================================================
 
@@ -438,6 +468,23 @@ export interface ScaleDriver {
    * 获取量表基本信息
    */
   getScaleInfo(): ScaleInfo
+
+  // ========== 持久化 ==========
+
+  /**
+   * 持久化评估结果到数据库（可选）
+   *
+   * 由各 ScaleDriver 实现，包含：
+   * 1. 创建量表特有的评估主记录
+   * 2. 保存答题详情（如有）
+   * 3. 创建 report_record
+   *
+   * 当 Driver 未实现此方法时，容器会降级到旧的硬编码保存逻辑。
+   *
+   * @param context 持久化上下文
+   * @returns 持久化结果，包含 assessId
+   */
+  persistAssessment?(context: PersistContext): Promise<PersistResult>
 }
 
 // ============================================================

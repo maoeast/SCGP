@@ -22,7 +22,9 @@ import type {
   ScoreResult,
   AssessmentFeedback,
   DimensionScore,
-  AssessmentState
+  AssessmentState,
+  PersistContext,
+  PersistResult
 } from '@/types/assessment'
 import { BaseDriver } from './BaseDriver'
 import {
@@ -36,6 +38,7 @@ import {
   getEvaluationLevel as getCSIRSEvaluationLevel
 } from '@/database/csirs-conversion'
 import type { CSIRSQuestion, CSIRSDimensionType } from '@/types/csirs'
+import { CSIRSAPI } from '@/database/api'
 
 /**
  * CSIRS 量表驱动器实现
@@ -237,6 +240,80 @@ export class CSIRSDriver extends BaseDriver {
     // 这里暂时使用固定值，实际应该传入 context
     const answeredCount = Object.keys(state.answers).length
     return Math.min(100, Math.round((answeredCount / this.totalQuestions) * 100))
+  }
+
+  // ========== 持久化 ==========
+
+  /**
+   * 持久化 CSIRS 量表评估结果到数据库
+   *
+   * 包含：
+   * 1. 创建 csirs_assess 主记录（使用 JSON 字段存储维度分数）
+   * 2. 保存 csirs_assess_detail 答题详情
+   * 3. 创建 report_record
+   */
+  async persistAssessment(context: PersistContext): Promise<PersistResult> {
+    const { student, state, scoreResult, startTime, endTime } = context
+
+    const csirsApi = new CSIRSAPI()
+
+    // 从维度分数中提取各维度得分
+    const dimensions = scoreResult.dimensions
+
+    // 构建原始分和 T 分的 JSON 对象
+    const rawScores: Record<string, number> = {}
+    const tScores: Record<string, number> = {}
+
+    for (const dim of dimensions) {
+      rawScores[dim.code] = dim.rawScore || 0
+      tScores[dim.code] = dim.standardScore || 50
+    }
+
+    // 1. 创建评估主记录
+    const assessId = csirsApi.createAssessmentWithJsonScores({
+      student_id: student.id,
+      age_months: student.ageInMonths,
+      raw_scores: JSON.stringify(rawScores),
+      t_scores: JSON.stringify(tScores),
+      total_t_score: scoreResult.tScore || scoreResult.totalScore || 50,
+      level: scoreResult.level,
+      start_time: startTime,
+      end_time: endTime
+    })
+
+    // 2. 保存答题详情（含维度信息）
+    const questions = this.getQuestions(student)
+    const details: Array<{
+      assess_id: number
+      question_id: number
+      dimension: string
+      score: number
+      answer_time: number
+    }> = []
+
+    for (const [questionId, answer] of Object.entries(state.answers)) {
+      const question = questions.find(q => q.id === parseInt(questionId))
+      details.push({
+        assess_id: assessId,
+        question_id: parseInt(questionId),
+        dimension: question?.dimension || '',
+        score: answer.score,
+        answer_time: answer.responseTime || 0
+      })
+    }
+
+    csirsApi.saveAssessmentDetailsWithDimension(details)
+
+    // 3. 创建报告记录
+    const reportId = this.createReportRecord({
+      studentId: student.id,
+      reportType: 'csirs',
+      assessId,
+      title: `${student.name} - CSIRS感觉统合评估报告`
+    })
+
+    console.log('[CSIRSDriver] CSIRS 评估持久化成功, assessId:', assessId)
+    return { assessId, reportId }
   }
 
   // ========== 私有方法：题目转换 ==========

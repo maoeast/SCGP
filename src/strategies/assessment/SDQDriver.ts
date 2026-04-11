@@ -14,8 +14,11 @@ import type {
   ScaleAnswer,
   ScoreResult,
   AssessmentFeedback,
-  DimensionScore
+  DimensionScore,
+  PersistContext,
+  PersistResult
 } from '@/types/assessment'
+import { SDQAssessmentAPI } from '@/database/api'
 import {
   SDQ_QUESTIONS,
   SDQ_DIMENSION_NAMES,
@@ -466,6 +469,50 @@ export class SDQDriver extends BaseDriver {
   protected getDefaultDescription(): string {
     return '评估儿童的情绪、行为、注意力及社交能力'
   }
+  // ========== 持久化 ==========
+
+  /**
+   * 持久化 SDQ 评估结果到数据库
+   */
+  async persistAssessment(context: PersistContext): Promise<PersistResult> {
+    const { student, scoreResult, startTime, endTime } = context
+
+    const sdqApi = new SDQAssessmentAPI()
+
+    const rawAnswers = scoreResult.rawAnswers || {}
+    const dimensionScores = scoreResult.dimensions.reduce((acc, dim) => {
+      acc[dim.code] = {
+        rawScore: dim.rawScore,
+        level: dim.level || 'normal',
+        levelName: dim.levelName || '正常'
+      }
+      return acc
+    }, {} as any)
+
+    const assessId = sdqApi.createAssessment({
+      student_id: student.id,
+      age_months: student.ageInMonths,
+      raw_scores: JSON.stringify(rawAnswers),
+      dimension_scores: JSON.stringify(dimensionScores),
+      total_difficulties_score: scoreResult.totalScore || 0,
+      prosocial_score: dimensionScores['prosocial']?.rawScore || 0,
+      is_valid: 1,
+      level: scoreResult.level || '正常',
+      start_time: startTime,
+      end_time: endTime
+    })
+
+    const reportId = this.createReportRecord({
+      studentId: student.id,
+      reportType: 'sdq',
+      assessId,
+      title: `${student.name} - SDQ长处和困难问卷评估报告`
+    })
+
+    console.log('[SDQDriver] SDQ 评估持久化成功, assessId:', assessId)
+    return { assessId, reportId }
+  }
+
   protected getEstimatedTime(): number {
     return 8 // 8分钟
   }

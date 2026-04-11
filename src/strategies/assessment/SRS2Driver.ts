@@ -13,8 +13,11 @@ import type {
   ScaleQuestion,
   ScaleAnswer,
   ScoreResult,
-  DimensionScore
+  DimensionScore,
+  PersistContext,
+  PersistResult
 } from '@/types/assessment'
+import { SRS2AssessmentAPI } from '@/database/api'
 import {
   SRS2_QUESTIONS,
   SRS2_DIMENSION_NAMES,
@@ -355,6 +358,55 @@ export class SRS2Driver extends BaseDriver {
 
   protected getDefaultDescription(): string {
     return '评估儿童的社交反应能力'
+  }
+
+  // ========== 持久化 ==========
+
+  /**
+   * 持久化 SRS-2 评估结果到数据库
+   */
+  async persistAssessment(context: PersistContext): Promise<PersistResult> {
+    const { student, scoreResult, startTime, endTime } = context
+
+    const srs2Api = new SRS2AssessmentAPI()
+
+    const rawAnswers = scoreResult.rawAnswers || {}
+    const dimensionTScores = (scoreResult.extraData as any)?.dimensionTScores || {}
+    const dimensionScores = scoreResult.dimensions.reduce((acc, dim) => {
+      acc[dim.code] = {
+        name: dim.name,
+        rawScore: dim.rawScore,
+        tScore: dimensionTScores[dim.code] || dim.standardScore || 50,
+        level: dim.level || 'normal',
+        levelName: dim.levelName || '正常'
+      }
+      return acc
+    }, {} as any)
+
+    const totalTScore = (scoreResult.extraData as { totalTScore: number })?.totalTScore || 50
+
+    const assessId = srs2Api.createAssessment({
+      student_id: student.id,
+      age_months: student.ageInMonths,
+      gender: student.gender === '男' ? 'male' : 'female',
+      raw_answers: JSON.stringify(rawAnswers),
+      dimension_scores: JSON.stringify(dimensionScores),
+      total_raw_score: scoreResult.totalScore || 0,
+      total_t_score: totalTScore,
+      total_level: scoreResult.levelCode || 'normal',
+      start_time: startTime,
+      end_time: endTime
+    })
+
+    const reportId = this.createReportRecord({
+      studentId: student.id,
+      reportType: 'srs2',
+      assessId,
+      title: `${student.name} - SRS-2社交反应量表评估报告`
+    })
+
+    console.log('[SRS2Driver] SRS-2 评估持久化成功, assessId:', assessId)
+    return { assessId, reportId }
   }
 
   protected getEstimatedTime(): number {

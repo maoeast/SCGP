@@ -6,8 +6,11 @@ import type {
   ScaleQuestion,
   ScoreResult,
   StudentContext,
+  PersistContext,
+  PersistResult
 } from '@/types/assessment'
 import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
+import { Tgmd3AssessmentAPI } from '@/database/api'
 import {
   TGMD3_DIMENSIONS,
   TGMD3_LEVEL_DESCRIPTIONS,
@@ -502,5 +505,74 @@ export class Tgmd3Driver extends BaseDriver {
       levelName: item.normLabel || item.level,
       severity: item.severity,
     }
+  }
+
+  // ========== 持久化 ==========
+
+  /**
+   * 持久化 TGMD-3 评估结果到数据库
+   */
+  async persistAssessment(context: PersistContext): Promise<PersistResult> {
+    const { student, state, scoreResult, startTime, endTime } = context
+
+    const tgmd3Api = new Tgmd3AssessmentAPI()
+    const extraData = scoreResult.extraData as any
+    const questions = this.getQuestions(student)
+
+    const orderedDetails = Object.entries(state.answers)
+      .map(([questionId, answer]) => {
+        const question = questions.find((item) => String(item.id) === String(questionId))
+        return {
+          question_id: parseInt(questionId, 10),
+          item_code: String(question?.metadata?.itemCode || ''),
+          dimension: question?.dimension || '',
+          score: Number(answer.score || 0),
+          max_score: Number(question?.metadata?.maxScore || 0),
+          raw_value: String(answer.value),
+          criteria_snapshot: Array.isArray(question?.metadata?.criteria) ? question?.metadata?.criteria : [],
+          answer_time: answer.responseTime || 0,
+        }
+      })
+      .sort((left, right) => left.question_id - right.question_id)
+
+    const assessId = tgmd3Api.saveAssessment({
+      assessment: {
+        student_id: student.id,
+        age_months: student.ageInMonths,
+        gender: student.gender,
+        locomotor_score: Number(extraData?.locomotorScore || 0),
+        locomotor_percent: Number(extraData?.locomotorPercent || 0),
+        locomotor_level: extraData?.locomotorLevel ?? null,
+        ball_skills_score: Number(extraData?.ballSkillsScore || 0),
+        ball_skills_percent: Number(extraData?.ballSkillsPercent || 0),
+        ball_skills_level: extraData?.ballSkillsLevel ?? null,
+        total_score: Number(extraData?.totalRawScore || 0),
+        total_percent: Number(extraData?.totalPercent || 0),
+        total_level: extraData?.totalLevel ?? null,
+        level: scoreResult.level,
+        level_code: scoreResult.levelCode || null,
+        domain_results: extraData?.domainResults || [],
+        domain_feedback: extraData?.domainFeedback || [],
+        skill_results: extraData?.skillResults || [],
+        norm_summary: extraData?.normSummary || {},
+        iep_targets: extraData?.iepTargets || [],
+        flags: extraData?.flags || [],
+        overall_rule: extraData?.overallRule || null,
+        start_time: startTime,
+        end_time: endTime,
+      },
+      details: orderedDetails,
+    })
+
+    const reportId = this.createReportRecord({
+      studentId: student.id,
+      reportType: 'tgmd_3',
+      assessId,
+      moduleCode: 'sensory',
+      title: `${student.name} - TGMD-3评估报告`,
+    })
+
+    console.log('[Tgmd3Driver] TGMD-3 评估持久化成功, assessId:', assessId)
+    return { assessId, reportId }
   }
 }

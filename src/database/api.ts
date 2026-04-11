@@ -1,5 +1,10 @@
 import { getDatabase } from './init';
 import type { ModuleCode } from '@/types/module';
+import type {
+  EmotionalTrainingSummaryRawData,
+  PersistEmotionalSessionInput,
+  PersistEmotionalSessionResult,
+} from '@/types/emotional';
 import { resolveTrainingEntryCode, resolveTrainingEntryCodeFromResource } from '@/utils/training-entry';
 import { TrainingSessionWriter } from './training-session-writer';
 import { FINE_MOTOR_QUESTIONS } from './fine-motor-questions';
@@ -297,6 +302,18 @@ function buildTrainingEntryResource(
     category: resourceRow?.category || fallback.category || '',
     metadata: parseResourceMetadata(resourceRow?.meta_data ?? fallback.metadata),
   }
+}
+
+function clampRate(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0
+  }
+
+  return Math.max(0, Math.min(1, value))
+}
+
+function toEmotionalIsoTimestamp(value: number): string {
+  return new Date(value).toISOString()
 }
 
 export interface TrainingSessionRecord {
@@ -1965,6 +1982,58 @@ export class CSIRSAPI extends DatabaseAPI {
       `, [detail.assess_id, detail.question_id, detail.score]);
     });
   }
+
+  /**
+   * 创建 CSIRS 评估记录（V2 - 使用 JSON 字段，匹配实际 Schema）
+   *
+   * 实际 csirs_assess 表使用 age_months, raw_scores(JSON), t_scores(JSON), total_t_score
+   * 而非旧的 per-column 维度分数
+   */
+  createAssessmentWithJsonScores(assessment: {
+    student_id: number
+    age_months: number
+    raw_scores: string   // JSON string: { "vestibular": 40, "tactile": 30, ... }
+    t_scores: string     // JSON string: { "vestibular": 50, "tactile": 45, ... }
+    total_t_score: number
+    level: string
+    start_time: string
+    end_time: string
+  }): number {
+    this.execute(`
+      INSERT INTO csirs_assess (
+        student_id, age_months, raw_scores, t_scores, total_t_score, level, start_time, end_time
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      assessment.student_id,
+      assessment.age_months,
+      assessment.raw_scores,
+      assessment.t_scores,
+      assessment.total_t_score,
+      assessment.level,
+      assessment.start_time,
+      assessment.end_time
+    ]);
+
+    return this.getLastInsertId();
+  }
+
+  /**
+   * 保存 CSIRS 评估详情（含维度信息）
+   */
+  saveAssessmentDetailsWithDimension(details: Array<{
+    assess_id: number
+    question_id: number
+    dimension: string
+    score: number
+    answer_time: number
+  }>): void {
+    for (const detail of details) {
+      this.execute(`
+        INSERT INTO csirs_assess_detail (assess_id, question_id, dimension, score, answer_time)
+        VALUES (?, ?, ?, ?, ?)
+      `, [detail.assess_id, detail.question_id, detail.dimension, detail.score, detail.answer_time]);
+    }
+  }
 }
 
 // CBCL 数据库 API
@@ -2393,6 +2462,106 @@ export class ConnersTRSAPI extends DatabaseAPI {
   getStudentAssessments(studentId: number) {
     return this.query(`
       SELECT * FROM conners_trs_assess
+      WHERE student_id = ?
+      ORDER BY created_at DESC
+    `, [studentId])
+  }
+}
+
+// SDQ 数据库 API
+export class SDQAssessmentAPI extends DatabaseAPI {
+  /**
+   * 创建 SDQ 评估记录
+   */
+  createAssessment(data: {
+    student_id: number
+    age_months: number
+    raw_scores: string           // JSON string
+    dimension_scores: string     // JSON string
+    total_difficulties_score: number
+    prosocial_score: number
+    is_valid: number
+    level: string
+    start_time: string
+    end_time: string
+  }): number {
+    this.execute(`
+      INSERT INTO sdq_assess (
+        student_id, age_months, raw_scores, dimension_scores,
+        total_difficulties_score, prosocial_score, is_valid, level, start_time, end_time
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      data.student_id,
+      data.age_months,
+      data.raw_scores,
+      data.dimension_scores,
+      data.total_difficulties_score,
+      data.prosocial_score,
+      data.is_valid,
+      data.level,
+      data.start_time,
+      data.end_time
+    ])
+
+    return this.getLastInsertId()
+  }
+
+  /**
+   * 获取学生的所有 SDQ 评估记录
+   */
+  getStudentAssessments(studentId: number) {
+    return this.query(`
+      SELECT * FROM sdq_assess
+      WHERE student_id = ?
+      ORDER BY created_at DESC
+    `, [studentId])
+  }
+}
+
+// SRS-2 数据库 API
+export class SRS2AssessmentAPI extends DatabaseAPI {
+  /**
+   * 创建 SRS-2 评估记录
+   */
+  createAssessment(data: {
+    student_id: number
+    age_months: number
+    gender: 'male' | 'female'
+    raw_answers: string          // JSON string
+    dimension_scores: string     // JSON string
+    total_raw_score: number
+    total_t_score: number
+    total_level: string
+    start_time: string
+    end_time: string
+  }): number {
+    this.execute(`
+      INSERT INTO srs2_assess (
+        student_id, age_months, gender, raw_answers, dimension_scores,
+        total_raw_score, total_t_score, total_level, start_time, end_time
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      data.student_id,
+      data.age_months,
+      data.gender,
+      data.raw_answers,
+      data.dimension_scores,
+      data.total_raw_score,
+      data.total_t_score,
+      data.total_level,
+      data.start_time,
+      data.end_time
+    ])
+
+    return this.getLastInsertId()
+  }
+
+  /**
+   * 获取学生的所有 SRS-2 评估记录
+   */
+  getStudentAssessments(studentId: number) {
+    return this.query(`
+      SELECT * FROM srs2_assess
       WHERE student_id = ?
       ORDER BY created_at DESC
     `, [studentId])
@@ -3127,6 +3296,179 @@ export class ReportAPI extends DatabaseAPI {
       gmfm_88_migrated: gmfm88Migrated,
       tgmd_3_migrated: tgmd3Migrated,
       total: smMigrated + weefimMigrated + csirsMigrated + connersPSQMigrated + connersTRSMigrated + sdqMigrated + srs2Migrated + cbclMigrated + fineMotorMigrated + cnbsr2016Migrated + gmfm88Migrated + tgmd3Migrated
+    }
+  }
+}
+
+export class EmotionalTrainingRecordAPI extends DatabaseAPI {
+  persistSession(input: PersistEmotionalSessionInput): PersistEmotionalSessionResult {
+    if (!Number.isFinite(input.studentId) || input.studentId <= 0) {
+      throw new Error('表达关心训练缺少有效 student_id，无法写入正式记录。')
+    }
+
+    if (!Number.isFinite(input.resourceId) || input.resourceId <= 0) {
+      throw new Error('表达关心训练缺少有效 resource_id，无法写入正式记录。')
+    }
+
+    const student = this.queryOne(
+      'SELECT name, current_class_id, current_class_name FROM student WHERE id = ?',
+      [input.studentId],
+    )
+    if (!student) {
+      throw new Error(`未找到学生 ${input.studentId}，无法写入表达关心训练记录。`)
+    }
+
+    const resource = this.queryOne(
+      'SELECT name FROM sys_training_resource WHERE id = ?',
+      [input.resourceId],
+    )
+    if (!resource) {
+      throw new Error(`未找到资源 ${input.resourceId}，无法写入表达关心训练记录。`)
+    }
+
+    const classId = student.current_class_id || null
+    const className = student.current_class_name || null
+    const studentName = student.name || `学生${input.studentId}`
+    const taskNameSnapshot = resource.name || input.summary.sessionType || input.subModule
+    const durationMs = Math.max(0, Math.round(input.endedAt - input.startedAt))
+    const accuracyRate = input.summary.questionCount > 0
+      ? clampRate(input.summary.correctCount / input.summary.questionCount)
+      : 0
+    const avgResponseTime = input.details.length > 0
+      ? Math.round(input.details.reduce((sum, item) => sum + (item.response_time_ms || 0), 0) / input.details.length)
+      : 0
+
+    const summaryRawData: EmotionalTrainingSummaryRawData = {
+      ...input.summary,
+      sessionType: input.summary.sessionType || input.subModule,
+      resourceId: input.resourceId,
+      resourceType: input.resourceType,
+      subModule: input.subModule,
+    }
+
+    const entryCode = resolveTrainingEntryCode(undefined, 'emotional')
+    const rawDb = getTransactionalDb(this.db)
+
+    rawDb.run('BEGIN TRANSACTION')
+
+    try {
+      this.execute(`
+        INSERT INTO training_records (
+          student_id, task_id, resource_id, resource_type, session_type,
+          entry_code, timestamp, duration, accuracy_rate, avg_response_time, raw_data,
+          class_id, class_name, module_code
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        input.studentId,
+        null,
+        input.resourceId,
+        input.resourceType,
+        input.subModule,
+        entryCode,
+        input.startedAt,
+        durationMs,
+        accuracyRate,
+        avgResponseTime,
+        JSON.stringify(summaryRawData),
+        classId,
+        className,
+        'emotional',
+      ])
+
+      const trainingRecordId = this.getLastInsertId()
+
+      new TrainingSessionWriter(this.db).upsertSession({
+        studentId: input.studentId,
+        moduleCode: 'emotional',
+        entryCode,
+        sessionFamily: input.subModule,
+        resourceId: input.resourceId,
+        resourceType: input.resourceType,
+        taskNameSnapshot,
+        classId,
+        className,
+        startedAt: toEmotionalIsoTimestamp(input.startedAt),
+        endedAt: toEmotionalIsoTimestamp(input.endedAt),
+        durationMs,
+        completionStatus: input.completionStatus,
+        accuracyRate,
+        avgResponseTimeMs: avgResponseTime,
+        summaryPayload: summaryRawData,
+        sourceTable: 'training_records',
+        sourceRecordId: trainingRecordId,
+      })
+
+      this.execute(`
+        INSERT INTO emotional_training_session (
+          training_record_id, student_id, module_code, sub_module,
+          resource_id, resource_type, start_time, end_time, duration_ms,
+          question_count, correct_count, accuracy_rate, hint_count, retry_count,
+          completion_status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        trainingRecordId,
+        input.studentId,
+        'emotional',
+        input.subModule,
+        input.resourceId,
+        input.resourceType,
+        toEmotionalIsoTimestamp(input.startedAt),
+        toEmotionalIsoTimestamp(input.endedAt),
+        durationMs,
+        input.summary.questionCount,
+        input.summary.correctCount,
+        accuracyRate,
+        input.summary.hintCount,
+        input.summary.retryCount,
+        input.completionStatus,
+      ])
+
+      const sessionId = this.getLastInsertId()
+      const detailIds: number[] = []
+
+      for (const detail of input.details) {
+        this.execute(`
+          INSERT INTO emotional_training_detail (
+            session_id, student_id, resource_id, step_type, step_index,
+            prompt_id, selected_value, selected_label, is_correct, is_acceptable,
+            hint_level, retry_count, response_time_ms, feedback_code, perspective
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          sessionId,
+          detail.student_id,
+          detail.resource_id,
+          detail.step_type,
+          detail.step_index,
+          detail.prompt_id || null,
+          detail.selected_value || null,
+          detail.selected_label || null,
+          detail.is_correct,
+          detail.is_acceptable,
+          detail.hint_level,
+          detail.retry_count,
+          detail.response_time_ms || null,
+          detail.feedback_code || null,
+          detail.perspective,
+        ])
+
+        detailIds.push(this.getLastInsertId())
+      }
+
+      rawDb.run('COMMIT')
+      return {
+        trainingRecordId,
+        sessionId,
+        detailIds,
+      }
+    } catch (error) {
+      try {
+        rawDb.run('ROLLBACK')
+      } catch {
+        // ignore rollback failures
+      }
+
+      console.error(`[EmotionalTrainingRecordAPI] 写入表达关心训练记录失败（student=${studentName}）:`, error)
+      throw error
     }
   }
 }

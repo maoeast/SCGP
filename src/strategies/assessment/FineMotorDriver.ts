@@ -8,6 +8,8 @@ import type {
   ScaleQuestion,
   ScoreResult,
   StudentContext,
+  PersistContext,
+  PersistResult
 } from '@/types/assessment'
 import {
   FINE_MOTOR_DIMENSIONS,
@@ -16,6 +18,7 @@ import {
   type FineMotorQuestionData,
   getFineMotorScaleQuestions,
 } from '@/database/fine-motor-questions'
+import { FineMotorAssessmentAPI } from '@/database/api'
 
 type FineMotorStatus = 'age_appropriate' | 'emerging' | 'delayed'
 type DomainAdvanceMode = 'search_basal' | 'search_ceiling' | 'completed'
@@ -694,6 +697,62 @@ export class FineMotorDriver extends BaseDriver {
     if (estimatedAgeMonths < minMonths) return minMonths - estimatedAgeMonths
     if (estimatedAgeMonths > maxMonths) return estimatedAgeMonths - maxMonths
     return 0
+  }
+
+  // ========== 持久化 ==========
+
+  /**
+   * 持久化小肌肉功能发展评估结果到数据库
+   */
+  async persistAssessment(context: PersistContext): Promise<PersistResult> {
+    const { student, state, scoreResult, startTime, endTime } = context
+
+    const fineMotorApi = new FineMotorAssessmentAPI()
+    const extraData = scoreResult.extraData as any
+    const questions = this.getQuestions(student)
+
+    const orderedDetails = Object.entries(state.answers)
+      .map(([questionId, answer]) => {
+        const question = questions.find((item) => String(item.id) === String(questionId))
+        return {
+          question_id: parseInt(questionId, 10),
+          dimension: question?.dimension || '',
+          score: answer.score,
+          answer_time: answer.responseTime || 0,
+          is_auto_filled: answer.metadata?.is_auto_filled === true,
+          auto_fill_reason: answer.metadata?.auto_fill_reason || null,
+        }
+      })
+      .sort((left, right) => left.question_id - right.question_id)
+
+    const assessId = fineMotorApi.saveAssessment({
+      assessment: {
+        student_id: student.id,
+        age_months: student.ageInMonths,
+        total_score: scoreResult.totalScore || 0,
+        standard_score: scoreResult.standardScore || 0,
+        level: scoreResult.level,
+        level_code: scoreResult.levelCode || null,
+        total_max_score: extraData?.totalMaxScore || 0,
+        total_mastery_rate: extraData?.totalMasteryRate || 0,
+        domain_results: extraData?.domainResults || [],
+        iep_targets: extraData?.iepTargets || [],
+        start_time: startTime,
+        end_time: endTime,
+      },
+      details: orderedDetails,
+    })
+
+    const reportId = this.createReportRecord({
+      studentId: student.id,
+      reportType: 'fine_motor',
+      assessId,
+      moduleCode: 'sensory',
+      title: `${student.name} - 小肌肉功能发展评估报告`,
+    })
+
+    console.log('[FineMotorDriver] Fine Motor 评估持久化成功, assessId:', assessId)
+    return { assessId, reportId }
   }
 
   private getAnswer(answers: Record<string, ScaleAnswer>, questionId: number) {

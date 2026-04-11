@@ -16,10 +16,13 @@ import type {
   ScaleAnswer,
   ScoreResult,
   AssessmentFeedback,
-  DimensionScore
+  DimensionScore,
+  PersistContext,
+  PersistResult
 } from '@/types/assessment'
 import { connorsPSQQuestions, PSQ_DIMENSION_QUESTIONS_EN } from '@/database/conners-psq-questions'
 import { calculateConnersTScore, getAgeGroup, type Gender } from '@/database/conners-norms'
+import { ConnersPSQAPI } from '@/database/api'
 
 // 维度名称映射（英文 -> 中文）
 const PSQ_DIMENSION_NAMES: Record<string, string> = {
@@ -473,6 +476,60 @@ export class ConnersPSQDriver extends BaseDriver {
 
   protected getDefaultDescription(): string {
     return '评估儿童在家中的行为表现，包括品行、学习、情绪等方面'
+  }
+
+  // ========== 持久化 ==========
+
+  /**
+   * 持久化 Conners PSQ 评估结果到数据库
+   */
+  async persistAssessment(context: PersistContext): Promise<PersistResult> {
+    const { student, scoreResult, startTime, endTime } = context
+
+    const connersApi = new ConnersPSQAPI()
+
+    // 构建原始分、维度分数和 T 分的 JSON 对象
+    const rawScores: Record<string, number> = {}
+    const dimensionScores: Record<string, { rawScore: number; isValid: boolean; missingCount: number }> = {}
+    const tScores: Record<string, number> = {}
+
+    for (const dim of scoreResult.dimensions) {
+      rawScores[dim.code] = dim.rawScore || 0
+      tScores[dim.code] = dim.standardScore || 50
+      dimensionScores[dim.code] = {
+        rawScore: dim.rawScore || 0,
+        isValid: true,
+        missingCount: 0
+      }
+    }
+
+    // 1. 创建评估主记录
+    const assessId = connersApi.createAssessment({
+      student_id: student.id,
+      gender: student.gender,
+      age_months: student.ageInMonths,
+      raw_scores: JSON.stringify(rawScores),
+      dimension_scores: JSON.stringify(dimensionScores),
+      t_scores: JSON.stringify(tScores),
+      pi_score: 0,
+      ni_score: 0,
+      is_valid: 1,
+      hyperactivity_index: tScores['hyperactivity_index'] || 50,
+      level: scoreResult.levelCode || 'normal',
+      start_time: startTime,
+      end_time: endTime
+    })
+
+    // 2. 创建报告记录
+    const reportId = this.createReportRecord({
+      studentId: student.id,
+      reportType: 'conners-psq',
+      assessId,
+      title: `${student.name} - Conners父母问卷评估报告`
+    })
+
+    console.log('[ConnersPSQDriver] Conners PSQ 评估持久化成功, assessId:', assessId)
+    return { assessId, reportId }
   }
 
   protected getEstimatedTime(): number {

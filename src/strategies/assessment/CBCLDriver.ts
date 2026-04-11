@@ -18,8 +18,11 @@ import type {
   ScaleAnswer,
   ScoreResult,
   DimensionScore,
-  AssessmentFeedback
+  AssessmentFeedback,
+  PersistContext,
+  PersistResult
 } from '@/types/assessment'
+import { CBCLAssessmentAPI } from '@/database/api'
 import type {
   CBCLSocialCompetenceData,
   CBCLSocialCompetenceResult,
@@ -934,6 +937,68 @@ export class CBCLDriver extends BaseDriver {
 
   protected getDefaultDescription(): string {
     return '评估儿童的社会能力和行为问题'
+  }
+
+  // ========== 持久化 ==========
+
+  /**
+   * 持久化 CBCL 评估结果到数据库
+   *
+   * 使用驱动器内部已存储的 socialData 作为 social_competence_data
+   */
+  async persistAssessment(context: PersistContext): Promise<PersistResult> {
+    const { student, scoreResult, startTime, endTime } = context
+
+    const cbclApi = new CBCLAssessmentAPI()
+
+    const extraData = scoreResult.extraData as any
+    const cbclData = extraData?.behaviorProblems
+    const socialScores = extraData?.socialCompetence
+
+    const rawAnswers = scoreResult.rawAnswers || {}
+
+    // 构建行为因子原始分和 T 分 JSON
+    const behaviorRawScores: Record<string, number> = {}
+    const factorTScores: Record<string, number> = {}
+
+    if (cbclData?.factors && Array.isArray(cbclData.factors)) {
+      for (const factor of cbclData.factors) {
+        if (factor.name) {
+          behaviorRawScores[factor.name] = factor.rawScore || 0
+          factorTScores[factor.name] = factor.tScore || 50
+        }
+      }
+    }
+
+    const assessId = cbclApi.createAssessment({
+      student_id: student.id,
+      age_months: student.ageInMonths,
+      gender: student.gender === '男' ? 'male' : 'female',
+      social_competence_data: JSON.stringify(this.socialData || {}),
+      social_activity_score: socialScores?.activity?.score || 0,
+      social_social_score: socialScores?.social?.score || 0,
+      social_school_score: socialScores?.school?.score || 0,
+      raw_answers: JSON.stringify(rawAnswers),
+      behavior_raw_scores: JSON.stringify(behaviorRawScores),
+      factor_t_scores: JSON.stringify(factorTScores),
+      total_problems_score: scoreResult.totalScore || 0,
+      total_problems_t_score: cbclData?.totalProblemsTScore || 0,
+      internalizing_t_score: cbclData?.internalizingTScore || 0,
+      externalizing_t_score: cbclData?.externalizingTScore || 0,
+      summary_level: (scoreResult.levelCode || 'normal') as 'normal' | 'borderline' | 'clinical',
+      start_time: startTime,
+      end_time: endTime
+    })
+
+    const reportId = this.createReportRecord({
+      studentId: student.id,
+      reportType: 'cbcl',
+      assessId,
+      title: `${student.name} - CBCL儿童行为量表评估报告`
+    })
+
+    console.log('[CBCLDriver] CBCL 评估持久化成功, assessId:', assessId)
+    return { assessId, reportId }
   }
 
   protected getEstimatedTime(): number {

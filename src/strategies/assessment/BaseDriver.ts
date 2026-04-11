@@ -16,8 +16,11 @@ import type {
   ScoreResult,
   AssessmentFeedback,
   DimensionScore,
-  ScaleInfo
+  ScaleInfo,
+  PersistContext,
+  PersistResult
 } from '@/types/assessment'
+import { ReportAPI } from '@/database/api'
 
 /**
  * 量表驱动器抽象基类
@@ -275,5 +278,41 @@ export abstract class BaseDriver implements ScaleDriver {
   protected getAnswerScore(answers: Record<string, ScaleAnswer>, questionId: number | string, defaultValue: number = 0): number {
     const answer = answers[questionId]
     return answer ? answer.score : defaultValue
+  }
+
+  // ========== 持久化工具方法（子类在 persistAssessment 中调用）==========
+
+  /**
+   * 创建报告记录
+   *
+   * 封装 ReportAPI.saveReportRecord 调用，供子类在 persistAssessment 内复用
+   */
+  protected createReportRecord(params: {
+    studentId: number
+    reportType: string
+    assessId: number
+    title: string
+    moduleCode?: string
+  }): number {
+    const reportApi = new ReportAPI()
+    return reportApi.saveReportRecord({
+      student_id: params.studentId,
+      report_type: params.reportType as any,
+      assess_id: params.assessId,
+      module_code: params.moduleCode,
+      title: params.title,
+    })
+  }
+
+  /**
+   * 获取数据库最后插入的记录 ID
+   *
+   * 供子类在直接使用 db.run 后获取 ID（过渡期工具，最终各量表应使用 API 类）
+   */
+  protected getDbLastInsertId(): number {
+    const { getDatabase } = require('@/database/init')
+    const db = getDatabase()
+    const result = db.all('SELECT last_insert_rowid() as id')
+    return result[0]?.id || 0
   }
 }

@@ -19,9 +19,12 @@ import type {
   ScaleAnswer,
   ScoreResult,
   AssessmentFeedback,
-  DimensionScore
+  DimensionScore,
+  PersistContext,
+  PersistResult
 } from '@/types/assessment'
 import { BaseDriver } from './BaseDriver'
+import { WeeFIMAPI } from '@/database/api'
 import {
   weefimQuestions,
   weefimCategories,
@@ -405,6 +408,57 @@ export class WeeFIMDriver extends BaseDriver {
 
   protected getEstimatedTime(): number {
     return 15  // WeeFIM 约需 15 分钟
+  }
+
+  // ========== 持久化 ==========
+
+  /**
+   * 持久化 WeeFIM 量表评估结果到数据库
+   */
+  async persistAssessment(context: PersistContext): Promise<PersistResult> {
+    const { student, state, scoreResult, startTime, endTime } = context
+
+    const weefimApi = new WeeFIMAPI()
+
+    // 从维度分数中提取各维度得分
+    const dimensions = scoreResult.dimensions
+    const getDimensionScore = (code: string): number => {
+      const dim = dimensions.find(d => d.code === code)
+      return dim?.rawScore || 0
+    }
+
+    // 1. 创建评估主记录
+    const assessId = weefimApi.createAssessment({
+      student_id: student.id,
+      total_score: scoreResult.totalScore || 0,
+      adl_score: getDimensionScore('motor'),
+      cognitive_score: getDimensionScore('cognitive'),
+      level: scoreResult.level,
+      start_time: startTime,
+      end_time: endTime
+    })
+
+    // 2. 保存答题详情
+    const details: Array<{ assess_id: number; question_id: number; score: number }> = []
+    for (const [questionId, answer] of Object.entries(state.answers)) {
+      details.push({
+        assess_id: assessId,
+        question_id: parseInt(questionId),
+        score: answer.score
+      })
+    }
+    weefimApi.saveAssessmentDetails(details)
+
+    // 3. 创建报告记录
+    const reportId = this.createReportRecord({
+      studentId: student.id,
+      reportType: 'weefim',
+      assessId,
+      title: `${student.name} - WeeFIM功能独立性评估报告`
+    })
+
+    console.log('[WeeFIMDriver] WeeFIM 评估持久化成功, assessId:', assessId)
+    return { assessId, reportId }
   }
 
   protected getIcon(): string {
