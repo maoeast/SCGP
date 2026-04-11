@@ -152,6 +152,35 @@
   - 默认 `care_scene` 入口尚未切到沉浸式链路
   - `care_scene` 正式训练记录闭环尚未接入
 
+### 3.4.2 2026-04-11 care_scene immersive production cutover
+
+- `care_scene` 已完成从旧左右分栏链路向沉浸式正式链路的切换：
+  - `SceneSelector` 不再提供 `immersivePreview` / 模式切换
+  - `/emotional/care-expression` 现在直接指向沉浸式训练页面
+  - `/emotional/care-expression/immersive` 仅保留兼容重定向，不再是独立产品路径
+- 当前已确认的重要约束：
+  - `care_scene` 训练进入前必须具备有效 `studentId` 与 `resourceId`
+  - 资源作者态配置缺失时必须 Fail-Fast 直接报错，不再回退旧训练模式
+  - 结果保存必须走正式主库接口，不再使用 `deferred` / prototype 影子链路
+- 正式持久化主链已接入：
+  - `src/database/api.ts` 新增 `EmotionalTrainingRecordAPI`
+  - `care_scene` 沉浸式结果现在直接写入：
+    - `training_records`
+    - `training_session`
+    - `emotional_training_session`
+    - `emotional_training_detail`
+  - 该链路通过 `DatabaseAPI -> getDatabase()` 进入当前产品主实例
+- 当前代码级清理已完成：
+  - 旧 `CareExpressionTraining.vue`
+  - 旧 `useEmotionalTrainingShell.ts`
+  - 旧 `useEmotionalSession.ts`
+  - 旧 `features/emotional/adapters/*`
+  - 旧 `components/emotional/engine/*`
+  - 以及仅服务于旧 split-screen 的卡片/renderer/runtime 辅助文件
+- 当前仍未完成：
+  - 尚未做 Electron 实机 smoke
+  - 尚未做本地 DB 实写核验，尚不能把“代码已接主库”写成“运行时已完成闭环验证”
+
 ## 4. 当前活跃未完成主线
 
 当前下一条真正的大改动，不是单页修补，而是：
