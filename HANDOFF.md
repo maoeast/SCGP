@@ -33,12 +33,12 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: 当前活跃任务已切到评估链逻辑核对与修复，已完成 `S-M` 与 `FMDA` 两个真实量表缺陷修复。下一步是做真实 Electron 场景复验，确认 UI 跳转、落库与报告结果与驱动计算一致。**
+**Active follow-up work is now in `.continue-here.md`: 当前活跃任务仍是评估链逻辑核对与修复；`S-M` 与 `FMDA` 初测已恢复正常，且已补回 `TGMD-3 / GMFM-88` 缺失反馈配置与参考资料。下一步优先做 `TGMD-3` 与 `GMFM-88` 的真实 Electron 完成评估与报告复验。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is runtime verification of the latest assessment logic fixes, starting with `S-M` and `FMDA`
+- current active task is runtime verification of the latest assessment logic fixes, now prioritizing `TGMD-3` and `GMFM-88` after restoring missing feedback config
 - first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
