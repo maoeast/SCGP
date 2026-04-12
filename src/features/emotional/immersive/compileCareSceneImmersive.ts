@@ -10,6 +10,7 @@ import type {
 import type { CareSceneResourceMeta } from '@/types/emotional'
 
 interface CompileCareSceneImmersiveContext {
+  studentId: number
   resourceId: number
   resourceName: string
   resourceDescription?: string

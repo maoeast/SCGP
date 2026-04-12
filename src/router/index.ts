@@ -40,7 +40,6 @@ const IEPReport = () => import('@/views/games/IEPReport.vue')
 const EmotionalMenu = () => import('@/views/emotional/Menu.vue')
 const EmotionalSceneSelector = () => import('@/views/emotional/SceneSelector.vue')
 const EmotionSceneTraining = () => import('@/views/emotional/EmotionSceneTraining.vue')
-const CareExpressionTraining = () => import('@/views/emotional/CareExpressionTraining.vue')
 const CareExpressionImmersiveTraining = () => import('@/views/emotional/CareExpressionImmersiveTraining.vue')
 const EmotionalSessionSummary = () => import('@/views/emotional/SessionSummary.vue')
 const EmotionalGameRecordDetail = () => import('@/views/emotional/GameRecordDetail.vue')
@@ -243,23 +242,20 @@ const router = createRouter({
         {
           path: 'emotional/care-expression',
           name: 'CareExpressionTraining',
-          component: CareExpressionTraining,
-          meta: {
-            title: '表达关心训练',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'emotional/care-expression/immersive',
-          name: 'CareExpressionImmersiveTraining',
           component: CareExpressionImmersiveTraining,
           meta: {
-            title: '表达关心训练（沉浸式预览）',
+            title: '表达关心训练',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,
           }
+        },
+        {
+          path: 'emotional/care-expression/immersive',
+          redirect: (to) => ({
+            path: '/emotional/care-expression',
+            query: to.query,
+          }),
         },
         {
           path: 'emotional/session-summary',

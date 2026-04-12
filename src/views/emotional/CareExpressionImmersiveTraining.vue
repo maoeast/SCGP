@@ -51,6 +51,14 @@ const store = useTrainingStore()
 const isLoading = ref(false)
 const loadError = ref('')
 const isTeacherPanelVisible = ref(false)
+const studentId = computed(() => {
+  const raw = Array.isArray(route.query.studentId)
+    ? route.query.studentId[0]
+    : route.query.studentId
+
+  const parsed = Number(raw || 0)
+  return Number.isFinite(parsed) ? parsed : 0
+})
 
 const resourceId = computed(() => {
   const raw = Array.isArray(route.query.resourceId)
@@ -62,6 +70,11 @@ const resourceId = computed(() => {
 })
 
 async function hydrateSession(): Promise<void> {
+  if (!studentId.value) {
+    loadError.value = '缺少有效 studentId，当前无法加载表达关心训练。请重新选择学生后再进入。'
+    return
+  }
+
   if (!resourceId.value) {
     loadError.value = '缺少 resourceId，当前无法加载表达关心训练。请从情境选择页重新进入。'
     return
@@ -81,6 +94,7 @@ async function hydrateSession(): Promise<void> {
     const metadata = normalizeCareSceneEditorModel(resource.metadata, resource.name)
     store.loadSessionPayload(
       compileCareSceneImmersive(metadata, {
+        studentId: studentId.value,
         resourceId: resource.id,
         resourceName: resource.name,
         resourceDescription: resource.description,
@@ -103,15 +117,19 @@ function handleKeydown(event: KeyboardEvent): void {
 }
 
 function goBackToSelector(): void {
+  const nextQuery = { ...route.query }
+  delete nextQuery.resourceId
+  delete nextQuery.sceneCode
+  delete nextQuery.immersivePreview
+  delete nextQuery.mode
+
   router.push({
     path: '/emotional/care-expression/select',
-    query: {
-      ...route.query,
-    },
+    query: nextQuery,
   })
 }
 
-watch(resourceId, () => {
+watch(() => [resourceId.value, studentId.value] as const, () => {
   isTeacherPanelVisible.value = false
   void hydrateSession()
 })
