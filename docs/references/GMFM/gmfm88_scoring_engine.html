@@ -1,0 +1,323 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.container { padding: 1rem 0; }
+.tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; border-bottom: 0.5px solid var(--color-border-tertiary); padding-bottom: 0; }
+.tab { padding: 8px 14px; font-size: 13px; cursor: pointer; border: 0.5px solid transparent; border-bottom: none; border-radius: 6px 6px 0 0; color: var(--color-text-secondary); background: none; position: relative; bottom: -1px; }
+.tab.active { border-color: var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-primary); font-weight: 500; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.section-header { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin: 1rem 0 0.5rem; letter-spacing: 0.03em; }
+.item-row { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.item-num { font-size: 11px; color: var(--color-text-tertiary); text-align: right; }
+.item-label { font-size: 13px; color: var(--color-text-primary); line-height: 1.4; }
+.score-btns { display: flex; gap: 3px; }
+.score-btn { width: 30px; height: 26px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); border-radius: 4px; font-size: 12px; cursor: pointer; color: var(--color-text-secondary); }
+.score-btn.active-0 { background: #FCEBEB; border-color: #E24B4A; color: #A32D2D; font-weight: 500; }
+.score-btn.active-1 { background: #FAEEDA; border-color: #BA7517; color: #854F0B; font-weight: 500; }
+.score-btn.active-2 { background: #E6F1FB; border-color: #378ADD; color: #185FA5; font-weight: 500; }
+.score-btn.active-3 { background: #EAF3DE; border-color: #639922; color: #3B6D11; font-weight: 500; }
+.score-btn.active-nt { background: #F1EFE8; border-color: #888780; color: #5F5E5A; font-weight: 500; }
+.summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 1rem 0; }
+.dim-card { background: var(--color-background-secondary); border-radius: 8px; padding: 10px; text-align: center; }
+.dim-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.dim-score { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+.dim-pct { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+.total-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 10px; padding: 16px; margin: 1rem 0; display: flex; align-items: center; justify-content: space-between; }
+.total-label { font-size: 14px; color: var(--color-text-secondary); }
+.total-num { font-size: 32px; font-weight: 500; color: var(--color-text-primary); }
+.progress-bar { height: 8px; background: var(--color-background-secondary); border-radius: 4px; overflow: hidden; margin: 6px 0; }
+.progress-fill { height: 100%; border-radius: 4px; background: #378ADD; transition: width 0.3s; }
+.goal-check { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; cursor: pointer; }
+.goal-check input { cursor: pointer; }
+.reset-btn { padding: 8px 16px; border: 0.5px solid var(--color-border-secondary); background: none; border-radius: 6px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); }
+.reset-btn:hover { background: var(--color-background-secondary); }
+.warn-box { background: #FAEEDA; border: 0.5px solid #BA7517; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #854F0B; margin: 0.5rem 0 1rem; line-height: 1.6; }
+.info-box { background: #E6F1FB; border: 0.5px solid #378ADD; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #185FA5; margin: 0.5rem 0 1rem; line-height: 1.6; }
+</style>
+<div class="container">
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('score')">评分录入</div>
+  <div class="tab" onclick="switchTab('summary')">计分结果</div>
+  <div class="tab" onclick="switchTab('goal')">目标能区</div>
+  <div class="tab" onclick="switchTab('guide')">使用说明</div>
+</div>
+
+<div id="tab-score" class="tab-content active">
+  <div class="info-box">为每个项目选择得分：0=无起始动作 / 1=有起始动作 / 2=部分完成 / 3=完整完成 / NT=未测试（计为0分）</div>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+    <div style="display:flex; gap:6px;">
+      <div class="tab" style="font-size:12px; padding:5px 10px; cursor:pointer; border:0.5px solid var(--color-border-tertiary); border-radius:6px;" onclick="showDim('A')" id="dim-tab-A">A区</div>
+      <div class="tab" style="font-size:12px; padding:5px 10px; cursor:pointer; border:0.5px solid var(--color-border-tertiary); border-radius:6px;" onclick="showDim('B')" id="dim-tab-B">B区</div>
+      <div class="tab" style="font-size:12px; padding:5px 10px; cursor:pointer; border:0.5px solid var(--color-border-tertiary); border-radius:6px;" onclick="showDim('C')" id="dim-tab-C">C区</div>
+      <div class="tab" style="font-size:12px; padding:5px 10px; cursor:pointer; border:0.5px solid var(--color-border-tertiary); border-radius:6px;" onclick="showDim('D')" id="dim-tab-D">D区</div>
+      <div class="tab" style="font-size:12px; padding:5px 10px; cursor:pointer; border:0.5px solid var(--color-border-tertiary); border-radius:6px;" onclick="showDim('E')" id="dim-tab-E">E区</div>
+    </div>
+    <button class="reset-btn" onclick="resetAll()">重置全部</button>
+  </div>
+  <div id="items-container"></div>
+</div>
+
+<div id="tab-summary" class="tab-content">
+  <div class="summary-grid" id="dim-cards"></div>
+  <div class="total-card">
+    <div>
+      <div class="total-label">GMFM-88 总分</div>
+      <div style="font-size:12px; color:var(--color-text-tertiary);">(五个能区百分比的平均值)</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="total-num" id="total-score">0.0%</div>
+    </div>
+  </div>
+  <div style="margin: 1rem 0;">
+    <div class="section-header">各能区得分率</div>
+    <div id="dim-bars"></div>
+  </div>
+  <div class="warn-box" id="nt-warning" style="display:none;"></div>
+  <button onclick="sendPrompt('根据以下GMFM-88评估结果，请给出简要的临床解读和康复建议：' + getSummaryText())" style="width:100%; padding:10px; border:0.5px solid var(--color-border-secondary); background:none; border-radius:6px; font-size:13px; cursor:pointer; color:var(--color-text-primary); margin-top:0.5rem;">请Claude解读这份评估结果 ↗</button>
+</div>
+
+<div id="tab-goal" class="tab-content">
+  <div class="info-box">目标能区总分用于重点追踪正在训练的能区，比总分更敏感，适合向家长展示进步。</div>
+  <div class="section-header">选择目标能区（1~5个）</div>
+  <div id="goal-checks"></div>
+  <div class="total-card" style="margin-top:1rem;">
+    <div>
+      <div class="total-label">目标能区总分</div>
+      <div style="font-size:12px; color:var(--color-text-tertiary);" id="goal-dims-label">未选择能区</div>
+    </div>
+    <div class="total-num" id="goal-score">—</div>
+  </div>
+</div>
+
+<div id="tab-guide" class="tab-content">
+  <div class="warn-box">本工具仅为辅助计分，不能替代专业评估师使用官方手册进行标准化测评。每个项目的具体评分标准须参照《GMFM 用户手册第3版（2021）》。</div>
+  <div class="section-header">计分规则</div>
+  <div style="font-size:13px; color:var(--color-text-primary); line-height:1.8; margin-bottom:1rem;">
+    <p>· 每项 0-3 分，NT（未测试）按 0 分计入，但系统保留 NT 标记</p>
+    <p>· 每项允许尝试最多 3 次，取最高分</p>
+    <p>· 各能区百分比 = 实际得分 ÷ 满分 × 100</p>
+    <p>· 总分 = 五个能区百分比之和 ÷ 5（等权重）</p>
+    <p>· 标准测评：裸足、不穿矫形器、不用助行器（GMFM-88 允许穿戴辅具测评，但应记录状态）</p>
+  </div>
+  <div class="section-header">能区满分对照</div>
+  <table style="width:100%; font-size:13px; border-collapse:collapse;">
+    <tr style="border-bottom:0.5px solid var(--color-border-tertiary);">
+      <td style="padding:6px 4px; color:var(--color-text-secondary);">能区</td>
+      <td style="padding:6px 4px; color:var(--color-text-secondary);">名称</td>
+      <td style="padding:6px 4px; color:var(--color-text-secondary); text-align:right;">项目数</td>
+      <td style="padding:6px 4px; color:var(--color-text-secondary); text-align:right;">满分</td>
+    </tr>
+    <tr style="border-bottom:0.5px solid var(--color-border-tertiary);"><td style="padding:6px 4px;">A</td><td style="padding:6px 4px;">卧位与翻身</td><td style="padding:6px 4px; text-align:right;">17</td><td style="padding:6px 4px; text-align:right;">51</td></tr>
+    <tr style="border-bottom:0.5px solid var(--color-border-tertiary);"><td style="padding:6px 4px;">B</td><td style="padding:6px 4px;">坐位</td><td style="padding:6px 4px; text-align:right;">20</td><td style="padding:6px 4px; text-align:right;">60</td></tr>
+    <tr style="border-bottom:0.5px solid var(--color-border-tertiary);"><td style="padding:6px 4px;">C</td><td style="padding:6px 4px;">爬与跪</td><td style="padding:6px 4px; text-align:right;">14</td><td style="padding:6px 4px; text-align:right;">42</td></tr>
+    <tr style="border-bottom:0.5px solid var(--color-border-tertiary);"><td style="padding:6px 4px;">D</td><td style="padding:6px 4px;">站立</td><td style="padding:6px 4px; text-align:right;">13</td><td style="padding:6px 4px; text-align:right;">39</td></tr>
+    <tr><td style="padding:6px 4px;">E</td><td style="padding:6px 4px;">走、跑、跳</td><td style="padding:6px 4px; text-align:right;">24</td><td style="padding:6px 4px; text-align:right;">72</td></tr>
+  </table>
+</div>
+</div>
+
+<script>
+const dims = {
+  A: { name:'卧位与翻身', max:51, items:[
+    'A1. 仰卧：头中线位','A2. 仰卧：手到中线，手指交叉','A3. 仰卧：抬头45°','A4. 仰卧：右髋右膝屈曲','A5. 仰卧：左髋左膝屈曲',
+    'A6. 仰卧：伸手抓右侧玩具','A7. 仰卧：伸手抓左侧玩具','A8. 仰卧：翻至右侧卧','A9. 仰卧：翻至左侧卧',
+    'A10. 俯卧：抬头直立','A11. 俯卧：前臂支撑，抬头直立','A12. 俯卧：前臂支撑，右臂伸出','A13. 俯卧：前臂支撑，左臂伸出',
+    'A14. 俯卧：翻至仰卧（右）','A15. 俯卧：翻至仰卧（左）','A16. 右侧卧：翻至俯卧','A17. 左侧卧：翻至俯卧'
+  ]},
+  B: { name:'坐位', max:60, items:[
+    'B1. 仰卧，检查者握手：拉起坐，头控制','B2. 仰卧：翻身至坐位（右）','B3. 仰卧：翻身至坐位（左）',
+    'B4. 坐在垫上，检查者支撑：直立坐','B5. 坐在垫上：坐稳5秒','B6. 坐在垫上：小腿前伸玩玩具',
+    'B7. 坐在垫上：向前触地','B8. 坐在垫上：触右侧地面','B9. 坐在垫上：触左侧地面',
+    'B10. 坐在垫上：坐至俯卧（右）','B11. 坐在垫上：坐至俯卧（左）','B12. 坐在垫上：坐至四肢爬行位',
+    'B13. 坐在垫上：手臂不支撑坐3秒','B14. 坐在垫上：手臂不支撑，转向右后方','B15. 坐在垫上：手臂不支撑，转向左后方',
+    'B16. 坐在长凳上：无支撑坐10秒','B17. 坐在长凳上：右侧，右手触地','B18. 坐在长凳上：左侧，左手触地',
+    'B19. 坐在长凳上：从地面捡物','B20. 坐在长凳上：站起'
+  ]},
+  C: { name:'爬与跪', max:42, items:[
+    'C1. 俯卧：向前爬行1.8米','C2. 四肢爬行位：维持重心','C3. 四肢爬行位：坐到垫上（右）','C4. 四肢爬行位：坐到垫上（左）',
+    'C5. 俯卧：向前爬行1.8米（腹部离地）','C6. 四肢爬行：向前爬1.8米','C7. 四肢爬行：向前爬1.8米（交替模式）',
+    'C8. 四肢爬行：爬上4级台阶','C9. 四肢爬行：爬下4级台阶','C10. 坐在垫上：高跪位',
+    'C11. 高跪位：高跪行走10步（无支撑）','C12. 高跪位：从地面站起（右膝在前）','C13. 高跪位：从地面站起（左膝在前）','C14. 高跪位：单膝跪（右膝）'
+  ]},
+  D: { name:'站立', max:39, items:[
+    'D1. 地面：扶物站起','D2. 站立：双手扶持，站10秒','D3. 站立：单手扶持，站10秒','D4. 站立：无支撑，站20秒',
+    'D5. 站立：无支撑，抬起一脚10秒（左）','D6. 站立：无支撑，抬起一脚10秒（右）','D7. 坐在小凳上：无支撑站起',
+    'D8. 站立：蹲下捡物后站起','D9. 站立：坐在地面上','D10. 地面：站起','D11. 站立：右脚前，双脚站20秒',
+    'D12. 站立：左脚前，双脚站20秒','D13. 站立：单脚站10秒（右脚）'
+  ]},
+  E: { name:'走、跑、跳', max:72, items:[
+    'E1. 扶物：向右侧行走5步','E2. 扶物：向左侧行走5步','E3. 双手被牵：向前走10步',
+    'E4. 单手被牵：向前走10步','E5. 无支撑：向前走10步','E6. 无支撑：向前走10步，停下',
+    'E7. 无支撑：向前走10步，转身回来','E8. 无支撑：向后退10步','E9. 无支撑：两线间走10步（20cm）',
+    'E10. 无支撑：跨越膝关节高障碍（右脚领先）','E11. 无支撑：跨越膝关节高障碍（左脚领先）','E12. 无支撑：跑4.5米，停下',
+    'E13. 无支撑：右脚单脚跳10次','E14. 无支撑：左脚单脚跳10次','E15. 无支撑：跑4.5米，捡物，跑回',
+    'E16. 无支撑：交替上4级台阶（扶栏）','E17. 无支撑：交替下4级台阶（扶栏）','E18. 无支撑：交替上4级台阶（无扶栏）',
+    'E19. 无支撑：交替下4级台阶（无扶栏）','E20. 无支撑：站立向前跳30cm','E21. 无支撑：右脚单脚跳10步',
+    'E22. 无支撑：左脚单脚跳10步','E23. 无支撑：跑过4.5米，踢球','E24. 无支撑：两脚同时跳20次'
+  ]}
+};
+
+let scores = {};
+let currentDim = 'A';
+let goalAreas = new Set();
+
+function initScores() {
+  Object.keys(dims).forEach(d => {
+    dims[d].items.forEach((_, i) => {
+      scores[d+'_'+i] = null;
+    });
+  });
+}
+
+function showDim(dim) {
+  currentDim = dim;
+  ['A','B','C','D','E'].forEach(d => {
+    document.getElementById('dim-tab-'+d).style.fontWeight = d===dim?'500':'400';
+    document.getElementById('dim-tab-'+d).style.background = d===dim?'var(--color-background-secondary)':'none';
+  });
+  renderItems();
+}
+
+function renderItems() {
+  const d = currentDim;
+  const container = document.getElementById('items-container');
+  const dimData = dims[d];
+  let html = '<div class="section-header">' + d + '区 — ' + dimData.name + '（共' + dimData.items.length + '项，满分' + dimData.max + '分）</div>';
+  dimData.items.forEach((label, i) => {
+    const key = d+'_'+i;
+    const val = scores[key];
+    html += '<div class="item-row">';
+    html += '<div class="item-num">' + (i+1) + '</div>';
+    html += '<div class="item-label">' + label + '</div>';
+    html += '<div class="score-btns">';
+    [0,1,2,3,'NT'].forEach(v => {
+      const isActive = val === (v==='NT'?'NT':v);
+      const cls = isActive ? 'score-btn active-'+(v==='NT'?'nt':v) : 'score-btn';
+      html += '<button class="'+cls+'" onclick="setScore(\''+key+'\','+(v==='NT'?'\'NT\'':v)+')">'+(v==='NT'?'NT':v)+'</button>';
+    });
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+function setScore(key, val) {
+  scores[key] = val;
+  renderItems();
+  updateSummary();
+}
+
+function getDimScore(d) {
+  let sum = 0;
+  dims[d].items.forEach((_, i) => {
+    const v = scores[d+'_'+i];
+    if (v !== null && v !== 'NT') sum += v;
+  });
+  return sum;
+}
+
+function getDimPct(d) {
+  return (getDimScore(d) / dims[d].max) * 100;
+}
+
+function countNT(d) {
+  return dims[d].items.filter((_,i) => scores[d+'_'+i] === 'NT').length;
+}
+
+function updateSummary() {
+  const dimNames = {A:'A区',B:'B区',C:'C区',D:'D区',E:'E区'};
+  let cards = '';
+  let bars = '';
+  let totalPct = 0;
+  let ntList = [];
+
+  Object.keys(dims).forEach(d => {
+    const sc = getDimScore(d);
+    const pct = getDimPct(d);
+    totalPct += pct;
+    const nt = countNT(d);
+    if (nt > 0) ntList.push(d+'区有'+nt+'项NT');
+    cards += '<div class="dim-card"><div class="dim-label">'+dimNames[d]+'</div><div class="dim-score">'+sc+'</div><div class="dim-pct">'+pct.toFixed(1)+'%</div></div>';
+    bars += '<div style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-text-secondary);margin-bottom:3px;"><span>'+dimNames[d]+' '+dims[d].name+'</span><span>'+pct.toFixed(1)+'%</span></div><div class="progress-bar"><div class="progress-fill" style="width:'+Math.min(pct,100).toFixed(1)+'%"></div></div></div>';
+  });
+
+  const avg = totalPct / 5;
+  document.getElementById('dim-cards').innerHTML = cards;
+  document.getElementById('dim-bars').innerHTML = bars;
+  document.getElementById('total-score').textContent = avg.toFixed(1) + '%';
+
+  const warn = document.getElementById('nt-warning');
+  if (ntList.length > 0) {
+    warn.style.display = 'block';
+    warn.textContent = '注意：以下能区存在 NT 项目（已按0分计入），可能低估真实能力——' + ntList.join('；');
+  } else {
+    warn.style.display = 'none';
+  }
+
+  updateGoal();
+}
+
+function updateGoal() {
+  const checkContainer = document.getElementById('goal-checks');
+  if (!checkContainer) return;
+  let html = '';
+  const dimNames = {A:'A区 卧位与翻身',B:'B区 坐位',C:'C区 爬与跪',D:'D区 站立',E:'E区 走跑跳'};
+  Object.keys(dims).forEach(d => {
+    const pct = getDimPct(d);
+    const checked = goalAreas.has(d) ? 'checked' : '';
+    html += '<label class="goal-check"><input type="checkbox" '+checked+' onchange="toggleGoal(\''+d+'\')" /><span>'+dimNames[d]+'</span><span style="margin-left:auto;font-size:13px;color:var(--color-text-secondary);">'+pct.toFixed(1)+'%</span></label>';
+  });
+  checkContainer.innerHTML = html;
+
+  if (goalAreas.size === 0) {
+    document.getElementById('goal-score').textContent = '—';
+    document.getElementById('goal-dims-label').textContent = '未选择能区';
+  } else {
+    let sum = 0;
+    goalAreas.forEach(d => sum += getDimPct(d));
+    const goalAvg = sum / goalAreas.size;
+    document.getElementById('goal-score').textContent = goalAvg.toFixed(1) + '%';
+    document.getElementById('goal-dims-label').textContent = '已选 ' + Array.from(goalAreas).join('、') + ' 区（共'+goalAreas.size+'个）';
+  }
+}
+
+function toggleGoal(d) {
+  if (goalAreas.has(d)) goalAreas.delete(d); else goalAreas.add(d);
+  updateGoal();
+}
+
+function getSummaryText() {
+  let txt = 'GMFM-88评估结果：';
+  Object.keys(dims).forEach(d => {
+    txt += d+'区得分率'+getDimPct(d).toFixed(1)+'%；';
+  });
+  const total = Object.keys(dims).reduce((s,d)=>s+getDimPct(d),0)/5;
+  txt += '总分'+total.toFixed(1)+'%';
+  if(goalAreas.size>0){
+    let gs=0; goalAreas.forEach(d=>gs+=getDimPct(d));
+    txt += '；目标能区（'+Array.from(goalAreas).join()+' 区）得分'+( gs/goalAreas.size).toFixed(1)+'%';
+  }
+  return txt;
+}
+
+function resetAll() {
+  if (!confirm('确认重置所有评分？')) return;
+  initScores();
+  goalAreas.clear();
+  renderItems();
+  updateSummary();
+}
+
+function switchTab(t) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tabs .tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  event.target.classList.add('active');
+  if (t==='summary' || t==='goal') updateSummary();
+}
+
+initScores();
+showDim('A');
+updateSummary();
+</script>

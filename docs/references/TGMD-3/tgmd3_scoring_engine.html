@@ -1,0 +1,400 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{padding:1rem 0;font-family:var(--font-sans)}
+.tabs{display:flex;gap:3px;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:1.25rem}
+.tab{padding:7px 13px;font-size:13px;cursor:pointer;border:0.5px solid transparent;border-bottom:none;border-radius:6px 6px 0 0;color:var(--color-text-secondary);background:none;position:relative;bottom:-1px}
+.tab.active{border-color:var(--color-border-tertiary);background:var(--color-background-primary);color:var(--color-text-primary);font-weight:500}
+.panel{display:none}.panel.active{display:block}
+.info{background:#E6F1FB;border:0.5px solid #378ADD;border-radius:6px;padding:9px 12px;font-size:12px;color:#185FA5;line-height:1.6;margin-bottom:1rem}
+.warn{background:#FAEEDA;border:0.5px solid #BA7517;border-radius:6px;padding:9px 12px;font-size:12px;color:#854F0B;line-height:1.6;margin-bottom:1rem}
+.sec{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin:1rem 0 0.4rem;letter-spacing:.03em}
+.skill-block{border:0.5px solid var(--color-border-tertiary);border-radius:8px;margin-bottom:8px;overflow:hidden}
+.skill-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--color-background-secondary);cursor:pointer}
+.skill-name{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.skill-score-badge{font-size:12px;font-weight:500;min-width:48px;text-align:right}
+.skill-body{padding:8px 12px 10px}
+.crit-row{display:grid;grid-template-columns:1fr auto;align-items:start;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.crit-row:last-child{border-bottom:none}
+.crit-text{font-size:12px;color:var(--color-text-primary);line-height:1.5}
+.trial-btns{display:flex;gap:4px}
+.t-btn{width:32px;height:24px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);border-radius:4px;font-size:11px;cursor:pointer;color:var(--color-text-secondary);font-weight:400}
+.t-btn.on{background:#EAF3DE;border-color:#639922;color:#3B6D11;font-weight:500}
+.t-label{font-size:10px;color:var(--color-text-tertiary);text-align:center;margin-top:1px}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:1rem 0}
+.sum-card{background:var(--color-background-secondary);border-radius:8px;padding:10px 12px;text-align:center}
+.sum-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+.sum-num{font-size:22px;font-weight:500;color:var(--color-text-primary)}
+.sum-sub{font-size:11px;color:var(--color-text-tertiary);margin-top:2px}
+.norm-row{display:grid;grid-template-columns:60px repeat(5,1fr);font-size:12px;border-bottom:0.5px solid var(--color-border-tertiary);align-items:center}
+.norm-row.head{font-weight:500;color:var(--color-text-secondary);background:var(--color-background-secondary)}
+.norm-cell{padding:5px 4px;text-align:center}
+.norm-cell.age{text-align:left;color:var(--color-text-secondary)}
+.lvl-pill{display:inline-block;font-size:11px;font-weight:500;border-radius:4px;padding:1px 6px}
+.lvl1{background:#FCEBEB;color:#A32D2D}.lvl2{background:#FAEEDA;color:#854F0B}.lvl3{background:#E6F1FB;color:#185FA5}.lvl4{background:#EAF3DE;color:#3B6D11}.lvl5{background:#EEEDFE;color:#3C3489}
+.highlight{background:#FAEEDA !important}
+.result-block{border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:12px;margin-bottom:10px}
+.result-title{font-size:13px;font-weight:500;margin-bottom:8px;color:var(--color-text-primary)}
+.bar-wrap{margin-bottom:6px}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--color-text-secondary);margin-bottom:3px}
+.bar-bg{height:8px;background:var(--color-background-secondary);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:#378ADD;transition:width .3s}
+.bar-fill.ball{background:#639922}
+.bar-fill.total{background:#534AB7}
+.calc-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+.field-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:4px}
+select,input[type=number]{width:100%;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);border-radius:6px;padding:6px 8px;font-size:13px;color:var(--color-text-primary)}
+.calc-btn{width:100%;padding:9px;border:0.5px solid #378ADD;background:#E6F1FB;border-radius:6px;font-size:13px;color:#185FA5;cursor:pointer;font-weight:500;margin-bottom:1rem}
+.calc-result{border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:12px}
+</style>
+<div class="wrap">
+<div class="tabs">
+  <div class="tab active" onclick="sw('score',this)">评分录入</div>
+  <div class="tab" onclick="sw('result',this)">计分结果</div>
+  <div class="tab" onclick="sw('norm',this)">常模对照</div>
+  <div class="tab" onclick="sw('guide',this)">使用说明</div>
+</div>
+
+<div id="p-score" class="panel active">
+  <div class="info">每个标准：1=完成 / 0=未完成。每项技能测试<strong>2次</strong>，两次得分相加即为该技能得分。</div>
+  <div class="sec">位移技能 Locomotor（满分46分）</div>
+  <div id="loco-skills"></div>
+  <div class="sec" style="margin-top:1.25rem">球类技能 Ball Skills（满分54分）</div>
+  <div id="ball-skills"></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem">
+    <button onclick="resetAll()" style="padding:7px 14px;border:0.5px solid var(--color-border-secondary);background:none;border-radius:6px;font-size:12px;cursor:pointer;color:var(--color-text-secondary)">重置</button>
+    <button onclick="sw('result',document.querySelectorAll('.tab')[1])" style="padding:7px 14px;border:0.5px solid #378ADD;background:#E6F1FB;border-radius:6px;font-size:12px;cursor:pointer;color:#185FA5;font-weight:500">查看结果 →</button>
+  </div>
+</div>
+
+<div id="p-result" class="panel">
+  <div class="sum-grid">
+    <div class="sum-card"><div class="sum-label">位移技能</div><div class="sum-num" id="r-loco">0</div><div class="sum-sub">满分 46</div></div>
+    <div class="sum-card"><div class="sum-label">球类技能</div><div class="sum-num" id="r-ball">0</div><div class="sum-sub">满分 54</div></div>
+    <div class="sum-card"><div class="sum-label">动作总分</div><div class="sum-num" id="r-total">0</div><div class="sum-sub">满分 100</div></div>
+  </div>
+  <div class="result-block">
+    <div class="result-title">得分率</div>
+    <div class="bar-wrap"><div class="bar-label"><span>位移技能</span><span id="b-loco-pct">0%</span></div><div class="bar-bg"><div class="bar-fill" id="b-loco" style="width:0%"></div></div></div>
+    <div class="bar-wrap"><div class="bar-label"><span>球类技能</span><span id="b-ball-pct">0%</span></div><div class="bar-bg"><div class="bar-fill ball" id="b-ball" style="width:0%"></div></div></div>
+    <div class="bar-wrap"><div class="bar-label"><span>动作总分</span><span id="b-total-pct">0%</span></div><div class="bar-bg"><div class="bar-fill total" id="b-total" style="width:0%"></div></div></div>
+  </div>
+  <div class="result-block">
+    <div class="result-title">上海市常模等级（需填写年龄和性别）</div>
+    <div class="calc-form">
+      <div><div class="field-label">年龄</div><select id="r-age"><option value="">请选择</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div>
+      <div><div class="field-label">性别（球类技能等级需要）</div><select id="r-gender"><option value="">请选择</option><option value="M">男</option><option value="F">女</option></select></div>
+    </div>
+    <button class="calc-btn" onclick="calcNorm()">计算常模等级</button>
+    <div id="norm-result" style="display:none" class="calc-result">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+        <div><div class="field-label">位移技能等级</div><div id="n-loco" style="font-size:22px;font-weight:500"></div></div>
+        <div><div class="field-label">球类技能等级</div><div id="n-ball" style="font-size:22px;font-weight:500"></div></div>
+        <div><div class="field-label">动作总分等级</div><div id="n-total" style="font-size:22px;font-weight:500"></div></div>
+      </div>
+      <div id="n-desc" style="margin-top:10px;font-size:12px;color:var(--color-text-secondary);line-height:1.7"></div>
+    </div>
+  </div>
+  <button onclick="sendPrompt('请根据以下TGMD-3评估结果提供康复干预建议：'+getSummary())" style="width:100%;padding:9px;border:0.5px solid var(--color-border-secondary);background:none;border-radius:6px;font-size:13px;cursor:pointer;color:var(--color-text-primary);margin-top:6px">请Claude解读并给出干预建议 ↗</button>
+</div>
+
+<div id="p-norm" class="panel">
+  <div class="info">上海市常模数据（n=1118，3~10岁）。位移技能和动作总分不分性别；球类技能区分男女。</div>
+  <div style="display:flex;gap:8px;margin-bottom:1rem">
+    <button onclick="showNormTab('loco',this)" id="nt-loco" style="padding:5px 12px;border:0.5px solid #378ADD;background:#E6F1FB;border-radius:5px;font-size:12px;cursor:pointer;color:#185FA5;font-weight:500">位移技能</button>
+    <button onclick="showNormTab('ball-m',this)" id="nt-ball-m" style="padding:5px 12px;border:0.5px solid var(--color-border-tertiary);background:none;border-radius:5px;font-size:12px;cursor:pointer;color:var(--color-text-secondary)">球类·男</button>
+    <button onclick="showNormTab('ball-f',this)" id="nt-ball-f" style="padding:5px 12px;border:0.5px solid var(--color-border-tertiary);background:none;border-radius:5px;font-size:12px;cursor:pointer;color:var(--color-text-secondary)">球类·女</button>
+    <button onclick="showNormTab('total',this)" id="nt-total" style="padding:5px 12px;border:0.5px solid var(--color-border-tertiary);background:none;border-radius:5px;font-size:12px;cursor:pointer;color:var(--color-text-secondary)">动作总分</button>
+  </div>
+  <div id="norm-table"></div>
+  <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:8px;line-height:1.6">等级含义：1级=极度偏差（亟需干预）/ 2级=中度偏差（需关注）/ 3级=平均水平 / 4级=中度偏上 / 5级=极度偏上。"—"表示该年龄段存在天花板效应，理论上无法达到该等级。</div>
+</div>
+
+<div id="p-guide" class="panel">
+  <div class="warn">本工具为辅助计分，不替代官方测评手册。评分须严格依照《TGMD-3 Examiner's Manual》（Ulrich, 2019）中每项技能的动作标准图示和文字说明进行观察判断。</div>
+  <div class="sec">量表结构</div>
+  <div style="font-size:13px;color:var(--color-text-primary);line-height:1.8;margin-bottom:1rem">
+    <p>· 共 13 项基本动作技能，分位移技能（6项）和球类技能（7项）两个分测验</p>
+    <p>· 每项设 3~5 个动作标准（criteria），每条标准按"完成=1 / 未完成=0"记分</p>
+    <p>· 每项技能测试 2 次，两次得分<strong>直接相加</strong>（满分=标准数×2）</p>
+    <p>· 位移技能满分 46 分，球类技能满分 54 分，动作总分满分 100 分</p>
+    <p>· 动作总分 = 位移得分 + 球类得分（直接相加，不需要换算）</p>
+    <p>· 适用年龄：3岁0个月 ~ 10岁11个月</p>
+  </div>
+  <div class="sec">测试流程要点</div>
+  <div style="font-size:13px;color:var(--color-text-primary);line-height:1.8;margin-bottom:1rem">
+    <p>· 先口头描述、演示动作，再让儿童做 1 次练习，然后正式测试 2 次</p>
+    <p>· 评估者在旁观察，按动作标准逐条判断，不给予肢体辅助</p>
+    <p>· 评估空间：位移技能需至少 18.3 米直线空间；球类技能需有墙面</p>
+    <p>· 通常先做位移技能，再做球类技能（儿童对球类活动兴趣更高）</p>
+  </div>
+  <div class="sec">与 TGMD-2 的关键区别（避免混用）</div>
+  <div style="font-size:13px;color:var(--color-text-primary);line-height:1.8">
+    <p>· 位移技能第 3 版新增了"跳绳（skip）"，并调整了评分标准数量</p>
+    <p>· 球类技能将"滚球（roll）"替换为"下手抛（underhand throw）"</p>
+    <p>· 第 3 版增加了"单手正手击球（one-hand forehand strike）"</p>
+    <p>· 两版本得分<strong>不可互换比较</strong>，建档时须注明版本</p>
+  </div>
+</div>
+</div>
+
+<script>
+const skills = {
+  loco: [
+    { name:'跑 Run', cn:'跑步（60英尺/18.3米）', criteria:['手臂弯曲，两臂交替摆动（与腿相对）','腾空阶段（双脚离地瞬间）','落地时窄步宽、脚跟或前脚掌着地（非平踏）','支撑腿摆动时，非支撑腿屈膝约90°'] },
+    { name:'跳远 Horizontal Jump', cn:'立定跳远（10英尺/3米起跳区）', criteria:['起跳前双臂后摆做准备','起跳时双臂前摆向上发力','起跳时双腿同时蹬地','落地时双脚同时落地'] },
+    { name:'单腿跳 Hop', cn:'单脚连续跳（15英尺/4.5米）', criteria:['非跳跃腿前摆（摆腿助力）','非跳跃腿不交叉到跳跃腿前方','双臂弯曲、前摆以产生力量','在优势脚上连续跳4次'] },
+    { name:'跳绳 Skip', cn:'跳绳（30英尺/9米）', criteria:['跨步后同脚跳跃的节律性步伐','左右脚交替完成'] },
+    { name:'侧并步 Slide', cn:'侧向滑步（25英尺/7.5米）', criteria:['身体侧对移动方向','领先脚侧步，后脚随之靠拢（不超越领先脚）','至少4次连续流畅的侧滑步','到达终点后可向反方向重复'] },
+    { name:'跑跳步 Gallop', cn:'跑跳步（25英尺/7.5米）', criteria:['领先脚向前跨步，后脚随之跟上（后脚不超过领先脚）','节律性跑跳步：连续4次','身体保持直立'] }
+  ],
+  ball: [
+    { name:'双手击固定球 Two-Hand Strike', cn:'双手挥棒击固定球', criteria:['优势手握棒在上，非优势手在下','非优势侧髋和肩正对目标方向','击球时髋和肩旋转发力（旋转-反旋转）','接触球时手臂伸展','挥棒送球向前（随挥动作跟随目标方向）'] },
+    { name:'单手正手击球 One-Hand Forehand Strike', cn:'单手正手击落地反弹球（球拍）', criteria:['球弹跳时球拍后摆','非优势侧髋和肩正对目标','接触时体重由后脚移至前脚','触球后随挥至非优势侧肩膀高度'] },
+    { name:'原地运球 Dribble', cn:'单手原地运球（篮球）', criteria:['用指尖触球（非拍打）','球在腰部以下弹跳','连续控制拍球4次（脚不移动）'] },
+    { name:'接球 Catch', cn:'双手接球（20英尺/6米投来的小球）', criteria:['准备时双臂前伸，手掌向上','随球追踪调整身体位置','仅用双手接住球（不借助身体）'] },
+    { name:'踢固定球 Kick', cn:'踢固定球（足球）', criteria:['助跑1~2步接近球','踢球腿后摆超过髋部（大摆腿）','踢球时脚背或脚尖接触球','支撑腿略屈膝'] },
+    { name:'上手投球 Overhand Throw', cn:'上手投球（15英尺/4.5米靶标）', criteria:['躯干旋转，投球侧肩后转','步骤：投球臂侧脚向前迈步（对侧步）','臀部和躯干旋转带动手臂发力','随挥：投球手沿身体中线向下挥过'] },
+    { name:'下手抛球 Underhand Throw', cn:'下手抛球（15英尺/4.5米靶标）', criteria:['摆臂：投球臂向后摆动','迈步：投球臂对侧脚向前迈步','弯腰：身体前倾、膝盖弯曲','随挥：手臂向目标方向挥出至肩部高度'] }
+  ]
+};
+
+const normData = {
+  loco: {
+    3:[[1,9],[10,14],[15,25],[26,30],[31,46]],
+    4:[[1,9],[10,15],[16,27],[28,33],[34,46]],
+    5:[[1,14],[15,20],[21,33],[34,38],[39,46]],
+    6:[[1,18],[19,24],[25,37],[38,43],[44,46]],
+    7:[[1,23],[24,29],[30,39],[40,44],[45,46]],
+    8:[[1,26],[27,31],[32,41],[42,46],null],
+    9:[[1,27],[28,32],[33,42],[43,46],null],
+    10:[[1,30],[31,34],[35,43],[44,46],null]
+  },
+  ballM: {
+    3:[[1,10],[11,14],[15,22],[23,26],[27,54]],
+    4:[[1,11],[12,16],[17,27],[28,32],[33,54]],
+    5:[[1,14],[15,21],[22,34],[35,41],[42,54]],
+    6:[[1,19],[20,26],[27,41],[42,46],[47,54]],
+    7:[[1,24],[25,30],[31,44],[45,50],[51,54]],
+    8:[[1,29],[30,34],[35,46],[47,51],[52,54]],
+    9:[[1,29],[30,35],[36,48],[49,54],null],
+    10:[[1,30],[31,36],[37,49],[50,54],null]
+  },
+  ballF: {
+    3:[[1,9],[10,14],[15,22],[23,26],[27,54]],
+    4:[[1,10],[11,15],[16,25],[26,30],[31,54]],
+    5:[[1,14],[15,19],[20,30],[31,35],[36,54]],
+    6:[[1,15],[16,22],[23,35],[36,41],[42,54]],
+    7:[[1,21],[22,27],[28,40],[41,46],[47,54]],
+    8:[[1,23],[24,29],[30,42],[43,48],[49,54]],
+    9:[[1,26],[27,31],[32,42],[43,47],[48,54]],
+    10:[[1,27],[28,32],[33,46],[47,54],null]
+  },
+  total: {
+    3:[[1,27],[28,30],[31,46],[47,56],[57,100]],
+    4:[[1,27],[28,33],[34,51],[52,60],[61,100]],
+    5:[[1,33],[34,43],[44,62],[63,73],[74,100]],
+    6:[[1,39],[40,51],[52,73],[74,85],[86,100]],
+    7:[[1,50],[51,60],[61,80],[81,91],[92,100]],
+    8:[[1,57],[58,65],[66,83],[84,93],[94,100]],
+    9:[[1,59],[60,68],[69,85],[86,94],[95,100]],
+    10:[[1,59],[60,69],[70,89],[90,100],null]
+  }
+};
+
+const levelDesc = ['极度偏差（亟需干预）','中度偏差（需关注与支持）','平均水平（稳步发展）','中度偏上（发展优势）','极度偏上（潜能卓越）'];
+const levelClass = ['lvl1','lvl2','lvl3','lvl4','lvl5'];
+let state = {};
+
+function initState() {
+  state = {};
+  skills.loco.forEach((s,si) => s.criteria.forEach((_,ci) => {
+    state['L'+si+'_'+ci+'_0'] = 0;
+    state['L'+si+'_'+ci+'_1'] = 0;
+  }));
+  skills.ball.forEach((s,si) => s.criteria.forEach((_,ci) => {
+    state['B'+si+'_'+ci+'_0'] = 0;
+    state['B'+si+'_'+ci+'_1'] = 0;
+  }));
+}
+
+function toggle(key) {
+  state[key] = state[key] ? 0 : 1;
+  renderSkillScore(key);
+  updateTotals();
+}
+
+function renderSkillScore(changedKey) {
+  const prefix = changedKey.match(/^([LB]\d+)/)[1];
+  const type = prefix[0]==='L'?'loco':'ball';
+  const si = parseInt(prefix.slice(1));
+  const skill = skills[type==='loco'?'loco':'ball'][si];
+  let score = 0;
+  skill.criteria.forEach((_,ci) => {
+    score += (state[prefix+'_'+ci+'_0']||0) + (state[prefix+'_'+ci+'_1']||0);
+  });
+  const max = skill.criteria.length * 2;
+  const badge = document.getElementById('badge-'+prefix);
+  if (badge) {
+    badge.textContent = score+'/'+max;
+    badge.style.color = score===0?'var(--color-text-tertiary)':score===max?'#3B6D11':'#185FA5';
+  }
+  skill.criteria.forEach((_,ci) => {
+    [0,1].forEach(t => {
+      const btn = document.getElementById('btn-'+prefix+'_'+ci+'_'+t);
+      if (btn) btn.className = 't-btn'+(state[prefix+'_'+ci+'_'+t']?' on':'');
+    });
+  });
+}
+
+function updateTotals() {
+  let loco=0, ball=0;
+  skills.loco.forEach((s,si) => s.criteria.forEach((_,ci) => {
+    loco += (state['L'+si+'_'+ci+'_0']||0)+(state['L'+si+'_'+ci+'_1']||0);
+  }));
+  skills.ball.forEach((s,si) => s.criteria.forEach((_,ci) => {
+    ball += (state['B'+si+'_'+ci+'_0']||0)+(state['B'+si+'_'+ci+'_1']||0);
+  }));
+  const total = loco+ball;
+  document.getElementById('r-loco').textContent = loco;
+  document.getElementById('r-ball').textContent = ball;
+  document.getElementById('r-total').textContent = total;
+  document.getElementById('b-loco').style.width = (loco/46*100).toFixed(1)+'%';
+  document.getElementById('b-ball').style.width = (ball/54*100).toFixed(1)+'%';
+  document.getElementById('b-total').style.width = (total/100*100).toFixed(1)+'%';
+  document.getElementById('b-loco-pct').textContent = (loco/46*100).toFixed(1)+'%';
+  document.getElementById('b-ball-pct').textContent = (ball/54*100).toFixed(1)+'%';
+  document.getElementById('b-total-pct').textContent = total+'%';
+}
+
+function getLevel(score, ranges) {
+  for (let i=0;i<ranges.length;i++) {
+    if (!ranges[i]) continue;
+    if (score>=ranges[i][0] && score<=ranges[i][1]) return i+1;
+  }
+  return null;
+}
+
+function calcNorm() {
+  const age = parseInt(document.getElementById('r-age').value);
+  const gender = document.getElementById('r-gender').value;
+  if (!age) { alert('请选择年龄'); return; }
+  let loco=0,ball=0;
+  skills.loco.forEach((s,si) => s.criteria.forEach((_,ci) => { loco+=(state['L'+si+'_'+ci+'_0']||0)+(state['L'+si+'_'+ci+'_1']||0); }));
+  skills.ball.forEach((s,si) => s.criteria.forEach((_,ci) => { ball+=(state['B'+si+'_'+ci+'_0']||0)+(state['B'+si+'_'+ci+'_1']||0); }));
+  const total = loco+ball;
+  const lLvl = getLevel(loco, normData.loco[age]);
+  const tLvl = getLevel(total, normData.total[age]);
+  let bLvl = null;
+  if (gender) bLvl = getLevel(ball, gender==='M'?normData.ballM[age]:normData.ballF[age]);
+
+  const nLoco = document.getElementById('n-loco');
+  const nBall = document.getElementById('n-ball');
+  const nTotal = document.getElementById('n-total');
+  nLoco.innerHTML = lLvl ? '<span class="lvl-pill '+levelClass[lLvl-1]+'">'+lLvl+'级</span>' : '<span style="color:var(--color-text-tertiary)">—</span>';
+  nBall.innerHTML = bLvl ? '<span class="lvl-pill '+levelClass[bLvl-1]+'">'+bLvl+'级</span>' : '<span style="color:var(--color-text-tertiary)">'+(gender?'—':'需选性别')+'</span>';
+  nTotal.innerHTML = tLvl ? '<span class="lvl-pill '+levelClass[tLvl-1]+'">'+tLvl+'级</span>' : '<span style="color:var(--color-text-tertiary)">—</span>';
+  
+  let desc = [];
+  if (lLvl) desc.push('位移技能'+lLvl+'级：'+levelDesc[lLvl-1]);
+  if (bLvl) desc.push('球类技能'+bLvl+'级：'+levelDesc[bLvl-1]);
+  if (tLvl) desc.push('动作总分'+tLvl+'级：'+levelDesc[tLvl-1]);
+  document.getElementById('n-desc').innerHTML = desc.join('<br>');
+  document.getElementById('norm-result').style.display = 'block';
+}
+
+function buildSkillBlocks(type) {
+  const list = skills[type];
+  const prefix = type==='loco'?'L':'B';
+  return list.map((s,si) => {
+    const max = s.criteria.length*2;
+    const critHTML = s.criteria.map((c,ci) => `
+      <div class="crit-row">
+        <div class="crit-text">${c}</div>
+        <div>
+          <div class="trial-btns">
+            <div>
+              <button class="t-btn" id="btn-${prefix}${si}_${ci}_0" onclick="toggle('${prefix}${si}_${ci}_0')">T1</button>
+            </div>
+            <div>
+              <button class="t-btn" id="btn-${prefix}${si}_${ci}_1" onclick="toggle('${prefix}${si}_${ci}_1')">T2</button>
+            </div>
+          </div>
+        </div>
+      </div>`).join('');
+    return `<div class="skill-block">
+      <div class="skill-head" onclick="toggleBlock(this)">
+        <span class="skill-name">${s.name}</span>
+        <span class="skill-score-badge" id="badge-${prefix}${si}">0/${max}</span>
+      </div>
+      <div class="skill-body" style="display:none"><div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:6px">${s.cn}</div>${critHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleBlock(head) {
+  const body = head.nextElementSibling;
+  body.style.display = body.style.display==='none'?'block':'none';
+}
+
+const normTableData = {
+  loco: { title:'位移技能（不分性别，满分46）', data:normData.loco },
+  'ball-m': { title:'球类技能·男童（满分54）', data:normData.ballM },
+  'ball-f': { title:'球类技能·女童（满分54）', data:normData.ballF },
+  total: { title:'动作总分（不分性别，满分100）', data:normData.total }
+};
+let curNormTab = 'loco';
+
+function showNormTab(tab, btn) {
+  curNormTab = tab;
+  document.querySelectorAll('[id^="nt-"]').forEach(b => {
+    b.style.background='none'; b.style.borderColor='var(--color-border-tertiary)'; b.style.color='var(--color-text-secondary)'; b.style.fontWeight='400';
+  });
+  btn.style.background='#E6F1FB'; btn.style.borderColor='#378ADD'; btn.style.color='#185FA5'; btn.style.fontWeight='500';
+  renderNormTable();
+}
+
+function renderNormTable() {
+  const d = normTableData[curNormTab];
+  let html = `<div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px">${d.title}</div>`;
+  html += '<div class="norm-row head"><div class="norm-cell age">年龄</div><div class="norm-cell">1级</div><div class="norm-cell">2级</div><div class="norm-cell">3级</div><div class="norm-cell">4级</div><div class="norm-cell">5级</div></div>';
+  [3,4,5,6,7,8,9,10].forEach(age => {
+    const row = d.data[age];
+    html += '<div class="norm-row"><div class="norm-cell age">'+age+'岁</div>';
+    row.forEach((r,i) => {
+      html += '<div class="norm-cell"><span class="lvl-pill '+levelClass[i]+'">'+(r?r[0]+'~'+r[1]:'—')+'</span></div>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('norm-table').innerHTML = html;
+}
+
+function getSummary() {
+  let loco=0,ball=0;
+  skills.loco.forEach((s,si) => s.criteria.forEach((_,ci) => { loco+=(state['L'+si+'_'+ci+'_0']||0)+(state['L'+si+'_'+ci+'_1']||0); }));
+  skills.ball.forEach((s,si) => s.criteria.forEach((_,ci) => { ball+=(state['B'+si+'_'+ci+'_0']||0)+(state['B'+si+'_'+ci+'_1']||0); }));
+  return '位移技能'+loco+'/46分，球类技能'+ball+'/54分，动作总分'+(loco+ball)+'/100分';
+}
+
+function sw(id, el) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  if(id==='result') updateTotals();
+  if(id==='norm') renderNormTable();
+}
+
+function resetAll() {
+  if(!confirm('确认重置所有评分？')) return;
+  initState();
+  document.querySelectorAll('.t-btn').forEach(b=>b.className='t-btn');
+  document.querySelectorAll('[id^="badge-"]').forEach(b => { const max=b.id.replace('badge-',''); b.textContent='0/'+b.textContent.split('/')[1]; b.style.color='var(--color-text-tertiary)'; });
+  updateTotals();
+}
+
+initState();
+document.getElementById('loco-skills').innerHTML = buildSkillBlocks('loco');
+document.getElementById('ball-skills').innerHTML = buildSkillBlocks('ball');
+renderNormTable();
+</script>
