@@ -33,13 +33,13 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: 当前活跃任务仍是评估链逻辑核对与修复；`S-M` 与 `FMDA` 初测已恢复正常，且已补回 `TGMD-3 / GMFM-88` 缺失反馈配置与参考资料。下一步优先做 `TGMD-3` 与 `GMFM-88` 的真实 Electron 完成评估与报告复验。**
+**Active follow-up work is now in `.continue-here.md`: 当前活跃任务仍是 `emotion_scene` 文案精修，但第四轮 `acceptable avoidant` 已完成收口。下一步不再是大规模改 `need` 或 `acceptable`，而是先做 Electron 运行时点选抽查。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is runtime verification of the latest assessment logic fixes, now prioritizing `TGMD-3` and `GMFM-88` after restoring missing feedback config
-- first action should follow `.continue-here.md`
+- current active task is post-round-4 verification for `emotion_scene` copy, with runtime spot-checks before any fifth-round micro-refinement
+- first action should be opening the real training flow and spot-checking `scene-16`, `scene-37`, `scene-68`, `scene-72`, and `scene-79`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`
