@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-11
+> last_updated: 2026-04-12
 
 > Responsibility: top-level handoff entry for new sessions.
 > Read when: entering the repo or resuming work and needing the fastest route to current context.
@@ -33,12 +33,12 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: `care_scene` 已完成“旧左右分栏移除 + 沉浸式正式入口切换 + 正式记录闭环接入”。下一步是做 Electron smoke 和本地 DB 实写核验，确认新主链在真实运行时中闭环成立。**
+**Active follow-up work is now in `.continue-here.md`: 当前活跃任务已切到评估链逻辑核对与修复，已完成 `S-M` 与 `FMDA` 两个真实量表缺陷修复。下一步是做真实 Electron 场景复验，确认 UI 跳转、落库与报告结果与驱动计算一致。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is runtime verification of the new `care_scene` production immersive chain after the cutover landed
+- current active task is runtime verification of the latest assessment logic fixes, starting with `S-M` and `FMDA`
 - first action should follow `.continue-here.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

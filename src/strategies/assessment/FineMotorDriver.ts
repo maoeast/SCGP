@@ -395,7 +395,21 @@ export class FineMotorDriver extends BaseDriver {
       }
     }
 
-    return { action: 'complete', message: '当前领域没有更多可评估题目。' }
+    const lowerUnanswered = this.findNearestLowerUnanswered(domainCode, currentIndex, answers)
+    if (lowerUnanswered !== null) {
+      domainState.backtrackingForBasal = true
+      return {
+        action: 'jump',
+        targetIndex: lowerUnanswered,
+        message: '当前领域起始位置距离末尾过近，回退到更低月龄项目继续建立基础线。',
+      }
+    }
+
+    domainState.mode = 'search_ceiling'
+    domainState.basalFallbackUsed = true
+    domainState.basalIndex = this.getDomainBoundary(domainCode).start
+
+    return this.moveToNextDomain(domainCode, this.ensureRuntimeState(state))
   }
 
   private advanceCeilingSearch(
@@ -685,7 +699,11 @@ export class FineMotorDriver extends BaseDriver {
       }
     }
 
-    return this.questionIndexMap.get(bestQuestion.id) ?? 0
+    const bestQuestionIndex = questions.findIndex((question) => question.id === bestQuestion.id)
+    const latestAllowedStartIndex = Math.max(0, questions.length - BASAL_STREAK)
+    const clampedQuestion = questions[Math.min(bestQuestionIndex, latestAllowedStartIndex)] || bestQuestion
+
+    return this.questionIndexMap.get(clampedQuestion.id) ?? 0
   }
 
   private getAgeDistance(question: FineMotorQuestionData, estimatedAgeMonths: number): number {

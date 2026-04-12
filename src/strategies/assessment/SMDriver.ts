@@ -29,6 +29,13 @@ import { BaseDriver } from './BaseDriver'
 import { smQuestions, type SMQuestion } from '@/database/sm-questions'
 import { calculateSQScore, getEvaluationLevel } from '@/database/sm-norms'
 import { SMAssessmentAPI } from '@/database/api'
+import {
+  calculateSMRawScoreFromAnswers,
+  ensureSMNavigationMetadata,
+  getSMNavigationDecision,
+  getSMStartIndex,
+  type SMNavigationMetadata,
+} from './sm-logic'
 
 /**
  * S-M 量表驱动器实现
@@ -51,10 +58,6 @@ export class SMDriver extends BaseDriver {
     '自我管理',
     '集体活动'
   ]
-
-  // S-M 特有配置
-  private readonly PASS_THRESHOLD = 10   // 连续通过阈值
-  private readonly FAIL_THRESHOLD = 10   // 连续不通过阈值
 
   // 题目缓存（按ID排序）
   private sortedQuestions: SMQuestion[] = []
@@ -81,8 +84,7 @@ export class SMDriver extends BaseDriver {
    */
   getStartIndex(context: StudentContext): number {
     const stage = this.getAgeStage(context.ageInMonths)
-    const idx = this.sortedQuestions.findIndex(q => q.age_stage === stage)
-    return Math.max(0, idx)
+    return getSMStartIndex(this.sortedQuestions, stage)
   }
 
   // ========== 跳题逻辑（S-M 特有）==========
@@ -91,80 +93,33 @@ export class SMDriver extends BaseDriver {
    * 【核心重写】获取下一个题目的导航决策
    *
    * S-M 量表的跳题逻辑：
-   * 1. 检查是否达到上限（连续10项不通过）-> 评估结束
-   * 2. 检查是否需要向后跳转（基线未建立，起始阶段未全通过）
-   * 3. 检查是否建立基线（当前阶段全部通过）
-   * 4. 默认进入下一题
+   * 1. 从年龄起点向前搜索连续10项通过，命中即建立基线
+   * 2. 若起点区间出现失败且尚未建立基线，则回到更早题目继续找连续10项通过
+   * 3. 建立基线后继续向后评估，命中连续10项不通过即结束
+   * 4. 其余情况默认进入下一题
    */
   getNextQuestion(
     currentIndex: number,
     answers: Record<string, ScaleAnswer>,
     state: AssessmentState
   ): NavigationDecision {
-    const questions = this.sortedQuestions
+    const metadata = ensureSMNavigationMetadata(
+      this.sortedQuestions,
+      currentIndex,
+      state.metadata,
+    )
 
-    // 初始化元数据（确保所有属性都被正确初始化）
-    if (!state.metadata) {
-      // 计算起始索引（第一次调用时记录）
-      const startStage = this.sortedQuestions[currentIndex]?.age_stage || 1
-      const calculatedStartIndex = this.sortedQuestions.findIndex(q => q.age_stage === startStage)
-
-      state.metadata = {
-        basalEstablished: false,      // 是否已建立基线
-        basalStage: null,             // 基线所在阶段
-        visitedStages: [],            // 已访问的阶段
-        startIndex: Math.max(0, calculatedStartIndex),  // 起始题目索引
-        startStage: startStage        // 起始年龄阶段
-      }
-    }
-    // 确保 visitedStages 数组存在
-    if (!state.metadata.visitedStages) {
-      state.metadata.visitedStages = []
+    state.metadata = {
+      ...state.metadata,
+      ...metadata,
     }
 
-    const currentQuestion = questions[currentIndex]
-    if (!currentQuestion) {
-      return { action: 'complete', message: '评估已完成' }
-    }
-
-    // 记录已访问阶段
-    const currentStage = currentQuestion.age_stage
-    if (!state.metadata.visitedStages.includes(currentStage)) {
-      state.metadata.visitedStages.push(currentStage)
-    }
-
-    // 1. 检查是否达到上限（连续10项不通过）
-    const ceilingCheck = this.checkCeilingReached(currentIndex, answers)
-    if (ceilingCheck.reached) {
-      return {
-        action: 'complete',
-        message: '根据S-M评估规则，连续10项不通过，评估自动结束'
-      }
-    }
-
-    // 2. 检查是否需要向后跳转（基线未建立时）
-    if (!state.metadata.basalEstablished) {
-      const backwardJump = this.checkBackwardJump(currentIndex, answers, state)
-      if (backwardJump) {
-        return backwardJump
-      }
-    }
-
-    // 3. 检查是否建立基线（当前阶段全部通过）
-    const basalCheck = this.checkBasalEstablished(currentIndex, answers)
-    if (basalCheck.established && !state.metadata.basalEstablished) {
-      state.metadata.basalEstablished = true
-      state.metadata.basalStage = basalCheck.stage
-      // 基线建立，继续向前评估
-    }
-
-    // 4. 检查是否到达最后一题
-    if (currentIndex >= questions.length - 1) {
-      return { action: 'complete', message: '评估已完成' }
-    }
-
-    // 5. 默认进入下一题
-    return { action: 'next' }
+    return getSMNavigationDecision(
+      this.sortedQuestions,
+      currentIndex,
+      answers,
+      state.metadata as SMNavigationMetadata,
+    )
   }
 
   // ========== 评分计算 ==========
@@ -409,138 +364,6 @@ export class SMDriver extends BaseDriver {
 
   // ========== 私有方法：跳题逻辑 ==========
 
-  /**
-   * 检查是否达到上限（连续10项不通过）
-   */
-  private checkCeilingReached(
-    currentIndex: number,
-    answers: Record<string, ScaleAnswer>
-  ): { reached: boolean; position?: number } {
-    // 从当前位置向前查找连续不通过
-    let consecutiveFail = 0
-    for (let i = currentIndex; i >= 0; i--) {
-      const q = this.sortedQuestions[i]
-      if (!q) continue
-      const answer = answers[q.id]
-
-      if (!answer) break
-
-      if (answer.score === 0) {
-        consecutiveFail++
-        if (consecutiveFail >= this.FAIL_THRESHOLD) {
-          console.log(`[SMDriver] 上限达到：从题目${q.id}开始连续${consecutiveFail}项不通过`)
-          return { reached: true, position: i }
-        }
-      } else {
-        consecutiveFail = 0
-      }
-    }
-
-    // 从当前位置向后查找连续不通过（已经作答的部分）
-    consecutiveFail = 0
-    for (let i = 0; i < this.sortedQuestions.length; i++) {
-      const q = this.sortedQuestions[i]
-      if (!q) continue
-      const answer = answers[q.id]
-
-      if (!answer) continue
-
-      if (answer.score === 0) {
-        consecutiveFail++
-        if (consecutiveFail >= this.FAIL_THRESHOLD) {
-          console.log(`[SMDriver] 上限达到：从题目${q.id}开始连续${consecutiveFail}项不通过`)
-          return { reached: true, position: i }
-        }
-      } else {
-        consecutiveFail = 0
-      }
-    }
-
-    return { reached: false }
-  }
-
-  /**
-   * 检查是否需要向后跳转（基线未建立时）
-   */
-  private checkBackwardJump(
-    currentIndex: number,
-    answers: Record<string, ScaleAnswer>,
-    state: AssessmentState
-  ): NavigationDecision | null {
-    const currentQuestion = this.sortedQuestions[currentIndex]
-    if (!currentQuestion) return null
-
-    const currentStage = currentQuestion.age_stage
-
-    // 检查当前阶段是否全部回答且不全是通过
-    const stageQuestions = this.sortedQuestions.filter(q => q.age_stage === currentStage)
-    const stageAnswers = stageQuestions.map(q => answers[q.id])
-
-    // 如果当前阶段还有未回答的题目，继续评估
-    const hasUnanswered = stageAnswers.some(a => a === undefined)
-    if (hasUnanswered) return null
-
-    // 检查是否全部通过
-    const allPassed = stageAnswers.every(a => a?.score === 1)
-    if (allPassed) {
-      // 当前阶段全通过，建立基线
-      return null
-    }
-
-    // 当前阶段未全通过，需要检查是否需要向后跳转
-    // 如果当前阶段不是第1阶段，且前一个阶段未被访问
-    const visitedStages = state.metadata?.visitedStages || []
-    if (currentStage > 1 && !visitedStages.includes(currentStage - 1)) {
-      const prevStageStart = this.sortedQuestions.findIndex(q => q.age_stage === currentStage - 1)
-      if (prevStageStart >= 0) {
-        console.log(`[SMDriver] 向后跳转：从阶段${currentStage}跳转到阶段${currentStage - 1}`)
-        return {
-          action: 'jump',
-          targetIndex: prevStageStart,
-          message: `当前阶段未全通过，继续评估第${currentStage - 1}阶段`
-        }
-      }
-    }
-
-    return null
-  }
-
-  /**
-   * 检查是否建立基线（当前阶段全部通过）
-   */
-  private checkBasalEstablished(
-    currentIndex: number,
-    answers: Record<string, ScaleAnswer>
-  ): { established: boolean; stage?: number } {
-    const currentQuestion = this.sortedQuestions[currentIndex]
-    if (!currentQuestion) return { established: false }
-
-    const currentStage = currentQuestion.age_stage
-    const stageQuestions = this.sortedQuestions.filter(q => q.age_stage === currentStage)
-
-    // 检查当前阶段是否全部回答且全部通过
-    let allAnswered = true
-    let allPassed = true
-
-    for (const q of stageQuestions) {
-      const answer = answers[q.id]
-      if (!answer) {
-        allAnswered = false
-        break
-      }
-      if (answer.score !== 1) {
-        allPassed = false
-      }
-    }
-
-    if (allAnswered && allPassed && stageQuestions.length >= 10) {
-      console.log(`[SMDriver] 基线建立：第${currentStage}阶段全部通过`)
-      return { established: true, stage: currentStage }
-    }
-
-    return { established: false }
-  }
-
   // ========== 私有方法：评分计算 ==========
 
   /**
@@ -555,126 +378,7 @@ export class SMDriver extends BaseDriver {
     answers: Record<string, ScaleAnswer>,
     startStage: number
   ): number {
-    const allQuestions = this.sortedQuestions
-
-    // 各年龄阶段的基础分（根据S-M量表标准）
-    const stageBaseScores: Record<number, number> = {
-      1: 0,    // I.6个月-1岁11个月: 基础分0
-      2: 19,   // II.2岁-3岁5个月: 基础分19
-      3: 41,   // III.3岁6个月-4岁11个月: 基础分41
-      4: 63,   // IV.5岁-6岁5个月: 基础分63
-      5: 80,   // V.6岁6个月-8岁5个月: 基础分80
-      6: 96,   // VI.8岁6个月-10岁5个月: 基础分96
-      7: 113   // VII.10岁6个月以上: 基础分113
-    }
-
-    // 获取起始阶段的第一个题目索引
-    const startIndex = allQuestions.findIndex(q => q.age_stage === startStage)
-
-    console.log('[SMDriver] 粗分计算 - 起始阶段:', startStage, ', 起始索引:', startIndex)
-
-    // 查找连续10项通过的位置
-    let tenPassStartIndex = -1
-    let tenPassEndIndex = -1
-
-    // Phase 1: 从起始阶段向前搜索
-    let consecutivePass = 0
-    for (let i = Math.max(0, startIndex); i < allQuestions.length; i++) {
-      const currentQuestion = allQuestions[i]
-      if (!currentQuestion) continue
-      const qid = currentQuestion.id
-      const answer = answers[qid]
-      if (!answer) break
-
-      if (answer.score === 1) {
-        consecutivePass++
-        if (consecutivePass === 10) {
-          tenPassStartIndex = i - 9
-          tenPassEndIndex = i
-          const startQuestion = allQuestions[tenPassStartIndex]
-          console.log('[SMDriver] 向前搜索：发现连续10项通过，从题目', startQuestion?.id, '到', currentQuestion.id)
-          break
-        }
-      } else {
-        consecutivePass = 0
-      }
-    }
-
-    // Phase 2: 如果向前没找到，尝试向后搜索
-    if (tenPassStartIndex === -1 && startIndex > 0) {
-      consecutivePass = 0
-      for (let i = startIndex - 1; i >= 0; i--) {
-        const currentQuestion = allQuestions[i]
-        if (!currentQuestion) continue
-        const qid = currentQuestion.id
-        const answer = answers[qid]
-        if (!answer) break
-
-        if (answer.score === 1) {
-          consecutivePass++
-          if (consecutivePass === 10) {
-            tenPassStartIndex = i
-            tenPassEndIndex = i + 9
-            const endQuestion = allQuestions[tenPassEndIndex]
-            console.log('[SMDriver] 向后搜索：发现连续10项通过，从题目', currentQuestion.id, '到', endQuestion?.id)
-            break
-          }
-        } else {
-          consecutivePass = 0
-        }
-      }
-    }
-
-    // 确定有效的基础分和通过题目数
-    let effectiveBaseScore = stageBaseScores[startStage] || 0
-    let finalPassedCount = 0
-
-    if (tenPassStartIndex !== -1) {
-      // 找到了连续10项通过，确定有效的年龄阶段和基础分
-      const tenPassQuestion = allQuestions[tenPassStartIndex]
-      if (!tenPassQuestion) {
-        return effectiveBaseScore
-      }
-      const effectiveAgeStage = tenPassQuestion.age_stage
-      effectiveBaseScore = stageBaseScores[effectiveAgeStage] || 0
-
-      console.log('[SMDriver] 连续10项通过起始题目所在阶段:', effectiveAgeStage, ', 使用基础分:', effectiveBaseScore)
-
-      // S-M规则：连续10项通过，前面所有项目视为通过
-      // 1. 连续10项通过本身
-      finalPassedCount = 10
-
-      // 2. 连续10项通过之后的通过题目
-      for (let i = tenPassEndIndex + 1; i < allQuestions.length; i++) {
-        const currentQuestion = allQuestions[i]
-        if (!currentQuestion) continue
-        const qid = currentQuestion.id
-        const answer = answers[qid]
-        if (answer) {
-          if (answer.score === 1) {
-            finalPassedCount++
-          }
-        } else {
-          break
-        }
-      }
-
-      console.log('[SMDriver] S-M规则计算：基础分', effectiveBaseScore, '+ 通过数', finalPassedCount)
-    } else {
-      // 没有找到连续10项通过，只计算实际通过的题目
-      console.log('[SMDriver] 没有连续10项通过，只计算实际通过题目')
-      for (const qid in answers) {
-        const answer = answers[qid]
-        if (answer?.score === 1) {
-          finalPassedCount++
-        }
-      }
-    }
-
-    const finalRawScore = effectiveBaseScore + finalPassedCount
-    console.log('[SMDriver] 最终粗分:', finalRawScore)
-
-    return finalRawScore
+    return calculateSMRawScoreFromAnswers(this.sortedQuestions, answers, startStage)
   }
 
   /**

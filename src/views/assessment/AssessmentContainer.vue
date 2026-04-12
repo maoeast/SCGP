@@ -26,7 +26,8 @@
               <div class="info-row">
                 <span>学生：{{ student?.name }}</span>
                 <span>年龄：{{ studentAgeLabel }}</span>
-                <span v-if="currentStageLabel">起始阶段：{{ currentStageLabel }}</span>
+                <span v-if="startStageLabel">起始阶段：{{ startStageLabel }}</span>
+                <span v-if="currentStageLabel && currentStageLabel !== startStageLabel">当前阶段：{{ currentStageLabel }}</span>
                 <span v-if="currentDimensionLabel">当前维度：{{ currentDimensionLabel }}</span>
               </div>
             </div>
@@ -266,9 +267,8 @@ const studentAgeLabel = computed(() => {
   return `${years}岁${months}个月`
 })
 
-const currentStageLabel = computed(() => {
-  if (!currentQuestion.value?.metadata?.age_stage) return null
-  const stage = currentQuestion.value.metadata.age_stage
+function formatSMStageLabel(stage: number | null | undefined): string | null {
+  if (!stage) return null
   const labels: Record<number, string> = {
     1: '第1阶段（6个月-1岁11个月）',
     2: '第2阶段（2岁-3岁5个月）',
@@ -279,6 +279,15 @@ const currentStageLabel = computed(() => {
     7: '第7阶段（10岁6个月以上）'
   }
   return labels[stage] || `第${stage}阶段`
+}
+
+const startStageLabel = computed(() => {
+  return formatSMStageLabel(state.value.metadata?.startStage)
+})
+
+const currentStageLabel = computed(() => {
+  const stage = currentQuestion.value?.metadata?.age_stage
+  return formatSMStageLabel(stage)
 })
 
 const currentDimensionLabel = computed(() => {
