@@ -171,7 +171,7 @@
   - 旧 `useEmotionalTrainingShell.ts`
   - 旧 `compileCareScene.ts`
 - 当前仍未完成：
-  - 尚未做 Electron 实机 smoke
+  - 尚未做 Electron 实机 smoke（已列为 2026-04-13 首要任务）
   - 尚未完成 `care_scene` 正式训练记录闭环接线与本地 DB 实写核验
 
 ## 4. 当前活跃未完成主线
