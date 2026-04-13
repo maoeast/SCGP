@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS game_emotion_records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
   game_code TEXT NOT NULL
-    CHECK(game_code IN ('G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER', 'G08_ENERGY_BALL')),
+    CHECK(game_code GLOB '[A-Z][0-9][0-9]_*'),
   start_time TEXT NOT NULL,
   duration_ms INTEGER NOT NULL,
   difficulty_level INTEGER DEFAULT 1
@@ -72,6 +72,10 @@ CREATE TABLE IF NOT EXISTS game_emotion_records (
   completion_status TEXT NOT NULL
     CHECK(completion_status IN ('completed', 'aborted')),
   performance_data TEXT,
+  session_group_id TEXT,
+  exit_trigger TEXT
+    CHECK(exit_trigger IN ('game_complete', 'user_exit', 'teacher_exit', 'timer_end', 'system_interrupt') OR exit_trigger IS NULL),
+  session_participants TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -80,6 +84,22 @@ CREATE INDEX IF NOT EXISTS idx_game_emotion_records_student
   ON game_emotion_records(student_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_game_emotion_records_code
   ON game_emotion_records(game_code, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_game_emotion_records_group
+  ON game_emotion_records(session_group_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS game_session_participants (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_group_id TEXT NOT NULL,
+  student_id INTEGER NOT NULL,
+  role TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_game_session_participants_student
+  ON game_session_participants(student_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_game_session_participants_group
+  ON game_session_participants(session_group_id, student_id);
 
 CREATE TABLE IF NOT EXISTS student_badges (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,7 +107,7 @@ CREATE TABLE IF NOT EXISTS student_badges (
   badge_code TEXT NOT NULL,
   badge_name TEXT NOT NULL,
   game_code TEXT NOT NULL
-    CHECK(game_code IN ('G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER', 'G08_ENERGY_BALL')),
+    CHECK(game_code GLOB '[A-Z][0-9][0-9]_*'),
   unlock_count INTEGER DEFAULT 1,
   first_earned_at TEXT DEFAULT CURRENT_TIMESTAMP,
   last_earned_at TEXT DEFAULT CURRENT_TIMESTAMP,

@@ -7,8 +7,8 @@
 
       <div class="toolbar-right">
         <div class="student-pill">
-          <span class="student-label">当前学生</span>
-          <strong>{{ resolvedStudentName }}</strong>
+          <span class="student-label">{{ participantLabel }}</span>
+          <strong>{{ participantSummary }}</strong>
         </div>
 
         <el-dropdown trigger="click" placement="bottom-end">
@@ -21,11 +21,14 @@
               <div class="settings-panel" @click.stop>
                 <div class="settings-row">
                   <span class="setting-label">难度级别</span>
-                  <el-radio-group v-model="difficulty" size="small">
+                  <el-radio-group v-model="difficulty" size="small" :disabled="difficultyLocked">
                     <el-radio-button :label="1">简单</el-radio-button>
                     <el-radio-button :label="2">中等</el-radio-button>
                     <el-radio-button :label="3">困难</el-radio-button>
                   </el-radio-group>
+                  <span v-if="difficultyLocked" class="setting-lock-note">
+                    当前训练已锁定难度，运行中不可修改。
+                  </span>
                 </div>
 
                 <div class="settings-row">
@@ -42,6 +45,13 @@
                   <span class="setting-label">特效与语音</span>
                   <el-switch v-model="settings.effectsEnabled" />
                 </div>
+
+                <div class="settings-row">
+                  <span class="setting-label">教师操作</span>
+                  <button class="teacher-exit-button" type="button" @click="handleTeacherExit">
+                    教师结束本局
+                  </button>
+                </div>
               </div>
             </el-dropdown-menu>
           </template>
@@ -55,8 +65,11 @@
         :settings="settings"
         :is-paused="isPaused"
         :complete-game="handleGameComplete"
+        :complete-group-game="handleGroupGameComplete"
+        :abort-group-game="handleAbortGroupGame"
         :mark-round-dirty="markRoundDirty"
         :audio="audioController"
+        :launch-context="props.launchContext"
       />
     </div>
 
@@ -69,28 +82,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
+import { ElMessageBox } from 'element-plus'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
 import type {
+  CustomGameCode,
+  CustomGameExitTrigger,
+  CustomGameLaunchContext,
   EmotionGameAudioController,
   EmotionGameBadgePayload,
-  EmotionGameCode,
   EmotionGameCompletionPayload,
   EmotionGameDifficulty,
   EmotionGameSettings,
+  GroupGameCompletionPayload,
 } from '@/types/emotional/games'
 
 const props = withDefaults(defineProps<{
-  studentId: number
-  studentName?: string
-  gameCode: EmotionGameCode
+  launchContext: CustomGameLaunchContext
+  gameCode: CustomGameCode
   gameTitle: string
-  initialDifficulty?: EmotionGameDifficulty
   defaultBadge?: EmotionGameBadgePayload
 }>(), {
-  studentName: '',
-  initialDifficulty: 1,
   defaultBadge: undefined,
 })
 
@@ -103,20 +116,73 @@ const settings = reactive<EmotionGameSettings>({
   effectsEnabled: true,
 })
 
-const difficulty = ref<EmotionGameDifficulty>(props.initialDifficulty)
+function normalizeParticipantStudentIds(source: number[]): number[] {
+  return Array.from(new Set(
+    source
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value) && value > 0)
+      .map((value) => Math.floor(value)),
+  ))
+}
+
+function createSessionGroupId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  return `custom-game-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+const resolvedParticipantStudentIds = computed(() => {
+  return normalizeParticipantStudentIds(
+    props.launchContext.participantStudentIds.length > 0
+      ? props.launchContext.participantStudentIds
+      : [props.launchContext.studentId],
+  )
+})
+
+const resolvedParticipantNames = computed(() => {
+  const explicitNames = Array.isArray(props.launchContext.participantStudentNames)
+    ? props.launchContext.participantStudentNames
+      .map((value) => String(value || '').trim())
+      .filter(Boolean)
+    : []
+
+  return resolvedParticipantStudentIds.value.map((studentId, index) => {
+    return explicitNames[index]
+      || (index === 0 && props.launchContext.studentName ? props.launchContext.studentName : '')
+      || `学生 ${studentId}`
+  })
+})
+
+const primaryStudentId = computed(() => resolvedParticipantStudentIds.value[0] || 0)
+const primaryStudentName = computed(() => resolvedParticipantNames.value[0] || `学生 ${primaryStudentId.value}`)
+const isGroupLaunch = computed(() => resolvedParticipantStudentIds.value.length > 1)
+const difficultyLocked = computed(() => props.launchContext.difficultyLocked)
+const participantLabel = computed(() => (isGroupLaunch.value ? '当前参与者' : '当前学生'))
+const participantSummary = computed(() => resolvedParticipantNames.value.join('、') || primaryStudentName.value)
+
+function resolveInitialSessionGroupId() {
+  const metadataSessionGroupId = typeof props.launchContext.metadata?.sessionGroupId === 'string'
+    ? props.launchContext.metadata.sessionGroupId.trim()
+    : ''
+
+  if (metadataSessionGroupId) {
+    return metadataSessionGroupId
+  }
+
+  return isGroupLaunch.value ? createSessionGroupId() : ''
+}
+
+const difficulty = ref<EmotionGameDifficulty>(props.launchContext.initialDifficulty)
 const isPaused = ref(false)
 const persistenceMessage = ref('')
 const isPersisting = ref(false)
 const sessionStartedAt = Date.now()
 const hasDirtyRound = ref(false)
 const suppressLeaveAbort = ref(false)
+const activeSessionGroupId = ref(resolveInitialSessionGroupId())
 let messageTimer: number | null = null
-
-const resolvedStudentName = computed(() => {
-  if (props.studentName) return props.studentName
-  const fromQuery = Array.isArray(route.query.studentName) ? route.query.studentName[0] : route.query.studentName
-  return fromQuery || `学生 ${props.studentId}`
-})
 
 let audioContext: AudioContext | null = null
 let masterGain: GainNode | null = null
@@ -303,6 +369,38 @@ watch(
   },
 )
 
+watch(
+  () => props.launchContext.initialDifficulty,
+  (value) => {
+    difficulty.value = value
+  },
+)
+
+watch(
+  () => props.launchContext.difficultyLocked,
+  (locked) => {
+    if (locked && difficulty.value !== props.launchContext.initialDifficulty) {
+      difficulty.value = props.launchContext.initialDifficulty
+    }
+  },
+)
+
+watch(difficulty, (value) => {
+  if (difficultyLocked.value && value !== props.launchContext.initialDifficulty) {
+    difficulty.value = props.launchContext.initialDifficulty
+  }
+})
+
+watch(isGroupLaunch, (value) => {
+  if (value && !activeSessionGroupId.value) {
+    activeSessionGroupId.value = createSessionGroupId()
+  }
+
+  if (!value) {
+    activeSessionGroupId.value = ''
+  }
+})
+
 const audioController: EmotionGameAudioController = {
   ensureReady: ensureAudioReady,
   startAmbient,
@@ -317,8 +415,19 @@ const audioController: EmotionGameAudioController = {
 
 function buildReturnQuery() {
   const nextQuery = { ...route.query }
-  nextQuery.studentId = String(props.studentId)
-  nextQuery.studentName = resolvedStudentName.value
+  nextQuery.entry = props.launchContext.launchEntryCode
+  nextQuery.module = props.launchContext.launchModuleCode
+  nextQuery.studentId = String(primaryStudentId.value)
+  nextQuery.studentName = primaryStudentName.value
+
+  if (isGroupLaunch.value) {
+    nextQuery.participantStudentIds = resolvedParticipantStudentIds.value.join(',')
+    nextQuery.participantStudentNames = resolvedParticipantNames.value.join('|')
+  } else {
+    delete nextQuery.participantStudentIds
+    delete nextQuery.participantStudentNames
+  }
+
   delete nextQuery.targetPath
   delete nextQuery.subModule
   return nextQuery
@@ -331,13 +440,10 @@ function markRoundDirty() {
 function getReturnLocation() {
   const sourceModule = Array.isArray(route.query.module) ? route.query.module[0] : route.query.module
 
-  if (sourceModule === 'emotional') {
+  if (sourceModule === 'emotional' || props.launchContext.launchModuleCode === 'emotional') {
     return {
-      path: `/games/lobby/${props.studentId}`,
-      query: {
-        module: 'emotional',
-        studentName: resolvedStudentName.value,
-      },
+      path: `/games/lobby/${primaryStudentId.value}`,
+      query: buildReturnQuery(),
     }
   }
 
@@ -347,9 +453,58 @@ function getReturnLocation() {
   }
 }
 
+function resolveSessionGroupId(payload?: EmotionGameCompletionPayload | GroupGameCompletionPayload) {
+  if (typeof payload?.sessionGroupId === 'string' && payload.sessionGroupId.trim()) {
+    return payload.sessionGroupId.trim()
+  }
+
+  if (isGroupLaunch.value) {
+    if (!activeSessionGroupId.value) {
+      activeSessionGroupId.value = createSessionGroupId()
+    }
+    return activeSessionGroupId.value
+  }
+
+  return null
+}
+
+function buildDefaultPerformanceData(
+  status: 'completed' | 'aborted',
+  exitTrigger: CustomGameExitTrigger | null,
+) {
+  if (status === 'completed') {
+    return {
+      event: exitTrigger || 'game_complete',
+    }
+  }
+
+  return {
+    event: exitTrigger || 'user_exit',
+  }
+}
+
+function normalizeGroupPayload(
+  status: 'completed' | 'aborted',
+  payload?: EmotionGameCompletionPayload | GroupGameCompletionPayload,
+) {
+  const exitTrigger = payload?.exitTrigger || null
+  const payloadParticipantIds = payload && 'participantStudentIds' in payload && Array.isArray(payload.participantStudentIds)
+    ? payload.participantStudentIds
+    : resolvedParticipantStudentIds.value
+  const participantStudentIds = normalizeParticipantStudentIds(payloadParticipantIds)
+
+  return {
+    performanceData: payload?.performanceData || buildDefaultPerformanceData(status, exitTrigger),
+    badge: payload?.badge || props.defaultBadge,
+    exitTrigger,
+    sessionGroupId: resolveSessionGroupId(payload),
+    participantStudentIds,
+  }
+}
+
 async function persistTerminalState(
   status: 'completed' | 'aborted',
-  payload?: EmotionGameCompletionPayload,
+  payload?: EmotionGameCompletionPayload | GroupGameCompletionPayload,
 ) {
   if (isPersisting.value) {
     return
@@ -358,22 +513,47 @@ async function persistTerminalState(
   isPersisting.value = true
 
   try {
-    const result = await api.persistSession({
-      studentId: props.studentId,
-      gameCode: props.gameCode,
-      startedAt: new Date(sessionStartedAt).toISOString(),
-      durationMs: Date.now() - sessionStartedAt,
-      difficultyLevel: difficulty.value,
-      completionStatus: status,
-      performanceData: payload?.performanceData || {
-        event: status === 'aborted' ? 'quiet_exit' : 'completed',
-      },
-      badge: payload?.badge || props.defaultBadge,
-    })
+    if (isGroupLaunch.value) {
+      const groupPayload = normalizeGroupPayload(status, payload)
+      const sessionGroupId = groupPayload.sessionGroupId || createSessionGroupId()
+      activeSessionGroupId.value = sessionGroupId
 
-    persistenceMessage.value = status === 'completed'
-      ? `已静默保存本次训练${result.badgeUnlockCount ? `，徽章累计 ${result.badgeUnlockCount} 次` : ''}`
-      : '已安静保存本次中断记录'
+      const result = await api.persistSessionGroup({
+        gameCode: props.gameCode,
+        participantStudentIds: groupPayload.participantStudentIds,
+        startedAt: new Date(sessionStartedAt).toISOString(),
+        durationMs: Date.now() - sessionStartedAt,
+        difficultyLevel: difficulty.value,
+        completionStatus: status,
+        performanceData: groupPayload.performanceData,
+        sessionGroupId,
+        exitTrigger: groupPayload.exitTrigger,
+        sharedBadge: groupPayload.badge,
+      })
+
+      persistenceMessage.value = status === 'completed'
+        ? `已静默保存共享训练，${result.recordIds.length} 名学生记录已同步写入`
+        : `已安静保存共享中断记录，${result.recordIds.length} 名学生已同步结束`
+    } else {
+      const exitTrigger = payload?.exitTrigger || null
+      const result = await api.persistSession({
+        studentId: primaryStudentId.value,
+        gameCode: props.gameCode,
+        startedAt: new Date(sessionStartedAt).toISOString(),
+        durationMs: Date.now() - sessionStartedAt,
+        difficultyLevel: difficulty.value,
+        completionStatus: status,
+        performanceData: payload?.performanceData || buildDefaultPerformanceData(status, exitTrigger),
+        badge: payload?.badge || props.defaultBadge,
+        exitTrigger,
+        sessionGroupId: resolveSessionGroupId(payload),
+        sessionParticipants: resolvedParticipantStudentIds.value,
+      })
+
+      persistenceMessage.value = status === 'completed'
+        ? `已静默保存本次训练${result.badgeUnlockCount ? `，徽章累计 ${result.badgeUnlockCount} 次` : ''}`
+        : '已安静保存本次中断记录'
+    }
 
     if (messageTimer) {
       window.clearTimeout(messageTimer)
@@ -388,7 +568,35 @@ async function persistTerminalState(
 }
 
 async function handleGameComplete(payload: EmotionGameCompletionPayload) {
-  await persistTerminalState('completed', payload)
+  await persistTerminalState('completed', {
+    ...payload,
+    exitTrigger: payload.exitTrigger || 'game_complete',
+  })
+  hasDirtyRound.value = false
+}
+
+async function handleGroupGameComplete(payload: GroupGameCompletionPayload) {
+  await persistTerminalState('completed', {
+    ...payload,
+    exitTrigger: payload.exitTrigger || 'game_complete',
+  })
+  hasDirtyRound.value = false
+}
+
+async function handleAbortGroupGame(reason?: CustomGameExitTrigger | GroupGameCompletionPayload) {
+  const payload = typeof reason === 'string'
+    ? {
+        performanceData: buildDefaultPerformanceData('aborted', reason),
+        exitTrigger: reason,
+        participantStudentIds: resolvedParticipantStudentIds.value,
+      }
+    : {
+        ...reason,
+        exitTrigger: reason?.exitTrigger || 'system_interrupt',
+        performanceData: reason?.performanceData || buildDefaultPerformanceData('aborted', reason?.exitTrigger || 'system_interrupt'),
+      }
+
+  await persistTerminalState('aborted', payload)
   hasDirtyRound.value = false
 }
 
@@ -400,13 +608,62 @@ async function handleQuietExit() {
   if (hasDirtyRound.value) {
     await persistTerminalState('aborted', {
       performanceData: {
-        event: 'quiet_exit',
+        event: 'user_exit',
       },
+      exitTrigger: 'user_exit',
     })
     hasDirtyRound.value = false
   }
 
   await router.push(getReturnLocation())
+}
+
+async function handleTeacherExit() {
+  try {
+    await ElMessageBox.confirm(
+      '教师结束会将本局记录为“已中断 / teacher_exit”，并立即返回上一页。',
+      '确认教师结束',
+      {
+        type: 'warning',
+        confirmButtonText: '结束本局',
+        cancelButtonText: '继续训练',
+      },
+    )
+  } catch {
+    return
+  }
+
+  suppressLeaveAbort.value = true
+  isPaused.value = true
+  stopAllAudio()
+
+  if (hasDirtyRound.value) {
+    await persistTerminalState('aborted', {
+      performanceData: {
+        event: 'teacher_exit',
+      },
+      exitTrigger: 'teacher_exit',
+    })
+    hasDirtyRound.value = false
+  }
+
+  await router.push(getReturnLocation())
+}
+
+function handleSystemInterrupt() {
+  if (suppressLeaveAbort.value || !hasDirtyRound.value || isPersisting.value) {
+    return
+  }
+
+  isPaused.value = true
+  stopAllAudio()
+  void persistTerminalState('aborted', {
+    performanceData: {
+      event: 'system_interrupt',
+    },
+    exitTrigger: 'system_interrupt',
+  })
+  hasDirtyRound.value = false
 }
 
 onBeforeRouteLeave(async () => {
@@ -415,17 +672,23 @@ onBeforeRouteLeave(async () => {
     stopAllAudio()
     await persistTerminalState('aborted', {
       performanceData: {
-        event: 'route_leave',
+        event: 'system_interrupt',
       },
+      exitTrigger: 'system_interrupt',
     })
     hasDirtyRound.value = false
   }
+})
+
+onMounted(() => {
+  window.addEventListener('pagehide', handleSystemInterrupt)
 })
 
 onBeforeUnmount(() => {
   if (messageTimer) {
     window.clearTimeout(messageTimer)
   }
+  window.removeEventListener('pagehide', handleSystemInterrupt)
   stopAllAudio()
   if (audioContext && audioContext.state !== 'closed') {
     audioContext.close().catch(() => {
@@ -551,6 +814,28 @@ onBeforeUnmount(() => {
   font-size: 14px;
   font-weight: 600;
   color: #33597b;
+}
+
+.setting-lock-note {
+  font-size: 12px;
+  color: #8b6a2f;
+}
+
+.teacher-exit-button {
+  min-height: 44px;
+  border: 1px solid rgba(193, 71, 66, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 241, 240, 0.96);
+  color: #9c3d35;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.teacher-exit-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(156, 61, 53, 0.12);
 }
 
 .persistence-banner {

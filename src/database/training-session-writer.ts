@@ -3,6 +3,12 @@ type DbLike = {
   run: (sql: string, params?: any[]) => any
 }
 
+export interface SharedTrainingSessionSummary {
+  sessionGroupId: string
+  participantStudentIds: number[]
+  exitTrigger?: string | null
+}
+
 export interface UpsertTrainingSessionInput {
   studentId: number
   moduleCode: string
@@ -21,6 +27,7 @@ export interface UpsertTrainingSessionInput {
   accuracyRate?: number | null
   avgResponseTimeMs?: number | null
   summaryPayload?: Record<string, any> | null
+  sharedSession?: SharedTrainingSessionSummary | null
   sourceTable: string
   sourceRecordId: number
 }
@@ -41,12 +48,66 @@ function normalizeDuration(value: number | null | undefined): number {
   return Math.max(0, Math.round(Number(value)))
 }
 
-function serializeSummaryPayload(payload: Record<string, any> | null | undefined): string | null {
-  if (!payload || typeof payload !== 'object') {
+function normalizeSharedTrainingSessionSummary(
+  sharedSession: SharedTrainingSessionSummary | null | undefined,
+): Record<string, any> | null {
+  if (!sharedSession || typeof sharedSession !== 'object') {
     return null
   }
 
-  return JSON.stringify(payload)
+  const sessionGroupId = typeof sharedSession.sessionGroupId === 'string'
+    ? sharedSession.sessionGroupId.trim()
+    : ''
+  const participantStudentIds = Array.from(new Set(
+    Array.isArray(sharedSession.participantStudentIds)
+      ? sharedSession.participantStudentIds
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value) && value > 0)
+      : [],
+  ))
+
+  if (!sessionGroupId || participantStudentIds.length === 0) {
+    return null
+  }
+
+  return {
+    sessionGroupId,
+    participantStudentIds,
+    participantCount: participantStudentIds.length,
+    exitTrigger: sharedSession.exitTrigger ?? null,
+  }
+}
+
+function buildSummaryPayload(
+  payload: Record<string, any> | null | undefined,
+  sharedSession: SharedTrainingSessionSummary | null | undefined,
+): Record<string, any> | null {
+  const normalizedPayload = payload && typeof payload === 'object'
+    ? { ...payload }
+    : {}
+  const normalizedSharedSession = normalizeSharedTrainingSessionSummary(sharedSession)
+
+  if (normalizedSharedSession) {
+    normalizedPayload.sharedSession = normalizedSharedSession
+  }
+
+  if (Object.keys(normalizedPayload).length === 0) {
+    return null
+  }
+
+  return normalizedPayload
+}
+
+function serializeSummaryPayload(
+  payload: Record<string, any> | null | undefined,
+  sharedSession: SharedTrainingSessionSummary | null | undefined,
+): string | null {
+  const normalizedPayload = buildSummaryPayload(payload, sharedSession)
+  if (!normalizedPayload) {
+    return null
+  }
+
+  return JSON.stringify(normalizedPayload)
 }
 
 export class TrainingSessionWriter {
@@ -97,7 +158,7 @@ export class TrainingSessionWriter {
       input.completionStatus,
       clampAccuracyRate(input.accuracyRate),
       input.avgResponseTimeMs ?? null,
-      serializeSummaryPayload(input.summaryPayload),
+      serializeSummaryPayload(input.summaryPayload, input.sharedSession),
       input.sourceTable,
       input.sourceRecordId,
     ])

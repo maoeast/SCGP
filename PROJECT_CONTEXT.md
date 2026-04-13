@@ -259,6 +259,15 @@
 8. `docs/reports/2026-03-13-scgp-prd-gap-analysis.md`
 9. `重构实施技术规范.md`
 
+### 3.3.2 2026-04-13 cross-entry custom games Phase 0 execution update
+
+- `Phase 0 Step 1-4` 已落代码，但当前运行现实仍是 `emotional-only`。
+- `src/data/custom-game-registry.ts` 已成为当前 5 个情绪小游戏的统一真源，旧 emotional catalog 已退化为 adapter。
+- `game_emotion_records` / `student_badges` 已完成 Phase 0 正式迁移，并新增 `game_session_participants`。
+- `EmotionalGamesAPI` 已具备 `persistSessionGroup()` 组事务写入，`training_session.summary_payload` 会保留共享场次摘要。
+- `GameContainer` 已切到 `launchContext` 契约，并区分 `user_exit / teacher_exit / system_interrupt`。
+- 下一步固定为 `Step 5`：容器统一权限 preflight 与 Electron 权限恢复链，不进入 `Wave 1` 新游戏。
+
 ## 7. 维护规则
 
 - 本文件只保留当前有效上下文，不再积累长流水日志

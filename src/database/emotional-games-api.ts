@@ -1,10 +1,14 @@
+import { getCustomGameDefinition, getCustomGamesByTrainingEntry } from '@/data/custom-game-registry'
+import { ModuleCode } from '@/types/module'
 import type {
+  CustomGameCode,
+  CustomGameExitTrigger,
   EmotionGameBadgePayload,
-  EmotionGameCode,
   EmotionGameCompletionStatus,
   EmotionGameDifficulty,
   GameEmotionRecord,
 } from '@/types/emotional/games'
+import type { TrainingEntryCode } from '@/utils/training-entry'
 import { TrainingSessionWriter } from './training-session-writer'
 
 type DbLike = {
@@ -18,19 +22,47 @@ type DbLike = {
 
 interface PersistEmotionGameSessionInput {
   studentId: number
-  gameCode: EmotionGameCode
+  gameCode: CustomGameCode
   startedAt: string
   durationMs: number
   difficultyLevel: EmotionGameDifficulty
   completionStatus: EmotionGameCompletionStatus
   performanceData: Record<string, any>
   badge?: EmotionGameBadgePayload
+  exitTrigger?: CustomGameExitTrigger | null
+  sessionGroupId?: string | null
+  sessionParticipants?: number[]
 }
 
 interface PersistEmotionGameSessionResult {
   recordId: number
   badgeId?: number
   badgeUnlockCount?: number
+}
+
+interface PersistEmotionGameSessionGroupInput {
+  gameCode: CustomGameCode
+  participantStudentIds: number[]
+  startedAt: string
+  durationMs: number
+  difficultyLevel: EmotionGameDifficulty
+  completionStatus: EmotionGameCompletionStatus
+  performanceData: Record<string, any>
+  sessionGroupId: string
+  exitTrigger?: CustomGameExitTrigger | null
+  sharedBadge?: EmotionGameBadgePayload
+  badgesByStudentId?: Record<number, EmotionGameBadgePayload | undefined>
+  participantRoles?: Record<number, string | undefined>
+}
+
+interface PersistEmotionGameSessionGroupResult {
+  sessionGroupId: string
+  recordIds: number[]
+  badgeResults: Array<{
+    studentId: number
+    badgeId?: number
+    badgeUnlockCount?: number
+  }>
 }
 
 export interface EmotionalGameTrainingRecordItem {
@@ -41,7 +73,7 @@ export interface EmotionalGameTrainingRecordItem {
   resource_id: null
   resource_type: 'game'
   session_type: 'emotion_game'
-  entry_code: 'emotional-regulation'
+  entry_code: TrainingEntryCode
   timestamp: number
   duration: number
   difficulty_level: EmotionGameDifficulty
@@ -50,21 +82,14 @@ export interface EmotionalGameTrainingRecordItem {
   raw_data: Record<string, any>
   class_id: null
   class_name: null
-  module_code: 'emotional'
+  module_code: ModuleCode
   created_at: string
   completion_status: EmotionGameCompletionStatus
-  game_code: EmotionGameCode
+  game_code: CustomGameCode
+  session_group_id: string | null
+  exit_trigger: CustomGameExitTrigger | null
+  session_participants: number[]
   record_source: 'emotional_game'
-}
-
-const EMOTIONAL_GAME_ENTRY_CODE = 'emotional-regulation'
-
-const EMOTIONAL_GAME_TITLE_MAP: Record<EmotionGameCode, string> = {
-  G01_BALLOON: '深呼吸热气球',
-  G03_FOREST: '音量魔法森林',
-  G04_WIPE_ICE: '擦亮坏心情',
-  G07_MONSTER: '喂食情绪小怪兽',
-  G08_ENERGY_BALL: '表情能量球',
 }
 
 function getActiveDb(): DbLike {
@@ -153,7 +178,7 @@ function averageNumericValues(values: unknown): number | null {
 }
 
 function deriveAccuracyRate(
-  gameCode: EmotionGameCode,
+  gameCode: CustomGameCode,
   performanceData: Record<string, any>,
   completionStatus: EmotionGameCompletionStatus,
 ): number | null {
@@ -205,7 +230,7 @@ function deriveAccuracyRate(
 }
 
 function deriveAvgResponseTime(
-  gameCode: EmotionGameCode,
+  gameCode: CustomGameCode,
   performanceData: Record<string, any>,
 ): number | null {
   switch (gameCode) {
@@ -244,10 +269,163 @@ function pickScalarSummaryMetrics(performanceData: Record<string, any>): Record<
   )
 }
 
+function normalizeExitTrigger(raw: unknown): CustomGameExitTrigger | null {
+  if (
+    raw === 'game_complete' ||
+    raw === 'user_exit' ||
+    raw === 'teacher_exit' ||
+    raw === 'timer_end' ||
+    raw === 'system_interrupt'
+  ) {
+    return raw
+  }
+
+  return null
+}
+
+function parseSessionParticipants(raw: unknown): number[] {
+  if (!raw) {
+    return []
+  }
+
+  if (Array.isArray(raw)) {
+    return raw
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value) && value > 0)
+  }
+
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw)
+      return parseSessionParticipants(parsed)
+    } catch {
+      return []
+    }
+  }
+
+  return []
+}
+
+function resolveCustomGameDefinition(gameCode: string) {
+  const definition = getCustomGameDefinition(gameCode)
+  if (!definition) {
+    throw new Error(`Unknown custom game definition: ${gameCode}`)
+  }
+
+  return definition
+}
+
+function normalizeStudentId(value: unknown): number | null {
+  const resolved = Number(value)
+  if (!Number.isFinite(resolved) || resolved <= 0) {
+    return null
+  }
+
+  return Math.floor(resolved)
+}
+
+function normalizeParticipantStudentIds(studentIds: unknown[]): number[] {
+  return Array.from(new Set(
+    studentIds
+      .map((value) => normalizeStudentId(value))
+      .filter((value): value is number => value !== null),
+  ))
+}
+
+function normalizeSessionGroupId(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const normalized = value.trim()
+  return normalized ? normalized : null
+}
+
+function deriveExitTrigger(
+  completionStatus: EmotionGameCompletionStatus,
+  performanceData: Record<string, any>,
+  explicitTrigger?: CustomGameExitTrigger | null,
+): CustomGameExitTrigger | null {
+  if (explicitTrigger) {
+    return explicitTrigger
+  }
+
+  if (completionStatus === 'completed') {
+    return 'game_complete'
+  }
+
+  return performanceData.event === 'quiet_exit' ? 'user_exit' : null
+}
+
+function buildTrainingSessionSummaryPayload(input: {
+  gameCode: CustomGameCode
+  trainingEntryCode: TrainingEntryCode
+  difficultyLevel: EmotionGameDifficulty
+  sessionGroupId?: string | null
+  sessionParticipants: number[]
+  exitTrigger: CustomGameExitTrigger | null
+  badge?: EmotionGameBadgePayload
+  badgeUnlockCount?: number | null
+  performanceData: Record<string, any>
+}) {
+  return {
+    gameCode: input.gameCode,
+    trainingEntryCode: input.trainingEntryCode,
+    difficultyLevel: input.difficultyLevel,
+    sessionGroupId: input.sessionGroupId || null,
+    sessionParticipants: [...input.sessionParticipants],
+    exitTrigger: input.exitTrigger,
+    badgeCode: input.badge?.badgeCode || null,
+    badgeName: input.badge?.badgeName || null,
+    badgeUnlockCount: input.badgeUnlockCount ?? null,
+    metrics: pickScalarSummaryMetrics(input.performanceData || {}),
+  }
+}
+
+function getStudentTrainingContext(db: DbLike, studentId: number) {
+  const student = db.get(
+    'SELECT id, current_class_id, current_class_name FROM student WHERE id = ?',
+    [studentId],
+  )
+
+  if (!student?.id) {
+    throw new Error(`Student not found for custom game persistence: ${studentId}`)
+  }
+
+  return {
+    studentId,
+    classId: student.current_class_id || null,
+    className: student.current_class_name || null,
+  }
+}
+
+function insertGameSessionParticipants(
+  db: DbLike,
+  sessionGroupId: string,
+  participantStudentIds: number[],
+  participantRoles?: Record<number, string | undefined>,
+) {
+  db.run('DELETE FROM game_session_participants WHERE session_group_id = ?', [sessionGroupId])
+
+  for (const studentId of participantStudentIds) {
+    db.run(
+      `INSERT INTO game_session_participants (
+        session_group_id, student_id, role
+      ) VALUES (?, ?, ?)`,
+      [
+        sessionGroupId,
+        studentId,
+        participantRoles?.[studentId] || null,
+      ],
+    )
+  }
+}
+
 function normalizeTrainingRecord(row: any): EmotionalGameTrainingRecordItem {
   const performanceData = parsePerformanceData(row.performance_data)
   const completionStatus = (row.completion_status || 'completed') as EmotionGameCompletionStatus
-  const gameCode = row.game_code as EmotionGameCode
+  const gameCode = row.game_code as CustomGameCode
+  const definition = getCustomGameDefinition(String(gameCode))
   const startedAt = Date.parse(row.start_time || row.created_at || '')
   const createdAt = row.created_at || row.start_time || ''
   const timestamp = Number.isFinite(startedAt) ? startedAt : 0
@@ -256,11 +434,11 @@ function normalizeTrainingRecord(row: any): EmotionalGameTrainingRecordItem {
     id: Number(row.id),
     student_id: Number(row.student_id),
     task_id: null,
-    task_name: EMOTIONAL_GAME_TITLE_MAP[gameCode] || '情绪小游戏',
+    task_name: definition?.name || '自定义小游戏',
     resource_id: null,
     resource_type: 'game',
     session_type: 'emotion_game',
-    entry_code: EMOTIONAL_GAME_ENTRY_CODE,
+    entry_code: definition?.trainingEntryCode || 'emotional-regulation',
     timestamp,
     duration: Number(row.duration_ms || 0),
     difficulty_level: Number(row.difficulty_level || 1) as EmotionGameDifficulty,
@@ -269,65 +447,14 @@ function normalizeTrainingRecord(row: any): EmotionalGameTrainingRecordItem {
     raw_data: performanceData,
     class_id: null,
     class_name: null,
-    module_code: 'emotional',
+    module_code: definition?.moduleCode || ModuleCode.EMOTIONAL,
     created_at: createdAt,
     completion_status: completionStatus,
     game_code: gameCode,
+    session_group_id: typeof row.session_group_id === 'string' ? row.session_group_id : null,
+    exit_trigger: normalizeExitTrigger(row.exit_trigger),
+    session_participants: parseSessionParticipants(row.session_participants),
     record_source: 'emotional_game',
-  }
-}
-
-/**
- * 运行时迁移: 如果 game_emotion_records 的 CHECK 约束不包含新游戏代码，重建表
- * SQLite 不支持 ALTER CONSTRAINT，只能 rename → create → copy → drop
- */
-function ensureGameCodeConstraint(rawDb: any, gameCode: string): void {
-  try {
-    // Probe: try a lightweight INSERT-then-ROLLBACK to test the constraint
-    rawDb.run('SAVEPOINT _constraint_probe')
-    try {
-      rawDb.run(
-        `INSERT INTO game_emotion_records (student_id, game_code, start_time, duration_ms, difficulty_level, completion_status, performance_data)
-         VALUES (-1, ?, '', 0, 1, 'aborted', '{}')`,
-        [gameCode],
-      )
-      // Constraint accepts this game code — no migration needed
-      rawDb.run('ROLLBACK TO _constraint_probe')
-      rawDb.run('RELEASE _constraint_probe')
-      return
-    } catch {
-      rawDb.run('ROLLBACK TO _constraint_probe')
-      rawDb.run('RELEASE _constraint_probe')
-    }
-
-    // Constraint rejected → rebuild the table
-    console.log(`[EmotionalGamesAPI] 迁移 game_emotion_records 以支持 ${gameCode}`)
-    rawDb.run('ALTER TABLE game_emotion_records RENAME TO _game_emotion_records_old')
-    rawDb.run(`
-      CREATE TABLE game_emotion_records (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        student_id INTEGER NOT NULL,
-        game_code TEXT NOT NULL
-          CHECK(game_code IN ('G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER', 'G08_ENERGY_BALL')),
-        start_time TEXT NOT NULL,
-        duration_ms INTEGER NOT NULL,
-        difficulty_level INTEGER DEFAULT 1
-          CHECK(difficulty_level IN (1, 2, 3)),
-        completion_status TEXT NOT NULL
-          CHECK(completion_status IN ('completed', 'aborted')),
-        performance_data TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (student_id) REFERENCES student(id)
-      )
-    `)
-    rawDb.run(`INSERT INTO game_emotion_records SELECT * FROM _game_emotion_records_old`)
-    rawDb.run('DROP TABLE _game_emotion_records_old')
-    rawDb.run(`CREATE INDEX IF NOT EXISTS idx_game_emotion_records_student ON game_emotion_records(student_id, created_at DESC)`)
-    rawDb.run(`CREATE INDEX IF NOT EXISTS idx_game_emotion_records_code ON game_emotion_records(game_code, created_at DESC)`)
-    console.log('[EmotionalGamesAPI] ✅ game_emotion_records 迁移完成')
-  } catch (err) {
-    console.error('[EmotionalGamesAPI] ❌ game_emotion_records 迁移失败:', err)
-    throw err
   }
 }
 
@@ -335,26 +462,26 @@ export class EmotionalGamesAPI {
   async persistSession(input: PersistEmotionGameSessionInput): Promise<PersistEmotionGameSessionResult> {
     const db = getActiveDb()
     const rawDb = getRawDb(db)
-
-    // Ensure the CHECK constraint supports this game code
-    ensureGameCodeConstraint(rawDb, input.gameCode)
-
-    const student = db.get(
-      'SELECT current_class_id, current_class_name FROM student WHERE id = ?',
-      [input.studentId]
-    )
-    const classId = student?.current_class_id || null
-    const className = student?.current_class_name || null
+    const definition = resolveCustomGameDefinition(input.gameCode)
+    const studentContext = getStudentTrainingContext(db, input.studentId)
     const accuracyRate = deriveAccuracyRate(input.gameCode, input.performanceData, input.completionStatus)
     const avgResponseTimeMs = deriveAvgResponseTime(input.gameCode, input.performanceData)
+    const exitTrigger = deriveExitTrigger(input.completionStatus, input.performanceData, input.exitTrigger)
+    const sessionParticipants = normalizeParticipantStudentIds(
+      input.sessionParticipants?.length
+        ? input.sessionParticipants
+        : [input.studentId],
+    )
+    const sessionGroupId = normalizeSessionGroupId(input.sessionGroupId)
 
     rawDb.run('BEGIN TRANSACTION')
 
     try {
       db.run(
         `INSERT INTO game_emotion_records (
-          student_id, game_code, start_time, duration_ms, difficulty_level, completion_status, performance_data
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          student_id, game_code, start_time, duration_ms, difficulty_level,
+          completion_status, performance_data, session_group_id, exit_trigger, session_participants
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           input.studentId,
           input.gameCode,
@@ -363,6 +490,9 @@ export class EmotionalGamesAPI {
           input.difficultyLevel,
           input.completionStatus,
           JSON.stringify(input.performanceData || {}),
+          sessionGroupId,
+          exitTrigger,
+          JSON.stringify(sessionParticipants),
         ],
       )
 
@@ -375,27 +505,37 @@ export class EmotionalGamesAPI {
 
       new TrainingSessionWriter(db).upsertSession({
         studentId: input.studentId,
-        moduleCode: 'emotional',
-        entryCode: EMOTIONAL_GAME_ENTRY_CODE,
+        moduleCode: definition.moduleCode,
+        entryCode: definition.trainingEntryCode,
         sessionFamily: 'emotional_game',
         resourceType: 'game',
-        taskNameSnapshot: EMOTIONAL_GAME_TITLE_MAP[input.gameCode] || '情绪小游戏',
-        classId,
-        className,
+        taskNameSnapshot: definition.name,
+        classId: studentContext.classId,
+        className: studentContext.className,
         startedAt: input.startedAt,
         endedAt: deriveEndedAt(input.startedAt, input.durationMs),
         durationMs: input.durationMs,
         completionStatus: input.completionStatus,
         accuracyRate,
         avgResponseTimeMs,
-        summaryPayload: {
+        summaryPayload: buildTrainingSessionSummaryPayload({
           gameCode: input.gameCode,
+          trainingEntryCode: definition.trainingEntryCode,
           difficultyLevel: input.difficultyLevel,
-          badgeCode: input.badge?.badgeCode || null,
-          badgeName: input.badge?.badgeName || null,
+          sessionGroupId,
+          sessionParticipants,
+          exitTrigger,
+          badge: input.badge,
           badgeUnlockCount: badgeResult?.unlockCount || null,
-          metrics: pickScalarSummaryMetrics(input.performanceData || {}),
-        },
+          performanceData: input.performanceData,
+        }),
+        sharedSession: sessionGroupId && sessionParticipants.length > 1
+          ? {
+              sessionGroupId,
+              participantStudentIds: sessionParticipants,
+              exitTrigger,
+            }
+          : null,
         sourceTable: 'game_emotion_records',
         sourceRecordId: recordId,
       })
@@ -421,10 +561,141 @@ export class EmotionalGamesAPI {
     }
   }
 
+  async persistSessionGroup(
+    input: PersistEmotionGameSessionGroupInput,
+  ): Promise<PersistEmotionGameSessionGroupResult> {
+    const db = getActiveDb()
+    const rawDb = getRawDb(db)
+    const definition = resolveCustomGameDefinition(input.gameCode)
+    const sessionGroupId = normalizeSessionGroupId(input.sessionGroupId)
+    const participantStudentIds = normalizeParticipantStudentIds(input.participantStudentIds)
+
+    if (!sessionGroupId) {
+      throw new Error('persistSessionGroup requires a non-empty sessionGroupId')
+    }
+
+    if (participantStudentIds.length < 2) {
+      throw new Error('persistSessionGroup requires at least 2 participantStudentIds')
+    }
+
+    if (participantStudentIds.length > 2) {
+      throw new Error('Phase 0 custom games do not support more than 2 participants')
+    }
+
+    if (participantStudentIds.length > definition.maxPlayers) {
+      throw new Error(
+        `Game ${input.gameCode} only supports ${definition.maxPlayers} participant(s), got ${participantStudentIds.length}`,
+      )
+    }
+
+    const exitTrigger = deriveExitTrigger(input.completionStatus, input.performanceData, input.exitTrigger)
+    const accuracyRate = deriveAccuracyRate(input.gameCode, input.performanceData, input.completionStatus)
+    const avgResponseTimeMs = deriveAvgResponseTime(input.gameCode, input.performanceData)
+    const studentContexts = participantStudentIds.map((studentId) => getStudentTrainingContext(db, studentId))
+    const recordIds: number[] = []
+    const badgeResults: PersistEmotionGameSessionGroupResult['badgeResults'] = []
+
+    rawDb.run('BEGIN TRANSACTION')
+
+    try {
+      insertGameSessionParticipants(db, sessionGroupId, participantStudentIds, input.participantRoles)
+
+      for (const studentContext of studentContexts) {
+        db.run(
+          `INSERT INTO game_emotion_records (
+            student_id, game_code, start_time, duration_ms, difficulty_level,
+            completion_status, performance_data, session_group_id, exit_trigger, session_participants
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            studentContext.studentId,
+            input.gameCode,
+            input.startedAt,
+            input.durationMs,
+            input.difficultyLevel,
+            input.completionStatus,
+            JSON.stringify(input.performanceData || {}),
+            sessionGroupId,
+            exitTrigger,
+            JSON.stringify(participantStudentIds),
+          ],
+        )
+
+        const recordId = getLastInsertId(db)
+        recordIds.push(recordId)
+
+        const badge = input.badgesByStudentId?.[studentContext.studentId] ?? input.sharedBadge
+        let badgeResult: { badgeId: number; unlockCount: number } | null = null
+        if (input.completionStatus === 'completed' && badge) {
+          badgeResult = this.upsertBadge(db, studentContext.studentId, input.gameCode, badge)
+        }
+
+        new TrainingSessionWriter(db).upsertSession({
+          studentId: studentContext.studentId,
+          moduleCode: definition.moduleCode,
+          entryCode: definition.trainingEntryCode,
+          sessionFamily: 'emotional_game',
+          resourceType: 'game',
+          taskNameSnapshot: definition.name,
+          classId: studentContext.classId,
+          className: studentContext.className,
+          startedAt: input.startedAt,
+          endedAt: deriveEndedAt(input.startedAt, input.durationMs),
+          durationMs: input.durationMs,
+          completionStatus: input.completionStatus,
+          accuracyRate,
+          avgResponseTimeMs,
+          summaryPayload: buildTrainingSessionSummaryPayload({
+            gameCode: input.gameCode,
+            trainingEntryCode: definition.trainingEntryCode,
+            difficultyLevel: input.difficultyLevel,
+            sessionGroupId,
+            sessionParticipants: participantStudentIds,
+            exitTrigger,
+            badge,
+            badgeUnlockCount: badgeResult?.unlockCount || null,
+            performanceData: input.performanceData,
+          }),
+          sharedSession: {
+            sessionGroupId,
+            participantStudentIds,
+            exitTrigger,
+          },
+          sourceTable: 'game_emotion_records',
+          sourceRecordId: recordId,
+        })
+
+        badgeResults.push({
+          studentId: studentContext.studentId,
+          badgeId: badgeResult?.badgeId,
+          badgeUnlockCount: badgeResult?.unlockCount,
+        })
+      }
+
+      rawDb.run('COMMIT')
+
+      if (typeof db.saveNow === 'function') {
+        await db.saveNow()
+      }
+
+      return {
+        sessionGroupId,
+        recordIds,
+        badgeResults,
+      }
+    } catch (error) {
+      try {
+        rawDb.run('ROLLBACK')
+      } catch {
+        // ignore rollback failures
+      }
+      throw error
+    }
+  }
+
   private upsertBadge(
     db: DbLike,
     studentId: number,
-    gameCode: EmotionGameCode,
+    gameCode: CustomGameCode,
     badge: EmotionGameBadgePayload,
   ) {
     const existing = db.get(
@@ -464,7 +735,7 @@ export class EmotionalGamesAPI {
     }
   }
 
-  getLatestRecord(studentId: number, gameCode: EmotionGameCode): GameEmotionRecord | null {
+  getLatestRecord(studentId: number, gameCode: CustomGameCode): GameEmotionRecord | null {
     const db = getActiveDb()
     const row = db.get(
       `SELECT *
@@ -482,6 +753,9 @@ export class EmotionalGamesAPI {
     return {
       ...row,
       performance_data: row.performance_data ? JSON.parse(row.performance_data) : {},
+      session_group_id: typeof row.session_group_id === 'string' ? row.session_group_id : null,
+      exit_trigger: normalizeExitTrigger(row.exit_trigger),
+      session_participants: parseSessionParticipants(row.session_participants),
     }
   }
 
@@ -512,12 +786,15 @@ export class EmotionalGamesAPI {
   }
 
   countRecordsByEntry(entryCode: string, studentId?: number): number {
-    if (entryCode !== EMOTIONAL_GAME_ENTRY_CODE) {
+    const supportedGames = getCustomGamesByTrainingEntry(entryCode as TrainingEntryCode)
+    if (supportedGames.length === 0) {
       return 0
     }
 
     let sql = 'SELECT COUNT(*) as count FROM game_emotion_records WHERE 1 = 1'
-    const params: any[] = []
+    const params: any[] = supportedGames.map((game) => game.gameCode)
+
+    sql += ` AND game_code IN (${supportedGames.map(() => '?').join(', ')})`
 
     if (studentId) {
       sql += ' AND student_id = ?'

@@ -3091,49 +3091,147 @@ async function initializeSysTables(rawDb: any): Promise<void> {
  */
 async function initializeEmotionalTables(rawDb: any): Promise<void> {
   rawDb.run(emotionalSchemaSQL)
-  migrateEmotionalGameCodeConstraint(rawDb)
+  migrateCustomGamePhase0Schema(rawDb)
   await initializeTeachingMaterialTables(rawDb)
   clearLegacyTeachingMaterialData(rawDb)
 }
 
 /**
- * 迁移: 扩展 game_emotion_records.game_code CHECK 约束以支持 G08_ENERGY_BALL
- *
- * SQLite 不支持 ALTER CONSTRAINT，需要重建表。
- * 仅在检测到旧约束时执行（安全幂等）。
+ * Phase 0 正式迁移：把小游戏记录表从情绪专用旧约束升级为跨入口 custom game 底座。
+ * 当前仍沿用 game_emotion_records / student_badges 表名，但不再为单个新游戏做 ad-hoc rebuild。
  */
-function migrateEmotionalGameCodeConstraint(rawDb: any): void {
+function migrateCustomGamePhase0Schema(rawDb: any): void {
+  migrateGameEmotionRecordsPhase0(rawDb)
+  migrateStudentBadgesPhase0(rawDb)
+}
+
+function migrateGameEmotionRecordsPhase0(rawDb: any): void {
+  const hasSessionGroupId = columnExists(rawDb, 'game_emotion_records', 'session_group_id')
+  const hasExitTrigger = columnExists(rawDb, 'game_emotion_records', 'exit_trigger')
+  const hasSessionParticipants = columnExists(rawDb, 'game_emotion_records', 'session_participants')
+  const usesLegacyGameCodeConstraint = tableSqlContains(rawDb, 'game_emotion_records', "CHECK(game_code IN (")
+  const usesPhase0PatternConstraint = tableSqlContains(rawDb, 'game_emotion_records', "CHECK(game_code GLOB '[A-Z][0-9][0-9]_*')")
+
+  const needsRebuild = !usesPhase0PatternConstraint
+    || usesLegacyGameCodeConstraint
+    || !hasSessionGroupId
+    || !hasExitTrigger
+    || !hasSessionParticipants
+
+  if (!needsRebuild) {
+    return
+  }
+
+  console.log('[InitDatabase] 迁移 game_emotion_records 到 Phase 0 custom game schema')
+  rawDb.run('PRAGMA foreign_keys = OFF')
+
   try {
-    const testRow = rawDb.exec(
-      "SELECT sql FROM sqlite_master WHERE type='table' AND name='game_emotion_records'"
-    )
-    const createSql = testRow?.[0]?.values?.[0]?.[0] as string | undefined
-    if (createSql && createSql.includes('G07_MONSTER') && !createSql.includes('G08_ENERGY_BALL')) {
-      rawDb.run('ALTER TABLE game_emotion_records RENAME TO _game_emotion_records_old')
-      rawDb.run(`
-        CREATE TABLE game_emotion_records (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          student_id INTEGER NOT NULL,
-          game_code TEXT NOT NULL
-            CHECK(game_code IN ('G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER', 'G08_ENERGY_BALL')),
-          start_time TEXT NOT NULL,
-          duration_ms INTEGER NOT NULL,
-          difficulty_level INTEGER DEFAULT 1
-            CHECK(difficulty_level IN (1, 2, 3)),
-          completion_status TEXT NOT NULL
-            CHECK(completion_status IN ('completed', 'aborted')),
-          performance_data TEXT,
-          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (student_id) REFERENCES student(id)
-        )
-      `)
-      rawDb.run(`INSERT INTO game_emotion_records SELECT * FROM _game_emotion_records_old`)
-      rawDb.run('DROP TABLE _game_emotion_records_old')
-      rawDb.run(`CREATE INDEX IF NOT EXISTS idx_game_emotion_records_student ON game_emotion_records(student_id, created_at DESC)`)
-      rawDb.run(`CREATE INDEX IF NOT EXISTS idx_game_emotion_records_code ON game_emotion_records(game_code, created_at DESC)`)
-    }
-  } catch {
-    // Table doesn't exist yet — schema.sql will create it with correct constraints
+    rawDb.run('DROP TABLE IF EXISTS _game_emotion_records_phase0_old')
+    rawDb.run('ALTER TABLE game_emotion_records RENAME TO _game_emotion_records_phase0_old')
+    rawDb.run(`
+      CREATE TABLE game_emotion_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        game_code TEXT NOT NULL
+          CHECK(game_code GLOB '[A-Z][0-9][0-9]_*'),
+        start_time TEXT NOT NULL,
+        duration_ms INTEGER NOT NULL,
+        difficulty_level INTEGER DEFAULT 1
+          CHECK(difficulty_level IN (1, 2, 3)),
+        completion_status TEXT NOT NULL
+          CHECK(completion_status IN ('completed', 'aborted')),
+        performance_data TEXT,
+        session_group_id TEXT,
+        exit_trigger TEXT
+          CHECK(exit_trigger IN ('game_complete', 'user_exit', 'teacher_exit', 'timer_end', 'system_interrupt') OR exit_trigger IS NULL),
+        session_participants TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES student(id)
+      )
+    `)
+    rawDb.run(`
+      INSERT INTO game_emotion_records (
+        id, student_id, game_code, start_time, duration_ms, difficulty_level,
+        completion_status, performance_data, session_group_id, exit_trigger, session_participants, created_at
+      )
+      SELECT
+        id,
+        student_id,
+        game_code,
+        start_time,
+        duration_ms,
+        COALESCE(difficulty_level, 1),
+        completion_status,
+        performance_data,
+        ${hasSessionGroupId ? 'session_group_id' : 'NULL'},
+        ${hasExitTrigger ? 'exit_trigger' : 'NULL'},
+        ${hasSessionParticipants ? 'session_participants' : 'NULL'},
+        created_at
+      FROM _game_emotion_records_phase0_old
+    `)
+    rawDb.run('DROP TABLE _game_emotion_records_phase0_old')
+    rawDb.run('CREATE INDEX IF NOT EXISTS idx_game_emotion_records_student ON game_emotion_records(student_id, created_at DESC)')
+    rawDb.run('CREATE INDEX IF NOT EXISTS idx_game_emotion_records_code ON game_emotion_records(game_code, created_at DESC)')
+    rawDb.run('CREATE INDEX IF NOT EXISTS idx_game_emotion_records_group ON game_emotion_records(session_group_id, created_at DESC)')
+  } catch (error) {
+    console.error('[InitDatabase] game_emotion_records Phase 0 迁移失败:', error)
+    throw error
+  } finally {
+    rawDb.run('PRAGMA foreign_keys = ON')
+  }
+}
+
+function migrateStudentBadgesPhase0(rawDb: any): void {
+  const usesLegacyGameCodeConstraint = tableSqlContains(rawDb, 'student_badges', "CHECK(game_code IN (")
+  const usesPhase0PatternConstraint = tableSqlContains(rawDb, 'student_badges', "CHECK(game_code GLOB '[A-Z][0-9][0-9]_*')")
+
+  if (usesPhase0PatternConstraint && !usesLegacyGameCodeConstraint) {
+    return
+  }
+
+  console.log('[InitDatabase] 迁移 student_badges 到 Phase 0 custom game constraint')
+  rawDb.run('PRAGMA foreign_keys = OFF')
+
+  try {
+    rawDb.run('DROP TABLE IF EXISTS _student_badges_phase0_old')
+    rawDb.run('ALTER TABLE student_badges RENAME TO _student_badges_phase0_old')
+    rawDb.run(`
+      CREATE TABLE student_badges (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        badge_code TEXT NOT NULL,
+        badge_name TEXT NOT NULL,
+        game_code TEXT NOT NULL
+          CHECK(game_code GLOB '[A-Z][0-9][0-9]_*'),
+        unlock_count INTEGER DEFAULT 1,
+        first_earned_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        last_earned_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(student_id, badge_code),
+        FOREIGN KEY (student_id) REFERENCES student(id)
+      )
+    `)
+    rawDb.run(`
+      INSERT INTO student_badges (
+        id, student_id, badge_code, badge_name, game_code, unlock_count, first_earned_at, last_earned_at
+      )
+      SELECT
+        id,
+        student_id,
+        badge_code,
+        badge_name,
+        game_code,
+        COALESCE(unlock_count, 1),
+        first_earned_at,
+        last_earned_at
+      FROM _student_badges_phase0_old
+    `)
+    rawDb.run('DROP TABLE _student_badges_phase0_old')
+    rawDb.run('CREATE INDEX IF NOT EXISTS idx_student_badges_student ON student_badges(student_id, last_earned_at DESC)')
+  } catch (error) {
+    console.error('[InitDatabase] student_badges Phase 0 迁移失败:', error)
+    throw error
+  } finally {
+    rawDb.run('PRAGMA foreign_keys = ON')
   }
 }
 
