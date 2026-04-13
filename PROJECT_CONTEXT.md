@@ -149,37 +149,30 @@
     - 未发现 `sceneCode / name / description / specificEmotionToken / specificEmotionLabel / emotionOptions[4] / legacy_source` 缺口
     - 未发现资源主表 `description` 与 `meta_data.description` 不一致
 - 当前仍未完成：
-  - 默认 `care_scene` 入口尚未切到沉浸式链路
   - `care_scene` 正式训练记录闭环尚未接入
 
-### 3.4.2 2026-04-11 care_scene immersive production cutover
+### 3.4.2 2026-04-12 care_scene immersive cutover reality check
 
-- `care_scene` 已完成从旧左右分栏链路向沉浸式正式链路的切换：
+- `main` 当前已恢复 `care_scene` 正式沉浸式入口：
   - `SceneSelector` 不再提供 `immersivePreview` / 模式切换
   - `/emotional/care-expression` 现在直接指向沉浸式训练页面
   - `/emotional/care-expression/immersive` 仅保留兼容重定向，不再是独立产品路径
 - 当前已确认的重要约束：
   - `care_scene` 训练进入前必须具备有效 `studentId` 与 `resourceId`
-  - 资源作者态配置缺失时必须 Fail-Fast 直接报错，不再回退旧训练模式
-  - 结果保存必须走正式主库接口，不再使用 `deferred` / prototype 影子链路
-- 正式持久化主链已接入：
+  - 旧左右双栏训练链路已从活跃代码中删除，不应再保留“旧模式 fallback”心智模型
+  - 当前代码仍不能把“正式训练记录已完成闭环”写成事实
+- 当前记录持久化现实：
+  - `compileCareSceneImmersive` 当前仍使用 `persistence_mode: 'deferred'`
+  - `ResultStep` 会因 `supportsRecordPersistence = false` 跳过训练记录保存
   - `src/database/api.ts` 新增 `EmotionalTrainingRecordAPI`
-  - `care_scene` 沉浸式结果现在直接写入：
-    - `training_records`
-    - `training_session`
-    - `emotional_training_session`
-    - `emotional_training_detail`
-  - 该链路通过 `DatabaseAPI -> getDatabase()` 进入当前产品主实例
+  - 但该 API **尚未真正接入当前 `care_scene` runtime**
 - 当前代码级清理已完成：
   - 旧 `CareExpressionTraining.vue`
   - 旧 `useEmotionalTrainingShell.ts`
-  - 旧 `useEmotionalSession.ts`
-  - 旧 `features/emotional/adapters/*`
-  - 旧 `components/emotional/engine/*`
-  - 以及仅服务于旧 split-screen 的卡片/renderer/runtime 辅助文件
+  - 旧 `compileCareScene.ts`
 - 当前仍未完成：
   - 尚未做 Electron 实机 smoke
-  - 尚未做本地 DB 实写核验，尚不能把“代码已接主库”写成“运行时已完成闭环验证”
+  - 尚未完成 `care_scene` 正式训练记录闭环接线与本地 DB 实写核验
 
 ## 4. 当前活跃未完成主线
 

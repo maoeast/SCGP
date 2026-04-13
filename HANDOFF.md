@@ -33,13 +33,13 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: 当前活跃任务仍是 `emotion_scene` 文案精修，但第四轮 `acceptable avoidant` 已完成收口。下一步不再是大规模改 `need` 或 `acceptable`，而是先做 Electron 运行时点选抽查。**
+**Active follow-up work is now in `.continue-here.md`: 当前活跃任务已切到 `care_scene` 沉浸式正式入口恢复后的运行时核验；代码级 cutover 与旧双栏链路清理已完成，下一步先做 Electron 实机 smoke。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is post-round-4 verification for `emotion_scene` copy, with runtime spot-checks before any fifth-round micro-refinement
-- first action should be opening the real training flow and spot-checking `scene-16`, `scene-37`, `scene-68`, `scene-72`, and `scene-79`
+- current active task is runtime verification for the restored `care_scene` immersive default path on `main`
+- first action should be opening the real `care_scene` flow and confirming `选择学生 -> 选择关心情境 -> 沉浸式训练` is now the default path, with correct resource loading and result-page behavior
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`
