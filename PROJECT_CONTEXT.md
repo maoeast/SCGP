@@ -109,6 +109,31 @@
 - `equipment_training_records` 的当前 schema/init 口径已改回正确资源主线：
   - `equipment_id -> sys_training_resource(id)`
 
+### 3.3.1 2026-04-13 cross-entry custom games planning update
+
+- 已新增当前专题计划入口：
+  - `docs/planning/2026-04-13-cross-entry-custom-games-expansion-plan.md`
+- 已新增 `Phase 0` 实施规格：
+  - `docs/planning/2026-04-13-cross-entry-custom-games-phase0-implementation-spec.md`
+- 当前已确认的代码现实：
+  - 自定义小游戏仍是 `emotional-only` 专线
+  - 当前只有 5 个情绪小游戏接入正式小游戏链路
+  - `GameLobby`、路由、落库、详情页都还没有完成跨入口收口
+  - 权限申请仍由子游戏自行发起，不是容器 preflight
+- 当前已锁定的 `Phase 0` 约束：
+  - 统一小游戏注册表
+  - 双人共享场次
+  - 组事务写入
+  - `game_session_participants` 关联表
+  - `completion_status + exit_trigger`
+  - `user_exit / teacher_exit` 细分
+  - 容器统一权限 preflight
+  - Electron 系统权限恢复页
+  - 本地构建前置与 CI 注册表校验
+- 当前明确下一步：
+  - 不先写 `Wave 1` 新游戏
+  - 先执行 implementation spec 中的 `注册表与类型基线`、`Schema 正式迁移`、`持久化事务补齐`
+
 ### 3.4 Emotional immersive rework planning update
 
 - `2026-04-06` 已新增情绪模块沉浸式训练改造规划：
