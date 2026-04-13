@@ -537,32 +537,32 @@
         <!-- 模块筛选 -->
         <div class="module-filter">
           <el-radio-group v-model="resourceFilterModule" @change="loadResourcesForSelection">
-            <el-radio-button label="all">全部模块</el-radio-button>
-            <el-radio-button label="sensory">感官训练</el-radio-button>
-            <el-radio-button label="emotional">情绪调节</el-radio-button>
-            <el-radio-button label="social">社交互动</el-radio-button>
-            <el-radio-button label="emotion_scene">情绪场景</el-radio-button>
-            <el-radio-button label="care_scene">表达关心</el-radio-button>
+            <el-radio-button value="all">全部模块</el-radio-button>
+            <el-radio-button value="sensory">感官训练</el-radio-button>
+            <el-radio-button value="emotional">情绪调节</el-radio-button>
+            <el-radio-button value="social">社交互动</el-radio-button>
+            <el-radio-button value="emotion_scene">情绪场景</el-radio-button>
+            <el-radio-button value="care_scene">表达关心</el-radio-button>
           </el-radio-group>
         </div>
 
         <!-- 资源类型筛选 -->
         <div class="type-filter">
           <el-radio-group v-model="resourceFilterType" @change="loadResourcesForSelection">
-            <el-radio-button label="">全部类型</el-radio-button>
-            <el-radio-button label="equipment">器材</el-radio-button>
-            <el-radio-button label="game">游戏</el-radio-button>
-            <el-radio-button label="flashcard">闪卡</el-radio-button>
+            <el-radio-button value="">全部类型</el-radio-button>
+            <el-radio-button value="equipment">器材</el-radio-button>
+            <el-radio-button value="game">游戏</el-radio-button>
+            <el-radio-button value="flashcard">闪卡</el-radio-button>
           </el-radio-group>
         </div>
 
         <div v-if="resourceFilterType === 'equipment'" class="catalog-group-filter">
           <el-radio-group v-model="resourceFilterCatalogGroup">
-            <el-radio-button label="all">全部分组</el-radio-button>
+            <el-radio-button value="all">全部分组</el-radio-button>
             <el-radio-button
               v-for="group in equipmentCatalogGroupOptions"
               :key="group.value"
-              :label="group.value"
+              :value="group.value"
             >
               {{ group.label }}
             </el-radio-button>

@@ -5,12 +5,13 @@
     :game-title="gameDefinition.name"
     :default-badge="{ badgeCode: gameDefinition.badge.badgeCode, badgeName: gameDefinition.badge.badgeName }"
   >
-    <template #default="{ difficulty, isPaused, completeGame, markRoundDirty, audio }">
+    <template #default="{ difficulty, isPaused, completeGame, markRoundDirty, audio, permissionStreams }">
       <EnergyBallGame
         :difficulty="difficulty"
         :paused="isPaused"
         :mark-round-dirty="markRoundDirty"
         :audio="audio"
+        :camera-stream="permissionStreams.camera"
         @complete="completeGame"
       />
     </template>

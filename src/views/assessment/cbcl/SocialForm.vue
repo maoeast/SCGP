@@ -34,9 +34,9 @@
         <!-- Reporter -->
         <el-form-item label="填表者" prop="reporter">
           <el-radio-group v-model="form.reporter">
-            <el-radio label="father">父</el-radio>
-            <el-radio label="mother">母</el-radio>
-            <el-radio label="other">其他人</el-radio>
+            <el-radio value="father">父</el-radio>
+            <el-radio value="mother">母</el-radio>
+            <el-radio value="other">其他人</el-radio>
           </el-radio-group>
         </el-form-item>
 
@@ -129,18 +129,18 @@
 
         <el-form-item label="与同龄儿童相比，他/她在这些项目上花去的时间多少？" prop="I_time">
           <el-radio-group v-model="form.I_time">
-            <el-radio :label="0">不知道</el-radio>
-            <el-radio :label="1">较少</el-radio>
-            <el-radio :label="2">一般</el-radio>
-            <el-radio :label="3">较多</el-radio>
+            <el-radio :value="0">不知道</el-radio>
+            <el-radio :value="1">较少</el-radio>
+            <el-radio :value="2">一般</el-radio>
+            <el-radio :value="3">较多</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="与同龄儿童相比，他/她的运动水平如何？" prop="I_level">
           <el-radio-group v-model="form.I_level">
-            <el-radio :label="0">不知道</el-radio>
-            <el-radio :label="1">较低</el-radio>
-            <el-radio :label="2">一般</el-radio>
-            <el-radio :label="3">较高</el-radio>
+            <el-radio :value="0">不知道</el-radio>
+            <el-radio :value="1">较低</el-radio>
+            <el-radio :value="2">一般</el-radio>
+            <el-radio :value="3">较高</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-card>
@@ -196,18 +196,18 @@
 
         <el-form-item label="与同龄儿童相比，他/她花在这些爱好上的时间多少？" prop="II_time">
           <el-radio-group v-model="form.II_time">
-            <el-radio :label="0">不知道</el-radio>
-            <el-radio :label="1">较少</el-radio>
-            <el-radio :label="2">一般</el-radio>
-            <el-radio :label="3">较多</el-radio>
+            <el-radio :value="0">不知道</el-radio>
+            <el-radio :value="1">较少</el-radio>
+            <el-radio :value="2">一般</el-radio>
+            <el-radio :value="3">较多</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="与同龄儿童相比，他/她的爱好水平/专注度如何？" prop="II_level">
           <el-radio-group v-model="form.II_level">
-            <el-radio :label="0">不知道</el-radio>
-            <el-radio :label="1">较低</el-radio>
-            <el-radio :label="2">一般</el-radio>
-            <el-radio :label="3">较高</el-radio>
+            <el-radio :value="0">不知道</el-radio>
+            <el-radio :value="1">较低</el-radio>
+            <el-radio :value="2">一般</el-radio>
+            <el-radio :value="3">较高</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-card>
@@ -263,10 +263,10 @@
 
         <el-form-item label="与同龄儿童相比，他/她在这些组织中的活跃程度如何？" prop="III_active">
           <el-radio-group v-model="form.III_active">
-            <el-radio :label="0">不知道</el-radio>
-            <el-radio :label="1">较差</el-radio>
-            <el-radio :label="2">一般</el-radio>
-            <el-radio :label="3">较高</el-radio>
+            <el-radio :value="0">不知道</el-radio>
+            <el-radio :value="1">较差</el-radio>
+            <el-radio :value="2">一般</el-radio>
+            <el-radio :value="3">较高</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-card>
@@ -322,10 +322,10 @@
 
         <el-form-item label="与同龄儿童相比，他/她的做事质量/完成度如何？" prop="IV_quality">
           <el-radio-group v-model="form.IV_quality">
-            <el-radio :label="0">不知道</el-radio>
-            <el-radio :label="1">较差</el-radio>
-            <el-radio :label="2">一般</el-radio>
-            <el-radio :label="3">较好</el-radio>
+            <el-radio :value="0">不知道</el-radio>
+            <el-radio :value="1">较差</el-radio>
+            <el-radio :value="2">一般</el-radio>
+            <el-radio :value="3">较好</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-card>
@@ -337,17 +337,17 @@
         </template>
         <el-form-item label="您孩子有几个要好的朋友？" prop="V_friends">
           <el-radio-group v-model="form.V_friends">
-            <el-radio :label="0">无</el-radio>
-            <el-radio :label="1">1个</el-radio>
-            <el-radio :label="2">2—3个</el-radio>
-            <el-radio :label="3">4个及以上</el-radio>
+            <el-radio :value="0">无</el-radio>
+            <el-radio :value="1">1个</el-radio>
+            <el-radio :value="2">2—3个</el-radio>
+            <el-radio :value="3">4个及以上</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="您孩子与这些朋友每星期大概在一起（或互动）几次？" prop="V_meet">
           <el-radio-group v-model="form.V_meet">
-            <el-radio :label="0">不到一次</el-radio>
-            <el-radio :label="1">1—2次</el-radio>
-            <el-radio :label="2">3次及以上</el-radio>
+            <el-radio :value="0">不到一次</el-radio>
+            <el-radio :value="1">1—2次</el-radio>
+            <el-radio :value="2">3次及以上</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-card>
@@ -359,31 +359,31 @@
         </template>
         <el-form-item label="a. 与兄弟姐妹相处（独生子女可不填）" prop="VI_a">
           <el-radio-group v-model="form.VI_a">
-            <el-radio :label="-1">无兄弟姐妹</el-radio>
-            <el-radio :label="0">较差</el-radio>
-            <el-radio :label="1">差不多</el-radio>
-            <el-radio :label="2">较好</el-radio>
+            <el-radio :value="-1">无兄弟姐妹</el-radio>
+            <el-radio :value="0">较差</el-radio>
+            <el-radio :value="1">差不多</el-radio>
+            <el-radio :value="2">较好</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="b. 与其他儿童相处" prop="VI_b">
           <el-radio-group v-model="form.VI_b">
-            <el-radio :label="0">较差</el-radio>
-            <el-radio :label="1">差不多</el-radio>
-            <el-radio :label="2">较好</el-radio>
+            <el-radio :value="0">较差</el-radio>
+            <el-radio :value="1">差不多</el-radio>
+            <el-radio :value="2">较好</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="c. 对待父母的态度和行为" prop="VI_c">
           <el-radio-group v-model="form.VI_c">
-            <el-radio :label="0">较差</el-radio>
-            <el-radio :label="1">差不多</el-radio>
-            <el-radio :label="2">较好</el-radio>
+            <el-radio :value="0">较差</el-radio>
+            <el-radio :value="1">差不多</el-radio>
+            <el-radio :value="2">较好</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="d. 独立做事和玩耍时的表现" prop="VI_d">
           <el-radio-group v-model="form.VI_d">
-            <el-radio :label="0">较差</el-radio>
-            <el-radio :label="1">差不多</el-radio>
-            <el-radio :label="2">较好</el-radio>
+            <el-radio :value="0">较差</el-radio>
+            <el-radio :value="1">差不多</el-radio>
+            <el-radio :value="2">较好</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-card>
@@ -407,34 +407,34 @@
             <div class="grade-items">
               <el-form-item label="语文课（含阅读/写作）" prop="VII_chinese">
                 <el-radio-group v-model="form.VII_chinese">
-                  <el-radio :label="0">不及格</el-radio>
-                  <el-radio :label="1">中等以下</el-radio>
-                  <el-radio :label="2">中等</el-radio>
-                  <el-radio :label="3">中等以上</el-radio>
+                  <el-radio :value="0">不及格</el-radio>
+                  <el-radio :value="1">中等以下</el-radio>
+                  <el-radio :value="2">中等</el-radio>
+                  <el-radio :value="3">中等以上</el-radio>
                 </el-radio-group>
               </el-form-item>
               <el-form-item label="数学课" prop="VII_math">
                 <el-radio-group v-model="form.VII_math">
-                  <el-radio :label="0">不及格</el-radio>
-                  <el-radio :label="1">中等以下</el-radio>
-                  <el-radio :label="2">中等</el-radio>
-                  <el-radio :label="3">中等以上</el-radio>
+                  <el-radio :value="0">不及格</el-radio>
+                  <el-radio :value="1">中等以下</el-radio>
+                  <el-radio :value="2">中等</el-radio>
+                  <el-radio :value="3">中等以上</el-radio>
                 </el-radio-group>
               </el-form-item>
               <el-form-item label="英语课" prop="VII_english">
                 <el-radio-group v-model="form.VII_english">
-                  <el-radio :label="0">不及格</el-radio>
-                  <el-radio :label="1">中等以下</el-radio>
-                  <el-radio :label="2">中等</el-radio>
-                  <el-radio :label="3">中等以上</el-radio>
+                  <el-radio :value="0">不及格</el-radio>
+                  <el-radio :value="1">中等以下</el-radio>
+                  <el-radio :value="2">中等</el-radio>
+                  <el-radio :value="3">中等以上</el-radio>
                 </el-radio-group>
               </el-form-item>
               <el-form-item label="其他课（如科学、历史等）" prop="VII_other">
                 <el-radio-group v-model="form.VII_other">
-                  <el-radio :label="0">不及格</el-radio>
-                  <el-radio :label="1">中等以下</el-radio>
-                  <el-radio :label="2">中等</el-radio>
-                  <el-radio :label="3">中等以上</el-radio>
+                  <el-radio :value="0">不及格</el-radio>
+                  <el-radio :value="1">中等以下</el-radio>
+                  <el-radio :value="2">中等</el-radio>
+                  <el-radio :value="3">中等以上</el-radio>
                 </el-radio-group>
               </el-form-item>
             </div>
@@ -505,8 +505,8 @@
           </el-form-item>
           <el-form-item label="问题是否已解决：" prop="VII_isSolved">
             <el-radio-group v-model="form.VII_isSolved">
-              <el-radio :label="false">未解决</el-radio>
-              <el-radio :label="true">已解决</el-radio>
+              <el-radio :value="false">未解决</el-radio>
+              <el-radio :value="true">已解决</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item

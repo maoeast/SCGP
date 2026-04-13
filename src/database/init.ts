@@ -2699,6 +2699,36 @@ export function isDualWriteEnabled(): boolean {
  * sql.js exec() 返回格式: [{ columns: [...], values: [[cid, name, type, ...], ...] }]
  * 每个 values 元素是 [cid, name, type, notnull, dflt_value, pk]
  */
+function tableExists(database: any, tableName: string): boolean {
+  try {
+    let row: any = null
+
+    if (database && typeof database.get === 'function') {
+      row = database.get(
+        `SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`,
+        [tableName]
+      )
+    } else if (database && typeof database.prepare === 'function') {
+      const stmt = database.prepare(
+        `SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`
+      )
+      try {
+        stmt.bind([tableName])
+        if (stmt.step()) {
+          row = stmt.getAsObject()
+        }
+      } finally {
+        stmt.free()
+      }
+    }
+
+    return typeof row?.name === 'string' && row.name === tableName
+  } catch (error) {
+    console.warn(`[InitDatabase] 检查表失败: ${tableName} - ${error}`)
+    return false
+  }
+}
+
 function columnExists(database: any, tableName: string, columnName: string): boolean {
   try {
     const result = database.exec(`PRAGMA table_info(${tableName})`)
@@ -3090,8 +3120,8 @@ async function initializeSysTables(rawDb: any): Promise<void> {
  * @param rawDb 原始的 sql.js Database 对象
  */
 async function initializeEmotionalTables(rawDb: any): Promise<void> {
+  ensureCustomGamePhase0Schema(rawDb)
   rawDb.run(emotionalSchemaSQL)
-  migrateCustomGamePhase0Schema(rawDb)
   await initializeTeachingMaterialTables(rawDb)
   clearLegacyTeachingMaterialData(rawDb)
 }
@@ -3100,9 +3130,81 @@ async function initializeEmotionalTables(rawDb: any): Promise<void> {
  * Phase 0 正式迁移：把小游戏记录表从情绪专用旧约束升级为跨入口 custom game 底座。
  * 当前仍沿用 game_emotion_records / student_badges 表名，但不再为单个新游戏做 ad-hoc rebuild。
  */
-function migrateCustomGamePhase0Schema(rawDb: any): void {
-  migrateGameEmotionRecordsPhase0(rawDb)
-  migrateStudentBadgesPhase0(rawDb)
+export function ensureCustomGamePhase0Schema(rawDb: any): void {
+  ensureGameEmotionRecordsPhase0(rawDb)
+  ensureGameSessionParticipantsPhase0(rawDb)
+  ensureStudentBadgesPhase0(rawDb)
+}
+
+function ensureGameEmotionRecordsPhase0(rawDb: any): void {
+  if (!tableExists(rawDb, 'game_emotion_records')) {
+    rawDb.run(`
+      CREATE TABLE IF NOT EXISTS game_emotion_records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        game_code TEXT NOT NULL
+          CHECK(game_code GLOB '[A-Z][0-9][0-9]_*'),
+        start_time TEXT NOT NULL,
+        duration_ms INTEGER NOT NULL,
+        difficulty_level INTEGER DEFAULT 1
+          CHECK(difficulty_level IN (1, 2, 3)),
+        completion_status TEXT NOT NULL
+          CHECK(completion_status IN ('completed', 'aborted')),
+        performance_data TEXT,
+        session_group_id TEXT,
+        exit_trigger TEXT
+          CHECK(exit_trigger IN ('game_complete', 'user_exit', 'teacher_exit', 'timer_end', 'system_interrupt') OR exit_trigger IS NULL),
+        session_participants TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES student(id)
+      )
+    `)
+  } else {
+    migrateGameEmotionRecordsPhase0(rawDb)
+  }
+
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_game_emotion_records_student ON game_emotion_records(student_id, created_at DESC)')
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_game_emotion_records_code ON game_emotion_records(game_code, created_at DESC)')
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_game_emotion_records_group ON game_emotion_records(session_group_id, created_at DESC)')
+}
+
+function ensureGameSessionParticipantsPhase0(rawDb: any): void {
+  rawDb.run(`
+    CREATE TABLE IF NOT EXISTS game_session_participants (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_group_id TEXT NOT NULL,
+      student_id INTEGER NOT NULL,
+      role TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (student_id) REFERENCES student(id)
+    )
+  `)
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_game_session_participants_student ON game_session_participants(student_id, created_at DESC)')
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_game_session_participants_group ON game_session_participants(session_group_id, student_id)')
+}
+
+function ensureStudentBadgesPhase0(rawDb: any): void {
+  if (!tableExists(rawDb, 'student_badges')) {
+    rawDb.run(`
+      CREATE TABLE IF NOT EXISTS student_badges (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER NOT NULL,
+        badge_code TEXT NOT NULL,
+        badge_name TEXT NOT NULL,
+        game_code TEXT NOT NULL
+          CHECK(game_code GLOB '[A-Z][0-9][0-9]_*'),
+        unlock_count INTEGER DEFAULT 1,
+        first_earned_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        last_earned_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(student_id, badge_code),
+        FOREIGN KEY (student_id) REFERENCES student(id)
+      )
+    `)
+  } else {
+    migrateStudentBadgesPhase0(rawDb)
+  }
+
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_student_badges_student ON student_badges(student_id, last_earned_at DESC)')
 }
 
 function migrateGameEmotionRecordsPhase0(rawDb: any): void {

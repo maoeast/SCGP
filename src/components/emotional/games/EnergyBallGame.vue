@@ -190,6 +190,7 @@ const props = defineProps<{
   paused: boolean
   markRoundDirty: () => void
   audio: EmotionGameAudioController
+  cameraStream?: MediaStream | null
 }>()
 
 const emit = defineEmits<{
@@ -260,25 +261,24 @@ const energyBallStyle = computed(() => ({
 async function startCamera(): Promise<boolean> {
   cameraError.value = null
 
-  // Check if getUserMedia is available
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    cameraError.value = '浏览器不支持摄像头访问，请使用 HTTPS 或 Electron 环境'
+  if (!props.cameraStream) {
+    cameraError.value = '摄像头预检尚未完成，请返回训练列表后重新进入'
+    return false
+  }
+
+  const activeVideoTrack = props.cameraStream.getVideoTracks().find((track) => track.readyState === 'live')
+  if (!activeVideoTrack) {
+    cameraError.value = '摄像头连接已失效，请返回训练列表后重新进入'
     return false
   }
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
-      audio: false,
-    })
-
     if (!videoRef.value) {
       cameraError.value = '视频元素未就绪'
-      stream.getTracks().forEach((t) => t.stop())
       return false
     }
 
-    videoRef.value.srcObject = stream
+    videoRef.value.srcObject = props.cameraStream
 
     // Wait for video metadata to load so dimensions are available
     await new Promise<void>((resolve, reject) => {
@@ -299,23 +299,13 @@ async function startCamera(): Promise<boolean> {
     return true
   } catch (err: any) {
     const msg = err?.name || err?.message || String(err)
-    if (msg === 'NotAllowedError' || msg.includes('Permission')) {
-      cameraError.value = '摄像头权限被拒绝，请在浏览器设置中允许访问摄像头'
-    } else if (msg === 'NotFoundError' || msg.includes('not found')) {
-      cameraError.value = '未检测到摄像头设备'
-    } else if (msg === 'NotReadableError' || msg.includes('track')) {
-      cameraError.value = '摄像头被其他应用占用，请关闭其他使用摄像头的程序'
-    } else {
-      cameraError.value = `摄像头启动失败: ${msg}`
-    }
+    cameraError.value = `摄像头启动失败: ${msg}`
     return false
   }
 }
 
 function stopCamera(): void {
-  if (videoRef.value?.srcObject) {
-    const stream = videoRef.value.srcObject as MediaStream
-    stream.getTracks().forEach((track) => track.stop())
+  if (videoRef.value) {
     videoRef.value.srcObject = null
   }
 }

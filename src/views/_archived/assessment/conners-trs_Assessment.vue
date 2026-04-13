@@ -122,7 +122,7 @@
             <el-radio-button
               v-for="option in answerOptions"
               :key="option.value"
-              :label="option.value"
+              :value="option.value"
               class="answer-option"
             >
               <span class="option-label">{{ option.label }}</span>

@@ -354,6 +354,7 @@ const props = defineProps<{
   paused: boolean
   markRoundDirty?: () => void
   audio: EmotionGameAudioController
+  microphoneStream?: MediaStream | null
 }>()
 
 const emit = defineEmits<{
@@ -545,7 +546,9 @@ async function ensureAudioContext() {
 }
 
 function stopMic() {
-  micStream?.getTracks().forEach((track) => track.stop())
+  if (micStream && micStream !== props.microphoneStream) {
+    micStream.getTracks().forEach((track) => track.stop())
+  }
   micStream = null
   try {
     micSource?.disconnect()
@@ -994,10 +997,18 @@ function runAnalysis(timestamp: number) {
 }
 
 async function startMicrophoneSession() {
-  if (!navigator.mediaDevices?.getUserMedia) {
+  if (!props.microphoneStream) {
     phase.value = 'error'
     stageMessage.value = '今天的小熊还没有找到可以听声音的耳朵。'
-    helperMessage.value = '请换一台能使用麦克风的设备，再来轻轻叫醒森林。'
+    helperMessage.value = '请返回训练列表后重新进入，让容器重新完成麦克风预检。'
+    return
+  }
+
+  const activeAudioTrack = props.microphoneStream.getAudioTracks().find((track) => track.readyState === 'live')
+  if (!activeAudioTrack) {
+    phase.value = 'error'
+    stageMessage.value = '小熊刚刚听不到麦克风了。'
+    helperMessage.value = '请返回训练列表后重新进入，让容器重新检测麦克风。'
     return
   }
 
@@ -1008,13 +1019,7 @@ async function startMicrophoneSession() {
   try {
     await props.audio.ensureReady()
     await ensureAudioContext()
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: false,
-      },
-    })
+    micStream = props.microphoneStream
     micPermissionGranted.value = true
     analyser = audioContext!.createAnalyser()
     analyser.fftSize = 2048

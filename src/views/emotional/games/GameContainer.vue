@@ -22,9 +22,9 @@
                 <div class="settings-row">
                   <span class="setting-label">难度级别</span>
                   <el-radio-group v-model="difficulty" size="small" :disabled="difficultyLocked">
-                    <el-radio-button :label="1">简单</el-radio-button>
-                    <el-radio-button :label="2">中等</el-radio-button>
-                    <el-radio-button :label="3">困难</el-radio-button>
+                    <el-radio-button :value="1">简单</el-radio-button>
+                    <el-radio-button :value="2">中等</el-radio-button>
+                    <el-radio-button :value="3">困难</el-radio-button>
                   </el-radio-group>
                   <span v-if="difficultyLocked" class="setting-lock-note">
                     当前训练已锁定难度，运行中不可修改。
@@ -61,6 +61,7 @@
 
     <div class="game-stage">
       <slot
+        v-if="shouldRenderGame"
         :difficulty="difficulty"
         :settings="settings"
         :is-paused="isPaused"
@@ -70,7 +71,63 @@
         :mark-round-dirty="markRoundDirty"
         :audio="audioController"
         :launch-context="props.launchContext"
+        :permission-streams="permissionStreams"
       />
+
+      <div v-else class="permission-gate">
+        <div class="permission-card" :data-state="preflightState">
+          <div class="permission-icon">
+            {{ preflightState === 'probing' ? '...' : preflightState === 'blocked_system' ? '🛡️' : '🎮' }}
+          </div>
+          <h2>{{ preflightTitle }}</h2>
+          <p>{{ preflightMessage }}</p>
+          <p v-if="preflightHint" class="permission-hint">
+            {{ preflightHint }}
+          </p>
+
+          <div v-if="requiredPermissions.length > 0" class="permission-tags">
+            <span
+              v-for="permission in requiredPermissions"
+              :key="permission"
+              class="permission-tag"
+              :class="{ missing: blockedPermissions.includes(permission) }"
+            >
+              {{ permissionLabels[permission] }}
+            </span>
+          </div>
+
+          <div class="permission-actions">
+            <button
+              v-if="preflightState === 'blocked_system' && canOpenSystemSettings"
+              class="permission-primary-button"
+              type="button"
+              :disabled="isOpeningSystemSettings || isProbing"
+              @click="handleOpenSystemSettings"
+            >
+              {{ isOpeningSystemSettings ? '正在打开系统设置...' : '打开系统设置' }}
+            </button>
+
+            <button
+              v-if="preflightState === 'blocked_retryable' || preflightState === 'blocked_system'"
+              class="permission-secondary-button"
+              type="button"
+              :disabled="isProbing"
+              @click="runPermissionPreflight"
+            >
+              {{ preflightState === 'blocked_system' ? '我已完成设置，重新检测' : '重新检测权限' }}
+            </button>
+
+            <button
+              v-if="preflightState !== 'probing'"
+              class="permission-ghost-button"
+              type="button"
+              @click="handlePreflightReturn"
+            >
+              返回训练列表
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <transition name="fade-up">
@@ -83,8 +140,12 @@
 
 <script setup lang="ts">
 import { ElMessageBox } from 'element-plus'
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
+import {
+  getRequiredCustomGameDefinition,
+  type CustomGamePermission,
+} from '@/data/custom-game-registry'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
 import type {
   CustomGameCode,
@@ -110,6 +171,37 @@ const props = withDefaults(defineProps<{
 const route = useRoute()
 const router = useRouter()
 const api = new EmotionalGamesAPI()
+const gameDefinition = computed(() => getRequiredCustomGameDefinition(props.gameCode))
+
+type PermissionPreflightState =
+  | 'idle'
+  | 'probing'
+  | 'ready'
+  | 'degraded_ready'
+  | 'blocked_retryable'
+  | 'blocked_system'
+  | 'active'
+  | 'terminal'
+
+type MediaAccessStatus = 'not-determined' | 'granted' | 'denied' | 'restricted' | 'unknown'
+
+const permissionLabels: Record<CustomGamePermission, string> = {
+  microphone: '麦克风',
+  camera: '摄像头',
+}
+
+const permissionStreams = reactive<Record<CustomGamePermission, MediaStream | null>>({
+  microphone: null,
+  camera: null,
+})
+const preflightState = ref<PermissionPreflightState>('idle')
+const blockedPermissions = ref<CustomGamePermission[]>([])
+const preflightFailureMessage = ref('')
+const preflightPlatform = ref('unknown')
+const canOpenSystemSettings = ref(false)
+const isOpeningSystemSettings = ref(false)
+let activePreflightRunId = 0
+let isDisposed = false
 
 const settings = reactive<EmotionGameSettings>({
   backgroundVolume: 28,
@@ -131,6 +223,230 @@ function createSessionGroupId() {
   }
 
   return `custom-game-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function getOptionalElectronAPI() {
+  return (window as typeof window & {
+    electronAPI?: {
+      getMediaPermissionStatus?: (permission: CustomGamePermission) => Promise<{
+        success: boolean
+        permission: CustomGamePermission
+        status: MediaAccessStatus
+        platform: string
+        canOpenSettings: boolean
+        error?: string
+      }>
+      openMediaPermissionSettings?: (permission: CustomGamePermission) => Promise<{
+        success: boolean
+        opened: boolean
+        platform: string
+        error?: string
+      }>
+    }
+  }).electronAPI
+}
+
+function stopPermissionStream(permission: CustomGamePermission) {
+  const stream = permissionStreams[permission]
+  if (!stream) {
+    return
+  }
+
+  stream.getTracks().forEach((track) => track.stop())
+  permissionStreams[permission] = null
+}
+
+function stopAllPermissionStreams() {
+  stopPermissionStream('microphone')
+  stopPermissionStream('camera')
+}
+
+function cancelPermissionPreflight() {
+  activePreflightRunId += 1
+  stopAllPermissionStreams()
+}
+
+function isCurrentPreflightRun(runId: number) {
+  return !isDisposed && activePreflightRunId === runId
+}
+
+function getPermissionConstraints(permission: CustomGamePermission): MediaStreamConstraints {
+  if (permission === 'microphone') {
+    return {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: false,
+      },
+      video: false,
+    }
+  }
+
+  return {
+    video: {
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+      facingMode: 'user',
+    },
+    audio: false,
+  }
+}
+
+async function getSystemPermissionStatus(permission: CustomGamePermission): Promise<MediaAccessStatus | null> {
+  const electronAPI = getOptionalElectronAPI()
+  if (!electronAPI?.getMediaPermissionStatus) {
+    return null
+  }
+
+  try {
+    const result = await electronAPI.getMediaPermissionStatus(permission)
+    if (!result?.success) {
+      return null
+    }
+
+    preflightPlatform.value = result.platform || preflightPlatform.value
+    canOpenSystemSettings.value = canOpenSystemSettings.value || Boolean(result.canOpenSettings)
+    return result.status
+  } catch {
+    return null
+  }
+}
+
+function setRetryableBlock(permission: CustomGamePermission, error: unknown) {
+  const errorName = typeof (error as { name?: string })?.name === 'string'
+    ? String((error as { name?: string }).name)
+    : ''
+  const errorMessage = typeof (error as { message?: string })?.message === 'string'
+    ? String((error as { message?: string }).message)
+    : ''
+  const permissionLabel = permissionLabels[permission]
+
+  blockedPermissions.value = [permission]
+  preflightState.value = 'blocked_retryable'
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    preflightFailureMessage.value = `${permissionLabel}当前不可用，请在 Electron 环境中运行，或确认浏览器允许媒体访问。`
+    return
+  }
+
+  if (errorName === 'NotFoundError') {
+    preflightFailureMessage.value = `没有检测到${permissionLabel}设备，请检查连接后重新检测。`
+    return
+  }
+
+  if (errorName === 'NotReadableError' || errorName === 'TrackStartError') {
+    preflightFailureMessage.value = `${permissionLabel}正在被其他程序占用，请关闭冲突程序后重试。`
+    return
+  }
+
+  if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
+    preflightFailureMessage.value = `${permissionLabel}未被当前页面允许，请点击重新检测并在弹窗中允许访问。`
+    return
+  }
+
+  preflightFailureMessage.value = `${permissionLabel}启动失败${errorMessage ? `：${errorMessage}` : '，请重新检测权限。'}`
+}
+
+function setSystemBlock(permissions: CustomGamePermission[]) {
+  blockedPermissions.value = [...permissions]
+  preflightState.value = 'blocked_system'
+  preflightFailureMessage.value = permissions.length > 0
+    ? `${permissions.map((permission) => permissionLabels[permission]).join('、')}在系统权限里被拒绝，当前不能进入训练。`
+    : '系统权限未开启，当前不能进入训练。'
+}
+
+async function runPermissionPreflight() {
+  const runId = ++activePreflightRunId
+
+  stopAllPermissionStreams()
+  blockedPermissions.value = []
+  preflightFailureMessage.value = ''
+  canOpenSystemSettings.value = false
+  preflightState.value = 'probing'
+
+  const permissions = requiredPermissions.value
+  if (permissions.length === 0) {
+    if (!isCurrentPreflightRun(runId)) {
+      return
+    }
+
+    preflightState.value = 'ready'
+    await nextTick()
+
+    if (isCurrentPreflightRun(runId)) {
+      preflightState.value = 'active'
+    }
+    return
+  }
+
+  const systemBlocked: CustomGamePermission[] = []
+  for (const permission of permissions) {
+    const status = await getSystemPermissionStatus(permission)
+    if (!isCurrentPreflightRun(runId)) {
+      stopAllPermissionStreams()
+      return
+    }
+
+    if (status === 'denied' || status === 'restricted') {
+      systemBlocked.push(permission)
+    }
+  }
+
+  if (systemBlocked.length > 0) {
+    setSystemBlock(systemBlocked)
+    stopAllPermissionStreams()
+    return
+  }
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    const firstPermission = permissions[0]
+    if (firstPermission) {
+      setRetryableBlock(firstPermission, new Error('media-devices-unavailable'))
+    }
+    stopAllPermissionStreams()
+    return
+  }
+
+  for (const permission of permissions) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(getPermissionConstraints(permission))
+      if (!isCurrentPreflightRun(runId)) {
+        stream.getTracks().forEach((track) => track.stop())
+        return
+      }
+      permissionStreams[permission] = stream
+    } catch (error) {
+      stopAllPermissionStreams()
+
+      if (!isCurrentPreflightRun(runId)) {
+        return
+      }
+
+      const postStatus = await getSystemPermissionStatus(permission)
+      if (!isCurrentPreflightRun(runId)) {
+        return
+      }
+
+      if (postStatus === 'denied' || postStatus === 'restricted') {
+        setSystemBlock([permission])
+      } else {
+        setRetryableBlock(permission, error)
+      }
+      return
+    }
+  }
+
+  if (!isCurrentPreflightRun(runId)) {
+    stopAllPermissionStreams()
+    return
+  }
+
+  preflightState.value = 'ready'
+  await nextTick()
+
+  if (isCurrentPreflightRun(runId)) {
+    preflightState.value = 'active'
+  }
 }
 
 const resolvedParticipantStudentIds = computed(() => {
@@ -161,6 +477,55 @@ const isGroupLaunch = computed(() => resolvedParticipantStudentIds.value.length 
 const difficultyLocked = computed(() => props.launchContext.difficultyLocked)
 const participantLabel = computed(() => (isGroupLaunch.value ? '当前参与者' : '当前学生'))
 const participantSummary = computed(() => resolvedParticipantNames.value.join('、') || primaryStudentName.value)
+const requiredPermissions = computed(() => [...gameDefinition.value.requiredPermissions])
+const shouldRenderGame = computed(() => ['active', 'terminal'].includes(preflightState.value))
+const isProbing = computed(() => preflightState.value === 'probing')
+const blockedPermissionSummary = computed(() => blockedPermissions.value.map((permission) => permissionLabels[permission]).join('、'))
+const preflightTitle = computed(() => {
+  if (preflightState.value === 'probing') {
+    return `正在准备《${props.gameTitle}》`
+  }
+
+  if (preflightState.value === 'blocked_system') {
+    return `${blockedPermissionSummary.value || '媒体权限'}尚未在系统中开启`
+  }
+
+  if (preflightState.value === 'blocked_retryable') {
+    return `${blockedPermissionSummary.value || '媒体权限'}暂时不可用`
+  }
+
+  return `正在进入《${props.gameTitle}》`
+})
+const preflightMessage = computed(() => {
+  if (preflightState.value === 'probing') {
+    if (requiredPermissions.value.length === 0) {
+      return '正在检查启动环境，请稍候。'
+    }
+
+    return `容器正在统一检查 ${requiredPermissions.value.map((permission) => permissionLabels[permission]).join('、')} 权限。`
+  }
+
+  if (preflightFailureMessage.value) {
+    return preflightFailureMessage.value
+  }
+
+  return '正在准备训练环境。'
+})
+const preflightHint = computed(() => {
+  if (preflightState.value !== 'blocked_system') {
+    return ''
+  }
+
+  if (preflightPlatform.value === 'darwin') {
+    return 'macOS：系统设置 -> 隐私与安全性 -> 麦克风 / 摄像头，开启后返回本页重新检测。'
+  }
+
+  if (preflightPlatform.value === 'win32') {
+    return 'Windows：设置 -> 隐私和安全性 -> 麦克风 / 摄像头，允许桌面应用访问后再返回重新检测。'
+  }
+
+  return 'Linux：请检查桌面环境权限设置，并确认设备未被其他程序占用。'
+})
 
 function resolveInitialSessionGroupId() {
   const metadataSessionGroupId = typeof props.launchContext.metadata?.sessionGroupId === 'string'
@@ -413,6 +778,25 @@ const audioController: EmotionGameAudioController = {
   stopAll: stopAllAudio,
 }
 
+async function handleOpenSystemSettings() {
+  const permission = blockedPermissions.value[0]
+  const electronAPI = getOptionalElectronAPI()
+
+  if (!permission || !electronAPI?.openMediaPermissionSettings) {
+    return
+  }
+
+  isOpeningSystemSettings.value = true
+  try {
+    const result = await electronAPI.openMediaPermissionSettings(permission)
+    if (result?.platform) {
+      preflightPlatform.value = result.platform
+    }
+  } finally {
+    isOpeningSystemSettings.value = false
+  }
+}
+
 function buildReturnQuery() {
   const nextQuery = { ...route.query }
   nextQuery.entry = props.launchContext.launchEntryCode
@@ -451,6 +835,14 @@ function getReturnLocation() {
     path: '/emotional/menu',
     query: buildReturnQuery(),
   }
+}
+
+async function handlePreflightReturn() {
+  suppressLeaveAbort.value = true
+  preflightState.value = 'terminal'
+  cancelPermissionPreflight()
+  stopAllAudio()
+  await router.push(getReturnLocation())
 }
 
 function resolveSessionGroupId(payload?: EmotionGameCompletionPayload | GroupGameCompletionPayload) {
@@ -603,7 +995,9 @@ async function handleAbortGroupGame(reason?: CustomGameExitTrigger | GroupGameCo
 async function handleQuietExit() {
   suppressLeaveAbort.value = true
   isPaused.value = true
+  preflightState.value = 'terminal'
   stopAllAudio()
+  cancelPermissionPreflight()
 
   if (hasDirtyRound.value) {
     await persistTerminalState('aborted', {
@@ -635,7 +1029,9 @@ async function handleTeacherExit() {
 
   suppressLeaveAbort.value = true
   isPaused.value = true
+  preflightState.value = 'terminal'
   stopAllAudio()
+  cancelPermissionPreflight()
 
   if (hasDirtyRound.value) {
     await persistTerminalState('aborted', {
@@ -656,7 +1052,9 @@ function handleSystemInterrupt() {
   }
 
   isPaused.value = true
+  preflightState.value = 'terminal'
   stopAllAudio()
+  cancelPermissionPreflight()
   void persistTerminalState('aborted', {
     performanceData: {
       event: 'system_interrupt',
@@ -669,7 +1067,9 @@ function handleSystemInterrupt() {
 onBeforeRouteLeave(async () => {
   if (!suppressLeaveAbort.value && hasDirtyRound.value) {
     isPaused.value = true
+    preflightState.value = 'terminal'
     stopAllAudio()
+    cancelPermissionPreflight()
     await persistTerminalState('aborted', {
       performanceData: {
         event: 'system_interrupt',
@@ -681,14 +1081,18 @@ onBeforeRouteLeave(async () => {
 })
 
 onMounted(() => {
+  void runPermissionPreflight()
   window.addEventListener('pagehide', handleSystemInterrupt)
 })
 
 onBeforeUnmount(() => {
+  isDisposed = true
+  cancelPermissionPreflight()
   if (messageTimer) {
     window.clearTimeout(messageTimer)
   }
   window.removeEventListener('pagehide', handleSystemInterrupt)
+  stopAllPermissionStreams()
   stopAllAudio()
   if (audioContext && audioContext.state !== 'closed') {
     audioContext.close().catch(() => {
@@ -785,6 +1189,135 @@ onBeforeUnmount(() => {
 .game-stage {
   position: relative;
   min-height: calc(100vh - 120px);
+}
+
+.permission-gate {
+  display: grid;
+  place-items: center;
+  min-height: calc(100vh - 120px);
+  padding: 120px 24px 48px;
+}
+
+.permission-card {
+  width: min(520px, 100%);
+  padding: 28px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 24px 48px rgba(58, 101, 142, 0.18);
+  text-align: center;
+}
+
+.permission-card h2 {
+  margin: 0 0 12px;
+  font-size: 28px;
+  color: #24425f;
+}
+
+.permission-card p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #5f7690;
+}
+
+.permission-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  min-height: 84px;
+  margin-bottom: 18px;
+  border-radius: 999px;
+  background: rgba(93, 169, 224, 0.12);
+  color: #24557d;
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.permission-hint {
+  margin-top: 12px !important;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255, 247, 223, 0.92);
+  color: #80622d !important;
+}
+
+.permission-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.permission-tag {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(230, 243, 255, 0.92);
+  color: #34648f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.permission-tag.missing {
+  background: rgba(255, 238, 236, 0.96);
+  color: #a44a42;
+}
+
+.permission-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.permission-primary-button,
+.permission-secondary-button,
+.permission-ghost-button {
+  min-width: 160px;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.permission-primary-button:disabled,
+.permission-secondary-button:disabled,
+.permission-ghost-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  transform: none;
+  box-shadow: none;
+}
+
+.permission-primary-button {
+  border: none;
+  color: #ffffff;
+  background: linear-gradient(135deg, #3d88c9 0%, #2f5f9f 100%);
+  box-shadow: 0 14px 28px rgba(55, 100, 160, 0.22);
+}
+
+.permission-secondary-button {
+  border: none;
+  color: #2f5f8b;
+  background: rgba(228, 243, 255, 0.98);
+  box-shadow: 0 12px 24px rgba(71, 126, 178, 0.14);
+}
+
+.permission-ghost-button {
+  border: 1px solid rgba(56, 95, 130, 0.18);
+  color: #476884;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.permission-primary-button:hover:not(:disabled),
+.permission-secondary-button:hover:not(:disabled),
+.permission-ghost-button:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
 
 :deep(.game-settings-menu) {

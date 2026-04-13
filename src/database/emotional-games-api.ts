@@ -9,6 +9,7 @@ import type {
   GameEmotionRecord,
 } from '@/types/emotional/games'
 import type { TrainingEntryCode } from '@/utils/training-entry'
+import { ensureCustomGamePhase0Schema } from './init'
 import { TrainingSessionWriter } from './training-session-writer'
 
 type DbLike = {
@@ -462,6 +463,7 @@ export class EmotionalGamesAPI {
   async persistSession(input: PersistEmotionGameSessionInput): Promise<PersistEmotionGameSessionResult> {
     const db = getActiveDb()
     const rawDb = getRawDb(db)
+    ensureCustomGamePhase0Schema(rawDb)
     const definition = resolveCustomGameDefinition(input.gameCode)
     const studentContext = getStudentTrainingContext(db, input.studentId)
     const accuracyRate = deriveAccuracyRate(input.gameCode, input.performanceData, input.completionStatus)
@@ -566,6 +568,7 @@ export class EmotionalGamesAPI {
   ): Promise<PersistEmotionGameSessionGroupResult> {
     const db = getActiveDb()
     const rawDb = getRawDb(db)
+    ensureCustomGamePhase0Schema(rawDb)
     const definition = resolveCustomGameDefinition(input.gameCode)
     const sessionGroupId = normalizeSessionGroupId(input.sessionGroupId)
     const participantStudentIds = normalizeParticipantStudentIds(input.participantStudentIds)

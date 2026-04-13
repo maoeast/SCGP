@@ -113,6 +113,24 @@ export interface ElectronAPI {
    */
   getElectronVersion: () => Promise<string>
 
+  /**
+   * 查询系统级媒体权限状态
+   * @param permission - 权限类型（麦克风/摄像头）
+   * @returns Promise<MediaPermissionStatusResult> - 当前系统权限状态
+   */
+  getMediaPermissionStatus: (
+    permission: MediaPermissionKind
+  ) => Promise<MediaPermissionStatusResult>
+
+  /**
+   * 打开系统权限设置页
+   * @param permission - 权限类型（麦克风/摄像头）
+   * @returns Promise<OpenMediaPermissionSettingsResult> - 是否成功打开设置页
+   */
+  openMediaPermissionSettings: (
+    permission: MediaPermissionKind
+  ) => Promise<OpenMediaPermissionSettingsResult>
+
   // ========== 数据库备份专用 API ==========
   /**
    * 获取用户数据目录路径
@@ -270,6 +288,26 @@ export interface DatabaseExistsResult {
 export interface TTSResult {
   success: boolean
   audioBase64?: string
+  error?: string
+}
+
+export type MediaPermissionKind = 'microphone' | 'camera'
+
+export type MediaPermissionAccessStatus = 'not-determined' | 'granted' | 'denied' | 'restricted' | 'unknown'
+
+export interface MediaPermissionStatusResult {
+  success: boolean
+  permission: MediaPermissionKind
+  status: MediaPermissionAccessStatus
+  platform: string
+  canOpenSettings: boolean
+  error?: string
+}
+
+export interface OpenMediaPermissionSettingsResult {
+  success: boolean
+  opened: boolean
+  platform: string
   error?: string
 }
 

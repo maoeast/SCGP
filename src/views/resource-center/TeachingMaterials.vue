@@ -89,7 +89,7 @@
           <el-radio-button
             v-for="category in fileCategoryOptions"
             :key="category"
-            :label="category"
+            :value="category"
           >
             {{ getFileCategoryLabel(category) }} ({{ getMaterialCountByCategory(category) }})
           </el-radio-button>

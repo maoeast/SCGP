@@ -5,13 +5,14 @@
     :game-title="gameDefinition.name"
     :default-badge="{ badgeCode: gameDefinition.badge.badgeCode, badgeName: gameDefinition.badge.badgeName }"
   >
-    <template #default="{ difficulty, settings, isPaused, completeGame, markRoundDirty, audio }">
+    <template #default="{ difficulty, settings, isPaused, completeGame, markRoundDirty, audio, permissionStreams }">
       <VoiceVolumeForestGame
         :difficulty="difficulty"
         :settings="settings"
         :paused="isPaused"
         :mark-round-dirty="markRoundDirty"
         :audio="audio"
+        :microphone-stream="permissionStreams.microphone"
         @complete="completeGame"
       />
     </template>

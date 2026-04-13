@@ -125,9 +125,9 @@
               <div class="preview-block">
                 <h4>开始前难度</h4>
                 <el-radio-group v-model="selectedEmotionalDifficulty" size="large">
-                  <el-radio-button :label="1">简单</el-radio-button>
-                  <el-radio-button :label="2">中等</el-radio-button>
-                  <el-radio-button :label="3">困难</el-radio-button>
+                  <el-radio-button :value="1">简单</el-radio-button>
+                  <el-radio-button :value="2">中等</el-radio-button>
+                  <el-radio-button :value="3">困难</el-radio-button>
                 </el-radio-group>
               </div>
             </div>

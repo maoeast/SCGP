@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell, protocol } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, shell, protocol, systemPreferences } from 'electron'
 import path from 'path'
 import { promises as fs } from 'fs'
 import fsSync from 'fs'  // 添加同步 fs 模块
@@ -149,6 +149,52 @@ function safeError(...args) {
 console.log = safeLog
 console.warn = safeWarn
 console.error = safeError
+
+const MEDIA_PERMISSION_TYPES = new Set(['microphone', 'camera'])
+
+function normalizeMediaPermission(permission) {
+  return MEDIA_PERMISSION_TYPES.has(permission) ? permission : null
+}
+
+function canOpenMediaPermissionSettings() {
+  return process.platform === 'darwin' || process.platform === 'win32'
+}
+
+function getMediaPermissionStatusValue(permission) {
+  if (!normalizeMediaPermission(permission)) {
+    return 'unknown'
+  }
+
+  if (typeof systemPreferences?.getMediaAccessStatus !== 'function') {
+    return 'unknown'
+  }
+
+  try {
+    return systemPreferences.getMediaAccessStatus(permission)
+  } catch {
+    return 'unknown'
+  }
+}
+
+function getMediaPermissionSettingsUrl(permission) {
+  if (!normalizeMediaPermission(permission)) {
+    return null
+  }
+
+  if (process.platform === 'darwin') {
+    return permission === 'microphone'
+      ? 'x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone'
+      : 'x-apple.systempreferences:com.apple.preference.security?Privacy_Camera'
+  }
+
+  if (process.platform === 'win32') {
+    return permission === 'microphone'
+      ? 'ms-settings:privacy-microphone'
+      : 'ms-settings:privacy-webcam'
+  }
+
+  return null
+}
 
 // ========== Phase 2.1: resource:// 协议注册 ==========
 
@@ -1087,4 +1133,65 @@ ipcMain.handle('get-app-version', async () => {
 // ========== 获取 Electron 版本信息 ==========
 ipcMain.handle('get-electron-version', async () => {
   return process.versions.electron
+})
+
+// ========== 媒体权限 ==========
+ipcMain.handle('get-media-permission-status', async (_event, permission) => {
+  const normalizedPermission = normalizeMediaPermission(permission)
+  if (!normalizedPermission) {
+    return {
+      success: false,
+      permission,
+      status: 'unknown',
+      platform: process.platform,
+      canOpenSettings: canOpenMediaPermissionSettings(),
+      error: 'unsupported-permission',
+    }
+  }
+
+  return {
+    success: true,
+    permission: normalizedPermission,
+    status: getMediaPermissionStatusValue(normalizedPermission),
+    platform: process.platform,
+    canOpenSettings: canOpenMediaPermissionSettings(),
+  }
+})
+
+ipcMain.handle('open-media-permission-settings', async (_event, permission) => {
+  const normalizedPermission = normalizeMediaPermission(permission)
+  if (!normalizedPermission) {
+    return {
+      success: false,
+      opened: false,
+      platform: process.platform,
+      error: 'unsupported-permission',
+    }
+  }
+
+  const settingsUrl = getMediaPermissionSettingsUrl(normalizedPermission)
+  if (!settingsUrl) {
+    return {
+      success: false,
+      opened: false,
+      platform: process.platform,
+      error: 'settings-url-unavailable',
+    }
+  }
+
+  try {
+    await shell.openExternal(settingsUrl)
+    return {
+      success: true,
+      opened: true,
+      platform: process.platform,
+    }
+  } catch (error) {
+    return {
+      success: false,
+      opened: false,
+      platform: process.platform,
+      error: error instanceof Error ? error.message : String(error),
+    }
+  }
 })

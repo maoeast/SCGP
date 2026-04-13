@@ -32,6 +32,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 获取 Electron 版本
   getElectronVersion: () => ipcRenderer.invoke('get-electron-version'),
 
+  // 媒体权限
+  getMediaPermissionStatus: (permission) => ipcRenderer.invoke('get-media-permission-status', permission),
+  openMediaPermissionSettings: (permission) => ipcRenderer.invoke('open-media-permission-settings', permission),
+
   // ========== 资源文件管理专用API ==========
   // 获取应用安装目录
   getAppPath: () => ipcRenderer.invoke('get-app-path'),
@@ -131,6 +135,19 @@ if (!process.contextIsolated) {
     getMachineId: () => Promise.resolve('mock-machine-id'),
     getAppVersion: () => Promise.resolve('0.0.0'),
     getElectronVersion: () => Promise.resolve('0.0.0'),
+    getMediaPermissionStatus: (permission) => Promise.resolve({
+      success: true,
+      permission,
+      status: 'unknown',
+      platform: 'unknown',
+      canOpenSettings: false,
+    }),
+    openMediaPermissionSettings: () => Promise.resolve({
+      success: false,
+      opened: false,
+      platform: 'unknown',
+      error: 'mock',
+    }),
     // 数据库备份API模拟
     getUserDataPath: () => Promise.resolve('/mock/userdata'),
     loadDatabaseFile: () => Promise.resolve(null),  // 直接返回 null
