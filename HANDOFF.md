@@ -33,13 +33,14 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: 当前活跃任务已切到 `care_scene` 沉浸式正式入口恢复后的运行时核验；代码级 cutover 与旧双栏链路清理已完成，下一步先做 Electron 实机 smoke。**
+**Active follow-up work is now in `.continue-here.md`: 评估页面布局重构计划已归档，当前活跃任务仍为 `care_scene` 沉浸式正式入口恢复后的运行时核验。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is runtime verification for the restored `care_scene` immersive default path on `main`
-- first action should be opening the real `care_scene` flow and confirming `选择学生 -> 选择关心情境 -> 沉浸式训练` is now the default path, with correct resource loading and result-page behavior
+- current active task is runtime verification for the restored `care_scene` immersive default path and newly added resource images
+- first action should be opening the real `care_scene` flow and checking resource loading
+- a new refactor plan for assessment layout is available in `docs/planning/2026-04-13-assessment-layout-refactor-plan.md`
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`
