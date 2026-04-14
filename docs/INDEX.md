@@ -35,6 +35,7 @@
 - [2026-03-20-emotion-games-prd.md](/home/DONG/Mycode/SCGP/docs/planning/2026-03-20-emotion-games-prd.md)
 - [2026-04-13-cross-entry-custom-games-expansion-plan.md](/home/DONG/Mycode/SCGP/docs/planning/2026-04-13-cross-entry-custom-games-expansion-plan.md)
 - [2026-04-13-cross-entry-custom-games-phase0-implementation-spec.md](/home/DONG/Mycode/SCGP/docs/planning/2026-04-13-cross-entry-custom-games-phase0-implementation-spec.md)
+- [2026-04-14-cross-entry-custom-games-wave1-prep-checklist.md](/home/DONG/Mycode/SCGP/docs/planning/2026-04-14-cross-entry-custom-games-wave1-prep-checklist.md)
 - [情绪场景训练全屏沉浸式重构PRD.md](./planning/情绪场景训练全屏沉浸式重构PRD.md)
 - [2026-04-08-care-scene-immersive-refactor-plan.md](./planning/2026-04-08-care-scene-immersive-refactor-plan.md)
 - [2026-04-06-emotional-immersive-training-rework-plan.md](/home/DONG/Mycode/SCGP/docs/planning/2026-04-06-emotional-immersive-training-rework-plan.md)

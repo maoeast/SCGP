@@ -268,6 +268,21 @@
 - `GameContainer` 已切到 `launchContext` 契约，并区分 `user_exit / teacher_exit / system_interrupt`。
 - 下一步固定为 `Step 5`：容器统一权限 preflight 与 Electron 权限恢复链，不进入 `Wave 1` 新游戏。
 
+### 3.3.3 2026-04-14 cross-entry custom games Phase 0 closeout and Wave 1 prep
+
+- `Phase 0` 已完成手动验证收口：
+  - `G03_FOREST` 麦克风 `blocked_system` 恢复链路已通过
+  - `G08_ENERGY_BALL` 摄像头 `blocked_system` 恢复链路已通过
+  - 跨入口启动与返回链路已通过
+- 主进程 broken pipe 弹窗已修复：
+  - commit `8f47ed1`
+- 当前新增 `Wave 1` 前期准备入口：
+  - `docs/planning/2026-04-14-cross-entry-custom-games-wave1-prep-checklist.md`
+- 当前明确边界：
+  - `Phase 0` 已关闭
+  - 当前真实链路仍是 `emotional-only`
+  - 下一步不是直接铺开 `Wave 1` 实现，而是先按 prep checklist 锁定单一目标并核对底座
+
 ## 7. 维护规则
 
 - 本文件只保留当前有效上下文，不再积累长流水日志
