@@ -88,6 +88,7 @@ interface MenuRouteItem {
   meta: {
     title: string
     displayTitle: string
+    activeMenu?: string
     icon?: string
     roles?: string[]
     moduleCode?: string
@@ -137,6 +138,7 @@ const menuRoutes = computed<MenuRouteItem[]>(() => {
       meta: {
         title: String(r.meta.title || ''),
         displayTitle: String(r.meta.title || ''),
+        activeMenu: typeof r.meta.activeMenu === 'string' ? r.meta.activeMenu : undefined,
         icon: typeof r.meta.icon === 'string' ? r.meta.icon : undefined,
         roles: Array.isArray(r.meta.roles) ? r.meta.roles as string[] : undefined,
         moduleCode: typeof r.meta.moduleCode === 'string' ? r.meta.moduleCode : undefined,
@@ -157,6 +159,11 @@ const isImmersiveRoute = computed(() => route.meta.immersiveShell === true)
 
 // 判断是否激活
 const isActive = (path: string) => {
+  const activeMenu = typeof route.meta.activeMenu === 'string' ? route.meta.activeMenu : ''
+  if (activeMenu) {
+    return path === activeMenu
+  }
+
   // 精确匹配
   if (path === route.path) return true
   // 首页特殊处理

@@ -3,6 +3,11 @@
 > last_updated: 2026-04-14
 
 2026-04-14
+- 完成 `F01_CLOUD_ERASE` 最小运行链路、训练记录接线与详情页入口归属修正。
+- 当前状态：代码已闭环，`npm run type-check` 通过；最新待确认项是详情页左侧仅高亮“训练记录”。
+- 下一步：刷新 `/emotional/game-record` 详情页，确认侧栏单高亮。
+
+2026-04-14
 - 已完成 cross-entry custom game 最小入口适配层：`GameLobby` 启动接线 + `GameContainer` 返程。
 - 当前状态：registry-backed custom game 已能按真实 `entry / module` 启动并返回游戏大厅；`F01_CLOUD_ERASE` 尚未实现。
 - 下一步：先修改 `src/data/custom-game-registry.ts`，新增 `F01_CLOUD_ERASE` 的 registry 定义。

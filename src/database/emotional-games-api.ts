@@ -209,7 +209,8 @@ function deriveAccuracyRate(
       }
       break
     }
-    case 'G04_WIPE_ICE': {
+    case 'G04_WIPE_ICE':
+    case 'F01_CLOUD_ERASE': {
       const clearedRatioPeak = Number(performanceData.cleared_ratio_peak)
       if (Number.isFinite(clearedRatioPeak)) {
         return Math.max(0, Math.min(1, clearedRatioPeak))
@@ -784,6 +785,28 @@ export class EmotionalGamesAPI {
       WHERE student_id = ?
       ORDER BY created_at DESC, id DESC
     `, [studentId])
+
+    return rows.map(normalizeTrainingRecord)
+  }
+
+  getStudentRecordsByEntry(
+    studentId: number,
+    entryCode: TrainingEntryCode,
+  ): EmotionalGameTrainingRecordItem[] {
+    const supportedGames = getCustomGamesByTrainingEntry(entryCode)
+    if (supportedGames.length === 0) {
+      return []
+    }
+
+    const db = getActiveDb()
+    const params: any[] = [studentId, ...supportedGames.map((game) => game.gameCode)]
+    const rows = queryAll(db, `
+      SELECT *
+      FROM game_emotion_records
+      WHERE student_id = ?
+        AND game_code IN (${supportedGames.map(() => '?').join(', ')})
+      ORDER BY created_at DESC, id DESC
+    `, params)
 
     return rows.map(normalizeTrainingRecord)
   }

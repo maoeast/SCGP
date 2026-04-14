@@ -47,6 +47,7 @@ const EmotionalReport = () => import('@/views/emotional/Report.vue')
 const BalloonBreathingPage = () => import('@/views/emotional/games/BalloonBreathingPage.vue')
 const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
 const WipeSadnessPage = () => import('@/views/emotional/games/WipeSadnessPage.vue')
+const CloudErasePage = () => import('@/views/emotional/games/CloudErasePage.vue')
 const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterPage.vue')
 const EnergyBallPage = () => import('@/views/emotional/games/EnergyBallPage.vue')
 
@@ -272,6 +273,7 @@ const router = createRouter({
           name: 'EmotionalGameRecordDetail',
           component: EmotionalGameRecordDetail,
           meta: {
+            activeMenu: '/training-records',
             title: '情绪小游戏记录详情',
             hideInMenu: true,
             roles: ['admin', 'teacher']
@@ -332,6 +334,16 @@ const router = createRouter({
           component: EmotionMonsterPage,
           meta: {
             title: '喂食情绪小怪兽',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/games/cloud-erase',
+          name: 'CloudEraseGame',
+          component: CloudErasePage,
+          meta: {
+            title: '云朵擦擦擦',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

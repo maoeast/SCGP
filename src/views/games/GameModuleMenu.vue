@@ -1,13 +1,12 @@
 <template>
   <div class="page-container scgp-admin-page">
-    <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
         <h1>游戏训练</h1>
         <p class="subtitle">选择训练入口组开始游戏训练</p>
       </div>
     </div>
-    <!-- 模块卡片网格 -->
+
     <div class="main-content scgp-page-panel scgp-page-panel--flush">
       <div class="module-grid scgp-selection-grid">
         <el-card
@@ -17,16 +16,19 @@
           :class="{
             'module-active': !entry.locked,
             'module-disabled': entry.locked,
-            'scgp-selection-card--disabled': entry.locked
+            'scgp-selection-card--disabled': entry.locked,
           }"
           shadow="hover"
           @click="handleEntryClick(entry)"
         >
-          <div class="module-icon scgp-selection-card__icon" :style="{
-            backgroundColor: entry.themeColor + '25',
-            borderColor: entry.themeColor + '60',
-            boxShadow: `0 4px 12px ${entry.themeColor}30`
-          }">
+          <div
+            class="module-icon scgp-selection-card__icon"
+            :style="{
+              backgroundColor: entry.themeColor + '25',
+              borderColor: entry.themeColor + '60',
+              boxShadow: `0 4px 12px ${entry.themeColor}30`,
+            }"
+          >
             <span class="module-emoji">{{ getEntryEmoji(entry.code) }}</span>
           </div>
 
@@ -47,7 +49,6 @@
             </div>
           </div>
 
-          <!-- 未授权遮罩 -->
           <div v-if="entry.locked" class="module-overlay scgp-selection-card__overlay">
             <el-icon :size="24"><Lock /></el-icon>
             <span>未授权</span>
@@ -65,6 +66,7 @@ import { ElMessage } from 'element-plus'
 import { Lock } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { ResourceAPI } from '@/database/resource-api'
+import { getCustomGamesByTrainingEntry } from '@/data/custom-game-registry'
 import { getEmotionalGameCount } from './emotional-game-catalog'
 import {
   getAllTrainingEntries,
@@ -75,13 +77,13 @@ import {
 const router = useRouter()
 const authStore = useAuthStore()
 
-const entryEmojis: Record<string, string> = {
+const entryEmojis: Record<TrainingEntryCode, string> = {
   'sensory-integration': '🎮',
   'emotional-regulation': '😊',
   'social-communication': '👥',
   'fine-motor': '🧩',
-  'soothing-aids': '🫶',
-  'life-skills': '🏠'
+  'soothing-aids': '🧸',
+  'life-skills': '🏠',
 }
 
 const trainingEntries = computed(() => {
@@ -91,20 +93,18 @@ const trainingEntries = computed(() => {
   }))
 })
 
-// 获取状态标签类型
 const getStatusTagType = (status: string) => {
   const typeMap: Record<string, '' | 'success' | 'warning' | 'danger' | 'info'> = {
-    'active': 'success',
-    'locked': 'info'
+    active: 'success',
+    locked: 'info',
   }
   return typeMap[status] || 'info'
 }
 
-// 获取状态标签文本
 const getStatusLabel = (status: string) => {
   const labelMap: Record<string, string> = {
-    'active': '已激活',
-    'locked': '未授权'
+    active: '已激活',
+    locked: '未授权',
   }
   return labelMap[status] || status
 }
@@ -113,49 +113,47 @@ const getEntryEmoji = (entryCode: TrainingEntryCode) => {
   return entryEmojis[entryCode] || '🎮'
 }
 
-// 获取入口游戏数量
 const getResourceCount = (entryCode: TrainingEntryCode) => {
-  if (entryCode === 'emotional-regulation') {
-    return getEmotionalGameCount()
-  }
+  const registryBackedGameCount = entryCode === 'emotional-regulation'
+    ? getEmotionalGameCount()
+    : getCustomGamesByTrainingEntry(entryCode).length
 
   try {
     const api = new ResourceAPI()
     const entry = trainingEntries.value.find((item) => item.code === entryCode)
     if (!entry) {
-      return 0
+      return registryBackedGameCount
     }
 
     const resources = api.getResources({
       moduleCode: entry.moduleCode,
-      resourceType: 'game'
+      resourceType: 'game',
     })
-    return resources.filter((resource) => matchesTrainingEntryResource(resource, entryCode)).length
+    const resourceCount = resources.filter((resource) => matchesTrainingEntryResource(resource, entryCode)).length
+    return resourceCount > 0 ? resourceCount : registryBackedGameCount
   } catch (error) {
     console.error(`获取入口 ${entryCode} 游戏数量失败:`, error)
-    return 0
+    return registryBackedGameCount
   }
 }
 
-// 处理入口点击
 const handleEntryClick = (entry: (typeof trainingEntries.value)[number]) => {
   if (entry.locked) {
-    ElMessage.warning(`「${entry.name}」未授权，请联系厂商购买`)
+    ElMessage.warning(`《${entry.name}》未授权，请联系厂商购买`)
     return
   }
 
   router.push({
-    path: `/games/select-student`,
+    path: '/games/select-student',
     query: {
       entry: entry.code,
-      module: entry.moduleCode
-    }
+      module: entry.moduleCode,
+    },
   })
 }
 </script>
 
 <style scoped>
-/* 模块卡片 */
 .module-card {
   cursor: pointer;
 }
@@ -180,5 +178,4 @@ const handleEntryClick = (entry: (typeof trainingEntries.value)[number]) => {
   font-size: 12px;
   color: #909399;
 }
-
 </style>

@@ -187,6 +187,42 @@ export const CUSTOM_GAME_REGISTRY: ReadonlyArray<CustomGameDefinition> = [
       repeatPlayHint: '每次会轮换关卡顺序和视觉主题，帮助孩子在反复练习中逐步增强面部肌肉控制力。',
     },
   },
+  {
+    gameCode: 'F01_CLOUD_ERASE',
+    name: '\u4e91\u6735\u64e6\u64e6\u64e6',
+    description: '\u901a\u8fc7\u7a33\u5b9a\u7684\u5927\u8303\u56f4\u64e6\u62ed\u52a8\u4f5c\u62e8\u5f00\u4e91\u5c42\uff0c\u5e2e\u52a9\u5b69\u5b50\u7ec3\u4e60\u624b\u773c\u534f\u8c03\u4e0e\u6301\u7eed\u7cbe\u7ec6\u63a7\u5236\u3002',
+    moduleCode: ModuleCode.SENSORY,
+    trainingEntryCode: 'fine-motor',
+    entryPath: '/emotional/games/cloud-erase',
+    category: 'coordination',
+    tags: [
+      '\u7cbe\u7ec6\u52a8\u4f5c',
+      '\u64e6\u9664\u4ea4\u4e92',
+      'Canvas',
+      '\u624b\u773c\u534f\u8c03',
+    ],
+    coverImage: '\u2601\ufe0f',
+    maxPlayers: 1,
+    requiredPermissions: [],
+    permissionPolicy: 'all_required',
+    difficultyLocked: false,
+    badge: {
+      badgeCode: 'BADGE_CLEAR_SKY',
+      badgeName: '\u6674\u7a7a\u5de7\u624b\u5fbd\u7ae0',
+      visualThemeTag: 'clear-sky',
+      iconToken: 'cloud-swipe',
+      paletteToken: 'sky-mint',
+    },
+    metadata: {
+      emoji: '\u2601\ufe0f',
+      color: 'linear-gradient(135deg, #9be7ff 0%, #d5f4ff 48%, #ffe38a 100%)',
+      duration: '3-5\u5206\u949f',
+      difficulty: '\u4e09\u7ea7\u64e6\u9664\u8fdb\u9636',
+      therapeuticGoal: '\u624b\u773c\u534f\u8c03',
+      previewDescription: '\u7528\u6574\u53ea\u624b\u6301\u7eed\u5730\u628a\u4e91\u5c42\u64e6\u5f00\uff0c\u8ba9\u84dd\u5929\u4e00\u70b9\u70b9\u9732\u51fa\u6765\u3002\u7b80\u5355\u6a21\u5f0f\u66f4\u5bb9\u6613\u64e6\u51c0\uff0c\u4e2d\u7b49\u6a21\u5f0f\u9700\u8981\u4fdd\u6301\u8fde\u7eed\u52a8\u4f5c\uff0c\u56f0\u96be\u6a21\u5f0f\u8981\u53cd\u590d\u628a\u539a\u4e91\u5c42\u64e6\u4eae\u3002',
+      repeatPlayHint: '\u6bcf\u6b21\u8fdb\u5165\u90fd\u53ef\u4ee5\u5207\u6362\u4e91\u5c42\u8282\u594f\u3001\u80cc\u666f\u914d\u8272\u548c\u76ee\u6807\u8986\u76d6\u533a\u57df\uff0c\u8ba9\u5b69\u5b50\u5728\u53cd\u590d\u7ec3\u4e60\u4e2d\u7a33\u5b9a\u624b\u90e8\u63a7\u5236\u3002',
+    },
+  },
 ]
 
 const CUSTOM_GAME_REGISTRY_MAP = new Map<string, CustomGameDefinition>(

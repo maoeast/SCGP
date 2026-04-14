@@ -2,9 +2,9 @@
   <div class="page-container scgp-admin-page emotional-game-record-page" v-loading="loading">
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
-        <el-breadcrumb-item :to="{ path: '/emotional/menu' }">情绪调节</el-breadcrumb-item>
-        <el-breadcrumb-item :to="{ path: '/training-records/emotional-regulation', query: { type: 'game' } }">
-          训练记录
+        <el-breadcrumb-item :to="{ path: '/training-records/menu' }">训练记录</el-breadcrumb-item>
+        <el-breadcrumb-item :to="trainingRecordsRoute">
+          {{ recordEntryName }}
         </el-breadcrumb-item>
         <el-breadcrumb-item>小游戏记录详情</el-breadcrumb-item>
       </el-breadcrumb>
@@ -27,7 +27,7 @@
               {{ formatDateTime(record.created_at || record.timestamp) }}
             </p>
             <div class="record-heading__meta">
-              <el-tag size="small" effect="plain" type="warning">情绪调节</el-tag>
+              <el-tag size="small" effect="plain" type="warning">{{ recordEntryName }}</el-tag>
               <el-tag size="small" effect="plain">{{ getDifficultyLabel(record.difficulty_level) }}</el-tag>
               <el-tag size="small" effect="plain" :type="getStatusType(record.completion_status)">
                 {{ getStatusLabel(record.completion_status) }}
@@ -39,7 +39,7 @@
 
       <div class="header-right">
         <el-button @click="goBack">返回上一页</el-button>
-        <el-button type="primary" plain @click="goToTrainingRecords">情绪调节记录</el-button>
+        <el-button type="primary" plain @click="goToTrainingRecords">{{ recordEntryName }}记录</el-button>
       </div>
     </div>
 
@@ -113,6 +113,7 @@ import { ElMessage } from 'element-plus'
 import StudentAvatar from '@/components/student/StudentAvatar.vue'
 import { StudentAPI } from '@/database/api'
 import { EmotionalGamesAPI, type EmotionalGameTrainingRecordItem } from '@/database/emotional-games-api'
+import { getTrainingEntry } from '@/utils/training-entry'
 
 type DetailRow = {
   label: string
@@ -127,6 +128,21 @@ const emotionalGamesApi = new EmotionalGamesAPI()
 const loading = ref(false)
 const student = ref<any | null>(null)
 const record = ref<EmotionalGameTrainingRecordItem | null>(null)
+
+const recordEntry = computed(() => {
+  if (!record.value) {
+    return null
+  }
+
+  return getTrainingEntry(record.value.entry_code, record.value.module_code)
+})
+
+const recordEntryName = computed(() => recordEntry.value?.name || '训练记录')
+
+const trainingRecordsRoute = computed(() => ({
+  path: `/training-records/${recordEntry.value?.code || 'emotional-regulation'}`,
+  query: { type: 'game' },
+}))
 
 const recordId = computed(() => {
   const raw = Array.isArray(route.query.recordId) ? route.query.recordId[0] : route.query.recordId
@@ -262,6 +278,7 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '唤醒动物', value: formatNullableNumber(raw.animals_awakened, '只') },
       ]
     case 'G04_WIPE_ICE':
+    case 'F01_CLOUD_ERASE':
       return [
         { label: '擦拭笔画', value: formatNullableNumber(raw.total_strokes, '次') },
         { label: '最高清理率', value: formatPercent(raw.cleared_ratio_peak) },
@@ -305,6 +322,7 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '校准兜底', value: raw.calibration_fallback_used ? '使用过' : '未使用' },
       ]
     case 'G04_WIPE_ICE':
+    case 'F01_CLOUD_ERASE':
       return [
         { label: '笔刷半径', value: formatNullableNumber(raw.brush_radius_px, ' px') },
         { label: '滑动距离', value: formatNullableNumber(raw.stroke_distance_px, ' px') },
@@ -354,11 +372,16 @@ async function loadRecord() {
 }
 
 function goBack() {
-  router.back()
+  if (window.history.length > 1) {
+    router.back()
+    return
+  }
+
+  router.push(trainingRecordsRoute.value)
 }
 
 function goToTrainingRecords() {
-  router.push('/training-records/emotional-regulation?type=game')
+  router.push(trainingRecordsRoute.value)
 }
 
 onMounted(() => {

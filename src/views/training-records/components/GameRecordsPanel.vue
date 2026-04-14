@@ -101,7 +101,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column v-if="isEmotionalEntry" label="状态" width="100">
+      <el-table-column v-if="showCompletionStatusColumn" label="状态" width="100">
         <template #default="{ row }">
           <el-tag size="small" effect="plain" :type="getCompletionStatusType(row.completion_status)">
             {{ getCompletionStatusLabel(row.completion_status) }}
@@ -219,9 +219,10 @@ const emotionalGamesApi = new EmotionalGamesAPI()
 
 const currentEntry = computed(() => (props.entryCode ? getTrainingEntry(props.entryCode) : null))
 const isFixedStudentMode = computed(() => Number(props.studentId || 0) > 0)
-const isEmotionalRegulationEntry = computed(() => currentEntry.value?.code === 'emotional-regulation')
-const shouldIncludeEmotionalGameRecords = computed(() => !props.entryCode || isEmotionalRegulationEntry.value)
 const isEmotionalEntry = computed(() => currentEntry.value?.moduleCode === 'emotional')
+const showCompletionStatusColumn = computed(() => {
+  return isEmotionalEntry.value || records.value.some((row) => row?.record_source === 'emotional_game')
+})
 const showStudentFilter = computed(() => !props.hideStudentFilter && !isFixedStudentMode.value)
 const showStudentColumn = computed(() => !isFixedStudentMode.value)
 const showEntryColumn = computed(() => !props.entryCode)
@@ -433,15 +434,19 @@ function mapStudentName(recordsToMap: any[], studentName: string) {
   }))
 }
 
-function getStudentGameRecords(studentId: number, studentName?: string) {
-  let nextRecords = gameTrainingApi.getStudentTrainingRecords(studentId, undefined, undefined, props.entryCode)
-
-  if (shouldIncludeEmotionalGameRecords.value) {
-    nextRecords = [
-      ...nextRecords,
-      ...emotionalGamesApi.getStudentRecords(studentId),
-    ]
+function getCustomGameRecords(studentId: number) {
+  if (!props.entryCode) {
+    return emotionalGamesApi.getStudentRecords(studentId)
   }
+
+  return emotionalGamesApi.getStudentRecordsByEntry(studentId, props.entryCode)
+}
+
+function getStudentGameRecords(studentId: number, studentName?: string) {
+  const nextRecords = [
+    ...gameTrainingApi.getStudentTrainingRecords(studentId, undefined, undefined, props.entryCode),
+    ...getCustomGameRecords(studentId),
+  ]
 
   return studentName ? mapStudentName(nextRecords, studentName) : nextRecords
 }
