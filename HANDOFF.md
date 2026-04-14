@@ -1,11 +1,12 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-13
+> last_updated: 2026-04-14
 
-2026-04-13
-- 已完成 cross-entry custom games `Phase 0 Step 5` 代码接线、旧库自愈补列与 radio 弃用清理。
-- 当前状态：权限 preflight / Electron 媒体权限 IPC / emotional-only 运行链已落地，运行时 `session_group_id` 缺列报错已消除。
-- 下一步：在 Electron 中手动验证 `blocked_system` 恢复页路径，先测 `G03_FOREST` 的麦克风系统拒绝场景。
+2026-04-14
+- 已完成 cross-entry custom games `Phase 0` 收口与验证。
+- 当前状态：权限 preflight / Electron 媒体权限 IPC / emotional-only 运行链已落地；`G03_FOREST`（麦克风）与 `G08_ENERGY_BALL`（摄像头）的 `blocked_system` 恢复链路已手动验证通过；运行时 `session_group_id` 缺列报错未再出现。
+- 补充修复：主进程日志 broken pipe 弹窗已修复并推送到 `main`（commit `8f47ed1`）。
+- 下一步：先决定是否进入 `Wave 1`，不要回头重做 `Phase 0` 规划。
 
 2026-04-13
 - 已完成 cross-entry custom games `Phase 0 Step 1-4` 落代码。
@@ -43,14 +44,14 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: 当前活跃主线是 cross-entry custom games `Phase 0 Step 5` 收口，代码已落地，下一步是 Electron 手动验证系统拒绝恢复页。**
+**Active follow-up work is now in `.continue-here.md`: cross-entry custom games `Phase 0` 已完成，当前待决策的是是否进入 `Wave 1` 扩展。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is cross-entry custom games `Phase 0 Step 5` verification closeout
-- first action should be manually testing the `blocked_system` recovery path for `src/views/emotional/games/GameContainer.vue`
-- do not start `Wave 1` new games before `Phase 0` is closed
+- current active task is post-Phase-0 handoff and deciding whether to enter `Wave 1`
+- first action should be reading `.continue-here.md` and choosing the next `Wave 1` target only if the user wants to continue expansion
+- `Phase 0` should be treated as closed unless a new regression is discovered
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`
