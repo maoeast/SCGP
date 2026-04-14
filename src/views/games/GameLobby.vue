@@ -56,10 +56,10 @@
     <div class="content-wrapper workspace-split">
       <!-- 左侧：游戏选择器 -->
       <div class="selector-section workspace-pane">
-        <template v-if="isEmotionalEntry">
+        <template v-if="usesRegistryBackedGameLobby">
           <div class="emotion-selector">
             <button
-              v-for="game in emotionalGames"
+              v-for="game in registryBackedGames"
               :key="game.id"
               class="emotion-game-card"
               :class="{ selected: selectedGame?.id === game.id }"
@@ -92,7 +92,7 @@
 
       <!-- 右侧：游戏预览卡片 -->
       <div class="preview-section workspace-pane">
-        <template v-if="isEmotionalEntry && selectedGame">
+        <template v-if="usesRegistryBackedGameLobby && selectedGame">
           <el-card class="emotion-preview-card workspace-pane-card">
             <div class="emotion-preview-header">
               <div
@@ -124,7 +124,11 @@
 
               <div class="preview-block">
                 <h4>开始前难度</h4>
-                <el-radio-group v-model="selectedEmotionalDifficulty" size="large">
+                <el-radio-group
+                  v-model="selectedEmotionalDifficulty"
+                  size="large"
+                  :disabled="Boolean(selectedGame.metadata?.difficultyLocked)"
+                >
                   <el-radio-button :value="1">简单</el-radio-button>
                   <el-radio-button :value="2">中等</el-radio-button>
                   <el-radio-button :value="3">困难</el-radio-button>
@@ -163,16 +167,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import ResourceSelector from '@/components/resources/ResourceSelector.vue'
 import GamePreviewCard from '@/components/games/GamePreviewCard.vue'
 import type { ResourceItem } from '@/types/module'
-import { ModuleCode } from '@/types/module'
 import { StudentAPI } from '@/database/api'
 import { ResourceAPI } from '@/database/resource-api'
+import { getCustomGamesByTrainingEntry, type CustomGameDefinition } from '@/data/custom-game-registry'
 import { EMOTIONAL_GAME_CATALOG, getEmotionalGameCount } from './emotional-game-catalog'
 import { useAuthStore } from '@/stores/auth'
 import {
@@ -229,7 +233,42 @@ const selectedCategory = ref<string>('all')
 const selectedEmotionalDifficulty = ref<1 | 2 | 3>(1)
 
 const isEmotionalEntry = computed(() => currentEntryCode.value === 'emotional-regulation')
-const emotionalGames = computed(() => EMOTIONAL_GAME_CATALOG)
+
+const createRegistryBackedGameItem = (game: CustomGameDefinition, index: number): ResourceItem => ({
+  id: -2001 - index,
+  moduleCode: game.moduleCode,
+  resourceType: 'game',
+  name: game.name,
+  description: game.description,
+  category: game.category,
+  tags: [...game.tags],
+  coverImage: game.coverImage,
+  isCustom: false,
+  isActive: true,
+  metadata: {
+    ...game.metadata,
+    entryPath: game.entryPath,
+    gameCode: game.gameCode,
+    trainingEntryCode: game.trainingEntryCode,
+    moduleCode: game.moduleCode,
+    maxPlayers: game.maxPlayers,
+    requiredPermissions: [...game.requiredPermissions],
+    permissionPolicy: game.permissionPolicy,
+    difficultyLocked: game.difficultyLocked,
+    badge: { ...game.badge },
+  },
+})
+
+const registryBackedGames = computed(() => {
+  if (isEmotionalEntry.value) {
+    return EMOTIONAL_GAME_CATALOG
+  }
+
+  return getCustomGamesByTrainingEntry(currentEntryCode.value)
+    .map((game, index) => createRegistryBackedGameItem(game, index))
+})
+
+const usesRegistryBackedGameLobby = computed(() => registryBackedGames.value.length > 0)
 
 // 获取入口 Emoji
 const getEntryEmoji = (entryCode: TrainingEntryCode): string => {
@@ -238,9 +277,9 @@ const getEntryEmoji = (entryCode: TrainingEntryCode): string => {
 
 // 获取入口游戏数量
 const getEntryGameCount = (entryCode: TrainingEntryCode): number => {
-  if (entryCode === 'emotional-regulation') {
-    return getEmotionalGameCount()
-  }
+  const registryBackedGameCount = entryCode === 'emotional-regulation'
+    ? getEmotionalGameCount()
+    : getCustomGamesByTrainingEntry(entryCode).length
 
   try {
     const api = new ResourceAPI()
@@ -249,9 +288,10 @@ const getEntryGameCount = (entryCode: TrainingEntryCode): number => {
       moduleCode: entry.moduleCode,
       resourceType: 'game'
     })
-    return resources.filter((resource) => matchesTrainingEntryResource(resource, entryCode)).length
+    const resourceCount = resources.filter((resource) => matchesTrainingEntryResource(resource, entryCode)).length
+    return resourceCount > 0 ? resourceCount : registryBackedGameCount
   } catch {
-    return 0
+    return registryBackedGameCount
   }
 }
 
@@ -286,6 +326,10 @@ const handleEntryChange = (newEntryCode: TrainingEntryCode) => {
 
 const selectEmotionalGame = (game: ResourceItem) => {
   selectedGame.value = game
+
+  if (game.metadata?.difficultyLocked) {
+    selectedEmotionalDifficulty.value = 1
+  }
 }
 
 // 加载学生信息
@@ -362,10 +406,11 @@ const handleStartEmotionalGame = () => {
       path: entryPath,
       query: {
         entry: currentEntryCode.value,
-        module: ModuleCode.EMOTIONAL,
+        module: currentEntry.value.moduleCode,
         studentId: String(studentId.value),
         studentName: student.value?.name || '',
       difficulty: String(selectedEmotionalDifficulty.value),
+      difficultyLocked: String(Boolean(selectedGame.value.metadata?.difficultyLocked)),
     },
   })
 }
@@ -391,14 +436,26 @@ onMounted(async () => {
 
   await loadStudent()
 
-  if (isEmotionalEntry.value) {
-    selectedGame.value = emotionalGames.value[0] || null
-  }
 })
 
-watch(isEmotionalEntry, (value) => {
+watch(registryBackedGames, (games) => {
+  if (games.length === 0) {
+    return
+  }
+
+  const selectedGameCode = typeof selectedGame.value?.metadata?.gameCode === 'string'
+    ? selectedGame.value.metadata.gameCode
+    : ''
+  const matchedGame = games.find((game) => game.metadata?.gameCode === selectedGameCode)
+  selectedGame.value = matchedGame || games[0] || null
+  selectedEmotionalDifficulty.value = 1
+}, { immediate: true })
+
+watch(usesRegistryBackedGameLobby, (value) => {
   if (value) {
-    selectedGame.value = emotionalGames.value[0] || null
+    if (!selectedGame.value) {
+      selectedGame.value = registryBackedGames.value[0] || null
+    }
     selectedEmotionalDifficulty.value = 1
   } else {
     selectedGame.value = null

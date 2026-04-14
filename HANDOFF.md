@@ -3,6 +3,11 @@
 > last_updated: 2026-04-14
 
 2026-04-14
+- 已完成 cross-entry custom game 最小入口适配层：`GameLobby` 启动接线 + `GameContainer` 返程。
+- 当前状态：registry-backed custom game 已能按真实 `entry / module` 启动并返回游戏大厅；`F01_CLOUD_ERASE` 尚未实现。
+- 下一步：先修改 `src/data/custom-game-registry.ts`，新增 `F01_CLOUD_ERASE` 的 registry 定义。
+
+2026-04-14
 - 已完成 cross-entry custom games 的 Wave 1 前期准备收口，锁定最小目标 `F01_CLOUD_ERASE`，并补齐最小定义文档。
 - 当前状态：运行时底座基本够用，但非 emotional 入口仍未接上 registry-backed custom games，返程仍会落回 `/emotional/menu`。
 - 下一步：先改 `src/views/games/GameLobby.vue` 和 `src/views/emotional/games/GameContainer.vue`，补跨入口启动与返程接线。
@@ -49,8 +54,8 @@ CNBS-R2016 public entry is now **OPEN** and verified.
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is wiring the minimal cross-entry custom game entry layer
-- first action should be editing `src/views/games/GameLobby.vue` to route `fine-motor` custom games into the registry-backed launch path
+- current active task is implementing Wave 1 minimal target `F01_CLOUD_ERASE`
+- first action should be editing `src/data/custom-game-registry.ts` to add the `F01_CLOUD_ERASE` registry definition
 - `Phase 0` should be treated as closed unless a new regression is discovered
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

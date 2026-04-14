@@ -822,17 +822,8 @@ function markRoundDirty() {
 }
 
 function getReturnLocation() {
-  const sourceModule = Array.isArray(route.query.module) ? route.query.module[0] : route.query.module
-
-  if (sourceModule === 'emotional' || props.launchContext.launchModuleCode === 'emotional') {
-    return {
-      path: `/games/lobby/${primaryStudentId.value}`,
-      query: buildReturnQuery(),
-    }
-  }
-
   return {
-    path: '/emotional/menu',
+    path: `/games/lobby/${primaryStudentId.value}`,
     query: buildReturnQuery(),
   }
 }
