@@ -3,15 +3,15 @@
 > last_updated: 2026-04-14
 
 2026-04-14
+- 已完成 cross-entry custom games 的 Wave 1 前期准备收口，锁定最小目标 `F01_CLOUD_ERASE`，并补齐最小定义文档。
+- 当前状态：运行时底座基本够用，但非 emotional 入口仍未接上 registry-backed custom games，返程仍会落回 `/emotional/menu`。
+- 下一步：先改 `src/views/games/GameLobby.vue` 和 `src/views/emotional/games/GameContainer.vue`，补跨入口启动与返程接线。
+
+2026-04-14
 - 已完成 cross-entry custom games `Phase 0` 收口与验证。
-- 当前状态：权限 preflight / Electron 媒体权限 IPC / emotional-only 运行链已落地；`G03_FOREST`（麦克风）与 `G08_ENERGY_BALL`（摄像头）的 `blocked_system` 恢复链路已手动验证通过；运行时 `session_group_id` 缺列报错未再出现。
+- 当前状态：权限 preflight / Electron 媒体权限 IPC / emotional-only 运行链已落地，`G03_FOREST`（麦克风）与 `G08_ENERGY_BALL`（摄像头）的 `blocked_system` 恢复链路已手动验证通过；运行时 `session_group_id` 缺列报错未再出现。
 - 补充修复：主进程日志 broken pipe 弹窗已修复并推送到 `main`（commit `8f47ed1`）。
 - 下一步：先决定是否进入 `Wave 1`，不要回头重做 `Phase 0` 规划。
-
-2026-04-13
-- 已完成 cross-entry custom games `Phase 0 Step 1-4` 落代码。
-- 当前状态：registry / schema migration / session-group persistence / launchContext container 已到位，但仍是 `emotional-only` 运行链。
-- 下一步：执行 `Step 5`，先让 `GameContainer` 接管权限 preflight，再下沉 Electron 恢复页 IPC。
 
 > Responsibility: top-level handoff entry for new sessions.
 > Read when: entering the repo or resuming work and needing the fastest route to current context.
@@ -44,13 +44,13 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: cross-entry custom games `Phase 0` 已完成，当前待决策的是是否进入 `Wave 1` 扩展。**
+**Active follow-up work is now in `.continue-here.md`: Wave 1 前期准备已收口，下一步是补 cross-entry custom game 入口适配层。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is post-Phase-0 handoff and deciding whether to enter `Wave 1`
-- first action should be reading `.continue-here.md` and choosing the next `Wave 1` target only if the user wants to continue expansion
+- current active task is wiring the minimal cross-entry custom game entry layer
+- first action should be editing `src/views/games/GameLobby.vue` to route `fine-motor` custom games into the registry-backed launch path
 - `Phase 0` should be treated as closed unless a new regression is discovered
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
