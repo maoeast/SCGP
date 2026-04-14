@@ -4,8 +4,8 @@
 
 2026-04-14
 - 完成 `F01_CLOUD_ERASE` 最小运行链路、训练记录接线与详情页入口归属修正。
-- 当前状态：代码已闭环，`npm run type-check` 通过；最新待确认项是详情页左侧仅高亮“训练记录”。
-- 下一步：刷新 `/emotional/game-record` 详情页，确认侧栏单高亮。
+- 当前状态：代码已闭环，`npm run type-check` 通过，且已人工确认详情页左侧仅高亮“训练记录”。
+- 下一步：与用户确认下一个 Wave 1 目标。
 
 2026-04-14
 - 已完成 cross-entry custom game 最小入口适配层：`GameLobby` 启动接线 + `GameContainer` 返程。
