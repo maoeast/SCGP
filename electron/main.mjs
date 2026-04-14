@@ -117,6 +117,9 @@ async function waitForDevServer(urlString, timeoutMs = 60000) {
  * 此函数包装所有日志调用以防止应用崩溃
  */
 function safeLog(...args) {
+  if (!process.stdout?.writable || process.stdout.destroyed) {
+    return
+  }
   try {
     rawConsoleLog(...args)
   } catch (e) {
@@ -129,6 +132,9 @@ function safeLog(...args) {
 }
 
 function safeWarn(...args) {
+  if (!process.stderr?.writable || process.stderr.destroyed) {
+    return
+  }
   try {
     rawConsoleWarn(...args)
   } catch (e) {
@@ -139,12 +145,36 @@ function safeWarn(...args) {
 }
 
 function safeError(...args) {
+  if (!process.stderr?.writable || process.stderr.destroyed) {
+    return
+  }
   try {
     rawConsoleError(...args)
   } catch (e) {
     // 完全静默失败
   }
 }
+
+function swallowBrokenPipe(stream) {
+  if (!stream || typeof stream.on !== 'function') {
+    return
+  }
+
+  stream.on('error', (error) => {
+    if (error?.code === 'EPIPE') {
+      return
+    }
+
+    try {
+      rawConsoleError('[ConsoleStream] unexpected stream error:', error)
+    } catch {
+      // ignore secondary logging failures
+    }
+  })
+}
+
+swallowBrokenPipe(process.stdout)
+swallowBrokenPipe(process.stderr)
 
 console.log = safeLog
 console.warn = safeWarn
