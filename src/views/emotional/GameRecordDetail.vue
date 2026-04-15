@@ -113,6 +113,7 @@ import { ElMessage } from 'element-plus'
 import StudentAvatar from '@/components/student/StudentAvatar.vue'
 import { StudentAPI } from '@/database/api'
 import { EmotionalGamesAPI, type EmotionalGameTrainingRecordItem } from '@/database/emotional-games-api'
+import { getCustomGameDefinition } from '@/data/custom-game-registry'
 import { getTrainingEntry } from '@/utils/training-entry'
 
 type DetailRow = {
@@ -138,6 +139,13 @@ const recordEntry = computed(() => {
 })
 
 const recordEntryName = computed(() => recordEntry.value?.name || '训练记录')
+const recordGameDefinition = computed(() => {
+  if (!record.value) {
+    return null
+  }
+
+  return getCustomGameDefinition(record.value.game_code)
+})
 
 const trainingRecordsRoute = computed(() => ({
   path: `/training-records/${recordEntry.value?.code || 'emotional-regulation'}`,
@@ -309,6 +317,26 @@ function getDifficultyLabel(value: unknown) {
   return '简单'
 }
 
+function getGameFocusLabel() {
+  const metadata = recordGameDefinition.value?.metadata
+  if (typeof metadata?.therapeuticGoal === 'string' && metadata.therapeuticGoal.trim()) {
+    return metadata.therapeuticGoal.trim()
+  }
+
+  const tags = recordGameDefinition.value?.tags
+  if (Array.isArray(tags)) {
+    const visibleTags = tags
+      .map((tag) => String(tag).trim())
+      .filter(Boolean)
+      .slice(0, 2)
+    if (visibleTags.length > 0) {
+      return visibleTags.join(' / ')
+    }
+  }
+
+  return '情绪调节训练'
+}
+
 const summaryCards = computed<DetailRow[]>(() => {
   if (!record.value) return []
 
@@ -326,7 +354,7 @@ const highlightRows = computed<DetailRow[]>(() => {
   return [
     { label: '学生', value: student.value?.name || `学生 ${record.value.student_id}` },
     { label: '游戏名称', value: record.value.task_name },
-    { label: '游戏代码', value: record.value.game_code },
+    { label: '训练重点', value: getGameFocusLabel() },
     { label: '开始时间', value: formatDateTime(record.value.timestamp) },
     { label: '落库时间', value: formatDateTime(record.value.created_at) },
     { label: '难度级别', value: getDifficultyLabel(record.value.difficulty_level) },

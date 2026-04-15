@@ -3,6 +3,11 @@
 > last_updated: 2026-04-15
 
 2026-04-15
+- 已完成 `C04_HOURGLASS` 手工验收，并修掉情绪小游戏详情页暴露内部 `game_code` 的用户文案。
+- 当前状态：`recordId=21` 已验证自然结束落库；剩余未收口的是详情页 `平均响应 = 0ms` 与时间显示时区不一致。
+- 下一步：先修改 `src/views/emotional/GameRecordDetail.vue`，让无响应小游戏不再显示 `0ms`。
+
+2026-04-15
 - 已完成 `C04_HOURGLASS` 最小运行链路、`timer_end` 落库、详情页中文化与相关约束文档补充。
 - 当前状态：代码已闭环，`npm run type-check:emotional` 通过，尚未做手工验收。
 - 下一步：先手工验证 `soothing-aids -> 魔法沙漏 -> 自然结束 -> 详情页指标 / 文案`。
@@ -74,13 +79,13 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: `C04_HOURGLASS` 已完成最小实现，下一步做手工验收。**
+**Active follow-up work is now in `.continue-here.md`: `C04_HOURGLASS` 手工验收已完成，下一步收口详情页剩余展示问题。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is validating the newly landed `C04_HOURGLASS` Wave 1 minimal flow
-- first action should be manually verifying `soothing-aids -> 魔法沙漏 -> 自然结束 -> 详情页指标 / 文案`
+- current active task is closing the remaining user-visible issues found after the `C04_HOURGLASS` manual validation
+- first action should be adjusting `src/views/emotional/GameRecordDetail.vue` so games without response-time metrics do not show `0ms`
 - `Phase 0` should be treated as closed unless a new regression is discovered
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
