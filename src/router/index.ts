@@ -46,6 +46,7 @@ const EmotionalGameRecordDetail = () => import('@/views/emotional/GameRecordDeta
 const EmotionalReport = () => import('@/views/emotional/Report.vue')
 const BalloonBreathingPage = () => import('@/views/emotional/games/BalloonBreathingPage.vue')
 const DandelionPage = () => import('@/views/emotional/games/DandelionPage.vue')
+const HourglassPage = () => import('@/views/emotional/games/HourglassPage.vue')
 const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
 const WipeSadnessPage = () => import('@/views/emotional/games/WipeSadnessPage.vue')
 const CloudErasePage = () => import('@/views/emotional/games/CloudErasePage.vue')
@@ -317,6 +318,17 @@ const router = createRouter({
           component: DandelionPage,
           meta: {
             title: '吹蒲公英',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/hourglass',
+          name: 'HourglassGame',
+          component: HourglassPage,
+          meta: {
+            title: '魔法沙漏',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

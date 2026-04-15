@@ -1309,3 +1309,10 @@
   - `docs/planning/2026-04-13-cross-entry-custom-games-expansion-plan.md`
   - `docs/planning/2026-04-14-cross-entry-custom-games-wave1-prep-checklist.md`
 - 当前已先应用到 `/emotional/games/*` 与 `/games/play` 路由
+
+## 38. 2026-04-15 Cross-Entry Custom Game UI Constraint Update
+
+- `cross-entry custom game` 当前新增两条全局实现约束：
+  - 用户可见文案不得直出字段名、状态码、事件名或 `completed + timer_end` 一类实现术语
+  - 沉浸式游戏壳必须完整覆盖可视区，不得露出 `Layout` 黑底、底部黑边或未接管背景的外层容器
+- `C04_HOURGLASS` 当前已完成最小代码闭环；下一步以手工验收结果为准，不要把未验收状态写成已收口

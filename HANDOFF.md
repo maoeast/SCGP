@@ -3,6 +3,11 @@
 > last_updated: 2026-04-15
 
 2026-04-15
+- 已完成 `C04_HOURGLASS` 最小运行链路、`timer_end` 落库、详情页中文化与相关约束文档补充。
+- 当前状态：代码已闭环，`npm run type-check:emotional` 通过，尚未做手工验收。
+- 下一步：先手工验证 `soothing-aids -> 魔法沙漏 -> 自然结束 -> 详情页指标 / 文案`。
+
+2026-04-15
 - 已完成 `C01_DANDELION` 人工验收，整链通过：`soothing-aids -> 吹蒲公英 -> 完成落库 -> 详情页指标`。
 - 当前状态：`C01_DANDELION` 已收口，下一轮进入下一个 Wave 1 单目标。
 - 下一步：先修改 `src/data/custom-game-registry.ts`，新增 `C04_HOURGLASS` 定义并挂到 `soothing-aids`。
@@ -69,13 +74,13 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: `C01_DANDELION` 已完成人工验收，下一步进入 `C04_HOURGLASS`。**
+**Active follow-up work is now in `.continue-here.md`: `C04_HOURGLASS` 已完成最小实现，下一步做手工验收。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is continuing Wave 1 after `C01_DANDELION` manual verification passed
-- first action should be adding `C04_HOURGLASS` to `src/data/custom-game-registry.ts`
+- current active task is validating the newly landed `C04_HOURGLASS` Wave 1 minimal flow
+- first action should be manually verifying `soothing-aids -> 魔法沙漏 -> 自然结束 -> 详情页指标 / 文案`
 - `Phase 0` should be treated as closed unless a new regression is discovered
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

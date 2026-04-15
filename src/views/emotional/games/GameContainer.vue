@@ -1096,7 +1096,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .emotion-game-shell {
   position: relative;
-  min-height: calc(100vh - 120px);
+  min-height: 100dvh;
+  height: 100dvh;
   border-radius: 28px;
   overflow: hidden;
   background:
@@ -1179,13 +1180,14 @@ onBeforeUnmount(() => {
 
 .game-stage {
   position: relative;
-  min-height: calc(100vh - 120px);
+  min-height: 100%;
+  height: 100%;
 }
 
 .permission-gate {
   display: grid;
   place-items: center;
-  min-height: calc(100vh - 120px);
+  min-height: 100%;
   padding: 120px 24px 48px;
 }
 
@@ -1391,7 +1393,8 @@ onBeforeUnmount(() => {
 @media (max-width: 900px) {
   .emotion-game-shell,
   .game-stage {
-    min-height: calc(100vh - 92px);
+    min-height: 100dvh;
+    height: 100dvh;
     border-radius: 20px;
   }
 

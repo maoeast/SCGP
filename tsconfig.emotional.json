@@ -2,6 +2,8 @@
   "extends": "./tsconfig.app.json",
   "include": [
     "env.d.ts",
+    "src/types/*.d.ts",
+    "src/types/**/*.d.ts",
     "src/views/emotional/**/*",
     "src/components/emotional/**/*",
     "src/types/emotional.ts",

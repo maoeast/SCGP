@@ -285,6 +285,37 @@ export const CUSTOM_GAME_REGISTRY: ReadonlyArray<CustomGameDefinition> = [
       repeatPlayHint: '每次进入都会轮换草地配色、风向轨迹和种子散开节奏，让孩子在反复练习中慢慢找到舒服、平稳的呼吸感觉。',
     },
   },
+  {
+    gameCode: 'C04_HOURGLASS',
+    name: '魔法沙漏',
+    description: '通过安静观察沙粒缓缓流动的倒计时互动，帮助孩子练习等待、专注和情绪平复。',
+    moduleCode: ModuleCode.EMOTIONAL,
+    trainingEntryCode: 'soothing-aids',
+    entryPath: '/emotional/games/hourglass',
+    category: 'calming',
+    tags: ['安抚教具', '视觉计时', '等待练习', '沙漏'],
+    coverImage: '⏳',
+    maxPlayers: 1,
+    requiredPermissions: [],
+    permissionPolicy: 'all_required',
+    difficultyLocked: false,
+    badge: {
+      badgeCode: 'BADGE_SAND_CALM',
+      badgeName: '静心沙光徽章',
+      visualThemeTag: 'hourglass-calm',
+      iconToken: 'hourglass-sand',
+      paletteToken: 'amber-sand',
+    },
+    metadata: {
+      emoji: '⏳',
+      color: 'linear-gradient(135deg, #f6d7a7 0%, #f4b183 45%, #8ec5d6 100%)',
+      duration: '2-4分钟',
+      difficulty: '三级等待进阶',
+      therapeuticGoal: '等待安抚',
+      previewDescription: '看着发光的沙粒一点点落下，在沙漏流完前保持身体安静、呼吸平稳。简单模式时长更短，中等模式需要更稳定地坚持等待，困难模式会加入更长的倒计时和更细的节奏提示。',
+      repeatPlayHint: '可根据孩子当下状态反复练习，并通过难度调整等待时长，慢慢建立“安静等一等”的稳定感。',
+    },
+  },
 ]
 
 const CUSTOM_GAME_REGISTRY_MAP = new Map<string, CustomGameDefinition>(

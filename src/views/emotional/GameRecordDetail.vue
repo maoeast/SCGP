@@ -91,8 +91,8 @@
 
       <section class="raw-section scgp-surface">
         <div class="raw-section__header">
-          <h2>原始表现摘要</h2>
-          <p>用于核对小游戏保存的原始 performance_data 关键字段。</p>
+          <h2>补充记录</h2>
+          <p>用于查看本次训练保存的补充信息。</p>
         </div>
 
         <div class="raw-grid">
@@ -234,6 +234,65 @@ function formatAverageArrayDuration(value: unknown) {
   return formatResponseTime(average)
 }
 
+function formatBooleanLabel(value: unknown) {
+  if (typeof value !== 'boolean') {
+    return '-'
+  }
+
+  return value ? '是' : '否'
+}
+
+function formatEventLabel(value: unknown) {
+  switch (String(value || '')) {
+    case 'timer_end':
+      return '自然结束'
+    case 'game_complete':
+      return '正常完成'
+    case 'user_exit':
+      return '主动退出'
+    case 'teacher_exit':
+      return '教师结束'
+    case 'system_interrupt':
+      return '系统中断'
+    default:
+      return String(value || '-')
+  }
+}
+
+const rawFieldLabelMap: Record<string, string> = {
+  event: '结束方式',
+  completed_by_timer_end: '是否自然结束',
+  planned_duration_ms: '预设时长',
+  elapsed_ms: '实际用时',
+  calm_taps: '安静提醒次数',
+  progress_ratio: '完成进度',
+  difficulty_level: '难度级别',
+}
+
+function getRawFieldLabel(key: string) {
+  return rawFieldLabelMap[key] || key
+}
+
+function formatRawFieldValue(key: string, value: unknown) {
+  switch (key) {
+    case 'event':
+      return formatEventLabel(value)
+    case 'completed_by_timer_end':
+      return formatBooleanLabel(value)
+    case 'planned_duration_ms':
+    case 'elapsed_ms':
+      return formatDuration(value as number)
+    case 'calm_taps':
+      return formatNullableNumber(value, '次')
+    case 'progress_ratio':
+      return formatPercent(value as number)
+    case 'difficulty_level':
+      return getDifficultyLabel(value)
+    default:
+      return Array.isArray(value) ? JSON.stringify(value) : String(value ?? '-')
+  }
+}
+
 function getStatusLabel(status?: string) {
   if (status === 'aborted') return '已中断'
   return '已完成'
@@ -317,6 +376,13 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '总拖拽数', value: formatNullableNumber(raw.total_drags, '次') },
         { label: '怪兽数量', value: formatNullableNumber(raw.monster_count, '只') },
       ]
+    case 'C04_HOURGLASS':
+      return [
+        { label: '结束方式', value: formatEventLabel(raw.event) },
+        { label: '预设时长', value: formatDuration(raw.planned_duration_ms) },
+        { label: '安静提醒', value: formatNullableNumber(raw.calm_taps, '次') },
+        { label: '完成进度', value: formatPercent(raw.progress_ratio) },
+      ]
     default:
       return []
   }
@@ -376,10 +442,19 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '庆祝状态', value: String(raw.celebration_state || '-') },
         { label: '喂食顺序', value: Array.isArray(raw.feed_order) ? raw.feed_order.join(' / ') || '-' : '-' },
       ]
+    case 'C04_HOURGLASS':
+      return [
+        { label: '是否自然结束', value: formatBooleanLabel(raw.completed_by_timer_end) },
+        { label: '预设时长', value: formatDuration(raw.planned_duration_ms) },
+        { label: '实际用时', value: formatDuration(raw.elapsed_ms) },
+        { label: '安静提醒次数', value: formatNullableNumber(raw.calm_taps, '次') },
+        { label: '完成进度', value: formatPercent(raw.progress_ratio) },
+        { label: '当前难度', value: getDifficultyLabel(raw.difficulty_level) },
+      ]
     default:
       return Object.entries(raw).map(([key, value]) => ({
-        label: key,
-        value: Array.isArray(value) ? JSON.stringify(value) : String(value),
+        label: getRawFieldLabel(key),
+        value: formatRawFieldValue(key, value),
       }))
   }
 })
