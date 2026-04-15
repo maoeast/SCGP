@@ -48,6 +48,7 @@ const BalloonBreathingPage = () => import('@/views/emotional/games/BalloonBreath
 const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
 const WipeSadnessPage = () => import('@/views/emotional/games/WipeSadnessPage.vue')
 const CloudErasePage = () => import('@/views/emotional/games/CloudErasePage.vue')
+const BalloonTapPage = () => import('@/views/emotional/games/BalloonTapPage.vue')
 const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterPage.vue')
 const EnergyBallPage = () => import('@/views/emotional/games/EnergyBallPage.vue')
 
@@ -344,6 +345,16 @@ const router = createRouter({
           component: CloudErasePage,
           meta: {
             title: '云朵擦擦擦',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'emotional/games/balloons',
+          name: 'BalloonTapGame',
+          component: BalloonTapPage,
+          meta: {
+            title: '刺破慢气球',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

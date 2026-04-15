@@ -217,6 +217,22 @@ function deriveAccuracyRate(
       }
       break
     }
+    case 'F05_BALLOONS': {
+      const successfulPops = Number(performanceData.successful_pops || 0)
+      const earlyTaps = Number(performanceData.early_taps || 0)
+      const wrongRestTaps = Number(performanceData.wrong_rest_taps || 0)
+      const missedWindows = Number(performanceData.missed_windows || 0)
+      const totalChecks = successfulPops + earlyTaps + wrongRestTaps + missedWindows
+      if (totalChecks > 0) {
+        return Math.max(0, Math.min(1, successfulPops / totalChecks))
+      }
+
+      const targetBalloonCount = Number(performanceData.target_balloon_count || 0)
+      if (targetBalloonCount > 0) {
+        return Math.max(0, Math.min(1, successfulPops / targetBalloonCount))
+      }
+      break
+    }
     case 'G07_MONSTER': {
       const correctDrops = Number(performanceData.correct_drops || 0)
       const wrongDrops = Number(performanceData.wrong_drops || 0)
@@ -246,6 +262,8 @@ function deriveAvgResponseTime(
       }
       return null
     }
+    case 'F05_BALLOONS':
+      return averageNumericValues(performanceData.window_response_ms)
     default:
       return null
   }

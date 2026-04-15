@@ -217,6 +217,23 @@ function formatArrayCount(value: unknown, suffix = '项') {
   return `${value.length}${suffix}`
 }
 
+function formatAverageArrayDuration(value: unknown) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return '-'
+  }
+
+  const normalized = value
+    .map((item) => Number(item))
+    .filter((item) => Number.isFinite(item) && item >= 0)
+
+  if (!normalized.length) {
+    return '-'
+  }
+
+  const average = normalized.reduce((sum, item) => sum + item, 0) / normalized.length
+  return formatResponseTime(average)
+}
+
 function getStatusLabel(status?: string) {
   if (status === 'aborted') return '已中断'
   return '已完成'
@@ -285,6 +302,13 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '回潮次数', value: formatNullableNumber(raw.regen_events, '次') },
         { label: '网格清理', value: `${formatNullableNumber(raw.fully_cleared_cells)}/${formatNullableNumber(raw.grid_cells_total)}` },
       ]
+    case 'F05_BALLOONS':
+      return [
+        { label: '成功刺破', value: formatNullableNumber(raw.successful_pops, '次') },
+        { label: '过早点按', value: formatNullableNumber(raw.early_taps, '次') },
+        { label: '漏掉窗口', value: formatNullableNumber(raw.missed_windows, '次') },
+        { label: '最长连击', value: formatNullableNumber(raw.max_streak, '次') },
+      ]
     case 'G07_MONSTER':
       return [
         { label: '正确投喂', value: formatNullableNumber(raw.correct_drops, '次') },
@@ -329,6 +353,16 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '静止回潮', value: formatDuration(raw.idle_recover_ms) },
         { label: '最大层数', value: formatNullableNumber(raw.max_strength_layers, '层') },
         { label: '目标清理率', value: formatPercent(raw.target_ratio) },
+        { label: '主题编码', value: String(raw.theme_key || '-') },
+      ]
+    case 'F05_BALLOONS':
+      return [
+        { label: '目标气球', value: formatNullableNumber(raw.target_balloon_count, '只') },
+        { label: '休息气球放行', value: formatNullableNumber(raw.calm_skips, '次') },
+        { label: '误点休息球', value: formatNullableNumber(raw.wrong_rest_taps, '次') },
+        { label: '进圈后平均响应', value: formatAverageArrayDuration(raw.window_response_ms) },
+        { label: '平均上浮速度', value: formatNullableNumber(raw.average_balloon_speed_px, ' px/s') },
+        { label: '目标区位置', value: `${formatPercent(raw.pop_zone_top_ratio)} - ${formatPercent(raw.pop_zone_bottom_ratio)}` },
         { label: '主题编码', value: String(raw.theme_key || '-') },
       ]
     case 'G07_MONSTER':

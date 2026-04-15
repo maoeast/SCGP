@@ -223,6 +223,37 @@ export const CUSTOM_GAME_REGISTRY: ReadonlyArray<CustomGameDefinition> = [
       repeatPlayHint: '\u6bcf\u6b21\u8fdb\u5165\u90fd\u53ef\u4ee5\u5207\u6362\u4e91\u5c42\u8282\u594f\u3001\u80cc\u666f\u914d\u8272\u548c\u76ee\u6807\u8986\u76d6\u533a\u57df\uff0c\u8ba9\u5b69\u5b50\u5728\u53cd\u590d\u7ec3\u4e60\u4e2d\u7a33\u5b9a\u624b\u90e8\u63a7\u5236\u3002',
     },
   },
+  {
+    gameCode: 'F05_BALLOONS',
+    name: '刺破慢气球',
+    description: '在合适的时机轻轻点破慢慢飘来的气球，帮助孩子练习抑制控制、手眼协调与稳定出手。',
+    moduleCode: ModuleCode.SENSORY,
+    trainingEntryCode: 'fine-motor',
+    entryPath: '/emotional/games/balloons',
+    category: 'inhibition',
+    tags: ['精细动作', '抑制控制', '点击互动', '手眼协调'],
+    coverImage: '🎈',
+    maxPlayers: 1,
+    requiredPermissions: [],
+    permissionPolicy: 'all_required',
+    difficultyLocked: false,
+    badge: {
+      badgeCode: 'BADGE_STEADY_POP',
+      badgeName: '稳稳出手徽章',
+      visualThemeTag: 'steady-pop',
+      iconToken: 'balloon-tap',
+      paletteToken: 'sunrise-balloons',
+    },
+    metadata: {
+      emoji: '🎈',
+      color: 'linear-gradient(135deg, #ffd36e 0%, #ff9f7f 46%, #8fd8ff 100%)',
+      duration: '3-5分钟',
+      difficulty: '三级等待进阶',
+      therapeuticGoal: '抑制控制',
+      previewDescription: '看着慢气球轻轻飘进金色圈，再稳稳地轻点一下。简单模式的等待区更宽，中等模式需要更稳地等时机，困难模式里还会混入需要先放行的休息气球。',
+      repeatPlayHint: '每次进入都会轮换天空主题、气球颜色和飘动节奏，让孩子在反复练习中慢慢学会“先等一等，再出手”。',
+    },
+  },
 ]
 
 const CUSTOM_GAME_REGISTRY_MAP = new Map<string, CustomGameDefinition>(

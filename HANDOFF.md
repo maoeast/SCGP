@@ -1,6 +1,11 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-14
+> last_updated: 2026-04-15
+
+2026-04-15
+- 已完成 `F05_BALLOONS` 最小运行链路、记录指标接线与人工验收。
+- 当前状态：`fine-motor -> 游戏 -> 完成态记录 -> 详情页指标` 已通过。
+- 下一步：下一轮直接实现下一个 Wave 1 游戏，默认先从 `C01_DANDELION` 开始。
 
 2026-04-14
 - 完成 `F01_CLOUD_ERASE` 最小运行链路、训练记录接线与详情页入口归属修正。
@@ -54,13 +59,13 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: Wave 1 前期准备已收口，下一步是补 cross-entry custom game 入口适配层。**
+**Active follow-up work is now in `.continue-here.md`: `F05_BALLOONS` 已验收通过，下一步直接进入下一个 Wave 1 游戏。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is implementing Wave 1 minimal target `F01_CLOUD_ERASE`
-- first action should be editing `src/data/custom-game-registry.ts` to add the `F01_CLOUD_ERASE` registry definition
+- current active task is implementing the next Wave 1 custom game after `F05_BALLOONS`
+- first action should be editing `src/data/custom-game-registry.ts` to add the `C01_DANDELION` registry definition
 - `Phase 0` should be treated as closed unless a new regression is discovered
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
