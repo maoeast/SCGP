@@ -3,6 +3,11 @@
 > last_updated: 2026-04-15
 
 2026-04-15
+- 已完成 `C01_DANDELION` 人工验收，整链通过：`soothing-aids -> 吹蒲公英 -> 完成落库 -> 详情页指标`。
+- 当前状态：`C01_DANDELION` 已收口，下一轮进入下一个 Wave 1 单目标。
+- 下一步：先修改 `src/data/custom-game-registry.ts`，新增 `C04_HOURGLASS` 定义并挂到 `soothing-aids`。
+
+2026-04-15
 - 已完成 `C01_DANDELION` 最小运行链路、呼吸玩法变体、大屏横向布局与小游戏沉浸式壳接线。
 - 当前状态：`soothing-aids -> 游戏 -> 吹蒲公英` 代码链已闭环，`npm run type-check` 通过；人工验收未做。
 - 下一步：先手工验证 `C01_DANDELION` 启动、完成态记录与详情页指标。
@@ -64,13 +69,13 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: `C01_DANDELION` 代码链已闭环，下一步先做人工验收。**
+**Active follow-up work is now in `.continue-here.md`: `C01_DANDELION` 已完成人工验收，下一步进入 `C04_HOURGLASS`。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is validating the `C01_DANDELION` Wave 1 game that has just landed
-- first action should be manually verifying the `soothing-aids -> 游戏 -> 吹蒲公英 -> 记录详情` chain
+- current active task is continuing Wave 1 after `C01_DANDELION` manual verification passed
+- first action should be adding `C04_HOURGLASS` to `src/data/custom-game-registry.ts`
 - `Phase 0` should be treated as closed unless a new regression is discovered
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
