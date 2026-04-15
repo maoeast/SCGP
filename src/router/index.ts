@@ -45,6 +45,7 @@ const EmotionalSessionSummary = () => import('@/views/emotional/SessionSummary.v
 const EmotionalGameRecordDetail = () => import('@/views/emotional/GameRecordDetail.vue')
 const EmotionalReport = () => import('@/views/emotional/Report.vue')
 const BalloonBreathingPage = () => import('@/views/emotional/games/BalloonBreathingPage.vue')
+const DandelionPage = () => import('@/views/emotional/games/DandelionPage.vue')
 const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
 const WipeSadnessPage = () => import('@/views/emotional/games/WipeSadnessPage.vue')
 const CloudErasePage = () => import('@/views/emotional/games/CloudErasePage.vue')
@@ -306,7 +307,19 @@ const router = createRouter({
           meta: {
             title: '深呼吸热气球',
             hideInMenu: true,
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/dandelion',
+          name: 'DandelionGame',
+          component: DandelionPage,
+          meta: {
+            title: '吹蒲公英',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
           }
         },
         {
@@ -316,7 +329,8 @@ const router = createRouter({
           meta: {
             title: '音量魔法森林',
             hideInMenu: true,
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
           }
         },
         {
@@ -326,7 +340,8 @@ const router = createRouter({
           meta: {
             title: '擦亮坏心情',
             hideInMenu: true,
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
           }
         },
         {
@@ -336,7 +351,8 @@ const router = createRouter({
           meta: {
             title: '喂食情绪小怪兽',
             hideInMenu: true,
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
           }
         },
         {
@@ -346,7 +362,8 @@ const router = createRouter({
           meta: {
             title: '云朵擦擦擦',
             hideInMenu: true,
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
           }
         },
         {
@@ -356,7 +373,8 @@ const router = createRouter({
           meta: {
             title: '刺破慢气球',
             hideInMenu: true,
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
           }
         },
         {
@@ -366,7 +384,8 @@ const router = createRouter({
           meta: {
             title: '表情能量球',
             hideInMenu: true,
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
           }
         },
         {
@@ -416,7 +435,8 @@ const router = createRouter({
           meta: {
             title: '训练进行中',
             hideInMenu: true,
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
           }
         },
         // 旧路由重定向到新的训练记录模块

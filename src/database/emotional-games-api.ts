@@ -184,6 +184,7 @@ function deriveAccuracyRate(
   completionStatus: EmotionGameCompletionStatus,
 ): number | null {
   switch (gameCode) {
+    case 'C01_DANDELION':
     case 'G01_BALLOON': {
       const successfulCycles = Number(performanceData.successful_cycles || 0)
       const failedReleases = Number(performanceData.failed_releases || 0)
@@ -252,6 +253,7 @@ function deriveAvgResponseTime(
   performanceData: Record<string, any>,
 ): number | null {
   switch (gameCode) {
+    case 'C01_DANDELION':
     case 'G01_BALLOON':
       return averageNumericValues(performanceData.inhale_samples_ms)
     case 'G03_FOREST': {

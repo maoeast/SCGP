@@ -1299,3 +1299,13 @@
 - 当前独立已知问题：
   - 本地 `msedge-tts` 依赖仍缺失
   - 这会让 TTS IPC 功能不可用，但当前不应与首页白屏根因混为一谈
+
+## 37. 2026-04-15 Cross-Entry Custom Game Display Baseline
+
+- `cross-entry custom games` 当前新增一条全局实现约束：
+  - 新小游戏默认按 `27` 寸触摸大屏、横向优先布局制作，不以手机竖屏为首要基线
+  - 进入游戏后默认启用 `immersiveShell`，隐藏平台侧边栏、顶部栏和内容区默认 padding
+- 当前该约束已落到：
+  - `docs/planning/2026-04-13-cross-entry-custom-games-expansion-plan.md`
+  - `docs/planning/2026-04-14-cross-entry-custom-games-wave1-prep-checklist.md`
+- 当前已先应用到 `/emotional/games/*` 与 `/games/play` 路由

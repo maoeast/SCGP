@@ -3,6 +3,11 @@
 > last_updated: 2026-04-15
 
 2026-04-15
+- 已完成 `C01_DANDELION` 最小运行链路、呼吸玩法变体、大屏横向布局与小游戏沉浸式壳接线。
+- 当前状态：`soothing-aids -> 游戏 -> 吹蒲公英` 代码链已闭环，`npm run type-check` 通过；人工验收未做。
+- 下一步：先手工验证 `C01_DANDELION` 启动、完成态记录与详情页指标。
+
+2026-04-15
 - 已完成 `F05_BALLOONS` 最小运行链路、记录指标接线与人工验收。
 - 当前状态：`fine-motor -> 游戏 -> 完成态记录 -> 详情页指标` 已通过。
 - 下一步：下一轮直接实现下一个 Wave 1 游戏，默认先从 `C01_DANDELION` 开始。
@@ -59,13 +64,13 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: `F05_BALLOONS` 已验收通过，下一步直接进入下一个 Wave 1 游戏。**
+**Active follow-up work is now in `.continue-here.md`: `C01_DANDELION` 代码链已闭环，下一步先做人工验收。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is implementing the next Wave 1 custom game after `F05_BALLOONS`
-- first action should be editing `src/data/custom-game-registry.ts` to add the `C01_DANDELION` registry definition
+- current active task is validating the `C01_DANDELION` Wave 1 game that has just landed
+- first action should be manually verifying the `soothing-aids -> 游戏 -> 吹蒲公英 -> 记录详情` chain
 - `Phase 0` should be treated as closed unless a new regression is discovered
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

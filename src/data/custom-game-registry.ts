@@ -254,6 +254,37 @@ export const CUSTOM_GAME_REGISTRY: ReadonlyArray<CustomGameDefinition> = [
       repeatPlayHint: '每次进入都会轮换天空主题、气球颜色和飘动节奏，让孩子在反复练习中慢慢学会“先等一等，再出手”。',
     },
   },
+  {
+    gameCode: 'C01_DANDELION',
+    name: '吹蒲公英',
+    description: '通过按住吸气、松开轻吹的柔和互动，帮助孩子练习平稳呼吸、身体放松与安抚转换。',
+    moduleCode: ModuleCode.EMOTIONAL,
+    trainingEntryCode: 'soothing-aids',
+    entryPath: '/emotional/games/dandelion',
+    category: 'calming',
+    tags: ['安抚教具', '呼吸训练', '放松调节', '蒲公英'],
+    coverImage: '🌼',
+    maxPlayers: 1,
+    requiredPermissions: [],
+    permissionPolicy: 'all_required',
+    difficultyLocked: false,
+    badge: {
+      badgeCode: 'BADGE_SOFT_SEED',
+      badgeName: '轻柔飞絮徽章',
+      visualThemeTag: 'dandelion-breeze',
+      iconToken: 'dandelion-seed',
+      paletteToken: 'meadow-breeze',
+    },
+    metadata: {
+      emoji: '🌼',
+      color: 'linear-gradient(135deg, #c7f0d8 0%, #f7f2c6 48%, #ffd6b0 100%)',
+      duration: '2-4分钟',
+      difficulty: '三级呼吸进阶',
+      therapeuticGoal: '安抚放松',
+      previewDescription: '按住主按钮慢慢吸气，让蒲公英绒球轻轻蓄满风；松开时再把种子柔和地吹向空中。简单模式更容易完成，中等模式需要更稳定地控制节奏，困难模式会要求更完整的吸气与轻吹配合。',
+      repeatPlayHint: '每次进入都会轮换草地配色、风向轨迹和种子散开节奏，让孩子在反复练习中慢慢找到舒服、平稳的呼吸感觉。',
+    },
+  },
 ]
 
 const CUSTOM_GAME_REGISTRY_MAP = new Map<string, CustomGameDefinition>(

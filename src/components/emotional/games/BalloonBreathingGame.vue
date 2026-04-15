@@ -1,5 +1,5 @@
 <template>
-  <div class="balloon-game" :style="rootStyle">
+  <div class="balloon-game" :class="{ 'balloon-game--dandelion': isDandelionVariant }" :style="rootStyle">
     <canvas ref="celebrationCanvas" class="celebration-canvas" />
 
     <div class="sky-layer">
@@ -17,61 +17,127 @@
 
     <div class="scene-ground">
       <div class="sun-glow" :style="sunStyle"></div>
-      <div class="rainbow-island" :class="{ 'is-visible': showIsland, 'no-transition': suppressSceneryFadeOut }">
-        <svg viewBox="0 0 240 180" aria-hidden="true">
-          <defs>
-            <linearGradient id="islandGradient" x1="0%" x2="100%" y1="0%" y2="100%">
-              <stop offset="0%" :stop-color="sessionTheme.islandStops[0]" />
-              <stop offset="100%" :stop-color="sessionTheme.islandStops[1]" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M34 120c18-22 42-30 67-30 10-18 26-28 46-28 17 0 34 8 45 22 17 0 31 7 45 20v32H34z"
-            fill="url(#islandGradient)"
-          />
-          <path d="M34 120h203" :stroke="sessionTheme.islandStroke" stroke-width="10" stroke-linecap="round" />
-          <path d="M54 122c28-70 64-96 112-96 28 0 56 16 74 44" fill="none" :stroke="sessionTheme.rainbow[0]" stroke-width="10" stroke-linecap="round" />
-          <path d="M58 122c23-54 56-76 97-76 24 0 48 12 63 34" fill="none" :stroke="sessionTheme.rainbow[1]" stroke-width="10" stroke-linecap="round" />
-          <path d="M63 122c18-40 46-58 81-58 19 0 37 8 50 23" fill="none" :stroke="sessionTheme.rainbow[2]" stroke-width="10" stroke-linecap="round" />
-        </svg>
+      <template v-if="isDandelionVariant">
+        <div class="dandelion-meadow" :class="{ 'is-visible': showIsland, 'no-transition': suppressSceneryFadeOut }">
+          <svg viewBox="0 0 240 180" aria-hidden="true">
+            <defs>
+              <linearGradient id="meadowGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+                <stop offset="0%" :stop-color="sessionTheme.islandStops[0]" />
+                <stop offset="100%" :stop-color="sessionTheme.islandStops[1]" />
+              </linearGradient>
+            </defs>
+            <path d="M24 126c18-24 42-34 69-34 15-18 32-28 54-28 16 0 33 7 47 20 17 0 31 8 47 24v38H24z" fill="url(#meadowGradient)" />
+            <path d="M26 126c34-24 70-34 112-34 27 0 54 5 88 18" fill="none" :stroke="sessionTheme.islandStroke" stroke-width="10" stroke-linecap="round" />
+            <path d="M72 148c10-18 18-34 25-52" fill="none" :stroke="sessionTheme.rainbow[0]" stroke-width="6" stroke-linecap="round" />
+            <path d="M118 146c7-14 13-29 18-44" fill="none" :stroke="sessionTheme.rainbow[1]" stroke-width="5" stroke-linecap="round" />
+            <path d="M158 150c8-16 16-32 25-46" fill="none" :stroke="sessionTheme.rainbow[2]" stroke-width="5" stroke-linecap="round" />
+          </svg>
 
-        <div v-if="showRabbits" class="rabbit-family">
-          <div class="rabbit rabbit-parent">
-            <span class="ear ear-left"></span>
-            <span class="ear ear-right"></span>
-            <span class="face"></span>
-          </div>
-          <div class="rabbit rabbit-child">
-            <span class="ear ear-left"></span>
-            <span class="ear ear-right"></span>
-            <span class="face"></span>
+          <div v-if="showRabbits" class="seed-burst" aria-hidden="true">
+            <span class="seed-spark seed-spark-a"></span>
+            <span class="seed-spark seed-spark-b"></span>
+            <span class="seed-spark seed-spark-c"></span>
+            <span class="seed-spark seed-spark-d"></span>
+            <span class="seed-spark seed-spark-e"></span>
+            <span class="seed-spark seed-spark-f"></span>
           </div>
         </div>
-      </div>
+      </template>
 
-      <div class="balloon-wrapper" :style="balloonStyle">
-        <svg viewBox="0 0 180 250" class="balloon-svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="balloonShell" x1="0%" x2="100%" y1="0%" y2="100%">
-              <stop offset="0%" :stop-color="sessionTheme.balloonStops[0]" />
-              <stop offset="45%" :stop-color="sessionTheme.balloonStops[1]" />
-              <stop offset="100%" :stop-color="sessionTheme.balloonStops[2]" />
-            </linearGradient>
-            <linearGradient id="basketTone" x1="0%" x2="100%" y1="0%" y2="100%">
-              <stop offset="0%" :stop-color="sessionTheme.basketStops[0]" />
-              <stop offset="100%" :stop-color="sessionTheme.basketStops[1]" />
-            </linearGradient>
-          </defs>
+      <template v-else>
+        <div class="rainbow-island" :class="{ 'is-visible': showIsland, 'no-transition': suppressSceneryFadeOut }">
+          <svg viewBox="0 0 240 180" aria-hidden="true">
+            <defs>
+              <linearGradient id="islandGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+                <stop offset="0%" :stop-color="sessionTheme.islandStops[0]" />
+                <stop offset="100%" :stop-color="sessionTheme.islandStops[1]" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M34 120c18-22 42-30 67-30 10-18 26-28 46-28 17 0 34 8 45 22 17 0 31 7 45 20v32H34z"
+              fill="url(#islandGradient)"
+            />
+            <path d="M34 120h203" :stroke="sessionTheme.islandStroke" stroke-width="10" stroke-linecap="round" />
+            <path d="M54 122c28-70 64-96 112-96 28 0 56 16 74 44" fill="none" :stroke="sessionTheme.rainbow[0]" stroke-width="10" stroke-linecap="round" />
+            <path d="M58 122c23-54 56-76 97-76 24 0 48 12 63 34" fill="none" :stroke="sessionTheme.rainbow[1]" stroke-width="10" stroke-linecap="round" />
+            <path d="M63 122c18-40 46-58 81-58 19 0 37 8 50 23" fill="none" :stroke="sessionTheme.rainbow[2]" stroke-width="10" stroke-linecap="round" />
+          </svg>
 
-          <path
-            d="M90 12c37 0 66 29 66 66 0 22-9 41-24 54-12 10-20 24-22 39H70c-2-15-10-29-22-39-15-13-24-32-24-54 0-37 29-66 66-66z"
-            fill="url(#balloonShell)"
-          />
-          <path d="M90 22c22 0 40 18 40 40" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="8" stroke-linecap="round" />
-          <path d="M70 171l-16 34M110 171l16 34" stroke="#89613d" stroke-width="5" stroke-linecap="round" />
-          <rect x="58" y="205" width="64" height="32" rx="10" fill="url(#basketTone)" />
-          <path d="M74 172h32" stroke="#8f6845" stroke-width="5" stroke-linecap="round" />
-        </svg>
+          <div v-if="showRabbits" class="rabbit-family">
+            <div class="rabbit rabbit-parent">
+              <span class="ear ear-left"></span>
+              <span class="ear ear-right"></span>
+              <span class="face"></span>
+            </div>
+            <div class="rabbit rabbit-child">
+              <span class="ear ear-left"></span>
+              <span class="ear ear-right"></span>
+              <span class="face"></span>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <div class="balloon-wrapper" :class="{ 'balloon-wrapper--dandelion': isDandelionVariant }" :style="balloonStyle">
+        <template v-if="isDandelionVariant">
+          <svg viewBox="0 0 180 250" class="balloon-svg dandelion-svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="dandelionFluff" x1="0%" x2="100%" y1="0%" y2="100%">
+                <stop offset="0%" :stop-color="sessionTheme.balloonStops[0]" />
+                <stop offset="55%" :stop-color="sessionTheme.balloonStops[1]" />
+                <stop offset="100%" :stop-color="sessionTheme.balloonStops[2]" />
+              </linearGradient>
+              <linearGradient id="dandelionStem" x1="0%" x2="0%" y1="0%" y2="100%">
+                <stop offset="0%" :stop-color="sessionTheme.basketStops[0]" />
+                <stop offset="100%" :stop-color="sessionTheme.basketStops[1]" />
+              </linearGradient>
+            </defs>
+
+            <circle cx="90" cy="88" r="36" fill="rgba(255,255,255,0.72)" />
+            <circle cx="90" cy="88" r="30" fill="url(#dandelionFluff)" opacity="0.88" />
+            <path d="M90 120v84" fill="none" stroke="url(#dandelionStem)" stroke-width="7" stroke-linecap="round" />
+            <path d="M90 160c-18 0-28 10-32 26" fill="none" stroke="url(#dandelionStem)" stroke-width="5" stroke-linecap="round" />
+            <path d="M90 176c22 0 34 10 38 28" fill="none" stroke="url(#dandelionStem)" stroke-width="5" stroke-linecap="round" />
+            <ellipse cx="48" cy="198" rx="24" ry="10" fill="rgba(255,255,255,0.34)" transform="rotate(-24 48 198)" />
+            <ellipse cx="132" cy="208" rx="26" ry="10" fill="rgba(255,255,255,0.28)" transform="rotate(20 132 208)" />
+
+            <g class="dandelion-fluff">
+              <path d="M90 46v24" stroke="rgba(255,255,255,0.95)" stroke-width="4" stroke-linecap="round" />
+              <path d="M90 42l-8 10M90 42l8 10" stroke="rgba(255,255,255,0.95)" stroke-width="3" stroke-linecap="round" />
+              <path d="M60 58l16 18M60 58l-1 13M60 58l12 4" stroke="rgba(255,255,255,0.92)" stroke-width="3" stroke-linecap="round" />
+              <path d="M120 58l-16 18M120 58l1 13M120 58l-12 4" stroke="rgba(255,255,255,0.92)" stroke-width="3" stroke-linecap="round" />
+              <path d="M48 88h24M48 88l9-8M48 88l9 8" stroke="rgba(255,255,255,0.94)" stroke-width="3" stroke-linecap="round" />
+              <path d="M132 88h-24M132 88l-9-8M132 88l-9 8" stroke="rgba(255,255,255,0.94)" stroke-width="3" stroke-linecap="round" />
+              <path d="M62 118l18-16M62 118l2-13M62 118l13-5" stroke="rgba(255,255,255,0.92)" stroke-width="3" stroke-linecap="round" />
+              <path d="M118 118l-18-16M118 118l-2-13M118 118l-13-5" stroke="rgba(255,255,255,0.92)" stroke-width="3" stroke-linecap="round" />
+            </g>
+          </svg>
+        </template>
+
+        <template v-else>
+          <svg viewBox="0 0 180 250" class="balloon-svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="balloonShell" x1="0%" x2="100%" y1="0%" y2="100%">
+                <stop offset="0%" :stop-color="sessionTheme.balloonStops[0]" />
+                <stop offset="45%" :stop-color="sessionTheme.balloonStops[1]" />
+                <stop offset="100%" :stop-color="sessionTheme.balloonStops[2]" />
+              </linearGradient>
+              <linearGradient id="basketTone" x1="0%" x2="100%" y1="0%" y2="100%">
+                <stop offset="0%" :stop-color="sessionTheme.basketStops[0]" />
+                <stop offset="100%" :stop-color="sessionTheme.basketStops[1]" />
+              </linearGradient>
+            </defs>
+
+            <path
+              d="M90 12c37 0 66 29 66 66 0 22-9 41-24 54-12 10-20 24-22 39H70c-2-15-10-29-22-39-15-13-24-32-24-54 0-37 29-66 66-66z"
+              fill="url(#balloonShell)"
+            />
+            <path d="M90 22c22 0 40 18 40 40" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="8" stroke-linecap="round" />
+            <path d="M70 171l-16 34M110 171l16 34" stroke="#89613d" stroke-width="5" stroke-linecap="round" />
+            <rect x="58" y="205" width="64" height="32" rx="10" fill="url(#basketTone)" />
+            <path d="M74 172h32" stroke="#8f6845" stroke-width="5" stroke-linecap="round" />
+          </svg>
+        </template>
       </div>
     </div>
 
@@ -102,7 +168,7 @@
       </div>
 
       <div class="instruction-copy">
-        <h2>深呼吸热气球</h2>
+        <h2>{{ gameTitle }}</h2>
         <p>{{ stageMessage }}</p>
       </div>
 
@@ -120,7 +186,7 @@
     <transition name="badge-pop">
       <div v-if="showBadge" class="badge-modal">
         <div class="badge-core">🎖</div>
-        <strong>平静微风徽章</strong>
+        <strong>{{ badgeName }}</strong>
         <p>{{ sessionTheme.badgeCopy }}</p>
       </div>
     </transition>
@@ -154,6 +220,8 @@ interface ParticleState {
   color: string
 }
 
+type BreathingGameVariant = 'balloon' | 'dandelion'
+
 interface BalloonTheme {
   key: string
   title: string
@@ -185,6 +253,19 @@ interface SessionObjective {
   cloudCount: number
   cloudSpeedScale: number
   safeWidth: number
+}
+
+interface BreathingVariantContent {
+  gameTitle: string
+  badgeCode: string
+  badgeName: string
+  singleCycleReadyLabel: string
+  finishedLabel: string
+  singleButtonLabel: string
+  tooShortReleaseMessage: string
+  cloudBlockMessage: string
+  rhythmRetryMessage: string
+  finalCycleMessage: string
 }
 
 const BALLOON_THEMES: readonly BalloonTheme[] = [
@@ -247,6 +328,69 @@ const BALLOON_THEMES: readonly BalloonTheme[] = [
     celebrationPalette: ['#ff9f68', '#f6e58d', '#7ed6df', '#badc58', '#d6a2e8'],
     ceremonyLine: '柠檬味的轻风来了，热气球像听懂了你的呼吸一样慢慢靠岸。',
     badgeCopy: '今天的柠檬微风很轻柔，你用安静而稳定的节奏完成了旅程。',
+  },
+]
+
+const DANDELION_THEMES: readonly BalloonTheme[] = [
+  {
+    key: 'dew_meadow',
+    title: '露珠草坡',
+    skyGradient: 'radial-gradient(circle at top, rgba(255,255,255,0.42), transparent 36%), linear-gradient(180deg, #b7e5ff 0%, #edf9ff 48%, #fff4cf 100%)',
+    sunGlow: 'radial-gradient(circle, rgba(255, 244, 176, 0.9), rgba(255, 244, 176, 0))',
+    islandStops: ['#8edb93', '#5bb870'],
+    islandStroke: '#347e4d',
+    rainbow: ['#f6d365', '#ffd8a8', '#9be7d8'],
+    balloonStops: ['#fffdf5', '#fff1b8', '#fff8de'],
+    basketStops: ['#79b56f', '#4f8a55'],
+    buttonGradient: 'linear-gradient(180deg, #ffd36e 0%, #ffb36b 100%)',
+    celebrationPalette: ['#fff5c4', '#ffd36e', '#a8e6cf', '#9ad7ff', '#f7c6d9'],
+    ceremonyLine: '露珠草坡上的风慢慢吹过来，蒲公英跟着你的呼吸把飞絮送上了天空。',
+    badgeCopy: '今天的露珠草坡很安静，你用轻柔的呼吸拿到了轻柔飞絮徽章。',
+  },
+  {
+    key: 'mint_seed_field',
+    title: '薄荷飞絮田',
+    skyGradient: 'radial-gradient(circle at top, rgba(255,255,255,0.4), transparent 36%), linear-gradient(180deg, #c3f1e5 0%, #f2fff9 48%, #fff6de 100%)',
+    sunGlow: 'radial-gradient(circle, rgba(210, 255, 232, 0.86), rgba(210, 255, 232, 0))',
+    islandStops: ['#97e38c', '#58b56f'],
+    islandStroke: '#3f8e59',
+    rainbow: ['#ffd6a5', '#fff0b5', '#8fe8d8'],
+    balloonStops: ['#fffef8', '#fff5d6', '#f6ffe7'],
+    basketStops: ['#82c07a', '#5a955f'],
+    buttonGradient: 'linear-gradient(180deg, #a8e6cf 0%, #7fd8be 100%)',
+    celebrationPalette: ['#fff5c4', '#a8e6cf', '#8fe8d8', '#f7c6d9', '#bcdfff'],
+    ceremonyLine: '薄荷色的风从草坡穿过去，你稳稳地把一团飞絮送到了远远的天空里。',
+    badgeCopy: '今天的薄荷飞絮田很温柔，你让每一颗种子都轻轻地飞了起来。',
+  },
+  {
+    key: 'peach_breeze_garden',
+    title: '蜜桃微风园',
+    skyGradient: 'radial-gradient(circle at top, rgba(255,255,255,0.34), transparent 34%), linear-gradient(180deg, #ffd9c9 0%, #fff1ec 50%, #fff7d8 100%)',
+    sunGlow: 'radial-gradient(circle, rgba(255, 214, 184, 0.88), rgba(255, 214, 184, 0))',
+    islandStops: ['#a8df88', '#5ca86b'],
+    islandStroke: '#3e784a',
+    rainbow: ['#ffb4a2', '#ffe29a', '#b8f2e6'],
+    balloonStops: ['#fffef6', '#ffeec2', '#fff7de'],
+    basketStops: ['#7fb472', '#57845a'],
+    buttonGradient: 'linear-gradient(180deg, #ffcf96 0%, #ffac81 100%)',
+    celebrationPalette: ['#ffe29a', '#ffcf96', '#b8f2e6', '#fff7de', '#f7c6d9'],
+    ceremonyLine: '蜜桃色的轻风来了，蒲公英在你的节奏里慢慢散开，飞絮一朵朵飘远了。',
+    badgeCopy: '今天的蜜桃微风园特别柔和，你用稳定节奏把飞絮送上了天。',
+  },
+  {
+    key: 'golden_seed_dusk',
+    title: '金色飞絮湾',
+    skyGradient: 'radial-gradient(circle at top, rgba(255,255,255,0.38), transparent 34%), linear-gradient(180deg, #c6dbff 0%, #f8e7ff 48%, #fff1c9 100%)',
+    sunGlow: 'radial-gradient(circle, rgba(255, 233, 156, 0.92), rgba(255, 233, 156, 0))',
+    islandStops: ['#92d98b', '#59b470'],
+    islandStroke: '#347d4f',
+    rainbow: ['#ffd166', '#ffde9e', '#9ad7ff'],
+    balloonStops: ['#fffef8', '#fff0c4', '#fff8e6'],
+    basketStops: ['#78b06e', '#4d7d53'],
+    buttonGradient: 'linear-gradient(180deg, #ffd166 0%, #ffb86b 100%)',
+    celebrationPalette: ['#fff5c4', '#ffd166', '#ffde9e', '#9ad7ff', '#b8f2e6'],
+    ceremonyLine: '傍晚的金色风顺着草地吹过，你让蒲公英把最后一阵飞絮轻轻送到了月光边。',
+    badgeCopy: '今天的金色飞絮湾很安静，你用柔和的呼吸把整朵蒲公英照顾得很好。',
   },
 ]
 
@@ -391,15 +535,192 @@ const OBJECTIVES_BY_DIFFICULTY: Record<EmotionGameDifficulty, SessionObjective[]
   ],
 }
 
-let lastThemeKey = ''
-const lastObjectiveCodeByDifficulty: Partial<Record<EmotionGameDifficulty, string>> = {}
+const DANDELION_OBJECTIVES_BY_DIFFICULTY: Record<EmotionGameDifficulty, SessionObjective[]> = {
+  1: [
+    {
+      code: 'l1_seed_breeze',
+      title: '轻吹飞絮',
+      shortLabel: '吸到 2 秒再轻吹',
+      readyText: '今天的任务是“轻吹飞絮”。按住吸气至少 2 秒，再轻轻松开，蒲公英种子就会慢慢飞出去。',
+      inhalePrompt: '慢慢吸气，让蒲公英绒球先稳稳蓄满风。',
+      successText: '这阵轻风刚刚好，第一圈飞絮已经轻轻飘起来了。',
+      inhaleMinMs: 2000,
+      glideMs: 2200,
+      requiredCycles: 1,
+      cloudCount: 2,
+      cloudSpeedScale: 0.55,
+      safeWidth: 24,
+    },
+    {
+      code: 'l1_soft_field_wind',
+      title: '草坡轻风',
+      shortLabel: '试着吸到 2.4 秒',
+      readyText: '这次试试“草坡轻风”。吸气稍微久一点，飞絮会飘得更稳更远。',
+      inhalePrompt: '很好，慢慢吸气，让整朵蒲公英一点点鼓起来。',
+      successText: '这阵风很柔和，飞絮慢慢地向前飘开了。',
+      inhaleMinMs: 2400,
+      glideMs: 2400,
+      requiredCycles: 1,
+      cloudCount: 3,
+      cloudSpeedScale: 0.6,
+      safeWidth: 24,
+    },
+    {
+      code: 'l1_feather_seed',
+      title: '羽絮慢慢飞',
+      shortLabel: '试着吸到 2.8 秒',
+      readyText: '今天练习“羽絮慢慢飞”。只要吸到接近 3 秒，飞絮就会特别轻、特别稳。',
+      inhalePrompt: '吸气像羽毛一样轻一点，不着急。',
+      successText: '羽毛一样的轻风来了，飞絮稳稳地飘向天空了。',
+      inhaleMinMs: 2800,
+      glideMs: 2500,
+      requiredCycles: 1,
+      cloudCount: 2,
+      cloudSpeedScale: 0.58,
+      safeWidth: 24,
+    },
+  ],
+  2: [
+    {
+      code: 'l2_watch_wind_lane',
+      title: '看准风道',
+      shortLabel: '等风道打开再松手',
+      readyText: '今天要“看准风道”。先慢慢吸气，等前面的风道轻轻打开，再松手轻吹。',
+      inhalePrompt: '继续慢慢吸气，一边看看飞絮前面的风有没有顺下来。',
+      successText: '你看准了风道，飞絮轻轻绕开前面的云飘过去了。',
+      inhaleMinMs: 2300,
+      glideMs: 2300,
+      requiredCycles: 1,
+      cloudCount: 3,
+      cloudSpeedScale: 0.86,
+      safeWidth: 12,
+    },
+    {
+      code: 'l2_golden_breeze',
+      title: '等金色微风',
+      shortLabel: '找到安全时机',
+      readyText: '这次试试“金色微风”。观察前方空气的节奏，找到安全时机再把飞絮送出去。',
+      inhalePrompt: '吸气时看看前面，等那一小段柔和的风出现。',
+      successText: '你抓到了最稳的那阵风，飞絮顺顺地飘远了。',
+      inhaleMinMs: 2500,
+      glideMs: 2400,
+      requiredCycles: 1,
+      cloudCount: 4,
+      cloudSpeedScale: 0.95,
+      safeWidth: 11,
+    },
+    {
+      code: 'l2_moon_seed_lane',
+      title: '月色飞絮',
+      shortLabel: '吸到 2.6 秒再轻吹',
+      readyText: '今天走“月色飞絮”。先把风稳稳地积起来，再等空气变得更安静时松手。',
+      inhalePrompt: '吸气时慢一点，等飞絮前面的路更清楚再轻吹。',
+      successText: '月色里的风已经顺了下来，你让飞絮飘得很从容。',
+      inhaleMinMs: 2600,
+      glideMs: 2500,
+      requiredCycles: 1,
+      cloudCount: 3,
+      cloudSpeedScale: 0.92,
+      safeWidth: 10,
+    },
+  ],
+  3: [
+    {
+      code: 'l3_seed_rhythm',
+      title: '飞絮节奏 4-6',
+      shortLabel: '完成 3 次平稳节奏',
+      readyText: '今天练习“飞絮节奏 4-6”。完成 3 次 4 秒吸气、6 秒轻吹，整朵蒲公英才会慢慢散开。',
+      inhalePrompt: '保持 4 秒吸气，让这一阵风稳稳地积起来。',
+      successText: '这一轮的节奏很漂亮，再来一次飞絮会更稳。',
+      inhaleMinMs: 4000,
+      perfectMinMs: 3600,
+      perfectMaxMs: 4500,
+      glideMs: 6000,
+      requiredCycles: 3,
+      cloudCount: 4,
+      cloudSpeedScale: 1,
+      safeWidth: 10,
+    },
+    {
+      code: 'l3_meadow_lullaby',
+      title: '草地摇篮曲',
+      shortLabel: '靠近 4 秒，慢慢吹 6 秒',
+      readyText: '这次是“草地摇篮曲”。把吸气维持在接近 4 秒，再让轻吹像摇篮曲一样慢下来。',
+      inhalePrompt: '不着急，慢慢数到 4，再把飞絮轻轻送出去。',
+      successText: '这一轮像摇篮曲一样平稳，我们继续下一轮。',
+      inhaleMinMs: 3900,
+      perfectMinMs: 3500,
+      perfectMaxMs: 4400,
+      glideMs: 6200,
+      requiredCycles: 3,
+      cloudCount: 4,
+      cloudSpeedScale: 1.02,
+      safeWidth: 10,
+    },
+    {
+      code: 'l3_moonfield_path',
+      title: '月光草径',
+      shortLabel: '3 次连续稳定',
+      readyText: '今天走“月光草径”。连续完成 3 次稳定呼吸，蒲公英就能把飞絮送过整片草地。',
+      inhalePrompt: '吸气数到 4 左右，草地上的风道就会慢慢变稳。',
+      successText: '月光草径又亮起来一段了，继续保持。',
+      inhaleMinMs: 4050,
+      perfectMinMs: 3650,
+      perfectMaxMs: 4600,
+      glideMs: 5800,
+      requiredCycles: 3,
+      cloudCount: 5,
+      cloudSpeedScale: 1.05,
+      safeWidth: 9,
+    },
+  ],
+}
 
-const props = defineProps<{
+const VARIANT_CONTENT: Record<BreathingGameVariant, BreathingVariantContent> = {
+  balloon: {
+    gameTitle: '深呼吸热气球',
+    badgeCode: 'BADGE_CALM_WIND',
+    badgeName: '平静微风徽章',
+    singleCycleReadyLabel: '已经准备靠岸',
+    finishedLabel: '彩虹岛到了',
+    singleButtonLabel: '按住吸气，松开呼气',
+    tooShortReleaseMessage: '再慢一点吸气也可以，等气球更鼓一些再松手。',
+    cloudBlockMessage: '云朵还在前面，我们等它轻轻飘过去，再试一次。',
+    rhythmRetryMessage: '这次吸气有点快或有点久了，我们试着更靠近 4 秒。',
+    finalCycleMessage: '最后一阵平稳的风已经准备好了，热气球要去彩虹岛了。',
+  },
+  dandelion: {
+    gameTitle: '吹蒲公英',
+    badgeCode: 'BADGE_SOFT_SEED',
+    badgeName: '轻柔飞絮徽章',
+    singleCycleReadyLabel: '已经吹散一圈',
+    finishedLabel: '飞絮飘远了',
+    singleButtonLabel: '按住吸气，松开轻吹',
+    tooShortReleaseMessage: '再慢一点吸气也可以，等飞絮蓄满一点再轻吹。',
+    cloudBlockMessage: '这阵风还没顺下来，我们等飞絮通道轻轻打开再试一次。',
+    rhythmRetryMessage: '这次吸气有点快或有点久了，我们试着更靠近 4 秒，让飞絮更稳。',
+    finalCycleMessage: '最后一阵轻风已经准备好了，蒲公英要把飞絮送上天空了。',
+  },
+}
+
+const lastThemeKeyByVariant: Record<BreathingGameVariant, string> = {
+  balloon: '',
+  dandelion: '',
+}
+const lastObjectiveCodeByVariant: Record<BreathingGameVariant, Partial<Record<EmotionGameDifficulty, string>>> = {
+  balloon: {},
+  dandelion: {},
+}
+
+const props = withDefaults(defineProps<{
   difficulty: EmotionGameDifficulty
   paused: boolean
   markRoundDirty?: () => void
   audio: EmotionGameAudioController
-}>()
+  variant?: BreathingGameVariant
+}>(), {
+  variant: 'balloon',
+})
 
 const emit = defineEmits<{
   complete: [payload: EmotionGameCompletionPayload]
@@ -428,6 +749,11 @@ const sessionObjective = ref<SessionObjective>(OBJECTIVES_BY_DIFFICULTY[1][0] as
 
 const celebrationCanvas = ref<HTMLCanvasElement | null>(null)
 
+const isDandelionVariant = computed(() => props.variant === 'dandelion')
+const variantContent = computed(() => VARIANT_CONTENT[props.variant])
+const gameTitle = computed(() => variantContent.value.gameTitle)
+const badgeName = computed(() => variantContent.value.badgeName)
+
 let holdInterval: number | null = null
 let autoReleaseTimer: number | null = null
 let bounceTimer: number | null = null
@@ -453,18 +779,22 @@ function pickFreshItem<T>(
 }
 
 function chooseSessionVariant() {
-  const nextTheme = pickFreshItem(BALLOON_THEMES, (item) => item.key, lastThemeKey)
-  lastThemeKey = nextTheme.key
+  const themePool = props.variant === 'dandelion' ? DANDELION_THEMES : BALLOON_THEMES
+  const lastThemeKey = lastThemeKeyByVariant[props.variant]
+  const nextTheme = pickFreshItem(themePool, (item) => item.key, lastThemeKey)
+  lastThemeKeyByVariant[props.variant] = nextTheme.key
   sessionTheme.value = nextTheme
 
-  const objectivePool = OBJECTIVES_BY_DIFFICULTY[props.difficulty]
+  const objectivePool = props.variant === 'dandelion'
+    ? DANDELION_OBJECTIVES_BY_DIFFICULTY[props.difficulty]
+    : OBJECTIVES_BY_DIFFICULTY[props.difficulty]
   const nextObjective = pickFreshItem(
     objectivePool,
     (item) => item.code,
-    lastObjectiveCodeByDifficulty[props.difficulty] || '',
+    lastObjectiveCodeByVariant[props.variant][props.difficulty] || '',
   )
 
-  lastObjectiveCodeByDifficulty[props.difficulty] = nextObjective.code
+  lastObjectiveCodeByVariant[props.variant][props.difficulty] = nextObjective.code
   sessionObjective.value = nextObjective
 }
 
@@ -549,7 +879,7 @@ const progressLabel = computed(() => {
   if (sessionObjective.value.requiredCycles > 1) {
     return `${perfectCycles.value} / ${sessionObjective.value.requiredCycles} 次平稳节奏`
   }
-  return successfulCycles.value > 0 ? '已经准备靠岸' : '完成 1 次平稳呼吸'
+  return successfulCycles.value > 0 ? variantContent.value.singleCycleReadyLabel : '完成 1 次平稳呼吸'
 })
 
 const interactionLocked = computed(() => {
@@ -560,7 +890,7 @@ const breathHint = computed(() => {
   if (phase.value === 'inhaling') return '慢慢吸气'
   if (phase.value === 'gliding') return props.difficulty === 3 ? '稳稳呼气' : '轻轻送它上升'
   if (phase.value === 'bounce') return '再试一次'
-  if (phase.value === 'finished') return '彩虹岛到了'
+  if (phase.value === 'finished') return variantContent.value.finishedLabel
   return '按住吸气'
 })
 
@@ -570,7 +900,7 @@ const buttonLabel = computed(() => {
       ? `保持 ${Math.round(sessionObjective.value.inhaleMinMs / 1000)} 秒吸气`
       : '按住开始下一轮'
   }
-  return phase.value === 'inhaling' ? '继续吸气' : '按住吸气，松开呼气'
+  return phase.value === 'inhaling' ? '继续吸气' : variantContent.value.singleButtonLabel
 })
 
 const rootStyle = computed(() => ({
@@ -586,11 +916,15 @@ const buttonStyle = computed(() => ({
 }))
 
 const balloonStyle = computed(() => {
-  const baseTop = 52 - balloonAltitude.value * 34
+  const baseTop = isDandelionVariant.value
+    ? 58 - balloonAltitude.value * 28
+    : 52 - balloonAltitude.value * 34
   const inflation = phase.value === 'inhaling'
     ? 1 + Math.min(holdMs.value / 4000, 1.25) * 0.2
     : 1
-  const tilt = phase.value === 'gliding' || phase.value === 'landing' ? -3 : 0
+  const tilt = phase.value === 'gliding' || phase.value === 'landing'
+    ? (isDandelionVariant.value ? -8 : -3)
+    : 0
 
   return {
     top: `${baseTop}%`,
@@ -733,6 +1067,7 @@ function animateAltitude(target: number, duration: number, onDone?: () => void) 
 
 function buildPerformanceData() {
   return {
+    breathing_variant: props.variant,
     successful_cycles: successfulCycles.value,
     perfect_cycles: perfectCycles.value,
     failed_releases: failedReleases.value,
@@ -771,8 +1106,8 @@ async function triggerCeremony() {
       emit('complete', {
         performanceData: buildPerformanceData(),
         badge: {
-          badgeCode: 'BADGE_CALM_WIND',
-          badgeName: '平静微风徽章',
+          badgeCode: variantContent.value.badgeCode,
+          badgeName: variantContent.value.badgeName,
         },
       })
 
@@ -795,7 +1130,7 @@ function completeBreathCycle(holdDurationMs: number) {
   if (sessionObjective.value.requiredCycles > 1) {
     perfectCycles.value += 1
     stageMessage.value = perfectCycles.value >= sessionObjective.value.requiredCycles
-      ? '最后一阵平稳的风已经准备好了，热气球要去彩虹岛了。'
+      ? variantContent.value.finalCycleMessage
       : `${sessionObjective.value.successText} 现在已经完成 ${perfectCycles.value} 次。`
 
     if (perfectCycles.value >= sessionObjective.value.requiredCycles) {
@@ -858,20 +1193,20 @@ async function endInhale() {
   longestInhaleMs.value = Math.max(longestInhaleMs.value, holdDurationMs)
 
   if (holdDurationMs < getAdaptiveInhaleMinMs()) {
-    await failWithGentleBounce('再慢一点吸气也可以，等气球更鼓一些再松手。')
+    await failWithGentleBounce(variantContent.value.tooShortReleaseMessage)
     return
   }
 
   if (props.difficulty === 2 && isCloudBlocking()) {
     cloudContacts.value += 1
-    await failWithGentleBounce('云朵还在前面，我们等它轻轻飘过去，再试一次。')
+    await failWithGentleBounce(variantContent.value.cloudBlockMessage)
     return
   }
 
   if (sessionObjective.value.requiredCycles > 1) {
     const isPerfect = holdDurationMs >= getAdaptivePerfectMinMs() && holdDurationMs <= getAdaptivePerfectMaxMs()
     if (!isPerfect) {
-      await failWithGentleBounce('这次吸气有点快或有点久了，我们试着更靠近 4 秒。')
+      await failWithGentleBounce(variantContent.value.rhythmRetryMessage)
       return
     }
   }
@@ -1053,6 +1388,25 @@ onBeforeUnmount(() => {
   transform: translateX(-50%) translateY(0) scale(1);
 }
 
+.dandelion-meadow {
+  position: absolute;
+  left: 50%;
+  bottom: 22%;
+  width: 300px;
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px) scale(0.92);
+  transition: opacity 1.2s ease, transform 1.2s ease;
+}
+
+.dandelion-meadow.no-transition {
+  transition: none;
+}
+
+.dandelion-meadow.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
 .rabbit-family {
   position: absolute;
   left: 50%;
@@ -1136,9 +1490,90 @@ onBeforeUnmount(() => {
   transition: transform 0.3s ease;
 }
 
+.balloon-wrapper--dandelion {
+  width: 188px;
+}
+
 .balloon-svg {
   width: 100%;
   filter: drop-shadow(0 22px 28px rgba(138, 84, 58, 0.24));
+}
+
+.dandelion-svg {
+  filter: drop-shadow(0 20px 30px rgba(112, 144, 93, 0.2));
+}
+
+.seed-burst {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  width: 160px;
+  height: 84px;
+  transform: translateX(-50%);
+}
+
+.seed-spark {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+}
+
+.seed-spark::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 8px;
+  width: 2px;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(122, 150, 102, 0.9);
+}
+
+.seed-spark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 0 50%;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  border-bottom-color: transparent;
+  border-right-color: transparent;
+  transform: rotate(-28deg);
+}
+
+.seed-spark-a {
+  left: 12px;
+  top: 26px;
+  transform: rotate(-14deg) scale(0.9);
+}
+
+.seed-spark-b {
+  left: 38px;
+  top: 8px;
+  transform: rotate(-4deg) scale(1.02);
+}
+
+.seed-spark-c {
+  left: 66px;
+  top: 18px;
+  transform: rotate(8deg) scale(0.94);
+}
+
+.seed-spark-d {
+  right: 48px;
+  top: 4px;
+  transform: rotate(12deg) scale(1.04);
+}
+
+.seed-spark-e {
+  right: 24px;
+  top: 24px;
+  transform: rotate(22deg) scale(0.9);
+}
+
+.seed-spark-f {
+  right: 0;
+  top: 40px;
+  transform: rotate(28deg) scale(0.84);
 }
 
 .hud-panel {
@@ -1311,6 +1746,108 @@ onBeforeUnmount(() => {
   transform: translate(-50%, -42%) scale(0.92);
 }
 
+@media (min-width: 1400px) and (orientation: landscape) {
+  .balloon-game--dandelion .sun-glow {
+    top: 10%;
+    right: 15%;
+    width: 240px;
+    height: 240px;
+  }
+
+  .balloon-game--dandelion .hud-panel {
+    top: 132px;
+    left: 36px;
+    width: 240px;
+    max-width: none;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .balloon-game--dandelion .hud-card {
+    padding: 18px 20px;
+    border-radius: 24px;
+  }
+
+  .balloon-game--dandelion .hud-label {
+    font-size: 13px;
+  }
+
+  .balloon-game--dandelion .hud-card strong {
+    font-size: 20px;
+  }
+
+  .balloon-game--dandelion .hud-card small {
+    font-size: 13px;
+  }
+
+  .balloon-game--dandelion .dandelion-meadow {
+    left: 42%;
+    bottom: 18%;
+    width: 420px;
+  }
+
+  .balloon-game--dandelion .balloon-wrapper {
+    left: 42%;
+  }
+
+  .balloon-game--dandelion .balloon-wrapper--dandelion {
+    width: 250px;
+  }
+
+  .balloon-game--dandelion .seed-burst {
+    bottom: 52px;
+    width: 200px;
+    height: 96px;
+  }
+
+  .balloon-game--dandelion .instruction-panel {
+    left: auto;
+    right: 36px;
+    top: 50%;
+    bottom: auto;
+    width: 440px;
+    padding: 30px 30px 32px;
+    align-items: stretch;
+    transform: translateY(-50%);
+  }
+
+  .balloon-game--dandelion .session-badges {
+    justify-content: flex-start;
+  }
+
+  .balloon-game--dandelion .instruction-copy {
+    text-align: left;
+  }
+
+  .balloon-game--dandelion .instruction-copy h2 {
+    font-size: 34px;
+  }
+
+  .balloon-game--dandelion .instruction-copy p {
+    font-size: 18px;
+    line-height: 1.85;
+  }
+
+  .balloon-game--dandelion .breath-button {
+    width: 100%;
+    min-height: 116px;
+    margin-top: 26px;
+    font-size: 28px;
+    box-shadow: 0 26px 34px rgba(245, 108, 108, 0.22);
+  }
+
+  .balloon-game--dandelion .badge-modal {
+    width: min(32vw, 440px);
+    padding: 34px 30px;
+  }
+
+  .balloon-game--dandelion .badge-core {
+    width: 96px;
+    height: 96px;
+    font-size: 48px;
+  }
+}
+
 @media (max-width: 900px) {
   .balloon-game {
     min-height: calc(100vh - 92px);
@@ -1350,6 +1887,11 @@ onBeforeUnmount(() => {
 
   .rainbow-island {
     width: 250px;
+    bottom: 28%;
+  }
+
+  .dandelion-meadow {
+    width: 258px;
     bottom: 28%;
   }
 }

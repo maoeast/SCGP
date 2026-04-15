@@ -280,6 +280,7 @@ const metricCards = computed<DetailRow[]>(() => {
   const raw = record.value.raw_data || {}
 
   switch (record.value.game_code) {
+    case 'C01_DANDELION':
     case 'G01_BALLOON':
       return [
         { label: '成功循环', value: formatNullableNumber(raw.successful_cycles, '次') },
@@ -327,6 +328,7 @@ const rawRows = computed<DetailRow[]>(() => {
   const raw = record.value.raw_data || {}
 
   switch (record.value.game_code) {
+    case 'C01_DANDELION':
     case 'G01_BALLOON':
       return [
         { label: '主题标题', value: String(raw.session_theme_title || '-') },
