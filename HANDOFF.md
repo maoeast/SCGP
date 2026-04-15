@@ -3,6 +3,11 @@
 > last_updated: 2026-04-15
 
 2026-04-15
+- 已完成 `C04_HOURGLASS` 详情页收口：无响应不再显示 `0ms`，开始/落库时间解析口径已统一。
+- 当前状态：`src/views/emotional/GameRecordDetail.vue` 已通过 `npm run type-check:emotional`，本轮无剩余展示遗留项。
+- 下一步：先修改 `src/data/custom-game-registry.ts`，新增 `S02_EMOTION_MIRROR` 定义并挂到 `social-communication`。
+
+2026-04-15
 - 已完成 `C04_HOURGLASS` 手工验收，并修掉情绪小游戏详情页暴露内部 `game_code` 的用户文案。
 - 当前状态：`recordId=21` 已验证自然结束落库；剩余未收口的是详情页 `平均响应 = 0ms` 与时间显示时区不一致。
 - 下一步：先修改 `src/views/emotional/GameRecordDetail.vue`，让无响应小游戏不再显示 `0ms`。

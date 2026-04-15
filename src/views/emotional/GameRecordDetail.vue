@@ -158,10 +158,28 @@ const recordId = computed(() => {
   return Number.isFinite(parsed) ? parsed : 0
 })
 
-function formatDateTime(value: string | number | null | undefined) {
+function parseDateTime(value: string | number | Date) {
+  if (value instanceof Date) {
+    return value
+  }
+
+  if (typeof value === 'number') {
+    return new Date(value)
+  }
+
+  const normalized = value.trim()
+  const sqliteUtcDateTime = normalized.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}(?::\d{2})?)$/)
+  if (sqliteUtcDateTime) {
+    return new Date(`${sqliteUtcDateTime[1]}T${sqliteUtcDateTime[2]}Z`)
+  }
+
+  return new Date(normalized)
+}
+
+function formatDateTime(value: string | number | Date | null | undefined) {
   if (value === null || value === undefined || value === '') return '-'
 
-  const date = typeof value === 'number' ? new Date(value) : new Date(value)
+  const date = parseDateTime(value)
   if (Number.isNaN(date.getTime())) {
     return typeof value === 'string' ? value : '-'
   }
@@ -188,16 +206,15 @@ function formatDuration(ms: number | null | undefined) {
 }
 
 function formatResponseTime(ms: number | null | undefined) {
-  const safeMs = Number(ms)
-  if (!Number.isFinite(safeMs) || safeMs < 0) {
+  if (typeof ms !== 'number' || !Number.isFinite(ms) || ms < 0) {
     return '-'
   }
 
-  if (safeMs < 1000) {
-    return `${Math.round(safeMs)}ms`
+  if (ms < 1000) {
+    return `${Math.round(ms)}ms`
   }
 
-  return `${(safeMs / 1000).toFixed(1)}秒`
+  return `${(ms / 1000).toFixed(1)}秒`
 }
 
 function formatPercent(rate: number | null | undefined) {
@@ -340,11 +357,16 @@ function getGameFocusLabel() {
 const summaryCards = computed<DetailRow[]>(() => {
   if (!record.value) return []
 
+  const avgResponseTime =
+    typeof record.value.avg_response_time === 'number' && Number.isFinite(record.value.avg_response_time)
+      ? formatResponseTime(record.value.avg_response_time)
+      : '-'
+
   return [
     { label: '训练状态', value: getStatusLabel(record.value.completion_status) },
     { label: '训练时长', value: formatDuration(record.value.duration) },
     { label: '估算正确率', value: formatPercent(record.value.accuracy_rate) },
-    { label: '平均响应', value: formatResponseTime(record.value.avg_response_time) },
+    { label: '平均响应', value: avgResponseTime },
   ]
 })
 
