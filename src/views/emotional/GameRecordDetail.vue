@@ -234,6 +234,16 @@ function formatNullableNumber(value: unknown, suffix = '') {
   return `${safeValue}${suffix}`
 }
 
+function formatCountPair(current: unknown, total: unknown, suffix = '题') {
+  const currentValue = Number(current)
+  const totalValue = Number(total)
+  if (!Number.isFinite(currentValue) || !Number.isFinite(totalValue)) {
+    return '-'
+  }
+
+  return `${currentValue}/${totalValue}${suffix}`
+}
+
 function formatArrayCount(value: unknown, suffix = '项') {
   if (!Array.isArray(value)) {
     return '-'
@@ -265,6 +275,69 @@ function formatBooleanLabel(value: unknown) {
   }
 
   return value ? '是' : '否'
+}
+
+function normalizeStringArray(value: unknown) {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .map((item) => String(item || '').trim())
+    .filter(Boolean)
+}
+
+const emotionMirrorScenarioLabelMap: Record<string, string> = {
+  'sticker-gift': '好友送来星星贴纸',
+  'tower-fell': '积木塔倒下来',
+  'marker-snatched': '画笔被抢走了',
+  'thunder-window': '窗外突然打雷',
+  'slide-turn': '终于轮到滑滑梯',
+  'balloon-flew-away': '气球飞走了',
+  'surprise-box': '盒子里跳出小灯球',
+  'public-praise': '老师当众表扬',
+  'puzzle-pushed': '拼图被推乱了',
+  'dog-bark': '陌生小狗突然叫',
+  'mask-jump': '朋友戴上奇怪面具',
+  'birthday-song': '大家一起唱生日快乐',
+}
+
+const emotionMirrorEmotionLabelMap: Record<string, string> = {
+  happy: '开心',
+  sad: '难过',
+  angry: '生气',
+  scared: '害怕',
+  surprised: '惊讶',
+  shy: '害羞',
+}
+
+function formatEmotionMirrorScenarioList(value: unknown) {
+  const labels = normalizeStringArray(value).map((scenarioId) => {
+    return emotionMirrorScenarioLabelMap[scenarioId] || '其他观察场景'
+  })
+
+  return labels.length > 0 ? labels.join(' / ') : '-'
+}
+
+function formatEmotionMirrorEmotionList(value: unknown) {
+  const labels = normalizeStringArray(value).map((emotionId) => {
+    return emotionMirrorEmotionLabelMap[emotionId] || '其他情绪'
+  })
+
+  return labels.length > 0 ? labels.join(' / ') : '-'
+}
+
+function formatResponseTimeList(value: unknown) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return '-'
+  }
+
+  const labels = value
+    .map((item) => Number(item))
+    .filter((item) => Number.isFinite(item) && item >= 0)
+    .map((item, index) => `第${index + 1}题 ${formatResponseTime(item)}`)
+
+  return labels.length > 0 ? labels.join(' / ') : '-'
 }
 
 function formatEventLabel(value: unknown) {
@@ -433,6 +506,13 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '安静提醒', value: formatNullableNumber(raw.calm_taps, '次') },
         { label: '完成进度', value: formatPercent(raw.progress_ratio) },
       ]
+    case 'S02_EMOTION_MIRROR':
+      return [
+        { label: '完成题目', value: formatCountPair(raw.completed_rounds, raw.target_round_count) },
+        { label: '首答命中', value: formatNullableNumber(raw.first_try_correct_count, '题') },
+        { label: '重试次数', value: formatNullableNumber(raw.wrong_attempts, '次') },
+        { label: '平均反应', value: formatResponseTime(raw.average_response_ms as number) },
+      ]
     default:
       return []
   }
@@ -500,6 +580,18 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '安静提醒次数', value: formatNullableNumber(raw.calm_taps, '次') },
         { label: '完成进度', value: formatPercent(raw.progress_ratio) },
         { label: '当前难度', value: getDifficultyLabel(raw.difficulty_level) },
+      ]
+    case 'S02_EMOTION_MIRROR':
+      return [
+        { label: '本轮完成', value: formatCountPair(raw.completed_rounds, raw.target_round_count) },
+        { label: '每题选项', value: formatNullableNumber(raw.option_count, '张') },
+        { label: '首答命中', value: formatNullableNumber(raw.first_try_correct_count, '题') },
+        { label: '总选择次数', value: formatNullableNumber(raw.total_selections, '次') },
+        { label: '估算正确率', value: formatPercent(raw.accuracy_ratio) },
+        { label: '平均反应', value: formatResponseTime(raw.average_response_ms as number) },
+        { label: '各题反应', value: formatResponseTimeList(raw.response_times_ms) },
+        { label: '出题场景', value: formatEmotionMirrorScenarioList(raw.scenario_ids) },
+        { label: '目标情绪', value: formatEmotionMirrorEmotionList(raw.scenario_emotions) },
       ]
     default:
       return Object.entries(raw).map(([key, value]) => ({

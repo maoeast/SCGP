@@ -1316,3 +1316,10 @@
   - 用户可见文案不得直出字段名、状态码、事件名或 `completed + timer_end` 一类实现术语
   - 沉浸式游戏壳必须完整覆盖可视区，不得露出 `Layout` 黑底、底部黑边或未接管背景的外层容器
 - `C04_HOURGLASS` 当前已完成最小代码闭环；下一步以手工验收结果为准，不要把未验收状态写成已收口
+
+## 39. 2026-04-15 Custom Game Record Detail Display Constraint
+
+- 跨入口自定义小游戏当前仍共用 `src/views/emotional/GameRecordDetail.vue`
+- 任何新增小游戏如果定义了专属 `performance_data`，必须同步补齐 `metricCards / rawRows` 的中文映射
+- 教师可见训练记录详情不允许直接暴露 `completed_rounds`、`scenario_ids`、`accuracy_ratio` 等程序字段名
+- 数组与枚举字段必须转成业务语言展示，不能直接 `JSON.stringify(...)`

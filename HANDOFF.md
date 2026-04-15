@@ -3,6 +3,11 @@
 > last_updated: 2026-04-15
 
 2026-04-15
+- 已完成 `S02_EMOTION_MIRROR` 最小运行链路、路由接线与训练记录详情中文化映射。
+- 当前状态：`表情猜猜乐` 可启动、可落库，详情页不再暴露程序字段名，`npm run type-check:emotional` 与 UI 验证已通过。
+- 下一步：先修改 `src/data/custom-game-registry.ts`，新增 `S04_GIFT_MATCH` 定义并挂到 `social-communication`。
+
+2026-04-15
 - 已完成 `C04_HOURGLASS` 详情页收口：无响应不再显示 `0ms`，开始/落库时间解析口径已统一。
 - 当前状态：`src/views/emotional/GameRecordDetail.vue` 已通过 `npm run type-check:emotional`，本轮无剩余展示遗留项。
 - 下一步：先修改 `src/data/custom-game-registry.ts`，新增 `S02_EMOTION_MIRROR` 定义并挂到 `social-communication`。
@@ -84,13 +89,13 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: `C04_HOURGLASS` 手工验收已完成，下一步收口详情页剩余展示问题。**
+**Active follow-up work is now in `.continue-here.md`: `S02_EMOTION_MIRROR` 已完成最小运行链路与记录详情收口，下一步进入下一个 Wave 1 目标。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is closing the remaining user-visible issues found after the `C04_HOURGLASS` manual validation
-- first action should be adjusting `src/views/emotional/GameRecordDetail.vue` so games without response-time metrics do not show `0ms`
+- current active task is continuing Wave 1 after `S02_EMOTION_MIRROR` closed cleanly
+- first action should be adding `S04_GIFT_MATCH` to `src/data/custom-game-registry.ts` under `social-communication`
 - `Phase 0` should be treated as closed unless a new regression is discovered
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`

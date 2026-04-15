@@ -293,6 +293,26 @@ const originY = canvas.height * 0.58
 4. 背景层、主体层、操作层强制分区
 5. 粒子与特效统一走全屏 canvas
 6. 收尾场景重置必须无残影
+7. 新游戏如果新增了自己的 `performance_data` 字段，必须同步补齐记录详情页的人类可读映射
+
+### 6.1 记录详情展示约束
+
+当前跨入口自定义小游戏已经共用：
+
+- `src/views/emotional/GameRecordDetail.vue`
+
+因此每新增一个小游戏时，除了能“正常落库”，还必须同步确认：
+
+- `关键表现` 区是否已经为该游戏补了教师可读指标
+- `补充记录` 区是否已经把 `scenario_ids`、`response_times_ms` 这类字段转成中文展示
+- 不能把 `completed_rounds`、`target_round_count`、`accuracy_ratio` 这类程序字段名直接暴露给老师
+
+最低要求：
+
+1. 新游戏提交时，同步检查 `GameRecordDetail.vue` 的 `metricCards` 和 `rawRows`
+2. 如果该游戏有专属 `performance_data` 结构，必须新增对应的中文标签和格式化逻辑
+3. 如果字段是数组或枚举，不要直接 `JSON.stringify(...)` 给最终用户看，必须转成“第 N 题 X 秒”“场景 A / 场景 B”“开心 / 难过”这类业务语言
+4. 只有调试页可以展示原始 key，正式训练记录详情页不允许出现面向程序员的文案
 
 ## 7. 开发自检清单
 
@@ -306,6 +326,7 @@ const originY = canvas.height * 0.58
 - [ ] 收尾场景进入下一轮时是否被立即清空
 - [ ] `quiet exit` 是否只在脏轮次写入 `aborted`
 - [ ] 是否记录了足够的 `performance_data`
+- [ ] 训练记录详情页是否已补中文化指标映射，不会直接显示 `completed_rounds`、`scenario_ids` 这类原始字段名
 
 ---
 
