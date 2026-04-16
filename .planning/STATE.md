@@ -25,7 +25,7 @@ progress:
 - **Phase**: 17 CNBS-R2016 Question Bank & Standardization Foundation
 - **Plan**: 17-01
 - **Status**: Phase 17 planning is complete. The phase is now ready to execute against the current milestone roadmap.
-- **Last activity**: 2026-04-16 - Completed quick task `260416-ofk` for `C02_PUDDLE / 水塘波纹`; added the route, runtime shell, gameplay component, and record-detail support in the working tree without changing current Phase 17 scope.
+- **Last activity**: 2026-04-16 - Completed quick task `260416-pug` for `C03_XYLOPHONE / 星空八音盒`; added the route, runtime shell, pentatonic note-play plus recording-playback flow, and record-detail support in the working tree without changing current Phase 17 scope.
 
 ## Latest Shipped Milestone
 
@@ -55,6 +55,7 @@ progress:
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260416-ofk | Implement `C02_PUDDLE / 水塘波纹` custom game end-to-end without extra refactor; keep `S03` bug untouched | 2026-04-16 | working-tree | [260416-ofk-implement-c02-puddle-custom-game-end-to-](./quick/260416-ofk-implement-c02-puddle-custom-game-end-to-/) |
+| 260416-pug | Implement `C03_XYLOPHONE / 星空八音盒` minimal runtime chain after registry addition, without extra refactor; keep `S03` bug untouched | 2026-04-16 | working-tree | [260416-pug-implement-c03-xylophone-minimal-runtime-](./quick/260416-pug-implement-c03-xylophone-minimal-runtime-/) |
 
 ## Next Action
 

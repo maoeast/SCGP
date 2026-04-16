@@ -572,6 +572,13 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '双波纹', value: formatNullableNumber(raw.dual_touch_ripples, '次') },
         { label: '平均应答', value: formatResponseTime((raw.average_prompt_response_ms as number) ?? (raw.average_hold_ms as number)) },
       ]
+    case 'C03_XYLOPHONE':
+      return [
+        { label: '总敲击数', value: formatNullableNumber(raw.note_tap_count, '次') },
+        { label: '引导命中', value: formatCountPair(raw.prompt_hits, raw.guided_prompt_count, '次') },
+        { label: '录制次数', value: formatNullableNumber(raw.recorded_phrase_count, '次') },
+        { label: '回放次数', value: formatNullableNumber(raw.playback_count, '次') },
+      ]
     case 'C01_DANDELION':
     case 'G01_BALLOON':
       return [
@@ -683,6 +690,24 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '应答记录', value: formatResponseTimeList(raw.prompt_response_times_ms, '次') },
         { label: '光圈半径', value: formatNullableNumber(raw.prompt_radius_px, ' px') },
         { label: '自由轻点模式', value: formatBooleanLabel(raw.free_play_mode) },
+        { label: '场景主题', value: String(raw.session_theme_title || '-') },
+      ]
+    case 'C03_XYLOPHONE':
+      return [
+        { label: '总敲击数', value: formatNullableNumber(raw.note_tap_count, '次') },
+        { label: '不同音条', value: formatNullableNumber(raw.unique_note_count, '种') },
+        { label: '录制次数', value: formatNullableNumber(raw.recorded_phrase_count, '次') },
+        { label: '回放次数', value: formatNullableNumber(raw.playback_count, '次') },
+        { label: '引导命中', value: formatCountPair(raw.prompt_hits, raw.guided_prompt_count, '次') },
+        { label: '提示失误', value: formatNullableNumber(raw.prompt_misses, '次') },
+        { label: '完成提示序列', value: formatNullableNumber(raw.guided_sequence_completions, '组') },
+        { label: '平均提示应答', value: formatResponseTime(raw.average_prompt_response_ms as number) },
+        { label: '平均敲击间隔', value: formatResponseTime(raw.average_tap_interval_ms as number) },
+        { label: '提示应答记录', value: formatResponseTimeList(raw.prompt_response_times_ms, '次') },
+        { label: '敲击间隔记录', value: formatResponseTimeList(raw.tap_intervals_ms, '次') },
+        { label: '最近旋律', value: formatPlainStringList(raw.recorded_note_labels) },
+        { label: '最近提示序列', value: formatPlainStringList(raw.last_guided_sequence_labels) },
+        { label: '手动完成', value: formatBooleanLabel(raw.manual_complete) },
         { label: '场景主题', value: String(raw.session_theme_title || '-') },
       ]
     case 'C01_DANDELION':

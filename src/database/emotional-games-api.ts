@@ -195,6 +195,17 @@ function deriveAccuracyRate(
       }
       break
     }
+    case 'C03_XYLOPHONE': {
+      const promptHits = Number(performanceData.prompt_hits || 0)
+      const promptMisses = Number(performanceData.prompt_misses || 0)
+      const guidedPromptCount = Number(performanceData.guided_prompt_count || 0)
+      const totalChecks = guidedPromptCount > 0 ? guidedPromptCount : promptHits + promptMisses
+
+      if (totalChecks > 0) {
+        return Math.max(0, Math.min(1, promptHits / totalChecks))
+      }
+      break
+    }
     case 'C01_DANDELION':
     case 'G01_BALLOON': {
       const successfulCycles = Number(performanceData.successful_cycles || 0)
@@ -325,6 +336,9 @@ function deriveAvgResponseTime(
     case 'C02_PUDDLE':
       return averageNumericValues(performanceData.prompt_response_times_ms)
         ?? averageNumericValues(performanceData.hold_samples_ms)
+    case 'C03_XYLOPHONE':
+      return averageNumericValues(performanceData.prompt_response_times_ms)
+        ?? averageNumericValues(performanceData.tap_intervals_ms)
     case 'C01_DANDELION':
     case 'G01_BALLOON':
       return averageNumericValues(performanceData.inhale_samples_ms)
