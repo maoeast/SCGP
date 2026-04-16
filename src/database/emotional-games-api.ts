@@ -243,6 +243,21 @@ function deriveAccuracyRate(
       }
       break
     }
+    case 'S03_STORY_SEQ': {
+      const correctSteps = Number(performanceData.correct_steps || 0)
+      const wrongSteps = Number(performanceData.wrong_steps || 0)
+      const totalAttempts = correctSteps + wrongSteps
+      if (totalAttempts > 0) {
+        return Math.max(0, Math.min(1, correctSteps / totalAttempts))
+      }
+
+      const completedStories = Number(performanceData.completed_stories || 0)
+      const targetStoryCount = Number(performanceData.target_story_count || 0)
+      if (targetStoryCount > 0) {
+        return Math.max(0, Math.min(1, completedStories / targetStoryCount))
+      }
+      break
+    }
     case 'S01_BURGER': {
       const correctPlacements = Number(performanceData.correct_placements || 0)
       const wrongPlacements = Number(performanceData.wrong_placements || 0)
@@ -281,6 +296,8 @@ function deriveAvgResponseTime(
     }
     case 'F05_BALLOONS':
       return averageNumericValues(performanceData.window_response_ms)
+    case 'S03_STORY_SEQ':
+      return averageNumericValues(performanceData.response_times_ms)
     case 'S01_BURGER':
       return averageNumericValues(performanceData.turn_times_ms)
     default:

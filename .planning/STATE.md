@@ -47,6 +47,8 @@ progress:
 - **Blockers**:
   - No structured CNBS-R2016 item bank exists in code yet; the official PDF must be digitized into a typed seed before driver implementation can be completed.
   - The CNBSR2016 feedback-config corpus must stay synchronized with the official PDF DQ status thresholds or report conclusions will drift.
+- **Pending Todos**:
+  - `2026-04-16-fix-story-seq-correct-drop-detection.md` - `S03_STORY_SEQ` currently fails to accept a correct story-card drop during manual QA; revisit target-slot hit detection and placement validation in `StorySequenceGame.vue`.
 
 ## Next Action
 

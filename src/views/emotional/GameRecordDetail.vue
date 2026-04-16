@@ -588,6 +588,13 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '重试次数', value: formatNullableNumber(raw.wrong_attempts, '次') },
         { label: '平均反应', value: formatResponseTime(raw.average_response_ms as number) },
       ]
+    case 'S03_STORY_SEQ':
+      return [
+        { label: '完成故事', value: formatCountPair(raw.completed_stories, raw.target_story_count, '段') },
+        { label: '排序成功', value: formatCountPair(raw.correct_steps, raw.target_step_count, '步') },
+        { label: '首轮命中', value: formatNullableNumber(raw.first_try_steps, '步') },
+        { label: '平均排序', value: formatResponseTime(raw.average_step_ms as number) },
+      ]
     case 'S01_BURGER':
       return [
         { label: '完成订单', value: formatCountPair(raw.completed_orders, raw.target_order_count, '个') },
@@ -681,6 +688,21 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '各题反应', value: formatResponseTimeList(raw.response_times_ms) },
         { label: '出题场景', value: formatEmotionMirrorScenarioList(raw.scenario_ids) },
         { label: '目标情绪', value: formatEmotionMirrorEmotionList(raw.scenario_emotions) },
+      ]
+    case 'S03_STORY_SEQ':
+      return [
+        { label: '完成故事', value: formatCountPair(raw.completed_stories, raw.target_story_count, '段') },
+        { label: '完成步数', value: formatCountPair(raw.correct_steps, raw.target_step_count, '步') },
+        { label: '总拖拽数', value: formatNullableNumber(raw.total_drags, '次') },
+        { label: '排序失误', value: formatNullableNumber(raw.wrong_steps, '次') },
+        { label: '平均排序', value: formatResponseTime(raw.average_step_ms as number) },
+        { label: '各步耗时', value: formatResponseTimeList(raw.response_times_ms, '步') },
+        { label: '故事清单', value: formatPlainStringList(raw.story_titles) },
+        { label: '目标顺序', value: formatPlainStringList(raw.story_target_orders) },
+        { label: '已完成故事', value: formatPlainStringList(raw.completed_story_titles) },
+        { label: '已接步骤', value: formatPlainStringList(raw.placed_step_labels) },
+        { label: '排序记录', value: formatPlainStringList(raw.placement_logs) },
+        { label: '故事主题', value: String(raw.session_theme_title || '-') },
       ]
     case 'S01_BURGER':
       return [

@@ -54,6 +54,7 @@ const CloudErasePage = () => import('@/views/emotional/games/CloudErasePage.vue'
 const BalloonTapPage = () => import('@/views/emotional/games/BalloonTapPage.vue')
 const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterPage.vue')
 const EmotionMirrorPage = () => import('@/views/emotional/games/EmotionMirrorPage.vue')
+const StorySequencePage = () => import('@/views/emotional/games/StorySequencePage.vue')
 const GiftMatchPage = () => import('@/views/emotional/games/GiftMatchPage.vue')
 const EnergyBallPage = () => import('@/views/emotional/games/EnergyBallPage.vue')
 
@@ -387,6 +388,17 @@ const router = createRouter({
           component: EmotionMirrorPage,
           meta: {
             title: '表情猜猜乐',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/story-seq',
+          name: 'StorySequenceGame',
+          component: StorySequencePage,
+          meta: {
+            title: '故事接龙板',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,
