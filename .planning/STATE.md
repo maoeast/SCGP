@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: CNBS-R2016 Assessment Integration
 status: Ready to execute
-last_updated: "2026-04-04T14:12:56.677Z"
+last_updated: "2026-04-16T08:51:03Z"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -25,7 +25,7 @@ progress:
 - **Phase**: 17 CNBS-R2016 Question Bank & Standardization Foundation
 - **Plan**: 17-01
 - **Status**: Phase 17 planning is complete. The phase is now ready to execute against the current milestone roadmap.
-- **Last activity**: 2026-04-04 - Wrote `17-RESEARCH.md`, `17-VALIDATION.md`, and `17-PLAN.md`; locked Phase 17 around typed item-bank digitization, verifier scripts, and official-threshold feedback normalization.
+- **Last activity**: 2026-04-16 - Completed quick task `260416-ofk` for `C02_PUDDLE / 水塘波纹`; added the route, runtime shell, gameplay component, and record-detail support in the working tree without changing current Phase 17 scope.
 
 ## Latest Shipped Milestone
 
@@ -49,6 +49,12 @@ progress:
   - The CNBSR2016 feedback-config corpus must stay synchronized with the official PDF DQ status thresholds or report conclusions will drift.
 - **Pending Todos**:
   - `2026-04-16-fix-story-seq-correct-drop-detection.md` - `S03_STORY_SEQ` currently fails to accept a correct story-card drop during manual QA; revisit target-slot hit detection and placement validation in `StorySequenceGame.vue`.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260416-ofk | Implement `C02_PUDDLE / 水塘波纹` custom game end-to-end without extra refactor; keep `S03` bug untouched | 2026-04-16 | working-tree | [260416-ofk-implement-c02-puddle-custom-game-end-to-](./quick/260416-ofk-implement-c02-puddle-custom-game-end-to-/) |
 
 ## Next Action
 

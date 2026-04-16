@@ -47,6 +47,7 @@ const EmotionalReport = () => import('@/views/emotional/Report.vue')
 const BalloonBreathingPage = () => import('@/views/emotional/games/BalloonBreathingPage.vue')
 const BurgerCoopPage = () => import('@/views/emotional/games/BurgerCoopPage.vue')
 const DandelionPage = () => import('@/views/emotional/games/DandelionPage.vue')
+const PuddlePage = () => import('@/views/emotional/games/PuddlePage.vue')
 const HourglassPage = () => import('@/views/emotional/games/HourglassPage.vue')
 const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
 const WipeSadnessPage = () => import('@/views/emotional/games/WipeSadnessPage.vue')
@@ -335,6 +336,17 @@ const router = createRouter({
           component: DandelionPage,
           meta: {
             title: '吹蒲公英',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/puddle',
+          name: 'PuddleGame',
+          component: PuddlePage,
+          meta: {
+            title: '水塘波纹',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

@@ -565,6 +565,13 @@ const metricCards = computed<DetailRow[]>(() => {
   const raw = record.value.raw_data || {}
 
   switch (record.value.game_code) {
+    case 'C02_PUDDLE':
+      return [
+        { label: '波纹次数', value: formatNullableNumber(raw.ripple_count, '次') },
+        { label: '柔波命中', value: formatCountPair(raw.prompt_hits, raw.guided_prompt_count, '次') },
+        { label: '双波纹', value: formatNullableNumber(raw.dual_touch_ripples, '次') },
+        { label: '平均应答', value: formatResponseTime((raw.average_prompt_response_ms as number) ?? (raw.average_hold_ms as number)) },
+      ]
     case 'C01_DANDELION':
     case 'G01_BALLOON':
       return [
@@ -662,6 +669,22 @@ const rawRows = computed<DetailRow[]>(() => {
   const raw = record.value.raw_data || {}
 
   switch (record.value.game_code) {
+    case 'C02_PUDDLE':
+      return [
+        { label: '波纹次数', value: formatNullableNumber(raw.ripple_count, '次') },
+        { label: '柔波命中', value: formatCountPair(raw.prompt_hits, raw.guided_prompt_count, '次') },
+        { label: '错过光圈', value: formatNullableNumber(raw.prompt_misses, '次') },
+        { label: '双波纹', value: formatNullableNumber(raw.dual_touch_ripples, '次') },
+        { label: '最大同时触点', value: formatNullableNumber(raw.max_concurrent_touches, '点') },
+        { label: '长按扩散', value: formatNullableNumber(raw.hold_generated_ripples, '次') },
+        { label: '平均按住', value: formatResponseTime(raw.average_hold_ms as number) },
+        { label: '平均应答', value: formatResponseTime(raw.average_prompt_response_ms as number) },
+        { label: '按住样本', value: formatResponseTimeList(raw.hold_samples_ms, '次') },
+        { label: '应答记录', value: formatResponseTimeList(raw.prompt_response_times_ms, '次') },
+        { label: '光圈半径', value: formatNullableNumber(raw.prompt_radius_px, ' px') },
+        { label: '自由轻点模式', value: formatBooleanLabel(raw.free_play_mode) },
+        { label: '场景主题', value: String(raw.session_theme_title || '-') },
+      ]
     case 'C01_DANDELION':
     case 'G01_BALLOON':
       return [
