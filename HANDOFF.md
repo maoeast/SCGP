@@ -1,6 +1,11 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-15
+> last_updated: 2026-04-16
+
+2026-04-16
+- 已完成 `S04_GIFT_MATCH` 最小运行链路、训练记录详情中文化与人工验收。
+- 当前状态：`Wave 1` 6 个目标已进入正式运行链路，`type-check:emotional` 通过，`礼物分享派对` 实机通过。
+- 下一步：先修改 `src/data/custom-game-registry.ts`，新增 `S01_BURGER` 定义并挂到 `social-communication`。
 
 2026-04-15
 - 已完成 `S02_EMOTION_MIRROR` 最小运行链路、路由接线与训练记录详情中文化映射。

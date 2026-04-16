@@ -311,6 +311,34 @@ const emotionMirrorEmotionLabelMap: Record<string, string> = {
   shy: '害羞',
 }
 
+const giftMatchRecipientLabelMap: Record<string, string> = {
+  linlin: '琳琳',
+  haohao: '浩浩',
+  mimi: '咪咪',
+  dongdong: '东东',
+  xiaoyu: '小雨',
+  qiqi: '琪琪',
+  leilei: '乐乐',
+  nana: '娜娜',
+}
+
+const giftMatchGiftLabelMap: Record<string, string> = {
+  storybook: '图画书',
+  soccerBall: '足球',
+  stickerSet: '星星贴纸',
+  puzzleBox: '拼图盒',
+  paintKit: '画笔盒彩绘',
+  plushBear: '抱抱小熊',
+  musicBox: '音乐盒',
+  toyTrain: '小火车',
+}
+
+const giftMatchThemeLabelMap: Record<string, string> = {
+  'sunny-party': '暖阳分享派对',
+  'garden-table': '花园礼物桌',
+  'rainbow-room': '彩虹庆祝屋',
+}
+
 function formatEmotionMirrorScenarioList(value: unknown) {
   const labels = normalizeStringArray(value).map((scenarioId) => {
     return emotionMirrorScenarioLabelMap[scenarioId] || '其他观察场景'
@@ -325,6 +353,48 @@ function formatEmotionMirrorEmotionList(value: unknown) {
   })
 
   return labels.length > 0 ? labels.join(' / ') : '-'
+}
+
+function formatGiftMatchRecipientList(value: unknown) {
+  const labels = normalizeStringArray(value).map((recipientId) => {
+    return giftMatchRecipientLabelMap[recipientId] || '其他小伙伴'
+  })
+
+  return labels.length > 0 ? labels.join(' / ') : '-'
+}
+
+function formatGiftMatchGiftList(value: unknown) {
+  const labels = normalizeStringArray(value).map((giftId) => {
+    return giftMatchGiftLabelMap[giftId] || '其他礼物'
+  })
+
+  return labels.length > 0 ? labels.join(' / ') : '-'
+}
+
+function formatGiftMatchPairList(value: unknown) {
+  const labels = normalizeStringArray(value)
+    .map((item) => {
+      const [recipientId, giftId] = item.split(':')
+      if (!recipientId || !giftId) {
+        return ''
+      }
+
+      const recipientLabel = giftMatchRecipientLabelMap[recipientId] || '其他小伙伴'
+      const giftLabel = giftMatchGiftLabelMap[giftId] || '其他礼物'
+      return `${recipientLabel} ← ${giftLabel}`
+    })
+    .filter(Boolean)
+
+  return labels.length > 0 ? labels.join(' / ') : '-'
+}
+
+function formatGiftMatchTheme(value: unknown) {
+  const key = String(value || '').trim()
+  if (!key) {
+    return '-'
+  }
+
+  return giftMatchThemeLabelMap[key] || key
 }
 
 function formatResponseTimeList(value: unknown) {
@@ -513,6 +583,13 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '重试次数', value: formatNullableNumber(raw.wrong_attempts, '次') },
         { label: '平均反应', value: formatResponseTime(raw.average_response_ms as number) },
       ]
+    case 'S04_GIFT_MATCH':
+      return [
+        { label: '完成配对', value: formatCountPair(raw.correct_matches, raw.pair_target_count, '组') },
+        { label: '首次命中', value: formatNullableNumber(raw.first_try_matches, '组') },
+        { label: '错误拖放', value: formatNullableNumber(raw.wrong_matches, '次') },
+        { label: '平均配对', value: formatResponseTime(raw.average_match_ms as number) },
+      ]
     default:
       return []
   }
@@ -592,6 +669,20 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '各题反应', value: formatResponseTimeList(raw.response_times_ms) },
         { label: '出题场景', value: formatEmotionMirrorScenarioList(raw.scenario_ids) },
         { label: '目标情绪', value: formatEmotionMirrorEmotionList(raw.scenario_emotions) },
+      ]
+    case 'S04_GIFT_MATCH':
+      return [
+        { label: '完成配对', value: formatCountPair(raw.correct_matches, raw.pair_target_count, '组') },
+        { label: '礼物总数', value: formatNullableNumber(raw.gift_count, '份') },
+        { label: '干扰礼物', value: formatNullableNumber(raw.distractor_gift_count, '份') },
+        { label: '总拖拽数', value: formatNullableNumber(raw.total_drags, '次') },
+        { label: '估算准确率', value: formatPercent(raw.accuracy_ratio as number) },
+        { label: '平均配对', value: formatResponseTime(raw.average_match_ms as number) },
+        { label: '各次耗时', value: formatResponseTimeList(raw.match_times_ms) },
+        { label: '分享伙伴', value: formatGiftMatchRecipientList(raw.recipient_ids) },
+        { label: '目标礼物', value: formatGiftMatchGiftList(raw.expected_gift_ids) },
+        { label: '配对顺序', value: formatGiftMatchPairList(raw.matched_pairs) },
+        { label: '派对主题', value: formatGiftMatchTheme(raw.session_theme) },
       ]
     default:
       return Object.entries(raw).map(([key, value]) => ({

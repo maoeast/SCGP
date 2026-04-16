@@ -53,6 +53,7 @@ const CloudErasePage = () => import('@/views/emotional/games/CloudErasePage.vue'
 const BalloonTapPage = () => import('@/views/emotional/games/BalloonTapPage.vue')
 const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterPage.vue')
 const EmotionMirrorPage = () => import('@/views/emotional/games/EmotionMirrorPage.vue')
+const GiftMatchPage = () => import('@/views/emotional/games/GiftMatchPage.vue')
 const EnergyBallPage = () => import('@/views/emotional/games/EnergyBallPage.vue')
 
 // 训练记录模块（Phase 4.6 重构）
@@ -374,6 +375,17 @@ const router = createRouter({
           component: EmotionMirrorPage,
           meta: {
             title: '表情猜猜乐',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/gift-match',
+          name: 'GiftMatchGame',
+          component: GiftMatchPage,
+          meta: {
+            title: '礼物分享派对',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

@@ -1323,3 +1323,10 @@
 - 任何新增小游戏如果定义了专属 `performance_data`，必须同步补齐 `metricCards / rawRows` 的中文映射
 - 教师可见训练记录详情不允许直接暴露 `completed_rounds`、`scenario_ids`、`accuracy_ratio` 等程序字段名
 - 数组与枚举字段必须转成业务语言展示，不能直接 `JSON.stringify(...)`
+
+## 40. 2026-04-16 Cross-Entry Custom Games Wave Transition Update
+
+- `S04_GIFT_MATCH` 已完成最小运行链路并通过人工验证
+- 当前现实：`Wave 1` 的 6 个目标都已进入正式运行链路
+- 新的全局约束：剩余小游戏先完成功能闭环，跨游戏 UI 细节统一延后到所有目标完成后再集中收口
+- 下一步固定为 `S01_BURGER`，作为首个验证共享场次 / 组事务写入的 `Wave 2` 目标
