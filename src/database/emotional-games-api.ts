@@ -243,6 +243,21 @@ function deriveAccuracyRate(
       }
       break
     }
+    case 'S01_BURGER': {
+      const correctPlacements = Number(performanceData.correct_placements || 0)
+      const wrongPlacements = Number(performanceData.wrong_placements || 0)
+      const totalActions = correctPlacements + wrongPlacements
+      if (totalActions > 0) {
+        return Math.max(0, Math.min(1, correctPlacements / totalActions))
+      }
+
+      const completedLayerCount = Number(performanceData.completed_layer_count || 0)
+      const targetLayerCount = Number(performanceData.target_layer_count || 0)
+      if (targetLayerCount > 0) {
+        return Math.max(0, Math.min(1, completedLayerCount / targetLayerCount))
+      }
+      break
+    }
   }
 
   return completionStatus === 'completed' ? 1 : null
@@ -266,6 +281,8 @@ function deriveAvgResponseTime(
     }
     case 'F05_BALLOONS':
       return averageNumericValues(performanceData.window_response_ms)
+    case 'S01_BURGER':
+      return averageNumericValues(performanceData.turn_times_ms)
     default:
       return null
   }

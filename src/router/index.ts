@@ -45,6 +45,7 @@ const EmotionalSessionSummary = () => import('@/views/emotional/SessionSummary.v
 const EmotionalGameRecordDetail = () => import('@/views/emotional/GameRecordDetail.vue')
 const EmotionalReport = () => import('@/views/emotional/Report.vue')
 const BalloonBreathingPage = () => import('@/views/emotional/games/BalloonBreathingPage.vue')
+const BurgerCoopPage = () => import('@/views/emotional/games/BurgerCoopPage.vue')
 const DandelionPage = () => import('@/views/emotional/games/DandelionPage.vue')
 const HourglassPage = () => import('@/views/emotional/games/HourglassPage.vue')
 const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
@@ -309,6 +310,17 @@ const router = createRouter({
           component: BalloonBreathingPage,
           meta: {
             title: '深呼吸热气球',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/burger',
+          name: 'BurgerCoopGame',
+          component: BurgerCoopPage,
+          meta: {
+            title: '合作造汉堡',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

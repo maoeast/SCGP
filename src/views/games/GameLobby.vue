@@ -134,10 +134,48 @@
                   <el-radio-button :value="3">困难</el-radio-button>
                 </el-radio-group>
               </div>
+
+              <div v-if="requiresPartnerSelection" class="preview-block">
+                <h4>协作伙伴</h4>
+                <p class="preview-block__hint">
+                  这个游戏需要 2 名学生共享同一场次，完成后会同时写入两人的训练记录。
+                </p>
+                <el-select
+                  v-model="selectedPartnerStudentId"
+                  class="partner-select"
+                  placeholder="请选择一起参与的学生"
+                  clearable
+                  :disabled="availablePartnerStudents.length === 0"
+                >
+                  <el-option
+                    v-for="candidate in availablePartnerStudents"
+                    :key="candidate.id"
+                    :label="candidate.name"
+                    :value="candidate.id"
+                  >
+                    <div class="partner-option">
+                      <span>{{ candidate.name }}</span>
+                      <small>{{ candidate.current_class_name || '未分班' }}</small>
+                    </div>
+                  </el-option>
+                </el-select>
+                <p v-if="selectedPartnerStudent" class="partner-chip">
+                  已选择搭档：{{ selectedPartnerStudent.name }}
+                </p>
+                <p v-else-if="availablePartnerStudents.length === 0" class="partner-empty">
+                  当前没有可选的第二位学生，请先在学生管理中添加学生后再开始合作游戏。
+                </p>
+              </div>
             </div>
 
             <div class="emotion-preview-actions">
-              <el-button type="primary" size="large" class="emotion-start-button" @click="handleStartEmotionalGame">
+              <el-button
+                type="primary"
+                size="large"
+                class="emotion-start-button"
+                :disabled="!canStartSelectedGame"
+                @click="handleStartEmotionalGame"
+              >
                 开始游戏
               </el-button>
             </div>
@@ -196,6 +234,8 @@ interface Student {
   student_no?: string
   disorder?: string
   avatar_path?: string
+  current_class_id?: number | null
+  current_class_name?: string | null
 }
 
 // 入口 Emoji 映射
@@ -221,16 +261,37 @@ const currentEntry = computed(() => getTrainingEntry(currentEntryCode.value))
 const activeEntries = computed(() => {
   return getAllTrainingEntries().filter((entry) => authStore.hasModuleAccess(entry.moduleCode))
 })
+const routeStudentId = Number.parseInt(route.params.studentId as string, 10) || 0
+
+function parseParticipantStudentIds(rawValue: unknown): number[] {
+  const sourceValues = Array.isArray(rawValue)
+    ? rawValue
+    : rawValue !== undefined && rawValue !== null
+      ? [rawValue]
+      : []
+
+  return Array.from(new Set(
+    sourceValues
+      .flatMap((item) => String(item || '').split(/[,\|]/))
+      .map((item) => Number(item))
+      .filter((item) => Number.isFinite(item) && item > 0)
+      .map((item) => Math.floor(item)),
+  ))
+}
 
 // 学生相关状态
-const studentId = ref<number>(parseInt(route.params.studentId as string) || 0)
+const studentId = ref<number>(routeStudentId)
 const student = ref<Student | null>(null)
 const studentLoading = ref(false)
+const allStudents = ref<Student[]>([])
+const initialParticipantIds = parseParticipantStudentIds(route.query.participantStudentIds)
+const initialPartnerStudentId = initialParticipantIds.find((id) => id !== routeStudentId) || null
 
 // 游戏选择相关状态
 const selectedGame = ref<ResourceItem | null>(null)
 const selectedCategory = ref<string>('all')
 const selectedEmotionalDifficulty = ref<1 | 2 | 3>(1)
+const selectedPartnerStudentId = ref<number | null>(initialPartnerStudentId)
 
 const isEmotionalEntry = computed(() => currentEntryCode.value === 'emotional-regulation')
 
@@ -269,6 +330,32 @@ const registryBackedGames = computed(() => {
 })
 
 const usesRegistryBackedGameLobby = computed(() => registryBackedGames.value.length > 0)
+const selectedGameMaxPlayers = computed(() => {
+  const raw = Number(selectedGame.value?.metadata?.maxPlayers || 1)
+  return raw === 2 ? 2 : 1
+})
+const requiresPartnerSelection = computed(() => selectedGameMaxPlayers.value > 1)
+const availablePartnerStudents = computed(() => {
+  return allStudents.value.filter((candidate) => candidate.id !== studentId.value)
+})
+const selectedPartnerStudent = computed(() => {
+  if (!selectedPartnerStudentId.value) {
+    return null
+  }
+
+  return availablePartnerStudents.value.find((candidate) => candidate.id === selectedPartnerStudentId.value) || null
+})
+const canStartSelectedGame = computed(() => {
+  if (!selectedGame.value) {
+    return false
+  }
+
+  if (!requiresPartnerSelection.value) {
+    return true
+  }
+
+  return Boolean(selectedPartnerStudent.value)
+})
 
 // 获取入口 Emoji
 const getEntryEmoji = (entryCode: TrainingEntryCode): string => {
@@ -310,6 +397,7 @@ const handleEntryChange = (newEntryCode: TrainingEntryCode) => {
   selectedGame.value = null
   selectedCategory.value = 'all'
   selectedEmotionalDifficulty.value = 1
+  selectedPartnerStudentId.value = null
   currentEntryCode.value = newEntryCode
 
   // 更新 URL（保持学生ID不变）
@@ -351,6 +439,17 @@ const loadStudent = async () => {
     goBackToStudentList()
   } finally {
     studentLoading.value = false
+  }
+}
+
+const loadStudents = async () => {
+  try {
+    const api = new StudentAPI()
+    const students = await api.getAllStudents()
+    allStudents.value = Array.isArray(students) ? students : []
+  } catch (error: any) {
+    console.error('加载学生列表失败:', error)
+    ElMessage.error('加载学生列表失败')
   }
 }
 
@@ -398,20 +497,32 @@ const handleStartGame = (gameConfig: {
 const handleStartEmotionalGame = () => {
   if (!selectedGame.value) return
 
+  if (requiresPartnerSelection.value && !selectedPartnerStudent.value) {
+    ElMessage.warning('合作造汉堡需要先选择一位协作伙伴')
+    return
+  }
+
   const entryPath = typeof selectedGame.value.metadata?.entryPath === 'string'
     ? selectedGame.value.metadata.entryPath
     : '/emotional/games/balloon'
 
+  const query: Record<string, string> = {
+    entry: currentEntryCode.value,
+    module: currentEntry.value.moduleCode,
+    studentId: String(studentId.value),
+    studentName: student.value?.name || '',
+    difficulty: String(selectedEmotionalDifficulty.value),
+    difficultyLocked: String(Boolean(selectedGame.value.metadata?.difficultyLocked)),
+  }
+
+  if (requiresPartnerSelection.value && selectedPartnerStudent.value) {
+    query.participantStudentIds = [studentId.value, selectedPartnerStudent.value.id].join(',')
+    query.participantStudentNames = [student.value?.name || '', selectedPartnerStudent.value.name].join('|')
+  }
+
   router.push({
-      path: entryPath,
-      query: {
-        entry: currentEntryCode.value,
-        module: currentEntry.value.moduleCode,
-        studentId: String(studentId.value),
-        studentName: student.value?.name || '',
-      difficulty: String(selectedEmotionalDifficulty.value),
-      difficultyLocked: String(Boolean(selectedGame.value.metadata?.difficultyLocked)),
-    },
+    path: entryPath,
+    query,
   })
 }
 
@@ -434,7 +545,10 @@ onMounted(async () => {
     return
   }
 
-  await loadStudent()
+  await Promise.all([
+    loadStudent(),
+    loadStudents(),
+  ])
 
 })
 
@@ -461,6 +575,34 @@ watch(usesRegistryBackedGameLobby, (value) => {
     selectedGame.value = null
   }
 })
+
+watch(
+  [requiresPartnerSelection, availablePartnerStudents],
+  ([requiresPartner]) => {
+    if (!requiresPartner) {
+      selectedPartnerStudentId.value = null
+      return
+    }
+
+    const hasCurrentSelection = availablePartnerStudents.value.some((candidate) => candidate.id === selectedPartnerStudentId.value)
+    if (hasCurrentSelection) {
+      return
+    }
+
+    if (initialPartnerStudentId && availablePartnerStudents.value.some((candidate) => candidate.id === initialPartnerStudentId)) {
+      selectedPartnerStudentId.value = initialPartnerStudentId
+      return
+    }
+
+    if (availablePartnerStudents.value.length === 1) {
+      selectedPartnerStudentId.value = availablePartnerStudents.value[0]?.id || null
+      return
+    }
+
+    selectedPartnerStudentId.value = null
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>
@@ -589,6 +731,40 @@ watch(usesRegistryBackedGameLobby, (value) => {
   margin: 0;
   color: #6a6a6a;
   line-height: 1.7;
+}
+
+.preview-block__hint {
+  margin-bottom: 12px !important;
+}
+
+.partner-select {
+  width: 100%;
+}
+
+.partner-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.partner-option small {
+  color: #909399;
+}
+
+.partner-chip,
+.partner-empty {
+  margin-top: 10px !important;
+  font-size: 13px;
+}
+
+.partner-chip {
+  color: #7a5618 !important;
+}
+
+.partner-empty {
+  color: #c05621 !important;
 }
 
 .emotion-preview-actions {

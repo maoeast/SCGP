@@ -287,6 +287,11 @@ function normalizeStringArray(value: unknown) {
     .filter(Boolean)
 }
 
+function formatPlainStringList(value: unknown) {
+  const labels = normalizeStringArray(value)
+  return labels.length > 0 ? labels.join(' / ') : '-'
+}
+
 const emotionMirrorScenarioLabelMap: Record<string, string> = {
   'sticker-gift': '好友送来星星贴纸',
   'tower-fell': '积木塔倒下来',
@@ -397,7 +402,7 @@ function formatGiftMatchTheme(value: unknown) {
   return giftMatchThemeLabelMap[key] || key
 }
 
-function formatResponseTimeList(value: unknown) {
+function formatResponseTimeList(value: unknown, itemLabel = '题') {
   if (!Array.isArray(value) || value.length === 0) {
     return '-'
   }
@@ -405,7 +410,7 @@ function formatResponseTimeList(value: unknown) {
   const labels = value
     .map((item) => Number(item))
     .filter((item) => Number.isFinite(item) && item >= 0)
-    .map((item, index) => `第${index + 1}题 ${formatResponseTime(item)}`)
+    .map((item, index) => `第${index + 1}${itemLabel} ${formatResponseTime(item)}`)
 
   return labels.length > 0 ? labels.join(' / ') : '-'
 }
@@ -583,6 +588,13 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '重试次数', value: formatNullableNumber(raw.wrong_attempts, '次') },
         { label: '平均反应', value: formatResponseTime(raw.average_response_ms as number) },
       ]
+    case 'S01_BURGER':
+      return [
+        { label: '完成订单', value: formatCountPair(raw.completed_orders, raw.target_order_count, '个') },
+        { label: '正确放置', value: formatCountPair(raw.correct_placements, raw.target_layer_count, '层') },
+        { label: '误放次数', value: formatNullableNumber(raw.wrong_placements, '次') },
+        { label: '平均放置', value: formatResponseTime(raw.average_turn_ms as number) },
+      ]
     case 'S04_GIFT_MATCH':
       return [
         { label: '完成配对', value: formatCountPair(raw.correct_matches, raw.pair_target_count, '组') },
@@ -669,6 +681,23 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '各题反应', value: formatResponseTimeList(raw.response_times_ms) },
         { label: '出题场景', value: formatEmotionMirrorScenarioList(raw.scenario_ids) },
         { label: '目标情绪', value: formatEmotionMirrorEmotionList(raw.scenario_emotions) },
+      ]
+    case 'S01_BURGER':
+      return [
+        { label: '完成订单', value: formatCountPair(raw.completed_orders, raw.target_order_count, '个') },
+        { label: '完成层数', value: formatCountPair(raw.completed_layer_count, raw.target_layer_count, '层') },
+        { label: '首轮命中', value: formatNullableNumber(raw.first_try_layers, '层') },
+        { label: '总放置数', value: formatNullableNumber(raw.total_actions, '次') },
+        { label: '平均放置', value: formatResponseTime(raw.average_turn_ms as number) },
+        { label: '各次耗时', value: formatResponseTimeList(raw.turn_times_ms, '次') },
+        { label: '参与学生', value: formatPlainStringList(raw.participant_names) },
+        { label: '订单清单', value: formatPlainStringList(raw.recipe_titles) },
+        { label: '已完成订单', value: formatPlainStringList(raw.completed_recipe_titles) },
+        { label: '已放配料', value: formatPlainStringList(raw.completed_layer_labels) },
+        { label: '轮流摘要', value: formatPlainStringList(raw.participant_turn_summary) },
+        { label: '放置记录', value: formatPlainStringList(raw.turn_log_labels) },
+        { label: '厨房主题', value: String(raw.session_theme_title || '-') },
+        { label: '起始学生', value: String(raw.starting_player_name || '-') },
       ]
     case 'S04_GIFT_MATCH':
       return [
