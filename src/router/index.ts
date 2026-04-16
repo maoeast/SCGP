@@ -51,6 +51,8 @@ const HourglassPage = () => import('@/views/emotional/games/HourglassPage.vue')
 const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
 const WipeSadnessPage = () => import('@/views/emotional/games/WipeSadnessPage.vue')
 const CloudErasePage = () => import('@/views/emotional/games/CloudErasePage.vue')
+const StarTracePage = () => import('@/views/emotional/games/StarTracePage.vue')
+const RecyclingSortPage = () => import('@/views/emotional/games/RecyclingSortPage.vue')
 const BalloonTapPage = () => import('@/views/emotional/games/BalloonTapPage.vue')
 const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterPage.vue')
 const EmotionMirrorPage = () => import('@/views/emotional/games/EmotionMirrorPage.vue')
@@ -421,6 +423,28 @@ const router = createRouter({
           component: CloudErasePage,
           meta: {
             title: '云朵擦擦擦',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/star-trace',
+          name: 'StarTraceGame',
+          component: StarTracePage,
+          meta: {
+            title: '连线小星座',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/recycling',
+          name: 'RecyclingSortGame',
+          component: RecyclingSortPage,
+          meta: {
+            title: '分拣小能手',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

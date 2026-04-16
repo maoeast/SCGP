@@ -218,6 +218,34 @@ function deriveAccuracyRate(
       }
       break
     }
+    case 'F02_STAR_TRACE': {
+      const pathPrecisionRatio = Number(performanceData.path_precision_ratio)
+      if (Number.isFinite(pathPrecisionRatio)) {
+        return Math.max(0, Math.min(1, pathPrecisionRatio))
+      }
+
+      const checkpointHits = Number(performanceData.checkpoint_hits || 0)
+      const targetCheckpointCount = Number(performanceData.target_checkpoint_count || 0)
+      if (targetCheckpointCount > 0) {
+        return Math.max(0, Math.min(1, checkpointHits / targetCheckpointCount))
+      }
+      break
+    }
+    case 'F03_RECYCLING': {
+      const sortedItems = Number(performanceData.sorted_items || 0)
+      const wrongDrops = Number(performanceData.wrong_drops || 0)
+      const missedItems = Number(performanceData.missed_items || 0)
+      const totalAttempts = sortedItems + wrongDrops + missedItems
+      if (totalAttempts > 0) {
+        return Math.max(0, Math.min(1, sortedItems / totalAttempts))
+      }
+
+      const targetItemCount = Number(performanceData.target_item_count || 0)
+      if (targetItemCount > 0) {
+        return Math.max(0, Math.min(1, sortedItems / targetItemCount))
+      }
+      break
+    }
     case 'F05_BALLOONS': {
       const successfulPops = Number(performanceData.successful_pops || 0)
       const earlyTaps = Number(performanceData.early_taps || 0)
@@ -294,6 +322,10 @@ function deriveAvgResponseTime(
       }
       return null
     }
+    case 'F02_STAR_TRACE':
+      return averageNumericValues(performanceData.constellation_durations_ms)
+    case 'F03_RECYCLING':
+      return averageNumericValues(performanceData.sort_times_ms)
     case 'F05_BALLOONS':
       return averageNumericValues(performanceData.window_response_ms)
     case 'S03_STORY_SEQ':

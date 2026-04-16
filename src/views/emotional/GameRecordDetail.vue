@@ -344,6 +344,24 @@ const giftMatchThemeLabelMap: Record<string, string> = {
   'rainbow-room': '彩虹庆祝屋',
 }
 
+const recyclingItemLabelMap: Record<string, string> = {
+  newspaper: '旧报纸',
+  'cardboard-box': '纸盒',
+  'drawing-paper': '卡纸',
+  'plastic-bottle': '塑料瓶',
+  'yogurt-cup': '酸奶杯',
+  'plastic-tray': '塑料盒',
+  'banana-peel': '香蕉皮',
+  'apple-core': '苹果核',
+  'vegetable-leaf': '菜叶',
+}
+
+const recyclingBinLabelMap: Record<string, string> = {
+  paper: '纸类桶',
+  plastic: '塑料桶',
+  food: '厨余桶',
+}
+
 function formatEmotionMirrorScenarioList(value: unknown) {
   const labels = normalizeStringArray(value).map((scenarioId) => {
     return emotionMirrorScenarioLabelMap[scenarioId] || '其他观察场景'
@@ -400,6 +418,16 @@ function formatGiftMatchTheme(value: unknown) {
   }
 
   return giftMatchThemeLabelMap[key] || key
+}
+
+function formatRecyclingItemList(value: unknown) {
+  const labels = normalizeStringArray(value).map((itemId) => recyclingItemLabelMap[itemId] || '其他物品')
+  return labels.length > 0 ? labels.join(' / ') : '-'
+}
+
+function formatRecyclingBinList(value: unknown) {
+  const labels = normalizeStringArray(value).map((binId) => recyclingBinLabelMap[binId] || '其他分类桶')
+  return labels.length > 0 ? labels.join(' / ') : '-'
 }
 
 function formatResponseTimeList(value: unknown, itemLabel = '题') {
@@ -560,6 +588,20 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '回潮次数', value: formatNullableNumber(raw.regen_events, '次') },
         { label: '网格清理', value: `${formatNullableNumber(raw.fully_cleared_cells)}/${formatNullableNumber(raw.grid_cells_total)}` },
       ]
+    case 'F02_STAR_TRACE':
+      return [
+        { label: '完成星座', value: formatCountPair(raw.completed_constellations, raw.target_constellation_count, '段') },
+        { label: '命中星点', value: formatCountPair(raw.checkpoint_hits, raw.target_checkpoint_count, '点') },
+        { label: '轨迹精度', value: formatPercent(raw.path_precision_ratio) },
+        { label: '平均耗时', value: formatResponseTime(raw.average_constellation_ms as number) },
+      ]
+    case 'F03_RECYCLING':
+      return [
+        { label: '完成分拣', value: formatCountPair(raw.sorted_items, raw.target_item_count, '件') },
+        { label: '错误投放', value: formatNullableNumber(raw.wrong_drops, '次') },
+        { label: '漏掉物品', value: formatNullableNumber(raw.missed_items, '次') },
+        { label: '平均分拣', value: formatResponseTime(raw.average_sort_ms as number) },
+      ]
     case 'F05_BALLOONS':
       return [
         { label: '成功刺破', value: formatNullableNumber(raw.successful_pops, '次') },
@@ -648,6 +690,35 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '最大层数', value: formatNullableNumber(raw.max_strength_layers, '层') },
         { label: '目标清理率', value: formatPercent(raw.target_ratio) },
         { label: '主题编码', value: String(raw.theme_key || '-') },
+      ]
+    case 'F02_STAR_TRACE':
+      return [
+        { label: '完成星座', value: formatCountPair(raw.completed_constellations, raw.target_constellation_count, '段') },
+        { label: '命中星点', value: formatCountPair(raw.checkpoint_hits, raw.target_checkpoint_count, '点') },
+        { label: '在轨样本', value: formatNullableNumber(raw.on_path_samples, '次') },
+        { label: '偏离样本', value: formatNullableNumber(raw.off_path_samples, '次') },
+        { label: '平均偏移', value: formatNullableNumber(raw.average_deviation_px, ' px') },
+        { label: '总轨迹长', value: formatNullableNumber(raw.trace_distance_px, ' px') },
+        { label: '重来次数', value: formatNullableNumber(raw.aborted_traces, '次') },
+        { label: '各轮耗时', value: formatResponseTimeList(raw.constellation_durations_ms, '段') },
+        { label: '星座清单', value: formatPlainStringList(raw.constellation_titles) },
+        { label: '已完成星座', value: formatPlainStringList(raw.completed_constellation_titles) },
+        { label: '夜空主题', value: String(raw.session_theme_title || '-') },
+      ]
+    case 'F03_RECYCLING':
+      return [
+        { label: '完成分拣', value: formatCountPair(raw.sorted_items, raw.target_item_count, '件') },
+        { label: '错误投放', value: formatNullableNumber(raw.wrong_drops, '次') },
+        { label: '漏掉物品', value: formatNullableNumber(raw.missed_items, '次') },
+        { label: '总拖拽数', value: formatNullableNumber(raw.total_drags, '次') },
+        { label: '平均分拣', value: formatResponseTime(raw.average_sort_ms as number) },
+        { label: '各次耗时', value: formatResponseTimeList(raw.sort_times_ms, '次') },
+        { label: '掉落物品', value: formatRecyclingItemList(raw.queue_item_ids) },
+        { label: '已分拣物品', value: formatRecyclingItemList(raw.sorted_item_ids) },
+        { label: '投放分类桶', value: formatRecyclingBinList(raw.sorted_bin_ids) },
+        { label: '分类桶', value: formatPlainStringList(raw.bin_labels) },
+        { label: '掉落速度', value: `${formatNullableNumber(raw.fall_speed_min_px, ' px/s')} - ${formatNullableNumber(raw.fall_speed_max_px, ' px/s')}` },
+        { label: '场景主题', value: String(raw.session_theme_title || '-') },
       ]
     case 'F05_BALLOONS':
       return [
