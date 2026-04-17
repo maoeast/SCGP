@@ -271,7 +271,7 @@ const DIFFICULTY_CONFIGS: Record<EmotionGameDifficulty, DifficultyConfig> = {
     completionText: '这段小旋律已经收进星光八音盒里啦。',
     minTapsToComplete: 8,
     guideSequenceLength: 0,
-    maxRecordingNotes: 6,
+    maxRecordingNotes: 24,
   },
   2: {
     label: '中等 · 三音跟弹',
@@ -282,7 +282,7 @@ const DIFFICULTY_CONFIGS: Record<EmotionGameDifficulty, DifficultyConfig> = {
     completionText: '你已经把星光提示稳稳接住了，这一轮的旋律也保存好了。',
     minTapsToComplete: 10,
     guideSequenceLength: 3,
-    maxRecordingNotes: 7,
+    maxRecordingNotes: 48,
   },
   3: {
     label: '困难 · 四音跟弹',
@@ -293,7 +293,7 @@ const DIFFICULTY_CONFIGS: Record<EmotionGameDifficulty, DifficultyConfig> = {
     completionText: '长一点的星空旋律也已经收好了，你做得很稳。',
     minTapsToComplete: 12,
     guideSequenceLength: 4,
-    maxRecordingNotes: 8,
+    maxRecordingNotes: 72,
   },
 }
 
@@ -867,6 +867,12 @@ function finishSession() {
       performanceData: buildPerformanceData(),
     })
   }, 860)
+
+  playbackTimers.push(window.setTimeout(() => {
+    if (!props.paused) {
+      resetForDifficulty(activeDifficulty.value)
+    }
+  }, 2900))
 }
 
 watch(() => props.difficulty, (nextDifficulty) => {

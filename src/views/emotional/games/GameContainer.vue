@@ -543,7 +543,7 @@ const difficulty = ref<EmotionGameDifficulty>(props.launchContext.initialDifficu
 const isPaused = ref(false)
 const persistenceMessage = ref('')
 const isPersisting = ref(false)
-const sessionStartedAt = Date.now()
+const sessionStartedAt = ref<number | null>(null)
 const hasDirtyRound = ref(false)
 const suppressLeaveAbort = ref(false)
 const activeSessionGroupId = ref(resolveInitialSessionGroupId())
@@ -818,6 +818,9 @@ function buildReturnQuery() {
 }
 
 function markRoundDirty() {
+  if (!hasDirtyRound.value) {
+    sessionStartedAt.value = Date.now()
+  }
   hasDirtyRound.value = true
 }
 
@@ -896,6 +899,8 @@ async function persistTerminalState(
   isPersisting.value = true
 
   try {
+    const startedAtMs = sessionStartedAt.value ?? Date.now()
+
     if (isGroupLaunch.value) {
       const groupPayload = normalizeGroupPayload(status, payload)
       const sessionGroupId = groupPayload.sessionGroupId || createSessionGroupId()
@@ -904,8 +909,8 @@ async function persistTerminalState(
       const result = await api.persistSessionGroup({
         gameCode: props.gameCode,
         participantStudentIds: groupPayload.participantStudentIds,
-        startedAt: new Date(sessionStartedAt).toISOString(),
-        durationMs: Date.now() - sessionStartedAt,
+        startedAt: new Date(startedAtMs).toISOString(),
+        durationMs: Date.now() - startedAtMs,
         difficultyLevel: difficulty.value,
         completionStatus: status,
         performanceData: groupPayload.performanceData,
@@ -922,8 +927,8 @@ async function persistTerminalState(
       const result = await api.persistSession({
         studentId: primaryStudentId.value,
         gameCode: props.gameCode,
-        startedAt: new Date(sessionStartedAt).toISOString(),
-        durationMs: Date.now() - sessionStartedAt,
+        startedAt: new Date(startedAtMs).toISOString(),
+        durationMs: Date.now() - startedAtMs,
         difficultyLevel: difficulty.value,
         completionStatus: status,
         performanceData: payload?.performanceData || buildDefaultPerformanceData(status, exitTrigger),
@@ -936,6 +941,11 @@ async function persistTerminalState(
       persistenceMessage.value = status === 'completed'
         ? `已静默保存本次训练${result.badgeUnlockCount ? `，徽章累计 ${result.badgeUnlockCount} 次` : ''}`
         : '已安静保存本次中断记录'
+    }
+
+    sessionStartedAt.value = null
+    if (isGroupLaunch.value) {
+      activeSessionGroupId.value = createSessionGroupId()
     }
 
     if (messageTimer) {
