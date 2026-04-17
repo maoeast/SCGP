@@ -55,6 +55,7 @@ const WipeSadnessPage = () => import('@/views/emotional/games/WipeSadnessPage.vu
 const CloudErasePage = () => import('@/views/emotional/games/CloudErasePage.vue')
 const StarTracePage = () => import('@/views/emotional/games/StarTracePage.vue')
 const RecyclingSortPage = () => import('@/views/emotional/games/RecyclingSortPage.vue')
+const TrackBuildPage = () => import('@/views/emotional/games/TrackBuildPage.vue')
 const BalloonTapPage = () => import('@/views/emotional/games/BalloonTapPage.vue')
 const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterPage.vue')
 const EmotionMirrorPage = () => import('@/views/emotional/games/EmotionMirrorPage.vue')
@@ -469,6 +470,17 @@ const router = createRouter({
           component: RecyclingSortPage,
           meta: {
             title: '分拣小能手',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/track-build',
+          name: 'TrackBuildGame',
+          component: TrackBuildPage,
+          meta: {
+            title: '轨道修补匠',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

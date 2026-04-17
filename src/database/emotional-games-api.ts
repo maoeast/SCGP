@@ -268,6 +268,20 @@ function deriveAccuracyRate(
       }
       break
     }
+    case 'F04_TRACK_BUILD': {
+      const correctPlacements = Number(performanceData.correct_placements || 0)
+      const wrongPlacements = Number(performanceData.wrong_placements || 0)
+      const totalAttempts = correctPlacements + wrongPlacements
+      if (totalAttempts > 0) {
+        return Math.max(0, Math.min(1, correctPlacements / totalAttempts))
+      }
+
+      const targetGapCount = Number(performanceData.target_gap_count || 0)
+      if (targetGapCount > 0) {
+        return Math.max(0, Math.min(1, correctPlacements / targetGapCount))
+      }
+      break
+    }
     case 'F05_BALLOONS': {
       const successfulPops = Number(performanceData.successful_pops || 0)
       const earlyTaps = Number(performanceData.early_taps || 0)
@@ -354,6 +368,11 @@ function deriveAvgResponseTime(
       return averageNumericValues(performanceData.constellation_durations_ms)
     case 'F03_RECYCLING':
       return averageNumericValues(performanceData.sort_times_ms)
+    case 'F04_TRACK_BUILD':
+      return averageNumericValues(performanceData.placement_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_placement_ms))
+          ? Number(performanceData.average_placement_ms)
+          : null)
     case 'F05_BALLOONS':
       return averageNumericValues(performanceData.window_response_ms)
     case 'S03_STORY_SEQ':

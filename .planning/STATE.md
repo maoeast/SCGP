@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: CNBS-R2016 Assessment Integration
 status: Ready to execute
-last_updated: "2026-04-16T08:51:03Z"
+last_updated: "2026-04-17T04:48:49Z"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -25,7 +25,7 @@ progress:
 - **Phase**: 17 CNBS-R2016 Question Bank & Standardization Foundation
 - **Plan**: 17-01
 - **Status**: Phase 17 planning is complete. The phase is now ready to execute against the current milestone roadmap.
-- **Last activity**: 2026-04-16 - Completed quick task `260416-pug` for `C03_XYLOPHONE / 星空八音盒`; added the route, runtime shell, pentatonic note-play plus recording-playback flow, and record-detail support in the working tree without changing current Phase 17 scope.
+- **Last activity**: 2026-04-17 - `F04_TRACK_BUILD / 轨道修补匠` passed real UI acceptance after quick tasks `260417-iot` and `260417-iwc`; the next Wave 3 target is `S05_ECHO_PARROT / 动物传声筒` via `gsd-quick`.
 
 ## Latest Shipped Milestone
 
@@ -56,6 +56,8 @@ progress:
 |---|-------------|------|--------|-----------|
 | 260416-ofk | Implement `C02_PUDDLE / 水塘波纹` custom game end-to-end without extra refactor; keep `S03` bug untouched | 2026-04-16 | working-tree | [260416-ofk-implement-c02-puddle-custom-game-end-to-](./quick/260416-ofk-implement-c02-puddle-custom-game-end-to-/) |
 | 260416-pug | Implement `C03_XYLOPHONE / 星空八音盒` minimal runtime chain after registry addition, without extra refactor; keep `S03` bug untouched | 2026-04-16 | working-tree | [260416-pug-implement-c03-xylophone-minimal-runtime-](./quick/260416-pug-implement-c03-xylophone-minimal-runtime-/) |
+| 260417-iot | Implement `F04_TRACK_BUILD / 轨道修补匠` registry definition in `src/data/custom-game-registry.ts` and attach it to `fine-motor`; do not fix `S03` bug | 2026-04-17 | working-tree | [260417-iot-implement-f04-track-build-registry-defin](./quick/260417-iot-implement-f04-track-build-registry-defin/) |
+| 260417-iwc | Implement `F04_TRACK_BUILD / 轨道修补匠` minimal runtime chain after registry addition: add page, gameplay component, route, and record-summary/detail support; keep `S03` bug untouched | 2026-04-17 | working-tree | [260417-iwc-implement-f04-track-build-minimal-runtim](./quick/260417-iwc-implement-f04-track-build-minimal-runtim/) |
 
 ## Next Action
 

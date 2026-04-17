@@ -616,6 +616,13 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '漏掉物品', value: formatNullableNumber(raw.missed_items, '次') },
         { label: '平均分拣', value: formatResponseTime(raw.average_sort_ms as number) },
       ]
+    case 'F04_TRACK_BUILD':
+      return [
+        { label: '修补轨道', value: formatCountPair(raw.correct_placements, raw.target_gap_count, '段') },
+        { label: '完成线路', value: formatCountPair(raw.completed_layout_count, raw.target_layout_count, '条') },
+        { label: '旋转调整', value: formatNullableNumber(raw.rotation_adjustments, '次') },
+        { label: '平均修补', value: formatResponseTime(raw.average_placement_ms as number) },
+      ]
     case 'F05_BALLOONS':
       return [
         { label: '成功刺破', value: formatNullableNumber(raw.successful_pops, '次') },
@@ -766,6 +773,23 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '投放分类桶', value: formatRecyclingBinList(raw.sorted_bin_ids) },
         { label: '分类桶', value: formatPlainStringList(raw.bin_labels) },
         { label: '掉落速度', value: `${formatNullableNumber(raw.fall_speed_min_px, ' px/s')} - ${formatNullableNumber(raw.fall_speed_max_px, ' px/s')}` },
+        { label: '场景主题', value: String(raw.session_theme_title || '-') },
+      ]
+    case 'F04_TRACK_BUILD':
+      return [
+        { label: '修补轨道', value: formatCountPair(raw.correct_placements, raw.target_gap_count, '段') },
+        { label: '完成线路', value: formatCountPair(raw.completed_layout_count, raw.target_layout_count, '条') },
+        { label: '错误放置', value: formatNullableNumber(raw.wrong_placements, '次') },
+        { label: '旋转调整', value: formatNullableNumber(raw.rotation_adjustments, '次') },
+        { label: '选取轨道件', value: formatNullableNumber(raw.piece_selections, '次') },
+        { label: '平均修补', value: formatResponseTime(raw.average_placement_ms as number) },
+        { label: '平均线路', value: formatResponseTime(raw.average_layout_ms as number) },
+        { label: '各段耗时', value: formatResponseTimeList(raw.placement_times_ms, '段') },
+        { label: '各线耗时', value: formatResponseTimeList(raw.layout_durations_ms, '条') },
+        { label: '线路清单', value: formatPlainStringList(raw.layout_titles) },
+        { label: '已完成线路', value: formatPlainStringList(raw.completed_layout_titles) },
+        { label: '已放轨道件', value: formatPlainStringList(raw.placed_piece_labels) },
+        { label: '控制模式', value: String(raw.control_mode || '-') },
         { label: '场景主题', value: String(raw.session_theme_title || '-') },
       ]
     case 'F05_BALLOONS':
