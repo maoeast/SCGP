@@ -672,6 +672,13 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '错误拖放', value: formatNullableNumber(raw.wrong_matches, '次') },
         { label: '平均配对', value: formatResponseTime(raw.average_match_ms as number) },
       ]
+    case 'S05_ECHO_PARROT':
+      return [
+        { label: '完成回合', value: formatCountPair(raw.completed_rounds, raw.target_round_count, '轮') },
+        { label: '首轮模仿', value: formatNullableNumber(raw.first_try_rounds, '轮') },
+        { label: '短句重试', value: formatNullableNumber(raw.short_attempts, '次') },
+        { label: '平均回应', value: formatResponseTime(raw.average_response_ms as number) },
+      ]
     default:
       return []
   }
@@ -877,6 +884,25 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '目标礼物', value: formatGiftMatchGiftList(raw.expected_gift_ids) },
         { label: '配对顺序', value: formatGiftMatchPairList(raw.matched_pairs) },
         { label: '派对主题', value: formatGiftMatchTheme(raw.session_theme) },
+      ]
+    case 'S05_ECHO_PARROT':
+      return [
+        { label: '完成回合', value: formatCountPair(raw.completed_rounds, raw.target_round_count, '轮') },
+        { label: '首轮模仿', value: formatNullableNumber(raw.first_try_rounds, '轮') },
+        { label: '模仿尝试', value: formatNullableNumber(raw.voice_attempt_count, '次') },
+        { label: '提示重播', value: formatNullableNumber(raw.prompt_replays, '次') },
+        { label: '短句重试', value: formatNullableNumber(raw.short_attempts, '次') },
+        { label: '平均回应', value: formatResponseTime(raw.average_response_ms as number) },
+        { label: '平均发声', value: formatResponseTime(raw.average_voice_ms as number) },
+        { label: '最长连续发声', value: formatResponseTime(raw.max_continuous_voice_ms as number) },
+        { label: '峰值音量', value: formatNullableNumber(raw.mapped_peak_db, ' dB') },
+        { label: '噪声基线', value: formatNullableNumber(raw.noise_floor_dbfs, ' dBFS') },
+        { label: '发声阈值', value: formatNullableNumber(raw.voice_threshold_dbfs, ' dBFS') },
+        { label: '麦克风授权', value: raw.mic_permission_granted ? '是' : '否' },
+        { label: '目标短句', value: formatPlainStringList(raw.target_phrase_labels) },
+        { label: '已完成短句', value: formatPlainStringList(raw.completed_phrase_labels) },
+        { label: '动物清单', value: formatPlainStringList(raw.animal_labels) },
+        { label: '场景主题', value: String(raw.session_theme_title || '-') },
       ]
     default:
       return Object.entries(raw).map(([key, value]) => ({

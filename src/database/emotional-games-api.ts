@@ -337,6 +337,20 @@ function deriveAccuracyRate(
       }
       break
     }
+    case 'S05_ECHO_PARROT': {
+      const firstTryRounds = Number(performanceData.first_try_rounds || 0)
+      const targetRoundCount = Number(performanceData.target_round_count || 0)
+      if (targetRoundCount > 0) {
+        return Math.max(0, Math.min(1, firstTryRounds / targetRoundCount))
+      }
+
+      const completedRounds = Number(performanceData.completed_rounds || 0)
+      const voiceAttemptCount = Number(performanceData.voice_attempt_count || 0)
+      if (voiceAttemptCount > 0) {
+        return Math.max(0, Math.min(1, completedRounds / voiceAttemptCount))
+      }
+      break
+    }
   }
 
   return completionStatus === 'completed' ? 1 : null
@@ -379,6 +393,11 @@ function deriveAvgResponseTime(
       return averageNumericValues(performanceData.response_times_ms)
     case 'S01_BURGER':
       return averageNumericValues(performanceData.turn_times_ms)
+    case 'S05_ECHO_PARROT':
+      return averageNumericValues(performanceData.response_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_response_ms))
+          ? Number(performanceData.average_response_ms)
+          : null)
     default:
       return null
   }

@@ -61,6 +61,7 @@ const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterP
 const EmotionMirrorPage = () => import('@/views/emotional/games/EmotionMirrorPage.vue')
 const StorySequencePage = () => import('@/views/emotional/games/StorySequencePage.vue')
 const GiftMatchPage = () => import('@/views/emotional/games/GiftMatchPage.vue')
+const EchoParrotPage = () => import('@/views/emotional/games/EchoParrotPage.vue')
 const EnergyBallPage = () => import('@/views/emotional/games/EnergyBallPage.vue')
 
 // 训练记录模块（Phase 4.6 重构）
@@ -437,6 +438,17 @@ const router = createRouter({
           component: GiftMatchPage,
           meta: {
             title: '礼物分享派对',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/echo-parrot',
+          name: 'EchoParrotGame',
+          component: EchoParrotPage,
+          meta: {
+            title: '动物传声筒',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

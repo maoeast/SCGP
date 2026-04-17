@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: CNBS-R2016 Assessment Integration
 status: Ready to execute
-last_updated: "2026-04-17T05:22:16Z"
+last_updated: "2026-04-17T05:42:28Z"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -25,7 +25,7 @@ progress:
 - **Phase**: 17 CNBS-R2016 Question Bank & Standardization Foundation
 - **Plan**: 17-01
 - **Status**: Phase 17 planning is complete. The phase is now ready to execute against the current milestone roadmap.
-- **Last activity**: 2026-04-17 - quick task `260417-jxz` started `Wave 3` `S05_ECHO_PARROT / 动物传声筒` by landing the registry definition in `src/data/custom-game-registry.ts`; next step is the minimal runtime chain after registry addition.
+- **Last activity**: 2026-04-17 - quick task `260417-k43` completed the `S05_ECHO_PARROT / 动物传声筒` minimal runtime chain after registry addition; the remaining follow-up on the custom-game branch is real UI acceptance for `S05`.
 
 ## Latest Shipped Milestone
 
@@ -59,6 +59,7 @@ progress:
 | 260417-iot | Implement `F04_TRACK_BUILD / 轨道修补匠` registry definition in `src/data/custom-game-registry.ts` and attach it to `fine-motor`; do not fix `S03` bug | 2026-04-17 | working-tree | [260417-iot-implement-f04-track-build-registry-defin](./quick/260417-iot-implement-f04-track-build-registry-defin/) |
 | 260417-iwc | Implement `F04_TRACK_BUILD / 轨道修补匠` minimal runtime chain after registry addition: add page, gameplay component, route, and record-summary/detail support; keep `S03` bug untouched | 2026-04-17 | working-tree | [260417-iwc-implement-f04-track-build-minimal-runtim](./quick/260417-iwc-implement-f04-track-build-minimal-runtim/) |
 | 260417-jxz | Implement `S05_ECHO_PARROT / 动物传声筒` registry definition in `src/data/custom-game-registry.ts` and attach it to `social-communication`; do not fix `S03` bug | 2026-04-17 | working-tree | [260417-jxz-implement-s05-echo-parrot-registry-defin](./quick/260417-jxz-implement-s05-echo-parrot-registry-defin/) |
+| 260417-k43 | Implement `S05_ECHO_PARROT / 动物传声筒` minimal runtime chain after registry addition: add page, gameplay component, route, and record-summary/detail support; keep `S03` bug untouched | 2026-04-17 | working-tree | [260417-k43-implement-s05-echo-parrot-minimal-runtim](./quick/260417-k43-implement-s05-echo-parrot-minimal-runtim/) |
 
 ## Next Action
 
