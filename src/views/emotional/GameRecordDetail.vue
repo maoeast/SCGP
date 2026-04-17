@@ -45,7 +45,7 @@
 
     <el-empty
       v-else-if="!loading"
-      description="未找到该情绪小游戏记录"
+      description="未找到该小游戏记录"
       class="record-empty"
     />
 
@@ -63,7 +63,7 @@
         <article class="detail-card scgp-surface">
           <div class="detail-card__header">
             <h2>训练摘要</h2>
-            <p>当前详情来自情绪小游戏独立记录表，已接入训练记录面板展示。</p>
+            <p>当前详情来自自定义小游戏记录表，已接入训练记录面板展示。</p>
           </div>
 
           <div class="detail-list">
@@ -362,6 +362,34 @@ const recyclingBinLabelMap: Record<string, string> = {
   food: '厨余桶',
 }
 
+const moodMeterMoodLabelMap: Record<string, string> = {
+  calm: '平静',
+  shy: '有点紧张',
+  sad: '难过',
+  angry: '生气',
+  overwhelmed: '很乱很满',
+}
+
+const moodMeterSupportLabelMap: Record<string, string> = {
+  'slow-breath': '慢慢呼吸 3 次',
+  'quiet-corner': '先去安静角落',
+  'hug-pillow': '抱一抱抱枕',
+  'count-down': '跟着数到 5',
+  'soft-music': '听一段轻音乐',
+  'squeeze-ball': '捏一捏解压球',
+  'ask-help': '告诉老师我需要帮忙',
+  stretch: '伸一伸肩膀和手臂',
+}
+
+const washHandsStepLabelMap: Record<string, string> = {
+  'open-water': '打开水龙头',
+  'wet-hands': '双手打湿',
+  soap: '按洗手液',
+  scrub: '左右搓洗',
+  rinse: '冲掉泡泡',
+  'close-water': '关掉水龙头',
+}
+
 function formatEmotionMirrorScenarioList(value: unknown) {
   const labels = normalizeStringArray(value).map((scenarioId) => {
     return emotionMirrorScenarioLabelMap[scenarioId] || '其他观察场景'
@@ -427,6 +455,11 @@ function formatRecyclingItemList(value: unknown) {
 
 function formatRecyclingBinList(value: unknown) {
   const labels = normalizeStringArray(value).map((binId) => recyclingBinLabelMap[binId] || '其他分类桶')
+  return labels.length > 0 ? labels.join(' / ') : '-'
+}
+
+function formatMappedStringList(value: unknown, labelMap: Record<string, string>, fallback = '其他项') {
+  const labels = normalizeStringArray(value).map((itemId) => labelMap[itemId] || fallback)
   return labels.length > 0 ? labels.join(' / ') : '-'
 }
 
@@ -527,7 +560,7 @@ function getGameFocusLabel() {
     }
   }
 
-  return '情绪调节训练'
+  return '小游戏训练'
 }
 
 const summaryCards = computed<DetailRow[]>(() => {
@@ -629,6 +662,48 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '过早点按', value: formatNullableNumber(raw.early_taps, '次') },
         { label: '漏掉窗口', value: formatNullableNumber(raw.missed_windows, '次') },
         { label: '最长连击', value: formatNullableNumber(raw.max_streak, '次') },
+      ]
+    case 'C05_MOOD_METER':
+      return [
+        { label: '当前心情', value: String(raw.selected_mood_label || '-') },
+        { label: '温度区间', value: String(raw.selected_temperature_label || '-') },
+        { label: '安抚选择', value: String(raw.support_card_label || '-') },
+        { label: '匹配程度', value: formatPercent(raw.support_fit_score) },
+      ]
+    case 'L01_WASH_HANDS':
+      return [
+        { label: '完成动作', value: formatNullableNumber(raw.correct_action_count, '步') },
+        { label: '错序次数', value: formatNullableNumber(raw.sequence_wrong_attempts, '次') },
+        { label: '错误动作', value: formatNullableNumber(raw.wrong_action_count, '次') },
+        { label: '平均动作', value: formatResponseTime(raw.average_action_ms as number) },
+      ]
+    case 'L02_DRESS_UP':
+      return [
+        { label: '完成衣物', value: formatCountPair(raw.completed_item_count, raw.target_item_count, '件') },
+        { label: '错误放置', value: formatNullableNumber(raw.wrong_placements, '次') },
+        { label: '平均选择', value: formatResponseTime(raw.average_selection_ms as number) },
+        { label: '天气主题', value: String(raw.weather_theme_title || raw.weather_theme || '-') },
+      ]
+    case 'L03_BRUSH_TEETH':
+      return [
+        { label: '完成区域', value: formatCountPair(raw.cleaned_zone_count, raw.target_zone_count, '块') },
+        { label: '正确刷动', value: formatNullableNumber(raw.correct_swipes, '次') },
+        { label: '错误方向', value: formatNullableNumber(raw.wrong_swipes, '次') },
+        { label: '方向准确', value: formatPercent(raw.directional_accuracy_score) },
+      ]
+    case 'L04_SET_TABLE':
+      return [
+        { label: '完成餐位', value: formatCountPair(raw.completed_places, raw.target_place_count, '个') },
+        { label: '错误放置', value: formatNullableNumber(raw.wrong_placements, '次') },
+        { label: '平均摆放', value: formatResponseTime(raw.average_placement_ms as number) },
+        { label: '桌面主题', value: String(raw.session_theme_title || raw.session_theme || '-') },
+      ]
+    case 'L05_PACK_BAG':
+      return [
+        { label: '正确装入', value: formatCountPair(raw.correctly_packed_count, raw.required_item_count, '件') },
+        { label: '错装物品', value: formatNullableNumber(raw.wrong_item_count, '件') },
+        { label: '情境得分', value: formatNullableNumber(raw.context_understanding_score, '分') },
+        { label: '最终得分', value: formatNullableNumber(raw.score, '分') },
       ]
     case 'G07_MONSTER':
       return [
@@ -809,6 +884,77 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '目标区位置', value: `${formatPercent(raw.pop_zone_top_ratio)} - ${formatPercent(raw.pop_zone_bottom_ratio)}` },
         { label: '主题编码', value: String(raw.theme_key || '-') },
       ]
+    case 'C05_MOOD_METER':
+      return [
+        { label: '当前心情', value: String(raw.selected_mood_label || '-') },
+        { label: '温度区间', value: String(raw.selected_temperature_label || '-') },
+        { label: '安抚卡', value: String(raw.support_card_label || '-') },
+        { label: '匹配程度', value: formatPercent(raw.support_fit_score) },
+        { label: '提示次数', value: formatNullableNumber(raw.prompt_count, '次') },
+        { label: '最高提示', value: formatNullableNumber(raw.highest_prompt_level, '级') },
+        { label: '各次选择', value: formatResponseTimeList(raw.choice_times_ms, '次') },
+        { label: '可选心情', value: formatMappedStringList(raw.available_mood_ids, moodMeterMoodLabelMap, '其他心情') },
+        { label: '可选安抚卡', value: formatMappedStringList(raw.available_support_ids, moodMeterSupportLabelMap, '其他安抚方式') },
+      ]
+    case 'L01_WASH_HANDS':
+      return [
+        { label: '完成动作', value: formatNullableNumber(raw.correct_action_count, '步') },
+        { label: '错序次数', value: formatNullableNumber(raw.sequence_wrong_attempts, '次') },
+        { label: '错误动作', value: formatNullableNumber(raw.wrong_action_count, '次') },
+        { label: '打湿用时', value: formatNullableNumber(raw.phase2_action_times?.wetHandsSec, '秒') },
+        { label: '打泡用时', value: formatNullableNumber(raw.phase2_action_times?.soapApplySec, '秒') },
+        { label: '搓洗用时', value: formatNullableNumber(raw.phase2_action_times?.scrubbingSec, '秒') },
+        { label: '冲洗用时', value: formatNullableNumber(raw.phase2_action_times?.rinseSec, '秒') },
+        { label: '搓洗进度', value: formatNullableNumber(raw.scrub_progress_px, ' px') },
+        { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
+        { label: '动作顺序', value: formatMappedStringList(raw.completed_step_codes, washHandsStepLabelMap, '其他动作') },
+        { label: '排序结果', value: formatMappedStringList(raw.completed_sequence_codes, washHandsStepLabelMap, '其他动作') },
+      ]
+    case 'L02_DRESS_UP':
+      return [
+        { label: '目标衣物', value: formatNullableNumber(raw.target_item_count, '件') },
+        { label: '完成衣物', value: formatNullableNumber(raw.completed_item_count, '件') },
+        { label: '错误放置', value: formatNullableNumber(raw.wrong_placements, '次') },
+        { label: '提示次数', value: formatNullableNumber(raw.prompt_count, '次') },
+        { label: '最高提示', value: formatNullableNumber(raw.highest_prompt_level, '级') },
+        { label: '已穿衣物', value: formatPlainStringList(raw.placed_item_labels) },
+        { label: '选择记录', value: formatResponseTimeList(raw.selection_times_ms, '次') },
+        { label: '天气主题', value: String(raw.weather_theme_title || raw.weather_theme || '-') },
+      ]
+    case 'L03_BRUSH_TEETH':
+      return [
+        { label: '覆盖比例', value: formatPercent(raw.final_coverage_percent) },
+        { label: '方向准确', value: formatPercent(raw.directional_accuracy_score) },
+        { label: '完成区域', value: formatCountPair(raw.cleaned_zone_count, raw.target_zone_count, '块') },
+        { label: '正确刷动', value: formatNullableNumber(raw.correct_swipes, '次') },
+        { label: '错误方向', value: formatNullableNumber(raw.wrong_swipes, '次') },
+        { label: '最高提示', value: formatNullableNumber(raw.highest_prompt_level, '级') },
+        { label: '刷动记录', value: formatResponseTimeList(raw.swipe_durations_ms, '次') },
+        { label: '区域列表', value: formatPlainStringList(raw.zone_labels) },
+      ]
+    case 'L04_SET_TABLE':
+      return [
+        { label: '目标餐位', value: formatNullableNumber(raw.target_place_count, '个') },
+        { label: '完成餐位', value: formatNullableNumber(raw.completed_places, '个') },
+        { label: '错误放置', value: formatNullableNumber(raw.wrong_placements, '次') },
+        { label: '提示次数', value: formatNullableNumber(raw.prompt_count, '次') },
+        { label: '最高提示', value: formatNullableNumber(raw.highest_prompt_level, '级') },
+        { label: '已摆餐具', value: formatPlainStringList(raw.placed_item_labels) },
+        { label: '位置锚点', value: formatPlainStringList(raw.anchor_labels) },
+        { label: '摆放记录', value: formatResponseTimeList(raw.placement_times_ms, '次') },
+        { label: '桌面主题', value: String(raw.session_theme_title || raw.session_theme || '-') },
+      ]
+    case 'L05_PACK_BAG':
+      return [
+        { label: '需要带的', value: formatPlainStringList(raw.required_item_labels) },
+        { label: '已装物品', value: formatPlainStringList(raw.packed_item_labels) },
+        { label: '错装物品', value: formatPlainStringList(raw.wrong_item_labels) },
+        { label: '提示次数', value: formatNullableNumber(raw.prompt_count, '次') },
+        { label: '最高提示', value: formatNullableNumber(raw.highest_prompt_level, '级') },
+        { label: '复盘次数', value: formatNullableNumber(raw.review_cycles, '次') },
+        { label: '选择记录', value: formatResponseTimeList(raw.selection_times_ms, '次') },
+        { label: '情境主题', value: String(raw.scenario_title || raw.scenario_id || '-') },
+      ]
     case 'G07_MONSTER':
       return [
         { label: '反弹次数', value: formatNullableNumber(raw.bounce_count, '次') },
@@ -928,8 +1074,8 @@ async function loadRecord() {
 
     student.value = await studentApi.getStudentById(record.value.student_id)
   } catch (error) {
-    console.error('加载情绪小游戏记录失败:', error)
-    ElMessage.error('加载情绪小游戏记录失败')
+    console.error('加载小游戏记录失败:', error)
+    ElMessage.error('加载小游戏记录失败')
   } finally {
     loading.value = false
   }

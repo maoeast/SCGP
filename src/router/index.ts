@@ -50,6 +50,7 @@ const DandelionPage = () => import('@/views/emotional/games/DandelionPage.vue')
 const PuddlePage = () => import('@/views/emotional/games/PuddlePage.vue')
 const XylophonePage = () => import('@/views/emotional/games/XylophonePage.vue')
 const HourglassPage = () => import('@/views/emotional/games/HourglassPage.vue')
+const MoodMeterPage = () => import('@/views/emotional/games/MoodMeterPage.vue')
 const VoiceVolumeForestPage = () => import('@/views/emotional/games/VoiceVolumeForestPage.vue')
 const WipeSadnessPage = () => import('@/views/emotional/games/WipeSadnessPage.vue')
 const CloudErasePage = () => import('@/views/emotional/games/CloudErasePage.vue')
@@ -57,6 +58,11 @@ const StarTracePage = () => import('@/views/emotional/games/StarTracePage.vue')
 const RecyclingSortPage = () => import('@/views/emotional/games/RecyclingSortPage.vue')
 const TrackBuildPage = () => import('@/views/emotional/games/TrackBuildPage.vue')
 const BalloonTapPage = () => import('@/views/emotional/games/BalloonTapPage.vue')
+const WashHandsPage = () => import('@/views/emotional/games/WashHandsPage.vue')
+const DressUpPage = () => import('@/views/emotional/games/DressUpPage.vue')
+const BrushTeethPage = () => import('@/views/emotional/games/BrushTeethPage.vue')
+const SetTablePage = () => import('@/views/emotional/games/SetTablePage.vue')
+const PackBagPage = () => import('@/views/emotional/games/PackBagPage.vue')
 const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterPage.vue')
 const EmotionMirrorPage = () => import('@/views/emotional/games/EmotionMirrorPage.vue')
 const StorySequencePage = () => import('@/views/emotional/games/StorySequencePage.vue')
@@ -378,6 +384,17 @@ const router = createRouter({
           }
         },
         {
+          path: 'emotional/games/mood-meter',
+          name: 'MoodMeterGame',
+          component: MoodMeterPage,
+          meta: {
+            title: '我的情绪温度计',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
           path: 'emotional/games/forest',
           name: 'VoiceVolumeForestGame',
           component: VoiceVolumeForestPage,
@@ -515,6 +532,61 @@ const router = createRouter({
           component: EnergyBallPage,
           meta: {
             title: '表情能量球',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/wash-hands',
+          name: 'WashHandsGame',
+          component: WashHandsPage,
+          meta: {
+            title: '洗手小能手',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/dress-up',
+          name: 'DressUpGame',
+          component: DressUpPage,
+          meta: {
+            title: '我会穿衣服',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/brush-teeth',
+          name: 'BrushTeethGame',
+          component: BrushTeethPage,
+          meta: {
+            title: '刷牙小卫士',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/set-table',
+          name: 'SetTableGame',
+          component: SetTablePage,
+          meta: {
+            title: '摆桌子帮帮忙',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/pack-bag',
+          name: 'PackBagGame',
+          component: PackBagPage,
+          meta: {
+            title: '上学包包装一装',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

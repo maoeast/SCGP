@@ -1,0 +1,318 @@
+.prototype-game {
+  position: relative;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 100%;
+  padding: 28px;
+  overflow: hidden;
+  color: #213547;
+  background: var(--prototype-background, linear-gradient(135deg, #d8f1ff 0%, #fef3c7 100%));
+}
+
+.prototype-game__backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.prototype-game__glow {
+  position: absolute;
+  width: 340px;
+  height: 340px;
+  border-radius: 999px;
+  filter: blur(18px);
+  opacity: 0.55;
+}
+
+.prototype-game__glow--left {
+  top: -60px;
+  left: -70px;
+}
+
+.prototype-game__glow--right {
+  right: -60px;
+  bottom: -70px;
+}
+
+.prototype-game__sparkle {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  animation: prototype-float 7.6s ease-in-out infinite;
+}
+
+.prototype-game__hud {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.prototype-game__hud-card,
+.prototype-game__tip-card,
+.prototype-game__surface,
+.prototype-game__badge-modal {
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 18px 48px rgba(22, 42, 72, 0.12);
+  backdrop-filter: blur(14px);
+}
+
+.prototype-game__hud-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 78px;
+  padding: 16px 18px;
+  border-radius: 24px;
+}
+
+.prototype-game__hud-card span,
+.prototype-game__tip-card strong,
+.prototype-game__eyebrow,
+.prototype-game__helper,
+.prototype-game__mini-copy {
+  color: rgba(33, 53, 71, 0.72);
+}
+
+.prototype-game__hud-card strong {
+  font-size: 1.12rem;
+}
+
+.prototype-game__layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(320px, 0.92fr);
+  gap: 18px;
+  height: calc(100% - 112px);
+  min-height: 0;
+}
+
+.prototype-game__stage,
+.prototype-game__aside {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: 34px;
+}
+
+.prototype-game__stage {
+  padding: 22px;
+}
+
+.prototype-game__aside {
+  padding: 24px 22px;
+}
+
+.prototype-game__status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.prototype-game__status strong {
+  font-size: 1.12rem;
+}
+
+.prototype-game__title {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.12;
+}
+
+.prototype-game__copy {
+  margin: 10px 0 0;
+  line-height: 1.7;
+}
+
+.prototype-game__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.prototype-game__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 0.88rem;
+}
+
+.prototype-game__tag--accent {
+  color: #fff;
+  background: rgba(33, 53, 71, 0.86);
+}
+
+.prototype-game__tip-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.prototype-game__tip-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 84px;
+  padding: 14px 16px;
+  border-radius: 20px;
+}
+
+.prototype-game__tip-card span {
+  color: #213547;
+  line-height: 1.5;
+}
+
+.prototype-game__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.prototype-game__button {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.prototype-game__button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(33, 53, 71, 0.16);
+}
+
+.prototype-game__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+.prototype-game__button--primary {
+  color: #fff;
+  background: linear-gradient(135deg, #1f7ae0 0%, #38bdf8 100%);
+}
+
+.prototype-game__button--secondary {
+  color: #1f3d5c;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.prototype-game__button--ghost {
+  color: #5f6f82;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.prototype-game__badge-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 280px;
+  padding: 22px 26px;
+  border-radius: 28px;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.prototype-game__badge-icon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 24px;
+  font-size: 2rem;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.prototype-game__progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.prototype-game__progress-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: rgba(33, 53, 71, 0.72);
+  font-size: 0.88rem;
+}
+
+.prototype-game__progress-track {
+  position: relative;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.prototype-game__progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--prototype-progress, linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%));
+  transition: width 0.2s ease;
+}
+
+@keyframes prototype-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1180px) {
+  .prototype-game {
+    padding: 18px;
+  }
+
+  .prototype-game__hud {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .prototype-game__layout {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .prototype-game__hud {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .prototype-game__tip-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .prototype-game__button {
+    width: 100%;
+    justify-content: center;
+  }
+}

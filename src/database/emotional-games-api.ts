@@ -298,6 +298,76 @@ function deriveAccuracyRate(
       }
       break
     }
+    case 'C05_MOOD_METER': {
+      const supportFitScore = Number(performanceData.support_fit_score)
+      if (Number.isFinite(supportFitScore)) {
+        return Math.max(0, Math.min(1, supportFitScore))
+      }
+      break
+    }
+    case 'L01_WASH_HANDS': {
+      const correctActionCount = Number(performanceData.correct_action_count || 0)
+      const wrongActionCount = Number(performanceData.wrong_action_count || 0)
+      const sequenceWrongAttempts = Number(performanceData.sequence_wrong_attempts || 0)
+      const totalAttempts = correctActionCount + wrongActionCount + sequenceWrongAttempts
+      if (totalAttempts > 0) {
+        return Math.max(0, Math.min(1, correctActionCount / totalAttempts))
+      }
+      break
+    }
+    case 'L02_DRESS_UP': {
+      const completedItemCount = Number(performanceData.completed_item_count || 0)
+      const wrongPlacements = Number(performanceData.wrong_placements || 0)
+      const totalAttempts = completedItemCount + wrongPlacements
+      if (totalAttempts > 0) {
+        return Math.max(0, Math.min(1, completedItemCount / totalAttempts))
+      }
+
+      const targetItemCount = Number(performanceData.target_item_count || 0)
+      if (targetItemCount > 0) {
+        return Math.max(0, Math.min(1, completedItemCount / targetItemCount))
+      }
+      break
+    }
+    case 'L03_BRUSH_TEETH': {
+      const directionalAccuracyScore = Number(performanceData.directional_accuracy_score)
+      if (Number.isFinite(directionalAccuracyScore)) {
+        return Math.max(0, Math.min(1, directionalAccuracyScore))
+      }
+
+      const finalCoveragePercent = Number(performanceData.final_coverage_percent)
+      if (Number.isFinite(finalCoveragePercent)) {
+        return Math.max(0, Math.min(1, finalCoveragePercent))
+      }
+      break
+    }
+    case 'L04_SET_TABLE': {
+      const completedPlaces = Number(performanceData.completed_places || 0)
+      const wrongPlacements = Number(performanceData.wrong_placements || 0)
+      const totalAttempts = completedPlaces + wrongPlacements
+      if (totalAttempts > 0) {
+        return Math.max(0, Math.min(1, completedPlaces / totalAttempts))
+      }
+
+      const targetPlaceCount = Number(performanceData.target_place_count || 0)
+      if (targetPlaceCount > 0) {
+        return Math.max(0, Math.min(1, completedPlaces / targetPlaceCount))
+      }
+      break
+    }
+    case 'L05_PACK_BAG': {
+      const score = Number(performanceData.score)
+      if (Number.isFinite(score)) {
+        return Math.max(0, Math.min(1, score / 100))
+      }
+
+      const correctlyPackedCount = Number(performanceData.correctly_packed_count || 0)
+      const requiredItemCount = Number(performanceData.required_item_count || 0)
+      if (requiredItemCount > 0) {
+        return Math.max(0, Math.min(1, correctlyPackedCount / requiredItemCount))
+      }
+      break
+    }
     case 'G07_MONSTER': {
       const correctDrops = Number(performanceData.correct_drops || 0)
       const wrongDrops = Number(performanceData.wrong_drops || 0)
@@ -389,6 +459,46 @@ function deriveAvgResponseTime(
           : null)
     case 'F05_BALLOONS':
       return averageNumericValues(performanceData.window_response_ms)
+    case 'C05_MOOD_METER':
+      return averageNumericValues(performanceData.choice_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_choice_ms))
+          ? Number(performanceData.average_choice_ms)
+          : null)
+    case 'L01_WASH_HANDS': {
+      const phase2ActionTimes = performanceData.phase2_action_times
+      if (phase2ActionTimes && typeof phase2ActionTimes === 'object') {
+        const actionDurationsMs = [
+          Number((phase2ActionTimes as Record<string, any>).wetHandsSec) * 1000,
+          Number((phase2ActionTimes as Record<string, any>).soapApplySec) * 1000,
+          Number((phase2ActionTimes as Record<string, any>).scrubbingSec) * 1000,
+          Number((phase2ActionTimes as Record<string, any>).rinseSec) * 1000,
+        ]
+        return averageNumericValues(actionDurationsMs)
+      }
+      return Number.isFinite(Number(performanceData.average_action_ms))
+        ? Number(performanceData.average_action_ms)
+        : null
+    }
+    case 'L02_DRESS_UP':
+      return averageNumericValues(performanceData.selection_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_selection_ms))
+          ? Number(performanceData.average_selection_ms)
+          : null)
+    case 'L03_BRUSH_TEETH':
+      return averageNumericValues(performanceData.swipe_durations_ms)
+        ?? (Number.isFinite(Number(performanceData.average_swipe_ms))
+          ? Number(performanceData.average_swipe_ms)
+          : null)
+    case 'L04_SET_TABLE':
+      return averageNumericValues(performanceData.placement_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_placement_ms))
+          ? Number(performanceData.average_placement_ms)
+          : null)
+    case 'L05_PACK_BAG':
+      return averageNumericValues(performanceData.selection_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_selection_ms))
+          ? Number(performanceData.average_selection_ms)
+          : null)
     case 'S03_STORY_SEQ':
       return averageNumericValues(performanceData.response_times_ms)
     case 'S01_BURGER':
