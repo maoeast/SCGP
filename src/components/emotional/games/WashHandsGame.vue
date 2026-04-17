@@ -46,11 +46,24 @@
 
         <section v-if="phase === 'ready'" class="wash-hands-game__intro">
           <div class="wash-hands-game__sink-card">
-            <div class="wash-hands-game__faucet"></div>
-            <div class="wash-hands-game__basin"></div>
-            <div class="wash-hands-game__hands">
-              <span class="wash-hands-game__hand"></span>
-              <span class="wash-hands-game__hand"></span>
+            <div class="wash-hands-game__section-head wash-hands-game__section-head--compact">
+              <div>
+                <span class="wash-hands-game__section-kicker">洗手主舞台</span>
+                <strong>先熟悉洗手台，再开始排步骤</strong>
+              </div>
+              <small>水龙头、皂液器、双手和洗手池都会在正式场景里给你反馈。</small>
+            </div>
+            <WashHandsStageArt preview />
+            <div class="wash-hands-game__preview-strip">
+              <article
+                v-for="(step, index) in sequenceSteps"
+                :key="step.id"
+                class="wash-hands-game__preview-step"
+              >
+                <span>{{ index + 1 }}</span>
+                <strong>{{ step.label }}</strong>
+                <small>{{ step.shortHint }}</small>
+              </article>
             </div>
           </div>
           <div class="wash-hands-game__intro-copy">
@@ -90,24 +103,32 @@
 
         <section v-else-if="phase === 'actions'" class="wash-hands-game__actions">
           <div class="wash-hands-game__sink-board">
-            <div class="wash-hands-game__faucet-row">
-              <div class="wash-hands-game__faucet">
-                <span class="wash-hands-game__faucet-head"></span>
-                <span class="wash-hands-game__faucet-base"></span>
-                <span v-if="waterOn" class="wash-hands-game__water-stream"></span>
+            <div class="wash-hands-game__section-head">
+              <div>
+                <span class="wash-hands-game__section-kicker">正式主舞台</span>
+                <strong>{{ currentActionStep?.label || '继续完成洗手动作' }}</strong>
               </div>
-              <div class="wash-hands-game__soap-pump" :class="{ 'is-used': soapApplied }">
-                <span class="wash-hands-game__soap-top"></span>
-                <span class="wash-hands-game__soap-body"></span>
-              </div>
+              <small>{{ actionStageCopy }}</small>
             </div>
-
-            <div class="wash-hands-game__hand-stage" :class="{ 'is-wet': handsWet, 'is-soapy': soapApplied }">
-              <div class="wash-hands-game__hand-shell"></div>
-              <div class="wash-hands-game__hand-shell"></div>
-              <div v-if="soapApplied" class="wash-hands-game__foam-layer">
-                <span v-for="bubble in foamBubbles" :key="bubble.id" class="wash-hands-game__foam-bubble" :style="bubble.style"></span>
-              </div>
+            <WashHandsStageArt
+              :water-on="waterOn"
+              :hands-wet="handsWet"
+              :soap-applied="soapApplied"
+              :scrub-active="scrubActive"
+              :rinse-active="rinseActive"
+              :focus-area="stageFocusArea"
+              :scrub-percent="scrubPercent"
+            />
+            <div class="wash-hands-game__state-chips">
+              <span
+                v-for="chip in sinkStateChips"
+                :key="chip.id"
+                class="wash-hands-game__state-chip"
+                :class="`is-${chip.tone}`"
+              >
+                <strong>{{ chip.label }}</strong>
+                <small>{{ chip.value }}</small>
+              </span>
             </div>
 
             <div class="wash-hands-game__scrub-track">
@@ -140,10 +161,20 @@
         </section>
 
         <section v-else class="wash-hands-game__complete">
-          <div class="wash-hands-game__complete-card">
-            <span>🧼</span>
-            <strong>小手已经洗得干干净净啦</strong>
-            <small>步骤排序、打泡搓洗和冲净动作都已经记录好了。</small>
+          <div class="wash-hands-game__complete-layout">
+            <div class="wash-hands-game__complete-scene">
+              <WashHandsStageArt
+                :hands-wet="true"
+                :finished="true"
+                focus-area="finish"
+                :scrub-percent="100"
+              />
+            </div>
+            <div class="wash-hands-game__complete-card">
+              <span>🧼</span>
+              <strong>小手已经洗得干干净净啦</strong>
+              <small>步骤排序、打泡搓洗和冲净动作都已经记录好了。</small>
+            </div>
           </div>
         </section>
       </article>
@@ -248,6 +279,7 @@ import type {
   EmotionGameDifficulty,
 } from '@/types/emotional/games'
 import { averageNumberList, clampNumber, shuffleArray } from './prototype-game-utils'
+import WashHandsStageArt from './WashHandsStageArt.vue'
 
 type Phase = 'ready' | 'sequence' | 'actions' | 'celebrating' | 'finished'
 
@@ -271,6 +303,13 @@ interface StepDefinition {
   label: string
   emoji: string
   shortHint: string
+}
+
+interface SinkStateChip {
+  id: string
+  label: string
+  value: string
+  tone: 'neutral' | 'info' | 'success'
 }
 
 const props = defineProps<{
@@ -326,15 +365,6 @@ const sparkles: ReadonlyArray<SparkleDot> = [
   { id: 3, left: 42, top: 20, size: 16, delay: 0.6 },
   { id: 4, left: 66, top: 12, size: 14, delay: 1.5 },
   { id: 5, left: 82, top: 54, size: 12, delay: 0.9 },
-]
-
-const foamBubbles = [
-  { id: 1, style: { left: '18%', top: '26%', width: '18px', height: '18px' } },
-  { id: 2, style: { left: '36%', top: '18%', width: '14px', height: '14px' } },
-  { id: 3, style: { left: '52%', top: '28%', width: '16px', height: '16px' } },
-  { id: 4, style: { left: '64%', top: '24%', width: '12px', height: '12px' } },
-  { id: 5, style: { left: '42%', top: '46%', width: '18px', height: '18px' } },
-  { id: 6, style: { left: '58%', top: '52%', width: '15px', height: '15px' } },
 ]
 
 const phase = ref<Phase>('ready')
@@ -437,6 +467,74 @@ const reminderText = computed(() => {
 
   return '冲净后记得关掉水龙头。'
 })
+const isRoundFinished = computed(() => phase.value === 'celebrating' || phase.value === 'finished')
+const scrubActive = computed(() => phase.value === 'actions' && currentActionStep.value?.id === 'scrub')
+const rinseActive = computed(() => phase.value === 'actions' && currentActionStep.value?.id === 'rinse')
+const soapReached = computed(() => completedActionIds.value.includes('soap') || completedActionIds.value.includes('scrub') || rinseActive.value || isRoundFinished.value)
+const rinseCompleted = computed(() => completedActionIds.value.includes('rinse') || isRoundFinished.value)
+const stageFocusArea = computed<'faucet' | 'hands' | 'soap' | 'scrub' | 'rinse' | 'finish' | null>(() => {
+  if (isRoundFinished.value) {
+    return 'finish'
+  }
+
+  switch (currentActionStep.value?.id) {
+    case 'open-water':
+    case 'close-water':
+      return 'faucet'
+    case 'wet-hands':
+      return 'hands'
+    case 'soap':
+      return 'soap'
+    case 'scrub':
+      return 'scrub'
+    case 'rinse':
+      return 'rinse'
+    default:
+      return null
+  }
+})
+const actionStageCopy = computed(() => {
+  if (isRoundFinished.value) {
+    return '水已经关好，泡泡也冲净了，整套洗手动作都已经记录完成。'
+  }
+
+  switch (currentActionStep.value?.id) {
+    case 'open-water':
+      return '先把水龙头打开，让清水流进洗手池。'
+    case 'wet-hands':
+      return '把双手都放到水流下面，先让手湿润起来。'
+    case 'soap':
+      return '按一下皂液器，让泡泡先覆盖到双手表面。'
+    case 'scrub':
+      return '双手来回搓洗，直到绿色圆环和进度条都慢慢填满。'
+    case 'rinse':
+      return '继续在水流下冲洗，把泡泡慢慢冲干净。'
+    case 'close-water':
+      return '动作都做完后，把水龙头关回去，完成整轮练习。'
+    default:
+      return '跟着当前提示慢慢做，舞台会同步给你视觉反馈。'
+  }
+})
+const sinkStateChips = computed<SinkStateChip[]>(() => [
+  {
+    id: 'water',
+    label: '水流',
+    value: waterOn.value ? '已打开' : isRoundFinished.value ? '已关闭' : '等待开启',
+    tone: waterOn.value ? 'info' : 'neutral',
+  },
+  {
+    id: 'hands',
+    label: '双手',
+    value: handsWet.value || isRoundFinished.value ? '已经打湿' : '还没打湿',
+    tone: handsWet.value || isRoundFinished.value ? 'info' : 'neutral',
+  },
+  {
+    id: 'foam',
+    label: '泡泡',
+    value: soapApplied.value ? '正在覆盖' : rinseCompleted.value ? '已经冲净' : soapReached.value ? '等待冲净' : '还没打泡',
+    tone: soapApplied.value ? 'success' : rinseCompleted.value ? 'info' : 'neutral',
+  },
+])
 
 function markDirtyOnce() {
   if (hasRoundDirty) {
@@ -729,15 +827,86 @@ onBeforeUnmount(() => {
 
 .wash-hands-game__sink-card,
 .wash-hands-game__sink-board {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px;
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.66);
 }
 
 .wash-hands-game__sink-card {
+  min-height: 100%;
+}
+
+.wash-hands-game__section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.wash-hands-game__section-head--compact {
+  padding: 12px 14px;
+}
+
+.wash-hands-game__section-head div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wash-hands-game__section-head strong {
+  font-size: 1.02rem;
+}
+
+.wash-hands-game__section-head small {
+  max-width: 320px;
+  color: rgba(33, 53, 71, 0.74);
+  line-height: 1.55;
+}
+
+.wash-hands-game__section-kicker {
+  color: #1570a6;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wash-hands-game__preview-strip {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wash-hands-game__preview-step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 110px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.wash-hands-game__preview-step span,
+.wash-hands-game__sequence-slot span {
+  display: inline-grid;
   place-items: center;
-  min-height: 280px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.wash-hands-game__preview-step small {
+  color: rgba(33, 53, 71, 0.72);
+  line-height: 1.5;
 }
 
 .wash-hands-game__intro-copy h2 {
@@ -749,90 +918,6 @@ onBeforeUnmount(() => {
 .wash-hands-game__intro-copy p {
   margin: 0;
   line-height: 1.75;
-}
-
-.wash-hands-game__faucet,
-.wash-hands-game__soap-pump {
-  position: relative;
-}
-
-.wash-hands-game__faucet {
-  width: 144px;
-  height: 140px;
-}
-
-.wash-hands-game__faucet-head,
-.wash-hands-game__faucet-base,
-.wash-hands-game__soap-top,
-.wash-hands-game__soap-body,
-.wash-hands-game__basin,
-.wash-hands-game__hand-shell,
-.wash-hands-game__hand,
-.wash-hands-game__water-stream {
-  position: absolute;
-  display: block;
-}
-
-.wash-hands-game__faucet-head {
-  top: 18px;
-  left: 18px;
-  width: 92px;
-  height: 32px;
-  border-radius: 20px 20px 10px 10px;
-  background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
-}
-
-.wash-hands-game__faucet-base {
-  top: 22px;
-  right: 22px;
-  width: 30px;
-  height: 82px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #cbd5e1 0%, #64748b 100%);
-}
-
-.wash-hands-game__water-stream {
-  top: 44px;
-  left: 26px;
-  width: 28px;
-  height: 124px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(56, 189, 248, 0.95) 0%, rgba(125, 211, 252, 0.25) 100%);
-}
-
-.wash-hands-game__basin {
-  bottom: 18px;
-  left: 50%;
-  width: 190px;
-  height: 84px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.84) 0%, rgba(191, 219, 254, 0.84) 100%);
-  transform: translateX(-50%);
-}
-
-.wash-hands-game__hands {
-  position: relative;
-  width: 168px;
-  height: 120px;
-  margin-top: 94px;
-}
-
-.wash-hands-game__hand {
-  bottom: 0;
-  width: 62px;
-  height: 92px;
-  border-radius: 30px 30px 24px 24px;
-  background: linear-gradient(180deg, #f7c7a5 0%, #efb789 100%);
-}
-
-.wash-hands-game__hand:first-child {
-  left: 28px;
-  transform: rotate(-8deg);
-}
-
-.wash-hands-game__hand:last-child {
-  right: 28px;
-  transform: rotate(8deg);
 }
 
 .wash-hands-game__sequence,
@@ -860,16 +945,6 @@ onBeforeUnmount(() => {
   min-height: 104px;
   padding: 16px;
   background: rgba(255, 255, 255, 0.56);
-}
-
-.wash-hands-game__sequence-slot span {
-  display: inline-grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  font-weight: 700;
-  background: rgba(255, 255, 255, 0.8);
 }
 
 .wash-hands-game__sequence-slot.is-done {
@@ -911,92 +986,57 @@ onBeforeUnmount(() => {
 
 .wash-hands-game__step-card span,
 .wash-hands-game__action-card span {
-  font-size: 1.8rem;
-}
-
-.wash-hands-game__faucet-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-}
-
-.wash-hands-game__soap-pump {
-  width: 96px;
-  height: 124px;
-  margin-top: 8px;
-}
-
-.wash-hands-game__soap-top {
-  top: 8px;
-  left: 36px;
-  width: 24px;
-  height: 22px;
-  border-radius: 10px;
-  background: #475569;
-}
-
-.wash-hands-game__soap-body {
-  top: 24px;
-  left: 12px;
-  width: 72px;
-  height: 90px;
-  border-radius: 22px;
-  background: linear-gradient(180deg, #bfdbfe 0%, #60a5fa 100%);
-}
-
-.wash-hands-game__soap-pump.is-used .wash-hands-game__soap-body {
-  background: linear-gradient(180deg, #fef3c7 0%, #facc15 100%);
-}
-
-.wash-hands-game__hand-stage {
-  position: relative;
-  display: flex;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  gap: 18px;
-  min-height: 220px;
-  padding: 18px 0 0;
-}
-
-.wash-hands-game__hand-shell {
-  position: relative;
-  width: 140px;
-  height: 168px;
-  border-radius: 48px 48px 34px 34px;
-  background: linear-gradient(180deg, #f7c7a5 0%, #efb789 100%);
-  box-shadow: inset 0 -14px 26px rgba(222, 141, 83, 0.28);
-}
-
-.wash-hands-game__hand-stage.is-wet .wash-hands-game__hand-shell {
-  background: linear-gradient(180deg, #cfe8ff 0%, #98d4f8 48%, #f0be96 100%);
-}
-
-.wash-hands-game__hand-stage.is-soapy .wash-hands-game__hand-shell {
-  opacity: 0.82;
-}
-
-.wash-hands-game__foam-layer {
-  position: absolute;
-  top: 24px;
-  left: 50%;
-  width: 360px;
-  height: 180px;
-  transform: translateX(-50%);
-}
-
-.wash-hands-game__foam-bubble {
-  position: absolute;
-  display: block;
+  min-width: 52px;
+  padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 0 0 2px rgba(219, 234, 254, 0.8) inset;
+  font-size: 1.25rem;
+  line-height: 1;
+  background: rgba(224, 247, 255, 0.88);
+}
+
+.wash-hands-game__state-chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wash-hands-game__state-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 76px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.wash-hands-game__state-chip strong {
+  font-size: 0.96rem;
+}
+
+.wash-hands-game__state-chip small {
+  color: rgba(33, 53, 71, 0.76);
+  line-height: 1.45;
+}
+
+.wash-hands-game__state-chip.is-info {
+  background: rgba(219, 242, 255, 0.86);
+}
+
+.wash-hands-game__state-chip.is-success {
+  background: rgba(223, 252, 231, 0.88);
 }
 
 .wash-hands-game__scrub-track {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 14px;
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .wash-hands-game__card-grid--actions {
@@ -1017,11 +1057,24 @@ onBeforeUnmount(() => {
   min-height: 100%;
 }
 
+.wash-hands-game__complete-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.1fr) minmax(240px, 0.8fr);
+  gap: 20px;
+  width: 100%;
+  align-items: center;
+}
+
+.wash-hands-game__complete-scene {
+  min-width: 0;
+}
+
 .wash-hands-game__complete-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  min-height: 100%;
   padding: 24px 28px;
   border-radius: 28px;
   text-align: center;
@@ -1037,23 +1090,34 @@ onBeforeUnmount(() => {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .wash-hands-game__preview-strip,
+  .wash-hands-game__state-chips,
   .wash-hands-game__card-grid,
   .wash-hands-game__card-grid--actions,
   .wash-hands-game__sequence-track {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .wash-hands-game__complete-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 760px) {
+  .wash-hands-game__section-head {
+    flex-direction: column;
+  }
+
+  .wash-hands-game__section-head small {
+    max-width: none;
+  }
+
+  .wash-hands-game__preview-strip,
+  .wash-hands-game__state-chips,
   .wash-hands-game__card-grid,
   .wash-hands-game__card-grid--actions,
   .wash-hands-game__sequence-track {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .wash-hands-game__hand-stage {
-    flex-direction: column;
-    align-items: center;
   }
 }
 </style>

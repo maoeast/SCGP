@@ -46,9 +46,29 @@
 
         <section v-if="phase === 'ready'" class="brush-teeth-game__intro">
           <div class="brush-teeth-game__mouth-card">
-            <div class="brush-teeth-game__mouth">
-              <span class="brush-teeth-game__tooth-row"></span>
-              <span class="brush-teeth-game__tooth-row brush-teeth-game__tooth-row--bottom"></span>
+            <div class="brush-teeth-game__section-head brush-teeth-game__section-head--compact">
+              <div>
+                <span class="brush-teeth-game__section-kicker">刷牙主舞台</span>
+                <strong>先熟悉口腔区域，再开始按方向刷动</strong>
+              </div>
+              <small>嘴型、牙面污渍和牙刷都已经切换成正式 SVG 视觉。</small>
+            </div>
+            <div class="brush-teeth-game__stage-preview">
+              <BrushTeethStageArt
+                preview
+                :target-zone-ids="previewZoneIds"
+              />
+            </div>
+            <div class="brush-teeth-game__preview-strip">
+              <article
+                v-for="(zone, index) in previewZones"
+                :key="zone.id"
+                class="brush-teeth-game__preview-step"
+              >
+                <span>{{ index + 1 }}</span>
+                <strong>{{ zone.label }}</strong>
+                <small>{{ zone.direction === 'horizontal' ? '左右刷' : '上下刷' }}</small>
+              </article>
             </div>
           </div>
           <div class="brush-teeth-game__intro-copy">
@@ -68,13 +88,21 @@
                 'is-current': index === currentZoneIndex,
               }"
             >
-              <span>{{ zone.emoji }}</span>
+              <span>{{ index + 1 }}</span>
               <strong>{{ zone.label }}</strong>
               <small>{{ zone.direction === 'horizontal' ? '左右刷' : '上下刷' }}</small>
             </div>
           </div>
 
           <div class="brush-teeth-game__board">
+            <div class="brush-teeth-game__section-head">
+              <div>
+                <span class="brush-teeth-game__section-kicker">刷牙舞台</span>
+                <strong>{{ currentZone?.label || '继续完成刷牙区域' }}</strong>
+              </div>
+              <small>{{ brushStageCopy }}</small>
+            </div>
+
             <div class="brush-teeth-game__current">
               <div class="brush-teeth-game__current-copy">
                 <strong>{{ currentZone?.label || '准备下一块牙面' }}</strong>
@@ -95,25 +123,46 @@
               @pointercancel="handlePointerLeave"
             >
               <div class="brush-teeth-game__pad-glow"></div>
-              <div class="brush-teeth-game__teeth">
-                <span
-                  v-for="tooth in 10"
-                  :key="`upper-${tooth}`"
-                  class="brush-teeth-game__tooth"
-                ></span>
-              </div>
-              <div class="brush-teeth-game__teeth brush-teeth-game__teeth--bottom">
-                <span
-                  v-for="tooth in 10"
-                  :key="`lower-${tooth}`"
-                  class="brush-teeth-game__tooth"
-                ></span>
-              </div>
+              <BrushTeethStageArt
+                :target-zone-ids="targetZoneIds"
+                :completed-zone-ids="completedZoneIds"
+                :current-zone-id="currentZone?.id || null"
+                :current-zone-progress="zoneProgressPercent"
+              />
 
               <div class="brush-teeth-game__brush" :style="brushStyle">
-                <span class="brush-teeth-game__brush-head"></span>
-                <span class="brush-teeth-game__brush-body"></span>
+                <svg viewBox="0 0 124 40" class="brush-teeth-game__brush-svg" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="brushHeadTone" x1="0%" x2="100%" y1="0%" y2="100%">
+                      <stop offset="0%" stop-color="#ffffff" />
+                      <stop offset="100%" stop-color="#cbd5e1" />
+                    </linearGradient>
+                    <linearGradient id="brushBodyTone" x1="0%" x2="100%" y1="0%" y2="100%">
+                      <stop offset="0%" stop-color="#38bdf8" />
+                      <stop offset="100%" stop-color="#2563eb" />
+                    </linearGradient>
+                  </defs>
+                  <rect x="0" y="0" width="44" height="40" rx="16" fill="url(#brushHeadTone)" />
+                  <rect x="12" y="6" width="4" height="18" rx="2" fill="#8ee87d" />
+                  <rect x="18" y="4" width="4" height="20" rx="2" fill="#6ad66a" />
+                  <rect x="24" y="6" width="4" height="18" rx="2" fill="#8ee87d" />
+                  <rect x="30" y="5" width="4" height="19" rx="2" fill="#6ad66a" />
+                  <rect x="34" y="7" width="4" height="17" rx="2" fill="#8ee87d" />
+                  <rect x="34" y="10" width="90" height="20" rx="10" fill="url(#brushBodyTone)" />
+                </svg>
               </div>
+            </div>
+
+            <div class="brush-teeth-game__state-chips">
+              <span
+                v-for="chip in brushStateChips"
+                :key="chip.id"
+                class="brush-teeth-game__state-chip"
+                :class="`is-${chip.tone}`"
+              >
+                <strong>{{ chip.label }}</strong>
+                <small>{{ chip.value }}</small>
+              </span>
             </div>
 
             <div class="brush-teeth-game__progress-row">
@@ -127,10 +176,21 @@
         </section>
 
         <section v-else class="brush-teeth-game__complete">
-          <div class="brush-teeth-game__complete-card">
-            <span>🪥</span>
-            <strong>牙齿已经刷得更干净啦</strong>
-            <small>每个区域的方向和进度都已经记录完成。</small>
+          <div class="brush-teeth-game__complete-layout">
+            <div class="brush-teeth-game__complete-scene">
+              <div class="brush-teeth-game__stage-preview">
+                <BrushTeethStageArt
+                  :target-zone-ids="targetZoneIds"
+                  :completed-zone-ids="targetZoneIds"
+                  finished
+                />
+              </div>
+            </div>
+            <div class="brush-teeth-game__complete-card">
+              <span>🪥</span>
+              <strong>牙齿已经刷得更干净啦</strong>
+              <small>每个区域的方向和进度都已经记录完成。</small>
+            </div>
           </div>
         </section>
       </article>
@@ -235,6 +295,7 @@ import type {
   EmotionGameDifficulty,
 } from '@/types/emotional/games'
 import { averageNumberList, clampNumber } from './prototype-game-utils'
+import BrushTeethStageArt from './BrushTeethStageArt.vue'
 
 type Phase = 'ready' | 'playing' | 'celebrating' | 'finished'
 type SwipeDirection = 'horizontal' | 'vertical'
@@ -260,6 +321,13 @@ interface BrushZone {
   emoji: string
   direction: SwipeDirection
   hint: string
+}
+
+interface BrushStateChip {
+  id: string
+  label: string
+  value: string
+  tone: 'neutral' | 'info' | 'success'
 }
 
 const props = defineProps<{
@@ -385,10 +453,50 @@ const stageTitle = computed(() => {
   if (phase.value === 'playing') return currentZone.value ? `跟着提示刷 ${currentZone.value.label}` : '继续完成刷牙区域'
   return '这一轮刷牙练习已经完成'
 })
+const isRoundFinished = computed(() => phase.value === 'celebrating' || phase.value === 'finished')
 const brushStyle = computed(() => ({
   left: `${brushPosition.x}px`,
   top: `${brushPosition.y}px`,
 }))
+const previewZones = computed(() => BRUSH_ZONES.slice(0, DIFFICULTY_CONFIGS[activeDifficulty.value].zoneCount))
+const targetZoneIds = computed(() => targetZones.value.map((zone) => zone.id))
+const previewZoneIds = computed(() => previewZones.value.map((zone) => zone.id))
+const completedZoneIds = computed(() => targetZones.value.slice(0, currentZoneIndex.value).map((zone) => zone.id))
+const brushStageCopy = computed(() => {
+  if (isRoundFinished.value) {
+    return '上下左右的目标区域都已经刷过，牙面也变得更干净了。'
+  }
+
+  if (!currentZone.value) {
+    return '先看清牙面区域，再按提示方向慢慢刷动。'
+  }
+
+  if (currentZone.value.direction === 'vertical') {
+    return '这一块更适合上下刷，牙刷竖向走会更稳定。'
+  }
+
+  return '这一块更适合左右刷，牙刷横向来回会更顺。'
+})
+const brushStateChips = computed<BrushStateChip[]>(() => [
+  {
+    id: 'zone',
+    label: '当前区域',
+    value: currentZone.value?.label || '已经完成',
+    tone: currentZone.value ? 'info' : 'success',
+  },
+  {
+    id: 'clean',
+    label: '局部进度',
+    value: `${zoneProgressPercent.value}%`,
+    tone: zoneProgressPercent.value > 0 ? 'info' : 'neutral',
+  },
+  {
+    id: 'direction',
+    label: '刷动方向',
+    value: currentZone.value?.direction === 'vertical' ? '上下刷' : currentZone.value ? '左右刷' : '全部完成',
+    tone: 'neutral',
+  },
+])
 
 function markDirtyOnce() {
   if (hasRoundDirty) {
@@ -638,45 +746,98 @@ onBeforeUnmount(() => {
 
 .brush-teeth-game__mouth-card,
 .brush-teeth-game__board {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
   padding: 22px;
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.66);
 }
 
 .brush-teeth-game__mouth-card {
-  display: grid;
-  place-items: center;
   min-height: 300px;
 }
 
-.brush-teeth-game__mouth {
+.brush-teeth-game__section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.brush-teeth-game__section-head--compact {
+  padding: 12px 14px;
+}
+
+.brush-teeth-game__section-head div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brush-teeth-game__section-head strong {
+  font-size: 1.02rem;
+}
+
+.brush-teeth-game__section-head small {
+  max-width: 320px;
+  color: rgba(33, 53, 71, 0.74);
+  line-height: 1.55;
+}
+
+.brush-teeth-game__section-kicker {
+  color: #15803d;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brush-teeth-game__stage-preview {
   position: relative;
-  width: 280px;
-  height: 180px;
-  border-radius: 90px;
-  background: linear-gradient(180deg, #fb7185 0%, #be123c 100%);
+  min-height: 300px;
+  overflow: hidden;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(224, 242, 254, 0.92));
 }
 
-.brush-teeth-game__tooth-row,
-.brush-teeth-game__tooth {
-  display: block;
+.brush-teeth-game__preview-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.brush-teeth-game__tooth-row {
-  position: absolute;
-  left: 22px;
-  width: calc(100% - 44px);
-  height: 54px;
-  border-radius: 30px;
-  background: linear-gradient(180deg, #ffffff 0%, #dbeafe 100%);
+.brush-teeth-game__preview-step,
+.brush-teeth-game__zone-card {
+  border-radius: 20px;
 }
 
-.brush-teeth-game__tooth-row:first-child {
-  top: 26px;
+.brush-teeth-game__preview-step {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 98px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.68);
 }
 
-.brush-teeth-game__tooth-row--bottom {
-  bottom: 26px;
+.brush-teeth-game__preview-step span,
+.brush-teeth-game__zone-card span {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.brush-teeth-game__preview-step small {
+  color: rgba(33, 53, 71, 0.72);
+  line-height: 1.45;
 }
 
 .brush-teeth-game__intro-copy h2 {
@@ -767,32 +928,6 @@ onBeforeUnmount(() => {
   background: radial-gradient(circle at center, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
 }
 
-.brush-teeth-game__teeth {
-  position: absolute;
-  top: 62px;
-  left: 50%;
-  display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  gap: 6px;
-  width: 78%;
-  transform: translateX(-50%);
-}
-
-.brush-teeth-game__teeth--bottom {
-  top: auto;
-  bottom: 68px;
-}
-
-.brush-teeth-game__tooth {
-  height: 58px;
-  border-radius: 0 0 16px 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #dbeafe 100%);
-}
-
-.brush-teeth-game__teeth--bottom .brush-teeth-game__tooth {
-  border-radius: 16px 16px 0 0;
-}
-
 .brush-teeth-game__brush {
   position: absolute;
   z-index: 1;
@@ -801,28 +936,44 @@ onBeforeUnmount(() => {
   transform: translate(-50%, -50%);
 }
 
-.brush-teeth-game__brush-head,
-.brush-teeth-game__brush-body {
-  position: absolute;
+.brush-teeth-game__brush-svg {
   display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 8px 12px rgba(37, 99, 235, 0.18));
 }
 
-.brush-teeth-game__brush-head {
-  top: 0;
-  left: 0;
-  width: 44px;
-  height: 40px;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+.brush-teeth-game__state-chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
-.brush-teeth-game__brush-body {
-  top: 10px;
-  left: 34px;
-  width: 90px;
-  height: 20px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+.brush-teeth-game__state-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 76px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.brush-teeth-game__state-chip strong {
+  font-size: 0.96rem;
+}
+
+.brush-teeth-game__state-chip small {
+  color: rgba(33, 53, 71, 0.76);
+  line-height: 1.45;
+}
+
+.brush-teeth-game__state-chip.is-info {
+  background: rgba(220, 252, 231, 0.9);
+}
+
+.brush-teeth-game__state-chip.is-success {
+  background: rgba(219, 242, 255, 0.88);
 }
 
 .brush-teeth-game__progress-row {
@@ -837,11 +988,24 @@ onBeforeUnmount(() => {
   min-height: 100%;
 }
 
+.brush-teeth-game__complete-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.08fr) minmax(240px, 0.82fr);
+  gap: 20px;
+  width: 100%;
+  align-items: center;
+}
+
+.brush-teeth-game__complete-scene {
+  min-width: 0;
+}
+
 .brush-teeth-game__complete-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
   align-items: center;
+  min-height: 100%;
   padding: 24px 28px;
   border-radius: 28px;
   text-align: center;
@@ -857,12 +1021,28 @@ onBeforeUnmount(() => {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .brush-teeth-game__zones {
+  .brush-teeth-game__preview-strip,
+  .brush-teeth-game__zones,
+  .brush-teeth-game__state-chips {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .brush-teeth-game__complete-layout {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 760px) {
+  .brush-teeth-game__section-head {
+    flex-direction: column;
+  }
+
+  .brush-teeth-game__section-head small {
+    max-width: none;
+  }
+
+  .brush-teeth-game__preview-strip,
+  .brush-teeth-game__state-chips,
   .brush-teeth-game__zones {
     grid-template-columns: minmax(0, 1fr);
   }

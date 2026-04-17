@@ -45,10 +45,30 @@
         </div>
 
         <section v-if="phase === 'ready'" class="dress-up-game__intro">
-          <div class="dress-up-game__avatar">
-            <div class="dress-up-game__head"></div>
-            <div class="dress-up-game__body"></div>
-            <div class="dress-up-game__legs"></div>
+          <div class="dress-up-game__avatar-card dress-up-game__avatar-card--intro">
+            <div class="dress-up-game__section-head dress-up-game__section-head--compact">
+              <div>
+                <span class="dress-up-game__section-kicker">穿搭主舞台</span>
+                <strong>先看看完整穿搭长什么样</strong>
+              </div>
+              <small>角色底模和衣物层已经切换到正式 SVG，顺序仍然保持先里后外。</small>
+            </div>
+            <DressUpStageArt
+              preview
+              :target-item-ids="previewItemIds"
+              :theme-id="sessionTheme.id"
+            />
+            <div class="dress-up-game__preview-strip">
+              <article
+                v-for="(item, index) in previewItems"
+                :key="item.id"
+                class="dress-up-game__preview-step"
+              >
+                <span>{{ index + 1 }}</span>
+                <strong>{{ item.label }}</strong>
+                <small>{{ item.shortHint }}</small>
+              </article>
+            </div>
           </div>
           <div class="dress-up-game__intro-copy">
             <h2>把衣物按合适顺序穿到角色身上。</h2>
@@ -59,29 +79,41 @@
         <section v-else-if="phase === 'playing'" class="dress-up-game__play">
           <div class="dress-up-game__stage-grid">
             <div class="dress-up-game__avatar-card">
-              <div class="dress-up-game__avatar dress-up-game__avatar--play">
-                <div class="dress-up-game__head"></div>
-                <div class="dress-up-game__body"></div>
-                <div class="dress-up-game__legs"></div>
-                <div
-                  v-for="item in placedItems"
-                  :key="item.id"
-                  class="dress-up-game__layer"
-                  :style="{ '--layer-color': item.color, '--layer-index': item.layerIndex }"
-                >
-                  <span>{{ item.emoji }}</span>
-                  <strong>{{ item.label }}</strong>
+              <div class="dress-up-game__section-head">
+                <div>
+                  <span class="dress-up-game__section-kicker">角色舞台</span>
+                  <strong>{{ currentTarget?.label || '继续完成剩余衣物' }}</strong>
                 </div>
+                <small>{{ stageArtCopy }}</small>
+              </div>
+
+              <DressUpStageArt
+                :target-item-ids="targetItemIds"
+                :placed-item-ids="placedItemIds"
+                :current-target-id="currentTarget?.id || null"
+                :theme-id="sessionTheme.id"
+              />
+
+              <div class="dress-up-game__state-chips">
+                <span
+                  v-for="chip in outfitStateChips"
+                  :key="chip.id"
+                  class="dress-up-game__state-chip"
+                  :class="`is-${chip.tone}`"
+                >
+                  <strong>{{ chip.label }}</strong>
+                  <small>{{ chip.value }}</small>
+                </span>
               </div>
 
               <div class="dress-up-game__layer-track">
                 <div
-                  v-for="item in targetItems"
+                  v-for="(item, index) in targetItems"
                   :key="item.id"
                   class="dress-up-game__layer-slot"
                   :class="{ 'is-done': placedItemIds.includes(item.id), 'is-current': currentTarget?.id === item.id }"
                 >
-                  <span>{{ item.emoji }}</span>
+                  <span>{{ index + 1 }}</span>
                   <strong>{{ placedItemIds.includes(item.id) ? item.label : '等待穿上' }}</strong>
                 </div>
               </div>
@@ -98,7 +130,10 @@
                 :style="{ '--item-color': item.color }"
                 @click="handleItemPick(item)"
               >
-                <span>{{ item.emoji }}</span>
+                <div class="dress-up-game__item-card-top">
+                  <span class="dress-up-game__item-swatch"></span>
+                  <small>第 {{ targetItemOrderMap[item.id] || '-' }} 层</small>
+                </div>
                 <strong>{{ item.label }}</strong>
                 <small>{{ item.shortHint }}</small>
               </button>
@@ -107,10 +142,20 @@
         </section>
 
         <section v-else class="dress-up-game__complete">
-          <div class="dress-up-game__complete-card">
-            <span>👕</span>
-            <strong>衣服已经穿好啦</strong>
-            <small>{{ sessionTheme.description }}</small>
+          <div class="dress-up-game__complete-layout">
+            <div class="dress-up-game__complete-scene">
+              <DressUpStageArt
+                :target-item-ids="targetItemIds"
+                :placed-item-ids="targetItemIds"
+                :theme-id="sessionTheme.id"
+                finished
+              />
+            </div>
+            <div class="dress-up-game__complete-card">
+              <span>👕</span>
+              <strong>衣服已经穿好啦</strong>
+              <small>{{ sessionTheme.description }}</small>
+            </div>
           </div>
         </section>
       </article>
@@ -215,6 +260,7 @@ import type {
   EmotionGameDifficulty,
 } from '@/types/emotional/games'
 import { averageNumberList, clampNumber, shuffleArray } from './prototype-game-utils'
+import DressUpStageArt from './DressUpStageArt.vue'
 
 type Phase = 'ready' | 'playing' | 'celebrating' | 'finished'
 
@@ -246,6 +292,13 @@ interface ThemeDefinition {
   title: string
   description: string
   helperLine: string
+}
+
+interface OutfitStateChip {
+  id: string
+  label: string
+  value: string
+  tone: 'neutral' | 'info' | 'success'
 }
 
 const props = defineProps<{
@@ -400,6 +453,58 @@ const averageSelectionLabel = computed(() => {
   return `${(averageSelectionMs.value / 1000).toFixed(1)} 秒`
 })
 const reminderText = computed(() => currentTarget.value?.shortHint || '继续保持先里后外的顺序。')
+const isRoundFinished = computed(() => phase.value === 'celebrating' || phase.value === 'finished')
+const previewItems = computed(() => buildTargetItems(activeDifficulty.value))
+const targetItemIds = computed(() => targetItems.value.map((item) => item.id))
+const previewItemIds = computed(() => previewItems.value.map((item) => item.id))
+const targetItemOrderMap = computed<Record<string, number>>(() => Object.fromEntries(targetItems.value.map((item, index) => [item.id, index + 1])))
+const stageArtCopy = computed(() => {
+  if (isRoundFinished.value) {
+    return '里层、袜子、上衣、裤子和外套都已经按顺序穿好了。'
+  }
+
+  if (!currentTarget.value) {
+    return '先从最里面的衣物开始，一层一层往外穿。'
+  }
+
+  if (currentTarget.value.id === 'underwear') {
+    return '先把内层衣物穿好，后面的衣服才会更稳。'
+  }
+
+  if (currentTarget.value.id === 'socks') {
+    return '袜子先穿好，裤脚和鞋子会更舒服。'
+  }
+
+  if (currentTarget.value.id === 'shirt') {
+    return '上衣会先覆盖身体主区域，再继续补上下半身。'
+  }
+
+  if (currentTarget.value.id === 'pants') {
+    return '裤子要套在下半身，遮住腿部主体。'
+  }
+
+  return '最后把外套套上，形成最外层的穿搭。'
+})
+const outfitStateChips = computed<OutfitStateChip[]>(() => [
+  {
+    id: 'next',
+    label: '下一件',
+    value: currentTarget.value?.label || '已经完成',
+    tone: currentTarget.value ? 'info' : 'success',
+  },
+  {
+    id: 'layers',
+    label: '已穿层数',
+    value: `${placedItems.value.length}/${targetItems.value.length || previewItems.value.length}`,
+    tone: placedItems.value.length > 0 ? 'info' : 'neutral',
+  },
+  {
+    id: 'theme',
+    label: '天气情境',
+    value: sessionTheme.value.title,
+    tone: 'neutral',
+  },
+])
 
 function markDirtyOnce() {
   if (hasRoundDirty) {
@@ -607,89 +712,87 @@ onBeforeUnmount(() => {
   line-height: 1.76;
 }
 
-.dress-up-game__avatar,
 .dress-up-game__avatar-card {
-  position: relative;
-}
-
-.dress-up-game__avatar-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
   padding: 18px;
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.66);
 }
 
-.dress-up-game__avatar {
-  display: grid;
-  place-items: center;
-  min-height: 340px;
+.dress-up-game__avatar-card--intro {
+  min-height: 100%;
 }
 
-.dress-up-game__avatar--play {
-  min-height: 360px;
-}
-
-.dress-up-game__head,
-.dress-up-game__body,
-.dress-up-game__legs,
-.dress-up-game__layer {
-  position: absolute;
-}
-
-.dress-up-game__head {
-  top: 36px;
-  width: 94px;
-  height: 94px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #f7c7a5 0%, #efb789 100%);
-}
-
-.dress-up-game__body {
-  top: 122px;
-  width: 160px;
-  height: 150px;
-  border-radius: 54px 54px 32px 32px;
-  background: linear-gradient(180deg, #f1f5f9 0%, #cbd5e1 100%);
-}
-
-.dress-up-game__legs {
-  top: 250px;
-  width: 126px;
-  height: 94px;
-  border-radius: 0 0 34px 34px;
-  background: linear-gradient(180deg, #cbd5e1 0%, #94a3b8 100%);
-}
-
-.dress-up-game__layer {
-  left: 50%;
+.dress-up-game__section-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.dress-up-game__section-head--compact {
+  padding: 12px 14px;
+}
+
+.dress-up-game__section-head div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dress-up-game__section-head strong {
+  font-size: 1.02rem;
+}
+
+.dress-up-game__section-head small {
+  max-width: 320px;
+  color: rgba(33, 53, 71, 0.74);
+  line-height: 1.55;
+}
+
+.dress-up-game__section-kicker {
+  color: #c2410c;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dress-up-game__preview-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dress-up-game__preview-step {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  min-width: 176px;
-  padding: 10px 14px;
-  border-radius: 18px;
-  background: var(--layer-color);
-  box-shadow: 0 10px 22px rgba(33, 53, 71, 0.12);
-  transform: translateX(-50%);
+  min-height: 106px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.68);
 }
 
-.dress-up-game__layer:nth-of-type(1) {
-  top: 150px;
+.dress-up-game__preview-step span,
+.dress-up-game__layer-slot span {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.9);
 }
 
-.dress-up-game__layer:nth-of-type(2) {
-  top: 194px;
-}
-
-.dress-up-game__layer:nth-of-type(3) {
-  top: 238px;
-}
-
-.dress-up-game__layer:nth-of-type(4) {
-  top: 282px;
-}
-
-.dress-up-game__layer:nth-of-type(5) {
-  top: 326px;
+.dress-up-game__preview-step small {
+  color: rgba(33, 53, 71, 0.72);
+  line-height: 1.45;
 }
 
 .dress-up-game__layer-track,
@@ -766,8 +869,61 @@ onBeforeUnmount(() => {
   background: rgba(187, 247, 208, 0.78);
 }
 
-.dress-up-game__item-card span {
-  font-size: 1.8rem;
+.dress-up-game__item-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.dress-up-game__item-card-top small {
+  color: rgba(33, 53, 71, 0.68);
+  font-weight: 700;
+}
+
+.dress-up-game__item-swatch {
+  display: inline-flex;
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0)),
+    var(--item-color);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.dress-up-game__state-chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dress-up-game__state-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 76px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.dress-up-game__state-chip strong {
+  font-size: 0.96rem;
+}
+
+.dress-up-game__state-chip small {
+  color: rgba(33, 53, 71, 0.76);
+  line-height: 1.45;
+}
+
+.dress-up-game__state-chip.is-info {
+  background: rgba(255, 237, 213, 0.92);
+}
+
+.dress-up-game__state-chip.is-success {
+  background: rgba(223, 252, 231, 0.88);
 }
 
 .dress-up-game__complete {
@@ -776,11 +932,24 @@ onBeforeUnmount(() => {
   min-height: 100%;
 }
 
+.dress-up-game__complete-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.08fr) minmax(240px, 0.82fr);
+  gap: 20px;
+  width: 100%;
+  align-items: center;
+}
+
+.dress-up-game__complete-scene {
+  min-width: 0;
+}
+
 .dress-up-game__complete-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
   align-items: center;
+  min-height: 100%;
   padding: 24px 28px;
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.74);
@@ -796,9 +965,30 @@ onBeforeUnmount(() => {
   .dress-up-game__stage-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .dress-up-game__preview-strip,
+  .dress-up-game__state-chips,
+  .dress-up-game__item-grid,
+  .dress-up-game__layer-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dress-up-game__complete-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 760px) {
+  .dress-up-game__section-head {
+    flex-direction: column;
+  }
+
+  .dress-up-game__section-head small {
+    max-width: none;
+  }
+
+  .dress-up-game__preview-strip,
+  .dress-up-game__state-chips,
   .dress-up-game__item-grid,
   .dress-up-game__layer-track {
     grid-template-columns: minmax(0, 1fr);
