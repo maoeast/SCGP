@@ -1,6 +1,5 @@
 <template>
   <div class="page-container scgp-admin-page">
-    <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
         <h1>评估中心</h1>
@@ -8,299 +7,59 @@
       </div>
     </div>
 
-    <!-- 量表选择区 -->
     <div class="main-content scgp-page-panel assessment-select-panel">
-      <div class="scale-cards">
-        <!-- S-M量表卡片 -->
-        <el-card
-          class="scale-card"
-          shadow="hover"
-          @click="selectScale('sm')"
+      <el-tabs v-model="activeTab" class="assessment-tabs">
+        <el-tab-pane
+          v-for="tab in tabPanels"
+          :key="tab.id"
+          :label="tab.label"
+          :name="tab.id"
         >
-          <div class="scale-icon sm-icon">
-            <el-icon size="60"><User /></el-icon>
-          </div>
-          <h3 class="scale-title">婴儿-初中生社会生活能力量表</h3>
-          <p class="scale-subtitle">(S-M量表)</p>
-          <div class="scale-info">
-            <ul>
-              <li>适用年龄：6个月 - 14岁</li>
-              <li>题目数量：132道</li>
-              <li>评估维度：交往、作业、运动能力、独立生活能力、自我管理、集体活动</li>
-              <li>评估时间：约30-45分钟</li>
-            </ul>
-          </div>
-          <el-button type="primary" size="large" class="scale-btn">
-            开始评估
-          </el-button>
-        </el-card>
+          <div class="tab-panel">
+            <div v-if="tab.scales.length > 0" class="scale-cards">
+              <el-card
+                v-for="scale in tab.scales"
+                :key="`${tab.id}-${scale.code}`"
+                class="scale-card"
+                shadow="hover"
+                @click="selectScale(scale.code)"
+              >
+                <div class="scale-icon" :class="scale.iconClass">
+                  <el-icon size="60">
+                    <component :is="scale.icon" />
+                  </el-icon>
+                </div>
+                <h3 class="scale-title">{{ scale.title }}</h3>
+                <p class="scale-subtitle">{{ scale.subtitle }}</p>
+                <div class="scale-info">
+                  <ul>
+                    <li>适用年龄：{{ scale.ageRange }}</li>
+                    <li>题目数量：{{ scale.questionCount }}</li>
+                    <li>{{ scale.dimensions }}</li>
+                    <li>评估时间：{{ scale.timeEstimate }}</li>
+                  </ul>
+                </div>
+                <el-button
+                  :type="scale.buttonType"
+                  size="large"
+                  class="scale-btn"
+                  @click.stop="selectScale(scale.code)"
+                >
+                  开始评估
+                </el-button>
+              </el-card>
+            </div>
 
-        <!-- WeeFIM量表卡片 -->
-        <el-card
-          class="scale-card"
-          shadow="hover"
-          @click="selectScale('weefim')"
-        >
-          <div class="scale-icon weefim-icon">
-            <el-icon size="60"><Setting /></el-icon>
+            <div v-else class="tab-empty scgp-empty-panel">
+              <el-empty
+                class="scgp-empty-state"
+                description="该分类下暂无可用量表或相关模块未授权"
+              />
+            </div>
           </div>
-          <h3 class="scale-title">改良儿童功能独立性评估量表</h3>
-          <p class="scale-subtitle">(WeeFIM量表)</p>
-          <div class="scale-info">
-            <ul>
-              <li>适用年龄：0 - 18岁</li>
-              <li>题目数量：18道</li>
-              <li>评估领域：日常生活活动（13题）、认知功能（5题）</li>
-              <li>评估时间：约15-20分钟</li>
-            </ul>
-          </div>
-          <el-button type="success" size="large" class="scale-btn">
-            开始评估
-          </el-button>
-        </el-card>
+        </el-tab-pane>
+      </el-tabs>
 
-        <!-- CSIRS量表卡片 -->
-        <el-card
-          class="scale-card csirs-card"
-          shadow="hover"
-          @click="selectScale('csirs')"
-        >
-          <div class="scale-icon csirs-icon">
-            <el-icon size="60"><Sunny /></el-icon>
-          </div>
-          <h3 class="scale-title">儿童感觉统合能力发展评定量表</h3>
-          <p class="scale-subtitle">(CSIRS量表)</p>
-          <div class="scale-info">
-            <ul>
-              <li>适用年龄：3 - 12岁</li>
-              <li>题目数量：58道</li>
-              <li>评估维度：前庭觉、触觉、本体感、学习能力、执行功能</li>
-              <li>评估时间：约15-20分钟</li>
-            </ul>
-          </div>
-          <el-button type="warning" size="large" class="scale-btn">
-            开始评估
-          </el-button>
-        </el-card>
-
-        <!-- Conners PSQ量表卡片 -->
-        <el-card
-          class="scale-card conners-psq-card"
-          shadow="hover"
-          @click="selectScale('conners-psq')"
-        >
-          <div class="scale-icon conners-psq-icon">
-            <el-icon size="60"><HomeFilled /></el-icon>
-          </div>
-          <h3 class="scale-title">Conners 父母用问卷</h3>
-          <p class="scale-subtitle">(PSQ量表)</p>
-          <div class="scale-info">
-            <ul>
-              <li>适用年龄：3 - 17岁</li>
-              <li>题目数量：48道</li>
-              <li>评估维度：品行问题、学习问题、冲动性、焦虑、多动指数</li>
-              <li>评估时间：约10-15分钟</li>
-            </ul>
-          </div>
-          <el-button type="danger" size="large" class="scale-btn">
-            开始评估
-          </el-button>
-        </el-card>
-
-        <!-- Conners TRS量表卡片 -->
-        <el-card
-          class="scale-card conners-trs-card"
-          shadow="hover"
-          @click="selectScale('conners-trs')"
-        >
-          <div class="scale-icon conners-trs-icon">
-            <el-icon size="60"><OfficeBuilding /></el-icon>
-          </div>
-          <h3 class="scale-title">Conners 教师用问卷</h3>
-          <p class="scale-subtitle">(TRS量表)</p>
-          <div class="scale-info">
-            <ul>
-              <li>适用年龄：3 - 17岁</li>
-              <li>题目数量：28道</li>
-              <li>评估维度：品行问题、多动、注意力缺陷、多动指数</li>
-              <li>评估时间：约5-10分钟</li>
-            </ul>
-          </div>
-          <el-button type="info" size="large" class="scale-btn">
-            开始评估
-          </el-button>
-        </el-card>
-
-        <!-- SDQ量表卡片 -->
-        <el-card
-          class="scale-card"
-          shadow="hover"
-          @click="selectScale('sdq')"
-        >
-          <div class="scale-icon sdq-icon">
-            <el-icon size="60"><Stamp /></el-icon>
-          </div>
-          <h3 class="scale-title">长处和困难问卷</h3>
-          <p class="scale-subtitle">(SDQ量表 - 父母版)</p>
-          <div class="scale-info">
-            <ul>
-              <li>适用年龄：3 - 16岁</li>
-              <li>题目数量：25道</li>
-              <li>评估维度：情绪症状、品行问题、多动注意、同伴交往、亲社会行为</li>
-              <li>评估时间：约5-10分钟</li>
-            </ul>
-          </div>
-          <el-button type="warning" size="large" class="scale-btn">
-            开始评估
-          </el-button>
-        </el-card>
-
-        <!-- SRS-2量表卡片 -->
-        <el-card
-          class="scale-card"
-          shadow="hover"
-          @click="selectScale('srs2')"
-        >
-          <div class="scale-icon srs2-icon">
-            <el-icon size="60"><Avatar /></el-icon>
-          </div>
-          <h3 class="scale-title">社交反应量表第二版</h3>
-          <p class="scale-subtitle">(SRS-2 学龄版)</p>
-          <div class="scale-info">
-            <ul>
-              <li>适用年龄：6 - 18岁</li>
-              <li>题目数量：65道</li>
-              <li>评估维度：社交觉知、社交认知、社交沟通、社交动机、刻板行为</li>
-              <li>评估时间：约15-20分钟</li>
-            </ul>
-          </div>
-          <el-button type="primary" size="large" class="scale-btn">
-            开始评估
-          </el-button>
-        </el-card>
-
-        <!-- CBCL量表卡片 -->
-        <el-card
-          class="scale-card"
-          shadow="hover"
-          @click="selectScale('cbcl')"
-        >
-          <div class="scale-icon cbcl-icon">
-            <el-icon size="60"><DataAnalysis /></el-icon>
-          </div>
-          <h3 class="scale-title">Achenbach儿童行为量表</h3>
-          <p class="scale-subtitle">(CBCL 家长版)</p>
-          <div class="scale-info">
-            <ul>
-              <li>适用年龄：4 - 16岁</li>
-              <li>题目数量：113道 + 社会能力评估</li>
-              <li>评估维度：社会能力、行为问题（内化/外化）</li>
-              <li>评估时间：约20-30分钟</li>
-            </ul>
-          </div>
-          <el-button type="warning" size="large" class="scale-btn">
-            开始评估
-          </el-button>
-        </el-card>
-
-        <!-- 儿童发育行为评估量表卡片 -->
-        <el-card
-          class="scale-card"
-          shadow="hover"
-          @click="selectScale('cnbsr2016')"
-        >
-          <div class="scale-icon dev-behavior-icon">
-            <el-icon size="60"><Opportunity /></el-icon>
-          </div>
-          <h3 class="scale-title">儿童发育行为评估量表</h3>
-          <p class="scale-subtitle">(儿心量表Ⅱ)</p>
-          <div class="scale-info">
-            <ul>
-              <li>适用年龄：0 - 6岁</li>
-              <li>题目数量：261道</li>
-              <li>评估维度：大运动、精细运动、适应能力、语言、社会行为</li>
-              <li>评估时间：约30-40分钟</li>
-            </ul>
-          </div>
-          <el-button type="success" size="large" class="scale-btn">
-            开始评估
-          </el-button>
-        </el-card>
-
-        <!-- TGMD-3量表卡片 -->
-        <el-card
-          class="scale-card"
-          shadow="hover"
-          @click="selectScale('tgmd_3')"
-        >
-          <div class="scale-icon tgmd-icon">
-            <el-icon size="60"><TrophyBase /></el-icon>
-          </div>
-          <h3 class="scale-title">大肌肉动作发展测验</h3>
-          <p class="scale-subtitle">(TGMD-3)</p>
-          <div class="scale-info">
-            <ul>
-              <li>适用年龄：3岁0个月 - 10岁11个月</li>
-              <li>题目数量：13项动作技能</li>
-              <li>评估维度：位移技能（6项）、球类技能（7项）</li>
-              <li>评估时间：约15-20分钟</li>
-            </ul>
-          </div>
-          <el-button type="warning" size="large" class="scale-btn">
-            开始评估
-          </el-button>
-        </el-card>
-
-        <!-- GMFM-88量表卡片 -->
-        <el-card
-          class="scale-card"
-          shadow="hover"
-          @click="selectScale('gmfm_88')"
-        >
-          <div class="scale-icon gmfm-icon">
-            <el-icon size="60"><Operation /></el-icon>
-          </div>
-          <h3 class="scale-title">粗大运动功能评定量表</h3>
-          <p class="scale-subtitle">(GMFM-88)</p>
-          <div class="scale-info">
-            <ul>
-              <li>适用年龄：5个月 - 16岁</li>
-              <li>题目数量：88项</li>
-              <li>评估维度：卧位与翻身、坐位、爬与跪、站立、行走跑跳</li>
-              <li>评估时间：约45-60分钟</li>
-            </ul>
-          </div>
-          <el-button type="primary" size="large" class="scale-btn">
-            开始评估
-          </el-button>
-        </el-card>
-
-        <!-- FMDA量表卡片 -->
-        <el-card
-          class="scale-card"
-          shadow="hover"
-          @click="selectScale('fine_motor')"
-        >
-          <div class="scale-icon fmda-icon">
-            <el-icon size="60"><EditPen /></el-icon>
-          </div>
-          <h3 class="scale-title">小肌肉功能发展评估量表</h3>
-          <p class="scale-subtitle">(FMDA)</p>
-          <div class="scale-info">
-            <ul>
-              <li>适用年龄：0 - 6岁</li>
-              <li>题目数量：87项</li>
-              <li>评估维度：抓握能力、手眼协调、双手协作、操作精确性</li>
-              <li>评估时间：约20-30分钟</li>
-            </ul>
-          </div>
-          <el-button type="primary" size="large" class="scale-btn">
-            开始评估
-          </el-button>
-        </el-card>
-      </div>
-
-      <!-- 评估说明 -->
       <el-card class="notice-card scgp-page-panel" shadow="never">
         <template #header>
           <div class="notice-header">
@@ -324,18 +83,36 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { User, Setting, Sunny, InfoFilled, HomeFilled, OfficeBuilding, Stamp, Avatar, DataAnalysis, Opportunity, TrophyBase, Operation, EditPen } from '@element-plus/icons-vue'
+import { InfoFilled } from '@element-plus/icons-vue'
+import {
+  ASSESSMENT_TABS,
+  getDefaultAssessmentTab,
+  getVisibleAssessmentScalesForTab,
+  type AssessmentScaleCode,
+} from '@/features/assessment/assessment-scale-catalog'
+import { useAuthStore } from '@/stores/auth'
+import type { TrainingEntryCode } from '@/utils/training-entry'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
-// 选择量表
-const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'conners-trs' | 'sdq' | 'srs2' | 'cbcl' | 'cnbsr2016' | 'fine_motor' | 'gmfm_88' | 'tgmd_3') => {
-  // 跳转到学生选择页面，传递量表类型参数
+const activeTab = ref<TrainingEntryCode>(
+  getDefaultAssessmentTab((moduleCode) => authStore.hasModuleAccess(moduleCode))
+)
+
+const tabPanels = computed(() =>
+  ASSESSMENT_TABS.map((tab) => ({
+    ...tab,
+    scales: getVisibleAssessmentScalesForTab(tab.id, (moduleCode) => authStore.hasModuleAccess(moduleCode)),
+  }))
+)
+
+const selectScale = (scaleType: AssessmentScaleCode) => {
   router.push({
     path: '/assessment/select-student',
-    query: { scale: scaleType }
+    query: { scale: scaleType },
   })
 }
 </script>
@@ -347,10 +124,27 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
   gap: 30px;
 }
 
-/* 量表卡片网格 */
+.assessment-tabs :deep(.el-tabs__header) {
+  margin: 0;
+}
+
+.assessment-tabs :deep(.el-tabs__nav-wrap::after) {
+  background: rgba(214, 224, 236, 0.9);
+}
+
+.assessment-tabs :deep(.el-tabs__item) {
+  height: auto;
+  padding: 14px 18px;
+  font-weight: 600;
+}
+
+.tab-panel {
+  padding-top: 24px;
+}
+
 .scale-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 30px;
 }
 
@@ -391,7 +185,7 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
 }
 
 .csirs-icon {
-  background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
+  background: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 100%);
   color: white;
 }
 
@@ -411,7 +205,7 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
 }
 
 .srs2-icon {
-  background: linear-gradient(135deg, #5B86E5 0%, #36D1DC 100%);
+  background: linear-gradient(135deg, #5b86e5 0%, #36d1dc 100%);
   color: white;
 }
 
@@ -469,7 +263,7 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
   padding-left: 20px;
 }
 
-.scale-info li:before {
+.scale-info li::before {
   content: '•';
   color: #409eff;
   font-weight: bold;
@@ -483,31 +277,14 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
   font-size: 18px;
 }
 
-.placeholder-card {
-  position: relative;
-  opacity: 0.85;
-}
-
-.scale-card-badge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: #FAEEDA;
-  color: #633806;
-  border: 0.5px solid #FAC775;
-  font-size: 11px;
-  line-height: 1.2;
-  padding: 2px 8px;
-  border-radius: 999px;
-}
-
-.coming-soon-btn.is-disabled,
-.coming-soon-btn.is-disabled:hover,
-.coming-soon-btn.is-disabled:focus {
-  background: var(--color-background-secondary, #ffffff);
-  color: var(--color-text-tertiary, #c0c4cc);
-  border: 0.5px solid var(--color-border-secondary, #dcdfe6);
-  cursor: not-allowed;
+.tab-empty {
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  border: 1px dashed rgba(196, 208, 223, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 249, 253, 0.96) 100%);
 }
 
 .notice-card {
@@ -536,6 +313,10 @@ const selectScale = (scaleType: 'sm' | 'weefim' | 'csirs' | 'conners-psq' | 'con
 }
 
 @media (max-width: 768px) {
+  .tab-panel {
+    padding-top: 20px;
+  }
+
   .scale-cards {
     grid-template-columns: 1fr;
     gap: 20px;

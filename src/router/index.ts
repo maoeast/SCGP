@@ -1,6 +1,16 @@
-import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
+import {
+  createRouter,
+  createWebHistory,
+  createWebHashHistory,
+  type NavigationGuardWithThis,
+  type RouteLocationNormalized,
+} from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
+import {
+  getAssessmentScaleCatalogItem,
+  isAssessmentScaleAuthorized,
+} from '@/features/assessment/assessment-scale-catalog'
 import { resolveEquipmentTrainingEntryRouteModuleCode } from '@/utils/equipment-training-entry'
 import { getTrainingEntryModuleCode } from '@/utils/training-entry'
 
@@ -118,6 +128,38 @@ const isElectron = !!processRef?.type
 // 开发环境下也可以通过检查是否有 electronAPI 来判断
 const isElectronEnv = !!(window as any).electronAPI || isElectron
 
+function normalizeAssessmentScaleRouteValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value[0]
+  }
+
+  return value
+}
+
+const createAssessmentScaleAccessGuard = (
+  source: 'query' | 'params'
+): NavigationGuardWithThis<undefined> => {
+  return (to: RouteLocationNormalized) => {
+    const authStore = useAuthStore()
+    const scaleValue = source === 'query'
+      ? normalizeAssessmentScaleRouteValue(to.query.scale)
+      : normalizeAssessmentScaleRouteValue(to.params.scaleCode)
+
+    const scaleItem = getAssessmentScaleCatalogItem(scaleValue)
+    if (!scaleItem) {
+      ElMessage.warning('无效的评估量表')
+      return '/assessment'
+    }
+
+    if (!isAssessmentScaleAuthorized(scaleItem, (moduleCode) => authStore.hasModuleAccess(moduleCode))) {
+      ElMessage.warning('该量表未授权')
+      return '/assessment'
+    }
+
+    return true
+  }
+}
+
 const router = createRouter({
   // 在 Electron 环境使用 HashRouter，Web 环境使用 BrowserRouter
   // HashRouter 使用 #/ 格式的 URL，不依赖服务器配置，适合 Electron 的 file:// 协议
@@ -202,8 +244,7 @@ const router = createRouter({
           meta: {
             title: '能力评估',
             icon: 'clipboard-check',
-            roles: ['admin', 'teacher'],
-            moduleCode: 'sensory'
+            roles: ['admin', 'teacher']
           }
         },
         {
@@ -753,6 +794,7 @@ const router = createRouter({
           path: 'assessment/select-student',
           name: 'SelectStudent',
           component: SelectStudent,
+          beforeEnter: createAssessmentScaleAccessGuard('query'),
           meta: {
             title: '选择学生',
             hideInMenu: true,
@@ -764,6 +806,7 @@ const router = createRouter({
           path: 'assessment/unified/:scaleCode/:studentId',
           name: 'UnifiedAssessment',
           component: AssessmentContainer,
+          beforeEnter: createAssessmentScaleAccessGuard('params'),
           meta: {
             title: '评估进行中',
             hideInMenu: true,
@@ -1184,10 +1227,6 @@ router.beforeEach(async (to, from, next) => {
     }
     if (to.path.startsWith('/games')) {
       return getTrainingEntryModuleCode(to.query.entry, to.query.module)
-    }
-
-    if (to.path.startsWith('/assessment')) {
-      return 'sensory'
     }
 
     if (to.path.startsWith('/training-records')) {

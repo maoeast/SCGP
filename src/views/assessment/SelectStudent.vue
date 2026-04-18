@@ -12,6 +12,7 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import StudentSelector from '@/components/common/StudentSelector.vue'
+import { getAssessmentScaleCatalogItem } from '@/features/assessment/assessment-scale-catalog'
 
 // 类型定义
 interface Student {
@@ -24,125 +25,30 @@ interface Student {
   avatar_path?: string
 }
 
-interface ModuleTag {
-  type: 'primary' | 'success' | 'warning' | 'danger' | 'info'
-  label: string
-  description: string
-}
-
 const router = useRouter()
 const route = useRoute()
 
-// 有效的量表类型
-const validScales = ['sm', 'weefim', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'cnbsr2016', 'fine_motor', 'gmfm_88', 'tgmd_3'] as const
-type ScaleType = typeof validScales[number]
-
-// 当前量表类型
-const scaleType = computed<ScaleType>(() => {
-  return validScales.includes(route.query.scale as ScaleType)
-    ? route.query.scale as ScaleType
-    : 'sm'
+const currentScaleItem = computed(() => {
+  const scaleCode = Array.isArray(route.query.scale) ? route.query.scale[0] : route.query.scale
+  return getAssessmentScaleCatalogItem(scaleCode)
 })
 
-// 页面标题
 const pageTitle = computed(() => {
-  const titles: Record<ScaleType, string> = {
-    'sm': '选择评估学生 - S-M量表',
-    'weefim': '选择评估学生 - WeeFIM量表',
-    'csirs': '选择评估学生 - CSIRS量表',
-    'conners-psq': '选择评估学生 - Conners父母问卷',
-    'conners-trs': '选择评估学生 - Conners教师问卷',
-    'sdq': '选择评估学生 - SDQ长处和困难问卷',
-    'srs2': '选择评估学生 - SRS-2社交反应量表',
-    'cbcl': '选择评估学生 - CBCL儿童行为量表',
-    'cnbsr2016': '选择评估学生 - 儿心量表Ⅱ',
-    'fine_motor': '选择评估学生 - 小肌肉功能发展评估量表',
-    'gmfm_88': '选择评估学生 - GMFM-88粗大运动功能评定量表',
-    'tgmd_3': '选择评估学生 - TGMD-3大肌肉动作发展测验'
-  }
-  return titles[scaleType.value]
+  return currentScaleItem.value?.studentSelectorTitle || '选择评估学生'
 })
 
-// 模块标签配置
-const currentModuleTag = computed<ModuleTag>(() => {
-  const tags: Record<ScaleType, ModuleTag> = {
-    'sm': {
-      type: 'primary',
-      label: 'S-M 社会生活能力',
-      description: '评估儿童社会生活能力发展水平'
-    },
-    'weefim': {
-      type: 'success',
-      label: 'WeeFIM 功能独立性',
-      description: '评估儿童功能独立性发展水平'
-    },
-    'csirs': {
-      type: 'warning',
-      label: 'CSIRS 感觉统合',
-      description: '评估儿童感觉统合能力'
-    },
-    'conners-psq': {
-      type: 'danger',
-      label: 'Conners 父母问卷',
-      description: '评估儿童在家中的行为表现'
-    },
-    'conners-trs': {
-      type: 'info',
-      label: 'Conners 教师问卷',
-      description: '评估儿童在学校中的行为表现'
-    },
-    'sdq': {
-      type: 'warning',
-      label: 'SDQ 长处和困难问卷',
-      description: '评估儿童的情绪、行为及社交能力'
-    },
-    'srs2': {
-      type: 'primary',
-      label: 'SRS-2 社交反应量表',
-      description: '评估儿童社交反应能力'
-    },
-    'cbcl': {
-      type: 'success',
-      label: 'CBCL 儿童行为量表',
-      description: '评估儿童社会能力与行为问题'
-    },
-    'cnbsr2016': {
-      type: 'success',
-      label: '儿心量表Ⅱ',
-      description: '评估儿童大运动、精细动作、适应能力、语言与社会行为发展水平'
-    },
-    'fine_motor': {
-      type: 'warning',
-      label: '小肌肉功能发展评估量表',
-      description: '评估儿童精细动作与手部操作能力发展水平'
-    },
-    'gmfm_88': {
-      type: 'danger',
-      label: 'GMFM-88 粗大运动功能',
-      description: '评估儿童卧位翻身、坐位、爬跪、站立与走跑跳能力'
-    },
-    'tgmd_3': {
-      type: 'warning',
-      label: 'TGMD-3 大肌肉动作',
-      description: '评估儿童位移技能与球类技能发展水平'
-    }
-  }
-  return tags[scaleType.value]
+const currentModuleTag = computed(() => {
+  return currentScaleItem.value?.studentSelectorTag
 })
 
-// 处理学生选择
 const handleSelectStudent = (student: Student) => {
-  // 验证学生ID
-  if (!student?.id) {
+  if (!student?.id || !currentScaleItem.value) {
     return
   }
 
-  // Phase 4 重构：所有量表使用统一的评估容器
-  // 路由格式: /assessment/unified/:scaleCode/:studentId
-  router.push(`/assessment/unified/${scaleType.value}/${student.id}`)
+  router.push(`/assessment/unified/${currentScaleItem.value.code}/${student.id}`)
 }
 
-// 处理返回
 const handleBack = () => {
   router.push('/assessment')
 }
