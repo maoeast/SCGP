@@ -68,9 +68,13 @@
                 :key="slot.id"
                 class="set-table-game__preview-step"
               >
-                <span>{{ slot.emoji }}</span>
-                <strong>{{ slot.label }}</strong>
-                <small>{{ slot.shortHint }}</small>
+                <div class="set-table-game__preview-asset" aria-hidden="true">
+                  <SetTableAssetThumbnail :slot-id="slot.id" :theme-id="sessionTheme.id" />
+                </div>
+                <div class="set-table-game__preview-copy">
+                  <strong>{{ slot.label }}</strong>
+                  <small>{{ slot.shortHint }}</small>
+                </div>
               </article>
             </div>
           </div>
@@ -122,9 +126,13 @@
               :disabled="paused || Boolean(placedMap[item.id])"
               @click="selectItem(item)"
             >
-              <span>{{ item.emoji }}</span>
-              <strong>{{ item.label }}</strong>
-              <small>{{ item.shortHint }}</small>
+              <div class="set-table-game__item-asset" aria-hidden="true">
+                <SetTableAssetThumbnail :slot-id="item.id" :theme-id="sessionTheme.id" />
+              </div>
+              <div class="set-table-game__item-copy">
+                <strong>{{ item.label }}</strong>
+                <small>{{ item.shortHint }}</small>
+              </div>
             </button>
           </div>
         </section>
@@ -150,7 +158,9 @@
           </div>
 
           <div class="set-table-game__complete-card">
-            <span>🍽️</span>
+            <div class="set-table-game__complete-art" aria-hidden="true">
+              <SetTableAssetThumbnail variant="table" :theme-id="sessionTheme.id" />
+            </div>
             <strong>桌面已经摆好啦</strong>
             <small>{{ sessionTheme.description }}</small>
           </div>
@@ -241,7 +251,11 @@
 
     <transition name="badge-pop">
       <div v-if="showBadge" class="prototype-game__badge-modal">
-        <div class="prototype-game__badge-icon">🍽️</div>
+        <div class="prototype-game__badge-icon set-table-game__badge-icon">
+          <div class="set-table-game__badge-art" aria-hidden="true">
+            <SetTableAssetThumbnail variant="table" :theme-id="sessionTheme.id" />
+          </div>
+        </div>
         <strong>摆桌小帮手徽章</strong>
         <p>你已经把餐具摆到合适的位置了。</p>
       </div>
@@ -256,6 +270,7 @@ import type {
   EmotionGameCompletionPayload,
   EmotionGameDifficulty,
 } from '@/types/emotional/games'
+import SetTableAssetThumbnail from './SetTableAssetThumbnail.vue'
 import SetTableStageArt from './SetTableStageArt.vue'
 import { averageNumberList, clampNumber, shuffleArray } from './prototype-game-utils'
 
@@ -278,11 +293,8 @@ interface DifficultyConfig {
 interface TableSlot {
   id: string
   label: string
-  emoji: string
   shortHint: string
-  ghostEmoji: string
   anchorLabel: string
-  position: Record<string, string>
 }
 
 interface ThemeDefinition {
@@ -325,47 +337,32 @@ const TABLE_SLOTS: ReadonlyArray<TableSlot> = [
   {
     id: 'bowl',
     label: '小碗',
-    emoji: '🍚',
     shortHint: '放在正中间',
-    ghostEmoji: '◌',
     anchorLabel: '碗位',
-    position: { left: '50%', top: '50%', transform: 'translate(-50%, -50%)' },
   },
   {
     id: 'spoon',
     label: '勺子',
-    emoji: '🥄',
     shortHint: '放在碗的左边',
-    ghostEmoji: '⟪',
     anchorLabel: '左侧餐具',
-    position: { left: '24%', top: '54%', transform: 'translate(-50%, -50%)' },
   },
   {
     id: 'cup',
     label: '杯子',
-    emoji: '🥛',
     shortHint: '放在右上角',
-    ghostEmoji: '◔',
     anchorLabel: '右上角杯位',
-    position: { right: '18%', top: '28%', transform: 'translate(0, 0)' },
   },
   {
     id: 'chopsticks',
     label: '筷子',
-    emoji: '🥢',
     shortHint: '放在碗的右边',
-    ghostEmoji: '⟫',
     anchorLabel: '右侧餐具',
-    position: { right: '24%', top: '56%', transform: 'translate(0, -50%)' },
   },
   {
     id: 'napkin',
     label: '餐巾',
-    emoji: '🧻',
     shortHint: '放在碗的左上角',
-    ghostEmoji: '▭',
     anchorLabel: '左上角餐巾位',
-    position: { left: '18%', top: '24%', transform: 'translate(0, 0)' },
   },
 ]
 
@@ -748,8 +745,15 @@ onBeforeUnmount(() => {
   box-shadow: 0 14px 26px rgba(33, 53, 71, 0.1);
 }
 
-.set-table-game__preview-step span {
-  font-size: 1.3rem;
+.set-table-game__preview-asset {
+  width: min(100%, 96px);
+  aspect-ratio: 1;
+}
+
+.set-table-game__preview-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .set-table-game__intro-copy {
@@ -815,8 +819,20 @@ onBeforeUnmount(() => {
   background: rgba(187, 247, 208, 0.78);
 }
 
-.set-table-game__item-card span {
-  font-size: 1.8rem;
+.set-table-game__item-asset {
+  width: min(100%, 136px);
+  aspect-ratio: 1;
+}
+
+.set-table-game__item-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.set-table-game__item-copy small {
+  line-height: 1.5;
+  color: rgba(23, 48, 77, 0.7);
 }
 
 .set-table-game__complete {
@@ -837,8 +853,21 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
-.set-table-game__complete-card span {
-  font-size: 2rem;
+.set-table-game__complete-art {
+  width: min(100%, 180px);
+  aspect-ratio: 1;
+}
+
+.set-table-game__badge-icon {
+  width: 104px;
+  height: 104px;
+  padding: 10px;
+  border-radius: 30px;
+}
+
+.set-table-game__badge-art {
+  width: 100%;
+  height: 100%;
 }
 
 @media (max-width: 1080px) {
