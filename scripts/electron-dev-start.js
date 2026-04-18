@@ -42,7 +42,7 @@ async function checkPort(port) {
   const platform = os.platform()
   const command = platform === 'win32'
     ? `netstat -ano | findstr ":${port} "`
-    : `lsof -i:${port}`
+    : `lsof -nP -iTCP:${port} -sTCP:LISTEN`
 
   try {
     const { stdout } = await execAsync(command)
@@ -85,9 +85,19 @@ async function killPortProcess(port) {
       await execAsync(`taskkill /F /PID ${pid}`)
     }
   } else {
-    const pids = portInfo.trim().split('\n').filter((pid) => pid.trim())
+    const pids = new Set()
+    const lines = portInfo.split('\n')
+
+    for (const line of lines) {
+      const parts = line.trim().split(/\s+/)
+      const pid = parts[1]
+      if (pid && !Number.isNaN(Number(pid))) {
+        pids.add(pid)
+      }
+    }
+
     for (const pid of pids) {
-      await execAsync(`kill -9 ${pid.trim()}`)
+      await execAsync(`kill -9 ${pid}`)
     }
   }
 

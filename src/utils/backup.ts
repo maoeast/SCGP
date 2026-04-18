@@ -1,5 +1,8 @@
 // 数据备份与恢复工具
 import { getDatabase } from '@/database/init'
+import { smQuestions } from '@/database/sm-questions'
+import { smAgeRanges, smRawToSQTable } from '@/database/sm-norms'
+import { weefimCategories, weefimQuestions } from '@/database/weefim-data'
 import { encryptData, decryptData } from './crypto'
 
 const BACKUP_VERSION = '2.0'
@@ -113,6 +116,97 @@ export class BackupManager {
 
     stmt.free()
     return violations
+  }
+
+  private getTableRowCount(tableName: string, db = getDatabase()): number {
+    const stmt = db.prepare(`SELECT COUNT(*) AS count FROM ${this.quoteIdentifier(tableName)}`)
+
+    try {
+      if (!stmt.step()) {
+        return 0
+      }
+
+      const row = stmt.getAsObject() as { count?: unknown }
+      return typeof row.count === 'number' ? row.count : Number(row.count || 0)
+    } finally {
+      stmt.free()
+    }
+  }
+
+  private ensureAssessmentReferenceData(currentTables: Set<string>, db = getDatabase()): void {
+    if (currentTables.has('sm_question')) {
+      for (const question of smQuestions) {
+        db.run(
+          `
+            INSERT OR IGNORE INTO sm_question (id, dimension, age_stage, age_min, age_max, title, audio)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `,
+          [
+            question.id,
+            question.dimension,
+            question.age_stage,
+            question.age_min,
+            question.age_max,
+            question.title,
+            question.audio || null,
+          ],
+        )
+      }
+    }
+
+    if (currentTables.has('sm_norm') && this.getTableRowCount('sm_norm', db) === 0) {
+      for (const range of smAgeRanges) {
+        db.run(
+          `
+            INSERT OR IGNORE INTO sm_norm (age_month, mean, sd)
+            VALUES (?, ?, ?)
+          `,
+          [range.months, 0, 0],
+        )
+      }
+    }
+
+    if (currentTables.has('sm_raw_to_sq') && this.getTableRowCount('sm_raw_to_sq', db) === 0) {
+      for (const table of smRawToSQTable) {
+        for (const [sqScore, rawRange] of Object.entries(table.raw_ranges)) {
+          if (!rawRange) {
+            continue
+          }
+
+          db.run(
+            `
+              INSERT OR IGNORE INTO sm_raw_to_sq (raw_score, sq_score, level)
+              VALUES (?, ?, ?)
+            `,
+            [parseInt(sqScore, 10), parseInt(sqScore, 10), rawRange],
+          )
+        }
+      }
+    }
+
+    if (currentTables.has('weefim_category')) {
+      for (const category of weefimCategories) {
+        db.run(
+          `
+            INSERT OR IGNORE INTO weefim_category (id, name, description)
+            VALUES (?, ?, ?)
+          `,
+          [category.id, category.name, category.description],
+        )
+      }
+    }
+
+    if (currentTables.has('weefim_question')) {
+      for (const question of weefimQuestions) {
+        db.run(
+          `
+            INSERT OR IGNORE INTO weefim_question (id, category_id, title, dimension)
+            VALUES (?, ?, ?, ?)
+          `,
+          [question.id, question.category_id, question.title, question.dimension],
+        )
+      }
+    }
   }
 
   private reconcileRestoredData(db = getDatabase(), restoredTables = new Set<string>()): void {
@@ -286,6 +380,7 @@ export class BackupManager {
           db,
           new Set(restoredEntries.map(([tableName]) => tableName)),
         )
+        this.ensureAssessmentReferenceData(currentTables, db)
 
         const violations = this.getForeignKeyViolations(db)
         if (violations.length > 0) {
