@@ -45,9 +45,38 @@
         </div>
 
         <section v-if="phase === 'ready'" class="mood-meter-game__intro">
-          <div class="mood-meter-game__thermometer">
-            <span v-for="zone in previewZones" :key="zone.id" class="mood-meter-game__preview-zone" :style="{ background: zone.color }"></span>
+          <div class="mood-meter-game__stage-board mood-meter-game__stage-board--intro">
+            <div class="mood-meter-game__section-head mood-meter-game__section-head--compact">
+              <div>
+                <span class="mood-meter-game__section-kicker">情绪主舞台</span>
+                <strong>先认识情绪角色、温度计和安抚卡</strong>
+              </div>
+              <small>主视觉已经切到正式 SVG，舞台会跟着心情、温度和安抚卡变化。</small>
+            </div>
+
+            <div class="mood-meter-game__stage-scene mood-meter-game__stage-scene--intro">
+              <MoodMeterStageArt
+                preview
+                focus-area="thermometer"
+                :thermometer-zone-ids="previewZoneIds"
+                :support-ids="previewSupportIds"
+              />
+            </div>
+
+            <div class="mood-meter-game__preview-strip">
+              <article
+                v-for="zone in previewZones"
+                :key="zone.id"
+                class="mood-meter-game__preview-step"
+                :style="{ '--mood-meter-chip-color': zone.color }"
+              >
+                <span>{{ zone.emoji }}</span>
+                <strong>{{ zone.label }}</strong>
+                <small>{{ zone.shortHint }}</small>
+              </article>
+            </div>
           </div>
+
           <div class="mood-meter-game__intro-copy">
             <h2>先看看现在的心情，再给自己选一个舒服的安抚办法。</h2>
             <p>
@@ -56,47 +85,109 @@
           </div>
         </section>
 
-        <section v-else-if="phase === 'mood'" class="mood-meter-game__grid">
-          <button
-            v-for="mood in availableMoods"
-            :key="mood.id"
-            type="button"
-            class="mood-meter-game__card"
-            :disabled="paused"
-            :style="{ '--mood-card-color': mood.color }"
-            @click="selectMood(mood)"
-          >
-            <span class="mood-meter-game__emoji">{{ mood.emoji }}</span>
-            <strong>{{ mood.label }}</strong>
-            <small>{{ mood.description }}</small>
-          </button>
+        <section v-else-if="phase === 'mood'" class="mood-meter-game__selection">
+          <div class="mood-meter-game__stage-board">
+            <div class="mood-meter-game__section-head">
+              <div>
+                <span class="mood-meter-game__section-kicker">情绪角色</span>
+                <strong>先看角色状态，再选心情卡</strong>
+              </div>
+              <small>左侧角色先给视觉线索，真正的选择仍然在右侧卡片里完成。</small>
+            </div>
+
+            <div class="mood-meter-game__stage-scene">
+              <MoodMeterStageArt
+                :mood-id="stageMoodId"
+                :zone-id="stageZoneId"
+                :thermometer-zone-ids="temperatureZoneIds"
+                :support-ids="previewSupportIds"
+                focus-area="character"
+              />
+            </div>
+
+            <p class="mood-meter-game__stage-note">
+              先观察角色表情，再从右侧选一张最像“我现在”的心情卡。
+            </p>
+          </div>
+
+          <div class="mood-meter-game__grid">
+            <button
+              v-for="mood in availableMoods"
+              :key="mood.id"
+              type="button"
+              class="mood-meter-game__card"
+              :disabled="paused"
+              :style="{ '--mood-card-color': mood.color }"
+              @click="selectMood(mood)"
+            >
+              <span class="mood-meter-game__emoji">{{ mood.emoji }}</span>
+              <strong>{{ mood.label }}</strong>
+              <small>{{ mood.description }}</small>
+            </button>
+          </div>
         </section>
 
         <section v-else-if="phase === 'temperature'" class="mood-meter-game__temperature">
-          <div class="mood-meter-game__temperature-copy">
-            <div class="mood-meter-game__selected">
-              <span>{{ selectedMood?.emoji }}</span>
-              <strong>{{ selectedMood?.label }}</strong>
-            </div>
-            <p>把这个心情放到最像它的温度区间里，越往下越接近“很激动、很需要帮助”。</p>
-          </div>
-
-          <div class="mood-meter-game__temperature-list">
-            <button
-              v-for="zone in availableZones"
-              :key="zone.id"
-              type="button"
-              class="mood-meter-game__zone"
-              :disabled="paused"
-              :style="{ background: zone.color }"
-              @click="selectTemperature(zone)"
-            >
+          <div class="mood-meter-game__stage-board">
+            <div class="mood-meter-game__section-head">
               <div>
+                <span class="mood-meter-game__section-kicker">温度计舞台</span>
+                <strong>把刚才的心情放进最像的温度区间</strong>
+              </div>
+              <small>温度越往下越热，也越接近“需要马上帮帮自己”的状态。</small>
+            </div>
+
+            <div class="mood-meter-game__stage-scene">
+              <MoodMeterStageArt
+                :mood-id="selectedMood?.id || stageMoodId"
+                :zone-id="stageZoneId"
+                :thermometer-zone-ids="temperatureZoneIds"
+                :support-ids="supportStageIds"
+                focus-area="thermometer"
+              />
+            </div>
+
+            <div class="mood-meter-game__meter-strip">
+              <article
+                v-for="zone in availableZones"
+                :key="zone.id"
+                class="mood-meter-game__meter-chip"
+                :class="{ 'is-active': selectedZone?.id === zone.id }"
+                :style="{ '--mood-meter-chip-color': zone.color }"
+              >
+                <span>{{ zone.emoji }}</span>
                 <strong>{{ zone.label }}</strong>
                 <small>{{ zone.shortHint }}</small>
+              </article>
+            </div>
+          </div>
+
+          <div class="mood-meter-game__temperature-panel">
+            <div class="mood-meter-game__temperature-copy">
+              <div class="mood-meter-game__selected">
+                <span>{{ selectedMood?.emoji }}</span>
+                <strong>{{ selectedMood?.label }}</strong>
               </div>
-              <span>{{ zone.emoji }}</span>
-            </button>
+              <p>把这个心情放到最像它的温度区间里，越往下越接近“很激动、很需要帮助”。</p>
+            </div>
+
+            <div class="mood-meter-game__temperature-list">
+              <button
+                v-for="zone in availableZones"
+                :key="zone.id"
+                type="button"
+                class="mood-meter-game__zone"
+                :disabled="paused"
+                :style="{ background: zone.color }"
+                @click="selectTemperature(zone)"
+              >
+                <div>
+                  <strong>{{ zone.label }}</strong>
+                  <small>{{ zone.shortHint }}</small>
+                </div>
+                <span>{{ zone.emoji }}</span>
+              </button>
+            </div>
           </div>
         </section>
 
@@ -110,28 +201,68 @@
             <p>现在选一张最想马上试试的安抚卡，让身体和心情慢慢回到舒服一点的位置。</p>
           </header>
 
-          <div class="mood-meter-game__grid">
-            <button
-              v-for="support in availableSupports"
-              :key="support.id"
-              type="button"
-              class="mood-meter-game__card mood-meter-game__card--support"
-              :disabled="paused"
-              :style="{ '--mood-card-color': support.color }"
-              @click="selectSupport(support)"
-            >
-              <span class="mood-meter-game__emoji">{{ support.emoji }}</span>
-              <strong>{{ support.label }}</strong>
-              <small>{{ support.description }}</small>
-            </button>
+          <div class="mood-meter-game__support-layout">
+            <div class="mood-meter-game__stage-board">
+              <div class="mood-meter-game__section-head">
+                <div>
+                  <span class="mood-meter-game__section-kicker">安抚卡舞台</span>
+                  <strong>把当前这一轮的安抚卡摆上舞台</strong>
+                </div>
+                <small>下方会显示这次可选的安抚卡，选中的卡会高亮记录下来。</small>
+              </div>
+
+              <div class="mood-meter-game__stage-scene">
+                <MoodMeterStageArt
+                  :mood-id="selectedMood?.id || stageMoodId"
+                  :zone-id="selectedZone?.id || stageZoneId"
+                  :thermometer-zone-ids="temperatureZoneIds"
+                  :support-ids="supportStageIds"
+                  :selected-support-id="selectedSupport?.id || null"
+                  focus-area="support"
+                />
+              </div>
+
+              <p class="mood-meter-game__stage-note">
+                选那张“如果现在马上做一做，会让我舒服一点”的卡就可以。
+              </p>
+            </div>
+
+            <div class="mood-meter-game__grid">
+              <button
+                v-for="support in availableSupports"
+                :key="support.id"
+                type="button"
+                class="mood-meter-game__card mood-meter-game__card--support"
+                :disabled="paused"
+                :style="{ '--mood-card-color': support.color }"
+                @click="selectSupport(support)"
+              >
+                <span class="mood-meter-game__emoji">{{ support.emoji }}</span>
+                <strong>{{ support.label }}</strong>
+                <small>{{ support.description }}</small>
+              </button>
+            </div>
           </div>
         </section>
 
         <section v-else class="mood-meter-game__complete">
-          <div class="mood-meter-game__summary">
-            <span class="mood-meter-game__emoji">{{ selectedMood?.emoji }}</span>
-            <strong>{{ selectedMood?.label }}</strong>
-            <small>{{ selectedZone?.label }} · {{ selectedSupport?.label }}</small>
+          <div class="mood-meter-game__complete-layout">
+            <div class="mood-meter-game__complete-scene">
+              <MoodMeterStageArt
+                :mood-id="selectedMood?.id || stageMoodId"
+                :zone-id="selectedZone?.id || stageZoneId"
+                :thermometer-zone-ids="temperatureZoneIds"
+                :support-ids="supportStageIds"
+                :selected-support-id="selectedSupport?.id || null"
+                focus-area="summary"
+                finished
+              />
+            </div>
+            <div class="mood-meter-game__summary">
+              <span class="mood-meter-game__emoji">{{ selectedMood?.emoji }}</span>
+              <strong>{{ selectedMood?.label }}</strong>
+              <small>{{ selectedZone?.label }} · {{ selectedSupport?.label }}</small>
+            </div>
           </div>
           <p>这一轮已经记录好了。等保存提示出现后，可以安静返回训练列表。</p>
         </section>
@@ -236,6 +367,7 @@ import type {
   EmotionGameCompletionPayload,
   EmotionGameDifficulty,
 } from '@/types/emotional/games'
+import MoodMeterStageArt from './MoodMeterStageArt.vue'
 import { averageNumberList, clampNumber, shuffleArray } from './prototype-game-utils'
 
 type Phase = 'ready' | 'mood' | 'temperature' | 'support' | 'celebrating' | 'finished'
@@ -316,6 +448,8 @@ const DIFFICULTY_CONFIGS: Record<EmotionGameDifficulty, DifficultyConfig> = {
     supportCount: 4,
   },
 }
+
+const previewSupportIds = ['slow-breath', 'quiet-corner', 'hug-pillow', 'count-down']
 
 const MOODS: ReadonlyArray<MoodDefinition> = [
   {
@@ -546,12 +680,50 @@ const themeStyle = computed(() => ({
   '--prototype-background': selectedMood.value?.color || 'linear-gradient(135deg, #c6f0ff 0%, #fce7f3 52%, #fde68a 100%)',
   '--prototype-progress': selectedSupport.value?.color || 'linear-gradient(135deg, #38bdf8 0%, #c084fc 100%)',
 }))
+const previewZoneIds = computed(() => previewZones.value.map((zone) => zone.id))
+const temperatureZoneIds = computed(() => {
+  const source = availableZones.value.length ? availableZones.value : previewZones.value
+  return source.map((zone) => zone.id)
+})
+const stageMoodId = computed(() => selectedMood.value?.id || 'calm')
+const stageZoneId = computed(() => selectedZone.value?.id || resolveMoodPreviewZone(stageMoodId.value))
+const supportStageIds = computed(() => {
+  if (availableSupports.value.length) {
+    return availableSupports.value.map((support) => support.id).slice(0, 4)
+  }
+
+  if (selectedMood.value) {
+    return [...selectedMood.value.supportIds].slice(0, 4)
+  }
+
+  return [...previewSupportIds]
+})
 
 function buildAvailableZones(difficulty: EmotionGameDifficulty) {
   const zoneIds = DIFFICULTY_CONFIGS[difficulty].zoneIds
   return zoneIds
     .map((zoneId) => TEMPERATURE_ZONES.find((zone) => zone.id === zoneId) || null)
     .filter((zone): zone is TemperatureZone => zone !== null)
+}
+
+function resolveMoodPreviewZone(moodId: string) {
+  if (moodId === 'angry') {
+    return 'hot'
+  }
+
+  if (moodId === 'overwhelmed') {
+    return 'alert'
+  }
+
+  if (moodId === 'shy') {
+    return 'calm-warm'
+  }
+
+  if (moodId === 'sad') {
+    return 'steady'
+  }
+
+  return 'cool'
 }
 
 function resolveSupportFitScore(mood: MoodDefinition, support: SupportDefinition) {
@@ -780,24 +952,106 @@ onBeforeUnmount(() => {
 
 .mood-meter-game__intro {
   display: grid;
-  grid-template-columns: 140px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
   gap: 24px;
-  align-items: center;
+  align-items: stretch;
   min-height: 100%;
 }
 
-.mood-meter-game__thermometer {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 18px;
-  border-radius: 34px;
-  background: rgba(255, 255, 255, 0.62);
+.mood-meter-game__selection,
+.mood-meter-game__temperature,
+.mood-meter-game__support-layout,
+.mood-meter-game__complete-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
 }
 
-.mood-meter-game__preview-zone {
-  height: 74px;
+.mood-meter-game__stage-board {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+  padding: 18px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.mood-meter-game__section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.mood-meter-game__section-head strong {
+  display: block;
+  color: #17304d;
+  font-size: 1.08rem;
+}
+
+.mood-meter-game__section-head small,
+.mood-meter-game__stage-note {
+  line-height: 1.6;
+  color: rgba(23, 48, 77, 0.72);
+}
+
+.mood-meter-game__section-kicker {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(23, 48, 77, 0.64);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mood-meter-game__stage-scene {
+  position: relative;
+  min-height: 320px;
+  overflow: hidden;
+  border-radius: 30px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(226, 239, 255, 0.86) 100%);
+}
+
+.mood-meter-game__stage-scene--intro,
+.mood-meter-game__complete-scene {
+  min-height: 340px;
+}
+
+.mood-meter-game__preview-strip,
+.mood-meter-game__meter-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mood-meter-game__preview-step,
+.mood-meter-game__meter-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
   border-radius: 20px;
+  color: #17304d;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.76) 100%),
+    var(--mood-meter-chip-color);
+  box-shadow: 0 14px 26px rgba(33, 53, 71, 0.1);
+}
+
+.mood-meter-game__preview-step span,
+.mood-meter-game__meter-chip span {
+  font-size: 1.3rem;
+}
+
+.mood-meter-game__meter-chip.is-active {
+  box-shadow: 0 18px 34px rgba(56, 189, 248, 0.18);
+  outline: 1px solid rgba(56, 189, 248, 0.42);
+}
+
+.mood-meter-game__stage-note {
+  margin: 0;
 }
 
 .mood-meter-game__intro-copy h2 {
@@ -876,10 +1130,13 @@ onBeforeUnmount(() => {
 }
 
 .mood-meter-game__temperature {
-  display: grid;
-  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
   gap: 18px;
-  align-items: start;
+}
+
+.mood-meter-game__temperature-panel {
+  display: grid;
+  gap: 18px;
+  align-self: stretch;
 }
 
 .mood-meter-game__temperature-copy,
@@ -933,16 +1190,19 @@ onBeforeUnmount(() => {
   gap: 18px;
 }
 
-.mood-meter-game__card--support {
-  min-height: 154px;
+.mood-meter-game__complete {
+  min-height: 100%;
 }
 
-.mood-meter-game__complete {
-  display: grid;
-  place-items: center;
-  gap: 18px;
-  min-height: 100%;
-  text-align: center;
+.mood-meter-game__complete-scene {
+  position: relative;
+  overflow: hidden;
+  border-radius: 30px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(226, 239, 255, 0.86) 100%);
+}
+
+.mood-meter-game__card--support {
+  min-height: 154px;
 }
 
 .mood-meter-game__summary {
@@ -950,23 +1210,37 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 6px;
   align-items: center;
+  justify-content: center;
+  min-height: 100%;
   padding: 18px 24px;
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.7);
+  text-align: center;
 }
 
 .mood-meter-game__summary span {
   font-size: 2rem;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1100px) {
   .mood-meter-game__intro,
-  .mood-meter-game__temperature {
+  .mood-meter-game__selection,
+  .mood-meter-game__temperature,
+  .mood-meter-game__support-layout,
+  .mood-meter-game__complete-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .mood-meter-game__preview-strip,
+  .mood-meter-game__meter-strip,
+  .mood-meter-game__grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .mood-meter-game__grid {
-    grid-template-columns: minmax(0, 1fr);
+  .mood-meter-game__section-head {
+    flex-direction: column;
   }
 }
 </style>
