@@ -45,12 +45,36 @@
         </div>
 
         <section v-if="phase === 'ready'" class="set-table-game__intro">
-          <div class="set-table-game__table-preview">
-            <div class="set-table-game__plate"></div>
-            <div class="set-table-game__ghost set-table-game__ghost--left"></div>
-            <div class="set-table-game__ghost set-table-game__ghost--right"></div>
-            <div class="set-table-game__ghost set-table-game__ghost--top"></div>
+          <div class="set-table-game__stage-board set-table-game__stage-board--intro">
+            <div class="set-table-game__section-head set-table-game__section-head--compact">
+              <div>
+                <span class="set-table-game__section-kicker">餐桌主舞台</span>
+                <strong>先认识桌面、餐位和餐具</strong>
+              </div>
+              <small>主视觉已经切到正式 SVG，桌面、餐垫和餐具会跟着难度切换。</small>
+            </div>
+
+            <div class="set-table-game__stage-scene set-table-game__stage-scene--intro">
+              <SetTableStageArt
+                preview
+                :theme-id="sessionTheme.id"
+                :slot-ids="difficultyConfig.slotIds"
+              />
+            </div>
+
+            <div class="set-table-game__preview-strip">
+              <article
+                v-for="slot in previewSlots"
+                :key="slot.id"
+                class="set-table-game__preview-step"
+              >
+                <span>{{ slot.emoji }}</span>
+                <strong>{{ slot.label }}</strong>
+                <small>{{ slot.shortHint }}</small>
+              </article>
+            </div>
           </div>
+
           <div class="set-table-game__intro-copy">
             <h2>先选餐具，再把它放到正确的位置上。</h2>
             <p>桌面上会有淡淡的虚影提示。选中一个物品后，再点最适合它的位置，慢慢练习空间锚点。</p>
@@ -58,27 +82,31 @@
         </section>
 
         <section v-else-if="phase === 'playing'" class="set-table-game__play">
-          <div class="set-table-game__board">
-            <div
-              v-for="slot in targetSlots"
-              :key="slot.id"
-              class="set-table-game__slot"
-              :class="{
-                'is-filled': Boolean(placedMap[slot.id]),
-                'is-hinted': hintedSlotId === slot.id,
-              }"
-              :style="slot.position"
-              @click="handleSlotPick(slot)"
-            >
-              <template v-if="placedMap[slot.id]">
-                <span>{{ placedMap[slot.id]?.emoji }}</span>
-                <strong>{{ placedMap[slot.id]?.label }}</strong>
-              </template>
-              <template v-else>
-                <span>{{ slot.ghostEmoji }}</span>
-                <small>{{ slot.anchorLabel }}</small>
-              </template>
+          <div class="set-table-game__stage-board">
+            <div class="set-table-game__section-head">
+              <div>
+                <span class="set-table-game__section-kicker">正式餐位</span>
+                <strong>选好餐具后，点桌面上对应的位置</strong>
+              </div>
+              <small>ghost 锚点会保留在桌面上，选中和提示中的位置会额外发光。</small>
             </div>
+
+            <div class="set-table-game__stage-scene">
+              <SetTableStageArt
+                interactive
+                :disabled="paused"
+                :theme-id="sessionTheme.id"
+                :slot-ids="activeSlotIds"
+                :filled-slot-ids="filledSlotIds"
+                :selected-slot-id="selectedItemId || null"
+                :hinted-slot-id="hintedSlotId || null"
+                @pick-slot="handleStageSlotPick"
+              />
+            </div>
+
+            <p class="set-table-game__stage-note">
+              {{ selectedItemId ? `${selectedItemLabel} 要去发光的位置。` : '先从下方选一件餐具，再点桌面上的锚点。' }}
+            </p>
           </div>
 
           <div class="set-table-game__items">
@@ -102,6 +130,25 @@
         </section>
 
         <section v-else class="set-table-game__complete">
+          <div class="set-table-game__stage-board set-table-game__stage-board--complete">
+            <div class="set-table-game__section-head">
+              <div>
+                <span class="set-table-game__section-kicker">完成舞台</span>
+                <strong>这一桌已经摆整齐啦</strong>
+              </div>
+              <small>{{ sessionTheme.helperLine }}</small>
+            </div>
+
+            <div class="set-table-game__stage-scene set-table-game__complete-scene">
+              <SetTableStageArt
+                finished
+                :theme-id="sessionTheme.id"
+                :slot-ids="activeSlotIds"
+                :filled-slot-ids="filledSlotIds"
+              />
+            </div>
+          </div>
+
           <div class="set-table-game__complete-card">
             <span>🍽️</span>
             <strong>桌面已经摆好啦</strong>
@@ -209,6 +256,7 @@ import type {
   EmotionGameCompletionPayload,
   EmotionGameDifficulty,
 } from '@/types/emotional/games'
+import SetTableStageArt from './SetTableStageArt.vue'
 import { averageNumberList, clampNumber, shuffleArray } from './prototype-game-utils'
 
 type Phase = 'ready' | 'playing' | 'celebrating' | 'finished'
@@ -403,6 +451,9 @@ const averagePlacementLabel = computed(() => {
   return `${(averagePlacementMs.value / 1000).toFixed(1)} 秒`
 })
 const highestPromptLabel = computed(() => `Level ${clampNumber(promptCount.value, 0, 3)}`)
+const previewSlots = computed(() => buildTargetSlots(activeDifficulty.value))
+const activeSlotIds = computed(() => targetSlots.value.map((slot) => slot.id))
+const filledSlotIds = computed(() => targetSlots.value.filter((slot) => Boolean(placedMap.value[slot.id])).map((slot) => slot.id))
 const paused = computed(() => props.paused)
 
 function markDirtyOnce() {
@@ -466,6 +517,15 @@ function selectItem(slot: TableSlot) {
   hintedSlotId.value = ''
   selectionStartedAt = Date.now()
   helperMessage.value = `现在把 ${slot.label} 放到最合适的位置。`
+}
+
+function handleStageSlotPick(slotId: string) {
+  const slot = targetSlots.value.find((candidate) => candidate.id === slotId)
+  if (!slot) {
+    return
+  }
+
+  handleSlotPick(slot)
 }
 
 function handleSlotPick(slot: TableSlot) {
@@ -609,10 +669,91 @@ onBeforeUnmount(() => {
 
 .set-table-game__intro {
   display: grid;
-  grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr);
   gap: 26px;
-  align-items: center;
+  align-items: start;
   min-height: 100%;
+}
+
+.set-table-game__stage-board {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+  padding: 18px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.set-table-game__section-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.set-table-game__section-head strong {
+  display: block;
+  color: #17304d;
+  font-size: 1.08rem;
+}
+
+.set-table-game__section-head--compact small {
+  max-width: 280px;
+}
+
+.set-table-game__section-head small,
+.set-table-game__stage-note {
+  line-height: 1.6;
+  color: rgba(23, 48, 77, 0.72);
+}
+
+.set-table-game__section-kicker {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(23, 48, 77, 0.64);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.set-table-game__stage-scene {
+  position: relative;
+  min-height: 320px;
+  aspect-ratio: 12 / 7;
+  overflow: hidden;
+  border-radius: 30px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 241, 228, 0.86) 100%);
+}
+
+.set-table-game__stage-scene--intro,
+.set-table-game__complete-scene {
+  min-height: 340px;
+}
+
+.set-table-game__preview-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.set-table-game__preview-step {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  color: #17304d;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.78) 100%);
+  box-shadow: 0 14px 26px rgba(33, 53, 71, 0.1);
+}
+
+.set-table-game__preview-step span {
+  font-size: 1.3rem;
+}
+
+.set-table-game__intro-copy {
+  align-self: center;
 }
 
 .set-table-game__intro-copy h2 {
@@ -626,98 +767,13 @@ onBeforeUnmount(() => {
   line-height: 1.76;
 }
 
-.set-table-game__table-preview,
-.set-table-game__board {
-  position: relative;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.7);
-}
-
-.set-table-game__table-preview {
-  min-height: 280px;
-}
-
-.set-table-game__plate,
-.set-table-game__ghost,
-.set-table-game__slot {
-  position: absolute;
-}
-
-.set-table-game__plate {
-  top: 50%;
-  left: 50%;
-  width: 180px;
-  height: 180px;
-  border-radius: 999px;
-  border: 12px solid rgba(255, 255, 255, 0.88);
-  background: rgba(250, 250, 249, 0.84);
-  transform: translate(-50%, -50%);
-}
-
-.set-table-game__ghost {
-  width: 78px;
-  height: 54px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.set-table-game__ghost--left {
-  left: 18%;
-  top: 56%;
-}
-
-.set-table-game__ghost--right {
-  right: 18%;
-  top: 56%;
-}
-
-.set-table-game__ghost--top {
-  right: 20%;
-  top: 22%;
-}
-
 .set-table-game__play {
   display: grid;
   gap: 18px;
 }
 
-.set-table-game__board {
-  min-height: 360px;
-  background:
-    linear-gradient(180deg, rgba(255, 252, 242, 0.92) 0%, rgba(254, 215, 170, 0.72) 100%),
-    rgba(255, 255, 255, 0.56);
-}
-
-.set-table-game__slot {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: center;
-  justify-content: center;
-  width: 120px;
-  min-height: 92px;
-  padding: 10px;
-  border-radius: 22px;
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.48);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-}
-
-.set-table-game__slot:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(33, 53, 71, 0.12);
-}
-
-.set-table-game__slot.is-filled {
-  background: rgba(187, 247, 208, 0.78);
-}
-
-.set-table-game__slot.is-hinted {
-  outline: 3px solid rgba(20, 184, 166, 0.28);
-}
-
-.set-table-game__slot span {
-  font-size: 1.5rem;
+.set-table-game__stage-note {
+  margin: 0;
 }
 
 .set-table-game__items {
@@ -765,7 +821,8 @@ onBeforeUnmount(() => {
 
 .set-table-game__complete {
   display: grid;
-  place-items: center;
+  gap: 18px;
+  align-items: start;
   min-height: 100%;
 }
 
@@ -789,12 +846,25 @@ onBeforeUnmount(() => {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .set-table-game__preview-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .set-table-game__items {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 760px) {
+  .set-table-game__section-head {
+    flex-direction: column;
+  }
+
+  .set-table-game__stage-scene {
+    min-height: 280px;
+  }
+
+  .set-table-game__preview-strip,
   .set-table-game__items {
     grid-template-columns: minmax(0, 1fr);
   }
