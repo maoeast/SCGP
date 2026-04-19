@@ -259,6 +259,11 @@
 8. `docs/reports/2026-03-13-scgp-prd-gap-analysis.md`
 9. `重构实施技术规范.md`
 
+## 7. 当前新增全局约束
+
+- `2026-04-19` 起，在继续新的功能开发或运行进一步代码验证前，必须先对现有脏工作区做分桶基线与抽样审计。
+- 当前已知脏工作区规模为 `4061` 个文件；后续会话默认先参考 `docs/reports/2026-04-19-dirty-worktree-baseline.md` 再决定恢复、保留或归档策略。
+
 ### 3.3.2 2026-04-13 cross-entry custom games Phase 0 execution update
 
 - `Phase 0 Step 1-4` 已落代码，但当前运行现实仍是 `emotional-only`。
