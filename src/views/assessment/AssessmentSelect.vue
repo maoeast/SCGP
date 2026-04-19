@@ -97,18 +97,19 @@
                   </el-icon>
                 </span>
                 <div class="assessment-card__titles">
-                  <h3>{{ scale.title }}</h3>
-                  <p class="assessment-card__subtitle">{{ scale.subtitle }}</p>
-                  <p class="assessment-card__summary">{{ scale.studentSelectorTag.description }}</p>
+                  <div class="assessment-card__title-row">
+                    <h3>{{ scale.title }}</h3>
+                    <p class="assessment-card__subtitle">{{ scale.subtitle }}</p>
+                  </div>
+
+                  <div class="assessment-card__meta">
+                    <span class="assessment-card__badge">适用 {{ scale.ageRange }}</span>
+                    <span class="assessment-card__badge">题量 {{ scale.questionCount }}</span>
+                  </div>
                 </div>
               </div>
 
               <span class="assessment-card__time">{{ scale.timeEstimate }}</span>
-            </div>
-
-            <div class="assessment-card__meta">
-              <span class="assessment-card__badge">适用 {{ scale.ageRange }}</span>
-              <span class="assessment-card__badge">题量 {{ scale.questionCount }}</span>
             </div>
 
             <p class="assessment-card__dimension">{{ scale.dimensions }}</p>
@@ -527,7 +528,17 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
 }
 
 .assessment-card__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   min-width: 0;
+}
+
+.assessment-card__title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .assessment-card__titles h3 {
@@ -539,17 +550,11 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
 }
 
 .assessment-card__subtitle {
-  margin: 4px 0 0;
-  color: #768499;
+  margin: 0;
+  color: #6c7a90;
   font-size: 13px;
   line-height: 1.5;
-}
-
-.assessment-card__summary {
-  margin: 8px 0 0;
-  color: #55657b;
-  font-size: 13px;
-  line-height: 1.6;
+  white-space: nowrap;
 }
 
 .assessment-card__time {
@@ -585,9 +590,9 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
 
 .assessment-card__dimension {
   margin: 0;
-  color: #55657b;
-  font-size: 13px;
-  line-height: 1.7;
+  color: #8190a4;
+  font-size: 12px;
+  line-height: 1.6;
   display: -webkit-box;
   overflow: hidden;
   -webkit-line-clamp: 2;
