@@ -1,11 +1,12 @@
 <template>
-  <el-card class="game-preview-card">
-    <!-- 游戏头部 -->
+  <el-card class="game-preview-card" :class="{ 'game-preview-card--immersive': showConfigInline }">
     <div class="game-header">
       <div class="game-emoji" :style="emojiStyle">
         {{ emoji }}
       </div>
+
       <div class="game-title-section">
+        <div v-if="showConfigInline" class="immersive-badge">全屏沉浸式训练</div>
         <h2 class="game-title">{{ game.name }}</h2>
         <div class="game-tags">
           <el-tag :type="categoryTagType" size="small">
@@ -18,12 +19,10 @@
       </div>
     </div>
 
-    <!-- 游戏描述 -->
     <div class="game-description">
       <p>{{ game.description || metaData?.description || '暂无描述' }}</p>
     </div>
 
-    <!-- 游戏信息 -->
     <div class="game-info">
       <div class="info-item">
         <el-icon><Clock /></el-icon>
@@ -39,7 +38,6 @@
       </div>
     </div>
 
-    <!-- 游戏说明 -->
     <div class="game-instructions">
       <h4>游戏说明</h4>
       <ul>
@@ -49,32 +47,10 @@
       </ul>
     </div>
 
-    <!-- 开始游戏按钮 -->
-    <div class="start-section">
-      <el-button
-        type="primary"
-        size="large"
-        class="start-button"
-        @click="showConfigDialog"
-      >
-        <span class="start-icon">🚀</span>
-        <span class="start-text">开始游戏</span>
-      </el-button>
-      <p class="start-hint">点击按钮配置训练参数，系统将记录训练数据</p>
-    </div>
-
-    <!-- 训练配置对话框 -->
-    <el-dialog
-      v-model="configDialogVisible"
-      title="训练配置"
-      width="480px"
-      :close-on-click-modal="false"
-      class="config-dialog"
-    >
+    <div v-if="showConfigInline" class="config-card">
       <div class="config-section">
-        <h4 class="config-title">难度设置</h4>
+        <h4 class="config-title">开始前设置</h4>
 
-        <!-- 颜色配对 / 形状识别 / 物品配对 -->
         <template v-if="isVisualMatchGame">
           <div class="config-item">
             <label>网格大小</label>
@@ -102,7 +78,6 @@
           </div>
         </template>
 
-        <!-- 视觉追踪 -->
         <template v-else-if="isVisualTrackGame">
           <div class="config-item">
             <label>训练时长</label>
@@ -130,7 +105,6 @@
           </div>
         </template>
 
-        <!-- 声音辨别 -->
         <template v-else-if="isAudioDiffGame">
           <div class="config-item">
             <label>时间限制</label>
@@ -150,7 +124,6 @@
           </div>
         </template>
 
-        <!-- 听指令做动作 -->
         <template v-else-if="isAudioCommandGame">
           <div class="config-item">
             <label>网格大小</label>
@@ -178,7 +151,146 @@
           </div>
         </template>
 
-        <!-- 节奏模仿 -->
+        <template v-else-if="isAudioRhythmGame">
+          <div class="config-item">
+            <label>训练轮次</label>
+            <el-radio-group v-model="config.rounds" size="large">
+              <el-radio-button :value="5">5轮</el-radio-button>
+              <el-radio-button :value="8">8轮</el-radio-button>
+              <el-radio-button :value="10">10轮</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <div class="start-section">
+      <el-button
+        type="primary"
+        size="large"
+        class="start-button"
+        :loading="starting"
+        @click="showConfigInline ? handleStartGame() : showConfigDialog()"
+      >
+        <span class="start-icon">{{ showConfigInline ? '🖐️' : '🚀' }}</span>
+        <span class="start-text">{{ showConfigInline ? '进入全屏训练' : '开始游戏' }}</span>
+      </el-button>
+      <p class="start-hint">
+        {{ showConfigInline ? '参数将在进入训练时直接生效' : '点击按钮配置训练参数，系统将记录训练数据' }}
+      </p>
+    </div>
+
+    <el-dialog
+      v-if="!showConfigInline"
+      v-model="configDialogVisible"
+      title="训练配置"
+      width="480px"
+      :close-on-click-modal="false"
+      class="config-dialog"
+    >
+      <div class="config-section">
+        <h4 class="config-title">难度设置</h4>
+
+        <template v-if="isVisualMatchGame">
+          <div class="config-item">
+            <label>网格大小</label>
+            <el-radio-group v-model="config.gridSize" size="large">
+              <el-radio-button :value="2">2×2</el-radio-button>
+              <el-radio-button :value="3">3×3</el-radio-button>
+              <el-radio-button :value="4">4×4</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>时间限制</label>
+            <el-radio-group v-model="config.timeLimit" size="large">
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>训练轮次</label>
+            <el-radio-group v-model="config.rounds" size="large">
+              <el-radio-button :value="5">5轮</el-radio-button>
+              <el-radio-button :value="8">8轮</el-radio-button>
+              <el-radio-button :value="10">10轮</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+
+        <template v-else-if="isVisualTrackGame">
+          <div class="config-item">
+            <label>训练时长</label>
+            <el-radio-group v-model="config.duration" size="large">
+              <el-radio-button :value="30">30秒</el-radio-button>
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>目标大小</label>
+            <el-radio-group v-model="config.targetSize" size="large">
+              <el-radio-button :value="40">小</el-radio-button>
+              <el-radio-button :value="60">中</el-radio-button>
+              <el-radio-button :value="80">大</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>移动速度</label>
+            <el-radio-group v-model="config.targetSpeed" size="large">
+              <el-radio-button :value="1">慢速</el-radio-button>
+              <el-radio-button :value="2">中速</el-radio-button>
+              <el-radio-button :value="3">快速</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+
+        <template v-else-if="isAudioDiffGame">
+          <div class="config-item">
+            <label>时间限制</label>
+            <el-radio-group v-model="config.timeLimit" size="large">
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>训练轮次</label>
+            <el-radio-group v-model="config.rounds" size="large">
+              <el-radio-button :value="5">5轮</el-radio-button>
+              <el-radio-button :value="8">8轮</el-radio-button>
+              <el-radio-button :value="10">10轮</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+
+        <template v-else-if="isAudioCommandGame">
+          <div class="config-item">
+            <label>网格大小</label>
+            <el-radio-group v-model="config.gridSize" size="large">
+              <el-radio-button :value="2">2×2</el-radio-button>
+              <el-radio-button :value="3">3×3</el-radio-button>
+              <el-radio-button :value="4">4×4</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>时间限制</label>
+            <el-radio-group v-model="config.timeLimit" size="large">
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>训练轮次</label>
+            <el-radio-group v-model="config.rounds" size="large">
+              <el-radio-button :value="5">5轮</el-radio-button>
+              <el-radio-button :value="8">8轮</el-radio-button>
+              <el-radio-button :value="10">10轮</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+
         <template v-else-if="isAudioRhythmGame">
           <div class="config-item">
             <label>训练轮次</label>
@@ -204,17 +316,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { Clock, TrendCharts, VideoCamera } from '@element-plus/icons-vue'
-import type { ResourceItem } from '@/types/module'
 import { TaskID, type GridSize } from '@/types/games'
+import type { ResourceItem } from '@/types/module'
 
 interface Props {
   game: ResourceItem
   studentId: number
+  launchVariant?: 'default' | 'sensory-immersive'
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  launchVariant: 'default',
+})
 
 const emit = defineEmits<{
   'start-game': [config: {
@@ -231,82 +346,52 @@ const emit = defineEmits<{
   }]
 }>()
 
-// 状态
 const starting = ref(false)
 const configDialogVisible = ref(false)
 
-// 训练配置
 const config = reactive({
   gridSize: 2 as GridSize,
   rounds: 5,
   timeLimit: 60,
   duration: 30,
   targetSize: 60,
-  targetSpeed: 2
+  targetSpeed: 2,
 })
 
-// 解析元数据
 const metaData = computed(() => {
-  if (props.game.metadata) {
-    return props.game.metadata
-  }
-  return null
+  return props.game.metadata || null
 })
 
-// 获取 taskId
 const taskId = computed(() => {
   return metaData.value?.taskId || props.game.legacyId || 0
 })
 
-// 游戏类型判断
-// 颜色配对、形状识别、物品配对
+const showConfigInline = computed(() => props.launchVariant === 'sensory-immersive')
+
 const isVisualMatchGame = computed(() => {
   return [
     TaskID.COLOR_MATCH,
     TaskID.SHAPE_MATCH,
-    TaskID.ICON_MATCH
+    TaskID.ICON_MATCH,
   ].includes(taskId.value)
 })
 
-// 视觉追踪
-const isVisualTrackGame = computed(() => {
-  return taskId.value === TaskID.VISUAL_TRACK
-})
+const isVisualTrackGame = computed(() => taskId.value === TaskID.VISUAL_TRACK)
+const isAudioDiffGame = computed(() => taskId.value === TaskID.AUDIO_DIFF)
+const isAudioCommandGame = computed(() => taskId.value === TaskID.AUDIO_COMMAND)
+const isAudioRhythmGame = computed(() => taskId.value === TaskID.AUDIO_RHYTHM)
 
-// 声音辨别
-const isAudioDiffGame = computed(() => {
-  return taskId.value === TaskID.AUDIO_DIFF
-})
-
-// 听指令做动作
-const isAudioCommandGame = computed(() => {
-  return taskId.value === TaskID.AUDIO_COMMAND
-})
-
-// 节奏模仿
-const isAudioRhythmGame = computed(() => {
-  return taskId.value === TaskID.AUDIO_RHYTHM
-})
-
-// 获取游戏属性
-const emoji = computed(() => {
-  return metaData.value?.emoji || props.game.coverImage || '🎮'
-})
-
-const difficulty = computed(() => {
-  return metaData.value?.difficulty || '中等'
-})
-
-const duration = computed(() => {
-  return metaData.value?.duration || '3-5分钟'
-})
+const emoji = computed(() => metaData.value?.emoji || props.game.coverImage || '🎮')
+const difficulty = computed(() => metaData.value?.difficulty || '中等')
+const duration = computed(() => metaData.value?.duration || '3-5分钟')
 
 const categoryLabel = computed(() => {
   const labels: Record<string, string> = {
     visual: '视觉训练',
     audio: '听觉训练',
-    tactile: '触觉训练'
+    tactile: '触觉训练',
   }
+
   return labels[props.game.category || ''] || props.game.category || '综合训练'
 })
 
@@ -314,106 +399,127 @@ const categoryTagType = computed(() => {
   const types: Record<string, '' | 'success' | 'warning' | 'danger' | 'info' | 'primary'> = {
     visual: 'primary',
     audio: 'warning',
-    tactile: 'danger'
+    tactile: 'danger',
   }
+
   return types[props.game.category || ''] || 'info'
 })
 
-// Emoji 背景样式
 const emojiStyle = computed(() => {
-  const color = metaData.value?.color || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
   return {
-    background: color
+    background: metaData.value?.color || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
   }
 })
 
-// 显示配置对话框
-const showConfigDialog = () => {
-  // 根据游戏类型重置配置为默认值
+function resetConfig() {
   if (isVisualMatchGame.value) {
     config.gridSize = 2
     config.timeLimit = 60
     config.rounds = 5
-  } else if (isVisualTrackGame.value) {
+    return
+  }
+
+  if (isVisualTrackGame.value) {
     config.duration = 30
     config.targetSize = 60
     config.targetSpeed = 2
-  } else if (isAudioDiffGame.value) {
+    return
+  }
+
+  if (isAudioDiffGame.value) {
     config.timeLimit = 60
     config.rounds = 5
-  } else if (isAudioCommandGame.value) {
+    return
+  }
+
+  if (isAudioCommandGame.value) {
     config.gridSize = 2
     config.timeLimit = 60
     config.rounds = 5
-  } else if (isAudioRhythmGame.value) {
-    config.rounds = 5
+    return
   }
 
+  if (isAudioRhythmGame.value) {
+    config.rounds = 5
+  }
+}
+
+function buildGameConfig() {
+  const mode = metaData.value?.mode || ''
+
+  if (!taskId.value) {
+    throw new Error('无法获取 taskId')
+  }
+
+  const gameConfig: {
+    resourceId: number
+    taskId: number
+    mode: string
+    studentId: number
+    gridSize?: number
+    rounds?: number
+    timeLimit?: number
+    duration?: number
+    targetSize?: number
+    targetSpeed?: number
+  } = {
+    resourceId: props.game.id,
+    taskId: taskId.value,
+    mode,
+    studentId: props.studentId,
+  }
+
+  if (isVisualMatchGame.value) {
+    gameConfig.gridSize = config.gridSize
+    gameConfig.timeLimit = config.timeLimit
+    gameConfig.rounds = config.rounds
+  } else if (isVisualTrackGame.value) {
+    gameConfig.duration = config.duration
+    gameConfig.targetSize = config.targetSize
+    gameConfig.targetSpeed = config.targetSpeed
+  } else if (isAudioDiffGame.value) {
+    gameConfig.timeLimit = config.timeLimit
+    gameConfig.rounds = config.rounds
+  } else if (isAudioCommandGame.value) {
+    gameConfig.gridSize = config.gridSize
+    gameConfig.timeLimit = config.timeLimit
+    gameConfig.rounds = config.rounds
+  } else if (isAudioRhythmGame.value) {
+    gameConfig.rounds = config.rounds
+  }
+
+  return gameConfig
+}
+
+const showConfigDialog = () => {
+  resetConfig()
   configDialogVisible.value = true
 }
 
-// 开始游戏
 const handleStartGame = async () => {
   starting.value = true
 
   try {
-    const mode = metaData.value?.mode || ''
-
-    if (!taskId.value) {
-      console.error('[GamePreviewCard] 无法获取 taskId')
-      return
-    }
-
-    // 构建配置对象
-    const gameConfig: {
-      resourceId: number
-      taskId: number
-      mode: string
-      studentId: number
-      gridSize?: number
-      rounds?: number
-      timeLimit?: number
-      duration?: number
-      targetSize?: number
-      targetSpeed?: number
-    } = {
-      resourceId: props.game.id,
-      taskId: taskId.value,
-      mode,
-      studentId: props.studentId
-    }
-
-    // 根据游戏类型添加配置参数
-    if (isVisualMatchGame.value) {
-      gameConfig.gridSize = config.gridSize
-      gameConfig.timeLimit = config.timeLimit
-      gameConfig.rounds = config.rounds
-    } else if (isVisualTrackGame.value) {
-      gameConfig.duration = config.duration
-      gameConfig.targetSize = config.targetSize
-      gameConfig.targetSpeed = config.targetSpeed
-    } else if (isAudioDiffGame.value) {
-      gameConfig.timeLimit = config.timeLimit
-      gameConfig.rounds = config.rounds
-    } else if (isAudioCommandGame.value) {
-      gameConfig.gridSize = config.gridSize
-      gameConfig.timeLimit = config.timeLimit
-      gameConfig.rounds = config.rounds
-    } else if (isAudioRhythmGame.value) {
-      gameConfig.rounds = config.rounds
-    }
-
+    const gameConfig = buildGameConfig()
     console.log('[GamePreviewCard] 开始游戏，配置:', gameConfig)
-
-    // 发射事件
     emit('start-game', gameConfig)
-
-    // 关闭对话框
     configDialogVisible.value = false
+  } catch (error) {
+    console.error('[GamePreviewCard] 构建游戏配置失败:', error)
   } finally {
     starting.value = false
   }
 }
+
+watch(
+  [taskId, showConfigInline, () => props.game.id],
+  ([, inline]) => {
+    if (inline) {
+      resetConfig()
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>
@@ -421,7 +527,14 @@ const handleStartGame = async () => {
   height: fit-content;
 }
 
-/* 游戏头部 */
+.game-preview-card--immersive {
+  border: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 250, 255, 0.96)),
+    linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(59, 130, 246, 0.08));
+  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.08);
+}
+
 .game-header {
   display: flex;
   align-items: center;
@@ -432,25 +545,38 @@ const handleStartGame = async () => {
 }
 
 .game-emoji {
+  display: flex;
   width: 80px;
   height: 80px;
-  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
-  border-radius: 16px;
   flex-shrink: 0;
+  border-radius: 16px;
+  font-size: 40px;
 }
 
 .game-title-section {
   flex: 1;
 }
 
+.immersive-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  margin-bottom: 10px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1d4ed8;
+  background: rgba(191, 219, 254, 0.82);
+}
+
 .game-title {
+  margin: 0 0 12px;
   font-size: 24px;
   font-weight: 600;
   color: #303133;
-  margin: 0 0 12px 0;
 }
 
 .game-tags {
@@ -458,27 +584,25 @@ const handleStartGame = async () => {
   gap: 8px;
 }
 
-/* 游戏描述 */
 .game-description {
   margin-bottom: 20px;
 }
 
 .game-description p {
-  font-size: 14px;
-  color: #606266;
-  line-height: 1.6;
   margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #606266;
 }
 
-/* 游戏信息 */
 .game-info {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 24px;
   padding: 16px;
-  background: #f5f7fa;
   border-radius: 8px;
+  background: #f5f7fa;
 }
 
 .info-item {
@@ -493,20 +617,19 @@ const handleStartGame = async () => {
   color: #909399;
 }
 
-/* 游戏说明 */
 .game-instructions {
   margin-bottom: 24px;
   padding: 16px;
-  background: #ecf5ff;
-  border-radius: 8px;
   border-left: 4px solid #409eff;
+  border-radius: 8px;
+  background: #ecf5ff;
 }
 
 .game-instructions h4 {
+  margin: 0 0 12px;
   font-size: 14px;
   font-weight: 500;
   color: #303133;
-  margin: 0 0 12px 0;
 }
 
 .game-instructions ul {
@@ -516,24 +639,53 @@ const handleStartGame = async () => {
 
 .game-instructions li {
   font-size: 13px;
-  color: #606266;
   line-height: 1.8;
+  color: #606266;
 }
 
-/* 开始按钮区域 */
+.immersive-callout {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  color: #0f172a;
+  background: linear-gradient(135deg, rgba(254, 249, 195, 0.95), rgba(219, 234, 254, 0.95));
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.immersive-callout strong {
+  font-size: 16px;
+}
+
+.immersive-callout span {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #475569;
+}
+
+.config-card {
+  margin-bottom: 20px;
+  padding: 18px 20px 6px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(226, 232, 240, 0.92);
+}
+
 .start-section {
+  padding-top: 8px;
   text-align: center;
-  padding-top: 20px;
 }
 
 .start-button {
   width: 100%;
-  max-width: 300px;
-  height: 56px;
-  font-size: 18px;
-  border-radius: 28px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  max-width: 340px;
+  height: 58px;
   border: none;
+  border-radius: 28px;
+  font-size: 18px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   transition: all 0.3s ease;
 }
@@ -548,8 +700,8 @@ const handleStartGame = async () => {
 }
 
 .start-icon {
-  font-size: 22px;
   margin-right: 8px;
+  font-size: 22px;
 }
 
 .start-text {
@@ -557,23 +709,22 @@ const handleStartGame = async () => {
 }
 
 .start-hint {
+  margin: 12px 0 0;
   font-size: 12px;
   color: #909399;
-  margin: 12px 0 0 0;
 }
 
-/* 配置对话框样式 */
 .config-section {
   padding: 10px 0;
 }
 
 .config-title {
+  margin: 0 0 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ebeef5;
   font-size: 16px;
   font-weight: 600;
   color: #303133;
-  margin: 0 0 20px 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #ebeef5;
 }
 
 .config-item {
@@ -582,10 +733,10 @@ const handleStartGame = async () => {
 
 .config-item label {
   display: block;
+  margin-bottom: 12px;
   font-size: 14px;
   font-weight: 500;
   color: #606266;
-  margin-bottom: 12px;
 }
 
 .config-item .el-radio-group {

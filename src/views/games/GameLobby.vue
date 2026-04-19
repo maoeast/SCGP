@@ -187,6 +187,7 @@
           class="workspace-pane-card"
           :game="selectedGame"
           :student-id="studentId"
+          :launch-variant="isSensoryEntry ? 'sensory-immersive' : 'default'"
           @start-game="handleStartGame"
         />
 
@@ -294,6 +295,7 @@ const selectedEmotionalDifficulty = ref<1 | 2 | 3>(1)
 const selectedPartnerStudentId = ref<number | null>(initialPartnerStudentId)
 
 const isEmotionalEntry = computed(() => currentEntryCode.value === 'emotional-regulation')
+const isSensoryEntry = computed(() => currentEntryCode.value === 'sensory-integration')
 
 const createRegistryBackedGameItem = (game: CustomGameDefinition, index: number): ResourceItem => ({
   id: -2001 - index,
@@ -472,6 +474,7 @@ const handleStartGame = (gameConfig: {
   // 构建查询参数
   const query: Record<string, string> = {
       studentId: String(gameConfig.studentId),
+      studentName: student.value?.name || '',
       resourceId: String(gameConfig.resourceId),
       taskId: String(gameConfig.taskId),
       mode: gameConfig.mode,

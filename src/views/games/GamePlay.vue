@@ -1,54 +1,102 @@
 <template>
-  <div class="game-play-container">
-    <!-- 加载中状态 -->
+  <div class="game-play-container" :class="{ 'game-play-container--sensory': shouldUseSensoryShell }">
     <div v-if="loading" class="loading-view">
       <el-icon class="loading-icon" :size="48"><Loading /></el-icon>
       <p>正在加载游戏...</p>
     </div>
 
-    <!-- 根据 taskId 渲染对应游戏组件 -->
     <template v-else-if="taskId">
-      <GameGrid
-        v-if="isGridGame"
-        :student-id="studentId"
-        :task-id="taskId"
-        :mode="mode as GameGridMode"
-        :grid-size="gridSize"
-        :time-limit="timeLimit"
-        :rounds="rounds"
-        @finish="handleGameFinish"
-      />
+      <SensoryGameShell
+        v-if="shouldUseSensoryShell"
+        :title="gameTitle"
+        :summary="gameSummary"
+        :student-name="studentName"
+        :mode-label="modeLabel"
+        :duration-label="durationLabel"
+        @back="goBack"
+      >
+        <div class="game-play-stage">
+          <GameGrid
+            v-if="isGridGame"
+            :student-id="studentId"
+            :task-id="taskId"
+            :mode="mode as GameGridMode"
+            :grid-size="gridSize"
+            :time-limit="timeLimit"
+            :rounds="rounds"
+            @finish="handleGameFinish"
+          />
 
-      <VisualTracker
-        v-else-if="taskId === TaskID.VISUAL_TRACK"
-        :student-id="studentId"
-        :task-id="taskId"
-        :duration="duration"
-        :target-size="targetSize"
-        :target-speed="targetSpeed"
-        @finish="handleGameFinish"
-      />
+          <VisualTracker
+            v-else-if="taskId === TaskID.VISUAL_TRACK"
+            :student-id="studentId"
+            :task-id="taskId"
+            :duration="duration"
+            :target-size="targetSize"
+            :target-speed="targetSpeed"
+            @finish="handleGameFinish"
+          />
 
-      <GameAudio
-        v-else-if="isAudioGame"
-        :student-id="studentId"
-        :task-id="taskId"
-        :mode="mode as GameAudioMode"
-        :grid-size="gridSize"
-        :rounds="rounds"
-        :time-limit="timeLimit"
-        @finish="handleGameFinish"
-      />
+          <GameAudio
+            v-else-if="isAudioGame"
+            :student-id="studentId"
+            :task-id="taskId"
+            :mode="mode as GameAudioMode"
+            :grid-size="gridSize"
+            :rounds="rounds"
+            :time-limit="timeLimit"
+            @finish="handleGameFinish"
+          />
 
-      <!-- 未知游戏类型 -->
-      <div v-else class="error-view">
-        <h2>❌ 未识别的游戏类型</h2>
-        <p>任务ID: {{ taskId }}，模式: {{ mode }}</p>
-        <el-button @click="goBack">返回</el-button>
+          <div v-else class="error-view error-view--embedded">
+            <h2>❌ 未识别的游戏类型</h2>
+            <p>任务ID: {{ taskId }}，模式: {{ mode }}</p>
+            <el-button @click="goBack">返回</el-button>
+          </div>
+        </div>
+      </SensoryGameShell>
+
+      <div v-else class="game-play-stage">
+        <GameGrid
+          v-if="isGridGame"
+          :student-id="studentId"
+          :task-id="taskId"
+          :mode="mode as GameGridMode"
+          :grid-size="gridSize"
+          :time-limit="timeLimit"
+          :rounds="rounds"
+          @finish="handleGameFinish"
+        />
+
+        <VisualTracker
+          v-else-if="taskId === TaskID.VISUAL_TRACK"
+          :student-id="studentId"
+          :task-id="taskId"
+          :duration="duration"
+          :target-size="targetSize"
+          :target-speed="targetSpeed"
+          @finish="handleGameFinish"
+        />
+
+        <GameAudio
+          v-else-if="isAudioGame"
+          :student-id="studentId"
+          :task-id="taskId"
+          :mode="mode as GameAudioMode"
+          :grid-size="gridSize"
+          :rounds="rounds"
+          :time-limit="timeLimit"
+          @finish="handleGameFinish"
+        />
+
+        <div v-else class="error-view">
+          <h2>❌ 未识别的游戏类型</h2>
+          <p>任务ID: {{ taskId }}，模式: {{ mode }}</p>
+          <el-button @click="goBack">返回</el-button>
+        </div>
       </div>
     </template>
 
-    <!-- 无效任务 -->
     <div v-else class="error-view">
       <h2>❌ 未找到训练任务</h2>
       <p>资源ID: {{ resourceId }}</p>
@@ -58,38 +106,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
+import SensoryGameShell from '@/components/games/SensoryGameShell.vue'
+import GameAudio from '@/components/games/audio/GameAudio.vue'
 import GameGrid from '@/components/games/visual/GameGrid.vue'
 import VisualTracker from '@/components/games/visual/VisualTracker.vue'
-import GameAudio from '@/components/games/audio/GameAudio.vue'
-import { TaskID, type GameSessionData, type GameGridMode, type GameAudioMode } from '@/types/games'
-import { GameTrainingAPI, DatabaseAPI } from '@/database/api'
+import { DatabaseAPI, GameTrainingAPI } from '@/database/api'
 import { ResourceAPI } from '@/database/resource-api'
+import { TaskID, type GameAudioMode, type GameGridMode, type GameSessionData } from '@/types/games'
 import type { ResourceItem } from '@/types/module'
 import { resolveTrainingEntryCode, resolveTrainingEntryCodeFromResource } from '@/utils/training-entry'
 
 const router = useRouter()
 const route = useRoute()
 
-// ========== 状态 ==========
 const loading = ref(true)
 const gameResource = ref<ResourceItem | null>(null)
 
-// 从 URL 参数获取基础信息
 const studentId = ref<number>(Number(route.query.studentId) || 0)
+const studentName = computed(() => String(route.query.studentName || ''))
 const resourceId = ref<number>(Number(route.query.resourceId) || 0)
 const moduleCode = ref<string>((route.query.module as string) || 'sensory')
 const entryCode = ref<string>(resolveTrainingEntryCode(route.query.entry, route.query.module))
 const launchSource = ref<string>((route.query.from as string) || '')
 
-// 从资源加载的游戏配置
 const taskId = ref<TaskID | null>(null)
 const mode = ref<string>('')
 
-// 游戏参数（从 URL query 获取，使用默认值）
 const gridSize = ref<2 | 3 | 4>((Number(route.query.gridSize) || 2) as 2 | 3 | 4)
 const timeLimit = ref<number>(Number(route.query.timeLimit) || 60)
 const rounds = ref<number>(Number(route.query.rounds) || 10)
@@ -97,48 +143,87 @@ const duration = ref<number>(Number(route.query.duration) || 30)
 const targetSize = ref<number>(Number(route.query.targetSize) || 60)
 const targetSpeed = ref<number>(Number(route.query.targetSpeed) || 2)
 
-// 兼容旧版 URL 参数（直接传 taskId）
 const legacyTaskId = ref<number>(Number(route.query.taskId) || 0)
 const legacyMode = ref<string>((route.query.mode as string) || '')
 
-// ========== 计算属性 ==========
-
-// 判断是否为 Grid 游戏
 const isGridGame = computed(() => {
-  return taskId.value && [
+  return taskId.value !== null && [
     TaskID.COLOR_MATCH,
     TaskID.SHAPE_MATCH,
-    TaskID.ICON_MATCH
+    TaskID.ICON_MATCH,
   ].includes(taskId.value)
 })
 
-// 判断是否为 Audio 游戏
 const isAudioGame = computed(() => {
-  return taskId.value && [
+  return taskId.value !== null && [
     TaskID.AUDIO_DIFF,
     TaskID.AUDIO_COMMAND,
-    TaskID.AUDIO_RHYTHM
+    TaskID.AUDIO_RHYTHM,
   ].includes(taskId.value)
 })
 
-// 任务名称映射
+const shouldUseSensoryShell = computed(() => entryCode.value === 'sensory-integration')
+
 const taskNames: Record<number, string> = {
-  [TaskID.COLOR_MATCH]: '颜色配对游戏',
-  [TaskID.SHAPE_MATCH]: '形状识别游戏',
-  [TaskID.ICON_MATCH]: '物品配对游戏',
-  [TaskID.VISUAL_TRACK]: '视觉追踪游戏',
-  [TaskID.AUDIO_DIFF]: '声音辨别游戏',
+  [TaskID.COLOR_MATCH]: '颜色配对',
+  [TaskID.SHAPE_MATCH]: '形状识别',
+  [TaskID.ICON_MATCH]: '物品配对',
+  [TaskID.VISUAL_TRACK]: '视觉追踪',
+  [TaskID.AUDIO_DIFF]: '声音辨别',
   [TaskID.AUDIO_COMMAND]: '听指令做动作',
-  [TaskID.AUDIO_RHYTHM]: '节奏模仿游戏'
+  [TaskID.AUDIO_RHYTHM]: '节奏模仿',
 }
 
-// ========== 方法 ==========
+const modeLabel = computed(() => {
+  if (taskId.value === TaskID.COLOR_MATCH) return '视觉配对'
+  if (taskId.value === TaskID.SHAPE_MATCH) return '图形辨别'
+  if (taskId.value === TaskID.ICON_MATCH) return '视觉联想'
+  if (taskId.value === TaskID.VISUAL_TRACK) return '视觉追踪'
+  if (taskId.value === TaskID.AUDIO_DIFF) return '听觉辨别'
+  if (taskId.value === TaskID.AUDIO_COMMAND) return '听觉理解'
+  if (taskId.value === TaskID.AUDIO_RHYTHM) return '节奏模仿'
+  return mode.value || '综合训练'
+})
 
-/**
- * 从资源表加载游戏配置
- */
+const gameTitle = computed(() => {
+  return gameResource.value?.name || (taskId.value ? taskNames[taskId.value] : '') || '感统训练'
+})
+
+const gameSummary = computed(() => {
+  const resourceSummary = typeof gameResource.value?.description === 'string' ? gameResource.value.description.trim() : ''
+  if (resourceSummary) {
+    return resourceSummary
+  }
+
+  if (taskId.value === TaskID.VISUAL_TRACK) {
+    return '请在全屏训练区内持续跟随移动目标，优先保证孩子能稳定看到目标与反馈。'
+  }
+
+  if (isAudioGame.value) {
+    return '进入训练后请优先使用手指直接操作大按钮，保持孩子注意力集中在当前一轮任务。'
+  }
+
+  return '进入训练后请直接使用手指完成当前目标匹配，系统会自动记录训练过程和结果。'
+})
+
+const durationLabel = computed(() => {
+  const resourceDuration = gameResource.value?.metadata?.duration
+  if (typeof resourceDuration === 'string' && resourceDuration.trim()) {
+    return resourceDuration
+  }
+
+  if (taskId.value === TaskID.VISUAL_TRACK) {
+    return `${duration.value}秒`
+  }
+
+  if (isGridGame.value || isAudioGame.value) {
+    return `${rounds.value}轮 / ${timeLimit.value}秒`
+  }
+
+  return ''
+})
+
 const loadGameFromResource = async () => {
-  // 优先使用 resourceId 从资源表加载
   if (resourceId.value) {
     try {
       const api = new ResourceAPI()
@@ -146,14 +231,8 @@ const loadGameFromResource = async () => {
 
       if (resource) {
         gameResource.value = resource as unknown as ResourceItem
-
-        // 从元数据解析游戏配置
-        // 注意：ResourceItem.metadata 是 camelCase，且已经是解析后的对象
         const metaData = resource.metadata || null
 
-        // 设置游戏配置
-        // 注意：ResourceItem.legacyId 是 camelCase，不是 snake_case
-        // 优先使用 metadata 中的值，其次使用 URL 参数中的值（兼容旧版）
         taskId.value = metaData?.taskId || resource.legacyId || legacyTaskId.value || null
         mode.value = metaData?.mode || legacyMode.value || ''
 
@@ -161,7 +240,7 @@ const loadGameFromResource = async () => {
           resourceId: resourceId.value,
           taskId: taskId.value,
           mode: mode.value,
-          metaData
+          metaData,
         })
 
         return true
@@ -171,13 +250,12 @@ const loadGameFromResource = async () => {
     }
   }
 
-  // 兼容旧版：直接使用 URL 中的 taskId 和 mode
   if (legacyTaskId.value) {
     taskId.value = legacyTaskId.value as TaskID
     mode.value = legacyMode.value
     console.log('[GamePlay] 使用旧版 URL 参数:', {
       taskId: taskId.value,
-      mode: mode.value
+      mode: mode.value,
     })
     return true
   }
@@ -185,14 +263,10 @@ const loadGameFromResource = async () => {
   return false
 }
 
-/**
- * 保存训练记录（带 module_code）
- */
 const saveTrainingRecord = async (sessionData: GameSessionData) => {
   try {
     const api = new GameTrainingAPI()
 
-    // 使用 saveTrainingRecord 方法（已支持 module_code）
     const recordId = api.saveTrainingRecord({
       student_id: sessionData.studentId,
       task_id: sessionData.taskId,
@@ -205,7 +279,7 @@ const saveTrainingRecord = async (sessionData: GameSessionData) => {
       accuracy_rate: sessionData.accuracy,
       avg_response_time: sessionData.avgResponseTime,
       raw_data: sessionData,
-      module_code: moduleCode.value  // 关键：传递 module_code
+      module_code: moduleCode.value,
     })
 
     console.log('[GamePlay] 训练记录已保存，ID:', recordId, 'module_code:', moduleCode.value)
@@ -217,26 +291,20 @@ const saveTrainingRecord = async (sessionData: GameSessionData) => {
   }
 }
 
-/**
- * 创建报告记录
- */
 const createReportRecord = async (recordId: number, sessionData: GameSessionData) => {
   try {
     const db = new DatabaseAPI()
-
-    // 获取学生信息
     const students = db.query('SELECT * FROM student WHERE id = ?', [sessionData.studentId])
+
     if (students.length === 0) {
       console.warn('[GamePlay] 学生不存在，跳过创建报告记录')
       return
     }
-    const student = students[0]
 
-    // 生成报告标题
+    const student = students[0]
     const taskName = taskNames[sessionData.taskId] || '训练任务'
     const title = `IEP评估报告_${student.name}_${taskName}_${new Date().toLocaleDateString()}`
 
-    // 创建报告记录（包含 module_code）
     db.execute(`
       INSERT INTO report_record (student_id, report_type, training_record_id, title, module_code, created_at)
       VALUES (?, ?, ?, ?, ?, ?)
@@ -245,34 +313,26 @@ const createReportRecord = async (recordId: number, sessionData: GameSessionData
       'iep',
       recordId,
       title,
-      moduleCode.value,  // 关键：传递 module_code
-      new Date().toISOString()
+      moduleCode.value,
+      new Date().toISOString(),
     ])
 
     console.log('[GamePlay] 报告记录已创建，module_code:', moduleCode.value)
   } catch (error) {
     console.error('[GamePlay] 创建报告记录失败:', error)
-    // 不阻塞游戏流程，只记录错误
   }
 }
 
-/**
- * 游戏完成处理
- */
 const handleGameFinish = async (sessionData: GameSessionData) => {
   console.log('[GamePlay] 游戏完成，数据:', sessionData)
 
-  // 保存训练记录
   const recordId = await saveTrainingRecord(sessionData)
 
   if (recordId) {
-    // 创建报告记录
     await createReportRecord(recordId, sessionData)
 
-    // 显示完成信息
     ElMessage.success('🎉 训练完成！正在生成报告...')
 
-    // 跳转到 IEP 报告页面
     setTimeout(() => {
       router.push({
         path: '/games/report',
@@ -281,21 +341,17 @@ const handleGameFinish = async (sessionData: GameSessionData) => {
           studentId: String(sessionData.studentId),
           taskId: String(sessionData.taskId),
           entry: entryCode.value,
-          module: moduleCode.value
-        }
+          module: moduleCode.value,
+        },
       })
     }, 1000)
   } else {
-    // 保存失败，按来源返回上一层入口
     setTimeout(() => {
       goBack()
     }, 2000)
   }
 }
 
-/**
- * 返回上一页
- */
 const goBack = () => {
   if (launchSource.value === 'dashboard') {
     router.push('/dashboard')
@@ -311,12 +367,10 @@ const goBack = () => {
     path: `/games/lobby/${studentId.value}`,
     query: {
       entry: entryCode.value,
-      module: moduleCode.value
-    }
+      module: moduleCode.value,
+    },
   })
 }
-
-// ========== 生命周期 ==========
 
 onMounted(async () => {
   console.log('[GamePlay] 组件挂载，参数:', {
@@ -324,17 +378,15 @@ onMounted(async () => {
     resourceId: resourceId.value,
     taskId: legacyTaskId.value,
     mode: legacyMode.value,
-    module: moduleCode.value
+    module: moduleCode.value,
   })
 
-  // 参数验证
-  if (!studentId.value || isNaN(studentId.value)) {
+  if (!studentId.value || Number.isNaN(studentId.value)) {
     ElMessage.error('学生ID无效')
     goBack()
     return
   }
 
-  // 加载游戏配置
   const loaded = await loadGameFromResource()
 
   if (!loaded || !taskId.value) {
@@ -354,7 +406,7 @@ onMounted(async () => {
   console.log('[GamePlay] 游戏配置加载完成:', {
     taskId: taskId.value,
     mode: mode.value,
-    moduleCode: moduleCode.value
+    moduleCode: moduleCode.value,
   })
 })
 </script>
@@ -367,6 +419,19 @@ onMounted(async () => {
   background: #f5f7fa;
 }
 
+.game-play-container--sensory {
+  height: 100dvh;
+  overflow: hidden;
+  background: transparent;
+}
+
+.game-play-stage {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
 .loading-view {
   display: flex;
   flex-direction: column;
@@ -377,8 +442,8 @@ onMounted(async () => {
 }
 
 .loading-icon {
-  animation: spin 1s linear infinite;
   color: #409eff;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
@@ -401,15 +466,60 @@ onMounted(async () => {
   text-align: center;
 }
 
+.error-view--embedded {
+  width: 100%;
+  height: auto;
+  min-height: 360px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
 .error-view h2 {
+  margin-bottom: 10px;
   font-size: 32px;
   color: #333;
-  margin-bottom: 10px;
 }
 
 .error-view p {
+  margin-bottom: 20px;
   font-size: 16px;
   color: #666;
-  margin-bottom: 20px;
+}
+
+.game-play-container--sensory :deep(.game-grid-container),
+.game-play-container--sensory :deep(.game-audio-container),
+.game-play-container--sensory :deep(.visual-tracker-container) {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.game-play-container--sensory :deep(.game-grid-container),
+.game-play-container--sensory :deep(.game-audio-container) {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.game-play-container--sensory :deep(.visual-tracker-container) {
+  min-height: 0;
+  height: 100%;
+}
+
+.game-play-container--sensory :deep(.game-header) {
+  border-radius: 26px;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
+}
+
+.game-play-container--sensory :deep(.game-grid) {
+  flex: 1;
+}
+
+.game-play-container--sensory :deep(.game-area) {
+  height: min(72vh, calc(100dvh - 310px));
+  min-height: 520px;
+  max-height: none;
 }
 </style>
