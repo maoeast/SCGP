@@ -1,14 +1,12 @@
 /**
  * SCGP 儿心量表Ⅱ 测评解释反馈与专家建议配置引擎库
  *
- * 数据统计：
- * - overall_rules: 20条（4月龄段 × 5发育等级）
- * - dimensions: 100条（5能区 × 4月龄段 × 5发育等级）
- * - iep_interventions: 40条（5能区 × 4月龄段 × 2异常等级）
- * - expert_clinical: 20条（4月龄段 × 5发育等级）
- * - commentary_library: 125条（5能区 × 5发育等级 × 5建议）
- *
- * 总计：305条核心文案
+ * 数据统计（按配置组计数）：
+ * - overall_rules: 20组（4月龄段 × 5发育等级）
+ * - dimensions: 100组（5能区 × 4月龄段 × 5发育等级）
+ * - iep_interventions: 40组（5能区 × 4月龄段 × 2异常等级）
+ * - expert_clinical: 20组（4月龄段 × 5发育等级）
+ * - commentary_library: 25组（5能区 × 5发育等级）
  *
  * 状态映射规则：
  * - excellent/good -> "success"

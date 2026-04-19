@@ -98,6 +98,12 @@ const SEVERITY_MAP: Record<Cnbsr2016DqStatus, 'success' | 'warning' | 'danger' |
   delayed: 'danger',
 }
 
+function isCnbsr2016InterventionStatus(
+  status: Cnbsr2016DqStatus,
+): status is Extract<Cnbsr2016DqStatus, 'borderline' | 'delayed'> {
+  return status === 'borderline' || status === 'delayed'
+}
+
 export class Cnbsr2016Driver extends BaseDriver {
   readonly scaleCode = 'cnbsr2016'
   readonly scaleName = '0-6岁儿童发育行为评估量表（儿心量表Ⅱ）'
@@ -258,14 +264,19 @@ export class Cnbsr2016Driver extends BaseDriver {
       } satisfies Cnbsr2016DomainFeedbackEntry
     })
     const iepInterventions = domainResults
-      .filter((result) => result.dqStatus === 'borderline' || result.dqStatus === 'delayed')
-      .map((result) => ({
-        domain: result.code,
-        domainName: result.name,
-        intervention:
-          SCGP_CNBS_R2016_Feedback_Config.iep_interventions?.[result.code]?.[ageBracket]?.[result.dqStatus] || null,
-      }))
-      .filter((item) => item.intervention)
+      .map((result) => {
+        if (!isCnbsr2016InterventionStatus(result.dqStatus)) {
+          return null
+        }
+
+        return {
+          domain: result.code,
+          domainName: result.name,
+          intervention:
+            SCGP_CNBS_R2016_Feedback_Config.iep_interventions?.[result.code]?.[ageBracket]?.[result.dqStatus] || null,
+        }
+      })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item?.intervention))
 
     return {
       scaleCode: this.scaleCode,

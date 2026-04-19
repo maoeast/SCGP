@@ -7,6 +7,12 @@ import {
 import { CNBSR2016_QUESTIONS } from '@/database/cnbsr2016-questions'
 import type { Cnbsr2016AgeBracketCode, Cnbsr2016DomainCode, Cnbsr2016DqStatus } from '@/types/cnbsr2016'
 
+function isCnbsr2016InterventionStatus(
+  status: Cnbsr2016DqStatus,
+): status is Extract<Cnbsr2016DqStatus, 'borderline' | 'delayed'> {
+  return status === 'borderline' || status === 'delayed'
+}
+
 export interface DomainResult {
   code: Cnbsr2016DomainCode
   name: string
@@ -334,22 +340,27 @@ export function buildCnbsr2016ReportViewModel({
   )
 
   const interventions = domainRows
-    .filter((domain) => domain.dqStatus === 'borderline' || domain.dqStatus === 'delayed')
-    .map((domain) => ({
-      domain: domain.code,
-      domainName: domain.name,
-      dqStatus: domain.dqStatus,
-      intervention:
-        interventionMap.get(domain.code)?.intervention
-        || SCGP_CNBS_R2016_Feedback_Config.iep_interventions?.[domain.code]?.[assessment.age_bracket]?.[domain.dqStatus]
-        || null,
-    }))
+    .map((domain) => {
+      if (!isCnbsr2016InterventionStatus(domain.dqStatus)) {
+        return null
+      }
+
+      return {
+        domain: domain.code,
+        domainName: domain.name,
+        dqStatus: domain.dqStatus,
+        intervention:
+          interventionMap.get(domain.code)?.intervention
+          || SCGP_CNBS_R2016_Feedback_Config.iep_interventions?.[domain.code]?.[assessment.age_bracket]?.[domain.dqStatus]
+          || null,
+      }
+    })
     .filter((item): item is {
       domain: Cnbsr2016DomainCode
       domainName: string
-      dqStatus: Cnbsr2016DqStatus
+      dqStatus: Extract<Cnbsr2016DqStatus, 'borderline' | 'delayed'>
       intervention: InterventionPayload
-    } => Boolean(item.intervention))
+    } => Boolean(item?.intervention))
 
   return {
     ageBracketLabel,
