@@ -30,7 +30,7 @@
               'is-empty': tab.count === 0,
             }"
             :style="getTabThemeStyle(tab.id)"
-            @click="activeTab = tab.id"
+            @click="handleTabSelect(tab.id)"
           >
             <div class="assessment-category-tile__main">
               <strong>{{ tab.label }}</strong>
@@ -87,7 +87,10 @@
             v-for="scale in visibleScales"
             :key="`${activePanel.id}-${scale.code}`"
             class="assessment-card"
+            role="button"
+            tabindex="0"
             @click="selectScale(scale.code)"
+            @keydown.self="handleAssessmentCardKeydown($event, scale.code)"
           >
             <div class="assessment-card__header">
               <div class="assessment-card__identity">
@@ -131,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowDown, ArrowUp, InfoFilled } from '@element-plus/icons-vue'
 import {
@@ -143,6 +146,10 @@ import {
 } from '@/features/assessment/assessment-scale-catalog'
 import { useAuthStore } from '@/stores/auth'
 import type { TrainingEntryCode } from '@/utils/training-entry'
+import {
+  isAssessmentCardActivationKey,
+  reconcileAssessmentActiveTab,
+} from './assessment-select-state'
 
 interface AssessmentTabPanel {
   id: TrainingEntryCode
@@ -196,6 +203,7 @@ const authStore = useAuthStore()
 const activeTab = ref<TrainingEntryCode>(
   getDefaultAssessmentTab((moduleCode) => authStore.hasModuleAccess(moduleCode))
 )
+const hasUserSelectedTab = ref(false)
 const isNoticeExpanded = ref(true)
 
 const tabPanels = computed<AssessmentTabPanel[]>(() =>
@@ -231,6 +239,36 @@ const selectScale = (scaleType: AssessmentScaleCode) => {
     query: { scale: scaleType },
   })
 }
+
+const handleTabSelect = (tabId: TrainingEntryCode) => {
+  hasUserSelectedTab.value = true
+  activeTab.value = tabId
+}
+
+const handleAssessmentCardKeydown = (event: KeyboardEvent, scaleCode: AssessmentScaleCode) => {
+  if (!isAssessmentCardActivationKey(event.key)) {
+    return
+  }
+
+  event.preventDefault()
+  selectScale(scaleCode)
+}
+
+watch(
+  tabPanels,
+  (panels) => {
+    const nextTab = reconcileAssessmentActiveTab({
+      currentTab: activeTab.value,
+      hasUserSelectedTab: hasUserSelectedTab.value,
+      panels,
+    })
+
+    if (nextTab !== activeTab.value) {
+      activeTab.value = nextTab
+    }
+  },
+  { immediate: true }
+)
 
 function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
   const theme = TAB_THEME_MAP[tabId]
@@ -498,6 +536,11 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
   transform: translateY(-3px);
   border-color: var(--assessment-accent-border);
   box-shadow: 0 18px 34px rgba(143, 169, 204, 0.16);
+}
+
+.assessment-card:focus-visible {
+  outline: 2px solid var(--assessment-accent);
+  outline-offset: 3px;
 }
 
 .assessment-card__header {
