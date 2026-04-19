@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import createJiti from 'jiti'
 
-const projectRoot = '/home/DONG/Mycode/SCGP'
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const jiti = createJiti(import.meta.url, {
   alias: {
     '@': `${projectRoot}/src`,

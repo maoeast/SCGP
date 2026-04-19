@@ -17,13 +17,23 @@ const {
   CNBSR2016_DOMAIN_DEFINITIONS,
   CNBSR2016_QUESTIONS,
 } = jiti('../src/database/cnbsr2016-questions.ts')
-const {
-  CNBSR2016_ALLOWED_SCORE_WEIGHTS,
-  CNBSR2016_DOMAIN_CODES,
-  CNBSR2016_MONTH_GROUPS,
-} = jiti('../src/types/cnbsr2016.ts')
 
 const OFFICIAL_TOTAL_ITEMS = 261
+const OFFICIAL_DOMAIN_DEFINITIONS = [
+  { code: 'gm', label: '大运动' },
+  { code: 'fm', label: '精细动作' },
+  { code: 'ad', label: '适应能力' },
+  { code: 'la', label: '语言' },
+  { code: 'sb', label: '社会行为' },
+]
+const OFFICIAL_DOMAIN_CODES = OFFICIAL_DOMAIN_DEFINITIONS.map((item) => item.code)
+const OFFICIAL_MONTH_GROUPS = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+  15, 18, 21, 24, 27, 30, 33, 36,
+  42, 48, 54, 60, 66, 72, 78, 84,
+]
+const OFFICIAL_ALLOWED_SCORE_WEIGHTS = [0.5, 1, 1.5, 3, 6]
+const ALLOWED_SOURCE_STATUSES = ['digitized', 'verified']
 
 function formatDetails(details) {
   return details.length > 0 ? ` ${details.join(' | ')}` : ''
@@ -59,63 +69,119 @@ function resolveExpectedGroupWeight(ageGroupMonths, itemCount) {
 
 function verifyTotalItems() {
   const count = CNBSR2016_QUESTIONS.length
-  const passed = count === 0 || count === OFFICIAL_TOTAL_ITEMS
-  const details = [count === 0 ? 'mode=stub' : 'mode=full', `count=${count}`]
-  if (count > 0) {
-    details.push(`expected=${OFFICIAL_TOTAL_ITEMS}`)
+  return reportCheck('total-items', count === OFFICIAL_TOTAL_ITEMS, [
+    `count=${count}`,
+    `expected=${OFFICIAL_TOTAL_ITEMS}`,
+  ])
+}
+
+function verifyIdentifiers() {
+  const duplicateIds = []
+  const duplicateItemCodes = []
+  const idSet = new Set()
+  const itemCodeSet = new Set()
+  const sequenceMismatches = []
+
+  for (const [index, item] of CNBSR2016_QUESTIONS.entries()) {
+    const expectedId = index + 1
+    const expectedItemCode = `cnbsr2016_${String(expectedId).padStart(3, '0')}`
+
+    if (idSet.has(item.id)) {
+      duplicateIds.push(item.id)
+    }
+    if (itemCodeSet.has(item.itemCode)) {
+      duplicateItemCodes.push(item.itemCode)
+    }
+
+    idSet.add(item.id)
+    itemCodeSet.add(item.itemCode)
+
+    if (item.id !== expectedId || item.itemCode !== expectedItemCode) {
+      sequenceMismatches.push(
+        `${expectedId}:actual-id=${item.id},actual-code=${item.itemCode}`,
+      )
+    }
   }
-  return reportCheck('total-items', passed, details)
+
+  const passed =
+    duplicateIds.length === 0 &&
+    duplicateItemCodes.length === 0 &&
+    sequenceMismatches.length === 0
+
+  return reportCheck(
+    'identifiers',
+    passed,
+    passed
+      ? [`range=1..${CNBSR2016_QUESTIONS.length}`]
+      : [
+          `duplicate-ids=${duplicateIds.slice(0, 5).join(',') || 'none'}`,
+          `duplicate-codes=${duplicateItemCodes.slice(0, 5).join(',') || 'none'}`,
+          `mismatches=${sequenceMismatches.slice(0, 5).join(';') || 'none'}`,
+        ],
+  )
 }
 
 function verifyDomains() {
-  const allowedDomainCodes = new Set(CNBSR2016_DOMAIN_CODES)
-  const definitionCodes = CNBSR2016_DOMAIN_DEFINITIONS.map((item) => item.code)
-  const invalidDefinitions = definitionCodes.filter((code) => !allowedDomainCodes.has(code))
-  const duplicateDefinitions = definitionCodes.filter(
-    (code, index) => definitionCodes.indexOf(code) !== index,
+  const allowedDomainCodes = new Set(OFFICIAL_DOMAIN_CODES)
+  const expectedDomainLabelMap = new Map(
+    OFFICIAL_DOMAIN_DEFINITIONS.map((item) => [item.code, item.label]),
   )
+  const definitionsPass =
+    JSON.stringify(CNBSR2016_DOMAIN_DEFINITIONS) === JSON.stringify(OFFICIAL_DOMAIN_DEFINITIONS)
   const invalidQuestionDomains = CNBSR2016_QUESTIONS.filter(
     (item) => !allowedDomainCodes.has(item.domain),
   )
+  const invalidQuestionDomainNames = CNBSR2016_QUESTIONS.filter(
+    (item) => expectedDomainLabelMap.get(item.domain) !== item.domainName,
+  )
 
   const passed =
-    invalidDefinitions.length === 0 &&
-    duplicateDefinitions.length === 0 &&
-    definitionCodes.length === CNBSR2016_DOMAIN_CODES.length &&
-    invalidQuestionDomains.length === 0
+    definitionsPass &&
+    invalidQuestionDomains.length === 0 &&
+    invalidQuestionDomainNames.length === 0
 
   return reportCheck(
     'domains',
     passed,
     passed
-      ? [`definitions=${definitionCodes.length}`, `questions=${CNBSR2016_QUESTIONS.length}`]
+      ? [`definitions=${OFFICIAL_DOMAIN_DEFINITIONS.length}`, `questions=${CNBSR2016_QUESTIONS.length}`]
       : [
-          `invalid-definitions=${invalidDefinitions.join(',') || 'none'}`,
-          `duplicate-definitions=${duplicateDefinitions.join(',') || 'none'}`,
+          `definitions=${definitionsPass ? 'ok' : 'drifted'}`,
           `invalid-question-count=${invalidQuestionDomains.length}`,
+          `invalid-question-labels=${invalidQuestionDomainNames
+            .slice(0, 5)
+            .map((item) => `${item.itemCode}:${item.domainName}`)
+            .join(',') || 'none'}`,
         ],
   )
 }
 
 function verifyMonthGroups() {
-  const allowedMonthGroups = new Set(CNBSR2016_MONTH_GROUPS)
+  const allowedMonthGroups = new Set(OFFICIAL_MONTH_GROUPS)
   const invalidQuestions = CNBSR2016_QUESTIONS.filter(
     (item) => !allowedMonthGroups.has(item.ageGroupMonths),
   )
+  const observedMonthGroups = new Set(CNBSR2016_QUESTIONS.map((item) => item.ageGroupMonths))
+  const missingMonthGroups = OFFICIAL_MONTH_GROUPS.filter((monthGroup) => !observedMonthGroups.has(monthGroup))
 
   return reportCheck(
     'month-groups',
-    invalidQuestions.length === 0,
-    invalidQuestions.length === 0
-      ? [`questions=${CNBSR2016_QUESTIONS.length}`]
+    invalidQuestions.length === 0 && missingMonthGroups.length === 0,
+    invalidQuestions.length === 0 && missingMonthGroups.length === 0
+      ? [`questions=${CNBSR2016_QUESTIONS.length}`, `groups=${OFFICIAL_MONTH_GROUPS.length}`]
       : invalidQuestions
           .slice(0, 5)
-          .map((item) => `${item.itemCode}:${item.ageGroupMonths}`),
+          .map((item) => `${item.itemCode}:${item.ageGroupMonths}`)
+          .concat(
+            missingMonthGroups.length > 0
+              ? [`missing=${missingMonthGroups.slice(0, 5).join(',')}`]
+              : [],
+          ),
   )
 }
 
 function verifyScoreWeights() {
-  const allowedWeights = new Set(CNBSR2016_ALLOWED_SCORE_WEIGHTS)
+  const allowedWeights = new Set(OFFICIAL_ALLOWED_SCORE_WEIGHTS)
   const invalidAllowedWeights = CNBSR2016_QUESTIONS.filter(
     (item) => !allowedWeights.has(item.scoreWeight),
   )
@@ -146,7 +212,20 @@ function verifyScoreWeights() {
     }
   }
 
-  const passed = invalidAllowedWeights.length === 0 && mismatches.length === 0
+  const missingGroups = []
+  for (const domainCode of OFFICIAL_DOMAIN_CODES) {
+    for (const monthGroup of OFFICIAL_MONTH_GROUPS) {
+      const groupKey = `${domainCode}:${monthGroup}`
+      if (!groupedItems.has(groupKey)) {
+        missingGroups.push(groupKey)
+      }
+    }
+  }
+
+  const passed =
+    invalidAllowedWeights.length === 0 &&
+    mismatches.length === 0 &&
+    missingGroups.length === 0
   return reportCheck(
     'score-weights',
     passed,
@@ -158,15 +237,84 @@ function verifyScoreWeights() {
             .map((item) => `${item.itemCode}:${item.scoreWeight}`)
             .join(',') || 'none'}`,
           `mismatches=${mismatches.slice(0, 5).join(';') || 'none'}`,
+          `missing-groups=${missingGroups.slice(0, 5).join(',') || 'none'}`,
+        ],
+  )
+}
+
+function verifySourceTraceability() {
+  const allowedSourceStatuses = new Set(ALLOWED_SOURCE_STATUSES)
+  const invalidStatuses = CNBSR2016_QUESTIONS.filter(
+    (item) => !allowedSourceStatuses.has(item.sourceStatus),
+  )
+  const missingNotes = CNBSR2016_QUESTIONS.filter(
+    (item) => typeof item.sourceNotes !== 'string' || item.sourceNotes.trim().length === 0,
+  )
+  const invalidPages = CNBSR2016_QUESTIONS.filter(
+    (item) => !Number.isInteger(item.sourcePage) || item.sourcePage < 1,
+  )
+  const invalidSourceOrders = CNBSR2016_QUESTIONS.filter(
+    (item) => !Number.isInteger(item.sourceOrder) || item.sourceOrder < 1,
+  )
+
+  const sourceOrderCounts = new Map()
+  for (const item of CNBSR2016_QUESTIONS) {
+    sourceOrderCounts.set(item.sourceOrder, (sourceOrderCounts.get(item.sourceOrder) || 0) + 1)
+  }
+  const duplicateSourceOrders = Array.from(sourceOrderCounts.entries())
+    .filter(([, count]) => count > 1)
+    .map(([sourceOrder]) => sourceOrder)
+  const missingSourceOrders = Array.from(
+    { length: OFFICIAL_TOTAL_ITEMS },
+    (_, index) => index + 1,
+  ).filter((sourceOrder) => !sourceOrderCounts.has(sourceOrder))
+  const statusCounts = ALLOWED_SOURCE_STATUSES.map(
+    (status) => `${status}=${CNBSR2016_QUESTIONS.filter((item) => item.sourceStatus === status).length}`,
+  )
+
+  const passed =
+    invalidStatuses.length === 0 &&
+    missingNotes.length === 0 &&
+    invalidPages.length === 0 &&
+    invalidSourceOrders.length === 0 &&
+    duplicateSourceOrders.length === 0 &&
+    missingSourceOrders.length === 0
+
+  return reportCheck(
+    'source-traceability',
+    passed,
+    passed
+      ? statusCounts
+      : [
+          `invalid-statuses=${invalidStatuses
+            .slice(0, 5)
+            .map((item) => `${item.itemCode}:${item.sourceStatus}`)
+            .join(',') || 'none'}`,
+          `missing-notes=${missingNotes
+            .slice(0, 5)
+            .map((item) => item.itemCode)
+            .join(',') || 'none'}`,
+          `invalid-pages=${invalidPages
+            .slice(0, 5)
+            .map((item) => `${item.itemCode}:${item.sourcePage}`)
+            .join(',') || 'none'}`,
+          `invalid-orders=${invalidSourceOrders
+            .slice(0, 5)
+            .map((item) => `${item.itemCode}:${item.sourceOrder}`)
+            .join(',') || 'none'}`,
+          `duplicate-orders=${duplicateSourceOrders.slice(0, 5).join(',') || 'none'}`,
+          `missing-orders=${missingSourceOrders.slice(0, 5).join(',') || 'none'}`,
         ],
   )
 }
 
 const checks = [
   verifyTotalItems(),
+  verifyIdentifiers(),
   verifyDomains(),
   verifyMonthGroups(),
   verifyScoreWeights(),
+  verifySourceTraceability(),
 ]
 
 if (checks.some((passed) => !passed)) {
