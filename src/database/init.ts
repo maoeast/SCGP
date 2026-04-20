@@ -2,6 +2,7 @@
 
 // 内联schema.sql内容
 import emotionalSchemaSQL from './schema/emotional-schema.sql?raw'
+import { hashPasswordV1 } from '@/utils/password-security'
 
 const schemaSQL = `
 -- 学生表
@@ -1559,11 +1560,7 @@ async function insertInitialDataToDB(database: any, options: { tasks?: boolean; 
       ('社区生活', 0, '培养学生社区生活能力，包括安全过马路、购物等', 'users');
     `)
 
-    // 生成盐值和密码哈希
-    const array = new Uint8Array(16)
-    crypto.getRandomValues(array)
-    const salt = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
-    const passwordHash = btoa('admin123' + salt)
+    const { passwordHash, salt } = await hashPasswordV1('admin123')
 
     // 插入默认管理员用户
     database.run(`
@@ -1631,12 +1628,11 @@ async function insertInitialData() {
     `);
 
     // 插入默认管理员用户
-    const defaultSalt = generateSalt();
-    const defaultPasswordHash = hashPassword('admin123', defaultSalt);
+    const { passwordHash: defaultPasswordHash, salt: defaultSalt } = await hashPasswordV1('admin123');
     db.run(`
       INSERT INTO user (username, password_hash, salt, role, name) VALUES
-      ('admin', '${defaultPasswordHash}', '${defaultSalt}', 'admin', '系统管理员');
-    `);
+      ('admin', ?, ?, 'admin', '系统管理员');
+    `, [defaultPasswordHash, defaultSalt]);
 
     // 插入系统默认配置
     db.run(`
@@ -1826,7 +1822,7 @@ export async function insertEquipmentData(): Promise<void> {
     })
 
     // 创建默认管理员账户
-    createDefaultAdminAccount(db)
+    await createDefaultAdminAccount(db)
   } catch (error) {
     console.error('插入器材数据失败:', error)
     throw error
@@ -2533,7 +2529,7 @@ export async function migrateEquipmentLegacyIds(): Promise<{ success: boolean; u
 /**
  * 创建默认管理员账户
  */
-function createDefaultAdminAccount(database: any) {
+async function createDefaultAdminAccount(database: any): Promise<void> {
   try {
     // 检查是否已有管理员
     const existingAdmin = database.get('SELECT id FROM user WHERE username = ?', ['admin'])
@@ -2550,8 +2546,7 @@ function createDefaultAdminAccount(database: any) {
     }
 
     // 创建默认管理员账户
-    const salt = generateSalt()
-    const hashedPassword = hashPassword('admin123', salt)
+    const { passwordHash: hashedPassword, salt } = await hashPasswordV1('admin123')
 
     database.run(`
       INSERT INTO user (username, password_hash, salt, name, role)
@@ -2570,19 +2565,6 @@ export function getDatabase(): any {
     throw new Error('数据库未初始化，请先调用 initDatabase()');
   }
   return db;
-}
-
-// 生成盐值
-function generateSalt(): string {
-  const array = new Uint8Array(16);
-  crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-}
-
-// 密码哈希
-function hashPassword(password: string, salt: string): string {
-  // 简化的密码哈希（生产环境应使用更安全的方法）
-  return btoa(password + salt);
 }
 
 // 导出数据库

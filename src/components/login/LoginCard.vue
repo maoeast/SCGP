@@ -49,7 +49,7 @@
       />
     </form>
 
-    <div class="login-card__footer">
+    <div v-if="showEmergencyReset" class="login-card__footer">
       <button type="button" class="login-card__link" @click="emit('emergency-reset')">
         重置管理员密码
       </button>
@@ -68,12 +68,14 @@ interface Props {
   loading?: boolean
   submitDisabled?: boolean
   errorMessage?: string
+  showEmergencyReset?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
   submitDisabled: false,
   errorMessage: '',
+  showEmergencyReset: false,
 })
 
 const emit = defineEmits<{

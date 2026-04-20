@@ -6,6 +6,7 @@ import type {
   PersistEmotionalSessionResult,
 } from '@/types/emotional';
 import { resolveTrainingEntryCode, resolveTrainingEntryCodeFromResource } from '@/utils/training-entry';
+import { hashPasswordV1, verifyPasswordRecord } from '@/utils/password-security';
 import { TrainingSessionWriter } from './training-session-writer';
 import { FINE_MOTOR_QUESTIONS } from './fine-motor-questions';
 import { CNBSR2016_QUESTIONS } from './cnbsr2016-questions';
@@ -357,9 +358,8 @@ export class UserAPI extends DatabaseAPI {
       return null;
     }
 
-    // 验证密码
-    const isPasswordValid = this.verifyPassword(password, user.password_hash, user.salt);
-    if (!isPasswordValid) {
+    const passwordResult = await verifyPasswordRecord(password, user.password_hash, user.salt);
+    if (!passwordResult.valid) {
       return null;
     }
 
@@ -385,15 +385,13 @@ export class UserAPI extends DatabaseAPI {
       return false;
     }
 
-    const isOldPasswordValid = this.verifyPassword(oldPassword, user.password_hash, user.salt);
-    if (!isOldPasswordValid) {
+    const passwordResult = await verifyPasswordRecord(oldPassword, user.password_hash, user.salt);
+    if (!passwordResult.valid) {
       return false;
     }
 
     try {
-      // 临时方案：使用简化的加密方式
-      const newSalt = this.generateSalt();
-      const newPasswordHash = this.hashPassword(newPassword, newSalt);
+      const { passwordHash: newPasswordHash, salt: newSalt } = await hashPasswordV1(newPassword);
 
       await this.executeAsync(
         'UPDATE user SET password_hash = ?, salt = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
@@ -405,26 +403,6 @@ export class UserAPI extends DatabaseAPI {
       console.error('密码加密失败:', error);
       return false;
     }
-  }
-
-  // 生成盐值
-  private generateSalt(): string {
-    const array = new Uint8Array(16);
-    crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-  }
-
-  // 密码哈希
-  private hashPassword(password: string, salt: string): string {
-    // 简化的密码哈希（生产环境应使用更安全的方法）
-    return btoa(password + salt);
-  }
-
-  // 验证密码
-  private verifyPassword(password: string, hash: string, salt: string): boolean {
-    // 计算输入密码的哈希值并与存储的哈希值比较
-    const computedHash = this.hashPassword(password, salt)
-    return computedHash === hash
   }
 
   // 获取所有用户
@@ -471,9 +449,7 @@ export class UserAPI extends DatabaseAPI {
       throw new Error('用户名已存在')
     }
 
-    // 生成盐值和密码哈希
-    const salt = this.generateSalt()
-    const passwordHash = this.hashPassword(userData.password, salt)
+    const { passwordHash, salt } = await hashPasswordV1(userData.password)
 
     // 插入用户
     await this.executeAsync(`
@@ -551,9 +527,7 @@ export class UserAPI extends DatabaseAPI {
       throw new Error('用户不存在')
     }
 
-    // 生成新的盐值和密码哈希
-    const salt = this.generateSalt()
-    const passwordHash = this.hashPassword(newPassword, salt)
+    const { passwordHash, salt } = await hashPasswordV1(newPassword)
 
     await this.executeAsync(
       'UPDATE user SET password_hash = ?, salt = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',

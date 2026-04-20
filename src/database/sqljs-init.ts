@@ -4,6 +4,7 @@
  */
 
 import { SQLWrapper } from './sql-wrapper'
+import { hashPasswordV1 } from '@/utils/password-security'
 
 // 数据库版本号 - 当数据结构发生变化时递增此版本号
 // 必须与 indexeddb-storage.ts 中的 DATA_VERSION 保持一致
@@ -426,11 +427,7 @@ async function createSchemaAndData(db: any): Promise<void> {
       ('社区生活', 0, '培养学生社区生活能力，包括安全过马路、购物等', 'users');
     `)
 
-    // 生成盐值和密码哈希
-    const array = new Uint8Array(16)
-    crypto.getRandomValues(array)
-    const salt = Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('')
-    const passwordHash = btoa('admin123' + salt)
+    const { passwordHash, salt } = await hashPasswordV1('admin123')
 
     // 插入默认管理员用户
     db.run(

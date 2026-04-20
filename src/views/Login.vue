@@ -22,6 +22,7 @@
           v-model:username="loginForm.username"
           v-model:password="loginForm.password"
           v-model:remember="loginForm.remember"
+          :show-emergency-reset="showEmergencyReset"
           :loading="isLogging"
           :submit-disabled="isLoginButtonDisabled"
           :error-message="loginError"
@@ -64,6 +65,7 @@ const loginForm = ref({
 const isLogging = ref(false)
 const loginError = ref('')
 const isLoginButtonDisabled = ref(true)
+const showEmergencyReset = import.meta.env.DEV
 
 const loginThemeVariant = computed(() =>
   normalizeLoginThemeVariant(systemConfigStore.loginThemeVariant),
@@ -110,19 +112,23 @@ const handleLogin = async () => {
 }
 
 const handleEmergencyReset = async () => {
+  if (!import.meta.env.DEV) {
+    return
+  }
+
   try {
     await ElMessageBox.confirm(
-      '此操作将把管理员密码重置为默认密码 admin123，仅用于紧急恢复登录。',
+      '此操作会把默认管理员密码重置为 admin123，仅用于当前开发环境紧急恢复登录。',
       '确认重置管理员密码',
       {
-        confirmButtonText: '确认重置',
+        confirmButtonText: '重置为 admin123',
         cancelButtonText: '取消',
         type: 'warning',
       },
     )
 
     await userAPI.resetUserPassword(1, 'admin123')
-    ElMessage.success('管理员密码已重置为 admin123，请登录后尽快修改。')
+    ElMessage.success('管理员密码已重置为 admin123，请直接登录。')
   } catch (error) {
     if (error !== 'cancel') {
       console.error('重置密码失败:', error)
