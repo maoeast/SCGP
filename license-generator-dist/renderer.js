@@ -35,13 +35,18 @@ function getSelectedModules() {
 }
 
 function renderModules(modules) {
-    moduleGrid.innerHTML = modules.map((moduleCode) => {
+    const hasWideLastRow = modules.length % 2 === 1;
+
+    moduleGrid.innerHTML = modules.map((moduleCode, index) => {
         const meta = MODULE_META[moduleCode] || { title: moduleCode, subtitle: moduleCode };
+        const wideClass = hasWideLastRow && index === modules.length - 1 ? ' module-card--wide' : '';
         return `
-            <label class="module-card">
+            <label class="module-card${wideClass}">
               <input type="checkbox" name="allowedModules" value="${moduleCode}" checked>
-              <span class="module-title">${meta.title}</span>
-              <span class="module-subtitle">${meta.subtitle}</span>
+              <span class="module-content">
+                <span class="module-title">${meta.title}</span>
+                <span class="module-subtitle">${meta.subtitle}</span>
+              </span>
             </label>
         `;
     }).join('');

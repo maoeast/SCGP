@@ -38,10 +38,10 @@ function getOutputDirectory() {
 
 function createMainWindow() {
     mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
-        minWidth: 800,
-        minHeight: 600,
+        width: 1024,
+        height: 768,
+        minWidth: 1024,
+        minHeight: 768,
         title: WINDOW_TITLE,
         autoHideMenuBar: true,
         backgroundColor: '#f6f4ef',

@@ -119,8 +119,7 @@ button {
   margin-bottom: 12px;
 }
 
-.mode-card,
-.module-card {
+.mode-card {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -131,8 +130,7 @@ button {
   transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
 }
 
-.mode-card:hover,
-.module-card:hover {
+.mode-card:hover {
   border-color: #a9d7bf;
 }
 
@@ -143,8 +141,7 @@ button {
   accent-color: var(--accent);
 }
 
-.mode-card.is-selected,
-.module-card.is-selected {
+.mode-card.is-selected {
   border-color: var(--accent);
   background: var(--accent-soft);
   box-shadow: inset 0 0 0 1px rgba(39, 168, 111, 0.12);
@@ -211,7 +208,54 @@ button {
 .module-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid #d7d2c8;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #ddd8ce;
+}
+
+.module-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
   gap: 8px;
+  min-height: 36px;
+  padding: 7px 12px;
+  background: #fff;
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+.module-card:hover {
+  background: #f4faf7;
+}
+
+.module-card.is-selected {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px rgba(39, 168, 111, 0.12);
+}
+
+.module-card--wide {
+  grid-column: 1 / -1;
+}
+
+.module-content {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.module-card .module-title {
+  white-space: nowrap;
+}
+
+.module-card .module-subtitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
 }
 
 .actions,
@@ -473,6 +517,10 @@ button {
   .module-grid,
   .input-action-row {
     grid-template-columns: 1fr;
+  }
+
+  .module-card--wide {
+    grid-column: auto;
   }
 
   .title-row,
