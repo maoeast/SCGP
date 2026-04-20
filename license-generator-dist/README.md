@@ -1,130 +1,102 @@
-# 特教安全教育资源仪 - 激活码生成器
+# SCGP 激活码生成工具
 
-## 📦 工具说明
+用于为 SCGP / 星愿能力发展平台生成试用或正式激活码。当前支持按 5 个顶层模块输出授权子集，写入许可证中的 `am` 字段。
 
-此工具用于为客户生成激活码，支持生成试用码和正式授权码。
+## 顶层模块白名单
 
-## 🚀 使用前准备
+仅允许以下模块编码：
 
-### 1. 安装 Node.js
-- 下载地址：https://nodejs.org/
-- 推荐版本：v16 或更高版本
-- 安装后验证：在命令行输入 `node -v` 查看版本
+- `sensory`
+- `emotional`
+- `social`
+- `cognitive`
+- `life_skills`
 
-### 2. 安装依赖（首次使用）
-打开命令行（CMD 或 PowerShell），进入本目录，执行：
-```
-npm install
-```
+省略 `--modules` 时，默认授权以上全部 5 个顶层模块。
 
-## 📖 使用方法
+## 前置要求
 
-### 方式1：生成试用码（7天）
-```
+- Node.js 16+
+- 首次使用前在当前目录执行 `npm install`
+
+## 用法
+
+### 1. 生成试用码
+
+```bash
 node generate-license.js --trial
 ```
-- 不绑定机器，任何人都可使用
-- 自动生成到 `.txt` 文件
 
-### 方式2：生成正式激活码（绑定机器）
+指定模块子集：
 
-#### 生成有期限的激活码：
+```bash
+node generate-license.js --trial --modules sensory emotional
+node generate-license.js --trial --modules sensory,social
 ```
+
+说明：
+
+- 试用码默认有效期 7 天
+- 不绑定机器码
+
+### 2. 生成按天数授权的正式码
+
+```bash
 node generate-license.js --machine <机器码> --days <天数>
 ```
 
-**示例**：生成365天（1年）授权
-```
-node generate-license.js --machine ABC123DEF456 --days 365
+指定模块子集：
+
+```bash
+node generate-license.js --machine ABC123DEF456 --days 365 --modules sensory,social
 ```
 
-#### 生成永久激活码：
-```
+### 3. 生成永久正式码
+
+```bash
 node generate-license.js --machine <机器码> --permanent
 ```
 
-**示例**：
-```
-node generate-license.js --machine ABC123DEF456 --permanent
-```
+指定模块子集：
 
-## 🔑 如何获取机器码？
-
-1. 客户打开应用程序
-2. 点击"激活"按钮
-3. 在激活界面会显示"机器码"
-4. 复制机器码发给技术员
-
-## 📋 常用操作示例
-
-### 示例1：为新客户生成1年授权
 ```bash
-# 1. 客户提供机器码：F5E8D9C2A1B3
-# 2. 生成1年（365天）授权
-node generate-license.js --machine F5E8D9C2A1B3 --days 365
-
-# 3. 将生成的激活码发给客户
+node generate-license.js --machine ABC123DEF456 --permanent --modules cognitive life_skills
 ```
 
-### 示例2：为学校生成永久授权
+### 4. 初始化密钥
+
 ```bash
-# 1. 学校提供机器码：X9Y8Z7W6V5U4
-# 2. 生成永久授权
-node generate-license.js --machine X9Y8Z7W6V5U4 --permanent
-
-# 3. 将生成的激活码发给学校
+node generate-license.js --init
 ```
 
-### 示例3：生成试用码用于演示
-```bash
-# 直接生成，不需要机器码
-node generate-license.js --trial
+首次运行时如果缺少密钥，会自动生成 `license-generator-dist/.keys/private.pem` 和 `license-generator-dist/.keys/public.pem`。
 
-# 将生成的试用码提供给客户试用
-```
+## `--modules` 参数规则
 
-## ⚠️ 重要提示
+- 只认 5 个顶层模块编码：`sensory/emotional/social/cognitive/life_skills`
+- 支持逗号分隔：`--modules sensory,social`
+- 支持空格分隔：`--modules sensory social`
+- 会自动去重
+- 如果传入白名单外模块，脚本会直接报错并拒绝发码
 
-1. **妥善保管 `.keys` 文件夹**
-   - 包含私钥文件，千万不要泄露
-   - 建议备份到安全位置
-   - 如果丢失，之前生成的激活码将全部失效
+## 输出内容
 
-2. **激活码特性**
-   - 试用码：不绑定机器，7天有效期
-   - 正式码：严格绑定机器硬件，换机器需重新生成
-   - 永久码：永久有效，但仍然绑定机器
+每次生成激活码时会：
 
-3. **生成记录**
-   - 每次生成都会创建 `.txt` 文件
-   - 文件名包含机器码和时间戳
-   - 建议妥善保存这些记录
+- 输出激活码明文到终端
+- 输出授权模块列表
+- 在当前目录生成一份 `.txt` 记录文件
+- 同步复制公钥到 `license-generator-dist/public-key.pem`
 
-## 🆘 常见问题
+## 机器码获取
 
-### Q1：提示找不到 node 命令？
-**A**：需要先安装 Node.js，下载地址：https://nodejs.org/
+1. 客户端打开应用
+2. 进入激活页面
+3. 复制页面显示的机器码
+4. 将机器码用于发码命令中的 `--machine`
 
-### Q2：提示找不到模块？
-**A**：首次使用需要安装依赖，执行：`npm install`
+## 注意事项
 
-### Q3：激活码太长，复制不便？
-**A**：激活码会自动保存到 `.txt` 文件，可以直接发送文件给客户
-
-### Q4：客户说激活码无效？
-**A**：检查以下几点：
-- 机器码是否正确（区分大小写）
-- 激活码是否完整复制（包括 SPED- 前缀）
-- 客户是否在正确的机器上使用
-
-### Q5：如何批量生成激活码？
-**A**：可以编写简单的批处理脚本，循环调用生成命令
-
-## 📞 技术支持
-
-如有问题，请联系技术支持部门。
-
----
-
-**版本**：1.0.0  
-**更新日期**：2025-11-24
+- `.keys/private.pem` 是签名私钥，必须妥善保管
+- 正式码与机器码绑定，更换机器后需要重新发码
+- 当前许可证顶层授权只消费 `sensory`、`emotional`、`social`、`cognitive`、`life_skills`
