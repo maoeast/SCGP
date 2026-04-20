@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCGP 激活码生成工具</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="title-row">
+        <h1>激活码生成工具</h1>
+        <span class="product-pill">SCGP - 星愿能力发展平台</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel form-panel">
+        <div class="section-heading">
+          <h2>授权配置</h2>
+        </div>
+
+        <form id="license-form" novalidate>
+          <div class="mode-grid">
+            <label class="mode-card">
+              <input type="radio" name="licenseType" value="trial" checked>
+              <span class="mode-title">试用码</span>
+              <span class="mode-copy">7 天，不绑机器</span>
+            </label>
+            <label class="mode-card">
+              <input type="radio" name="licenseType" value="full">
+              <span class="mode-title">正式码</span>
+              <span class="mode-copy">按天数绑机器</span>
+            </label>
+            <label class="mode-card">
+              <input type="radio" name="licenseType" value="permanent">
+              <span class="mode-title">永久码</span>
+              <span class="mode-copy">永久绑机器</span>
+            </label>
+          </div>
+
+          <label class="field" id="machine-field">
+            <span>机器码</span>
+            <div class="input-action-row">
+              <input id="machine-id" name="machineId" type="text" placeholder="请输入或粘贴客户机器码">
+              <button id="paste-machine-button" class="secondary-button compact-button" type="button">粘贴机器码</button>
+            </div>
+            <small>试用码无需机器码，正式码和永久码必须填写。</small>
+          </label>
+
+          <label class="field" id="days-field">
+            <span>授权天数</span>
+            <input id="days" name="days" type="number" min="1" step="1" value="365" placeholder="例如 365">
+            <small>仅“正式码”需要填写正整数天数。</small>
+          </label>
+
+          <div class="field">
+            <div class="field-header">
+              <span>授权模块</span>
+              <button id="select-all-modules" class="text-button" type="button">取消</button>
+            </div>
+            <div id="module-grid" class="module-grid"></div>
+            <small>顶层授权只认 sensory / emotional / social / cognitive / life_skills。</small>
+          </div>
+
+          <details class="help-panel">
+            <summary>查看授权模块说明</summary>
+            <div class="help-body">
+              <p class="help-intro">以下说明按当前代码现状整理，用于发码时判断应勾选哪些顶层授权模块。</p>
+              <div class="help-item">
+                <strong>`sensory` / 感官训练</strong>
+                <p>当前覆盖感官统合主链，也包含精细动作相关游戏、器材、训练记录和评估。</p>
+              </div>
+              <div class="help-item">
+                <strong>`emotional` / 情绪行为</strong>
+                <p>当前覆盖情绪场景训练、表达关心训练、情绪小游戏、模块报告，以及情绪调节和安抚教具相关入口。</p>
+              </div>
+              <div class="help-item">
+                <strong>`social` / 社交沟通</strong>
+                <p>当前主要覆盖社交沟通训练入口组、资源归类，以及社交量表授权。</p>
+              </div>
+              <div class="help-item">
+                <strong>`cognitive` / 认知训练</strong>
+                <p>当前主要是预留授权位，资源中心与标签筛选里可见，但未形成独立业务主链。</p>
+              </div>
+              <div class="help-item">
+                <strong>`life_skills` / 生活自理</strong>
+                <p>当前覆盖生活自理训练入口组、资源归类，以及 S-M、WeeFIM 等相关评估入口。</p>
+              </div>
+              <p class="help-note">注意：如果后续把精细动作改成独立授权模块，这里的说明也需要同步调整。</p>
+            </div>
+          </details>
+
+          <div class="actions">
+            <button id="generate-button" class="primary-button" type="submit">生成激活码</button>
+            <button id="reset-button" class="secondary-button" type="button">重置</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="result-panel" class="panel result-panel is-empty">
+        <div class="section-heading">
+          <h2>生成结果</h2>
+        </div>
+
+        <div class="result-block">
+          <span class="result-label">激活码</span>
+          <textarea id="license-output" rows="5" readonly placeholder="生成后显示"></textarea>
+          <div class="result-actions">
+            <button id="copy-license-button" class="secondary-button compact-button" type="button" disabled>复制激活码</button>
+          </div>
+        </div>
+
+        <dl class="summary-list">
+          <div>
+            <dt>授权类型</dt>
+            <dd id="summary-type">—</dd>
+          </div>
+          <div>
+            <dt>机器码</dt>
+            <dd id="summary-machine">—</dd>
+          </div>
+          <div>
+            <dt>有效期</dt>
+            <dd id="summary-validity">—</dd>
+          </div>
+          <div>
+            <dt>创建时间</dt>
+            <dd id="summary-created">—</dd>
+          </div>
+          <div>
+            <dt>过期时间</dt>
+            <dd id="summary-expire">—</dd>
+          </div>
+          <div>
+            <dt>模块</dt>
+            <dd id="summary-modules" class="summary-modules">—</dd>
+          </div>
+        </dl>
+
+        <div class="result-footer">
+          <div id="status-chip" class="status-chip" data-state="idle">等待生成</div>
+          <p id="status-detail" class="status-detail">生成后会在这里显示结果摘要。</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./renderer.js"></script>
+</body>
+</html>
