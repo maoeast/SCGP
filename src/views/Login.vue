@@ -18,30 +18,33 @@
       </div>
 
       <div class="login-layout__form">
-        <LoginCard
-          v-model:username="loginForm.username"
-          v-model:password="loginForm.password"
-          v-model:remember="loginForm.remember"
-          :show-emergency-reset="showEmergencyReset"
-          :loading="isLogging"
-          :submit-disabled="isLoginButtonDisabled"
-          :error-message="loginError"
-          @submit="handleLogin"
-          @emergency-reset="handleEmergencyReset"
-        />
+        <div class="login-layout__form-stack">
+          <LoginCard
+            v-model:username="loginForm.username"
+            v-model:password="loginForm.password"
+            v-model:remember="loginForm.remember"
+            :loading="isLogging"
+            :submit-disabled="isLoginButtonDisabled"
+            :error-message="loginError"
+            @submit="handleLogin"
+          />
+          <component
+            :is="devEmergencyResetComponent"
+            v-if="devEmergencyResetComponent"
+            @reset="handleEmergencyReset"
+          />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import GalaxyBackground from '@/components/login/GalaxyBackground.vue'
 import LoginCard from '@/components/login/LoginCard.vue'
 import SchoolPanel from '@/components/login/SchoolPanel.vue'
-import { UserAPI } from '@/database/api'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
 import { applyLoginThemeVariables, normalizeLoginThemeVariant } from '@/utils/login-theme'
@@ -54,7 +57,9 @@ const defaultTagline = '为学校及康复团队，提供科学、稳定、持�
 const router = useRouter()
 const authStore = useAuthStore()
 const systemConfigStore = useSystemConfigStore()
-const userAPI = new UserAPI()
+const devEmergencyResetComponent = import.meta.env.DEV
+  ? defineAsyncComponent(() => import('@/components/login/DevEmergencyResetButton.vue'))
+  : null
 
 const loginForm = ref({
   username: '',
@@ -65,7 +70,6 @@ const loginForm = ref({
 const isLogging = ref(false)
 const loginError = ref('')
 const isLoginButtonDisabled = ref(true)
-const showEmergencyReset = import.meta.env.DEV
 
 const loginThemeVariant = computed(() =>
   normalizeLoginThemeVariant(systemConfigStore.loginThemeVariant),
@@ -111,31 +115,35 @@ const handleLogin = async () => {
   }
 }
 
-const handleEmergencyReset = async () => {
-  if (!import.meta.env.DEV) {
-    return
-  }
+const handleEmergencyReset = import.meta.env.DEV
+  ? async () => {
+      const [{ ElMessage, ElMessageBox }, { UserAPI }] = await Promise.all([
+        import('element-plus'),
+        import('@/database/api'),
+      ])
+      const userAPI = new UserAPI()
 
-  try {
-    await ElMessageBox.confirm(
-      '此操作会把默认管理员密码重置为 admin123，仅用于当前开发环境紧急恢复登录。',
-      '确认重置管理员密码',
-      {
-        confirmButtonText: '重置为 admin123',
-        cancelButtonText: '取消',
-        type: 'warning',
-      },
-    )
+      try {
+        await ElMessageBox.confirm(
+          '此操作会把默认管理员密码重置为 admin123，仅用于当前开发环境紧急恢复登录。',
+          '确认重置管理员密码',
+          {
+            confirmButtonText: '重置为 admin123',
+            cancelButtonText: '取消',
+            type: 'warning',
+          },
+        )
 
-    await userAPI.resetUserPassword(1, 'admin123')
-    ElMessage.success('管理员密码已重置为 admin123，请直接登录。')
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('重置密码失败:', error)
-      ElMessage.error('重置管理员密码失败')
+        await userAPI.resetUserPassword(1, 'admin123')
+        ElMessage.success('管理员密码已重置为 admin123，请直接登录。')
+      } catch (error) {
+        if (error !== 'cancel') {
+          console.error('重置密码失败:', error)
+          ElMessage.error('重置管理员密码失败')
+        }
+      }
     }
-  }
-}
+  : undefined
 
 watch(
   [() => loginForm.value.username, () => loginForm.value.password],
@@ -237,6 +245,13 @@ onMounted(async () => {
   );
 }
 
+.login-layout__form-stack {
+  width: min(464px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 @media (max-width: 1024px) {
   .login-layout {
     grid-template-columns: 1fr;
@@ -246,6 +261,10 @@ onMounted(async () => {
   .login-layout__form {
     justify-content: center;
     padding-top: 0;
+  }
+
+  .login-layout__form-stack {
+    width: min(464px, 100%);
   }
 }
 

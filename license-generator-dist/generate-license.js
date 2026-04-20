@@ -18,6 +18,13 @@ const LICENSE_VERSION = '1.0';
 const KEY_DIR = path.join(__dirname, '.keys');
 const PRIVATE_KEY_PATH = path.join(KEY_DIR, 'private.pem');
 const PUBLIC_KEY_PATH = path.join(KEY_DIR, 'public.pem');
+const TOP_LEVEL_MODULE_CODES = Object.freeze([
+    'sensory',
+    'emotional',
+    'social',
+    'cognitive',
+    'life_skills'
+]);
 
 // ============ RSA密钥管理 ============
 
@@ -79,6 +86,18 @@ function copyPublicKeyToProject() {
     console.log(`✅ 公钥已复制到: ${destPath}`);
 }
 
+function getDefaultAllowedModules() {
+    return [...TOP_LEVEL_MODULE_CODES];
+}
+
+function formatTimestamp(timestamp) {
+    return new Date(timestamp).toLocaleString('zh-CN');
+}
+
+function formatAllowedModules(allowedModules) {
+    return allowedModules.join(', ');
+}
+
 // ============ 激活码生成 ============
 
 /**
@@ -90,7 +109,8 @@ function generateTrialLicense() {
         v: LICENSE_VERSION, // version 缩短
         c: Date.now(), // createdAt 缩短
         e: Date.now() + 7 * 24 * 60 * 60 * 1000, // expireAt 缩短
-        m: '*' // machineId 缩短
+        m: '*', // machineId 缩短
+        am: getDefaultAllowedModules() // allowedModules 缩短
     };
 
     return licenseData;
@@ -106,6 +126,7 @@ function generateFullLicense(machineId, days = null) {
         m: machineId, // machineId 缩短
         c: Date.now(), // createdAt 缩短
         e: days ? Date.now() + days * 24 * 60 * 60 * 1000 : null, // expireAt 缩短
+        am: getDefaultAllowedModules(), // allowedModules 缩短
         p: !days // permanent 缩短
     };
 
@@ -199,6 +220,7 @@ function printUsage() {
    - 机器码可从应用的激活界面获取
    - 试用码不绑定机器，任何人都可使用
    - 正式码严格绑定机器硬件信息
+   - 默认授权模块: ${TOP_LEVEL_MODULE_CODES.join(', ')}
   `);
 }
 
@@ -232,9 +254,9 @@ function main() {
         console.log('📄 激活码信息：');
         console.log(`   类型: 试用版`);
         console.log(`   有效期: 7天`);
-        console.log(`   创建时间: ${new Date(licenseData.createdAt).toLocaleString('zh-CN')}`);
-        console.log(`   过期时间: ${new Date(licenseData.expireAt).toLocaleString('zh-CN')}`);
-        console.log(`   功能: 全功能`);
+        console.log(`   创建时间: ${formatTimestamp(licenseData.c)}`);
+        console.log(`   过期时间: ${formatTimestamp(licenseData.e)}`);
+        console.log(`   授权模块: ${formatAllowedModules(licenseData.am)}`);
         console.log('\n🔑 激活码：');
         console.log(`\n   ${formatted}\n`);
         console.log('='.repeat(60));
@@ -244,8 +266,9 @@ function main() {
         const filename = `trial_license_${timestamp}.txt`;
         fs.writeFileSync(filename, `激活码类型: 试用版
 有效期: 7天
-创建时间: ${new Date(licenseData.createdAt).toLocaleString('zh-CN')}
-过期时间: ${new Date(licenseData.expireAt).toLocaleString('zh-CN')}
+创建时间: ${formatTimestamp(licenseData.c)}
+过期时间: ${formatTimestamp(licenseData.e)}
+授权模块: ${formatAllowedModules(licenseData.am)}
 
 激活码:
 ${formatted}
@@ -295,11 +318,11 @@ ${formatted}
     console.log(`   类型: 正式版`);
     console.log(`   机器码: ${machineId}`);
     console.log(`   有效期: ${isPermanent ? '永久' : days + '天'}`);
-    console.log(`   创建时间: ${new Date(licenseData.createdAt).toLocaleString('zh-CN')}`);
+    console.log(`   创建时间: ${formatTimestamp(licenseData.c)}`);
     if (!isPermanent) {
-        console.log(`   过期时间: ${new Date(licenseData.expireAt).toLocaleString('zh-CN')}`);
+        console.log(`   过期时间: ${formatTimestamp(licenseData.e)}`);
     }
-    console.log(`   功能: 全功能`);
+    console.log(`   授权模块: ${formatAllowedModules(licenseData.am)}`);
     console.log('\n🔑 激活码：');
     console.log(`\n   ${formatted}\n`);
     console.log('='.repeat(60));
@@ -310,8 +333,9 @@ ${formatted}
     fs.writeFileSync(filename, `激活码类型: 正式版
 机器码: ${machineId}
 有效期: ${isPermanent ? '永久' : days + '天'}
-创建时间: ${new Date(licenseData.createdAt).toLocaleString('zh-CN')}
-${!isPermanent ? '过期时间: ' + new Date(licenseData.expireAt).toLocaleString('zh-CN') : ''}
+创建时间: ${formatTimestamp(licenseData.c)}
+${!isPermanent ? '过期时间: ' + formatTimestamp(licenseData.e) : ''}
+授权模块: ${formatAllowedModules(licenseData.am)}
 
 激活码:
 ${formatted}

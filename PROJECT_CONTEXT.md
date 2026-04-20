@@ -1341,3 +1341,9 @@
 - `Wave 1 / W1-01` 已完成第一段代码落地：`src/utils/password-security.ts` 已成为当前密码哈希真源，统一使用 `Web Crypto API + PBKDF2-SHA256`
 - `src/database/api.ts`、`src/database/init.ts`、`src/database/sqljs-init.ts` 已切到新哈希口径；登录页管理员紧急恢复入口当前仅限 `DEV` 环境显示，并重置为 `admin123`
 - 当前交付态新增全局约束：模块授权不能只停留在 runtime 消费层；`license-generator-dist/generate-license.js` 必须输出许可证 `am` 授权模块数组，否则不可对外承诺“按模块授权”
+
+## 42. 2026-04-20 Activation Delivery Hardening Follow-up
+
+- `license-generator-dist/generate-license.js` 当前已成为交付态模块授权真源，默认输出 5 个顶层模块的 `am`
+- 生产构建新增硬约束：登录页 DEV 管理员重置入口必须被构建裁剪，不能只靠运行时 `import.meta.env.DEV` 隐藏
+- 下一步固定为：让发码工具支持从 `sensory / emotional / social / cognitive / life_skills` 中选择子集授权

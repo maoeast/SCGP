@@ -49,11 +49,6 @@
       />
     </form>
 
-    <div v-if="showEmergencyReset" class="login-card__footer">
-      <button type="button" class="login-card__link" @click="emit('emergency-reset')">
-        重置管理员密码
-      </button>
-    </div>
   </section>
 </template>
 
@@ -68,14 +63,12 @@ interface Props {
   loading?: boolean
   submitDisabled?: boolean
   errorMessage?: string
-  showEmergencyReset?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
   submitDisabled: false,
   errorMessage: '',
-  showEmergencyReset: false,
 })
 
 const emit = defineEmits<{
@@ -83,7 +76,6 @@ const emit = defineEmits<{
   (event: 'update:password', value: string): void
   (event: 'update:remember', value: boolean): void
   (event: 'submit'): void
-  (event: 'emergency-reset'): void
 }>()
 
 const handleRememberChange = (event: Event) => {
@@ -176,27 +168,6 @@ const handleSubmit = () => {
   color: #8b3c36;
   font-size: 13px;
   line-height: 1.6;
-}
-
-.login-card__footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 20px;
-}
-
-.login-card__link {
-  border: none;
-  padding: 0;
-  background: transparent;
-  color: var(--login-muted, #5f6b7a);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.login-card__link:hover {
-  color: var(--login-primary, #2f6fd6);
 }
 
 @media (max-width: 768px) {
