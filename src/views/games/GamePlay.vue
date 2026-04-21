@@ -20,6 +20,7 @@
           <GameGrid
             v-if="isGridGame"
             :student-id="studentId"
+            :student-name="studentName"
             :task-id="taskId"
             :mode="mode as GameGridMode"
             :grid-size="gridSize"
@@ -41,6 +42,7 @@
           <GameAudio
             v-else-if="isAudioGame"
             :student-id="studentId"
+            :student-name="studentName"
             :task-id="taskId"
             :mode="mode as GameAudioMode"
             :grid-size="gridSize"
@@ -61,6 +63,7 @@
         <GameGrid
           v-if="isGridGame"
           :student-id="studentId"
+          :student-name="studentName"
           :task-id="taskId"
           :mode="mode as GameGridMode"
           :grid-size="gridSize"
@@ -82,6 +85,7 @@
         <GameAudio
           v-else-if="isAudioGame"
           :student-id="studentId"
+          :student-name="studentName"
           :task-id="taskId"
           :mode="mode as GameAudioMode"
           :grid-size="gridSize"
@@ -164,9 +168,14 @@ const isAudioGame = computed(() => {
 })
 
 const shouldUseSensoryShell = computed(() => entryCode.value === 'sensory-integration')
-const sensoryShellTheme = computed(() => (
-  taskId.value === TaskID.AUDIO_RHYTHM ? 'rhythm' : 'default'
-))
+const sensoryShellTheme = computed(() => {
+  if (taskId.value === TaskID.AUDIO_RHYTHM) return 'rhythm'
+  if (taskId.value === TaskID.AUDIO_DIFF) return 'audio-diff'
+  if (taskId.value === TaskID.AUDIO_COMMAND) return 'audio-command'
+  if (taskId.value === TaskID.COLOR_MATCH) return 'color-match'
+  if (taskId.value === TaskID.SHAPE_MATCH || taskId.value === TaskID.ICON_MATCH) return 'shape-match'
+  return 'default'
+})
 
 const taskNames: Record<number, string> = {
   [TaskID.COLOR_MATCH]: '颜色配对',
