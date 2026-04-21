@@ -50,9 +50,9 @@ Display comprehensive project statistics including phase progress, plan executio
 </objective>
 
 <execution_context>
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/stats.md
+@.codex/get-shit-done/workflows/stats.md
 </execution_context>
 
 <process>
-Execute the stats workflow from @/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/stats.md end-to-end.
+Execute the stats workflow from @.codex/get-shit-done/workflows/stats.md end-to-end.
 </process>

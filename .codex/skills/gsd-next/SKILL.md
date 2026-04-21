@@ -53,9 +53,9 @@ Designed for rapid multi-project workflows where remembering which phase/step yo
 </objective>
 
 <execution_context>
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/next.md
+@.codex/get-shit-done/workflows/next.md
 </execution_context>
 
 <process>
-Execute the next workflow from @/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/next.md end-to-end.
+Execute the next workflow from @.codex/get-shit-done/workflows/next.md end-to-end.
 </process>

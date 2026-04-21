@@ -69,14 +69,14 @@ Initialize a new project through unified flow: questioning → research (optiona
 </objective>
 
 <execution_context>
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/new-project.md
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/references/questioning.md
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/references/ui-brand.md
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/templates/project.md
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/templates/requirements.md
+@.codex/get-shit-done/workflows/new-project.md
+@.codex/get-shit-done/references/questioning.md
+@.codex/get-shit-done/references/ui-brand.md
+@.codex/get-shit-done/templates/project.md
+@.codex/get-shit-done/templates/requirements.md
 </execution_context>
 
 <process>
-Execute the new-project workflow from @/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/new-project.md end-to-end.
+Execute the new-project workflow from @.codex/get-shit-done/workflows/new-project.md end-to-end.
 Preserve all workflow gates (validation, approvals, commits, routing).
 </process>

@@ -56,9 +56,9 @@ you could describe in one sentence and execute in under 2 minutes.
 </objective>
 
 <execution_context>
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/fast.md
+@.codex/get-shit-done/workflows/fast.md
 </execution_context>
 
 <process>
-Execute the fast workflow from @/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/fast.md end-to-end.
+Execute the fast workflow from @.codex/get-shit-done/workflows/fast.md end-to-end.
 </process>

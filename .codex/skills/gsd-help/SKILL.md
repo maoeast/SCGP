@@ -56,10 +56,10 @@ Output ONLY the reference content below. Do NOT add:
 </objective>
 
 <execution_context>
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/help.md
+@.codex/get-shit-done/workflows/help.md
 </execution_context>
 
 <process>
-Output the complete GSD command reference from @/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/help.md.
+Output the complete GSD command reference from @.codex/get-shit-done/workflows/help.md.
 Display the reference content directly — no additions or modifications.
 </process>

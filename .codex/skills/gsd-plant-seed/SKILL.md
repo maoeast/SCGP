@@ -55,9 +55,9 @@ Consumed by: /gsd-new-milestone (scans seeds and presents matches)
 </objective>
 
 <execution_context>
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/plant-seed.md
+@.codex/get-shit-done/workflows/plant-seed.md
 </execution_context>
 
 <process>
-Execute the plant-seed workflow from @/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/plant-seed.md end-to-end.
+Execute the plant-seed workflow from @.codex/get-shit-done/workflows/plant-seed.md end-to-end.
 </process>

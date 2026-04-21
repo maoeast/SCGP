@@ -71,11 +71,11 @@ Create a physical workspace directory containing copies of specified git repos (
 </objective>
 
 <execution_context>
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/new-workspace.md
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/references/ui-brand.md
+@.codex/get-shit-done/workflows/new-workspace.md
+@.codex/get-shit-done/references/ui-brand.md
 </execution_context>
 
 <process>
-Execute the new-workspace workflow from @/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/new-workspace.md end-to-end.
+Execute the new-workspace workflow from @.codex/get-shit-done/workflows/new-workspace.md end-to-end.
 Preserve all workflow gates (validation, approvals, commits, routing).
 </process>

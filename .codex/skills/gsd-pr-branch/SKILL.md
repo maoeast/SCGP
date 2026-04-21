@@ -54,9 +54,9 @@ changes that are irrelevant to code review.
 </objective>
 
 <execution_context>
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/pr-branch.md
+@.codex/get-shit-done/workflows/pr-branch.md
 </execution_context>
 
 <process>
-Execute the pr-branch workflow from @/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/pr-branch.md end-to-end.
+Execute the pr-branch workflow from @.codex/get-shit-done/workflows/pr-branch.md end-to-end.
 </process>

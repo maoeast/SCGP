@@ -54,7 +54,7 @@ planning via /gsd-plan-phase --reviews.
 </objective>
 
 <execution_context>
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/review.md
+@.codex/get-shit-done/workflows/review.md
 </execution_context>
 
 <context>
@@ -69,5 +69,5 @@ Phase number: extracted from {{GSD_ARGS}} (required)
 </context>
 
 <process>
-Execute the review workflow from @/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/review.md end-to-end.
+Execute the review workflow from @.codex/get-shit-done/workflows/review.md end-to-end.
 </process>

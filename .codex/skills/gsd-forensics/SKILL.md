@@ -53,7 +53,7 @@ Output: Forensic report saved to `.planning/forensics/`, presented inline, with 
 </objective>
 
 <execution_context>
-@/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/forensics.md
+@.codex/get-shit-done/workflows/forensics.md
 </execution_context>
 
 <context>
@@ -70,7 +70,7 @@ Output: Forensic report saved to `.planning/forensics/`, presented inline, with 
 </context>
 
 <process>
-Read and execute the forensics workflow from @/home/DONG/Mycode/SCGP/.codex/get-shit-done/workflows/forensics.md end-to-end.
+Read and execute the forensics workflow from @.codex/get-shit-done/workflows/forensics.md end-to-end.
 </process>
 
 <success_criteria>
