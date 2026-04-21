@@ -528,6 +528,7 @@ void props
 }
 
 .sensory-shell--rhythm {
+  height: 100dvh;
   color: #4b2c73;
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.38), transparent 28%),

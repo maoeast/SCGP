@@ -289,6 +289,7 @@
               v-else
               tag="div"
               class="cmd-block-grid"
+              :style="{ '--cmd-grid-cols': gridSize }"
               name="cmd-blocks"
             >
               <button
@@ -711,8 +712,7 @@ const diffWaveBars = [0.38, 0.62, 0.48, 0.88, 0.56, 0.94, 0.52, 0.78, 0.44, 0.66
 const DIFF_TONE_DURATION = 620
 const DIFF_TONE_GAP = 860
 const DIFF_PLAYBACK_TOTAL = DIFF_TONE_DURATION * 2 + DIFF_TONE_GAP
-const COMMAND_GRID_SIZE = 2
-const COMMAND_OPTION_COUNT = COMMAND_GRID_SIZE * COMMAND_GRID_SIZE
+const COMMAND_OPTION_COUNT = computed(() => props.gridSize * props.gridSize)
 const COMMAND_TARGET_COLORS: Array<{ key: GameColor; name: string }> = [
   { key: 'red', name: '红色' },
   { key: 'orange', name: '橙色' },
@@ -1062,8 +1062,12 @@ function getCommandOptionLabel(item: Pick<CommandOption, 'color' | 'shape'>) {
 function getCommandBlockStyle(item: CommandOption, index: number): CSSProperties {
   const commandColorMap: Partial<Record<GameColor, string>> = {
     red: '#FF3B30',
-    blue: '#0057FF',
+    orange: '#FF8800',
     yellow: '#FFD400',
+    green: '#00CC66',
+    blue: '#0057FF',
+    purple: '#9932CC',
+    pink: '#FF69B4',
     cyan: '#70D6FF',
   }
   const faceColor = commandColorMap[item.color] ?? GAME_COLORS[item.color]
@@ -1255,7 +1259,7 @@ function generateCommandOptions() {
   ]
   const usedCombinations = new Set<string>([`${selectedColor}-${selectedShape}`])
 
-  while (options.length < COMMAND_OPTION_COUNT) {
+  while (options.length < COMMAND_OPTION_COUNT.value) {
     const colorKey = allColorKeys[Math.floor(Math.random() * allColorKeys.length)] ?? allColorKeys[0]!
     const shapeKey = shapeKeys[Math.floor(Math.random() * shapeKeys.length)] ?? shapeKeys[0]!
     const key = `${colorKey}-${shapeKey}`
@@ -3248,7 +3252,6 @@ onUnmounted(() => {
 
 .cmd-target-copy p {
   margin: 0;
-  max-width: 20ch;
   font-size: 1rem;
   line-height: 1.6;
   color: rgba(255, 238, 214, 0.82);
@@ -3770,19 +3773,14 @@ onUnmounted(() => {
 }
 
 .cmd-block__shape--depth path {
-  fill: rgba(120, 80, 40, 0.3);
+  fill: transparent;
   stroke: none;
 }
 
 .cmd-block__shape--face path {
-  fill: linear-gradient(180deg, #e8d0a8, #c9a870);
-  stroke: rgba(140, 90, 45, 0.3);
+  fill: var(--command-face-color, #dbb878);
+  stroke: rgba(140, 90, 45, 0.25);
   stroke-width: 1.5;
-  filter: drop-shadow(0 4px 8px rgba(80, 50, 20, 0.2));
-}
-
-.cmd-block__shape--face path {
-  fill: #dbb878;
 }
 
 .cmd-block__shape--shine path {
@@ -4554,6 +4552,8 @@ onUnmounted(() => {
 .game-audio-container--rhythm {
   max-width: none;
   padding: 0;
+  height: 100%;
+  min-height: 0;
 }
 
 .game-audio-container--rhythm .feedback {
@@ -4574,12 +4574,18 @@ onUnmounted(() => {
 
 .game-mode-rhythm {
   color: #5b3579;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .rhythm-playground {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
 }
 
 .rhythm-card-surface {
@@ -4598,18 +4604,18 @@ onUnmounted(() => {
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 14px;
+  gap: 8px;
 }
 
 .rhythm-status-pills {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 
 .rhythm-status-pill {
-  min-width: 132px;
-  padding: 12px 16px;
+  min-width: 96px;
+  padding: 6px 12px;
   border-radius: 999px;
   background: rgba(255, 252, 244, 0.66);
   border: 1px solid rgba(255, 255, 255, 0.76);
@@ -4637,19 +4643,19 @@ onUnmounted(() => {
 
 .rhythm-hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 12px;
   align-items: stretch;
 }
 
 .difficulty-selector {
   margin: 0;
-  padding: 24px;
+  padding: 16px;
   background: linear-gradient(180deg, rgba(255, 250, 235, 0.96), rgba(255, 243, 215, 0.9));
 }
 
 .selector-label {
-  margin-bottom: 18px;
+  margin-bottom: 10px;
   text-align: left;
   font-size: 1.08rem;
   font-weight: 800;
@@ -4659,7 +4665,7 @@ onUnmounted(() => {
 .difficulty-buttons {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 10px;
 }
 
 .diff-btn {
@@ -4668,8 +4674,8 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: stretch;
   justify-content: space-between;
-  min-height: 270px;
-  padding: 20px 18px 22px;
+  min-height: 150px;
+  padding: 14px 12px 16px;
   border: 0;
   border-radius: 32px;
   cursor: pointer;
@@ -4734,14 +4740,14 @@ onUnmounted(() => {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 132px;
-  margin-bottom: 16px;
+  height: 72px;
+  margin-bottom: 10px;
 }
 
 .plant-illustration {
   position: relative;
-  width: min(100%, 160px);
-  height: 124px;
+  width: min(100%, 100px);
+  height: 66px;
 }
 
 .plant-ground {
@@ -4922,7 +4928,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 222px;
 }
 
 .difficulty-preview {
@@ -4972,16 +4977,15 @@ onUnmounted(() => {
 .rhythm-sidekick-stack {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 10px;
 }
 
 .rhythm-assistant-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  padding: 20px 22px;
-  min-height: 214px;
+  gap: 10px;
+  padding: 12px 14px;
 }
 
 .rhythm-assistant-copy {
@@ -5002,8 +5006,8 @@ onUnmounted(() => {
 }
 
 .rhythm-assistant-copy h3 {
-  margin: 12px 0 10px;
-  font-size: 1.24rem;
+  margin: 8px 0 6px;
+  font-size: 1.08rem;
   line-height: 1.25;
   color: #5a2f86;
 }
@@ -5018,8 +5022,8 @@ onUnmounted(() => {
 
 .monster-sidekick {
   position: relative;
-  width: 164px;
-  height: 164px;
+  width: 100px;
+  height: 100px;
   flex-shrink: 0;
   animation: rhythmMonsterBounce 3s ease-in-out infinite;
 }
@@ -5168,12 +5172,12 @@ onUnmounted(() => {
 }
 
 .rhythm-trophy-rack {
-  padding: 18px 22px 20px;
+  padding: 10px 14px;
 }
 
 .trophy-title {
   display: block;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   font-size: 1rem;
   font-weight: 800;
   color: #5a2f86;
@@ -5182,15 +5186,15 @@ onUnmounted(() => {
 .trophy-slots {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .trophy-slot {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 72px;
+  min-height: 44px;
   border-radius: 24px;
   border: 2px dashed rgba(154, 92, 31, 0.24);
   background: rgba(255, 255, 255, 0.42);
@@ -5202,14 +5206,14 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 20px;
+  gap: 10px;
   margin-bottom: 0;
-  padding: 22px 24px;
+  padding: 10px 16px;
   background: linear-gradient(180deg, rgba(255, 250, 235, 0.96), rgba(255, 243, 215, 0.9));
 }
 
 .phase-step {
-  padding: 18px 20px;
+  padding: 8px 12px;
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.74);
   border: 1px solid rgba(255, 255, 255, 0.86);
@@ -5220,9 +5224,9 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 84px;
-  height: 84px;
-  margin-bottom: 12px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 6px;
   border-radius: 28px;
   background: linear-gradient(180deg, #ffe2a6 0%, #ffc468 100%);
   box-shadow:
@@ -5244,29 +5248,29 @@ onUnmounted(() => {
 
 .phase-icon {
   margin: 0;
-  font-size: 2.2rem;
+  font-size: 1.5rem;
 }
 
 .phase-text {
-  font-size: 1.12rem;
+  font-size: 0.96rem;
   font-weight: 800;
   color: #5a2f86;
 }
 
 .phase-caption {
-  margin-top: 6px;
-  font-size: 0.88rem;
+  margin-top: 2px;
+  font-size: 0.78rem;
   color: rgba(91, 53, 121, 0.72);
 }
 
 .phase-arrow {
-  font-size: 2.3rem;
+  font-size: 1.6rem;
   color: rgba(154, 92, 31, 0.68);
 }
 
 .rhythm-timeline {
   margin-bottom: 0;
-  padding: 22px 24px 24px;
+  padding: 10px 16px;
   background: linear-gradient(180deg, rgba(255, 250, 235, 0.96), rgba(255, 243, 215, 0.9));
 }
 
@@ -5274,8 +5278,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .timeline-title-row span {
@@ -5290,15 +5294,15 @@ onUnmounted(() => {
 }
 
 .timeline-track {
-  gap: 22px;
+  gap: 10px;
 }
 
 .timeline-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  min-height: 108px;
+  gap: 12px;
+  min-height: 48px;
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.42);
 }
@@ -5317,8 +5321,8 @@ onUnmounted(() => {
 }
 
 .beat-circle {
-  width: 72px;
-  height: 72px;
+  width: 52px;
+  height: 52px;
   background: linear-gradient(180deg, #fffdf7 0%, #ffe7bc 100%);
   border: 3px solid rgba(255, 205, 126, 0.78);
   box-shadow:
@@ -5331,8 +5335,8 @@ onUnmounted(() => {
 }
 
 .beat-line {
-  left: 72px;
-  width: 26px;
+  left: 52px;
+  width: 20px;
   height: 6px;
   border-radius: 999px;
   background: linear-gradient(90deg, rgba(255, 205, 126, 0.58), rgba(255, 160, 89, 0.4));
@@ -5372,15 +5376,19 @@ onUnmounted(() => {
 }
 
 .rhythm-main-area {
-  min-height: 300px;
+  flex: 1;
+  min-height: 0;
   margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .rhythm-start-btn {
   position: relative;
-  width: min(480px, 100%);
-  min-height: 268px;
-  padding: 36px 32px 32px;
+  width: min(400px, 100%);
+  min-height: 140px;
+  padding: 20px 24px;
   border-radius: 40px;
   background: linear-gradient(180deg, #ffb351 0%, #ff8d2d 56%, #e06d18 100%);
   box-shadow:
@@ -5420,12 +5428,12 @@ onUnmounted(() => {
 }
 
 .rhythm-start-btn .btn-icon {
-  font-size: 5rem;
-  margin-bottom: 10px;
+  font-size: 3.2rem;
+  margin-bottom: 6px;
 }
 
 .rhythm-start-btn .btn-text {
-  font-size: 2rem;
+  font-size: 1.5rem;
   color: #fff8ef;
   text-shadow: 0 4px 12px rgba(111, 47, 4, 0.24);
 }
@@ -5437,16 +5445,16 @@ onUnmounted(() => {
 }
 
 .rhythm-status {
-  width: min(520px, 100%);
-  min-height: 220px;
-  padding: 30px 34px;
+  width: min(420px, 100%);
+  min-height: 100px;
+  padding: 18px 22px;
   background: linear-gradient(180deg, rgba(255, 239, 202, 0.98), rgba(255, 214, 143, 0.94));
   border: 1px solid rgba(255, 255, 255, 0.84);
   animation: rhythmButtonBreath 1.8s ease-in-out infinite;
 }
 
 .status-icon {
-  font-size: 4rem;
+  font-size: 2.6rem;
 }
 
 .status-text {
@@ -5460,8 +5468,8 @@ onUnmounted(() => {
 }
 
 .drum-pad {
-  width: 320px;
-  height: 320px;
+  width: min(200px, 28vh);
+  height: min(200px, 28vh);
 }
 
 .drum-pad__glow {
@@ -5541,14 +5549,14 @@ onUnmounted(() => {
 .rhythm-bottom-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 8px;
 }
 
 .accuracy-display,
 .rhythm-progress,
 .rhythm-hint {
   margin: 0;
-  padding: 20px 22px;
+  padding: 10px 14px;
   background: linear-gradient(180deg, rgba(255, 250, 235, 0.96), rgba(255, 243, 215, 0.9));
 }
 
@@ -5650,7 +5658,7 @@ onUnmounted(() => {
   .accuracy-display,
   .rhythm-progress,
   .rhythm-hint {
-    border-radius: 28px;
+    border-radius: 20px;
   }
 
   .rhythm-assistant-card {
@@ -5663,36 +5671,36 @@ onUnmounted(() => {
   }
 
   .monster-sidekick {
-    width: 148px;
-    height: 148px;
+    width: 80px;
+    height: 80px;
   }
 
   .drum-pad {
-    width: 268px;
-    height: 268px;
+    width: min(200px, 32vh);
+    height: min(200px, 32vh);
   }
 
   .rhythm-start-btn {
-    min-height: 236px;
+    min-height: 120px;
   }
 
   .rhythm-start-btn .btn-icon {
-    font-size: 4.2rem;
+    font-size: 2.6rem;
   }
 
   .timeline-track {
-    gap: 14px;
+    gap: 8px;
     flex-wrap: wrap;
   }
 
   .beat-circle {
-    width: 60px;
-    height: 60px;
+    width: 42px;
+    height: 42px;
   }
 
   .beat-line {
-    width: 18px;
-    left: 60px;
+    width: 14px;
+    left: 42px;
   }
 }
 
