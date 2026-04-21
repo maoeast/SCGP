@@ -391,6 +391,10 @@ const realAccuracy = computed(() => {
   return totalAcc / rhythmTrials.length / 100 // 转换为0-1范围
 })
 
+const sessionAccuracy = computed(() => (
+  props.mode === 'rhythm' ? realAccuracy.value : accuracy.value
+))
+
 const avgResponseTime = computed(() => {
   const valid = trials.value.filter(t => t.responseTime > 0)
   if (valid.length === 0) return 0
@@ -456,7 +460,7 @@ const sessionData = computed<GameSessionData>(() => {
     trials: trials.value,
     totalTrials: trials.value.length,
     correctTrials: correct,
-    accuracy: realAccuracy.value,
+    accuracy: sessionAccuracy.value,
     avgResponseTime: avgResponseTime.value,
     errors: {
       omission,

@@ -130,7 +130,7 @@ import { Loading, WarningFilled, Document, DocumentCopy } from '@element-plus/ic
 import { IEPGenerator } from '@/utils/iep-generator'
 import { GameTrainingAPI } from '@/database/api'
 import { DatabaseAPI } from '@/database/api'
-import type { IEPReport, GameSessionData } from '@/types/games'
+import { TaskID, type IEPReport, type GameSessionData } from '@/types/games'
 import {
   Document as DocxDocument,
   Packer,
@@ -162,6 +162,26 @@ const student = ref<any>()
 // 获取记录 ID
 const recordId = ref<string>(route.query.recordId as string)
 
+const normalizeLegacyAudioAccuracy = (data: GameSessionData): GameSessionData => {
+  if (![TaskID.AUDIO_DIFF, TaskID.AUDIO_COMMAND].includes(data.taskId)) {
+    return data
+  }
+
+  if (data.totalTrials <= 0) {
+    return data
+  }
+
+  const derivedAccuracy = data.correctTrials / data.totalTrials
+  if (Math.abs(data.accuracy - derivedAccuracy) < 0.0001) {
+    return data
+  }
+
+  return {
+    ...data,
+    accuracy: Number(derivedAccuracy.toFixed(4))
+  }
+}
+
 // 加载报告数据
 const loadReport = async () => {
   try {
@@ -180,7 +200,7 @@ const loadReport = async () => {
     }
 
     // 解析会话数据
-    sessionData.value = record.raw_data as GameSessionData
+    sessionData.value = normalizeLegacyAudioAccuracy(record.raw_data as GameSessionData)
 
     // 获取学生信息
     const db = new DatabaseAPI()
