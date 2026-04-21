@@ -1,7 +1,7 @@
 <template>
-  <div class="game-audio-container">
+  <div class="game-audio-container" :class="{ 'game-audio-container--rhythm': mode === 'rhythm' }">
     <!-- 游戏头部 -->
-    <div class="game-header" v-if="!gameEnded">
+    <div class="game-header" v-if="!gameEnded && mode !== 'rhythm'">
       <div class="task-info">
         <h2>{{ taskTitle }}</h2>
         <p class="instruction">{{ currentInstruction }}</p>
@@ -11,7 +11,7 @@
           <span class="label">进度：</span>
           <span class="value">{{ currentRound }} / {{ totalRounds }}</span>
         </div>
-        <div class="stat" v-if="mode !== 'rhythm'">
+        <div class="stat">
           <span class="label">时间：</span>
           <span class="value" :class="{ warning: timeLeft <= 10 }">{{ timeLeft }}s</span>
         </div>
@@ -97,156 +97,255 @@
 
     <!-- 节奏模式 (Task 7) - 简化版：看-做模式 -->
     <div v-if="mode === 'rhythm' && !gameEnded" class="game-mode-rhythm">
-      <!-- 难度选择（游戏开始前） -->
-      <div class="difficulty-selector" v-if="!isRhythmPlaying && !canRecord && rhythmPattern.length === 0">
-        <div class="selector-label">选择难度：</div>
-        <div class="difficulty-buttons">
-          <button 
-            class="diff-btn easy" 
-            :class="{ active: difficulty === 'easy' }"
-            @click="difficulty = 'easy'"
-          >
-            <span class="diff-icon">🌱</span>
-            <span class="diff-label">简单</span>
-            <span class="diff-desc">慢节奏，容错大</span>
-          </button>
-          <button 
-            class="diff-btn medium" 
-            :class="{ active: difficulty === 'medium' }"
-            @click="difficulty = 'medium'"
-          >
-            <span class="diff-icon">🌿</span>
-            <span class="diff-label">中等</span>
-            <span class="diff-desc">标准节奏</span>
-          </button>
-          <button 
-            class="diff-btn hard" 
-            :class="{ active: difficulty === 'hard' }"
-            @click="difficulty = 'hard'"
-          >
-            <span class="diff-icon">🌳</span>
-            <span class="diff-label">困难</span>
-            <span class="diff-desc">快节奏，精度高</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 阶段提示 -->
-      <div class="phase-indicator">
-        <div class="phase-step" :class="{ active: isRhythmPlaying, completed: !isRhythmPlaying && rhythmPattern.length > 0 }">
-          <span class="phase-icon">👀</span>
-          <span class="phase-text">仔细看</span>
-        </div>
-        <div class="phase-arrow">→</div>
-        <div class="phase-step" :class="{ active: canRecord }">
-          <span class="phase-icon">👆</span>
-          <span class="phase-text">跟着做</span>
-        </div>
-      </div>
-
-      <!-- 节奏可视化条 -->
-      <div class="rhythm-timeline">
-        <div class="timeline-track">
-          <div
-            v-for="(beat, index) in rhythmPattern"
-            :key="index"
-            class="beat-marker"
-            :class="{
-              'demo': isRhythmPlaying && index === currentBeatIndex,
-              'user-turn': canRecord && index === currentTapIndex,
-              'tapped': tapFeedback[index]?.show,
-              'correct': tapFeedback[index]?.show && tapFeedback[index]?.isCorrect,
-              'wrong': tapFeedback[index]?.show && !tapFeedback[index]?.isCorrect
-            }"
-          >
-            <div class="beat-circle">
-              <span class="beat-number" v-if="!tapFeedback[index]?.show">{{ index + 1 }}</span>
-              <span class="beat-accuracy" v-else>{{ tapFeedback[index]?.accuracy }}%</span>
-              <div class="beat-ripple" v-if="isRhythmPlaying && index === currentBeatIndex"></div>
+      <div class="rhythm-playground">
+        <div class="rhythm-scene-top">
+          <div class="rhythm-status-pills">
+            <div class="rhythm-status-pill">
+              <span>当前轮次</span>
+              <strong>{{ currentRound }} / {{ totalRounds }}</strong>
             </div>
-            <div class="beat-line" v-if="index < rhythmPattern.length - 1"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 主交互区域 -->
-      <div class="rhythm-main-area">
-        <!-- 开始按钮 -->
-        <button
-          v-if="!isRhythmPlaying && !canRecord && rhythmPattern.length === 0"
-          class="rhythm-start-btn"
-          @click="startRhythmGame"
-        >
-          <div class="btn-icon">🥁</div>
-          <div class="btn-text">开始游戏</div>
-          <div class="btn-hint">先看我做，然后你做</div>
-        </button>
-
-        <!-- 观看中提示 -->
-        <div v-else-if="isRhythmPlaying" class="rhythm-status watching">
-          <div class="status-icon">👀</div>
-          <div class="status-text">仔细看节奏...</div>
-        </div>
-
-        <!-- 用户操作鼓面 -->
-        <button
-          v-else-if="canRecord"
-          class="drum-pad"
-          :class="{ 'can-tap': true }"
-          @click="handleRhythmTap"
-        >
-          <div class="drum-surface">
-            <div class="drum-center">
-              <span class="drum-icon">👆</span>
-              <span class="drum-text">轮到你了！</span>
-              <span class="drum-subtext">第 {{ currentTapIndex + 1 }} / {{ rhythmPattern.length }} 拍</span>
+            <div class="rhythm-status-pill">
+              <span>当前得分</span>
+              <strong>{{ score }}</strong>
+            </div>
+            <div class="rhythm-status-pill">
+              <span>当前难度</span>
+              <strong>{{ selectedRhythmDifficulty.label }}</strong>
             </div>
           </div>
-          <div class="tap-effects">
+          <p class="rhythm-scene-copy">{{ currentInstruction }}</p>
+        </div>
+
+        <div class="rhythm-hero-grid">
+          <section
+            v-if="!isRhythmPlaying && !canRecord && rhythmPattern.length === 0"
+            class="difficulty-selector rhythm-card-surface"
+          >
+            <div class="selector-label">挑选一片节奏森林</div>
+            <div class="difficulty-buttons">
+              <button
+                v-for="card in rhythmDifficultyCards"
+                :key="card.key"
+                type="button"
+                class="diff-btn"
+                :class="[card.key, { active: difficulty === card.key }]"
+                @click="difficulty = card.key"
+              >
+                <div class="diff-art" aria-hidden="true">
+                  <div v-if="card.key === 'easy'" class="plant-illustration plant-illustration--easy">
+                    <span class="plant-ground"></span>
+                    <span class="plant-stem"></span>
+                    <span class="plant-leaf plant-leaf--left"></span>
+                    <span class="plant-leaf plant-leaf--right"></span>
+                    <span class="plant-spark"></span>
+                  </div>
+                  <div v-else-if="card.key === 'medium'" class="plant-illustration plant-illustration--medium">
+                    <span class="plant-ground"></span>
+                    <span class="plant-bush plant-bush--left"></span>
+                    <span class="plant-bush plant-bush--middle"></span>
+                    <span class="plant-bush plant-bush--right"></span>
+                    <span class="plant-berry plant-berry--one"></span>
+                    <span class="plant-berry plant-berry--two"></span>
+                  </div>
+                  <div v-else class="plant-illustration plant-illustration--hard">
+                    <span class="plant-ground"></span>
+                    <span class="plant-trunk"></span>
+                    <span class="plant-canopy plant-canopy--left"></span>
+                    <span class="plant-canopy plant-canopy--center"></span>
+                    <span class="plant-canopy plant-canopy--right"></span>
+                    <span class="plant-star"></span>
+                  </div>
+                </div>
+                <div class="diff-copy">
+                  <span class="diff-label">{{ card.label }}</span>
+                  <strong class="diff-title">{{ card.title }}</strong>
+                  <span class="diff-desc">{{ card.description }}</span>
+                </div>
+              </button>
+            </div>
+          </section>
+
+          <section v-else class="difficulty-selector rhythm-card-surface rhythm-card-surface--compact">
+            <div class="selector-label">本轮节奏森林</div>
+            <div class="difficulty-preview">
+              <div class="difficulty-preview__chip" :class="selectedRhythmDifficulty.key">
+                <span>已锁定难度</span>
+                <strong>{{ selectedRhythmDifficulty.label }} · {{ selectedRhythmDifficulty.title }}</strong>
+              </div>
+              <p>完成这一轮后，可以重新挑选难度和节奏速度。</p>
+            </div>
+          </section>
+
+          <aside class="rhythm-sidekick-stack">
+            <section class="rhythm-assistant-card rhythm-card-surface">
+              <div class="rhythm-assistant-copy">
+                <span class="assistant-badge">耳机小助手</span>
+                <h3>鼓点怪陪你一起听拍子</h3>
+                <p>先看发亮的鼓点，再用小手跟上去。慢一点也没关系，稳稳做就很棒。</p>
+              </div>
+              <div class="monster-sidekick" aria-hidden="true">
+                <span class="monster-shadow"></span>
+                <span class="monster-band"></span>
+                <span class="monster-ear monster-ear--left"></span>
+                <span class="monster-ear monster-ear--right"></span>
+                <span class="monster-horn monster-horn--left"></span>
+                <span class="monster-horn monster-horn--right"></span>
+                <span class="monster-body"></span>
+                <span class="monster-eye monster-eye--left"></span>
+                <span class="monster-eye monster-eye--right"></span>
+                <span class="monster-blush monster-blush--left"></span>
+                <span class="monster-blush monster-blush--right"></span>
+                <span class="monster-mouth"></span>
+                <span class="monster-foot monster-foot--left"></span>
+                <span class="monster-foot monster-foot--right"></span>
+              </div>
+            </section>
+
+            <section class="rhythm-trophy-rack rhythm-card-surface">
+              <span class="trophy-title">星星奖杯架</span>
+              <div class="trophy-slots" aria-hidden="true">
+                <span class="trophy-slot">☆</span>
+                <span class="trophy-slot">☆</span>
+                <span class="trophy-slot">☆</span>
+              </div>
+              <p>训练完成后，这里会留给你的闪亮星星。</p>
+            </section>
+          </aside>
+        </div>
+
+        <div class="phase-indicator rhythm-card-surface">
+          <div class="phase-step" :class="{ active: isRhythmPlaying, completed: !isRhythmPlaying && rhythmPattern.length > 0 }">
+            <div class="phase-icon-shell">
+              <span class="phase-icon">👀</span>
+            </div>
+            <span class="phase-text">仔细看</span>
+            <span class="phase-caption">看清发亮的鼓点</span>
+          </div>
+          <div class="phase-arrow" aria-hidden="true">➜</div>
+          <div class="phase-step" :class="{ active: canRecord }">
+            <div class="phase-icon-shell">
+              <span class="phase-icon">☝️</span>
+            </div>
+            <span class="phase-text">跟着做</span>
+            <span class="phase-caption">按同样节奏轻轻拍</span>
+          </div>
+        </div>
+
+        <div class="rhythm-timeline rhythm-card-surface">
+          <div class="timeline-title-row">
+            <span>节奏轨道</span>
+            <strong>{{ rhythmPattern.length > 0 ? `${rhythmPattern.length} 拍` : '等待开始' }}</strong>
+          </div>
+          <div v-if="rhythmPattern.length > 0" class="timeline-track">
             <div
-              v-for="n in 3"
-              :key="n"
-              class="tap-ring"
-              :class="{ 'tap-animate': tapEffects[n-1] }"
-            ></div>
+              v-for="(beat, index) in rhythmPattern"
+              :key="index"
+              class="beat-marker"
+              :class="{
+                'demo': isRhythmPlaying && index === currentBeatIndex,
+                'user-turn': canRecord && index === currentTapIndex,
+                'tapped': tapFeedback[index]?.show,
+                'correct': tapFeedback[index]?.show && tapFeedback[index]?.isCorrect,
+                'wrong': tapFeedback[index]?.show && !tapFeedback[index]?.isCorrect
+              }"
+            >
+              <div class="beat-circle">
+                <span class="beat-number" v-if="!tapFeedback[index]?.show">{{ index + 1 }}</span>
+                <span class="beat-accuracy" v-else>{{ tapFeedback[index]?.accuracy }}%</span>
+                <div class="beat-ripple" v-if="isRhythmPlaying && index === currentBeatIndex"></div>
+              </div>
+              <div class="beat-line" v-if="index < rhythmPattern.length - 1"></div>
+            </div>
           </div>
-        </button>
-      </div>
-
-      <!-- 实时准确率显示 -->
-      <div class="accuracy-display" v-if="canRecord && currentTapIndex > 0">
-        <div class="accuracy-label">本拍准确度</div>
-        <div class="accuracy-value" :class="{ 'good': (previousTapFeedback?.accuracy ?? 0) >= 70, 'bad': (previousTapFeedback?.accuracy ?? 0) < 70 }" v-if="previousTapFeedback?.show">
-          {{ previousTapFeedback?.accuracy }}%
+          <div v-else class="timeline-placeholder" aria-hidden="true">
+            <span class="timeline-placeholder__note">♪</span>
+            <span class="timeline-placeholder__dot"></span>
+            <span class="timeline-placeholder__dot"></span>
+            <span class="timeline-placeholder__dot"></span>
+            <span class="timeline-placeholder__note">♫</span>
+          </div>
         </div>
-        <div class="accuracy-hint" v-else>等待点击...</div>
-      </div>
 
-      <!-- 节拍进度 -->
-      <div class="rhythm-progress" v-if="rhythmPattern.length > 0">
-        <div class="progress-text">
-          <span v-if="isRhythmPlaying">👀 仔细看节奏...</span>
-          <span v-else-if="canRecord">👆 第 {{ currentTapIndex + 1 }} / {{ rhythmPattern.length }} 拍</span>
-          <span v-else>🎯 准备开始</span>
-        </div>
-        <div class="progress-bar">
-          <div
-            class="progress-fill"
-            :style="{ width: (currentTapIndex / rhythmPattern.length * 100) + '%' }"
-          ></div>
-        </div>
-      </div>
+        <div class="rhythm-main-area">
+          <button
+            v-if="!isRhythmPlaying && !canRecord && rhythmPattern.length === 0"
+            type="button"
+            class="rhythm-start-btn"
+            @click="startRhythmGame"
+          >
+            <span class="rhythm-start-btn__glow" aria-hidden="true"></span>
+            <div class="btn-icon">🥁</div>
+            <div class="btn-text">开始游戏</div>
+            <div class="btn-hint">先看我敲，再跟着做</div>
+          </button>
 
-      <!-- 提示信息 -->
-      <div class="rhythm-hint">
-        <p v-if="rhythmMode === 'follow'">
-          <span class="hint-icon">💡</span>
-          跟着鼓声一起点击鼓面，越快越准得分越高！
-        </p>
-        <p v-else>
-          <span class="hint-icon">💡</span>
-          仔细听节奏，播放完成后重复点击
-        </p>
+          <div v-else-if="isRhythmPlaying" class="rhythm-status watching rhythm-card-surface">
+            <div class="status-icon">👀</div>
+            <div class="status-text">仔细看节奏</div>
+            <div class="status-subtext">鼓点正在示范，等一下就轮到你啦。</div>
+          </div>
+
+          <button
+            v-else-if="canRecord"
+            type="button"
+            class="drum-pad"
+            :class="{ 'can-tap': true }"
+            @click="handleRhythmTap"
+          >
+            <span class="drum-pad__glow" aria-hidden="true"></span>
+            <div class="drum-surface">
+              <div class="drum-center">
+                <span class="drum-icon">🥁</span>
+                <span class="drum-text">轮到你敲啦</span>
+                <span class="drum-subtext">第 {{ currentTapIndex + 1 }} / {{ rhythmPattern.length }} 拍</span>
+              </div>
+            </div>
+            <div class="tap-effects">
+              <div
+                v-for="n in 3"
+                :key="n"
+                class="tap-ring"
+                :class="{ 'tap-animate': tapEffects[n - 1] }"
+              ></div>
+            </div>
+          </button>
+        </div>
+
+        <div class="rhythm-bottom-grid">
+          <div class="accuracy-display rhythm-card-surface">
+            <div class="accuracy-label">本拍准确度</div>
+            <div
+              v-if="canRecord && currentTapIndex > 0 && previousTapFeedback?.show"
+              class="accuracy-value"
+              :class="{ 'good': (previousTapFeedback?.accuracy ?? 0) >= 70, 'bad': (previousTapFeedback?.accuracy ?? 0) < 70 }"
+            >
+              {{ previousTapFeedback?.accuracy }}%
+            </div>
+            <div v-else class="accuracy-hint">等鼓点亮起来后，再轻轻跟着拍下去。</div>
+          </div>
+
+          <div class="rhythm-progress rhythm-card-surface">
+            <div class="progress-text">
+              <span v-if="isRhythmPlaying">👀 先看示范节奏</span>
+              <span v-else-if="canRecord && rhythmPattern.length > 0">☝️ 第 {{ currentTapIndex + 1 }} / {{ rhythmPattern.length }} 拍</span>
+              <span v-else>🎯 按下大鼓开始这一轮</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" :style="{ width: `${rhythmProgressPercentage}%` }"></div>
+            </div>
+          </div>
+
+          <div class="rhythm-hint rhythm-card-surface">
+            <p v-if="rhythmMode === 'follow'">
+              <span class="hint-icon">💡</span>
+              跟着鼓声一起点击鼓面。节奏越稳定，分数就会越高。
+            </p>
+            <p v-else>
+              <span class="hint-icon">💡</span>
+              仔细听节奏，播放完成后重复点击，慢慢把拍子记在心里。
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -298,6 +397,8 @@ type CommandOption = GridItem & {
   shape: GameShape
   isCorrect: boolean
 }
+
+type RhythmDifficulty = 'easy' | 'medium' | 'hard'
 
 // Props
 interface Props {
@@ -353,14 +454,25 @@ const tapFeedback = ref<{ index: number; isCorrect: boolean; show: boolean; accu
 const comboCount = ref(0) // 连击计数
 const lastBeatTime = ref(0) // 最后一个节拍的时间
 const isRhythmPlaying = ref(false) // 是否正在播放节奏
-const difficulty = ref<'easy' | 'medium' | 'hard'>('medium') // 难度级别
+const difficulty = ref<RhythmDifficulty>('medium') // 难度级别
 
 // 难度配置
-const difficultyConfig = {
+const difficultyConfig: Record<RhythmDifficulty, { interval: number; tolerance: number; label: string }> = {
   easy: { interval: 1200, tolerance: 0.40, label: '简单' },    // 1200ms间隔，40%容错
   medium: { interval: 800, tolerance: 0.30, label: '中等' },    // 800ms间隔，30%容错
   hard: { interval: 500, tolerance: 0.20, label: '困难' }       // 500ms间隔，20%容错
 }
+
+const rhythmDifficultyCards: Array<{
+  key: RhythmDifficulty
+  label: string
+  title: string
+  description: string
+}> = [
+  { key: 'easy', label: '简单', title: '嫩芽节奏', description: '慢一点，看清再跟上，容错更宽松。' },
+  { key: 'medium', label: '中等', title: '灌木节奏', description: '标准速度，适合稳定练习整轮节拍。' },
+  { key: 'hard', label: '困难', title: '大树节奏', description: '速度更快，需要更稳的节奏控制。' },
+]
 
 // 通用
 const showResult = ref(false)
@@ -435,6 +547,16 @@ const previousTapFeedback = computed(() => {
 
   return tapFeedback.value[currentTapIndex.value - 1] ?? null
 })
+
+const selectedRhythmDifficulty = computed(() => (
+  rhythmDifficultyCards.find(card => card.key === difficulty.value) ?? rhythmDifficultyCards[1]!
+))
+
+const rhythmProgressPercentage = computed(() => (
+  rhythmPattern.value.length > 0
+    ? (currentTapIndex.value / rhythmPattern.value.length) * 100
+    : 0
+))
 
 const sessionData = computed<GameSessionData>(() => {
   const correct = trials.value.filter(t => t.isCorrect).length
@@ -2385,5 +2507,1152 @@ onUnmounted(() => {
 .accuracy-hint {
   font-size: 18px;
   color: #999;
+}
+
+/* ========== 节奏模仿卡通重构 ========== */
+
+.game-audio-container--rhythm {
+  max-width: none;
+  padding: 0;
+}
+
+.game-audio-container--rhythm .feedback {
+  border-radius: 999px;
+  box-shadow: 0 24px 42px rgba(91, 53, 121, 0.22);
+}
+
+.game-audio-container--rhythm .game-result {
+  padding: 48px 28px;
+  border-radius: 40px;
+  background: linear-gradient(180deg, rgba(255, 249, 235, 0.95), rgba(255, 242, 213, 0.9));
+  box-shadow: 0 26px 50px rgba(145, 102, 34, 0.16);
+}
+
+.game-audio-container--rhythm .game-result h2 {
+  color: #5a2f86;
+}
+
+.game-mode-rhythm {
+  color: #5b3579;
+}
+
+.rhythm-playground {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.rhythm-card-surface {
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  background: linear-gradient(180deg, rgba(255, 251, 240, 0.94), rgba(255, 245, 224, 0.88));
+  box-shadow:
+    0 16px 0 rgba(199, 151, 74, 0.12),
+    0 28px 44px rgba(149, 104, 31, 0.12);
+}
+
+.rhythm-scene-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.rhythm-status-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.rhythm-status-pill {
+  min-width: 132px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  background: rgba(255, 252, 244, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.76);
+  box-shadow: 0 12px 24px rgba(140, 96, 37, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.rhythm-status-pill span {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.74rem;
+  color: rgba(91, 53, 121, 0.68);
+}
+
+.rhythm-status-pill strong {
+  font-size: 1rem;
+  color: #5f3a88;
+}
+
+.rhythm-scene-copy {
+  margin: 0;
+  font-size: 0.96rem;
+  color: rgba(96, 61, 133, 0.86);
+}
+
+.rhythm-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 22px;
+  align-items: stretch;
+}
+
+.difficulty-selector {
+  margin: 0;
+  padding: 24px;
+  background: linear-gradient(180deg, rgba(255, 250, 235, 0.96), rgba(255, 243, 215, 0.9));
+}
+
+.selector-label {
+  margin-bottom: 18px;
+  text-align: left;
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: #5a2f86;
+}
+
+.difficulty-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.diff-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  min-height: 270px;
+  padding: 20px 18px 22px;
+  border: 0;
+  border-radius: 32px;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+  text-align: left;
+  box-shadow:
+    0 16px 0 rgba(132, 97, 48, 0.16),
+    0 28px 40px rgba(132, 97, 48, 0.16);
+}
+
+.diff-btn:hover {
+  transform: translateY(-5px) scale(1.015);
+}
+
+.diff-btn:active {
+  transform: translateY(8px) scale(0.985);
+}
+
+.diff-btn.easy {
+  background: linear-gradient(180deg, #e5f9d8 0%, #bee99e 100%);
+  color: #27441f;
+}
+
+.diff-btn.medium {
+  background: linear-gradient(180deg, #ffd89e 0%, #ffae52 100%);
+  color: #6e3d05;
+}
+
+.diff-btn.hard {
+  background: linear-gradient(180deg, #cf5c58 0%, #8f2828 100%);
+  color: #fff6f3;
+}
+
+.diff-btn.active.easy {
+  background: linear-gradient(180deg, #e5f9d8 0%, #bee99e 100%);
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.85),
+    0 0 0 10px rgba(127, 206, 112, 0.32),
+    0 16px 0 rgba(82, 145, 66, 0.24),
+    0 28px 40px rgba(82, 145, 66, 0.24);
+}
+
+.diff-btn.active.medium {
+  background: linear-gradient(180deg, #ffd89e 0%, #ffae52 100%);
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.88),
+    0 0 0 10px rgba(255, 176, 62, 0.34),
+    0 16px 0 rgba(202, 115, 19, 0.28),
+    0 28px 40px rgba(202, 115, 19, 0.26);
+}
+
+.diff-btn.active.hard {
+  background: linear-gradient(180deg, #cf5c58 0%, #8f2828 100%);
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.84),
+    0 0 0 10px rgba(163, 42, 42, 0.28),
+    0 16px 0 rgba(110, 22, 22, 0.32),
+    0 28px 40px rgba(110, 22, 22, 0.3);
+}
+
+.diff-art {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 132px;
+  margin-bottom: 16px;
+}
+
+.plant-illustration {
+  position: relative;
+  width: min(100%, 160px);
+  height: 124px;
+}
+
+.plant-ground {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 108px;
+  height: 18px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background: rgba(95, 66, 21, 0.14);
+}
+
+.plant-stem,
+.plant-trunk {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+}
+
+.plant-stem {
+  width: 12px;
+  height: 52px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #7bc55c 0%, #41923b 100%);
+}
+
+.plant-leaf {
+  position: absolute;
+  bottom: 42px;
+  width: 44px;
+  height: 28px;
+  border-radius: 28px 28px 8px 28px;
+  background: linear-gradient(180deg, #9df07d 0%, #56af45 100%);
+}
+
+.plant-leaf--left {
+  left: 28px;
+  transform: rotate(-28deg);
+}
+
+.plant-leaf--right {
+  right: 28px;
+  transform: scaleX(-1) rotate(-28deg);
+}
+
+.plant-spark {
+  position: absolute;
+  right: 34px;
+  top: 22px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 253, 221, 0.98) 0%, rgba(255, 233, 128, 0.88) 60%, transparent 61%);
+}
+
+.plant-bush {
+  position: absolute;
+  bottom: 18px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #8bd455 0%, #4b9d3a 100%);
+}
+
+.plant-bush--left {
+  left: 18px;
+  width: 64px;
+  height: 58px;
+}
+
+.plant-bush--middle {
+  left: 50%;
+  bottom: 22px;
+  width: 76px;
+  height: 70px;
+  transform: translateX(-50%);
+}
+
+.plant-bush--right {
+  right: 18px;
+  width: 64px;
+  height: 58px;
+}
+
+.plant-berry {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff8c7 0%, #ffb642 65%, #ee7d1d 100%);
+}
+
+.plant-berry--one {
+  left: 46px;
+  top: 30px;
+}
+
+.plant-berry--two {
+  right: 44px;
+  top: 38px;
+}
+
+.plant-trunk {
+  width: 18px;
+  height: 62px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #88511d 0%, #5e3311 100%);
+}
+
+.plant-canopy {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #4fa72f 0%, #2f6f2b 100%);
+}
+
+.plant-canopy--left {
+  left: 18px;
+  top: 24px;
+  width: 68px;
+  height: 58px;
+}
+
+.plant-canopy--center {
+  left: 50%;
+  top: 4px;
+  width: 82px;
+  height: 72px;
+  transform: translateX(-50%);
+}
+
+.plant-canopy--right {
+  right: 18px;
+  top: 24px;
+  width: 68px;
+  height: 58px;
+}
+
+.plant-star {
+  position: absolute;
+  top: 12px;
+  right: 26px;
+  width: 18px;
+  height: 18px;
+  color: #ffe36a;
+  font-size: 18px;
+}
+
+.plant-star::before {
+  content: '✦';
+}
+
+.diff-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.diff-label {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  opacity: 0.82;
+}
+
+.diff-title {
+  font-size: 1.32rem;
+  line-height: 1.12;
+}
+
+.diff-desc {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.rhythm-card-surface--compact {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 222px;
+}
+
+.difficulty-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.difficulty-preview__chip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  border-radius: 28px;
+  box-shadow: 0 14px 28px rgba(132, 97, 48, 0.12);
+}
+
+.difficulty-preview__chip span {
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+.difficulty-preview__chip strong {
+  font-size: 1.12rem;
+}
+
+.difficulty-preview__chip.easy {
+  background: linear-gradient(180deg, rgba(230, 248, 216, 0.92), rgba(191, 233, 157, 0.94));
+}
+
+.difficulty-preview__chip.medium {
+  background: linear-gradient(180deg, rgba(255, 222, 167, 0.94), rgba(255, 177, 82, 0.96));
+}
+
+.difficulty-preview__chip.hard {
+  background: linear-gradient(180deg, rgba(207, 92, 88, 0.96), rgba(143, 40, 40, 0.98));
+  color: #fff7f4;
+}
+
+.difficulty-preview p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: rgba(91, 53, 121, 0.78);
+}
+
+.rhythm-sidekick-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.rhythm-assistant-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 20px 22px;
+  min-height: 214px;
+}
+
+.rhythm-assistant-copy {
+  max-width: 150px;
+}
+
+.assistant-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #9a5c1f;
+  background: rgba(255, 241, 201, 0.86);
+}
+
+.rhythm-assistant-copy h3 {
+  margin: 12px 0 10px;
+  font-size: 1.24rem;
+  line-height: 1.25;
+  color: #5a2f86;
+}
+
+.rhythm-assistant-copy p,
+.rhythm-trophy-rack p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: rgba(91, 53, 121, 0.78);
+}
+
+.monster-sidekick {
+  position: relative;
+  width: 164px;
+  height: 164px;
+  flex-shrink: 0;
+  animation: rhythmMonsterBounce 3s ease-in-out infinite;
+}
+
+.monster-shadow {
+  position: absolute;
+  left: 26px;
+  right: 26px;
+  bottom: 10px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(83, 56, 101, 0.12);
+}
+
+.monster-band {
+  position: absolute;
+  left: 24px;
+  top: 18px;
+  width: 116px;
+  height: 56px;
+  border-radius: 999px 999px 0 0;
+  border: 10px solid #5a2f86;
+  border-bottom: 0;
+}
+
+.monster-ear {
+  position: absolute;
+  top: 44px;
+  width: 26px;
+  height: 38px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #7248a5 0%, #5a2f86 100%);
+}
+
+.monster-ear--left {
+  left: 16px;
+}
+
+.monster-ear--right {
+  right: 16px;
+}
+
+.monster-horn {
+  position: absolute;
+  top: 34px;
+  width: 20px;
+  height: 28px;
+  border-radius: 16px 16px 2px 16px;
+  background: linear-gradient(180deg, #ffd873 0%, #f39d39 100%);
+}
+
+.monster-horn--left {
+  left: 42px;
+  transform: rotate(-18deg);
+}
+
+.monster-horn--right {
+  right: 42px;
+  transform: scaleX(-1) rotate(-18deg);
+}
+
+.monster-body {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 26px;
+  height: 104px;
+  border-radius: 40px 40px 46px 46px;
+  background: linear-gradient(180deg, #8fe9ff 0%, #63c5ff 52%, #3ba2ed 100%);
+  box-shadow:
+    inset 0 10px 16px rgba(255, 255, 255, 0.46),
+    0 18px 26px rgba(59, 162, 237, 0.22);
+}
+
+.monster-eye {
+  position: absolute;
+  top: 90px;
+  width: 22px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.monster-eye::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 10px;
+  width: 8px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3b2358;
+}
+
+.monster-eye--left {
+  left: 56px;
+}
+
+.monster-eye--right {
+  right: 56px;
+}
+
+.monster-blush {
+  position: absolute;
+  top: 120px;
+  width: 18px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 132, 164, 0.46);
+}
+
+.monster-blush--left {
+  left: 48px;
+}
+
+.monster-blush--right {
+  right: 48px;
+}
+
+.monster-mouth {
+  position: absolute;
+  left: 50%;
+  top: 124px;
+  width: 28px;
+  height: 16px;
+  border-bottom: 5px solid #5a2f86;
+  border-radius: 0 0 24px 24px;
+  transform: translateX(-50%);
+}
+
+.monster-foot {
+  position: absolute;
+  bottom: 16px;
+  width: 24px;
+  height: 18px;
+  border-radius: 18px 18px 12px 12px;
+  background: #ff9c4b;
+}
+
+.monster-foot--left {
+  left: 52px;
+}
+
+.monster-foot--right {
+  right: 52px;
+}
+
+.rhythm-trophy-rack {
+  padding: 18px 22px 20px;
+}
+
+.trophy-title {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #5a2f86;
+}
+
+.trophy-slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.trophy-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+  border-radius: 24px;
+  border: 2px dashed rgba(154, 92, 31, 0.24);
+  background: rgba(255, 255, 255, 0.42);
+  font-size: 2rem;
+  color: rgba(245, 167, 59, 0.44);
+}
+
+.phase-indicator {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 0;
+  padding: 22px 24px;
+  background: linear-gradient(180deg, rgba(255, 250, 235, 0.96), rgba(255, 243, 215, 0.9));
+}
+
+.phase-step {
+  padding: 18px 20px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  box-shadow: 0 16px 28px rgba(132, 97, 48, 0.1);
+}
+
+.phase-icon-shell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+  margin-bottom: 12px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #ffe2a6 0%, #ffc468 100%);
+  box-shadow:
+    inset 0 8px 12px rgba(255, 255, 255, 0.48),
+    0 14px 22px rgba(202, 115, 19, 0.18);
+}
+
+.phase-step.active .phase-icon-shell {
+  background: linear-gradient(180deg, #f9d5ff 0%, #d893ff 100%);
+  box-shadow:
+    0 0 0 6px rgba(215, 148, 255, 0.22),
+    inset 0 8px 12px rgba(255, 255, 255, 0.42),
+    0 16px 24px rgba(122, 71, 171, 0.2);
+}
+
+.phase-step.completed .phase-icon-shell {
+  background: linear-gradient(180deg, #dff9ca 0%, #9fe274 100%);
+}
+
+.phase-icon {
+  margin: 0;
+  font-size: 2.2rem;
+}
+
+.phase-text {
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: #5a2f86;
+}
+
+.phase-caption {
+  margin-top: 6px;
+  font-size: 0.88rem;
+  color: rgba(91, 53, 121, 0.72);
+}
+
+.phase-arrow {
+  font-size: 2.3rem;
+  color: rgba(154, 92, 31, 0.68);
+}
+
+.rhythm-timeline {
+  margin-bottom: 0;
+  padding: 22px 24px 24px;
+  background: linear-gradient(180deg, rgba(255, 250, 235, 0.96), rgba(255, 243, 215, 0.9));
+}
+
+.timeline-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.timeline-title-row span {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #5a2f86;
+}
+
+.timeline-title-row strong {
+  font-size: 0.92rem;
+  color: rgba(91, 53, 121, 0.72);
+}
+
+.timeline-track {
+  gap: 22px;
+}
+
+.timeline-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  min-height: 108px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.timeline-placeholder__note {
+  font-size: 2rem;
+  color: rgba(122, 92, 170, 0.34);
+}
+
+.timeline-placeholder__dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 186, 96, 0.42);
+  box-shadow: 0 0 0 12px rgba(255, 224, 175, 0.26);
+}
+
+.beat-circle {
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(180deg, #fffdf7 0%, #ffe7bc 100%);
+  border: 3px solid rgba(255, 205, 126, 0.78);
+  box-shadow:
+    inset 0 8px 12px rgba(255, 255, 255, 0.58),
+    0 12px 20px rgba(202, 115, 19, 0.12);
+}
+
+.beat-number {
+  color: #a0661c;
+}
+
+.beat-line {
+  left: 72px;
+  width: 26px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 205, 126, 0.58), rgba(255, 160, 89, 0.4));
+}
+
+.beat-marker.demo .beat-circle {
+  background: linear-gradient(180deg, #f7d6ff 0%, #db9cff 100%);
+  border-color: rgba(177, 106, 236, 0.96);
+  box-shadow:
+    0 0 0 10px rgba(215, 148, 255, 0.18),
+    0 18px 28px rgba(122, 71, 171, 0.18);
+}
+
+.beat-marker.user-turn .beat-circle {
+  border-color: #7ace70;
+  box-shadow:
+    0 0 0 10px rgba(122, 206, 112, 0.18),
+    0 18px 28px rgba(82, 145, 66, 0.18);
+}
+
+.beat-marker.tapped.correct .beat-circle {
+  background: linear-gradient(180deg, #dff9ca 0%, #9fe274 100%);
+  border-color: #6dbe4e;
+}
+
+.beat-marker.tapped.wrong .beat-circle {
+  background: linear-gradient(180deg, #ffd0cb 0%, #ff8f84 100%);
+  border-color: #de5a50;
+}
+
+.beat-accuracy {
+  color: #5a2f86;
+}
+
+.beat-ripple {
+  border-color: rgba(177, 106, 236, 0.76);
+}
+
+.rhythm-main-area {
+  min-height: 300px;
+  margin-bottom: 0;
+}
+
+.rhythm-start-btn {
+  position: relative;
+  width: min(480px, 100%);
+  min-height: 268px;
+  padding: 36px 32px 32px;
+  border-radius: 40px;
+  background: linear-gradient(180deg, #ffb351 0%, #ff8d2d 56%, #e06d18 100%);
+  box-shadow:
+    0 18px 0 #c35910,
+    0 34px 48px rgba(185, 93, 17, 0.28);
+  overflow: hidden;
+}
+
+.rhythm-start-btn__glow {
+  position: absolute;
+  inset: 18px;
+  border-radius: 32px;
+  background: radial-gradient(circle, rgba(255, 248, 215, 0.74) 0%, rgba(255, 248, 215, 0) 72%);
+  filter: blur(12px);
+  animation: rhythmButtonBreath 2.2s ease-in-out infinite;
+}
+
+.rhythm-start-btn:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow:
+    0 24px 0 #c35910,
+    0 40px 52px rgba(185, 93, 17, 0.32);
+}
+
+.rhythm-start-btn:active {
+  transform: translateY(8px) scale(0.985);
+  box-shadow:
+    0 10px 0 #c35910,
+    0 22px 32px rgba(185, 93, 17, 0.26);
+}
+
+.rhythm-start-btn .btn-icon,
+.rhythm-start-btn .btn-text,
+.rhythm-start-btn .btn-hint {
+  position: relative;
+  z-index: 1;
+}
+
+.rhythm-start-btn .btn-icon {
+  font-size: 5rem;
+  margin-bottom: 10px;
+}
+
+.rhythm-start-btn .btn-text {
+  font-size: 2rem;
+  color: #fff8ef;
+  text-shadow: 0 4px 12px rgba(111, 47, 4, 0.24);
+}
+
+.rhythm-start-btn .btn-hint {
+  margin-top: 6px;
+  font-size: 1rem;
+  color: rgba(255, 247, 234, 0.92);
+}
+
+.rhythm-status {
+  width: min(520px, 100%);
+  min-height: 220px;
+  padding: 30px 34px;
+  background: linear-gradient(180deg, rgba(255, 239, 202, 0.98), rgba(255, 214, 143, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  animation: rhythmButtonBreath 1.8s ease-in-out infinite;
+}
+
+.status-icon {
+  font-size: 4rem;
+}
+
+.status-text {
+  color: #8f4b05;
+}
+
+.status-subtext {
+  margin-top: 10px;
+  font-size: 0.96rem;
+  color: rgba(143, 75, 5, 0.78);
+}
+
+.drum-pad {
+  width: 320px;
+  height: 320px;
+}
+
+.drum-pad__glow {
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 246, 212, 0.82) 0%, rgba(255, 246, 212, 0) 72%);
+  filter: blur(10px);
+  animation: rhythmButtonBreath 1.8s ease-in-out infinite;
+}
+
+.drum-surface {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffca6d 0%, #ef9636 72%, #cb6314 100%);
+  box-shadow:
+    inset 0 12px 18px rgba(255, 255, 255, 0.48),
+    0 18px 0 #aa5314,
+    0 34px 48px rgba(185, 93, 17, 0.28);
+}
+
+.drum-center {
+  width: 72%;
+  height: 72%;
+  background: radial-gradient(circle at 34% 30%, #fff9e4 0%, #ffdf9d 58%, #f3a64a 100%);
+  box-shadow:
+    inset 0 12px 18px rgba(255, 255, 255, 0.58),
+    inset 0 -16px 24px rgba(145, 75, 19, 0.18);
+}
+
+.drum-pad.can-tap .drum-center {
+  background: radial-gradient(circle at 34% 30%, #fff9e4 0%, #ffdf9d 58%, #f3a64a 100%);
+  box-shadow:
+    inset 0 12px 18px rgba(255, 255, 255, 0.58),
+    inset 0 -16px 24px rgba(145, 75, 19, 0.18);
+  animation: none;
+}
+
+.drum-pad.can-tap .drum-surface {
+  animation: rhythmDrumPulse 1.4s ease-in-out infinite;
+}
+
+.drum-pad:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.drum-pad:active {
+  transform: translateY(10px) scale(0.975);
+}
+
+.drum-pad:active .drum-surface {
+  box-shadow:
+    inset 0 12px 18px rgba(255, 255, 255, 0.48),
+    0 10px 0 #aa5314,
+    0 22px 32px rgba(185, 93, 17, 0.24);
+}
+
+.drum-icon {
+  font-size: 3.6rem;
+  margin-bottom: 10px;
+}
+
+.drum-text {
+  font-size: 1.18rem;
+  color: #8f4b05;
+}
+
+.drum-subtext {
+  color: rgba(143, 75, 5, 0.84);
+}
+
+.tap-ring {
+  border-color: rgba(255, 215, 153, 0.9);
+}
+
+.rhythm-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.accuracy-display,
+.rhythm-progress,
+.rhythm-hint {
+  margin: 0;
+  padding: 20px 22px;
+  background: linear-gradient(180deg, rgba(255, 250, 235, 0.96), rgba(255, 243, 215, 0.9));
+}
+
+.accuracy-label {
+  margin-bottom: 10px;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: rgba(91, 53, 121, 0.68);
+}
+
+.accuracy-value {
+  font-size: 2.4rem;
+}
+
+.accuracy-value.good {
+  color: #5cae3b;
+}
+
+.accuracy-value.bad {
+  color: #d74d43;
+}
+
+.accuracy-hint {
+  font-size: 0.96rem;
+  line-height: 1.55;
+  color: rgba(91, 53, 121, 0.76);
+}
+
+.progress-text {
+  margin-bottom: 14px;
+  text-align: left;
+  font-size: 0.96rem;
+  color: rgba(91, 53, 121, 0.84);
+}
+
+.progress-bar {
+  height: 16px;
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: inset 0 2px 6px rgba(132, 97, 48, 0.08);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #ffb056 0%, #ff7d49 52%, #bb6dff 100%);
+}
+
+.rhythm-hint p {
+  font-size: 0.96rem;
+  line-height: 1.7;
+  color: rgba(91, 53, 121, 0.86);
+}
+
+@keyframes rhythmButtonBreath {
+  0%, 100% { transform: scale(0.98); opacity: 0.72; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+
+@keyframes rhythmDrumPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+@keyframes rhythmMonsterBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@media (max-width: 1180px) {
+  .rhythm-hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rhythm-sidekick-stack {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .difficulty-buttons,
+  .rhythm-bottom-grid,
+  .rhythm-sidekick-stack {
+    grid-template-columns: 1fr;
+  }
+
+  .phase-indicator {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .phase-arrow {
+    transform: rotate(90deg);
+  }
+}
+
+@media (max-width: 720px) {
+  .rhythm-card-surface,
+  .difficulty-selector,
+  .accuracy-display,
+  .rhythm-progress,
+  .rhythm-hint {
+    border-radius: 28px;
+  }
+
+  .rhythm-assistant-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .rhythm-assistant-copy {
+    max-width: none;
+  }
+
+  .monster-sidekick {
+    width: 148px;
+    height: 148px;
+  }
+
+  .drum-pad {
+    width: 268px;
+    height: 268px;
+  }
+
+  .rhythm-start-btn {
+    min-height: 236px;
+  }
+
+  .rhythm-start-btn .btn-icon {
+    font-size: 4.2rem;
+  }
+
+  .timeline-track {
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .beat-circle {
+    width: 60px;
+    height: 60px;
+  }
+
+  .beat-line {
+    width: 18px;
+    left: 60px;
+  }
 }
 </style>

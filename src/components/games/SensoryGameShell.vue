@@ -1,9 +1,17 @@
 <template>
-  <section class="sensory-shell">
+  <section class="sensory-shell" :class="{ 'sensory-shell--rhythm': theme === 'rhythm' }">
     <div class="sensory-shell__backdrop" aria-hidden="true">
       <div class="sensory-shell__orb sensory-shell__orb--amber"></div>
       <div class="sensory-shell__orb sensory-shell__orb--sky"></div>
       <div class="sensory-shell__grid"></div>
+      <template v-if="theme === 'rhythm'">
+        <span class="sensory-shell__note sensory-shell__note--one">♪</span>
+        <span class="sensory-shell__note sensory-shell__note--two">♫</span>
+        <span class="sensory-shell__note sensory-shell__note--three">♩</span>
+        <span class="sensory-shell__bubble sensory-shell__bubble--one"></span>
+        <span class="sensory-shell__bubble sensory-shell__bubble--two"></span>
+        <span class="sensory-shell__bubble sensory-shell__bubble--three"></span>
+      </template>
     </div>
 
     <header class="sensory-shell__toolbar">
@@ -49,11 +57,13 @@ const props = withDefaults(defineProps<{
   entryLabel?: string
   modeLabel: string
   durationLabel?: string
+  theme?: 'default' | 'rhythm'
 }>(), {
   summary: '请使用手指直接操作训练内容，系统会自动记录本次训练结果。',
   studentName: '',
   entryLabel: '感官统合训练',
   durationLabel: '',
+  theme: 'default',
 })
 
 const emit = defineEmits<{
@@ -113,6 +123,65 @@ void props
     linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
   background-size: 28px 28px;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent 88%);
+}
+
+.sensory-shell__note,
+.sensory-shell__bubble {
+  position: absolute;
+  pointer-events: none;
+}
+
+.sensory-shell__note {
+  font-size: clamp(2rem, 2.8vw, 3.4rem);
+  font-weight: 700;
+  color: rgba(122, 92, 170, 0.2);
+  text-shadow: 0 10px 18px rgba(255, 255, 255, 0.28);
+}
+
+.sensory-shell__note--one {
+  top: 12%;
+  left: 14%;
+  transform: rotate(-14deg);
+}
+
+.sensory-shell__note--two {
+  right: 11%;
+  top: 24%;
+  transform: rotate(12deg);
+}
+
+.sensory-shell__note--three {
+  left: 56%;
+  bottom: 16%;
+  transform: rotate(-10deg);
+}
+
+.sensory-shell__bubble {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.12));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.sensory-shell__bubble--one {
+  width: 44px;
+  height: 44px;
+  top: 18%;
+  right: 24%;
+}
+
+.sensory-shell__bubble--two {
+  width: 28px;
+  height: 28px;
+  bottom: 20%;
+  left: 12%;
+}
+
+.sensory-shell__bubble--three {
+  width: 64px;
+  height: 64px;
+  top: 54%;
+  right: 8%;
 }
 
 .sensory-shell__toolbar {
@@ -225,6 +294,141 @@ void props
   backdrop-filter: blur(16px);
 }
 
+.sensory-shell--rhythm {
+  color: #4b2c73;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.38), transparent 28%),
+    radial-gradient(circle at 82% 18%, rgba(255, 210, 122, 0.36), transparent 22%),
+    linear-gradient(180deg, #f8e8a6 0%, #f7e3a9 40%, #f6dfad 100%);
+}
+
+.sensory-shell--rhythm .sensory-shell__orb {
+  filter: blur(42px);
+  opacity: 0.5;
+}
+
+.sensory-shell--rhythm .sensory-shell__orb--amber {
+  top: -90px;
+  left: -40px;
+  background: rgba(255, 200, 94, 0.86);
+}
+
+.sensory-shell--rhythm .sensory-shell__orb--sky {
+  right: -80px;
+  bottom: -100px;
+  background: rgba(255, 167, 108, 0.42);
+}
+
+.sensory-shell--rhythm .sensory-shell__grid {
+  opacity: 0.18;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.52) 0, rgba(255, 255, 255, 0.52) 2px, transparent 2px),
+    radial-gradient(circle at 72% 26%, rgba(255, 255, 255, 0.48) 0, rgba(255, 255, 255, 0.48) 2px, transparent 2px),
+    radial-gradient(circle at 40% 72%, rgba(255, 255, 255, 0.44) 0, rgba(255, 255, 255, 0.44) 2px, transparent 2px);
+  background-size: 220px 220px, 160px 160px, 200px 200px;
+  mask-image: none;
+}
+
+.sensory-shell--rhythm .sensory-shell__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.sensory-shell--rhythm .sensory-shell__back-button {
+  order: 1;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  color: #65438f;
+  background: rgba(255, 252, 246, 0.78);
+  box-shadow: 0 16px 28px rgba(160, 116, 45, 0.14);
+}
+
+.sensory-shell--rhythm .sensory-shell__back-button:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 20px 34px rgba(160, 116, 45, 0.18);
+}
+
+.sensory-shell--rhythm .sensory-shell__title-group {
+  order: 3;
+  flex: 1 1 100%;
+  padding: 4px 4px 0;
+}
+
+.sensory-shell--rhythm .sensory-shell__eyebrow {
+  min-height: 32px;
+  padding: 0 14px;
+  color: #9a5c1f;
+  background: rgba(255, 246, 225, 0.72);
+  box-shadow: 0 12px 22px rgba(194, 138, 42, 0.12);
+}
+
+.sensory-shell--rhythm .sensory-shell__title-group h1 {
+  margin: 14px 0 10px;
+  font-family: "Comic Sans MS", "Marker Felt", "Trebuchet MS", "Microsoft YaHei", sans-serif;
+  font-size: clamp(2.4rem, 4.4vw, 4rem);
+  letter-spacing: 0.04em;
+  color: #5a2f86;
+  text-shadow:
+    0 4px 0 rgba(255, 255, 255, 0.6),
+    0 18px 28px rgba(111, 67, 155, 0.16);
+}
+
+.sensory-shell--rhythm .sensory-shell__title-group p {
+  max-width: 820px;
+  font-size: 1rem;
+  color: rgba(101, 67, 143, 0.88);
+}
+
+.sensory-shell--rhythm .sensory-shell__meta {
+  order: 2;
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.sensory-shell--rhythm .sensory-shell__meta-card {
+  min-height: auto;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 252, 246, 0.48);
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  box-shadow: 0 12px 24px rgba(140, 96, 37, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.sensory-shell--rhythm .sensory-shell__meta-card span {
+  font-size: 0.72rem;
+  color: rgba(101, 67, 143, 0.68);
+}
+
+.sensory-shell--rhythm .sensory-shell__meta-card strong {
+  font-size: 0.92rem;
+  color: #5f3a88;
+}
+
+.sensory-shell--rhythm .sensory-shell__stage {
+  margin-top: 10px;
+  padding: clamp(18px, 2vw, 24px);
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 242, 0.78), rgba(255, 246, 227, 0.72)),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 226, 169, 0.14));
+  box-shadow:
+    0 26px 58px rgba(159, 112, 38, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
 @media (max-width: 1280px) {
   .sensory-shell__toolbar {
     grid-template-columns: 1fr;
@@ -232,6 +436,11 @@ void props
 
   .sensory-shell__meta {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sensory-shell--rhythm .sensory-shell__meta {
+    margin-left: 0;
+    justify-content: flex-start;
   }
 }
 
@@ -252,6 +461,23 @@ void props
   .sensory-shell__stage {
     padding: 16px;
     border-radius: 24px;
+  }
+
+  .sensory-shell--rhythm .sensory-shell__toolbar {
+    gap: 12px;
+  }
+
+  .sensory-shell--rhythm .sensory-shell__title-group h1 {
+    font-size: clamp(2rem, 11vw, 3rem);
+  }
+
+  .sensory-shell--rhythm .sensory-shell__meta {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .sensory-shell--rhythm .sensory-shell__stage {
+    border-radius: 28px;
   }
 }
 </style>

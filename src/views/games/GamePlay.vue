@@ -13,6 +13,7 @@
         :student-name="studentName"
         :mode-label="modeLabel"
         :duration-label="durationLabel"
+        :theme="sensoryShellTheme"
         @back="goBack"
       >
         <div class="game-play-stage">
@@ -163,6 +164,9 @@ const isAudioGame = computed(() => {
 })
 
 const shouldUseSensoryShell = computed(() => entryCode.value === 'sensory-integration')
+const sensoryShellTheme = computed(() => (
+  taskId.value === TaskID.AUDIO_RHYTHM ? 'rhythm' : 'default'
+))
 
 const taskNames: Record<number, string> = {
   [TaskID.COLOR_MATCH]: '颜色配对',
@@ -200,6 +204,10 @@ const gameSummary = computed(() => {
   }
 
   if (isAudioGame.value) {
+    if (taskId.value === TaskID.AUDIO_RHYTHM) {
+      return '先看鼓点示范，再跟着节奏轻轻拍打，让每一拍都稳稳落在音乐里。'
+    }
+
     return '进入训练后请优先使用手指直接操作大按钮，保持孩子注意力集中在当前一轮任务。'
   }
 
