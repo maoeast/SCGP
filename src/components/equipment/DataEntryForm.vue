@@ -101,7 +101,7 @@ import { ref, reactive, computed } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import type { EquipmentCatalog, EquipmentCategory } from '@/types/equipment'
 import type { ResourceItem } from '@/types/module'
-import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
+import { resolveResourceItemCoverImage } from '@/utils/resource-cover'
 
 // Props - 支持旧和新两种类型
 interface Props {
@@ -124,13 +124,9 @@ const equipmentData = computed(() => {
   return {
     name: eq.name,
     description: eq.description,
-    // 图片：ResourceItem 用 coverImage，EquipmentCatalog 用 image_url
+    // 图片：ResourceItem 用统一封面解析（兼容新旧系统），EquipmentCatalog 用 image_url
     image: isResourceItem
-      ? getEquipmentImageUrl(
-          category,
-          (eq as ResourceItem).legacyId ?? eq.id,
-          eq.name
-        )
+      ? resolveResourceItemCoverImage(eq as ResourceItem)
       : (eq as EquipmentCatalog).image_url,
     // 标签：ResourceItem 用 tags，EquipmentCatalog 用 ability_tags
     tags: isResourceItem

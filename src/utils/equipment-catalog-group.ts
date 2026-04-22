@@ -97,6 +97,8 @@ function mapPhysicalDomainToGroup(domain: PhysicalEquipmentDomain): EquipmentCat
       return 'fine-motor'
     case 'soothing-aids':
       return 'soothing-aids'
+    case 'daily-living':
+      return 'life-skills'
   }
 }
 

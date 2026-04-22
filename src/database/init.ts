@@ -2268,7 +2268,7 @@ export async function insertPhysicalEquipmentResourceData(): Promise<void> {
       SELECT id, module_code, name, category, legacy_source, meta_data
       FROM sys_training_resource
       WHERE resource_type = 'equipment'
-        AND module_code IN ('sensory', 'emotional', 'social')
+        AND module_code IN ('sensory', 'emotional', 'social', 'life_skills')
     `)
 
     const existingByCode = new Map<string, number>()

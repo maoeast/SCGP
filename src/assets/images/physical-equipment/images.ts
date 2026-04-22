@@ -7,6 +7,7 @@ const DOMAIN_COLORS: Record<PhysicalEquipmentDomain, string> = {
   'social-communication': '#3498db',
   'fine-motor': '#27ae60',
   'soothing-aids': '#8e44ad',
+  'daily-living': '#e74c3c',
 }
 
 function generatePlaceholderUrl(domain: PhysicalEquipmentDomain, name: string): string {

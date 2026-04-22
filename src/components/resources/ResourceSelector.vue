@@ -1,14 +1,18 @@
 <template>
   <div class="resource-selector">
-    <div class="category-filters">
-      <el-button :type="selectedCategory === 'all' ? 'primary' : 'default'" size="small" @click="selectCategory('all')">
-        All ({{ categoryCounts.all }})
-      </el-button>
-      <el-button v-for="cat in categoryButtons" :key="cat.key" :type="selectedCategory === cat.key ? 'primary' : 'default'" size="small" @click="selectCategory(cat.key)">
-        {{ cat.label }} ({{ categoryCounts[cat.key] || 0 }})
-      </el-button>
+    <div class="filter-bar">
+      <el-select v-model="selectedCategory" size="small" class="category-select" @change="selectCategory">
+        <el-option label="All" value="all">
+          <span>All</span>
+          <span class="category-count">{{ categoryCounts.all }}</span>
+        </el-option>
+        <el-option v-for="cat in categoryButtons" :key="cat.key" :label="cat.label" :value="cat.key">
+          <span>{{ cat.label }}</span>
+          <span class="category-count">{{ categoryCounts[cat.key] || 0 }}</span>
+        </el-option>
+      </el-select>
+      <el-input v-model="searchKeyword" placeholder="Search..." prefix-icon="Search" clearable size="small" class="search-input" @input="handleSearch" />
     </div>
-    <el-input v-model="searchKeyword" placeholder="Search..." prefix-icon="Search" clearable size="small" class="search-input" @input="handleSearch" />
     <div v-if="loading" class="loading-container">
       <el-skeleton :rows="6" animated />
     </div>
@@ -297,14 +301,25 @@ watch(selectedResource, (newVal) => {
   flex-direction: column;
 }
 
-.category-filters {
+.filter-bar {
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
 }
 
+.category-select {
+  flex-shrink: 0;
+  width: 160px;
+}
+
 .search-input {
-  margin-bottom: 12px;
+  flex: 1;
+}
+
+.category-count {
+  float: right;
+  color: #909399;
+  font-size: 12px;
 }
 
 .resource-list {

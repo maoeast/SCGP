@@ -2,6 +2,7 @@ import emotionalRegulationRaw from '../../docs/references/physical-equipment/emo
 import socialCommunicationRaw from '../../docs/references/physical-equipment/social-communication/2026-03-26-social-communication-equipment-draft.csv?raw'
 import fineMotorRaw from '../../docs/references/physical-equipment/fine-motor/2026-03-26-fine-motor-equipment-draft.csv?raw'
 import soothingAidsRaw from '../../docs/references/physical-equipment/soothing-aids/2026-03-26-soothing-aids-equipment-draft.csv?raw'
+import dailyLivingRaw from '../../docs/references/physical-equipment/daily-living/daily-living.csv?raw'
 import {
   createPhysicalEquipmentSeedResources,
   PHYSICAL_EQUIPMENT_SEED_LEGACY_SOURCE,
@@ -32,6 +33,11 @@ const sourceInputs: PhysicalEquipmentSeedInput[] = [
     domain: 'soothing-aids',
     sourcePath: 'docs/references/physical-equipment/soothing-aids/2026-03-26-soothing-aids-equipment-draft.csv',
     raw: soothingAidsRaw,
+  },
+  {
+    domain: 'daily-living',
+    sourcePath: 'docs/references/physical-equipment/daily-living/daily-living.csv',
+    raw: dailyLivingRaw,
   },
 ]
 

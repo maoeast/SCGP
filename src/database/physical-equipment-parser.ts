@@ -50,6 +50,7 @@ const DOMAIN_MODULE_MAP: Record<PhysicalEquipmentDomain, ModuleCode> = {
   'social-communication': ModuleCode.SOCIAL,
   'fine-motor': ModuleCode.SENSORY,
   'soothing-aids': ModuleCode.EMOTIONAL,
+  'daily-living': ModuleCode.LIFE_SKILLS,
 }
 
 const LETTERS = 'abcdefghijklmnopqrstuvwxyz'
@@ -318,6 +319,7 @@ function createEmptySummary(): PhysicalEquipmentSeedSummary {
       'social-communication': 0,
       'fine-motor': 0,
       'soothing-aids': 0,
+      'daily-living': 0,
     },
     byModule: {
       [ModuleCode.SENSORY]: 0,

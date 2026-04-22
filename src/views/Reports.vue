@@ -148,7 +148,7 @@
       </div>
 
       <el-table
-        :data="reportList"
+        :data="pagedReportList"
         style="width: 100%"
         v-loading="loading"
         class="reports-table"
@@ -194,6 +194,17 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div v-if="reportList.length > 0" class="reports-pagination">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 30, 40]"
+          :total="reportList.length"
+          layout="total, sizes, prev, pager, next"
+          background
+        />
+      </div>
 
       <el-empty
         v-if="!loading && reportList.length === 0"
@@ -320,11 +331,17 @@ const students = ref<any[]>([])
 const reportList = ref<any[]>([])
 const loading = ref(false)
 const migrating = ref(false)
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 const reportTypeOptions = REPORT_TYPE_OPTIONS
 const reportTypeMap = new Map(REPORT_TYPE_OPTIONS.map((item) => [item.value, item]))
 
 const statistics = computed<ReportStatistics>(() => deriveReportStatistics(reportList.value))
+const pagedReportList = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return reportList.value.slice(start, start + pageSize.value)
+})
 const assessmentReportCount = computed(() =>
   statistics.value.sm_count
   + statistics.value.weefim_count
@@ -509,6 +526,7 @@ async function loadReports() {
     }
 
     reportList.value = api.getReportList(params)
+    currentPage.value = 1
   } catch (error) {
     console.error('加载报告列表失败:', error)
     ElMessage.error('加载报告列表失败')
@@ -922,6 +940,12 @@ onMounted(async () => {
 
 .report-action-button {
   min-height: 34px;
+}
+
+.reports-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
 }
 
 @media (max-width: 1280px) {
