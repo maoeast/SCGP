@@ -1347,3 +1347,9 @@
 - `license-generator-dist/generate-license.js` 当前已成为交付态模块授权真源，默认输出 5 个顶层模块的 `am`
 - 生产构建新增硬约束：登录页 DEV 管理员重置入口必须被构建裁剪，不能只靠运行时 `import.meta.env.DEV` 隐藏
 - 下一步固定为：让发码工具支持从 `sensory / emotional / social / cognitive / life_skills` 中选择子集授权
+
+## 43. 2026-04-22 Packaged SQL.js Loading Constraint
+
+- 打包版 Electron 当前新增全局约束：`sql.js` runtime 与 wasm 必须通过 Vite `?url` 产物地址加载，不能再写死 `/sql-wasm.js` 或 `/sql-wasm.wasm`
+- 生产环境数据库初始化当前新增全局约束：`src/database/init.ts` 失败时必须直接抛错，不能静默降级到 `MockDatabase`
+- 原因：静默降级会把初始化故障伪装成登录失败，并导致新机器首次启动时不生成真实 `database.sqlite`
