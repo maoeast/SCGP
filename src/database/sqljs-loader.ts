@@ -3,6 +3,9 @@
  * 注意：动态 import 不适用于 sql.js，因为它不是标准 ES 模块
  */
 
+import sqlWasmScriptUrl from 'sql.js/dist/sql-wasm.js?url'
+import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url'
+
 let loadPromise: Promise<any> | null = null
 
 // 使用 script 标签加载 SQL.js
@@ -24,7 +27,7 @@ export async function loadSQLJs(): Promise<any> {
     // 使用 script 标签加载
     return new Promise((resolve, reject) => {
       const script = document.createElement('script')
-      script.src = '/sql-wasm.js'
+      script.src = sqlWasmScriptUrl
       script.async = true
 
       console.log('[loadSQLJs] 正在加载 script:', script.src)
@@ -40,7 +43,7 @@ export async function loadSQLJs(): Promise<any> {
 
       script.onerror = (e) => {
         console.error('[loadSQLJs] ❌ script 加载失败:', e)
-        reject(new Error('SQL.js 加载失败：无法加载 /sql-wasm.js'))
+        reject(new Error(`SQL.js 加载失败：无法加载 ${sqlWasmScriptUrl}`))
       }
 
       document.head.appendChild(script)
@@ -62,9 +65,8 @@ export async function initSQLiteDatabase(): Promise<any> {
     // 初始化SQL.js - 使用绝对路径确保 WASM 文件能正确加载
     const SQL = await initSqlJs({
       locateFile: (filename: string) => {
-        const path = `/sql-wasm.wasm`
-        console.log(`[initSQLiteDatabase] locateFile: ${filename} -> ${path}`)
-        return path
+        console.log(`[initSQLiteDatabase] locateFile: ${filename} -> ${sqlWasmUrl}`)
+        return sqlWasmUrl
       }
     })
     console.log('[initSQLiteDatabase] ✅ SQL.js 初始化成功')

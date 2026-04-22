@@ -1507,8 +1507,13 @@ export async function initDatabase(): Promise<any> {
       return db
     } catch (error) {
       console.error('SQL.js数据库初始化失败:', error)
-      // 降级到Mock数据库
-      console.log('降级使用Mock数据库')
+
+      if (import.meta.env.PROD) {
+        throw error
+      }
+
+      // 仅开发环境允许降级到 Mock 数据库，避免生产环境误报为账号密码错误。
+      console.warn('[InitDatabase] 开发环境降级使用 Mock 数据库')
       const { MockDatabase, createMockData } = await import('./mock-db')
       db = new MockDatabase()
       createMockData(db)

@@ -8,6 +8,7 @@
  */
 
 // 复用已有的 sql.js 加载器
+import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url'
 import { loadSQLJs } from './sqljs-loader'
 
 /**
@@ -37,11 +38,10 @@ export async function loadDatabaseFromBuffer(
 
   // 初始化 SQL.js
   const SQL = await initSqlJs({
-    // 在 Electron 环境中，WASM 文件已经通过 preload 脚本加载到全局
+    // 使用 Vite 产物 URL，避免 Electron file:// 环境下绝对路径失效。
     locateFile: (file: string) => {
-      const path = `/sql-wasm.wasm`
-      console.log(`[DatabaseLoader] locateFile: ${file} -> ${path}`)
-      return path
+      console.log(`[DatabaseLoader] locateFile: ${file} -> ${sqlWasmUrl}`)
+      return sqlWasmUrl
     }
   })
 
