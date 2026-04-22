@@ -56,7 +56,7 @@ const descriptionText = computed(() => {
     .map(item => item?.trim() || '')
     .filter(Boolean)
 
-  return candidates[0] || '为学校及康复团队，提供科学、稳定、持续的评估训练方案'
+  return candidates[0] || '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步'
 })
 </script>
 
@@ -191,13 +191,13 @@ const descriptionText = computed(() => {
   margin: 0;
   max-width: min(100%, 420px);
   overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: clamp(36px, 2.9vw, 44px);
+  font-size: clamp(30px, 2.6vw, 42px);
   font-weight: 800;
   font-family: 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC', sans-serif;
-  line-height: 1.18;
-  letter-spacing: -0.03em;
-  white-space: nowrap;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  white-space: normal;
+  word-break: break-word;
   text-align: center;
 }
 
@@ -305,8 +305,8 @@ const descriptionText = computed(() => {
 
   .school-panel__title {
     max-width: min(100%, 320px);
-    font-size: 30px;
-    line-height: 1.2;
+    font-size: 28px;
+    line-height: 1.25;
   }
 
   .school-panel__meta-stage {

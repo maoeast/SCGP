@@ -1576,7 +1576,7 @@ async function insertInitialDataToDB(database: any, options: { tasks?: boolean; 
       ('login_theme_variant', 'classic-blue', '登录页主题预设'),
       ('theme_primary_color', '#4d8bbd', '登录页主色'),
       ('login_logo_path', '', '登录页 Logo'),
-      ('brand_panel_description', '统一进入学生管理、能力评估、训练计划、训练记录与报告生成，让一线工作更聚焦。', '登录页品牌说明'),
+      ('brand_panel_description', '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。', '登录页品牌说明'),
       ('auto_backup', 'true', '是否自动备份'),
       ('backup_interval', '7', '备份间隔（天）'),
       ('trial_days', '7', '试用天数');
@@ -1642,7 +1642,7 @@ async function insertInitialData() {
       ('login_theme_variant', 'classic-blue', '登录页主题预设'),
       ('theme_primary_color', '#4d8bbd', '登录页主色'),
       ('login_logo_path', '', '登录页 Logo'),
-      ('brand_panel_description', '统一进入学生管理、能力评估、训练计划、训练记录与报告生成，让一线工作更聚焦。', '登录页品牌说明'),
+      ('brand_panel_description', '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。', '登录页品牌说明'),
       ('auto_backup', 'true', '是否自动备份'),
       ('backup_interval', '7', '备份间隔（天）'),
       ('trial_days', '7', '试用天数');

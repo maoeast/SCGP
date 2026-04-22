@@ -25,13 +25,13 @@ const emit = defineEmits<{
   border: none;
   padding: 0;
   background: transparent;
-  color: var(--login-muted, #5f6b7a);
+  color: transparent;
   font-size: 12px;
   font-weight: 500;
-  cursor: pointer;
+  cursor: default;
 }
 
 .login-dev-reset__link:hover {
-  color: var(--login-primary, #2f6fd6);
+  color: var(--login-muted, #5f6b7a);
 }
 </style>

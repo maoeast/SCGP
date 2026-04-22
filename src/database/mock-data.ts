@@ -130,7 +130,7 @@ const mockData: MockTableData = {
     { id: 3, key: 'login_theme_variant', value: 'classic-blue', description: '登录页主题预设' },
     { id: 4, key: 'theme_primary_color', value: '#4d8bbd', description: '登录页主色' },
     { id: 5, key: 'login_logo_path', value: '', description: '登录页 Logo' },
-    { id: 6, key: 'brand_panel_description', value: '统一进入学生管理、能力评估、训练计划、训练记录与报告生成，让一线工作更聚焦。', description: '登录页品牌说明' },
+    { id: 6, key: 'brand_panel_description', value: '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。', description: '登录页品牌说明' },
     { id: 7, key: 'auto_backup', value: 'true', description: '是否自动备份' },
     { id: 8, key: 'backup_interval', value: '7', description: '备份间隔（天）' },
     { id: 9, key: 'trial_days', value: '7', description: '试用天数' },

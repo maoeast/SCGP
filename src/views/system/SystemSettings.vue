@@ -243,7 +243,7 @@ const settings = reactive({
   schoolName: '',
   loginThemeVariant: 'warm-glow',
   themePrimaryColor: DEFAULT_LOGIN_PRIMARY_COLOR,
-  brandPanelDescription: '统一进入学生管理、能力评估、训练计划、训练记录与报告生成，让一线工作更聚焦。',
+  brandPanelDescription: '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。',
   loginCustomBgImage: '',
   loginCardBgOpacity: 92,
   autoBackup: true,

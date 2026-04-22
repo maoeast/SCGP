@@ -18,10 +18,10 @@ const getDefaultLogo = () => {
   if (isElectron) {
     // Electron 环境：使用相对路径
     // 打包后的文件结构：dist/index.html 和 dist/xcatslogo.png
-    return './xcatslogo.png'
+    return './scgp.png'
   } else {
     // Web 开发环境：使用绝对路径
-    return '/xcatslogo.png'
+    return '/scgp.png'
   }
 }
 
@@ -29,7 +29,7 @@ const DEFAULT_LOGO = getDefaultLogo()
 const LEGACY_SYSTEM_NAME = '生活自理适应综合训练'
 const LEGACY_SYSTEM_NAME_ALT = '感官综合训练与评估'
 const CURRENT_SYSTEM_NAME = '星愿能力发展训练系统'
-const DEFAULT_BRAND_PANEL_DESCRIPTION = '统一进入学生管理、能力评估、训练计划、训练记录与报告生成，让一线工作更聚焦。'
+const DEFAULT_BRAND_PANEL_DESCRIPTION = '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。'
 
 function normalizeSystemName(value: string) {
   return value === LEGACY_SYSTEM_NAME || value === LEGACY_SYSTEM_NAME_ALT
@@ -62,7 +62,8 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
     if (loginLogoPath.value) {
       return loginLogoPath.value
     }
-    return DEFAULT_LOGO
+    const isElectron = !!(window as any).electronAPI
+    return isElectron ? './logo.png' : '/logo.png'
   })
 
   const applyTheme = () => {

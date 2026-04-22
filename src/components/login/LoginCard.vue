@@ -1,6 +1,10 @@
 <template>
   <section class="login-card">
+    <!-- Noise texture overlay -->
+    <div class="login-card__noise" aria-hidden="true"></div>
+
     <div class="login-card__header">
+      <p class="login-card__greeting">让每一个愿望都能闪闪发光</p>
       <h2>用户登录</h2>
       <p>请输入账号和密码进入系统</p>
     </div>
@@ -45,14 +49,15 @@
         label="登录系统"
         :loading="loading"
         :disabled="submitDisabled"
+        :active="isButtonActive"
         loading-text="登录中..."
       />
     </form>
-
   </section>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import InputField from './InputField.vue'
 import PrimaryButton from './PrimaryButton.vue'
 
@@ -78,6 +83,9 @@ const emit = defineEmits<{
   (event: 'submit'): void
 }>()
 
+/** Button shows active state when password has content */
+const isButtonActive = computed(() => props.password.trim().length > 0)
+
 const handleRememberChange = (event: Event) => {
   emit('update:remember', (event.target as HTMLInputElement).checked)
 }
@@ -93,28 +101,56 @@ const handleSubmit = () => {
 
 <style scoped>
 .login-card {
-  --card-opacity: var(--login-card-bg-opacity, 0.94);
+  --card-opacity: var(--login-card-bg-opacity, 0.52);
+  position: relative;
   width: min(464px, 100%);
   display: flex;
   flex-direction: column;
   gap: 26px;
   padding: 36px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 28px;
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, var(--card-opacity)) 0%,
-    rgba(248, 250, 255, var(--card-opacity)) 100%
+    rgba(245, 248, 255, var(--card-opacity)) 100%
   );
-  backdrop-filter: blur(14px);
-  box-shadow: 0 28px 70px rgba(10, 19, 44, 0.18), 0 10px 24px rgba(10, 19, 44, 0.1);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  box-shadow:
+    0 28px 70px rgba(10, 19, 44, 0.18),
+    0 10px 24px rgba(10, 19, 44, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
   box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Noise texture overlay for premium glass feel */
+.login-card__noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
+  border-radius: inherit;
+  z-index: 0;
 }
 
 .login-card__header {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.login-card__greeting {
+  margin: 0 0 2px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.02em;
 }
 
 .login-card__header h2 {
@@ -125,7 +161,7 @@ const handleSubmit = () => {
   letter-spacing: -0.03em;
 }
 
-.login-card__header p {
+.login-card__header p:last-child {
   margin: 0;
   color: var(--login-muted, #5f6b7a);
   font-size: 14px;
@@ -134,6 +170,8 @@ const handleSubmit = () => {
 }
 
 .login-card__form {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -157,7 +195,7 @@ const handleSubmit = () => {
 .login-card__check input {
   width: 16px;
   height: 16px;
-  accent-color: var(--login-primary, #2f6fd6);
+  accent-color: var(--login-primary, #E6B93C);
 }
 
 .login-card__error {

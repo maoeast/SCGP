@@ -52,7 +52,7 @@ import { applyLoginThemeVariables, normalizeLoginThemeVariant } from '@/utils/lo
 const REMEMBERED_USERNAME_KEY = 'scgp_login_username'
 const defaultSystemName = '星愿能力发展训练系统'
 const defaultSchoolName = 'XX学校'
-const defaultTagline = '为学校及康复团队，提供科学、稳定、持续的评估训练方案'
+const defaultTagline = '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步'
 
 const router = useRouter()
 const authStore = useAuthStore()

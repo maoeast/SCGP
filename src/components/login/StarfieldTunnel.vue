@@ -1,6 +1,12 @@
 <template>
   <div ref="containerRef" class="starfield-tunnel" aria-hidden="true">
     <canvas ref="canvasRef" class="starfield-tunnel__canvas"></canvas>
+
+    <!-- CSS shooting stars -->
+    <div class="starfield-tunnel__meteors">
+      <span v-for="m in meteors" :key="m.id" class="meteor" :style="m.style"></span>
+    </div>
+
     <div ref="vignetteRef" class="starfield-tunnel__vignette"></div>
   </div>
 </template>
@@ -14,22 +20,63 @@ import {
   BufferGeometry,
   Float32BufferAttribute,
   Points,
-  PointsMaterial,
-  CanvasTexture,
-  FogExp2,
+  ShaderMaterial,
   Color,
   Clock,
   AdditiveBlending,
 } from 'three'
-import { getLoginThemePreset, type LoginThemeVariant } from '@/utils/login-theme'
+import { type LoginThemeVariant } from '@/utils/login-theme'
 
-const PARTICLE_COUNT = 6000
-const TUNNEL_LENGTH = 200
-const SPEED = 6
-const MAX_RADIUS = 65
-const FOG_DENSITY = 0.012
-const PARALLAX_STRENGTH = 4
+const STAR_COUNT = 1800
 
+/* ── Star shaders ── */
+const starVert = /* glsl */ `
+attribute float aSize;
+attribute float aPhase;
+attribute float aBright;
+uniform float uTime;
+uniform float uDpr;
+varying float vAlpha;
+varying float vBright;
+
+void main() {
+  // Stronger twinkle: wider amplitude + faster
+  float twinkle = sin(uTime * 2.4 + aPhase) * 0.55 + 0.45;
+  vAlpha = twinkle * aBright;
+  vBright = aBright;
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  gl_PointSize = max(aSize * uDpr * (260.0 / -mv.z), 0.8);
+  gl_Position = projectionMatrix * mv;
+}
+`
+
+const starFrag = /* glsl */ `
+precision highp float;
+uniform vec3 uColor;
+varying float vAlpha;
+varying float vBright;
+
+void main() {
+  float d = length(gl_PointCoord - vec2(0.5));
+  if (d > 0.5) discard;
+  // Brighter core + softer glow halo
+  float core = smoothstep(0.5, 0.0, d);
+  float glow = smoothstep(0.5, 0.15, d);
+  float a = pow(core, 1.2) + glow * 0.4;
+  // Boost brightness for visible twinkle
+  vec3 col = uColor * (1.0 + vBright * 0.6) + vec3(1.0) * pow(core, 4.0) * 0.5;
+  gl_FragColor = vec4(col, a * vAlpha);
+}
+`
+
+/* ── Theme ── */
+function getStarColor(v: LoginThemeVariant): Color {
+  if (v === 'calm-blue') return new Color('#d8f0f8')
+  if (v === 'custom') return new Color('#fff0c0')
+  return new Color('#ffe8b0')
+}
+
+/* ── Props ── */
 interface Props {
   variant?: LoginThemeVariant
 }
@@ -38,6 +85,20 @@ const props = withDefaults(defineProps<Props>(), {
   variant: 'warm-glow',
 })
 
+/* ── Shooting star data ── */
+const meteors = Array.from({ length: 18 }, (_, i) => ({
+  id: i,
+  style: {
+    '--delay': `${(i * 2.3) % 14}s`,
+    '--dur': `${1.4 + (i % 4) * 0.35}s`,
+    '--top': `${4 + (i * 11) % 35}%`,
+    '--left': `${5 + (i * 19) % 85}%`,
+    '--angle': `${24 + (i * 7) % 18}deg`,
+    '--len': `${50 + (i % 5) * 30}px`,
+  },
+}))
+
+/* ── Refs & state ── */
 const containerRef = ref<HTMLDivElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const vignetteRef = ref<HTMLDivElement | null>(null)
@@ -45,233 +106,141 @@ const vignetteRef = ref<HTMLDivElement | null>(null)
 let renderer: WebGLRenderer | null = null
 let scene: Scene | null = null
 let camera: PerspectiveCamera | null = null
-let geometry: BufferGeometry | null = null
-let material: PointsMaterial | null = null
-let spriteTexture: CanvasTexture | null = null
+let starMat: ShaderMaterial | null = null
+let starGeo: BufferGeometry | null = null
 let clock: Clock | null = null
 let frameId = 0
 let mouseX = 0
 let mouseY = 0
 let resizeObserver: ResizeObserver | null = null
-let webglFailed = false
 
-function parseRgbString(rgb: string): Color {
-  const match = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/)
-  if (match) {
-    return new Color(
-      parseInt(match[1]!) / 255,
-      parseInt(match[2]!) / 255,
-      parseInt(match[3]!) / 255,
-    )
+/* ── Apply theme ── */
+function applyTheme() {
+  if (starMat) {
+    starMat.uniforms.uColor!.value.copy(getStarColor(props.variant))
   }
-  return new Color(0x4fb3bf)
-}
-
-function createSpriteTexture(): CanvasTexture {
-  const size = 64
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')!
-  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
-  gradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
-  gradient.addColorStop(0.15, 'rgba(255, 255, 255, 0.82)')
-  gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.35)')
-  gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.08)')
-  gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
-  ctx.fillStyle = gradient
-  ctx.fillRect(0, 0, size, size)
-  return new CanvasTexture(canvas)
-}
-
-function buildParticles() {
-  const preset = getLoginThemePreset(props.variant)
-  const bgColor = new Color(preset.galaxyBaseGradient)
-  const palette = preset.galaxyParticlePalette.map(parseRgbString)
-
-  // Update fog and clear color
-  if (scene) {
-    scene.fog = new FogExp2(bgColor, FOG_DENSITY)
-  }
-  if (renderer) {
-    renderer.setClearColor(bgColor)
-  }
-
-  // Update vignette to match theme background
   if (vignetteRef.value) {
-    const bgHex = preset.galaxyBaseGradient
-    const rgb = new Color(bgHex)
-    const r = Math.round(rgb.r * 255)
-    const g = Math.round(rgb.g * 255)
-    const b = Math.round(rgb.b * 255)
-    vignetteRef.value.style.background = `radial-gradient(circle at center, transparent 0% 40%, rgba(${r}, ${g}, ${b}, 0.25) 65%, rgba(${r}, ${g}, ${b}, 0.6) 100%)`
-  }
-
-  // Update particle colors
-  if (geometry) {
-    const colorAttr = geometry.getAttribute('color')
-    if (colorAttr) {
-      const colors = colorAttr.array as Float32Array
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        const color = palette[Math.floor(Math.random() * palette.length)]!
-        colors[i * 3] = color.r
-        colors[i * 3 + 1] = color.g
-        colors[i * 3 + 2] = color.b
-      }
-      colorAttr.needsUpdate = true
-    }
+    vignetteRef.value.style.background =
+      'radial-gradient(circle at center, transparent 0% 45%, rgba(0,0,0,0.3) 100%)'
   }
 }
 
+/* ── Scene initialisation ── */
 function initScene() {
   const canvas = canvasRef.value
   const container = containerRef.value
   if (!canvas || !container) return
 
-  const preset = getLoginThemePreset(props.variant)
-  const bgColor = new Color(preset.galaxyBaseGradient)
-  const palette = preset.galaxyParticlePalette.map(parseRgbString)
+  const rect = container.getBoundingClientRect()
+  const w = rect.width || 1
+  const h = rect.height || 1
 
   scene = new Scene()
-  scene.fog = new FogExp2(bgColor, FOG_DENSITY)
-
-  const rect = container.getBoundingClientRect()
-  const width = rect.width || 1
-  const height = rect.height || 1
-
-  camera = new PerspectiveCamera(75, width / height, 0.1, 300)
-  camera.position.set(0, 0, 0)
+  camera = new PerspectiveCamera(60, w / h, 0.1, 600)
 
   try {
-    renderer = new WebGLRenderer({ canvas, antialias: false })
+    renderer = new WebGLRenderer({ canvas, antialias: false, alpha: true })
   } catch {
-    webglFailed = true
-    if (container) {
-      container.style.background = `linear-gradient(180deg, ${preset.galaxyBaseGradient}, ${preset.galaxyBaseGradient})`
-    }
     return
   }
 
-  renderer.setClearColor(bgColor)
+  renderer.setClearColor(0x000000, 0)
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-  renderer.setSize(width, height)
+  renderer.setSize(w, h)
 
-  const positions = new Float32Array(PARTICLE_COUNT * 3)
-  const colors = new Float32Array(PARTICLE_COUNT * 3)
+  // ── Star particles ──
+  const positions = new Float32Array(STAR_COUNT * 3)
+  const sizes = new Float32Array(STAR_COUNT)
+  const phases = new Float32Array(STAR_COUNT)
+  const brights = new Float32Array(STAR_COUNT)
 
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    const angle = Math.random() * Math.PI * 2
-    const radius = Math.sqrt(Math.random()) * MAX_RADIUS
-    positions[i * 3] = Math.cos(angle) * radius
-    positions[i * 3 + 1] = Math.sin(angle) * radius
-    positions[i * 3 + 2] = Math.random() * TUNNEL_LENGTH
-
-    const color = palette[Math.floor(Math.random() * palette.length)]!
-    colors[i * 3] = color.r
-    colors[i * 3 + 1] = color.g
-    colors[i * 3 + 2] = color.b
+  for (let i = 0; i < STAR_COUNT; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 500
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 350
+    positions[i * 3 + 2] = -15 - Math.random() * 485
+    sizes[i] = 1.2 + Math.pow(Math.random(), 1.6) * 6.0
+    phases[i] = Math.random() * Math.PI * 2
+    brights[i] = 0.25 + Math.random() * 0.75
   }
 
-  geometry = new BufferGeometry()
-  geometry.setAttribute('position', new Float32BufferAttribute(positions, 3))
-  geometry.setAttribute('color', new Float32BufferAttribute(colors, 3))
+  starGeo = new BufferGeometry()
+  starGeo.setAttribute('position', new Float32BufferAttribute(positions, 3))
+  starGeo.setAttribute('aSize', new Float32BufferAttribute(sizes, 1))
+  starGeo.setAttribute('aPhase', new Float32BufferAttribute(phases, 1))
+  starGeo.setAttribute('aBright', new Float32BufferAttribute(brights, 1))
 
-  spriteTexture = createSpriteTexture()
-  material = new PointsMaterial({
-    map: spriteTexture,
-    size: 2.4,
-    sizeAttenuation: true,
+  starMat = new ShaderMaterial({
+    vertexShader: starVert,
+    fragmentShader: starFrag,
+    uniforms: {
+      uTime: { value: 0 },
+      uColor: { value: getStarColor(props.variant).clone() },
+      uDpr: { value: Math.min(window.devicePixelRatio || 1, 2) },
+    },
     transparent: true,
-    opacity: 0.95,
-    vertexColors: true,
-    blending: AdditiveBlending,
     depthWrite: false,
+    blending: AdditiveBlending,
   })
 
-  const points = new Points(geometry, material)
-  scene.add(points)
-
+  scene.add(new Points(starGeo, starMat))
   clock = new Clock()
-
-  // Set initial vignette
-  buildParticles()
+  applyTheme()
 }
 
+/* ── Render loop ── */
 function animate() {
-  if (!renderer || !scene || !camera || !geometry || !clock) return
+  if (!renderer || !scene || !camera || !clock) return
 
-  const delta = Math.min(clock.getDelta(), 0.05)
-  const posAttr = geometry.getAttribute('position')
-  if (!posAttr) return
-  const arr = posAttr.array as Float32Array
+  clock.getDelta()
+  const t = clock.getElapsedTime()
 
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    const ix = i * 3
-    const iy = i * 3 + 1
-    const iz = i * 3 + 2
-    arr[iz]! -= SPEED * delta
-    if (arr[iz]! < -10) {
-      arr[iz]! += TUNNEL_LENGTH
-      const angle = Math.random() * Math.PI * 2
-      const radius = Math.sqrt(Math.random()) * MAX_RADIUS
-      arr[ix]! = Math.cos(angle) * radius
-      arr[iy]! = Math.sin(angle) * radius
-    }
-  }
-  posAttr.needsUpdate = true
+  if (starMat) starMat.uniforms.uTime!.value = t
 
-  camera.position.x += (mouseX * PARALLAX_STRENGTH - camera.position.x) * 0.025
-  camera.position.y += (mouseY * PARALLAX_STRENGTH - camera.position.y) * 0.025
-  camera.lookAt(camera.position.x * 0.3, camera.position.y * 0.3, camera.position.z + 100)
+  const sx = Math.sin(t * 0.04) * 4 + mouseX * 3
+  const sy = Math.cos(t * 0.035) * 3 + mouseY * 3
+  camera.position.x += (sx - camera.position.x) * 0.008
+  camera.position.y += (sy - camera.position.y) * 0.008
+  camera.lookAt(camera.position.x * 0.15, camera.position.y * 0.15, -100)
 
   renderer.render(scene, camera)
   frameId = requestAnimationFrame(animate)
 }
 
+/* ── Resize ── */
 function handleResize() {
-  const container = containerRef.value
-  if (!container || !renderer || !camera) return
-
-  const rect = container.getBoundingClientRect()
-  if (!rect.width || !rect.height) return
-
-  camera.aspect = rect.width / rect.height
+  const el = containerRef.value
+  if (!el || !renderer || !camera) return
+  const r = el.getBoundingClientRect()
+  if (!r.width || !r.height) return
+  camera.aspect = r.width / r.height
   camera.updateProjectionMatrix()
-  renderer.setSize(rect.width, rect.height)
+  renderer.setSize(r.width, r.height)
 }
 
+/* ── Mouse ── */
 function handleMouseMove(e: MouseEvent) {
   mouseX = (e.clientX / window.innerWidth) * 2 - 1
   mouseY = -((e.clientY / window.innerHeight) * 2 - 1)
 }
 
-watch(() => props.variant, () => {
-  buildParticles()
-})
+/* ── Watch variant changes ── */
+watch(() => props.variant, () => applyTheme())
 
+/* ── Lifecycle ── */
 onMounted(() => {
   initScene()
-
-  if (!webglFailed) {
-    frameId = requestAnimationFrame(animate)
-
-    resizeObserver = new ResizeObserver(handleResize)
-    if (containerRef.value) {
-      resizeObserver.observe(containerRef.value)
-    }
-
-    window.addEventListener('mousemove', handleMouseMove, { passive: true })
-  }
+  frameId = requestAnimationFrame(animate)
+  resizeObserver = new ResizeObserver(handleResize)
+  if (containerRef.value) resizeObserver.observe(containerRef.value)
+  window.addEventListener('mousemove', handleMouseMove, { passive: true })
 })
 
 onBeforeUnmount(() => {
   cancelAnimationFrame(frameId)
   resizeObserver?.disconnect()
   window.removeEventListener('mousemove', handleMouseMove)
-
-  geometry?.dispose()
-  material?.dispose()
-  spriteTexture?.dispose()
+  starGeo?.dispose()
+  starMat?.dispose()
   renderer?.dispose()
 })
 </script>
@@ -282,6 +251,7 @@ onBeforeUnmount(() => {
   inset: 0;
   overflow: hidden;
   pointer-events: none;
+  background: url('/loginbg.jpg') center / cover no-repeat;
 }
 
 .starfield-tunnel__canvas {
@@ -289,6 +259,58 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+/* ── Shooting stars ── */
+.starfield-tunnel__meteors {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.meteor {
+  position: absolute;
+  top: var(--top);
+  left: var(--left);
+  width: 2px;
+  height: 2px;
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0;
+  box-shadow: 0 0 6px 2px rgba(255, 255, 255, 0.6);
+  animation: meteor-fall var(--dur) var(--delay) linear infinite;
+}
+
+.meteor::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: var(--len);
+  height: 1.2px;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
+  transform: translateY(-50%);
+}
+
+@keyframes meteor-fall {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(var(--angle));
+  }
+  3% {
+    opacity: 1;
+  }
+  25% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0;
+    transform: translate(280px, 200px) rotate(var(--angle));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(280px, 200px) rotate(var(--angle));
+  }
 }
 
 .starfield-tunnel__vignette {

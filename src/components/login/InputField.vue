@@ -80,7 +80,7 @@ const handleInput = (event: Event) => {
   background: var(--login-surface-soft, #f7fafd);
   color: var(--login-text, #1f2937);
   font-size: 15px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.2s ease;
   box-sizing: border-box;
 }
 
@@ -94,8 +94,9 @@ const handleInput = (event: Event) => {
 
 .input-field__input:focus {
   outline: none;
-  border-color: var(--login-primary, #2f6fd6);
-  box-shadow: 0 0 0 4px var(--login-primary-ring, rgba(47, 111, 214, 0.18));
+  border-color: var(--login-primary, #E6B93C);
+  box-shadow: 0 0 0 4px var(--login-primary-ring, rgba(230, 185, 60, 0.18));
+  background: var(--login-surface, #ffffff);
 }
 
 .input-field__input:disabled {
