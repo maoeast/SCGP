@@ -75,6 +75,73 @@ interface SRS2WordReportInput {
   dimensionDetails: SRS2DimensionDetail[]
 }
 
+interface GmfmWordReportRule {
+  summary: string
+  content: string
+  advice: string[]
+}
+
+interface GmfmWordReportDomain {
+  code: string
+  name: string
+  rawScore: number
+  maxScore: number
+  percentage: number
+  ntCount: number
+  itemCount: number
+  level: string
+}
+
+interface GmfmWordReportDomainFeedback {
+  code: string
+  content: string
+  advice: string
+}
+
+interface GmfmWordReportFlag {
+  title: string
+  severity: 'error' | 'warning'
+  content: string
+  advice: string
+}
+
+interface GmfmWordReportTarget {
+  itemCode: string
+  title: string
+  dimensionName: string
+  score: number
+  isNt: boolean
+  priority: 1 | 2 | 3
+  rationale: string
+  advice: string
+}
+
+interface GmfmWordReportDetail {
+  item_code: string
+  dimension_name: string
+  title: string
+  score: number
+  is_nt: boolean
+}
+
+interface GmfmWordReportInput {
+  studentName: string
+  gender: string
+  ageMonths: number
+  assessmentDate: string
+  totalScore: number
+  rawTotalScore: number
+  totalMaxScore: number
+  levelText: string
+  totalNtCount: number
+  overallRule?: GmfmWordReportRule | null
+  domainResults: GmfmWordReportDomain[]
+  domainFeedback: GmfmWordReportDomainFeedback[]
+  iepTargets: GmfmWordReportTarget[]
+  flags: GmfmWordReportFlag[]
+  details: GmfmWordReportDetail[]
+}
+
 function cleanText(text: string | undefined): string {
   if (!text) return ''
   return text
@@ -104,6 +171,10 @@ function formatAgeMonths(ageMonths: number): string {
 
 function buildFilename(prefix: string, studentName: string) {
   return `${prefix}_${studentName}_${new Date().toISOString().slice(0, 10)}`
+}
+
+function formatPercent(value: number | undefined): string {
+  return `${Number(value || 0).toFixed(1)}%`
 }
 
 function getStructuredAdviceTitle(category: string): string {
@@ -337,6 +408,131 @@ export function buildSRS2WordPayload(input: SRS2WordReportInput): WordExportPayl
         items: input.feedback.overallAdvice.map(cleanText).filter(Boolean),
       },
     ],
+  }
+}
+
+export function buildGmfm88WordPayload(input: GmfmWordReportInput): WordExportPayload {
+  const priorityLabelMap: Record<GmfmWordReportTarget['priority'], string> = {
+    1: '近期突破',
+    2: '继续巩固',
+    3: '先备支持',
+  }
+  const domainFeedbackMap = new Map(
+    input.domainFeedback.map((item) => [item.code, item]),
+  )
+
+  const sections: WordExportPayload['sections'] = [
+    {
+      type: 'kv-table',
+      heading: '评估结果总览',
+      rows: [
+        { label: 'GMFM-88 总分', value: formatPercent(input.totalScore) },
+        { label: '原始分', value: `${input.rawTotalScore} / ${input.totalMaxScore}` },
+        { label: '总体等级', value: input.levelText },
+        { label: '目标条目', value: `${input.iepTargets.length}` },
+        { label: 'NT 项数', value: `${input.totalNtCount}` },
+      ],
+    },
+  ]
+
+  if (input.overallRule) {
+    sections.push({
+      type: 'paragraph',
+      heading: '总体评估说明',
+      paragraphs: [
+        cleanText(input.overallRule.summary),
+        cleanText(input.overallRule.content),
+      ].filter(Boolean),
+    })
+
+    if (input.overallRule.advice.length > 0) {
+      sections.push({
+        type: 'list',
+        heading: '总体建议',
+        items: input.overallRule.advice.map(cleanText).filter(Boolean),
+      })
+    }
+  }
+
+  if (input.domainResults.length > 0) {
+    sections.push({
+      type: 'table',
+      heading: '五大能区结果',
+      columns: ['能区', '得分', '项目数', 'NT', '等级', '评估说明', '训练建议'],
+      columnWidths: [16, 12, 10, 8, 12, 21, 21],
+      rows: input.domainResults.map((domain) => {
+        const feedback = domainFeedbackMap.get(domain.code)
+        return [
+          domain.name,
+          `${formatPercent(domain.percentage)} (${domain.rawScore} / ${domain.maxScore})`,
+          `${domain.itemCount}`,
+          `${domain.ntCount}`,
+          domain.level,
+          cleanText(feedback?.content || ''),
+          cleanText(feedback?.advice || ''),
+        ]
+      }),
+    })
+  }
+
+  if (input.flags.length > 0) {
+    sections.push({
+      type: 'table',
+      heading: '风险提醒',
+      columns: ['提醒', '级别', '内容', '建议'],
+      columnWidths: [18, 10, 36, 36],
+      rows: input.flags.map((flag) => [
+        flag.title,
+        flag.severity === 'error' ? '高风险' : '提醒',
+        cleanText(flag.content),
+        cleanText(flag.advice),
+      ]),
+    })
+  }
+
+  if (input.iepTargets.length > 0) {
+    sections.push({
+      type: 'table',
+      heading: '近期 IEP 关注点',
+      columns: ['项目', '能区', '当前表现', '优先级', '关注原因', '建议'],
+      columnWidths: [24, 12, 12, 10, 21, 21],
+      rows: input.iepTargets.map((target) => [
+        `${target.itemCode}. ${target.title}`,
+        target.dimensionName,
+        target.isNt ? 'NT' : `评分 ${target.score}`,
+        priorityLabelMap[target.priority],
+        cleanText(target.rationale),
+        cleanText(target.advice),
+      ]),
+    })
+  }
+
+  if (input.details.length > 0) {
+    sections.push({
+      type: 'table',
+      heading: '评分明细',
+      columns: ['项目', '能区', '题目', '得分'],
+      columnWidths: [10, 14, 56, 20],
+      rows: input.details.map((detail) => [
+        detail.item_code,
+        detail.dimension_name,
+        cleanText(detail.title),
+        detail.is_nt ? 'NT' : `${detail.score}`,
+      ]),
+    })
+  }
+
+  return {
+    title: 'GMFM-88 粗大运动功能评定量表报告',
+    subtitle: '统一评估报告 Word 导出版',
+    filename: buildFilename('GMFM-88评估报告', input.studentName),
+    meta: [
+      { label: '学生姓名', value: input.studentName },
+      { label: '性别', value: input.gender },
+      { label: '年龄', value: formatAgeMonths(input.ageMonths) },
+      { label: '评估日期', value: formatDate(input.assessmentDate) },
+    ],
+    sections,
   }
 }
 

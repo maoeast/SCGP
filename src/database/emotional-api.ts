@@ -1,8 +1,11 @@
 import type {
+  EmotionalBaseEmotion,
+  EmotionalCareType,
   EmotionalTrainingSummaryRawData,
   PersistEmotionalSessionInput,
   PersistEmotionalSessionResult,
 } from '../types/emotional'
+import { getEmotionCatalogEntry, parseEmotionalBaseEmotion } from '@/features/emotional/emotion-catalog'
 import { resolveTrainingEntryCode } from '@/utils/training-entry'
 import { TrainingSessionWriter } from './training-session-writer'
 
@@ -130,6 +133,54 @@ function toIsoString(timestamp: number): string {
 function round(value: number, digits = 1) {
   const factor = 10 ** digits
   return Math.round(value * factor) / factor
+}
+
+type ReportEmotionKey = EmotionalBaseEmotion | 'unknown'
+type ReportCareTypeKey = EmotionalCareType | 'unknown'
+
+const CARE_TYPE_LABEL_MAP: Record<EmotionalCareType, string> = {
+  empathy: '共情式',
+  advice: '建议式',
+  action: '行动式',
+}
+
+const REPORT_CATEGORY_LABEL_MAP: Record<string, string> = {
+  imported_emotion_scene: '导入情绪场景',
+  imported_care_scene: '导入关心情境',
+  unknown: '未分类',
+}
+
+function normalizeReportEmotionKey(value: unknown): ReportEmotionKey {
+  return parseEmotionalBaseEmotion(value) || 'unknown'
+}
+
+function getReportEmotionLabel(value: ReportEmotionKey): string {
+  return value === 'unknown'
+    ? '未知情绪'
+    : getEmotionCatalogEntry(value, value).label
+}
+
+function normalizeReportCareTypeKey(value: unknown): ReportCareTypeKey {
+  return value === 'empathy' || value === 'advice' || value === 'action'
+    ? value
+    : 'unknown'
+}
+
+function getReportCareTypeLabel(value: ReportCareTypeKey): string {
+  return value === 'unknown' ? '未分类' : CARE_TYPE_LABEL_MAP[value]
+}
+
+function getReportCategoryLabel(value: unknown): string {
+  if (typeof value !== 'string') {
+    return '未分类'
+  }
+
+  const normalized = value.trim()
+  if (!normalized) {
+    return '未分类'
+  }
+
+  return REPORT_CATEGORY_LABEL_MAP[normalized] || normalized
 }
 
 export class EmotionalTrainingAPI {
@@ -476,11 +527,11 @@ export class EmotionalTrainingAPI {
       return { record, session, detailRows, metadata }
     })
 
-    const emotionAgg = new Map<string, { hits: number; total: number; hintSum: number; color: string }>()
+    const emotionAgg = new Map<ReportEmotionKey, { hits: number; total: number; hintSum: number; color: string }>()
     sessionDetails
       .filter((item) => item.record.subModule === 'emotion_scene')
       .forEach((item) => {
-        const targetEmotion = item.metadata?.targetEmotion || 'unknown'
+        const targetEmotion = normalizeReportEmotionKey(item.metadata?.targetEmotion)
         const detail = item.detailRows.filter((row: any) => row.step_type === 'emotion_choice').slice(-1)[0]
         const bucket = emotionAgg.get(targetEmotion) || {
           hits: 0,
@@ -495,13 +546,13 @@ export class EmotionalTrainingAPI {
       })
 
     const emotionPerformance = Array.from(emotionAgg.entries()).map(([emotion, stats]) => ({
-      emotion,
+      emotion: getReportEmotionLabel(emotion),
       accuracy: stats.total > 0 ? round((stats.hits / stats.total) * 100, 1) : 0,
       averageHintLevel: stats.total > 0 ? round(stats.hintSum / stats.total, 2) : 0,
       color: stats.color,
     }))
 
-    const carePreferenceMap = new Map<string, number>()
+    const carePreferenceMap = new Map<ReportCareTypeKey, number>()
     sessionDetails
       .filter((item) => item.record.subModule === 'care_scene')
       .forEach((item) => {
@@ -509,12 +560,12 @@ export class EmotionalTrainingAPI {
           ? db.get('SELECT raw_data FROM training_records WHERE id = ?', [item.record.trainingRecordId])?.raw_data
           : null
         const parsed = summaryType ? JSON.parse(summaryType) : null
-        const key = parsed?.dominantChoiceType || 'unknown'
+        const key = normalizeReportCareTypeKey(parsed?.dominantChoiceType)
         carePreferenceMap.set(key, (carePreferenceMap.get(key) || 0) + 1)
       })
 
     const carePreference = Array.from(carePreferenceMap.entries()).map(([name, value]) => ({
-      name,
+      name: getReportCareTypeLabel(name),
       value,
     }))
 
@@ -522,10 +573,11 @@ export class EmotionalTrainingAPI {
     records
       .filter((item) => item.subModule === 'emotion_scene')
       .forEach((item) => {
-        const bucket = sceneMasteryMap.get(item.resourceCategory) || { total: 0, accuracySum: 0 }
+        const category = getReportCategoryLabel(item.resourceCategory)
+        const bucket = sceneMasteryMap.get(category) || { total: 0, accuracySum: 0 }
         bucket.total += 1
         bucket.accuracySum += item.accuracyRate * 100
-        sceneMasteryMap.set(item.resourceCategory, bucket)
+        sceneMasteryMap.set(category, bucket)
       })
 
     const sceneMastery = Array.from(sceneMasteryMap.entries()).map(([category, stats]) => ({

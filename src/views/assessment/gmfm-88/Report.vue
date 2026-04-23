@@ -7,6 +7,11 @@
             <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
             <h2>GMFM-88 粗大运动功能评定量表报告</h2>
           </div>
+          <div class="header-actions">
+            <el-button type="primary" :icon="Download" :disabled="!assessment" @click="exportWord">
+              导出Word
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -203,8 +208,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft, Download } from '@element-plus/icons-vue'
 import { Gmfm88AssessmentAPI } from '@/database/api'
+import { buildGmfm88WordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 
 type FlagSeverity = 'error' | 'warning'
 
@@ -274,12 +281,20 @@ interface GmfmAssessmentRecord {
   start_time: string
 }
 
+interface GmfmAssessmentDetail {
+  item_code: string
+  dimension_name: string
+  title: string
+  score: number
+  is_nt: boolean
+}
+
 const route = useRoute()
 const router = useRouter()
 const api = new Gmfm88AssessmentAPI()
 
 const assessment = ref<GmfmAssessmentRecord | null>(null)
-const details = ref<any[]>([])
+const details = ref<GmfmAssessmentDetail[]>([])
 
 const priorityLabelMap: Record<1 | 2 | 3, string> = {
   1: '近期突破',
@@ -314,6 +329,38 @@ function loadReport() {
 
 function goBack() {
   router.back()
+}
+
+async function exportWord() {
+  if (!assessment.value) {
+    ElMessage.error('报告数据尚未加载完成')
+    return
+  }
+
+  try {
+    const payload = buildGmfm88WordPayload({
+      studentName: assessment.value.student_name,
+      gender: assessment.value.student_gender || '未知',
+      ageMonths: assessment.value.age_months,
+      assessmentDate: assessment.value.start_time,
+      totalScore: assessment.value.total_score,
+      rawTotalScore: assessment.value.raw_total_score,
+      totalMaxScore: assessment.value.total_max_score,
+      levelText: assessment.value.level,
+      totalNtCount: totalNtCount.value,
+      overallRule: assessment.value.overall_rule || null,
+      domainResults: assessment.value.domain_results || [],
+      domainFeedback: assessment.value.domain_feedback || [],
+      iepTargets: iepTargets.value,
+      flags: flags.value,
+      details: details.value,
+    })
+    await exportWordDocument(payload)
+    ElMessage.success('Word导出成功')
+  } catch (error) {
+    console.error('导出Word失败:', error)
+    ElMessage.error('Word导出失败，请重试')
+  }
 }
 
 function getDomainFeedback(code: string) {
@@ -365,6 +412,7 @@ onMounted(() => {
 
 .header-content,
 .header-left,
+.header-actions,
 .student-info,
 .overview-grid,
 .domain-top,
