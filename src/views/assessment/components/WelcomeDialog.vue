@@ -25,7 +25,12 @@
             <span class="section-icon">{{ section.icon }}</span>
             {{ section.title }}
           </h4>
-          <p>{{ section.content }}</p>
+          <p v-if="section.content" class="section-content">{{ section.content }}</p>
+          <ul v-if="section.items?.length" class="section-list">
+            <li v-for="(item, itemIndex) in section.items" :key="itemIndex">
+              {{ item }}
+            </li>
+          </ul>
         </div>
       </div>
 
@@ -43,6 +48,14 @@
           <h4><span class="section-icon">💡</span> 温馨提示</h4>
           <p>请根据孩子的实际情况真实填写，不要过分担忧或刻意美化。</p>
         </div>
+      </div>
+
+      <div class="welcome-reminder" v-if="welcomeContent?.reminder">
+        <h4>
+          <span class="section-icon">{{ welcomeContent.reminder.icon || '⚠️' }}</span>
+          {{ welcomeContent.reminder.title || '特别提醒' }}
+        </h4>
+        <p>{{ welcomeContent.reminder.content }}</p>
       </div>
 
       <p class="welcome-footer" v-if="welcomeContent?.footer">
@@ -129,7 +142,50 @@ function handleStart() {
   font-size: 18px;
 }
 
-.welcome-section p {
+.welcome-section p,
+.section-content {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #606266;
+}
+
+.section-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-content + .section-list {
+  margin-top: 10px;
+}
+
+.section-list li {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #606266;
+}
+
+.welcome-reminder {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #f5d4a7;
+  background: #fff8ec;
+}
+
+.welcome-reminder h4 {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  color: #303133;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.welcome-reminder p {
   margin: 0;
   font-size: 14px;
   line-height: 1.7;

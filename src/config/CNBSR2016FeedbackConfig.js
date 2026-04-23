@@ -18,7 +18,7 @@
  * - a1: 0~12月 (婴儿期)
  * - a2: 13~24月 (学步期)
  * - a3: 25~36月 (幼儿前期)
- * - a4: 37~72月 (学前期)
+ * - a4: 37~84月 (学前期)
  *
  * 能区编码：
  * - gm: 大运动 (Gross Motor)
@@ -167,7 +167,7 @@ export const SCGP_CNBS_R2016_Feedback_Config = {
       }
     },
 
-    // 🎒 a4: 37~72月 (学前准备与幼小衔接期)
+    // 🎒 a4: 37~84月 (学前准备与幼小衔接期)
     a4: {
       excellent: {
         label: '优秀',
@@ -365,7 +365,7 @@ export const SCGP_CNBS_R2016_Feedback_Config = {
           ]
         }
       },
-      // a4: 37~72月 (学前期)
+      // a4: 37~84月 (学前期)
       a4: {
         excellent: {
           headline: '运动技能全面领先，具备良好体育发展潜力',
@@ -563,7 +563,7 @@ export const SCGP_CNBS_R2016_Feedback_Config = {
           ]
         }
       },
-      // a4: 37~72月 (学前期)
+      // a4: 37~84月 (学前期)
       a4: {
         excellent: {
           headline: '精细技能全面精进，书写与操作能力卓越',
@@ -763,7 +763,7 @@ export const SCGP_CNBS_R2016_Feedback_Config = {
           ]
         }
       },
-      // a4: 37~72月 (学前期)
+      // a4: 37~84月 (学前期)
       a4: {
         excellent: {
           headline: '逻辑推断卓越，学前认知准备能力全面领先',
@@ -963,7 +963,7 @@ export const SCGP_CNBS_R2016_Feedback_Config = {
           ]
         }
       },
-      // a4: 37~72月 (学前期)
+      // a4: 37~84月 (学前期)
       a4: {
         excellent: {
           headline: '语言能力卓越，叙事与语用能力达学龄前领先水平',
@@ -1161,7 +1161,7 @@ export const SCGP_CNBS_R2016_Feedback_Config = {
           ]
         }
       },
-      // a4: 37~72月 (学前期)
+      // a4: 37~84月 (学前期)
       a4: {
         excellent: {
           headline: '社会情感发展卓越，共情与自我调节能力领先',
@@ -1266,7 +1266,7 @@ export const SCGP_CNBS_R2016_Feedback_Config = {
           freq: '每周2-3次专业干预，每日家庭趣味运动'
         }
       },
-      a4: { // 37-72月
+      a4: { // 37-84月
         borderline: {
           short: '能单脚站立维持3秒，或能连续双手接住近距离抛来的大球。',
           long: '掌握复杂运动技能（如交替步上楼、骑带辅轮自行车），具备幼小衔接的体能基础。',
@@ -1334,7 +1334,7 @@ export const SCGP_CNBS_R2016_Feedback_Config = {
           freq: '每周2-3次专业OT，每日家庭游戏'
         }
       },
-      a4: { // 37-72月
+      a4: { // 37-84月
         borderline: {
           short: '能掌握正确的"三指执笔法"，并能沿直线剪开纸张。',
           long: '具备幼小衔接的书写前准备能力，能描画简单的几何图形和汉字基本笔画。',
@@ -1402,7 +1402,7 @@ export const SCGP_CNBS_R2016_Feedback_Config = {
           freq: '每周3次以上特教干预，家庭环境高度结构化'
         }
       },
-      a4: { // 37-72月
+      a4: { // 37-84月
         borderline: {
           short: '能点数1-10个物品并说出总数，理解简单的数字概念。',
           long: '具备幼小衔接的逻辑基础，能按照大小、长短排序，并能讲述简单的故事发展顺序。',
@@ -1470,7 +1470,7 @@ export const SCGP_CNBS_R2016_Feedback_Config = {
           freq: '每周3次密集ST治疗，家庭成员统一沟通策略'
         }
       },
-      a4: { // 37-72月
+      a4: { // 37-84月
         borderline: {
           short: '能用较完整的句子复述刚才发生的一件小事。',
           long: '掌握基本的叙事能力和逻辑连词（因为...所以），语用能力（与人交谈时的眼神、轮流）达标，适应幼小衔接。',
@@ -1538,7 +1538,7 @@ export const SCGP_CNBS_R2016_Feedback_Config = {
           freq: '持续的特教/ABA干预，园方与家庭深度配合'
         }
       },
-      a4: { // 37-72月
+      a4: { // 37-84月
         borderline: {
           short: '在游戏发生分歧时，能尝试用语言表达抗议（如"这是我的"）而不是直接动手。',
           long: '掌握基础的冲突解决技巧，能结交1-2个固定玩伴，具备幼小衔接所必需的抗挫折能力和规则内化。',
@@ -1663,7 +1663,7 @@ export const SCGP_CNBS_R2016_Feedback_Config = {
       }
     },
 
-    // 🎒 a4: 37~72月 (学前期 - 幼小衔接与社会化融合窗口)
+    // 🎒 a4: 37~84月 (学前期 - 幼小衔接与社会化融合窗口)
     a4: {
       excellent: {
         clinical: '本次评估发育商优秀（DQ≥130）。儿童在前学术技能（如图形临摹、数学逻辑）、复杂叙事语言及社会共情能力上表现出超越同龄群体的特质。执行控制能力成熟，为高阶学习做好了绝佳的神经系统准备。',

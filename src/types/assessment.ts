@@ -453,16 +453,7 @@ export interface ScaleDriver {
    * 获取欢迎对话框内容（可选）
    * @returns 欢迎内容配置
    */
-  getWelcomeContent?(): {
-    title: string
-    intro: string
-    sections: Array<{
-      icon: string
-      title: string
-      content: string
-    }>
-    footer?: string
-  }
+  getWelcomeContent?(): WelcomeContent
 
   /**
    * 获取量表基本信息
@@ -485,6 +476,27 @@ export interface ScaleDriver {
    * @returns 持久化结果，包含 assessId
    */
   persistAssessment?(context: PersistContext): Promise<PersistResult>
+}
+
+export interface WelcomeContentSection {
+  icon: string
+  title: string
+  content?: string
+  items?: string[]
+}
+
+export interface WelcomeContentReminder {
+  icon?: string
+  title?: string
+  content: string
+}
+
+export interface WelcomeContent {
+  title: string
+  intro: string
+  sections: WelcomeContentSection[]
+  reminder?: WelcomeContentReminder
+  footer?: string
 }
 
 // ============================================================

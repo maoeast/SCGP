@@ -13,6 +13,7 @@ import {
   TrophyBase,
   User,
 } from '@element-plus/icons-vue'
+import { CNBSR2016_SUPPORTED_AGE_RANGE_TEXT } from '@/config/cnbsr2016-thresholds'
 import type { TrainingEntryCode } from '@/utils/training-entry'
 
 export const ASSESSMENT_SCALE_CODES = [
@@ -251,7 +252,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     icon: Opportunity,
     buttonType: 'success',
     iconClass: 'dev-behavior-icon',
-    ageRange: '0 - 6岁',
+    ageRange: CNBSR2016_SUPPORTED_AGE_RANGE_TEXT,
     questionCount: '261道',
     dimensions: '评估维度：大运动、精细运动、适应能力、语言、社会行为',
     timeEstimate: '约30-40分钟',
@@ -312,7 +313,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     buttonType: 'primary',
     iconClass: 'fmda-icon',
     ageRange: '0 - 6岁',
-    questionCount: '87项',
+    questionCount: '88项',
     dimensions: '评估维度：抓握能力、手眼协调、双手协作、操作精确性',
     timeEstimate: '约20-30分钟',
     studentSelectorTitle: '选择评估学生 - 小肌肉功能发展评估量表',

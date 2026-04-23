@@ -122,6 +122,10 @@ import type {
   AssessmentFeedback
 } from '@/types/assessment'
 import { calculateAgeInMonths } from '@/types/assessment'
+import {
+  getCnbsr2016UnsupportedAgeMessage,
+  isCnbsr2016AgeSupported,
+} from '@/config/cnbsr2016-thresholds'
 import { getDriverByScaleCode } from '@/strategies/assessment'
 import { StudentAPI } from '@/database/api'
 import {
@@ -260,12 +264,16 @@ const isLastQuestion = computed(() => {
 
 const studentAgeLabel = computed(() => {
   if (!student.value) return '-'
-  const years = Math.floor(student.value.ageInMonths / 12)
-  const months = student.value.ageInMonths % 12
+  return formatAgeInMonths(student.value.ageInMonths)
+})
+
+function formatAgeInMonths(ageInMonths: number): string {
+  const years = Math.floor(ageInMonths / 12)
+  const months = ageInMonths % 12
   if (years === 0) return `${months}个月`
   if (months === 0) return `${years}岁`
   return `${years}岁${months}个月`
-})
+}
 
 function formatSMStageLabel(stage: number | null | undefined): string | null {
   if (!stage) return null
@@ -344,6 +352,17 @@ async function initializeAssessment() {
     // 3. 加载驱动器
     driver.value = getDriverByScaleCode(scaleCode.value)
 
+    if (scaleCode.value === 'cnbsr2016' && !isCnbsr2016AgeSupported(studentContext.ageInMonths)) {
+      ElMessage.error(
+        `${studentContext.name} 当前为${formatAgeInMonths(studentContext.ageInMonths)}（${studentContext.ageInMonths}个月）。${getCnbsr2016UnsupportedAgeMessage(studentContext.ageInMonths)}`,
+      )
+      await router.replace({
+        name: 'SelectStudent',
+        query: { scale: scaleCode.value },
+      })
+      return
+    }
+
     // 4. 初始化评估状态
     const startIndex = driver.value.getStartIndex(studentContext)
     state.value.currentIndex = startIndex
@@ -369,7 +388,7 @@ async function initializeAssessment() {
 
   } catch (error) {
     console.error('[AssessmentContainer] 初始化失败:', error)
-    ElMessage.error('评估初始化失败')
+    ElMessage.error(error instanceof Error ? error.message : '评估初始化失败')
     router.back()
   }
 }
@@ -584,7 +603,7 @@ async function completeAssessment() {
 
   } catch (error) {
     console.error('[AssessmentContainer] 完成评估失败:', error)
-    ElMessage.error('保存评估结果失败')
+    ElMessage.error(error instanceof Error ? error.message : '保存评估结果失败')
   }
 }
 

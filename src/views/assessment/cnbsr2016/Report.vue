@@ -7,8 +7,8 @@
             <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
             <h2>儿心量表Ⅱ评估报告</h2>
           </div>
-          <el-tag v-if="assessment" :type="getStatusTagType(assessment.dq_status)" size="large">
-            {{ assessment.level || getDqStatusLabel(assessment.dq_status) }}
+          <el-tag v-if="assessment" :type="isAgeSupported ? getStatusTagType(assessment.dq_status) : 'warning'" size="large">
+            {{ overallConclusionLabel }}
           </el-tag>
         </div>
       </template>
@@ -35,6 +35,14 @@
           <span class="value">{{ ageBracketLabel }}</span>
         </div>
       </div>
+
+      <el-alert
+        v-if="ageSupportWarning"
+        class="age-alert"
+        type="warning"
+        :closable="false"
+        :title="ageSupportWarning"
+      />
     </el-card>
 
     <template v-if="assessment">
@@ -46,19 +54,19 @@
         <div class="metric-grid">
           <article class="metric-card metric-card--primary">
             <span class="metric-label">总智龄 MA</span>
-            <strong class="metric-value">{{ formatScore(assessment.total_mental_age) }}</strong>
+            <strong class="metric-value">{{ isAgeSupported ? formatScore(assessment.total_mental_age) : '-' }}</strong>
             <span class="metric-meta">按五能区平均后的月龄值</span>
           </article>
 
-          <article class="metric-card" :class="`metric-card--${assessment.dq_status}`">
+          <article class="metric-card" :class="isAgeSupported ? `metric-card--${assessment.dq_status}` : 'metric-card--neutral'">
             <span class="metric-label">发育商 DQ</span>
-            <strong class="metric-value">{{ formatScore(assessment.dq) }}</strong>
-            <span class="metric-meta">{{ getDqStatusLabel(assessment.dq_status) }}</span>
+            <strong class="metric-value">{{ isAgeSupported ? formatScore(assessment.dq) : '-' }}</strong>
+            <span class="metric-meta">{{ isAgeSupported ? getDqStatusLabel(assessment.dq_status) : `超出${supportedAgeRangeText}` }}</span>
           </article>
 
           <article class="metric-card metric-card--neutral">
             <span class="metric-label">总体结论</span>
-            <strong class="metric-value metric-value--text">{{ assessment.level || getDqStatusLabel(assessment.dq_status) }}</strong>
+            <strong class="metric-value metric-value--text">{{ overallConclusionLabel }}</strong>
             <span class="metric-meta">当前运行时区间：{{ dqBandRangeText }}</span>
           </article>
 
@@ -76,7 +84,7 @@
         </div>
       </el-card>
 
-      <el-card class="overall-card">
+      <el-card v-if="isAgeSupported" class="overall-card">
         <template #header>
           <h3>总体解读</h3>
         </template>
@@ -352,6 +360,14 @@ const ageBracketLabel = computed(() => reportViewModel.value?.ageBracketLabel ||
 
 const dqBandRangeText = computed(() => reportViewModel.value?.dqBandRangeText || '-')
 
+const supportedAgeRangeText = computed(() => reportViewModel.value?.supportedAgeRangeText || '-')
+
+const isAgeSupported = computed(() => reportViewModel.value?.isAgeSupported ?? true)
+
+const ageSupportWarning = computed(() => reportViewModel.value?.ageSupportWarning || '')
+
+const overallConclusionLabel = computed(() => reportViewModel.value?.overallConclusionLabel || '-')
+
 const overallRule = computed<OverallRule | null>(() => reportViewModel.value?.overallRule || null)
 
 const expertClinical = computed<ExpertClinical | null>(() => reportViewModel.value?.expertClinical || null)
@@ -517,6 +533,10 @@ watch(assessId, async (nextValue, previousValue) => {
   padding: 16px;
   border-radius: 12px;
   background: linear-gradient(135deg, #eef6ff 0%, #f7fbff 100%);
+}
+
+.age-alert {
+  margin-top: 16px;
 }
 
 .info-item {

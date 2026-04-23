@@ -3,6 +3,8 @@ import {
   CNBSR2016_AGE_BRACKETS,
   CNBSR2016_DOMAIN_DEFINITIONS,
   CNBSR2016_DQ_BANDS,
+  CNBSR2016_SUPPORTED_AGE_RANGE_TEXT,
+  isCnbsr2016AgeSupported,
 } from '@/config/cnbsr2016-thresholds'
 import { CNBSR2016_QUESTIONS } from '@/database/cnbsr2016-questions'
 import type { Cnbsr2016AgeBracketCode, Cnbsr2016DomainCode, Cnbsr2016DqStatus } from '@/types/cnbsr2016'
@@ -162,6 +164,10 @@ export interface IepTargetItem {
 export interface Cnbsr2016ReportViewModel {
   ageBracketLabel: string
   dqBandRangeText: string
+  supportedAgeRangeText: string
+  isAgeSupported: boolean
+  ageSupportWarning: string | null
+  overallConclusionLabel: string
   overallRule: OverallRule | null
   expertClinical: ExpertClinical | null
   hasExpertClinical: boolean
@@ -179,6 +185,16 @@ export interface Cnbsr2016ReportViewModel {
 const CNBSR2016_QUESTION_MAP = new Map(
   CNBSR2016_QUESTIONS.map((question) => [question.id, question]),
 )
+
+function formatCnbsr2016Age(ageMonths: number) {
+  const normalized = Math.max(0, Math.floor(Number(ageMonths) || 0))
+  const years = Math.floor(normalized / 12)
+  const months = normalized % 12
+
+  if (years <= 0) return `${months}个月`
+  if (months === 0) return `${years}岁`
+  return `${years}岁${months}个月`
+}
 
 export function getCnbsr2016DqStatusLabel(status: Cnbsr2016DqStatus | string | null | undefined) {
   if (!status) return '-'
@@ -241,16 +257,25 @@ export function buildCnbsr2016ReportViewModel({
     domainFeedbackMap.set(item.domain, item)
   }
 
-  const ageBracketLabel = CNBSR2016_AGE_BRACKETS.find((item) => item.code === assessment.age_bracket)?.label
-    || assessment.age_bracket
+  const isAgeSupported = isCnbsr2016AgeSupported(assessment.age_months)
+  const ageBracketLabel = isAgeSupported
+    ? CNBSR2016_AGE_BRACKETS.find((item) => item.code === assessment.age_bracket)?.label || assessment.age_bracket
+    : '超出适用范围'
+  const ageSupportWarning = isAgeSupported
+    ? null
+    : `该记录评估时年龄为${formatCnbsr2016Age(assessment.age_months)}（${assessment.age_months}个月），已超出儿心量表Ⅱ标准常模覆盖的${CNBSR2016_SUPPORTED_AGE_RANGE_TEXT}。请勿按有效常模结论继续使用，必要时优先考虑 Conners 评定量表或 Achenbach 儿童行为量表（CBCL）。`
 
-  const overallRule = assessment.overall_rule
-    || SCGP_CNBS_R2016_Feedback_Config.overall_rules?.[assessment.age_bracket]?.[assessment.dq_status]
-    || null
+  const overallRule = isAgeSupported
+    ? assessment.overall_rule
+      || SCGP_CNBS_R2016_Feedback_Config.overall_rules?.[assessment.age_bracket]?.[assessment.dq_status]
+      || null
+    : null
 
-  const expertClinical = assessment.expert_clinical
-    || SCGP_CNBS_R2016_Feedback_Config.expert_clinical?.[assessment.age_bracket]?.[assessment.dq_status]
-    || null
+  const expertClinical = isAgeSupported
+    ? assessment.expert_clinical
+      || SCGP_CNBS_R2016_Feedback_Config.expert_clinical?.[assessment.age_bracket]?.[assessment.dq_status]
+      || null
+    : null
 
   const hasExpertClinical = Boolean(
     expertClinical?.clinical
@@ -364,7 +389,13 @@ export function buildCnbsr2016ReportViewModel({
 
   return {
     ageBracketLabel,
-    dqBandRangeText: getCnbsr2016DqBandRangeText(assessment.dq_status),
+    dqBandRangeText: isAgeSupported ? getCnbsr2016DqBandRangeText(assessment.dq_status) : '-',
+    supportedAgeRangeText: CNBSR2016_SUPPORTED_AGE_RANGE_TEXT,
+    isAgeSupported,
+    ageSupportWarning,
+    overallConclusionLabel: isAgeSupported
+      ? assessment.level || getCnbsr2016DqStatusLabel(assessment.dq_status)
+      : '超出适用范围',
     overallRule,
     expertClinical,
     hasExpertClinical,

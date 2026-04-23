@@ -17,6 +17,7 @@ import type {
   AssessmentFeedback,
   DimensionScore,
   ScaleInfo,
+  WelcomeContent,
   PersistContext,
   PersistResult
 } from '@/types/assessment'
@@ -125,16 +126,7 @@ export abstract class BaseDriver implements ScaleDriver {
   /**
    * 获取欢迎对话框内容（可选实现）
    */
-  getWelcomeContent?(): {
-    title: string
-    intro: string
-    sections: Array<{
-      icon: string
-      title: string
-      content: string
-    }>
-    footer?: string
-  }
+  getWelcomeContent?(): WelcomeContent
 
   // ========== 受保护的工具方法（子类可调用）==========
 

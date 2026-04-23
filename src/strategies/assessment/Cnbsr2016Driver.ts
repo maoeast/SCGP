@@ -16,6 +16,9 @@ import {
 } from '@/config/CNBSR2016FeedbackConfig'
 import {
   CNBSR2016_AGE_BRACKETS,
+  CNBSR2016_SUPPORTED_AGE_RANGE,
+  assertCnbsr2016AgeSupported,
+  isCnbsr2016QuestionSupported,
   resolveCnbsr2016AgeBracket,
   resolveCnbsr2016DqStatus,
 } from '@/config/cnbsr2016-thresholds'
@@ -90,6 +93,10 @@ interface Cnbsr2016DomainFeedbackEntry {
 
 const DOMAIN_ORDER = CNBSR2016_DOMAIN_DEFINITIONS.map((item) => item.code)
 const AGE_BRACKET_LABELS = new Map(CNBSR2016_AGE_BRACKETS.map((item) => [item.code, item.label]))
+// 当前正式支持口径为 0~84 月，保留题库全量月龄组参与正式问卷与计分。
+const SUPPORTED_CNBSR2016_QUESTIONS = CNBSR2016_QUESTIONS.filter((question) =>
+  isCnbsr2016QuestionSupported(question.ageGroupMonths),
+)
 const SEVERITY_MAP: Record<Cnbsr2016DqStatus, 'success' | 'warning' | 'danger' | 'info'> = {
   excellent: 'success',
   good: 'success',
@@ -108,8 +115,11 @@ export class Cnbsr2016Driver extends BaseDriver {
   readonly scaleCode = 'cnbsr2016'
   readonly scaleName = '0-6岁儿童发育行为评估量表（儿心量表Ⅱ）'
   readonly version = '1.0.0'
-  readonly ageRange = { min: 0, max: 84 }
-  readonly totalQuestions = CNBSR2016_QUESTIONS.length
+  readonly ageRange = {
+    min: CNBSR2016_SUPPORTED_AGE_RANGE.minMonths,
+    max: CNBSR2016_SUPPORTED_AGE_RANGE.maxMonths,
+  }
+  readonly totalQuestions = SUPPORTED_CNBSR2016_QUESTIONS.length
   readonly dimensions = CNBSR2016_DOMAIN_DEFINITIONS.map((item) => item.label)
 
   private readonly orderedQuestions = this.buildOrderedQuestions()
@@ -146,13 +156,14 @@ export class Cnbsr2016Driver extends BaseDriver {
   private latestChronologicalAgeMonths = 0
 
   getQuestions(context: StudentContext): ScaleQuestion[] {
-    this.latestChronologicalAgeMonths = context.ageInMonths
+    this.latestChronologicalAgeMonths = assertCnbsr2016AgeSupported(context.ageInMonths)
     return this.scaleQuestions
   }
 
   getStartIndex(context: StudentContext): number {
-    this.latestChronologicalAgeMonths = context.ageInMonths
-    const startMonthGroup = this.getClosestMonthGroup('gm', context.ageInMonths)
+    const chronologicalAgeMonths = assertCnbsr2016AgeSupported(context.ageInMonths)
+    this.latestChronologicalAgeMonths = chronologicalAgeMonths
+    const startMonthGroup = this.getClosestMonthGroup('gm', chronologicalAgeMonths)
     return this.getFirstQuestionIndex('gm', startMonthGroup) ?? 0
   }
 
@@ -202,10 +213,14 @@ export class Cnbsr2016Driver extends BaseDriver {
     answers: Record<string, ScaleAnswer>,
     context: StudentContext,
   ): ScoreResult {
-    this.latestChronologicalAgeMonths = context.ageInMonths
+    const supportedAgeMonths = assertCnbsr2016AgeSupported(context.ageInMonths)
+    this.latestChronologicalAgeMonths = supportedAgeMonths
 
-    const chronologicalAgeMonths = Math.max(1, context.ageInMonths)
-    const ageBracket = resolveCnbsr2016AgeBracket(context.ageInMonths)
+    const chronologicalAgeMonths = Math.max(1, supportedAgeMonths)
+    const ageBracket = resolveCnbsr2016AgeBracket(supportedAgeMonths)
+    if (!ageBracket) {
+      throw new Error('儿心量表Ⅱ年龄段解析失败，无法生成有效结果。')
+    }
     const iepTargets = this.extractIepTargets(answers)
     const domainResults = CNBSR2016_DOMAIN_DEFINITIONS.map((domainDefinition) => {
       const domainQuestions = this.getDomainQuestions(domainDefinition.code)
@@ -390,26 +405,34 @@ export class Cnbsr2016Driver extends BaseDriver {
 
   getWelcomeContent() {
     return {
-      title: '儿心量表Ⅱ评估',
-      intro: '本评估按五大能区独立推进，系统会根据儿童月龄自动确定各能区起测月龄，并按 basal / ceiling 规则自动补题。',
+      title: '儿童发育行为评估量表 (儿心量表Ⅱ)',
+      intro: '绘制孩子五大能力（大运动、精细、适应、语言、社交）的“发育雷达图”，看哪里长得快，哪里拖了后腿。',
       sections: [
         {
-          icon: '🧭',
-          title: '起测方式',
-          content: '每个能区都会从最接近儿童实际月龄的月龄组开始测查，月龄落在两个组之间时取较小月龄组。',
+          icon: '👨‍🏫',
+          title: '给专业人员的实操心法',
+          items: [
+            '过程永远比结果重要：让他搭积木，他没搭成。请记录他是怎么失败的，是手抖放不准、搭了两块就跑了，还是遇到困难直接把积木砸向你。失败的姿势，才是诊断的黄金线索。',
+            '灵活的“破冰”策略：不要像个没有感情的读题机器。如果孩子抗拒指令，请立刻把测验变成游戏。哪怕不按量表顺序，只要能引出他的真实反应，就是一次成功的评估。',
+            '寻找能力的“平替”：如果孩子不会指认卡片，但能精准地从玩具堆里挑出你说的汽车，请备注这一事实。我们要评估的是他的认知理解力，而不是死板的应试能力。',
+          ],
         },
         {
-          icon: '🔁',
-          title: 'Basal / Ceiling',
-          content: '某能区连续两个相邻月龄组全部通过后建立 basal，连续两个相邻月龄组全部不通过后建立 ceiling，系统会自动补齐更低/更高项目。',
-        },
-        {
-          icon: '📊',
-          title: '结果计算',
-          content: '系统会根据五个能区的通过权重计算能区智龄、总智龄（MA）和发育商（DQ），并按当前运行时阈值生成解释反馈。',
+          icon: '❤️',
+          title: '给家长的填表大实话',
+          items: [
+            '发育不是百米赛跑：看到量表上同龄孩子该会的技能，您的孩子还不会，您肯定会慌。但这份量表是为了帮我们确定接下来该在哪个高度给孩子递梯子，而不是宣判他“没救了”。',
+            '请做一台客观的“行车记录仪”：不要用“他很聪明，就是懒得做”来美化，也不要用“他什么都不懂”来全盘否定。请尽量用具体场景描述孩子的真实表现。',
+            '当好孩子的“安全岛”：测试时如果孩子大哭、发脾气，千万别在现场训斥他。您越放松，他呈现出的能力才越真实。',
+          ],
         },
       ],
-      footer: '请严格按儿童当下真实表现选择“通过 / 不通过”，不要为便于结束测查而跳过真实表现。',
+      reminder: {
+        icon: '⚠️',
+        title: '特别提醒',
+        content:
+          '本系统的发育评估结果仅供学校开展特殊教育教学支持参考，不能作为智力障碍等医学诊断依据。如发现显著发育迟缓，请前往正规儿童医院发育行为科进一步确诊。',
+      },
     }
   }
 
@@ -489,7 +512,7 @@ export class Cnbsr2016Driver extends BaseDriver {
 
   private buildOrderedQuestions(): Cnbsr2016QuestionData[] {
     return DOMAIN_ORDER.flatMap((domainCode) =>
-      CNBSR2016_QUESTIONS
+      SUPPORTED_CNBSR2016_QUESTIONS
         .filter((question) => question.domain === domainCode)
         .sort((left, right) => {
           if (left.ageGroupMonths !== right.ageGroupMonths) {

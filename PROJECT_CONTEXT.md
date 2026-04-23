@@ -1353,3 +1353,9 @@
 - 打包版 Electron 当前新增全局约束：`sql.js` runtime 与 wasm 必须通过 Vite `?url` 产物地址加载，不能再写死 `/sql-wasm.js` 或 `/sql-wasm.wasm`
 - 生产环境数据库初始化当前新增全局约束：`src/database/init.ts` 失败时必须直接抛错，不能静默降级到 `MockDatabase`
 - 原因：静默降级会把初始化故障伪装成登录失败，并导致新机器首次启动时不生成真实 `database.sqlite`
+
+## 44. 2026-04-23 Assessment Welcome Content Contract Update
+
+- 统一评估入口当前新增全局契约：`ScaleDriver.getWelcomeContent()` 应返回结构化 `WelcomeContent`，支持 `sections[].items[]` 与 `reminder`
+- 评估开始前弹窗文案当前以 `docs/references/评估量表温馨提示.md` 为事实来源；后续调整先改参考文档，再改对应 driver
+- `FMDA` 目录展示题量当前已修正为 `88项`；评分链路的题量真源仍为 `FINE_MOTOR_QUESTIONS.length`
