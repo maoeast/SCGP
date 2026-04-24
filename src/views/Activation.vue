@@ -9,8 +9,13 @@
       <!-- 机器码 - 放在首行最显眼位置 -->
       <div class="machine-code-section">
         <div class="machine-code-header">
-          <i class="fas fa-microchip"></i>
-          <h3>您的机器码</h3>
+          <span class="machine-code-badge">
+            <i class="fas fa-microchip"></i>
+          </span>
+          <div class="machine-code-header__text">
+            <h3>您的机器码</h3>
+            <p>请将机器码发送给软件供应商获取激活码</p>
+          </div>
         </div>
         <div class="machine-code-display">
           <code class="machine-code-text">{{ authStore.activationInfo.machineCode || '正在获取...' }}</code>
@@ -19,7 +24,7 @@
             复制
           </button>
         </div>
-        <p class="machine-code-hint">请将机器码发送给软件供应商获取激活码</p>
+        <p class="machine-code-hint">机器码与当前设备绑定，请发送给软件供应商获取对应激活码。</p>
       </div>
 
       <!-- 激活表单 -->
@@ -54,6 +59,15 @@
             <li>激活数据使用 RSA 数字签名加密存储</li>
             <li>请妥善保管您的激活码</li>
           </ul>
+        </div>
+
+        <div class="activation-contact">
+          <h4>联系我们</h4>
+          <p>杭州炫灿科技有限公司</p>
+          <p>
+            服务热线：
+            <a href="tel:057186087889">0571-86087889</a>
+          </p>
         </div>
       </div>
     </div>
@@ -273,62 +287,103 @@ const formatDate = (dateString: string) => {
 
 /* 机器码区域 - 放在最前面 */
 .machine-code-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
   padding: 24px;
-  border-radius: 12px;
+  border-radius: 16px;
   margin-bottom: 30px;
-  color: white;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  color: #21414a;
+  background: linear-gradient(180deg, #f7fbfb 0%, #eef4f2 100%);
+  border: 1px solid rgba(67, 112, 109, 0.14);
+  box-shadow: 0 16px 30px rgba(32, 74, 72, 0.08);
+  overflow: hidden;
+}
+
+.machine-code-section::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #2eb6a1 0%, #5ec2d6 48%, #f28f4b 100%);
 }
 
 .machine-code-header {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
-.machine-code-header i {
-  font-size: 24px;
+.machine-code-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(46, 182, 161, 0.18);
+  color: #258d81;
+  box-shadow: 0 8px 18px rgba(37, 141, 129, 0.1);
+}
+
+.machine-code-badge i {
+  font-size: 20px;
+}
+
+.machine-code-header__text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .machine-code-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
+  color: #21363d;
+}
+
+.machine-code-header__text p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #5b7074;
 }
 
 .machine-code-display {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 16px;
-  border-radius: 8px;
+  background: #ffffff;
+  padding: 16px 18px;
+  border-radius: 14px;
   margin-bottom: 12px;
-  backdrop-filter: blur(10px);
+  border: 1px solid rgba(83, 133, 130, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 
 .machine-code-text {
   flex: 1;
-  font-family: 'Courier New', monospace;
+  font-family: 'Consolas', 'Courier New', monospace;
   font-size: 20px;
   font-weight: 700;
-  color: #fff;
-  letter-spacing: 2px;
+  color: #2c4c56;
+  letter-spacing: 1.8px;
   word-break: break-all;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .copy-machine-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 20px;
-  background: white;
-  color: #667eea;
-  border: none;
-  border-radius: 6px;
+  padding: 11px 18px;
+  background: #ffffff;
+  color: #258d81;
+  border: 1px solid rgba(46, 182, 161, 0.28);
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -337,9 +392,10 @@ const formatDate = (dateString: string) => {
 }
 
 .copy-machine-btn:hover {
-  background: #f0f0f0;
+  background: #edf9f7;
+  border-color: rgba(37, 141, 129, 0.42);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 18px rgba(37, 141, 129, 0.12);
 }
 
 .copy-machine-btn:active {
@@ -349,8 +405,9 @@ const formatDate = (dateString: string) => {
 .machine-code-hint {
   margin: 0;
   font-size: 13px;
-  opacity: 0.9;
-  text-align: center;
+  line-height: 1.6;
+  color: #61767a;
+  text-align: left;
 }
 
 .activation-form {
@@ -529,6 +586,33 @@ const formatDate = (dateString: string) => {
   font-size: 18px;
 }
 
+.activation-contact {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(52, 86, 93, 0.12);
+}
+
+.activation-contact h4 {
+  margin: 0 0 10px;
+  color: #33484f;
+}
+
+.activation-contact p {
+  margin: 0;
+  color: #607277;
+  line-height: 1.7;
+}
+
+.activation-contact a {
+  color: #258d81;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.activation-contact a:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 480px) {
   .activation-card {
     padding: 30px 20px;
@@ -544,10 +628,15 @@ const formatDate = (dateString: string) => {
     align-items: stretch;
   }
 
+  .machine-code-header {
+    gap: 12px;
+  }
+
   .machine-code-text {
     font-size: 16px;
     text-align: center;
     margin-bottom: 12px;
+    letter-spacing: 1.2px;
   }
 
   .copy-machine-btn {

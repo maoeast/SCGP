@@ -30,6 +30,8 @@ export interface EntitlementsInfo {
 
 const DEV_MOCK_ALLOWED_MODULES = ['sensory', 'emotional', 'social', 'life_skills'] as const
 const BUSINESS_MODULE_CODES = ['sensory', 'emotional', 'social', 'cognitive', 'life_skills'] as const
+const ENABLE_DEV_ACTIVATION_BYPASS =
+  import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_ACTIVATION_BYPASS === 'true'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -169,7 +171,7 @@ export const useAuthStore = defineStore('auth', {
     // 检查激活状态
     async checkActivation(): Promise<void> {
       try {
-        if (import.meta.env.DEV) {
+        if (ENABLE_DEV_ACTIVATION_BYPASS) {
           this.activationInfo.machineCode = 'DEV-BYPASS'
           this.activationInfo.isActivated = true
           this.activationInfo.isInTrial = false

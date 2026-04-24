@@ -16,6 +16,8 @@ dist
 dist-ssr
 coverage
 *.local
+release/
+.tmp/
 
 # Editor directories and files
 .vscode/*

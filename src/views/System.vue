@@ -191,8 +191,7 @@
               <div class="scgp-section-heading">
                 <h4>更新当前机器授权</h4>
                 <p>
-                  增购模块后，可在此输入新的激活码。提交成功后会立即刷新当前机器的
-                  <code>allowedModules</code>，无需重装，也无需返回首次启动激活页。
+                  增购模块后，在此输入新的激活码，即可使用增购模块。
                 </p>
               </div>
 
@@ -267,13 +266,13 @@ const isDevMode = computed(() => {
 const loadPackageInfo = async () => {
   try {
     systemName.value = 'SCGP / 星愿能力发展平台'
-    systemVersion.value = '1.0.0'
-    copyright.value = '©2013-2026 杭州点燃科技有限公司'
+    systemVersion.value = window.electronAPI ? await window.electronAPI.getAppVersion() : '1.0.1'
+    copyright.value = '©2013-2026 杭州炫灿科技有限公司'
   } catch (error) {
     console.error('加载 package 信息失败:', error)
     systemName.value = 'SCGP / 星愿能力发展平台'
-    systemVersion.value = '1.0.0'
-    copyright.value = '©2013-2026 杭州点燃科技有限公司'
+    systemVersion.value = '1.0.1'
+    copyright.value = '©2013-2026 杭州炫灿科技有限公司'
   }
 }
 

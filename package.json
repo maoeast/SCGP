@@ -1,6 +1,6 @@
 {
   "name": "scgp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "main": "electron/main.mjs",
@@ -56,6 +56,19 @@
     ],
     "files": [
       "dist/**/*",
+      "!dist/worker-test.html",
+      "!dist/webgazer.js",
+      "!dist/public-key.pem",
+      "!dist/fontawesome-local.css",
+      "!dist/sql.js-loader.js",
+      "!dist/sql-wasm.js",
+      "!dist/sql-wasm.wasm",
+      "!dist/fontawesome/js/**/*",
+      "!dist/fontawesome/less/**/*",
+      "!dist/fontawesome/scss/**/*",
+      "!dist/fontawesome/metadata/**/*",
+      "!dist/fontawesome/sprites/**/*",
+      "!dist/fontawesome/svgs/**/*",
       "electron/**/*",
       "package.json"
     ],

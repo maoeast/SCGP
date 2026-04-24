@@ -1576,7 +1576,7 @@ async function insertInitialDataToDB(database: any, options: { tasks?: boolean; 
     database.run(`
       INSERT INTO system_config (key, value, description) VALUES
       ('system_name', '星愿能力发展训练系统', '系统名称'),
-      ('system_version', '1.0.0', '系统版本'),
+      ('system_version', '1.0.1', '系统版本'),
       ('login_theme_variant', 'classic-blue', '登录页主题预设'),
       ('theme_primary_color', '#4d8bbd', '登录页主色'),
       ('login_logo_path', '', '登录页 Logo'),
@@ -1642,7 +1642,7 @@ async function insertInitialData() {
     db.run(`
       INSERT INTO system_config (key, value, description) VALUES
       ('system_name', '星愿能力发展训练系统', '系统名称'),
-      ('system_version', '1.0.0', '系统版本'),
+      ('system_version', '1.0.1', '系统版本'),
       ('login_theme_variant', 'classic-blue', '登录页主题预设'),
       ('theme_primary_color', '#4d8bbd', '登录页主色'),
       ('login_logo_path', '', '登录页 Logo'),

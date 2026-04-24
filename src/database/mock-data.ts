@@ -126,7 +126,7 @@ const mockData: MockTableData = {
   weefim_assess_detail: [],
   system_config: [
     { id: 1, key: 'system_name', value: '星愿能力发展训练系统', description: '系统名称' },
-    { id: 2, key: 'system_version', value: '1.0.0', description: '系统版本' },
+    { id: 2, key: 'system_version', value: '1.0.1', description: '系统版本' },
     { id: 3, key: 'login_theme_variant', value: 'classic-blue', description: '登录页主题预设' },
     { id: 4, key: 'theme_primary_color', value: '#4d8bbd', description: '登录页主色' },
     { id: 5, key: 'login_logo_path', value: '', description: '登录页 Logo' },

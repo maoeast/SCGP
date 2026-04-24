@@ -239,7 +239,7 @@ const customBgFile = ref<File | null>(null)
 
 const settings = reactive({
   systemName: '星愿能力发展训练系统',
-  systemVersion: '1.0.0',
+  systemVersion: '1.0.1',
   schoolName: '',
   loginThemeVariant: 'warm-glow',
   themePrimaryColor: DEFAULT_LOGIN_PRIMARY_COLOR,
@@ -267,6 +267,10 @@ const originalThemeSnapshot = ref({
 
 const loadSettings = async () => {
   try {
+    settings.systemVersion = window.electronAPI
+      ? await window.electronAPI.getAppVersion()
+      : settings.systemVersion
+
     const db = await initDatabase()
 
     const configs = db.all(`
@@ -282,7 +286,9 @@ const loadSettings = async () => {
           settings.systemName = value
           break
         case 'system_version':
-          settings.systemVersion = value
+          if (!window.electronAPI) {
+            settings.systemVersion = value
+          }
           break
         case 'school_name':
           settings.schoolName = value
