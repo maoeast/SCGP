@@ -12,31 +12,28 @@
         <div class="scgp-content-toolbar assessment-category-toolbar">
           <div class="scgp-content-toolbar__main">
             <h2 class="scgp-content-toolbar__title">评估分类</h2>
-            <p class="scgp-content-toolbar__description">按业务方向切换量表入口，分类块只显示当前授权下的可用数量。</p>
+            <p class="scgp-content-toolbar__description">按业务方向切换量表入口，分类区仅显示当前授权下的可用数量。</p>
           </div>
           <div class="scgp-content-toolbar__actions">
             <span class="assessment-toolbar-tip">共 {{ totalAvailableScaleCount }} 项可用量表</span>
           </div>
         </div>
 
-        <div class="assessment-category-grid">
+        <div class="assessment-category-chips" role="group" aria-label="评估分类">
           <button
             v-for="tab in tabPanels"
             :key="tab.id"
             type="button"
-            class="assessment-category-tile"
+            class="assessment-category-chip"
             :class="{
               'is-active': activeTab === tab.id,
               'is-empty': tab.count === 0,
             }"
-            :style="getTabThemeStyle(tab.id)"
+            :aria-pressed="activeTab === tab.id"
             @click="handleTabSelect(tab.id)"
           >
-            <div class="assessment-category-tile__main">
-              <strong>{{ tab.label }}</strong>
-              <span>{{ tab.count === 0 ? '暂无可用量表' : `当前可用 ${tab.count} 项` }}</span>
-            </div>
-            <span class="assessment-category-tile__count">{{ tab.count }}</span>
+            <span class="assessment-category-chip__label">{{ tab.label }}</span>
+            <span class="assessment-category-chip__count">{{ tab.count }}</span>
           </button>
         </div>
       </section>
@@ -44,36 +41,36 @@
       <section class="assessment-selection-panel" :style="getTabThemeStyle(activePanel.id)">
         <div class="scgp-content-toolbar assessment-results-toolbar">
           <div class="scgp-content-toolbar__main">
-            <h2 class="scgp-content-toolbar__title">{{ activePanel.label }}</h2>
+            <div class="assessment-results-toolbar__heading">
+              <h2 class="scgp-content-toolbar__title">{{ activePanel.label }}</h2>
+              <span
+                class="assessment-results-chip"
+                title="仅显示当前账号已获授权的量表"
+              >
+                已按授权过滤
+              </span>
+            </div>
             <p class="scgp-content-toolbar__description">
               当前分类共 {{ activePanel.count }} 项可用量表，点击卡片即可进入学生选择并开始评估。
             </p>
           </div>
-          <div class="scgp-content-toolbar__actions">
-            <span class="assessment-results-chip">已按授权过滤</span>
-          </div>
         </div>
 
-        <section class="assessment-guidance">
-          <button
-            type="button"
-            class="assessment-guidance__toggle"
-            @click="isNoticeExpanded = !isNoticeExpanded"
-          >
-            <span class="assessment-guidance__icon">
-              <el-icon :size="18"><InfoFilled /></el-icon>
-            </span>
-            <span class="assessment-guidance__copy">
-              <strong>评估说明</strong>
-              <span>开始评估前先确认评估对象、场地状态和填写角色，避免把入口分类误当成评分依据。</span>
-            </span>
-            <span class="assessment-guidance__state">
-              {{ isNoticeExpanded ? '收起' : '展开说明' }}
-              <el-icon :size="14">
+        <section class="assessment-guidance" :class="{ 'is-expanded': isNoticeExpanded }">
+          <div class="assessment-guidance__summary">
+            <span class="assessment-guidance__dot" aria-hidden="true" />
+            <p>开始评估前先确认评估对象、场地状态和填写角色，避免把入口分类误当成评分依据。</p>
+            <button
+              type="button"
+              class="assessment-guidance__link"
+              @click="isNoticeExpanded = !isNoticeExpanded"
+            >
+              <span>{{ isNoticeExpanded ? '收起' : '展开' }}</span>
+              <el-icon :size="12">
                 <component :is="isNoticeExpanded ? ArrowUp : ArrowDown" />
               </el-icon>
-            </span>
-          </button>
+            </button>
+          </div>
 
           <ol v-if="isNoticeExpanded" class="assessment-guidance__list">
             <li>评估环境保持安静、舒适，尽量减少外界干扰。</li>
@@ -93,34 +90,42 @@
             @keydown.self="handleAssessmentCardKeydown($event, scale.code)"
           >
             <div class="assessment-card__header">
-              <div class="assessment-card__identity">
-                <span class="assessment-card__icon">
-                  <el-icon :size="18">
-                    <component :is="scale.icon" />
-                  </el-icon>
-                </span>
-                <div class="assessment-card__titles">
-                  <div class="assessment-card__title-row">
-                    <h3>{{ scale.title }}</h3>
-                    <p class="assessment-card__subtitle">{{ scale.subtitle }}</p>
-                  </div>
+              <span class="assessment-card__icon">
+                <el-icon :size="18">
+                  <component :is="scale.icon" />
+                </el-icon>
+              </span>
 
-                  <div class="assessment-card__meta">
-                    <span class="assessment-card__badge">适用 {{ scale.ageRange }}</span>
-                    <span class="assessment-card__badge">题量 {{ scale.questionCount }}</span>
-                  </div>
+              <div class="assessment-card__content">
+                <div class="assessment-card__title-row">
+                  <h3>{{ scale.title }}</h3>
+                  <p class="assessment-card__subtitle">{{ scale.subtitle }}</p>
+                </div>
+
+                <div class="assessment-card__meta" role="list" aria-label="量表摘要信息">
+                  <span
+                    v-for="item in getScaleMetaItems(scale)"
+                    :key="item.key"
+                    class="assessment-card__meta-item"
+                    role="listitem"
+                  >
+                    <span class="assessment-card__meta-label">{{ item.label }}</span>
+                    <span class="assessment-card__meta-value">{{ item.value }}</span>
+                  </span>
                 </div>
               </div>
-
-              <span class="assessment-card__time">{{ scale.timeEstimate }}</span>
             </div>
 
             <p class="assessment-card__dimension">{{ scale.dimensions }}</p>
 
             <div class="assessment-card__footer">
-              <el-button type="primary" class="assessment-card__action" @click.stop="selectScale(scale.code)">
+              <button
+                type="button"
+                class="assessment-card__action"
+                @click.stop="selectScale(scale.code)"
+              >
                 开始评估
-              </el-button>
+              </button>
             </div>
           </article>
         </div>
@@ -136,7 +141,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowDown, ArrowUp, InfoFilled } from '@element-plus/icons-vue'
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import {
   ASSESSMENT_TABS,
   getDefaultAssessmentTab,
@@ -162,6 +167,12 @@ interface AssessmentTabTheme {
   accent: string
   soft: string
   border: string
+}
+
+interface AssessmentScaleMetaItem {
+  key: 'age' | 'questions' | 'duration'
+  label: string
+  value: string
 }
 
 const TAB_THEME_MAP: Record<TrainingEntryCode, AssessmentTabTheme> = {
@@ -204,7 +215,7 @@ const activeTab = ref<TrainingEntryCode>(
   getDefaultAssessmentTab((moduleCode) => authStore.hasModuleAccess(moduleCode))
 )
 const hasUserSelectedTab = ref(false)
-const isNoticeExpanded = ref(true)
+const isNoticeExpanded = ref(false)
 
 const tabPanels = computed<AssessmentTabPanel[]>(() =>
   ASSESSMENT_TABS.map((tab) => {
@@ -278,13 +289,25 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
     '--assessment-accent-border': theme.border,
   }
 }
+
+function normalizeScaleMetaValue(value: string | null | undefined): string {
+  return typeof value === 'string' && value.trim().length > 0 ? value : '—'
+}
+
+function getScaleMetaItems(scale: AssessmentScaleCatalogItem): AssessmentScaleMetaItem[] {
+  return [
+    { key: 'age', label: '年龄', value: normalizeScaleMetaValue(scale.ageRange) },
+    { key: 'questions', label: '题量', value: normalizeScaleMetaValue(scale.questionCount) },
+    { key: 'duration', label: '时长', value: normalizeScaleMetaValue(scale.timeEstimate) },
+  ]
+}
 </script>
 
 <style scoped>
 .assessment-select-panel {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 18px;
 }
 
 .assessment-category-panel,
@@ -322,7 +345,7 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
 
 .assessment-results-toolbar {
   padding-top: 22px;
-  padding-bottom: 18px;
+  padding-bottom: 14px;
 }
 
 .assessment-results-toolbar .scgp-content-toolbar__title {
@@ -335,8 +358,14 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
   font-size: 14px;
 }
 
-.assessment-toolbar-tip,
-.assessment-results-chip {
+.assessment-results-toolbar__heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.assessment-toolbar-tip {
   display: inline-flex;
   align-items: center;
   min-height: 30px;
@@ -349,161 +378,148 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
   font-weight: 600;
 }
 
-.assessment-category-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  padding: 18px 22px 22px;
-}
-
-.assessment-category-tile {
-  display: flex;
+.assessment-results-chip {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: 96px;
-  padding: 18px;
-  border: 1px solid #e1e8f1;
-  border-radius: 18px;
-  background: #fff;
-  color: #303133;
-  text-align: left;
-  cursor: pointer;
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
-}
-
-.assessment-category-tile:hover {
-  transform: translateY(-2px);
-  border-color: var(--assessment-accent-border);
-  box-shadow: 0 14px 28px rgba(143, 169, 204, 0.16);
-}
-
-.assessment-category-tile.is-active {
-  border-color: #a8c6f8;
-  background: linear-gradient(180deg, #edf4ff 0%, #deebff 100%);
-  box-shadow: 0 16px 30px rgba(95, 137, 217, 0.18);
-}
-
-.assessment-category-tile.is-empty {
-  opacity: 0.78;
-}
-
-.assessment-category-tile__main {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.assessment-category-tile__main strong {
-  color: #223246;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.assessment-category-tile__main span {
-  color: #66768a;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
   font-size: 12px;
-  line-height: 1.5;
+  font-weight: 600;
 }
 
-.assessment-category-tile.is-active .assessment-category-tile__main strong,
-.assessment-category-tile.is-active .assessment-category-tile__count {
-  color: #2f5fb4;
+.assessment-category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 22px 22px;
 }
 
-.assessment-category-tile.is-active .assessment-category-tile__main span {
-  color: #5b75a2;
+.assessment-category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 0 8px 0 14px;
+  border: 1px solid #d7e0eb;
+  border-radius: 999px;
+  background: #fff;
+  color: #5f6f84;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.assessment-category-tile__count {
+.assessment-category-chip:hover {
+  border-color: #b8c6d8;
+  color: #32455e;
+}
+
+.assessment-category-chip:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 3px;
+}
+
+.assessment-category-chip.is-active {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.12);
+}
+
+.assessment-category-chip.is-empty {
+  opacity: 0.74;
+}
+
+.assessment-category-chip__label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.assessment-category-chip__count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 38px;
-  height: 38px;
-  padding: 0 10px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
   border-radius: 999px;
-  background: rgba(248, 251, 255, 0.95);
-  color: #51627b;
-  font-size: 14px;
+  background: #f3f6fa;
+  color: inherit;
+  font-size: 12px;
   font-weight: 700;
 }
 
-.assessment-category-tile.is-active .assessment-category-tile__count {
-  border: 1px solid rgba(168, 198, 248, 0.88);
-  background: rgba(255, 255, 255, 0.94);
+.assessment-category-chip.is-active .assessment-category-chip__count {
+  border: 1px solid #bfdbfe;
+  background: #fff;
 }
 
 .assessment-guidance {
-  margin: 0 22px 18px;
-  border: 1px solid #dbe6f6;
-  border-radius: 20px;
-  background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  margin: 0 22px 14px;
+  padding: 0;
 }
 
-.assessment-guidance__toggle {
-  width: 100%;
+.assessment-guidance__summary {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
+  gap: 10px;
+  min-height: 32px;
+  padding: 4px 0;
+}
+
+.assessment-guidance__summary p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: #5c6d84;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.assessment-guidance__dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: #3b82f6;
+}
+
+.assessment-guidance__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 0;
   border: 0;
   background: transparent;
-  color: inherit;
-  text-align: left;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.assessment-guidance__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  border-radius: 12px;
-  background: #e2edff;
-  color: #3f68c7;
+.assessment-guidance__link:hover {
+  color: #1d4ed8;
 }
 
-.assessment-guidance__copy {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.assessment-guidance__copy strong {
-  color: #223246;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.assessment-guidance__copy span {
-  color: #5c6d84;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.assessment-guidance__state {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  color: #4b67a0;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
+.assessment-guidance__link:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
 .assessment-guidance__list {
   margin: 0;
-  padding: 0 22px 18px 68px;
+  padding: 2px 0 0 20px;
   color: #55667d;
   font-size: 13px;
-  line-height: 1.8;
+  line-height: 1.7;
 }
 
 .assessment-guidance__list li + li {
@@ -514,13 +530,13 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-  padding: 18px 22px 22px;
+  padding: 0 22px 22px;
 }
 
 .assessment-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   min-height: 0;
   padding: 18px;
   border: 1px solid #dfe7f1;
@@ -546,14 +562,14 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
 .assessment-card__header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 12px;
 }
 
-.assessment-card__identity {
+.assessment-card__content {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -570,13 +586,6 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
   color: var(--assessment-accent);
 }
 
-.assessment-card__titles {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-}
-
 .assessment-card__title-row {
   display: flex;
   align-items: baseline;
@@ -584,7 +593,7 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
   flex-wrap: wrap;
 }
 
-.assessment-card__titles h3 {
+.assessment-card__title-row h3 {
   margin: 0;
   color: #243449;
   font-size: 17px;
@@ -597,38 +606,42 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
   color: #6c7a90;
   font-size: 13px;
   line-height: 1.5;
-  white-space: nowrap;
-}
-
-.assessment-card__time {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: #f7f9fc;
-  color: #617186;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 .assessment-card__meta {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  align-items: stretch;
+  border: 1px solid #e3eaf3;
+  border-radius: 14px;
+  background: #fbfcfe;
+  overflow: hidden;
 }
 
-.assessment-card__badge {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(221, 229, 239, 0.96);
-  background: #fff;
+.assessment-card__meta-item {
+  min-width: 0;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 9px 12px;
+}
+
+.assessment-card__meta-item + .assessment-card__meta-item {
+  border-left: 0.5px solid #d9e2ec;
+}
+
+.assessment-card__meta-label {
+  color: #8a97aa;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.assessment-card__meta-value {
   color: #5f6f84;
   font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .assessment-card__dimension {
@@ -649,20 +662,41 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
 }
 
 .assessment-card__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid #bfdbfe;
   border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease, color 0.18s ease;
+}
+
+.assessment-card__action:hover {
+  border-color: #93c5fd;
+  background: #dbeafe;
+}
+
+.assessment-card__action:active {
+  transform: scale(0.99);
+}
+
+.assessment-card__action:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
 }
 
 .assessment-empty-panel {
-  margin: 18px 22px 22px;
+  margin: 0 22px 22px;
 }
 
 @media (max-width: 1200px) {
-  .assessment-category-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .assessment-card-grid {
     grid-template-columns: 1fr;
   }
@@ -678,7 +712,7 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
     padding: 18px 18px 14px;
   }
 
-  .assessment-category-grid,
+  .assessment-category-chips,
   .assessment-card-grid {
     padding-left: 18px;
     padding-right: 18px;
@@ -689,34 +723,34 @@ function getTabThemeStyle(tabId: TrainingEntryCode): Record<string, string> {
     margin-right: 18px;
   }
 
-  .assessment-guidance__toggle {
+  .assessment-results-toolbar__heading {
+    align-items: flex-start;
+  }
+
+  .assessment-guidance__summary {
     align-items: flex-start;
     flex-wrap: wrap;
   }
 
-  .assessment-guidance__state {
-    margin-left: 52px;
+  .assessment-guidance__link {
+    margin-left: 16px;
   }
 
   .assessment-guidance__list {
-    padding: 0 18px 18px 36px;
-  }
-
-  .assessment-category-grid {
-    grid-template-columns: 1fr;
+    padding-left: 18px;
   }
 
   .assessment-card {
     min-height: 0;
   }
 
-  .assessment-card__header,
-  .assessment-card__footer {
+  .assessment-card__header {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .assessment-card__action {
+  .assessment-card__content,
+  .assessment-card__meta {
     width: 100%;
   }
 }

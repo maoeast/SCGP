@@ -131,19 +131,54 @@ function lerpScores(current: EmotionScores, target: EmotionScores, factor: numbe
   }
 }
 
+function resolveDetectorAssetUrl(assetPath: string): string {
+  if (/^(https?:|file:|blob:|data:)/i.test(assetPath)) {
+    return assetPath
+  }
+
+  const cleanPath = assetPath.replace(/^\/+/, '')
+  const basePath = import.meta.env.BASE_URL || '/'
+  const normalizedBase = basePath.endsWith('/') ? basePath : `${basePath}/`
+  return new URL(`${normalizedBase}${cleanPath}`, window.location.href).toString()
+}
+
+function ensureTrailingSlash(url: string): string {
+  return url.endsWith('/') ? url : `${url}/`
+}
+
+function formatDetectorInitError(err: unknown): string {
+  if (err instanceof Error) {
+    return err.message
+  }
+
+  if (typeof Event !== 'undefined' && err instanceof Event) {
+    const eventTarget = err.target as { src?: string } | null
+    if (eventTarget?.src) {
+      return `资源加载失败: ${eventTarget.src}`
+    }
+
+    return `资源加载失败: ${err.type || '未知事件'}`
+  }
+
+  return String(err)
+}
+
 // ---------------------------------------------------------------------------
 // Composable
 // ---------------------------------------------------------------------------
 
 export function useEmotionDetector(options: EmotionDetectorOptions = {}): EmotionDetectorReturn {
   const {
-    modelAssetPath = '/models/face_landmarker.task',
-    wasmBasePath = '/models/wasm',
+    modelAssetPath: rawModelAssetPath = '/models/face_landmarker.task',
+    wasmBasePath: rawWasmBasePath = '/models/wasm',
     delegate = 'GPU',
     smoothingFactor = 0.35,
     minFaceDetectionConfidence = 0.5,
     calibrationFrames = 30,
   } = options
+
+  const modelAssetPath = resolveDetectorAssetUrl(rawModelAssetPath)
+  const wasmBasePath = ensureTrailingSlash(resolveDetectorAssetUrl(rawWasmBasePath))
 
   // Reactive state
   const isReady = ref(false)
@@ -177,6 +212,7 @@ export function useEmotionDetector(options: EmotionDetectorOptions = {}): Emotio
     }
 
     videoElement = video
+    initError.value = null
 
     try {
       const vision = await FilesetResolver.forVisionTasks(wasmBasePath)
@@ -197,7 +233,7 @@ export function useEmotionDetector(options: EmotionDetectorOptions = {}): Emotio
       running = true
       detectLoop()
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
+      const message = formatDetectorInitError(err)
       initError.value = `MediaPipe 初始化失败: ${message}`
       console.error('[useEmotionDetector] Init failed:', err)
     }
@@ -373,6 +409,7 @@ export function useEmotionDetector(options: EmotionDetectorOptions = {}): Emotio
     calibrationProgress.value = 0
     calibrationSamples = []
     lastTimestamp = -1
+    initError.value = null
   }
 
   return {
