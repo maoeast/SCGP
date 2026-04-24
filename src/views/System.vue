@@ -36,7 +36,9 @@
                 <el-button type="primary" :loading="isBackingUp" @click="handleBackup">
                   {{ isBackingUp ? '备份中...' : '立即备份' }}
                 </el-button>
-                <p class="system-help-text">备份文件覆盖当前数据库中的班级、分班、计划、报告、训练记录、资源与系统配置。</p>
+                <p class="system-help-text">
+                  备份文件覆盖当前数据库中的班级、分班、计划、报告、训练记录、资源与系统配置。
+                </p>
               </div>
             </section>
 
@@ -52,8 +54,8 @@
                     ref="fileInput"
                     type="file"
                     accept=".dat"
-                    @change="handleFileSelect"
                     style="display: none"
+                    @change="handleFileSelect"
                   />
                   <el-button plain @click="triggerFileSelect">选择备份文件</el-button>
                   <span v-if="selectedFile" class="system-file-name">{{ selectedFile.name }}</span>
@@ -122,7 +124,7 @@
             <section class="system-card scgp-surface">
               <div class="scgp-section-heading">
                 <h3>软件更新</h3>
-                <p>检查当前版本状态并在可用时安装应用更新。</p>
+                <p>检查当前版本状态，并在可用时安装应用更新。</p>
               </div>
               <div class="system-card__body">
                 <UpdatePanel />
@@ -137,14 +139,21 @@
           <div class="scgp-content-toolbar">
             <div class="scgp-content-toolbar__main">
               <h2 class="scgp-content-toolbar__title">关于系统</h2>
-              <p class="scgp-content-toolbar__description">查看当前安装信息、激活状态与设备机器码。</p>
+              <p class="scgp-content-toolbar__description">
+                查看当前安装信息、激活状态、授权模块与设备机器码。
+              </p>
             </div>
           </div>
 
           <section class="system-card scgp-surface system-about-card">
             <div class="system-about-card__header">
               <h3>{{ systemName }}</h3>
-              <el-button plain @click="copyMachineCode">复制机器码</el-button>
+              <div class="system-about-card__actions">
+                <el-button plain @click="copyMachineCode">复制机器码</el-button>
+                <el-button plain type="primary" @click="toggleActivationRefresh">
+                  {{ showActivationRefresh ? '收起授权更新' : '重新激活 / 更新授权' }}
+                </el-button>
+              </div>
             </div>
 
             <dl class="system-about-list">
@@ -157,10 +166,58 @@
                 <dd>{{ activationStatus }}</dd>
               </div>
               <div class="system-about-list__row">
+                <dt>授权模块</dt>
+                <dd>
+                  <div v-if="allowedModuleLabels.length" class="system-module-tags">
+                    <el-tag
+                      v-for="moduleItem in allowedModuleLabels"
+                      :key="moduleItem.code"
+                      size="small"
+                      effect="light"
+                    >
+                      {{ moduleItem.label }}
+                    </el-tag>
+                  </div>
+                  <span v-else class="system-about-empty">当前授权未包含业务模块</span>
+                </dd>
+              </div>
+              <div class="system-about-list__row">
                 <dt>机器码</dt>
                 <dd class="system-about-list__value">{{ machineCode }}</dd>
               </div>
             </dl>
+
+            <section v-if="showActivationRefresh" class="system-license-panel">
+              <div class="scgp-section-heading">
+                <h4>更新当前机器授权</h4>
+                <p>
+                  增购模块后，可在此输入新的激活码。提交成功后会立即刷新当前机器的
+                  <code>allowedModules</code>，无需重装，也无需返回首次启动激活页。
+                </p>
+              </div>
+
+              <div class="system-license-panel__form">
+                <el-input
+                  v-model="activationCodeInput"
+                  clearable
+                  placeholder="请输入新的激活码，例如 SPED-XXXX-XXXX..."
+                  @keyup.enter="handleActivationRefresh"
+                />
+
+                <div class="system-license-panel__actions">
+                  <el-button @click="pasteActivationCode">粘贴激活码</el-button>
+                  <el-button plain @click="closeActivationRefresh">取消</el-button>
+                  <el-button
+                    type="primary"
+                    :loading="isRefreshingActivation"
+                    :disabled="!trimmedActivationCode"
+                    @click="handleActivationRefresh"
+                  >
+                    {{ isRefreshingActivation ? '授权刷新中...' : '提交并刷新授权' }}
+                  </el-button>
+                </div>
+              </div>
+            </section>
 
             <p class="system-about-card__copyright">{{ copyright }}</p>
           </section>
@@ -175,6 +232,7 @@ import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { backupManager } from '@/utils/backup'
+import { getTrainingPlanModuleLabel } from '@/utils/training-plan-module'
 import UserManagement from './system/UserManagement.vue'
 import SystemSettings from './system/SystemSettings.vue'
 import UpdatePanel from './updates/UpdatePanel.vue'
@@ -194,6 +252,10 @@ const systemVersion = ref('')
 const copyright = ref('')
 
 const isClearing = ref(false)
+const showActivationRefresh = ref(false)
+const activationCodeInput = ref('')
+const isRefreshingActivation = ref(false)
+
 const isDevMode = computed(() => {
   return (
     import.meta.env.DEV ||
@@ -204,25 +266,35 @@ const isDevMode = computed(() => {
 
 const loadPackageInfo = async () => {
   try {
-    systemName.value = '感官综合训练与评估'
+    systemName.value = 'SCGP / 星愿能力发展平台'
     systemVersion.value = '1.0.0'
-    copyright.value = '©2013-2026 杭州炫灿科技有限公司'
+    copyright.value = '©2013-2026 杭州点燃科技有限公司'
   } catch (error) {
-    console.error('加载 package.json 失败:', error)
-    systemName.value = '感官综合训练与评估'
+    console.error('加载 package 信息失败:', error)
+    systemName.value = 'SCGP / 星愿能力发展平台'
     systemVersion.value = '1.0.0'
-    copyright.value = '©2013-2026 杭州炫灿科技有限公司'
+    copyright.value = '©2013-2026 杭州点燃科技有限公司'
   }
 }
 
 const activationStatus = computed(() => {
   if (authStore.activationInfo.isActivated) {
-    return authStore.activationInfo.isInTrial ? '试用期内' : '已激活'
+    return '已激活'
+  }
+  if (authStore.activationInfo.isInTrial) {
+    return '试用期内'
   }
   return '未激活'
 })
 
 const machineCode = computed(() => authStore.activationInfo.machineCode)
+const trimmedActivationCode = computed(() => activationCodeInput.value.trim())
+const allowedModuleLabels = computed(() =>
+  authStore.allowedModules.map((moduleCode) => ({
+    code: moduleCode,
+    label: getTrainingPlanModuleLabel(moduleCode),
+  })),
+)
 
 const handleBackup = async () => {
   try {
@@ -262,9 +334,13 @@ const handleFileSelect = async (event: Event) => {
 }
 
 const handleRestore = async () => {
-  if (!selectedFile.value) return
+  if (!selectedFile.value) {
+    return
+  }
 
-  if (!confirm('恢复数据将覆盖当前所有数据，确定继续吗？')) return
+  if (!confirm('恢复数据将覆盖当前所有数据，确定继续吗？')) {
+    return
+  }
 
   try {
     isRestoring.value = true
@@ -275,7 +351,7 @@ const handleRestore = async () => {
     backupInfo.value = null
   } catch (error) {
     console.error('恢复失败:', error)
-    ElMessage.error('恢复失败：' + (error as Error).message)
+    ElMessage.error(`恢复失败：${(error as Error).message}`)
   } finally {
     isRestoring.value = false
   }
@@ -291,6 +367,66 @@ const copyMachineCode = async () => {
   }
 }
 
+const closeActivationRefresh = () => {
+  showActivationRefresh.value = false
+  activationCodeInput.value = ''
+}
+
+const toggleActivationRefresh = () => {
+  if (showActivationRefresh.value) {
+    closeActivationRefresh()
+    return
+  }
+
+  showActivationRefresh.value = true
+}
+
+const pasteActivationCode = async () => {
+  try {
+    const clipboardText = await navigator.clipboard.readText()
+    activationCodeInput.value = clipboardText.trim()
+    ElMessage.success('激活码已粘贴')
+  } catch (error) {
+    console.error('粘贴激活码失败:', error)
+    ElMessage.error('粘贴失败，请手动输入新的激活码')
+  }
+}
+
+const handleActivationRefresh = async () => {
+  if (!trimmedActivationCode.value) {
+    ElMessage.warning('请输入新的激活码')
+    return
+  }
+
+  try {
+    isRefreshingActivation.value = true
+
+    const result = await authStore.validateActivationCodeWithMessage(trimmedActivationCode.value)
+    if (!result.success) {
+      ElMessage.error(result.message)
+      return
+    }
+
+    await authStore.checkActivation()
+
+    const refreshedModules = authStore.allowedModules
+      .map((moduleCode) => getTrainingPlanModuleLabel(moduleCode))
+      .join('、')
+
+    closeActivationRefresh()
+    ElMessage.success(
+      refreshedModules
+        ? `授权已更新，当前可用模块：${refreshedModules}`
+        : '授权已更新，当前机器未授予业务模块',
+    )
+  } catch (error) {
+    console.error('刷新授权失败:', error)
+    ElMessage.error(error instanceof Error ? error.message : '刷新授权失败，请重试')
+  } finally {
+    isRefreshingActivation.value = false
+  }
+}
+
 const handleClearAllData = async () => {
   try {
     await ElMessageBox.confirm(
@@ -300,7 +436,7 @@ const handleClearAllData = async () => {
         '• 所有训练计划和记录\n' +
         '• 所有用户数据（保留默认管理员）\n' +
         '• 所有资源文件引用\n\n' +
-        '系统将重新初始化，此操作不可撤销！',
+        '系统将重新初始化，此操作不可撤销。',
       '⚠️ 危险操作警告',
       {
         confirmButtonText: '确定',
@@ -331,8 +467,7 @@ const handleClearAllData = async () => {
 
     sessionStorage.setItem('__CLEAR_ALL_DATA__', 'true')
 
-    console.log('✅ 用户确认清空，准备重新加载页面...')
-
+    console.log('用户确认清空，准备重新加载页面...')
     window.location.reload()
   } catch (error) {
     if ((error as any) !== 'cancel' && (error as any)?.message !== 'cancel') {
@@ -341,8 +476,9 @@ const handleClearAllData = async () => {
   }
 }
 
-onMounted(() => {
-  loadPackageInfo()
+onMounted(async () => {
+  await loadPackageInfo()
+  await authStore.checkActivation()
 })
 </script>
 
@@ -462,6 +598,13 @@ onMounted(() => {
   font-size: 18px;
 }
 
+.system-about-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .system-about-list {
   margin: 0;
 }
@@ -493,6 +636,47 @@ onMounted(() => {
   word-break: break-all;
 }
 
+.system-about-empty {
+  color: var(--scgp-muted);
+}
+
+.system-module-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.system-license-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid rgba(217, 226, 238, 0.9);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(247, 249, 252, 0.95), rgba(255, 255, 255, 0.96));
+}
+
+.system-license-panel :deep(code) {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.06);
+  font-size: 12px;
+}
+
+.system-license-panel__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.system-license-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .system-about-card__copyright {
   margin: 18px 0 0;
   padding-top: 16px;
@@ -522,9 +706,17 @@ onMounted(() => {
     align-items: stretch;
   }
 
+  .system-about-card__actions {
+    justify-content: stretch;
+  }
+
   .system-about-list__row {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+
+  .system-license-panel__actions {
+    justify-content: stretch;
   }
 }
 </style>

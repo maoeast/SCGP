@@ -210,6 +210,9 @@ export const useAuthStore = defineStore('auth', {
         this.activationInfo.isActivated = activation.isActivated && !activation.isTrial
         this.activationInfo.isInTrial = isTrialActive
         this.activationInfo.trialEnd = activation.trialEnd
+        this.activationInfo.expiresAt = activation.expiresAt
+        this.activationInfo.trialDays = 0
+        this.activationInfo.trialUsed = 0
 
         if (activation.isTrial && activation.trialEnd) {
           const trialStart = new Date(activation.trialStart || '')
@@ -224,10 +227,6 @@ export const useAuthStore = defineStore('auth', {
 
           this.activationInfo.trialDays = totalDays
           this.activationInfo.trialUsed = Math.min(usedDays, totalDays)
-        }
-
-        if (activation.expiresAt) {
-          this.activationInfo.expiresAt = activation.expiresAt
         }
 
         const allowedModules = Array.isArray(activation.allowedModules)
@@ -264,9 +263,10 @@ export const useAuthStore = defineStore('auth', {
     async validateActivationCode(code: string): Promise<boolean> {
       try {
         const { activationManager } = await import('@/utils/activation-manager')
+        const normalizedCode = code.trim()
 
         // 验证激活码
-        const result = await activationManager.validateActivationCode(code)
+        const result = await activationManager.validateActivationCode(normalizedCode)
 
         if (result.success) {
           // 重新检查激活状态
@@ -286,9 +286,10 @@ export const useAuthStore = defineStore('auth', {
     async validateActivationCodeWithMessage(code: string): Promise<{ success: boolean; message: string }> {
       try {
         const { activationManager } = await import('@/utils/activation-manager')
+        const normalizedCode = code.trim()
 
         // 验证激活码
-        const result = await activationManager.validateActivationCode(code)
+        const result = await activationManager.validateActivationCode(normalizedCode)
 
         if (result.success) {
           // 重新检查激活状态
