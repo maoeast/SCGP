@@ -1288,8 +1288,8 @@ router.beforeEach(async (to, from, next) => {
     }
 
     // 检查软件激活状态（除激活页面外）
-    // 只有在完全未激活（不在试用期内）才跳转到激活页面
-    if (to.name !== 'Activation' && !authStore.isActivated && !authStore.activationInfo.isInTrial) {
+    // 生产环境下只要未正式激活，就必须先进入激活页
+    if (to.name !== 'Activation' && !authStore.isActivated) {
       next('/activation')
       return
     }
@@ -1307,14 +1307,14 @@ router.beforeEach(async (to, from, next) => {
   } else {
     // 不需要登录的页面（登录页、激活页）
 
-    // 已激活或仍在试用期内时，不应再进入激活页，避免启动时短暂闪出“软件未激活”
-    if (to.name === 'Activation' && (authStore.isActivated || authStore.activationInfo.isInTrial)) {
+    // 只有正式激活后，才跳过激活页
+    if (to.name === 'Activation' && authStore.isActivated) {
       next(authStore.isLoggedIn ? '/dashboard' : '/login')
       return
     }
 
-    // 如果访问登录页面但完全未激活（不在试用期内），跳转到激活页面
-    if (to.name === 'Login' && !authStore.isActivated && !authStore.activationInfo.isInTrial) {
+    // 如果访问登录页面但尚未正式激活，跳转到激活页面
+    if (to.name === 'Login' && !authStore.isActivated) {
       next('/activation')
       return
     }

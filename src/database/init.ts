@@ -454,7 +454,6 @@ CREATE TABLE IF NOT EXISTS report_record (
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id),
-  FOREIGN KEY (assess_id) REFERENCES sm_assess(id),
   FOREIGN KEY (plan_id) REFERENCES train_plan(id),
   FOREIGN KEY (training_record_id) REFERENCES training_records(id)
 );
@@ -2598,7 +2597,7 @@ export async function importDatabase(data: Uint8Array): Promise<void> {
 
 /**
  * 手动迁移 report_record 表约束
- * 添加对 conners-psq 和 conners-trs 类型的支持
+ * 同步支持最新 report_type，并移除错误的 assess_id -> sm_assess 外键
  */
 export async function migrateReportRecordConstraintsManually(): Promise<{ success: boolean; message: string }> {
   const { migrateReportRecordConstraints, needsMigration } = await import('./migrate-report-constraints')

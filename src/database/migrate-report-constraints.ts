@@ -1,6 +1,6 @@
 /**
  * 数据库迁移脚本
- * 更新 report_record 表的 CHECK 约束，补齐当前支持的评估报告类型
+ * 更新 report_record 表的 CHECK 约束，并移除错误的 assess_id -> sm_assess 外键
  */
 
 import { getDatabase } from './init'
@@ -70,7 +70,6 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (student_id) REFERENCES student(id),
-        FOREIGN KEY (assess_id) REFERENCES sm_assess(id),
         FOREIGN KEY (plan_id) REFERENCES train_plan(id),
         FOREIGN KEY (training_record_id) REFERENCES training_records(id)
       )
@@ -179,7 +178,7 @@ export function needsMigration(): boolean {
     // results[0].values 是二维数组，取第一行第一列
     const sql = results[0].values[0][0] as string
 
-    // 检查约束是否包含当前所需的评估报告类型
+    // 检查约束是否包含当前所需的评估报告类型，并且不再保留错误的 assess_id 外键。
     return !sql.includes("'conners-psq'")
       || !sql.includes("'conners-trs'")
       || !sql.includes("'sdq'")
@@ -190,6 +189,7 @@ export function needsMigration(): boolean {
       || !sql.includes("'cnbsr2016'")
       || !sql.includes("'gmfm_88'")
       || !sql.includes("'tgmd_3'")
+      || sql.includes('FOREIGN KEY (assess_id) REFERENCES sm_assess(id)')
   } catch (error) {
     // 如果查询失败，保守地认为不需要迁移
     console.warn('[needsMigration] 检查约束失败，跳过迁移:', error)

@@ -171,7 +171,6 @@ function migrateReportRecord(db: any): number {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (student_id) REFERENCES student(id),
-      FOREIGN KEY (assess_id) REFERENCES sm_assess(id),
       FOREIGN KEY (plan_id) REFERENCES train_plan(id),
       FOREIGN KEY (training_record_id) REFERENCES training_records(id)
     )
