@@ -2462,25 +2462,10 @@ export function initImportedResources(db: any): void {
   console.log(`✅ 成功插入 ${importedResources.length} 条资源数据`)
 }
 
-// 初始化资源数据（主入口函数）
+// 初始化资源数据
 export function initResourceData(db: any): void {
   console.log('[resource-data] legacy teaching-material seed disabled')
   void db
-  return
-  console.log('开始初始化资源数据...')
-
-  // 先初始化导入的资源数据（211条）
-  initImportedResources(db)
-  console.log('已初始化导入的资源数据（211条）')
-
-  // 可选：初始化示例资源（仅当数据库为空时）
-  // const checkResult = db.exec('SELECT COUNT(*) as count FROM resource_meta')
-  // if (checkResult.length > 0 && checkResult[0].values[0][0] === 0) {
-  //   initSampleResources(db)
-  //   console.log('已初始化示例资源数据')
-  // }
-
-  console.log('资源数据初始化完成')
 }
 
 // 初始化示例资源数据

@@ -128,6 +128,19 @@ const isElectron = !!processRef?.type
 // 开发环境下也可以通过检查是否有 electronAPI 来判断
 const isElectronEnv = !!(window as any).electronAPI || isElectron
 
+const devOnlyRouteNames = new Set([
+  'SQLTest',
+  'WeeFIMTest',
+  'WorkerTest',
+  'SchemaMigration',
+  'MigrationVerification',
+  'ModuleDevTools',
+  'BenchmarkRunner',
+  'ClassManagementTest',
+  'ClassSnapshotVerification',
+  'ClassSnapshotTestLite',
+])
+
 function normalizeAssessmentScaleRouteValue(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value[0]
@@ -1217,6 +1230,12 @@ router.beforeEach(async (to, from, next) => {
 
   const authStore = useAuthStore()
 
+  if (!import.meta.env.DEV && typeof to.name === 'string' && devOnlyRouteNames.has(to.name)) {
+    ElMessage.warning('当前版本不开放调试或测试路由')
+    next('/dashboard')
+    return
+  }
+
   const resolveModuleCode = () => {
     const fromMeta = typeof to.meta.moduleCode === 'string' ? to.meta.moduleCode : ''
     if (fromMeta) return fromMeta
@@ -1287,6 +1306,12 @@ router.beforeEach(async (to, from, next) => {
     }
   } else {
     // 不需要登录的页面（登录页、激活页）
+
+    // 已激活或仍在试用期内时，不应再进入激活页，避免启动时短暂闪出“软件未激活”
+    if (to.name === 'Activation' && (authStore.isActivated || authStore.activationInfo.isInTrial)) {
+      next(authStore.isLoggedIn ? '/dashboard' : '/login')
+      return
+    }
 
     // 如果访问登录页面但完全未激活（不在试用期内），跳转到激活页面
     if (to.name === 'Login' && !authStore.isActivated && !authStore.activationInfo.isInTrial) {
