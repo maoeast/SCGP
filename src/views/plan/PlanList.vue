@@ -678,10 +678,21 @@
             暂无训练资源
           </div>
           <div v-else class="detail-resource-list">
-            <div v-for="resource in planResources" :key="resource.id" class="detail-resource-item">
+            <div
+              v-for="resource in planResources"
+              :key="resource.id"
+              class="detail-resource-item"
+              :class="{ 'detail-resource-item--interactive': canStartPlanResource(resource) }"
+              @click="handleLaunchCurrentPlanResource(resource)"
+            >
               <img :src="getResourceImage(resource)" class="detail-resource-cover" />
               <div class="detail-resource-info">
-                <div class="detail-resource-name">{{ resource.resource_name }}</div>
+                <div class="detail-resource-name-row">
+                  <div class="detail-resource-name">{{ resource.resource_name }}</div>
+                  <el-tag size="small" effect="plain">
+                    {{ getResourceTypeLabel(resource.resource_type) }}
+                  </el-tag>
+                </div>
                 <div class="detail-resource-config">
                   <span v-if="resource.frequency">每周 {{ resource.frequency }} 次</span>
                   <span v-if="resource.duration_minutes">，每次 {{ resource.duration_minutes }} 分钟</span>
@@ -689,6 +700,17 @@
                 <div v-if="resource.notes" class="detail-resource-notes">
                   教学提示：{{ resource.notes }}
                 </div>
+              </div>
+              <div class="detail-resource-actions">
+                <el-button
+                  :type="getPlanResourceActionType(resource)"
+                  plain
+                  size="small"
+                  :disabled="!canStartPlanResource(resource)"
+                  @click.stop="handleLaunchCurrentPlanResource(resource)"
+                >
+                  {{ getPlanResourceActionLabel(resource) }}
+                </el-button>
               </div>
             </div>
           </div>
@@ -1028,6 +1050,47 @@ function getPlanResourceCatalogGroupLabel(resource: PlanResourceMap): string {
   })
 }
 
+function canStartPlanResource(resource: PlanResourceMap): boolean {
+  return Boolean(resource.resource_type)
+}
+
+function getPlanResourceActionLabel(resource: PlanResourceMap): string {
+  switch (resource.resource_type) {
+    case 'equipment':
+      return '开始录入'
+    case 'document':
+    case 'video':
+      return '打开预览'
+    case 'game':
+    case 'flashcard':
+    case 'emotion_scene':
+    case 'care_scene':
+      return '开始训练'
+    default:
+      return '打开'
+  }
+}
+
+function getPlanResourceActionType(resource: PlanResourceMap): 'primary' | 'success' | 'info' {
+  switch (resource.resource_type) {
+    case 'equipment':
+      return 'success'
+    case 'document':
+    case 'video':
+      return 'info'
+    default:
+      return 'primary'
+  }
+}
+
+function handleLaunchCurrentPlanResource(resource: PlanResourceMap) {
+  if (!currentPlan.value || !canStartPlanResource(resource)) {
+    return
+  }
+
+  void handleLaunchTraining(currentPlan.value, resource)
+}
+
 // 获取计划资源列表（从缓存）
 function getPlanResources(planId: number): PlanResourceMap[] {
   return planResourcesMap.value[planId] || []
@@ -1309,12 +1372,9 @@ function handleViewPlan(plan: TrainingPlan) {
  * - game: /games/play?studentId=xxx&gameId=xxx&from=plan
  * - document/video: 直接打开预览
  */
-function handleLaunchTraining(plan: TrainingPlan, resource: PlanResourceMap) {
+async function handleLaunchTraining(plan: TrainingPlan, resource: PlanResourceMap) {
   const { student_id } = plan
   const { resource_id, resource_type, resource_name } = resource
-
-  // 关闭详情抽屉（如果打开的话）
-  detailDrawerVisible.value = false
 
   if (!resource_type) {
     ElMessage.warning('当前资源缺少启动类型，无法直接开始训练')
@@ -1322,7 +1382,7 @@ function handleLaunchTraining(plan: TrainingPlan, resource: PlanResourceMap) {
   }
 
   if (resource_type === 'document' || resource_type === 'video') {
-    handlePreviewResource(resource)
+    await handlePreviewResource(resource)
     return
   }
 
@@ -1343,6 +1403,7 @@ function handleLaunchTraining(plan: TrainingPlan, resource: PlanResourceMap) {
     return
   }
 
+  detailDrawerVisible.value = false
   router.push(target)
   ElMessage.success(`正在启动「${resource_name}」训练...`)
 }
@@ -2375,10 +2436,23 @@ onMounted(() => {
 
 .detail-resource-item {
   display: flex;
+  align-items: center;
   gap: 12px;
   padding: 12px;
   background: #fafafa;
   border-radius: 8px;
+  border: 1px solid transparent;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.detail-resource-item--interactive {
+  cursor: pointer;
+}
+
+.detail-resource-item--interactive:hover {
+  border-color: #b5d4f4;
+  box-shadow: 0 8px 18px rgba(24, 95, 165, 0.08);
+  transform: translateY(-1px);
 }
 
 .detail-resource-cover {
@@ -2393,11 +2467,18 @@ onMounted(() => {
   flex: 1;
 }
 
+.detail-resource-name-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
 .detail-resource-name {
   font-size: 14px;
   font-weight: 500;
   color: #303133;
-  margin-bottom: 4px;
 }
 
 .detail-resource-config {
@@ -2409,5 +2490,11 @@ onMounted(() => {
   font-size: 12px;
   color: #909399;
   margin-top: 4px;
+}
+
+.detail-resource-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 </style>

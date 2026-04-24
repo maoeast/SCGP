@@ -1,5 +1,5 @@
 import { ResourceAPI } from '@/database/resource-api'
-import { ModuleCode } from '@/types/module'
+import { ModuleCode, type ResourceItem } from '@/types/module'
 import { resolveEquipmentTrainingEntryCodeFromResource } from '@/utils/equipment-training-entry'
 import { resolveTrainingEntryCodeFromResource } from '@/utils/training-entry'
 
@@ -49,13 +49,20 @@ export function getTrainingLaunchModuleCode(context: TrainingLaunchContext): str
   return context.resourceModuleCode || context.moduleCode || 'sensory'
 }
 
+function resolveLaunchResource(
+  context: TrainingLaunchContext,
+  launchModuleCode: string
+): ResourceItem | null {
+  const resourceApi = new ResourceAPI()
+  return resourceApi.getResourceById(context.resourceId, launchModuleCode as ModuleCode)
+}
+
 function resolveEquipmentEntryQuery(
   context: TrainingLaunchContext,
   launchModuleCode: string
 ): string | undefined {
   try {
-    const resourceApi = new ResourceAPI()
-    const resource = resourceApi.getResourceById(context.resourceId, launchModuleCode as ModuleCode)
+    const resource = resolveLaunchResource(context, launchModuleCode)
     if (!resource) {
       return undefined
     }
@@ -72,8 +79,7 @@ function resolveTrainingEntryQuery(
   launchModuleCode: string
 ): string | undefined {
   try {
-    const resourceApi = new ResourceAPI()
-    const resource = resourceApi.getResourceById(context.resourceId, launchModuleCode as ModuleCode)
+    const resource = resolveLaunchResource(context, launchModuleCode)
     if (!resource) {
       return undefined
     }
@@ -82,6 +88,114 @@ function resolveTrainingEntryQuery(
   } catch (error) {
     console.warn('[buildTrainingLaunchRoute] 解析训练入口失败:', error)
     return undefined
+  }
+}
+
+function resolveEmotionalSceneCodeQuery(
+  context: TrainingLaunchContext,
+  launchModuleCode: string
+): string | undefined {
+  try {
+    const resource = resolveLaunchResource(context, launchModuleCode)
+    if (!resource) {
+      return undefined
+    }
+
+    const metadata = resource.metadata as {
+      sceneCode?: unknown
+      scene_code?: unknown
+      sceneId?: unknown
+      scene_id?: unknown
+    } | undefined
+
+    const candidates = [
+      metadata?.sceneCode,
+      metadata?.scene_code,
+      metadata?.sceneId,
+      metadata?.scene_id,
+    ]
+
+    const sceneCode = candidates.find((value): value is string => (
+      typeof value === 'string' && value.trim().length > 0
+    ))
+
+    return sceneCode?.trim()
+  } catch (error) {
+    console.warn('[buildTrainingLaunchRoute] 解析情绪场景编码失败:', error)
+    return undefined
+  }
+}
+
+function resolveGameLaunchRoute(
+  context: TrainingLaunchContext,
+  launchModuleCode: string,
+  baseEntries: Array<[string, string | undefined]>
+): TrainingLaunchRoute {
+  const baseQueryEntries: Array<[string, string | undefined]> = [
+    ...baseEntries,
+    ['entry', resolveTrainingEntryQuery(context, launchModuleCode)],
+    ['module', launchModuleCode],
+    ['studentId', String(context.studentId)],
+    ['studentName', stringifyQueryValue(context.studentName)],
+    ['resourceId', String(context.resourceId)],
+  ]
+
+  try {
+    const resource = resolveLaunchResource(context, launchModuleCode)
+    const metadata = resource?.metadata as {
+      entryPath?: unknown
+      taskId?: unknown
+      mode?: unknown
+      difficultyLocked?: unknown
+    } | undefined
+
+    const resourceEntryCode = resource
+      ? resolveTrainingEntryCodeFromResource(resource)
+      : undefined
+    const resourceModuleCode = resource?.moduleCode || launchModuleCode
+    const entryPath = typeof metadata?.entryPath === 'string' && metadata.entryPath.trim().startsWith('/')
+      ? metadata.entryPath.trim()
+      : ''
+    const mode = typeof metadata?.mode === 'string' && metadata.mode.trim()
+      ? metadata.mode.trim()
+      : undefined
+    const taskId = typeof metadata?.taskId === 'number'
+      ? metadata.taskId
+      : resource?.legacyId
+    const difficultyLocked = typeof metadata?.difficultyLocked === 'boolean'
+      ? String(metadata.difficultyLocked)
+      : undefined
+
+    if (entryPath) {
+      return {
+        path: entryPath,
+        query: buildQuery([
+          ...baseEntries,
+          ['entry', stringifyQueryValue(resourceEntryCode)],
+          ['module', resourceModuleCode],
+          ['studentId', String(context.studentId)],
+          ['studentName', stringifyQueryValue(context.studentName)],
+          ['resourceId', String(context.resourceId)],
+          ['difficulty', '1'],
+          ['difficultyLocked', difficultyLocked],
+        ]),
+      }
+    }
+
+    return {
+      path: '/games/play',
+      query: buildQuery([
+        ...baseQueryEntries,
+        ['taskId', stringifyQueryValue(taskId)],
+        ['mode', mode],
+      ]),
+    }
+  } catch (error) {
+    console.warn('[buildTrainingLaunchRoute] 解析游戏训练入口失败:', error)
+    return {
+      path: '/games/play',
+      query: buildQuery(baseQueryEntries),
+    }
   }
 }
 
@@ -106,6 +220,8 @@ export function buildTrainingLaunchRoute(context: TrainingLaunchContext): Traini
       }
 
     case 'game':
+      return resolveGameLaunchRoute(context, launchModuleCode, baseEntries)
+
     case 'flashcard':
       return {
         path: '/games/play',
@@ -114,6 +230,7 @@ export function buildTrainingLaunchRoute(context: TrainingLaunchContext): Traini
           ['entry', resolveTrainingEntryQuery(context, launchModuleCode)],
           ['module', launchModuleCode],
           ['studentId', String(context.studentId)],
+          ['studentName', stringifyQueryValue(context.studentName)],
           ['resourceId', String(context.resourceId)],
         ]),
       }
@@ -126,6 +243,7 @@ export function buildTrainingLaunchRoute(context: TrainingLaunchContext): Traini
           ['studentId', String(context.studentId)],
           ['studentName', stringifyQueryValue(context.studentName)],
           ['resourceId', String(context.resourceId)],
+          ['sceneCode', resolveEmotionalSceneCodeQuery(context, launchModuleCode)],
         ]),
       }
 
@@ -137,6 +255,7 @@ export function buildTrainingLaunchRoute(context: TrainingLaunchContext): Traini
           ['studentId', String(context.studentId)],
           ['studentName', stringifyQueryValue(context.studentName)],
           ['resourceId', String(context.resourceId)],
+          ['sceneCode', resolveEmotionalSceneCodeQuery(context, launchModuleCode)],
         ]),
       }
 
