@@ -1,6 +1,14 @@
 <template>
-  <div class="training-layout" :style="backgroundStyle">
-    <div class="training-overlay">
+  <div
+    class="training-layout"
+    :class="{ 'is-annotation-active': isTeacherAnnotationActive }"
+    :style="backgroundStyle"
+    @dblclick="handleLayoutDoubleClick"
+  >
+    <div
+      class="training-overlay"
+      :class="{ 'is-hidden-for-annotation': isTeacherAnnotationActive }"
+    >
       <header class="training-header">
         <div class="progress-stage">
           <div class="progress-shell" role="list" aria-label="训练进度">
@@ -43,16 +51,24 @@
         </Transition>
       </main>
     </div>
+
+    <TeacherAnnotationLayer
+      :visible="isTeacherAnnotationActive"
+      @toggle="toggleTeacherAnnotation"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
+import TeacherAnnotationLayer from '@/components/training/TeacherAnnotationLayer.vue'
 import { useTrainingStore } from '@/stores/useTrainingStore'
 import { resolvePresetResourceUrl } from '@/utils/preset-resource'
 
 const store = useTrainingStore()
+const isTeacherAnnotationActive = ref(false)
+
 const progressSteps = computed(() => {
   return Array.from({ length: store.questionStepCount }, (_, index) => index + 1)
 })
@@ -68,6 +84,24 @@ function handleExit(): void {
   }
 
   store.toggleExitModal(true)
+}
+
+function toggleTeacherAnnotation(): void {
+  isTeacherAnnotationActive.value = !isTeacherAnnotationActive.value
+}
+
+function handleLayoutDoubleClick(event: MouseEvent): void {
+  const target = event.target
+  if (!(target instanceof Element)) {
+    return
+  }
+
+  if (target.closest('button, a, input, textarea, select, summary, [role="button"], [data-annotation-toolbar]')) {
+    return
+  }
+
+  event.preventDefault()
+  isTeacherAnnotationActive.value = !isTeacherAnnotationActive.value
 }
 
 const backgroundStyle = computed(() => {
@@ -99,6 +133,10 @@ const backgroundStyle = computed(() => {
   background-size: cover;
 }
 
+.training-layout.is-annotation-active {
+  user-select: none;
+}
+
 .training-overlay {
   height: 100%;
   min-height: 100vh;
@@ -106,6 +144,12 @@ const backgroundStyle = computed(() => {
   flex-direction: column;
   overflow: hidden;
   background: rgb(0 0 0 / 20%);
+  transition: opacity 0.18s ease;
+}
+
+.training-overlay.is-hidden-for-annotation {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .training-header {
