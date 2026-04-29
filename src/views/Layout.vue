@@ -79,9 +79,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
+import { performConfirmedLogout } from '@/utils/auth-ui'
 
 interface MenuRouteItem {
   path: string
@@ -227,10 +228,21 @@ const toggleSidebar = () => {
 }
 
 // 退出登录
-const handleLogout = () => {
-  if (confirm('确定要退出系统吗？')) {
-    authStore.logout()
-    router.push('/login')
+const handleLogout = async () => {
+  try {
+    await performConfirmedLogout({
+      confirm: () => ElMessageBox.confirm('确定要退出系统吗？', '退出登录', {
+        confirmButtonText: '退出',
+        cancelButtonText: '取消',
+        type: 'warning',
+        closeOnClickModal: false,
+      }),
+      logout: () => authStore.logout(),
+      navigateToLogin: () => router.replace('/login'),
+    })
+  } catch (error) {
+    console.error('退出登录失败:', error)
+    ElMessage.error('退出失败，请重试。')
   }
 }
 

@@ -20,6 +20,7 @@
       <div class="login-layout__form">
         <div class="login-layout__form-stack">
           <LoginCard
+            ref="loginCardRef"
             v-model:username="loginForm.username"
             v-model:password="loginForm.password"
             v-model:remember="loginForm.remember"
@@ -40,13 +41,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import GalaxyBackground from '@/components/login/GalaxyBackground.vue'
 import LoginCard from '@/components/login/LoginCard.vue'
 import SchoolPanel from '@/components/login/SchoolPanel.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
+import { cancelLoginFocusRecovery, scheduleLoginFocusRecovery } from '@/utils/auth-ui'
 import { applyLoginThemeVariables, normalizeLoginThemeVariant } from '@/utils/login-theme'
 
 const REMEMBERED_USERNAME_KEY = 'scgp_login_username'
@@ -70,6 +72,12 @@ const loginForm = ref({
 const isLogging = ref(false)
 const loginError = ref('')
 const isLoginButtonDisabled = ref(true)
+type LoginCardExpose = {
+  focusUsernameInput: () => boolean
+}
+
+const loginCardRef = ref<LoginCardExpose | null>(null)
+let loginFocusTimerIds: number[] = []
 
 const loginThemeVariant = computed(() =>
   normalizeLoginThemeVariant(systemConfigStore.loginThemeVariant),
@@ -89,6 +97,15 @@ const persistRememberedUsername = () => {
     return
   }
   localStorage.removeItem(REMEMBERED_USERNAME_KEY)
+}
+
+const focusUsernameInput = () => {
+  return loginCardRef.value?.focusUsernameInput() ?? false
+}
+
+const recoverLoginInteraction = () => {
+  cancelLoginFocusRecovery(loginFocusTimerIds)
+  loginFocusTimerIds = scheduleLoginFocusRecovery(focusUsernameInput)
 }
 
 const handleLogin = async () => {
@@ -167,10 +184,10 @@ watch(
 )
 
 onMounted(async () => {
-  await systemConfigStore.loadConfig()
   restoreRememberedUsername()
-
   await nextTick()
+  recoverLoginInteraction()
+  void systemConfigStore.loadConfig()
 
   const hasStartedTyping = loginForm.value.username !== '' || loginForm.value.password !== ''
 
@@ -180,6 +197,11 @@ onMounted(async () => {
       router.replace('/activation')
     }
   }
+})
+
+onBeforeUnmount(() => {
+  cancelLoginFocusRecovery(loginFocusTimerIds)
+  loginFocusTimerIds = []
 })
 </script>
 

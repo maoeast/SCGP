@@ -4,6 +4,7 @@
     <span class="input-field__control">
       <i v-if="iconClass" :class="iconClass" class="input-field__icon" aria-hidden="true"></i>
       <input
+        ref="inputElement"
         :value="modelValue"
         :type="type"
         :placeholder="placeholder"
@@ -17,6 +18,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
 interface Props {
   modelValue: string
   label: string
@@ -39,9 +42,24 @@ const emit = defineEmits<{
   (event: 'update:modelValue', value: string): void
 }>()
 
+const inputElement = ref<HTMLInputElement | null>(null)
+
 const handleInput = (event: Event) => {
   emit('update:modelValue', (event.target as HTMLInputElement).value)
 }
+
+const focusInput = () => {
+  if (!inputElement.value) {
+    return false
+  }
+
+  inputElement.value.focus({ preventScroll: true })
+  return document.activeElement === inputElement.value
+}
+
+defineExpose({
+  focusInput,
+})
 </script>
 
 <style scoped>

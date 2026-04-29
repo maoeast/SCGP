@@ -11,6 +11,7 @@
 
     <form class="login-card__form" @submit.prevent="handleSubmit">
       <InputField
+        ref="usernameFieldRef"
         :model-value="username"
         label="用户名"
         placeholder="请输入用户名"
@@ -57,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import InputField from './InputField.vue'
 import PrimaryButton from './PrimaryButton.vue'
 
@@ -83,6 +84,12 @@ const emit = defineEmits<{
   (event: 'submit'): void
 }>()
 
+type InputFieldExpose = {
+  focusInput: () => boolean
+}
+
+const usernameFieldRef = ref<InputFieldExpose | null>(null)
+
 /** Button shows active state when password has content */
 const isButtonActive = computed(() => props.password.trim().length > 0)
 
@@ -97,6 +104,14 @@ const handleSubmit = () => {
 
   emit('submit')
 }
+
+const focusUsernameInput = () => {
+  return usernameFieldRef.value?.focusInput() ?? false
+}
+
+defineExpose({
+  focusUsernameInput,
+})
 </script>
 
 <style scoped>
