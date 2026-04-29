@@ -1,6 +1,11 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-16
+> last_updated: 2026-04-29
+
+2026-04-29
+- 已完成统一评估容器断点续评主链收口，并通过用户验收。
+- 当前状态：12 个接入统一评估容器的量表现在共享真实的保存/恢复链路；代码级验证已通过，剩余仅是可选的 Electron 人工 UAT。
+- 下一步：先读 `.continue-here.md`，如果继续本专题，优先做 `weefim / sm / cbcl / fine_motor / cnbsr2016` 这 5 组代表性人工验收。
 
 2026-04-16
 - 已完成 `S04_GIFT_MATCH` 最小运行链路、训练记录详情中文化与人工验收。
@@ -94,14 +99,14 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: `S02_EMOTION_MIRROR` 已完成最小运行链路与记录详情收口，下一步进入下一个 Wave 1 目标。**
+**Active follow-up work is now in `.continue-here.md`: 统一评估容器断点续评主链已落地，下一步如需继续，先做代表性量表的人工 UAT。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is continuing Wave 1 after `S02_EMOTION_MIRROR` closed cleanly
-- first action should be adding `S04_GIFT_MATCH` to `src/data/custom-game-registry.ts` under `social-communication`
-- `Phase 0` should be treated as closed unless a new regression is discovered
+- current active task is assessment resume hardening closeout for the unified assessment container
+- first action should be reading `.continue-here.md`, then deciding whether to run manual UAT for `weefim / sm / cbcl / fine_motor / cnbsr2016`
+- the current code-level implementation is accepted; remaining work is optional runtime verification, not feature implementation
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`

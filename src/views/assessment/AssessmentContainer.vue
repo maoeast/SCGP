@@ -132,6 +132,13 @@ import {
   buildAssessmentReportRoute,
   type AssessmentReportScaleType,
 } from '@/features/assessment/report-routes'
+import {
+  type AssessmentProgressPhase,
+  clearAssessmentProgressSnapshot,
+  readAssessmentProgressSnapshot,
+  resolveAssessmentProgressSnapshot,
+  saveAssessmentProgressSnapshot,
+} from './assessment-progress'
 
 
 // 子组件
@@ -180,6 +187,11 @@ const state = ref<AssessmentState>({
 const scoreResult = ref<ScoreResult | null>(null)
 const feedback = ref<AssessmentFeedback | null>(null)
 const assessId = ref<number | null>(null)
+
+interface CBCLDriverProgressBinding {
+  setSocialData(data: CBCLSocialCompetenceData): void
+  clearSocialData?(): void
+}
 
 // ========== 计算属性 ==========
 
@@ -351,6 +363,7 @@ async function initializeAssessment() {
 
     // 3. 加载驱动器
     driver.value = getDriverByScaleCode(scaleCode.value)
+    resetDriverProgressBindings()
 
     if (scaleCode.value === 'cnbsr2016' && !isCnbsr2016AgeSupported(studentContext.ageInMonths)) {
       ElMessage.error(
@@ -381,10 +394,12 @@ async function initializeAssessment() {
     }
 
     // 5. 尝试恢复进度
-    restoreProgress()
+    const restored = await restoreProgress()
 
-    // 6. 进入欢迎阶段
-    phase.value = 'welcome'
+    // 6. 未恢复时进入欢迎阶段
+    if (!restored) {
+      phase.value = 'welcome'
+    }
 
   } catch (error) {
     console.error('[AssessmentContainer] 初始化失败:', error)
@@ -404,6 +419,7 @@ function handleStartAssessment() {
     phase.value = 'assessing'
     state.value.startTime = Date.now()
   }
+  saveProgress()
 }
 
 function handleSocialFormSubmit(data: CBCLSocialCompetenceData) {
@@ -415,6 +431,7 @@ function handleSocialFormSubmit(data: CBCLSocialCompetenceData) {
   cbclStep.value = 'behavior'
   phase.value = 'assessing'
   state.value.startTime = Date.now()
+  saveProgress()
   ElMessage.success('社会能力信息已保存，开始行为问题评估')
 }
 
@@ -425,6 +442,7 @@ function handlePageChange(page: number) {
   if (newIndex < questions.value.length) {
     state.value.currentIndex = newIndex
   }
+  saveProgress()
 }
 
 interface AnswerWithDescription {
@@ -516,6 +534,7 @@ function handleAnswer(value: number | string | AnswerWithDescription) {
 function handlePrevious() {
   if (state.value.currentIndex > 0) {
     state.value.currentIndex--
+    saveProgress()
   }
 }
 
@@ -554,6 +573,7 @@ function navigateToNext() {
       if (state.value.currentIndex < questions.value.length - 1) {
         state.value.currentIndex++
       }
+      saveProgress()
       break
 
     case 'jump':
@@ -563,6 +583,7 @@ function navigateToNext() {
         const idx = questions.value.findIndex(q => q.id === decision.targetQuestionId)
         if (idx >= 0) state.value.currentIndex = idx
       }
+      saveProgress()
       break
 
     case 'complete':
@@ -603,6 +624,9 @@ async function completeAssessment() {
 
   } catch (error) {
     console.error('[AssessmentContainer] 完成评估失败:', error)
+    state.value.isComplete = false
+    state.value.endTime = undefined
+    saveProgress()
     ElMessage.error(error instanceof Error ? error.message : '保存评估结果失败')
   }
 }
@@ -656,43 +680,107 @@ function progressFormat(percentage: number): string {
 
 // ========== 进度持久化 ==========
 
-const PROGRESS_KEY = 'assessment_progress'
+function shouldPersistProgress(): boolean {
+  return getPersistablePhase() !== null
+}
 
-function getProgressKey(): string {
-  return `${PROGRESS_KEY}_${scaleCode.value}_${studentId.value}`
+function getPersistablePhase(): AssessmentProgressPhase | null {
+  if (phase.value === 'welcome' || phase.value === 'social' || phase.value === 'assessing') {
+    return phase.value
+  }
+  return null
+}
+
+function getProgressKeyInput() {
+  return {
+    scaleCode: scaleCode.value,
+    studentId: studentId.value,
+  }
+}
+
+function resetDriverProgressBindings() {
+  if (scaleCode.value !== 'cbcl' || !driver.value) return
+  const cbclDriver = driver.value as ScaleDriver & CBCLDriverProgressBinding
+  cbclDriver.clearSocialData?.()
 }
 
 function saveProgress() {
+  const persistablePhase = getPersistablePhase()
+  if (!persistablePhase) return
+
   try {
-    const data = {
+    saveAssessmentProgressSnapshot(localStorage, getProgressKeyInput(), {
+      phase: persistablePhase,
       currentIndex: state.value.currentIndex,
       answers: state.value.answers,
-      startTime: state.value.startTime,
-      metadata: state.value.metadata
-    }
-    localStorage.setItem(getProgressKey(), JSON.stringify(data))
+      startTime: state.value.startTime ?? Date.now(),
+      metadata: state.value.metadata,
+      cbclStep: cbclStep.value,
+      socialFormData: socialFormData.value,
+      currentPage: currentPage.value,
+    })
   } catch (e) {
     console.warn('[AssessmentContainer] 保存进度失败:', e)
   }
 }
 
-function restoreProgress() {
+async function restoreProgress(): Promise<boolean> {
   try {
-    const saved = localStorage.getItem(getProgressKey())
-    if (saved) {
-      const data = JSON.parse(saved)
-      // 恢复进度（可选，需要用户确认）
-      // 这里暂时不自动恢复，后续可以添加确认对话框
-      console.log('[AssessmentContainer] 发现已保存的进度')
+    const snapshot = readAssessmentProgressSnapshot(localStorage, getProgressKeyInput())
+    if (!snapshot) {
+      return false
     }
+
+    await ElMessageBox.confirm(
+      '发现该学生此量表有未完成的评估进度，是否继续上次评估？',
+      '恢复评估进度',
+      {
+        type: 'warning',
+        confirmButtonText: '继续评估',
+        cancelButtonText: '重新开始',
+        distinguishCancelAndClose: true,
+      },
+    )
+
+    const restored = resolveAssessmentProgressSnapshot({
+      snapshot,
+      questionCount: questions.value.length,
+      pageSize,
+      fallbackStartTime: state.value.startTime ?? Date.now(),
+    })
+
+    state.value.currentIndex = restored.currentIndex
+    state.value.answers = restored.answers
+    state.value.startTime = restored.startTime
+    state.value.metadata = restored.metadata
+    state.value.isComplete = false
+    state.value.endTime = undefined
+    cbclStep.value = restored.cbclStep
+    socialFormData.value = restored.socialFormData
+    currentPage.value = restored.currentPage
+
+    if (scaleCode.value === 'cbcl' && driver.value && restored.socialFormData) {
+      const cbclDriver = driver.value as ScaleDriver & CBCLDriverProgressBinding
+      cbclDriver.setSocialData(restored.socialFormData)
+    }
+
+    phase.value = restored.phase
+    ElMessage.success('已恢复上次未完成的评估进度')
+    return true
   } catch (e) {
+    if (e === 'cancel' || e === 'close') {
+      clearProgress()
+      return false
+    }
+
     console.warn('[AssessmentContainer] 恢复进度失败:', e)
+    return false
   }
 }
 
 function clearProgress() {
   try {
-    localStorage.removeItem(getProgressKey())
+    clearAssessmentProgressSnapshot(localStorage, getProgressKeyInput())
   } catch (e) {
     console.warn('[AssessmentContainer] 清除进度失败:', e)
   }
@@ -706,9 +794,7 @@ onMounted(() => {
 
 // 离开页面时确认
 onBeforeUnmount(() => {
-  // 如果评估未完成，提示用户
-  if (phase.value === 'assessing' && !state.value.isComplete) {
-    // 保存进度
+  if (shouldPersistProgress() && !state.value.isComplete) {
     saveProgress()
   }
 })

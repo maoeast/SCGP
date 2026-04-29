@@ -383,6 +383,10 @@ export class CBCLDriver extends BaseDriver {
     this.socialData = data
   }
 
+  clearSocialData(): void {
+    this.socialData = null
+  }
+
   /**
    * 配置学生上下文
    */
