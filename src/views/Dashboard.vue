@@ -61,20 +61,17 @@
 
       <div class="quick-grid">
         <button
-          v-for="action in quickActions"
+          v-for="action in visibleQuickActions"
           :key="action.label"
           type="button"
           :class="[
             'quick-card',
             `quick-card--${action.tone}`,
-            { 'is-locked': isActionLocked(action) },
           ]"
           @click="goTo(action)"
         >
           <div class="quick-card__topline">
-            <span class="quick-card__badge">
-              {{ isActionLocked(action) ? '未授权' : '推荐入口' }}
-            </span>
+            <span class="quick-card__badge">推荐入口</span>
             <el-icon class="quick-card__arrow"><ArrowRight /></el-icon>
           </div>
 
@@ -282,11 +279,23 @@ import {
   type DashboardScheduleItem,
   type DashboardSnapshot,
 } from '@/database/dashboard-api'
+import {
+  filterVisibleAccessControlledItems,
+  isAccessControlledItemVisible,
+  type AccessControlledItem,
+} from '@/utils/access-visibility'
 import { resolveTrainingLaunch } from '@/utils/training-launch'
 import { useAuthStore } from '@/stores/auth'
 
 type DashboardTone = 'blue' | 'amber' | 'green' | 'coral'
 type QuickActionTone = 'blue' | 'teal' | 'coral' | 'green'
+type QuickAction = AccessControlledItem & {
+  label: string
+  description: string
+  path: string
+  icon: any
+  tone: QuickActionTone
+}
 
 const BUSINESS_MODULE_TOTAL = 5
 
@@ -347,12 +356,12 @@ const metrics = computed(() => ([
   },
 ]))
 
-const quickActions = [
+const quickActions: QuickAction[] = [
   {
     label: '快速发起评估',
     description: '进入量表选择页，快速为学生建立或更新评估基线。',
     path: '/assessment',
-    moduleCode: 'sensory',
+    accessScope: 'global',
     icon: EditPen,
     tone: 'blue' as QuickActionTone,
   },
@@ -360,6 +369,7 @@ const quickActions = [
     label: '启动感官游戏',
     description: '进入游戏训练模块，按学生和模块快速开始训练。',
     path: '/games/menu',
+    accessScope: 'module',
     moduleCode: 'sensory',
     icon: Monitor,
     tone: 'teal' as QuickActionTone,
@@ -368,6 +378,7 @@ const quickActions = [
     label: '情绪场景训练',
     description: '进入情绪行为模块，围绕真实场景开展情绪与关心训练。',
     path: '/emotional/menu',
+    accessScope: 'module',
     moduleCode: 'emotional',
     icon: MagicStick,
     tone: 'coral' as QuickActionTone,
@@ -376,7 +387,7 @@ const quickActions = [
     label: '录入训练记录',
     description: '查看并进入各模块训练记录入口，承接日常训练复盘。',
     path: '/training-records/menu',
-    moduleCode: 'sensory',
+    accessScope: 'global',
     icon: DataAnalysis,
     tone: 'green' as QuickActionTone,
   },
@@ -385,6 +396,7 @@ const quickActions = [
 const displayedAnomalies = computed(() => snapshot.value.anomalies.slice(0, 4))
 const displayedAssessmentAlerts = computed(() => snapshot.value.assessmentAlerts.slice(0, 4))
 const accessibleModuleCount = computed(() => new Set(authStore.allowedModules).size)
+const visibleQuickActions = computed(() => filterVisibleAccessControlledItems(quickActions, authStore.hasModuleAccess))
 
 const focusPanel = computed(() => {
   const overview = snapshot.value.overview
@@ -435,14 +447,12 @@ const heroHighlights = computed(() => ([
   },
 ]))
 
-const isActionLocked = (action: { moduleCode: string }) => !authStore.hasModuleAccess(action.moduleCode)
-
 function getModuleLabel(moduleCode: string) {
   return moduleLabelMap[moduleCode] || moduleCode || '训练模块'
 }
 
-function goTo(action: { path: string; moduleCode: string }) {
-  if (isActionLocked(action)) {
+function goTo(action: QuickAction) {
+  if (!isAccessControlledItemVisible(action, authStore.hasModuleAccess)) {
     ElMessage.warning('该模块未授权，请联系厂商购买')
     return
   }
@@ -748,15 +758,6 @@ onMounted(() => {
 .quick-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 18px 36px rgba(143, 169, 204, 0.16);
-}
-
-.quick-card.is-locked {
-  opacity: 0.74;
-}
-
-.quick-card.is-locked:hover {
-  transform: none;
-  box-shadow: none;
 }
 
 .quick-card__topline {

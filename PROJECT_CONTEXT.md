@@ -1359,3 +1359,13 @@
 - 统一评估入口当前新增全局契约：`ScaleDriver.getWelcomeContent()` 应返回结构化 `WelcomeContent`，支持 `sections[].items[]` 与 `reminder`
 - 评估开始前弹窗文案当前以 `docs/references/评估量表温馨提示.md` 为事实来源；后续调整先改参考文档，再改对应 driver
 - `FMDA` 目录展示题量当前已修正为 `88项`；评分链路的题量真源仍为 `FINE_MOTOR_QUESTIONS.length`
+
+## 45. 2026-04-30 Authorization Visibility Contract Update
+
+- 首页快捷区、侧边栏、游戏训练/器材训练/训练记录菜单当前新增统一授权可见性约束
+- 全局入口继续可见可点：`能力评估`、`游戏训练`、`器材训练`、`训练记录`
+- 模块入口未授权时直接隐藏，不再显示“未授权 / 锁定态”占位
+- 首页快捷区当前口径固定为：
+  - 全局：`快速发起评估`、`录入训练记录`
+  - 模块：`启动感官游戏`（`sensory`）、`情绪场景训练`（`emotional`）
+- 后续新增同类入口时，应复用 `src/utils/access-visibility.ts`，避免首页与导航再次分叉

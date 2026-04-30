@@ -20,8 +20,8 @@
           :key="route.path"
           :href="route.path"
           class="nav-item"
-          :class="{ active: isActive(route.path), locked: isRouteLocked(route) }"
-          :title="isRouteLocked(route) ? '该模块未授权，请联系厂商购买' : route.meta.title"
+          :class="{ active: isActive(route.path) }"
+          :title="route.meta.title"
           @click.prevent="handleMenuClick(route)"
           v-show="hasRole(route.meta.roles)"
         >
@@ -29,7 +29,6 @@
           <span class="nav-text" v-show="!sidebarCollapsed">{{
             route.meta.displayTitle || route.meta.title
           }}</span>
-          <span v-if="isRouteLocked(route)" class="lock-mark" aria-hidden="true">🔒</span>
         </a>
       </nav>
 
@@ -83,8 +82,13 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
 import { performConfirmedLogout } from '@/utils/auth-ui'
+import {
+  filterVisibleAccessControlledItems,
+  type AccessControlledItem,
+  type AccessScope,
+} from '@/utils/access-visibility'
 
-interface MenuRouteItem {
+interface MenuRouteItem extends AccessControlledItem {
   path: string
   meta: {
     title: string
@@ -136,6 +140,8 @@ const menuRoutes = computed<MenuRouteItem[]>(() => {
     })
     .map((r) => ({
       path: r.path,
+      accessScope: (typeof r.meta.moduleCode === 'string' ? 'module' : 'global') as AccessScope,
+      moduleCode: typeof r.meta.moduleCode === 'string' ? r.meta.moduleCode : undefined,
       meta: {
         title: String(r.meta.title || ''),
         displayTitle: String(r.meta.title || ''),
@@ -145,6 +151,7 @@ const menuRoutes = computed<MenuRouteItem[]>(() => {
         moduleCode: typeof r.meta.moduleCode === 'string' ? r.meta.moduleCode : undefined,
       },
     }))
+    .filter((menuRoute) => filterVisibleAccessControlledItems([menuRoute], authStore.hasModuleAccess).length > 0)
 })
 
 // 页面标题
@@ -185,16 +192,7 @@ const hasRole = (roles?: string[]) => {
   return roles.includes(authStore.user?.role || '')
 }
 
-const isRouteLocked = (route: MenuRouteItem) => {
-  if (!route.meta.moduleCode) return false
-  return !authStore.hasModuleAccess(route.meta.moduleCode)
-}
-
 const handleMenuClick = (route: MenuRouteItem) => {
-  if (isRouteLocked(route)) {
-    ElMessage.warning('该模块未授权，请联系厂商购买')
-    return
-  }
   router.push(route.path)
 }
 
@@ -346,16 +344,6 @@ onMounted(() => {
   color: white;
 }
 
-.nav-item.locked {
-  color: #7f8c8d;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.nav-item.locked:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #d5dbdb;
-}
-
 .nav-item.active::before {
   content: '';
   position: absolute;
@@ -380,11 +368,6 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   transition: opacity 0.3s;
-}
-
-.lock-mark {
-  margin-left: auto;
-  font-size: 14px;
 }
 
 .sidebar-footer {

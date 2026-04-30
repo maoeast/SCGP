@@ -12,12 +12,7 @@
         <el-card
           v-for="entry in trainingEntries"
           :key="entry.code"
-          class="module-card scgp-selection-card"
-          :class="{
-            'module-active': !entry.locked,
-            'module-disabled': entry.locked,
-            'scgp-selection-card--disabled': entry.locked,
-          }"
+          class="module-card scgp-selection-card module-active"
           shadow="hover"
           @click="handleEntryClick(entry)"
         >
@@ -37,21 +32,11 @@
             <p class="module-description scgp-selection-card__description">{{ entry.description }}</p>
 
             <div class="module-meta scgp-selection-card__meta">
-              <el-tag
-                :type="getStatusTagType(entry.locked ? 'locked' : 'active')"
-                size="small"
-              >
-                {{ getStatusLabel(entry.locked ? 'locked' : 'active') }}
-              </el-tag>
+              <el-tag type="success" size="small">已激活</el-tag>
               <span class="resource-count">
                 {{ getResourceCount(entry.code) }} 个游戏
               </span>
             </div>
-          </div>
-
-          <div v-if="entry.locked" class="module-overlay scgp-selection-card__overlay">
-            <el-icon :size="24"><Lock /></el-icon>
-            <span>未授权</span>
           </div>
         </el-card>
       </div>
@@ -62,12 +47,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { Lock } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { ResourceAPI } from '@/database/resource-api'
 import { getCustomGamesByTrainingEntry } from '@/data/custom-game-registry'
 import { getEmotionalGameCount } from './emotional-game-catalog'
+import { filterVisibleAccessControlledItems } from '@/utils/access-visibility'
 import {
   getAllTrainingEntries,
   matchesTrainingEntryResource,
@@ -87,27 +71,14 @@ const entryEmojis: Record<TrainingEntryCode, string> = {
 }
 
 const trainingEntries = computed(() => {
-  return getAllTrainingEntries().map((entry) => ({
-    ...entry,
-    locked: !authStore.hasModuleAccess(entry.moduleCode),
-  }))
+  return filterVisibleAccessControlledItems(
+    getAllTrainingEntries().map((entry) => ({
+      ...entry,
+      accessScope: 'module' as const,
+    })),
+    authStore.hasModuleAccess,
+  )
 })
-
-const getStatusTagType = (status: string) => {
-  const typeMap: Record<string, '' | 'success' | 'warning' | 'danger' | 'info'> = {
-    active: 'success',
-    locked: 'info',
-  }
-  return typeMap[status] || 'info'
-}
-
-const getStatusLabel = (status: string) => {
-  const labelMap: Record<string, string> = {
-    active: '已激活',
-    locked: '未授权',
-  }
-  return labelMap[status] || status
-}
 
 const getEntryEmoji = (entryCode: TrainingEntryCode) => {
   return entryEmojis[entryCode] || '🎮'
@@ -138,11 +109,6 @@ const getResourceCount = (entryCode: TrainingEntryCode) => {
 }
 
 const handleEntryClick = (entry: (typeof trainingEntries.value)[number]) => {
-  if (entry.locked) {
-    ElMessage.warning(`《${entry.name}》未授权，请联系厂商购买`)
-    return
-  }
-
   router.push({
     path: '/games/select-student',
     query: {
@@ -164,10 +130,6 @@ const handleEntryClick = (entry: (typeof trainingEntries.value)[number]) => {
 
 .module-card.module-active:hover {
   box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
-}
-
-.module-card.module-disabled {
-  cursor: not-allowed;
 }
 
 .module-emoji {
