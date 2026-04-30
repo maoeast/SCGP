@@ -100,7 +100,7 @@
             <div class="scgp-content-toolbar__main">
               <h2 class="scgp-content-toolbar__title">开发者调试</h2>
               <p class="scgp-content-toolbar__description">
-                提供本机维护与更新入口，高风险操作应仅在确认环境后执行。
+                提供本机维护入口，高风险操作应仅在确认环境后执行。
               </p>
             </div>
           </div>
@@ -120,16 +120,6 @@
                 </el-button>
               </div>
             </section>
-
-            <section class="system-card scgp-surface">
-              <div class="scgp-section-heading">
-                <h3>软件更新</h3>
-                <p>检查当前版本状态，并在可用时安装应用更新。</p>
-              </div>
-              <div class="system-card__body">
-                <UpdatePanel />
-              </div>
-            </section>
           </div>
         </div>
       </el-tab-pane>
@@ -140,7 +130,7 @@
             <div class="scgp-content-toolbar__main">
               <h2 class="scgp-content-toolbar__title">关于系统</h2>
               <p class="scgp-content-toolbar__description">
-                查看当前安装信息、激活状态、授权模块与设备机器码。
+                查看当前安装信息、激活状态、授权模块、设备机器码与软件更新状态。
               </p>
             </div>
           </div>
@@ -220,6 +210,8 @@
 
             <p class="system-about-card__copyright">{{ copyright }}</p>
           </section>
+
+          <UpdatePanel />
         </div>
       </el-tab-pane>
     </el-tabs>

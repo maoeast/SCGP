@@ -1369,3 +1369,10 @@
   - 全局：`快速发起评估`、`录入训练记录`
   - 模块：`启动感官游戏`（`sensory`）、`情绪场景训练`（`emotional`）
 - 后续新增同类入口时，应复用 `src/utils/access-visibility.ts`，避免首页与导航再次分叉
+
+## 46. 2026-04-30 Self-Hosted Update Source Contract Update
+
+- 桌面端自动更新默认源已从 GitHub Releases 切到 `generic provider`
+- 当前默认更新地址固定为 `https://upadate.hzxckj308.com/scgp/win`
+- Windows 更新安装包文件名当前固定为 `scgp-setup-${version}.exe`，用于保证 `latest.yml`、安装包与 `.blockmap` 命名一致
+- `release/` 目录中的部署说明与更新三件套属于发布交付物，不作为仓库常规提交内容

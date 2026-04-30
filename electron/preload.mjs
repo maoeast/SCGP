@@ -1,5 +1,15 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
+const ipcListenerRegistry = new Map()
+
+function getChannelListenerRegistry(channel) {
+  if (!ipcListenerRegistry.has(channel)) {
+    ipcListenerRegistry.set(channel, new WeakMap())
+  }
+
+  return ipcListenerRegistry.get(channel)
+}
+
 // 暴露安全的API给渲染进程
 // 防御性编程：所有与主进程的通信都通过 IPC (进程间通信) 进行，确保渲染进程无法直接访问 Node.js
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -86,7 +96,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'update:before-quit'
     ]
     if (validChannels.includes(channel)) {
-      ipcRenderer.on(channel, (_event, ...args) => callback(...args))
+      const channelRegistry = getChannelListenerRegistry(channel)
+      const wrappedCallback = (_event, ...args) => callback(_event, ...args)
+      channelRegistry.set(callback, wrappedCallback)
+      ipcRenderer.on(channel, wrappedCallback)
     }
   },
 
@@ -101,7 +114,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'update:before-quit'
     ]
     if (validChannels.includes(channel)) {
-      ipcRenderer.removeListener(channel, callback)
+      const channelRegistry = ipcListenerRegistry.get(channel)
+      const wrappedCallback = channelRegistry?.get(callback)
+      if (wrappedCallback) {
+        ipcRenderer.removeListener(channel, wrappedCallback)
+        channelRegistry.delete(callback)
+      }
     }
   },
 

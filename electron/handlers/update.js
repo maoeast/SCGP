@@ -5,38 +5,130 @@
  * 基于 electron-updater 实现
  */
 
-import { ipcMain, app, dialog, BrowserWindow } from 'electron'
+import { ipcMain, app, BrowserWindow } from 'electron'
 import pkg from 'electron-updater'
 const { autoUpdater } = pkg
 import fs from 'fs'
 import path from 'path'
 
+const UPDATE_CONFIG_FILE_NAME = 'update-config.json'
+const UPDATE_URL_MISSING_MESSAGE =
+  '未配置自有更新源 URL，请在 update-config.json 中设置 url，例如 https://updates.example.com/scgp/win'
+const DEFAULT_UPDATE_URL = 'https://upadate.hzxckj308.com/scgp/win'
+
 // 默认更新配置
 const DEFAULT_FEED_CONFIG = {
-  provider: 'github',
-  owner: 'maoeast',
-  repo: 'Self-Care-ATS'
+  provider: 'generic',
+  url: DEFAULT_UPDATE_URL,
+  channel: 'latest',
+  useMultipleRangeRequest: false,
+  autoUpdate: true,
+  skippedVersion: ''
 }
 
 // 加载更新配置
 let feedConfig = { ...DEFAULT_FEED_CONFIG }
+let updateFeedReady = false
+
+function getUpdateConfigPath() {
+  return path.join(app.getPath('userData'), UPDATE_CONFIG_FILE_NAME)
+}
+
+function normalizeUpdateUrl(url) {
+  if (typeof url !== 'string') return ''
+  return url.trim().replace(/\/+$/, '')
+}
+
+function normalizeBoolean(value, fallback) {
+  return typeof value === 'boolean' ? value : fallback
+}
+
+function normalizeFeedConfig(rawConfig = {}) {
+  const fallbackUrl = normalizeUpdateUrl(DEFAULT_FEED_CONFIG.url)
+  const rawUrl = typeof rawConfig.url === 'string' ? rawConfig.url : fallbackUrl
+  const normalizedConfig = {
+    ...DEFAULT_FEED_CONFIG,
+    provider: 'generic',
+    url: normalizeUpdateUrl(rawUrl),
+    channel: typeof rawConfig.channel === 'string' && rawConfig.channel.trim()
+      ? rawConfig.channel.trim()
+      : DEFAULT_FEED_CONFIG.channel,
+    useMultipleRangeRequest: normalizeBoolean(
+      rawConfig.useMultipleRangeRequest,
+      DEFAULT_FEED_CONFIG.useMultipleRangeRequest
+    ),
+    autoUpdate: normalizeBoolean(rawConfig.autoUpdate, DEFAULT_FEED_CONFIG.autoUpdate),
+    skippedVersion: typeof rawConfig.skippedVersion === 'string' ? rawConfig.skippedVersion : ''
+  }
+
+  const envUpdateUrl = normalizeUpdateUrl(process.env.SCGP_UPDATE_URL)
+  if (envUpdateUrl) {
+    normalizedConfig.url = envUpdateUrl
+  }
+
+  return normalizedConfig
+}
+
+function writeUpdateConfig(config) {
+  const configPath = getUpdateConfigPath()
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
+}
+
+function isFeedConfigReady(config = feedConfig) {
+  return config.provider === 'generic' && normalizeUpdateUrl(config.url).length > 0
+}
+
+function getUpdateFeedConfig() {
+  return {
+    provider: 'generic',
+    url: feedConfig.url,
+    channel: feedConfig.channel,
+    useMultipleRangeRequest: feedConfig.useMultipleRangeRequest
+  }
+}
+
+function ensureUpdateFeedReady() {
+  if (updateFeedReady) {
+    return null
+  }
+
+  return UPDATE_URL_MISSING_MESSAGE
+}
 
 function loadUpdateConfig() {
-  const configPath = path.join(app.getPath('userData'), 'update-config.json')
+  const configPath = getUpdateConfigPath()
 
   try {
+    let rawConfig = {}
+    let configFileExists = false
+
     if (fs.existsSync(configPath)) {
+      configFileExists = true
       const configData = fs.readFileSync(configPath, 'utf-8')
-      const userConfig = JSON.parse(configData)
-      feedConfig = { ...DEFAULT_FEED_CONFIG, ...userConfig }
-      console.log('[Update] 已加载用户更新配置:', feedConfig)
+      rawConfig = JSON.parse(configData)
+      feedConfig = normalizeFeedConfig(rawConfig)
+      console.log('[Update] 已加载用户更新配置:', getUpdateFeedConfig())
     } else {
-      // 创建默认配置文件
-      fs.writeFileSync(configPath, JSON.stringify(DEFAULT_FEED_CONFIG, null, 2))
+      feedConfig = normalizeFeedConfig(DEFAULT_FEED_CONFIG)
       console.log('[Update] 已创建默认更新配置')
+    }
+
+    const rawConfigSerialized = JSON.stringify(rawConfig)
+    const normalizedConfigSerialized = JSON.stringify(feedConfig)
+    if (
+      !configFileExists ||
+      rawConfigSerialized !== normalizedConfigSerialized
+    ) {
+      writeUpdateConfig(feedConfig)
     }
   } catch (error) {
     console.error('[Update] 配置文件读取失败，使用默认配置:', error)
+    feedConfig = normalizeFeedConfig(DEFAULT_FEED_CONFIG)
+  }
+
+  updateFeedReady = isFeedConfigReady(feedConfig)
+  if (!updateFeedReady) {
+    console.warn('[Update] 自有更新源未配置:', UPDATE_URL_MISSING_MESSAGE)
   }
 }
 
@@ -44,8 +136,12 @@ function loadUpdateConfig() {
 function initializeAutoUpdater() {
   loadUpdateConfig()
 
+  if (!updateFeedReady) {
+    return
+  }
+
   // 配置更新服务器
-  autoUpdater.setFeedURL(feedConfig)
+  autoUpdater.setFeedURL(getUpdateFeedConfig())
 
   // 配置自动下载（设为 false，需要用户确认后才下载）
   autoUpdater.autoDownload = false
@@ -126,6 +222,14 @@ function initializeAutoUpdater() {
  */
 ipcMain.handle('update:check-for-updates', async () => {
   try {
+    const feedError = ensureUpdateFeedReady()
+    if (feedError) {
+      return {
+        success: false,
+        error: feedError
+      }
+    }
+
     console.log('[Update] 开始检查更新...')
     const result = await autoUpdater.checkForUpdates()
     return {
@@ -147,6 +251,14 @@ ipcMain.handle('update:check-for-updates', async () => {
  */
 ipcMain.handle('update:download-update', async () => {
   try {
+    const feedError = ensureUpdateFeedReady()
+    if (feedError) {
+      return {
+        success: false,
+        error: feedError
+      }
+    }
+
     console.log('[Update] 开始下载更新...')
     await autoUpdater.downloadUpdate()
     return { success: true }
@@ -210,17 +322,18 @@ ipcMain.handle('update:get-current-version', () => {
  */
 ipcMain.handle('update:skip-version', async (_event, version) => {
   try {
-    const configPath = path.join(app.getPath('userData'), 'update-config.json')
+    const configPath = getUpdateConfigPath()
 
-    let config = { ...DEFAULT_FEED_CONFIG }
+    let config = { ...feedConfig }
     if (fs.existsSync(configPath)) {
       const data = fs.readFileSync(configPath, 'utf-8')
-      config = JSON.parse(data)
+      config = normalizeFeedConfig(JSON.parse(data))
     }
 
     // 保存跳过的版本
     config.skippedVersion = version
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
+    writeUpdateConfig(config)
+    feedConfig = config
 
     console.log('[Update] 已跳过版本:', version)
     return { success: true }
@@ -238,11 +351,11 @@ ipcMain.handle('update:skip-version', async (_event, version) => {
  */
 ipcMain.handle('update:get-skipped-version', async () => {
   try {
-    const configPath = path.join(app.getPath('userData'), 'update-config.json')
+    const configPath = getUpdateConfigPath()
 
     if (fs.existsSync(configPath)) {
       const data = fs.readFileSync(configPath, 'utf-8')
-      const config = JSON.parse(data)
+      const config = normalizeFeedConfig(JSON.parse(data))
       return {
         success: true,
         skippedVersion: config.skippedVersion || ''
@@ -260,17 +373,18 @@ ipcMain.handle('update:get-skipped-version', async () => {
  */
 ipcMain.handle('update:set-auto-update', async (_event, enabled) => {
   try {
-    const configPath = path.join(app.getPath('userData'), 'update-config.json')
+    const configPath = getUpdateConfigPath()
 
-    let config = { ...DEFAULT_FEED_CONFIG }
+    let config = { ...feedConfig }
     if (fs.existsSync(configPath)) {
       const data = fs.readFileSync(configPath, 'utf-8')
-      config = JSON.parse(data)
+      config = normalizeFeedConfig(JSON.parse(data))
     }
 
     // 保存自动更新设置
     config.autoUpdate = enabled
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
+    writeUpdateConfig(config)
+    feedConfig = config
 
     console.log('[Update] 自动更新已', enabled ? '启用' : '禁用')
     return { success: true }
@@ -288,11 +402,11 @@ ipcMain.handle('update:set-auto-update', async (_event, enabled) => {
  */
 ipcMain.handle('update:get-auto-update', async () => {
   try {
-    const configPath = path.join(app.getPath('userData'), 'update-config.json')
+    const configPath = getUpdateConfigPath()
 
     if (fs.existsSync(configPath)) {
       const data = fs.readFileSync(configPath, 'utf-8')
-      const config = JSON.parse(data)
+      const config = normalizeFeedConfig(JSON.parse(data))
       return {
         success: true,
         enabled: config.autoUpdate !== false // 默认启用
