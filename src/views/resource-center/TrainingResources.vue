@@ -660,7 +660,7 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import {
   Filter, Search, Plus, Edit, Delete, RefreshRight,
   Picture, Lock, Star, Upload, WarningFilled,
-  Document, VideoPlay, Box, Files, InfoFilled, Sunny, ChatDotRound
+  InfoFilled
 } from '@element-plus/icons-vue'
 import { ResourceAPI } from '@/database/resource-api'
 import type { ResourceItem, ModuleCode } from '@/types/module'
@@ -687,6 +687,13 @@ import {
   validateCareSceneEditorModel,
   validateEmotionSceneEditorModel,
 } from './editors/emotional-resource-contract'
+import {
+  getTrainingResourceTypeIcon,
+  getTrainingResourceTypeIconClass,
+  getTrainingResourceTypeOptions,
+  normalizeTrainingResourceModuleCode,
+  resolveTrainingResourceDefaultCreateType,
+} from './training-resource-ui'
 
 // ========== Props ==========
 interface Props {
@@ -710,15 +717,6 @@ const availableModules = [
 ]
 
 // 资源类型列表
-const resourceTypes = [
-  { code: 'equipment', name: '器材' },
-  { code: 'document', name: '文档' },
-  { code: 'video', name: '视频' },
-  { code: 'flashcard', name: '闪卡' },
-  { code: 'emotion_scene', name: '情绪场景' },
-  { code: 'care_scene', name: '表达关心' }
-]
-
 const displayTypeOptions: Array<{ code: TrainingResourceDisplayType; name: string }> = [
   { code: 'equipment', name: '器材' },
   { code: 'game', name: '游戏' },
@@ -830,6 +828,7 @@ const currentModuleCode = computed<ModuleCode | null>(() => {
 })
 
 const isEmotionalBusinessGroup = computed(() => currentModuleCode.value === 'emotional')
+const resourceTypes = computed(() => getTrainingResourceTypeOptions(currentModuleCode.value))
 
 // 当前模块名称
 const currentModuleName = computed(() => {
@@ -939,32 +938,12 @@ function resetImagePreview() {
 
 // 获取资源类型图标
 function getTypeIcon(type: string) {
-  const iconMap: Record<string, any> = {
-    equipment: Box,
-    game: VideoPlay,
-    document: Document,
-    video: VideoPlay,
-    flashcard: Picture,
-    emotion_scene: Sunny,
-    care_scene: ChatDotRound,
-    default: Files
-  }
-  return iconMap[type] || iconMap.default
+  return getTrainingResourceTypeIcon(type)
 }
 
 // 获取资源类型图标样式类
 function getTypeIconClass(type: string) {
-  const classMap: Record<string, string> = {
-    equipment: 'type-equipment',
-    game: 'type-game',
-    document: 'type-document',
-    video: 'type-video',
-    flashcard: 'type-flashcard',
-    emotion_scene: 'type-emotion-scene',
-    care_scene: 'type-care-scene',
-    default: 'type-default'
-  }
-  return classMap[type] || classMap.default
+  return getTrainingResourceTypeIconClass(type)
 }
 
 function getResourceCategoryLabel(resource: ResourceItem): string {
@@ -985,15 +964,12 @@ function isEmotionalResourceType(resourceType?: string): boolean {
 }
 
 function resolveDefaultCreateResourceType(): string {
-  if (selectedBusinessGroup.value === 'emotional-behavior') {
-    return 'emotion_scene'
-  }
-
-  if (selectedDisplayType.value === 'equipment') {
-    return 'equipment'
-  }
-
-  return isEmotionalBusinessGroup.value ? 'emotion_scene' : 'equipment'
+  return resolveTrainingResourceDefaultCreateType({
+    businessGroupCode: selectedBusinessGroup.value,
+    displayType: selectedDisplayType.value,
+    moduleCode: currentModuleCode.value,
+    isEmotionalBusinessGroup: isEmotionalBusinessGroup.value,
+  })
 }
 
 function ensureCreateEmotionalEditorState(resourceType: string) {
@@ -1220,8 +1196,9 @@ async function handleStatusChange(resource: ResourceItem, active: boolean) {
 function handleCreate() {
   if (props.readOnly) return
   // 设置默认值为当前选中的模块
-  createForm.moduleCode = currentModuleCode.value || 'sensory'
+  createForm.moduleCode = (currentModuleCode.value || 'sensory') as string
   createForm.resourceType = resolveDefaultCreateResourceType()
+  createForm.moduleCode = normalizeTrainingResourceModuleCode(createForm.resourceType, createForm.moduleCode)
   ensureCreateEmotionalEditorState(createForm.resourceType)
   createDialogVisible.value = true
 }
@@ -1245,9 +1222,10 @@ async function handleSaveCreate() {
     }
     const resolvedDescription = resolveResourceDescription(createForm.resourceType, createForm.description, metadata)
     const emotionalCoverImage = getEmotionalCoverImage(createForm.resourceType, metadata)
+    const normalizedModuleCode = normalizeTrainingResourceModuleCode(createForm.resourceType, createForm.moduleCode)
 
     const resourceId = api.addResource({
-      moduleCode: (isEmotionalResourceType(createForm.resourceType) ? 'emotional' : createForm.moduleCode) as ModuleCode,
+      moduleCode: normalizedModuleCode,
       resourceType: createForm.resourceType,
       name: createForm.name,
       category: createForm.category,
@@ -1262,7 +1240,7 @@ async function handleSaveCreate() {
       createDialogVisible.value = false
 
       // 如果创建的资源属于当前筛选的业务分组主模块，刷新列表
-      if (createForm.moduleCode === currentModuleCode.value) {
+      if (normalizedModuleCode === currentModuleCode.value) {
         loadResources()
       }
     }
@@ -1534,9 +1512,7 @@ onMounted(() => {
 
 // 暴露刷新方法给父组件
 watch(() => createForm.resourceType, (newType) => {
-  if (isEmotionalResourceType(newType)) {
-    createForm.moduleCode = 'emotional'
-  }
+  createForm.moduleCode = normalizeTrainingResourceModuleCode(newType, createForm.moduleCode)
   ensureCreateEmotionalEditorState(newType)
 })
 
@@ -1713,6 +1689,11 @@ defineExpose({
 .type-care-scene {
   background: #f0f9eb;
   color: #67c23a;
+}
+
+.type-task-training {
+  background: #eef2ff;
+  color: #4f46e5;
 }
 
 .type-default {
