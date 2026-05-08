@@ -174,6 +174,7 @@ export function resolveTrainingResourceDisplayType(
   }
 
   if (resource.resourceType === 'game'
+    || resource.resourceType === 'task_training'
     || resource.resourceType === 'emotion_scene'
     || resource.resourceType === 'care_scene') {
     return 'game'
