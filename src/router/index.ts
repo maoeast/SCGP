@@ -11,6 +11,7 @@ import {
   getAssessmentScaleCatalogItem,
   isAssessmentScaleAuthorized,
 } from '@/features/assessment/assessment-scale-catalog'
+import { selfCareRoutes } from '@/features/self-care/self-care-routes'
 import { resolveEquipmentTrainingEntryRouteModuleCode } from '@/utils/equipment-training-entry'
 import { getTrainingEntryModuleCode } from '@/utils/training-entry'
 
@@ -260,6 +261,7 @@ const router = createRouter({
             roles: ['admin', 'teacher']
           }
         },
+        ...selfCareRoutes,
         {
           path: 'emotional',
           name: 'EmotionalTraining',

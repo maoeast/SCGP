@@ -121,6 +121,7 @@ const menuRoutes = computed<MenuRouteItem[]>(() => {
     'StudentClassAssignment', // 学生分班
     'Assessment', // 能力评估
     'TrainingPlan', // 训练计划
+    'SelfCareTraining', // 自理训练
     'EmotionalTraining', // 情绪行为
     'GameTraining', // 游戏训练
     'EquipmentTraining', // 器材训练
