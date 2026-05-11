@@ -1,4 +1,5 @@
 import { ResourceAPI } from '@/database/resource-api'
+import { SELF_CARE_TASKS_PATH } from '@/features/self-care/self-care-routes'
 import { ModuleCode, type ResourceItem } from '@/types/module'
 import { resolveEquipmentTrainingEntryCodeFromResource } from '@/utils/equipment-training-entry'
 import { resolveTrainingEntryCodeFromResource } from '@/utils/training-entry'
@@ -232,6 +233,19 @@ export function buildTrainingLaunchRoute(context: TrainingLaunchContext): Traini
           ['studentId', String(context.studentId)],
           ['studentName', stringifyQueryValue(context.studentName)],
           ['resourceId', String(context.resourceId)],
+        ]),
+      }
+
+    case 'task_training':
+      return {
+        path: SELF_CARE_TASKS_PATH,
+        query: buildQuery([
+          ...baseEntries,
+          ['module', launchModuleCode],
+          ['studentId', String(context.studentId)],
+          ['studentName', stringifyQueryValue(context.studentName)],
+          ['resourceId', String(context.resourceId)],
+          ['resourceName', stringifyQueryValue(context.resourceName)],
         ]),
       }
 
