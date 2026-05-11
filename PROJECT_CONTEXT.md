@@ -1383,3 +1383,10 @@
 - ç»Ÿä¸€å¯åŠ¨å™¨ `src/utils/training-launch.ts` å·²å°† `task_training` æ¥åˆ° `/self-care/tasks` å£³å…¥å£ã€‚
 - `è‡ªç†è®­ç»ƒ` é¡¶å±‚å…¥å£å’Œ `task_training` èµ„æºç»§ç»­ä½¿ç”¨ `life_skills` æˆæƒå£å¾„ã€‚
 - å½“å‰ä»åªæ˜¯é˜¶æ®µ 1 å¹³å°åº•åº§è¡¥é“¾ï¼›ä»»åŠ¡ CRUDã€æ‰§è¡Œé¡µã€è®°å½•è¯¦æƒ…é¡µå°šæœªå®ç°ã€‚
+
+## 48. 2026-05-11 Self-Care Phase 2 Internal Task Library Update
+
+- src/database/self-care-task-api.ts ÒÑ³ÉÎª 	ask_training ÔÚ self-care ÄÚ²¿µÄÖ÷±í CRUD ·â×°£¬¹Ì¶¨Ê¹ÓÃ module_code = life_skills Óë esource_type = task_training¡£
+- /self-care/tasks ÒÑ´ÓÂ·ÓÉ¿ÇÉı¼¶ÎªÕæÊµÈÎÎñÁĞ±í£¬TaskList / TaskEditor ÒÑ½ÓÍ¨ĞÂ½¨¡¢±à¼­¡¢½ûÓÃ¡¢»Ö¸´×îĞ¡±Õ»·¡£
+- src/views/resource-center/editors/TaskTrainingEditor.vue µ±Ç°ÊÇ 	ask_training ¹²Í¬ metadata ±à¼­Æ÷ÕæÔ´£¬×ÊÔ´ÖĞĞÄÓë /self-care/tasks ±à¼­Á´¹²ÓÃÍ¬Ò»ÆõÔ¼¡£
+- µ±Ç°ÈÔÎ´½øÈë½×¶Î 3£ºÑ¡Ñ§ÉúÒ³¡¢Ö´ĞĞÒ³£¬ÒÔ¼° 	raining_records + training_session ³Ö¾Ã»¯Á´Â·ÉĞÎ´½ÓÈë¡£

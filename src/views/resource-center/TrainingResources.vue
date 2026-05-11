@@ -421,6 +421,16 @@
             :resource-name="editForm.name || editingResource?.name || ''"
           />
         </el-form-item>
+
+        <el-form-item
+          v-else-if="editingResource?.resourceType === TASK_TRAINING_RESOURCE_TYPE && editForm.taskTrainingMeta"
+          label="任务配置"
+        >
+          <TaskTrainingEditor
+            v-model="editForm.taskTrainingMeta"
+            :resource-name="editForm.name || editingResource?.name || ''"
+          />
+        </el-form-item>
       </el-form>
 
       <template #footer>
@@ -628,6 +638,16 @@
           />
         </el-form-item>
 
+        <el-form-item
+          v-else-if="createForm.resourceType === TASK_TRAINING_RESOURCE_TYPE && createForm.taskTrainingMeta"
+          label="任务配置"
+        >
+          <TaskTrainingEditor
+            v-model="createForm.taskTrainingMeta"
+            :resource-name="createForm.name"
+          />
+        </el-form-item>
+
         <el-form-item>
           <div class="create-hint">
             <el-icon><InfoFilled /></el-icon>
@@ -668,7 +688,14 @@ import type { CareSceneResourceMeta, EmotionSceneResourceMeta } from '@/types/em
 import { useAuthStore } from '@/stores/auth'
 import CareExpressionEditor from './editors/CareExpressionEditor.vue'
 import EmotionSceneEditor from './editors/EmotionSceneEditor.vue'
+import TaskTrainingEditor from './editors/TaskTrainingEditor.vue'
 import EmotionalResourcePackDialog from './components/EmotionalResourcePackDialog.vue'
+import type { TaskTrainingResourceMeta } from '@/features/self-care/task-training-contract'
+import {
+  TASK_TRAINING_RESOURCE_TYPE,
+  normalizeTaskTrainingEditorModel,
+  validateTaskTrainingEditorModel,
+} from '@/features/self-care/task-training-contract'
 import {
   getAccessibleTrainingResourceBusinessGroups,
   getTrainingResourceBusinessGroupLabel,
@@ -781,7 +808,8 @@ const editForm = reactive({
   description: '',
   tags: [] as string[],
   emotionSceneMeta: null as EmotionSceneResourceMeta | null,
-  careSceneMeta: null as CareSceneResourceMeta | null
+  careSceneMeta: null as CareSceneResourceMeta | null,
+  taskTrainingMeta: null as TaskTrainingResourceMeta | null,
 })
 const newTag = ref('')
 
@@ -800,7 +828,8 @@ const createForm = reactive({
   description: '',
   tags: [] as string[],
   emotionSceneMeta: null as EmotionSceneResourceMeta | null,
-  careSceneMeta: null as CareSceneResourceMeta | null
+  careSceneMeta: null as CareSceneResourceMeta | null,
+  taskTrainingMeta: null as TaskTrainingResourceMeta | null,
 })
 const newCreateTag = ref('')
 const creating = ref(false)
@@ -976,45 +1005,67 @@ function ensureCreateEmotionalEditorState(resourceType: string) {
   if (resourceType === 'emotion_scene') {
     createForm.emotionSceneMeta = normalizeEmotionSceneEditorModel(createForm.emotionSceneMeta, createForm.name)
     createForm.careSceneMeta = null
+    createForm.taskTrainingMeta = null
     return
   }
 
   if (resourceType === 'care_scene') {
     createForm.careSceneMeta = normalizeCareSceneEditorModel(createForm.careSceneMeta, createForm.name)
     createForm.emotionSceneMeta = null
+    createForm.taskTrainingMeta = null
+    return
+  }
+
+  if (resourceType === TASK_TRAINING_RESOURCE_TYPE) {
+    createForm.taskTrainingMeta = normalizeTaskTrainingEditorModel(createForm.taskTrainingMeta, createForm.name)
+    createForm.emotionSceneMeta = null
+    createForm.careSceneMeta = null
     return
   }
 
   createForm.emotionSceneMeta = null
   createForm.careSceneMeta = null
+  createForm.taskTrainingMeta = null
 }
 
 function ensureEditEmotionalEditorState(resource: ResourceItem | null) {
   if (!resource) {
     editForm.emotionSceneMeta = null
     editForm.careSceneMeta = null
+    editForm.taskTrainingMeta = null
     return
   }
 
   if (resource.resourceType === 'emotion_scene') {
     editForm.emotionSceneMeta = normalizeEmotionSceneEditorModel(resource.metadata, editForm.name || resource.name)
     editForm.careSceneMeta = null
+    editForm.taskTrainingMeta = null
     return
   }
 
   if (resource.resourceType === 'care_scene') {
     editForm.careSceneMeta = normalizeCareSceneEditorModel(resource.metadata, editForm.name || resource.name)
     editForm.emotionSceneMeta = null
+    editForm.taskTrainingMeta = null
+    return
+  }
+
+  if (resource.resourceType === TASK_TRAINING_RESOURCE_TYPE) {
+    editForm.taskTrainingMeta = normalizeTaskTrainingEditorModel(resource.metadata, editForm.name || resource.name)
+    editForm.emotionSceneMeta = null
+    editForm.careSceneMeta = null
     return
   }
 
   editForm.emotionSceneMeta = null
   editForm.careSceneMeta = null
+  editForm.taskTrainingMeta = null
 }
 
 function parseMetadataForSave(resourceType: string, source: 'create' | 'edit'): Record<string, any> | null | undefined {
   const emotionSceneMeta = source === 'create' ? createForm.emotionSceneMeta : editForm.emotionSceneMeta
   const careSceneMeta = source === 'create' ? createForm.careSceneMeta : editForm.careSceneMeta
+  const taskTrainingMeta = source === 'create' ? createForm.taskTrainingMeta : editForm.taskTrainingMeta
   const resourceName = source === 'create' ? createForm.name : editForm.name
 
   if (resourceType === 'emotion_scene') {
@@ -1047,6 +1098,22 @@ function parseMetadataForSave(resourceType: string, source: 'create' | 'edit'): 
     }
 
     return normalized
+  }
+
+  if (resourceType === TASK_TRAINING_RESOURCE_TYPE) {
+    if (!taskTrainingMeta) {
+      ElMessage.error('自理任务资源缺少步骤配置数据')
+      return null
+    }
+
+    const normalized = normalizeTaskTrainingEditorModel(taskTrainingMeta, resourceName)
+    const errors = validateTaskTrainingEditorModel(normalized)
+    if (errors.length > 0) {
+      ElMessage.error(errors[0] || '自理任务配置未完成')
+      return null
+    }
+
+    return normalized as Record<string, any>
   }
 
   return undefined
@@ -1217,7 +1284,7 @@ async function handleSaveCreate() {
   try {
     const api = new ResourceAPI()
     const metadata = parseMetadataForSave(createForm.resourceType, 'create')
-    if (isEmotionalResourceType(createForm.resourceType) && metadata === null) {
+    if ((isEmotionalResourceType(createForm.resourceType) || createForm.resourceType === TASK_TRAINING_RESOURCE_TYPE) && metadata === null) {
       return
     }
     const resolvedDescription = resolveResourceDescription(createForm.resourceType, createForm.description, metadata)
@@ -1262,6 +1329,7 @@ function resetCreateForm() {
   createForm.tags = []
   createForm.emotionSceneMeta = null
   createForm.careSceneMeta = null
+  createForm.taskTrainingMeta = null
   newCreateTag.value = ''
 }
 
@@ -1350,7 +1418,7 @@ async function handleSaveEdit() {
   try {
     const api = new ResourceAPI()
     const metadata = parseMetadataForSave(editingResource.value.resourceType, 'edit')
-    if (isEmotionalResourceType(editingResource.value.resourceType) && metadata === null) {
+    if ((isEmotionalResourceType(editingResource.value.resourceType) || editingResource.value.resourceType === TASK_TRAINING_RESOURCE_TYPE) && metadata === null) {
       return
     }
     const resolvedDescription = resolveResourceDescription(editingResource.value.resourceType, editForm.description, metadata)
@@ -1412,6 +1480,7 @@ function resetEditForm() {
   editForm.tags = []
   editForm.emotionSceneMeta = null
   editForm.careSceneMeta = null
+  editForm.taskTrainingMeta = null
   editingResource.value = null
 }
 

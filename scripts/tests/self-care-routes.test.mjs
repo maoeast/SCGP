@@ -32,16 +32,22 @@ test('self-care route shell keeps life_skills authorization on menu and tasks ro
     selfCareRoutes,
     SELF_CARE_BASE_PATH,
     SELF_CARE_TASKS_PATH,
+    SELF_CARE_TASK_NEW_PATH,
+    SELF_CARE_TASK_EDIT_PATH,
     SELF_CARE_MODULE_CODE,
   } = loadSelfCareRoutes()
   const { TASK_TRAINING_MODULE_CODE } = loadTaskTrainingContract()
 
   const baseRoute = selfCareRoutes.find((route) => route.name === 'SelfCareTraining')
   const tasksRoute = selfCareRoutes.find((route) => route.name === 'SelfCareTaskList')
+  const createRoute = selfCareRoutes.find((route) => route.name === 'SelfCareTaskCreate')
+  const editRoute = selfCareRoutes.find((route) => route.name === 'SelfCareTaskEdit')
 
   assert.equal(SELF_CARE_MODULE_CODE, TASK_TRAINING_MODULE_CODE)
   assert.equal(SELF_CARE_BASE_PATH, '/self-care')
   assert.equal(SELF_CARE_TASKS_PATH, '/self-care/tasks')
+  assert.equal(SELF_CARE_TASK_NEW_PATH, '/self-care/tasks/new')
+  assert.equal(SELF_CARE_TASK_EDIT_PATH, '/self-care/tasks/:taskId/edit')
 
   assert.equal(baseRoute?.path, 'self-care')
   assert.equal(baseRoute?.redirect, SELF_CARE_TASKS_PATH)
@@ -51,4 +57,14 @@ test('self-care route shell keeps life_skills authorization on menu and tasks ro
   assert.equal(tasksRoute?.meta?.moduleCode, SELF_CARE_MODULE_CODE)
   assert.equal(tasksRoute?.meta?.hideInMenu, true)
   assert.equal(typeof tasksRoute?.component, 'function')
+
+  assert.equal(createRoute?.path, 'self-care/tasks/new')
+  assert.equal(createRoute?.meta?.moduleCode, SELF_CARE_MODULE_CODE)
+  assert.equal(createRoute?.meta?.hideInMenu, true)
+  assert.equal(typeof createRoute?.component, 'function')
+
+  assert.equal(editRoute?.path, 'self-care/tasks/:taskId/edit')
+  assert.equal(editRoute?.meta?.moduleCode, SELF_CARE_MODULE_CODE)
+  assert.equal(editRoute?.meta?.hideInMenu, true)
+  assert.equal(typeof editRoute?.component, 'function')
 })
