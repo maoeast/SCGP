@@ -4,7 +4,7 @@
       <div class="header-left">
         <h1>自理训练</h1>
         <p class="subtitle">
-          参考情绪行为模块的场景选择结构，将自理训练项目按类别集中展示。教师可直接开始训练，也可在卡片右下角继续编辑任务。
+          生活自理任务训练通过标准化训练任务培养孩子生活自理与生活适应能力
         </p>
       </div>
       <div class="header-right">
@@ -13,28 +13,6 @@
         </el-button>
       </div>
     </div>
-
-    <section class="filter-section scgp-filter-surface self-care-filter-section">
-      <div class="filter-toolbar">
-        <el-input
-          v-model="keyword"
-          clearable
-          placeholder="搜索任务名称、描述或能力项"
-          @keyup.enter="loadTasks"
-          @clear="loadTasks"
-        >
-          <template #append>
-            <el-button @click="loadTasks">搜索</el-button>
-          </template>
-        </el-input>
-
-        <el-radio-group v-model="statusFilter" @change="loadTasks">
-          <el-radio-button value="active">启用中</el-radio-button>
-          <el-radio-button value="inactive">已禁用</el-radio-button>
-          <el-radio-button value="all">全部状态</el-radio-button>
-        </el-radio-group>
-      </div>
-    </section>
 
     <section class="main-content scgp-page-panel self-care-task-list-panel">
       <div v-if="launchContext" class="launch-context-banner">
@@ -223,19 +201,14 @@
                 />
               </div>
 
-              <el-tag
-                class="task-gallery-card__status"
-                :type="task.isActive ? 'success' : 'info'"
-                effect="light"
-              >
-                {{ task.isActive ? '启用' : '禁用' }}
-              </el-tag>
             </div>
 
             <div class="task-gallery-card__body">
               <div class="task-gallery-card__topline">
                 <h3 class="task-gallery-card__title">{{ task.name }}</h3>
-                <el-tag size="small" effect="plain">步骤 {{ task.metadata.steps.length }}</el-tag>
+                <span class="task-gallery-badge task-gallery-badge--step-count">
+                  步骤 {{ task.metadata.steps.length }}
+                </span>
               </div>
 
               <p class="task-gallery-card__description">
@@ -243,36 +216,31 @@
               </p>
 
               <div class="task-gallery-card__meta">
-                <el-tag size="small" effect="plain" :style="{ color: task.accentColor, borderColor: `${task.accentColor}33` }">
+                <span class="task-gallery-badge task-gallery-badge--category">
                   {{ task.categoryLabel }}
-                </el-tag>
-                <el-tag
+                </span>
+                <span
                   v-if="task.metadata.category?.childName"
-                  size="small"
-                  type="warning"
-                  effect="plain"
+                  class="task-gallery-badge task-gallery-badge--subcategory"
                 >
                   {{ task.metadata.category?.childName }}
-                </el-tag>
-                <el-tag
+                </span>
+                <span
                   v-if="task.metadata.abilityItem?.name"
-                  size="small"
-                  type="success"
-                  effect="plain"
+                  class="task-gallery-badge task-gallery-badge--ability"
                 >
                   能力项：{{ task.metadata.abilityItem?.name }}
-                </el-tag>
+                </span>
               </div>
 
               <div v-if="task.tags.length > 0" class="task-gallery-card__tags">
-                <el-tag
+                <span
                   v-for="tag in task.tags"
                   :key="tag"
-                  size="small"
-                  effect="plain"
+                  class="task-gallery-badge task-gallery-badge--neutral"
                 >
                   {{ tag }}
-                </el-tag>
+                </span>
               </div>
             </div>
 
@@ -294,30 +262,14 @@
                 已禁用
               </el-button>
 
-              <el-tooltip content="编辑任务" placement="top">
-                <el-button
-                  circle
-                  plain
-                  class="task-gallery-card__icon-action"
-                  @click="handleEdit(task.id)"
-                >
-                  <el-icon><EditPen /></el-icon>
-                </el-button>
-              </el-tooltip>
-
-              <el-tooltip :content="task.isActive ? '禁用任务' : '恢复任务'" placement="top">
-                <el-button
-                  circle
-                  plain
-                  class="task-gallery-card__icon-action"
-                  :type="task.isActive ? 'danger' : 'success'"
-                  @click="task.isActive ? handleDelete(task.id) : handleRestore(task.id)"
-                >
-                  <el-icon>
-                    <component :is="task.isActive ? SwitchButton : RefreshRight" />
-                  </el-icon>
-                </el-button>
-              </el-tooltip>
+              <el-button
+                plain
+                class="task-gallery-card__action task-gallery-card__action--edit"
+                @click="handleEdit(task.id)"
+              >
+                <el-icon><EditPen /></el-icon>
+                <span>编辑</span>
+              </el-button>
             </div>
           </article>
         </div>
@@ -336,9 +288,7 @@ import {
   Grid,
   House,
   MapLocation,
-  RefreshRight,
   SuitcaseLine,
-  SwitchButton,
   ToiletPaper,
 } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -363,7 +313,6 @@ interface TaskGalleryItem extends SelfCareTaskListItem {
   categoryKey: SelfCareCategoryFilterKey
   categoryLabel: string
   categoryIconName: SelfCareCategoryIconName
-  accentColor: string
   coverGradient: string
   coverImageUrl?: string
 }
@@ -383,8 +332,6 @@ const router = useRouter()
 const api = new SelfCareTaskAPI()
 
 const loading = ref(false)
-const keyword = ref('')
-const statusFilter = ref<'active' | 'inactive' | 'all'>('active')
 const tasks = ref<SelfCareTaskListItem[]>([])
 const selectedCategory = ref<SelfCareCategoryFilterKey>('all')
 
@@ -425,7 +372,6 @@ const galleryTasks = computed<TaskGalleryItem[]>(() => tasks.value.map((task) =>
     categoryKey,
     categoryLabel: categoryMeta?.label || task.metadata.category?.parentName || task.category || '未分类',
     categoryIconName: categoryMeta?.iconName ?? 'Grid',
-    accentColor: categoryMeta?.accentColor || '#475569',
     coverGradient: categoryMeta?.coverGradient || 'linear-gradient(135deg, rgba(148, 163, 184, 0.14) 0%, rgba(203, 213, 225, 0.28) 100%)',
     coverImageUrl,
   }
@@ -500,21 +446,9 @@ function handleEdit(taskId: number) {
 async function loadTasks() {
   loading.value = true
   try {
-    const includeInactive = statusFilter.value !== 'active'
-    let list = api.listTasks({
-      keyword: keyword.value.trim() || undefined,
-      includeInactive,
+    tasks.value = api.listTasks({
+      includeInactive: true,
     })
-
-    if (statusFilter.value === 'inactive') {
-      list = list.filter((task) => !task.isActive)
-    }
-
-    if (statusFilter.value === 'active') {
-      list = list.filter((task) => task.isActive)
-    }
-
-    tasks.value = list
   } catch (error) {
     console.error('[TaskList] 加载自理任务失败:', error)
     ElMessage.error('加载自理任务失败')
@@ -524,44 +458,12 @@ async function loadTasks() {
   }
 }
 
-async function handleDelete(taskId: number) {
-  try {
-    api.deleteTask(taskId)
-    ElMessage.success('任务已禁用')
-    loadTasks()
-  } catch (error) {
-    console.error('[TaskList] 禁用任务失败:', error)
-    ElMessage.error('禁用任务失败')
-  }
-}
-
-async function handleRestore(taskId: number) {
-  try {
-    api.restoreTask(taskId)
-    ElMessage.success('任务已恢复')
-    loadTasks()
-  } catch (error) {
-    console.error('[TaskList] 恢复任务失败:', error)
-    ElMessage.error('恢复任务失败')
-  }
-}
-
 onMounted(() => {
   loadTasks()
 })
 </script>
 
 <style scoped>
-.self-care-filter-section {
-  margin-bottom: 16px;
-}
-
-.filter-toolbar {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
 .main-content {
   padding: 20px;
 }
@@ -892,13 +794,6 @@ onMounted(() => {
   color: rgba(148, 95, 14, 0.72);
 }
 
-.task-gallery-card__status {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  border: none;
-}
-
 .task-gallery-card__body {
   display: flex;
   flex-direction: column;
@@ -935,9 +830,49 @@ onMounted(() => {
   gap: 8px;
 }
 
+.task-gallery-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.task-gallery-badge--category {
+  background: #fff2e8;
+  color: #d4380d;
+}
+
+.task-gallery-badge--subcategory,
+.task-gallery-badge--step-count {
+  background: #e6f4ff;
+  color: #0958d9;
+}
+
+.task-gallery-badge--step-count {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.task-gallery-badge--ability {
+  background: #f6ffed;
+  color: #389e0d;
+}
+
+.task-gallery-badge--neutral {
+  background: var(--color-background-secondary, #f5f7fa);
+  border-color: var(--color-border-secondary, #dcdfe6);
+  color: #5f6b7a;
+}
+
 .task-gallery-card__footer {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: auto;
   padding: 0 16px 16px;
@@ -945,14 +880,37 @@ onMounted(() => {
 
 .task-gallery-card__start {
   flex: 1;
+  min-height: 48px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
 }
 
-.task-gallery-card__icon-action {
+.task-gallery-card__action {
   flex: 0 0 auto;
+  min-height: 38px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-gallery-card__action--edit {
+  border-color: #e5e7eb;
+  color: #8a94a6;
+  background: #f8fafc;
+  font-weight: 400;
+}
+
+.task-gallery-card__action--edit:hover {
+  border-color: #d7dee8;
+  color: #6b7280;
+  background: #f3f6fa;
 }
 
 @media (max-width: 768px) {
-  .filter-toolbar,
   .launch-context-banner__content,
   .current-task-workspace__header,
   .current-task-workspace__card-header,
