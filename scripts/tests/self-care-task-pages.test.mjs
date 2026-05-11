@@ -23,3 +23,22 @@ test('TaskEditor exists and loads task_training metadata editing flow', () => {
   assert.match(source, /createTaskTrainingEditorModel|normalizeTaskTrainingEditorModel/)
   assert.match(source, /createTask|updateTask/)
 })
+
+test('TaskList exposes self-care start-training entry to select student per task', () => {
+  const source = readFileSync(resolve(projectRoot, 'src/views/self-care/TaskList.vue'), 'utf8')
+
+  assert.match(source, /开始训练/)
+  assert.match(source, /handleStartTraining/)
+  assert.match(source, /\/self-care\/tasks\/\$\{.*\}\/select-student/)
+})
+
+test('SelectStudent exists and reuses the shared student selector for self-care training', () => {
+  const source = readFileSync(resolve(projectRoot, 'src/views/self-care/SelectStudent.vue'), 'utf8')
+
+  assert.match(source, /StudentSelector/)
+  assert.match(source, /SelfCareTaskAPI/)
+  assert.match(source, /route\.params\.taskId/)
+  assert.match(source, /studentId/)
+  assert.match(source, /resourceId/)
+  assert.match(source, /trainingEntryCode|TASK_TRAINING_ENTRY_CODE/)
+})

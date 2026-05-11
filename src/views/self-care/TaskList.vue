@@ -37,6 +37,20 @@
     </section>
 
     <section class="main-content scgp-page-panel self-care-task-list-panel">
+      <div v-if="launchContext" class="launch-context-banner">
+        <div class="launch-context-banner__content">
+          <el-tag type="warning" effect="light">开始训练</el-tag>
+          <div>
+            <p class="launch-context-banner__title">
+              {{ launchContext.studentName }} · {{ launchContext.taskName }}
+            </p>
+            <p class="launch-context-banner__meta">
+              已带入学生与任务上下文。当前阶段先闭合到自理任务入口壳页，后续继续补执行链。
+            </p>
+          </div>
+        </div>
+      </div>
+
       <el-empty v-if="tasks.length === 0" description="暂无自理任务">
         <el-button type="primary" @click="handleCreate">创建第一条任务</el-button>
       </el-empty>
@@ -89,6 +103,14 @@
           </div>
 
           <div class="task-card__footer">
+            <el-button
+              v-if="task.isActive"
+              type="primary"
+              plain
+              @click="handleStartTraining(task.id)"
+            >
+              开始训练
+            </el-button>
             <el-button plain @click="handleEdit(task.id)">编辑</el-button>
             <el-button
               v-if="task.isActive"
@@ -114,11 +136,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { SelfCareTaskAPI, type SelfCareTaskListItem } from '@/database/self-care-task-api'
+import { TASK_TRAINING_ENTRY_CODE } from '@/features/self-care/task-training-contract'
 
+const route = useRoute()
 const router = useRouter()
 const api = new SelfCareTaskAPI()
 
@@ -127,8 +151,52 @@ const keyword = ref('')
 const statusFilter = ref<'active' | 'inactive' | 'all'>('active')
 const tasks = ref<SelfCareTaskListItem[]>([])
 
+const launchContext = computed(() => {
+  const studentId = getSingleQueryValue(route.query.studentId)
+  const resourceId = getSingleQueryValue(route.query.resourceId)
+  const studentName = getSingleQueryValue(route.query.studentName)
+  const taskName = getSingleQueryValue(route.query.resourceName)
+
+  if (!studentId || !resourceId || !studentName || !taskName) {
+    return null
+  }
+
+  return {
+    studentId,
+    resourceId,
+    studentName,
+    taskName,
+  }
+})
+
+function getSingleQueryValue(value: unknown): string {
+  if (Array.isArray(value)) {
+    return typeof value[0] === 'string' ? value[0] : ''
+  }
+
+  return typeof value === 'string' ? value : ''
+}
+
 function handleCreate() {
   router.push('/self-care/tasks/new')
+}
+
+function handleStartTraining(taskId: number) {
+  const task = tasks.value.find((item) => item.id === taskId)
+  if (!task) {
+    ElMessage.warning('任务不存在或已失效')
+    return
+  }
+
+  router.push({
+    path: `/self-care/tasks/${taskId}/select-student`,
+    query: {
+      resourceId: String(task.id),
+      resourceName: task.name,
+      entry: TASK_TRAINING_ENTRY_CODE,
+      module: task.moduleCode,
+    },
+  })
 }
 
 function handleEdit(taskId: number) {
@@ -192,6 +260,37 @@ onMounted(() => {
 <style scoped>
 .self-care-filter-section {
   margin-bottom: 16px;
+}
+
+.launch-context-banner {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid #f3d19e;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fff8eb 0%, #fffcf4 100%);
+}
+
+.launch-context-banner__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.launch-context-banner__title,
+.launch-context-banner__meta {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.launch-context-banner__title {
+  color: #8a5200;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.launch-context-banner__meta {
+  color: #9a6b20;
+  font-size: 13px;
 }
 
 .filter-toolbar {
@@ -268,6 +367,7 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .filter-toolbar,
+  .launch-context-banner__content,
   .task-card__header,
   .task-card__footer {
     display: flex;
