@@ -42,3 +42,15 @@ test('SelectStudent exists and reuses the shared student selector for self-care 
   assert.match(source, /resourceId/)
   assert.match(source, /trainingEntryCode|TASK_TRAINING_ENTRY_CODE/)
 })
+
+test('TaskList renders current training workspace placeholder from student and resource context', () => {
+  const source = readFileSync(resolve(projectRoot, 'src/views/self-care/TaskList.vue'), 'utf8')
+
+  assert.match(source, /当前训练任务/)
+  assert.match(source, /resourceId/)
+  assert.match(source, /studentId/)
+  assert.match(source, /launchTask/)
+  assert.match(source, /metadata\.steps/)
+  assert.match(source, /step\.seq/)
+  assert.match(source, /step\.text/)
+})
