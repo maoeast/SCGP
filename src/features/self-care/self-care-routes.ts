@@ -8,10 +8,12 @@ export const SELF_CARE_TASKS_PATH = '/self-care/tasks'
 export const SELF_CARE_TASK_NEW_PATH = '/self-care/tasks/new'
 export const SELF_CARE_TASK_EDIT_PATH = '/self-care/tasks/:taskId/edit'
 export const SELF_CARE_TASK_SELECT_STUDENT_PATH = '/self-care/tasks/:taskId/select-student'
+export const SELF_CARE_TASK_EXECUTE_PATH = '/self-care/execute/:taskId/:studentId'
 
 const SelfCareTaskList = () => import('@/views/self-care/TaskList.vue')
 const SelfCareTaskEditor = () => import('@/views/self-care/TaskEditor.vue')
 const SelfCareSelectStudent = () => import('@/views/self-care/SelectStudent.vue')
+const SelfCareTaskExecution = () => import('@/views/self-care/TaskExecution.vue')
 
 export const selfCareRoutes: RouteRecordRaw[] = [
   {
@@ -67,6 +69,18 @@ export const selfCareRoutes: RouteRecordRaw[] = [
       hideInMenu: true,
       roles: ['admin', 'teacher'],
       moduleCode: SELF_CARE_MODULE_CODE,
+    },
+  },
+  {
+    path: 'self-care/execute/:taskId/:studentId',
+    name: 'SelfCareTaskExecution',
+    component: SelfCareTaskExecution,
+    meta: {
+      title: '自理任务训练',
+      hideInMenu: true,
+      roles: ['admin', 'teacher'],
+      moduleCode: SELF_CARE_MODULE_CODE,
+      immersiveShell: true,
     },
   },
 ]

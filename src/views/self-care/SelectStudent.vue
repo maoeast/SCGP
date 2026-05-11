@@ -57,7 +57,7 @@ const backRoute = computed(() => {
 const selfCareModuleTag = computed(() => ({
   type: 'warning' as const,
   label: '生活自理',
-  description: '选择学生后回到自理任务入口壳页，继续承接任务训练启动链。',
+  description: '选择学生后直接进入自理任务执行页，步骤结果统一写入训练记录主链。',
 }))
 
 function getSingleQueryValue(value: unknown): string {
@@ -90,15 +90,16 @@ function handleSelectStudent(student: Student) {
   }
 
   router.push({
-    path: '/self-care/tasks',
+    path: `/self-care/execute/${taskId.value}/${student.id}`,
     query: {
       entry: TASK_TRAINING_ENTRY_CODE,
       module: TASK_TRAINING_MODULE_CODE,
-      taskId: String(taskId.value),
       resourceId: String(task.value!.id),
       resourceName: task.value!.name,
       studentId: String(student.id),
       studentName: student.name || '',
+      planId: getSingleQueryValue(route.query.planId),
+      from: getSingleQueryValue(route.query.from),
     },
   })
 }

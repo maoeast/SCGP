@@ -41,6 +41,7 @@ test('SelectStudent exists and reuses the shared student selector for self-care 
   assert.match(source, /studentId/)
   assert.match(source, /resourceId/)
   assert.match(source, /trainingEntryCode|TASK_TRAINING_ENTRY_CODE/)
+  assert.match(source, /\/self-care\/execute\/\$\{.*\}\/\$\{.*\}/)
 })
 
 test('TaskList renders current training workspace placeholder from student and resource context', () => {
@@ -53,4 +54,17 @@ test('TaskList renders current training workspace placeholder from student and r
   assert.match(source, /metadata\.steps/)
   assert.match(source, /step\.seq/)
   assert.match(source, /step\.text/)
+})
+
+test('TaskExecution exists and persists self-care step-task results through the dedicated training api', () => {
+  const source = readFileSync(resolve(projectRoot, 'src/views/self-care/TaskExecution.vue'), 'utf8')
+
+  assert.match(source, /SelfCareTaskAPI/)
+  assert.match(source, /SelfCareTrainingAPI/)
+  assert.match(source, /route\.params\.taskId/)
+  assert.match(source, /route\.params\.studentId/)
+  assert.match(source, /metadata\.steps/)
+  assert.match(source, /completionLevel/)
+  assert.match(source, /errorType/)
+  assert.match(source, /saveTrainingSession/)
 })

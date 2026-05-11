@@ -39,7 +39,7 @@ test('task_training launch branch uses the self-care contract constant', () => {
   assert.doesNotMatch(source, /case ['"]task_training['"]:/)
 })
 
-test('task_training launches to the self-care task shell', () => {
+test('task_training launches to the self-care execution route', () => {
   const { buildTrainingLaunchRoute } = loadTrainingLaunch()
 
   const route = buildTrainingLaunchRoute({
@@ -53,14 +53,13 @@ test('task_training launches to the self-care task shell', () => {
     resourceName: '穿衣练习',
   })
 
-  assert.equal(route?.path, '/self-care/tasks')
+  assert.equal(route?.path, '/self-care/execute/34/7')
   assert.deepEqual(route?.query, {
+    entry: 'life-skills',
     from: 'plan',
     module: 'life_skills',
     planId: '12',
-    resourceId: '34',
     resourceName: '穿衣练习',
-    studentId: '7',
     studentName: '测试学生',
   })
 })
