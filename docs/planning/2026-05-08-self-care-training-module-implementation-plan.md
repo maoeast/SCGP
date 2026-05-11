@@ -1,6 +1,9 @@
 # 自理训练任务模块详细实现计划（A2）
 > 文档类型：现行实施计划
-> 前置输入：`docs/planning/2026-05-08-self-care-training-module-a1-migration-design.md`
+> 前置输入：
+> - `docs/planning/2026-05-08-self-care-training-module-a1-migration-design.md`
+> - `docs/planning/2026-05-08-self-care-ats-to-scgp-mapping-checklist.md`
+> 同步状态：A1 迁移设计已同步为本计划的阶段拆分与平台边界；ATS 到 SCGP 映射清单已同步为旧系统事实来源与“迁职责、不迁旧表主链”的实现约束。
 > 适用范围：`SCGP / 星愿能力发展训练系统`
 > 状态：当前有效
 > 创建日期：2026-05-08

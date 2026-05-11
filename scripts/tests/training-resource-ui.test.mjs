@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import createJiti from 'jiti'
@@ -18,6 +19,18 @@ function loadTrainingResourceUi() {
 function loadModuleTypes() {
   return jiti('../../src/types/module.ts')
 }
+
+test('task_training resource UI branches use the self-care contract constants', () => {
+  const source = readFileSync(resolve(projectRoot, 'src/views/resource-center/training-resource-ui.ts'), 'utf8')
+
+  assert.match(source, /TASK_TRAINING_RESOURCE_TYPE/)
+  assert.match(source, /TASK_TRAINING_ENTRY_CODE/)
+  assert.match(source, /TASK_TRAINING_MODULE_CODE/)
+  assert.doesNotMatch(source, /code:\s*['"]task_training['"]/)
+  assert.doesNotMatch(source, /return ['"]task_training['"]/)
+  assert.doesNotMatch(source, /resourceType === ['"]task_training['"]/)
+  assert.doesNotMatch(source, /businessGroupCode === ['"]life-skills['"]/)
+})
 
 test('life-skills create options expose task_training and default to it', () => {
   const { getTrainingResourceTypeOptions, resolveTrainingResourceDefaultCreateType } = loadTrainingResourceUi()

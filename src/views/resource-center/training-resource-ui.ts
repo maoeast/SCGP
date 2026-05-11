@@ -9,6 +9,11 @@ import {
   VideoPlay,
 } from '@element-plus/icons-vue'
 import type { Component } from 'vue'
+import {
+  TASK_TRAINING_ENTRY_CODE,
+  TASK_TRAINING_MODULE_CODE,
+  TASK_TRAINING_RESOURCE_TYPE,
+} from '@/features/self-care/task-training-contract'
 import { ModuleCode } from '@/types/module'
 import type {
   TrainingResourceBusinessGroupCode,
@@ -40,7 +45,7 @@ const EMOTIONAL_TRAINING_RESOURCE_TYPE_OPTIONS: TrainingResourceTypeOption[] = [
 ]
 
 const LIFE_SKILLS_TRAINING_RESOURCE_TYPE_OPTIONS: TrainingResourceTypeOption[] = [
-  { code: 'task_training', name: '自理任务' },
+  { code: TASK_TRAINING_RESOURCE_TYPE, name: '自理任务' },
 ]
 
 const TRAINING_RESOURCE_TYPE_ICON_MAP: Record<string, Component> = {
@@ -51,7 +56,7 @@ const TRAINING_RESOURCE_TYPE_ICON_MAP: Record<string, Component> = {
   flashcard: Picture,
   emotion_scene: Sunny,
   care_scene: ChatDotRound,
-  task_training: CollectionTag,
+  [TASK_TRAINING_RESOURCE_TYPE]: CollectionTag,
   default: Files,
 }
 
@@ -63,8 +68,12 @@ const TRAINING_RESOURCE_TYPE_ICON_CLASS_MAP: Record<string, string> = {
   flashcard: 'type-flashcard',
   emotion_scene: 'type-emotion-scene',
   care_scene: 'type-care-scene',
-  task_training: 'type-task-training',
+  [TASK_TRAINING_RESOURCE_TYPE]: 'type-task-training',
   default: 'type-default',
+}
+
+function isTaskTrainingModuleCode(moduleCode: ModuleCode | null | string): boolean {
+  return moduleCode === TASK_TRAINING_MODULE_CODE
 }
 
 export function getTrainingResourceTypeOptions(moduleCode: ModuleCode | null): TrainingResourceTypeOption[] {
@@ -74,7 +83,7 @@ export function getTrainingResourceTypeOptions(moduleCode: ModuleCode | null): T
     options.push(...EMOTIONAL_TRAINING_RESOURCE_TYPE_OPTIONS)
   }
 
-  if (moduleCode === ModuleCode.LIFE_SKILLS) {
+  if (isTaskTrainingModuleCode(moduleCode)) {
     options.push(...LIFE_SKILLS_TRAINING_RESOURCE_TYPE_OPTIONS)
   }
 
@@ -95,8 +104,8 @@ export function resolveTrainingResourceDefaultCreateType({
   moduleCode,
   isEmotionalBusinessGroup,
 }: DefaultCreateTypeContext): string {
-  if (businessGroupCode === 'life-skills' || moduleCode === ModuleCode.LIFE_SKILLS) {
-    return 'task_training'
+  if (businessGroupCode === TASK_TRAINING_ENTRY_CODE || isTaskTrainingModuleCode(moduleCode)) {
+    return TASK_TRAINING_RESOURCE_TYPE
   }
 
   if (businessGroupCode === 'emotional-behavior') {
@@ -114,8 +123,8 @@ export function normalizeTrainingResourceModuleCode(
   resourceType: string,
   fallbackModuleCode: ModuleCode | null | string,
 ): ModuleCode {
-  if (resourceType === 'task_training') {
-    return ModuleCode.LIFE_SKILLS
+  if (resourceType === TASK_TRAINING_RESOURCE_TYPE) {
+    return TASK_TRAINING_MODULE_CODE as ModuleCode
   }
 
   if (resourceType === 'emotion_scene' || resourceType === 'care_scene') {

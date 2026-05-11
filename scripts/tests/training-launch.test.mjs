@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
@@ -30,6 +31,13 @@ function loadTrainingLaunch() {
 
   return jiti('../../src/utils/training-launch.ts')
 }
+
+test('task_training launch branch uses the self-care contract constant', () => {
+  const source = readFileSync(resolve(projectRoot, 'src/utils/training-launch.ts'), 'utf8')
+
+  assert.match(source, /case TASK_TRAINING_RESOURCE_TYPE:/)
+  assert.doesNotMatch(source, /case ['"]task_training['"]:/)
+})
 
 test('task_training launches to the self-care task shell', () => {
   const { buildTrainingLaunchRoute } = loadTrainingLaunch()

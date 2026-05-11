@@ -1,6 +1,8 @@
 import type { RouteRecordRaw } from 'vue-router'
 
-export const SELF_CARE_MODULE_CODE = 'life_skills' as const
+import { TASK_TRAINING_MODULE_CODE } from '@/features/self-care/task-training-contract'
+
+export const SELF_CARE_MODULE_CODE = TASK_TRAINING_MODULE_CODE
 export const SELF_CARE_BASE_PATH = '/self-care'
 export const SELF_CARE_TASKS_PATH = '/self-care/tasks'
 

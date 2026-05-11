@@ -1,3 +1,8 @@
+import {
+  TASK_TRAINING_ENTRY_CODE,
+  TASK_TRAINING_RESOURCE_DISPLAY_TYPE,
+  TASK_TRAINING_RESOURCE_TYPE,
+} from '@/features/self-care/task-training-contract'
 import { ModuleCode, type ResourceItem } from '@/types/module'
 import {
   EQUIPMENT_CATALOG_GROUPS,
@@ -173,8 +178,11 @@ export function resolveTrainingResourceDisplayType(
     return 'equipment'
   }
 
+  if (resource.resourceType === TASK_TRAINING_RESOURCE_TYPE) {
+    return TASK_TRAINING_RESOURCE_DISPLAY_TYPE
+  }
+
   if (resource.resourceType === 'game'
-    || resource.resourceType === 'task_training'
     || resource.resourceType === 'emotion_scene'
     || resource.resourceType === 'care_scene') {
     return 'game'
@@ -200,6 +208,10 @@ export function resolveTrainingResourceBusinessGroupCode(
     return resolveEquipmentCatalogGroupCode(resource)
   }
 
+  if (resource.resourceType === TASK_TRAINING_RESOURCE_TYPE) {
+    return TASK_TRAINING_ENTRY_CODE
+  }
+
   const entryCode = resolveTrainingEntryCodeFromResource(resource)
 
   switch (entryCode) {
@@ -211,8 +223,8 @@ export function resolveTrainingResourceBusinessGroupCode(
       return 'fine-motor'
     case 'soothing-aids':
       return 'soothing-aids'
-    case 'life-skills':
-      return 'life-skills'
+    case TASK_TRAINING_ENTRY_CODE:
+      return TASK_TRAINING_ENTRY_CODE
     case 'sensory-integration':
     default:
       return 'sensory-training'

@@ -1,4 +1,5 @@
 import { DatabaseAPI } from './api'
+import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import { getTrainingPlanModuleLabel } from '@/utils/training-plan-module'
 
 export interface DashboardOverview {
@@ -86,6 +87,19 @@ function normalizeNumber(value: unknown): number {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+const LAUNCHABLE_TRAINING_RESOURCE_TYPES = [
+  'equipment',
+  'game',
+  'flashcard',
+  'emotion_scene',
+  'care_scene',
+  TASK_TRAINING_RESOURCE_TYPE,
+] as const
+
+const launchableTrainingResourceTypesSql = LAUNCHABLE_TRAINING_RESOURCE_TYPES
+  .map((type) => `'${type}'`)
+  .join(', ')
+
 export class DashboardAPI extends DatabaseAPI {
   async getSnapshot(): Promise<DashboardSnapshot> {
     const [schedule, anomalies, assessmentAlerts, studentCount] = await Promise.all([
@@ -137,7 +151,7 @@ export class DashboardAPI extends DatabaseAPI {
             INNER JOIN sys_training_resource tr2 ON tr2.id = prm2.resource_id
             WHERE prm2.plan_id = tp.id
               AND tr2.is_active = 1
-              AND tr2.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene', 'task_training')
+              AND tr2.resource_type IN (${launchableTrainingResourceTypesSql})
             ORDER BY prm2.sort_order ASC, prm2.created_at ASC
             LIMIT 1
           ) AS launch_resource_id,
@@ -147,7 +161,7 @@ export class DashboardAPI extends DatabaseAPI {
             INNER JOIN sys_training_resource tr3 ON tr3.id = prm3.resource_id
             WHERE prm3.plan_id = tp.id
               AND tr3.is_active = 1
-              AND tr3.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene', 'task_training')
+              AND tr3.resource_type IN (${launchableTrainingResourceTypesSql})
             ORDER BY prm3.sort_order ASC, prm3.created_at ASC
             LIMIT 1
           ) AS launch_resource_type,
@@ -157,7 +171,7 @@ export class DashboardAPI extends DatabaseAPI {
             INNER JOIN sys_training_resource tr4 ON tr4.id = prm4.resource_id
             WHERE prm4.plan_id = tp.id
               AND tr4.is_active = 1
-              AND tr4.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene', 'task_training')
+              AND tr4.resource_type IN (${launchableTrainingResourceTypesSql})
             ORDER BY prm4.sort_order ASC, prm4.created_at ASC
             LIMIT 1
           ) AS launch_resource_name,
@@ -167,7 +181,7 @@ export class DashboardAPI extends DatabaseAPI {
             INNER JOIN sys_training_resource tr5 ON tr5.id = prm5.resource_id
             WHERE prm5.plan_id = tp.id
               AND tr5.is_active = 1
-              AND tr5.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene', 'task_training')
+              AND tr5.resource_type IN (${launchableTrainingResourceTypesSql})
             ORDER BY prm5.sort_order ASC, prm5.created_at ASC
             LIMIT 1
           ) AS launch_resource_module_code

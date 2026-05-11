@@ -10,8 +10,11 @@ test('dashboard schedule launch resource whitelist includes task_training', () =
   const source = readFileSync(resolve(projectRoot, 'src/database/dashboard-api.ts'), 'utf8')
   const whitelistMatches = [...source.matchAll(/resource_type IN \(([^)]+)\)/g)]
 
+  assert.match(source, /TASK_TRAINING_RESOURCE_TYPE/)
+  assert.match(source, /launchableTrainingResourceTypesSql/)
   assert.equal(whitelistMatches.length, 4)
   for (const match of whitelistMatches) {
-    assert.match(match[1], /'task_training'/)
+    assert.match(match[1], /\$\{launchableTrainingResourceTypesSql\}/)
+    assert.doesNotMatch(match[1], /'task_training'/)
   }
 })

@@ -1,5 +1,6 @@
 import { ResourceAPI } from '@/database/resource-api'
 import { SELF_CARE_TASKS_PATH } from '@/features/self-care/self-care-routes'
+import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import { ModuleCode, type ResourceItem } from '@/types/module'
 import { resolveEquipmentTrainingEntryCodeFromResource } from '@/utils/equipment-training-entry'
 import { resolveTrainingEntryCodeFromResource } from '@/utils/training-entry'
@@ -236,7 +237,7 @@ export function buildTrainingLaunchRoute(context: TrainingLaunchContext): Traini
         ]),
       }
 
-    case 'task_training':
+    case TASK_TRAINING_RESOURCE_TYPE:
       return {
         path: SELF_CARE_TASKS_PATH,
         query: buildQuery([

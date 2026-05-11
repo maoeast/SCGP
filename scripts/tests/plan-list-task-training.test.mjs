@@ -13,7 +13,8 @@ function readPlanListSource() {
 test('plan resource selector exposes task_training for self-care resources', () => {
   const source = readPlanListSource()
 
-  assert.match(source, /<el-radio-button value="task_training">自理任务<\/el-radio-button>/)
-  assert.match(source, /task_training:\s*'自理任务'/)
-  assert.match(source, /ModuleCode\.LIFE_SKILLS/)
+  assert.match(source, /:value="TASK_TRAINING_RESOURCE_TYPE"/)
+  assert.match(source, /\[TASK_TRAINING_RESOURCE_TYPE\]:\s*'自理任务'/)
+  assert.doesNotMatch(source, /<el-radio-button value="task_training">/)
+  assert.match(source, /TASK_TRAINING_MODULE_CODE/)
 })

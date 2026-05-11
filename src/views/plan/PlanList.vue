@@ -553,7 +553,7 @@
             <el-radio-button value="equipment">器材</el-radio-button>
             <el-radio-button value="game">游戏</el-radio-button>
             <el-radio-button value="flashcard">闪卡</el-radio-button>
-            <el-radio-button value="task_training">自理任务</el-radio-button>
+            <el-radio-button :value="TASK_TRAINING_RESOURCE_TYPE">自理任务</el-radio-button>
           </el-radio-group>
         </div>
 
@@ -731,6 +731,10 @@ import {
 import { PlanAPI, type TrainingPlan, type PlanStatus, type PlanResourceMap } from '@/database/plan-api'
 import { ResourceAPI } from '@/database/resource-api'
 import { StudentAPI } from '@/database/api'
+import {
+  TASK_TRAINING_MODULE_CODE,
+  TASK_TRAINING_RESOURCE_TYPE,
+} from '@/features/self-care/task-training-contract'
 import type { ResourceItem } from '@/types/module'
 import { ModuleCode } from '@/types/module'
 import {
@@ -842,7 +846,7 @@ const todayCompletedResources = ref<Set<string>>(new Set())
 const EXTRA_RESOURCE_TYPE_LABELS: Record<string, string> = {
   emotion_scene: '情绪场景',
   care_scene: '表达关心',
-  task_training: '自理任务',
+  [TASK_TRAINING_RESOURCE_TYPE]: '自理任务',
 }
 
 // API 实例
@@ -1490,7 +1494,7 @@ async function loadResourcesForSelection() {
         ModuleCode.SENSORY,
         ModuleCode.EMOTIONAL,
         ModuleCode.SOCIAL,
-        ModuleCode.LIFE_SKILLS,
+        TASK_TRAINING_MODULE_CODE as ModuleCode,
       ]
 
       for (const mod of modules) {
