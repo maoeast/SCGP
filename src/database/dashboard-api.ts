@@ -137,7 +137,7 @@ export class DashboardAPI extends DatabaseAPI {
             INNER JOIN sys_training_resource tr2 ON tr2.id = prm2.resource_id
             WHERE prm2.plan_id = tp.id
               AND tr2.is_active = 1
-              AND tr2.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene')
+              AND tr2.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene', 'task_training')
             ORDER BY prm2.sort_order ASC, prm2.created_at ASC
             LIMIT 1
           ) AS launch_resource_id,
@@ -147,7 +147,7 @@ export class DashboardAPI extends DatabaseAPI {
             INNER JOIN sys_training_resource tr3 ON tr3.id = prm3.resource_id
             WHERE prm3.plan_id = tp.id
               AND tr3.is_active = 1
-              AND tr3.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene')
+              AND tr3.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene', 'task_training')
             ORDER BY prm3.sort_order ASC, prm3.created_at ASC
             LIMIT 1
           ) AS launch_resource_type,
@@ -157,7 +157,7 @@ export class DashboardAPI extends DatabaseAPI {
             INNER JOIN sys_training_resource tr4 ON tr4.id = prm4.resource_id
             WHERE prm4.plan_id = tp.id
               AND tr4.is_active = 1
-              AND tr4.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene')
+              AND tr4.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene', 'task_training')
             ORDER BY prm4.sort_order ASC, prm4.created_at ASC
             LIMIT 1
           ) AS launch_resource_name,
@@ -167,7 +167,7 @@ export class DashboardAPI extends DatabaseAPI {
             INNER JOIN sys_training_resource tr5 ON tr5.id = prm5.resource_id
             WHERE prm5.plan_id = tp.id
               AND tr5.is_active = 1
-              AND tr5.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene')
+              AND tr5.resource_type IN ('equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene', 'task_training')
             ORDER BY prm5.sort_order ASC, prm5.created_at ASC
             LIMIT 1
           ) AS launch_resource_module_code
