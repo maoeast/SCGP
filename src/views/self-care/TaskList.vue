@@ -2,9 +2,9 @@
   <div class="page-container scgp-admin-page self-care-task-list-page" v-loading="loading">
     <div class="page-header self-care-task-list-header">
       <div class="header-left">
-        <h1>自理任务</h1>
+        <h1>自理训练</h1>
         <p class="subtitle">
-          当前任务列表直接读取 `task_training` 资源主表，后续学生选择与执行链在此基础上继续补齐。
+          参考情绪行为模块的场景选择结构，将自理训练项目按类别集中展示。教师可直接开始训练，也可在卡片右下角继续编辑任务。
         </p>
       </div>
       <div class="header-right">
@@ -19,7 +19,7 @@
         <el-input
           v-model="keyword"
           clearable
-          placeholder="搜索任务名称或描述"
+          placeholder="搜索任务名称、描述或能力项"
           @keyup.enter="loadTasks"
           @clear="loadTasks"
         >
@@ -31,7 +31,7 @@
         <el-radio-group v-model="statusFilter" @change="loadTasks">
           <el-radio-button value="active">启用中</el-radio-button>
           <el-radio-button value="inactive">已禁用</el-radio-button>
-          <el-radio-button value="all">全部</el-radio-button>
+          <el-radio-button value="all">全部状态</el-radio-button>
         </el-radio-group>
       </div>
     </section>
@@ -45,7 +45,7 @@
               {{ launchContext.studentName }} · {{ launchContext.taskName }}
             </p>
             <p class="launch-context-banner__meta">
-              已带入学生与任务上下文。当前阶段先闭合到自理任务入口壳页，后续继续补执行链。
+              已带入学生与任务上下文。你可以继续浏览卡片，也可以直接回到当前任务工作区。
             </p>
           </div>
         </div>
@@ -57,7 +57,7 @@
             <p class="current-task-workspace__eyebrow">当前训练任务</p>
             <h2 class="current-task-workspace__title">{{ launchTask.name }}</h2>
             <p class="current-task-workspace__description">
-              已承接学生与任务入口上下文。当前阶段先渲染训练工作区占位，并以 `meta_data.steps[]` 作为任务步骤事实源。
+              已承接学生与任务入口上下文。当前阶段仍保留训练工作区占位，并以 `meta_data.steps[]` 作为任务步骤事实源。
             </p>
           </div>
 
@@ -136,82 +136,192 @@
         <el-button type="primary" @click="handleCreate">创建第一条任务</el-button>
       </el-empty>
 
-      <div v-else class="task-card-grid">
-        <article
-          v-for="task in tasks"
-          :key="task.id"
-          class="task-card"
-          :class="{ 'is-inactive': !task.isActive }"
-        >
-          <div class="task-card__header">
-            <div>
-              <h3 class="task-card__title">{{ task.name }}</h3>
-              <p class="task-card__meta">
-                {{ task.category || '未分类' }} · {{ task.metadata.steps.length }} 步
+      <template v-else>
+        <el-card shadow="never" class="task-gallery-summary-card">
+          <div class="task-gallery-summary-head">
+            <div class="task-gallery-summary-copy">
+              <div class="task-gallery-summary-title-row">
+                <h3 class="task-gallery-summary-title">训练项目分类</h3>
+                <span class="task-gallery-summary-count">
+                  {{ filteredTasks.length }} / {{ tasks.length }}
+                </span>
+              </div>
+              <p class="task-gallery-summary-subtitle">
+                按胶囊标签切换训练项目。页面优先服务“选项目并开始训练”，编辑与启用状态保留为次级教师动作。
               </p>
             </div>
-            <el-tag :type="task.isActive ? 'success' : 'info'" effect="light">
-              {{ task.isActive ? '启用' : '禁用' }}
-            </el-tag>
+
+            <div class="task-gallery-summary-actions">
+              <el-button plain @click="loadTasks">刷新</el-button>
+              <el-button
+                v-if="selectedCategory !== 'all'"
+                text
+                @click="selectedCategory = 'all'"
+              >
+                清除分类
+              </el-button>
+            </div>
           </div>
 
-          <p class="task-card__description">
-            {{ task.description || '暂无任务描述' }}
-          </p>
-
-          <div class="task-card__summary">
-            <span v-if="task.metadata.category?.parentName">
-              {{ task.metadata.category?.parentName }}
-              <template v-if="task.metadata.category?.childName"> / {{ task.metadata.category?.childName }}</template>
-            </span>
-            <span v-else>未配置结构化分类</span>
-
-            <span v-if="task.metadata.abilityItem?.name">
-              能力项：{{ task.metadata.abilityItem?.name }}
-            </span>
-            <span v-else>未配置能力项</span>
+          <div class="task-gallery-pill-row">
+            <button
+              v-for="filter in SELF_CARE_CATEGORY_FILTERS"
+              :key="filter.key"
+              type="button"
+              class="task-gallery-pill"
+              :class="{ 'is-active': selectedCategory === filter.key }"
+              @click="selectedCategory = filter.key"
+            >
+              <component
+                :is="resolveCategoryIcon(filter.iconName)"
+                class="task-gallery-pill__icon"
+              />
+              <span>{{ filter.label }}</span>
+              <em>{{ categoryCounts[filter.key] || 0 }}</em>
+            </button>
           </div>
+        </el-card>
 
-          <div class="task-card__tags">
-            <el-tag
-              v-for="tag in task.tags"
-              :key="tag"
-              size="small"
-              effect="plain"
-            >
-              {{ tag }}
-            </el-tag>
-          </div>
+        <el-empty
+          v-if="filteredTasks.length === 0"
+          description="当前筛选条件下没有匹配的自理训练项目"
+        >
+          <el-button type="primary" @click="selectedCategory = 'all'">查看全部项目</el-button>
+        </el-empty>
 
-          <div class="task-card__footer">
-            <el-button
-              v-if="task.isActive"
-              type="primary"
-              plain
-              @click="handleStartTraining(task.id)"
+        <div v-else class="task-gallery-grid">
+          <article
+            v-for="task in filteredTasks"
+            :key="task.id"
+            class="task-gallery-card"
+            :class="{ 'is-inactive': !task.isActive }"
+          >
+            <div
+              class="task-gallery-card__cover"
+              :style="{ background: task.coverGradient }"
             >
-              开始训练
-            </el-button>
-            <el-button plain @click="handleEdit(task.id)">编辑</el-button>
-            <el-button
-              v-if="task.isActive"
-              type="danger"
-              plain
-              @click="handleDelete(task.id)"
-            >
-              禁用
-            </el-button>
-            <el-button
-              v-else
-              type="success"
-              plain
-              @click="handleRestore(task.id)"
-            >
-              恢复
-            </el-button>
-          </div>
-        </article>
-      </div>
+              <el-image
+                v-if="task.coverImageUrl"
+                :src="task.coverImageUrl"
+                fit="cover"
+                class="task-gallery-card__cover-image"
+              >
+                <template #error>
+                  <div class="task-gallery-card__cover-fallback">
+                    <component
+                      :is="resolveCategoryIcon(task.categoryIconName)"
+                      class="task-gallery-card__cover-icon"
+                    />
+                  </div>
+                </template>
+              </el-image>
+
+              <div v-else class="task-gallery-card__cover-fallback">
+                <component
+                  :is="resolveCategoryIcon(task.categoryIconName)"
+                  class="task-gallery-card__cover-icon"
+                />
+              </div>
+
+              <el-tag
+                class="task-gallery-card__status"
+                :type="task.isActive ? 'success' : 'info'"
+                effect="light"
+              >
+                {{ task.isActive ? '启用' : '禁用' }}
+              </el-tag>
+            </div>
+
+            <div class="task-gallery-card__body">
+              <div class="task-gallery-card__topline">
+                <h3 class="task-gallery-card__title">{{ task.name }}</h3>
+                <el-tag size="small" effect="plain">步骤 {{ task.metadata.steps.length }}</el-tag>
+              </div>
+
+              <p class="task-gallery-card__description">
+                {{ task.description || '暂无任务描述' }}
+              </p>
+
+              <div class="task-gallery-card__meta">
+                <el-tag size="small" effect="plain" :style="{ color: task.accentColor, borderColor: `${task.accentColor}33` }">
+                  {{ task.categoryLabel }}
+                </el-tag>
+                <el-tag
+                  v-if="task.metadata.category?.childName"
+                  size="small"
+                  type="warning"
+                  effect="plain"
+                >
+                  {{ task.metadata.category?.childName }}
+                </el-tag>
+                <el-tag
+                  v-if="task.metadata.abilityItem?.name"
+                  size="small"
+                  type="success"
+                  effect="plain"
+                >
+                  能力项：{{ task.metadata.abilityItem?.name }}
+                </el-tag>
+              </div>
+
+              <div v-if="task.tags.length > 0" class="task-gallery-card__tags">
+                <el-tag
+                  v-for="tag in task.tags"
+                  :key="tag"
+                  size="small"
+                  effect="plain"
+                >
+                  {{ tag }}
+                </el-tag>
+              </div>
+            </div>
+
+            <div class="task-gallery-card__footer">
+              <el-button
+                v-if="task.isActive"
+                type="primary"
+                class="task-gallery-card__start"
+                @click="handleStartTraining(task.id)"
+              >
+                开始训练
+              </el-button>
+              <el-button
+                v-else
+                plain
+                disabled
+                class="task-gallery-card__start"
+              >
+                已禁用
+              </el-button>
+
+              <el-tooltip content="编辑任务" placement="top">
+                <el-button
+                  circle
+                  plain
+                  class="task-gallery-card__icon-action"
+                  @click="handleEdit(task.id)"
+                >
+                  <el-icon><EditPen /></el-icon>
+                </el-button>
+              </el-tooltip>
+
+              <el-tooltip :content="task.isActive ? '禁用任务' : '恢复任务'" placement="top">
+                <el-button
+                  circle
+                  plain
+                  class="task-gallery-card__icon-action"
+                  :type="task.isActive ? 'danger' : 'success'"
+                  @click="task.isActive ? handleDelete(task.id) : handleRestore(task.id)"
+                >
+                  <el-icon>
+                    <component :is="task.isActive ? SwitchButton : RefreshRight" />
+                  </el-icon>
+                </el-button>
+              </el-tooltip>
+            </div>
+          </article>
+        </div>
+      </template>
     </section>
   </div>
 </template>
@@ -219,6 +329,18 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import {
+  Brush,
+  EditPen,
+  ForkSpoon,
+  Grid,
+  House,
+  MapLocation,
+  RefreshRight,
+  SuitcaseLine,
+  SwitchButton,
+  ToiletPaper,
+} from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import { SelfCareTaskAPI, type SelfCareTaskListItem } from '@/database/self-care-task-api'
 import {
@@ -226,6 +348,35 @@ import {
   TASK_TRAINING_MODULE_CODE,
   TASK_TRAINING_MODE,
 } from '@/features/self-care/task-training-contract'
+import {
+  buildSelfCareCategoryCounts,
+  filterSelfCareTasksByCategory,
+  getSelfCareCategoryFilter,
+  resolveSelfCareCategoryKey,
+  SELF_CARE_CATEGORY_FILTERS,
+  type SelfCareCategoryIconName,
+  type SelfCareCategoryFilterKey,
+} from '@/features/self-care/task-gallery'
+import { isDisplayImageLike, resolvePresetResourceUrl } from '@/utils/preset-resource'
+
+interface TaskGalleryItem extends SelfCareTaskListItem {
+  categoryKey: SelfCareCategoryFilterKey
+  categoryLabel: string
+  categoryIconName: SelfCareCategoryIconName
+  accentColor: string
+  coverGradient: string
+  coverImageUrl?: string
+}
+
+const CATEGORY_ICON_MAP = {
+  Grid,
+  ForkSpoon,
+  SuitcaseLine,
+  ToiletPaper,
+  Brush,
+  House,
+  MapLocation,
+} as const
 
 const route = useRoute()
 const router = useRouter()
@@ -235,6 +386,7 @@ const loading = ref(false)
 const keyword = ref('')
 const statusFilter = ref<'active' | 'inactive' | 'all'>('active')
 const tasks = ref<SelfCareTaskListItem[]>([])
+const selectedCategory = ref<SelfCareCategoryFilterKey>('all')
 
 const launchTaskId = computed(() => getPositiveQueryNumber(route.query.resourceId))
 const launchTask = computed(() => {
@@ -263,6 +415,25 @@ const launchContext = computed(() => {
   }
 })
 
+const galleryTasks = computed<TaskGalleryItem[]>(() => tasks.value.map((task) => {
+  const categoryKey = resolveSelfCareCategoryKey(task)
+  const categoryMeta = getSelfCareCategoryFilter(categoryKey)
+  const coverImageUrl = resolveTaskCoverImage(task)
+
+  return {
+    ...task,
+    categoryKey,
+    categoryLabel: categoryMeta?.label || task.metadata.category?.parentName || task.category || '未分类',
+    categoryIconName: categoryMeta?.iconName ?? 'Grid',
+    accentColor: categoryMeta?.accentColor || '#475569',
+    coverGradient: categoryMeta?.coverGradient || 'linear-gradient(135deg, rgba(148, 163, 184, 0.14) 0%, rgba(203, 213, 225, 0.28) 100%)',
+    coverImageUrl,
+  }
+}))
+
+const categoryCounts = computed(() => buildSelfCareCategoryCounts(galleryTasks.value))
+const filteredTasks = computed(() => filterSelfCareTasksByCategory(galleryTasks.value, selectedCategory.value))
+
 function getSingleQueryValue(value: unknown): string {
   if (Array.isArray(value)) {
     return typeof value[0] === 'string' ? value[0] : ''
@@ -275,6 +446,29 @@ function getPositiveQueryNumber(value: unknown): number | null {
   const raw = getSingleQueryValue(value)
   const parsed = Number.parseInt(raw, 10)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+}
+
+function resolveCategoryIcon(iconName: keyof typeof CATEGORY_ICON_MAP) {
+  return CATEGORY_ICON_MAP[iconName] || Grid
+}
+
+function resolveTaskCoverImage(task: SelfCareTaskListItem): string | undefined {
+  const candidateValues = [
+    task.coverImage,
+    task.metadata.steps.find((step) => typeof step.imagePath === 'string' && step.imagePath.trim().length > 0)?.imagePath,
+  ]
+
+  for (const value of candidateValues) {
+    if (typeof value !== 'string' || !value.trim()) {
+      continue
+    }
+
+    if (isDisplayImageLike(value)) {
+      return resolvePresetResourceUrl(value)
+    }
+  }
+
+  return undefined
 }
 
 function handleCreate() {
@@ -360,6 +554,16 @@ onMounted(() => {
 <style scoped>
 .self-care-filter-section {
   margin-bottom: 16px;
+}
+
+.filter-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.main-content {
+  padding: 20px;
 }
 
 .launch-context-banner {
@@ -540,85 +744,220 @@ onMounted(() => {
   font-size: 12px;
 }
 
-.filter-toolbar {
+.task-gallery-summary-card {
+  margin-bottom: 20px;
+  border-radius: 22px;
+  border: 1px solid #e5edf6;
+  background:
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 30%),
+    linear-gradient(135deg, #fffdf8 0%, #f8fbff 100%);
+}
+
+.task-gallery-summary-head {
   display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.self-care-task-list-panel {
-  padding: 20px;
-}
-
-.task-card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-.task-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  background: #fff;
-}
-
-.task-card.is-inactive {
-  opacity: 0.72;
-}
-
-.task-card__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
   align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
 }
 
-.task-card__title {
+.task-gallery-summary-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-gallery-summary-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.task-gallery-summary-title {
   margin: 0;
   font-size: 18px;
-  color: #303133;
+  color: #1f2937;
 }
 
-.task-card__meta,
-.task-card__description,
-.task-card__summary {
+.task-gallery-summary-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.task-gallery-summary-subtitle {
   margin: 0;
-  color: #606266;
-  font-size: 14px;
+  color: #64748b;
   line-height: 1.7;
+  font-size: 13px;
 }
 
-.task-card__summary {
+.task-gallery-summary-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.task-gallery-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.task-gallery-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #dbe4ee;
+  background: rgba(255, 255, 255, 0.88);
+  color: #445569;
+  padding: 9px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-gallery-pill:hover {
+  transform: translateY(-1px);
+  border-color: #bed4f5;
+}
+
+.task-gallery-pill.is-active {
+  color: #1d4ed8;
+  border-color: #60a5fa;
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.95) 0%, rgba(255, 251, 235, 0.92) 100%);
+  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.18);
+}
+
+.task-gallery-pill__icon {
+  width: 14px;
+  height: 14px;
+}
+
+.task-gallery-pill em {
+  font-style: normal;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.task-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.task-gallery-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  min-height: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 
-.task-card__tags {
+.task-gallery-card.is-inactive {
+  opacity: 0.74;
+}
+
+.task-gallery-card__cover {
+  position: relative;
+  min-height: 180px;
+}
+
+.task-gallery-card__cover-image {
+  width: 100%;
+  height: 180px;
+}
+
+.task-gallery-card__cover-fallback {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-gallery-card__cover-icon {
+  width: 56px;
+  height: 56px;
+  color: rgba(148, 95, 14, 0.72);
+}
+
+.task-gallery-card__status {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+}
+
+.task-gallery-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px 12px;
+}
+
+.task-gallery-card__topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.task-gallery-card__title {
+  margin: 0;
+  color: #1f2937;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.task-gallery-card__description {
+  margin: 0;
+  color: #606f7b;
+  font-size: 14px;
+  line-height: 1.75;
+  min-height: 48px;
+}
+
+.task-gallery-card__meta,
+.task-gallery-card__tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  min-height: 24px;
 }
 
-.task-card__footer {
+.task-gallery-card__footer {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
   gap: 10px;
   margin-top: auto;
+  padding: 0 16px 16px;
+}
+
+.task-gallery-card__start {
+  flex: 1;
+}
+
+.task-gallery-card__icon-action {
+  flex: 0 0 auto;
 }
 
 @media (max-width: 768px) {
   .filter-toolbar,
+  .launch-context-banner__content,
   .current-task-workspace__header,
   .current-task-workspace__card-header,
-  .launch-context-banner__content,
-  .task-card__header,
-  .task-card__footer {
+  .task-gallery-summary-head,
+  .task-gallery-summary-actions {
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -632,8 +971,12 @@ onMounted(() => {
     grid-template-columns: 1fr;
   }
 
-  .self-care-task-list-panel {
+  .main-content {
     padding: 16px;
+  }
+
+  .task-gallery-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -68,3 +68,17 @@ test('TaskExecution exists and persists self-care step-task results through the 
   assert.match(source, /errorType/)
   assert.match(source, /saveTrainingSession/)
 })
+
+test('TaskList renders category pills, card gallery, and edit icon action for self-care tasks', () => {
+  const source = readFileSync(resolve(projectRoot, 'src/views/self-care/TaskList.vue'), 'utf8')
+
+  assert.match(source, /SELF_CARE_CATEGORY_FILTERS/)
+  assert.match(source, /selectedCategory/)
+  assert.match(source, /filteredTasks/)
+  assert.match(source, /EditPen/)
+  assert.match(source, /Grid/)
+  assert.match(source, /ForkSpoon/)
+  assert.match(source, /SuitcaseLine/)
+  assert.match(source, /ToiletPaper/)
+  assert.match(source, /MapLocation/)
+})
