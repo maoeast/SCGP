@@ -185,6 +185,7 @@ import StudentAvatar from '@/components/student/StudentAvatar.vue'
 import StudentId from '@/components/student/StudentId.vue'
 import { EquipmentTrainingAPI, GameTrainingAPI } from '@/database/api'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
+import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import { useStudentStore, type Student } from '@/stores/student'
 import { formatStudentDate, getStudentAge } from '@/utils/student-display'
 import { getTrainingEntry } from '@/utils/training-entry'
@@ -292,6 +293,16 @@ function viewEquipmentRecord(record: any) {
 }
 
 function viewGameRecord(record: any) {
+  if (record.resource_type === TASK_TRAINING_RESOURCE_TYPE) {
+    router.push({
+      path: `/self-care/execute/${record.resource_id}/${record.student_id}`,
+      query: {
+        studentName: String(student.value?.name || '').trim() || undefined,
+      },
+    })
+    return
+  }
+
   if (record.record_source === 'emotional_game') {
     router.push({
       path: '/emotional/game-record',

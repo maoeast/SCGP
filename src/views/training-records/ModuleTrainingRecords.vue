@@ -78,6 +78,7 @@ import { ArrowLeft, Switch, MagicStick, Sunny, ChatDotRound, Operation, MoonNigh
 import { useAuthStore } from '@/stores/auth'
 import { EquipmentTrainingAPI, GameTrainingAPI } from '@/database/api'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
+import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import {
   getAllTrainingEntries,
   getTrainingEntry,
@@ -155,6 +156,16 @@ const goBackToMenu = () => {
 
 // 查看游戏记录详情
 const handleViewGameDetail = (record: any) => {
+  if (record.resource_type === TASK_TRAINING_RESOURCE_TYPE) {
+    router.push({
+      path: `/self-care/execute/${record.resource_id}/${record.student_id}`,
+      query: {
+        studentName: String(record.student_name || '').trim() || undefined,
+      }
+    })
+    return
+  }
+
   if (record.record_source === 'emotional_game') {
     router.push({
       path: '/emotional/game-record',
