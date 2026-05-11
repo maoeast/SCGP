@@ -1376,3 +1376,10 @@
 - 当前默认更新地址固定为 `https://upadate.hzxckj308.com/scgp/win`
 - Windows 更新安装包文件名当前固定为 `scgp-setup-${version}.exe`，用于保证 `latest.yml`、安装包与 `.blockmap` 命名一致
 - `release/` 目录中的部署说明与更新三件套属于发布交付物，不作为仓库常规提交内容
+
+## 47. 2026-05-11 Self-Care task_training Platform Mainline Update
+
+- `task_training` 当前已进入平台共用训练资源主链：资源中心可见，训练计划可选，首页今日计划可启动。
+- 统一启动器 `src/utils/training-launch.ts` 已将 `task_training` 接到 `/self-care/tasks` 壳入口。
+- `自理训练` 顶层入口和 `task_training` 资源继续使用 `life_skills` 授权口径。
+- 当前仍只是阶段 1 平台底座补链；任务 CRUD、执行页、记录详情页尚未实现。
