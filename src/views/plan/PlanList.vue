@@ -553,6 +553,7 @@
             <el-radio-button value="equipment">器材</el-radio-button>
             <el-radio-button value="game">游戏</el-radio-button>
             <el-radio-button value="flashcard">闪卡</el-radio-button>
+            <el-radio-button value="task_training">自理任务</el-radio-button>
           </el-radio-group>
         </div>
 
@@ -841,6 +842,7 @@ const todayCompletedResources = ref<Set<string>>(new Set())
 const EXTRA_RESOURCE_TYPE_LABELS: Record<string, string> = {
   emotion_scene: '情绪场景',
   care_scene: '表达关心',
+  task_training: '自理任务',
 }
 
 // API 实例
@@ -1484,7 +1486,12 @@ async function loadResourcesForSelection() {
     // 如果选择全部模块，需要分别查询
     if (resourceFilterModule.value === 'all') {
       const allResources: ResourceItem[] = []
-      const modules: ModuleCode[] = [ModuleCode.SENSORY, ModuleCode.EMOTIONAL, ModuleCode.SOCIAL]
+      const modules: ModuleCode[] = [
+        ModuleCode.SENSORY,
+        ModuleCode.EMOTIONAL,
+        ModuleCode.SOCIAL,
+        ModuleCode.LIFE_SKILLS,
+      ]
 
       for (const mod of modules) {
         queryOptions.moduleCode = mod
