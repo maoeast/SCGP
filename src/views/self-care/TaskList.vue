@@ -116,31 +116,6 @@
 
       <template v-else>
         <el-card shadow="never" class="task-gallery-summary-card">
-          <div class="task-gallery-summary-head">
-            <div class="task-gallery-summary-copy">
-              <div class="task-gallery-summary-title-row">
-                <h3 class="task-gallery-summary-title">训练项目分类</h3>
-                <span class="task-gallery-summary-count">
-                  {{ filteredTasks.length }} / {{ tasks.length }}
-                </span>
-              </div>
-              <p class="task-gallery-summary-subtitle">
-                按胶囊标签切换训练项目。页面优先服务“选项目并开始训练”，编辑与启用状态保留为次级教师动作。
-              </p>
-            </div>
-
-            <div class="task-gallery-summary-actions">
-              <el-button plain @click="loadTasks">刷新</el-button>
-              <el-button
-                v-if="selectedCategory !== 'all'"
-                text
-                @click="selectedCategory = 'all'"
-              >
-                清除分类
-              </el-button>
-            </div>
-          </div>
-
           <div class="task-gallery-pill-row">
             <button
               v-for="filter in SELF_CARE_CATEGORY_FILTERS"
@@ -172,12 +147,37 @@
             v-for="task in filteredTasks"
             :key="task.id"
             class="task-gallery-card"
-            :class="{ 'is-inactive': !task.isActive }"
+            :class="{
+              'is-inactive': !task.isActive,
+              'is-interactive': task.isActive,
+            }"
+            :role="task.isActive ? 'button' : undefined"
+            :tabindex="task.isActive ? 0 : undefined"
+            :aria-disabled="task.isActive ? undefined : 'true'"
+            @click="handleCardActivate(task)"
+            @keydown.enter.prevent="handleCardActivate(task)"
+            @keydown.space.prevent="handleCardActivate(task)"
           >
             <div
               class="task-gallery-card__cover"
               :style="{ background: task.coverGradient }"
             >
+              <button
+                type="button"
+                class="task-gallery-card__edit-button"
+                aria-label="编辑任务"
+                @click.stop="handleEdit(task.id)"
+              >
+                <el-icon><EditPen /></el-icon>
+              </button>
+
+              <span
+                v-if="!task.isActive"
+                class="task-gallery-badge task-gallery-badge--inactive"
+              >
+                已禁用
+              </span>
+
               <el-image
                 v-if="task.coverImageUrl"
                 :src="task.coverImageUrl"
@@ -207,7 +207,7 @@
               <div class="task-gallery-card__topline">
                 <h3 class="task-gallery-card__title">{{ task.name }}</h3>
                 <span class="task-gallery-badge task-gallery-badge--step-count">
-                  步骤 {{ task.metadata.steps.length }}
+                  {{ task.metadata.steps.length }} 个步骤
                 </span>
               </div>
 
@@ -244,33 +244,6 @@
               </div>
             </div>
 
-            <div class="task-gallery-card__footer">
-              <el-button
-                v-if="task.isActive"
-                type="primary"
-                class="task-gallery-card__start"
-                @click="handleStartTraining(task.id)"
-              >
-                开始训练
-              </el-button>
-              <el-button
-                v-else
-                plain
-                disabled
-                class="task-gallery-card__start"
-              >
-                已禁用
-              </el-button>
-
-              <el-button
-                plain
-                class="task-gallery-card__action task-gallery-card__action--edit"
-                @click="handleEdit(task.id)"
-              >
-                <el-icon><EditPen /></el-icon>
-                <span>编辑</span>
-              </el-button>
-            </div>
           </article>
         </div>
       </template>
@@ -441,6 +414,14 @@ function handleStartTraining(taskId: number) {
 
 function handleEdit(taskId: number) {
   router.push(`/self-care/tasks/${taskId}/edit`)
+}
+
+function handleCardActivate(task: SelfCareTaskListItem) {
+  if (!task.isActive) {
+    return
+  }
+
+  handleStartTraining(task.id)
 }
 
 async function loadTasks() {
@@ -655,59 +636,6 @@ onMounted(() => {
     linear-gradient(135deg, #fffdf8 0%, #f8fbff 100%);
 }
 
-.task-gallery-summary-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 14px;
-}
-
-.task-gallery-summary-copy {
-  flex: 1;
-  min-width: 0;
-}
-
-.task-gallery-summary-title-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-
-.task-gallery-summary-title {
-  margin: 0;
-  font-size: 18px;
-  color: #1f2937;
-}
-
-.task-gallery-summary-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 72px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(37, 99, 235, 0.08);
-  color: #1d4ed8;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.task-gallery-summary-subtitle {
-  margin: 0;
-  color: #64748b;
-  line-height: 1.7;
-  font-size: 13px;
-}
-
-.task-gallery-summary-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .task-gallery-pill-row {
   display: flex;
   flex-wrap: wrap;
@@ -757,6 +685,7 @@ onMounted(() => {
 }
 
 .task-gallery-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -765,10 +694,51 @@ onMounted(() => {
   background: #fff;
   overflow: hidden;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.task-gallery-card.is-interactive {
+  cursor: pointer;
+}
+
+.task-gallery-card.is-interactive:hover,
+.task-gallery-card.is-interactive:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.task-gallery-card.is-interactive:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.28);
+  outline-offset: 2px;
 }
 
 .task-gallery-card.is-inactive {
-  opacity: 0.74;
+  opacity: 0.68;
+}
+
+.task-gallery-card__edit-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #5b6472;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.task-gallery-card__edit-button:hover {
+  transform: translateY(-1px);
+  background: #ffffff;
+  color: #1f2937;
 }
 
 .task-gallery-card__cover {
@@ -869,58 +839,19 @@ onMounted(() => {
   color: #5f6b7a;
 }
 
-.task-gallery-card__footer {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: auto;
-  padding: 0 16px 16px;
-}
-
-.task-gallery-card__start {
-  flex: 1;
-  min-height: 48px;
-  padding: 12px 20px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.task-gallery-card__action {
-  flex: 0 0 auto;
-  min-height: 38px;
-  padding: 9px 14px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.task-gallery-card__action--edit {
-  border-color: #e5e7eb;
-  color: #8a94a6;
-  background: #f8fafc;
-  font-weight: 400;
-}
-
-.task-gallery-card__action--edit:hover {
-  border-color: #d7dee8;
-  color: #6b7280;
-  background: #f3f6fa;
+.task-gallery-badge--inactive {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  background: rgba(31, 41, 55, 0.72);
+  color: #fff;
 }
 
 @media (max-width: 768px) {
   .launch-context-banner__content,
   .current-task-workspace__header,
   .current-task-workspace__card-header,
-  .task-gallery-summary-head,
-  .task-gallery-summary-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .current-task-workspace {
     padding: 16px;
   }
