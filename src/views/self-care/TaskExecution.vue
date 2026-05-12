@@ -9,14 +9,10 @@
       <template v-if="task && currentStep">
         <section class="task-execution-workspace">
           <div class="task-execution-stage">
-            <div class="task-stage-context">
-              <div class="task-stage-context__copy">
-                <p class="task-stage-context__eyebrow">自理训练执行中</p>
-                <h1 class="task-stage-context__title">{{ task?.name || '自理任务' }}</h1>
-              </div>
-            </div>
-
             <div class="task-stage-figure">
+              <div class="task-stage-title">
+                <h1 class="task-stage-title__text">{{ task?.name || '自理训练任务' }}</h1>
+              </div>
               <div
                 class="task-stage-figure__blur"
                 :class="{ 'is-empty': !hasCurrentStepImage }"
@@ -89,7 +85,7 @@
                 <span>正在训练</span>
                 <strong>{{ studentName }}</strong>
               </div>
-              <button type="button" class="task-sidebar__back-button" @click="handleAbort">
+              <button type="button" class="task-sidebar__back-button" @click="handleSwitchClick">
                 切换
               </button>
             </header>
@@ -97,7 +93,6 @@
             <section class="task-sidebar-panel task-sidebar-panel--summary">
               <div class="task-sidebar-panel__header">
                 <h2>执行概览</h2>
-                <span>{{ executionStatus }}</span>
               </div>
               <div class="task-execution-summary">
                 <div class="task-summary-block">
@@ -203,6 +198,32 @@
         <el-button type="primary" @click="router.replace('/self-care/tasks')">返回任务列表</el-button>
       </el-empty>
     </div>
+
+    <div
+      v-if="isExitConfirmVisible"
+      class="exit-confirm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="exit-confirm-title"
+      @click.self="closeExitConfirm"
+    >
+      <div class="exit-confirm__card">
+        <div class="exit-confirm__icon">!</div>
+        <h2 id="exit-confirm-title" class="exit-confirm__title">训练还在进行中，确定要退出吗？</h2>
+        <p class="exit-confirm__description">
+          当前进度尚未完成，现在退出会回到学生选择页面。你也可以继续留在这里，完成本轮观察与答题。
+        </p>
+
+        <div class="exit-confirm__actions">
+          <button type="button" class="exit-confirm__button exit-confirm__button--secondary" @click="closeExitConfirm">
+            继续训练
+          </button>
+          <button type="button" class="exit-confirm__button exit-confirm__button--danger" @click="confirmExit">
+            确认退出
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -239,6 +260,7 @@ const notesInputFocused = ref(false)
 const viewportInsetBottom = ref(0)
 const audioMuted = ref(false)
 const audioReplayToken = ref(0)
+const isExitConfirmVisible = ref(false)
 
 let removeViewportListener: (() => void) | null = null
 
@@ -551,6 +573,23 @@ function handleAbort() {
   router.push(`/self-care/tasks/${taskId.value || ''}/select-student`)
 }
 
+function handleSwitchClick() {
+  if (saving.value) {
+    return
+  }
+
+  isExitConfirmVisible.value = true
+}
+
+function closeExitConfirm() {
+  isExitConfirmVisible.value = false
+}
+
+function confirmExit() {
+  isExitConfirmVisible.value = false
+  handleAbort()
+}
+
 watch(() => currentStepIndex.value, async () => {
   await nextTick()
   centerActiveStepNav()
@@ -620,44 +659,10 @@ onBeforeUnmount(() => {
 
 .task-execution-stage {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) 64px;
+  grid-template-rows: minmax(0, 1fr) 64px;
   gap: 12px;
   min-width: 0;
   min-height: 0;
-}
-
-.task-stage-context {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 54px;
-  padding: 4px 2px 2px;
-}
-
-.task-stage-context__copy {
-  min-width: 0;
-}
-
-.task-stage-context__eyebrow,
-.task-stage-context__title {
-  margin: 0;
-}
-
-.task-stage-context__eyebrow {
-  color: #7d6a3b;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.task-stage-context__title {
-  max-width: min(760px, 52vw);
-  overflow: hidden;
-  color: #37291c;
-  font-size: clamp(20px, 2.1vw, 30px);
-  font-weight: 800;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .task-stage-figure {
@@ -671,6 +676,31 @@ onBeforeUnmount(() => {
   border-radius: 18px;
   background: #241f19;
   box-shadow: 0 16px 36px rgba(48, 38, 24, 0.18);
+}
+
+.task-stage-title {
+  position: absolute;
+  z-index: 4;
+  top: 14px;
+  left: 14px;
+  max-width: min(72%, 760px);
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 234, 201, 0.34);
+  border-radius: 16px;
+  background: rgba(41, 30, 19, 0.56);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 24px rgba(17, 12, 8, 0.22);
+}
+
+.task-stage-title__text {
+  margin: 0;
+  overflow: hidden;
+  color: #fff7ea;
+  font-size: clamp(18px, 1.9vw, 28px);
+  font-weight: 900;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .task-stage-figure__blur {
@@ -1111,6 +1141,95 @@ onBeforeUnmount(() => {
   box-shadow: 0 6px 0 #2c4f31, 0 10px 20px rgba(48, 84, 52, 0.2);
 }
 
+.exit-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 16, 12, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.exit-confirm__card {
+  width: min(100%, 470px);
+  padding: 28px;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 252, 0.98));
+  box-shadow:
+    0 28px 80px rgba(15, 23, 42, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  text-align: center;
+}
+
+.exit-confirm__icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: 999px;
+  color: #7c2d12;
+  font-size: 26px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #fde68a 0%, #fb923c 100%);
+  box-shadow: 0 16px 36px rgba(251, 146, 60, 0.32);
+}
+
+.exit-confirm__title {
+  margin: 0;
+  color: #0f172a;
+  font-size: 24px;
+  line-height: 1.45;
+}
+
+.exit-confirm__description {
+  margin: 12px 0 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.exit-confirm__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.exit-confirm__button {
+  border: 0;
+  border-radius: 18px;
+  padding: 14px 16px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.exit-confirm__button:hover {
+  transform: translateY(-1px);
+}
+
+.exit-confirm__button:active {
+  transform: scale(0.98);
+}
+
+.exit-confirm__button--secondary {
+  color: #1e3a8a;
+  background: #dbeafe;
+  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.3);
+}
+
+.exit-confirm__button--danger {
+  background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+  box-shadow: 0 14px 26px rgba(239, 68, 68, 0.26);
+}
+
 @media (max-width: 1020px) {
   .task-execution-page {
     height: auto;
@@ -1129,8 +1248,25 @@ onBeforeUnmount(() => {
     grid-template-rows: auto minmax(420px, 58vh) 64px;
   }
 
+  .task-stage-title {
+    max-width: calc(100% - 28px);
+  }
+
   .task-execution-sidebar {
     grid-template-rows: auto;
+  }
+
+  .exit-confirm__card {
+    padding: 24px;
+    border-radius: 24px;
+  }
+
+  .exit-confirm__title {
+    font-size: 21px;
+  }
+
+  .exit-confirm__actions {
+    grid-template-columns: 1fr;
   }
 }
 </style>
