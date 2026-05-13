@@ -536,36 +536,26 @@
       <div class="resource-selector-content">
         <!-- 模块筛选 -->
         <div class="module-filter">
-          <el-radio-group v-model="resourceFilterModule" @change="loadResourcesForSelection">
-            <el-radio-button value="all">全部模块</el-radio-button>
-            <el-radio-button value="sensory">感官训练</el-radio-button>
-            <el-radio-button value="emotional">情绪调节</el-radio-button>
-            <el-radio-button value="social">社交互动</el-radio-button>
-            <el-radio-button value="emotion_scene">情绪场景</el-radio-button>
-            <el-radio-button value="care_scene">表达关心</el-radio-button>
+          <el-radio-group v-model="resourceFilterModule">
+            <el-radio-button
+              v-for="option in planResourceSelectorModuleOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </el-radio-button>
           </el-radio-group>
         </div>
 
         <!-- 资源类型筛选 -->
         <div class="type-filter">
-          <el-radio-group v-model="resourceFilterType" @change="loadResourcesForSelection">
-            <el-radio-button value="">全部类型</el-radio-button>
-            <el-radio-button value="equipment">器材</el-radio-button>
-            <el-radio-button value="game">游戏</el-radio-button>
-            <el-radio-button value="flashcard">闪卡</el-radio-button>
-            <el-radio-button :value="TASK_TRAINING_RESOURCE_TYPE">自理任务</el-radio-button>
-          </el-radio-group>
-        </div>
-
-        <div v-if="resourceFilterType === 'equipment'" class="catalog-group-filter">
-          <el-radio-group v-model="resourceFilterCatalogGroup">
-            <el-radio-button value="all">全部分组</el-radio-button>
+          <el-radio-group v-model="resourceFilterType">
             <el-radio-button
-              v-for="group in equipmentCatalogGroupOptions"
-              :key="group.value"
-              :value="group.value"
+              v-for="option in planResourceSelectorTypeOptions"
+              :key="option.value"
+              :value="option.value"
             >
-              {{ group.label }}
+              {{ option.label }}
             </el-radio-button>
           </el-radio-group>
         </div>
@@ -738,11 +728,7 @@ import {
 import type { ResourceItem } from '@/types/module'
 import { ModuleCode } from '@/types/module'
 import {
-  EQUIPMENT_CATALOG_GROUPS,
-  EQUIPMENT_CATALOG_GROUP_LABELS,
   getEquipmentCatalogGroupLabel,
-  resolveEquipmentCatalogGroupCode,
-  type EquipmentCatalogGroupCode,
 } from '@/utils/equipment-catalog-group'
 import { buildTrainingLaunchRoute } from '@/utils/training-launch'
 import { resolveResourceCoverImage, resolveResourceItemCoverImage } from '@/utils/resource-cover'
@@ -756,6 +742,13 @@ import {
   type TrainingPlanModuleCode,
 } from '@/utils/training-plan-module'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
+import {
+  PLAN_RESOURCE_SELECTOR_MODULE_OPTIONS,
+  PLAN_RESOURCE_SELECTOR_TYPE_OPTIONS,
+  filterPlanResourceSelectorItems,
+  type PlanResourceSelectorModuleFilter,
+  type PlanResourceSelectorTypeFilter,
+} from '@/views/plan/plan-resource-selector-filter'
 import StudentAvatar from '@/components/student/StudentAvatar.vue'
 import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
 
@@ -824,9 +817,8 @@ const selectedResources = ref<SelectedResource[]>([])
 
 // 资源选择器状态
 const resourceSelectorVisible = ref(false)
-const resourceFilterModule = ref<'all' | ModuleCode>('all')
-const resourceFilterType = ref('')
-const resourceFilterCatalogGroup = ref<'all' | EquipmentCatalogGroupCode>('all')
+const resourceFilterModule = ref<PlanResourceSelectorModuleFilter>('all')
+const resourceFilterType = ref<PlanResourceSelectorTypeFilter>('all')
 const resourceSearchKeyword = ref('')
 const resourceLoading = ref(false)
 const availableResources = ref<ResourceItem[]>([])
@@ -855,6 +847,8 @@ const studentApi = new StudentAPI()
 const router = useRouter()
 const trainingPlanFilterModuleOptions = TRAINING_PLAN_FILTER_MODULE_OPTIONS
 const trainingPlanModuleOptions = TRAINING_PLAN_MODULE_OPTIONS
+const planResourceSelectorModuleOptions = PLAN_RESOURCE_SELECTOR_MODULE_OPTIONS
+const planResourceSelectorTypeOptions = PLAN_RESOURCE_SELECTOR_TYPE_OPTIONS
 const standardDateRangePickerProps = STANDARD_DATE_RANGE_PICKER_PROPS
 
 // 计算属性
@@ -901,22 +895,11 @@ const studentLookup = computed<Record<number, Student>>(() =>
   }, {} as Record<number, Student>)
 )
 
-const equipmentCatalogGroupOptions = computed(() =>
-  EQUIPMENT_CATALOG_GROUPS.map((value) => ({
-    value,
-    label: EQUIPMENT_CATALOG_GROUP_LABELS[value],
-  }))
-)
-
 const filteredAvailableResources = computed(() => {
-  if (resourceFilterType.value !== 'equipment' || resourceFilterCatalogGroup.value === 'all') {
-    return availableResources.value
-  }
-
-  return availableResources.value.filter((resource) =>
-    resource.resourceType === 'equipment'
-    && resolveEquipmentCatalogGroupCode(resource) === resourceFilterCatalogGroup.value
-  )
+  return filterPlanResourceSelectorItems(availableResources.value, {
+    moduleFilter: resourceFilterModule.value,
+    typeFilter: resourceFilterType.value,
+  })
 })
 
 const parsedLongTermGoals = computed(() => {
@@ -1479,34 +1462,23 @@ async function loadResourcesForSelection() {
   resourceLoading.value = true
   try {
     const api = new ResourceAPI()
-    const moduleCode = resourceFilterModule.value === 'all' ? 'sensory' : resourceFilterModule.value
+    const modules: ModuleCode[] = [
+      ModuleCode.SENSORY,
+      ModuleCode.EMOTIONAL,
+      ModuleCode.SOCIAL,
+      TASK_TRAINING_MODULE_CODE as ModuleCode,
+    ]
 
-    const queryOptions: any = {
-      moduleCode: moduleCode as ModuleCode,
-      resourceType: resourceFilterType.value || undefined,
-      keyword: resourceSearchKeyword.value || undefined
+    const allResources: ResourceItem[] = []
+    for (const mod of modules) {
+      const data = api.getResources({
+        moduleCode: mod,
+        keyword: resourceSearchKeyword.value || undefined,
+      })
+      allResources.push(...data)
     }
 
-    // 如果选择全部模块，需要分别查询
-    if (resourceFilterModule.value === 'all') {
-      const allResources: ResourceItem[] = []
-      const modules: ModuleCode[] = [
-        ModuleCode.SENSORY,
-        ModuleCode.EMOTIONAL,
-        ModuleCode.SOCIAL,
-        TASK_TRAINING_MODULE_CODE as ModuleCode,
-      ]
-
-      for (const mod of modules) {
-        queryOptions.moduleCode = mod
-        const data = api.getResources(queryOptions)
-        allResources.push(...data)
-      }
-
-      availableResources.value = allResources
-    } else {
-      availableResources.value = api.getResources(queryOptions)
-    }
+    availableResources.value = allResources
   } catch (error) {
     console.error('加载资源失败:', error)
     ElMessage.error('加载资源失败')
@@ -1570,12 +1542,6 @@ function confirmResourceSelection() {
 function removeResource(index: number) {
   selectedResources.value.splice(index, 1)
 }
-
-watch(resourceFilterType, (newType) => {
-  if (newType !== 'equipment') {
-    resourceFilterCatalogGroup.value = 'all'
-  }
-})
 
 // 初始化
 onMounted(() => {

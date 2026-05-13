@@ -1476,9 +1476,9 @@ export async function initDatabase(): Promise<any> {
 
     try {
       await insertEmotionalGameResourceData()
-      console.log('[InitDatabase] ✅ emotional 调节游戏资源初始化完成')
+      console.log('[InitDatabase] ✅ custom game 游戏资源初始化完成')
     } catch (emotionalGameResourceError) {
-      console.warn('[InitDatabase] ⚠️  emotional 调节游戏资源初始化失败:', emotionalGameResourceError)
+      console.warn('[InitDatabase] ⚠️  custom game 游戏资源初始化失败:', emotionalGameResourceError)
     }
 
     try {
@@ -2087,7 +2087,7 @@ export async function insertEmotionalResourceData(): Promise<void> {
 export async function insertEmotionalGameResourceData(): Promise<void> {
   try {
     const {
-      EMOTIONAL_GAME_CATALOG_SEED,
+      ALL_CUSTOM_GAME_RESOURCE_SEED,
       EMOTIONAL_GAME_RESOURCE_SEED_LEGACY_SOURCE,
     } = await import('../data/emotional-game-catalog')
 
@@ -2164,7 +2164,7 @@ export async function insertEmotionalGameResourceData(): Promise<void> {
       return tagId
     }
 
-    for (const resource of EMOTIONAL_GAME_CATALOG_SEED) {
+    for (const resource of ALL_CUSTOM_GAME_RESOURCE_SEED) {
       const gameCode = typeof resource.metadata?.gameCode === 'string'
         ? resource.metadata.gameCode.trim()
         : ''
@@ -2245,7 +2245,7 @@ export async function insertEmotionalGameResourceData(): Promise<void> {
     console.log('[InitDatabase] emotional regulation game resources synced:', {
       inserted,
       updated,
-      total: EMOTIONAL_GAME_CATALOG_SEED.length,
+      total: ALL_CUSTOM_GAME_RESOURCE_SEED.length,
     })
   } catch (error) {
     console.error('failed to insert emotional regulation game resources:', error)

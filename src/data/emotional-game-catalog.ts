@@ -2,6 +2,7 @@ import { ModuleCode, type ResourceItem } from '@/types/module'
 import { getTrainingResourceCopyOverride } from '@/data/generated-training-resource-copy'
 import {
   getCustomGamesByTrainingEntry,
+  listCustomGameDefinitions,
   type CustomGameDefinition,
 } from '@/data/custom-game-registry'
 import { buildEmotionalGameResourceCopyKey } from '@/utils/training-resource-copy'
@@ -45,6 +46,9 @@ function createEmotionalGameCatalogSeedFromDefinition(game: CustomGameDefinition
 }
 
 export const EMOTIONAL_GAME_CATALOG_SEED: EmotionalGameCatalogSeed[] = getCustomGamesByTrainingEntry('emotional-regulation')
+  .map(createEmotionalGameCatalogSeedFromDefinition)
+
+export const ALL_CUSTOM_GAME_RESOURCE_SEED: EmotionalGameCatalogSeed[] = listCustomGameDefinitions()
   .map(createEmotionalGameCatalogSeedFromDefinition)
 
 export function createEmotionalGameCatalog(): ResourceItem[] {

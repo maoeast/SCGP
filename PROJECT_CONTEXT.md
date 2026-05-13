@@ -1390,3 +1390,17 @@
 - /self-care/tasks 已从路由壳升级为真实任务列表，TaskList / TaskEditor 已接通新建、编辑、禁用、恢复最小闭环。
 - src/views/resource-center/editors/TaskTrainingEditor.vue 当前是 	ask_training 共同 metadata 编辑器真源，资源中心与 /self-care/tasks 编辑链共用同一契约。
 - 当前仍未进入阶段 3：选学生页、执行页，以及 	raining_records + training_session 持久化链路尚未接入。
+
+## 49. 2026-05-11 Self-Care Execution Mainline Update
+
+- /self-care/execute/:taskId/:studentId 已成为 	ask_training 的当前执行主入口，选学生页与统一启动器都直接进入该路由。
+- src/database/self-care-training-api.ts 已成为自理训练专用写链，统一写入 	raining_records + training_session。
+- 当前写入契约固定为：	ask_id = NULL、esource_id = sys_training_resource.id、session_family = task_training、entry_code = life-skills。
+- src/views/self-care/TaskExecution.vue 当前只读取 sys_training_resource.meta_data.steps[]，不回读旧 	ask_step / train_log。
+
+## 50. 2026-05-13 Plan Resource Selector Contract Update
+
+- 训练计划“资源编排 > 添加资源”弹窗当前只保留两层主筛选：模块 + 类型；器材下不再显示第三层“全部分组 / 感官训练 / …”冗余筛选条。
+- 该弹窗当前模块口径固定为 9 项：自理训练 / 生活自理 / 情绪场景 / 表达关心 / 感官训练 / 情绪调节 / 安抚教具 / 社交沟通 / 精细动作。
+- 该弹窗类型口径当前固定为：全部类型 / 游戏 / 器材。
+- custom game 资源同步当前必须覆盖全量 25 条（emotional-regulation / fine-motor / social-communication / soothing-aids / life-skills 各 5 条），不能再只同步情绪调节 5 条。
