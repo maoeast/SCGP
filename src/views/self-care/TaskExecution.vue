@@ -11,6 +11,14 @@
           <div class="task-execution-stage">
             <div class="task-stage-figure">
               <div class="task-stage-title">
+                <button
+                  type="button"
+                  class="task-stage-title__exit-button"
+                  :disabled="saving"
+                  @click="handleExitClick"
+                >
+                  退出
+                </button>
                 <h1 class="task-stage-title__text">{{ task?.name || '自理训练任务' }}</h1>
               </div>
               <div
@@ -91,9 +99,7 @@
             </header>
 
             <section class="task-sidebar-panel task-sidebar-panel--summary">
-              <div class="task-sidebar-panel__header">
-                <h2>执行概览</h2>
-              </div>
+              <h2>执行概览</h2>
               <div class="task-execution-summary">
                 <div class="task-summary-block">
                   <span>已记录步骤</span>
@@ -209,17 +215,17 @@
     >
       <div class="exit-confirm__card">
         <div class="exit-confirm__icon">!</div>
-        <h2 id="exit-confirm-title" class="exit-confirm__title">训练还在进行中，确定要退出吗？</h2>
+        <h2 id="exit-confirm-title" class="exit-confirm__title">{{ exitConfirmConfig.title }}</h2>
         <p class="exit-confirm__description">
-          当前进度尚未完成，现在退出会回到学生选择页面。你也可以继续留在这里，完成本轮观察与答题。
+          {{ exitConfirmConfig.description }}
         </p>
 
         <div class="exit-confirm__actions">
           <button type="button" class="exit-confirm__button exit-confirm__button--secondary" @click="closeExitConfirm">
-            继续训练
+            {{ exitConfirmConfig.cancelLabel }}
           </button>
           <button type="button" class="exit-confirm__button exit-confirm__button--danger" @click="confirmExit">
-            确认退出
+            {{ exitConfirmConfig.confirmLabel }}
           </button>
         </div>
       </div>
@@ -237,10 +243,13 @@ import type {
   TaskTrainingCompletionLevel,
   TaskTrainingErrorType,
   TaskTrainingExecutionResult,
-  TaskTrainingExecutionStatus,
   TaskTrainingStep,
   TaskTrainingStepResult,
 } from '@/features/self-care/task-training-contract'
+import {
+  resolveTaskExitConfirmConfig,
+  type TaskExitIntent,
+} from '@/features/self-care/task-exit-flow'
 import { resolvePresetResourceUrl } from '@/utils/preset-resource'
 
 const route = useRoute()
@@ -251,7 +260,6 @@ const trainingApi = new SelfCareTrainingAPI()
 const loading = ref(false)
 const saving = ref(false)
 const startedAt = ref(Date.now())
-const executionStatus = ref<TaskTrainingExecutionStatus>('idle')
 const currentStepIndex = ref(0)
 const stepResults = ref<TaskTrainingStepResult[]>([])
 const rootRef = ref<HTMLElement | null>(null)
@@ -261,6 +269,7 @@ const viewportInsetBottom = ref(0)
 const audioMuted = ref(false)
 const audioReplayToken = ref(0)
 const isExitConfirmVisible = ref(false)
+const exitConfirmIntent = ref<TaskExitIntent>('switch_student')
 
 let removeViewportListener: (() => void) | null = null
 
@@ -331,6 +340,10 @@ const studentName = computed(() => {
   const raw = Array.isArray(route.query.studentName) ? route.query.studentName[0] : route.query.studentName
   return typeof raw === 'string' && raw.trim() ? raw.trim() : `学生 #${studentId.value || ''}`
 })
+
+const exitConfirmConfig = computed(() => (
+  resolveTaskExitConfirmConfig(exitConfirmIntent.value, taskId.value)
+))
 
 const completionCounts = computed(() => {
   const base = {
@@ -533,7 +546,6 @@ function handleStepJump(targetSeq: number) {
 
   upsertCurrentStepResult()
   currentStepIndex.value = index
-  executionStatus.value = 'in_progress'
   syncFormFromCurrentStep()
 }
 
@@ -542,7 +554,6 @@ function handlePrevStep() {
   upsertCurrentStepResult()
   if (currentStepIndex.value > 0) {
     currentStepIndex.value -= 1
-    executionStatus.value = 'in_progress'
     syncFormFromCurrentStep()
   }
 }
@@ -550,10 +561,8 @@ function handlePrevStep() {
 function handleNextOrFinish() {
   blurActiveElement()
   upsertCurrentStepResult()
-  executionStatus.value = 'in_progress'
 
   if (currentStepIndex.value >= steps.value.length - 1) {
-    executionStatus.value = 'completed'
     void persistSession('completed')
     return
   }
@@ -564,21 +573,24 @@ function handleNextOrFinish() {
 
 function handleInterrupt() {
   blurActiveElement()
-  executionStatus.value = 'interrupted'
   void persistSession('interrupted')
 }
 
-function handleAbort() {
-  blurActiveElement()
-  router.push(`/self-care/tasks/${taskId.value || ''}/select-student`)
-}
-
-function handleSwitchClick() {
+function openExitConfirm(intent: TaskExitIntent) {
   if (saving.value) {
     return
   }
 
+  exitConfirmIntent.value = intent
   isExitConfirmVisible.value = true
+}
+
+function handleSwitchClick() {
+  openExitConfirm('switch_student')
+}
+
+function handleExitClick() {
+  openExitConfirm('exit_training')
 }
 
 function closeExitConfirm() {
@@ -586,8 +598,15 @@ function closeExitConfirm() {
 }
 
 function confirmExit() {
+  const { confirmNavigation, confirmRoute } = exitConfirmConfig.value
   isExitConfirmVisible.value = false
-  handleAbort()
+  blurActiveElement()
+  if (confirmNavigation === 'replace') {
+    router.replace(confirmRoute)
+    return
+  }
+
+  router.push(confirmRoute)
 }
 
 watch(() => currentStepIndex.value, async () => {
@@ -603,7 +622,6 @@ onMounted(async () => {
     }
 
     startedAt.value = Date.now()
-    executionStatus.value = 'in_progress'
     syncFormFromCurrentStep()
   } finally {
     loading.value = false
@@ -683,8 +701,11 @@ onBeforeUnmount(() => {
   z-index: 4;
   top: 14px;
   left: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   max-width: min(72%, 760px);
-  padding: 10px 14px;
+  padding: 8px 10px 8px 8px;
   border: 1px solid rgba(255, 234, 201, 0.34);
   border-radius: 16px;
   background: rgba(41, 30, 19, 0.56);
@@ -692,8 +713,35 @@ onBeforeUnmount(() => {
   box-shadow: 0 10px 24px rgba(17, 12, 8, 0.22);
 }
 
+.task-stage-title__exit-button {
+  flex: 0 0 auto;
+  min-width: 72px;
+  border: 1px solid rgba(255, 224, 201, 0.18);
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(160, 57, 32, 0.92), rgba(121, 35, 23, 0.9));
+  color: #fff7ea;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.task-stage-title__exit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.task-stage-title__exit-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
 .task-stage-title__text {
   margin: 0;
+  min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
   color: #fff7ea;
   font-size: clamp(18px, 1.9vw, 28px);
@@ -997,8 +1045,7 @@ onBeforeUnmount(() => {
   background: rgba(255, 252, 246, 0.68);
 }
 
-.task-sidebar-panel h2,
-.task-sidebar-panel__header h2 {
+.task-sidebar-panel h2 {
   margin: 0;
   color: #493824;
   font-size: 14px;
@@ -1006,19 +1053,8 @@ onBeforeUnmount(() => {
   line-height: 1.2;
 }
 
-.task-sidebar-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+.task-sidebar-panel--summary > h2 {
   margin-bottom: 5px;
-}
-
-.task-sidebar-panel__header span {
-  flex: 0 0 auto;
-  color: #6b7652;
-  font-size: 12px;
-  font-weight: 800;
 }
 
 .task-execution-summary {
