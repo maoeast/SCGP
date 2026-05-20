@@ -1404,3 +1404,9 @@
 - ¸Ãµ¯´°µ±Ç°Ä£¿é¿Ú¾¶¹Ì¶¨Îª 9 Ïî£º×ÔÀíÑµÁ· / Éú»î×ÔÀí / ÇéĞ÷³¡¾° / ±í´ï¹ØĞÄ / ¸Ğ¹ÙÑµÁ· / ÇéĞ÷µ÷½Ú / °²¸§½Ì¾ß / Éç½»¹µÍ¨ / ¾«Ï¸¶¯×÷¡£
 - ¸Ãµ¯´°ÀàĞÍ¿Ú¾¶µ±Ç°¹Ì¶¨Îª£ºÈ«²¿ÀàĞÍ / ÓÎÏ· / Æ÷²Ä¡£
 - custom game ×ÊÔ´Í¬²½µ±Ç°±ØĞë¸²¸ÇÈ«Á¿ 25 Ìõ£¨emotional-regulation / fine-motor / social-communication / soothing-aids / life-skills ¸÷ 5 Ìõ£©£¬²»ÄÜÔÙÖ»Í¬²½ÇéĞ÷µ÷½Ú 5 Ìõ¡£
+## 51. 2026-05-20 Entitlement Shadow Mapping and Entry Gating Update
+
+- å½“å‰æ–°å¢ç‹¬ç«‹ entitlement å±‚ï¼š`src/features/entitlements/entitlement-catalog.ts`ï¼Œæ—§ `sensory / emotional / social / life_skills / cognitive` å·²ä¸æ–°æˆæƒèƒ½åŠ›åŒ…è§£è€¦ã€‚
+- `src/stores/auth.ts` å½“å‰ä»¥ `effectiveEntitlements` ä½œä¸ºå‰ç«¯æˆæƒäº‹å®æ¥æºï¼›`hasEntitlementAccess()` ä¸å†åœ¨è°ƒç”¨æ—¶ä¸´æ—¶å±•å¼€æ—§æ¨¡å—ã€‚
+- `src/utils/training-entry.ts` / `src/utils/equipment-training-entry.ts` å½“å‰æ–°å¢ `requiredEntitlement`ï¼Œè®­ç»ƒå…¥å£å·²ä¸ `moduleCode` æ•°æ®å½’å±åˆ†ç¦»ã€‚
+- æ¸¸æˆè®­ç»ƒ / å™¨æè®­ç»ƒ / è®­ç»ƒè®°å½•å…¥å£åˆ—è¡¨ã€é¦–é¡µå¿«æ·å…¥å£ã€ä¾§è¾¹æ ä¸ç›¸å…³è·¯ç”±å®ˆå«å½“å‰å·²ä¼˜å…ˆæŒ‰ entitlement åˆ¤æƒã€‚
