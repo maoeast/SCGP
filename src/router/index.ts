@@ -12,8 +12,15 @@ import {
   isAssessmentScaleAuthorized,
 } from '@/features/assessment/assessment-scale-catalog'
 import { selfCareRoutes } from '@/features/self-care/self-care-routes'
-import { resolveEquipmentTrainingEntryRouteModuleCode } from '@/utils/equipment-training-entry'
-import { getTrainingEntryModuleCode } from '@/utils/training-entry'
+import {
+  getEquipmentTrainingEntryRequiredEntitlement,
+  resolveEquipmentTrainingEntryRouteModuleCode,
+} from '@/utils/equipment-training-entry'
+import {
+  getAllTrainingEntries,
+  getTrainingEntryModuleCode,
+  getTrainingEntryRequiredEntitlement,
+} from '@/utils/training-entry'
 
 // 路由懒加载
 const Login = () => import('@/views/Login.vue')
@@ -141,6 +148,10 @@ const devOnlyRouteNames = new Set([
   'ClassSnapshotVerification',
   'ClassSnapshotTestLite',
 ])
+
+const TRAINING_ENTRY_REQUIRED_ENTITLEMENTS = Array.from(new Set(
+  getAllTrainingEntries().map((entry) => entry.requiredEntitlement)
+))
 
 function normalizeAssessmentScaleRouteValue(value: unknown): unknown {
   if (Array.isArray(value)) {
@@ -655,7 +666,8 @@ const router = createRouter({
           meta: {
             title: '游戏训练',
             icon: 'gamepad',
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            requiredEntitlementsAnyOf: TRAINING_ENTRY_REQUIRED_ENTITLEMENTS,
           }
         },
         {
@@ -665,7 +677,8 @@ const router = createRouter({
           meta: {
             title: '游戏训练 - 选择模块',
             hideInMenu: true,
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            requiredEntitlementsAnyOf: TRAINING_ENTRY_REQUIRED_ENTITLEMENTS,
           }
         },
         {
@@ -712,7 +725,8 @@ const router = createRouter({
           meta: {
             title: '训练记录',
             icon: 'chart-line',
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            requiredEntitlementsAnyOf: TRAINING_ENTRY_REQUIRED_ENTITLEMENTS,
           }
         },
         {
@@ -722,7 +736,8 @@ const router = createRouter({
           meta: {
             title: '训练记录 - 选择模块',
             hideInMenu: true,
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            requiredEntitlementsAnyOf: TRAINING_ENTRY_REQUIRED_ENTITLEMENTS,
           }
         },
         {
@@ -762,7 +777,8 @@ const router = createRouter({
           meta: {
             title: '器材训练',
             icon: 'dumbbell',
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            requiredEntitlementsAnyOf: TRAINING_ENTRY_REQUIRED_ENTITLEMENTS,
           }
         },
         {
@@ -772,7 +788,8 @@ const router = createRouter({
           meta: {
             title: '器材训练 - 选择模块',
             hideInMenu: true,
-            roles: ['admin', 'teacher']
+            roles: ['admin', 'teacher'],
+            requiredEntitlementsAnyOf: TRAINING_ENTRY_REQUIRED_ENTITLEMENTS,
           }
         },
         {
@@ -1262,6 +1279,44 @@ router.beforeEach(async (to, from, next) => {
     return ''
   }
 
+  const resolveRequiredEntitlementsAnyOf = () => {
+    const fromMetaAnyOf = Array.isArray(to.meta.requiredEntitlementsAnyOf)
+      ? to.meta.requiredEntitlementsAnyOf.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      : []
+    if (fromMetaAnyOf.length > 0) {
+      return fromMetaAnyOf
+    }
+
+    const fromMetaSingle = typeof to.meta.requiredEntitlement === 'string'
+      ? to.meta.requiredEntitlement.trim()
+      : ''
+    if (fromMetaSingle) {
+      return [fromMetaSingle]
+    }
+
+    if (to.path.startsWith('/equipment')) {
+      const entitlementCode = getEquipmentTrainingEntryRequiredEntitlement(to.query.entry, to.query.module)
+      return entitlementCode ? [entitlementCode] : []
+    }
+
+    if (to.path.startsWith('/games')) {
+      const entitlementCode = getTrainingEntryRequiredEntitlement(to.query.entry, to.query.module)
+      return entitlementCode ? [entitlementCode] : []
+    }
+
+    if (to.path.startsWith('/training-records')) {
+      const routeEntryCode = typeof to.params.entryCode === 'string'
+        ? to.params.entryCode
+        : typeof to.params.moduleCode === 'string'
+          ? to.params.moduleCode
+          : ''
+      const entitlementCode = routeEntryCode ? getTrainingEntryRequiredEntitlement(routeEntryCode) : ''
+      return entitlementCode ? [entitlementCode] : []
+    }
+
+    return []
+  }
+
   // 首次访问时，确保激活状态已检查
   if (!from.name) {
     await authStore.checkActivation()
@@ -1293,6 +1348,20 @@ router.beforeEach(async (to, from, next) => {
     // 生产环境下只要未正式激活，就必须先进入激活页
     if (to.name !== 'Activation' && !authStore.isActivated) {
       next('/activation')
+      return
+    }
+
+    const requiredEntitlementsAnyOf = resolveRequiredEntitlementsAnyOf()
+    if (
+      requiredEntitlementsAnyOf.length > 0
+      && !requiredEntitlementsAnyOf.some((entitlementCode) => authStore.hasEntitlementAccess(entitlementCode))
+    ) {
+      ElMessage.warning('该入口未授权')
+      if (to.path === '/dashboard') {
+        next(false)
+      } else {
+        next('/dashboard')
+      }
       return
     }
 

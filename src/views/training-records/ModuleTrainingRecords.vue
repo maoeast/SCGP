@@ -128,7 +128,9 @@ const currentEntry = computed(() => {
 
 // 活跃入口列表
 const activeEntries = computed(() => {
-  return getAllTrainingEntries().filter((entry) => authStore.hasModuleAccess(entry.moduleCode))
+  return getAllTrainingEntries().filter((entry) =>
+    authStore.hasEntitlementAccess(entry.requiredEntitlement)
+  )
 })
 
 // 当前选中的 Tab

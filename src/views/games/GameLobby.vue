@@ -260,7 +260,7 @@ const currentEntryCode = ref<TrainingEntryCode>(
 
 const currentEntry = computed(() => getTrainingEntry(currentEntryCode.value))
 const activeEntries = computed(() => {
-  return getAllTrainingEntries().filter((entry) => authStore.hasModuleAccess(entry.moduleCode))
+  return getAllTrainingEntries().filter((entry) => authStore.hasEntitlementAccess(entry.requiredEntitlement))
 })
 const routeStudentId = Number.parseInt(route.params.studentId as string, 10) || 0
 

@@ -1,5 +1,11 @@
 import { defineStore } from 'pinia'
 import { UserAPI } from '@/database/api'
+import {
+  ENTITLEMENT_CODES,
+  type EntitlementCode,
+  isEntitlementCode,
+  resolveEffectiveEntitlementDetails,
+} from '@/features/entitlements/entitlement-catalog'
 
 export interface User {
   id: number
@@ -26,6 +32,9 @@ export interface EntitlementsInfo {
   allowedModules: string[]
   source: EntitlementSource
   isFullAccess: boolean
+  effectiveEntitlements: EntitlementCode[]
+  entitlementDebugOrigins: Partial<Record<EntitlementCode, string[]>>
+  debugOrigin?: string
 }
 
 const DEV_MOCK_ALLOWED_MODULES = ['sensory', 'emotional', 'social', 'life_skills'] as const
@@ -50,7 +59,10 @@ export const useAuthStore = defineStore('auth', {
     entitlements: {
       allowedModules: [],
       source: 'none',
-      isFullAccess: false
+      isFullAccess: false,
+      effectiveEntitlements: [],
+      entitlementDebugOrigins: {},
+      debugOrigin: undefined
     } as EntitlementsInfo
   }),
 
@@ -58,6 +70,7 @@ export const useAuthStore = defineStore('auth', {
     isLoggedIn: (state) => !!state.user,
     isActivated: (state) => state.activationInfo.isActivated,
     allowedModules: (state) => state.entitlements.allowedModules,
+    effectiveEntitlements: (state) => state.entitlements.effectiveEntitlements,
     isAdmin: (state) => state.user?.role === 'admin',
     isTeacher: (state) => state.user?.role === 'teacher',
     canAccess: (state) => (roles: string[]) => {
@@ -68,10 +81,61 @@ export const useAuthStore = defineStore('auth', {
         return true
       }
       return state.entitlements.allowedModules.includes(moduleCode)
+    },
+    hasEntitlementAccess: (state) => (entitlementCode: string) => {
+      if (!isEntitlementCode(entitlementCode)) {
+        return false
+      }
+
+      if (state.entitlements.isFullAccess) {
+        return true
+      }
+
+      return state.entitlements.effectiveEntitlements.includes(entitlementCode)
     }
   },
 
   actions: {
+    applyEntitlements(
+      allowedModules: string[],
+      source: EntitlementSource,
+      debugOrigin?: string
+    ) {
+      const normalizedAllowedModules = Array.isArray(allowedModules)
+        ? allowedModules.filter((moduleCode): moduleCode is string => typeof moduleCode === 'string')
+        : []
+      const isFullAccess = (BUSINESS_MODULE_CODES as readonly string[]).every((moduleCode) =>
+        normalizedAllowedModules.includes(moduleCode)
+      )
+      const resolution = resolveEffectiveEntitlementDetails(normalizedAllowedModules)
+
+      this.entitlements.allowedModules = [...normalizedAllowedModules]
+      this.entitlements.source = source
+      this.entitlements.isFullAccess = isFullAccess
+      this.entitlements.effectiveEntitlements = isFullAccess
+        ? [...ENTITLEMENT_CODES]
+        : resolution.effectiveEntitlements
+
+      if (import.meta.env.DEV) {
+        this.entitlements.debugOrigin = debugOrigin
+        this.entitlements.entitlementDebugOrigins = isFullAccess
+          ? Object.fromEntries(
+              ENTITLEMENT_CODES.map((code) => [
+                code,
+                resolution.entitlementDebugOrigins[code] || ['direct_license_entitlement'],
+              ])
+            ) as Partial<Record<EntitlementCode, string[]>>
+          : resolution.entitlementDebugOrigins
+
+        if (resolution.unknownCodes.length > 0) {
+          console.warn('检测到未知授权 code，已按默认拒绝忽略:', resolution.unknownCodes)
+        }
+      } else {
+        this.entitlements.debugOrigin = undefined
+        this.entitlements.entitlementDebugOrigins = {}
+      }
+    },
+
     // 登录
     async login(username: string, password: string): Promise<boolean> {
       try {
@@ -180,15 +244,12 @@ export const useAuthStore = defineStore('auth', {
           this.activationInfo.trialDays = 0
           this.activationInfo.trialUsed = 0
 
-          this.entitlements.allowedModules = [...DEV_MOCK_ALLOWED_MODULES]
-          this.entitlements.source = 'dev-mock'
-          this.entitlements.isFullAccess = (BUSINESS_MODULE_CODES as readonly string[]).every((moduleCode) =>
-            this.entitlements.allowedModules.includes(moduleCode)
-          )
+          this.applyEntitlements([...DEV_MOCK_ALLOWED_MODULES], 'dev-mock', 'dev_activation_bypass')
 
           console.log('开发环境已绕过激活校验', {
             machineCode: this.activationInfo.machineCode,
-            allowedModules: this.entitlements.allowedModules
+            allowedModules: this.entitlements.allowedModules,
+            effectiveEntitlements: this.entitlements.effectiveEntitlements
           })
           return
         }
@@ -235,10 +296,10 @@ export const useAuthStore = defineStore('auth', {
           ? activation.allowedModules
           : []
 
-        this.entitlements.allowedModules = allowedModules
-        this.entitlements.source = activation.activationCode ? 'license' : 'none'
-        this.entitlements.isFullAccess = (BUSINESS_MODULE_CODES as readonly string[]).every((moduleCode) =>
-          allowedModules.includes(moduleCode)
+        this.applyEntitlements(
+          allowedModules,
+          activation.activationCode ? 'license' : 'none',
+          activation.activationCode ? 'license_signature_verified' : 'activation_not_present'
         )
 
         console.log('激活状态检查结果:', {
@@ -248,7 +309,8 @@ export const useAuthStore = defineStore('auth', {
           trialDays: this.activationInfo.trialDays,
           trialUsed: this.activationInfo.trialUsed,
           entitlementSource: this.entitlements.source,
-          allowedModules: this.entitlements.allowedModules
+          allowedModules: this.entitlements.allowedModules,
+          effectiveEntitlements: this.entitlements.effectiveEntitlements
         })
       } catch (error) {
         console.error('检查激活状态失败:', error)

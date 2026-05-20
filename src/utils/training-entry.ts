@@ -1,4 +1,5 @@
 import { ModuleCode, type ResourceItem } from '@/types/module'
+import type { EntitlementCode } from '@/features/entitlements/entitlement-catalog'
 import {
   type EquipmentCatalogGroupCode,
   resolveEquipmentCatalogGroupCode,
@@ -20,6 +21,7 @@ export interface TrainingEntryDefinition {
   name: string
   description: string
   moduleCode: ModuleCode
+  requiredEntitlement: EntitlementCode
   catalogGroups: EquipmentCatalogGroupCode[]
   icon: string
   themeColor: string
@@ -36,6 +38,7 @@ const TRAINING_ENTRY_DEFINITIONS: Record<TrainingEntryCode, TrainingEntryDefinit
     name: '感官统合训练',
     description: '围绕感官统合主链开展游戏训练、器材训练与训练记录。',
     moduleCode: ModuleCode.SENSORY,
+    requiredEntitlement: 'sensory_integration',
     catalogGroups: ['sensory-training'],
     icon: 'MagicStick',
     themeColor: '#67c23a',
@@ -45,6 +48,7 @@ const TRAINING_ENTRY_DEFINITIONS: Record<TrainingEntryCode, TrainingEntryDefinit
     name: '情绪调节',
     description: '围绕情绪调节主链开展游戏训练、器材训练与训练记录。',
     moduleCode: ModuleCode.EMOTIONAL,
+    requiredEntitlement: 'emotional',
     catalogGroups: ['emotional-regulation'],
     icon: 'Sunny',
     themeColor: '#e6a23c',
@@ -54,6 +58,7 @@ const TRAINING_ENTRY_DEFINITIONS: Record<TrainingEntryCode, TrainingEntryDefinit
     name: '社交沟通',
     description: '围绕社交沟通主链开展游戏训练、器材训练与训练记录。',
     moduleCode: ModuleCode.SOCIAL,
+    requiredEntitlement: 'social_communication',
     catalogGroups: ['social-communication'],
     icon: 'ChatDotRound',
     themeColor: '#409eff',
@@ -63,6 +68,7 @@ const TRAINING_ENTRY_DEFINITIONS: Record<TrainingEntryCode, TrainingEntryDefinit
     name: '精细动作',
     description: '围绕精细动作主链开展游戏训练、器材训练与训练记录。',
     moduleCode: ModuleCode.SENSORY,
+    requiredEntitlement: 'fine_motor',
     catalogGroups: ['fine-motor'],
     icon: 'Operation',
     themeColor: '#27ae60',
@@ -72,6 +78,7 @@ const TRAINING_ENTRY_DEFINITIONS: Record<TrainingEntryCode, TrainingEntryDefinit
     name: '安抚教具',
     description: '围绕安抚教具体系开展游戏训练、器材训练与训练记录。',
     moduleCode: ModuleCode.EMOTIONAL,
+    requiredEntitlement: 'soothing_aids',
     catalogGroups: ['soothing-aids'],
     icon: 'MoonNight',
     themeColor: '#8e44ad',
@@ -81,6 +88,7 @@ const TRAINING_ENTRY_DEFINITIONS: Record<TrainingEntryCode, TrainingEntryDefinit
     name: '生活自理',
     description: '围绕生活自理主链开展游戏训练、器材训练与训练记录。',
     moduleCode: ModuleCode.LIFE_SKILLS,
+    requiredEntitlement: 'life_skills',
     catalogGroups: ['life-skills'],
     icon: 'House',
     themeColor: '#d97706',
@@ -108,6 +116,15 @@ const CATALOG_GROUP_ENTRY_MAP: Record<EquipmentCatalogGroupCode, TrainingEntryCo
   'fine-motor': 'fine-motor',
   'soothing-aids': 'soothing-aids',
   'life-skills': 'life-skills',
+}
+
+const MODULE_PRIMARY_ENTITLEMENT_MAP: Record<ModuleCode, EntitlementCode> = {
+  [ModuleCode.SENSORY]: 'sensory_integration',
+  [ModuleCode.EMOTIONAL]: 'emotional',
+  [ModuleCode.SOCIAL]: 'social_communication',
+  [ModuleCode.COGNITIVE]: 'cognitive',
+  [ModuleCode.LIFE_SKILLS]: 'life_skills',
+  [ModuleCode.RESOURCE]: 'sensory_integration',
 }
 
 function parseMetadata(metadata: unknown): ResourceMetadataLike | null {
@@ -165,6 +182,26 @@ export function getTrainingEntryModuleCode(
   moduleValue?: unknown
 ): ModuleCode {
   return getTrainingEntry(entryValue, moduleValue).moduleCode
+}
+
+export function getTrainingEntryRequiredEntitlement(
+  entryValue?: unknown,
+  moduleValue?: unknown
+): EntitlementCode {
+  const entryCode = normalizeTrainingEntryCode(entryValue)
+  if (entryCode) {
+    return TRAINING_ENTRY_DEFINITIONS[entryCode].requiredEntitlement
+  }
+
+  const normalizedModuleCode = typeof moduleValue === 'string'
+    ? moduleValue.trim() as ModuleCode
+    : undefined
+
+  if (normalizedModuleCode && normalizedModuleCode in MODULE_PRIMARY_ENTITLEMENT_MAP) {
+    return MODULE_PRIMARY_ENTITLEMENT_MAP[normalizedModuleCode]
+  }
+
+  return TRAINING_ENTRY_DEFINITIONS['sensory-integration'].requiredEntitlement
 }
 
 export function getTrainingEntryCatalogGroups(

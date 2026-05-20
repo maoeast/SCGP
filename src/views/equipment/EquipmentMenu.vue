@@ -57,7 +57,6 @@ import {
 } from '@element-plus/icons-vue'
 import { ResourceAPI } from '@/database/resource-api'
 import { useAuthStore } from '@/stores/auth'
-import { filterVisibleAccessControlledItems } from '@/utils/access-visibility'
 import {
   getAllEquipmentTrainingEntries,
   getEquipmentTrainingEntry,
@@ -69,12 +68,8 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const equipmentEntries = computed(() => {
-  return filterVisibleAccessControlledItems(
-    getAllEquipmentTrainingEntries().map((entry) => ({
-      ...entry,
-      accessScope: 'module' as const,
-    })),
-    authStore.hasModuleAccess,
+  return getAllEquipmentTrainingEntries().filter((entry) =>
+    authStore.hasEntitlementAccess(entry.requiredEntitlement)
   )
 })
 

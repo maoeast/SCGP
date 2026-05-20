@@ -369,8 +369,8 @@ const quickActions: QuickAction[] = [
     label: '启动感官游戏',
     description: '进入游戏训练模块，按学生和模块快速开始训练。',
     path: '/games/menu',
-    accessScope: 'module',
-    moduleCode: 'sensory',
+    accessScope: 'entitlement',
+    entitlementCode: 'sensory_integration',
     icon: Monitor,
     tone: 'teal' as QuickActionTone,
   },
@@ -378,8 +378,8 @@ const quickActions: QuickAction[] = [
     label: '情绪场景训练',
     description: '进入情绪行为模块，围绕真实场景开展情绪与关心训练。',
     path: '/emotional/menu',
-    accessScope: 'module',
-    moduleCode: 'emotional',
+    accessScope: 'entitlement',
+    entitlementCode: 'emotional',
     icon: MagicStick,
     tone: 'coral' as QuickActionTone,
   },
@@ -396,7 +396,11 @@ const quickActions: QuickAction[] = [
 const displayedAnomalies = computed(() => snapshot.value.anomalies.slice(0, 4))
 const displayedAssessmentAlerts = computed(() => snapshot.value.assessmentAlerts.slice(0, 4))
 const accessibleModuleCount = computed(() => new Set(authStore.allowedModules).size)
-const visibleQuickActions = computed(() => filterVisibleAccessControlledItems(quickActions, authStore.hasModuleAccess))
+const visibleQuickActions = computed(() => filterVisibleAccessControlledItems(
+  quickActions,
+  authStore.hasModuleAccess,
+  authStore.hasEntitlementAccess,
+))
 
 const focusPanel = computed(() => {
   const overview = snapshot.value.overview
@@ -452,7 +456,7 @@ function getModuleLabel(moduleCode: string) {
 }
 
 function goTo(action: QuickAction) {
-  if (!isAccessControlledItemVisible(action, authStore.hasModuleAccess)) {
+  if (!isAccessControlledItemVisible(action, authStore.hasModuleAccess, authStore.hasEntitlementAccess)) {
     ElMessage.warning('该模块未授权，请联系厂商购买')
     return
   }

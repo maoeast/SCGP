@@ -71,7 +71,6 @@ import {
 import { useAuthStore } from '@/stores/auth'
 import { GameTrainingAPI, EquipmentTrainingAPI } from '@/database/api'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
-import { filterVisibleAccessControlledItems } from '@/utils/access-visibility'
 import {
   getAllTrainingEntries,
   type TrainingEntryCode,
@@ -86,12 +85,8 @@ const emotionalGamesApi = new EmotionalGamesAPI()
 const equipmentApi = new EquipmentTrainingAPI()
 
 const trainingEntries = computed(() => {
-  return filterVisibleAccessControlledItems(
-    getAllTrainingEntries().map((entry) => ({
-      ...entry,
-      accessScope: 'module' as const,
-    })),
-    authStore.hasModuleAccess,
+  return getAllTrainingEntries().filter((entry) =>
+    authStore.hasEntitlementAccess(entry.requiredEntitlement)
   )
 })
 

@@ -8,6 +8,7 @@ import {
   getTrainingEntry,
   getTrainingEntryCatalogGroups,
   getTrainingEntryModuleCode,
+  getTrainingEntryRequiredEntitlement,
   isTrainingEntryCode,
   matchesTrainingEntryResource,
   normalizeTrainingEntryCode,
@@ -27,6 +28,7 @@ export const resolveEquipmentTrainingEntryCode = resolveTrainingEntryCode
 export const getAllEquipmentTrainingEntries = getAllTrainingEntries
 export const getEquipmentTrainingEntry = getTrainingEntry
 export const getEquipmentTrainingEntryModuleCode = getTrainingEntryModuleCode
+export const getEquipmentTrainingEntryRequiredEntitlement = getTrainingEntryRequiredEntitlement
 export const getEquipmentTrainingEntryCatalogGroups = getTrainingEntryCatalogGroups
 
 const ROUTE_ENTRY_ALIASES: Record<string, EquipmentTrainingEntryCode> = {

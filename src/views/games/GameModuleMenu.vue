@@ -51,7 +51,6 @@ import { useAuthStore } from '@/stores/auth'
 import { ResourceAPI } from '@/database/resource-api'
 import { getCustomGamesByTrainingEntry } from '@/data/custom-game-registry'
 import { getEmotionalGameCount } from './emotional-game-catalog'
-import { filterVisibleAccessControlledItems } from '@/utils/access-visibility'
 import {
   getAllTrainingEntries,
   matchesTrainingEntryResource,
@@ -71,12 +70,8 @@ const entryEmojis: Record<TrainingEntryCode, string> = {
 }
 
 const trainingEntries = computed(() => {
-  return filterVisibleAccessControlledItems(
-    getAllTrainingEntries().map((entry) => ({
-      ...entry,
-      accessScope: 'module' as const,
-    })),
-    authStore.hasModuleAccess,
+  return getAllTrainingEntries().filter((entry) =>
+    authStore.hasEntitlementAccess(entry.requiredEntitlement)
   )
 })
 

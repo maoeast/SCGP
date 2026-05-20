@@ -97,6 +97,8 @@ interface MenuRouteItem extends AccessControlledItem {
     icon?: string
     roles?: string[]
     moduleCode?: string
+    requiredEntitlement?: string
+    requiredEntitlementsAnyOf?: string[]
   }
 }
 
@@ -141,8 +143,20 @@ const menuRoutes = computed<MenuRouteItem[]>(() => {
     })
     .map((r) => ({
       path: r.path,
-      accessScope: (typeof r.meta.moduleCode === 'string' ? 'module' : 'global') as AccessScope,
+      accessScope: (
+        Array.isArray(r.meta.requiredEntitlementsAnyOf)
+          ? 'entitlement-any'
+          : typeof r.meta.requiredEntitlement === 'string'
+            ? 'entitlement'
+            : typeof r.meta.moduleCode === 'string'
+              ? 'module'
+              : 'global'
+      ) as AccessScope,
       moduleCode: typeof r.meta.moduleCode === 'string' ? r.meta.moduleCode : undefined,
+      entitlementCode: typeof r.meta.requiredEntitlement === 'string' ? r.meta.requiredEntitlement : undefined,
+      entitlementCodes: Array.isArray(r.meta.requiredEntitlementsAnyOf)
+        ? r.meta.requiredEntitlementsAnyOf.filter((value): value is string => typeof value === 'string')
+        : undefined,
       meta: {
         title: String(r.meta.title || ''),
         displayTitle: String(r.meta.title || ''),
@@ -150,9 +164,17 @@ const menuRoutes = computed<MenuRouteItem[]>(() => {
         icon: typeof r.meta.icon === 'string' ? r.meta.icon : undefined,
         roles: Array.isArray(r.meta.roles) ? r.meta.roles as string[] : undefined,
         moduleCode: typeof r.meta.moduleCode === 'string' ? r.meta.moduleCode : undefined,
+        requiredEntitlement: typeof r.meta.requiredEntitlement === 'string' ? r.meta.requiredEntitlement : undefined,
+        requiredEntitlementsAnyOf: Array.isArray(r.meta.requiredEntitlementsAnyOf)
+          ? r.meta.requiredEntitlementsAnyOf.filter((value): value is string => typeof value === 'string')
+          : undefined,
       },
     }))
-    .filter((menuRoute) => filterVisibleAccessControlledItems([menuRoute], authStore.hasModuleAccess).length > 0)
+    .filter((menuRoute) => filterVisibleAccessControlledItems(
+      [menuRoute],
+      authStore.hasModuleAccess,
+      authStore.hasEntitlementAccess,
+    ).length > 0)
 })
 
 // 页面标题

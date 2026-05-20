@@ -194,7 +194,9 @@ const selectStudentRoute = computed(() => {
 })
 
 const availableEntries = computed(() => {
-  return getAllEquipmentTrainingEntries().filter((entry) => authStore.hasModuleAccess(entry.moduleCode))
+  return getAllEquipmentTrainingEntries().filter((entry) =>
+    authStore.hasEntitlementAccess(entry.requiredEntitlement)
+  )
 })
 
 // 学生相关状态
