@@ -3,6 +3,12 @@
 // 内联schema.sql内容
 import emotionalSchemaSQL from './schema/emotional-schema.sql?raw'
 import { hashPasswordV1 } from '@/utils/password-security'
+import {
+  resolveSelfCareTaskSeedMode,
+  SELF_CARE_TASK_SEED_RESOURCES,
+  SELF_CARE_TASK_SEED_SUMMARY,
+  type SelfCareTaskSeedMode,
+} from '@/data/self-care-task-seed'
 
 const schemaSQL = `
 -- 学生表
@@ -1343,6 +1349,8 @@ export async function initDatabase(): Promise<any> {
       console.log('加载已有数据库，跳过初始数据插入')
     }
 
+    await upsertSelfCareTaskSeedResources(db)
+
     // 插入器材数据（如果表为空）
     await insertEquipmentData()
 
@@ -1592,6 +1600,140 @@ async function insertInitialDataToDB(database: any, options: { tasks?: boolean; 
   } catch (error) {
     console.error('插入初始数据失败:', error)
   }
+}
+
+function getSelfCareTaskSeedModeFromEnv(): SelfCareTaskSeedMode {
+  const envMode = typeof window !== 'undefined'
+    ? ((window as any).__SCGP_TASK_SEED_MODE__ as string | undefined)
+    : undefined
+
+  return resolveSelfCareTaskSeedMode(envMode)
+}
+
+async function upsertSelfCareTaskSeedResources(database: any): Promise<void> {
+  const mode = getSelfCareTaskSeedModeFromEnv()
+  const existingRows = queryRows<{
+    id: number
+    legacy_id: number | null
+    legacy_source: string | null
+    meta_data: string | null
+  }>(
+    `
+      SELECT id, legacy_id, legacy_source, meta_data
+      FROM sys_training_resource
+      WHERE module_code = ?
+        AND resource_type = ?
+    `,
+    ['life_skills', 'task_training'],
+  )
+
+  const existingByLegacyId = new Map<string, typeof existingRows[number]>()
+  const existingByLegacyTaskCode = new Map<string, typeof existingRows[number]>()
+
+  for (const row of existingRows) {
+    const legacyId = Number(row.legacy_id || 0)
+    const legacySource = String(row.legacy_source || '')
+    if (legacyId > 0 && legacySource) {
+      existingByLegacyId.set(`${legacyId}::${legacySource}`, row)
+    }
+
+    try {
+      const metadata = row.meta_data ? JSON.parse(row.meta_data) : null
+      const legacyTaskCode = typeof metadata?.legacyTaskCode === 'string'
+        ? metadata.legacyTaskCode.trim()
+        : ''
+      if (legacyTaskCode) {
+        existingByLegacyTaskCode.set(legacyTaskCode, row)
+      }
+    } catch {
+      // ignore malformed metadata on legacy rows
+    }
+  }
+
+  let inserted = 0
+  let updated = 0
+  let skipped = 0
+
+  for (const task of SELF_CARE_TASK_SEED_RESOURCES) {
+    const existing = existingByLegacyId.get(`${task.legacyId}::${task.legacySource}`)
+      || existingByLegacyTaskCode.get(task.legacyTaskCode)
+      || null
+    const metadataJson = JSON.stringify(task.metadata)
+
+    if (!existing) {
+      database.run(
+        `
+          INSERT INTO sys_training_resource (
+            module_code, resource_type, name, category, description,
+            cover_image, is_custom, is_active, legacy_id, legacy_source,
+            meta_data, usage_count
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          'life_skills',
+          'task_training',
+          task.name,
+          task.category,
+          task.description || '',
+          task.coverImage || '',
+          0,
+          1,
+          task.legacyId,
+          task.legacySource,
+          metadataJson,
+          0,
+        ],
+      )
+      inserted += 1
+      continue
+    }
+
+    if (mode === 'missing-only' || mode === 'preserve') {
+      skipped += 1
+      continue
+    }
+
+    database.run(
+      `
+        UPDATE sys_training_resource
+        SET module_code = ?,
+            resource_type = ?,
+            name = ?,
+            category = ?,
+            description = ?,
+            cover_image = ?,
+            is_custom = 0,
+            is_active = 1,
+            legacy_id = ?,
+            legacy_source = ?,
+            meta_data = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `,
+      [
+        'life_skills',
+        'task_training',
+        task.name,
+        task.category,
+        task.description || '',
+        task.coverImage || '',
+        task.legacyId,
+        task.legacySource,
+        metadataJson,
+        existing.id,
+      ],
+    )
+    updated += 1
+  }
+
+  console.log('[InitDatabase] self-care task seed processed:', {
+    mode,
+    inserted,
+    updated,
+    skipped,
+    totalTasks: SELF_CARE_TASK_SEED_SUMMARY.totalTasks,
+    totalSteps: SELF_CARE_TASK_SEED_SUMMARY.totalSteps,
+  })
 }
 
 // 插入初始数据

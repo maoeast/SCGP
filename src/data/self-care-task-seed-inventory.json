@@ -1,0 +1,2417 @@
+{
+  "generatedAt": "2026-05-13T04:25:57.797Z",
+  "sourceProject": "E:\\VSC\\H5\\Self-Care ATS\\self-care-ats",
+  "resourceType": "task_training",
+  "entryCode": "life-skills",
+  "totalTasks": 31,
+  "totalSteps": 235,
+  "tasks": [
+    {
+      "legacyId": 1,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "EAT_SPOON_001",
+      "name": "用勺子吃饭",
+      "description": "学习正确握勺，将食物从碗中独立送入口中而不撒漏",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/EAT_SPOON_001_cover.jpg",
+      "categoryId": 11,
+      "abilityItem": "feed_01",
+      "stepCount": 8,
+      "steps": [
+        {
+          "id": "legacy_step_1001",
+          "seq": 1,
+          "text": "端正坐姿，非惯用手扶住碗边",
+          "imagePath": "images/tasks/EAT_SPOON_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_1002",
+          "seq": 2,
+          "text": "惯用手正确握住勺柄",
+          "imagePath": "images/tasks/EAT_SPOON_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_1003",
+          "seq": 3,
+          "text": "勺子伸入碗中舀取食物",
+          "imagePath": "images/tasks/EAT_SPOON_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_1004",
+          "seq": 4,
+          "text": "保持勺口向上平稳抬起至嘴边",
+          "imagePath": "images/tasks/EAT_SPOON_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_1005",
+          "seq": 5,
+          "text": "张大嘴巴将勺子送入口中",
+          "imagePath": "images/tasks/EAT_SPOON_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_1006",
+          "seq": 6,
+          "text": "双唇闭合利用上唇刮下食物",
+          "imagePath": "images/tasks/EAT_SPOON_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_1007",
+          "seq": 7,
+          "text": "咀嚼食物并吞咽",
+          "imagePath": "images/tasks/EAT_SPOON_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_1008",
+          "seq": 8,
+          "text": "刮干净碗底",
+          "imagePath": "images/tasks/EAT_SPOON_001/8.png",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 2,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "EAT_CHOPSTICKS_001",
+      "name": "用筷子吃饭",
+      "description": "学习使用筷子夹取不同形状的食物，锻炼手部精细动作",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/EAT_CHOPSTICKS_001_cover.jpg",
+      "categoryId": 12,
+      "abilityItem": "feed_01",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_2001",
+          "seq": 1,
+          "text": "拿起筷子在桌面上轻轻顿齐",
+          "imagePath": "images/tasks/EAT_CHOPSTICKS_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_2002",
+          "seq": 2,
+          "text": "调整握姿：拇指食指中指控制上根筷子",
+          "imagePath": "images/tasks/EAT_CHOPSTICKS_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_2003",
+          "seq": 3,
+          "text": "保持下根筷子不动张开筷子尖端",
+          "imagePath": "images/tasks/EAT_CHOPSTICKS_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_2004",
+          "seq": 4,
+          "text": "眼睛看准目标食物",
+          "imagePath": "images/tasks/EAT_CHOPSTICKS_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_2005",
+          "seq": 5,
+          "text": "合拢筷子夹住食物",
+          "imagePath": "images/tasks/EAT_CHOPSTICKS_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_2006",
+          "seq": 6,
+          "text": "平稳将食物送至嘴边",
+          "imagePath": "images/tasks/EAT_CHOPSTICKS_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_2007",
+          "seq": 7,
+          "text": "送入口中松开筷子",
+          "imagePath": "images/tasks/EAT_CHOPSTICKS_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 3,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "DRINK_WATER_001",
+      "name": "用杯子喝水",
+      "description": "学习控制水杯倾斜角度，安全饮水",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/DRINK_WATER_001_cover.jpg",
+      "categoryId": 15,
+      "abilityItem": "feed_02",
+      "stepCount": 8,
+      "steps": [
+        {
+          "id": "legacy_step_3001",
+          "seq": 1,
+          "text": "眼睛注视水杯确认水量",
+          "imagePath": "images/tasks/DRINK_WATER_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_3002",
+          "seq": 2,
+          "text": "双手稳固握住杯身",
+          "imagePath": "images/tasks/DRINK_WATER_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_3003",
+          "seq": 3,
+          "text": "平稳拿起水杯移至嘴边",
+          "imagePath": "images/tasks/DRINK_WATER_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_3004",
+          "seq": 4,
+          "text": "杯口轻触下嘴唇",
+          "imagePath": "images/tasks/DRINK_WATER_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_3005",
+          "seq": 5,
+          "text": "微微仰头手腕转动缓慢倾斜杯身",
+          "imagePath": "images/tasks/DRINK_WATER_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_3006",
+          "seq": 6,
+          "text": "感觉到水流入口中小口啜饮",
+          "imagePath": "images/tasks/DRINK_WATER_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_3007",
+          "seq": 7,
+          "text": "吞咽口水",
+          "imagePath": "images/tasks/DRINK_WATER_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_3008",
+          "seq": 8,
+          "text": "将杯身回正平稳放回桌面",
+          "imagePath": "images/tasks/DRINK_WATER_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 4,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "WASH_HANDS_001",
+      "name": "洗手",
+      "description": "学习七步洗手流程，彻底清洁双手",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/WASH_HANDS_001_cover.jpg",
+      "categoryId": 42,
+      "abilityItem": "hygiene_02",
+      "stepCount": 10,
+      "steps": [
+        {
+          "id": "legacy_step_4001",
+          "seq": 1,
+          "text": "卷起袖子至手腕以上",
+          "imagePath": "images/tasks/WASH_HANDS_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_4002",
+          "seq": 2,
+          "text": "打开水龙头淋湿双手",
+          "imagePath": "images/tasks/WASH_HANDS_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_4003",
+          "seq": 3,
+          "text": "按压洗手液或涂抹肥皂",
+          "imagePath": "images/tasks/WASH_HANDS_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_4004",
+          "seq": 4,
+          "text": "掌心对掌心搓出泡沫",
+          "imagePath": "images/tasks/WASH_HANDS_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_4005",
+          "seq": 5,
+          "text": "手心对手背交替搓擦",
+          "imagePath": "images/tasks/WASH_HANDS_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_4006",
+          "seq": 6,
+          "text": "手指交叉搓擦指缝",
+          "imagePath": "images/tasks/WASH_HANDS_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_4007",
+          "seq": 7,
+          "text": "指尖在掌心旋转搓擦",
+          "imagePath": "images/tasks/WASH_HANDS_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_4008",
+          "seq": 8,
+          "text": "握住大拇指旋转搓擦",
+          "imagePath": "images/tasks/WASH_HANDS_001/8.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_4009",
+          "seq": 9,
+          "text": "流水冲净泡沫",
+          "imagePath": "images/tasks/WASH_HANDS_001/9.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_4010",
+          "seq": 10,
+          "text": "关上水龙头用毛巾擦干",
+          "imagePath": "images/tasks/WASH_HANDS_001/10.png",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 5,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "SQUEEZE_TOOTHPASTE_001",
+      "name": "挤牙膏",
+      "description": "学习精细的手眼协调，控制牙膏用量",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/SQUEEZE_TOOTHPASTE_001_cover.jpg",
+      "categoryId": 41,
+      "abilityItem": "hygiene_01",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_5001",
+          "seq": 1,
+          "text": "一手拿牙膏一手拿牙刷",
+          "imagePath": "images/tasks/SQUEEZE_TOOTHPASTE_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_5002",
+          "seq": 2,
+          "text": "拧开牙膏盖将盖子放在固定位置",
+          "imagePath": "images/tasks/SQUEEZE_TOOTHPASTE_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_5003",
+          "seq": 3,
+          "text": "调整手部姿势将牙膏口对准刷毛根部",
+          "imagePath": "images/tasks/SQUEEZE_TOOTHPASTE_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_5004",
+          "seq": 4,
+          "text": "大拇指配合手指轻轻挤压管身",
+          "imagePath": "images/tasks/SQUEEZE_TOOTHPASTE_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_5005",
+          "seq": 5,
+          "text": "观察挤出的量停止用力",
+          "imagePath": "images/tasks/SQUEEZE_TOOTHPASTE_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_5006",
+          "seq": 6,
+          "text": "将牙膏管口移开",
+          "imagePath": "images/tasks/SQUEEZE_TOOTHPASTE_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_5007",
+          "seq": 7,
+          "text": "拿起盖子盖回并拧紧",
+          "imagePath": "images/tasks/SQUEEZE_TOOTHPASTE_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 6,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "BRUSH_TEETH_001",
+      "name": "刷牙",
+      "description": "建立全面清洁口腔的习惯",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/BRUSH_TEETH_001_cover.jpg",
+      "categoryId": 41,
+      "abilityItem": "hygiene_01",
+      "stepCount": 8,
+      "steps": [
+        {
+          "id": "legacy_step_6001",
+          "seq": 1,
+          "text": "杯子接水含一口润湿口腔后吐掉",
+          "imagePath": "images/tasks/BRUSH_TEETH_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_6002",
+          "seq": 2,
+          "text": "刷上排牙齿外侧",
+          "imagePath": "images/tasks/BRUSH_TEETH_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_6003",
+          "seq": 3,
+          "text": "刷下排牙齿外侧",
+          "imagePath": "images/tasks/BRUSH_TEETH_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_6004",
+          "seq": 4,
+          "text": "张大嘴刷上排牙齿内侧",
+          "imagePath": "images/tasks/BRUSH_TEETH_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_6005",
+          "seq": 5,
+          "text": "刷下排牙齿内侧",
+          "imagePath": "images/tasks/BRUSH_TEETH_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_6006",
+          "seq": 6,
+          "text": "刷大牙的咀嚼面",
+          "imagePath": "images/tasks/BRUSH_TEETH_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_6007",
+          "seq": 7,
+          "text": "含水漱口鼓动腮部至少3次",
+          "imagePath": "images/tasks/BRUSH_TEETH_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_6008",
+          "seq": 8,
+          "text": "吐出漱口水清洗牙刷并归位",
+          "imagePath": "images/tasks/BRUSH_TEETH_001/8.png",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 7,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "WASH_FACE_001",
+      "name": "洗脸",
+      "description": "学习清洁面部关键区域",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/WASH_FACE_001_cover.jpg",
+      "categoryId": 42,
+      "abilityItem": "hygiene_02",
+      "stepCount": 8,
+      "steps": [
+        {
+          "id": "legacy_step_7001",
+          "seq": 1,
+          "text": "卷好袖子打开水龙头",
+          "imagePath": "images/tasks/WASH_FACE_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_7002",
+          "seq": 2,
+          "text": "双手接水打湿面部",
+          "imagePath": "images/tasks/WASH_FACE_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_7003",
+          "seq": 3,
+          "text": "双手用力拧干毛巾",
+          "imagePath": "images/tasks/WASH_FACE_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_7004",
+          "seq": 4,
+          "text": "展开毛巾擦拭额头和眼睛周围",
+          "imagePath": "images/tasks/WASH_FACE_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_7005",
+          "seq": 5,
+          "text": "擦拭脸颊和鼻子",
+          "imagePath": "images/tasks/WASH_FACE_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_7006",
+          "seq": 6,
+          "text": "擦拭嘴巴周围下巴",
+          "imagePath": "images/tasks/WASH_FACE_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_7007",
+          "seq": 7,
+          "text": "擦拭耳后及颈部",
+          "imagePath": "images/tasks/WASH_FACE_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_7008",
+          "seq": 8,
+          "text": "清洗毛巾拧干并挂回原处",
+          "imagePath": "images/tasks/WASH_FACE_001/8.png",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 8,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "COMB_HAIR_001",
+      "name": "梳头",
+      "description": "学习自我整理仪容",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/COMB_HAIR_001_cover.jpg",
+      "categoryId": 44,
+      "abilityItem": "hygiene_03",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_8001",
+          "seq": 1,
+          "text": "握住梳子手柄站在镜子前",
+          "imagePath": "images/tasks/COMB_HAIR_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_8002",
+          "seq": 2,
+          "text": "将头发中分或按习惯分开",
+          "imagePath": "images/tasks/COMB_HAIR_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_8003",
+          "seq": 3,
+          "text": "先梳理发梢打结处",
+          "imagePath": "images/tasks/COMB_HAIR_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_8004",
+          "seq": 4,
+          "text": "从头顶梳向发梢左侧",
+          "imagePath": "images/tasks/COMB_HAIR_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_8005",
+          "seq": 5,
+          "text": "从头顶梳向发梢右侧",
+          "imagePath": "images/tasks/COMB_HAIR_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_8006",
+          "seq": 6,
+          "text": "整理刘海或鬓角",
+          "imagePath": "images/tasks/COMB_HAIR_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_8007",
+          "seq": 7,
+          "text": "检查梳子取下缠绕的头发扔进垃圾桶",
+          "imagePath": "images/tasks/COMB_HAIR_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 9,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "BLOW_NOSE_001",
+      "name": "擦鼻涕",
+      "description": "学习卫生的清理鼻腔分泌物",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/BLOW_NOSE_001_cover.jpg",
+      "categoryId": 46,
+      "abilityItem": "hygiene_03",
+      "stepCount": 8,
+      "steps": [
+        {
+          "id": "legacy_step_9001",
+          "seq": 1,
+          "text": "感觉有鼻涕立刻取纸巾",
+          "imagePath": "images/tasks/BLOW_NOSE_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_9002",
+          "seq": 2,
+          "text": "将纸巾对折一次",
+          "imagePath": "images/tasks/BLOW_NOSE_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_9003",
+          "seq": 3,
+          "text": "将纸巾覆盖在鼻子上",
+          "imagePath": "images/tasks/BLOW_NOSE_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_9004",
+          "seq": 4,
+          "text": "手指按住左鼻孔用力擤右鼻孔",
+          "imagePath": "images/tasks/BLOW_NOSE_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_9005",
+          "seq": 5,
+          "text": "手指按住右鼻孔用力擤左鼻孔",
+          "imagePath": "images/tasks/BLOW_NOSE_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_9006",
+          "seq": 6,
+          "text": "用纸巾擦净鼻孔下方的皮肤",
+          "imagePath": "images/tasks/BLOW_NOSE_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_9007",
+          "seq": 7,
+          "text": "将脏纸巾向内折叠包裹",
+          "imagePath": "images/tasks/BLOW_NOSE_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_9008",
+          "seq": 8,
+          "text": "丢入垃圾桶并去洗手",
+          "imagePath": "images/tasks/BLOW_NOSE_001/8.png",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 10,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "TAKE_SHOWER_001",
+      "name": "洗澡（淋浴）",
+      "description": "学习独立完成洗澡全流程，注意隐私与清洁",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/TAKE_SHOWER_001_cover.jpg",
+      "categoryId": 43,
+      "abilityItem": "hygiene_03",
+      "stepCount": 10,
+      "steps": [
+        {
+          "id": "legacy_step_10001",
+          "seq": 1,
+          "text": "准备换洗衣物放在干燥处",
+          "imagePath": "images/tasks/TAKE_SHOWER_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_10002",
+          "seq": 2,
+          "text": "打开水龙头用手腕内侧试水温",
+          "imagePath": "images/tasks/TAKE_SHOWER_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_10003",
+          "seq": 3,
+          "text": "脱去衣物走进淋浴区",
+          "imagePath": "images/tasks/TAKE_SHOWER_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_10004",
+          "seq": 4,
+          "text": "淋湿头发和全身",
+          "imagePath": "images/tasks/TAKE_SHOWER_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_10005",
+          "seq": 5,
+          "text": "取洗发水洗头并冲净",
+          "imagePath": "images/tasks/TAKE_SHOWER_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_10006",
+          "seq": 6,
+          "text": "取沐浴露搓出泡沫涂抹全身",
+          "imagePath": "images/tasks/TAKE_SHOWER_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_10007",
+          "seq": 7,
+          "text": "重点搓洗腋下私处脚丫",
+          "imagePath": "images/tasks/TAKE_SHOWER_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_10008",
+          "seq": 8,
+          "text": "用清水彻底冲净全身泡沫",
+          "imagePath": "images/tasks/TAKE_SHOWER_001/8.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_10009",
+          "seq": 9,
+          "text": "关水用浴巾按顺序擦干",
+          "imagePath": "images/tasks/TAKE_SHOWER_001/9.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_10010",
+          "seq": 10,
+          "text": "穿上干净的内衣和外衣",
+          "imagePath": "images/tasks/TAKE_SHOWER_001/10.png",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 11,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "WEAR_SHIRT_001",
+      "name": "穿上衣（套头衫）",
+      "description": "学习空间方位认知及肢体配合",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/WEAR_SHIRT_001_cover.jpg",
+      "categoryId": 21,
+      "abilityItem": "dress_01",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_11001",
+          "seq": 1,
+          "text": "拿起衣服找到领口确认正反",
+          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_11002",
+          "seq": 2,
+          "text": "双手从衣摆伸入撑开衣服",
+          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_11003",
+          "seq": 3,
+          "text": "低头将头钻出领口",
+          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_11004",
+          "seq": 4,
+          "text": "将右臂伸进右袖筒用力伸出",
+          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_11005",
+          "seq": 5,
+          "text": "将左臂伸进左袖筒用力伸出",
+          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_11006",
+          "seq": 6,
+          "text": "双手向下拉平衣身",
+          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_11007",
+          "seq": 7,
+          "text": "整理领口和下摆",
+          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 12,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "TAKE_OFF_SHIRT_001",
+      "name": "脱上衣",
+      "description": "学习通过大肌肉动作脱掉衣物",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/TAKE_OFF_SHIRT_001_cover.jpg",
+      "categoryId": 21,
+      "abilityItem": "dress_01",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_12001",
+          "seq": 1,
+          "text": "右手拉住左袖口左臂缩进袖筒",
+          "imagePath": "images/tasks/TAKE_OFF_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_12002",
+          "seq": 2,
+          "text": "左手拉住右袖口右臂缩进袖筒",
+          "imagePath": "images/tasks/TAKE_OFF_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_12003",
+          "seq": 3,
+          "text": "双手在衣服内部撑开",
+          "imagePath": "images/tasks/TAKE_OFF_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_12004",
+          "seq": 4,
+          "text": "抓住衣服下摆或内侧",
+          "imagePath": "images/tasks/TAKE_OFF_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_12005",
+          "seq": 5,
+          "text": "向上提拉使领口越过头顶",
+          "imagePath": "images/tasks/TAKE_OFF_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_12006",
+          "seq": 6,
+          "text": "将衣服完全拿下",
+          "imagePath": "images/tasks/TAKE_OFF_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_12007",
+          "seq": 7,
+          "text": "将翻过来的衣服翻正",
+          "imagePath": "images/tasks/TAKE_OFF_SHIRT_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 13,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "WEAR_PANTS_001",
+      "name": "穿裤子",
+      "description": "学习保持平衡穿裤",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/WEAR_PANTS_001_cover.jpg",
+      "categoryId": 22,
+      "abilityItem": "dress_02",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_13001",
+          "seq": 1,
+          "text": "分辨裤子的前后",
+          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_13002",
+          "seq": 2,
+          "text": "坐在椅子或床边",
+          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_13003",
+          "seq": 3,
+          "text": "双手握住裤腰整理好裤管口",
+          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_13004",
+          "seq": 4,
+          "text": "抬起一条腿伸入同侧裤管",
+          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_13005",
+          "seq": 5,
+          "text": "抬起另一条腿伸入另一侧裤管",
+          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_13006",
+          "seq": 6,
+          "text": "站起来双手用力将裤腰提至腰部",
+          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_13007",
+          "seq": 7,
+          "text": "调整裤腰松紧整理裤腿",
+          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 14,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "TAKE_OFF_PANTS_001",
+      "name": "脱裤子",
+      "description": "学习配合如厕或更衣脱裤",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
+      "categoryId": 22,
+      "abilityItem": "dress_02",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_14001",
+          "seq": 1,
+          "text": "解开纽扣或拉链",
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_14002",
+          "seq": 2,
+          "text": "双手抓住裤腰两侧推至膝盖处",
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_14003",
+          "seq": 3,
+          "text": "坐在椅子或床边",
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_14004",
+          "seq": 4,
+          "text": "弯腰将裤子推至脚踝处",
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_14005",
+          "seq": 5,
+          "text": "一只手扶住裤脚一只脚抽出",
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_14006",
+          "seq": 6,
+          "text": "另一只脚抽出",
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_14007",
+          "seq": 7,
+          "text": "拿起裤子放好",
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 15,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "WEAR_SOCKS_001",
+      "name": "穿袜子",
+      "description": "学习精细动作与手脚协调",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/WEAR_SOCKS_001_cover.jpg",
+      "categoryId": 23,
+      "abilityItem": "dress_03",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_15001",
+          "seq": 1,
+          "text": "拿起袜子找到袜跟位置",
+          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_15002",
+          "seq": 2,
+          "text": "双手大拇指伸入袜筒",
+          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_15003",
+          "seq": 3,
+          "text": "将袜子叠缩到脚尖处",
+          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_15004",
+          "seq": 4,
+          "text": "套入脚尖",
+          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_15005",
+          "seq": 5,
+          "text": "用力向后上方拉使袜跟包裹脚后跟",
+          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_15006",
+          "seq": 6,
+          "text": "向上拉平袜筒",
+          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_15007",
+          "seq": 7,
+          "text": "调整袜头缝线使其平整",
+          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 16,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "WEAR_SHOES_001",
+      "name": "穿鞋子",
+      "description": "学习分辨左右并独立穿鞋",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/WEAR_SHOES_001_cover.jpg",
+      "categoryId": 24,
+      "abilityItem": "dress_03",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_16001",
+          "seq": 1,
+          "text": "将鞋子摆在脚前检查左右",
+          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_16002",
+          "seq": 2,
+          "text": "解开魔术贴把鞋舌尽量拉开",
+          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_16003",
+          "seq": 3,
+          "text": "脚尖探入鞋内",
+          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_16004",
+          "seq": 4,
+          "text": "手指勾住鞋后跟处脚用力踩入",
+          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_16005",
+          "seq": 5,
+          "text": "整理鞋舌使其平整贴合脚背",
+          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_16006",
+          "seq": 6,
+          "text": "拉紧魔术贴并粘好",
+          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_16007",
+          "seq": 7,
+          "text": "跺跺脚确认舒适",
+          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 17,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "TIE_SHOELACES_001",
+      "name": "系鞋带",
+      "description": "学习复杂的双手配合打结",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/TIE_SHOELACES_001_cover.jpg",
+      "categoryId": 24,
+      "abilityItem": "dress_04",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_17001",
+          "seq": 1,
+          "text": "双手拉紧两根鞋带",
+          "imagePath": "images/tasks/TIE_SHOELACES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_17002",
+          "seq": 2,
+          "text": "交叉鞋带一根绕过另一根拉紧",
+          "imagePath": "images/tasks/TIE_SHOELACES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_17003",
+          "seq": 3,
+          "text": "左手将鞋带折成一个圈",
+          "imagePath": "images/tasks/TIE_SHOELACES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_17004",
+          "seq": 4,
+          "text": "右手将鞋带折成一个圈",
+          "imagePath": "images/tasks/TIE_SHOELACES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_17005",
+          "seq": 5,
+          "text": "两个圈交叉",
+          "imagePath": "images/tasks/TIE_SHOELACES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_17006",
+          "seq": 6,
+          "text": "将上面的圈绕到下面从洞中穿出",
+          "imagePath": "images/tasks/TIE_SHOELACES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_17007",
+          "seq": 7,
+          "text": "双手分别拉住两个圈用力拉紧",
+          "imagePath": "images/tasks/TIE_SHOELACES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 18,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "BUTTON_UNBUTTON_001",
+      "name": "扣/解纽扣",
+      "description": "学习指尖捏握与对准",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/BUTTON_UNBUTTON_001_cover.jpg",
+      "categoryId": 26,
+      "abilityItem": "dress_04",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_18001",
+          "seq": 1,
+          "text": "整理衣服对齐门襟",
+          "imagePath": "images/tasks/BUTTON_UNBUTTON_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_18002",
+          "seq": 2,
+          "text": "一只手捏住纽扣另一只手捏住扣眼旁",
+          "imagePath": "images/tasks/BUTTON_UNBUTTON_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_18003",
+          "seq": 3,
+          "text": "将纽扣的一半塞入扣眼",
+          "imagePath": "images/tasks/BUTTON_UNBUTTON_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_18004",
+          "seq": 4,
+          "text": "另一只手从扣眼背面拉住纽扣边缘",
+          "imagePath": "images/tasks/BUTTON_UNBUTTON_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_18005",
+          "seq": 5,
+          "text": "配合用力将纽扣完全拉出",
+          "imagePath": "images/tasks/BUTTON_UNBUTTON_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_18006",
+          "seq": 6,
+          "text": "整理平整",
+          "imagePath": "images/tasks/BUTTON_UNBUTTON_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_18007",
+          "seq": 7,
+          "text": "解扣时一手拉开扣眼一手拇指推压纽扣退出",
+          "imagePath": "images/tasks/BUTTON_UNBUTTON_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 19,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "EXPRESS_TOILET_001",
+      "name": "表达如厕需求",
+      "description": "建立内感官觉察与社交表达的联系",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/EXPRESS_TOILET_001_cover.jpg",
+      "categoryId": 31,
+      "abilityItem": "toilet_01",
+      "stepCount": 6,
+      "steps": [
+        {
+          "id": "legacy_step_19001",
+          "seq": 1,
+          "text": "觉察到身体信号",
+          "imagePath": "images/tasks/EXPRESS_TOILET_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_19002",
+          "seq": 2,
+          "text": "立刻停止手中的玩具或活动",
+          "imagePath": "images/tasks/EXPRESS_TOILET_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_19003",
+          "seq": 3,
+          "text": "寻找老师或家长",
+          "imagePath": "images/tasks/EXPRESS_TOILET_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_19004",
+          "seq": 4,
+          "text": "用语言或手势图片卡表达",
+          "imagePath": "images/tasks/EXPRESS_TOILET_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_19005",
+          "seq": 5,
+          "text": "得到允许后走向厕所",
+          "imagePath": "images/tasks/EXPRESS_TOILET_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_19006",
+          "seq": 6,
+          "text": "进入厕所",
+          "imagePath": "images/tasks/EXPRESS_TOILET_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 20,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "BOY_URINATE_001",
+      "name": "男生小便",
+      "description": "学习站立排尿规范",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/BOY_URINATE_001_cover.jpg",
+      "categoryId": 32,
+      "abilityItem": "toilet_02",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_20001",
+          "seq": 1,
+          "text": "走到便池前站稳位置",
+          "imagePath": "images/tasks/BOY_URINATE_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_20002",
+          "seq": 2,
+          "text": "双手配合将裤子褪至大腿处",
+          "imagePath": "images/tasks/BOY_URINATE_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_20003",
+          "seq": 3,
+          "text": "手扶私处对准便池内部",
+          "imagePath": "images/tasks/BOY_URINATE_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_20004",
+          "seq": 4,
+          "text": "放松排尿",
+          "imagePath": "images/tasks/BOY_URINATE_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_20005",
+          "seq": 5,
+          "text": "排完后轻轻抖动排净余尿",
+          "imagePath": "images/tasks/BOY_URINATE_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_20006",
+          "seq": 6,
+          "text": "将私处收回提起裤子",
+          "imagePath": "images/tasks/BOY_URINATE_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_20007",
+          "seq": 7,
+          "text": "按冲水按钮去洗手",
+          "imagePath": "images/tasks/BOY_URINATE_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 21,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "GIRL_URINATE_001",
+      "name": "女生小便",
+      "description": "学习如厕清洁习惯",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/GIRL_URINATE_001_cover.jpg",
+      "categoryId": 32,
+      "abilityItem": "toilet_02",
+      "stepCount": 8,
+      "steps": [
+        {
+          "id": "legacy_step_21001",
+          "seq": 1,
+          "text": "进入隔间关好门",
+          "imagePath": "images/tasks/GIRL_URINATE_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_21002",
+          "seq": 2,
+          "text": "将裤子褪至膝盖以下",
+          "imagePath": "images/tasks/GIRL_URINATE_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_21003",
+          "seq": 3,
+          "text": "坐在马桶圈上",
+          "imagePath": "images/tasks/GIRL_URINATE_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_21004",
+          "seq": 4,
+          "text": "放松排尿",
+          "imagePath": "images/tasks/GIRL_URINATE_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_21005",
+          "seq": 5,
+          "text": "取适量手纸",
+          "imagePath": "images/tasks/GIRL_URINATE_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_21006",
+          "seq": 6,
+          "text": "从前往后轻轻擦拭私处",
+          "imagePath": "images/tasks/GIRL_URINATE_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_21007",
+          "seq": 7,
+          "text": "丢弃手纸站起提裤子",
+          "imagePath": "images/tasks/GIRL_URINATE_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_21008",
+          "seq": 8,
+          "text": "冲水去洗手",
+          "imagePath": "images/tasks/GIRL_URINATE_001/8.png",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 22,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "DEFECATE_001",
+      "name": "大便",
+      "description": "学习独立处理排便卫生",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/DEFECATE_001_cover.jpg",
+      "categoryId": 32,
+      "abilityItem": "toilet_02",
+      "stepCount": 9,
+      "steps": [
+        {
+          "id": "legacy_step_22001",
+          "seq": 1,
+          "text": "褪下裤子坐在马桶上",
+          "imagePath": "images/tasks/DEFECATE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_22002",
+          "seq": 2,
+          "text": "排便身体略前倾",
+          "imagePath": "images/tasks/DEFECATE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_22003",
+          "seq": 3,
+          "text": "取较长的手纸折叠几次",
+          "imagePath": "images/tasks/DEFECATE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_22004",
+          "seq": 4,
+          "text": "手伸向身后从前往后擦拭肛门",
+          "imagePath": "images/tasks/DEFECATE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_22005",
+          "seq": 5,
+          "text": "看一下手纸如果不干净继续擦拭",
+          "imagePath": "images/tasks/DEFECATE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_22006",
+          "seq": 6,
+          "text": "重复擦拭直到手纸变干净",
+          "imagePath": "images/tasks/DEFECATE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_22007",
+          "seq": 7,
+          "text": "穿上裤子整理衣摆",
+          "imagePath": "images/tasks/DEFECATE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_22008",
+          "seq": 8,
+          "text": "冲水并检查是否冲干净",
+          "imagePath": "images/tasks/DEFECATE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_22009",
+          "seq": 9,
+          "text": "用洗手液彻底洗手",
+          "imagePath": "images/tasks/DEFECATE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 23,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "PACK_SCHOOLBAG_001",
+      "name": "收拾书包",
+      "description": "学习分类整理与物品核对",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+      "categoryId": 51,
+      "abilityItem": "home_01",
+      "stepCount": 8,
+      "steps": [
+        {
+          "id": "legacy_step_23001",
+          "seq": 1,
+          "text": "将书包内的东西全部拿出清空",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_23002",
+          "seq": 2,
+          "text": "拿出课程表或物品清单",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_23003",
+          "seq": 3,
+          "text": "按清单找到课本和作业本装入大层",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_23004",
+          "seq": 4,
+          "text": "检查文具盒装入书包",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_23005",
+          "seq": 5,
+          "text": "检查水杯是否拧紧装入侧袋",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_23006",
+          "seq": 6,
+          "text": "放入纸巾或其他杂物",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_23007",
+          "seq": 7,
+          "text": "拉好所有拉链",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_23008",
+          "seq": 8,
+          "text": "将书包放在门口指定位置",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 24,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "MAKE_BED_001",
+      "name": "整理床铺",
+      "description": "学习卧室基础整洁维护",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/MAKE_BED_001_cover.jpg",
+      "categoryId": 51,
+      "abilityItem": "home_01",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_24001",
+          "seq": 1,
+          "text": "起床后移开床上的玩偶或杂物",
+          "imagePath": "images/tasks/MAKE_BED_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_24002",
+          "seq": 2,
+          "text": "拉住床单的四个角将其拉平整",
+          "imagePath": "images/tasks/MAKE_BED_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_24003",
+          "seq": 3,
+          "text": "拿起枕头拍松摆放在床头正中",
+          "imagePath": "images/tasks/MAKE_BED_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_24004",
+          "seq": 4,
+          "text": "抓起被子的两个角将其铺平",
+          "imagePath": "images/tasks/MAKE_BED_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_24005",
+          "seq": 5,
+          "text": "将被子左右对折",
+          "imagePath": "images/tasks/MAKE_BED_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_24006",
+          "seq": 6,
+          "text": "将被子上下对折",
+          "imagePath": "images/tasks/MAKE_BED_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_24007",
+          "seq": 7,
+          "text": "将被子摆放整齐",
+          "imagePath": "images/tasks/MAKE_BED_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 25,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "WIPE_TABLE_001",
+      "name": "擦桌子",
+      "description": "学习有序的清洁动作",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/WIPE_TABLE_001_cover.jpg",
+      "categoryId": 53,
+      "abilityItem": "home_02",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_25001",
+          "seq": 1,
+          "text": "将抹布打湿并用力拧干",
+          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_25002",
+          "seq": 2,
+          "text": "将桌上的物品全部移到另一处",
+          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_25003",
+          "seq": 3,
+          "text": "先沿着桌子的四条边擦一圈",
+          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_25004",
+          "seq": 4,
+          "text": "从左上角开始走Z字形擦拭",
+          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_25005",
+          "seq": 5,
+          "text": "遇到顽固污渍用力抠擦",
+          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_25006",
+          "seq": 6,
+          "text": "清洗抹布拧干挂好",
+          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_25007",
+          "seq": 7,
+          "text": "将物品放回原处",
+          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 26,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "SWEEP_FLOOR_001",
+      "name": "扫地",
+      "description": "学习工具配合与手眼协调",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+      "categoryId": 53,
+      "abilityItem": "home_02",
+      "stepCount": 8,
+      "steps": [
+        {
+          "id": "legacy_step_26001",
+          "seq": 1,
+          "text": "双手握住扫把柄",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_26002",
+          "seq": 2,
+          "text": "眼睛寻找地面的垃圾",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_26003",
+          "seq": 3,
+          "text": "从房间四周向中间扫",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_26004",
+          "seq": 4,
+          "text": "拿来簸箕平贴地面放置",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_26005",
+          "seq": 5,
+          "text": "用扫把将垃圾扫入簸箕内部",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_26006",
+          "seq": 6,
+          "text": "提起簸箕保持平稳",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_26007",
+          "seq": 7,
+          "text": "走到垃圾桶旁将垃圾倒入",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_26008",
+          "seq": 8,
+          "text": "将工具放回原处",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 27,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "FOLD_CLOTHES_001",
+      "name": "叠衣服",
+      "description": "学习折叠衣物的空间逻辑",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
+      "categoryId": 51,
+      "abilityItem": "home_01",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_27001",
+          "seq": 1,
+          "text": "将衣服正面朝下平铺",
+          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_27002",
+          "seq": 2,
+          "text": "用手掌抚平衣服上的皱褶",
+          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_27003",
+          "seq": 3,
+          "text": "将左侧袖子和衣身向内折叠",
+          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_27004",
+          "seq": 4,
+          "text": "将右侧袖子和衣身向内折叠",
+          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_27005",
+          "seq": 5,
+          "text": "双手捏住衣摆底部",
+          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_27006",
+          "seq": 6,
+          "text": "向上对折",
+          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_27007",
+          "seq": 7,
+          "text": "翻转过来整理平整",
+          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 28,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "SUPERMARKET_SHOPPING_001",
+      "name": "超市购物",
+      "description": "学习在公共环境完成购物流程",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/SUPERMARKET_SHOPPING_001_cover.jpg",
+      "categoryId": 63,
+      "abilityItem": "community_02",
+      "stepCount": 8,
+      "steps": [
+        {
+          "id": "legacy_step_28001",
+          "seq": 1,
+          "text": "进超市取购物车或购物篮",
+          "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_28002",
+          "seq": 2,
+          "text": "拿出购物清单",
+          "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_28003",
+          "seq": 3,
+          "text": "走到对应货架区",
+          "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_28004",
+          "seq": 4,
+          "text": "找到目标商品检查保质期",
+          "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_28005",
+          "seq": 5,
+          "text": "查看价格标签放入购物车",
+          "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_28006",
+          "seq": 6,
+          "text": "确认买齐后推车去收银台排队",
+          "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_28007",
+          "seq": 7,
+          "text": "将商品拿出放在传送带上",
+          "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_28008",
+          "seq": 8,
+          "text": "付款将商品装入袋子",
+          "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/8.png",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 29,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "TAKE_BUS_001",
+      "name": "乘坐公交车",
+      "description": "学习乘车规则与安全",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/TAKE_BUS_001_cover.jpg",
+      "categoryId": 62,
+      "abilityItem": "community_01",
+      "stepCount": 8,
+      "steps": [
+        {
+          "id": "legacy_step_29001",
+          "seq": 1,
+          "text": "在站台黄线内排队候车",
+          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_29002",
+          "seq": 2,
+          "text": "车停稳后等待车门完全打开",
+          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_29003",
+          "seq": 3,
+          "text": "先让车上的人下车再从前门上车",
+          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_29004",
+          "seq": 4,
+          "text": "刷公交卡或投币",
+          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_29005",
+          "seq": 5,
+          "text": "寻找空座位坐下",
+          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_29006",
+          "seq": 6,
+          "text": "注意听广播报站",
+          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_29007",
+          "seq": 7,
+          "text": "快到站时提前按铃",
+          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_29008",
+          "seq": 8,
+          "text": "车停稳后从后门下车",
+          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 30,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "CROSS_ROAD_001",
+      "name": "过马路",
+      "description": "学习识别信号灯，安全通过马路",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/CROSS_ROAD_001_cover.jpg",
+      "categoryId": 61,
+      "abilityItem": "community_01",
+      "stepCount": 8,
+      "steps": [
+        {
+          "id": "legacy_step_30001",
+          "seq": 1,
+          "text": "走到斑马线前停下",
+          "imagePath": "images/tasks/CROSS_ROAD_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_30002",
+          "seq": 2,
+          "text": "抬头寻找人行横道红绿灯",
+          "imagePath": "images/tasks/CROSS_ROAD_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_30003",
+          "seq": 3,
+          "text": "如果是红灯原地等待",
+          "imagePath": "images/tasks/CROSS_ROAD_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_30004",
+          "seq": 4,
+          "text": "变绿灯后先向左看再向右看",
+          "imagePath": "images/tasks/CROSS_ROAD_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_30005",
+          "seq": 5,
+          "text": "确认车辆都已停下",
+          "imagePath": "images/tasks/CROSS_ROAD_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_30006",
+          "seq": 6,
+          "text": "举起一只手",
+          "imagePath": "images/tasks/CROSS_ROAD_001/6.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_30007",
+          "seq": 7,
+          "text": "快速走过斑马线",
+          "imagePath": "images/tasks/CROSS_ROAD_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_30008",
+          "seq": 8,
+          "text": "保持警惕直到到达对面",
+          "imagePath": "images/tasks/CROSS_ROAD_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    },
+    {
+      "legacyId": 31,
+      "legacySource": "self_care_ats_task",
+      "legacyTaskCode": "ASK_DIRECTIONS_001",
+      "name": "问路求助",
+      "description": "学习在危机时刻寻找正确的人求助",
+      "moduleCode": "life_skills",
+      "resourceType": "task_training",
+      "trainingEntryCode": "life-skills",
+      "trainingMode": "step_task",
+      "coverImage": "images/tasks/ASK_DIRECTIONS_001_cover.jpg",
+      "categoryId": 64,
+      "abilityItem": "community_03",
+      "stepCount": 7,
+      "steps": [
+        {
+          "id": "legacy_step_31001",
+          "seq": 1,
+          "text": "发现迷路先原地站好深呼吸",
+          "imagePath": "images/tasks/ASK_DIRECTIONS_001/1.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_31002",
+          "seq": 2,
+          "text": "环顾四周寻找穿制服的人",
+          "imagePath": "images/tasks/ASK_DIRECTIONS_001/2.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_31003",
+          "seq": 3,
+          "text": "走上前去保持一臂距离",
+          "imagePath": "images/tasks/ASK_DIRECTIONS_001/3.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_31004",
+          "seq": 4,
+          "text": "看着对方眼睛大声说请帮帮我",
+          "imagePath": "images/tasks/ASK_DIRECTIONS_001/4.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_31005",
+          "seq": 5,
+          "text": "拿出紧急联系卡递给对方",
+          "imagePath": "images/tasks/ASK_DIRECTIONS_001/5.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_31006",
+          "seq": 6,
+          "text": "说出需求",
+          "imagePath": "images/tasks/ASK_DIRECTIONS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_31007",
+          "seq": 7,
+          "text": "等待家长来接",
+          "imagePath": "images/tasks/ASK_DIRECTIONS_001_cover.jpg",
+          "videoPath": null,
+          "audioPath": null
+        }
+      ]
+    }
+  ]
+}
