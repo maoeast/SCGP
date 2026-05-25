@@ -468,6 +468,7 @@ const handleStartGame = (gameConfig: {
   duration?: number
   targetSize?: number
   targetSpeed?: number
+  airXylophoneDifficulty?: string
 }) => {
   console.log('[GameLobby] 开始游戏:', gameConfig)
 
@@ -489,6 +490,9 @@ const handleStartGame = (gameConfig: {
   if (gameConfig.duration !== undefined) query.duration = String(gameConfig.duration)
   if (gameConfig.targetSize !== undefined) query.targetSize = String(gameConfig.targetSize)
   if (gameConfig.targetSpeed !== undefined) query.targetSpeed = String(gameConfig.targetSpeed)
+  if (gameConfig.airXylophoneDifficulty) {
+    query.airXylophoneDifficulty = gameConfig.airXylophoneDifficulty
+  }
 
   // 跳转到游戏播放页面
   router.push({

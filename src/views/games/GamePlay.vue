@@ -56,6 +56,7 @@
             :student-id="studentId"
             :task-id="taskId"
             :duration="duration"
+            :difficulty="airXylophoneDifficulty"
             @finish="handleGameFinish"
           />
 
@@ -121,6 +122,7 @@
           :student-id="studentId"
           :task-id="taskId"
           :duration="duration"
+          :difficulty="airXylophoneDifficulty"
           @finish="handleGameFinish"
         />
 
@@ -166,6 +168,10 @@ import GestureGardenGame from '@/components/games/hand/GestureGardenGame.vue'
 import WoodBlockPuzzleGame from '@/components/games/hand/WoodBlockPuzzleGame.vue'
 import GameGrid from '@/components/games/visual/GameGrid.vue'
 import VisualTracker from '@/components/games/visual/VisualTracker.vue'
+import {
+  resolveAirXylophoneDifficulty,
+  type AirXylophoneDifficultyId,
+} from '@/data/air-xylophone-songs'
 import { DatabaseAPI, GameTrainingAPI } from '@/database/api'
 import { ResourceAPI } from '@/database/resource-api'
 import { TaskID, type GameAudioMode, type GameGridMode, type GameSessionData } from '@/types/games'
@@ -192,8 +198,11 @@ const gridSize = ref<2 | 3 | 4>((Number(route.query.gridSize) || 2) as 2 | 3 | 4
 const timeLimit = ref<number>(Number(route.query.timeLimit) || 60)
 const rounds = ref<number>(Number(route.query.rounds) || 10)
 const duration = ref<number>(Number(route.query.duration) || 30)
-const targetSize = ref<number>(Number(route.query.targetSize) || 60)
+const targetSize = ref<number>(Number(route.query.targetSize) || 128)
 const targetSpeed = ref<number>(Number(route.query.targetSpeed) || 2)
+const airXylophoneDifficulty = ref<AirXylophoneDifficultyId>(
+  resolveAirXylophoneDifficulty(String(route.query.airXylophoneDifficulty || 'medium')).id,
+)
 
 const legacyTaskId = ref<number>(Number(route.query.taskId) || 0)
 const legacyMode = ref<string>((route.query.mode as string) || '')
@@ -480,6 +489,10 @@ onMounted(async () => {
     ElMessage.error('无法加载游戏配置')
     goBack()
     return
+  }
+
+  if (taskId.value === TaskID.HAND_XYLOPHONE && route.query.duration === undefined) {
+    duration.value = 60
   }
 
   if (!mode.value) {

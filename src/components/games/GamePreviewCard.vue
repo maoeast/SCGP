@@ -90,9 +90,9 @@
           <div class="config-item">
             <label>目标大小</label>
             <el-radio-group v-model="config.targetSize" size="large">
-              <el-radio-button :value="40">小</el-radio-button>
-              <el-radio-button :value="60">中</el-radio-button>
-              <el-radio-button :value="80">大</el-radio-button>
+              <el-radio-button :value="104">小</el-radio-button>
+              <el-radio-button :value="128">中</el-radio-button>
+              <el-radio-button :value="152">大</el-radio-button>
             </el-radio-group>
           </div>
           <div class="config-item">
@@ -162,13 +162,36 @@
           </div>
         </template>
 
+        <template v-else-if="isAirXylophoneGame">
+          <div class="config-item">
+            <label>训练时长</label>
+            <el-radio-group v-model="config.duration" size="large">
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>歌曲难度</label>
+            <el-radio-group v-model="config.airXylophoneDifficulty" size="large">
+              <el-radio-button
+                v-for="option in AIR_XYLOPHONE_DIFFICULTY_OPTIONS"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+
         <template v-else-if="isHandGame">
           <div class="config-item">
             <label>训练时长</label>
             <el-radio-group v-model="config.duration" size="large">
-              <el-radio-button :value="45">45秒</el-radio-button>
               <el-radio-button :value="60">60秒</el-radio-button>
               <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
             </el-radio-group>
           </div>
         </template>
@@ -241,9 +264,9 @@
           <div class="config-item">
             <label>目标大小</label>
             <el-radio-group v-model="config.targetSize" size="large">
-              <el-radio-button :value="40">小</el-radio-button>
-              <el-radio-button :value="60">中</el-radio-button>
-              <el-radio-button :value="80">大</el-radio-button>
+              <el-radio-button :value="104">小</el-radio-button>
+              <el-radio-button :value="128">中</el-radio-button>
+              <el-radio-button :value="152">大</el-radio-button>
             </el-radio-group>
           </div>
           <div class="config-item">
@@ -313,13 +336,36 @@
           </div>
         </template>
 
+        <template v-else-if="isAirXylophoneGame">
+          <div class="config-item">
+            <label>训练时长</label>
+            <el-radio-group v-model="config.duration" size="large">
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>歌曲难度</label>
+            <el-radio-group v-model="config.airXylophoneDifficulty" size="large">
+              <el-radio-button
+                v-for="option in AIR_XYLOPHONE_DIFFICULTY_OPTIONS"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.label }}
+              </el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
+
         <template v-else-if="isHandGame">
           <div class="config-item">
             <label>训练时长</label>
             <el-radio-group v-model="config.duration" size="large">
-              <el-radio-button :value="45">45秒</el-radio-button>
               <el-radio-button :value="60">60秒</el-radio-button>
               <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
             </el-radio-group>
           </div>
         </template>
@@ -340,6 +386,10 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { Clock, TrendCharts, VideoCamera } from '@element-plus/icons-vue'
+import {
+  AIR_XYLOPHONE_DIFFICULTY_OPTIONS,
+  type AirXylophoneDifficultyId,
+} from '@/data/air-xylophone-songs'
 import { TaskID, type GridSize } from '@/types/games'
 import type { ResourceItem } from '@/types/module'
 
@@ -365,6 +415,7 @@ const emit = defineEmits<{
     duration?: number
     targetSize?: number
     targetSpeed?: number
+    airXylophoneDifficulty?: AirXylophoneDifficultyId
   }]
 }>()
 
@@ -376,8 +427,9 @@ const config = reactive({
   rounds: 5,
   timeLimit: 60,
   duration: 30,
-  targetSize: 60,
+  targetSize: 128,
   targetSpeed: 2,
+  airXylophoneDifficulty: 'medium' as AirXylophoneDifficultyId,
 })
 
 const metaData = computed(() => {
@@ -402,6 +454,7 @@ const isVisualTrackGame = computed(() => taskId.value === TaskID.VISUAL_TRACK)
 const isAudioDiffGame = computed(() => taskId.value === TaskID.AUDIO_DIFF)
 const isAudioCommandGame = computed(() => taskId.value === TaskID.AUDIO_COMMAND)
 const isAudioRhythmGame = computed(() => taskId.value === TaskID.AUDIO_RHYTHM)
+const isAirXylophoneGame = computed(() => taskId.value === TaskID.HAND_XYLOPHONE)
 const isHandGame = computed(() => [
   TaskID.HAND_XYLOPHONE,
   TaskID.HAND_WOOD_BLOCKS,
@@ -450,7 +503,7 @@ function resetConfig() {
 
   if (isVisualTrackGame.value) {
     config.duration = 30
-    config.targetSize = 60
+    config.targetSize = 128
     config.targetSpeed = 2
     return
   }
@@ -473,8 +526,14 @@ function resetConfig() {
     return
   }
 
+  if (isAirXylophoneGame.value) {
+    config.duration = 60
+    config.airXylophoneDifficulty = 'medium'
+    return
+  }
+
   if (isHandGame.value) {
-    config.duration = 45
+    config.duration = 60
   }
 }
 
@@ -496,6 +555,7 @@ function buildGameConfig() {
     duration?: number
     targetSize?: number
     targetSpeed?: number
+    airXylophoneDifficulty?: AirXylophoneDifficultyId
   } = {
     resourceId: props.game.id,
     taskId: taskId.value,
@@ -520,6 +580,9 @@ function buildGameConfig() {
     gameConfig.rounds = config.rounds
   } else if (isAudioRhythmGame.value) {
     gameConfig.rounds = config.rounds
+  } else if (isAirXylophoneGame.value) {
+    gameConfig.duration = config.duration
+    gameConfig.airXylophoneDifficulty = config.airXylophoneDifficulty
   } else if (isHandGame.value) {
     gameConfig.duration = config.duration
   }
