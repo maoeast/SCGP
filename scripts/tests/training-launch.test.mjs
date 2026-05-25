@@ -63,3 +63,38 @@ test('task_training launches to the self-care execution route', () => {
     studentName: '测试学生',
   })
 })
+
+test('training launch authorization prefers entry entitlement over top-level module access', () => {
+  const { resolveTrainingLaunch } = loadTrainingLaunch()
+
+  const blocked = resolveTrainingLaunch(
+    {
+      studentId: 7,
+      moduleCode: 'sensory',
+      resourceId: 99,
+      resourceType: 'game',
+    },
+    (moduleCode) => moduleCode === 'sensory',
+    (entitlementCode) => entitlementCode !== 'sensory_integration',
+  )
+
+  assert.equal(blocked.authorized, false)
+  assert.equal(blocked.route, null)
+  assert.equal(blocked.requiredModuleCode, 'sensory')
+  assert.equal(blocked.requiredEntitlementCode, 'sensory_integration')
+
+  const allowed = resolveTrainingLaunch(
+    {
+      studentId: 7,
+      moduleCode: 'sensory',
+      resourceId: 99,
+      resourceType: 'game',
+    },
+    () => false,
+    (entitlementCode) => entitlementCode === 'sensory_integration',
+  )
+
+  assert.equal(allowed.authorized, true)
+  assert.equal(allowed.requiredEntitlementCode, 'sensory_integration')
+  assert.equal(allowed.route?.path, '/games/play')
+})

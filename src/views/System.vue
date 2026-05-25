@@ -172,10 +172,40 @@
                 </dd>
               </div>
               <div class="system-about-list__row">
+                <dt>能力包授权</dt>
+                <dd>
+                  <div v-if="effectiveEntitlementLabels.length" class="system-module-tags">
+                    <el-tag
+                      v-for="entitlementItem in effectiveEntitlementLabels"
+                      :key="entitlementItem.code"
+                      size="small"
+                      effect="light"
+                      type="success"
+                    >
+                      {{ entitlementItem.label }}
+                    </el-tag>
+                  </div>
+                  <span v-else class="system-about-empty">当前账号尚未开通能力包</span>
+                </dd>
+              </div>
+              <div class="system-about-list__row">
                 <dt>机器码</dt>
                 <dd class="system-about-list__value">{{ machineCode }}</dd>
               </div>
             </dl>
+
+            <section v-if="isDevMode && entitlementDebugRows.length > 0" class="system-license-panel">
+              <div class="scgp-section-heading">
+                <h4>授权诊断</h4>
+                <p>开发模式下展示当前有效能力包及其来源，用于销售、实施和售后排查授权映射。</p>
+              </div>
+
+              <el-table :data="entitlementDebugRows" size="small" border>
+                <el-table-column prop="label" label="能力包" min-width="160" />
+                <el-table-column prop="code" label="Code" min-width="180" />
+                <el-table-column prop="originsLabel" label="来源" min-width="260" />
+              </el-table>
+            </section>
 
             <section v-if="showActivationRefresh" class="system-license-panel">
               <div class="scgp-section-heading">
@@ -222,6 +252,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
+import { getEntitlementDefinition } from '@/features/entitlements/entitlement-catalog'
 import { backupManager } from '@/utils/backup'
 import { getTrainingPlanModuleLabel } from '@/utils/training-plan-module'
 import UserManagement from './system/UserManagement.vue'
@@ -284,6 +315,19 @@ const allowedModuleLabels = computed(() =>
   authStore.allowedModules.map((moduleCode) => ({
     code: moduleCode,
     label: getTrainingPlanModuleLabel(moduleCode),
+  })),
+)
+const effectiveEntitlementLabels = computed(() =>
+  authStore.effectiveEntitlements.map((entitlementCode) => ({
+    code: entitlementCode,
+    label: getEntitlementDefinition(entitlementCode).name,
+  })),
+)
+const entitlementDebugRows = computed(() =>
+  authStore.effectiveEntitlements.map((entitlementCode) => ({
+    code: entitlementCode,
+    label: getEntitlementDefinition(entitlementCode).name,
+    originsLabel: (authStore.entitlements.entitlementDebugOrigins[entitlementCode] || []).join(', ') || 'direct',
   })),
 )
 

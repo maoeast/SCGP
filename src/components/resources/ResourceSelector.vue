@@ -40,6 +40,8 @@
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { ModuleCode, ResourceItem, ResourceQueryOptions } from '@/types/module'
+import { useAuthStore } from '@/stores/auth'
+import { isAccessControlledItemVisible } from '@/utils/access-visibility'
 import { CATEGORY_LABELS } from '@/types/equipment'
 import { ResourceAPI } from '@/database/resource-api'
 import { type EquipmentCatalogGroupCode, resolveEquipmentCatalogGroupCode } from '@/utils/equipment-catalog-group'
@@ -56,6 +58,7 @@ import {
   resolveEquipmentSourceCategory,
   sortEquipmentSourceCategoryKeys,
 } from '@/utils/physical-equipment-source-category'
+import { adaptTrainingResourceAccessControlledItem } from '@/utils/resource-center-business'
 import { resolveResourceItemCoverImage } from '@/utils/resource-cover'
 
 // 简洁的中文标签映射（用于分类按钮）
@@ -96,6 +99,7 @@ const emit = defineEmits<{
   'update:keyword': [value: string]
 }>()
 
+const authStore = useAuthStore()
 const api = ref<ResourceAPI>()
 const loading = ref(false)
 const resources = ref<ResourceItem[]>([])
@@ -249,6 +253,14 @@ const loadData = async () => {
       const allowedGroups = new Set(props.equipmentCatalogGroups)
       data = data.filter((item) => allowedGroups.has(resolveEquipmentCatalogGroupCode(item)))
     }
+
+    data = data.filter((item) =>
+      isAccessControlledItemVisible(
+        adaptTrainingResourceAccessControlledItem(item),
+        authStore.hasModuleAccess,
+        authStore.hasEntitlementAccess,
+      )
+    )
 
     resources.value = data
     categoryCounts.value = props.resourceType === 'equipment'

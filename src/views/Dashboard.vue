@@ -457,7 +457,7 @@ function getModuleLabel(moduleCode: string) {
 
 function goTo(action: QuickAction) {
   if (!isAccessControlledItemVisible(action, authStore.hasModuleAccess, authStore.hasEntitlementAccess)) {
-    ElMessage.warning('该模块未授权，请联系厂商购买')
+    ElMessage.warning('当前功能未授权，请联系厂商开通对应能力包')
     return
   }
   router.push(action.path)
@@ -481,10 +481,11 @@ function openPlanModule(item: DashboardScheduleItem) {
       resourceModuleCode: item.launchResourceModuleCode || undefined,
     },
     authStore.hasModuleAccess,
+    authStore.hasEntitlementAccess,
   )
 
   if (!resolution.authorized) {
-    ElMessage.warning('该模块未授权，请联系厂商购买')
+    ElMessage.warning('当前训练入口未授权，请联系厂商开通对应能力包')
     return
   }
 

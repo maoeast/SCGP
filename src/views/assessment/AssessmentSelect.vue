@@ -212,14 +212,21 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const activeTab = ref<TrainingEntryCode>(
-  getDefaultAssessmentTab((moduleCode) => authStore.hasModuleAccess(moduleCode))
+  getDefaultAssessmentTab(
+    (moduleCode) => authStore.hasModuleAccess(moduleCode),
+    (entitlementCode) => authStore.hasEntitlementAccess(entitlementCode)
+  )
 )
 const hasUserSelectedTab = ref(false)
 const isNoticeExpanded = ref(false)
 
 const tabPanels = computed<AssessmentTabPanel[]>(() =>
   ASSESSMENT_TABS.map((tab) => {
-    const scales = getVisibleAssessmentScalesForTab(tab.id, (moduleCode) => authStore.hasModuleAccess(moduleCode))
+    const scales = getVisibleAssessmentScalesForTab(
+      tab.id,
+      (moduleCode) => authStore.hasModuleAccess(moduleCode),
+      (entitlementCode) => authStore.hasEntitlementAccess(entitlementCode)
+    )
     return {
       ...tab,
       count: scales.length,

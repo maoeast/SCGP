@@ -4,13 +4,17 @@ import {
   TASK_TRAINING_RESOURCE_TYPE,
 } from '@/features/self-care/task-training-contract'
 import { ModuleCode, type ResourceItem } from '@/types/module'
+import type { AccessControlledItem } from '@/utils/access-visibility'
 import {
   EQUIPMENT_CATALOG_GROUPS,
   EQUIPMENT_CATALOG_GROUP_LABELS,
   type EquipmentCatalogGroupCode,
   resolveEquipmentCatalogGroupCode,
 } from '@/utils/equipment-catalog-group'
-import { resolveTrainingEntryCodeFromResource } from '@/utils/training-entry'
+import {
+  getTrainingEntryRequiredEntitlement,
+  resolveTrainingEntryCodeFromResource,
+} from '@/utils/training-entry'
 
 export const TEACHING_MATERIAL_DIMENSION_CODES = EQUIPMENT_CATALOG_GROUPS
 
@@ -228,5 +232,31 @@ export function resolveTrainingResourceBusinessGroupCode(
     case 'sensory-integration':
     default:
       return 'sensory-training'
+  }
+}
+
+export function adaptTrainingResourceAccessControlledItem(
+  resource: Pick<ResourceItem, 'moduleCode' | 'resourceType' | 'category' | 'metadata'>
+): AccessControlledItem {
+  if (resource.resourceType === 'emotion_scene') {
+    return {
+      accessScope: 'entitlement',
+      moduleCode: resource.moduleCode,
+      entitlementCode: 'emotional',
+    }
+  }
+
+  if (resource.resourceType === 'care_scene') {
+    return {
+      accessScope: 'entitlement',
+      moduleCode: resource.moduleCode,
+      entitlementCode: 'emotional',
+    }
+  }
+
+  return {
+    accessScope: 'entitlement',
+    moduleCode: resource.moduleCode,
+    entitlementCode: getTrainingEntryRequiredEntitlement(resolveTrainingEntryCodeFromResource(resource)),
   }
 }

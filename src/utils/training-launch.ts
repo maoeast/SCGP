@@ -1,8 +1,16 @@
 import { ResourceAPI } from '@/database/resource-api'
+import type { EntitlementCode } from '@/features/entitlements/entitlement-catalog'
 import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import { ModuleCode, type ResourceItem } from '@/types/module'
-import { resolveEquipmentTrainingEntryCodeFromResource } from '@/utils/equipment-training-entry'
-import { resolveTrainingEntryCode, resolveTrainingEntryCodeFromResource } from '@/utils/training-entry'
+import {
+  getEquipmentTrainingEntryRequiredEntitlement,
+  resolveEquipmentTrainingEntryCodeFromResource,
+} from '@/utils/equipment-training-entry'
+import {
+  getTrainingEntryRequiredEntitlement,
+  resolveTrainingEntryCode,
+  resolveTrainingEntryCodeFromResource,
+} from '@/utils/training-entry'
 
 export type TrainingLaunchSource = 'plan' | 'dashboard'
 
@@ -26,6 +34,7 @@ export interface TrainingLaunchRoute {
 export interface TrainingLaunchResolution {
   route: TrainingLaunchRoute | null
   requiredModuleCode: string
+  requiredEntitlementCode: EntitlementCode | ''
   authorized: boolean
 }
 
@@ -48,6 +57,38 @@ function buildQuery(entries: Array<[string, string | undefined]>): Record<string
 
 export function getTrainingLaunchModuleCode(context: TrainingLaunchContext): string {
   return context.resourceModuleCode || context.moduleCode || 'sensory'
+}
+
+function resolveTrainingLaunchEntitlementCode(
+  context: TrainingLaunchContext,
+  launchModuleCode: string
+): EntitlementCode | '' {
+  try {
+    const resource = resolveLaunchResource(context, launchModuleCode)
+    if (resource) {
+      if (resource.resourceType === 'equipment') {
+        const entryCode = resolveEquipmentTrainingEntryCodeFromResource(resource)
+        return getEquipmentTrainingEntryRequiredEntitlement(entryCode)
+      }
+
+      return getTrainingEntryRequiredEntitlement(resolveTrainingEntryCodeFromResource(resource))
+    }
+  } catch (error) {
+    console.warn('[resolveTrainingLaunch] 解析训练入口授权失败:', error)
+  }
+
+  switch (context.resourceType) {
+    case 'equipment':
+      return getEquipmentTrainingEntryRequiredEntitlement(undefined, launchModuleCode)
+    case 'game':
+    case 'flashcard':
+    case TASK_TRAINING_RESOURCE_TYPE:
+    case 'emotion_scene':
+    case 'care_scene':
+      return getTrainingEntryRequiredEntitlement(undefined, launchModuleCode)
+    default:
+      return ''
+  }
 }
 
 function resolveLaunchResource(
@@ -279,15 +320,20 @@ export function buildTrainingLaunchRoute(context: TrainingLaunchContext): Traini
 
 export function resolveTrainingLaunch(
   context: TrainingLaunchContext,
-  hasModuleAccess?: (moduleCode: string) => boolean
+  hasModuleAccess?: (moduleCode: string) => boolean,
+  hasEntitlementAccess?: (entitlementCode: string) => boolean
 ): TrainingLaunchResolution {
   const requiredModuleCode = getTrainingLaunchModuleCode(context)
-  const authorized = hasModuleAccess ? hasModuleAccess(requiredModuleCode) : true
+  const requiredEntitlementCode = resolveTrainingLaunchEntitlementCode(context, requiredModuleCode)
+  const authorized = requiredEntitlementCode
+    ? (hasEntitlementAccess ? hasEntitlementAccess(requiredEntitlementCode) : true)
+    : (hasModuleAccess ? hasModuleAccess(requiredModuleCode) : true)
 
   if (!authorized) {
     return {
       route: null,
       requiredModuleCode,
+      requiredEntitlementCode,
       authorized: false,
     }
   }
@@ -295,6 +341,7 @@ export function resolveTrainingLaunch(
   return {
     route: buildTrainingLaunchRoute(context),
     requiredModuleCode,
+    requiredEntitlementCode,
     authorized: true,
   }
 }

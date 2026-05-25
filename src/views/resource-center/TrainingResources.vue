@@ -686,6 +686,7 @@ import { ResourceAPI } from '@/database/resource-api'
 import type { ResourceItem, ModuleCode } from '@/types/module'
 import type { CareSceneResourceMeta, EmotionSceneResourceMeta } from '@/types/emotional'
 import { useAuthStore } from '@/stores/auth'
+import { isAccessControlledItemVisible } from '@/utils/access-visibility'
 import CareExpressionEditor from './editors/CareExpressionEditor.vue'
 import EmotionSceneEditor from './editors/EmotionSceneEditor.vue'
 import TaskTrainingEditor from './editors/TaskTrainingEditor.vue'
@@ -698,6 +699,7 @@ import {
 } from '@/features/self-care/task-training-contract'
 import {
   getAccessibleTrainingResourceBusinessGroups,
+  adaptTrainingResourceAccessControlledItem,
   getTrainingResourceBusinessGroupLabel,
   getTrainingResourceBusinessGroupModuleCode,
   isVisibleTrainingResource,
@@ -868,6 +870,14 @@ const currentModuleName = computed(() => {
 // 筛选后的资源列表
 const filteredResourcePool = computed(() => {
   let result = allResources.value.filter((resource) => isVisibleTrainingResource(resource))
+
+  result = result.filter((resource) =>
+    isAccessControlledItemVisible(
+      adaptTrainingResourceAccessControlledItem(resource),
+      authStore.hasModuleAccess,
+      authStore.hasEntitlementAccess,
+    )
+  )
 
   result = result.filter((resource) =>
     resolveTrainingResourceBusinessGroupCode(resource) === selectedBusinessGroup.value
@@ -1226,6 +1236,14 @@ function handleRowClick(row: ResourceItem) {
 // 图片预览
 function handlePreviewImage(row: ResourceItem) {
   if (row.resourceType !== 'equipment') return
+  if (!isAccessControlledItemVisible(
+    adaptTrainingResourceAccessControlledItem(row),
+    authStore.hasModuleAccess,
+    authStore.hasEntitlementAccess,
+  )) {
+    ElMessage.warning('当前资源未授权')
+    return
+  }
   const previewUrl = getThumbnailUrl(row)
   if (!previewUrl) return
   openImagePreview(previewUrl, row.name)

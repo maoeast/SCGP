@@ -176,7 +176,11 @@ const createAssessmentScaleAccessGuard = (
       return '/assessment'
     }
 
-    if (!isAssessmentScaleAuthorized(scaleItem, (moduleCode) => authStore.hasModuleAccess(moduleCode))) {
+    if (!isAssessmentScaleAuthorized(
+      scaleItem,
+      (moduleCode) => authStore.hasModuleAccess(moduleCode),
+      (entitlementCode) => authStore.hasEntitlementAccess(entitlementCode)
+    )) {
       ElMessage.warning('该量表未授权')
       return '/assessment'
     }

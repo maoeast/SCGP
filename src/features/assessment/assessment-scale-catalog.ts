@@ -14,6 +14,7 @@ import {
   User,
 } from '@element-plus/icons-vue'
 import { CNBSR2016_SUPPORTED_AGE_RANGE_TEXT } from '@/config/cnbsr2016-thresholds'
+import type { EntitlementCode } from '@/features/entitlements/entitlement-catalog'
 import type { TrainingEntryCode } from '@/utils/training-entry'
 
 export const ASSESSMENT_SCALE_CODES = [
@@ -70,10 +71,12 @@ export interface AssessmentScaleCatalogItem {
   studentSelectorTitle: string
   studentSelectorTag: AssessmentScaleTag
   entryTabs: TrainingEntryCode[]
+  accessEntitlementsAnyOf?: EntitlementCode[]
   accessModulesAnyOf: BusinessModuleCode[]
 }
 
 export type AssessmentModuleAccessChecker = (moduleCode: BusinessModuleCode) => boolean
+export type AssessmentEntitlementAccessChecker = (entitlementCode: EntitlementCode) => boolean
 
 export const ASSESSMENT_TABS: AssessmentTabDefinition[] = [
   { id: 'sensory-integration', label: '感官统合' },
@@ -103,6 +106,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       description: '评估儿童社会生活能力发展水平',
     },
     entryTabs: ['life-skills', 'social-communication'],
+    accessEntitlementsAnyOf: ['life_skills'],
     accessModulesAnyOf: ['life_skills'],
   },
   {
@@ -123,6 +127,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       description: '评估儿童功能独立性发展水平',
     },
     entryTabs: ['life-skills'],
+    accessEntitlementsAnyOf: ['life_skills'],
     accessModulesAnyOf: ['life_skills'],
   },
   {
@@ -143,6 +148,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       description: '评估儿童感觉统合能力',
     },
     entryTabs: ['sensory-integration'],
+    accessEntitlementsAnyOf: ['sensory_integration'],
     accessModulesAnyOf: ['sensory'],
   },
   {
@@ -163,6 +169,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       description: '评估儿童在家中的行为表现',
     },
     entryTabs: ['emotional-regulation', 'soothing-aids'],
+    accessEntitlementsAnyOf: ['emotional', 'soothing_aids'],
     accessModulesAnyOf: ['emotional'],
   },
   {
@@ -183,6 +190,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       description: '评估儿童在学校中的行为表现',
     },
     entryTabs: ['emotional-regulation'],
+    accessEntitlementsAnyOf: ['emotional'],
     accessModulesAnyOf: ['emotional'],
   },
   {
@@ -203,6 +211,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       description: '评估儿童的情绪、行为及社交能力',
     },
     entryTabs: ['emotional-regulation', 'social-communication'],
+    accessEntitlementsAnyOf: ['emotional', 'social_communication'],
     accessModulesAnyOf: ['emotional', 'social'],
   },
   {
@@ -223,6 +232,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       description: '评估儿童社交反应能力',
     },
     entryTabs: ['social-communication'],
+    accessEntitlementsAnyOf: ['social_communication'],
     accessModulesAnyOf: ['social'],
   },
   {
@@ -243,6 +253,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       description: '评估儿童社会能力与行为问题',
     },
     entryTabs: ['emotional-regulation', 'soothing-aids'],
+    accessEntitlementsAnyOf: ['emotional', 'soothing_aids'],
     accessModulesAnyOf: ['emotional'],
   },
   {
@@ -263,6 +274,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       description: '评估儿童大运动、精细动作、适应能力、语言与社会行为发展水平',
     },
     entryTabs: ['sensory-integration', 'fine-motor', 'social-communication', 'life-skills'],
+    accessEntitlementsAnyOf: ['sensory_integration', 'fine_motor', 'social_communication', 'life_skills'],
     accessModulesAnyOf: ['sensory'],
   },
   {
@@ -283,6 +295,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       description: '评估儿童位移技能与球类技能发展水平',
     },
     entryTabs: ['sensory-integration'],
+    accessEntitlementsAnyOf: ['sensory_integration'],
     accessModulesAnyOf: ['sensory'],
   },
   {
@@ -303,6 +316,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       description: '评估儿童卧位翻身、坐位、爬跪、站立与走跑跳能力',
     },
     entryTabs: ['sensory-integration'],
+    accessEntitlementsAnyOf: ['sensory_integration'],
     accessModulesAnyOf: ['sensory'],
   },
   {
@@ -323,6 +337,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       description: '评估儿童精细动作与手部操作能力发展水平',
     },
     entryTabs: ['fine-motor'],
+    accessEntitlementsAnyOf: ['fine_motor'],
     accessModulesAnyOf: ['sensory'],
   },
 ]
@@ -349,23 +364,36 @@ export function getAssessmentScaleCatalogItem(code: unknown): AssessmentScaleCat
 
 export function isAssessmentScaleAuthorized(
   item: AssessmentScaleCatalogItem,
-  hasModuleAccess: AssessmentModuleAccessChecker
+  hasModuleAccess: AssessmentModuleAccessChecker,
+  hasEntitlementAccess?: AssessmentEntitlementAccessChecker
 ): boolean {
+  if (item.accessEntitlementsAnyOf && item.accessEntitlementsAnyOf.length > 0) {
+    if (!hasEntitlementAccess) {
+      return false
+    }
+
+    return item.accessEntitlementsAnyOf.some((entitlementCode) => hasEntitlementAccess(entitlementCode))
+  }
+
   return item.accessModulesAnyOf.some((moduleCode) => hasModuleAccess(moduleCode))
 }
 
 export function getVisibleAssessmentScalesForTab(
   tabId: TrainingEntryCode,
-  hasModuleAccess: AssessmentModuleAccessChecker
+  hasModuleAccess: AssessmentModuleAccessChecker,
+  hasEntitlementAccess?: AssessmentEntitlementAccessChecker
 ): AssessmentScaleCatalogItem[] {
   return ASSESSMENT_SCALE_CATALOG.filter((item) =>
-    item.entryTabs.includes(tabId) && isAssessmentScaleAuthorized(item, hasModuleAccess)
+    item.entryTabs.includes(tabId) && isAssessmentScaleAuthorized(item, hasModuleAccess, hasEntitlementAccess)
   )
 }
 
 export function getDefaultAssessmentTab(
-  hasModuleAccess: AssessmentModuleAccessChecker
+  hasModuleAccess: AssessmentModuleAccessChecker,
+  hasEntitlementAccess?: AssessmentEntitlementAccessChecker
 ): TrainingEntryCode {
-  return ASSESSMENT_TABS.find((tab) => getVisibleAssessmentScalesForTab(tab.id, hasModuleAccess).length > 0)?.id
+  return ASSESSMENT_TABS.find((tab) =>
+    getVisibleAssessmentScalesForTab(tab.id, hasModuleAccess, hasEntitlementAccess).length > 0
+  )?.id
     || 'sensory-integration'
 }

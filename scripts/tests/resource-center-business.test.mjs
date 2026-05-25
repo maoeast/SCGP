@@ -50,3 +50,37 @@ test('task_training resources are grouped under life-skills', () => {
 
   assert.equal(resolveTrainingResourceBusinessGroupCode(resource), 'life-skills')
 })
+
+test('training resources adapt to capability package access control', () => {
+  const { adaptTrainingResourceAccessControlledItem } = loadResourceCenterBusiness()
+
+  assert.deepEqual(
+    adaptTrainingResourceAccessControlledItem({
+      moduleCode: 'sensory',
+      resourceType: 'game',
+      category: 'fine-motor',
+      metadata: {
+        trainingEntryCode: 'fine-motor',
+      },
+    }),
+    {
+      accessScope: 'entitlement',
+      moduleCode: 'sensory',
+      entitlementCode: 'fine_motor',
+    },
+  )
+
+  assert.deepEqual(
+    adaptTrainingResourceAccessControlledItem({
+      moduleCode: 'emotional',
+      resourceType: 'care_scene',
+      category: 'care',
+      metadata: {},
+    }),
+    {
+      accessScope: 'entitlement',
+      moduleCode: 'emotional',
+      entitlementCode: 'emotional',
+    },
+  )
+})

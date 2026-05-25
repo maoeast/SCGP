@@ -49,3 +49,50 @@ test('module entries are hidden when the module is not authorized', () => {
 
   assert.equal(visible, false)
 })
+
+test('entitlement entries require the matching capability package', () => {
+  const { isAccessControlledItemVisible } = loadAccessVisibility()
+
+  assert.equal(
+    isAccessControlledItemVisible(
+      {
+        accessScope: 'entitlement',
+        moduleCode: 'sensory',
+        entitlementCode: 'fine_motor',
+      },
+      () => true,
+      (entitlementCode) => entitlementCode === 'fine_motor',
+    ),
+    true,
+  )
+
+  assert.equal(
+    isAccessControlledItemVisible(
+      {
+        accessScope: 'entitlement',
+        moduleCode: 'sensory',
+        entitlementCode: 'fine_motor',
+      },
+      () => true,
+      (entitlementCode) => entitlementCode === 'sensory_integration',
+    ),
+    false,
+  )
+})
+
+test('entitlement-any entries are visible when any capability package is authorized', () => {
+  const { isAccessControlledItemVisible } = loadAccessVisibility()
+
+  assert.equal(
+    isAccessControlledItemVisible(
+      {
+        accessScope: 'entitlement-any',
+        moduleCode: 'emotional',
+        entitlementCodes: ['emotional', 'social_communication'],
+      },
+      () => false,
+      (entitlementCode) => entitlementCode === 'social_communication',
+    ),
+    true,
+  )
+})
