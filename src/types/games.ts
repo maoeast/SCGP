@@ -10,7 +10,10 @@ export enum TaskID {
   VISUAL_TRACK = 4,     // 视觉追踪
   AUDIO_DIFF = 5,       // 声音辨别
   AUDIO_COMMAND = 6,    // 听指令做动作
-  AUDIO_RHYTHM = 7      // 节奏模仿
+  AUDIO_RHYTHM = 7,     // 节奏模仿
+  HAND_XYLOPHONE = 8,   // 空气木琴
+  HAND_WOOD_BLOCKS = 9, // 木块磁贴拼图
+  HAND_GESTURE_GARDEN = 10 // 森林手势魔法屋
 }
 
 /**
@@ -22,6 +25,11 @@ export type GameGridMode = 'color' | 'shape' | 'icon'
  * GameAudio 游戏模式
  */
 export type GameAudioMode = 'diff' | 'command' | 'rhythm'
+
+/**
+ * 摄像头手势游戏模式
+ */
+export type GameHandMode = 'hand-xylophone' | 'wood-blocks' | 'gesture-garden'
 
 /**
  * 网格尺寸
@@ -233,6 +241,13 @@ export interface GameSessionData {
   trackingStats?: {
     timeOnTargetPercent: number
     useEyeTracking?: boolean
+  }
+
+  handGameStats?: {
+    handTrackingUsed: boolean
+    pointerFallbackUsed: boolean
+    gestureEvents: number
+    completionScore: number
   }
 }
 

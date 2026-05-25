@@ -51,6 +51,28 @@
             @finish="handleGameFinish"
           />
 
+          <HandXylophoneGame
+            v-else-if="taskId === TaskID.HAND_XYLOPHONE"
+            :student-id="studentId"
+            :task-id="taskId"
+            :duration="duration"
+            @finish="handleGameFinish"
+          />
+
+          <WoodBlockPuzzleGame
+            v-else-if="taskId === TaskID.HAND_WOOD_BLOCKS"
+            :student-id="studentId"
+            :task-id="taskId"
+            @finish="handleGameFinish"
+          />
+
+          <GestureGardenGame
+            v-else-if="taskId === TaskID.HAND_GESTURE_GARDEN"
+            :student-id="studentId"
+            :task-id="taskId"
+            @finish="handleGameFinish"
+          />
+
           <div v-else class="error-view error-view--embedded">
             <h2>❌ 未识别的游戏类型</h2>
             <p>任务ID: {{ taskId }}，模式: {{ mode }}</p>
@@ -94,6 +116,28 @@
           @finish="handleGameFinish"
         />
 
+        <HandXylophoneGame
+          v-else-if="taskId === TaskID.HAND_XYLOPHONE"
+          :student-id="studentId"
+          :task-id="taskId"
+          :duration="duration"
+          @finish="handleGameFinish"
+        />
+
+        <WoodBlockPuzzleGame
+          v-else-if="taskId === TaskID.HAND_WOOD_BLOCKS"
+          :student-id="studentId"
+          :task-id="taskId"
+          @finish="handleGameFinish"
+        />
+
+        <GestureGardenGame
+          v-else-if="taskId === TaskID.HAND_GESTURE_GARDEN"
+          :student-id="studentId"
+          :task-id="taskId"
+          @finish="handleGameFinish"
+        />
+
         <div v-else class="error-view">
           <h2>❌ 未识别的游戏类型</h2>
           <p>任务ID: {{ taskId }}，模式: {{ mode }}</p>
@@ -117,6 +161,9 @@ import { ElMessage } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import SensoryGameShell from '@/components/games/SensoryGameShell.vue'
 import GameAudio from '@/components/games/audio/GameAudio.vue'
+import HandXylophoneGame from '@/components/games/hand/AirXylophoneGame.vue'
+import GestureGardenGame from '@/components/games/hand/GestureGardenGame.vue'
+import WoodBlockPuzzleGame from '@/components/games/hand/WoodBlockPuzzleGame.vue'
 import GameGrid from '@/components/games/visual/GameGrid.vue'
 import VisualTracker from '@/components/games/visual/VisualTracker.vue'
 import { DatabaseAPI, GameTrainingAPI } from '@/database/api'
@@ -167,11 +214,20 @@ const isAudioGame = computed(() => {
   ].includes(taskId.value)
 })
 
+const isHandGame = computed(() => {
+  return taskId.value !== null && [
+    TaskID.HAND_XYLOPHONE,
+    TaskID.HAND_WOOD_BLOCKS,
+    TaskID.HAND_GESTURE_GARDEN,
+  ].includes(taskId.value)
+})
+
 const shouldUseSensoryShell = computed(() => entryCode.value === 'sensory-integration')
 const sensoryShellTheme = computed(() => {
   if (taskId.value === TaskID.AUDIO_RHYTHM) return 'rhythm'
   if (taskId.value === TaskID.AUDIO_DIFF) return 'audio-diff'
   if (taskId.value === TaskID.AUDIO_COMMAND) return 'audio-command'
+  if (isHandGame.value) return 'shape-match'
   if (taskId.value === TaskID.COLOR_MATCH) return 'color-match'
   if (taskId.value === TaskID.SHAPE_MATCH || taskId.value === TaskID.ICON_MATCH) return 'shape-match'
   return 'default'
@@ -185,6 +241,9 @@ const taskNames: Record<number, string> = {
   [TaskID.AUDIO_DIFF]: '声音辨别',
   [TaskID.AUDIO_COMMAND]: '听指令做动作',
   [TaskID.AUDIO_RHYTHM]: '节奏模仿',
+  [TaskID.HAND_XYLOPHONE]: '空气木琴',
+  [TaskID.HAND_WOOD_BLOCKS]: '木块磁贴拼图',
+  [TaskID.HAND_GESTURE_GARDEN]: '森林手势魔法屋',
 }
 
 const modeLabel = computed(() => {
@@ -195,6 +254,9 @@ const modeLabel = computed(() => {
   if (taskId.value === TaskID.AUDIO_DIFF) return '听觉辨别'
   if (taskId.value === TaskID.AUDIO_COMMAND) return '听觉理解'
   if (taskId.value === TaskID.AUDIO_RHYTHM) return '节奏模仿'
+  if (taskId.value === TaskID.HAND_XYLOPHONE) return '体感节奏'
+  if (taskId.value === TaskID.HAND_WOOD_BLOCKS) return '抓放配对'
+  if (taskId.value === TaskID.HAND_GESTURE_GARDEN) return '手势计划'
   return mode.value || '综合训练'
 })
 
@@ -220,6 +282,10 @@ const gameSummary = computed(() => {
     return '进入训练后请优先使用手指直接操作大按钮，保持孩子注意力集中在当前一轮任务。'
   }
 
+  if (isHandGame.value) {
+    return '通过摄像头识别手部动作，也支持鼠标或触摸备用操作，用节奏敲击、抓放匹配和手势转换训练动作计划与感官统合。'
+  }
+
   return '进入训练后请直接使用手指完成当前目标匹配，系统会自动记录训练过程和结果。'
 })
 
@@ -231,6 +297,10 @@ const durationLabel = computed(() => {
 
   if (taskId.value === TaskID.VISUAL_TRACK) {
     return `${duration.value}秒`
+  }
+
+  if (isHandGame.value) {
+    return taskId.value === TaskID.HAND_XYLOPHONE ? `${duration.value}秒` : '完成目标'
   }
 
   if (isGridGame.value || isAudioGame.value) {
@@ -505,7 +575,8 @@ onMounted(async () => {
 
 .game-play-container--sensory :deep(.game-grid-container),
 .game-play-container--sensory :deep(.game-audio-container),
-.game-play-container--sensory :deep(.visual-tracker-container) {
+.game-play-container--sensory :deep(.visual-tracker-container),
+.game-play-container--sensory :deep(.hand-camera-layer) {
   width: 100%;
   max-width: none;
   margin: 0;
@@ -521,6 +592,11 @@ onMounted(async () => {
 }
 
 .game-play-container--sensory :deep(.visual-tracker-container) {
+  min-height: 0;
+  height: 100%;
+}
+
+.game-play-container--sensory :deep(.hand-camera-layer) {
   min-height: 0;
   height: 100%;
 }

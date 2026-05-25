@@ -135,7 +135,10 @@ export class IEPGenerator {
       [TaskID.VISUAL_TRACK]: '视觉追踪游戏',
       [TaskID.AUDIO_DIFF]: '声音辨别游戏',
       [TaskID.AUDIO_COMMAND]: '听指令做动作',
-      [TaskID.AUDIO_RHYTHM]: '节奏模仿游戏'
+      [TaskID.AUDIO_RHYTHM]: '节奏模仿游戏',
+      [TaskID.HAND_XYLOPHONE]: '空气木琴',
+      [TaskID.HAND_WOOD_BLOCKS]: '木块磁贴拼图',
+      [TaskID.HAND_GESTURE_GARDEN]: '森林手势魔法屋'
     }
     return names[taskId] || '未知任务'
   }
@@ -162,6 +165,8 @@ export class IEPGenerator {
       sections.push(this.generateAuditoryIntegrationSection(data))
     } else if (taskId === TaskID.AUDIO_RHYTHM) {
       sections.push(this.generateAuditorySequencingSection(data))
+    } else if ([TaskID.HAND_XYLOPHONE, TaskID.HAND_WOOD_BLOCKS, TaskID.HAND_GESTURE_GARDEN].includes(taskId)) {
+      sections.push(this.generateHandIntegrationSection(taskId, data))
     }
 
     return sections
@@ -308,6 +313,47 @@ export class IEPGenerator {
       category: '听觉序列',
       performance: performanceText,
       suggestions: template.suggestions
+    }
+  }
+
+  /**
+   * 生成手势体感统合训练段落 (Task 8-10)
+   */
+  private static generateHandIntegrationSection(
+    taskId: TaskID,
+    data: GameSessionData
+  ): IEPReportSection {
+    const score = data.handGameStats?.completionScore ?? Math.round(data.accuracy * 100)
+    const handTrackingText = data.handGameStats?.handTrackingUsed
+      ? '本次训练已使用摄像头手势识别，能反映儿童在开放空间中的主动动作表现。'
+      : '本次训练主要使用鼠标或触摸备用操作，建议在后续训练中逐步过渡到摄像头手势识别。'
+
+    let domain = '手眼协调与动作计划'
+    if (taskId === TaskID.HAND_XYLOPHONE) {
+      domain = '双侧协调与节奏控制'
+    } else if (taskId === TaskID.HAND_WOOD_BLOCKS) {
+      domain = '抓放控制与视觉空间配对'
+    } else if (taskId === TaskID.HAND_GESTURE_GARDEN) {
+      domain = '手势转换与动作序列计划'
+    }
+
+    const performance = score >= 80
+      ? `儿童在${domain}训练中完成度较高，动作启动、目标定位和反馈调整较稳定。${handTrackingText}`
+      : score >= 50
+        ? `儿童在${domain}训练中能完成部分目标，但动作稳定性、节奏保持或手势转换仍需要成人提示。${handTrackingText}`
+        : `儿童在${domain}训练中仍需要较多支持，建议降低目标数量、放慢节奏，并增加示范和身体辅助。${handTrackingText}`
+
+    return {
+      category: domain,
+      performance,
+      behavior: data.handGameStats
+        ? `共记录 ${data.handGameStats.gestureEvents} 次有效手势事件，完成度 ${score}%。`
+        : '',
+      suggestions: [
+        '训练前先用 1-2 分钟做肩肘腕放松和手指张合热身，降低动作紧张。',
+        '初期优先使用大目标、短时长和高对比反馈，等成功率稳定后再增加目标数量或节奏变化。',
+        '教师应观察儿童是否出现疲劳、躲避镜头或过度兴奋，必要时改用触摸备用操作完成同一目标。'
+      ]
     }
   }
 

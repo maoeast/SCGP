@@ -161,6 +161,17 @@
             </el-radio-group>
           </div>
         </template>
+
+        <template v-else-if="isHandGame">
+          <div class="config-item">
+            <label>训练时长</label>
+            <el-radio-group v-model="config.duration" size="large">
+              <el-radio-button :value="45">45秒</el-radio-button>
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -301,6 +312,17 @@
             </el-radio-group>
           </div>
         </template>
+
+        <template v-else-if="isHandGame">
+          <div class="config-item">
+            <label>训练时长</label>
+            <el-radio-group v-model="config.duration" size="large">
+              <el-radio-button :value="45">45秒</el-radio-button>
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+            </el-radio-group>
+          </div>
+        </template>
       </div>
 
       <template #footer>
@@ -380,6 +402,11 @@ const isVisualTrackGame = computed(() => taskId.value === TaskID.VISUAL_TRACK)
 const isAudioDiffGame = computed(() => taskId.value === TaskID.AUDIO_DIFF)
 const isAudioCommandGame = computed(() => taskId.value === TaskID.AUDIO_COMMAND)
 const isAudioRhythmGame = computed(() => taskId.value === TaskID.AUDIO_RHYTHM)
+const isHandGame = computed(() => [
+  TaskID.HAND_XYLOPHONE,
+  TaskID.HAND_WOOD_BLOCKS,
+  TaskID.HAND_GESTURE_GARDEN,
+].includes(taskId.value))
 
 const emoji = computed(() => metaData.value?.emoji || props.game.coverImage || '🎮')
 const difficulty = computed(() => metaData.value?.difficulty || '中等')
@@ -390,6 +417,7 @@ const categoryLabel = computed(() => {
     visual: '视觉训练',
     audio: '听觉训练',
     tactile: '触觉训练',
+    motor: '体感训练',
   }
 
   return labels[props.game.category || ''] || props.game.category || '综合训练'
@@ -400,6 +428,7 @@ const categoryTagType = computed(() => {
     visual: 'primary',
     audio: 'warning',
     tactile: 'danger',
+    motor: 'success',
   }
 
   return types[props.game.category || ''] || 'info'
@@ -441,6 +470,11 @@ function resetConfig() {
 
   if (isAudioRhythmGame.value) {
     config.rounds = 5
+    return
+  }
+
+  if (isHandGame.value) {
+    config.duration = 45
   }
 }
 
@@ -486,6 +520,8 @@ function buildGameConfig() {
     gameConfig.rounds = config.rounds
   } else if (isAudioRhythmGame.value) {
     gameConfig.rounds = config.rounds
+  } else if (isHandGame.value) {
+    gameConfig.duration = config.duration
   }
 
   return gameConfig

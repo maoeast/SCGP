@@ -5,7 +5,7 @@ export interface SensoryGameSeed {
   taskId: number
   name: string
   description: string
-  category: 'visual' | 'audio'
+  category: 'visual' | 'audio' | 'motor'
   emoji: string
   color: string
   difficulty: string
@@ -90,6 +90,39 @@ const BASE_SENSORY_GAME_SEED: SensoryGameSeed[] = [
     difficulty: '困难',
     duration: '3-5分钟',
     mode: 'rhythm',
+  },
+  {
+    taskId: 8,
+    name: '空气木琴',
+    description: '用手在空中向下敲击彩色木琴，训练节奏感、双侧协调和动作启动控制',
+    category: 'motor',
+    emoji: '🎼',
+    color: 'linear-gradient(135deg, #f6d365 0%, #5ee7df 100%)',
+    difficulty: '中等',
+    duration: '45秒',
+    mode: 'hand-xylophone',
+  },
+  {
+    taskId: 9,
+    name: '木块磁贴拼图',
+    description: '用捏取动作抓起木块并放到对应槽位，训练空间定位、抓放控制和手眼协调',
+    category: 'motor',
+    emoji: '🧩',
+    color: 'linear-gradient(135deg, #d7a86e 0%, #7fb069 100%)',
+    difficulty: '中等',
+    duration: '3-5分钟',
+    mode: 'wood-blocks',
+  },
+  {
+    taskId: 10,
+    name: '森林手势魔法屋',
+    description: '通过张手、握拳等稳定手势唤醒种子、雨云和花朵，训练动作计划与感官反馈整合',
+    category: 'motor',
+    emoji: '🌱',
+    color: 'linear-gradient(135deg, #8fd694 0%, #86c5da 100%)',
+    difficulty: '简单',
+    duration: '2-4分钟',
+    mode: 'gesture-garden',
   },
 ]
 
