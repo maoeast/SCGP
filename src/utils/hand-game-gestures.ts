@@ -109,6 +109,16 @@ export function mapLandmarkToStagePoint(
   }
 }
 
+export function mapLandmarkToNormalizedStagePoint(
+  point: HandPoint,
+  options: { mirror?: boolean } = { mirror: true },
+): StagePoint {
+  return {
+    x: options.mirror === false ? point.x : 1 - point.x,
+    y: point.y,
+  }
+}
+
 export function normalizeStagePoint(point: StagePoint, size: StageSize): StagePoint {
   return {
     x: size.width > 0 ? point.x / size.width : 0,

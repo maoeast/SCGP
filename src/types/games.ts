@@ -172,7 +172,13 @@ export interface TrackingData {
   timeOnTarget: number // 在目标上的时间（毫秒）
   totalTime: number // 总时间（毫秒）
   timeOnTargetPercent: number // 在靶时间百分比
-  samplePoints: Array<{ time: number; onTarget: boolean }> // 采样点
+  samplePoints: Array<{
+    time: number
+    onTarget: boolean
+    distancePx?: number
+    pointer?: { x: number; y: number } | null
+    target?: { x: number; y: number }
+  }> // 采样点
 }
 
 /**
@@ -241,6 +247,10 @@ export interface GameSessionData {
   trackingStats?: {
     timeOnTargetPercent: number
     useEyeTracking?: boolean
+    followStability?: number
+    breakCount?: number
+    longestStreakMs?: number
+    inputMode?: 'pointer' | 'touch' | 'mouse' | 'eye'
   }
 
   handGameStats?: {

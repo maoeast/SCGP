@@ -14,7 +14,11 @@
       class="hand-camera-layer__cursor"
       :class="{ 'is-pinching': cursor.isPinching }"
       :style="{ transform: `translate(${cursor.x}px, ${cursor.y}px)` }"
-    />
+    >
+      <span class="hand-camera-layer__cursor-hand" aria-hidden="true">
+        {{ cursor.isPinching ? '🤏' : '✋' }}
+      </span>
+    </div>
 
     <slot
       :hands="hands"
@@ -219,22 +223,63 @@ onBeforeUnmount(() => {
 .hand-camera-layer__cursor {
   position: absolute;
   z-index: 16;
-  width: 26px;
-  height: 26px;
-  margin: -13px 0 0 -13px;
-  border: 3px solid #2563eb;
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  margin: -39px 0 0 -39px;
+  border: 4px solid rgba(37, 99, 235, 0.62);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.24);
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.96), rgba(219, 234, 254, 0.72) 62%, rgba(37, 99, 235, 0.14));
+  box-shadow:
+    0 18px 34px rgba(37, 99, 235, 0.24),
+    0 0 0 10px rgba(37, 99, 235, 0.08);
   pointer-events: none;
+  animation: hand-cursor-glow 1.35s ease-in-out infinite;
 }
 
 .hand-camera-layer__cursor.is-pinching {
-  width: 34px;
-  height: 34px;
-  margin: -17px 0 0 -17px;
-  border-color: #f59e0b;
-  background: rgba(254, 243, 199, 0.82);
+  width: 86px;
+  height: 86px;
+  margin: -43px 0 0 -43px;
+  border-color: rgba(245, 158, 11, 0.78);
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 251, 235, 0.98), rgba(254, 243, 199, 0.8) 62%, rgba(245, 158, 11, 0.16));
+  box-shadow:
+    0 18px 34px rgba(245, 158, 11, 0.28),
+    0 0 0 12px rgba(245, 158, 11, 0.1);
+}
+
+.hand-camera-layer__cursor-hand {
+  display: block;
+  font-size: 48px;
+  line-height: 1;
+  filter: drop-shadow(0 6px 8px rgba(30, 64, 175, 0.18));
+  transform: translateY(-1px);
+  animation: hand-cursor-float 1.35s ease-in-out infinite;
+}
+
+.hand-camera-layer__cursor.is-pinching .hand-camera-layer__cursor-hand {
+  font-size: 52px;
+}
+
+@keyframes hand-cursor-glow {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.08);
+  }
+}
+
+@keyframes hand-cursor-float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.03);
+  }
 }
 
 .hand-camera-layer__status {

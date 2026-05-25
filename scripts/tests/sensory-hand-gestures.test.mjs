@@ -77,11 +77,42 @@ test('detects a downward strike crossing a target line', () => {
   )
 })
 
+test('finds which normalized target rect contains the hand point', () => {
+  const { findRectHit } = loadGestures()
+
+  assert.equal(
+    findRectHit(
+      { x: 0.35, y: 0.74 },
+      [
+        { left: 0.1, right: 0.25, top: 0.6, bottom: 0.9 },
+        { left: 0.28, right: 0.42, top: 0.6, bottom: 0.9 },
+      ],
+    ),
+    1,
+  )
+  assert.equal(
+    findRectHit(
+      { x: 0.5, y: 0.5 },
+      [{ left: 0.1, right: 0.25, top: 0.6, bottom: 0.9 }],
+    ),
+    -1,
+  )
+})
+
 test('maps mirrored camera coordinates into stage coordinates', () => {
   const { mapLandmarkToStagePoint } = loadGestures()
 
   assert.deepEqual(
     mapLandmarkToStagePoint({ x: 0.25, y: 0.5 }, { width: 800, height: 600 }),
     { x: 600, y: 300 },
+  )
+})
+
+test('maps a landmark directly into normalized mirrored stage coordinates', () => {
+  const { mapLandmarkToNormalizedStagePoint } = loadGestures()
+
+  assert.deepEqual(
+    mapLandmarkToNormalizedStagePoint({ x: 0.2, y: 0.7 }),
+    { x: 0.8, y: 0.7 },
   )
 })

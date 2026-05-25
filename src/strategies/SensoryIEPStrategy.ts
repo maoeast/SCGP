@@ -120,9 +120,21 @@ export class SensoryIEPStrategy implements IEPStrategy {
       performanceText = template.performance.low
     }
 
+    const behaviorParts: string[] = []
+    if (typeof data.trackingStats?.followStability === 'number') {
+      behaviorParts.push(`追踪稳定度为 ${data.trackingStats.followStability} 分`)
+    }
+    if (typeof data.trackingStats?.longestStreakMs === 'number') {
+      behaviorParts.push(`最长连续跟随 ${(data.trackingStats.longestStreakMs / 1000).toFixed(1)} 秒`)
+    }
+    if (typeof data.trackingStats?.breakCount === 'number') {
+      behaviorParts.push(`过程中出现 ${data.trackingStats.breakCount} 次跟随断开`)
+    }
+
     return {
       category: '视觉追踪',
       performance: performanceText,
+      behavior: behaviorParts.join('，'),
       suggestions: template.suggestions
     }
   }
