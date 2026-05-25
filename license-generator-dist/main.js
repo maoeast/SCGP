@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { app, BrowserWindow, clipboard, ipcMain, shell } = require('electron');
 
-const { TOP_LEVEL_MODULE_CODES, generateLicenseArtifact } = require('./generate-license');
+const { ENTITLEMENT_CODES, generateLicenseArtifact } = require('./generate-license');
 
 const WINDOW_TITLE = 'SCGP 激活码生成工具';
 
@@ -63,7 +63,7 @@ function createMainWindow() {
 function registerIpcHandlers() {
     ipcMain.handle('license:get-config', () => {
         return {
-            modules: [...TOP_LEVEL_MODULE_CODES],
+            entitlements: [...ENTITLEMENT_CODES],
             outputDir: getOutputDirectory()
         };
     });
@@ -74,7 +74,7 @@ function registerIpcHandlers() {
                 type: payload?.type,
                 machineId: payload?.machineId,
                 days: payload?.days,
-                allowedModules: payload?.allowedModules,
+                entitlements: payload?.entitlements,
                 outputDir: getOutputDirectory(),
                 syncPublicKeyToProject: false
             });

@@ -57,38 +57,46 @@
 
           <div class="field">
             <div class="field-header">
-              <span>授权模块</span>
+              <span>授权能力包</span>
               <button id="select-all-modules" class="text-button" type="button">取消</button>
             </div>
             <div id="module-grid" class="module-grid"></div>
-            <small>顶层授权只认 sensory / emotional / social / cognitive / life_skills。</small>
+            <small>发码推荐直接选择新的 EntitlementCode 能力包。</small>
           </div>
 
           <details class="help-panel">
-            <summary>查看授权模块说明</summary>
+            <summary>查看授权能力包说明</summary>
             <div class="help-body">
-              <p class="help-intro">以下说明按当前代码现状整理，用于发码时判断应勾选哪些顶层授权模块。</p>
+              <p class="help-intro">以下说明用于发码时判断应勾选哪些授权能力包。</p>
               <div class="help-item">
-                <strong>`sensory` / 感官训练</strong>
-                <p>当前覆盖感官统合主链，也包含精细动作相关游戏、器材、训练记录和评估。</p>
+                <strong>`sensory_integration` / 感官统合</strong>
+                <p>覆盖感官统合训练主链，以及相关量表、资源与训练入口。</p>
               </div>
               <div class="help-item">
-                <strong>`emotional` / 情绪行为</strong>
-                <p>当前覆盖情绪场景训练、表达关心训练、情绪小游戏、模块报告，以及情绪调节和安抚教具相关入口。</p>
+                <strong>`emotional` / 情绪发展</strong>
+                <p>覆盖情绪场景训练、表达关心训练、情绪小游戏、模块报告，以及情绪调节相关入口。</p>
               </div>
               <div class="help-item">
-                <strong>`social` / 社交沟通</strong>
-                <p>当前主要覆盖社交沟通训练入口组、资源归类，以及社交量表授权。</p>
+                <strong>`social_communication` / 社交沟通</strong>
+                <p>覆盖社交沟通训练入口、相关评估与资源。</p>
               </div>
               <div class="help-item">
-                <strong>`cognitive` / 认知训练</strong>
-                <p>当前主要是预留授权位，资源中心与标签筛选里可见，但未形成独立业务主链。</p>
+                <strong>`fine_motor` / 精细动作</strong>
+                <p>独立授权能力包，数据归属仍为 `sensory`。</p>
+              </div>
+              <div class="help-item">
+                <strong>`soothing_aids` / 安抚系统</strong>
+                <p>独立授权能力包，覆盖安抚教具与安抚训练相关入口，数据归属仍为 `emotional`。</p>
               </div>
               <div class="help-item">
                 <strong>`life_skills` / 生活自理</strong>
-                <p>当前覆盖生活自理训练入口组、资源归类，以及 S-M、WeeFIM 等相关评估入口。</p>
+                <p>覆盖自理训练顶级入口、`task_training`、生活自理资源，以及相关评估入口。</p>
               </div>
-              <p class="help-note">注意：如果后续把精细动作改成独立授权模块，这里的说明也需要同步调整。</p>
+              <div class="help-item">
+                <strong>`cognitive` / 认知发展</strong>
+                <p>当前仍为预留授权位，不代表认知模块已经完整交付。</p>
+              </div>
+              <p class="help-note">注意：许可证 payload 的字段名仍保持为 `am`，变更的是其中写入的 code 内容。</p>
             </div>
           </details>
 
@@ -134,7 +142,7 @@
             <dd id="summary-expire">—</dd>
           </div>
           <div>
-            <dt>模块</dt>
+            <dt>能力包</dt>
             <dd id="summary-modules" class="summary-modules">—</dd>
           </div>
         </dl>

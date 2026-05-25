@@ -1,9 +1,11 @@
-const MODULE_META = {
-    sensory: { title: '感官训练', subtitle: 'sensory' },
+const ENTITLEMENT_META = {
+    sensory_integration: { title: '感官统合', subtitle: 'sensory_integration' },
     emotional: { title: '情绪发展', subtitle: 'emotional' },
-    social: { title: '社交发展', subtitle: 'social' },
-    cognitive: { title: '认知发展', subtitle: 'cognitive' },
-    life_skills: { title: '生活技能', subtitle: 'life_skills' }
+    social_communication: { title: '社交沟通', subtitle: 'social_communication' },
+    fine_motor: { title: '精细动作', subtitle: 'fine_motor' },
+    soothing_aids: { title: '安抚系统', subtitle: 'soothing_aids' },
+    life_skills: { title: '生活自理', subtitle: 'life_skills' },
+    cognitive: { title: '认知发展', subtitle: 'cognitive' }
 };
 
 const state = {
@@ -13,7 +15,7 @@ const state = {
 
 const form = document.getElementById('license-form');
 const resultPanel = document.getElementById('result-panel');
-const moduleGrid = document.getElementById('module-grid');
+const entitlementGrid = document.getElementById('module-grid');
 const machineField = document.getElementById('machine-field');
 const daysField = document.getElementById('days-field');
 const machineInput = document.getElementById('machine-id');
@@ -23,26 +25,26 @@ const statusChip = document.getElementById('status-chip');
 const statusDetail = document.getElementById('status-detail');
 const licenseOutput = document.getElementById('license-output');
 const copyLicenseButton = document.getElementById('copy-license-button');
-const selectAllModulesButton = document.getElementById('select-all-modules');
+const selectAllEntitlementsButton = document.getElementById('select-all-modules');
 const resetButton = document.getElementById('reset-button');
 
 function getSelectedType() {
     return document.querySelector('input[name="licenseType"]:checked')?.value || 'trial';
 }
 
-function getSelectedModules() {
-    return [...document.querySelectorAll('input[name="allowedModules"]:checked')].map((element) => element.value);
+function getSelectedEntitlements() {
+    return [...document.querySelectorAll('input[name="entitlements"]:checked')].map((element) => element.value);
 }
 
-function renderModules(modules) {
-    const hasWideLastRow = modules.length % 2 === 1;
+function renderEntitlements(entitlements) {
+    const hasWideLastRow = entitlements.length % 2 === 1;
 
-    moduleGrid.innerHTML = modules.map((moduleCode, index) => {
-        const meta = MODULE_META[moduleCode] || { title: moduleCode, subtitle: moduleCode };
-        const wideClass = hasWideLastRow && index === modules.length - 1 ? ' module-card--wide' : '';
+    entitlementGrid.innerHTML = entitlements.map((entitlementCode, index) => {
+        const meta = ENTITLEMENT_META[entitlementCode] || { title: entitlementCode, subtitle: entitlementCode };
+        const wideClass = hasWideLastRow && index === entitlements.length - 1 ? ' module-card--wide' : '';
         return `
             <label class="module-card${wideClass}">
-              <input type="checkbox" name="allowedModules" value="${moduleCode}" checked>
+              <input type="checkbox" name="entitlements" value="${entitlementCode}" checked>
               <span class="module-content">
                 <span class="module-title">${meta.title}</span>
                 <span class="module-subtitle">${meta.subtitle}</span>
@@ -59,17 +61,17 @@ function syncModeSelectionStyles() {
     });
 }
 
-function syncModuleSelectionStyles() {
+function syncEntitlementSelectionStyles() {
     document.querySelectorAll('.module-card').forEach((card) => {
-        const input = card.querySelector('input[name="allowedModules"]');
+        const input = card.querySelector('input[name="entitlements"]');
         card.classList.toggle('is-selected', Boolean(input?.checked));
     });
 }
 
-function syncModuleToggleButton() {
-    const selectedCount = getSelectedModules().length;
-    const totalCount = document.querySelectorAll('input[name="allowedModules"]').length;
-    selectAllModulesButton.textContent = selectedCount === totalCount ? '取消' : '全选';
+function syncEntitlementToggleButton() {
+    const selectedCount = getSelectedEntitlements().length;
+    const totalCount = document.querySelectorAll('input[name="entitlements"]').length;
+    selectAllEntitlementsButton.textContent = selectedCount === totalCount ? '取消' : '全选';
 }
 
 function updateVisibility() {
@@ -120,9 +122,9 @@ function renderSummary(summary) {
     document.getElementById('summary-validity').textContent = summary.validityLabel;
     document.getElementById('summary-created').textContent = summary.createdAtLabel;
     document.getElementById('summary-expire').textContent = summary.expireAtLabel || '永久或不适用';
-    document.getElementById('summary-modules').innerHTML = summary.allowedModules.map((moduleCode) => {
-        const meta = MODULE_META[moduleCode] || { title: moduleCode };
-        return `<span class="summary-module-tag">${meta.title}<small>${moduleCode}</small></span>`;
+    document.getElementById('summary-modules').innerHTML = summary.entitlements.map((entitlementCode) => {
+        const meta = ENTITLEMENT_META[entitlementCode] || { title: entitlementCode };
+        return `<span class="summary-module-tag">${meta.title}<small>${entitlementCode}</small></span>`;
     }).join('');
 }
 
@@ -137,10 +139,10 @@ function renderArtifact(artifact) {
 function validateForm() {
     const type = getSelectedType();
     const machineId = machineInput.value.trim();
-    const selectedModules = getSelectedModules();
+    const selectedEntitlements = getSelectedEntitlements();
 
-    if (selectedModules.length === 0) {
-        throw new Error('至少选择一个授权模块');
+    if (selectedEntitlements.length === 0) {
+        throw new Error('至少选择一个授权能力包');
     }
 
     if (type !== 'trial' && !machineId) {
@@ -166,7 +168,7 @@ async function handleGenerate(event) {
             type: getSelectedType(),
             machineId: machineInput.value.trim(),
             days: daysInput.value,
-            allowedModules: getSelectedModules()
+            entitlements: getSelectedEntitlements()
         });
 
         if (!response?.ok) {
@@ -229,47 +231,47 @@ function handleReset() {
     resetSummary();
     setStatus('idle', '生成后会在这里显示结果摘要。');
 
-    document.querySelectorAll('input[name="allowedModules"]').forEach((input) => {
+    document.querySelectorAll('input[name="entitlements"]').forEach((input) => {
         input.checked = true;
     });
 
-    syncModuleSelectionStyles();
-    syncModuleToggleButton();
+    syncEntitlementSelectionStyles();
+    syncEntitlementToggleButton();
 }
 
-function handleSelectAllModules() {
-    const moduleInputs = document.querySelectorAll('input[name="allowedModules"]');
-    const shouldSelectAll = getSelectedModules().length !== moduleInputs.length;
+function handleSelectAllEntitlements() {
+    const entitlementInputs = document.querySelectorAll('input[name="entitlements"]');
+    const shouldSelectAll = getSelectedEntitlements().length !== entitlementInputs.length;
 
-    moduleInputs.forEach((input) => {
+    entitlementInputs.forEach((input) => {
         input.checked = shouldSelectAll;
     });
 
-    syncModuleSelectionStyles();
-    syncModuleToggleButton();
+    syncEntitlementSelectionStyles();
+    syncEntitlementToggleButton();
 }
 
 async function bootstrap() {
     const config = await window.licenseGeneratorApi.getConfig();
     state.outputDir = config.outputDir;
 
-    renderModules(config.modules);
+    renderEntitlements(config.entitlements);
     resetSummary();
     updateVisibility();
-    syncModuleSelectionStyles();
-    syncModuleToggleButton();
+    syncEntitlementSelectionStyles();
+    syncEntitlementToggleButton();
 
     form.addEventListener('submit', handleGenerate);
     document.querySelectorAll('input[name="licenseType"]').forEach((radio) => {
         radio.addEventListener('change', updateVisibility);
     });
-    moduleGrid.addEventListener('change', () => {
-        syncModuleSelectionStyles();
-        syncModuleToggleButton();
+    entitlementGrid.addEventListener('change', () => {
+        syncEntitlementSelectionStyles();
+        syncEntitlementToggleButton();
     });
     copyLicenseButton.addEventListener('click', handleCopyLicense);
     pasteMachineButton.addEventListener('click', handlePasteMachineCode);
-    selectAllModulesButton.addEventListener('click', handleSelectAllModules);
+    selectAllEntitlementsButton.addEventListener('click', handleSelectAllEntitlements);
     resetButton.addEventListener('click', handleReset);
 }
 
