@@ -207,6 +207,14 @@
               <el-radio-button value="color">分类</el-radio-button>
             </el-radio-group>
           </div>
+          <div v-if="config.bubblePopMode === 'free'" class="config-item">
+            <label>训练时长</label>
+            <el-radio-group v-model="config.duration" size="large">
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
+            </el-radio-group>
+          </div>
           <div class="config-item">
             <label>泡泡难度</label>
             <el-radio-group v-model="config.bubblePopDifficulty" size="large">
@@ -416,6 +424,14 @@
               <el-radio-button value="color">分类</el-radio-button>
             </el-radio-group>
           </div>
+          <div v-if="config.bubblePopMode === 'free'" class="config-item">
+            <label>训练时长</label>
+            <el-radio-group v-model="config.duration" size="large">
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
+            </el-radio-group>
+          </div>
           <div class="config-item">
             <label>泡泡难度</label>
             <el-radio-group v-model="config.bubblePopDifficulty" size="large">
@@ -549,7 +565,14 @@ const isHandGame = computed(() => [
   TaskID.HAND_BUBBLE_POP,
 ].includes(taskId.value))
 
-const emoji = computed(() => metaData.value?.emoji || props.game.coverImage || '🎮')
+const emoji = computed(() => {
+  const taskId = typeof metaData.value?.taskId === 'number' ? metaData.value.taskId : props.game.legacyId
+  if (taskId === TaskID.HAND_BUBBLE_POP) {
+    return '🎈'
+  }
+
+  return metaData.value?.emoji || props.game.coverImage || '🎮'
+})
 const difficulty = computed(() => {
   if (isWoodBlockPuzzleGame.value) {
     return getWoodBlockDifficultyLabel(config.woodBlockDifficulty)
@@ -572,7 +595,7 @@ const duration = computed(() => {
   }
 
   if (isBubblePopGame.value) {
-    return config.bubblePopMode === 'color' ? '20个目标' : '60秒限时'
+    return config.bubblePopMode === 'color' ? '20个目标' : `${config.duration}秒限时`
   }
 
   return metaData.value?.duration || '3-5分钟'
@@ -580,10 +603,15 @@ const duration = computed(() => {
 
 const categoryLabel = computed(() => {
   const labels: Record<string, string> = {
+    motor: '体感训练',
     visual: '视觉训练',
     audio: '听觉训练',
     tactile: '触觉训练',
-    motor: '体感训练',
+    construction: '结构搭建',
+    coordination: '手眼协调',
+    inhibition: '抑制控制',
+    sorting: '分类整理',
+    tracing: '轨迹描摹',
   }
 
   return labels[props.game.category || ''] || props.game.category || '综合训练'
@@ -651,6 +679,7 @@ function resetConfig() {
   }
 
   if (isBubblePopGame.value) {
+    config.duration = 60
     config.bubblePopMode = 'free'
     config.bubblePopDifficulty = 'normal'
     return
@@ -715,6 +744,9 @@ function buildGameConfig() {
   } else if (isBubblePopGame.value) {
     gameConfig.bubblePopMode = config.bubblePopMode
     gameConfig.bubblePopDifficulty = config.bubblePopDifficulty
+    if (config.bubblePopMode === 'free') {
+      gameConfig.duration = config.duration
+    }
   } else if (isHandGame.value) {
     gameConfig.duration = config.duration
   }

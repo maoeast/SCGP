@@ -72,6 +72,7 @@
             v-else-if="taskId === TaskID.HAND_BUBBLE_POP"
             :student-id="studentId"
             :task-id="taskId"
+            :duration="duration"
             :mode="bubblePopMode"
             :difficulty="bubblePopDifficulty"
             @back="goBack"
@@ -142,6 +143,7 @@
           v-else-if="taskId === TaskID.HAND_BUBBLE_POP"
           :student-id="studentId"
           :task-id="taskId"
+          :duration="duration"
           :mode="bubblePopMode"
           :difficulty="bubblePopDifficulty"
           @back="goBack"
@@ -189,6 +191,7 @@ import {
 import {
   getBubblePopDifficultyLabel,
   getBubblePopModeLabel,
+  sanitizeBubblePopFreeModeDuration,
   sanitizeBubblePopDifficulty,
   sanitizeBubblePopMode,
   type BubblePopDifficultyId,
@@ -349,7 +352,7 @@ const durationLabel = computed(() => {
     }
 
     if (taskId.value === TaskID.HAND_BUBBLE_POP) {
-      const durationLabel = bubblePopMode.value === 'color' ? '20个目标' : '60秒'
+      const durationLabel = bubblePopMode.value === 'color' ? '20个目标' : `${duration.value}秒`
       return `${getBubblePopModeLabel(bubblePopMode.value)} · ${getBubblePopDifficultyLabel(bubblePopDifficulty.value)} · ${durationLabel}`
     }
 
@@ -545,6 +548,10 @@ onMounted(async () => {
 
   if (taskId.value === TaskID.HAND_XYLOPHONE && route.query.duration === undefined) {
     duration.value = 60
+  }
+
+  if (taskId.value === TaskID.HAND_BUBBLE_POP && bubblePopMode.value === 'free') {
+    duration.value = sanitizeBubblePopFreeModeDuration(route.query.duration)
   }
 
   if (!mode.value) {

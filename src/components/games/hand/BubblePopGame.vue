@@ -115,6 +115,7 @@ import {
   advanceBubblePopState,
   createBubblePopState,
   getBubblePopTargetColor,
+  sanitizeBubblePopFreeModeDuration,
   sanitizeBubblePopDifficulty,
   sanitizeBubblePopMode,
   summarizeBubblePopSession,
@@ -122,6 +123,7 @@ import {
   switchBubblePopMode,
   type BubblePopComboBurst,
   type BubblePopDifficultyId,
+  type BubblePopFreeModeDuration,
   type BubblePopModeId,
   type BubblePopState,
 } from '@/components/games/hand/bubble-pop-game'
@@ -137,10 +139,12 @@ import {
 const props = withDefaults(defineProps<{
   studentId: number
   taskId?: TaskID
+  duration?: number
   mode?: BubblePopModeId
   difficulty?: BubblePopDifficultyId
 }>(), {
   taskId: TaskID.HAND_BUBBLE_POP,
+  duration: 60,
   mode: 'free',
   difficulty: 'normal',
 })
@@ -154,12 +158,13 @@ const boardRef = ref<HTMLElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const latestHands = ref<HandObservation[]>([])
 const latestPrimaryPoint = ref<StagePoint | null>(null)
+const freeModeDuration = ref<BubblePopFreeModeDuration>(sanitizeBubblePopFreeModeDuration(props.duration))
 const currentMode = ref<BubblePopModeId>(sanitizeBubblePopMode(props.mode))
 const currentDifficulty = ref<BubblePopDifficultyId>(sanitizeBubblePopDifficulty(props.difficulty))
 const score = ref(0)
 const comboDisplay = ref(1)
 const maxComboDisplay = ref(1)
-const progressValue = ref('60秒')
+const progressValue = ref(`${freeModeDuration.value}秒`)
 const showOverlay = ref(false)
 const finishReason = ref<'timeout' | 'goal' | null>(null)
 const comboBursts = ref<BubblePopComboBurst[]>([])
@@ -180,7 +185,6 @@ const difficultyOptions = [
   { id: 'normal', shortLabel: '普通' },
   { id: 'hard', shortLabel: '困难' },
 ] as const
-
 let animationFrameId = 0
 let resizeObserver: ResizeObserver | null = null
 let audioContext: AudioContext | null = null
@@ -188,6 +192,7 @@ let pointerPressActive = false
 let bubbleState: BubblePopState = createBubblePopState({
   mode: currentMode.value,
   difficulty: currentDifficulty.value,
+  durationMs: freeModeDuration.value * 1000,
   stageSize,
   now: performance.now(),
 })
@@ -210,7 +215,7 @@ const overlaySummary = computed(() => {
     return '这一轮已经记录到结果，可以立刻再玩一次继续练颜色分类。'
   }
 
-  return '60 秒自由戳泡泡训练完成了，马上再来一轮也可以。'
+  return `${freeModeDuration.value} 秒自由模式训练完成了，马上再来一轮也可以。`
 })
 const overlayProgress = computed(() => {
   if (currentMode.value === 'color') {
@@ -536,7 +541,7 @@ function syncUiState(now: number) {
     progressValue.value = `${bubbleState.correctHits}/20`
     targetProgressLabel.value = `${bubbleState.targetProgress}/5`
   } else {
-    const remainingSeconds = Math.max(0, Math.ceil((60_000 - (now - bubbleState.startedAt)) / 1000))
+    const remainingSeconds = Math.max(0, Math.ceil((bubbleState.durationMs - (now - bubbleState.startedAt)) / 1000))
     progressValue.value = `${remainingSeconds}秒`
   }
 }
@@ -585,6 +590,7 @@ function resetRun(now = performance.now()) {
   bubbleState = createBubblePopState({
     mode: currentMode.value,
     difficulty: currentDifficulty.value,
+    durationMs: freeModeDuration.value * 1000,
     stageSize,
     now,
   })
@@ -631,6 +637,11 @@ watch(() => props.mode, (value) => {
 
 watch(() => props.difficulty, (value) => {
   currentDifficulty.value = sanitizeBubblePopDifficulty(value)
+  resetRun()
+})
+
+watch(() => props.duration, (value) => {
+  freeModeDuration.value = sanitizeBubblePopFreeModeDuration(value)
   resetRun()
 })
 

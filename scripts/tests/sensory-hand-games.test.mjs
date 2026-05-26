@@ -349,6 +349,35 @@ test('BubblePopGame consumes the reusable runtime and renders canvas HUD control
   assert.doesNotMatch(source, /class Bubble/)
 })
 
+test('bubble pop free mode exposes 60, 90, and 120 second durations while color mode stays goal-based', () => {
+  const previewSource = readFileSync(resolve(projectRoot, 'src/components/games/GamePreviewCard.vue'), 'utf8')
+  const playSource = readFileSync(resolve(projectRoot, 'src/views/games/GamePlay.vue'), 'utf8')
+  const componentSource = readFileSync(resolve(projectRoot, 'src/components/games/hand/BubblePopGame.vue'), 'utf8')
+  const {
+    BUBBLE_POP_FREE_MODE_DURATIONS,
+    createBubblePopState,
+    advanceBubblePopState,
+  } = jiti('../../src/components/games/hand/bubble-pop-game.ts')
+
+  assert.deepEqual(BUBBLE_POP_FREE_MODE_DURATIONS, [60, 90, 120])
+  assert.match(previewSource, /config\.duration/)
+  assert.match(previewSource, /<el-radio-button :value="60">60/)
+  assert.match(previewSource, /<el-radio-button :value="90">90/)
+  assert.match(previewSource, /<el-radio-button :value="120">120/)
+  assert.match(playSource, /:duration="duration"/)
+  assert.match(componentSource, /duration\?: number/)
+
+  const freeState = createBubblePopState({ mode: 'free', durationMs: 90_000, now: 0 })
+  advanceBubblePopState(freeState, { now: 89_000 })
+  assert.equal(freeState.isFinished, false)
+  advanceBubblePopState(freeState, { now: 90_000 })
+  assert.equal(freeState.finishReason, 'timeout')
+
+  const colorState = createBubblePopState({ mode: 'color', durationMs: 120_000, now: 0 })
+  advanceBubblePopState(colorState, { now: 180_000 })
+  assert.equal(colorState.isFinished, false)
+})
+
 test('AirXylophone song library provides at least three songs per difficulty', () => {
   const {
     AIR_XYLOPHONE_DIFFICULTIES,

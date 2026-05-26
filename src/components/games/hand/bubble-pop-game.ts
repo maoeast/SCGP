@@ -3,6 +3,7 @@ import type { StagePoint, StageSize } from '@/utils/hand-game-gestures'
 
 export type BubblePopModeId = 'free' | 'color'
 export type BubblePopDifficultyId = 'easy' | 'normal' | 'hard'
+export type BubblePopFreeModeDuration = 60 | 90 | 120
 export type BubblePopColorId = 'red' | 'yellow' | 'green' | 'blue' | 'pink' | 'orange'
 export type BubblePopFinishReason = 'timeout' | 'goal'
 
@@ -99,6 +100,7 @@ export interface BubblePopApplyResult {
 export interface BubblePopState {
   mode: BubblePopModeId
   difficulty: BubblePopDifficultyId
+  durationMs: number
   stageSize: StageSize
   startedAt: number
   lastUpdateAt: number
@@ -125,6 +127,7 @@ export interface BubblePopState {
 interface CreateBubblePopStateOptions {
   mode?: BubblePopModeId
   difficulty?: BubblePopDifficultyId
+  durationMs?: number
   stageSize?: StageSize
   now?: number
   random?: () => number
@@ -145,7 +148,9 @@ interface SummarizeBubblePopSessionOptions {
 
 const REFERENCE_STAGE_WIDTH = 1920
 const DEFAULT_STAGE_SIZE: StageSize = { width: 1280, height: 720 }
-const DEFAULT_DURATION_MS = 60_000
+export const BUBBLE_POP_FREE_MODE_DURATIONS: readonly BubblePopFreeModeDuration[] = [60, 90, 120]
+const DEFAULT_FREE_MODE_DURATION_SECONDS: BubblePopFreeModeDuration = 60
+const DEFAULT_FREE_MODE_DURATION_MS = DEFAULT_FREE_MODE_DURATION_SECONDS * 1000
 const COLOR_MODE_GOAL = 20
 const TARGET_SWITCH_BATCH = 5
 const COMBO_RESET_MS = 2500
@@ -299,12 +304,34 @@ export function sanitizeBubblePopDifficulty(
   return value === 'easy' || value === 'normal' || value === 'hard' ? value : fallback
 }
 
+export function sanitizeBubblePopFreeModeDuration(
+  value: unknown,
+  fallback: BubblePopFreeModeDuration = DEFAULT_FREE_MODE_DURATION_SECONDS,
+): BubblePopFreeModeDuration {
+  const normalized = Math.round(Number(value))
+  return BUBBLE_POP_FREE_MODE_DURATIONS.includes(normalized as BubblePopFreeModeDuration)
+    ? normalized as BubblePopFreeModeDuration
+    : fallback
+}
+
+function sanitizeBubblePopFreeModeDurationMs(
+  value: unknown,
+  fallback: number = DEFAULT_FREE_MODE_DURATION_MS,
+) {
+  const fallbackSeconds = sanitizeBubblePopFreeModeDuration(Math.round(fallback / 1000))
+  return sanitizeBubblePopFreeModeDuration(
+    Number.isFinite(Number(value)) ? Math.round(Number(value) / 1000) : value,
+    fallbackSeconds,
+  ) * 1000
+}
+
 export function createBubblePopState(options: CreateBubblePopStateOptions = {}): BubblePopState {
   const random = options.random || Math.random
   const now = options.now ?? 0
   const state: BubblePopState = {
     mode: sanitizeBubblePopMode(options.mode),
     difficulty: sanitizeBubblePopDifficulty(options.difficulty),
+    durationMs: sanitizeBubblePopFreeModeDurationMs(options.durationMs),
     stageSize: options.stageSize || { ...DEFAULT_STAGE_SIZE },
     startedAt: now,
     lastUpdateAt: now,
@@ -520,7 +547,7 @@ export function advanceBubblePopState(state: BubblePopState, options: AdvanceBub
   })
   cleanupEffects(state, now)
 
-  if (state.mode === 'free' && now - state.startedAt >= DEFAULT_DURATION_MS) {
+  if (state.mode === 'free' && now - state.startedAt >= state.durationMs) {
     state.isFinished = true
     state.finishReason = 'timeout'
     state.finishedAt = now
