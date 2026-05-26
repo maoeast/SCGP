@@ -138,7 +138,7 @@ export class IEPGenerator {
       [TaskID.AUDIO_RHYTHM]: '节奏模仿游戏',
       [TaskID.HAND_XYLOPHONE]: '空气木琴',
       [TaskID.HAND_WOOD_BLOCKS]: '木块磁贴拼图',
-      [TaskID.HAND_GESTURE_GARDEN]: '森林手势魔法屋'
+      [TaskID.HAND_BUBBLE_POP]: '打泡泡'
     }
     return names[taskId] || '未知任务'
   }
@@ -165,7 +165,7 @@ export class IEPGenerator {
       sections.push(this.generateAuditoryIntegrationSection(data))
     } else if (taskId === TaskID.AUDIO_RHYTHM) {
       sections.push(this.generateAuditorySequencingSection(data))
-    } else if ([TaskID.HAND_XYLOPHONE, TaskID.HAND_WOOD_BLOCKS, TaskID.HAND_GESTURE_GARDEN].includes(taskId)) {
+    } else if ([TaskID.HAND_XYLOPHONE, TaskID.HAND_WOOD_BLOCKS, TaskID.HAND_BUBBLE_POP].includes(taskId)) {
       sections.push(this.generateHandIntegrationSection(taskId, data))
     }
 
@@ -345,8 +345,8 @@ export class IEPGenerator {
       domain = '双侧协调与节奏控制'
     } else if (taskId === TaskID.HAND_WOOD_BLOCKS) {
       domain = '抓放控制与视觉空间配对'
-    } else if (taskId === TaskID.HAND_GESTURE_GARDEN) {
-      domain = '手势转换与动作序列计划'
+    } else if (taskId === TaskID.HAND_BUBBLE_POP) {
+      domain = '手眼协调与目标抑制控制'
     }
 
     const performance = score >= 80

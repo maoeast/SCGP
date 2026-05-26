@@ -115,14 +115,14 @@ const BASE_SENSORY_GAME_SEED: SensoryGameSeed[] = [
   },
   {
     taskId: 10,
-    name: '森林手势魔法屋',
-    description: '通过张手、握拳等稳定手势唤醒种子、雨云和花朵，训练动作计划与感官反馈整合',
+    name: '打泡泡',
+    description: '用手指去戳漂浮的彩色泡泡，训练手眼协调、连续动作控制和颜色目标抑制',
     category: 'motor',
-    emoji: '🌱',
-    color: 'linear-gradient(135deg, #8fd694 0%, #86c5da 100%)',
-    difficulty: '简单',
-    duration: '2-4分钟',
-    mode: 'gesture-garden',
+    emoji: '🫧',
+    color: 'linear-gradient(135deg, #7dd3fc 0%, #a78bfa 48%, #f9a8d4 100%)',
+    difficulty: '普通-困难',
+    duration: '自由60秒 / 分类20个目标',
+    mode: 'bubble-pop',
   },
 ]
 

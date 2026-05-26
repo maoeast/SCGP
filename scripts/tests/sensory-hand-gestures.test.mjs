@@ -116,3 +116,15 @@ test('maps a landmark directly into normalized mirrored stage coordinates', () =
     { x: 0.8, y: 0.7 },
   )
 })
+
+test('extracts index and middle finger tips for collision checks', () => {
+  const { getCollisionFingerPoints } = loadGestures()
+
+  assert.deepEqual(
+    getCollisionFingerPoints(makeHand()),
+    [
+      { x: 0.62, y: 0.22, z: 0 },
+      { x: 0.52, y: 0.2, z: 0 },
+    ],
+  )
+})

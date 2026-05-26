@@ -469,6 +469,9 @@ const handleStartGame = (gameConfig: {
   targetSize?: number
   targetSpeed?: number
   airXylophoneDifficulty?: string
+  woodBlockDifficulty?: string
+  bubblePopMode?: string
+  bubblePopDifficulty?: string
 }) => {
   console.log('[GameLobby] 开始游戏:', gameConfig)
 
@@ -492,6 +495,15 @@ const handleStartGame = (gameConfig: {
   if (gameConfig.targetSpeed !== undefined) query.targetSpeed = String(gameConfig.targetSpeed)
   if (gameConfig.airXylophoneDifficulty) {
     query.airXylophoneDifficulty = gameConfig.airXylophoneDifficulty
+  }
+  if (gameConfig.woodBlockDifficulty) {
+    query.woodBlockDifficulty = gameConfig.woodBlockDifficulty
+  }
+  if (gameConfig.bubblePopMode) {
+    query.bubblePopMode = gameConfig.bubblePopMode
+  }
+  if (gameConfig.bubblePopDifficulty) {
+    query.bubblePopDifficulty = gameConfig.bubblePopDifficulty
   }
 
   // 跳转到游戏播放页面

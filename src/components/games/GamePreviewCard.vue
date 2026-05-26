@@ -185,6 +185,41 @@
           </div>
         </template>
 
+        <template v-else-if="isWoodBlockPuzzleGame">
+          <div class="config-item">
+            <label>拼图难度</label>
+            <el-radio-group v-model="config.woodBlockDifficulty" size="large">
+              <el-radio-button value="low">简单</el-radio-button>
+              <el-radio-button value="mid">普通</el-radio-button>
+              <el-radio-button value="high">困难</el-radio-button>
+            </el-radio-group>
+            <p class="config-caption">
+              进入训练后仍可在游戏顶部继续切换难度。
+            </p>
+          </div>
+        </template>
+
+        <template v-else-if="isBubblePopGame">
+          <div class="config-item">
+            <label>玩法模式</label>
+            <el-radio-group v-model="config.bubblePopMode" size="large">
+              <el-radio-button value="free">自由</el-radio-button>
+              <el-radio-button value="color">分类</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>泡泡难度</label>
+            <el-radio-group v-model="config.bubblePopDifficulty" size="large">
+              <el-radio-button value="easy">简单</el-radio-button>
+              <el-radio-button value="normal">普通</el-radio-button>
+              <el-radio-button value="hard">困难</el-radio-button>
+            </el-radio-group>
+            <p class="config-caption">
+              进入训练后仍可在游戏顶部继续切换玩法和难度。
+            </p>
+          </div>
+        </template>
+
         <template v-else-if="isHandGame">
           <div class="config-item">
             <label>训练时长</label>
@@ -359,6 +394,41 @@
           </div>
         </template>
 
+        <template v-else-if="isWoodBlockPuzzleGame">
+          <div class="config-item">
+            <label>拼图难度</label>
+            <el-radio-group v-model="config.woodBlockDifficulty" size="large">
+              <el-radio-button value="low">简单</el-radio-button>
+              <el-radio-button value="mid">普通</el-radio-button>
+              <el-radio-button value="high">困难</el-radio-button>
+            </el-radio-group>
+            <p class="config-caption">
+              进入训练后仍可在游戏顶部继续切换难度。
+            </p>
+          </div>
+        </template>
+
+        <template v-else-if="isBubblePopGame">
+          <div class="config-item">
+            <label>玩法模式</label>
+            <el-radio-group v-model="config.bubblePopMode" size="large">
+              <el-radio-button value="free">自由</el-radio-button>
+              <el-radio-button value="color">分类</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="config-item">
+            <label>泡泡难度</label>
+            <el-radio-group v-model="config.bubblePopDifficulty" size="large">
+              <el-radio-button value="easy">简单</el-radio-button>
+              <el-radio-button value="normal">普通</el-radio-button>
+              <el-radio-button value="hard">困难</el-radio-button>
+            </el-radio-group>
+            <p class="config-caption">
+              进入训练后仍可在游戏顶部继续切换玩法和难度。
+            </p>
+          </div>
+        </template>
+
         <template v-else-if="isHandGame">
           <div class="config-item">
             <label>训练时长</label>
@@ -390,6 +460,16 @@ import {
   AIR_XYLOPHONE_DIFFICULTY_OPTIONS,
   type AirXylophoneDifficultyId,
 } from '@/data/air-xylophone-songs'
+import {
+  getWoodBlockDifficultyLabel,
+  type WoodBlockDifficultyId,
+} from '@/components/games/hand/wood-block-puzzle'
+import {
+  getBubblePopDifficultyLabel,
+  getBubblePopModeLabel,
+  type BubblePopDifficultyId,
+  type BubblePopModeId,
+} from '@/components/games/hand/bubble-pop-game'
 import { TaskID, type GridSize } from '@/types/games'
 import type { ResourceItem } from '@/types/module'
 
@@ -416,6 +496,9 @@ const emit = defineEmits<{
     targetSize?: number
     targetSpeed?: number
     airXylophoneDifficulty?: AirXylophoneDifficultyId
+    woodBlockDifficulty?: WoodBlockDifficultyId
+    bubblePopMode?: BubblePopModeId
+    bubblePopDifficulty?: BubblePopDifficultyId
   }]
 }>()
 
@@ -430,6 +513,9 @@ const config = reactive({
   targetSize: 128,
   targetSpeed: 2,
   airXylophoneDifficulty: 'medium' as AirXylophoneDifficultyId,
+  woodBlockDifficulty: 'mid' as WoodBlockDifficultyId,
+  bubblePopMode: 'free' as BubblePopModeId,
+  bubblePopDifficulty: 'normal' as BubblePopDifficultyId,
 })
 
 const metaData = computed(() => {
@@ -455,15 +541,42 @@ const isAudioDiffGame = computed(() => taskId.value === TaskID.AUDIO_DIFF)
 const isAudioCommandGame = computed(() => taskId.value === TaskID.AUDIO_COMMAND)
 const isAudioRhythmGame = computed(() => taskId.value === TaskID.AUDIO_RHYTHM)
 const isAirXylophoneGame = computed(() => taskId.value === TaskID.HAND_XYLOPHONE)
+const isWoodBlockPuzzleGame = computed(() => taskId.value === TaskID.HAND_WOOD_BLOCKS)
+const isBubblePopGame = computed(() => taskId.value === TaskID.HAND_BUBBLE_POP)
 const isHandGame = computed(() => [
   TaskID.HAND_XYLOPHONE,
   TaskID.HAND_WOOD_BLOCKS,
-  TaskID.HAND_GESTURE_GARDEN,
+  TaskID.HAND_BUBBLE_POP,
 ].includes(taskId.value))
 
 const emoji = computed(() => metaData.value?.emoji || props.game.coverImage || '🎮')
-const difficulty = computed(() => metaData.value?.difficulty || '中等')
-const duration = computed(() => metaData.value?.duration || '3-5分钟')
+const difficulty = computed(() => {
+  if (isWoodBlockPuzzleGame.value) {
+    return getWoodBlockDifficultyLabel(config.woodBlockDifficulty)
+  }
+
+  if (isBubblePopGame.value) {
+    return `${getBubblePopModeLabel(config.bubblePopMode)} · ${getBubblePopDifficultyLabel(config.bubblePopDifficulty)}`
+  }
+
+  return metaData.value?.difficulty || '中等'
+})
+const duration = computed(() => {
+  if (isWoodBlockPuzzleGame.value) {
+    const labels: Record<WoodBlockDifficultyId, string> = {
+      low: '完成目标',
+      mid: '60秒限时',
+      high: '40秒限时',
+    }
+    return labels[config.woodBlockDifficulty]
+  }
+
+  if (isBubblePopGame.value) {
+    return config.bubblePopMode === 'color' ? '20个目标' : '60秒限时'
+  }
+
+  return metaData.value?.duration || '3-5分钟'
+})
 
 const categoryLabel = computed(() => {
   const labels: Record<string, string> = {
@@ -532,6 +645,17 @@ function resetConfig() {
     return
   }
 
+  if (isWoodBlockPuzzleGame.value) {
+    config.woodBlockDifficulty = 'mid'
+    return
+  }
+
+  if (isBubblePopGame.value) {
+    config.bubblePopMode = 'free'
+    config.bubblePopDifficulty = 'normal'
+    return
+  }
+
   if (isHandGame.value) {
     config.duration = 60
   }
@@ -556,6 +680,9 @@ function buildGameConfig() {
     targetSize?: number
     targetSpeed?: number
     airXylophoneDifficulty?: AirXylophoneDifficultyId
+    woodBlockDifficulty?: WoodBlockDifficultyId
+    bubblePopMode?: BubblePopModeId
+    bubblePopDifficulty?: BubblePopDifficultyId
   } = {
     resourceId: props.game.id,
     taskId: taskId.value,
@@ -583,6 +710,11 @@ function buildGameConfig() {
   } else if (isAirXylophoneGame.value) {
     gameConfig.duration = config.duration
     gameConfig.airXylophoneDifficulty = config.airXylophoneDifficulty
+  } else if (isWoodBlockPuzzleGame.value) {
+    gameConfig.woodBlockDifficulty = config.woodBlockDifficulty
+  } else if (isBubblePopGame.value) {
+    gameConfig.bubblePopMode = config.bubblePopMode
+    gameConfig.bubblePopDifficulty = config.bubblePopDifficulty
   } else if (isHandGame.value) {
     gameConfig.duration = config.duration
   }
@@ -836,6 +968,13 @@ watch(
   font-size: 14px;
   font-weight: 500;
   color: #606266;
+}
+
+.config-caption {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #909399;
 }
 
 .config-item .el-radio-group {

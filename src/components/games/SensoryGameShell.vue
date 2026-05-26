@@ -7,6 +7,7 @@
       'sensory-shell--rhythm': theme === 'rhythm',
       'sensory-shell--color-match': theme === 'color-match',
       'sensory-shell--shape-match': theme === 'shape-match',
+      'sensory-shell--bubble-pop': theme === 'bubble-pop',
     }"
   >
     <div class="sensory-shell__backdrop" aria-hidden="true">
@@ -37,7 +38,7 @@
       </template>
     </div>
 
-    <header class="sensory-shell__toolbar">
+    <header v-if="theme !== 'bubble-pop'" class="sensory-shell__toolbar">
       <button class="sensory-shell__back-button" type="button" @click="emit('back')">
         返回准备页
       </button>
@@ -80,7 +81,7 @@ const props = withDefaults(defineProps<{
   entryLabel?: string
   modeLabel: string
   durationLabel?: string
-  theme?: 'default' | 'audio-diff' | 'audio-command' | 'rhythm' | 'color-match' | 'shape-match'
+  theme?: 'default' | 'audio-diff' | 'audio-command' | 'rhythm' | 'color-match' | 'shape-match' | 'bubble-pop'
 }>(), {
   summary: '请使用手指直接操作训练内容，系统会自动记录本次训练结果。',
   studentName: '',
@@ -889,6 +890,32 @@ void props
   background: transparent;
   box-shadow: none;
   backdrop-filter: none;
+}
+
+.sensory-shell--bubble-pop {
+  height: 100%;
+}
+
+.sensory-shell--bubble-pop .sensory-shell__title-group,
+.sensory-shell--bubble-pop .sensory-shell__meta {
+  display: none;
+}
+
+.sensory-shell--bubble-pop .sensory-shell__stage {
+  margin-top: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.sensory-shell--bubble-pop .sensory-shell__back-button {
+  min-height: 42px;
+  padding: 0 16px;
 }
 
 .sensory-shell--audio-command {

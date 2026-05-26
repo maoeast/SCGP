@@ -23,12 +23,26 @@ export interface NormalizedRect {
 
 export type HandPose = 'open' | 'fist' | 'pinch' | 'unknown'
 
+export interface HandPoseAnalysis {
+  averageDistance: number
+  confidence: number
+  openness: number
+  pinchDistance: number
+  pose: HandPose
+}
+
 const THUMB_TIP = 4
 const INDEX_TIP = 8
 const MIDDLE_TIP = 12
 const RING_TIP = 16
 const PINKY_TIP = 20
 const PALM_CENTER = 9
+const FIST_REFERENCE = 0.095
+const OPEN_REFERENCE = 0.215
+
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value))
+}
 
 export function distance2d(a: HandPoint, b: HandPoint): number {
   return Math.hypot(a.x - b.x, a.y - b.y)
@@ -44,18 +58,28 @@ export function isPinching(landmarks: HandPoint[], threshold = 0.055): boolean {
   return distance2d(thumb, index) <= threshold
 }
 
-export function classifyHandPose(landmarks: HandPoint[]): HandPose {
+export function analyzeHandPose(landmarks: HandPoint[]): HandPoseAnalysis {
   if (landmarks.length < 21) {
-    return 'unknown'
-  }
-
-  if (isPinching(landmarks)) {
-    return 'pinch'
+    return {
+      averageDistance: 0,
+      confidence: 0,
+      openness: 0,
+      pinchDistance: Number.POSITIVE_INFINITY,
+      pose: 'unknown',
+    }
   }
 
   const palm = landmarks[PALM_CENTER]
+  const thumb = landmarks[THUMB_TIP]
+  const index = landmarks[INDEX_TIP]
   if (!palm) {
-    return 'unknown'
+    return {
+      averageDistance: 0,
+      confidence: 0,
+      openness: 0,
+      pinchDistance: Number.POSITIVE_INFINITY,
+      pose: 'unknown',
+    }
   }
 
   const fingertipIndexes = [INDEX_TIP, MIDDLE_TIP, RING_TIP, PINKY_TIP]
@@ -65,20 +89,43 @@ export function classifyHandPose(landmarks: HandPoint[]): HandPose {
     .map((point) => distance2d(point, palm))
 
   if (distances.length !== fingertipIndexes.length) {
-    return 'unknown'
+    return {
+      averageDistance: 0,
+      confidence: 0,
+      openness: 0,
+      pinchDistance: Number.POSITIVE_INFINITY,
+      pose: 'unknown',
+    }
   }
 
   const averageDistance = distances.reduce((sum, value) => sum + value, 0) / distances.length
+  const pinchDistance = thumb && index ? distance2d(thumb, index) : Number.POSITIVE_INFINITY
 
-  if (averageDistance <= 0.105) {
-    return 'fist'
+  if (pinchDistance <= 0.055) {
+    return {
+      averageDistance,
+      confidence: clamp01(1 - pinchDistance / 0.055),
+      openness: clamp01((averageDistance - FIST_REFERENCE) / (OPEN_REFERENCE - FIST_REFERENCE)),
+      pinchDistance,
+      pose: 'pinch',
+    }
   }
 
-  if (averageDistance >= 0.18) {
-    return 'open'
-  }
+  const openness = clamp01((averageDistance - FIST_REFERENCE) / (OPEN_REFERENCE - FIST_REFERENCE))
+  const pose = openness >= 0.5 ? 'open' : 'fist'
+  const confidence = clamp01(Math.abs(openness - 0.5) * 2)
 
-  return 'unknown'
+  return {
+    averageDistance,
+    confidence,
+    openness,
+    pinchDistance,
+    pose: confidence < 0.04 ? 'unknown' : pose,
+  }
+}
+
+export function classifyHandPose(landmarks: HandPoint[]): HandPose {
+  return analyzeHandPose(landmarks).pose
 }
 
 export function detectDownwardStrike(
@@ -137,4 +184,13 @@ export function findRectHit(point: StagePoint, rects: NormalizedRect[]): number 
 
 export function getPrimaryFingerPoint(landmarks: HandPoint[]): HandPoint | null {
   return landmarks[INDEX_TIP] || null
+}
+
+export function getCollisionFingerPoints(
+  landmarks: HandPoint[],
+  indexes: number[] = [INDEX_TIP, MIDDLE_TIP],
+): HandPoint[] {
+  return indexes
+    .map((index) => landmarks[index])
+    .filter((point): point is HandPoint => Boolean(point))
 }

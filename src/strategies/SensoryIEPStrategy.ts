@@ -209,7 +209,10 @@ export class SensoryIEPStrategy implements IEPStrategy {
       4: '视觉追踪游戏',
       5: '声音辨别游戏',
       6: '听指令做动作',
-      7: '节奏模仿游戏'
+      7: '节奏模仿游戏',
+      8: '空气木琴',
+      9: '木块磁贴拼图',
+      10: '打泡泡'
     }
     const taskName = taskNames[data.taskId] || '未知任务'
 
@@ -255,7 +258,10 @@ export class SensoryIEPStrategy implements IEPStrategy {
       4: '视觉追踪游戏',
       5: '声音辨别游戏',
       6: '听指令做动作',
-      7: '节奏模仿游戏'
+      7: '节奏模仿游戏',
+      8: '空气木琴',
+      9: '木块磁贴拼图',
+      10: '打泡泡'
     }
 
     const sections = this.generateGameSections(taskId, sessionData)

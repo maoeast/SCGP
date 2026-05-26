@@ -64,13 +64,17 @@
             v-else-if="taskId === TaskID.HAND_WOOD_BLOCKS"
             :student-id="studentId"
             :task-id="taskId"
+            :difficulty="woodBlockDifficulty"
             @finish="handleGameFinish"
           />
 
-          <GestureGardenGame
-            v-else-if="taskId === TaskID.HAND_GESTURE_GARDEN"
+          <BubblePopGame
+            v-else-if="taskId === TaskID.HAND_BUBBLE_POP"
             :student-id="studentId"
             :task-id="taskId"
+            :mode="bubblePopMode"
+            :difficulty="bubblePopDifficulty"
+            @back="goBack"
             @finish="handleGameFinish"
           />
 
@@ -130,13 +134,17 @@
           v-else-if="taskId === TaskID.HAND_WOOD_BLOCKS"
           :student-id="studentId"
           :task-id="taskId"
+          :difficulty="woodBlockDifficulty"
           @finish="handleGameFinish"
         />
 
-        <GestureGardenGame
-          v-else-if="taskId === TaskID.HAND_GESTURE_GARDEN"
+        <BubblePopGame
+          v-else-if="taskId === TaskID.HAND_BUBBLE_POP"
           :student-id="studentId"
           :task-id="taskId"
+          :mode="bubblePopMode"
+          :difficulty="bubblePopDifficulty"
+          @back="goBack"
           @finish="handleGameFinish"
         />
 
@@ -164,7 +172,7 @@ import { Loading } from '@element-plus/icons-vue'
 import SensoryGameShell from '@/components/games/SensoryGameShell.vue'
 import GameAudio from '@/components/games/audio/GameAudio.vue'
 import HandXylophoneGame from '@/components/games/hand/AirXylophoneGame.vue'
-import GestureGardenGame from '@/components/games/hand/GestureGardenGame.vue'
+import BubblePopGame from '@/components/games/hand/BubblePopGame.vue'
 import WoodBlockPuzzleGame from '@/components/games/hand/WoodBlockPuzzleGame.vue'
 import GameGrid from '@/components/games/visual/GameGrid.vue'
 import VisualTracker from '@/components/games/visual/VisualTracker.vue'
@@ -172,6 +180,20 @@ import {
   resolveAirXylophoneDifficulty,
   type AirXylophoneDifficultyId,
 } from '@/data/air-xylophone-songs'
+import {
+  WOOD_BLOCK_DIFFICULTIES,
+  getWoodBlockDifficultyLabel,
+  sanitizeWoodBlockDifficulty,
+  type WoodBlockDifficultyId,
+} from '@/components/games/hand/wood-block-puzzle'
+import {
+  getBubblePopDifficultyLabel,
+  getBubblePopModeLabel,
+  sanitizeBubblePopDifficulty,
+  sanitizeBubblePopMode,
+  type BubblePopDifficultyId,
+  type BubblePopModeId,
+} from '@/components/games/hand/bubble-pop-game'
 import { DatabaseAPI, GameTrainingAPI } from '@/database/api'
 import { ResourceAPI } from '@/database/resource-api'
 import { TaskID, type GameAudioMode, type GameGridMode, type GameSessionData } from '@/types/games'
@@ -203,6 +225,15 @@ const targetSpeed = ref<number>(Number(route.query.targetSpeed) || 2)
 const airXylophoneDifficulty = ref<AirXylophoneDifficultyId>(
   resolveAirXylophoneDifficulty(String(route.query.airXylophoneDifficulty || 'medium')).id,
 )
+const woodBlockDifficulty = ref<WoodBlockDifficultyId>(
+  sanitizeWoodBlockDifficulty(route.query.woodBlockDifficulty),
+)
+const bubblePopMode = ref<BubblePopModeId>(
+  sanitizeBubblePopMode(route.query.bubblePopMode),
+)
+const bubblePopDifficulty = ref<BubblePopDifficultyId>(
+  sanitizeBubblePopDifficulty(route.query.bubblePopDifficulty),
+)
 
 const legacyTaskId = ref<number>(Number(route.query.taskId) || 0)
 const legacyMode = ref<string>((route.query.mode as string) || '')
@@ -227,7 +258,7 @@ const isHandGame = computed(() => {
   return taskId.value !== null && [
     TaskID.HAND_XYLOPHONE,
     TaskID.HAND_WOOD_BLOCKS,
-    TaskID.HAND_GESTURE_GARDEN,
+    TaskID.HAND_BUBBLE_POP,
   ].includes(taskId.value)
 })
 
@@ -236,6 +267,7 @@ const sensoryShellTheme = computed(() => {
   if (taskId.value === TaskID.AUDIO_RHYTHM) return 'rhythm'
   if (taskId.value === TaskID.AUDIO_DIFF) return 'audio-diff'
   if (taskId.value === TaskID.AUDIO_COMMAND) return 'audio-command'
+  if (taskId.value === TaskID.HAND_BUBBLE_POP) return 'bubble-pop'
   if (isHandGame.value) return 'shape-match'
   if (taskId.value === TaskID.COLOR_MATCH) return 'color-match'
   if (taskId.value === TaskID.SHAPE_MATCH || taskId.value === TaskID.ICON_MATCH) return 'shape-match'
@@ -252,7 +284,7 @@ const taskNames: Record<number, string> = {
   [TaskID.AUDIO_RHYTHM]: '节奏模仿',
   [TaskID.HAND_XYLOPHONE]: '空气木琴',
   [TaskID.HAND_WOOD_BLOCKS]: '木块磁贴拼图',
-  [TaskID.HAND_GESTURE_GARDEN]: '森林手势魔法屋',
+  [TaskID.HAND_BUBBLE_POP]: '打泡泡',
 }
 
 const modeLabel = computed(() => {
@@ -265,7 +297,7 @@ const modeLabel = computed(() => {
   if (taskId.value === TaskID.AUDIO_RHYTHM) return '节奏模仿'
   if (taskId.value === TaskID.HAND_XYLOPHONE) return '体感节奏'
   if (taskId.value === TaskID.HAND_WOOD_BLOCKS) return '抓放配对'
-  if (taskId.value === TaskID.HAND_GESTURE_GARDEN) return '手势计划'
+  if (taskId.value === TaskID.HAND_BUBBLE_POP) return '手眼戳击'
   return mode.value || '综合训练'
 })
 
@@ -292,6 +324,10 @@ const gameSummary = computed(() => {
   }
 
   if (isHandGame.value) {
+    if (taskId.value === TaskID.HAND_BUBBLE_POP) {
+      return '把手伸向漂浮泡泡做连续戳击，也可以切换到颜色分类模式训练抑制控制和目标命中。'
+    }
+
     return '通过摄像头识别手部动作，也支持鼠标或触摸备用操作，用节奏敲击、抓放匹配和手势转换训练动作计划与感官统合。'
   }
 
@@ -300,16 +336,32 @@ const gameSummary = computed(() => {
 
 const durationLabel = computed(() => {
   const resourceDuration = gameResource.value?.metadata?.duration
-  if (typeof resourceDuration === 'string' && resourceDuration.trim()) {
-    return resourceDuration
+  if (isHandGame.value) {
+    if (taskId.value === TaskID.HAND_XYLOPHONE) {
+      return `${duration.value}秒`
+    }
+
+    if (taskId.value === TaskID.HAND_WOOD_BLOCKS) {
+      const config = WOOD_BLOCK_DIFFICULTIES[woodBlockDifficulty.value]
+      return config.timeLimit > 0
+        ? `${getWoodBlockDifficultyLabel(woodBlockDifficulty.value)} · ${config.timeLimit}秒`
+        : `${getWoodBlockDifficultyLabel(woodBlockDifficulty.value)} · 完成目标`
+    }
+
+    if (taskId.value === TaskID.HAND_BUBBLE_POP) {
+      const durationLabel = bubblePopMode.value === 'color' ? '20个目标' : '60秒'
+      return `${getBubblePopModeLabel(bubblePopMode.value)} · ${getBubblePopDifficultyLabel(bubblePopDifficulty.value)} · ${durationLabel}`
+    }
+
+    return '完成目标'
   }
 
   if (taskId.value === TaskID.VISUAL_TRACK) {
     return `${duration.value}秒`
   }
 
-  if (isHandGame.value) {
-    return taskId.value === TaskID.HAND_XYLOPHONE ? `${duration.value}秒` : '完成目标'
+  if (typeof resourceDuration === 'string' && resourceDuration.trim()) {
+    return resourceDuration
   }
 
   if (isGridGame.value || isAudioGame.value) {

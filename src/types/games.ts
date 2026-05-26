@@ -13,7 +13,7 @@ export enum TaskID {
   AUDIO_RHYTHM = 7,     // 节奏模仿
   HAND_XYLOPHONE = 8,   // 空气木琴
   HAND_WOOD_BLOCKS = 9, // 木块磁贴拼图
-  HAND_GESTURE_GARDEN = 10 // 森林手势魔法屋
+  HAND_BUBBLE_POP = 10 // 打泡泡
 }
 
 /**
@@ -29,7 +29,7 @@ export type GameAudioMode = 'diff' | 'command' | 'rhythm'
 /**
  * 摄像头手势游戏模式
  */
-export type GameHandMode = 'hand-xylophone' | 'wood-blocks' | 'gesture-garden'
+export type GameHandMode = 'hand-xylophone' | 'wood-blocks' | 'bubble-pop'
 
 /**
  * 网格尺寸
