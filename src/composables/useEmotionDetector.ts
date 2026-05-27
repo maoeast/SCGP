@@ -42,7 +42,7 @@ const BLENDSHAPE_MAP: Record<string, keyof BlendshapeScores> = {
   'eyeBlinkRight': 'eyeBlinkRight',
 }
 
-const EMPTY_SCORES: EmotionScores = { Happy: 0, Surprised: 0, Angry: 0, Neutral: 0 }
+const EMPTY_SCORES: EmotionScores = { Happy: 0, Surprised: 0, Angry: 0, Sad: 0, Fearful: 0, Neutral: 0 }
 
 // ---------------------------------------------------------------------------
 // Emotion scoring from blendshapes (PRD formulas)
@@ -56,6 +56,9 @@ function computeScores(blendshapes: BlendshapeScores, baseline: EmotionBaseline 
   let eyeWideR = blendshapes.eyeWideRight
   let browDownL = blendshapes.browDownLeft
   let browDownR = blendshapes.browDownRight
+  let browInnerUp = blendshapes.browInnerUp
+  let frownL = blendshapes.mouthFrownLeft
+  let frownR = blendshapes.mouthFrownRight
 
   // Subtract baseline so individual resting offsets don't bias scores
   if (baseline) {
@@ -67,19 +70,32 @@ function computeScores(blendshapes: BlendshapeScores, baseline: EmotionBaseline 
     eyeWideR = Math.max(0, eyeWideR - (b.eyeWideRight ?? 0))
     browDownL = Math.max(0, browDownL - (b.browDownLeft ?? 0))
     browDownR = Math.max(0, browDownR - (b.browDownRight ?? 0))
+    browInnerUp = Math.max(0, browInnerUp - (b.browInnerUp ?? 0))
+    frownL = Math.max(0, frownL - (b.mouthFrownLeft ?? 0))
+    frownR = Math.max(0, frownR - (b.mouthFrownRight ?? 0))
   }
 
   const happy = (smileL + smileR) / 2
   const surprised = jawOpen * 0.6 + eyeWideL * 0.2 + eyeWideR * 0.2
   const angry = (browDownL + browDownR) / 2
 
+  // Sad: mouth corners pulling down + inner brows rising (puppy-eyes)
+  const sad = (frownL + frownR) / 2 * 0.6 + browInnerUp * 0.4
+
+  // Fearful: wide eyes + raised inner brows + slight jaw drop, but NOT a smile
+  const fearful = Math.max(0,
+    (eyeWideL + eyeWideR) / 2 * 0.3 + browInnerUp * 0.4 + jawOpen * 0.3 - happy * 0.5
+  )
+
   // Neutral: all primary muscle weights < 0.2
-  const neutral = (happy < 0.2 && surprised < 0.2 && angry < 0.2) ? 1 : 0
+  const neutral = (happy < 0.2 && surprised < 0.2 && angry < 0.2 && sad < 0.2 && fearful < 0.2) ? 1 : 0
 
   return {
     Happy: clamp01(happy),
     Surprised: clamp01(surprised),
     Angry: clamp01(angry),
+    Sad: clamp01(sad),
+    Fearful: clamp01(fearful),
     Neutral: clamp01(neutral),
   }
 }
@@ -90,6 +106,8 @@ function getDominantEmotion(scores: EmotionScores): EmotionType {
   let maxVal = scores.Happy
   if (scores.Surprised > maxVal) { max = 'Surprised'; maxVal = scores.Surprised }
   if (scores.Angry > maxVal) { max = 'Angry'; maxVal = scores.Angry }
+  if (scores.Sad > maxVal) { max = 'Sad'; maxVal = scores.Sad }
+  if (scores.Fearful > maxVal) { max = 'Fearful'; maxVal = scores.Fearful }
   return maxVal > 0.15 ? max : 'Neutral'
 }
 

@@ -1,5 +1,10 @@
 import type { ModuleCode } from '@/types/module'
 import type { TrainingEntryCode } from '@/utils/training-entry'
+import type {
+  GameMusicDuckMode,
+  GameMusicProfileId,
+  GameMusicStateId,
+} from '@/audio/game-music-profiles'
 
 export type EmotionGameCode =
   | 'G01_BALLOON'
@@ -7,6 +12,7 @@ export type EmotionGameCode =
   | 'G04_WIPE_ICE'
   | 'G07_MONSTER'
   | 'G08_ENERGY_BALL'
+  | 'G09_EXPRESSION_DETECTIVE'
 
 export type CustomGameCode = EmotionGameCode | (string & {})
 export type EmotionGameDifficulty = 1 | 2 | 3
@@ -46,8 +52,10 @@ export interface StudentBadge {
 }
 
 export interface EmotionGameSettings {
-  backgroundVolume: number
+  musicEnabled: boolean
+  musicVolume: number
   effectsEnabled: boolean
+  backgroundVolume: number
 }
 
 export interface EmotionGameBadgePayload {
@@ -90,6 +98,12 @@ export interface LegacyEmotionGameCompletionPayload {
 
 export interface EmotionGameAudioController {
   ensureReady: () => Promise<void>
+  setProfile: (profileId: GameMusicProfileId) => void
+  setState: (state: GameMusicStateId) => void
+  duckMusic: (mode: GameMusicDuckMode) => void
+  restoreMusic: () => void
+  stopMusic: () => void
+  dispose: () => void
   startAmbient: () => Promise<void>
   stopAmbient: () => void
   startBreathCue: () => Promise<void>

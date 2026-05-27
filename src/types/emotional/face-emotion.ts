@@ -75,7 +75,7 @@ export interface BlendshapeScores {
 // Game-level types
 // ---------------------------------------------------------------------------
 
-export type EmotionType = 'Happy' | 'Surprised' | 'Angry' | 'Neutral'
+export type EmotionType = 'Happy' | 'Surprised' | 'Angry' | 'Sad' | 'Fearful' | 'Neutral'
 
 export type AppState = 'CALIBRATION' | 'PLAYING' | 'RESTING'
 
@@ -84,6 +84,8 @@ export interface EmotionScores {
   Happy: number
   Surprised: number
   Angry: number
+  Sad: number
+  Fearful: number
   Neutral: number
 }
 
