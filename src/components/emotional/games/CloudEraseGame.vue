@@ -3,6 +3,8 @@
     <canvas ref="celebrationCanvas" class="celebration-canvas" />
 
     <HandCameraLayer :paused="paused" @primary-point="onPrimaryPoint">
+      <template #default="{ usingPointerFallback }">
+      {{ void (pointerFallbackMode = usingPointerFallback) }}
       <div class="scene-bg" :style="{ background: theme.skyGradient }">
         <div class="aurora-glow" :style="{ background: theme.glowGradient }" />
         <span
@@ -79,7 +81,7 @@
         </div>
       </div>
 
-      <canvas ref="frostCanvas" class="frost-canvas" />
+      <canvas ref="frostCanvas" class="frost-canvas" @pointerdown="handlePointerDown" />
       <canvas ref="particleCanvas" class="particle-canvas" />
 
       <transition name="instruction-fade">
@@ -99,6 +101,7 @@
           <div class="progress-marker" :style="{ left: `${Math.round(difficultyConfig.targetRatio * 100)}%` }" />
         </div>
       </div>
+      </template>
     </HandCameraLayer>
   </div>
 </template>
@@ -304,6 +307,7 @@ const strokeDistancePx = ref(0)
 const regenEvents = ref(0)
 const idleRecoverMs = ref(0)
 const showInstruction = ref(true)
+const pointerFallbackMode = ref(false)
 
 const sparkles = SPARKLES
 
@@ -343,6 +347,7 @@ const MAX_CLOUD_PARTICLES = 200
 
 let handLastPoint: Point | null = null
 let handActive = false
+let pointerId: number | null = null
 
 const difficultyConfig = computed(() => DIFFICULTY_CONFIGS[props.difficulty])
 
@@ -638,6 +643,8 @@ function maybeCompleteSession() {
   phase.value = 'celebrating'
   handActive = false
   handLastPoint = null
+  pointerId = null
+  detachPointerListeners()
   stopRegenLoop()
   props.audio.playSuccessCue().catch(() => {
     // ignore
@@ -678,6 +685,7 @@ function buildPerformanceData() {
 }
 
 function onPrimaryPoint(point: StagePoint | null) {
+  if (pointerFallbackMode.value) return
   if (props.paused || completed) return
 
   const canvas = frostCanvas.value
@@ -730,6 +738,83 @@ function onPrimaryPoint(point: StagePoint | null) {
 
 function onHands(_hands: HandObservation[]) {
   // Multi-hand support placeholder
+}
+
+function getLocalPoint(event: PointerEvent): Point | null {
+  const canvas = frostCanvas.value
+  if (!canvas) return null
+  const rect = canvas.getBoundingClientRect()
+  if (!rect.width || !rect.height) return null
+  return {
+    x: Math.max(0, Math.min(canvas.width, ((event.clientX - rect.left) / rect.width) * canvas.width)),
+    y: Math.max(0, Math.min(canvas.height, ((event.clientY - rect.top) / rect.height) * canvas.height)),
+  }
+}
+
+function handlePointerDown(event: PointerEvent) {
+  if (!pointerFallbackMode.value || props.paused || completed) return
+  const point = getLocalPoint(event)
+  if (!point) return
+
+  event.preventDefault()
+  pointerId = event.pointerId
+  handActive = true
+  handLastPoint = point
+  markDirtyOnce()
+  beginWipingState()
+  totalStrokes.value += 1
+  lastInteractionAt = performance.now()
+  regenActive = false
+
+  if (showInstruction.value) {
+    showInstruction.value = false
+  }
+
+  props.audio.ensureReady().then(() => props.audio.startAmbient()).catch(() => {
+    // ignore
+  })
+
+  stampVisualErase(point.x, point.y)
+  applyBrushToGrid(point.x, point.y)
+  scheduleFrostRender()
+  attachPointerListeners()
+  maybeCompleteSession()
+}
+
+function handlePointerMove(event: PointerEvent) {
+  if (pointerId === null || event.pointerId !== pointerId || props.paused || completed) return
+  const point = getLocalPoint(event)
+  if (!point || !handLastPoint) return
+
+  event.preventDefault()
+  beginWipingState()
+  paintInterpolatedStroke(handLastPoint, point)
+  handLastPoint = point
+  lastInteractionAt = performance.now()
+  regenActive = false
+  scheduleFrostRender()
+  maybeCompleteSession()
+}
+
+function finishPointer(event?: PointerEvent) {
+  if (pointerId === null) return
+  if (event && event.pointerId !== pointerId) return
+  pointerId = null
+  handActive = false
+  handLastPoint = null
+  detachPointerListeners()
+}
+
+function attachPointerListeners() {
+  window.addEventListener('pointermove', handlePointerMove, { passive: false })
+  window.addEventListener('pointerup', finishPointer)
+  window.addEventListener('pointercancel', finishPointer)
+}
+
+function detachPointerListeners() {
+  window.removeEventListener('pointermove', handlePointerMove)
+  window.removeEventListener('pointerup', finishPointer)
+  window.removeEventListener('pointercancel', finishPointer)
 }
 
 function spawnCloudParticles(x: number, y: number, count: number) {
@@ -969,6 +1054,8 @@ function resetForDifficulty() {
   regenActive = false
   handActive = false
   handLastPoint = null
+  pointerId = null
+  detachPointerListeners()
   phase.value = 'ready'
   clearedRatio.value = 0
   totalStrokes.value = 0
@@ -1002,6 +1089,10 @@ watch(() => props.paused, (paused) => {
   if (paused) {
     stopRegenLoop()
     stopCelebration()
+    detachPointerListeners()
+    pointerId = null
+    handActive = false
+    handLastPoint = null
     props.audio.stopAll()
     return
   }
@@ -1012,11 +1103,19 @@ watch(() => props.paused, (paused) => {
   }
 })
 
+watch(pointerFallbackMode, () => {
+  handActive = false
+  handLastPoint = null
+  pointerId = null
+  detachPointerListeners()
+})
+
 onBeforeUnmount(() => {
   clearTimeouts()
   stopRegenLoop()
   stopCelebration()
   stopCloudParticles()
+  detachPointerListeners()
   if (renderFrame) {
     window.cancelAnimationFrame(renderFrame)
   }
