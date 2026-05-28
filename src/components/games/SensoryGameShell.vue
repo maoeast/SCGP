@@ -39,9 +39,21 @@
     </div>
 
     <header v-if="theme !== 'bubble-pop'" class="sensory-shell__toolbar">
+      <div class="sensory-shell__actions">
       <button class="sensory-shell__back-button" type="button" @click="emit('back')">
         返回准备页
       </button>
+
+        <!-- 背景音乐设置 -->
+        <GameMusicSettingsMenu
+          :music-available="musicAvailable"
+          :music-enabled="musicEnabled"
+          :music-volume="musicVolume"
+          :effects-enabled="effectsEnabled"
+          :tone="theme === 'default' || theme === 'rhythm' || theme === 'color-match' ? 'light' : 'dark'"
+          @change="emit('updateAudioSettings', $event)"
+        />
+      </div>
 
       <div class="sensory-shell__title-group">
         <span class="sensory-shell__eyebrow">{{ entryLabel }}</span>
@@ -74,6 +86,9 @@
 </template>
 
 <script setup lang="ts">
+import type { SharedGameAudioSettings } from '@/audio/game-audio-settings'
+import GameMusicSettingsMenu from '@/components/games/GameMusicSettingsMenu.vue'
+
 const props = withDefaults(defineProps<{
   title: string
   summary?: string
@@ -81,17 +96,23 @@ const props = withDefaults(defineProps<{
   entryLabel?: string
   modeLabel: string
   durationLabel?: string
+  musicAvailable?: boolean
+  musicEnabled: boolean
+  musicVolume: number
+  effectsEnabled: boolean
   theme?: 'default' | 'audio-diff' | 'audio-command' | 'rhythm' | 'color-match' | 'shape-match' | 'bubble-pop'
 }>(), {
   summary: '请使用手指直接操作训练内容，系统会自动记录本次训练结果。',
   studentName: '',
   entryLabel: '感官统合训练',
   durationLabel: '',
+  musicAvailable: true,
   theme: 'default',
 })
 
 const emit = defineEmits<{
   back: []
+  updateAudioSettings: [settings: SharedGameAudioSettings]
 }>()
 
 void props
@@ -347,6 +368,12 @@ void props
   backdrop-filter: blur(18px);
 }
 
+.sensory-shell__actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
 .sensory-shell__back-button {
   align-self: start;
   min-height: 58px;
@@ -489,6 +516,12 @@ void props
   background: transparent;
   box-shadow: none;
   backdrop-filter: none;
+}
+
+.sensory-shell--audio-diff .sensory-shell__actions,
+.sensory-shell--shape-match .sensory-shell__actions,
+.sensory-shell--audio-command .sensory-shell__actions {
+  align-items: center;
 }
 
 .sensory-shell--audio-diff .sensory-shell__back-button {
