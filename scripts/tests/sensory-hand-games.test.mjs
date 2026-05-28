@@ -52,6 +52,7 @@ test('Air Conductor stage 3 wiring is present across seed, play, runtime types, 
   const componentSource = readFileSync(resolve(projectRoot, 'src/components/games/pose/AirConductorGame.vue'), 'utf8')
   const cameraLayerSource = readFileSync(resolve(projectRoot, 'src/components/games/pose/PoseCameraLayer.vue'), 'utf8')
   const runtimeSource = readFileSync(resolve(projectRoot, 'src/components/games/pose/air-conductor-runtime.ts'), 'utf8')
+  const overlaySource = readFileSync(resolve(projectRoot, 'src/components/games/pose/pose-overlay.ts'), 'utf8')
   const audioSource = readFileSync(resolve(projectRoot, 'src/composables/usePoseAudio.ts'), 'utf8')
   const apiSource = readFileSync(resolve(projectRoot, 'src/database/api.ts'), 'utf8')
 
@@ -93,6 +94,9 @@ test('Air Conductor stage 3 wiring is present across seed, play, runtime types, 
   assert.doesNotMatch(componentSource, /air-conductor-placeholder/)
   assert.match(cameraLayerSource, /\.pose-camera-layer__video[\s\S]*transform:\s*scaleX\(-1\)/)
   assert.match(cameraLayerSource, /\.pose-camera-layer__canvas[\s\S]*transform:\s*scaleX\(-1\)/)
+  assert.match(overlaySource, /createMagicGloveOverlayModel/)
+  assert.match(overlaySource, /leftIntensity/)
+  assert.match(overlaySource, /rightIntensity/)
 
   assert.match(runtimeSource, /AIR_CONDUCTOR_SMOOTH_ALPHA/)
   assert.match(runtimeSource, /updateArmLiftState/)

@@ -1,5 +1,16 @@
 import { computed, reactive, ref } from 'vue'
-import { DrawingUtils, FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision'
+import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision'
+import {
+  createMagicGloveOverlayModel,
+  LEFT_ELBOW_INDEX,
+  LEFT_SHOULDER_INDEX,
+  LEFT_WRIST_INDEX,
+  RIGHT_ELBOW_INDEX,
+  RIGHT_SHOULDER_INDEX,
+  RIGHT_WRIST_INDEX,
+  type MagicGloveOverlayModel,
+  type RawPoseLandmark,
+} from '@/components/games/pose/pose-overlay'
 
 export interface PoseStageSize {
   width: number
@@ -58,15 +69,9 @@ function formatInitError(error: unknown): string {
   return String(error)
 }
 
-const POSE_CONNECTIONS = PoseLandmarker.POSE_CONNECTIONS
-const LEFT_SHOULDER_INDEX = 11
-const RIGHT_SHOULDER_INDEX = 12
-const LEFT_ELBOW_INDEX = 13
-const RIGHT_ELBOW_INDEX = 14
-const LEFT_WRIST_INDEX = 15
-const RIGHT_WRIST_INDEX = 16
 const VISIBILITY_THRESHOLD = 0.6
 const FPS_SAMPLE_WINDOW_MS = 1000
+const DEFAULT_STAGE_PADDING = 0.05
 
 function normalizePoint(landmark: { x: number; y: number; z?: number; visibility?: number } | undefined): PosePoint | null {
   if (!landmark) {
@@ -100,15 +105,229 @@ function extractPoseFrame(
   }
 }
 
-function normalizeDrawingLandmarks(
-  landmarks: Array<{ x: number; y: number; z?: number; visibility?: number }> | undefined,
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
+}
+
+function roundTo(value: number, precision = 1000): number {
+  return Math.round(value * precision) / precision
+}
+
+function projectStageX(value: number, width: number): number {
+  const normalized = clamp(value, 0, 1)
+  return roundTo(width * (DEFAULT_STAGE_PADDING + normalized * (1 - DEFAULT_STAGE_PADDING * 2)), 100)
+}
+
+function projectStageY(value: number, height: number): number {
+  const normalized = clamp(value, 0, 1)
+  return roundTo(height * (DEFAULT_STAGE_PADDING + normalized * (1 - DEFAULT_STAGE_PADDING * 2)), 100)
+}
+
+function drawSoftLine(
+  context: CanvasRenderingContext2D,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  colorStart: string,
+  colorEnd: string,
+  width: number,
 ) {
-  return (landmarks || []).map((landmark) => ({
-    x: landmark.x,
-    y: landmark.y,
-    z: landmark.z ?? 0,
-    visibility: landmark.visibility ?? 0,
-  }))
+  const gradient = context.createLinearGradient(startX, startY, endX, endY)
+  gradient.addColorStop(0, colorStart)
+  gradient.addColorStop(1, colorEnd)
+  context.save()
+  context.strokeStyle = gradient
+  context.lineWidth = width
+  context.lineCap = 'round'
+  context.shadowBlur = width * 1.6
+  context.shadowColor = colorEnd
+  context.beginPath()
+  context.moveTo(startX, startY)
+  context.lineTo(endX, endY)
+  context.stroke()
+  context.restore()
+}
+
+function drawMagicGlove(
+  context: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  intensity: number,
+) {
+  const coreRadius = 10 + intensity * 10
+  const ringRadius = 22 + intensity * 12
+  const outerRadius = 34 + intensity * 20
+
+  context.save()
+
+  const outerGradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, outerRadius)
+  outerGradient.addColorStop(0, 'rgba(255,255,255,0.98)')
+  outerGradient.addColorStop(0.32, 'rgba(123, 224, 210, 0.92)')
+  outerGradient.addColorStop(0.72, 'rgba(101, 184, 255, 0.24)')
+  outerGradient.addColorStop(1, 'rgba(101, 184, 255, 0)')
+  context.fillStyle = outerGradient
+  context.beginPath()
+  context.arc(centerX, centerY, outerRadius, 0, Math.PI * 2)
+  context.fill()
+
+  context.strokeStyle = `rgba(123, 224, 210, ${0.38 + intensity * 0.34})`
+  context.lineWidth = 2.2 + intensity * 1.4
+  context.beginPath()
+  context.arc(centerX, centerY, ringRadius, 0, Math.PI * 2)
+  context.stroke()
+
+  context.fillStyle = 'rgba(255,255,255,0.94)'
+  context.beginPath()
+  context.arc(centerX, centerY, coreRadius * 0.6, 0, Math.PI * 2)
+  context.fill()
+
+  context.strokeStyle = `rgba(255, 255, 255, ${0.52 + intensity * 0.24})`
+  context.lineWidth = 1.4
+  context.beginPath()
+  context.arc(centerX, centerY, coreRadius, 0, Math.PI * 2)
+  context.stroke()
+
+  context.restore()
+}
+
+function drawShoulderAura(
+  context: CanvasRenderingContext2D,
+  model: MagicGloveOverlayModel,
+  width: number,
+  height: number,
+) {
+  if (!model.shoulderCenter || !model.chestCenter) {
+    return
+  }
+
+  const centerX = projectStageX(model.shoulderCenter.x, width)
+  const centerY = projectStageY(model.chestCenter.y, height)
+  const radiusX = Math.max(34, width * Math.max(0.045, model.shoulderSpan * 0.28))
+  const radiusY = Math.max(28, height * Math.max(0.035, model.shoulderSpan * 0.22))
+
+  context.save()
+  const aura = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radiusX * 1.1)
+  aura.addColorStop(0, 'rgba(255,255,255,0.32)')
+  aura.addColorStop(0.45, 'rgba(123, 224, 210, 0.18)')
+  aura.addColorStop(1, 'rgba(123, 224, 210, 0)')
+  context.fillStyle = aura
+  context.beginPath()
+  context.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2)
+  context.fill()
+  context.restore()
+}
+
+function drawMagicGloveOverlay(
+  context: CanvasRenderingContext2D,
+  model: MagicGloveOverlayModel,
+  width: number,
+  height: number,
+) {
+  drawShoulderAura(context, model, width, height)
+
+  const leftShoulder = model.leftShoulder?.visible ? model.leftShoulder : null
+  const rightShoulder = model.rightShoulder?.visible ? model.rightShoulder : null
+  const leftElbow = model.leftElbow?.visible ? model.leftElbow : null
+  const rightElbow = model.rightElbow?.visible ? model.rightElbow : null
+  const leftWrist = model.leftWrist?.visible ? model.leftWrist : null
+  const rightWrist = model.rightWrist?.visible ? model.rightWrist : null
+
+  if (leftShoulder && rightShoulder) {
+    drawSoftLine(
+      context,
+      projectStageX(leftShoulder.x, width),
+      projectStageY(leftShoulder.y, height),
+      projectStageX(rightShoulder.x, width),
+      projectStageY(rightShoulder.y, height),
+      'rgba(255,255,255,0.36)',
+      'rgba(123, 224, 210, 0.34)',
+      10,
+    )
+  }
+
+  if (model.shoulderCenter && model.chestCenter) {
+    drawSoftLine(
+      context,
+      projectStageX(model.shoulderCenter.x, width),
+      projectStageY(model.shoulderCenter.y, height),
+      projectStageX(model.chestCenter.x, width),
+      projectStageY(model.chestCenter.y, height),
+      'rgba(255,255,255,0.22)',
+      'rgba(101, 184, 255, 0.24)',
+      12,
+    )
+  }
+
+  if (leftShoulder && leftElbow) {
+    drawSoftLine(
+      context,
+      projectStageX(leftShoulder.x, width),
+      projectStageY(leftShoulder.y, height),
+      projectStageX(leftElbow.x, width),
+      projectStageY(leftElbow.y, height),
+      'rgba(255,255,255,0.72)',
+      'rgba(123, 224, 210, 0.72)',
+      13,
+    )
+  }
+
+  if (leftElbow && leftWrist) {
+    drawSoftLine(
+      context,
+      projectStageX(leftElbow.x, width),
+      projectStageY(leftElbow.y, height),
+      projectStageX(leftWrist.x, width),
+      projectStageY(leftWrist.y, height),
+      'rgba(255,255,255,0.84)',
+      'rgba(101, 184, 255, 0.88)',
+      11 + model.leftIntensity * 3,
+    )
+  }
+
+  if (rightShoulder && rightElbow) {
+    drawSoftLine(
+      context,
+      projectStageX(rightShoulder.x, width),
+      projectStageY(rightShoulder.y, height),
+      projectStageX(rightElbow.x, width),
+      projectStageY(rightElbow.y, height),
+      'rgba(255,255,255,0.72)',
+      'rgba(123, 224, 210, 0.72)',
+      13,
+    )
+  }
+
+  if (rightElbow && rightWrist) {
+    drawSoftLine(
+      context,
+      projectStageX(rightElbow.x, width),
+      projectStageY(rightElbow.y, height),
+      projectStageX(rightWrist.x, width),
+      projectStageY(rightWrist.y, height),
+      'rgba(255,255,255,0.84)',
+      'rgba(101, 184, 255, 0.88)',
+      11 + model.rightIntensity * 3,
+    )
+  }
+
+  if (leftWrist) {
+    drawMagicGlove(
+      context,
+      projectStageX(leftWrist.x, width),
+      projectStageY(leftWrist.y, height),
+      model.leftIntensity,
+    )
+  }
+
+  if (rightWrist) {
+    drawMagicGlove(
+      context,
+      projectStageX(rightWrist.x, width),
+      projectStageY(rightWrist.y, height),
+      model.rightIntensity,
+    )
+  }
 }
 
 function isFrameVisible(frame: PoseFrame | null): boolean {
@@ -162,7 +381,6 @@ export function usePoseTracker(options: UsePoseTrackerOptions = {}) {
 
   let paused = Boolean(initiallyPaused)
   let landmarker: PoseLandmarker | null = null
-  let drawingUtils: DrawingUtils | null = null
   let videoElement: HTMLVideoElement | null = null
   let canvasElement: HTMLCanvasElement | null = null
   let canvasContext: CanvasRenderingContext2D | null = null
@@ -177,7 +395,6 @@ export function usePoseTracker(options: UsePoseTrackerOptions = {}) {
     videoElement = video
     canvasElement = canvas || null
     canvasContext = canvasElement?.getContext('2d') || null
-    drawingUtils = canvasContext ? new DrawingUtils(canvasContext) : null
     initError.value = null
 
     try {
@@ -200,8 +417,8 @@ export function usePoseTracker(options: UsePoseTrackerOptions = {}) {
     }
   }
 
-  function drawCurrentPose(result: { landmarks?: Array<Array<{ x: number; y: number; z?: number; visibility?: number }>> }) {
-    if (!canvasContext || !canvasElement || !drawingUtils) {
+  function drawCurrentPose(result: { landmarks?: Array<Array<RawPoseLandmark>> }) {
+    if (!canvasContext || !canvasElement) {
       return
     }
 
@@ -210,18 +427,11 @@ export function usePoseTracker(options: UsePoseTrackerOptions = {}) {
     if (!landmarks) {
       return
     }
-    const drawingLandmarks = normalizeDrawingLandmarks(landmarks)
-
-    drawingUtils.drawConnectors(drawingLandmarks, POSE_CONNECTIONS, {
-      color: '#38BDF8',
-      lineWidth: 4,
-    })
-    drawingUtils.drawLandmarks(drawingLandmarks, {
-      color: '#F8FAFC',
-      fillColor: '#0EA5E9',
-      lineWidth: 1.5,
-      radius: 4,
-    })
+    const overlayModel = createMagicGloveOverlayModel(landmarks)
+    if (!overlayModel) {
+      return
+    }
+    drawMagicGloveOverlay(canvasContext, overlayModel, canvasElement.width, canvasElement.height)
   }
 
   function updateFps(now: number) {
@@ -310,7 +520,6 @@ export function usePoseTracker(options: UsePoseTrackerOptions = {}) {
       canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height)
     }
 
-    drawingUtils = null
     videoElement = null
     canvasElement = null
     canvasContext = null
