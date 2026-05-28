@@ -11,6 +11,21 @@
           <strong>{{ participantSummary }}</strong>
         </div>
 
+        <button
+          v-if="musicAvailable"
+          class="music-toggle-button"
+          type="button"
+          @click="toggleMusicEnabled"
+          :aria-label="settings.musicEnabled ? '关闭背景音乐' : '开启背景音乐'"
+        >
+          <span class="music-toggle-button__status">
+            {{ settings.musicEnabled ? '音乐开着' : '安静模式' }}
+          </span>
+          <strong class="music-toggle-button__action">
+            {{ settings.musicEnabled ? '点一下先安静' : '点一下开音乐' }}
+          </strong>
+        </button>
+
         <el-dropdown trigger="click" placement="bottom-end">
           <button class="settings-button" type="button">
             设置
@@ -32,9 +47,9 @@
                 </div>
 
                 <div class="settings-row">
-                  <span class="setting-label">背景音量</span>
+                  <span class="setting-label">背景音乐</span>
                   <el-slider
-                    v-model="settings.backgroundVolume"
+                    v-model="settings.musicVolume"
                     :min="0"
                     :max="100"
                     :show-tooltip="false"
@@ -147,6 +162,15 @@ import {
   type CustomGamePermission,
 } from '@/data/custom-game-registry'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
+import {
+  loadGameAudioSettings,
+  saveGameAudioSettings,
+} from '@/audio/game-audio-settings'
+import { createGameMusicController } from '@/audio/game-music-controller'
+import {
+  hasCustomGameBackgroundMusic,
+  resolveCustomGameMusicProfile,
+} from '@/audio/game-music-profiles'
 import type {
   CustomGameCode,
   CustomGameExitTrigger,
@@ -203,10 +227,15 @@ const isOpeningSystemSettings = ref(false)
 let activePreflightRunId = 0
 let isDisposed = false
 
+const LEGACY_BACKGROUND_VOLUME = 28
+const initialAudioSettings = loadGameAudioSettings()
 const settings = reactive<EmotionGameSettings>({
-  backgroundVolume: 28,
-  effectsEnabled: true,
+  musicEnabled: initialAudioSettings.musicEnabled,
+  musicVolume: initialAudioSettings.musicVolume,
+  effectsEnabled: initialAudioSettings.effectsEnabled,
+  backgroundVolume: LEGACY_BACKGROUND_VOLUME,
 })
+const gameMusicController = createGameMusicController(initialAudioSettings)
 
 function normalizeParticipantStudentIds(source: number[]): number[] {
   return Array.from(new Set(
@@ -481,6 +510,14 @@ const requiredPermissions = computed(() => [...gameDefinition.value.requiredPerm
 const shouldRenderGame = computed(() => ['active', 'terminal'].includes(preflightState.value))
 const isProbing = computed(() => preflightState.value === 'probing')
 const blockedPermissionSummary = computed(() => blockedPermissions.value.map((permission) => permissionLabels[permission]).join('、'))
+const resolvedMusicProfile = computed(() => resolveCustomGameMusicProfile({
+  trainingEntryCode: props.launchContext.launchEntryCode,
+  gameCode: props.gameCode,
+}))
+const musicAvailable = computed(() => hasCustomGameBackgroundMusic({
+  trainingEntryCode: props.launchContext.launchEntryCode,
+  gameCode: props.gameCode,
+}))
 const preflightTitle = computed(() => {
   if (preflightState.value === 'probing') {
     return `正在准备《${props.gameTitle}》`
@@ -551,8 +588,6 @@ let messageTimer: number | null = null
 
 let audioContext: AudioContext | null = null
 let masterGain: GainNode | null = null
-let ambientGain: GainNode | null = null
-let ambientOscillators: OscillatorNode[] = []
 const cleanupAudioStops = new Set<() => void>()
 
 function registerCleanup(cleanup: () => void) {
@@ -562,57 +597,36 @@ function registerCleanup(cleanup: () => void) {
 
 async function ensureAudioReady() {
   const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
-  if (!AudioContextClass) return
+  if (AudioContextClass) {
+    if (!audioContext) {
+      audioContext = new AudioContextClass()
+      masterGain = audioContext.createGain()
+      masterGain.gain.value = 0.45
+      masterGain.connect(audioContext.destination)
+    }
 
-  if (!audioContext) {
-    audioContext = new AudioContextClass()
-    masterGain = audioContext.createGain()
-    masterGain.gain.value = 0.45
-    masterGain.connect(audioContext.destination)
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume()
+    }
   }
 
-  if (audioContext.state === 'suspended') {
-    await audioContext.resume()
-  }
+  await gameMusicController.ensureReady()
 }
 
 function stopAmbient() {
-  ambientOscillators.forEach((osc) => {
-    try {
-      osc.stop()
-      osc.disconnect()
-    } catch {
-      // ignore stopped oscillators
-    }
-  })
-  ambientOscillators = []
-  if (ambientGain) {
-    ambientGain.disconnect()
-    ambientGain = null
-  }
+  gameMusicController.stopMusic()
 }
 
 async function startAmbient() {
+  if (!musicAvailable.value) {
+    gameMusicController.stopMusic()
+    return
+  }
+
   await ensureAudioReady()
-  if (!audioContext || !masterGain || ambientOscillators.length > 0) return
-
-  ambientGain = audioContext.createGain()
-  ambientGain.gain.value = settings.backgroundVolume / 100 * 0.12
-  ambientGain.connect(masterGain)
-
-  const baseOsc = audioContext.createOscillator()
-  baseOsc.type = 'sine'
-  baseOsc.frequency.value = 196
-  baseOsc.connect(ambientGain)
-
-  const warmOsc = audioContext.createOscillator()
-  warmOsc.type = 'triangle'
-  warmOsc.frequency.value = 294
-  warmOsc.connect(ambientGain)
-
-  baseOsc.start()
-  warmOsc.start()
-  ambientOscillators = [baseOsc, warmOsc]
+  gameMusicController.setProfile(resolvedMusicProfile.value)
+  gameMusicController.restoreMusic()
+  gameMusicController.setState('playing')
 }
 
 async function startBreathCue() {
@@ -713,25 +727,79 @@ function speak(text: string) {
   utterance.lang = 'zh-CN'
   utterance.rate = 0.9
   utterance.pitch = 1.08
-  utterance.volume = Math.max(0.2, settings.backgroundVolume / 100)
+  utterance.volume = Math.max(0.2, LEGACY_BACKGROUND_VOLUME / 100)
   window.speechSynthesis.speak(utterance)
 }
 
 function stopAllAudio() {
   stopBreathCue()
-  stopAmbient()
+  gameMusicController.stopMusic()
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel()
   }
 }
 
+function toggleMusicEnabled() {
+  settings.musicEnabled = !settings.musicEnabled
+}
+
+watch(
+  () => resolvedMusicProfile.value,
+  (profileId) => {
+    gameMusicController.setProfile(profileId)
+  },
+  { immediate: true },
+)
+
 watch(
   () => settings.backgroundVolume,
-  (value) => {
-    if (ambientGain) {
-      ambientGain.gain.value = value / 100 * 0.12
+  (backgroundVolume) => {
+    if (backgroundVolume !== LEGACY_BACKGROUND_VOLUME) {
+      settings.backgroundVolume = LEGACY_BACKGROUND_VOLUME
     }
   },
+)
+
+watch(
+  () => settings.musicVolume,
+  (musicVolume, previousVolume) => {
+    if (musicVolume === previousVolume) {
+      return
+    }
+
+    if (musicVolume <= 0 && settings.musicEnabled) {
+      settings.musicEnabled = false
+      return
+    }
+
+    if (musicVolume > 0 && !settings.musicEnabled) {
+      settings.musicEnabled = true
+    }
+  },
+)
+
+watch(
+  () => [settings.musicEnabled, settings.musicVolume, settings.effectsEnabled] as const,
+  ([musicEnabled, musicVolume, effectsEnabled]) => {
+    const normalizedSettings = saveGameAudioSettings({
+      musicEnabled,
+      musicVolume,
+      effectsEnabled,
+    })
+
+    if (settings.musicEnabled !== normalizedSettings.musicEnabled) {
+      settings.musicEnabled = normalizedSettings.musicEnabled
+    }
+    if (settings.musicVolume !== normalizedSettings.musicVolume) {
+      settings.musicVolume = normalizedSettings.musicVolume
+    }
+    if (settings.effectsEnabled !== normalizedSettings.effectsEnabled) {
+      settings.effectsEnabled = normalizedSettings.effectsEnabled
+    }
+
+    gameMusicController.applySettings(normalizedSettings)
+  },
+  { immediate: true },
 )
 
 watch(
@@ -768,6 +836,15 @@ watch(isGroupLaunch, (value) => {
 
 const audioController: EmotionGameAudioController = {
   ensureReady: ensureAudioReady,
+  setProfile: (profileId) => gameMusicController.setProfile(profileId),
+  setState: (state) => gameMusicController.setState(state),
+  duckMusic: (mode) => gameMusicController.duckMusic(mode),
+  restoreMusic: () => gameMusicController.restoreMusic(),
+  stopMusic: () => gameMusicController.stopMusic(),
+  dispose: () => {
+    stopAllAudio()
+    gameMusicController.dispose()
+  },
   startAmbient,
   stopAmbient,
   startBreathCue,
@@ -1095,6 +1172,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('pagehide', handleSystemInterrupt)
   stopAllPermissionStreams()
   stopAllAudio()
+  gameMusicController.dispose()
   if (audioContext && audioContext.state !== 'closed') {
     audioContext.close().catch(() => {
       // ignore close failures
@@ -1108,7 +1186,6 @@ onBeforeUnmount(() => {
   position: relative;
   min-height: 100dvh;
   height: 100dvh;
-  border-radius: 28px;
   overflow: hidden;
   background:
     radial-gradient(circle at top, rgba(255, 255, 255, 0.45), transparent 38%),
@@ -1133,6 +1210,7 @@ onBeforeUnmount(() => {
 }
 
 .quiet-exit-button,
+.music-toggle-button,
 .settings-button {
   min-width: 112px;
   min-height: 64px;
@@ -1156,9 +1234,32 @@ onBeforeUnmount(() => {
   box-shadow: 0 12px 24px rgba(68, 123, 170, 0.14);
 }
 
+.music-toggle-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  color: #2b5b4c;
+  background: rgba(240, 255, 248, 0.94);
+  box-shadow: 0 12px 24px rgba(58, 112, 96, 0.14);
+  text-align: left;
+}
+
 .quiet-exit-button:hover,
+.music-toggle-button:hover,
 .settings-button:hover {
   transform: translateY(-2px);
+}
+
+.music-toggle-button__status {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.78;
+}
+
+.music-toggle-button__action {
+  font-size: 13px;
+  line-height: 1.2;
 }
 
 .toolbar-right {

@@ -87,6 +87,8 @@ const StorySequencePage = () => import('@/views/emotional/games/StorySequencePag
 const GiftMatchPage = () => import('@/views/emotional/games/GiftMatchPage.vue')
 const EchoParrotPage = () => import('@/views/emotional/games/EchoParrotPage.vue')
 const EnergyBallPage = () => import('@/views/emotional/games/EnergyBallPage.vue')
+const ExpressionDetectivePage = () => import('@/views/emotional/games/ExpressionDetectivePage.vue')
+const ExpressionDuelPage = () => import('@/views/emotional/games/ExpressionDuelPage.vue')
 
 // 训练记录模块（Phase 4.6 重构）
 const TrainingRecordsMenu = () => import('@/views/training-records/TrainingRecordsMenu.vue')
@@ -603,6 +605,28 @@ const router = createRouter({
           component: EnergyBallPage,
           meta: {
             title: '表情能量球',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/expression-detective',
+          name: 'ExpressionDetectiveGame',
+          component: ExpressionDetectivePage,
+          meta: {
+            title: '表情侦探',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/expression-duel',
+          name: 'ExpressionDuelGame',
+          component: ExpressionDuelPage,
+          meta: {
+            title: '双人表情擂台',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

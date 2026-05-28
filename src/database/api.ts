@@ -257,6 +257,10 @@ function buildGameTrainingSummaryPayload(rawData: any): Record<string, any> | nu
     payload.trackingStats = rawData.trackingStats
   }
 
+  if (rawData.handGameStats && typeof rawData.handGameStats === 'object') {
+    payload.handGameStats = rawData.handGameStats
+  }
+
   return Object.keys(payload).length > 0 ? payload : null
 }
 

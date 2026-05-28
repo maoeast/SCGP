@@ -1386,27 +1386,34 @@
 
 ## 48. 2026-05-11 Self-Care Phase 2 Internal Task Library Update
 
-- src/database/self-care-task-api.ts �ѳ�Ϊ 	ask_training �� self-care �ڲ������� CRUD ��װ���̶�ʹ�� module_code = life_skills �� esource_type = task_training��
-- /self-care/tasks �Ѵ�·�ɿ�����Ϊ��ʵ�����б���TaskList / TaskEditor �ѽ�ͨ�½����༭�����á��ָ���С�ջ���
-- src/views/resource-center/editors/TaskTrainingEditor.vue ��ǰ�� 	ask_training ��ͬ metadata �༭����Դ����Դ������ /self-care/tasks �༭������ͬһ��Լ��
-- ��ǰ��δ����׶� 3��ѡѧ��ҳ��ִ��ҳ���Լ� 	raining_records + training_session �־û���·��δ���롣
+- src/database/self-care-task-api.ts �ѳ�Ϊ 	ask_training �� self-care �ڲ������� CRUD ��װ���̶�ʹ�� module_code = life_skills �� esource_type = task_training��
+- /self-care/tasks �Ѵ�·�ɿ�����Ϊ��ʵ�����б���TaskList / TaskEditor �ѽ�ͨ�½����༭�����á��ָ���С�ջ���
+- src/views/resource-center/editors/TaskTrainingEditor.vue ��ǰ�� 	ask_training ��ͬ metadata �༭����Դ����Դ������ /self-care/tasks �༭������ͬһ��Լ��
+- ��ǰ��δ����׶� 3��ѡѧ��ҳ��ִ��ҳ���Լ� 	raining_records + training_session �־û���·��δ���롣
 
 ## 49. 2026-05-11 Self-Care Execution Mainline Update
 
-- /self-care/execute/:taskId/:studentId �ѳ�Ϊ 	ask_training �ĵ�ǰִ������ڣ�ѡѧ��ҳ��ͳһ��������ֱ�ӽ����·�ɡ�
-- src/database/self-care-training-api.ts �ѳ�Ϊ����ѵ��ר��д����ͳһд�� 	raining_records + training_session��
-- ��ǰд����Լ�̶�Ϊ��	ask_id = NULL��esource_id = sys_training_resource.id��session_family = task_training��entry_code = life-skills��
-- src/views/self-care/TaskExecution.vue ��ǰֻ��ȡ sys_training_resource.meta_data.steps[]�����ض��� 	ask_step / train_log��
+- /self-care/execute/:taskId/:studentId �ѳ�Ϊ 	ask_training �ĵ�ǰִ������ڣ�ѡѧ��ҳ��ͳһ��������ֱ�ӽ����·�ɡ�
+- src/database/self-care-training-api.ts �ѳ�Ϊ����ѵ��ר��д����ͳһд�� 	raining_records + training_session��
+- ��ǰд����Լ�̶�Ϊ��	ask_id = NULL��esource_id = sys_training_resource.id��session_family = task_training��entry_code = life-skills��
+- src/views/self-care/TaskExecution.vue ��ǰֻ��ȡ sys_training_resource.meta_data.steps[]�����ض��� 	ask_step / train_log��
 
 ## 50. 2026-05-13 Plan Resource Selector Contract Update
 
-- ѵ���ƻ�����Դ���� > ������Դ��������ǰֻ����������ɸѡ��ģ�� + ���ͣ������²�����ʾ�����㡰ȫ������ / �й�ѵ�� / ��������ɸѡ����
-- �õ�����ǰģ��ھ��̶�Ϊ 9 �����ѵ�� / �������� / �������� / ������� / �й�ѵ�� / �������� / �����̾� / �罻��ͨ / ��ϸ������
-- �õ������Ϳھ���ǰ�̶�Ϊ��ȫ������ / ��Ϸ / ���ġ�
-- custom game ��Դͬ����ǰ���븲��ȫ�� 25 ����emotional-regulation / fine-motor / social-communication / soothing-aids / life-skills �� 5 ������������ֻͬ���������� 5 ����
+- ѵ���ƻ�����Դ���� > ������Դ��������ǰֻ����������ɸѡ��ģ�� + ���ͣ������²�����ʾ�����㡰ȫ������ / �й�ѵ�� / ��������ɸѡ����
+- �õ�����ǰģ��ھ��̶�Ϊ 9 �����ѵ�� / �������� / �������� / ������� / �й�ѵ�� / �������� / �����̾� / �罻��ͨ / ��ϸ������
+- �õ������Ϳھ���ǰ�̶�Ϊ��ȫ������ / ��Ϸ / ���ġ�
+- custom game ��Դͬ����ǰ���븲��ȫ�� 25 ����emotional-regulation / fine-motor / social-communication / soothing-aids / life-skills �� 5 ������������ֻͬ���������� 5 ����
 ## 51. 2026-05-20 Entitlement Shadow Mapping and Entry Gating Update
 
 - 当前新增独立 entitlement 层：`src/features/entitlements/entitlement-catalog.ts`，旧 `sensory / emotional / social / life_skills / cognitive` 已与新授权能力包解耦。
 - `src/stores/auth.ts` 当前以 `effectiveEntitlements` 作为前端授权事实来源；`hasEntitlementAccess()` 不再在调用时临时展开旧模块。
 - `src/utils/training-entry.ts` / `src/utils/equipment-training-entry.ts` 当前新增 `requiredEntitlement`，训练入口已与 `moduleCode` 数据归属分离。
 - 游戏训练 / 器材训练 / 训练记录入口列表、首页快捷入口、侧边栏与相关路由守卫当前已优先按 entitlement 判权。
+
+## 52. 2026-05-27 Emotion Detection Capability Expansion
+
+- `useEmotionDetector` 表情检测能力已从 4 种扩展为 6 种：`Happy | Surprised | Angry | Sad | Fearful | Neutral`
+- 新增 `Sad = mouthFrown × 0.6 + browInnerUp × 0.4`，`Fearful = eyeWide × 0.3 + browInnerUp × 0.4 + jawOpen × 0.3 − happy × 0.5`
+- `EmotionType` / `EmotionScores` 类型已同步扩展，所有消费 `useEmotionDetector` 的游戏（表情能量球、表情侦探等）自动受益
+- 新增 `G09_EXPRESSION_DETECTIVE` 表情侦探游戏已接入情绪调节游戏大厅完整注册链

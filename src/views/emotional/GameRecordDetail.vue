@@ -754,6 +754,13 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '短句重试', value: formatNullableNumber(raw.short_attempts, '次') },
         { label: '平均回应', value: formatResponseTime(raw.average_response_ms as number) },
       ]
+    case 'S06_EXPRESSION_DUEL':
+      return [
+        { label: '平均相似度', value: formatPercent(raw.average_similarity_ratio) },
+        { label: '最高相似度', value: formatPercent(raw.best_similarity_ratio) },
+        { label: '完成回合', value: formatCountPair(raw.completed_rounds, raw.target_round_count, '轮') },
+        { label: '平均模仿', value: formatResponseTime(raw.average_mimic_duration_ms as number) },
+      ]
     default:
       return []
   }
@@ -1049,6 +1056,23 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '已完成短句', value: formatPlainStringList(raw.completed_phrase_labels) },
         { label: '动物清单', value: formatPlainStringList(raw.animal_labels) },
         { label: '场景主题', value: String(raw.session_theme_title || '-') },
+      ]
+    case 'S06_EXPRESSION_DUEL':
+      return [
+        { label: '完成回合', value: formatCountPair(raw.completed_rounds, raw.target_round_count, '轮') },
+        { label: '平均相似度', value: formatPercent(raw.average_similarity_ratio) },
+        { label: '最高相似度', value: formatPercent(raw.best_similarity_ratio) },
+        { label: '最低相似度', value: formatPercent(raw.lowest_similarity_ratio) },
+        { label: '提前达标', value: formatNullableNumber(raw.early_success_rounds, '轮') },
+        { label: '平均模仿时长', value: formatResponseTime(raw.average_mimic_duration_ms as number) },
+        { label: '各轮模仿时长', value: formatResponseTimeList(raw.mimic_duration_ms_list, '轮') },
+        { label: '参与学生', value: formatPlainStringList(raw.participant_names) },
+        { label: '左右得分', value: raw.participant_scores ? `左 ${formatNullableNumber(raw.participant_scores.left, '分')} / 右 ${formatNullableNumber(raw.participant_scores.right, '分')}` : '-' },
+        { label: '教师加分', value: raw.teacher_bonus_scores ? `左 ${formatNullableNumber(raw.teacher_bonus_scores.left, '分')} / 右 ${formatNullableNumber(raw.teacher_bonus_scores.right, '分')}` : '-' },
+        { label: '镜头模式', value: String(raw.camera_mode || '-') },
+        { label: '镜头设备', value: String(raw.camera_device_label || '-') },
+        { label: '检测镜头数', value: formatNullableNumber(raw.detected_camera_count, '个') },
+        { label: '轮次记录', value: formatPlainStringList(raw.round_logs) },
       ]
     default:
       return Object.entries(raw).map(([key, value]) => ({

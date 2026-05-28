@@ -190,13 +190,13 @@
                 v-if="currentTarget"
                 ref="woodTargetRef"
                 class="shape-target-block"
-                :style="[shapeTargetBlockSizeStyle, getShapeBlockPalette(currentTarget.color)]"
+                :style="shapeTargetBlockSizeStyle"
               >
-                <div class="shape-block" :class="`shape-block--${currentTarget.shape}`">
-                  <span class="shape-block__side"></span>
-                  <span class="shape-block__face"></span>
-                  <span class="shape-block__sheen"></span>
-                </div>
+                <WoodenShapeBlock
+                  class="shape-block-shell"
+                  :shape-id="currentTarget.shape!"
+                  :color="getShapeBlockColor(currentTarget.color)"
+                />
               </div>
             </div>
           </div>
@@ -238,13 +238,11 @@
                   :style="itemMotionStyles[item.id]"
                   @click="handleItemClick(item, $event)"
                 >
-                  <div class="shape-block-shell" :style="getShapeBlockPalette(item.color)">
-                    <div class="shape-block" :class="`shape-block--${item.shape}`">
-                      <span class="shape-block__side"></span>
-                      <span class="shape-block__face"></span>
-                      <span class="shape-block__sheen"></span>
-                    </div>
-                  </div>
+                  <WoodenShapeBlock
+                    class="shape-block-shell"
+                    :shape-id="item.shape!"
+                    :color="getShapeBlockColor(item.color)"
+                  />
                 </button>
               </div>
             </div>
@@ -333,6 +331,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import type { CSSProperties } from 'vue'
+import WoodenShapeBlock from '@/components/games/shared/WoodenShapeBlock.vue'
 import type {
   DistractorLevel,
   GameColor,
@@ -664,17 +663,8 @@ function getColorJellyStyle(color?: GameColor): CSSProperties {
   } as CSSProperties
 }
 
-function getShapeBlockPalette(color?: GameColor): CSSProperties {
-  const base = GAME_COLORS[color ?? 'orange']
-  const rgb = hexToRgb(base)
-
-  return {
-    '--block-face': mixColor(base, '#f4c88d', 0.12),
-    '--block-light': mixColor(base, '#fff5e6', 0.42),
-    '--block-shadow': mixColor(base, '#7a4a21', 0.38),
-    '--block-edge': mixColor(base, '#4f3119', 0.44),
-    '--block-rgb': `${rgb.r}, ${rgb.g}, ${rgb.b}`,
-  } as CSSProperties
+function getShapeBlockColor(color?: GameColor) {
+  return GAME_COLORS[color ?? 'orange']
 }
 
 const ICON_BLOCK_BASES = [
@@ -1823,122 +1813,21 @@ onUnmounted(() => {
   transform: none;
 }
 
-.shape-block {
-  position: relative;
+.shape-target-block > .shape-block-shell {
   width: 100%;
   height: 100%;
-  overflow: visible;
-  background-color: var(--block-face);
-  background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 38%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 42%),
-    repeating-linear-gradient(
-      118deg,
-      rgba(255, 255, 255, 0.08) 0,
-      rgba(255, 255, 255, 0.08) 11px,
-      rgba(93, 56, 27, 0.16) 11px,
-      rgba(93, 56, 27, 0.16) 22px,
-      rgba(255, 255, 255, 0.04) 22px,
-      rgba(255, 255, 255, 0.04) 34px
-    );
-  background-blend-mode: soft-light, soft-light, normal;
-  box-shadow:
-    0 4px 0 rgba(55, 31, 14, 0.18),
-    0 11px 18px rgba(0, 0, 0, 0.22),
-    inset 0 1px 0 rgba(255, 245, 228, 0.4),
-    inset 0 -10px 12px rgba(79, 49, 24, 0.14);
-  transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease, opacity 0.2s ease;
 }
 
-.shape-block::before,
-.shape-block::after {
-  content: '';
-  position: absolute;
-  pointer-events: none;
-}
-
-.shape-block::before {
-  top: 14%;
-  left: 18%;
-  width: 34%;
-  height: 16%;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0));
-  opacity: 0.72;
-}
-
-.shape-block::after {
-  inset: auto 14% 12% 14%;
-  height: 18%;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(61, 36, 16, 0), rgba(61, 36, 16, 0.16));
-}
-
-.shape-block__side,
-.shape-block__face,
-.shape-block__sheen {
-  display: none;
-}
-
-.shape-block--circle {
-  border-radius: 50%;
-}
-
-.shape-block--square {
-  border-radius: 22%;
-}
-
-.shape-block--triangle,
-.shape-block--hexagon,
-.shape-block--star,
-.shape-block--trapezoid,
-.shape-block--diamond,
-.shape-block--rightTriangle {
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-}
-
-.shape-block--triangle {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50 16 82 78 18 78' fill='white' stroke='white' stroke-width='10' stroke-linejoin='round'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50 16 82 78 18 78' fill='white' stroke='white' stroke-width='10' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
-
-.shape-block--hexagon {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='28 16 72 16 88 50 72 84 28 84 12 50' fill='white' stroke='white' stroke-width='10' stroke-linejoin='round'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='28 16 72 16 88 50 72 84 28 84 12 50' fill='white' stroke='white' stroke-width='10' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
-
-.shape-block--star {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50 14 60 38 86 38 65 54 74 80 50 65 26 80 35 54 14 38 40 38' fill='white' stroke='white' stroke-width='8' stroke-linejoin='round'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50 14 60 38 86 38 65 54 74 80 50 65 26 80 35 54 14 38 40 38' fill='white' stroke='white' stroke-width='8' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
-
-.shape-block--trapezoid {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='26 22 74 22 84 78 16 78' fill='white' stroke='white' stroke-width='10' stroke-linejoin='round'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='26 22 74 22 84 78 16 78' fill='white' stroke='white' stroke-width='10' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
-
-.shape-block--diamond {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50 14 82 50 50 86 18 50' fill='white' stroke='white' stroke-width='10' stroke-linejoin='round'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50 14 82 50 50 86 18 50' fill='white' stroke='white' stroke-width='10' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
-
-.shape-block--rightTriangle {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='24 18 78 18 24 82' fill='white' stroke='white' stroke-width='10' stroke-linejoin='round'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='24 18 78 18 24 82' fill='white' stroke='white' stroke-width='10' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
-
-.shape-block-button:focus-visible .shape-block {
+.shape-block-button:focus-visible .shape-block-shell :deep(.wooden-shape-block__body) {
   outline: 3px solid rgba(255, 247, 232, 0.8);
   outline-offset: 8px;
 }
 
-.shape-block-button:active .shape-block {
+.shape-block-button:active .shape-block-shell {
   transform: translateY(4px);
+}
+
+.shape-block-button:active .shape-block-shell :deep(.wooden-shape-block__body) {
   box-shadow:
     0 1px 0 rgba(55, 31, 14, 0.2),
     0 6px 10px rgba(0, 0, 0, 0.18),
@@ -1946,7 +1835,7 @@ onUnmounted(() => {
     inset 0 -8px 10px rgba(79, 49, 24, 0.16);
 }
 
-.shape-block-button--reveal .shape-block {
+.shape-block-button--reveal .shape-block-shell :deep(.wooden-shape-block__body) {
   box-shadow:
     0 0 0 10px rgba(var(--block-rgb), 0.1),
     0 4px 0 rgba(55, 31, 14, 0.18),
@@ -1960,11 +1849,11 @@ onUnmounted(() => {
   animation: shapeBlockFlyIn 0.6s cubic-bezier(0.22, 0.72, 0.18, 1) forwards;
 }
 
-.shape-block-button--hit .shape-block {
+.shape-block-button--hit .shape-block-shell :deep(.wooden-shape-block__body) {
   filter: brightness(1.04) saturate(1.04);
 }
 
-.shape-block-button--miss .shape-block {
+.shape-block-button--miss .shape-block-shell {
   animation: shapeBlockNudge 0.36s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
