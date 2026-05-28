@@ -13,7 +13,12 @@
         :student-name="studentName"
         :mode-label="modeLabel"
         :duration-label="durationLabel"
+        :music-available="sensoryMusicAvailable"
+        :music-enabled="audioSettings.musicEnabled"
+        :music-volume="audioSettings.musicVolume"
+        :effects-enabled="audioSettings.effectsEnabled"
         :theme="sensoryShellTheme"
+        @update-audio-settings="applySharedGameAudioSettings"
         @back="goBack"
       >
         <div class="game-play-stage">
@@ -75,7 +80,19 @@
             :duration="duration"
             :mode="bubblePopMode"
             :difficulty="bubblePopDifficulty"
+            :music-enabled="audioSettings.musicEnabled"
+            :music-volume="audioSettings.musicVolume"
+            :effects-enabled="audioSettings.effectsEnabled"
+            @update-audio-settings="applySharedGameAudioSettings"
             @back="goBack"
+            @finish="handleGameFinish"
+          />
+
+          <AirConductorGame
+            v-else-if="taskId === TaskID.AIR_CONDUCTOR"
+            :student-id="studentId"
+            :task-id="taskId"
+            :duration="duration"
             @finish="handleGameFinish"
           />
 
@@ -146,7 +163,19 @@
           :duration="duration"
           :mode="bubblePopMode"
           :difficulty="bubblePopDifficulty"
+          :music-enabled="audioSettings.musicEnabled"
+          :music-volume="audioSettings.musicVolume"
+          :effects-enabled="audioSettings.effectsEnabled"
+          @update-audio-settings="applySharedGameAudioSettings"
           @back="goBack"
+          @finish="handleGameFinish"
+        />
+
+        <AirConductorGame
+          v-else-if="taskId === TaskID.AIR_CONDUCTOR"
+          :student-id="studentId"
+          :task-id="taskId"
+          :duration="duration"
           @finish="handleGameFinish"
         />
 
@@ -167,15 +196,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, provide, reactive, ref, watch } from 'vue'
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
+import {
+  loadGameAudioSettings,
+  saveGameAudioSettings,
+  type SharedGameAudioSettings,
+} from '@/audio/game-audio-settings'
+import {
+  createGameMusicController,
+  GAME_MUSIC_CONTROLLER_KEY,
+} from '@/audio/game-music-controller'
+import {
+  getDefaultMusicStateForLegacyTask,
+  hasLegacyGameBackgroundMusic,
+  resolveLegacyGameMusicProfile,
+} from '@/audio/game-music-profiles'
 import SensoryGameShell from '@/components/games/SensoryGameShell.vue'
 import GameAudio from '@/components/games/audio/GameAudio.vue'
 import HandXylophoneGame from '@/components/games/hand/AirXylophoneGame.vue'
 import BubblePopGame from '@/components/games/hand/BubblePopGame.vue'
 import WoodBlockPuzzleGame from '@/components/games/hand/WoodBlockPuzzleGame.vue'
+import AirConductorGame from '@/components/games/pose/AirConductorGame.vue'
 import GameGrid from '@/components/games/visual/GameGrid.vue'
 import VisualTracker from '@/components/games/visual/VisualTracker.vue'
 import {
@@ -208,6 +252,10 @@ const route = useRoute()
 
 const loading = ref(true)
 const gameResource = ref<ResourceItem | null>(null)
+const audioSettings = reactive<SharedGameAudioSettings>(loadGameAudioSettings())
+const gameMusicController = createGameMusicController(audioSettings)
+
+provide(GAME_MUSIC_CONTROLLER_KEY, gameMusicController)
 
 const studentId = ref<number>(Number(route.query.studentId) || 0)
 const studentName = computed(() => String(route.query.studentName || ''))
@@ -240,6 +288,16 @@ const bubblePopDifficulty = ref<BubblePopDifficultyId>(
 
 const legacyTaskId = ref<number>(Number(route.query.taskId) || 0)
 const legacyMode = ref<string>((route.query.mode as string) || '')
+let hasEnsuredGameMusicReady = false
+let cleanupEnsureReadyListeners: (() => void) | null = null
+
+function getDefaultModeForTask(nextTaskId: TaskID | null): string {
+  if (nextTaskId === TaskID.AIR_CONDUCTOR) {
+    return 'air-conductor'
+  }
+
+  return ''
+}
 
 const isGridGame = computed(() => {
   return taskId.value !== null && [
@@ -262,6 +320,7 @@ const isHandGame = computed(() => {
     TaskID.HAND_XYLOPHONE,
     TaskID.HAND_WOOD_BLOCKS,
     TaskID.HAND_BUBBLE_POP,
+    TaskID.AIR_CONDUCTOR,
   ].includes(taskId.value)
 })
 
@@ -271,11 +330,15 @@ const sensoryShellTheme = computed(() => {
   if (taskId.value === TaskID.AUDIO_DIFF) return 'audio-diff'
   if (taskId.value === TaskID.AUDIO_COMMAND) return 'audio-command'
   if (taskId.value === TaskID.HAND_BUBBLE_POP) return 'bubble-pop'
+  if (taskId.value === TaskID.AIR_CONDUCTOR) return 'shape-match'
   if (isHandGame.value) return 'shape-match'
   if (taskId.value === TaskID.COLOR_MATCH) return 'color-match'
   if (taskId.value === TaskID.SHAPE_MATCH || taskId.value === TaskID.ICON_MATCH) return 'shape-match'
   return 'default'
 })
+const sensoryMusicAvailable = computed(() => (
+  taskId.value !== null ? hasLegacyGameBackgroundMusic(taskId.value) : false
+))
 
 const taskNames: Record<number, string> = {
   [TaskID.COLOR_MATCH]: '颜色配对',
@@ -288,6 +351,7 @@ const taskNames: Record<number, string> = {
   [TaskID.HAND_XYLOPHONE]: '空气木琴',
   [TaskID.HAND_WOOD_BLOCKS]: '木块磁贴拼图',
   [TaskID.HAND_BUBBLE_POP]: '打泡泡',
+  [TaskID.AIR_CONDUCTOR]: '空中魔法指挥棒',
 }
 
 const modeLabel = computed(() => {
@@ -301,6 +365,7 @@ const modeLabel = computed(() => {
   if (taskId.value === TaskID.HAND_XYLOPHONE) return '体感节奏'
   if (taskId.value === TaskID.HAND_WOOD_BLOCKS) return '抓放配对'
   if (taskId.value === TaskID.HAND_BUBBLE_POP) return '手眼戳击'
+  if (taskId.value === TaskID.AIR_CONDUCTOR) return '姿态追踪'
   return mode.value || '综合训练'
 })
 
@@ -356,6 +421,10 @@ const durationLabel = computed(() => {
       return `${getBubblePopModeLabel(bubblePopMode.value)} · ${getBubblePopDifficultyLabel(bubblePopDifficulty.value)} · ${durationLabel}`
     }
 
+    if (taskId.value === TaskID.AIR_CONDUCTOR) {
+      return `${duration.value}秒`
+    }
+
     return '完成目标'
   }
 
@@ -385,7 +454,7 @@ const loadGameFromResource = async () => {
         const metaData = resource.metadata || null
 
         taskId.value = metaData?.taskId || resource.legacyId || legacyTaskId.value || null
-        mode.value = metaData?.mode || legacyMode.value || ''
+        mode.value = metaData?.mode || legacyMode.value || getDefaultModeForTask(taskId.value)
 
         console.log('[GamePlay] 从资源加载游戏配置:', {
           resourceId: resourceId.value,
@@ -403,7 +472,7 @@ const loadGameFromResource = async () => {
 
   if (legacyTaskId.value) {
     taskId.value = legacyTaskId.value as TaskID
-    mode.value = legacyMode.value
+    mode.value = legacyMode.value || getDefaultModeForTask(taskId.value)
     console.log('[GamePlay] 使用旧版 URL 参数:', {
       taskId: taskId.value,
       mode: mode.value,
@@ -412,6 +481,52 @@ const loadGameFromResource = async () => {
   }
 
   return false
+}
+
+function applySharedGameAudioSettings(nextSettings: SharedGameAudioSettings) {
+  const normalized = saveGameAudioSettings(nextSettings)
+  audioSettings.musicEnabled = normalized.musicEnabled
+  audioSettings.musicVolume = normalized.musicVolume
+  audioSettings.effectsEnabled = normalized.effectsEnabled
+  gameMusicController.applySettings(normalized)
+}
+
+function detachEnsureReadyListeners() {
+  cleanupEnsureReadyListeners?.()
+  cleanupEnsureReadyListeners = null
+}
+
+function installEnsureReadyListeners() {
+  if (typeof window === 'undefined' || cleanupEnsureReadyListeners) {
+    return
+  }
+
+  const triggerEnsureReady = () => {
+    if (hasEnsuredGameMusicReady) {
+      detachEnsureReadyListeners()
+      return
+    }
+
+    gameMusicController.ensureReady().then(() => {
+      hasEnsuredGameMusicReady = true
+      detachEnsureReadyListeners()
+    }).catch(() => {
+      // Keep listeners attached so the next gesture can retry Tone startup.
+    })
+  }
+
+  const pointerListenerOptions: AddEventListenerOptions = { capture: true, passive: true }
+  const keyListenerOptions: AddEventListenerOptions = { capture: true }
+
+  window.addEventListener('pointerdown', triggerEnsureReady, pointerListenerOptions)
+  window.addEventListener('touchstart', triggerEnsureReady, pointerListenerOptions)
+  window.addEventListener('keydown', triggerEnsureReady, keyListenerOptions)
+
+  cleanupEnsureReadyListeners = () => {
+    window.removeEventListener('pointerdown', triggerEnsureReady, pointerListenerOptions)
+    window.removeEventListener('touchstart', triggerEnsureReady, pointerListenerOptions)
+    window.removeEventListener('keydown', triggerEnsureReady, keyListenerOptions)
+  }
 }
 
 const saveTrainingRecord = async (sessionData: GameSessionData) => {
@@ -474,7 +589,17 @@ const createReportRecord = async (recordId: number, sessionData: GameSessionData
   }
 }
 
+watch(taskId, (nextTaskId) => {
+  if (nextTaskId === null) {
+    return
+  }
+
+  gameMusicController.setProfile(resolveLegacyGameMusicProfile(nextTaskId))
+  gameMusicController.setState(getDefaultMusicStateForLegacyTask(nextTaskId))
+})
+
 const handleGameFinish = async (sessionData: GameSessionData) => {
+  gameMusicController.setState('finish')
   console.log('[GamePlay] 游戏完成，数据:', sessionData)
 
   const recordId = await saveTrainingRecord(sessionData)
@@ -503,7 +628,13 @@ const handleGameFinish = async (sessionData: GameSessionData) => {
   }
 }
 
+onBeforeRouteLeave(() => {
+  gameMusicController.stopMusic()
+})
+
 const goBack = () => {
+  gameMusicController.stopMusic()
+
   if (launchSource.value === 'dashboard') {
     router.push('/dashboard')
     return
@@ -538,6 +669,8 @@ onMounted(async () => {
     return
   }
 
+  installEnsureReadyListeners()
+
   const loaded = await loadGameFromResource()
 
   if (!loaded || !taskId.value) {
@@ -554,6 +687,10 @@ onMounted(async () => {
     duration.value = sanitizeBubblePopFreeModeDuration(route.query.duration)
   }
 
+  if (taskId.value === TaskID.AIR_CONDUCTOR && route.query.duration === undefined) {
+    duration.value = 60
+  }
+
   if (!mode.value) {
     ElMessage.error('游戏模式未指定')
     goBack()
@@ -567,6 +704,10 @@ onMounted(async () => {
     mode: mode.value,
     moduleCode: moduleCode.value,
   })
+})
+onBeforeUnmount(() => {
+  detachEnsureReadyListeners()
+  gameMusicController.dispose()
 })
 </script>
 

@@ -16,7 +16,7 @@ test('sensory game seed includes the retained camera hand games and the new bubb
   const { SENSORY_GAME_SEED } = jiti('../../src/data/sensory-game-seed.ts')
 
   const names = SENSORY_GAME_SEED.map((game) => game.name)
-  assert.equal(SENSORY_GAME_SEED.length >= 10, true)
+  assert.equal(SENSORY_GAME_SEED.length >= 11, true)
   assert.equal(names.includes('空气木琴'), true)
   assert.equal(names.includes('木块磁贴拼图'), true)
   assert.equal(names.includes('打泡泡'), true)
@@ -29,6 +29,7 @@ test('TaskID reserves stable ids for the retained sensory camera hand games and 
   assert.equal(TaskID.HAND_XYLOPHONE, 8)
   assert.equal(TaskID.HAND_WOOD_BLOCKS, 9)
   assert.equal(TaskID.HAND_BUBBLE_POP, 10)
+  assert.equal(TaskID.AIR_CONDUCTOR, 11)
   assert.equal('HAND_GESTURE_GARDEN' in TaskID, false)
 })
 
@@ -43,6 +44,53 @@ test('GamePlay wires the retained hand games and bubble pop into the sensory run
   assert.match(source, /TaskID\.HAND_BUBBLE_POP/)
   assert.doesNotMatch(source, /GestureGardenGame/)
   assert.doesNotMatch(source, /TaskID\.HAND_GESTURE_GARDEN/)
+})
+
+test('Air Conductor stage 3 wiring is present across seed, play, runtime types, and active component structure', () => {
+  const { SENSORY_GAME_SEED } = jiti('../../src/data/sensory-game-seed.ts')
+  const playSource = readFileSync(resolve(projectRoot, 'src/views/games/GamePlay.vue'), 'utf8')
+  const componentSource = readFileSync(resolve(projectRoot, 'src/components/games/pose/AirConductorGame.vue'), 'utf8')
+  const cameraLayerSource = readFileSync(resolve(projectRoot, 'src/components/games/pose/PoseCameraLayer.vue'), 'utf8')
+  const runtimeSource = readFileSync(resolve(projectRoot, 'src/components/games/pose/air-conductor-runtime.ts'), 'utf8')
+  const audioSource = readFileSync(resolve(projectRoot, 'src/composables/usePoseAudio.ts'), 'utf8')
+  const apiSource = readFileSync(resolve(projectRoot, 'src/database/api.ts'), 'utf8')
+
+  const airConductorSeed = SENSORY_GAME_SEED.find((game) => game.taskId === 11)
+  assert.ok(airConductorSeed)
+  assert.equal(airConductorSeed?.mode, 'air-conductor')
+  assert.equal(airConductorSeed?.category, 'motor')
+
+  assert.match(playSource, /AirConductorGame/)
+  assert.match(playSource, /TaskID\.AIR_CONDUCTOR/)
+  assert.match(playSource, /return 'air-conductor'/)
+  assert.match(playSource, /if \(taskId\.value === TaskID\.AIR_CONDUCTOR && route\.query\.duration === undefined\)/)
+  assert.match(playSource, /:duration="duration"/)
+
+  assert.match(componentSource, /usePoseAudio/)
+  assert.match(componentSource, /PoseCameraLayer/)
+  assert.match(componentSource, /phase === 'countdown'/)
+  assert.match(componentSource, /stats\.leftArmExtensions/)
+  assert.match(componentSource, /stats\.rightArmExtensions/)
+  assert.match(componentSource, /stats\.maxReachScore/)
+  assert.match(componentSource, /handGameStats:/)
+  assert.match(componentSource, /空中魔法指挥棒/)
+  assert.match(componentSource, /准备开始上肢协同训练/)
+  assert.match(componentSource, /训练已暂停/)
+  assert.match(componentSource, /请回到摄像头取景范围内/)
+  assert.match(componentSource, /重新校准/)
+  assert.doesNotMatch(componentSource, /air-conductor-placeholder/)
+  assert.match(cameraLayerSource, /\.pose-camera-layer__video[\s\S]*transform:\s*scaleX\(-1\)/)
+  assert.match(cameraLayerSource, /\.pose-camera-layer__canvas[\s\S]*transform:\s*scaleX\(-1\)/)
+
+  assert.match(runtimeSource, /AIR_CONDUCTOR_SMOOTH_ALPHA/)
+  assert.match(runtimeSource, /updateArmLiftState/)
+  assert.match(runtimeSource, /accumulateBilateralCoordSec/)
+  assert.match(runtimeSource, /calculateReachScore/)
+  assert.match(audioSource, /musicController\?\.duckMusic\('low'\)/)
+  assert.match(audioSource, /countdownValue/)
+  assert.match(audioSource, /offFrameCount/)
+  assert.match(apiSource, /payload\.handGameStats = rawData\.handGameStats/)
+  assert.match(playSource, /空中魔法指挥棒/)
 })
 
 test('bubble pop runtime exposes difficulty-based bubble spawning ranges and hard-mode splitting', () => {
@@ -376,6 +424,47 @@ test('bubble pop free mode exposes 60, 90, and 120 second durations while color 
   const colorState = createBubblePopState({ mode: 'color', durationMs: 120_000, now: 0 })
   advanceBubblePopState(colorState, { now: 180_000 })
   assert.equal(colorState.isFinished, false)
+})
+
+test('shared game audio controller types expose unified music controls for registry-backed games', () => {
+  const source = readFileSync(resolve(projectRoot, 'src/types/emotional/games.ts'), 'utf8')
+
+  assert.match(source, /musicEnabled:\s*boolean/)
+  assert.match(source, /musicVolume:\s*number/)
+  assert.match(source, /effectsEnabled:\s*boolean/)
+  assert.match(source, /setProfile:\s*\(profileId:/)
+  assert.match(source, /setState:\s*\(state:/)
+  assert.match(source, /duckMusic:\s*\(mode:/)
+  assert.match(source, /restoreMusic:\s*\(\)\s*=>\s*void/)
+  assert.match(source, /stopMusic:\s*\(\)\s*=>\s*void/)
+  assert.match(source, /dispose:\s*\(\)\s*=>\s*void/)
+})
+
+test('GamePlay and SensoryGameShell wire a shared music controller and shared settings entry for sensory games', () => {
+  const playSource = readFileSync(resolve(projectRoot, 'src/views/games/GamePlay.vue'), 'utf8')
+  const shellSource = readFileSync(resolve(projectRoot, 'src/components/games/SensoryGameShell.vue'), 'utf8')
+
+  assert.match(playSource, /game-music-controller/)
+  assert.match(playSource, /provide\(/)
+  assert.match(playSource, /setProfile\(/)
+  assert.match(playSource, /setState\(/)
+  assert.match(shellSource, /背景音乐/)
+  assert.match(shellSource, /musicEnabled/)
+  assert.match(shellSource, /musicVolume/)
+})
+
+test('BubblePopGame and GameContainer both use the shared music controller instead of standalone ambient logic', () => {
+  const bubbleSource = readFileSync(resolve(projectRoot, 'src/components/games/hand/BubblePopGame.vue'), 'utf8')
+  const containerSource = readFileSync(resolve(projectRoot, 'src/views/emotional/games/GameContainer.vue'), 'utf8')
+
+  assert.match(bubbleSource, /game-music-controller/)
+  assert.match(bubbleSource, /duckMusic|setState|restoreMusic/)
+  assert.match(bubbleSource, /背景音乐|musicEnabled|musicVolume/)
+  assert.match(containerSource, /game-music-controller/)
+  assert.match(containerSource, /game-audio-settings/)
+  assert.match(containerSource, /loadGameAudioSettings/)
+  assert.match(containerSource, /saveGameAudioSettings/)
+  assert.doesNotMatch(containerSource, /const settings = reactive<EmotionGameSettings>\(\{\s*backgroundVolume:/)
 })
 
 test('AirXylophone song library provides at least three songs per difficulty', () => {

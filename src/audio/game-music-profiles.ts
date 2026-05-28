@@ -591,6 +591,8 @@ export function resolveLegacyGameMusicProfile(taskId: TaskID): GameMusicProfileI
       return 'calm'
     case TaskID.HAND_BUBBLE_POP:
       return 'bubble'
+    case TaskID.AIR_CONDUCTOR:
+      return 'music-minimal'
     default:
       return 'playful'
   }
@@ -603,6 +605,7 @@ export function getDefaultMusicStateForLegacyTask(taskId: TaskID): GameMusicStat
     case TaskID.AUDIO_DIFF:
     case TaskID.AUDIO_COMMAND:
     case TaskID.AUDIO_RHYTHM:
+    case TaskID.AIR_CONDUCTOR:
       return 'paused'
     default:
       return 'playing'
@@ -610,7 +613,14 @@ export function getDefaultMusicStateForLegacyTask(taskId: TaskID): GameMusicStat
 }
 
 export function hasLegacyGameBackgroundMusic(taskId: TaskID): boolean {
-  return getDefaultMusicStateForLegacyTask(taskId) !== 'paused'
+  switch (taskId) {
+    case TaskID.AUDIO_DIFF:
+    case TaskID.AUDIO_COMMAND:
+    case TaskID.AUDIO_RHYTHM:
+      return false
+    default:
+      return true
+  }
 }
 
 export function resolveCustomGameMusicProfile({
