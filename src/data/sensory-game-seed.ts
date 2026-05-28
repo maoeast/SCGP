@@ -124,6 +124,17 @@ const BASE_SENSORY_GAME_SEED: SensoryGameSeed[] = [
     duration: '自由60秒 / 分类20个目标',
     mode: 'bubble-pop',
   },
+  {
+    taskId: 11,
+    name: '空中魔法指挥棒',
+    description: '通过双臂在空中抬举与摆动完成姿态感知训练，首期用于感统主链接线与相机舞台验证。',
+    category: 'motor',
+    emoji: '🪄',
+    color: 'linear-gradient(135deg, #7c9cff 0%, #54d2d2 52%, #ffe29a 100%)',
+    difficulty: '时长可调',
+    duration: '60-120秒',
+    mode: 'air-conductor',
+  },
 ]
 
 export const SENSORY_GAME_SEED: SensoryGameSeed[] = BASE_SENSORY_GAME_SEED.map((game) => {

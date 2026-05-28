@@ -138,7 +138,8 @@ export class IEPGenerator {
       [TaskID.AUDIO_RHYTHM]: '节奏模仿游戏',
       [TaskID.HAND_XYLOPHONE]: '空气木琴',
       [TaskID.HAND_WOOD_BLOCKS]: '木块磁贴拼图',
-      [TaskID.HAND_BUBBLE_POP]: '打泡泡'
+      [TaskID.HAND_BUBBLE_POP]: '打泡泡',
+      [TaskID.AIR_CONDUCTOR]: '空中魔法指挥棒'
     }
     return names[taskId] || '未知任务'
   }
@@ -165,7 +166,7 @@ export class IEPGenerator {
       sections.push(this.generateAuditoryIntegrationSection(data))
     } else if (taskId === TaskID.AUDIO_RHYTHM) {
       sections.push(this.generateAuditorySequencingSection(data))
-    } else if ([TaskID.HAND_XYLOPHONE, TaskID.HAND_WOOD_BLOCKS, TaskID.HAND_BUBBLE_POP].includes(taskId)) {
+    } else if ([TaskID.HAND_XYLOPHONE, TaskID.HAND_WOOD_BLOCKS, TaskID.HAND_BUBBLE_POP, TaskID.AIR_CONDUCTOR].includes(taskId)) {
       sections.push(this.generateHandIntegrationSection(taskId, data))
     }
 
