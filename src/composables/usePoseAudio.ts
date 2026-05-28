@@ -32,23 +32,97 @@ import {
   updateOffFrameState,
 } from '@/components/games/pose/air-conductor-runtime'
 
-function createPentatonicScale() {
-  return ['C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5', 'G5', 'A5', 'C6'] as const
+export const AIR_CONDUCTOR_PENTATONIC_SCALE = [
+  'C3',
+  'D3',
+  'E3',
+  'G3',
+  'A3',
+  'C4',
+  'D4',
+  'E4',
+  'G4',
+  'A4',
+  'C5',
+  'D5',
+  'E5',
+] as const
+
+const AIR_CONDUCTOR_SCALE_HEIGHT_SPAN = 0.52
+const AIR_CONDUCTOR_FILTER_MIN_FREQUENCY = 320
+const AIR_CONDUCTOR_FILTER_BASE_FREQUENCY = 900
+const AIR_CONDUCTOR_FILTER_MAX_FREQUENCY = 2200
+
+export function createPentatonicScale() {
+  return [...AIR_CONDUCTOR_PENTATONIC_SCALE]
+}
+
+export function createAirConductorSynthOptions(hand: 'left' | 'right') {
+  return {
+    oscillator: { type: 'sine' as const },
+    envelope: {
+      attack: hand === 'left' ? 0.1 : 0.12,
+      decay: 0.18,
+      sustain: 0.28,
+      release: hand === 'left' ? 1.02 : 1.08,
+    },
+  }
+}
+
+export function createAirConductorHarmonySynthOptions() {
+  return {
+    volume: -16,
+    oscillator: { type: 'sine' as const },
+    envelope: {
+      attack: 0.11,
+      decay: 0.2,
+      sustain: 0.22,
+      release: 1.06,
+    },
+  }
+}
+
+export function createAirConductorCompressorOptions() {
+  return {
+    threshold: -18,
+    ratio: 4,
+    attack: 0.01,
+    release: 0.24,
+    knee: 8,
+  }
+}
+
+export function createAirConductorEffectOptions() {
+  return {
+    outputGain: 0.52,
+    filterMinFrequency: AIR_CONDUCTOR_FILTER_MIN_FREQUENCY,
+    filterBaseFrequency: AIR_CONDUCTOR_FILTER_BASE_FREQUENCY,
+    filterMaxFrequency: AIR_CONDUCTOR_FILTER_MAX_FREQUENCY,
+    delayTime: '8n' as const,
+    delayFeedback: 0.12,
+    delayWet: 0.08,
+    harmonyWet: 0.22,
+  }
 }
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
-function mapHeightToScaleIndex(height: number): number {
-  return clamp(Math.round((height / 0.45) * 10), 0, 10)
+export function mapHeightToScaleIndex(height: number): number {
+  const maxIndex = AIR_CONDUCTOR_PENTATONIC_SCALE.length - 1
+  return clamp(Math.round((height / AIR_CONDUCTOR_SCALE_HEIGHT_SPAN) * maxIndex), 0, maxIndex)
 }
 
-function mapHorizontalToFilterFrequency(value: number): number {
-  const min = 400
-  const max = 4000
+export function mapHorizontalToFilterFrequency(value: number): number {
   const safeValue = clamp(value, 0, 1)
-  return Math.round(min * Math.pow(max / min, safeValue))
+  return Math.round(
+    AIR_CONDUCTOR_FILTER_MIN_FREQUENCY *
+      Math.pow(
+        AIR_CONDUCTOR_FILTER_MAX_FREQUENCY / AIR_CONDUCTOR_FILTER_MIN_FREQUENCY,
+        safeValue,
+      ),
+  )
 }
 
 export function usePoseAudio(durationSec: number) {
@@ -73,8 +147,10 @@ export function usePoseAudio(durationSec: number) {
   let audioReady = false
   let leftSynth: Tone.Synth | null = null
   let rightSynth: Tone.Synth | null = null
+  let harmonySynth: Tone.PolySynth<Tone.Synth> | null = null
   let filter: Tone.Filter | null = null
   let feedbackDelay: Tone.FeedbackDelay | null = null
+  let compressor: Tone.Compressor | null = null
   let outputGain: Tone.Gain | null = null
   let audioSuppressedByOffFrame = false
 
@@ -90,36 +166,37 @@ export function usePoseAudio(durationSec: number) {
       await Tone.getContext().resume()
     }
 
-    Tone.Destination.volume.value = -6
-    outputGain = new Tone.Gain(0.6)
-    filter = new Tone.Filter(1200, 'lowpass')
-    feedbackDelay = new Tone.FeedbackDelay('8n', 0.18)
-    feedbackDelay.wet.value = 0.1
-    leftSynth = new Tone.Synth({
-      oscillator: { type: 'triangle' },
-      envelope: { attack: 0.03, decay: 0.08, sustain: 0.2, release: 0.24 },
-    })
-    rightSynth = new Tone.Synth({
-      oscillator: { type: 'sine' },
-      envelope: { attack: 0.03, decay: 0.08, sustain: 0.2, release: 0.24 },
-    })
+    const effectOptions = createAirConductorEffectOptions()
+    const compressorOptions = createAirConductorCompressorOptions()
+    Tone.Destination.volume.value = -10
+    outputGain = new Tone.Gain(effectOptions.outputGain)
+    filter = new Tone.Filter(effectOptions.filterBaseFrequency, 'lowpass')
+    feedbackDelay = new Tone.FeedbackDelay(effectOptions.delayTime, effectOptions.delayFeedback)
+    compressor = new Tone.Compressor(compressorOptions)
+    feedbackDelay.wet.value = effectOptions.delayWet
+    leftSynth = new Tone.Synth(createAirConductorSynthOptions('left'))
+    rightSynth = new Tone.Synth(createAirConductorSynthOptions('right'))
+    harmonySynth = new Tone.PolySynth(Tone.Synth, createAirConductorHarmonySynthOptions())
 
     leftSynth.connect(filter)
     rightSynth.connect(filter)
+    harmonySynth.connect(filter)
     filter.connect(feedbackDelay)
-    filter.connect(outputGain)
-    feedbackDelay.connect(outputGain)
+    filter.connect(compressor)
+    feedbackDelay.connect(compressor)
+    compressor.connect(outputGain)
     outputGain.connect(Tone.Destination)
     audioReady = true
   }
 
   async function syncAudioForPose(nextPose: ArmPose) {
     await ensureAudioReady()
-    if (!leftSynth || !rightSynth || !filter || !feedbackDelay) {
+    if (!leftSynth || !rightSynth || !harmonySynth || !filter || !feedbackDelay) {
       return
     }
 
-    const scale = createPentatonicScale()
+    const effectOptions = createAirConductorEffectOptions()
+    const scale = AIR_CONDUCTOR_PENTATONIC_SCALE
     const leftHeight = Math.max(0, nextPose.leftShoulder.y - nextPose.left.y)
     const rightHeight = Math.max(0, nextPose.rightShoulder.y - nextPose.right.y)
     const leftNote = scale[mapHeightToScaleIndex(leftHeight)]
@@ -148,20 +225,20 @@ export function usePoseAudio(durationSec: number) {
 
     const separatedEnough = Math.abs(nextPose.left.x - nextPose.right.x) > 0.4
     if (leftLifted && rightLifted && separatedEnough) {
-      feedbackDelay.wet.rampTo(0.55, 0.3)
+      feedbackDelay.wet.rampTo(effectOptions.harmonyWet, 0.3)
       if (performance.now() - lastHarmonyTriggeredAt >= AIR_CONDUCTOR_HARMONY_COOLDOWN_MS) {
         lastHarmonyTriggeredAt = performance.now()
-        leftSynth.triggerAttackRelease('C5', '8n', Tone.now())
-        rightSynth.triggerAttackRelease('G4', '8n', Tone.now() + 0.03)
+        harmonySynth.triggerAttackRelease(['C4', 'E4'], '8n', Tone.now(), 0.35)
       }
     } else {
-      feedbackDelay.wet.rampTo(0.1, 0.5)
+      feedbackDelay.wet.rampTo(effectOptions.delayWet, 0.5)
     }
   }
 
   function releaseInteractiveAudio() {
     leftSynth?.triggerRelease(Tone.now())
     rightSynth?.triggerRelease(Tone.now())
+    harmonySynth?.releaseAll(Tone.now())
   }
 
   function suppressForOffFrame() {
@@ -181,7 +258,7 @@ export function usePoseAudio(durationSec: number) {
     }
 
     audioSuppressedByOffFrame = false
-    outputGain?.gain.rampTo(0.6, 0.3)
+    outputGain?.gain.rampTo(createAirConductorEffectOptions().outputGain, 0.3)
     musicController?.restoreMusic()
   }
 
@@ -378,13 +455,17 @@ export function usePoseAudio(durationSec: number) {
     rightSynth?.triggerRelease(Tone.now())
     leftSynth?.dispose()
     rightSynth?.dispose()
+    harmonySynth?.dispose()
     filter?.dispose()
     feedbackDelay?.dispose()
+    compressor?.dispose()
     outputGain?.dispose()
     leftSynth = null
     rightSynth = null
+    harmonySynth = null
     filter = null
     feedbackDelay = null
+    compressor = null
     outputGain = null
     audioReady = false
   }
