@@ -1,7 +1,7 @@
 <template>
   <div class="air-conductor">
     <PoseCameraLayer class="air-conductor__stage" :paused="cameraPaused" @pose-frame="handlePoseFrameEvent">
-      <template #default="{ fps, offFrame, isReady }">
+      <template #default="{ offFrame }">
         <div class="air-conductor__topbar">
           <div class="air-conductor__topbar-group">
             <span class="air-conductor__badge">Air Conductor</span>
@@ -105,10 +105,55 @@
               </span>
             </div>
 
-            <div class="air-conductor__status-panel">
-              <span class="air-conductor__status-label">状态</span>
-              <strong>{{ phaseLabel }}</strong>
-              <span class="air-conductor__status-meta">FPS {{ fps || 0 }}</span>
+            <div
+              v-if="phase !== 'idle'"
+              class="air-conductor__hud-stack"
+              :class="hudStackClass"
+            >
+              <div
+                class="air-conductor__status-panel"
+                :class="{ 'air-conductor__status-panel--spotlight': phase === 'done' }"
+              >
+                <span class="air-conductor__status-label">当前任务</span>
+                <strong>{{ phaseLabel }}</strong>
+                <span class="air-conductor__status-meta">{{ formattedDuration }}</span>
+              </div>
+
+              <div
+                class="air-conductor__prompt-card"
+                :class="mainPromptToneClass"
+              >
+                <div class="air-conductor__prompt-copy">
+                  <span class="air-conductor__prompt-eyebrow">{{ mainPromptEyebrow }}</span>
+                  <strong class="air-conductor__prompt-title">{{ mainPromptTitle }}</strong>
+                  <p class="air-conductor__prompt-body">{{ mainPromptBody }}</p>
+                </div>
+
+                <div class="air-conductor__prompt-meta">
+                  <span class="air-conductor__prompt-chip">挥动 {{ totalExtensions }} 次</span>
+                  <span class="air-conductor__prompt-chip">训练 {{ formattedDuration }}</span>
+                  <span class="air-conductor__prompt-chip">最高 {{ stats.maxReachScore }} 分</span>
+                </div>
+
+                <div class="air-conductor__prompt-actions">
+                  <button
+                    v-if="phase === 'done'"
+                    type="button"
+                    class="air-conductor__pill air-conductor__pill--primary"
+                    @click="emitFinish"
+                  >
+                    完成训练
+                  </button>
+                  <button
+                    v-else-if="phase !== 'countdown' && phase !== 'finishing'"
+                    type="button"
+                    class="air-conductor__pill air-conductor__pill--secondary"
+                    @click="beginCalibration"
+                  >
+                    重新校准
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div v-if="phase === 'idle'" class="air-conductor__overlay-card">
@@ -121,93 +166,10 @@
               </div>
             </div>
 
-            <div v-else-if="phase === 'calibrating'" class="air-conductor__center-overlay">
-              <strong>正在校准静息姿势</strong>
-              <span>请自然站立并保持双肩稳定</span>
-            </div>
-
-            <div v-else-if="phase === 'countdown'" class="air-conductor__countdown">
+            <div v-if="phase === 'countdown'" class="air-conductor__countdown">
               {{ countdownValue }}
             </div>
-
-            <div v-else-if="phase === 'paused'" class="air-conductor__center-overlay">
-              <strong>训练已暂停</strong>
-              <span>调整好姿势后继续</span>
-            </div>
-
-            <div v-else-if="phase === 'finishing'" class="air-conductor__center-overlay">
-              <strong>正在收尾并整理结果</strong>
-              <span>请保持放松，结果马上完成</span>
-            </div>
-
-            <div v-if="offFrame" class="air-conductor__offframe">
-              请回到摄像头取景范围内
-            </div>
-
-            <div class="air-conductor__floating-pitch">
-              <span>本轮最高伸展</span>
-              <strong>{{ stats.maxReachScore }}</strong>
-            </div>
-
-            <div class="air-conductor__camera-meta">
-              <span>追踪状态</span>
-              <strong>{{ isReady ? '已连接' : '准备中' }}</strong>
-            </div>
           </section>
-
-          <aside class="air-conductor__panel">
-            <div class="air-conductor__metric-card">
-              <span>训练时长</span>
-              <strong>{{ formattedDuration }}</strong>
-            </div>
-            <div class="air-conductor__metric-card">
-              <span>左臂抬举</span>
-              <strong>{{ stats.leftArmExtensions }}</strong>
-            </div>
-            <div class="air-conductor__metric-card">
-              <span>右臂抬举</span>
-              <strong>{{ stats.rightArmExtensions }}</strong>
-            </div>
-            <div class="air-conductor__metric-card">
-              <span>双侧协同</span>
-              <strong>{{ bilateralLabel }}</strong>
-            </div>
-            <div class="air-conductor__metric-card">
-              <span>最大伸展</span>
-              <strong>{{ stats.maxReachScore }}分</strong>
-            </div>
-
-            <div class="air-conductor__notes">
-              <div class="air-conductor__note">
-                <span>运行态</span>
-                <strong>{{ phaseLabel }}</strong>
-              </div>
-              <div class="air-conductor__note">
-                <span>音乐</span>
-                <strong>{{ musicHint }}</strong>
-              </div>
-              <div class="air-conductor__note">
-                <span>统计摘要</span>
-                <strong>{{ summaryText }}</strong>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              class="air-conductor__pill air-conductor__pill--secondary"
-              @click="beginCalibration"
-            >
-              重新校准
-            </button>
-
-            <div v-if="phase === 'done'" class="air-conductor__done">
-              <h3>本轮训练完成</h3>
-              <p>统计已整理完成，可以直接写入现有训练记录主链。</p>
-              <button type="button" class="air-conductor__pill air-conductor__pill--primary" @click="emitFinish">
-                完成训练
-              </button>
-            </div>
-          </aside>
         </div>
       </template>
     </PoseCameraLayer>
@@ -282,31 +244,106 @@ let previousParticleEmitters: AirConductorParticleEmitter[] = []
 
 const cameraPaused = computed(() => phase.value === 'paused')
 const formattedDuration = computed(() => buildSummary().formattedDuration)
-const bilateralLabel = computed(() => `${stats.value.bilateralCoordSec.toFixed(1)}s`)
+const totalExtensions = computed(() => stats.value.leftArmExtensions + stats.value.rightArmExtensions)
 const phaseLabel = computed(() => {
   switch (phase.value) {
     case 'idle':
       return '等待开始'
     case 'calibrating':
-      return '校准中'
+      return '正在准备'
     case 'countdown':
-      return '倒计时'
+      return '马上开始'
     case 'playing':
-      return '训练进行中'
+      return '跟着挥动'
     case 'paused':
-      return '已暂停'
+      return '暂停一下'
     case 'finishing':
       return '收尾中'
     case 'done':
-      return '已完成'
+      return '完成啦'
     default:
       return '准备中'
   }
 })
-const musicHint = computed(() => phase.value === 'playing' ? '已联动共享音乐系统' : '待机中')
-const summaryText = computed(() => {
-  const summary = buildSummary()
-  return `左${summary.leftArmExtensions} / 右${summary.rightArmExtensions}`
+
+const mainPromptEyebrow = computed(() => {
+  if (isOffFrame.value) return '站回镜头里'
+  switch (phase.value) {
+    case 'calibrating':
+      return '先站稳'
+    case 'countdown':
+      return '准备起飞'
+    case 'playing':
+      return '跟着节奏来'
+    case 'paused':
+      return '休息一下'
+    case 'finishing':
+      return '马上出结果'
+    case 'done':
+      return '你做到了'
+    default:
+      return '准备开始'
+  }
+})
+
+const mainPromptTitle = computed(() => {
+  if (isOffFrame.value) return '回到画面中间'
+  switch (phase.value) {
+    case 'calibrating':
+      return '站稳身体，肩膀放松'
+    case 'countdown':
+      return '双臂准备飞起来'
+    case 'playing':
+      return '双臂向上挥动'
+    case 'paused':
+      return '调整好再继续'
+    case 'finishing':
+      return '保持放松，结果整理中'
+    case 'done':
+      return '本轮训练完成'
+    default:
+      return '准备挥动双臂'
+  }
+})
+
+const mainPromptBody = computed(() => {
+  if (isOffFrame.value) return '向前站一点点，让小手套重新回到镜头里。'
+  switch (phase.value) {
+    case 'calibrating':
+      return '看着屏幕站好，等系统记住你的起始姿势。'
+    case 'countdown':
+      return '听着节奏，等数字结束就把双手举高高。'
+    case 'playing':
+      return '像指挥家一样挥动双手，越大胆越好。'
+    case 'paused':
+      return '准备好了就继续，我们慢慢来。'
+    case 'finishing':
+      return '先别离开镜头，训练记录马上整理完成。'
+    case 'done':
+      return '可以完成训练，结果会继续走训练记录和报告主链。'
+    default:
+      return '先站到镜头前，再开始这场发光指挥游戏。'
+  }
+})
+
+const mainPromptToneClass = computed(() => {
+  if (isOffFrame.value) return 'air-conductor__prompt-card--warning'
+  switch (phase.value) {
+    case 'paused':
+      return 'air-conductor__prompt-card--calm'
+    case 'done':
+      return 'air-conductor__prompt-card--success'
+    case 'finishing':
+      return 'air-conductor__prompt-card--calm'
+    default:
+      return 'air-conductor__prompt-card--playful'
+  }
+})
+
+const hudStackClass = computed(() => {
+  if (phase.value === 'done') return 'air-conductor__hud-stack--center'
+  if (isOffFrame.value) return 'air-conductor__hud-stack--offframe'
+  return 'air-conductor__hud-stack--default'
 })
 
 function mapPoseFrameToArmPose(frame: PoseFrame | null) {
@@ -429,11 +466,11 @@ function getRippleStyle(ripple: AirConductorRipplePulse) {
 }
 
 function emitFinish() {
-  const totalExtensions = stats.value.leftArmExtensions + stats.value.rightArmExtensions
+  const totalExtensionCount = totalExtensions.value
   const completionScore = Math.min(100, Math.round(
     (stats.value.maxReachScore * 0.5)
       + (Math.min(1, stats.value.bilateralCoordSec / Math.max(1, props.duration * 0.5)) * 30)
-      + (Math.min(1, totalExtensions / Math.max(8, props.duration / 5)) * 20),
+      + (Math.min(1, totalExtensionCount / Math.max(8, props.duration / 5)) * 20),
   ))
 
   const endTime = Date.now()
@@ -444,10 +481,10 @@ function emitFinish() {
     endTime,
     duration: Math.max(1, stats.value.durationSec),
     trials: [],
-    totalTrials: Math.max(1, totalExtensions),
-    correctTrials: totalExtensions,
+    totalTrials: Math.max(1, totalExtensionCount),
+    correctTrials: totalExtensionCount,
     accuracy: 1,
-    avgResponseTime: totalExtensions > 0 ? Math.round((stats.value.durationSec * 1000) / totalExtensions) : 0,
+    avgResponseTime: totalExtensionCount > 0 ? Math.round((stats.value.durationSec * 1000) / totalExtensionCount) : 0,
     errors: {
       omission: 0,
       commission: 0,
@@ -460,7 +497,7 @@ function emitFinish() {
     handGameStats: {
       handTrackingUsed: true,
       pointerFallbackUsed: false,
-      gestureEvents: totalExtensions,
+      gestureEvents: totalExtensionCount,
       completionScore,
       leftArmExtensions: stats.value.leftArmExtensions,
       rightArmExtensions: stats.value.rightArmExtensions,
@@ -574,12 +611,13 @@ onBeforeUnmount(() => {
 
 .air-conductor__badge,
 .air-conductor__status-panel,
-.air-conductor__floating-pitch,
-.air-conductor__camera-meta,
-.air-conductor__metric-card,
-.air-conductor__note {
+.air-conductor__prompt-card,
+.air-conductor__overlay-card,
+.air-conductor__offframe,
+.air-conductor__countdown,
+.air-conductor__prompt-chip {
   border: 1px solid rgba(255, 255, 255, 0.72);
-  background: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.86);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
   backdrop-filter: blur(14px);
 }
@@ -604,14 +642,12 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   z-index: 3;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 20px;
-  padding: 86px 20px 20px;
+  padding: 108px 20px 20px;
 }
 
 .air-conductor__visual {
   position: relative;
+  height: 100%;
   min-height: 0;
 }
 
@@ -697,116 +733,98 @@ onBeforeUnmount(() => {
   animation: air-conductor-beat-trace 0.46s ease-out forwards;
 }
 
-.air-conductor__panel {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.air-conductor__status-panel,
-.air-conductor__floating-pitch,
-.air-conductor__camera-meta,
-.air-conductor__metric-card,
-.air-conductor__note,
-.air-conductor__overlay-card,
-.air-conductor__done,
-.air-conductor__center-overlay,
-.air-conductor__offframe,
-.air-conductor__countdown {
-  border-radius: 24px;
-}
-
-.air-conductor__status-panel {
+.air-conductor__hud-stack {
   position: absolute;
   top: 0;
   left: 0;
   z-index: 2;
   display: grid;
-  gap: 6px;
-  padding: 16px 18px;
+  gap: 14px;
+  width: min(460px, calc(100% - 116px));
 }
 
-.air-conductor__camera-meta {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  z-index: 2;
+.air-conductor__hud-stack--default {
+  top: auto;
+  left: auto;
+  right: 18px;
+  bottom: 18px;
+  width: min(420px, calc(100% - 36px));
+}
+
+.air-conductor__hud-stack--offframe {
+  top: auto;
+  left: auto;
+  right: 18px;
+  bottom: 18px;
+  width: min(360px, calc(100% - 36px));
+}
+
+.air-conductor__hud-stack--center {
+  top: 50%;
+  left: 50%;
+  width: min(560px, calc(100% - 48px));
+  transform: translate(-50%, -50%);
+  justify-items: center;
+}
+
+.air-conductor__status-panel,
+.air-conductor__overlay-card,
+.air-conductor__countdown,
+.air-conductor__prompt-card {
+  border-radius: 28px;
+}
+
+.air-conductor__status-panel {
   display: grid;
   gap: 4px;
-  padding: 14px 16px;
+  width: fit-content;
+  min-width: 92px;
+  padding: 10px 12px;
+  border-color: rgba(255, 255, 255, 0.68);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(241, 245, 249, 0.88));
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.air-conductor__status-panel--spotlight {
+  width: 100%;
+  justify-items: center;
+  text-align: center;
+  padding: 16px 20px;
+  border-color: rgba(255, 255, 255, 0.72);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(248, 250, 252, 0.94));
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
 }
 
 .air-conductor__status-label,
 .air-conductor__status-meta,
-.air-conductor__metric-card span,
-.air-conductor__note span,
-.air-conductor__camera-meta span {
+.air-conductor__prompt-eyebrow {
   color: #64748b;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 
-.air-conductor__status-panel strong,
-.air-conductor__metric-card strong,
-.air-conductor__note strong,
-.air-conductor__camera-meta strong {
+.air-conductor__status-panel strong {
   color: #0f172a;
+  font-size: 0.9rem;
+  line-height: 1.15;
+}
+
+.air-conductor__status-panel--spotlight .air-conductor__status-label,
+.air-conductor__status-panel--spotlight .air-conductor__status-meta {
+  font-size: 12px;
+}
+
+.air-conductor__status-panel--spotlight strong {
   font-size: 1.1rem;
 }
 
-.air-conductor__floating-pitch {
-  position: absolute;
-  right: 0;
-  top: 0;
-  z-index: 2;
-  display: grid;
-  gap: 4px;
-  padding: 14px 16px;
-  text-align: right;
-}
-
-.air-conductor__floating-pitch span {
-  color: #475569;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.air-conductor__floating-pitch strong {
-  color: #1d4ed8;
-  font-size: 2rem;
-  line-height: 1;
-}
-
-.air-conductor__metric-card,
-.air-conductor__note,
-.air-conductor__done {
-  padding: 16px 18px;
-}
-
-.air-conductor__metric-card {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.air-conductor__notes {
-  display: grid;
-  gap: 10px;
-}
-
-.air-conductor__note {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .air-conductor__overlay-card,
-.air-conductor__center-overlay,
-.air-conductor__offframe,
 .air-conductor__countdown {
   position: absolute;
-  z-index: 3;
   left: 50%;
+  z-index: 3;
   transform: translateX(-50%);
 }
 
@@ -814,20 +832,16 @@ onBeforeUnmount(() => {
   top: 50%;
   width: min(640px, calc(100% - 32px));
   padding: 28px 30px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 26px 56px rgba(15, 23, 42, 0.16);
   text-align: center;
   transform: translate(-50%, -50%);
 }
 
-.air-conductor__overlay-card h2,
-.air-conductor__done h3 {
+.air-conductor__overlay-card h2 {
   margin: 0 0 10px;
   color: #0f172a;
 }
 
-.air-conductor__overlay-card p,
-.air-conductor__done p {
+.air-conductor__overlay-card p {
   margin: 0;
   color: #475569;
   line-height: 1.8;
@@ -837,27 +851,6 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: center;
   margin-top: 22px;
-}
-
-.air-conductor__center-overlay,
-.air-conductor__offframe {
-  display: grid;
-  gap: 6px;
-  padding: 16px 20px;
-  color: #0f172a;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.14);
-}
-
-.air-conductor__center-overlay {
-  top: 50%;
-  min-width: 320px;
-  transform: translate(-50%, -50%);
-}
-
-.air-conductor__offframe {
-  bottom: 18px;
 }
 
 .air-conductor__countdown {
@@ -872,6 +865,93 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 28px 58px rgba(15, 23, 42, 0.18);
   transform: translate(-50%, -50%);
+}
+
+.air-conductor__prompt-card {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  padding: 18px 20px;
+}
+
+.air-conductor__hud-stack--center .air-conductor__prompt-card {
+  text-align: center;
+}
+
+.air-conductor__hud-stack--center .air-conductor__prompt-copy {
+  justify-items: center;
+}
+
+.air-conductor__hud-stack--center .air-conductor__prompt-meta,
+.air-conductor__hud-stack--center .air-conductor__prompt-actions {
+  justify-content: center;
+}
+
+.air-conductor__prompt-card--playful {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(236, 252, 255, 0.94)),
+    radial-gradient(circle at left top, rgba(59, 130, 246, 0.14), transparent 36%);
+}
+
+.air-conductor__prompt-card--calm {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(240, 249, 255, 0.94)),
+    radial-gradient(circle at left top, rgba(14, 165, 233, 0.1), transparent 40%);
+}
+
+.air-conductor__prompt-card--success {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(236, 253, 245, 0.94)),
+    radial-gradient(circle at left top, rgba(16, 185, 129, 0.14), transparent 40%);
+}
+
+.air-conductor__prompt-card--warning {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(255, 247, 237, 0.94)),
+    radial-gradient(circle at left top, rgba(249, 115, 22, 0.16), transparent 40%);
+}
+
+.air-conductor__prompt-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.air-conductor__prompt-title {
+  color: #0f172a;
+  font-size: clamp(1.65rem, 2vw + 1rem, 2.6rem);
+  font-weight: 900;
+  line-height: 1.08;
+}
+
+.air-conductor__prompt-body {
+  margin: 0;
+  color: #334155;
+  font-size: clamp(1rem, 1vw + 0.8rem, 1.2rem);
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.air-conductor__prompt-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.air-conductor__prompt-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.air-conductor__prompt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .air-conductor__pill {
@@ -893,7 +973,7 @@ onBeforeUnmount(() => {
 .air-conductor__pill--secondary,
 .air-conductor__pill--ghost {
   color: #24415b;
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.1);
 }
 
@@ -992,22 +1072,6 @@ onBeforeUnmount(() => {
   }
 }
 
-@media (max-width: 1080px) {
-  .air-conductor__layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
-  }
-
-  .air-conductor__panel {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .air-conductor__done {
-    grid-column: 1 / -1;
-  }
-}
-
 @media (max-width: 700px) {
   .air-conductor__topbar {
     flex-direction: column;
@@ -1021,11 +1085,34 @@ onBeforeUnmount(() => {
   }
 
   .air-conductor__layout {
-    padding-top: 126px;
+    padding-top: 138px;
   }
 
-  .air-conductor__panel {
-    grid-template-columns: 1fr;
+  .air-conductor__hud-stack {
+    width: min(100%, calc(100% - 12px));
+  }
+
+  .air-conductor__hud-stack--default,
+  .air-conductor__hud-stack--offframe {
+    right: 0;
+    bottom: 12px;
+    width: min(320px, calc(100% - 12px));
+  }
+
+  .air-conductor__hud-stack--center {
+    width: calc(100% - 24px);
+  }
+
+  .air-conductor__prompt-card {
+    padding: 18px;
+  }
+
+  .air-conductor__prompt-actions {
+    width: 100%;
+  }
+
+  .air-conductor__prompt-actions .air-conductor__pill {
+    flex: 1 1 auto;
   }
 }
 </style>
