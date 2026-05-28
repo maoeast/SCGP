@@ -36,6 +36,75 @@
 
         <div class="air-conductor__layout">
           <section class="air-conductor__visual">
+            <div class="air-conductor__particle-layer" aria-hidden="true">
+              <svg class="air-conductor__beat-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient
+                    v-for="segment in beatTrajectorySegments"
+                    :id="`air-conductor-beat-gradient-${segment.id}`"
+                    :key="`gradient-${segment.id}`"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
+                    <stop offset="0%" :stop-color="segment.colorWarm" />
+                    <stop offset="100%" :stop-color="segment.colorCool" />
+                  </linearGradient>
+                </defs>
+
+                <line
+                  v-for="segment in beatTrajectorySegments"
+                  :key="segment.id"
+                  class="air-conductor__beat-segment"
+                  :x1="(segment.startX * 100).toFixed(2)"
+                  :y1="(segment.startY * 100).toFixed(2)"
+                  :x2="(segment.endX * 100).toFixed(2)"
+                  :y2="(segment.endY * 100).toFixed(2)"
+                  :stroke="`url(#air-conductor-beat-gradient-${segment.id})`"
+                  :stroke-width="segment.strokeWidth / 7"
+                  :style="getBeatSegmentStyle(segment)"
+                />
+              </svg>
+
+              <div
+                v-for="emitter in particleEmitters"
+                :key="emitter.hand"
+                class="air-conductor__emitter"
+                :class="`air-conductor__emitter--${emitter.hand}`"
+                :style="getEmitterStyle(emitter)"
+              >
+                <span class="air-conductor__emitter-core" />
+                <span class="air-conductor__emitter-ring" />
+              </div>
+
+              <span
+                v-for="trailPoint in trailPoints"
+                :key="trailPoint.id"
+                class="air-conductor__trail-point"
+                :class="`air-conductor__trail-point--${trailPoint.hand}`"
+                :style="getTrailPointStyle(trailPoint)"
+              />
+
+              <span
+                v-for="ripple in ripplePulses"
+                :key="ripple.id"
+                class="air-conductor__ripple"
+                :class="`air-conductor__ripple--${ripple.hand}`"
+                :style="getRippleStyle(ripple)"
+              />
+
+              <span
+                v-for="particle in noteParticles"
+                :key="particle.id"
+                class="air-conductor__particle"
+                :class="`air-conductor__particle--${particle.hand}`"
+                :style="getParticleStyle(particle)"
+              >
+                {{ particle.symbol }}
+              </span>
+            </div>
+
             <div class="air-conductor__status-panel">
               <span class="air-conductor__status-label">状态</span>
               <strong>{{ phaseLabel }}</strong>
@@ -148,8 +217,27 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import PoseCameraLayer from '@/components/games/pose/PoseCameraLayer.vue'
+import {
+  AIR_CONDUCTOR_PARTICLE_BURST_INTERVAL_MS,
+  createBeatTrajectorySegments,
+  createConductorTrailFrame,
+  mapArmPoseToParticleEmitters,
+  pruneExpiredBeatTrajectorySegments,
+  pruneExpiredNoteParticles,
+  pruneExpiredRipples,
+  pruneExpiredTrailPoints,
+  spawnConductorRipples,
+  spawnEmitterNoteParticles,
+} from '@/components/games/pose/air-conductor-runtime'
 import { usePoseAudio } from '@/composables/usePoseAudio'
 import type { PoseFrame } from '@/composables/usePoseTracker'
+import type {
+  AirConductorBeatTrajectorySegment,
+  AirConductorNoteParticle,
+  AirConductorParticleEmitter,
+  AirConductorRipplePulse,
+  AirConductorTrailPoint,
+} from '@/types/air-conductor'
 import { TaskID, type GameSessionData } from '@/types/games'
 
 const props = withDefaults(defineProps<{
@@ -182,7 +270,15 @@ const {
 } = usePoseAudio(props.duration)
 
 const startedAt = ref(Date.now())
+const particleEmitters = ref<AirConductorParticleEmitter[]>([])
+const noteParticles = ref<AirConductorNoteParticle[]>([])
+const beatTrajectorySegments = ref<AirConductorBeatTrajectorySegment[]>([])
+const trailPoints = ref<AirConductorTrailPoint[]>([])
+const ripplePulses = ref<AirConductorRipplePulse[]>([])
 let animationFrameId = 0
+let nextParticleId = 0
+let lastParticleBurstAt = 0
+let previousParticleEmitters: AirConductorParticleEmitter[] = []
 
 const cameraPaused = computed(() => phase.value === 'paused')
 const formattedDuration = computed(() => buildSummary().formattedDuration)
@@ -240,12 +336,24 @@ function mapPoseFrameToArmPose(frame: PoseFrame | null) {
 }
 
 function animationLoop(now: number) {
+  noteParticles.value = pruneExpiredNoteParticles(noteParticles.value, now)
+  beatTrajectorySegments.value = pruneExpiredBeatTrajectorySegments(beatTrajectorySegments.value, now)
+  trailPoints.value = pruneExpiredTrailPoints(trailPoints.value, now)
+  ripplePulses.value = pruneExpiredRipples(ripplePulses.value, now)
   void tick(now)
   animationFrameId = window.requestAnimationFrame(animationLoop)
 }
 
 function beginCalibration() {
   startedAt.value = Date.now()
+  particleEmitters.value = []
+  noteParticles.value = []
+  beatTrajectorySegments.value = []
+  trailPoints.value = []
+  ripplePulses.value = []
+  nextParticleId = 0
+  lastParticleBurstAt = 0
+  previousParticleEmitters = []
   void startCalibration()
 }
 
@@ -262,6 +370,62 @@ function finishRun() {
     return
   }
   void endSession()
+}
+
+function getEmitterStyle(emitter: AirConductorParticleEmitter) {
+  return {
+    left: `${(emitter.x * 100).toFixed(2)}%`,
+    top: `${(emitter.y * 100).toFixed(2)}%`,
+    opacity: emitter.visible ? `${0.42 + emitter.intensity * 0.58}` : '0',
+    '--emitter-scale': `${0.88 + emitter.intensity * 0.58}`,
+    '--emitter-glow': emitter.hand === 'left' ? 'rgba(56, 189, 248, 0.42)' : 'rgba(168, 85, 247, 0.38)',
+  }
+}
+
+function getParticleStyle(particle: AirConductorNoteParticle) {
+  return {
+    left: `${(particle.x * 100).toFixed(2)}%`,
+    top: `${(particle.y * 100).toFixed(2)}%`,
+    color: particle.color,
+    opacity: `${particle.opacity}`,
+    '--particle-drift-x': `${particle.driftX}px`,
+    '--particle-drift-y': `${particle.driftY}px`,
+    '--particle-rotation': `${particle.rotation}deg`,
+    '--particle-scale': `${particle.scale}`,
+    '--particle-delay': `${particle.delayMs}ms`,
+  }
+}
+
+function getBeatSegmentStyle(segment: AirConductorBeatTrajectorySegment) {
+  return {
+    opacity: `${segment.opacity}`,
+    '--beat-vector-x': `${segment.vectorX * 120}px`,
+    '--beat-vector-y': `${segment.vectorY * 120}px`,
+  }
+}
+
+function getTrailPointStyle(trailPoint: AirConductorTrailPoint) {
+  return {
+    left: `${(trailPoint.x * 100).toFixed(2)}%`,
+    top: `${(trailPoint.y * 100).toFixed(2)}%`,
+    width: `${trailPoint.radius * 2}px`,
+    height: `${trailPoint.radius * 2}px`,
+    opacity: `${trailPoint.opacity}`,
+    background: trailPoint.color,
+    boxShadow: `0 0 ${trailPoint.glowSize}px ${trailPoint.color}`,
+  }
+}
+
+function getRippleStyle(ripple: AirConductorRipplePulse) {
+  return {
+    left: `${(ripple.x * 100).toFixed(2)}%`,
+    top: `${(ripple.y * 100).toFixed(2)}%`,
+    width: `${ripple.radius * 2}px`,
+    height: `${ripple.radius * 2}px`,
+    borderColor: ripple.color,
+    opacity: `${0.22 + ripple.strength * 0.46}`,
+    '--ripple-scale': `${1.18 + ripple.strength * 0.72}`,
+  }
 }
 
 function emitFinish() {
@@ -308,7 +472,58 @@ function emitFinish() {
 }
 
 function handlePoseFrameEvent(frame: PoseFrame | null) {
-  void handlePoseFrame(mapPoseFrameToArmPose(frame))
+  const armPose = mapPoseFrameToArmPose(frame)
+  particleEmitters.value = mapArmPoseToParticleEmitters(armPose)
+
+  if (phase.value === 'playing' && frame?.timestamp && particleEmitters.value.some((emitter) => emitter.visible)) {
+    const beatFrame = createBeatTrajectorySegments(previousParticleEmitters, particleEmitters.value, frame.timestamp, nextParticleId)
+    nextParticleId = beatFrame.nextId
+    beatTrajectorySegments.value = [
+      ...pruneExpiredBeatTrajectorySegments(beatTrajectorySegments.value, frame.timestamp),
+      ...beatFrame.segments,
+    ]
+
+    const trailFrame = createConductorTrailFrame(particleEmitters.value, frame.timestamp, nextParticleId)
+    nextParticleId = trailFrame.nextId
+    trailPoints.value = [
+      ...pruneExpiredTrailPoints(trailPoints.value, frame.timestamp),
+      ...trailFrame.points,
+    ]
+
+    const rippleFrame = spawnConductorRipples(particleEmitters.value, frame.timestamp, nextParticleId)
+    nextParticleId = rippleFrame.nextId
+    ripplePulses.value = [
+      ...pruneExpiredRipples(ripplePulses.value, frame.timestamp),
+      ...rippleFrame.ripples,
+    ]
+  }
+
+  if (
+    phase.value === 'playing'
+    && particleEmitters.value.some((emitter) => emitter.visible)
+    && frame?.timestamp
+    && frame.timestamp - lastParticleBurstAt >= AIR_CONDUCTOR_PARTICLE_BURST_INTERVAL_MS
+  ) {
+    const burst = spawnEmitterNoteParticles(particleEmitters.value, frame.timestamp, nextParticleId)
+    nextParticleId = burst.nextId
+    lastParticleBurstAt = frame.timestamp
+    noteParticles.value = [
+      ...pruneExpiredNoteParticles(noteParticles.value, frame.timestamp),
+      ...burst.particles,
+    ]
+  }
+
+  if (!frame?.timestamp) {
+    noteParticles.value = []
+    beatTrajectorySegments.value = []
+    trailPoints.value = []
+    ripplePulses.value = []
+    previousParticleEmitters = []
+  } else {
+    previousParticleEmitters = particleEmitters.value.map((emitter) => ({ ...emitter }))
+  }
+
+  void handlePoseFrame(armPose)
 }
 
 onMounted(() => {
@@ -400,6 +615,88 @@ onBeforeUnmount(() => {
   min-height: 0;
 }
 
+.air-conductor__particle-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.air-conductor__beat-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.air-conductor__emitter,
+.air-conductor__trail-point,
+.air-conductor__ripple,
+.air-conductor__particle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.air-conductor__emitter {
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 0 16px var(--emitter-glow));
+}
+
+.air-conductor__emitter-core,
+.air-conductor__emitter-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+}
+
+.air-conductor__emitter-core {
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.98) 0%, rgba(191, 219, 254, 0.84) 42%, rgba(59, 130, 246, 0.12) 72%, transparent 100%);
+  transform: scale(var(--emitter-scale));
+}
+
+.air-conductor__emitter-ring {
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  animation: air-conductor-emitter-pulse 1.25s ease-out infinite;
+}
+
+.air-conductor__particle {
+  z-index: 1;
+  font-size: 1.3rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow:
+    0 0 12px color-mix(in srgb, currentColor 58%, transparent),
+    0 0 28px color-mix(in srgb, currentColor 32%, transparent);
+  animation: air-conductor-note-float 1.5s ease-out forwards;
+  animation-delay: var(--particle-delay);
+}
+
+.air-conductor__trail-point {
+  z-index: 0;
+  border-radius: 999px;
+  mix-blend-mode: screen;
+  animation: air-conductor-trail-fade 0.52s ease-out forwards;
+}
+
+.air-conductor__ripple {
+  z-index: 0;
+  border: 2px solid;
+  border-radius: 999px;
+  mix-blend-mode: screen;
+  animation: air-conductor-ripple-pulse 0.82s ease-out forwards;
+}
+
+.air-conductor__beat-segment {
+  stroke-linecap: round;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.18));
+  animation: air-conductor-beat-trace 0.46s ease-out forwards;
+}
+
 .air-conductor__panel {
   display: flex;
   flex-direction: column;
@@ -423,6 +720,7 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 2;
   display: grid;
   gap: 6px;
   padding: 16px 18px;
@@ -432,6 +730,7 @@ onBeforeUnmount(() => {
   position: absolute;
   left: 0;
   bottom: 0;
+  z-index: 2;
   display: grid;
   gap: 4px;
   padding: 14px 16px;
@@ -459,6 +758,7 @@ onBeforeUnmount(() => {
   position: absolute;
   right: 0;
   top: 0;
+  z-index: 2;
   display: grid;
   gap: 4px;
   padding: 14px 16px;
@@ -505,6 +805,7 @@ onBeforeUnmount(() => {
 .air-conductor__offframe,
 .air-conductor__countdown {
   position: absolute;
+  z-index: 3;
   left: 50%;
   transform: translateX(-50%);
 }
@@ -600,6 +901,95 @@ onBeforeUnmount(() => {
   color: #fff;
   background: linear-gradient(135deg, #ef4444, #f97316);
   box-shadow: 0 14px 28px rgba(239, 68, 68, 0.24);
+}
+
+@keyframes air-conductor-emitter-pulse {
+  0% {
+    opacity: 0.68;
+    transform: scale(0.86);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+@keyframes air-conductor-note-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.68) rotate(0deg);
+  }
+
+  18% {
+    opacity: var(--particle-opacity, 1);
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(
+        calc(-50% + var(--particle-drift-x)),
+        calc(-50% + var(--particle-drift-y))
+      )
+      scale(var(--particle-scale))
+      rotate(var(--particle-rotation));
+  }
+}
+
+@keyframes air-conductor-trail-fade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.72);
+  }
+
+  22% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.28);
+  }
+}
+
+@keyframes air-conductor-ripple-pulse {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.32);
+  }
+
+  16% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.84);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(var(--ripple-scale));
+  }
+}
+
+@keyframes air-conductor-beat-trace {
+  0% {
+    opacity: 0;
+    stroke-dasharray: 0 120;
+    transform: translate(0, 0);
+  }
+
+  24% {
+    opacity: 1;
+    stroke-dasharray: 42 120;
+    transform: translate(0, 0);
+  }
+
+  100% {
+    opacity: 0;
+    stroke-dasharray: 120 120;
+    transform: translate(var(--beat-vector-x), var(--beat-vector-y));
+  }
 }
 
 @media (max-width: 1080px) {

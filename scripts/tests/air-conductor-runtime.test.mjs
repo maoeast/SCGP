@@ -117,3 +117,135 @@ test('calibration and countdown helpers produce deterministic runtime state', ()
   assert.equal(runtime.shouldAutoFinish(60, 60_000), true)
   assert.equal(runtime.formatAirConductorDuration(75), '01:15')
 })
+
+test('particle emitters mirror wrist positions into the same display coordinate system as the mirrored stage', () => {
+  const pose = createPose({
+    leftX: 0.22,
+    rightX: 0.81,
+    leftY: 0.18,
+    rightY: 0.28,
+    leftShoulderY: 0.62,
+    rightShoulderY: 0.63,
+  })
+
+  const emitters = runtime.mapArmPoseToParticleEmitters(pose)
+
+  assert.deepEqual(
+    emitters.map((emitter) => ({
+      hand: emitter.hand,
+      x: Number(emitter.x.toFixed(2)),
+      y: Number(emitter.y.toFixed(2)),
+      visible: emitter.visible,
+    })),
+    [
+      { hand: 'left', x: 0.78, y: 0.18, visible: true },
+      { hand: 'right', x: 0.19, y: 0.28, visible: true },
+    ],
+  )
+  assert.equal(emitters[0].intensity > emitters[1].intensity, true)
+})
+
+test('note particles spawn as mirrored rainbow bursts and expire after their animation window', () => {
+  const emitters = [
+    { hand: 'left', x: 0.74, y: 0.24, visible: true, intensity: 1 },
+    { hand: 'right', x: 0.28, y: 0.31, visible: true, intensity: 0.6 },
+  ]
+
+  const burst = runtime.spawnEmitterNoteParticles(emitters, 5_000, 10)
+
+  assert.equal(burst.particles.length, runtime.AIR_CONDUCTOR_PARTICLE_BURST_SIZE * emitters.length)
+  assert.equal(burst.nextId, 10 + burst.particles.length)
+  assert.equal(runtime.AIR_CONDUCTOR_PARTICLE_COLORS.includes(burst.particles[0].color), true)
+  assert.equal(runtime.AIR_CONDUCTOR_PARTICLE_SYMBOLS.includes(burst.particles[0].symbol), true)
+  assert.equal(burst.particles.some((particle) => particle.hand === 'left' && particle.driftX < 0), true)
+  assert.equal(burst.particles.some((particle) => particle.hand === 'right' && particle.driftX > 0), true)
+
+  const survivors = runtime.pruneExpiredNoteParticles(
+    burst.particles,
+    5_000 + runtime.AIR_CONDUCTOR_PARTICLE_LIFETIME_MS - 1,
+  )
+  assert.equal(survivors.length > 0, true)
+
+  const expired = runtime.pruneExpiredNoteParticles(
+    burst.particles,
+    5_000 + runtime.AIR_CONDUCTOR_PARTICLE_LIFETIME_MS + 200,
+  )
+  assert.equal(expired.length, 0)
+})
+
+test('conductor trail points follow mirrored emitters and scale visual weight with intensity', () => {
+  const emitters = [
+    { hand: 'left', x: 0.78, y: 0.18, visible: true, intensity: 1 },
+    { hand: 'right', x: 0.2, y: 0.3, visible: true, intensity: 0.35 },
+  ]
+
+  const trail = runtime.createConductorTrailFrame(emitters, 8_000, 0)
+
+  assert.equal(trail.points.length, 2)
+  assert.equal(trail.nextId, 2)
+  assert.equal(trail.points[0].hand, 'left')
+  assert.equal(trail.points[0].radius > trail.points[1].radius, true)
+  assert.equal(trail.points[0].opacity > trail.points[1].opacity, true)
+  assert.equal(trail.points[0].glowSize > trail.points[1].glowSize, true)
+
+  const survivors = runtime.pruneExpiredTrailPoints(
+    trail.points,
+    8_000 + runtime.AIR_CONDUCTOR_TRAIL_POINT_LIFETIME_MS - 1,
+  )
+  assert.equal(survivors.length, 2)
+
+  const expired = runtime.pruneExpiredTrailPoints(
+    trail.points,
+    8_000 + runtime.AIR_CONDUCTOR_TRAIL_POINT_LIFETIME_MS + 1,
+  )
+  assert.equal(expired.length, 0)
+})
+
+test('conductor ripples pulse on strong beats and keep mirrored stage coordinates', () => {
+  const emitters = [
+    { hand: 'left', x: 0.72, y: 0.2, visible: true, intensity: 0.92 },
+    { hand: 'right', x: 0.24, y: 0.34, visible: true, intensity: 0.41 },
+  ]
+
+  const ripples = runtime.spawnConductorRipples(emitters, 9_500, 20)
+
+  assert.equal(ripples.ripples.length, 1)
+  assert.equal(ripples.nextId, 21)
+  assert.equal(ripples.ripples[0].hand, 'left')
+  assert.equal(ripples.ripples[0].x, 0.72)
+  assert.equal(ripples.ripples[0].radius >= runtime.AIR_CONDUCTOR_RIPPLE_MIN_RADIUS, true)
+  assert.equal(ripples.ripples[0].strength > 0.9, true)
+
+  const none = runtime.spawnConductorRipples(
+    [{ hand: 'right', x: 0.24, y: 0.34, visible: true, intensity: 0.45 }],
+    9_800,
+    30,
+  )
+  assert.equal(none.ripples.length, 0)
+  assert.equal(none.nextId, 30)
+})
+
+test('beat trajectory segments preserve left/right tonal palettes and expose swing direction vectors', () => {
+  const previous = [
+    { hand: 'left', x: 0.82, y: 0.26, visible: true, intensity: 0.88 },
+    { hand: 'right', x: 0.22, y: 0.42, visible: true, intensity: 0.56 },
+  ]
+  const current = [
+    { hand: 'left', x: 0.7, y: 0.18, visible: true, intensity: 0.93 },
+    { hand: 'right', x: 0.34, y: 0.35, visible: true, intensity: 0.61 },
+  ]
+
+  const segments = runtime.createBeatTrajectorySegments(previous, current, 12_000, 40)
+
+  assert.equal(segments.segments.length, 2)
+  assert.equal(segments.nextId, 42)
+  assert.equal(segments.segments[0].hand, 'left')
+  assert.equal(segments.segments[0].toneBand, 'high')
+  assert.equal(segments.segments[1].toneBand, 'mid')
+  assert.equal(segments.segments[0].colorWarm !== segments.segments[1].colorWarm, true)
+  assert.equal(segments.segments[0].vectorX < 0, true)
+  assert.equal(segments.segments[1].vectorX > 0, true)
+  assert.equal(segments.segments[0].vectorY < 0, true)
+  assert.equal(segments.segments[0].strokeWidth > segments.segments[1].strokeWidth, true)
+  assert.equal(segments.segments[0].opacity >= segments.segments[1].opacity, true)
+})
