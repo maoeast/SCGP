@@ -228,6 +228,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import VisualSupportOverlay from './VisualSupportOverlay.vue'
 import { useEmotionDetector } from '@/composables/useEmotionDetector'
+import { useExpressionAudio } from '@/composables/useExpressionAudio'
 import type { EmotionType } from '@/types/emotional/face-emotion'
 import type { EmotionGameAudioController, EmotionGameDifficulty } from '@/types/emotional/games'
 
@@ -346,6 +347,11 @@ const detector = useEmotionDetector({
   smoothingFactor: 0.3,
   calibrationFrames: 20,
 })
+const expressionAudio = useExpressionAudio({
+  audio: props.audio,
+  enabled: () => !props.paused,
+  defaultEmotion: 'calm',
+})
 
 // ---- Computed ----
 
@@ -446,6 +452,12 @@ async function retryCamera(): Promise<void> {
 // ---- Game flow ----
 
 async function beginCalibration(): Promise<void> {
+  try {
+    await expressionAudio.ensureReady()
+    expressionAudio.stop()
+  } catch {
+    // ignore audio startup failures
+  }
   await detector.startCalibration()
 }
 
@@ -457,6 +469,7 @@ function nextLevel(): void {
     holdStartTime.value = null
     scoreWindow = []
     resetCelebration()
+    expressionAudio.stop()
   }
 }
 
@@ -468,6 +481,7 @@ function prevLevel(): void {
     holdStartTime.value = null
     scoreWindow = []
     resetCelebration()
+    expressionAudio.stop()
   }
 }
 
@@ -493,6 +507,14 @@ function startEnergyLoop(): void {
 
   const tick = () => {
     if (props.paused) {
+      expressionAudio.stop()
+      energyAccumulator = requestAnimationFrame(tick)
+      return
+    }
+
+    if (!detector.faceDetected.value) {
+      holdStartTime.value = null
+      expressionAudio.stop()
       energyAccumulator = requestAnimationFrame(tick)
       return
     }
@@ -508,6 +530,19 @@ function startEnergyLoop(): void {
         scoreWindow.shift()
       }
       const smoothedScore = scoreWindow.reduce((a, b) => a + b, 0) / scoreWindow.length
+      const normalizedIntensity = threshold >= 1
+        ? 0
+        : clamp01((smoothedScore - threshold) / Math.max(0.01, 1 - threshold))
+      const moderatedIntensity = currentTarget.value === 'Surprised'
+        ? normalizedIntensity * 0.9
+        : currentTarget.value === 'Angry'
+          ? normalizedIntensity * 0.82
+          : normalizedIntensity
+
+      void expressionAudio.changeExpression(target, {
+        intensity: moderatedIntensity,
+        state: moderatedIntensity >= 0.86 ? 'combo' : 'playing',
+      })
 
       if (smoothedScore > threshold) {
         // Hold-time gating
@@ -526,13 +561,21 @@ function startEnergyLoop(): void {
             levelComplete.value = true
             completedLevels.value[levelIndex.value] = true
             props.markRoundDirty()
+            void expressionAudio.changeExpression(target, {
+              intensity: 1,
+              state: 'finish',
+              force: true,
+            })
             props.audio.playSuccessCue()
             runCelebration()
           }
         }
       } else {
         holdStartTime.value = null
+        expressionAudio.stop()
       }
+    } else {
+      expressionAudio.stop()
     }
 
     energyAccumulator = requestAnimationFrame(tick)
@@ -626,6 +669,7 @@ watch(
     // When calibration finishes (was calibrating, now not), start playing
     if (wasCalibrating && !calibrating && detector.baseline.value) {
       detector.startPlaying()
+      expressionAudio.stop()
     }
   },
 )
@@ -643,14 +687,19 @@ onMounted(async () => {
 watch(() => props.paused, (isPaused) => {
   if (isPaused) {
     detector.pause()
+    expressionAudio.stop()
   } else {
     detector.resume()
+    if (detector.appState.value !== 'PLAYING') {
+      expressionAudio.stop()
+    }
   }
 })
 
 onBeforeUnmount(() => {
   stopEnergyLoop()
   resetCelebration()
+  expressionAudio.dispose()
   detector.dispose()
   stopCamera()
 })

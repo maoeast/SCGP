@@ -133,6 +133,7 @@ import type { EmotionGameDifficulty } from '@/types/emotional/games'
 import type { EmotionGameAudioController } from '@/types/emotional/games'
 import type { CustomGameCompletionPayload } from '@/types/emotional/games'
 import { useEmotionDetector } from '@/composables/useEmotionDetector'
+import { useExpressionAudio } from '@/composables/useExpressionAudio'
 import FaceSVG from './expression-detective/FaceSVG.vue'
 import {
   DETECTIVE_WAVES,
@@ -160,6 +161,11 @@ const emit = defineEmits<{
 const detector = useEmotionDetector({
   smoothingFactor: 0.3,
   calibrationFrames: 20,
+})
+const expressionAudio = useExpressionAudio({
+  audio: props.audio,
+  enabled: () => !props.paused,
+  defaultEmotion: 'calm',
 })
 
 // --- Refs ---
@@ -266,6 +272,7 @@ function startWave() {
   waveTotalScore.value = 0
   waveEncouragement.value = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)] || ENCOURAGEMENTS[0]!
   resetMatch()
+  expressionAudio.stop()
   startRound()
 }
 
@@ -273,6 +280,11 @@ function startRound() {
   gamePhase.value = 'round-active'
   resetMatch()
   roundMaxMatch.value = 0
+  void expressionAudio.changeExpression(currentTarget.value?.emotionKey ?? 'Neutral', {
+    intensity: 0.4,
+    state: 'playing',
+    force: true,
+  })
 
   const timeLimit = currentWave.value.timeLimitPerRound
   roundTimeLeft.value = timeLimit
@@ -302,12 +314,16 @@ function startDetectLoop() {
 
   function loop() {
     if (props.paused || gamePhase.value !== 'round-active') {
+      if (props.paused) {
+        expressionAudio.stop()
+      }
       detectRAF = requestAnimationFrame(loop)
       return
     }
 
     const target = currentTarget.value
     if (!target || !detector.faceDetected.value) {
+      expressionAudio.stop()
       detectRAF = requestAnimationFrame(loop)
       return
     }
@@ -321,6 +337,16 @@ function startDetectLoop() {
     matchPercent.value = pct
     if (pct > roundMaxMatch.value) roundMaxMatch.value = pct
 
+    const moderatedIntensity = target.emotionKey === 'Surprised'
+      ? avg * 0.88
+      : target.emotionKey === 'Angry'
+        ? avg * 0.8
+        : avg
+
+    void expressionAudio.changeExpression(target.emotionKey, {
+      intensity: moderatedIntensity,
+      state: avg >= SUCCESS_THRESHOLD ? 'combo' : avg >= 0.5 ? 'playing' : 'focus',
+    })
     props.markRoundDirty()
 
     if (avg >= SUCCESS_THRESHOLD) {
@@ -347,7 +373,14 @@ function endRound(success: boolean) {
   if (success) {
     gamePhase.value = 'round-success'
     triggerSuccessFlash()
+    void expressionAudio.changeExpression(currentTarget.value?.emotionKey ?? 'Neutral', {
+      intensity: 1,
+      state: 'finish',
+      force: true,
+    })
     try { props.audio.playSuccessCue() } catch {}
+  } else {
+    expressionAudio.stop()
   }
 
   const maxPct = roundMaxMatch.value
@@ -369,15 +402,18 @@ function endRound(success: boolean) {
 
 function completeWave() {
   gamePhase.value = 'wave-complete'
+  expressionAudio.stop()
 }
 
 function replayWave() {
+  expressionAudio.stop()
   startWave()
 }
 
 function nextWave() {
   if (!hasNextWave.value) return
   currentWaveIndex.value++
+  expressionAudio.stop()
   startWave()
 }
 
@@ -400,10 +436,18 @@ watch(() => props.paused, (p) => {
   if (p) {
     detector.pause()
     if (roundTimer) { clearInterval(roundTimer); roundTimer = null }
+    expressionAudio.stop()
   } else {
     detector.resume()
     if (gamePhase.value === 'round-active') {
+      void expressionAudio.changeExpression(currentTarget.value?.emotionKey ?? 'Neutral', {
+        intensity: Math.max(0.45, matchPercent.value / 100),
+        state: 'playing',
+        force: true,
+      })
       startDetectLoop()
+    } else {
+      expressionAudio.stop()
     }
   }
 })
@@ -413,6 +457,7 @@ watch(() => detector.isCalibrating.value, (calibrating, wasCalibrating) => {
   if (wasCalibrating && !calibrating && detector.baseline.value) {
     detector.startPlaying()
     gamePhase.value = 'playing'
+    expressionAudio.stop()
     startWave()
   }
 })
@@ -422,6 +467,12 @@ onMounted(async () => {
   const cameraOk = await startCamera()
   if (cameraOk && videoRef.value) {
     await detector.initialize(videoRef.value)
+    try {
+      await expressionAudio.ensureReady()
+      expressionAudio.stop()
+    } catch {
+      // ignore audio startup failures
+    }
     await detector.startCalibration()
   }
 })
@@ -429,6 +480,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   if (roundTimer) clearInterval(roundTimer)
   cancelAnimationFrame(detectRAF)
+  expressionAudio.dispose()
   detector.dispose()
 })
 </script>
