@@ -421,6 +421,19 @@ function deriveAccuracyRate(
       }
       break
     }
+    case 'S06_EXPRESSION_DUEL': {
+      const averageSimilarityRatio = Number(performanceData.average_similarity_ratio)
+      if (Number.isFinite(averageSimilarityRatio)) {
+        return Math.max(0, Math.min(1, averageSimilarityRatio))
+      }
+
+      const completedRounds = Number(performanceData.completed_rounds || 0)
+      const targetRoundCount = Number(performanceData.target_round_count || 0)
+      if (targetRoundCount > 0) {
+        return Math.max(0, Math.min(1, completedRounds / targetRoundCount))
+      }
+      break
+    }
   }
 
   return completionStatus === 'completed' ? 1 : null
@@ -507,6 +520,11 @@ function deriveAvgResponseTime(
       return averageNumericValues(performanceData.response_times_ms)
         ?? (Number.isFinite(Number(performanceData.average_response_ms))
           ? Number(performanceData.average_response_ms)
+          : null)
+    case 'S06_EXPRESSION_DUEL':
+      return averageNumericValues(performanceData.mimic_duration_ms_list)
+        ?? (Number.isFinite(Number(performanceData.average_mimic_duration_ms))
+          ? Number(performanceData.average_mimic_duration_ms)
           : null)
     default:
       return null

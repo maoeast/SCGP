@@ -64,7 +64,7 @@ export const DETECTIVE_WAVES: DetectiveWave[] = [
     rounds: 5,
     timeLimitPerRound: 5,
     shuffleTargets: true,
-    targets: [EXPRESSION_TARGETS.happy, EXPRESSION_TARGETS.surprised],
+    targets: [EXPRESSION_TARGETS.happy!, EXPRESSION_TARGETS.surprised!],
   },
   {
     waveId: 2,
@@ -74,10 +74,10 @@ export const DETECTIVE_WAVES: DetectiveWave[] = [
     timeLimitPerRound: 4,
     shuffleTargets: true,
     targets: [
-      EXPRESSION_TARGETS.happy,
-      EXPRESSION_TARGETS.surprised,
-      EXPRESSION_TARGETS.sad,
-      EXPRESSION_TARGETS.angry,
+      EXPRESSION_TARGETS.happy!,
+      EXPRESSION_TARGETS.surprised!,
+      EXPRESSION_TARGETS.sad!,
+      EXPRESSION_TARGETS.angry!,
     ],
   },
   {
@@ -88,12 +88,12 @@ export const DETECTIVE_WAVES: DetectiveWave[] = [
     timeLimitPerRound: 3,
     shuffleTargets: true,
     targets: [
-      EXPRESSION_TARGETS.happy,
-      EXPRESSION_TARGETS.surprised,
-      EXPRESSION_TARGETS.sad,
-      EXPRESSION_TARGETS.angry,
-      EXPRESSION_TARGETS.fearful,
-      EXPRESSION_TARGETS.neutral,
+      EXPRESSION_TARGETS.happy!,
+      EXPRESSION_TARGETS.surprised!,
+      EXPRESSION_TARGETS.sad!,
+      EXPRESSION_TARGETS.angry!,
+      EXPRESSION_TARGETS.fearful!,
+      EXPRESSION_TARGETS.neutral!,
     ],
   },
 ]

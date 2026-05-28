@@ -145,6 +145,8 @@ function lerpScores(current: EmotionScores, target: EmotionScores, factor: numbe
     Happy: current.Happy + (target.Happy - current.Happy) * factor,
     Surprised: current.Surprised + (target.Surprised - current.Surprised) * factor,
     Angry: current.Angry + (target.Angry - current.Angry) * factor,
+    Sad: current.Sad + (target.Sad - current.Sad) * factor,
+    Fearful: current.Fearful + (target.Fearful - current.Fearful) * factor,
     Neutral: current.Neutral + (target.Neutral - current.Neutral) * factor,
   }
 }

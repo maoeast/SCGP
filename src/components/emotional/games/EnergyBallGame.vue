@@ -245,23 +245,23 @@ const emit = defineEmits<{
 
 // ---- Constants ----
 
-const emotions: EmotionType[] = ['Happy', 'Surprised', 'Angry', 'Neutral']
+const emotions = ['Happy', 'Surprised', 'Angry', 'Neutral'] as const
 
-const emotionLabels: Record<EmotionType, string> = {
+const emotionLabels: Record<(typeof emotions)[number], string> = {
   Happy: '开心',
   Surprised: '惊讶',
   Angry: '生气',
   Neutral: '平静',
 }
 
-const emotionEmojis: Record<EmotionType, string> = {
+const emotionEmojis: Record<(typeof emotions)[number], string> = {
   Happy: '😄',
   Surprised: '😲',
   Angry: '😠',
   Neutral: '😌',
 }
 
-const emotionColors: Record<EmotionType, string> = {
+const emotionColors: Record<(typeof emotions)[number], string> = {
   Happy: '#ffd93d',
   Surprised: '#74b9ff',
   Angry: '#ff6b6b',

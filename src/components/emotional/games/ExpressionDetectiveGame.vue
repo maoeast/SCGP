@@ -128,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import type { EmotionGameDifficulty } from '@/types/emotional/games'
 import type { EmotionGameAudioController } from '@/types/emotional/games'
 import type { CustomGameCompletionPayload } from '@/types/emotional/games'
@@ -192,7 +192,7 @@ const waveTotalScore = ref(0)
 const waveEncouragement = ref('')
 
 // --- Computed ---
-const currentWave = computed(() => DETECTIVE_WAVES[currentWaveIndex.value])
+const currentWave = computed<DetectiveWave>(() => DETECTIVE_WAVES[currentWaveIndex.value] ?? DETECTIVE_WAVES[0]!)
 const currentTarget = computed(() => roundTargets.value[currentRoundIndex.value] ?? null)
 const hasNextWave = computed(() => currentWaveIndex.value < DETECTIVE_WAVES.length - 1)
 
@@ -247,12 +247,12 @@ async function startCamera(): Promise<boolean> {
 function generateRoundTargets(wave: DetectiveWave): ExpressionTarget[] {
   const targets: ExpressionTarget[] = []
   for (let i = 0; i < wave.rounds; i++) {
-    targets.push(wave.targets[i % wave.targets.length])
+    targets.push(wave.targets[i % wave.targets.length]!)
   }
   if (wave.shuffleTargets) {
     for (let i = targets.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [targets[i], targets[j]] = [targets[j], targets[i]]
+      ;[targets[i], targets[j]] = [targets[j]!, targets[i]!]
     }
   }
   return targets
@@ -264,7 +264,7 @@ function startWave() {
   currentRoundIndex.value = 0
   roundScores.value = []
   waveTotalScore.value = 0
-  waveEncouragement.value = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)]
+  waveEncouragement.value = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)] || ENCOURAGEMENTS[0]!
   resetMatch()
   startRound()
 }
