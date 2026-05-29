@@ -21,6 +21,15 @@
       </div>
 
       <div class="bubble-pop__topbar-section bubble-pop__topbar-section--right">
+        <GameMusicSettingsMenu
+          :music-enabled="musicEnabled"
+          :music-volume="musicVolume"
+          :effects-enabled="effectsEnabled"
+          :music-available="musicAvailable"
+          tone="light"
+          @change="handleAudioSettingsChange"
+        />
+
         <button
           v-for="option in difficultyOptions"
           :key="option.id"
@@ -109,6 +118,9 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import type { SharedGameAudioSettings } from '@/audio/game-audio-settings'
+import { useInjectedGameMusicController } from '@/audio/game-music-controller'
+import GameMusicSettingsMenu from '@/components/games/GameMusicSettingsMenu.vue'
 import HandCameraLayer from '@/components/games/hand/HandCameraLayer.vue'
 import {
   applyBubblePopContacts,
@@ -142,18 +154,25 @@ const props = withDefaults(defineProps<{
   duration?: number
   mode?: BubblePopModeId
   difficulty?: BubblePopDifficultyId
+  musicAvailable?: boolean
+  musicEnabled: boolean
+  musicVolume: number
+  effectsEnabled: boolean
 }>(), {
   taskId: TaskID.HAND_BUBBLE_POP,
   duration: 60,
   mode: 'free',
   difficulty: 'normal',
+  musicAvailable: true,
 })
 
 const emit = defineEmits<{
   finish: [session: GameSessionData]
   back: []
+  updateAudioSettings: [settings: SharedGameAudioSettings]
 }>()
 
+const musicController = useInjectedGameMusicController()
 const boardRef = ref<HTMLElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const latestHands = ref<HandObservation[]>([])
@@ -622,6 +641,10 @@ function finishSession() {
   }))
 }
 
+function handleAudioSettingsChange(settings: SharedGameAudioSettings) {
+  emit('updateAudioSettings', settings)
+}
+
 function comboBurstStyle(burst: BubblePopComboBurst) {
   return {
     left: `${burst.x * 100}%`,
@@ -652,6 +675,8 @@ onMounted(() => {
     resizeObserver.observe(boardRef.value)
   }
   syncUiState(performance.now())
+  musicController?.restoreMusic()
+  musicController?.setState('playing')
   animationFrameId = window.requestAnimationFrame(tick)
 })
 
@@ -661,6 +686,16 @@ onBeforeUnmount(() => {
   }
   resizeObserver?.disconnect()
   audioContext?.close().catch(() => undefined)
+})
+
+watch(showOverlay, (visible) => {
+  if (visible) {
+    musicController?.setState('finish')
+    return
+  }
+
+  musicController?.restoreMusic()
+  musicController?.setState('playing')
 })
 </script>
 
