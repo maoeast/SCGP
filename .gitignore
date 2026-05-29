@@ -43,6 +43,12 @@ __screenshots__/
 # Git worktrees
 .worktrees/
 
+# Local agent scratch files
+.superpowers/
+
+# Local generated image workspace
+AIimages/
+
 # Large files
 assets/resources/videos/
 

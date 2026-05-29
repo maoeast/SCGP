@@ -38,6 +38,16 @@ function colorLog(message, color = 'reset') {
   console.log(`${colors[color]}${message}${colors.reset}`)
 }
 
+function resolveProjectCliPath(...segments) {
+  const cliPath = path.join(ROOT_DIR, 'node_modules', ...segments)
+
+  if (!fs.existsSync(cliPath)) {
+    throw new Error(`未找到本地 CLI: ${path.relative(ROOT_DIR, cliPath)}`)
+  }
+
+  return cliPath
+}
+
 async function checkPort(port) {
   const platform = os.platform()
   const command = platform === 'win32'
@@ -79,7 +89,7 @@ async function killPortProcess(port) {
       return
     }
 
-    colorLog(`⚠️  端口 ${port} 已被占用，正在清理旧进程...`, 'yellow')
+    colorLog(`端口 ${port} 已被占用，正在清理旧进程...`, 'yellow')
 
     for (const pid of pids) {
       await execAsync(`taskkill /F /PID ${pid}`)
@@ -152,15 +162,16 @@ async function waitForDevServer() {
     }
   }
 
-  throw new Error(`等待开发服务器超时：${DEV_SERVER_URL}`)
+  throw new Error(`等待开发服务器超时: ${DEV_SERVER_URL}`)
 }
 
 function spawnViteProcess() {
-  colorLog(`🚀 启动 Vite 开发服务器: ${DEV_SERVER_URL}`, 'green')
+  colorLog(`启动 Vite 开发服务器: ${DEV_SERVER_URL}`, 'green')
 
-  viteProcess = spawn('vite', [], {
+  const viteCliPath = resolveProjectCliPath('vite', 'bin', 'vite.js')
+
+  viteProcess = spawn(process.execPath, [viteCliPath], {
     cwd: ROOT_DIR,
-    shell: true,
     env: {
       ...process.env,
     },
@@ -180,17 +191,18 @@ function spawnViteProcess() {
       return
     }
 
-    colorLog(`❌ Vite 开发服务器已退出（code=${code ?? 'null'}, signal=${signal ?? 'null'}）`, 'red')
+    colorLog(`Vite 开发服务器已退出（code=${code ?? 'null'}, signal=${signal ?? 'null'}）`, 'red')
     shutdown(code ?? 1)
   })
 }
 
 function spawnElectronProcess() {
-  colorLog(`🖥️  启动 Electron，并注入开发地址: ${DEV_SERVER_URL}`, 'cyan')
+  colorLog(`启动 Electron，并注入开发地址: ${DEV_SERVER_URL}`, 'cyan')
 
-  electronProcess = spawn('electron', ['.'], {
+  const electronCliPath = resolveProjectCliPath('electron', 'cli.js')
+
+  electronProcess = spawn(process.execPath, [electronCliPath, '.'], {
     cwd: ROOT_DIR,
-    shell: true,
     env: {
       ...process.env,
       SCGP_DEV_SERVER_URL: DEV_SERVER_URL,
@@ -203,7 +215,7 @@ function spawnElectronProcess() {
       return
     }
 
-    colorLog(`👋 Electron 已退出（code=${code ?? 'null'}, signal=${signal ?? 'null'}）`, 'yellow')
+    colorLog(`Electron 已退出（code=${code ?? 'null'}, signal=${signal ?? 'null'}）`, 'yellow')
     shutdown(code ?? 0)
   })
 }
@@ -233,16 +245,16 @@ function shutdown(exitCode = 0) {
 }
 
 async function main() {
-  colorLog('🔎 检查开发端口状态...', 'blue')
+  colorLog('检查开发端口状态...', 'blue')
   await killPortProcess(PORT)
   spawnViteProcess()
   await waitForDevServer()
-  colorLog(`✅ 开发服务器已就绪: ${DEV_SERVER_URL}`, 'green')
+  colorLog(`开发服务器已就绪: ${DEV_SERVER_URL}`, 'green')
   spawnElectronProcess()
 }
 
 process.on('SIGINT', () => {
-  colorLog('\n👋 已停止 Electron 联调', 'yellow')
+  colorLog('\n已停止 Electron 联调', 'yellow')
   shutdown(0)
 })
 
@@ -251,6 +263,6 @@ process.on('SIGTERM', () => {
 })
 
 main().catch((error) => {
-  colorLog(`❌ Electron 联调启动失败: ${error.message}`, 'red')
+  colorLog(`Electron 联调启动失败: ${error.message}`, 'red')
   shutdown(1)
 })

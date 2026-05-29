@@ -5,6 +5,13 @@
         <button type="button" class="bubble-pop__back-button" @click="emit('back')">
           返回准备页
         </button>
+        <GameMusicSettingsMenu
+          :music-enabled="musicEnabled"
+          :music-volume="musicVolume"
+          :effects-enabled="effectsEnabled"
+          tone="light"
+          @change="emit('updateAudioSettings', $event)"
+        />
       </div>
 
       <div class="bubble-pop__topbar-section bubble-pop__topbar-section--center">
@@ -204,6 +211,7 @@ const difficultyOptions = [
   { id: 'normal', shortLabel: '普通' },
   { id: 'hard', shortLabel: '困难' },
 ] as const
+const comboMusicThreshold = 5
 let animationFrameId = 0
 let resizeObserver: ResizeObserver | null = null
 let audioContext: AudioContext | null = null
@@ -261,6 +269,20 @@ const interactionHint = computed(() => {
   return '把手放到摄像头前，或者直接用鼠标、触摸点按泡泡开始训练。'
 })
 
+function syncMusicState() {
+  if (!musicController) {
+    return
+  }
+
+  if (bubbleState.isFinished) {
+    musicController.setState('finish')
+    return
+  }
+
+  const comboLevel = Math.max(1, bubbleState.combo - 1)
+  musicController.setState(comboLevel >= comboMusicThreshold ? 'combo' : 'playing')
+}
+
 function syncBoardSize() {
   const rect = boardRef.value?.getBoundingClientRect()
   if (!rect) {
@@ -304,6 +326,10 @@ async function playTone(
   durationMs: number,
   gainAmount: number,
 ) {
+  if (!props.effectsEnabled) {
+    return
+  }
+
   const ctx = getAudioContext()
   if (!ctx) {
     return
@@ -563,6 +589,8 @@ function syncUiState(now: number) {
     const remainingSeconds = Math.max(0, Math.ceil((bubbleState.durationMs - (now - bubbleState.startedAt)) / 1000))
     progressValue.value = `${remainingSeconds}秒`
   }
+
+  syncMusicState()
 }
 
 function handleHitSounds(hitCount: number, hasWrongHit: boolean) {
@@ -613,6 +641,8 @@ function resetRun(now = performance.now()) {
     stageSize,
     now,
   })
+  musicController?.restoreMusic()
+  musicController?.setState('playing')
   syncUiState(now)
 }
 
@@ -667,6 +697,19 @@ watch(() => props.duration, (value) => {
   freeModeDuration.value = sanitizeBubblePopFreeModeDuration(value)
   resetRun()
 })
+
+watch([showOverlay, comboDisplay], ([overlayVisible, combo]) => {
+  if (!musicController) {
+    return
+  }
+
+  if (overlayVisible) {
+    musicController.setState('finish')
+    return
+  }
+
+  musicController.setState(combo >= comboMusicThreshold ? 'combo' : 'playing')
+}, { immediate: true })
 
 onMounted(() => {
   syncBoardSize()

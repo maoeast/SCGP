@@ -1,6 +1,16 @@
 # HANDOFF.md
 
-> last_updated: 2026-04-29
+> last_updated: 2026-05-20
+
+2026-05-20
+- 已完成授权能力包拆分方案评审稿，并吸收首轮架构评审意见：授权能力包与 `module_code` 解耦，旧激活码兼容展开，`effectiveEntitlements` 作为验签后的前端授权事实来源。
+- 当前状态：方案文档和阶段 1 影子映射层实施计划已落到 `docs/planning/`，`docs/INDEX.md` 已加入入口；尚未开始改实现代码。
+- 下一步：先读 `.continue-here.md`，再读 `docs/planning/2026-05-20-entitlement-phase1-shadow-mapping-implementation-plan.md`，第一步新增 `src/features/entitlements/entitlement-catalog.ts`，只实现授权目录、兼容展开和类型定义，不改 UI 行为。
+
+2026-05-11
+- 已完成自理训练迁移启动前分析，明确旧 `Self-Care ATS` 在本项目中只作为“任务内容种子源”，不迁学生、历史计划、历史记录等业务包袱。
+- 当前状态：阶段 3 的“当前训练任务”工作区占位与 `meta_data.steps[]` 展示代码已完成；新增了 ATS 种子导入分析文档，锁定了“先做执行与写链、后做种子导入”的顺序。
+- 下一步：先读 `.continue-here.md`，然后先新建 `src/database/self-care-training-api.ts`，收口 `TaskTrainingExecutionResult -> training_records + training_session` 的保存契约。
 
 2026-04-29
 - 已完成统一评估容器断点续评主链收口，并通过用户验收。
@@ -99,14 +109,16 @@ All four phases (17-20) have landed and passed verification:
 
 CNBS-R2016 public entry is now **OPEN** and verified.
 
-**Active follow-up work is now in `.continue-here.md`: 统一评估容器断点续评主链已落地，下一步如需继续，先做代表性量表的人工 UAT。**
+**Active follow-up work is now in `.continue-here.md`: 自理训练模块已进入正式迁移启动准备态，下一步先做执行页与写链主线，再做 ATS 种子导入。**
 
 ## Next Session
 
 - active handoff source: `.continue-here.md`
-- current active task is assessment resume hardening closeout for the unified assessment container
-- first action should be reading `.continue-here.md`, then deciding whether to run manual UAT for `weefim / sm / cbcl / fine_motor / cnbsr2016`
-- the current code-level implementation is accepted; remaining work is optional runtime verification, not feature implementation
+- current active task is self-care migration kickoff for the task-training mainline
+- first action should be reading `.continue-here.md`, then opening:
+  - `docs/planning/2026-05-08-self-care-training-module-implementation-plan.md`
+  - `docs/planning/2026-05-11-self-care-ats-seed-import-analysis.md`
+- the first implementation move should be defining the save contract in `src/database/self-care-training-api.ts`, not writing the ATS importer first
 - if `.continue-here.md` conflicts with other docs:
   - current task state follows `.continue-here.md`
   - repo rules and boundaries follow `AGENTS.md`
