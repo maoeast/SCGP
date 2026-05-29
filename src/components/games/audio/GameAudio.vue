@@ -619,6 +619,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, type CSSProperties } from 'vue'
+import { useInjectedGameMusicController } from '@/audio/game-music-controller'
 import type { GameAudioMode, GridSize, GridItem, AudioTrialData, GameSessionData, GameColor, GameShape } from '@/types/games'
 import { GAME_COLORS, GAME_SHAPES, TaskID } from '@/types/games'
 
@@ -744,6 +745,8 @@ const audioContext = ref<AudioContext | null>(null)
 const speechSynthesisSupported = ref(
   typeof window !== 'undefined' && 'speechSynthesis' in window
 )
+const gameMusicController = useInjectedGameMusicController()
+let musicMutedByPlayback = false
 
 // 定时器
 const timerInterval = ref<number | null>(null)
@@ -993,6 +996,26 @@ function clearDiffPlaybackTimers({ resetProgress = true }: { resetProgress?: boo
   if (resetProgress) {
     diffPlaybackProgress.value = 0
   }
+
+  restoreMusicAfterPlayback()
+}
+
+function muteMusicDuringPlayback() {
+  if (!gameMusicController || musicMutedByPlayback) {
+    return
+  }
+
+  gameMusicController.duckMusic('mute')
+  musicMutedByPlayback = true
+}
+
+function restoreMusicAfterPlayback() {
+  if (!gameMusicController || !musicMutedByPlayback) {
+    return
+  }
+
+  gameMusicController.restoreMusic()
+  musicMutedByPlayback = false
 }
 
 function startDiffPlaybackMeter(totalDuration: number) {
@@ -1088,6 +1111,7 @@ function playSounds() {
   if (isPlaying.value || choiceMade.value) return
   initAudioContext()
   clearDiffPlaybackTimers()
+  muteMusicDuringPlayback()
   feedback.value = null
   showResult.value = false
   soundsPlayed.value = false
@@ -1134,6 +1158,7 @@ function playSounds() {
     soundsPlayed.value = true
     trialStartTime.value = Date.now()
     diffPlaybackCompleteTimeout.value = null
+    restoreMusicAfterPlayback()
   }, DIFF_PLAYBACK_TOTAL)
 }
 
@@ -1295,6 +1320,7 @@ function playCommand(autoShowOptions = true) {
   if (speechSynthesisSupported.value && window.speechSynthesis) {
     // 使用语音合成播放指令
     isPlaying.value = true
+    muteMusicDuringPlayback()
     window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(currentCommand.value)
     utterance.lang = 'zh-CN'
@@ -1324,6 +1350,7 @@ function playCommand(autoShowOptions = true) {
         trialStartTime.value = Date.now()
         isPlaying.value = false
       }
+      restoreMusicAfterPlayback()
     }, 5000)
 
     // 方案2：语音播放结束时显示选项（双保险）
@@ -1341,6 +1368,7 @@ function playCommand(autoShowOptions = true) {
         commandPlayed.value = true
         trialStartTime.value = Date.now()
       }
+      restoreMusicAfterPlayback()
     }
 
     utterance.onerror = (event) => {
@@ -1355,6 +1383,7 @@ function playCommand(autoShowOptions = true) {
       commandPlayed.value = true
       trialStartTime.value = Date.now()
       speechSynthesisSupported.value = false
+      restoreMusicAfterPlayback()
     }
 
     window.speechSynthesis.speak(utterance)
@@ -1436,6 +1465,7 @@ function startRhythmGame() {
  * 播放演示序列（看）
  */
 function playDemoSequence() {
+  muteMusicDuringPlayback()
   isRhythmPlaying.value = true
   isPlaying.value = true
   currentBeatIndex.value = 0
@@ -1453,6 +1483,7 @@ function playDemoSequence() {
         canRecord.value = true // 现在轮到用户
         currentTapIndex.value = 0
         recordedBeats.value = []
+        restoreMusicAfterPlayback()
       }, 600)
       return
     }
@@ -1754,6 +1785,7 @@ function endGame() {
   if (gameEnded.value) return
   gameEnded.value = true
   clearDiffPlaybackTimers()
+  restoreMusicAfterPlayback()
   if (timerInterval.value) clearInterval(timerInterval.value)
   emit('finish', sessionData.value)
 }
@@ -1795,6 +1827,7 @@ onUnmounted(() => {
   if (speechSynthesisSupported.value && window.speechSynthesis) {
     window.speechSynthesis.cancel()
   }
+  restoreMusicAfterPlayback()
 })
 </script>
 

@@ -5,6 +5,13 @@
         <button type="button" class="bubble-pop__back-button" @click="emit('back')">
           返回准备页
         </button>
+        <GameMusicSettingsMenu
+          :music-enabled="musicEnabled"
+          :music-volume="musicVolume"
+          :effects-enabled="effectsEnabled"
+          tone="light"
+          @change="emit('updateAudioSettings', $event)"
+        />
       </div>
 
       <div class="bubble-pop__topbar-section bubble-pop__topbar-section--center">
@@ -109,6 +116,9 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import type { SharedGameAudioSettings } from '@/audio/game-audio-settings'
+import { useInjectedGameMusicController } from '@/audio/game-music-controller'
+import GameMusicSettingsMenu from '@/components/games/GameMusicSettingsMenu.vue'
 import HandCameraLayer from '@/components/games/hand/HandCameraLayer.vue'
 import {
   applyBubblePopContacts,
@@ -142,6 +152,9 @@ const props = withDefaults(defineProps<{
   duration?: number
   mode?: BubblePopModeId
   difficulty?: BubblePopDifficultyId
+  musicEnabled: boolean
+  musicVolume: number
+  effectsEnabled: boolean
 }>(), {
   taskId: TaskID.HAND_BUBBLE_POP,
   duration: 60,
@@ -152,10 +165,12 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   finish: [session: GameSessionData]
   back: []
+  updateAudioSettings: [settings: SharedGameAudioSettings]
 }>()
 
 const boardRef = ref<HTMLElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
+const musicController = useInjectedGameMusicController()
 const latestHands = ref<HandObservation[]>([])
 const latestPrimaryPoint = ref<StagePoint | null>(null)
 const freeModeDuration = ref<BubblePopFreeModeDuration>(sanitizeBubblePopFreeModeDuration(props.duration))
@@ -185,6 +200,7 @@ const difficultyOptions = [
   { id: 'normal', shortLabel: '普通' },
   { id: 'hard', shortLabel: '困难' },
 ] as const
+const comboMusicThreshold = 5
 let animationFrameId = 0
 let resizeObserver: ResizeObserver | null = null
 let audioContext: AudioContext | null = null
@@ -242,6 +258,20 @@ const interactionHint = computed(() => {
   return '把手放到摄像头前，或者直接用鼠标、触摸点按泡泡开始训练。'
 })
 
+function syncMusicState() {
+  if (!musicController) {
+    return
+  }
+
+  if (bubbleState.isFinished) {
+    musicController.setState('finish')
+    return
+  }
+
+  const comboLevel = Math.max(1, bubbleState.combo - 1)
+  musicController.setState(comboLevel >= comboMusicThreshold ? 'combo' : 'playing')
+}
+
 function syncBoardSize() {
   const rect = boardRef.value?.getBoundingClientRect()
   if (!rect) {
@@ -285,6 +315,10 @@ async function playTone(
   durationMs: number,
   gainAmount: number,
 ) {
+  if (!props.effectsEnabled) {
+    return
+  }
+
   const ctx = getAudioContext()
   if (!ctx) {
     return
@@ -544,6 +578,8 @@ function syncUiState(now: number) {
     const remainingSeconds = Math.max(0, Math.ceil((bubbleState.durationMs - (now - bubbleState.startedAt)) / 1000))
     progressValue.value = `${remainingSeconds}秒`
   }
+
+  syncMusicState()
 }
 
 function handleHitSounds(hitCount: number, hasWrongHit: boolean) {
@@ -594,6 +630,8 @@ function resetRun(now = performance.now()) {
     stageSize,
     now,
   })
+  musicController?.restoreMusic()
+  musicController?.setState('playing')
   syncUiState(now)
 }
 
@@ -645,12 +683,26 @@ watch(() => props.duration, (value) => {
   resetRun()
 })
 
+watch([showOverlay, comboDisplay], ([overlayVisible, combo]) => {
+  if (!musicController) {
+    return
+  }
+
+  if (overlayVisible) {
+    musicController.setState('finish')
+    return
+  }
+
+  musicController.setState(combo >= comboMusicThreshold ? 'combo' : 'playing')
+}, { immediate: true })
+
 onMounted(() => {
   syncBoardSize()
   if (boardRef.value) {
     resizeObserver = new ResizeObserver(syncBoardSize)
     resizeObserver.observe(boardRef.value)
   }
+  musicController?.setState('playing')
   syncUiState(performance.now())
   animationFrameId = window.requestAnimationFrame(tick)
 })

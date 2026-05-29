@@ -2,8 +2,8 @@
   <div class="resource-selector">
     <div class="filter-bar">
       <el-select v-model="selectedCategory" size="small" class="category-select" @change="selectCategory">
-        <el-option label="All" value="all">
-          <span>All</span>
+        <el-option label="全部" value="all">
+          <span>全部</span>
           <span class="category-count">{{ categoryCounts.all }}</span>
         </el-option>
         <el-option v-for="cat in categoryButtons" :key="cat.key" :label="cat.label" :value="cat.key">
@@ -11,13 +11,13 @@
           <span class="category-count">{{ categoryCounts[cat.key] || 0 }}</span>
         </el-option>
       </el-select>
-      <el-input v-model="searchKeyword" placeholder="Search..." prefix-icon="Search" clearable size="small" class="search-input" @input="handleSearch" />
+      <el-input v-model="searchKeyword" placeholder="搜索..." prefix-icon="Search" clearable size="small" class="search-input" @input="handleSearch" />
     </div>
     <div v-if="loading" class="loading-container">
       <el-skeleton :rows="6" animated />
     </div>
     <div v-else-if="filteredResources.length === 0" class="empty-container">
-      <el-empty description="No resources" />
+      <el-empty description="暂无资源" />
     </div>
     <div v-else class="resource-list">
       <div v-for="item in filteredResources" :key="item.id" class="resource-item" :class="{ selected: selectedResource?.id === item.id }" @click="selectResource(item)">
@@ -61,11 +61,23 @@ import {
 import { adaptTrainingResourceAccessControlledItem } from '@/utils/resource-center-business'
 import { resolveResourceItemCoverImage } from '@/utils/resource-cover'
 
-// 简洁的中文标签映射（用于分类按钮）
-const SIMPLE_CATEGORY_LABELS: Record<string, string> = {
-  // 游戏分类
-  audio: '听觉游戏'
+// 游戏分类中文标签
+const GAME_CATEGORY_LABELS: Record<string, string> = {
+  visual: '视觉训练',
+  audio: '听觉训练',
+  tactile: '触觉训练',
+  motor: '体感训练',
+  construction: '结构搭建',
+  coordination: '手眼协调',
+  inhibition: '抑制控制',
+  sorting: '分类整理',
+  tracing: '轨迹描摹',
 }
+
+const SENSORY_GAME_ORDER = [1, 2, 3, 4, 5, 6, 8, 9, 10, 7]
+const SENSORY_GAME_ORDER_BY_TASK_ID = new Map(
+  SENSORY_GAME_ORDER.map((taskId, index) => [taskId, index])
+)
 
 interface Props {
   moduleCode?: ModuleCode
@@ -127,7 +139,7 @@ const categoryButtons = computed(() => {
         key,
         label: props.resourceType === 'equipment'
           ? key
-          : SIMPLE_CATEGORY_LABELS[key] || key,
+          : GAME_CATEGORY_LABELS[key] || key,
       })
     }
   }
@@ -183,8 +195,7 @@ const getItemCategoryLabel = (item: ResourceItem) => {
 
   const category = item.category
   if (!category) return ''
-  // 对于卡片中的标签，使用简洁版本
-  return SIMPLE_CATEGORY_LABELS[category] || CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] || category
+  return GAME_CATEGORY_LABELS[category] || CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] || category
 }
 
 // ========== 游戏资源相关函数 ==========
@@ -200,6 +211,11 @@ const isGameResource = (item: ResourceItem): boolean => {
  * 获取游戏 Emoji
  */
 const getEmoji = (item: ResourceItem): string => {
+  const taskId = typeof item.metadata?.taskId === 'number' ? item.metadata.taskId : item.legacyId
+  if (taskId === 10) {
+    return '🎈'
+  }
+
   // 优先从 metadata 获取 emoji
   if (item.metadata?.emoji) {
     return item.metadata.emoji
@@ -228,6 +244,52 @@ const getEmojiStyle = (item: ResourceItem): Record<string, string> => {
 const isEmoji = (str: string): boolean => {
   const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u
   return emojiRegex.test(str)
+}
+
+const buildCategoryCounts = (items: ResourceItem[]): Record<string, number> => {
+  const counts: Record<string, number> = { all: items.length }
+
+  for (const item of items) {
+    const category = typeof item.category === 'string' ? item.category.trim() : ''
+    if (!category) {
+      continue
+    }
+
+    counts[category] = (counts[category] || 0) + 1
+  }
+
+  return counts
+}
+
+const sortGameResources = (items: ResourceItem[]): ResourceItem[] => {
+  if (props.resourceType !== 'game' || props.trainingEntry !== 'sensory-integration') {
+    return items
+  }
+
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((left, right) => {
+      const leftTaskId = typeof left.item.metadata?.taskId === 'number'
+        ? left.item.metadata.taskId
+        : left.item.legacyId
+      const rightTaskId = typeof right.item.metadata?.taskId === 'number'
+        ? right.item.metadata.taskId
+        : right.item.legacyId
+
+      const leftOrder = typeof leftTaskId === 'number'
+        ? (SENSORY_GAME_ORDER_BY_TASK_ID.get(leftTaskId) ?? Number.MAX_SAFE_INTEGER)
+        : Number.MAX_SAFE_INTEGER
+      const rightOrder = typeof rightTaskId === 'number'
+        ? (SENSORY_GAME_ORDER_BY_TASK_ID.get(rightTaskId) ?? Number.MAX_SAFE_INTEGER)
+        : Number.MAX_SAFE_INTEGER
+
+      if (leftOrder !== rightOrder) {
+        return leftOrder - rightOrder
+      }
+
+      return left.index - right.index
+    })
+    .map(({ item }) => item)
 }
 
 const loadData = async () => {
@@ -262,10 +324,12 @@ const loadData = async () => {
       )
     )
 
+    data = sortGameResources(data)
+
     resources.value = data
     categoryCounts.value = props.resourceType === 'equipment'
       ? buildEquipmentSourceCategoryCounts(data)
-      : api.value.getCategoryCounts(props.moduleCode, props.resourceType)
+      : buildCategoryCounts(data)
   } catch (error: any) {
     console.error('Load failed:', error)
     ElMessage.error('Failed to load resources')

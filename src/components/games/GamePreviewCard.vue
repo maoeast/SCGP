@@ -228,6 +228,20 @@
           </div>
         </template>
 
+        <template v-else-if="isAirConductorGame">
+          <div class="config-item">
+            <label>训练时长</label>
+            <el-radio-group v-model="config.duration" size="large">
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
+            </el-radio-group>
+            <p class="config-caption">
+              首期仅开放训练时长配置，真实姿态玩法和差异化难度将在后续版本补齐。
+            </p>
+          </div>
+        </template>
+
         <template v-else-if="isHandGame">
           <div class="config-item">
             <label>训练时长</label>
@@ -445,6 +459,20 @@
           </div>
         </template>
 
+        <template v-else-if="isAirConductorGame">
+          <div class="config-item">
+            <label>训练时长</label>
+            <el-radio-group v-model="config.duration" size="large">
+              <el-radio-button :value="60">60秒</el-radio-button>
+              <el-radio-button :value="90">90秒</el-radio-button>
+              <el-radio-button :value="120">120秒</el-radio-button>
+            </el-radio-group>
+            <p class="config-caption">
+              首期仅开放训练时长配置，真实姿态玩法和差异化难度将在后续版本补齐。
+            </p>
+          </div>
+        </template>
+
         <template v-else-if="isHandGame">
           <div class="config-item">
             <label>训练时长</label>
@@ -559,6 +587,7 @@ const isAudioRhythmGame = computed(() => taskId.value === TaskID.AUDIO_RHYTHM)
 const isAirXylophoneGame = computed(() => taskId.value === TaskID.HAND_XYLOPHONE)
 const isWoodBlockPuzzleGame = computed(() => taskId.value === TaskID.HAND_WOOD_BLOCKS)
 const isBubblePopGame = computed(() => taskId.value === TaskID.HAND_BUBBLE_POP)
+const isAirConductorGame = computed(() => taskId.value === TaskID.AIR_CONDUCTOR)
 const isHandGame = computed(() => [
   TaskID.HAND_XYLOPHONE,
   TaskID.HAND_WOOD_BLOCKS,
@@ -596,6 +625,10 @@ const duration = computed(() => {
 
   if (isBubblePopGame.value) {
     return config.bubblePopMode === 'color' ? '20个目标' : `${config.duration}秒限时`
+  }
+
+  if (isAirConductorGame.value) {
+    return `${config.duration}秒`
   }
 
   return metaData.value?.duration || '3-5分钟'
@@ -685,6 +718,11 @@ function resetConfig() {
     return
   }
 
+  if (isAirConductorGame.value) {
+    config.duration = 60
+    return
+  }
+
   if (isHandGame.value) {
     config.duration = 60
   }
@@ -747,6 +785,8 @@ function buildGameConfig() {
     if (config.bubblePopMode === 'free') {
       gameConfig.duration = config.duration
     }
+  } else if (isAirConductorGame.value) {
+    gameConfig.duration = config.duration
   } else if (isHandGame.value) {
     gameConfig.duration = config.duration
   }
