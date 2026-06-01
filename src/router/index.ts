@@ -14,13 +14,12 @@ import {
 import { selfCareRoutes } from '@/features/self-care/self-care-routes'
 import {
   getEquipmentTrainingEntryRequiredEntitlement,
-  resolveEquipmentTrainingEntryRouteModuleCode,
 } from '@/utils/equipment-training-entry'
 import {
   getAllTrainingEntries,
-  getTrainingEntryModuleCode,
   getTrainingEntryRequiredEntitlement,
 } from '@/utils/training-entry'
+import { resolveRouteModuleCode } from '@/utils/training-route-access'
 
 // 路由懒加载
 const Login = () => import('@/views/Login.vue')
@@ -1283,29 +1282,14 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  const resolveModuleCode = () => {
-    const fromMeta = typeof to.meta.moduleCode === 'string' ? to.meta.moduleCode : ''
-    if (fromMeta) return fromMeta
-
-    if (to.path.startsWith('/emotional')) return 'emotional'
-    if (to.path.startsWith('/equipment')) {
-      return resolveEquipmentTrainingEntryRouteModuleCode(to.query.entry, to.query.module)
-    }
-    if (to.path.startsWith('/games')) {
-      return getTrainingEntryModuleCode(to.query.entry, to.query.module)
-    }
-
-    if (to.path.startsWith('/training-records')) {
-      const routeEntryCode = typeof to.params.entryCode === 'string'
-        ? to.params.entryCode
-        : typeof to.params.moduleCode === 'string'
-          ? to.params.moduleCode
-          : ''
-      return getTrainingEntryModuleCode(routeEntryCode)
-    }
-
-    return ''
-  }
+  const resolveModuleCode = () => resolveRouteModuleCode({
+    path: to.path,
+    metaModuleCode: to.meta.moduleCode,
+    queryEntry: to.query.entry,
+    queryModule: to.query.module,
+    paramsEntryCode: to.params.entryCode,
+    paramsModuleCode: to.params.moduleCode,
+  })
 
   const resolveRequiredEntitlementsAnyOf = () => {
     const fromMetaAnyOf = Array.isArray(to.meta.requiredEntitlementsAnyOf)
