@@ -1373,7 +1373,8 @@
 ## 46. 2026-04-30 Self-Hosted Update Source Contract Update
 
 - 桌面端自动更新默认源已从 GitHub Releases 切到 `generic provider`
-- 当前默认更新地址固定为 `https://upadate.hzxckj308.com/scgp/win`
+- 当前默认更新地址固定为 `http://124.220.104.199/scgp/win`
+- 旧默认地址 `https://upadate.hzxckj308.com/scgp/win` 会在读取本地更新配置时自动迁移到当前地址
 - Windows 更新安装包文件名当前固定为 `scgp-setup-${version}.exe`，用于保证 `latest.yml`、安装包与 `.blockmap` 命名一致
 - `release/` 目录中的部署说明与更新三件套属于发布交付物，不作为仓库常规提交内容
 

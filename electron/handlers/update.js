@@ -14,7 +14,8 @@ import path from 'path'
 const UPDATE_CONFIG_FILE_NAME = 'update-config.json'
 const UPDATE_URL_MISSING_MESSAGE =
   '未配置自有更新源 URL，请在 update-config.json 中设置 url，例如 https://updates.example.com/scgp/win'
-const DEFAULT_UPDATE_URL = 'https://upadate.hzxckj308.com/scgp/win'
+const LEGACY_DEFAULT_UPDATE_URL = 'https://upadate.hzxckj308.com/scgp/win'
+const DEFAULT_UPDATE_URL = 'http://124.220.104.199/scgp/win'
 
 // 默认更新配置
 const DEFAULT_FEED_CONFIG = {
@@ -46,10 +47,15 @@ function normalizeBoolean(value, fallback) {
 function normalizeFeedConfig(rawConfig = {}) {
   const fallbackUrl = normalizeUpdateUrl(DEFAULT_FEED_CONFIG.url)
   const rawUrl = typeof rawConfig.url === 'string' ? rawConfig.url : fallbackUrl
+  const normalizedRawUrl = normalizeUpdateUrl(rawUrl)
+  const migratedUrl =
+    normalizedRawUrl === normalizeUpdateUrl(LEGACY_DEFAULT_UPDATE_URL)
+      ? fallbackUrl
+      : normalizedRawUrl
   const normalizedConfig = {
     ...DEFAULT_FEED_CONFIG,
     provider: 'generic',
-    url: normalizeUpdateUrl(rawUrl),
+    url: migratedUrl,
     channel: typeof rawConfig.channel === 'string' && rawConfig.channel.trim()
       ? rawConfig.channel.trim()
       : DEFAULT_FEED_CONFIG.channel,
