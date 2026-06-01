@@ -1379,7 +1379,7 @@ router.beforeEach(async (to, from, next) => {
 
     const moduleCode = resolveModuleCode()
     if (moduleCode && !authStore.hasModuleAccess(moduleCode)) {
-      ElMessage.warning('该模块未授权')
+      ElMessage.warning('该入口对应能力包未授权')
       if (to.path === '/dashboard') {
         next(false)
       } else {

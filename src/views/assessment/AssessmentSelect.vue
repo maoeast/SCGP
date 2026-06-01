@@ -248,7 +248,7 @@ const visibleScales = computed(() =>
 )
 
 const emptyStateDescription = computed(() =>
-  '该分类下暂无可用量表或相关模块未授权'
+  '该分类下暂无可用量表或相关能力包未授权'
 )
 
 const selectScale = (scaleType: AssessmentScaleCode) => {

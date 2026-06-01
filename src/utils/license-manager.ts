@@ -157,7 +157,7 @@ export class LicenseManager {
       }
 
       if (!Array.isArray(licenseData.am)) {
-        throw new Error('激活码缺少 am 授权模块字段')
+        throw new Error('激活码缺少 am 授权能力包字段')
       }
 
       const allowedModules = licenseData.am

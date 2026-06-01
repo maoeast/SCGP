@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 
 import {
   ENTITLEMENT_DEFINITIONS,
+  canAccessModuleByEntitlements,
   isEntitlementCode,
   resolveEffectiveEntitlementDetails,
 } from '../src/features/entitlements/entitlement-catalog.ts'
@@ -35,5 +36,18 @@ assert.deepEqual(unknownResolution.effectiveEntitlements, ['cognitive'])
 assert.deepEqual(unknownResolution.unknownCodes, ['unknown_bundle'])
 assert.equal(isEntitlementCode('unknown_bundle'), false)
 assert.equal(isEntitlementCode('cognitive'), true)
+
+const hybridEmotionalResolution = resolveEffectiveEntitlementDetails(['emotional', 'soothing_aids'])
+assert.deepEqual(hybridEmotionalResolution.effectiveEntitlements, ['emotional', 'soothing_aids'])
+assert.deepEqual(hybridEmotionalResolution.entitlementDebugOrigins.emotional, ['legacy_emotional_mapping'])
+assert.deepEqual(hybridEmotionalResolution.entitlementDebugOrigins.soothing_aids, [
+  'legacy_emotional_mapping',
+  'direct_license_entitlement',
+])
+assert.equal(canAccessModuleByEntitlements('sensory', ['sensory_integration']), true)
+assert.equal(canAccessModuleByEntitlements('social', ['social_communication']), true)
+assert.equal(canAccessModuleByEntitlements('emotional', ['soothing_aids']), true)
+assert.equal(canAccessModuleByEntitlements('life_skills', ['life_skills']), true)
+assert.equal(canAccessModuleByEntitlements('cognitive', ['sensory_integration']), false)
 
 console.log('entitlement catalog test passed')

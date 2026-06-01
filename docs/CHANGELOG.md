@@ -31,8 +31,8 @@
 - `src/database/init.ts` 已支持在数据库启动时补齐缺失的 physical-equipment 系统资源
 - 新增 `scripts/import-physical-equipment-resources.cjs` 与 `npm run import:physical-equipment`
 - `ResourceSelector`、`TrainingResources`、`PlanList` 已支持按 physical-equipment metadata / `resourceCode` 解析新规则封面图
-- 已明确“授权模块层”和“展示大类层”拆分：
-  - 授权继续沿用顶层 `moduleCode`
+- 已明确“原始授权 code 层”和“展示大类层”拆分：
+  - 许可证原始 `am` 载荷继续承载兼容 code，前端访问控制以解析后的能力包为准
   - 器材训练 / 资源中心新增大类推导：`感官训练 / 情绪调节 / 社交沟通 / 生活自理 / 精细动作 / 安抚教具`
 
 ## [2026-03-26] emotional 默认完整 seed 与物理器材目录规范
@@ -164,10 +164,10 @@
 
 ### [2026-02-19] Electron 应用在线升级功能
 - **功能**: 检查更新、下载更新、安装更新、版本信息显示
-- **技术栈**: electron-updater + GitHub Releases
+- **技术栈**: electron-updater + generic provider
 - **主进程 IPC 处理器** (`electron/handlers/update.js`):
   - 延迟加载 electron-updater（避免启动失败）
-  - 默认配置：GitHub Releases (owner: maoeast, repo: Self-Care-ATS)
+  - 默认配置：自有更新源 `generic provider`
   - 用户配置存储：`%APPDATA%\sic-ads\update-config.json`
   - IPC 处理器：check-for-updates, download-update, quit-and-install, get-current-version
 - **前端更新服务** (`src/services/UpdateService.ts`):

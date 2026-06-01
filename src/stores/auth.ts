@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { UserAPI } from '@/database/api'
 import {
+  canAccessModuleByEntitlements,
   ENTITLEMENT_CODES,
   type EntitlementCode,
   isEntitlementCode,
@@ -80,7 +81,10 @@ export const useAuthStore = defineStore('auth', {
       if (!(BUSINESS_MODULE_CODES as readonly string[]).includes(moduleCode)) {
         return true
       }
-      return state.entitlements.allowedModules.includes(moduleCode)
+      return canAccessModuleByEntitlements(
+        moduleCode,
+        state.entitlements.effectiveEntitlements
+      )
     },
     hasEntitlementAccess: (state) => (entitlementCode: string) => {
       if (!isEntitlementCode(entitlementCode)) {

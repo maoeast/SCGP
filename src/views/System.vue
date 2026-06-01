@@ -130,7 +130,7 @@
             <div class="scgp-content-toolbar__main">
               <h2 class="scgp-content-toolbar__title">关于系统</h2>
               <p class="scgp-content-toolbar__description">
-                查看当前安装信息、激活状态、授权模块、设备机器码与软件更新状态。
+                查看当前安装信息、激活状态、授权能力包、设备机器码与软件更新状态。
               </p>
             </div>
           </div>
@@ -155,20 +155,21 @@
                 <dt>激活状态</dt>
                 <dd>{{ activationStatus }}</dd>
               </div>
-              <div class="system-about-list__row">
-                <dt>授权模块</dt>
+              <div v-if="isDevMode" class="system-about-list__row">
+                <dt>原始授权 code</dt>
                 <dd>
-                  <div v-if="allowedModuleLabels.length" class="system-module-tags">
+                  <div v-if="rawAllowedLicenseCodes.length" class="system-module-tags">
                     <el-tag
-                      v-for="moduleItem in allowedModuleLabels"
-                      :key="moduleItem.code"
+                      v-for="rawCode in rawAllowedLicenseCodes"
+                      :key="rawCode"
                       size="small"
-                      effect="light"
+                      effect="plain"
+                      type="warning"
                     >
-                      {{ moduleItem.label }}
+                      <code>{{ rawCode }}</code>
                     </el-tag>
                   </div>
-                  <span v-else class="system-about-empty">当前授权未包含业务模块</span>
+                  <span v-else class="system-about-empty">当前许可证未写入授权 code</span>
                 </dd>
               </div>
               <div class="system-about-list__row">
@@ -197,7 +198,7 @@
             <section v-if="isDevMode && entitlementDebugRows.length > 0" class="system-license-panel">
               <div class="scgp-section-heading">
                 <h4>授权诊断</h4>
-                <p>开发模式下展示当前有效能力包及其来源，用于销售、实施和售后排查授权映射。</p>
+                <p>开发模式下展示许可证原始 am 载荷解析后的有效能力包及其来源，用于排查新旧授权口径兼容映射。</p>
               </div>
 
               <el-table :data="entitlementDebugRows" size="small" border>
@@ -254,7 +255,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { getEntitlementDefinition } from '@/features/entitlements/entitlement-catalog'
 import { backupManager } from '@/utils/backup'
-import { getTrainingPlanModuleLabel } from '@/utils/training-plan-module'
 import UserManagement from './system/UserManagement.vue'
 import SystemSettings from './system/SystemSettings.vue'
 import UpdatePanel from './updates/UpdatePanel.vue'
@@ -311,11 +311,8 @@ const activationStatus = computed(() => {
 
 const machineCode = computed(() => authStore.activationInfo.machineCode)
 const trimmedActivationCode = computed(() => activationCodeInput.value.trim())
-const allowedModuleLabels = computed(() =>
-  authStore.allowedModules.map((moduleCode) => ({
-    code: moduleCode,
-    label: getTrainingPlanModuleLabel(moduleCode),
-  })),
+const rawAllowedLicenseCodes = computed(() =>
+  authStore.allowedModules.filter((moduleCode): moduleCode is string => typeof moduleCode === 'string' && moduleCode.trim().length > 0),
 )
 const effectiveEntitlementLabels = computed(() =>
   authStore.effectiveEntitlements.map((entitlementCode) => ({
@@ -444,15 +441,15 @@ const handleActivationRefresh = async () => {
 
     await authStore.checkActivation()
 
-    const refreshedModules = authStore.allowedModules
-      .map((moduleCode) => getTrainingPlanModuleLabel(moduleCode))
+    const refreshedEntitlements = authStore.effectiveEntitlements
+      .map((entitlementCode) => getEntitlementDefinition(entitlementCode).name)
       .join('、')
 
     closeActivationRefresh()
     ElMessage.success(
-      refreshedModules
-        ? `授权已更新，当前可用模块：${refreshedModules}`
-        : '授权已更新，当前机器未授予业务模块',
+      refreshedEntitlements
+        ? `授权已更新，当前可用能力包：${refreshedEntitlements}`
+        : '授权已更新，当前机器未授予能力包',
     )
   } catch (error) {
     console.error('刷新授权失败:', error)

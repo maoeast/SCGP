@@ -395,7 +395,11 @@ const quickActions: QuickAction[] = [
 
 const displayedAnomalies = computed(() => snapshot.value.anomalies.slice(0, 4))
 const displayedAssessmentAlerts = computed(() => snapshot.value.assessmentAlerts.slice(0, 4))
-const accessibleModuleCount = computed(() => new Set(authStore.allowedModules).size)
+const accessibleModuleCount = computed(() =>
+  ['sensory', 'emotional', 'social', 'cognitive', 'life_skills']
+    .filter((moduleCode) => authStore.hasModuleAccess(moduleCode))
+    .length
+)
 const visibleQuickActions = computed(() => filterVisibleAccessControlledItems(
   quickActions,
   authStore.hasModuleAccess,
@@ -438,7 +442,7 @@ const heroHighlights = computed(() => ([
     value: `${snapshot.value.overview.studentCount} 名`,
   },
   {
-    label: '已授权模块',
+    label: '已授权能力包映射模块',
     value: `${accessibleModuleCount.value}/${BUSINESS_MODULE_TOTAL}`,
   },
   {

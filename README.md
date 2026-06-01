@@ -20,9 +20,17 @@
 - 核心评估模块已完成统一容器 + `ScaleDriver` 架构改造
 - 首页已重构为“首页看板”，使用本地 SQLite 的真实聚合数据展示日程、异常预警与待评估预警
 - 首页支持从今日日程直接带上下文启动训练，不再依赖中间选择页
-- 系统已实现按模块授权（Modular Licensing）基础架构，前端具备路由拦截与带锁菜单能力
+- 系统已实现按能力包授权（Entitlement-first Licensing）基础架构，前端具备路由拦截与带锁菜单能力
 - 开发环境下支持免真实激活码的授权注入，用于本地主线开发
 - 仓库中同时存在现行文档、历史规划文档、归档材料和参考资料
+
+## 当前授权链现状
+
+- 当前前端授权事实来源是 `authStore.effectiveEntitlements`，它来自验签后的许可证 `am` 载荷兼容展开结果。
+- `allowedModules` 与许可证 `am` 当前表示“原始授权 code”，可能同时承载旧模块 code 和新能力包 code；它用于兼容和调试，不再作为用户可见授权事实来源。
+- 旧 code `sensory / emotional / social / life_skills / cognitive` 仍会被兼容展开为新的授权能力包。
+- 路由拦截、菜单可见性、训练入口判权与模块访问当前都已切到 `entitlement-first`，`hasModuleAccess()` 也由 `effectiveEntitlements` 反推，不再直接依赖原始 `allowedModules`。
+- 用户可见文案统一使用“能力包授权”；仅开发态诊断区域保留“原始授权 code”展示。
 
 ## 快速开始
 

@@ -41,7 +41,7 @@ export async function detectBlockedPage(page, scene) {
     '页面未找到',
     '未授权',
     '该入口未授权',
-    '该模块未授权',
+    '该入口对应能力包未授权',
   ];
 
   if (/\/login(?:$|[?#])/.test(url)) return 'blocked by login page';

@@ -130,6 +130,20 @@ export function resolveLegacyModuleEntitlements(moduleCode: string): readonly En
   return LEGACY_MODULE_ENTITLEMENT_MAP[moduleCode]
 }
 
+export function canAccessModuleByEntitlements(
+  moduleCode: string,
+  effectiveEntitlements: readonly EntitlementCode[] | null | undefined
+): boolean {
+  if (!isLegacyEntitlementModuleCode(moduleCode)) {
+    return true
+  }
+
+  const allowedEntitlementSet = new Set<EntitlementCode>(effectiveEntitlements || [])
+  return LEGACY_MODULE_ENTITLEMENT_MAP[moduleCode].some((entitlementCode) =>
+    allowedEntitlementSet.has(entitlementCode)
+  )
+}
+
 export function resolveEffectiveEntitlementDetails(
   rawCodes: readonly string[] | null | undefined
 ): EffectiveEntitlementResolution {

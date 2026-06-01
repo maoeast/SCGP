@@ -32,9 +32,9 @@
 
 快捷操作区中，部分模块入口会显示"未授权"标签。
 
-![未授权模块标签](screenshots/dashboard-unauthorized.png)
+![未授权能力包标签](screenshots/dashboard-unauthorized.png)
 
-这些模块当前未购买授权，无法使用。将鼠标悬停在"未授权"标签上，会看到提示："该模块未授权，请联系厂商购买"。
+这些入口当前对应的能力包未购买授权，无法使用。将鼠标悬停在"未授权"标签上，会看到提示："该入口对应能力包未授权，请联系厂商购买"。
 
 ![未授权悬停提示](screenshots/dashboard-unauthorized-tooltip.png)
 
