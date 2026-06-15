@@ -7102,5 +7102,95 @@
       "自豪"
     ],
     "sceneDomain": "校园"
+  },
+  {
+    "sceneCode": "scene-81",
+    "title": "在医院探望生病的爷爷",
+    "description": "识别在医院探望生病长辈时产生的难过与担忧情绪，理解面对亲人身体不适时的心疼和牵挂。学习用安静陪伴、轻声问候和体贴行动表达关心。",
+    "imageUrl": "images/emotional-scenes/scene81_hospital_visit_grandpa.png",
+    "difficultyLevel": 2,
+    "targetEmotion": "sad",
+    "emotionOptions": [
+      "sad",
+      "scared",
+      "calm",
+      "shy",
+      "happy",
+      "embarrassed"
+    ],
+    "emotionClues": [
+      "手里拎着带给爷爷的保温桶，站在病床边一直没怎么说话",
+      "看到爷爷手背上贴着胶布和输液管，眼圈慢慢红了",
+      "轻轻拉着爷爷的手，嘴角往下抿着，不像平时那样活泼"
+    ],
+    "prompts": [
+      {
+        "questionId": "scene-81-cause",
+        "questionType": "cause",
+        "questionText": "小明为什么会有这种感觉？",
+        "options": [
+          {
+            "id": "cause_1",
+            "text": "看到生病的爷爷躺在病床上，担心他难受又心疼他",
+            "isCorrect": true,
+            "feedbackText": "是的，看到自己很爱的爷爷生病住院，心里会很难过，也会很担心他什么时候能舒服一点。"
+          },
+          {
+            "id": "cause_2",
+            "text": "因为爷爷这次没有带他去买想要的玩具",
+            "isCorrect": false,
+            "feedbackText": "如果只是没买到玩具，更像是失望或闹别扭。这里他是看见爷爷生病了，才会这样难过。"
+          }
+        ]
+      },
+      {
+        "questionId": "scene-81-need",
+        "questionType": "need",
+        "questionText": "小明现在最需要什么？",
+        "options": [
+          {
+            "id": "need_1",
+            "text": "安静陪陪爷爷，让爷爷好好休息，也让爷爷知道自己很关心他",
+            "isCorrect": true,
+            "feedbackText": "对呀，病房里最重要的是安静、体贴地陪伴，这样爷爷会更安心，小明心里也会踏实一些。"
+          },
+          {
+            "id": "need_2",
+            "text": "赶紧让爷爷起来陪自己聊天，这样病房里就不会无聊了",
+            "isCorrect": false,
+            "feedbackText": "爷爷现在最需要的是休息，不是强撑着陪别人说话。真正的关心要先想到病人的身体感受。"
+          }
+        ]
+      }
+    ],
+    "solutions": [
+      {
+        "id": "sol_1",
+        "text": "走到床边轻轻叫一声“爷爷”，握住他的手说“您好好休息，我来看您了”",
+        "suitability": "optimal",
+        "explanation": "温柔问候、安静陪伴，会让生病的爷爷感到安心，也能把心疼变成真正有力量的关心。"
+      },
+      {
+        "id": "sol_2",
+        "text": "把带来的水果和水杯轻轻放好，安静坐在旁边陪爷爷一会儿",
+        "suitability": "acceptable",
+        "explanation": "不打扰地陪在身边也是很好的做法，虽然话不多，但已经把关心用行动表达出来了。"
+      },
+      {
+        "id": "sol_3",
+        "text": "一进病房就大声嚷“爷爷你什么时候出院啊，我待会儿还要去玩！”",
+        "suitability": "inappropriate",
+        "explanation": "病房需要安静，生病的人也需要被体贴对待。大声喧闹和只想着自己，会让爷爷更累也更难受。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "家庭亲情",
+      "长辈生病",
+      "医院探望"
+    ],
+    "sceneDomain": "医疗康复"
   }
 ]

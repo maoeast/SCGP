@@ -5735,5 +5735,95 @@
         "feedbackText": "他现在并没有慌得手忙脚乱哦。再仔细观察一下他的动作？"
       }
     ]
+  },
+  {
+    "sceneCode": "care-scene-65",
+    "name": "小雨",
+    "title": "好朋友期中考试数学没考好",
+    "description": "识别同伴在重要考试失利后的难过与挫败感，理解其对自己能力的怀疑和对努力落空的失望。通过先共情、再陪伴整理错题或给予具体支持，帮助对方慢慢找回信心。",
+    "imageUrl": "images/care-scenes/care-scene-65_math_midterm_failed.png",
+    "difficultyLevel": 2,
+    "careType": "empathy",
+    "receiverEmotion": "sad",
+    "emotionColorToken": "blue",
+    "emotionColorLabel": "蓝区",
+    "speakerPerspectiveText": "期中考试成绩发下来了，你的好朋友小雨数学考得很不理想。她盯着卷子上的分数，眼圈红红的，把试卷折起来塞进书包，一句话也不想说。你应该怎么表达关心？",
+    "receiverPerspectiveText": "想象一下，你为了期中考试认真复习了很久，却还是没把数学考好。你觉得特别失落，也开始怀疑自己是不是怎么学都学不会。这个时候，你最希望好朋友怎么对你？",
+    "utterances": [
+      {
+        "id": "u1",
+        "type": "advice",
+        "text": "“这次没考好说明你方法不对，今晚开始我给你列个计划，你必须每天多做二十道题。”",
+        "effect": "在对方还沉浸在失败和自我怀疑里时，立刻强压任务和要求，只会让她觉得更累、更挫败，好像自己现在连难过都不被允许。",
+        "receiverReactionText": "我现在已经够难受了，你别再说这些了...",
+        "receiverReactionEmoji": "😔"
+      },
+      {
+        "id": "u2",
+        "type": "empathy",
+        "text": "“你明明认真复习了那么久，这次数学还是没考好，心里一定特别失落吧。”",
+        "effect": "先看见她的努力，再接住她的失望，这种被理解的感觉能让她从“我不行”的打击里慢慢缓一口气。",
+        "receiverReactionText": "嗯，我本来以为这次至少会比上次好一点...",
+        "receiverReactionEmoji": "🥺"
+      },
+      {
+        "id": "u3",
+        "type": "action",
+        "text": "轻轻坐到她旁边，把水杯递给她说：“我们先缓一缓，等你想说的时候，我陪你一起看看哪几题最可惜。”",
+        "effect": "这既没有否定她的难过，也给了她一个可以重新面对试卷的安全出口，是非常体贴又务实的支持。",
+        "receiverReactionText": "谢谢你，等我没那么难受了，你再陪我看看吧。",
+        "receiverReactionEmoji": "🙂"
+      }
+    ],
+    "preferredUtteranceIds": [
+      "u2",
+      "u3"
+    ],
+    "receiverOptions": [
+      {
+        "id": "ro1",
+        "text": "好朋友先理解我的难过，没有嫌我笨，还愿意等我缓过来以后陪我一起看错题。",
+        "isComforting": true,
+        "reasonText": "考试失利的时候，我最需要的不是被训和被安排，而是有人相信我的努力没有白费，并愿意陪我一起重新开始。"
+      },
+      {
+        "id": "ro2",
+        "text": "好朋友一把抢过我的卷子，当着别人面大声说我哪些题太简单都能做错。",
+        "isComforting": false,
+        "reasonText": "这会把我本来就很脆弱的自尊心彻底击碎，让我觉得自己又丢脸又没用，根本不想再面对这张卷子。"
+      }
+    ],
+    "recommendedHintCeiling": 2,
+    "ageRange": "7-12",
+    "abilityLevel": "middle",
+    "tags": [
+      "校园生活",
+      "考试失利",
+      "学业挫折"
+    ],
+    "specificEmotionToken": "discouraged",
+    "specificEmotionLabel": "失落/泄气",
+    "emotionOptions": [
+      {
+        "text": "平静/无所谓",
+        "isCorrect": false,
+        "feedbackText": "如果她真的无所谓，就不会红着眼圈把试卷赶紧收起来了。再看看她更像哪种心情？"
+      },
+      {
+        "text": "生气/想发火",
+        "isCorrect": false,
+        "feedbackText": "她现在更像是在往心里难受，还没有冲着别人发脾气呢。我们再找找更贴近的感受。"
+      },
+      {
+        "text": "失落/泄气",
+        "isCorrect": true,
+        "feedbackText": "太棒了！你读懂了她努力后没有得到想要结果的那种失落，这样的理解能真正帮助朋友。"
+      },
+      {
+        "text": "得意/骄傲",
+        "isCorrect": false,
+        "feedbackText": "考得不理想的时候，她当然不会得意呀。再看看她收起试卷时的表情和动作。"
+      }
+    ]
   }
 ]
