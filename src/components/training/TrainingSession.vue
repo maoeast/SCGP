@@ -57,6 +57,24 @@ const sceneCode = computed(() => {
   return typeof raw === 'string' ? raw.trim() : ''
 })
 
+const studentId = computed(() => {
+  const raw = Array.isArray(route.query.studentId)
+    ? route.query.studentId[0]
+    : route.query.studentId
+
+  const parsed = Number(raw || 0)
+  return Number.isFinite(parsed) ? parsed : 0
+})
+
+const resourceId = computed(() => {
+  const raw = Array.isArray(route.query.resourceId)
+    ? route.query.resourceId[0]
+    : route.query.resourceId
+
+  const parsed = Number(raw || 0)
+  return Number.isFinite(parsed) ? parsed : 0
+})
+
 async function hydrateScene(): Promise<void> {
   if (!sceneCode.value) {
     loadError.value = '缺少 sceneCode，当前无法从原型库加载情绪场景。请从场景选择页重新进入。'
@@ -67,7 +85,15 @@ async function hydrateScene(): Promise<void> {
   loadError.value = ''
 
   try {
-    await store.loadScene(sceneCode.value)
+    await store.loadScene(
+      sceneCode.value,
+      studentId.value && resourceId.value
+        ? {
+            studentId: studentId.value,
+            resourceId: resourceId.value,
+          }
+        : undefined,
+    )
   } catch (error) {
     console.error('Failed to hydrate immersive training scene:', error)
     loadError.value = error instanceof Error ? error.message : '训练场景加载失败。'
@@ -96,7 +122,7 @@ function goBackToSelector(): void {
   })
 }
 
-watch(sceneCode, () => {
+watch(() => [sceneCode.value, studentId.value, resourceId.value] as const, () => {
   isTeacherPanelVisible.value = false
   void hydrateScene()
 })

@@ -212,7 +212,7 @@ function submitOption(optionId: number): void {
   })
 
   schedule(() => {
-    store.recordError(Number(store.currentStepIndex))
+    store.recordError(Number(store.currentStepIndex), selectedOption.id)
   }, TRAINING_ERROR_FEEDBACK_MS)
 
   schedule(() => {

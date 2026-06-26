@@ -270,5 +270,10 @@ export function compileCareSceneImmersive(
   return {
     scene,
     steps,
+    sessionContext: {
+      studentId: context.studentId,
+      resourceId: context.resourceId,
+      startedAt: Date.now(),
+    },
   }
 }

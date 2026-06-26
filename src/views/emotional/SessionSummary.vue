@@ -61,11 +61,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { EmotionalTrainingAPI } from '@/database/emotional-api'
+import { EmotionalTrainingRecordAPI } from '@/database/api'
 
 const route = useRoute()
 const router = useRouter()
-const api = new EmotionalTrainingAPI()
+const api = new EmotionalTrainingRecordAPI()
 
 const inheritedQuery = computed(() => ({ ...route.query }))
 const studentId = computed(() => Number(Array.isArray(route.query.studentId) ? route.query.studentId[0] : route.query.studentId || 0))

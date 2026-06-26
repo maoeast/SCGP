@@ -3432,6 +3432,32 @@ export class EmotionalTrainingRecordAPI extends DatabaseAPI {
         detailIds.push(this.getLastInsertId())
       }
 
+      if (input.completionStatus === 'completed') {
+        const reportTitle = `${studentName} - 情绪行为调节训练报告`
+        const existingReport = this.queryOne(
+          `SELECT id
+           FROM report_record
+           WHERE student_id = ? AND report_type = 'emotional'`,
+          [input.studentId],
+        )
+
+        if (existingReport?.id) {
+          this.execute(`
+            UPDATE report_record
+            SET training_record_id = ?, title = ?, class_id = ?, class_name = ?,
+                module_code = 'emotional', created_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `, [trainingRecordId, reportTitle, classId, className, existingReport.id])
+        } else {
+          this.execute(`
+            INSERT INTO report_record (
+              student_id, report_type, training_record_id, title,
+              class_id, class_name, module_code, created_at, updated_at
+            ) VALUES (?, 'emotional', ?, ?, ?, ?, 'emotional', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `, [input.studentId, trainingRecordId, reportTitle, classId, className])
+        }
+      }
+
       rawDb.run('COMMIT')
       return {
         trainingRecordId,
@@ -3448,6 +3474,23 @@ export class EmotionalTrainingRecordAPI extends DatabaseAPI {
       console.error(`[EmotionalTrainingRecordAPI] 写入表达关心训练记录失败（student=${studentName}）:`, error)
       throw error
     }
+  }
+
+  getSessionByTrainingRecordId(trainingRecordId: number): any | null {
+    return this.queryOne(`
+      SELECT *
+      FROM emotional_training_session
+      WHERE training_record_id = ?
+    `, [trainingRecordId])
+  }
+
+  getSessionDetails(sessionId: number): any[] {
+    return this.query(`
+      SELECT *
+      FROM emotional_training_detail
+      WHERE session_id = ?
+      ORDER BY step_index ASC, id ASC
+    `, [sessionId])
   }
 }
 

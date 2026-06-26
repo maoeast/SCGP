@@ -2,8 +2,17 @@ import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 
 import { useDatabase, type SqlResultSet } from '@/db/useDatabase'
+import { EmotionalTrainingRecordAPI } from '@/database/api'
 import router from '@/router'
-import type { EmotionalBaseEmotion, EmotionalCareType } from '@/types/emotional'
+import type {
+  EmotionalBaseEmotion,
+  EmotionalCareType,
+  EmotionalFeedbackCode,
+  EmotionalPerspective,
+  EmotionalTrainingDetailEntity,
+  EmotionalStepType,
+  PersistEmotionalSessionInput,
+} from '@/types/emotional'
 
 export type TrainingVariant = 'emotion_scene' | 'care_scene'
 export type TrainingPersistenceMode = 'prototype-db' | 'deferred'
@@ -125,6 +134,21 @@ export interface SceneData {
 export interface TrainingSessionPayload {
   scene: SceneData
   steps: StepData[]
+  sessionContext?: TrainingSessionContext
+}
+
+export interface TrainingSessionContext {
+  studentId: number
+  resourceId: number
+  startedAt: number
+}
+
+interface TrainingAttempt {
+  stepIndex: number
+  optionId: number
+  responseTimeMs: number
+  recordedAt: number
+  final: boolean
 }
 
 const INTRO_STEP_INDEX = 0
@@ -285,6 +309,60 @@ function cloneStep(step: StepData): StepData {
   }
 }
 
+function clampHintLevel(value: number): 0 | 1 | 2 | 3 {
+  if (value <= 0) {
+    return 0
+  }
+
+  if (value >= 3) {
+    return 3
+  }
+
+  return value as 0 | 1 | 2 | 3
+}
+
+function resolveDetailStepType(stepType: TrainingStepType): EmotionalStepType {
+  switch (stepType) {
+    case 'emotion':
+    case 'care_emotion':
+      return 'emotion_choice'
+    case 'response':
+      return 'solution_choice'
+    case 'care_utterance':
+      return 'care_utterance'
+    case 'receiver_preference':
+      return 'receiver_preference'
+    case 'reason':
+    case 'need':
+    default:
+      return 'reasoning_question'
+  }
+}
+
+function resolveDetailPerspective(stepType: TrainingStepType): EmotionalPerspective {
+  if (stepType === 'care_utterance') {
+    return 'sender'
+  }
+
+  if (stepType === 'receiver_preference') {
+    return 'receiver'
+  }
+
+  return 'none'
+}
+
+function resolveFeedbackCode(option: OptionData, final: boolean): EmotionalFeedbackCode {
+  if (option.is_correct) {
+    return 'correct'
+  }
+
+  if (option.is_acceptable) {
+    return 'acceptable'
+  }
+
+  return final ? 'retry' : 'guided'
+}
+
 export const useTrainingStore = defineStore('training', () => {
   const database = useDatabase()
 
@@ -300,6 +378,9 @@ export const useTrainingStore = defineStore('training', () => {
   const availableTTSEngine = ref<TTSEngine>(null)
   const questionResetSeed = ref(0)
   const savedRecordId = ref<number | null>(null)
+  const sessionContext = ref<TrainingSessionContext | null>(null)
+  const stepStartedAt = ref<Record<number, number>>({})
+  const attempts = ref<TrainingAttempt[]>([])
 
   const questionStepCount = computed(() => steps.value.length)
   const resultStepIndex = computed(() => questionStepCount.value + 1)
@@ -330,7 +411,9 @@ export const useTrainingStore = defineStore('training', () => {
   })
 
   const supportsRecordPersistence = computed(() => {
-    return scene.value?.persistence_mode === 'prototype-db'
+    return (scene.value?.variant === 'emotion_scene' && Boolean(sessionContext.value))
+      || (scene.value?.variant === 'care_scene' && Boolean(sessionContext.value))
+      || scene.value?.persistence_mode === 'prototype-db'
   })
 
   const selectedStepOptions = computed(() => {
@@ -395,6 +478,12 @@ export const useTrainingStore = defineStore('training', () => {
 
   watch(currentStepIndex, () => {
     console.log('TODO: Call ttsService.stop() here')
+    if (isQuestionStepIndex(currentStepIndex.value, questionStepCount.value)) {
+      stepStartedAt.value = {
+        ...stepStartedAt.value,
+        [currentStepIndex.value]: Date.now(),
+      }
+    }
   })
 
   function bumpQuestionResetSeed(): void {
@@ -410,6 +499,10 @@ export const useTrainingStore = defineStore('training', () => {
     isExitModalVisible.value = false
     showRewardOverlay.value = false
     savedRecordId.value = null
+    stepStartedAt.value = isQuestionStepIndex(nextStepIndex, stepCount)
+      ? { [nextStepIndex]: Date.now() }
+      : {}
+    attempts.value = []
     bumpQuestionResetSeed()
   }
 
@@ -499,7 +592,7 @@ export const useTrainingStore = defineStore('training', () => {
     }
   }
 
-  async function loadScene(sceneCode: string): Promise<void> {
+  async function loadScene(sceneCode: string, context?: Omit<TrainingSessionContext, 'startedAt'>): Promise<void> {
     const normalizedSceneCode = sceneCode.trim()
     if (!normalizedSceneCode) {
       throw new Error('loadScene(sceneCode) requires a non-empty scene code.')
@@ -601,6 +694,13 @@ export const useTrainingStore = defineStore('training', () => {
 
     scene.value = nextScene
     steps.value = nextSteps
+    sessionContext.value = context?.studentId && context.resourceId
+      ? {
+          studentId: context.studentId,
+          resourceId: context.resourceId,
+          startedAt: Date.now(),
+        }
+      : null
     resetRuntimeState(INTRO_STEP_INDEX, nextSteps.length)
   }
 
@@ -614,6 +714,9 @@ export const useTrainingStore = defineStore('training', () => {
       tags: [...payload.scene.tags],
     }
     steps.value = nextSteps
+    sessionContext.value = payload.sessionContext
+      ? { ...payload.sessionContext }
+      : null
     resetRuntimeState(INTRO_STEP_INDEX, nextSteps.length)
   }
 
@@ -635,7 +738,7 @@ export const useTrainingStore = defineStore('training', () => {
     }
   }
 
-  function recordError(stepIndex: number): void {
+  function recordError(stepIndex: number, optionId?: number): void {
     if (!isQuestionStepIndex(stepIndex, questionStepCount.value)) {
       console.warn('recordError ignored an out-of-range step index:', stepIndex)
       return
@@ -645,6 +748,26 @@ export const useTrainingStore = defineStore('training', () => {
     const currentLevel = nextLevels[stepIndex - 1] ?? 0
     nextLevels[stepIndex - 1] = currentLevel + 1
     hintLevelPerStep.value = nextLevels
+
+    const step = steps.value.find((item) => item.step_index === stepIndex)
+    const selectedOptionId = optionId || (step ? answers.value[stepIndex] : undefined)
+    if (step && selectedOptionId && step.options.some((option) => option.id === selectedOptionId)) {
+      const stepStart = stepStartedAt.value[stepIndex] || Date.now()
+      attempts.value = [
+        ...attempts.value,
+        {
+          stepIndex,
+          optionId: selectedOptionId,
+          responseTimeMs: Math.max(0, Date.now() - stepStart),
+          recordedAt: Date.now(),
+          final: false,
+        },
+      ]
+      stepStartedAt.value = {
+        ...stepStartedAt.value,
+        [stepIndex]: Date.now(),
+      }
+    }
   }
 
   function recordAnswer(stepIndex: number, optionId: number): void {
@@ -672,6 +795,18 @@ export const useTrainingStore = defineStore('training', () => {
       ...answers.value,
       [stepIndex]: optionId,
     }
+
+    const stepStart = stepStartedAt.value[stepIndex] || Date.now()
+    attempts.value = [
+      ...attempts.value,
+      {
+        stepIndex,
+        optionId,
+        responseTimeMs: Math.max(0, Date.now() - stepStart),
+        recordedAt: Date.now(),
+        final: true,
+      },
+    ]
   }
 
   function calculateStars(): 1 | 2 | 3 {
@@ -686,6 +821,88 @@ export const useTrainingStore = defineStore('training', () => {
     return 1
   }
 
+  function buildEmotionalSceneRecordInput(): PersistEmotionalSessionInput {
+    if (!scene.value) {
+      throw new Error('当前训练场景尚未加载，无法写入情绪训练记录。')
+    }
+
+    if (!sessionContext.value) {
+      throw new Error('情绪训练缺少会话上下文，无法写入正式记录。')
+    }
+
+    const context = sessionContext.value
+    const finalAttempts = attempts.value.filter((attempt) => attempt.final)
+    const correctCount = finalAttempts.reduce((sum, attempt) => {
+      const step = steps.value.find((item) => item.step_index === attempt.stepIndex)
+      const option = step?.options.find((item) => item.id === attempt.optionId)
+      return sum + (option?.is_correct ? 1 : 0)
+    }, 0)
+    const retryCount = attempts.value.filter((attempt) => !attempt.final).length
+
+    const details: Array<Omit<EmotionalTrainingDetailEntity, 'id' | 'session_id' | 'created_at'>> = []
+    attempts.value.forEach((attempt) => {
+      const step = steps.value.find((item) => item.step_index === attempt.stepIndex)
+      const option = step?.options.find((item) => item.id === attempt.optionId)
+      if (!step || !option) {
+        return
+      }
+
+      details.push({
+        student_id: context.studentId,
+        resource_id: context.resourceId,
+        step_type: resolveDetailStepType(step.step_type),
+        step_index: step.step_index,
+        prompt_id: step.question_id || null,
+        selected_value: option.option_code || String(option.id),
+        selected_label: option.content,
+        is_correct: option.is_correct ? 1 : 0,
+        is_acceptable: option.is_acceptable ? 1 : 0,
+        hint_level: clampHintLevel(hintLevelPerStep.value[step.step_index - 1] || 0),
+        retry_count: attempts.value.filter((item) => (
+          item.stepIndex === step.step_index && !item.final
+        )).length,
+        response_time_ms: attempt.responseTimeMs,
+        feedback_code: resolveFeedbackCode(option, attempt.final),
+        perspective: resolveDetailPerspective(step.step_type),
+      })
+    })
+
+    const subModule = scene.value.variant
+    const emotionChoice = selectedStepOptions.value.find((item) => item.step.step_type === 'emotion')?.option
+    const responseChoice = selectedStepOptions.value.find((item) => item.step.step_type === 'response')?.option
+
+    return {
+      studentId: context.studentId,
+      resourceId: context.resourceId,
+      resourceType: subModule,
+      subModule,
+      startedAt: context.startedAt,
+      endedAt: Date.now(),
+      completionStatus: 'completed',
+      summary: {
+        subModule,
+        resourceId: context.resourceId,
+        resourceType: subModule,
+        sessionType: subModule,
+        correctCount,
+        questionCount: steps.value.length,
+        hintCount: totalHintLevel.value,
+        retryCount,
+        dominantChoiceType: subModule === 'care_scene'
+          ? selectedCareChoiceType.value
+          : null,
+        preferredPerspective: subModule === 'care_scene'
+          ? receiverComfortMatched.value === true ? 'receiver' : 'sender'
+          : responseChoice
+            ? 'sender'
+            : emotionChoice
+              ? 'none'
+              : null,
+      },
+      details,
+    }
+  }
+
   async function saveRecord(): Promise<number> {
     if (!scene.value) {
       throw new Error('Cannot save training record before a scene is loaded.')
@@ -696,6 +913,12 @@ export const useTrainingStore = defineStore('training', () => {
     }
 
     if (savedRecordId.value !== null) {
+      return savedRecordId.value
+    }
+
+    if (scene.value.variant === 'care_scene' || sessionContext.value) {
+      const result = new EmotionalTrainingRecordAPI().persistSession(buildEmotionalSceneRecordInput())
+      savedRecordId.value = result.trainingRecordId
       return savedRecordId.value
     }
 

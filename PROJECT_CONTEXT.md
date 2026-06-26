@@ -1418,3 +1418,10 @@
 - 新增 `Sad = mouthFrown × 0.6 + browInnerUp × 0.4`，`Fearful = eyeWide × 0.3 + browInnerUp × 0.4 + jawOpen × 0.3 − happy × 0.5`
 - `EmotionType` / `EmotionScores` 类型已同步扩展，所有消费 `useEmotionDetector` 的游戏（表情能量球、表情侦探等）自动受益
 - 新增 `G09_EXPRESSION_DETECTIVE` 表情侦探游戏已接入情绪调节游戏大厅完整注册链
+
+## 53. 2026-06-26 Emotional Immersive Training Record Closeout
+
+- `emotion_scene` 与 `care_scene` 沉浸式训练结束页已统一接入 `EmotionalTrainingRecordAPI.persistSession()`。
+- 正式写入范围：`training_records`、`training_session`、`emotional_training_session`、`emotional_training_detail`、`report_record`。
+- `emotion_scene` 从选择页进入时必须携带 `studentId + resourceId + sceneCode` 才写正式记录；缺上下文时保留旧 prototype 兼容保存路径。
+- 逐步明细会记录错误点击与最终答案，不只保存最终正确结果。

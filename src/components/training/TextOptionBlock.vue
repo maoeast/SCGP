@@ -127,7 +127,7 @@ function handleSelect(): void {
   })
 
   schedule(() => {
-    store.recordError(Number(store.currentStepIndex))
+    store.recordError(Number(store.currentStepIndex), props.option.id)
   }, TRAINING_ERROR_FEEDBACK_MS)
 
   schedule(() => {
