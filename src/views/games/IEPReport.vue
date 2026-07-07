@@ -83,35 +83,35 @@
         </div>
 
         <!-- 训练数据统计 -->
-        <div v-if="sessionData" class="stats-section">
+        <div v-if="displayStats.accuracy !== null || displayStats.durationSec !== null || displayStats.avgResponseTimeMs !== null || displayStats.correctOverTotal !== null" class="stats-section">
           <h3>📈 训练数据</h3>
           <el-row :gutter="20">
-            <el-col :span="6">
+            <el-col v-if="displayStats.accuracy !== null" :span="6">
               <div class="stat-card">
-                <div class="stat-value">{{ (sessionData.accuracy * 100).toFixed(1) }}%</div>
+                <div class="stat-value">{{ (displayStats.accuracy * 100).toFixed(1) }}%</div>
                 <div class="stat-label">准确率</div>
               </div>
             </el-col>
-            <el-col :span="6">
+            <el-col v-if="displayStats.rhythmTimingErrorAvg !== null || displayStats.avgResponseTimeMs !== null" :span="6">
               <div class="stat-card">
-                <div class="stat-value" v-if="sessionData.rhythmStats">
-                  {{ sessionData.rhythmStats.timingErrorAvg }}ms
+                <div class="stat-value" v-if="displayStats.hasRhythm">
+                  {{ displayStats.rhythmTimingErrorAvg }}ms
                 </div>
                 <div class="stat-value" v-else>
-                  {{ (sessionData.avgResponseTime / 1000).toFixed(1) }}s
+                  {{ ((displayStats.avgResponseTimeMs as number) / 1000).toFixed(1) }}s
                 </div>
-                <div class="stat-label">{{ sessionData.rhythmStats ? '平均节奏误差' : '平均反应时' }}</div>
+                <div class="stat-label">{{ displayStats.hasRhythm ? '平均节奏误差' : '平均反应时' }}</div>
               </div>
             </el-col>
-            <el-col :span="6">
+            <el-col v-if="displayStats.durationSec !== null" :span="6">
               <div class="stat-card">
-                <div class="stat-value">{{ sessionData.duration }}s</div>
+                <div class="stat-value">{{ displayStats.durationSec }}s</div>
                 <div class="stat-label">训练时长</div>
               </div>
             </el-col>
-            <el-col :span="6">
+            <el-col v-if="displayStats.correctOverTotal !== null" :span="6">
               <div class="stat-card">
-                <div class="stat-value">{{ sessionData.correctTrials }}/{{ sessionData.totalTrials }}</div>
+                <div class="stat-value">{{ displayStats.correctOverTotal }}</div>
                 <div class="stat-label">正确/总数</div>
               </div>
             </el-col>
@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Loading, WarningFilled, Document, DocumentCopy } from '@element-plus/icons-vue'
@@ -158,9 +158,79 @@ const error = ref<string>()
 const report = ref<IEPReport>()
 const sessionData = ref<GameSessionData>()
 const student = ref<any>()
+// 社交沟通报告：raw_data 原对象（含 gameCode / performanceData）
+const socialRawData = ref<any>()
+const isSocialReport = computed(() => Boolean(socialRawData.value?.gameCode))
 
 // 获取记录 ID
 const recordId = ref<string>(route.query.recordId as string)
+
+const numOr = (value: unknown, fallback: number): number => {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : fallback
+}
+
+const clampNum = (value: unknown, min: number, max: number, fallback: number): number => {
+  const num = Number(value)
+  if (!Number.isFinite(num)) {
+    return fallback
+  }
+  if (num < min) return min
+  if (num > max) return max
+  return num
+}
+
+// 统一统计：社交路径从 performanceData 防御性提取，sensory 路径读 sessionData
+interface DisplayStats {
+  accuracy: number | null // 0-1
+  avgResponseTimeMs: number | null // 缺失为 null（隐藏该卡）
+  durationSec: number | null
+  correctOverTotal: string | null
+  hasRhythm: boolean
+  rhythmTimingErrorAvg: number | null
+}
+
+const displayStats = computed<DisplayStats>(() => {
+  if (isSocialReport.value) {
+    const perf = socialRawData.value?.performanceData || {}
+    const accuracy = clampNum(perf.accuracy ?? perf.accuracyRate, 0, 1, NaN)
+    const response = numOr(perf.avgResponseTime ?? perf.avgResponseTimeMs ?? perf.reactionTime, NaN)
+    const durationMs = numOr(perf.durationMs ?? perf.durationSec ?? perf.duration, NaN)
+    const durationSec = Number.isFinite(durationMs)
+      ? (durationMs > 10000 ? Math.round(durationMs / 1000) : Math.round(durationMs))
+      : null
+
+    return {
+      accuracy: Number.isFinite(accuracy) ? accuracy : null,
+      avgResponseTimeMs: Number.isFinite(response) ? response : null,
+      durationSec,
+      correctOverTotal: null,
+      hasRhythm: false,
+      rhythmTimingErrorAvg: null,
+    }
+  }
+
+  const data = sessionData.value
+  if (!data) {
+    return {
+      accuracy: null,
+      avgResponseTimeMs: null,
+      durationSec: null,
+      correctOverTotal: null,
+      hasRhythm: false,
+      rhythmTimingErrorAvg: null,
+    }
+  }
+
+  return {
+    accuracy: Number.isFinite(data.accuracy) ? data.accuracy : null,
+    avgResponseTimeMs: Number.isFinite(data.avgResponseTime) ? data.avgResponseTime : null,
+    durationSec: Number.isFinite(data.duration) ? data.duration : null,
+    correctOverTotal: `${data.correctTrials ?? 0}/${data.totalTrials ?? 0}`,
+    hasRhythm: Boolean(data.rhythmStats),
+    rhythmTimingErrorAvg: data.rhythmStats?.timingErrorAvg ?? null,
+  }
+})
 
 const normalizeLegacyAudioAccuracy = (data: GameSessionData): GameSessionData => {
   if (![TaskID.AUDIO_DIFF, TaskID.AUDIO_COMMAND].includes(data.taskId)) {
@@ -199,22 +269,39 @@ const loadReport = async () => {
       throw new Error('未找到训练记录')
     }
 
-    // 解析会话数据
-    sessionData.value = normalizeLegacyAudioAccuracy(record.raw_data as GameSessionData)
+    // 判断是否为社交沟通训练（raw_data 含 gameCode；SELECT 未含 module_code 列）
+    const rawAny = record.raw_data as any
+    const isSocial = Boolean(rawAny && typeof rawAny === 'object' && rawAny.gameCode)
 
-    // 获取学生信息
+    // 获取学生信息：社交路径学生 id 来自 record.student_id；sensory 路径来自 raw_data.studentId
     const db = new DatabaseAPI()
-    const students = db.query('SELECT * FROM student WHERE id = ?', [sessionData.value.studentId])
-    if (students.length > 0) {
-      student.value = students[0]
+    const studentIdForLookup = isSocial
+      ? record.student_id
+      : (rawAny?.studentId as number | undefined)
+    if (studentIdForLookup) {
+      const students = db.query('SELECT * FROM student WHERE id = ?', [studentIdForLookup])
+      if (students.length > 0) {
+        student.value = students[0]
+      }
     }
 
-    // 生成 IEP 报告
-    report.value = IEPGenerator.generateReport(
-      student.value?.name || '未知',
-      sessionData.value.taskId,
-      sessionData.value
-    )
+    if (isSocial) {
+      socialRawData.value = rawAny
+      // 生成社交沟通 IEP 报告（不走 generateReport(taskId,...)）
+      report.value = IEPGenerator.generateSocialReport(
+        student.value?.name || '未知',
+        rawAny.gameCode,
+        rawAny.performanceData || {},
+      )
+    } else {
+      // 解析会话数据（sensory 原路径保持不变）
+      sessionData.value = normalizeLegacyAudioAccuracy(rawAny as GameSessionData)
+      report.value = IEPGenerator.generateReport(
+        student.value?.name || '未知',
+        sessionData.value.taskId,
+        sessionData.value,
+      )
+    }
 
   } catch (err: any) {
     console.error('加载报告失败:', err)
@@ -259,7 +346,7 @@ const exportPDF = async () => {
 // 导出 Word
 const exportWord = async () => {
   try {
-    if (!report.value || !sessionData.value) return
+    if (!report.value) return
 
     const tableBorder = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' }
     const cellBorders = { top: tableBorder, bottom: tableBorder, left: tableBorder, right: tableBorder }
@@ -411,149 +498,90 @@ const exportWord = async () => {
     )
 
     // 训练数据统计
-    children.push(
-      new Paragraph({
-        heading: HeadingLevel.HEADING_2,
-        spacing: { before: 300, after: 100 },
-        children: [new TextRun({ text: '📈 训练数据', bold: true })]
-      })
-    )
+    const stats = displayStats.value
+    const hasAnyStat = stats.accuracy !== null
+      || stats.avgResponseTimeMs !== null
+      || stats.durationSec !== null
+      || stats.correctOverTotal !== null
+      || stats.rhythmTimingErrorAvg !== null
 
-    children.push(
-      new Table({
-        columnWidths: [2340, 2340, 2340, 2340],
-        margins: { top: 100, bottom: 100, left: 100, right: 100 },
-        rows: [
-          new TableRow({
-            tableHeader: true,
-            children: [
-              new TableCell({
-                borders: cellBorders,
-                width: { size: 2340, type: WidthType.DXA },
-                shading: { fill: '667EEA', type: ShadingType.CLEAR },
-                verticalAlign: VerticalAlign.CENTER,
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.CENTER,
-                    children: [new TextRun({ text: '准确率', bold: true, color: 'FFFFFF' })]
-                  })
-                ]
-              }),
-              new TableCell({
-                borders: cellBorders,
-                width: { size: 2340, type: WidthType.DXA },
-                shading: { fill: '667EEA', type: ShadingType.CLEAR },
-                verticalAlign: VerticalAlign.CENTER,
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.CENTER,
-                    children: [new TextRun({ 
-                      text: sessionData.value?.rhythmStats ? '平均节奏误差' : '平均反应时', 
-                      bold: true, 
-                      color: 'FFFFFF' 
-                    })]
-                  })
-                ]
-              }),
-              new TableCell({
-                borders: cellBorders,
-                width: { size: 2340, type: WidthType.DXA },
-                shading: { fill: '667EEA', type: ShadingType.CLEAR },
-                verticalAlign: VerticalAlign.CENTER,
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.CENTER,
-                    children: [new TextRun({ text: '训练时长', bold: true, color: 'FFFFFF' })]
-                  })
-                ]
-              }),
-              new TableCell({
-                borders: cellBorders,
-                width: { size: 2340, type: WidthType.DXA },
-                shading: { fill: '667EEA', type: ShadingType.CLEAR },
-                verticalAlign: VerticalAlign.CENTER,
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.CENTER,
-                    children: [new TextRun({ text: '正确/总数', bold: true, color: 'FFFFFF' })]
-                  })
-                ]
-              })
-            ]
-          }),
-          new TableRow({
-            children: [
-              new TableCell({
-                borders: cellBorders,
-                width: { size: 2340, type: WidthType.DXA },
-                verticalAlign: VerticalAlign.CENTER,
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.CENTER,
-                    children: [
-                      new TextRun({
-                        text: `${(sessionData.value.accuracy * 100).toFixed(1)}%`,
-                        bold: true,
-                        size: 28
-                      })
-                    ]
-                  })
-                ]
-              }),
-              new TableCell({
-                borders: cellBorders,
-                width: { size: 2340, type: WidthType.DXA },
-                verticalAlign: VerticalAlign.CENTER,
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.CENTER,
-                    children: [
-                      new TextRun({
-                        text: sessionData.value?.rhythmStats 
-                          ? `${sessionData.value.rhythmStats.timingErrorAvg}ms`
-                          : `${(sessionData.value.avgResponseTime / 1000).toFixed(1)}s`,
-                        bold: true,
-                        size: 28
-                      })
-                    ]
-                  })
-                ]
-              }),
-              new TableCell({
-                borders: cellBorders,
-                width: { size: 2340, type: WidthType.DXA },
-                verticalAlign: VerticalAlign.CENTER,
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.CENTER,
-                    children: [
-                      new TextRun({ text: `${sessionData.value.duration}s`, bold: true, size: 28 })
-                    ]
-                  })
-                ]
-              }),
-              new TableCell({
-                borders: cellBorders,
-                width: { size: 2340, type: WidthType.DXA },
-                verticalAlign: VerticalAlign.CENTER,
-                children: [
-                  new Paragraph({
-                    alignment: AlignmentType.CENTER,
-                    children: [
-                      new TextRun({
-                        text: `${sessionData.value.correctTrials}/${sessionData.value.totalTrials}`,
-                        bold: true,
-                        size: 28
-                      })
-                    ]
-                  })
-                ]
-              })
-            ]
+    if (hasAnyStat) {
+      children.push(
+        new Paragraph({
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 300, after: 100 },
+          children: [new TextRun({ text: '📈 训练数据', bold: true })]
+        })
+      )
+
+      const headerCells: TableCell[] = []
+      const valueCells: TableCell[] = []
+      const colCount = (stats.accuracy !== null ? 1 : 0)
+        + (stats.avgResponseTimeMs !== null || stats.rhythmTimingErrorAvg !== null ? 1 : 0)
+        + (stats.durationSec !== null ? 1 : 0)
+        + (stats.correctOverTotal !== null ? 1 : 0)
+      const colWidth = colCount > 0 ? Math.floor(9360 / colCount) : 2340
+
+      const headerCell = (text: string) => new TableCell({
+        borders: cellBorders,
+        width: { size: colWidth, type: WidthType.DXA },
+        shading: { fill: '667EEA', type: ShadingType.CLEAR },
+        verticalAlign: VerticalAlign.CENTER,
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [new TextRun({ text, bold: true, color: 'FFFFFF' })]
           })
         ]
       })
-    )
+
+      const valueCell = (text: string) => new TableCell({
+        borders: cellBorders,
+        width: { size: colWidth, type: WidthType.DXA },
+        verticalAlign: VerticalAlign.CENTER,
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [new TextRun({ text, bold: true, size: 28 })]
+          })
+        ]
+      })
+
+      if (stats.accuracy !== null) {
+        headerCells.push(headerCell('准确率'))
+        valueCells.push(valueCell(`${(stats.accuracy * 100).toFixed(1)}%`))
+      }
+      if (stats.rhythmTimingErrorAvg !== null || stats.avgResponseTimeMs !== null) {
+        if (stats.hasRhythm) {
+          headerCells.push(headerCell('平均节奏误差'))
+          valueCells.push(valueCell(`${stats.rhythmTimingErrorAvg ?? 0}ms`))
+        } else {
+          headerCells.push(headerCell('平均反应时'))
+          valueCells.push(valueCell(`${(((stats.avgResponseTimeMs as number) || 0) / 1000).toFixed(1)}s`))
+        }
+      }
+      if (stats.durationSec !== null) {
+        headerCells.push(headerCell('训练时长'))
+        valueCells.push(valueCell(`${stats.durationSec}s`))
+      }
+      if (stats.correctOverTotal !== null) {
+        headerCells.push(headerCell('正确/总数'))
+        valueCells.push(valueCell(stats.correctOverTotal))
+      }
+
+      const columnWidths = headerCells.map(() => colWidth)
+
+      children.push(
+        new Table({
+          columnWidths,
+          margins: { top: 100, bottom: 100, left: 100, right: 100 },
+          rows: [
+            new TableRow({ tableHeader: true, children: headerCells }),
+            new TableRow({ children: valueCells }),
+          ]
+        })
+      )
+    }
 
     // 创建文档
     const doc = new DocxDocument({

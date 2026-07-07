@@ -154,7 +154,7 @@
 </template>
 
 <script setup lang="ts">
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import {
@@ -162,6 +162,8 @@ import {
   type CustomGamePermission,
 } from '@/data/custom-game-registry'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
+import { DatabaseAPI, GameTrainingAPI } from '@/database/api'
+import { ModuleCode } from '@/types/module'
 import {
   loadGameAudioSettings,
   saveGameAudioSettings,
@@ -965,6 +967,131 @@ function normalizeGroupPayload(
   }
 }
 
+// 社交沟通游戏中文映射（与 IEPGenerator.getSocialGameName 保持一致）
+const SOCIAL_GAME_NAME_MAP: Record<string, string> = {
+  S01_BURGER: '合作造汉堡',
+  S02_EMOTION_MIRROR: '表情猜猜乐',
+  S03_STORY_SEQ: '故事接龙板',
+  S04_GIFT_MATCH: '礼物分享派对',
+  S05_ECHO_PARROT: '动物传声筒',
+  S06_EXPRESSION_DUEL: '双人表情擂台',
+}
+
+function resolveSocialGameName(gameCode: string): string {
+  return SOCIAL_GAME_NAME_MAP[gameCode] || '社交沟通训练'
+}
+
+function numOr(value: unknown, fallback: number): number {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : fallback
+}
+
+function clampNum(value: unknown, min: number, max: number, fallback: number): number {
+  const num = Number(value)
+  if (!Number.isFinite(num)) {
+    return fallback
+  }
+  if (num < min) return min
+  if (num > max) return max
+  return num
+}
+
+// 把可能是 ms 或秒的时长统一换算为整数秒（NaN 安全）
+function resolveDurationSeconds(performanceData: Record<string, any>, sessionDurationMs: number): number {
+  const raw = performanceData.durationMs ?? performanceData.durationSec ?? performanceData.duration
+  const fieldName = ['durationMs', 'durationSec', 'duration'].find(
+    (key) => performanceData[key] !== undefined,
+  )
+  const looksLikeMs = fieldName === 'durationMs' || (numOr(raw, 0) > 10000)
+  const valueMs = looksLikeMs
+    ? numOr(raw, sessionDurationMs)
+    : numOr(raw, sessionDurationMs / 1000) * 1000
+  const seconds = Math.round((valueMs || sessionDurationMs) / 1000)
+  return Number.isFinite(seconds) && seconds >= 0 ? seconds : 0
+}
+
+/**
+ * 社交沟通游戏完成后的 IEP 链路：
+ * 写 training_records + report_record，然后跳 IEPReport。
+ * 失败时降级：弹错 + 不抛，让外层照常回大厅。
+ * 双人游戏只为 primaryStudentId 生成一份 IEP。
+ */
+async function runSocialIepChain(
+  studentId: number,
+  gameCode: CustomGameCode,
+  performanceData: Record<string, any>,
+  sessionDurationMs: number,
+) {
+  if (!studentId || studentId <= 0) {
+    return false
+  }
+
+  try {
+    const data = performanceData && typeof performanceData === 'object' ? performanceData : {}
+    const accuracy = clampNum(data.accuracy ?? data.accuracyRate, 0, 1, 0)
+    const avgResponseTimeMs = numOr(
+      data.avgResponseTime ?? data.avgResponseTimeMs ?? data.reactionTime,
+      0,
+    )
+    const durationSec = resolveDurationSeconds(data, sessionDurationMs)
+    const gameName = resolveSocialGameName(gameCode)
+
+    const gameApi = new GameTrainingAPI()
+    const recordId = gameApi.saveTrainingRecord({
+      student_id: studentId,
+      task_id: null,
+      resource_id: null,
+      resource_type: 'game',
+      session_type: 'game',
+      entry_code: 'social-communication',
+      timestamp: Date.now(),
+      duration: durationSec,
+      accuracy_rate: accuracy,
+      avg_response_time: avgResponseTimeMs,
+      raw_data: {
+        gameCode,
+        taskName: gameName,
+        performanceData: data,
+        difficulty: difficulty.value,
+        durationMs: sessionDurationMs,
+        moduleCode: 'social',
+      },
+      module_code: 'social',
+    })
+
+    const db = new DatabaseAPI()
+    const students = db.query('SELECT name FROM student WHERE id = ?', [studentId])
+    const studentName = students[0]?.name || String(studentId)
+    const dateStamp = new Date()
+    const yyyymmdd = `${dateStamp.getFullYear()}${String(dateStamp.getMonth() + 1).padStart(2, '0')}${String(dateStamp.getDate()).padStart(2, '0')}`
+    const title = `社交沟通IEP报告_${studentName}_${gameCode}_${yyyymmdd}`
+
+    db.execute(
+      `INSERT INTO report_record (student_id, report_type, training_record_id, title, module_code, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [studentId, 'iep', recordId, title, 'social', new Date().toISOString()],
+    )
+
+    ElMessage.success('训练完成，正在生成 IEP 报告…')
+
+    await router.push({
+      path: '/games/report',
+      query: {
+        recordId: String(recordId),
+        studentId: String(studentId),
+        module: 'social',
+        gameCode,
+      },
+    })
+
+    return true
+  } catch (error) {
+    console.error('[GameContainer] 社交 IEP 链路失败，降级返回大厅:', error)
+    ElMessage.error('报告生成失败，已返回大厅')
+    return false
+  }
+}
+
 async function persistTerminalState(
   status: 'completed' | 'aborted',
   payload?: EmotionGameCompletionPayload | GroupGameCompletionPayload,
@@ -999,6 +1126,23 @@ async function persistTerminalState(
       persistenceMessage.value = status === 'completed'
         ? `已静默保存共享训练，${result.recordIds.length} 名学生记录已同步写入`
         : `已安静保存共享中断记录，${result.recordIds.length} 名学生已同步结束`
+
+      if (
+        status === 'completed'
+        && gameDefinition.value.moduleCode === ModuleCode.SOCIAL
+        && primaryStudentId.value > 0
+      ) {
+        const startedAtMsForIep = sessionStartedAt.value ?? Date.now()
+        const navigated = await runSocialIepChain(
+          primaryStudentId.value,
+          props.gameCode,
+          groupPayload.performanceData,
+          Date.now() - startedAtMsForIep,
+        )
+        if (navigated) {
+          return
+        }
+      }
     } else {
       const exitTrigger = payload?.exitTrigger || null
       const result = await api.persistSession({
@@ -1018,6 +1162,23 @@ async function persistTerminalState(
       persistenceMessage.value = status === 'completed'
         ? `已静默保存本次训练${result.badgeUnlockCount ? `，徽章累计 ${result.badgeUnlockCount} 次` : ''}`
         : '已安静保存本次中断记录'
+
+      if (
+        status === 'completed'
+        && gameDefinition.value.moduleCode === ModuleCode.SOCIAL
+        && primaryStudentId.value > 0
+      ) {
+        const startedAtMsForIep = sessionStartedAt.value ?? Date.now()
+        const navigated = await runSocialIepChain(
+          primaryStudentId.value,
+          props.gameCode,
+          payload?.performanceData || buildDefaultPerformanceData(status, exitTrigger),
+          Date.now() - startedAtMsForIep,
+        )
+        if (navigated) {
+          return
+        }
+      }
     }
 
     sessionStartedAt.value = null

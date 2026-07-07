@@ -124,6 +124,243 @@ export class IEPGenerator {
     }
   }
 
+  // ==========================================
+  // 社交沟通游戏报告生成（社交模块）
+  // ==========================================
+
+  /**
+   * 生成社交沟通游戏 IEP 报告（不带 taskId）
+   */
+  static generateSocialReport(
+    studentName: string,
+    gameCode: string,
+    performanceData: Record<string, any>
+  ): IEPReport {
+    const taskName = this.getSocialGameName(gameCode)
+    const sections = this.generateSocialSections(gameCode, performanceData)
+    const summary = this.generateSocialSummary(studentName, taskName, performanceData, sections)
+
+    return {
+      studentName,
+      taskName,
+      reportDate: new Date().toLocaleDateString('zh-CN'),
+      sections,
+      summary
+    }
+  }
+
+  /**
+   * 社交游戏 code -> 中文名映射
+   */
+  private static getSocialGameName(gameCode: string): string {
+    const names: Record<string, string> = {
+      S01_BURGER: '合作造汉堡',
+      S02_EMOTION_MIRROR: '表情猜猜乐',
+      S03_STORY_SEQ: '故事接龙板',
+      S04_GIFT_MATCH: '礼物分享派对',
+      S05_ECHO_PARROT: '动物传声筒',
+      S06_EXPRESSION_DUEL: '双人表情擂台'
+    }
+    return names[gameCode] || '社交沟通训练'
+  }
+
+  /**
+   * 按 gameCode 维度生成社交评估段（共情/轮流/识别/分享/仿说）
+   */
+  private static generateSocialSections(
+    gameCode: string,
+    performanceData: Record<string, any>
+  ): IEPReportSection[] {
+    const sections: IEPReportSection[] = []
+    const data = performanceData && typeof performanceData === 'object' ? performanceData : {}
+    const accuracy = this.clampNum(data.accuracy ?? data.accuracyRate, 0, 1, NaN)
+    const hasAccuracy = Number.isFinite(accuracy)
+
+    if (gameCode === 'S01_BURGER' || gameCode === 'S06_EXPRESSION_DUEL') {
+      // 合作 / 双人表情擂台
+      sections.push({
+        category: '轮流配合',
+        performance: this.buildCooperativePerformance(gameCode, accuracy, hasAccuracy, data),
+        behavior: data.turnCount || data.rounds
+          ? `本次共完成约 ${this.numOr(data.turnCount ?? data.rounds, 0)} 个回合的轮流互动。`
+          : '',
+        suggestions: [
+          '在生活情境中继续练习“先看伙伴、再轮到我”，强化共同注意与等待。',
+          '当孩子主动等待或邀请伙伴时，及时给予具体、积极的反馈，描述他做得好的行为。',
+          '若出现抢答或抢动作，可以暂停并示范“该你/该我”的简短提示语。'
+        ]
+      })
+      sections.push({
+        category: '合作完成度',
+        performance: hasAccuracy
+          ? (accuracy >= 0.7
+            ? '在双人合作任务中能稳定配合伙伴完成目标，共同完成度较高。'
+            : '在双人合作任务中能参与部分配合，但仍需要成人提示来维持协作节奏。')
+          : '本次未采集到量化指标，建议在后续训练中关注双方配合的稳定程度。',
+        suggestions: [
+          '设置一个共同的视觉目标（如共享的拼图或成品），让孩子体验合作完成后的成就感。',
+          '练习换位思考：邀请孩子说出“伙伴现在需要什么”，再决定自己的下一步动作。'
+        ]
+      })
+    } else if (gameCode === 'S02_EMOTION_MIRROR') {
+      sections.push({
+        category: '表情识别准确率',
+        performance: this.buildAccuracyPerformance('表情识别', accuracy, hasAccuracy),
+        behavior: data.confusions
+          ? `观察到较容易混淆的表情组合：${String(data.confusions)}。`
+          : '',
+        suggestions: [
+          '结合生活照片或镜子练习，把表情与“因为…所以…”的情绪原因连起来描述。',
+          '用绘本或情绪卡片做“猜感受”小游戏，先看表情再读情境，提升共情理解。',
+          '当孩子识别准确时，复述并肯定他注意到的面部细节（眉毛、嘴角等）。'
+        ]
+      })
+    } else if (gameCode === 'S03_STORY_SEQ') {
+      sections.push({
+        category: '故事接龙逻辑顺序',
+        performance: hasAccuracy
+          ? (accuracy >= 0.7
+            ? '能较好地把握故事的先后顺序，把打乱的步骤归位到正确位置。'
+            : '在排序中能识别部分关键步骤，但整体顺序判断仍需要提示。')
+          : '本次未采集到量化指标，建议在后续训练中观察孩子对“先/再/最后”的理解。',
+        behavior: data.steps || data.totalTrials
+          ? `本次排序任务约包含 ${this.numOr(data.steps ?? data.totalTrials, 0)} 个步骤。`
+          : '',
+        suggestions: [
+          '用日常小故事（洗手、起床、吃饭）练习口头复述“先…接着…最后…”。',
+          '鼓励孩子讲完顺序后补一句“为什么这样排”，培养因果与叙事组织。',
+          '排序出错时，不要直接给答案，而是引导他对比相邻两步的因果关系。'
+        ]
+      })
+    } else if (gameCode === 'S04_GIFT_MATCH') {
+      sections.push({
+        category: '分享与匹配决策',
+        performance: this.buildAccuracyPerformance('礼物匹配', accuracy, hasAccuracy),
+        behavior: data.mismatches !== undefined
+          ? `本次出现约 ${this.numOr(data.mismatches, 0)} 次匹配不一致。`
+          : '',
+        suggestions: [
+          '在生活中练习“他喜欢什么/我喜欢什么”的对比，培养换位思考与分享意识。',
+          '当孩子选对礼物时，描述他注意到的线索（颜色、表情、情境），强化观察。',
+          '匹配不一致时，引导孩子重新看一眼对方的表情和场景再决定。'
+        ]
+      })
+    } else if (gameCode === 'S05_ECHO_PARROT') {
+      sections.push({
+        category: '仿说完整度',
+        performance: hasAccuracy
+          ? (accuracy >= 0.7
+            ? '能较完整地模仿短词和短句，听说配合较稳定。'
+            : '能跟读部分词语，但在较长句子或顺序上仍需要重复提示。')
+          : '本次未采集到量化指标，建议在后续训练中关注仿说长度与清晰度。',
+        behavior: data.phraseLength
+          ? `本次跟读内容约 ${this.numOr(data.phraseLength, 0)} 个字词长度。`
+          : '',
+        suggestions: [
+          '从孩子熟悉的日常词开始，先听一遍再模仿一遍，逐步延长句子。',
+          '当孩子模仿不准确时，先肯定他愿意回应，再用自然的语速示范一次正确说法。',
+          '练习轮流说话：成人一句、孩子一句，强化社交轮替而非单纯复述。'
+        ]
+      })
+    } else {
+      // 未知 gameCode 兜底
+      sections.push({
+        category: '社交沟通训练',
+        performance: hasAccuracy
+          ? `本次社交沟通训练总体完成情况：${(accuracy * 100).toFixed(1)}%。`
+          : '本次未采集到量化指标，建议结合训练观察进行综合评估。',
+        suggestions: [
+          '在互动中保持耐心，多用积极反馈描述孩子具体的合作或表达行为。',
+          '把社交目标拆成小步，每完成一步就给一次明确的鼓励。'
+        ]
+      })
+    }
+
+    return sections
+  }
+
+  private static generateSocialSummary(
+    studentName: string,
+    taskName: string,
+    performanceData: Record<string, any>,
+    sections: IEPReportSection[]
+  ): string {
+    const data = performanceData && typeof performanceData === 'object' ? performanceData : {}
+    const accuracy = this.clampNum(data.accuracy ?? data.accuracyRate, 0, 1, NaN)
+    const parts: string[] = []
+
+    if (Number.isFinite(accuracy)) {
+      if (accuracy >= 0.8) {
+        parts.push(`${studentName}在本次《${taskName}》中表现优异，总体准确率达到 ${(accuracy * 100).toFixed(1)}%，社交沟通目标完成稳定。`)
+      } else if (accuracy >= 0.6) {
+        parts.push(`${studentName}在本次《${taskName}》中表现良好，总体准确率为 ${(accuracy * 100).toFixed(1)}%，仍有继续提升的空间。`)
+      } else {
+        parts.push(`${studentName}在本次《${taskName}》中面临一定挑战，总体准确率为 ${(accuracy * 100).toFixed(1)}%，需要更多支持与练习。`)
+      }
+    } else {
+      parts.push(`${studentName}完成了本次《${taskName}》社交沟通训练。`)
+    }
+
+    parts.push('社交沟通训练的目标是帮助孩子在真实互动中练习共情、换位思考和轮流等待，建议在日常生活中继续泛化本次训练涉及的社交技能。')
+
+    if (sections.length > 0) {
+      parts.push(`本报告共给出 ${sections.length} 项专项评估与对应建议，可作为下一阶段训练计划的参考。`)
+    }
+
+    return parts.join('\n\n')
+  }
+
+  private static buildAccuracyPerformance(
+    domain: string,
+    accuracy: number,
+    hasAccuracy: boolean
+  ): string {
+    if (!hasAccuracy) {
+      return '本次未采集到量化指标，建议在后续训练中持续记录以支撑评估。'
+    }
+    if (accuracy >= 0.8) {
+      return `${domain}准确率较高（${(accuracy * 100).toFixed(1)}%），能较稳定地完成识别与判断。`
+    }
+    if (accuracy >= 0.6) {
+      return `${domain}准确率为 ${(accuracy * 100).toFixed(1)}%，基本能完成大部分任务，个别项目仍需提示。`
+    }
+    return `${domain}准确率为 ${(accuracy * 100).toFixed(1)}%，完成过程中需要较多支持与示范。`
+  }
+
+  private static buildCooperativePerformance(
+    gameCode: string,
+    accuracy: number,
+    hasAccuracy: boolean,
+    data: Record<string, any>
+  ): string {
+    const scene = gameCode === 'S01_BURGER' ? '合作造汉堡' : '双人表情擂台'
+    if (!hasAccuracy) {
+      return `本次${scene}未采集到量化指标，建议在后续训练中记录轮流配合的稳定性。`
+    }
+    const turnNote = data.turnCount || data.rounds
+      ? `共进行约 ${this.numOr(data.turnCount ?? data.rounds, 0)} 个回合，`
+      : ''
+    if (accuracy >= 0.7) {
+      return `在${scene}中${turnNote}能较好地等待伙伴、轮流操作，共同完成度约 ${(accuracy * 100).toFixed(1)}%。`
+    }
+    return `在${scene}中${turnNote}能参与轮流互动，但有时会出现抢答或需要提示才轮换，共同完成度约 ${(accuracy * 100).toFixed(1)}%。`
+  }
+
+  private static clampNum(value: unknown, min: number, max: number, fallback: number): number {
+    const num = Number(value)
+    if (!Number.isFinite(num)) {
+      return fallback
+    }
+    if (num < min) return min
+    if (num > max) return max
+    return num
+  }
+
+  private static numOr(value: unknown, fallback: number): number {
+    const num = Number(value)
+    return Number.isFinite(num) ? num : fallback
+  }
+
   /**
    * 获取任务名称
    */

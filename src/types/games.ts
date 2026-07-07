@@ -282,7 +282,7 @@ export interface IEPReportSection {
  */
 export interface IEPReport {
   studentName: string
-  taskId: TaskID
+  taskId?: TaskID
   taskName: string
   reportDate: string
   sections: IEPReportSection[]
