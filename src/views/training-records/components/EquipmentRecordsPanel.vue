@@ -547,4 +547,42 @@ watch(
 .comment-text {
   color: var(--color-text-primary, #303133);
 }
+
+/* 筛选工具栏：宽屏下合并为单行（学生 / 分类 / 日期范围 / 全部·本周·本月 / 刷新 / 导出 Excel） */
+@media (min-width: 820px) {
+  .records-filter-section .filter-toolbar,
+  .records-filter-section .filter-toolbar__controls,
+  .records-filter-section .date-filter-group,
+  .records-filter-section .quick-range-list {
+    flex-wrap: nowrap;
+  }
+
+  .records-filter-section .filter-toolbar {
+    gap: 10px;
+  }
+
+  .records-filter-section .filter-toolbar__controls {
+    gap: 8px;
+  }
+
+  .records-filter-section .date-filter-group {
+    gap: 8px;
+  }
+
+  .records-filter-section .scgp-field-control--student,
+  .records-filter-section .scgp-field-control--category {
+    flex: 0 1 150px;
+    min-width: 112px;
+  }
+
+  .records-filter-section .scgp-date-range {
+    flex: 0 1 232px;
+    min-width: 196px;
+  }
+
+  .records-filter-section .scgp-refresh-button {
+    margin-left: 0;
+    flex: 0 0 auto;
+  }
+}
 </style>
