@@ -1425,3 +1425,17 @@
 - 正式写入范围：`training_records`、`training_session`、`emotional_training_session`、`emotional_training_detail`、`report_record`。
 - `emotion_scene` 从选择页进入时必须携带 `studentId + resourceId + sceneCode` 才写正式记录；缺上下文时保留旧 prototype 兼容保存路径。
 - 逐步明细会记录错误点击与最终答案，不只保存最终正确结果。
+
+## 54. 2026-07-07 游戏 IEP 闭环扩展至精细动作/生活自理（Phase 1，代码级落地，运行时待验）
+
+- 游戏训练 IEP 报告闭环已从「感官经典 + 社交沟通」扩展到「精细动作(F03) + 生活自理(L03/L05)」三类 Tier1 游戏，完整路径：完成 → 写 `training_records` + `report_record` → 自动跳 `IEPReport` → 可导 Word。
+- 新增全局约束：`src/utils/game-performance-normalizer.ts` 的 `normalizeGameMetrics()` 是游戏 performanceData → 标准指标（accuracy/avgResponseTimeMs/durationSec/hasRealData）的**唯一提取真源**；落库链路 `runModuleIepChain`、`IEPGenerator`、`IEPReport.vue` 三处必须只调它，禁止各自重复提取。
+- 内部维护 `GAME_EXTRACTION_RULES`（gameCode → 提取规则）表，集中字段命名差异/单位换算/量纲归一；Phase 2/3 扩展新游戏只在此表加行，不改 `normalizeGameMetrics` 主体。
+- 触发守卫口径：按 `trainingEntryCode ∈ {social-communication, fine-motor, life-skills}` 放行，**不是** `moduleCode`。原因是 EMOTIONAL 模块同时含 G(情绪调节) 与 C(安抚教具)，二者都不应出 IEP。
+- `IEPReport.vue` 按 `raw_data.gameCode` 前缀（S/F/L）路由分支，因为 `getTrainingRecord` 的 SELECT 不含 `module_code` 列，且 fine-motor 的 `module_code` 实为 `'sensory'`（与经典感官同列），无法用 module_code 区分；经典感官记录无 gameCode，走原 `generateReport` 路径不变。
+- 当前重要现实边界（不得写成已收口）：
+  - 代码级已落地，`npm run type-check` exit 0，归一化层 25 条断言（含 L05 的 0-100 ÷100、L03 字段名 `duration_seconds` 陷阱、`{event}` 空壳降级）全过。
+  - 但 F03/L03/L05 三游戏 + 社交 S01/S06 + G09 的真机 E2E 尚未跑，不得写成运行时已验证。
+  - Phase 0 的 G09 emit 缺陷已独立修复并提交（`448d292`），与本 Phase 分离。
+- 不扩展项（产品口径）：C 类（安抚教具整组）+ G01/G03/G04/G08/G09 不出 IEP，保留徽章 + `game_emotion_records`。
+- 规格来源：`docs/plans/2026-07-07-game-iep-extension-plan.md`（当前为 untracked 草案，未随任务提交）。
