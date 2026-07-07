@@ -334,12 +334,14 @@
               />
             </el-form-item>
 
-            <el-form-item label="计划描述">
+            <el-form-item label="计划说明">
               <el-input
                 v-model="planForm.description"
                 type="textarea"
-                :rows="2"
-                placeholder="请输入计划描述（可选）"
+                :rows="3"
+                maxlength="200"
+                show-word-limit
+                placeholder="填写本计划的目标、注意事项或执行说明"
               />
             </el-form-item>
           </el-form>
@@ -640,7 +642,7 @@
               {{ getStatusLabel(currentPlan.status) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="描述" v-if="currentPlan.description">
+          <el-descriptions-item label="计划说明" v-if="currentPlan.description">
             {{ currentPlan.description }}
           </el-descriptions-item>
         </el-descriptions>
