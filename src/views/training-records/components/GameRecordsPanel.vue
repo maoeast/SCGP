@@ -75,6 +75,9 @@
         <el-button class="refresh-button scgp-refresh-button" size="small" :icon="Refresh" @click="loadRecords">
           刷新
         </el-button>
+        <el-button class="export-button scgp-refresh-button" size="small" @click="handleExportExcel">
+          导出 Excel
+        </el-button>
       </div>
     </div>
 
@@ -176,12 +179,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { EmotionalTrainingAPI } from '@/database/emotional-api'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
 import { GameTrainingAPI, StudentAPI } from '@/database/api'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 import { getTrainingEntry, type TrainingEntryCode } from '@/utils/training-entry'
+import { exportGameRecordsExcel } from '../exportTrainingRecords'
 
 interface Props {
   entryCode?: TrainingEntryCode
@@ -461,6 +466,21 @@ function handleViewDetail(row: any) {
   }
 
   emit('view-detail', row)
+}
+
+function handleExportExcel() {
+  if (!records.value.length) {
+    ElMessage.warning('当前没有可导出的记录')
+    return
+  }
+
+  const studentName = students.value.find((student) => student.id === selectedStudentId.value)?.name || ''
+  try {
+    exportGameRecordsExcel(records.value, studentName)
+    ElMessage.success('导出成功')
+  } catch {
+    ElMessage.error('导出失败，请重试')
+  }
 }
 
 async function loadStudents() {

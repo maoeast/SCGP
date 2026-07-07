@@ -91,6 +91,9 @@
         <el-button class="refresh-button scgp-refresh-button" size="small" :icon="Refresh" @click="loadRecords">
           刷新
         </el-button>
+        <el-button class="export-button scgp-refresh-button" size="small" @click="handleExportExcel">
+          导出 Excel
+        </el-button>
       </div>
     </div>
 
@@ -191,11 +194,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { EquipmentTrainingAPI, StudentAPI } from '@/database/api'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 import { resolveEquipmentSourceCategory } from '@/utils/physical-equipment-source-category'
 import { getTrainingEntry, type TrainingEntryCode } from '@/utils/training-entry'
+import { exportEquipmentRecordsExcel } from '../exportTrainingRecords'
 
 interface Props {
   entryCode?: TrainingEntryCode
@@ -362,6 +367,21 @@ function getPromptLevelMeta(level: number): { label: string; tone: PromptTone } 
   }
 
   return { label: '身体协助', tone: 'physical' }
+}
+
+function handleExportExcel() {
+  if (!records.value.length) {
+    ElMessage.warning('当前没有可导出的记录')
+    return
+  }
+
+  const studentName = students.value.find((student) => student.id === selectedStudentId.value)?.name || ''
+  try {
+    exportEquipmentRecordsExcel(records.value, studentName)
+    ElMessage.success('导出成功')
+  } catch {
+    ElMessage.error('导出失败，请重试')
+  }
 }
 
 async function loadStudents() {
