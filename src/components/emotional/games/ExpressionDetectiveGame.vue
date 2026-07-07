@@ -69,6 +69,11 @@
                     class="result-overlay__btn result-overlay__btn--primary"
                     @click="nextWave"
                   >下一关 →</button>
+                  <button
+                    v-else
+                    class="result-overlay__btn result-overlay__btn--primary"
+                    @click="finishGame"
+                  >完成游戏 ✓</button>
                 </div>
               </div>
             </div>
@@ -196,6 +201,12 @@ const roundScores = ref<number[]>([])
 const totalScore = ref(0)
 const waveTotalScore = ref(0)
 const waveEncouragement = ref('')
+
+// Session-level aggregation (not reset between waves)
+// roundScores / waveTotalScore reset on each startWave; these accumulate across
+// the whole session so the terminal emit can report whole-game match metrics.
+const allRoundMaxMatch = ref<number[]>([])
+let sessionFinished = false
 
 // --- Computed ---
 const currentWave = computed<DetectiveWave>(() => DETECTIVE_WAVES[currentWaveIndex.value] ?? DETECTIVE_WAVES[0]!)
@@ -386,6 +397,7 @@ function endRound(success: boolean) {
   const maxPct = roundMaxMatch.value
   const score = getScoreForMatch(maxPct)
   roundScores.value.push(score)
+  allRoundMaxMatch.value.push(maxPct)
   totalScore.value += score
   waveTotalScore.value += score
 
@@ -403,6 +415,38 @@ function endRound(success: boolean) {
 function completeWave() {
   gamePhase.value = 'wave-complete'
   expressionAudio.stop()
+}
+
+function finishGame() {
+  if (sessionFinished) return
+  sessionFinished = true
+  expressionAudio.stop()
+
+  const matches = allRoundMaxMatch.value
+  const matchCount = matches.length
+  const averageMatch = matchCount > 0
+    ? Math.round(matches.reduce((a, b) => a + b, 0) / matchCount)
+    : 0
+  const bestMatch = matchCount > 0 ? Math.max(...matches) : 0
+
+  emit('complete', {
+    performanceData: {
+      total_waves: DETECTIVE_WAVES.length,
+      completed_waves: currentWaveIndex.value + 1,
+      total_rounds: matchCount,
+      total_score: totalScore.value,
+      average_match_percent: averageMatch,
+      best_match_percent: bestMatch,
+      final_wave_score: waveTotalScore.value,
+      final_wave_stars: waveStars.value,
+      final_wave_round_scores: [...roundScores.value],
+      difficulty_level: props.difficulty,
+    },
+    badge: {
+      badgeCode: 'BADGE_EXPRESSION_DETECTIVE',
+      badgeName: '表情侦探徽章',
+    },
+  })
 }
 
 function replayWave() {
