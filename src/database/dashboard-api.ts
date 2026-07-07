@@ -7,6 +7,21 @@ export interface DashboardOverview {
   pendingAssessmentCount: number
   todayTaskCount: number
   weeklyAnomalyCount: number
+  completedPlanCount: number
+}
+
+export interface DashboardRecentStudent {
+  id: number
+  name: string
+  student_no: string
+  avatar_path: string | null
+  created_at: string
+}
+
+export interface DashboardTrendPoint {
+  date: string
+  count: number
+  totalDurationMs: number
 }
 
 export interface DashboardScheduleItem {
@@ -55,6 +70,8 @@ export interface DashboardSnapshot {
   schedule: DashboardScheduleItem[]
   anomalies: DashboardAnomalyItem[]
   assessmentAlerts: DashboardAssessmentAlertItem[]
+  recentStudents: DashboardRecentStudent[]
+  weeklyTrend: DashboardTrendPoint[]
 }
 
 function formatDate(date: Date): string {
@@ -102,11 +119,22 @@ const launchableTrainingResourceTypesSql = LAUNCHABLE_TRAINING_RESOURCE_TYPES
 
 export class DashboardAPI extends DatabaseAPI {
   async getSnapshot(): Promise<DashboardSnapshot> {
-    const [schedule, anomalies, assessmentAlerts, studentCount] = await Promise.all([
+    const [
+      schedule,
+      anomalies,
+      assessmentAlerts,
+      studentCount,
+      completedPlanCount,
+      recentStudents,
+      weeklyTrend,
+    ] = await Promise.all([
       this.getTodaySchedule(),
       this.getWeeklyAnomalies(),
       this.getAssessmentAlerts(),
       this.getStudentCount(),
+      this.getCompletedPlanCount(),
+      this.getRecentStudents(),
+      this.getWeeklyTrainingTrend(),
     ])
 
     return {
@@ -115,10 +143,13 @@ export class DashboardAPI extends DatabaseAPI {
         pendingAssessmentCount: assessmentAlerts.length,
         todayTaskCount: schedule.length,
         weeklyAnomalyCount: anomalies.length,
+        completedPlanCount,
       },
       schedule,
       anomalies,
       assessmentAlerts,
+      recentStudents,
+      weeklyTrend,
     }
   }
 
@@ -129,6 +160,73 @@ export class DashboardAPI extends DatabaseAPI {
     `)
 
     return normalizeNumber(row?.count)
+  }
+
+  async getCompletedPlanCount(): Promise<number> {
+    const row = await this.queryOneAsync(`
+      SELECT COUNT(*) AS count
+      FROM sys_training_plan
+      WHERE status = 'completed'
+    `)
+
+    return normalizeNumber(row?.count)
+  }
+
+  async getRecentStudents(): Promise<DashboardRecentStudent[]> {
+    const rows = await this.queryAsync(`
+      SELECT id, name, student_no, avatar_path, created_at
+      FROM student
+      ORDER BY created_at DESC
+      LIMIT 5
+    `)
+
+    return rows.map((row) => ({
+      id: normalizeNumber(row.id),
+      name: row.name || `学生 #${row.id}`,
+      student_no: row.student_no || '',
+      avatar_path: row.avatar_path || null,
+      created_at: row.created_at || '',
+    }))
+  }
+
+  async getWeeklyTrainingTrend(): Promise<DashboardTrendPoint[]> {
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000
+    const rows = await this.queryAsync(
+      `
+        SELECT strftime('%Y-%m-%d', timestamp / 1000, 'unixepoch', 'localtime') AS date,
+               COUNT(*) AS count,
+               SUM(duration) AS total_duration
+        FROM training_records
+        WHERE timestamp >= ?
+        GROUP BY date
+        ORDER BY date ASC
+      `,
+      [cutoff],
+    )
+
+    const byDate = new Map<string, DashboardTrendPoint>()
+    for (const row of rows) {
+      const date = row.date
+      if (!date) continue
+      byDate.set(date, {
+        date,
+        count: normalizeNumber(row.count),
+        totalDurationMs: normalizeNumber(row.total_duration) * 1000,
+      })
+    }
+
+    const points: DashboardTrendPoint[] = []
+    const now = new Date()
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const day = new Date(now)
+      day.setDate(now.getDate() - offset)
+      const date = formatDate(day)
+      points.push(
+        byDate.get(date) ?? { date, count: 0, totalDurationMs: 0 },
+      )
+    }
+
+    return points
   }
 
   async getTodaySchedule(): Promise<DashboardScheduleItem[]> {

@@ -89,6 +89,72 @@
       </div>
     </section>
 
+    <section class="dashboard-surface scgp-surface">
+      <div class="dashboard-section-header">
+        <div>
+          <h2>最近添加的学生</h2>
+          <p>展示最近建档的学生档案，点击可直接进入学生详情继续跟进。</p>
+        </div>
+      </div>
+
+      <el-empty
+        v-if="snapshot.recentStudents.length === 0"
+        description="暂无学生记录"
+      />
+
+      <div v-else class="recent-student-list">
+        <article
+          v-for="student in snapshot.recentStudents"
+          :key="student.id"
+          class="recent-student-item"
+          role="button"
+          tabindex="0"
+          @click="goToStudentDetail(student.id)"
+          @keyup.enter="goToStudentDetail(student.id)"
+        >
+          <StudentAvatar
+            :name="student.name"
+            :avatar-url="student.avatar_path || undefined"
+            size="md"
+          />
+
+          <div class="recent-student-item__body">
+            <div class="recent-student-item__topline">
+              <h3>{{ student.name }}</h3>
+              <el-tag size="small" effect="plain">
+                {{ student.student_no || '未分配学号' }}
+              </el-tag>
+            </div>
+            <span class="recent-student-item__time">
+              建档时间：{{ formatDate(student.created_at) }}
+            </span>
+          </div>
+
+          <el-icon class="recent-student-item__arrow"><ArrowRight /></el-icon>
+        </article>
+      </div>
+    </section>
+
+    <section class="dashboard-surface scgp-surface">
+      <div class="dashboard-section-header">
+        <div>
+          <h2>训练进度概览</h2>
+          <p>过去 7 天的主轴训练次数趋势，帮助快速判断近期训练强度变化。</p>
+        </div>
+      </div>
+
+      <el-empty
+        v-if="snapshot.weeklyTrend.length === 0"
+        description="暂无训练数据"
+      />
+      <VChart
+        v-else
+        class="dashboard-trend-chart"
+        :option="trendOption"
+        autoresize
+      />
+    </section>
+
     <section class="dashboard-board">
       <article class="dashboard-surface scgp-surface schedule-panel">
         <div class="dashboard-panel-header">
@@ -266,6 +332,7 @@ import {
   Calendar,
   DataAnalysis,
   EditPen,
+  Finished,
   MagicStick,
   Monitor,
   RefreshRight,
@@ -286,6 +353,14 @@ import {
 } from '@/utils/access-visibility'
 import { resolveTrainingLaunch } from '@/utils/training-launch'
 import { useAuthStore } from '@/stores/auth'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent } from 'echarts/components'
+import type { EChartsOption } from 'echarts'
+import VChart from 'vue-echarts'
+
+use([CanvasRenderer, LineChart, GridComponent, TooltipComponent])
 
 type DashboardTone = 'blue' | 'amber' | 'green' | 'coral'
 type QuickActionTone = 'blue' | 'teal' | 'coral' | 'green'
@@ -310,10 +385,13 @@ const snapshot = ref<DashboardSnapshot>({
     pendingAssessmentCount: 0,
     todayTaskCount: 0,
     weeklyAnomalyCount: 0,
+    completedPlanCount: 0,
   },
   schedule: [],
   anomalies: [],
   assessmentAlerts: [],
+  recentStudents: [],
+  weeklyTrend: [],
 })
 
 const moduleLabelMap: Record<string, string> = {
@@ -353,6 +431,13 @@ const metrics = computed(() => ([
     hint: '低正确率或高提示依赖',
     icon: Warning,
     tone: 'coral' as DashboardTone,
+  },
+  {
+    label: '已完成计划数',
+    value: snapshot.value.overview.completedPlanCount,
+    hint: '状态为已完成的训练计划',
+    icon: Finished,
+    tone: 'green' as DashboardTone,
   },
 ]))
 
@@ -405,6 +490,56 @@ const visibleQuickActions = computed(() => filterVisibleAccessControlledItems(
   authStore.hasModuleAccess,
   authStore.hasEntitlementAccess,
 ))
+
+const trendOption = computed<EChartsOption>(() => ({
+  tooltip: {
+    trigger: 'axis',
+  },
+  grid: {
+    left: 24,
+    right: 24,
+    top: 24,
+    bottom: 24,
+    containLabel: true,
+  },
+  xAxis: {
+    type: 'category',
+    boundaryGap: false,
+    data: snapshot.value.weeklyTrend.map((point) => point.date),
+    axisLabel: {
+      color: '#909399',
+    },
+  },
+  yAxis: {
+    type: 'value',
+    minInterval: 1,
+    axisLabel: {
+      color: '#909399',
+    },
+    splitLine: {
+      lineStyle: {
+        color: '#ebeef5',
+      },
+    },
+  },
+  series: [
+    {
+      type: 'line',
+      smooth: true,
+      data: snapshot.value.weeklyTrend.map((point) => point.count),
+      lineStyle: {
+        color: '#409EFF',
+        width: 3,
+      },
+      itemStyle: {
+        color: '#409EFF',
+      },
+      areaStyle: {
+        color: 'rgba(64, 158, 255, 0.14)',
+      },
+    },
+  ],
+}))
 
 const focusPanel = computed(() => {
   const overview = snapshot.value.overview
@@ -465,6 +600,11 @@ function goTo(action: QuickAction) {
     return
   }
   router.push(action.path)
+}
+
+function goToStudentDetail(studentId: number) {
+  if (!studentId) return
+  router.push(`/students/${studentId}`)
 }
 
 function openPlanModule(item: DashboardScheduleItem) {
@@ -622,7 +762,7 @@ onMounted(() => {
 
 .dashboard-hero__metrics {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;
 }
 
@@ -851,6 +991,66 @@ onMounted(() => {
 
 .quick-card--green .quick-card__icon {
   background: #eaf8f0;
+}
+
+.recent-student-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.recent-student-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--scgp-border);
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbfe 100%);
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.recent-student-item:hover,
+.recent-student-item:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(143, 169, 204, 0.16);
+  outline: none;
+}
+
+.recent-student-item__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.recent-student-item__topline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.recent-student-item__topline h3 {
+  margin: 0;
+  color: var(--scgp-text);
+  font-size: 15px;
+}
+
+.recent-student-item__time {
+  color: var(--scgp-subtle);
+  font-size: 12px;
+}
+
+.recent-student-item__arrow {
+  color: var(--scgp-subtle);
+  flex-shrink: 0;
+}
+
+.dashboard-trend-chart {
+  height: 300px;
+  margin-top: 18px;
 }
 
 .dashboard-board {
