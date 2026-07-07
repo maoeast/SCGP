@@ -61,6 +61,8 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
       video: 0,
       image: 0,
       document: 0,
+      audio: 0,
+      archive: 0,
       other: 0,
     }
 

@@ -588,8 +588,11 @@ function getFileIcon(type: string) {
   if (['mp4', 'avi', 'mov', 'wmv', 'webm', 'mkv', 'm4v'].includes(lowerType)) {
     return VideoPlay
   }
-  if (['mp3', 'wav', 'flac', 'aac'].includes(lowerType)) {
+  if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'].includes(lowerType)) {
     return Headset
+  }
+  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'].includes(lowerType)) {
+    return Files
   }
   if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(lowerType)) {
     return Picture
@@ -602,7 +605,8 @@ function getFileIconColor(type: string): string {
   if (['pdf'].includes(lowerType)) return '#d14343'
   if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv'].includes(lowerType)) return '#3b82f6'
   if (['mp4', 'avi', 'mov', 'wmv', 'webm', 'mkv', 'm4v'].includes(lowerType)) return '#7c3aed'
-  if (['mp3', 'wav', 'flac', 'aac'].includes(lowerType)) return '#ea580c'
+  if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'].includes(lowerType)) return '#ea580c'
+  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'].includes(lowerType)) return '#16a34a'
   if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(lowerType)) return '#0ea5e9'
   return '#64748b'
 }

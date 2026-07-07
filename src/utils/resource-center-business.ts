@@ -65,6 +65,8 @@ export const TEACHING_MATERIAL_FILE_CATEGORY_CODES = [
   'video',
   'image',
   'document',
+  'audio',
+  'archive',
   'other',
 ] as const
 
@@ -75,6 +77,8 @@ export const TEACHING_MATERIAL_FILE_CATEGORY_LABELS: Record<TeachingMaterialFile
   video: '视频',
   image: '图片',
   document: '文档',
+  audio: '音频',
+  archive: '压缩包',
   other: '其他',
 }
 
@@ -92,6 +96,8 @@ const TEACHING_MATERIAL_DOCUMENT_TYPES = new Set([
   'rtf',
   'csv',
 ])
+const TEACHING_MATERIAL_AUDIO_TYPES = new Set(['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'])
+const TEACHING_MATERIAL_ARCHIVE_TYPES = new Set(['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'])
 
 export function getTeachingMaterialFileCategoryLabel(code: TeachingMaterialFileCategoryCode): string {
   return TEACHING_MATERIAL_FILE_CATEGORY_LABELS[code]
@@ -110,6 +116,14 @@ export function resolveTeachingMaterialFileCategory(fileType: string): Exclude<T
 
   if (TEACHING_MATERIAL_DOCUMENT_TYPES.has(normalizedType)) {
     return 'document'
+  }
+
+  if (TEACHING_MATERIAL_AUDIO_TYPES.has(normalizedType)) {
+    return 'audio'
+  }
+
+  if (TEACHING_MATERIAL_ARCHIVE_TYPES.has(normalizedType)) {
+    return 'archive'
   }
 
   return 'other'
