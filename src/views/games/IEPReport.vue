@@ -128,6 +128,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Loading, WarningFilled, Document, DocumentCopy } from '@element-plus/icons-vue'
 import { IEPGenerator } from '@/utils/iep-generator'
+import { normalizeGameMetrics } from '@/utils/game-performance-normalizer'
 import { GameTrainingAPI } from '@/database/api'
 import { DatabaseAPI } from '@/database/api'
 import { TaskID, type IEPReport, type GameSessionData } from '@/types/games'
@@ -158,9 +159,23 @@ const error = ref<string>()
 const report = ref<IEPReport>()
 const sessionData = ref<GameSessionData>()
 const student = ref<any>()
-// 社交沟通报告：raw_data 原对象（含 gameCode / performanceData）
-const socialRawData = ref<any>()
-const isSocialReport = computed(() => Boolean(socialRawData.value?.gameCode))
+// 游戏（社交 / 精细动作 / 生活自理）报告：raw_data 原对象（含 gameCode / performanceData）
+const gameRecordRaw = ref<any>()
+
+type GameReportBranch = 'social' | 'fine-motor' | 'life-skills'
+
+// 按 raw_data.gameCode 前缀判定报告分支；经典感官路径无 gameCode，返回 null
+function resolveGameReportBranch(gameCode: unknown): GameReportBranch | null {
+  if (!gameCode || typeof gameCode !== 'string') return null
+  if (gameCode.startsWith('S')) return 'social'
+  if (gameCode.startsWith('F')) return 'fine-motor'
+  if (gameCode.startsWith('L')) return 'life-skills'
+  return 'social' // 未知前缀兜底走社交（沿用旧行为）
+}
+
+const reportBranch = computed<GameReportBranch | null>(() =>
+  resolveGameReportBranch(gameRecordRaw.value?.gameCode),
+)
 
 // 获取记录 ID
 const recordId = ref<string>(route.query.recordId as string)
@@ -170,17 +185,7 @@ const numOr = (value: unknown, fallback: number): number => {
   return Number.isFinite(num) ? num : fallback
 }
 
-const clampNum = (value: unknown, min: number, max: number, fallback: number): number => {
-  const num = Number(value)
-  if (!Number.isFinite(num)) {
-    return fallback
-  }
-  if (num < min) return min
-  if (num > max) return max
-  return num
-}
-
-// 统一统计：社交路径从 performanceData 防御性提取，sensory 路径读 sessionData
+// 统一统计：游戏容器路径（社交/精细动作/生活自理）走归一化层，经典感官路径读 sessionData
 interface DisplayStats {
   accuracy: number | null // 0-1
   avgResponseTimeMs: number | null // 缺失为 null（隐藏该卡）
@@ -191,19 +196,17 @@ interface DisplayStats {
 }
 
 const displayStats = computed<DisplayStats>(() => {
-  if (isSocialReport.value) {
-    const perf = socialRawData.value?.performanceData || {}
-    const accuracy = clampNum(perf.accuracy ?? perf.accuracyRate, 0, 1, NaN)
-    const response = numOr(perf.avgResponseTime ?? perf.avgResponseTimeMs ?? perf.reactionTime, NaN)
-    const durationMs = numOr(perf.durationMs ?? perf.durationSec ?? perf.duration, NaN)
-    const durationSec = Number.isFinite(durationMs)
-      ? (durationMs > 10000 ? Math.round(durationMs / 1000) : Math.round(durationMs))
-      : null
+  if (reportBranch.value !== null) {
+    // 游戏容器报告（社交 / 精细动作 / 生活自理）：统一走归一化层
+    const gameCode = gameRecordRaw.value?.gameCode
+    const perf = gameRecordRaw.value?.performanceData || {}
+    const sessionMs = numOr(gameRecordRaw.value?.durationMs, 0)
+    const metrics = normalizeGameMetrics(gameCode, perf, sessionMs)
 
     return {
-      accuracy: Number.isFinite(accuracy) ? accuracy : null,
-      avgResponseTimeMs: Number.isFinite(response) ? response : null,
-      durationSec,
+      accuracy: metrics.accuracy, // null → 隐藏准确率卡
+      avgResponseTimeMs: metrics.avgResponseTimeMs, // null → 隐藏反应时卡
+      durationSec: metrics.durationSec, // 时长始终显示
       correctOverTotal: null,
       hasRhythm: false,
       rhythmTimingErrorAvg: null,
@@ -269,13 +272,14 @@ const loadReport = async () => {
       throw new Error('未找到训练记录')
     }
 
-    // 判断是否为社交沟通训练（raw_data 含 gameCode；SELECT 未含 module_code 列）
+    // 判断报告分支：raw_data 含 gameCode 即为游戏容器报告（社交/精细动作/生活自理）；
+    // 否则为经典感官训练（getTrainingRecord 的 SELECT 未含 module_code 列，故按 gameCode 前缀路由）
     const rawAny = record.raw_data as any
-    const isSocial = Boolean(rawAny && typeof rawAny === 'object' && rawAny.gameCode)
+    const branch = resolveGameReportBranch(rawAny?.gameCode)
 
-    // 获取学生信息：社交路径学生 id 来自 record.student_id；sensory 路径来自 raw_data.studentId
+    // 获取学生信息：游戏容器路径学生 id 来自 record.student_id；经典感官路径来自 raw_data.studentId
     const db = new DatabaseAPI()
-    const studentIdForLookup = isSocial
+    const studentIdForLookup = branch !== null
       ? record.student_id
       : (rawAny?.studentId as number | undefined)
     if (studentIdForLookup) {
@@ -285,16 +289,20 @@ const loadReport = async () => {
       }
     }
 
-    if (isSocial) {
-      socialRawData.value = rawAny
-      // 生成社交沟通 IEP 报告（不走 generateReport(taskId,...)）
-      report.value = IEPGenerator.generateSocialReport(
-        student.value?.name || '未知',
-        rawAny.gameCode,
-        rawAny.performanceData || {},
-      )
+    if (branch !== null) {
+      gameRecordRaw.value = rawAny
+      const studentName = student.value?.name || '未知'
+      const gameCode = rawAny.gameCode
+      const perf = rawAny.performanceData || {}
+      if (branch === 'social') {
+        report.value = IEPGenerator.generateSocialReport(studentName, gameCode, perf)
+      } else if (branch === 'fine-motor') {
+        report.value = IEPGenerator.generateFineMotorReport(studentName, gameCode, perf)
+      } else {
+        report.value = IEPGenerator.generateLifeSkillsReport(studentName, gameCode, perf)
+      }
     } else {
-      // 解析会话数据（sensory 原路径保持不变）
+      // 解析会话数据（经典感官原路径保持不变）
       sessionData.value = normalizeLegacyAudioAccuracy(rawAny as GameSessionData)
       report.value = IEPGenerator.generateReport(
         student.value?.name || '未知',

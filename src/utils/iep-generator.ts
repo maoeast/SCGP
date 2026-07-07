@@ -24,6 +24,7 @@ import { TaskID, type GameSessionData, type IEPReport, type IEPReportSection } f
 import { CATEGORY_LABELS } from '@/types/equipment'
 import type { EquipmentCatalog, EquipmentCategory, PromptLevel } from '@/types/equipment'
 import { iepTaskMapping, equipmentTaskMapping } from './iep-templates'
+import { normalizeGameMetrics } from './game-performance-normalizer'
 
 /**
  * IEP 生成输入数据接口
@@ -139,6 +140,58 @@ export class IEPGenerator {
     const taskName = this.getSocialGameName(gameCode)
     const sections = this.generateSocialSections(gameCode, performanceData)
     const summary = this.generateSocialSummary(studentName, taskName, performanceData, sections)
+
+    return {
+      studentName,
+      taskName,
+      reportDate: new Date().toLocaleDateString('zh-CN'),
+      sections,
+      summary
+    }
+  }
+
+  // ==========================================
+  // 精细动作游戏报告生成（精细动作模块）
+  // ==========================================
+
+  /**
+   * 生成精细动作游戏 IEP 报告（不带 taskId）
+   * Phase 1：F03_RECYCLING 分拣小能手
+   */
+  static generateFineMotorReport(
+    studentName: string,
+    gameCode: string,
+    performanceData: Record<string, any>
+  ): IEPReport {
+    const taskName = this.getFineMotorGameName(gameCode)
+    const sections = this.generateFineMotorSections(gameCode, performanceData)
+    const summary = this.generateFineMotorSummary(studentName, taskName, gameCode, performanceData, sections)
+
+    return {
+      studentName,
+      taskName,
+      reportDate: new Date().toLocaleDateString('zh-CN'),
+      sections,
+      summary
+    }
+  }
+
+  // ==========================================
+  // 生活自理游戏报告生成（生活技能模块）
+  // ==========================================
+
+  /**
+   * 生成生活自理游戏 IEP 报告（不带 taskId）
+   * Phase 1：L03_BRUSH_TEETH 刷牙小卫士 / L05_PACK_BAG 上学包包装一装
+   */
+  static generateLifeSkillsReport(
+    studentName: string,
+    gameCode: string,
+    performanceData: Record<string, any>
+  ): IEPReport {
+    const taskName = this.getLifeSkillGameName(gameCode)
+    const sections = this.generateLifeSkillsSections(gameCode, performanceData)
+    const summary = this.generateLifeSkillsSummary(studentName, taskName, gameCode, performanceData, sections)
 
     return {
       studentName,
@@ -344,6 +397,262 @@ export class IEPGenerator {
       return `在${scene}中${turnNote}能较好地等待伙伴、轮流操作，共同完成度约 ${(accuracy * 100).toFixed(1)}%。`
     }
     return `在${scene}中${turnNote}能参与轮流互动，但有时会出现抢答或需要提示才轮换，共同完成度约 ${(accuracy * 100).toFixed(1)}%。`
+  }
+
+  // ---------- 精细动作：私有辅助 ----------
+
+  /**
+   * 精细动作游戏 code -> 中文名映射（Phase 1 仅 F03 落地，其余为 Phase 2/3 预留）
+   */
+  private static getFineMotorGameName(gameCode: string): string {
+    const names: Record<string, string> = {
+      F01_CLOUD_ERASE: '云朵擦擦擦',
+      F02_STAR_TRACE: '连线小星座',
+      F03_RECYCLING: '分拣小能手',
+      F04_TRACK_BUILD: '轨道修补匠',
+      F05_BALLOONS: '刺破慢气球'
+    }
+    return names[gameCode] || '精细动作训练'
+  }
+
+  /**
+   * 按 gameCode 维度生成精细动作评估段（围绕手眼协调、动作稳定、抑制控制）
+   * 指标统一来自 normalizeGameMetrics，缺指标时给“未采集到量化指标”降级提示，不编造数值。
+   */
+  private static generateFineMotorSections(
+    gameCode: string,
+    performanceData: Record<string, any>
+  ): IEPReportSection[] {
+    const sections: IEPReportSection[] = []
+    const metrics = normalizeGameMetrics(gameCode, performanceData, 0)
+    const accuracy = metrics.accuracy
+    const hasAccuracy = accuracy !== null
+    const reaction = metrics.avgResponseTimeMs
+    const hasReaction = reaction !== null
+
+    if (gameCode === 'F03_RECYCLING') {
+      // 分拣小能手：分类正确率 + 反应时 + 手眼协调
+      const coordPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子的抓取稳定性与拖拽落点准确度。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较稳定地把物品抓起并拖到正确分类桶，手眼协调与落点控制发展良好。'
+          : hasAccuracy
+            ? '能参与抓取与拖拽，但落点判断仍偶尔出错，需要在更慢的节奏下多练“看准再放”。'
+            : '本次能完成拖拽交互，建议在后续训练中持续记录分类正确率以评估手眼协调。'
+
+      sections.push({
+        category: '分类正确率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('物品分类', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录分类正确率以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每次分拣反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '先引导孩子口头说出“这是什么、该扔进哪个桶”，再动手分拣，建立“先认后放”的习惯。',
+          '从两类物品、慢速掉落开始，待稳定后再增加到三类或更快的掉落节奏。',
+          '当孩子把物品放进正确分类桶时，及时描述他做得好的抓取与拖拽动作，给予具体反馈。'
+        ]
+      })
+      sections.push({
+        category: '手眼协调与拖拽控制',
+        performance: coordPerformance,
+        suggestions: [
+          '练习“抓稳再移动”：先让孩子用手指稳稳捏住物品再拖动，减少中途掉落。',
+          '可配合大颗粒积木、夹子等生活小物做抓放游戏，迁移拖拽控制能力。',
+          '若孩子出现频繁放错或掉落，先放慢节奏并增加示范，再逐步恢复原速。'
+        ]
+      })
+    } else {
+      // 其它 F 类（Phase 2/3 接入时再细化）兜底
+      sections.push({
+        category: '精细动作训练',
+        performance: hasAccuracy
+          ? `本次精细动作训练总体完成情况：${((accuracy as number) * 100).toFixed(1)}%。`
+          : '本次未采集到量化指标，建议结合训练观察进行综合评估。',
+        suggestions: [
+          '在活动前做简单的手指张合、抓握热身，降低手部紧张。',
+          '把目标拆成小步，每完成一步给予明确鼓励。'
+        ]
+      })
+    }
+
+    return sections
+  }
+
+  private static generateFineMotorSummary(
+    studentName: string,
+    taskName: string,
+    gameCode: string,
+    performanceData: Record<string, any>,
+    sections: IEPReportSection[]
+  ): string {
+    const metrics = normalizeGameMetrics(gameCode, performanceData, 0)
+    const accuracy = metrics.accuracy
+    const parts: string[] = []
+
+    if (accuracy !== null) {
+      if (accuracy >= 0.8) {
+        parts.push(`${studentName}在本次《${taskName}》中表现优异，总体完成度达到 ${(accuracy * 100).toFixed(1)}%，精细动作目标完成稳定。`)
+      } else if (accuracy >= 0.6) {
+        parts.push(`${studentName}在本次《${taskName}》中表现良好，总体完成度为 ${(accuracy * 100).toFixed(1)}%，仍有继续提升的空间。`)
+      } else {
+        parts.push(`${studentName}在本次《${taskName}》中面临一定挑战，总体完成度为 ${(accuracy * 100).toFixed(1)}%，需要更多支持与练习。`)
+      }
+    } else {
+      parts.push(`${studentName}完成了本次《${taskName}》精细动作训练。`)
+    }
+
+    parts.push('精细动作训练的目标是帮助孩子提升手眼协调、抓握控制与动作稳定性，建议在日常生活中通过拿取、分拣、拼搭等小活动继续泛化本次训练涉及的精细动作技能。')
+
+    if (sections.length > 0) {
+      parts.push(`本报告共给出 ${sections.length} 项专项评估与对应建议，可作为下一阶段训练计划的参考。`)
+    }
+
+    return parts.join('\n\n')
+  }
+
+  // ---------- 生活自理：私有辅助 ----------
+
+  /**
+   * 生活自理游戏 code -> 中文名映射（Phase 1 仅 L03/L05 落地，其余为 Phase 2 预留）
+   */
+  private static getLifeSkillGameName(gameCode: string): string {
+    const names: Record<string, string> = {
+      L01_WASH_HANDS: '洗手小能手',
+      L02_DRESS_UP: '我会穿衣服',
+      L03_BRUSH_TEETH: '刷牙小卫士',
+      L04_SET_TABLE: '摆桌子帮帮忙',
+      L05_PACK_BAG: '上学包包装一装'
+    }
+    return names[gameCode] || '生活自理训练'
+  }
+
+  /**
+   * 按 gameCode 维度生成生活自理评估段（围绕自理步骤完成度、顺序理解、执行功能）
+   * 指标统一来自 normalizeGameMetrics，缺指标时给“未采集到量化指标”降级提示，不编造数值。
+   */
+  private static generateLifeSkillsSections(
+    gameCode: string,
+    performanceData: Record<string, any>
+  ): IEPReportSection[] {
+    const sections: IEPReportSection[] = []
+    const metrics = normalizeGameMetrics(gameCode, performanceData, 0)
+    const accuracy = metrics.accuracy
+    const hasAccuracy = accuracy !== null
+    const reaction = metrics.avgResponseTimeMs
+    const hasReaction = reaction !== null
+
+    if (gameCode === 'L03_BRUSH_TEETH') {
+      // 刷牙小卫士：刷牙路径 + 方向准确度
+      const pathPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否按区域顺序完成刷牙路径。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较完整地按区域顺序完成刷牙路径，动作规划与方向控制发展良好。'
+          : hasAccuracy
+            ? '能参与刷牙动作，但区域顺序和方向仍偶尔出错，需要在更慢的节奏下多练“先看区域再刷”。'
+            : '本次能完成刷牙交互，建议在后续训练中持续记录方向准确度以评估动作规划。'
+
+      sections.push({
+        category: '刷牙方向准确度',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('刷牙方向', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录刷牙方向准确度以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每个刷牙区域的动作反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '在真实刷牙时复述“上牙从上往下、下牙从下往上、里外都要刷”，把游戏中的方向迁移到生活。',
+          '可以先对着镜子慢动作示范，再让孩子模仿，帮助建立正确的刷牙路径。',
+          '当孩子按正确方向刷动时，及时肯定他注意到的区域顺序（先外侧、再内侧、最后咬合面）。'
+        ]
+      })
+      sections.push({
+        category: '刷牙路径与动作规划',
+        performance: pathPerformance,
+        suggestions: [
+          '用儿歌或口令把刷牙步骤串起来（“先刷外面、再刷里面、最后刷上面”），帮助记忆路径。',
+          '可配合牙齿模型做练习，先在模型上走一遍正确路径，再回到真实刷牙。'
+        ]
+      })
+    } else if (gameCode === 'L05_PACK_BAG') {
+      // 上学包包装一装：情境计划 + 执行功能
+      const execPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能根据情境挑出合适物品并整理入包。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较准确地根据情境挑出合适物品并整理入包，执行功能与计划能力发展良好。'
+          : hasAccuracy
+            ? '能参与物品挑选，但偶尔会放入与情境无关的物品，需要更多“先想场景再选”的提示。'
+            : '本次能完成整理交互，建议在后续训练中持续记录情境理解得分以评估执行功能。'
+
+      sections.push({
+        category: '情境理解与计划',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('情境计划', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录情境理解得分以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每次选择反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '出门前和孩子一起说一说“今天去哪里、会发生什么、需要带什么”，把情境推理迁移到生活。',
+          '先让孩子口头挑出必需物品，再动手装包，建立“先想场景、再做选择”的计划习惯。',
+          '当孩子选对物品时，描述他注意到的情境线索（天气、活动、地点），强化观察与推理。'
+        ]
+      })
+      sections.push({
+        category: '执行功能与物品整理',
+        performance: execPerformance,
+        suggestions: [
+          '用图文清单做辅助：先和孩子一起列“今天要带的物品”，再对照清单逐项装包。',
+          '逐步撤除清单提示，鼓励孩子独立判断“该带 / 不该带”，培养自主整理能力。'
+        ]
+      })
+    } else {
+      sections.push({
+        category: '生活自理训练',
+        performance: hasAccuracy
+          ? `本次生活自理训练总体完成情况：${((accuracy as number) * 100).toFixed(1)}%。`
+          : '本次未采集到量化指标，建议结合训练观察进行综合评估。',
+        suggestions: [
+          '把训练中的步骤迁移到真实生活情境，让孩子在自然场景中反复练习。',
+          '把自理流程拆成小步，每完成一步给予明确鼓励。'
+        ]
+      })
+    }
+
+    return sections
+  }
+
+  private static generateLifeSkillsSummary(
+    studentName: string,
+    taskName: string,
+    gameCode: string,
+    performanceData: Record<string, any>,
+    sections: IEPReportSection[]
+  ): string {
+    const metrics = normalizeGameMetrics(gameCode, performanceData, 0)
+    const accuracy = metrics.accuracy
+    const parts: string[] = []
+
+    if (accuracy !== null) {
+      if (accuracy >= 0.8) {
+        parts.push(`${studentName}在本次《${taskName}》中表现优异，总体完成度达到 ${(accuracy * 100).toFixed(1)}%，生活自理目标完成稳定。`)
+      } else if (accuracy >= 0.6) {
+        parts.push(`${studentName}在本次《${taskName}》中表现良好，总体完成度为 ${(accuracy * 100).toFixed(1)}%，仍有继续提升的空间。`)
+      } else {
+        parts.push(`${studentName}在本次《${taskName}》中面临一定挑战，总体完成度为 ${(accuracy * 100).toFixed(1)}%，需要更多支持与练习。`)
+      }
+    } else {
+      parts.push(`${studentName}完成了本次《${taskName}》生活自理训练。`)
+    }
+
+    parts.push('生活自理训练的目标是帮助孩子建立稳定的自理步骤、顺序理解与执行功能，建议在日常生活中结合真实情境继续泛化本次训练涉及的自理技能。')
+
+    if (sections.length > 0) {
+      parts.push(`本报告共给出 ${sections.length} 项专项评估与对应建议，可作为下一阶段训练计划的参考。`)
+    }
+
+    return parts.join('\n\n')
   }
 
   private static clampNum(value: unknown, min: number, max: number, fallback: number): number {

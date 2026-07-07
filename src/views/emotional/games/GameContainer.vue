@@ -163,7 +163,7 @@ import {
 } from '@/data/custom-game-registry'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
 import { DatabaseAPI, GameTrainingAPI } from '@/database/api'
-import { ModuleCode } from '@/types/module'
+import { normalizeGameMetrics } from '@/utils/game-performance-normalizer'
 import {
   loadGameAudioSettings,
   saveGameAudioSettings,
@@ -967,56 +967,33 @@ function normalizeGroupPayload(
   }
 }
 
-// 社交沟通游戏中文映射（与 IEPGenerator.getSocialGameName 保持一致）
-const SOCIAL_GAME_NAME_MAP: Record<string, string> = {
-  S01_BURGER: '合作造汉堡',
-  S02_EMOTION_MIRROR: '表情猜猜乐',
-  S03_STORY_SEQ: '故事接龙板',
-  S04_GIFT_MATCH: '礼物分享派对',
-  S05_ECHO_PARROT: '动物传声筒',
-  S06_EXPRESSION_DUEL: '双人表情擂台',
-}
+// 出 IEP 报告的 trainingEntryCode 白名单：
+// social-communication（社交 S01–S06）/ fine-motor（精细动作 F03）/ life-skills（生活自理 L03/L05）。
+// 注意：不能用 moduleCode 判断——EMOTIONAL 模块同时含 emotional-regulation(G) 与 soothing-aids(C)，
+// 二者都不该出 IEP；必须用 trainingEntryCode 精确放行。
+const IEP_ELIGIBLE_ENTRY_CODES: ReadonlySet<string> = new Set([
+  'social-communication',
+  'fine-motor',
+  'life-skills',
+])
 
-function resolveSocialGameName(gameCode: string): string {
-  return SOCIAL_GAME_NAME_MAP[gameCode] || '社交沟通训练'
-}
-
-function numOr(value: unknown, fallback: number): number {
-  const num = Number(value)
-  return Number.isFinite(num) ? num : fallback
-}
-
-function clampNum(value: unknown, min: number, max: number, fallback: number): number {
-  const num = Number(value)
-  if (!Number.isFinite(num)) {
-    return fallback
-  }
-  if (num < min) return min
-  if (num > max) return max
-  return num
-}
-
-// 把可能是 ms 或秒的时长统一换算为整数秒（NaN 安全）
-function resolveDurationSeconds(performanceData: Record<string, any>, sessionDurationMs: number): number {
-  const raw = performanceData.durationMs ?? performanceData.durationSec ?? performanceData.duration
-  const fieldName = ['durationMs', 'durationSec', 'duration'].find(
-    (key) => performanceData[key] !== undefined,
-  )
-  const looksLikeMs = fieldName === 'durationMs' || (numOr(raw, 0) > 10000)
-  const valueMs = looksLikeMs
-    ? numOr(raw, sessionDurationMs)
-    : numOr(raw, sessionDurationMs / 1000) * 1000
-  const seconds = Math.round((valueMs || sessionDurationMs) / 1000)
-  return Number.isFinite(seconds) && seconds >= 0 ? seconds : 0
+// trainingEntryCode → IEP 报告标题前缀
+const IEP_TITLE_PREFIX_BY_ENTRY: Record<string, string> = {
+  'social-communication': '社交沟通',
+  'fine-motor': '精细动作',
+  'life-skills': '生活自理',
 }
 
 /**
- * 社交沟通游戏完成后的 IEP 链路：
+ * 游戏（社交 / 精细动作 / 生活自理）完成后的 IEP 链路：
  * 写 training_records + report_record，然后跳 IEPReport。
  * 失败时降级：弹错 + 不抛，让外层照常回大厅。
  * 双人游戏只为 primaryStudentId 生成一份 IEP。
+ *
+ * accuracy / avgResponseTimeMs / durationSec 全部来自 normalizeGameMetrics（归一化层），
+ * 不在此手写各 gameCode 的字段差异与量纲换算。
  */
-async function runSocialIepChain(
+async function runModuleIepChain(
   studentId: number,
   gameCode: CustomGameCode,
   performanceData: Record<string, any>,
@@ -1028,13 +1005,18 @@ async function runSocialIepChain(
 
   try {
     const data = performanceData && typeof performanceData === 'object' ? performanceData : {}
-    const accuracy = clampNum(data.accuracy ?? data.accuracyRate, 0, 1, 0)
-    const avgResponseTimeMs = numOr(
-      data.avgResponseTime ?? data.avgResponseTimeMs ?? data.reactionTime,
-      0,
-    )
-    const durationSec = resolveDurationSeconds(data, sessionDurationMs)
-    const gameName = resolveSocialGameName(gameCode)
+    const metrics = normalizeGameMetrics(gameCode, data, sessionDurationMs)
+
+    const definition = gameDefinition.value
+    const trainingEntryCode = definition.trainingEntryCode
+    const moduleCode = definition.moduleCode
+    const gameName = definition.name
+    const titlePrefix = IEP_TITLE_PREFIX_BY_ENTRY[trainingEntryCode] || '训练'
+
+    // training_records 的 accuracy_rate / avg_response_time 列为 NOT NULL，
+    // 缺失时存 0，但在 raw_data 标记 availability，供渲染层隐藏对应统计卡。
+    const accuracyRate = metrics.accuracy ?? 0
+    const avgResponseTimeMs = metrics.avgResponseTimeMs ?? 0
 
     const gameApi = new GameTrainingAPI()
     const recordId = gameApi.saveTrainingRecord({
@@ -1043,10 +1025,10 @@ async function runSocialIepChain(
       resource_id: null,
       resource_type: 'game',
       session_type: 'game',
-      entry_code: 'social-communication',
+      entry_code: trainingEntryCode,
       timestamp: Date.now(),
-      duration: durationSec,
-      accuracy_rate: accuracy,
+      duration: metrics.durationSec,
+      accuracy_rate: accuracyRate,
       avg_response_time: avgResponseTimeMs,
       raw_data: {
         gameCode,
@@ -1054,9 +1036,13 @@ async function runSocialIepChain(
         performanceData: data,
         difficulty: difficulty.value,
         durationMs: sessionDurationMs,
-        moduleCode: 'social',
+        moduleCode,
+        trainingEntryCode,
+        accuracyAvailable: metrics.accuracy !== null,
+        reactionAvailable: metrics.avgResponseTimeMs !== null,
+        hasRealData: metrics.hasRealData,
       },
-      module_code: 'social',
+      module_code: moduleCode,
     })
 
     const db = new DatabaseAPI()
@@ -1064,12 +1050,12 @@ async function runSocialIepChain(
     const studentName = students[0]?.name || String(studentId)
     const dateStamp = new Date()
     const yyyymmdd = `${dateStamp.getFullYear()}${String(dateStamp.getMonth() + 1).padStart(2, '0')}${String(dateStamp.getDate()).padStart(2, '0')}`
-    const title = `社交沟通IEP报告_${studentName}_${gameCode}_${yyyymmdd}`
+    const title = `${titlePrefix}IEP报告_${studentName}_${gameCode}_${yyyymmdd}`
 
     db.execute(
       `INSERT INTO report_record (student_id, report_type, training_record_id, title, module_code, created_at)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [studentId, 'iep', recordId, title, 'social', new Date().toISOString()],
+      [studentId, 'iep', recordId, title, moduleCode, new Date().toISOString()],
     )
 
     ElMessage.success('训练完成，正在生成 IEP 报告…')
@@ -1079,14 +1065,14 @@ async function runSocialIepChain(
       query: {
         recordId: String(recordId),
         studentId: String(studentId),
-        module: 'social',
+        module: moduleCode,
         gameCode,
       },
     })
 
     return true
   } catch (error) {
-    console.error('[GameContainer] 社交 IEP 链路失败，降级返回大厅:', error)
+    console.error('[GameContainer] IEP 链路失败，降级返回大厅:', error)
     ElMessage.error('报告生成失败，已返回大厅')
     return false
   }
@@ -1129,11 +1115,11 @@ async function persistTerminalState(
 
       if (
         status === 'completed'
-        && gameDefinition.value.moduleCode === ModuleCode.SOCIAL
+        && IEP_ELIGIBLE_ENTRY_CODES.has(gameDefinition.value.trainingEntryCode)
         && primaryStudentId.value > 0
       ) {
         const startedAtMsForIep = sessionStartedAt.value ?? Date.now()
-        const navigated = await runSocialIepChain(
+        const navigated = await runModuleIepChain(
           primaryStudentId.value,
           props.gameCode,
           groupPayload.performanceData,
@@ -1165,11 +1151,11 @@ async function persistTerminalState(
 
       if (
         status === 'completed'
-        && gameDefinition.value.moduleCode === ModuleCode.SOCIAL
+        && IEP_ELIGIBLE_ENTRY_CODES.has(gameDefinition.value.trainingEntryCode)
         && primaryStudentId.value > 0
       ) {
         const startedAtMsForIep = sessionStartedAt.value ?? Date.now()
-        const navigated = await runSocialIepChain(
+        const navigated = await runModuleIepChain(
           primaryStudentId.value,
           props.gameCode,
           payload?.performanceData || buildDefaultPerformanceData(status, exitTrigger),
