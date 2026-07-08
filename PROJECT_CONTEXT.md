@@ -1468,3 +1468,14 @@
   - G07 独立后续任务待启动。
 - 不扩展项不变：C 类（安抚教具整组）+ G01/G03/G04/G08/G09 不出 IEP，保留徽章 + `game_emotion_records`。
 - 规格来源：`docs/plans/2026-07-07-game-iep-extension-plan.md`。
+
+## 57. 2026-07-08 Sensory 手势游戏（hand-games）现状盘点
+
+- 当前 sensory 手势游戏集中在 `src/components/games/hand/`，清单：
+  - `AirXylophoneGame.vue`（空气木琴）
+  - `BubblePopGame.vue` + `bubble-pop-game.ts`（打泡泡）
+  - `WoodBlockPuzzleGame.vue` + `wood-block-puzzle.ts`（木块拼图 / 形状匹配）
+  - `HandCameraLayer.vue`（手势摄像头共享层）
+- 形状匹配类游戏当前以**独立组件**结构落地：共享视觉件 `WoodenShapeBlock.vue`（`src/components/games/shared/`）由 `WoodBlockPuzzleGame.vue` 与 `GameGrid.vue` 复用，不再把形状/木块逻辑内联回 `GameGrid.vue`。
+- 专题测试：`scripts/tests/sensory-hand-games.test.mjs`、`scripts/tests/sensory-hand-gestures.test.mjs`。
+- 重要实现边界：后续新增形状匹配/手势类感官游戏，应沿用「`hand/` 下独立组件 + `shared/` 复用视觉件」结构，不要把逻辑塞回 `GameGrid.vue` 造成膨胀。
