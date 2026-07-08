@@ -40,7 +40,7 @@ git stash list
 | 产品差距分析 | `docs/reports/2026-03-13-scgp-prd-gap-analysis.md` |
 | 文档导航 | `docs/INDEX.md` |
 | emotional 模块 | `docs/planning/2026-03-16-emotional-module-prd.md` |
-| 当前阶段计划 | `.continue-here.md` 指向的 `.planning/phases/*/PLAN.md` |
+| 当前阶段计划 | `docs/plans/` 与 `.continue-here.md`（`.planning/` 已于 2026-07-08 清理） |
 
 **历史参考（追溯用，不是当前事实来源）：**
 
@@ -49,8 +49,8 @@ git stash list
 - `docs/planning/prd.md`
 - `docs/logs/2026-03-26-project-context-archive.md`
 
-`.planning/PROJECT.md`、`.planning/ROADMAP.md`、`.planning/REQUIREMENTS.md`、`.planning/STATE.md`
-仅在任务明确进入 GSD 规划或执行流程时使用，不是当前产品事实的最高来源。
+GSD 规划目录（`.planning/`、`.claude/get-shit-done/`、`.claude/commands/gsd/`、`.claude/agents/gsd-*`、`.claude/hooks/gsd-*`）
+已于 2026-07-08 整体清除，不再作为任何流程的输入；当前阶段计划以 `docs/plans/` 与 `.continue-here.md` 为准。
 
 ---
 

@@ -149,9 +149,9 @@ npm run build:electron
 
 ## 说明
 
-- `.planning/`：过程型协作材料，包含阶段上下文、研究记录、任务拆解，不是正式需求文档入口。
+- `.planning/`：已于 2026-07-08 GSD 残留清理中整体移除；过程型协作材料改以 `docs/plans/` 与 `.continue-here.md` 为准。
 - `.archive/`：历史归档，保留旧方案和旧过程文件，不代表当前实现。
-- `.claude/`、`.gemini/`：代理协作与命令模板目录；其中 `gsd` 是给代理使用的工作流命令，不属于业务模块。
+- `.claude/`：Claude Code 代理配置（skills/agents/commands）；其中的 GSD 工作流命令已于 2026-07-08 移除，仅保留与业务无关的通用 skill。`.gemini/`：Gemini CLI 镜像目录，是否清理待定。
 - `AGENTS.md`：仓库级代理启动说明，供 Codex 类代理在进入仓库时快速建立项目背景和执行规则。
 - `docs/planning/2026-03-23-scgp-context-bootstrap.md`：轻量启动上下文，适合作为新会话默认首读入口，用于控制启动阶段上下文体积。
 - `.continue-here.md`：当前唯一有效续接任务说明，适合新会话继续未完成工作时优先读取。

@@ -300,7 +300,7 @@
 
 ## 8. 2026-04-04 CNBS-R2016 Planning Update
 
-- `.planning/` 已创建 v1.7 的正式规划材料：
+- `.planning/` 曾创建 v1.7 的正式规划材料（已于 2026-07-08 GSD 残留清理中整体移除，以下路径仅作历史记录）：
   - `.planning/PROJECT.md`
   - `.planning/REQUIREMENTS.md`
   - `.planning/ROADMAP.md`
@@ -367,7 +367,7 @@
   - 三条报告入口已统一复用共享路由构造器，不再各自硬编码
   - CNBS-R2016 报告页已改为消费共享 report view-model，不再在页面内散落重复投影逻辑
   - `scripts/verify-cnbsr2016-phase20-runtime.mjs` 已落地，用于验证三入口一致性与报告关键结果一致性
-  - `.planning/phases/20-cnbs-r2016-runtime-qa-standard-verification/20-VERIFICATION.md` 已记录本阶段验证结论
+  - `.planning/phases/20-cnbs-r2016-runtime-qa-standard-verification/20-VERIFICATION.md`（已于 2026-07-08 GSD 残留清理中移除）曾记录本阶段验证结论
 - 当前 Phase 20 已验证通过的结果范围：
   - `CA / 总 MA / 总 DQ`
   - 五能区 `MA / DQ / 结论`
