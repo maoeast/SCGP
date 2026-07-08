@@ -33,6 +33,10 @@ function buildSceneDescription(
     .join(' ')
 }
 
+function fillReceiverName(text: string | undefined, receiverName: string): string {
+  return (text || '').replace(/\{name\}/g, receiverName)
+}
+
 function buildEmotionFeedbackText(emotionLabel: string, emotionChips: string[]): string {
   const clueText = emotionChips.slice(0, 3).join('、')
   return clueText
@@ -130,6 +134,7 @@ export function compileCareSceneImmersive(
 
   const receiverEmotion = enrichedMeta.receiverEmotion || 'sad'
   const receiverEmotionMeta = EMOTIONAL_BASE_EMOTION_META[receiverEmotion]
+  const receiverName = enrichedMeta.receiverName || '这位小朋友'
   const scene: SceneData = {
     id: sceneId,
     variant: 'care_scene',
@@ -137,14 +142,14 @@ export function compileCareSceneImmersive(
     scene_code: enrichedMeta.sceneCode,
     title: enrichedMeta.title,
     description: buildSceneDescription(
-      enrichedMeta.receiverName || '这位小朋友',
+      receiverName,
       enrichedMeta.description,
       context.resourceDescription,
       enrichedMeta.comfortTip || '',
     ),
     background_image_url: context.coverImage?.trim() || enrichedMeta.imageUrl || null,
     target_emotion: receiverEmotion,
-    character_name: enrichedMeta.receiverName || '这位小朋友',
+    character_name: receiverName,
     difficulty_level: enrichedMeta.difficultyLevel,
     scene_domain: null,
     age_range: enrichedMeta.ageRange || null,
@@ -168,7 +173,7 @@ export function compileCareSceneImmersive(
       scene_id: scene.id,
       step_index: 1,
       question_id: `${enrichedMeta.sceneCode}_care_emotion`,
-      question_text: '你觉得{name}现在更像是什么感受呀？',
+      question_text: fillReceiverName('你觉得{name}现在更像是什么感受呀？', receiverName),
       step_type: 'care_emotion',
       audio_url: null,
       options: enrichedMeta.emotionOptions.map((option, optionIndex) => {
@@ -187,15 +192,18 @@ export function compileCareSceneImmersive(
           color_label: iconMeta.colorLabel,
           is_correct: option.isCorrect,
           is_acceptable: null,
-          feedback_text: option.feedbackText?.trim() || (option.isCorrect
-            ? buildEmotionFeedbackText(
-              enrichedMeta.specificEmotionLabel || receiverEmotionMeta.label,
-              enrichedMeta.emotionChips || [],
-            )
-            : buildEmotionRetryText(
-              enrichedMeta.specificEmotionLabel || receiverEmotionMeta.label,
-              enrichedMeta.comfortTip || '',
-            )),
+          feedback_text: fillReceiverName(
+            option.feedbackText?.trim() || (option.isCorrect
+              ? buildEmotionFeedbackText(
+                enrichedMeta.specificEmotionLabel || receiverEmotionMeta.label,
+                enrichedMeta.emotionChips || [],
+              )
+              : buildEmotionRetryText(
+                enrichedMeta.specificEmotionLabel || receiverEmotionMeta.label,
+                enrichedMeta.comfortTip || '',
+              )),
+            receiverName,
+          ),
           metadata: {
             emotion: iconName,
             specific_emotion_label: enrichedMeta.specificEmotionLabel || '',
@@ -211,7 +219,7 @@ export function compileCareSceneImmersive(
       scene_id: scene.id,
       step_index: 2,
       question_id: `${enrichedMeta.sceneCode}_care_utterance`,
-      question_text: '如果你要对{name}说一句关心的话，你会怎么说？',
+      question_text: fillReceiverName('如果你要对{name}说一句关心的话，你会怎么说？', receiverName),
       step_type: 'care_utterance',
       audio_url: null,
       options: enrichedMeta.utterances.map((utterance) => {
@@ -228,7 +236,7 @@ export function compileCareSceneImmersive(
           color_label: null,
           is_correct: isPreferred,
           is_acceptable: isAcceptable ? true : null,
-          feedback_text: buildUtteranceFeedback(utterance, isPreferred),
+          feedback_text: fillReceiverName(buildUtteranceFeedback(utterance, isPreferred), receiverName),
           metadata: {
             utterance_type: utterance.type,
             effect: utterance.effect,
@@ -244,7 +252,7 @@ export function compileCareSceneImmersive(
       scene_id: scene.id,
       step_index: 3,
       question_id: `${enrichedMeta.sceneCode}_receiver_preference`,
-      question_text: '站在{name}这边想，听到哪一句会更舒服？',
+      question_text: fillReceiverName('站在{name}这边想，听到哪一句会更舒服？', receiverName),
       step_type: 'receiver_preference',
       audio_url: null,
       options: enrichedMeta.receiverOptions.map((option) => ({

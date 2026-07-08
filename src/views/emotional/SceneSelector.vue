@@ -494,7 +494,7 @@ const filteredScenes = computed(() => scenes.value.filter((scene) => {
     receiverEmotions: selectedReceiverEmotions.value,
     careTypes: selectedCareTypes.value,
   })
-}))
+}).sort(sortScenesByResourceCode))
 const filterPanelTitle = computed(() => (
   isEmotionSceneSelector.value ? '场景筛选' : '关心情境筛选'
 ))
@@ -799,6 +799,20 @@ function sortAgeRanges(left: string, right: string) {
     return leftRange.max - rightRange.max
   }
   return left.localeCompare(right, 'zh-CN')
+}
+
+function parseSceneCodeNumber(sceneCode: string): number {
+  const match = sceneCode.trim().match(/(\d+)$/)
+  return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER
+}
+
+function sortScenesByResourceCode(left: SceneCard, right: SceneCard) {
+  const leftNumber = parseSceneCodeNumber(left.resourceCode)
+  const rightNumber = parseSceneCodeNumber(right.resourceCode)
+  if (leftNumber !== rightNumber) {
+    return leftNumber - rightNumber
+  }
+  return left.resourceCode.localeCompare(right.resourceCode, 'zh-CN')
 }
 
 function matchesSceneFilters(

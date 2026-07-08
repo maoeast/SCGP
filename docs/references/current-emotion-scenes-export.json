@@ -7127,7 +7127,7 @@
       {
         "questionId": "scene-81-cause",
         "questionType": "cause",
-        "questionText": "小明为什么会有这种感觉？",
+        "questionText": "小杰为什么会有这种感觉？",
         "options": [
           {
             "id": "cause_1",
@@ -7146,7 +7146,7 @@
       {
         "questionId": "scene-81-need",
         "questionType": "need",
-        "questionText": "小明现在最需要什么？",
+        "questionText": "小杰现在最需要什么？",
         "options": [
           {
             "id": "need_1",
