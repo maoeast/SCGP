@@ -45,6 +45,9 @@ __screenshots__/
 
 # Local agent scratch files
 .superpowers/
+.codex/
+.learnings/
+AGENTS.rar
 
 # Local generated image workspace
 AIimages/
