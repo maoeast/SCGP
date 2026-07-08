@@ -1439,3 +1439,32 @@
   - Phase 0 的 G09 emit 缺陷已独立修复并提交（`448d292`），与本 Phase 分离。
 - 不扩展项（产品口径）：C 类（安抚教具整组）+ G01/G03/G04/G08/G09 不出 IEP，保留徽章 + `game_emotion_records`。
 - 规格来源：`docs/plans/2026-07-07-game-iep-extension-plan.md`（当前为 untracked 草案，未随任务提交）。
+
+## 55. 2026-07-08 游戏 IEP 闭环扩展 Phase 2（Tier2 F04/L01/L02/L04，代码级落地，运行时待验）
+
+- 游戏训练 IEP 报告闭环已从 Tier1（F03/L03/L05）扩展到 Tier2 四游戏（F04 轨道修补匠 / L01 洗手小能手 / L02 我会穿衣服 / L04 摆桌子帮帮忙），复用 Phase 1 的归一化层 + `runModuleIepChain` + 生成器框架 + IEPReport 前缀路由，守卫 / 路由 / 统计卡可用性无需改动。
+- 新增能力：归一化层 `GAME_EXTRACTION_RULES` 支持「派生正确率」`accuracyDerived = correct/(correct+wrong)`（优先于 `accuracyFields`），用于 Tier2 这类没有单一正确率字段、只能由正确/错误计数派生的游戏。派生要求 correct+wrong 都有效且分母>0，否则记 null（渲染层隐藏准确率卡）。
+- 字段已逐一对照真实 emit：F04 `correct_placements`+`wrong_placements`+`average_placement_ms`；L01 `correct_action_count`+`wrong_action_count`+`average_action_ms`；L02 `completed_item_count`+`wrong_placements`+`average_selection_ms`；L04 `completed_places`+`wrong_placements`+`average_placement_ms`；L01/L02/L04 时长均为 `total_duration_seconds`(秒)。
+- F04 时长用会话兜底（`{kind:'session'}`，与 F03 一致）：`TrackBuildGame.vue` 的 `average_layout_ms` 是「每个关卡布局的平均耗时」而非总训练时长，不能当 `durationSec`（方案文档原列 average_layout_ms 系误读）。
+- `iep-generator.ts` 的 `generateFineMotorSections` 加 F04 分支、`generateLifeSkillsSections` 加 L01/L02/L04 三分支（各 2 段：准确率域 + 步骤/顺序/空间定位域），缺指标一律降级不编造数值；F/L 中文名映射与通用 summary 均已在 Phase 1 就位。
+- 当前重要现实边界（不得写成已收口）：
+  - 代码级已落地，`npm run type-check` exit 0；一次性 jiti 断言（15 条，含派生正确率、wrong=0 完美局、缺 wrong 降级、0/0→null、{event} 空壳、Tier1/社交无回归）全过后即删除，未留测试文件。
+  - F03/L03/L05 + F04/L01/L02/L04 + 社交 S01–S06 + G09 的真机 E2E 仍未跑，不得写成运行时已验证。
+  - Phase 3（Tier3 F02/F01/F05/G07，可选）待用户决定。
+- 不扩展项不变：C 类（安抚教具整组）+ G01/G03/G04/G08/G09 不出 IEP，保留徽章 + `game_emotion_records`。
+- 规格来源：`docs/plans/2026-07-07-game-iep-extension-plan.md`。
+
+## 56. 2026-07-08 游戏 IEP 闭环扩展 Phase 3（Tier3 F02/F01/F05，近似指标口径，G07 延后，代码级落地运行时待验）
+
+- 游戏训练 IEP 报告闭环已扩到 Tier3 三个近似指标精细动作游戏（F02 连线小星座 / F01 云朵擦擦擦 / F05 刺破慢气球），三者 moduleCode=sensory、trainingEntryCode=fine-motor（已在 IEP 放行集合内），复用 Phase 1 的归一化层 + `runModuleIepChain` + 生成器框架 + IEPReport 前缀路由，守卫 / 路由 / 统计卡可用性无需改动。
+- 新增能力：归一化层 `GAME_EXTRACTION_RULES` 支持「数组型反应时」`reactionArrayField`（取数组元素 ms 的平均，优先于 `reactionFields`），用于只产出反应时数组、无标量均值的游戏（F05 的 `window_response_ms`）。保持归一化层为唯一提取入口。
+- Tier3 近似指标口径（非经典正确率）：F02 accuracy=`path_precision_ratio`(ratio，可能 null) + reaction=`average_constellation_ms`；F01 accuracy=`cleared_ratio_peak`(ratio)，无反应时指标；F05 无 accuracy（核心是抑制控制 `early_taps`），reaction 由 `window_response_ms` 数组取均值。F01 无反应时卡、F05 无正确率卡，对应统计卡自动隐藏。
+- 字段已对照真实 emit：F02 `path_precision_ratio`/`completed_constellations`/`average_constellation_ms`；F01 `cleared_ratio_peak`/`total_strokes`；F05 `successful_pops`/`early_taps`/`window_response_ms`(数组)/`max_streak`。三者均无总时长字段，duration 走会话兜底。
+- `iep-generator.ts` 的 `generateFineMotorSections` 加 F02（轨迹精度+路径跟随）、F01（擦拭覆盖率+手眼协调持续控制）、F05（抑制控制与出手时机+反应稳定）三分支；F05 的抑制控制评估读 `metrics.extra.early_taps`（extra 透传是 Phase 1 既定用法，未在生成器里重复提取标准三列）。
+- G07_MONSTER 经决定**延后**为独立任务：属 emotional-regulation 入口（不在 IEP 放行集合），启用需改守卫 + G07 专属白名单（否则 Tier4 的 G01/G03/G04/G08/G09 会被一起放进 IEP）+ IEPReport 情绪匹配分支 + 新生成器，风险更高，与方案文档「二期再议」一致。
+- 当前重要现实边界（不得写成已收口）：
+  - 代码级已落地，`npm run type-check` exit 0；一次性 jiti 断言（Phase 3 共 19 条，含 F02 精度+null 降级、F01 无反应时、F05 数组均值+early_taps 经 extra+空数组/空壳降级、Tier1/2/社交无回归）全过后即删除，未留测试文件。
+  - 全部已接入游戏（经典感官 + 社交 S01–S06 + Tier1 F03/L03/L05 + Tier2 F04/L01/L02/L04 + Tier3 F02/F01/F05）的真机 E2E 仍未跑，不得写成运行时已验证。
+  - G07 独立后续任务待启动。
+- 不扩展项不变：C 类（安抚教具整组）+ G01/G03/G04/G08/G09 不出 IEP，保留徽章 + `game_emotion_records`。
+- 规格来源：`docs/plans/2026-07-07-game-iep-extension-plan.md`。

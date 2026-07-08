@@ -57,17 +57,30 @@ interface GameExtractionRule {
   accuracyFields?: string[]
   /** accuracy 量纲：ratio=0-1 直接用，percent=0-100 需 ÷100 */
   accuracyScale?: AccuracyScale
+  /**
+   * 派生正确率：correct/(correct+wrong)。优先于 accuracyFields。
+   * 用于没有单一正确率字段、只能由正确/错误计数派生的游戏（Tier 2）。
+   * 要求 correct 与 wrong 都为有效数值、且 correct+wrong > 0，否则该游戏本局正确率记为 null。
+   * 派生结果天然在 0-1，不读 accuracyScale（正确率本就是比值）。
+   */
+  accuracyDerived?: { correctFields: string[]; wrongFields: string[] }
   /** 平均反应时源字段（按顺序尝试，单位 ms）；不声明则无反应时口径 */
   reactionFields?: string[]
+  /**
+   * 数组型反应时：取该字段数组元素（ms）的平均。优先于 reactionFields。
+   * 用于只产出“每次反应时数组”、没有标量均值的游戏（如 F05 的 window_response_ms）。
+   */
+  reactionArrayField?: string
   /** 时长提取规则；不声明则等价于 { kind: 'session' } */
   duration?: DurationRule
 }
 
 // ========== gameCode → 提取规则表 ==========
 //
-// Phase 1 只填 Tier 1 三游戏（F03/L03/L05）；social 六个 code 共享同一条遗留规则，
-// 行为与原 runSocialIepChain 的手写提取保持一致（不破坏社交闭环）。
-// Phase 2/3 直接在此加行即可。
+// Phase 1 填 Tier 1 三游戏（F03/L03/L05）；Phase 2 补 Tier 2 四游戏（F04/L01/L02/L04，用 accuracyDerived 派生正确率）；
+// Phase 3 补 Tier 3 三游戏（F02/F01/F05，近似指标口径；F05 用 reactionArrayField 取数组反应时均值）。
+// social 六个 code 共享同一条遗留规则，行为与原 runSocialIepChain 的手写提取保持一致（不破坏社交闭环）。
+// 后续扩展（如 G07）直接在此加行即可。
 
 const SOCIAL_GAME_CODES = [
   'S01_BURGER',
@@ -114,6 +127,65 @@ const GAME_EXTRACTION_RULES: Record<string, GameExtractionRule> = {
     accuracyFields: ['context_understanding_score'],
     accuracyScale: 'percent',
     reactionFields: ['average_selection_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
+
+  // ===== Tier 2：精细动作 =====
+  F04_TRACK_BUILD: {
+    // 轨道修补匠：派生正确率 correct_placements/(correct+wrong)_placements + average_placement_ms
+    // 时长：无 total_duration_seconds；average_layout_ms 是“每个关卡布局的平均耗时”（非总训练时长），
+    // 故用会话兜底（与 F03 一致），避免把单关平均误当总时长。
+    realityFields: ['correct_placements'],
+    accuracyDerived: { correctFields: ['correct_placements'], wrongFields: ['wrong_placements'] },
+    reactionFields: ['average_placement_ms'],
+    duration: { kind: 'session' },
+  },
+
+  // ===== Tier 3：精细动作（近似指标，非经典正确率） =====
+  F02_STAR_TRACE: {
+    // 连线小星座：path_precision_ratio(0-1，可能为 null) 轨迹精度 + average_constellation_ms；无总时长
+    // realityFields 含 completed_constellations：精度为 null 的中断局仍判为真实数据（accuracy 走 null 降级）
+    realityFields: ['path_precision_ratio', 'completed_constellations'],
+    accuracyFields: ['path_precision_ratio'],
+    accuracyScale: 'ratio',
+    reactionFields: ['average_constellation_ms'],
+    duration: { kind: 'session' },
+  },
+  F01_CLOUD_ERASE: {
+    // 云朵擦擦擦：cleared_ratio_peak(0-1) 覆盖率峰值；无反应时指标；无总时长
+    realityFields: ['cleared_ratio_peak'],
+    accuracyFields: ['cleared_ratio_peak'],
+    accuracyScale: 'ratio',
+    duration: { kind: 'session' },
+  },
+  F05_BALLOONS: {
+    // 刺破慢气球：无经典正确率（核心是抑制控制 early_taps，由生成器读 extra）；
+    // 反应时 window_response_ms 是数组→用 reactionArrayField 取均值；无总时长
+    realityFields: ['successful_pops'],
+    reactionArrayField: 'window_response_ms',
+    duration: { kind: 'session' },
+  },
+
+  // ===== Tier 2：生活自理 =====
+  L01_WASH_HANDS: {
+    // 洗手小能手：派生 correct_action_count/(correct+wrong)_action + average_action_ms + total_duration_seconds(秒)
+    realityFields: ['correct_action_count'],
+    accuracyDerived: { correctFields: ['correct_action_count'], wrongFields: ['wrong_action_count'] },
+    reactionFields: ['average_action_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
+  L02_DRESS_UP: {
+    // 我会穿衣服：派生 completed_item_count/(completed+wrong)_placements + average_selection_ms + total_duration_seconds(秒)
+    realityFields: ['completed_item_count'],
+    accuracyDerived: { correctFields: ['completed_item_count'], wrongFields: ['wrong_placements'] },
+    reactionFields: ['average_selection_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
+  L04_SET_TABLE: {
+    // 摆桌子帮帮忙：派生 completed_places/(completed+wrong)_placements + average_placement_ms + total_duration_seconds(秒)
+    realityFields: ['completed_places'],
+    accuracyDerived: { correctFields: ['completed_places'], wrongFields: ['wrong_placements'] },
+    reactionFields: ['average_placement_ms'],
     duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
   },
 }
@@ -166,6 +238,22 @@ function pickFirstValid(data: Record<string, any>, fields: string[] | undefined)
 }
 
 function resolveAccuracy(rule: GameExtractionRule, data: Record<string, any>): number | null {
+  // 派生正确率优先：correct/(correct+wrong)。需二者都有效且分母 > 0，否则记 null（渲染层隐藏准确率卡）。
+  if (rule.accuracyDerived) {
+    const correct = pickFirstValid(data, rule.accuracyDerived.correctFields)
+    const wrong = pickFirstValid(data, rule.accuracyDerived.wrongFields)
+    if (!correct || !wrong) {
+      return null
+    }
+    const denom = correct.value + wrong.value
+    if (!(denom > 0)) {
+      return null
+    }
+    // correct/denom 本就在 0-1，clamp 仅作脏数据兜底
+    const clamped = clampNum(correct.value / denom, 0, 1, NaN)
+    return Number.isFinite(clamped) ? clamped : null
+  }
+
   const picked = pickFirstValid(data, rule.accuracyFields)
   if (!picked) {
     return null
@@ -177,6 +265,21 @@ function resolveAccuracy(rule: GameExtractionRule, data: Record<string, any>): n
 }
 
 function resolveReaction(rule: GameExtractionRule, data: Record<string, any>): number | null {
+  // 数组型反应时优先：取数组有效非负元素的平均（如 F05 的 window_response_ms）
+  if (rule.reactionArrayField) {
+    const arr = data[rule.reactionArrayField]
+    if (Array.isArray(arr) && arr.length > 0) {
+      const nums = arr
+        .map((v) => Number(v))
+        .filter((n) => Number.isFinite(n) && n >= 0)
+      if (nums.length > 0) {
+        const avg = nums.reduce((sum, n) => sum + n, 0) / nums.length
+        return Math.max(0, Math.round(avg))
+      }
+    }
+    return null
+  }
+
   const picked = pickFirstValid(data, rule.reactionFields)
   if (!picked) {
     return null

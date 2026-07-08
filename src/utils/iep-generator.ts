@@ -463,8 +463,143 @@ export class IEPGenerator {
           '若孩子出现频繁放错或掉落，先放慢节奏并增加示范，再逐步恢复原速。'
         ]
       })
+    } else if (gameCode === 'F04_TRACK_BUILD') {
+      // 轨道修补匠：旋转拼接正确率 + 反应时 + 旋转操作与空间拼接
+      const assemblyPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能对齐接口、把轨道片段旋转到正确方向再放下。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较稳定地把轨道片段旋转到正确方向并对齐接口，空间拼接与手眼协调发展良好。'
+          : hasAccuracy
+            ? '能参与轨道拼接，但方向判断或接口对齐仍偶尔出错，需要在更慢的节奏下多练“先转再放”。'
+            : '本次能完成拼接交互，建议在后续训练中持续记录拼接正确率以评估空间拼接能力。'
+
+      sections.push({
+        category: '轨道拼接正确率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('轨道拼接', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录拼接正确率以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每次拼接反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '先引导孩子观察“接口形状、缺口方向”，再决定旋转到哪个角度，建立“先看再转”的习惯。',
+          '从两段直轨、慢速开始，待对齐稳定后再增加弯轨或更复杂的拼接组合。',
+          '当孩子把片段旋转到正确方向并对齐时，及时描述他注意到的接口细节，给予具体反馈。'
+        ]
+      })
+      sections.push({
+        category: '旋转操作与空间拼接',
+        performance: assemblyPerformance,
+        suggestions: [
+          '练习“旋转再放下”：先把片段转到大致方向、悬停比对接口，再松手放下，减少反复调整。',
+          '可配合拼图、螺母螺帽等生活小物做旋转对齐游戏，迁移旋转控制与空间推理能力。',
+          '若孩子频繁放反或对不齐，先放慢节奏并用手势示范接口方向，再逐步恢复原速。'
+        ]
+      })
+    } else if (gameCode === 'F02_STAR_TRACE') {
+      // 连线小星座：轨迹精度 + 反应时 + 路径跟随与手眼配合
+      const followPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能沿星点顺序缓慢、稳定地连线。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较稳定地沿星点顺序连线，轨迹偏离少，路径跟随与手眼精细配合发展良好。'
+          : hasAccuracy
+            ? '能参与连线，但轨迹偏离或断开仍较多，需要在更慢的节奏下多练“看准星点再走”。'
+            : '本次能完成连线交互，建议在后续训练中持续记录轨迹精度以评估路径跟随。'
+
+      sections.push({
+        category: '轨迹精度',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('轨迹精度', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录轨迹精度以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每个星座连线反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '先引导孩子用眼睛“走一遍”星点顺序，再动手连，建立“先看路径再下笔”的习惯。',
+          '从少量星点、慢速开始，待轨迹稳定后再增加星点或加快节奏。',
+          '当孩子沿星点顺序稳定连线时，及时肯定他注意到的下一个落点，给予具体反馈。'
+        ]
+      })
+      sections.push({
+        category: '路径跟随与手眼配合',
+        performance: followPerformance,
+        suggestions: [
+          '练习“慢走不抬笔”：鼓励孩子一笔连完一小段，减少中途停顿与断开。',
+          '可用描红本、迷宫等做路径跟随游戏，迁移手眼精细配合与轨迹控制能力。'
+        ]
+      })
+    } else if (gameCode === 'F01_CLOUD_ERASE') {
+      // 云朵擦擦擦：擦拭覆盖率 + 手眼协调与持续控制（无反应时指标）
+      const controlPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能用稳定的大范围擦拭动作拨开云层。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能用较稳定的大范围擦拭动作拨开云层，手眼协调与持续精细控制发展良好。'
+          : hasAccuracy
+            ? '能参与擦拭，但覆盖范围或动作连贯性仍不足，需要更多“稳稳地、慢慢擦”的练习。'
+            : '本次能完成擦拭交互，建议在后续训练中持续记录覆盖率以评估手眼协调。'
+
+      sections.push({
+        category: '擦拭覆盖率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('擦拭覆盖', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录擦拭覆盖率以支撑评估。',
+        behavior: '',
+        suggestions: [
+          '先示范“整只手稳稳移动、不来回乱蹭”，让孩子模仿大范围、连贯的擦拭动作。',
+          '从大块云层、低强度开始，待稳定覆盖后再增加层数或强度。',
+          '当孩子把云层擦干净时，及时肯定他注意到的剩余区域，鼓励“再擦一下就干净了”。'
+        ]
+      })
+      sections.push({
+        category: '手眼协调与持续控制',
+        performance: controlPerformance,
+        suggestions: [
+          '练习“看着擦”：让孩子眼睛跟着手移动，避免只凭感觉乱擦。',
+          '可配合擦桌子、擦黑板等生活动作迁移手眼协调与持续控制能力。'
+        ]
+      })
+    } else if (gameCode === 'F05_BALLOONS') {
+      // 刺破慢气球：无经典正确率，核心是抑制控制（early_taps 过早点击）+ 出手反应稳定
+      const earlyTaps = this.numOr(metrics.extra?.early_taps, -1)
+      const successfulPops = this.numOr(metrics.extra?.successful_pops, -1)
+      const maxStreak = this.numOr(metrics.extra?.max_streak, -1)
+
+      const inhibitPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能在合适时机出手、忍住过早点击。'
+        : earlyTaps >= 0 && earlyTaps <= 1
+          ? '能在大部分正确时机出手，过早点击很少，抑制控制与等待能力发展良好。'
+          : earlyTaps >= 0 && earlyTaps <= 4
+            ? '能等待正确出手时机，但偶尔出现过早点击，抑制控制仍可在更慢节奏下继续练习。'
+            : earlyTaps >= 0
+              ? '出手偏急，常在正确时机到来前就点击，抑制控制需要更多“等一等再出手”的练习。'
+              : '本次能完成点破气球交互，建议在后续训练中持续记录过早点击次数以评估抑制控制。'
+
+      sections.push({
+        category: '抑制控制与出手时机',
+        performance: inhibitPerformance,
+        behavior: successfulPops >= 0
+          ? `本次成功点破气球 ${successfulPops} 个${earlyTaps >= 0 ? `，过早点击约 ${earlyTaps} 次` : ''}。`
+          : '',
+        suggestions: [
+          '练习“等亮起再点”：先和孩子约定一个明确的出手信号，强化“看到信号再动手”。',
+          '出现过早点击时，暂停并示范“先停一下、看准了再点”，把节奏放慢。',
+          '当孩子忍住没在错误时机点击时，及时肯定他的等待与自控。'
+        ]
+      })
+      sections.push({
+        category: '反应稳定与持续出手',
+        performance: hasReaction
+          ? (maxStreak > 0
+            ? `本次平均出手反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒，最长连续正确出手 ${maxStreak} 次。`
+            : `本次平均出手反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`)
+          : '本次未采集到反应时数据，建议在后续训练中关注出手的稳定性与节奏。',
+        suggestions: [
+          '把“稳”放在“快”前面：鼓励孩子宁可稍慢也要在正确时机出手，再逐步提升节奏。',
+          '可配合“红灯停、绿灯行”一类等待游戏，迁移抑制控制与稳定出手能力。'
+        ]
+      })
     } else {
-      // 其它 F 类（Phase 2/3 接入时再细化）兜底
+      // 其它 F 类（后续接入时再细化）兜底
       sections.push({
         category: '精细动作训练',
         performance: hasAccuracy
@@ -605,6 +740,102 @@ export class IEPGenerator {
         suggestions: [
           '用图文清单做辅助：先和孩子一起列“今天要带的物品”，再对照清单逐项装包。',
           '逐步撤除清单提示，鼓励孩子独立判断“该带 / 不该带”，培养自主整理能力。'
+        ]
+      })
+    } else if (gameCode === 'L01_WASH_HANDS') {
+      // 洗手小能手：步骤完成准确率 + 反应时 + 洗手步骤与顺序
+      const stepPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否按正确顺序完成洗手各步骤。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较稳定地按顺序完成洗手各步骤，步骤理解与自理独立性发展良好。'
+          : hasAccuracy
+            ? '能参与洗手步骤，但顺序或漏步仍偶尔出错，需要在更慢的节奏下多练“先做哪步、再做哪步”。'
+            : '本次能完成洗手交互，建议在后续训练中持续记录步骤正确率以评估自理步骤理解。'
+
+      sections.push({
+        category: '洗手步骤完成准确率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('洗手步骤', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录步骤正确率以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每个动作反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '在真实洗手时复述“打湿—抹肥皂—搓手心—搓手背—冲干净—擦干”，把游戏中的步骤迁移到生活。',
+          '可以先和孩子口头复述一遍顺序再动手，建立“先想顺序、再动手做”的自理习惯。',
+          '当孩子按正确顺序完成步骤时，及时肯定他记牢的先后关系，给予具体反馈。'
+        ]
+      })
+      sections.push({
+        category: '洗手步骤与顺序',
+        performance: stepPerformance,
+        suggestions: [
+          '用图文步骤卡贴在洗手台旁，先对照卡片逐步完成，再逐步撤除提示培养独立自理。',
+          '把漏步或乱序当作提醒信号，引导孩子回到“上一步是什么、下一步是什么”重新梳理。'
+        ]
+      })
+    } else if (gameCode === 'L02_DRESS_UP') {
+      // 我会穿衣服：穿衣物品放置准确率 + 反应时 + 穿衣顺序与放置
+      const dressPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能按情境挑出衣物并放到正确位置。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较稳定地把衣物放到正确位置，顺序理解与放置准确度发展良好。'
+          : hasAccuracy
+            ? '能参与穿衣放置，但位置或顺序仍偶尔出错，需要更多“先看位置再放”的提示。'
+            : '本次能完成穿衣交互，建议在后续训练中持续记录放置正确率以评估顺序理解。'
+
+      sections.push({
+        category: '穿衣物品放置准确率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('穿衣物品', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录放置正确率以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每次选择反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '出门或起床前和孩子一起说一说“先穿哪件、再穿哪件、放在哪里”，把顺序迁移到真实穿衣。',
+          '先引导孩子口头指出每件衣物的位置，再动手放置，建立“先想位置、再做选择”的习惯。',
+          '当孩子把衣物放到正确位置时，描述他注意到的位置线索（左右、上下、里外），强化观察。'
+        ]
+      })
+      sections.push({
+        category: '穿衣顺序与物品放置',
+        performance: dressPerformance,
+        suggestions: [
+          '用穿衣顺序图卡做辅助：先和孩子一起排出“内层—外层、上—下”的顺序，再逐件完成。',
+          '放错位置时，引导孩子重新看一眼目标位置再调整，而不是直接帮他放好。'
+        ]
+      })
+    } else if (gameCode === 'L04_SET_TABLE') {
+      // 摆桌子帮帮忙：摆放位置准确率 + 反应时 + 空间定位与摆放
+      const placePerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能按锚点把餐具摆到正确位置。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较稳定地按锚点把餐具摆到正确位置，空间定位与对应能力发展良好。'
+          : hasAccuracy
+            ? '能参与餐具摆放，但位置对应仍偶尔出错，需要更多“先对锚点再放”的提示。'
+            : '本次能完成摆放交互，建议在后续训练中持续记录摆放正确率以评估空间定位。'
+
+      sections.push({
+        category: '摆放位置准确率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('摆放位置', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录摆放正确率以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每次摆放反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '在真实摆桌时复述“碗在中间、筷子在右边、勺子在左边”，把游戏中的位置迁移到生活。',
+          '先引导孩子口头指出每个座位对应的位置，再动手摆放，建立“先对锚点、再放餐具”的习惯。',
+          '当孩子把餐具摆到正确位置时，描述他注意到的空间线索（左右、里外、远近），强化观察。'
+        ]
+      })
+      sections.push({
+        category: '空间定位与餐具摆放',
+        performance: placePerformance,
+        suggestions: [
+          '用桌垫上的轮廓图做辅助：先让孩子把餐具对齐轮廓，再逐步撤除提示培养独立摆放。',
+          '放错位置时，引导孩子重新看一眼座位与锚点再调整，而不是直接帮他摆好。'
         ]
       })
     } else {
