@@ -1,9 +1,12 @@
 # 认知发展（cognitive）器材资源 + 器材训练模块接入计划
 
-> status: **draft / 未实施**（2026-07-08 交接，摸底已完成，代码未动）
+> status: **已交付 / 真机 E2E 通过**（2026-07-09 代码全部落地，type-check + parser 断言 + 真机 E2E 均通过；待提交）
 > created: 2026-07-08
+> implemented: 2026-07-09
 > 来源: 用户任务 —— 资源中心新增「认知发展」业务分组（器材）+ 器材训练新增「认知发展」模块
 > 性质: 这是**计划/目标态**文档，不是现状。所有"当前是 X"均以代码现实为准（已在 2026-07-08 摸底核对）。
+> 6 个待决策点（§7）已于 2026-07-09 敲定：entitlement→active/hide、resourceCode 自动生成+脚本改名、用户自转 webp、只走 init、icon=Cpu/#13c2c2、教具页连带接受。
+> 实施中超计划补充：补了 plan 漏列的穷举映射（training-plan-module + 4 vue）、teaching_material CHECK 迁移、DEV_MOCK 补 cognitive。详见 .continue-here.md。
 
 ---
 

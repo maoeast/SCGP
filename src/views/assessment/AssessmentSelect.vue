@@ -206,6 +206,11 @@ const TAB_THEME_MAP: Record<TrainingEntryCode, AssessmentTabTheme> = {
     soft: '#fff7e8',
     border: '#ead7a9',
   },
+  'cognitive': {
+    accent: '#0ea5a5',
+    soft: '#e8fbfb',
+    border: '#b5ecec',
+  },
 }
 
 const router = useRouter()

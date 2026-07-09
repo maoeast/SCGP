@@ -8,6 +8,7 @@ export const EQUIPMENT_CATALOG_GROUPS = [
   'life-skills',
   'fine-motor',
   'soothing-aids',
+  'cognitive-development',
 ] as const
 
 export type EquipmentCatalogGroupCode = typeof EQUIPMENT_CATALOG_GROUPS[number]
@@ -19,6 +20,7 @@ export const EQUIPMENT_CATALOG_GROUP_LABELS: Record<EquipmentCatalogGroupCode, s
   'life-skills': '生活自理',
   'fine-motor': '精细动作',
   'soothing-aids': '安抚教具',
+  'cognitive-development': '认知发展',
 }
 
 export const EQUIPMENT_CATALOG_GROUP_TAG_TYPES: Record<EquipmentCatalogGroupCode, '' | 'success' | 'warning' | 'danger' | 'info' | 'primary'> = {
@@ -28,6 +30,7 @@ export const EQUIPMENT_CATALOG_GROUP_TAG_TYPES: Record<EquipmentCatalogGroupCode
   'life-skills': 'warning',
   'fine-motor': 'info',
   'soothing-aids': '',
+  'cognitive-development': 'primary',
 }
 
 interface ResourceCatalogLike {
@@ -99,6 +102,8 @@ function mapPhysicalDomainToGroup(domain: PhysicalEquipmentDomain): EquipmentCat
       return 'soothing-aids'
     case 'daily-living':
       return 'life-skills'
+    case 'cognitive':
+      return 'cognitive-development'
   }
 }
 

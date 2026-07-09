@@ -12,6 +12,7 @@ export const TRAINING_PLAN_MODULE_CODES = [
   'fine-motor',
   'soothing-aids',
   'life-skills',
+  'cognitive-development',
 ] as const
 
 export type TrainingPlanModuleCode = typeof TRAINING_PLAN_MODULE_CODES[number]
@@ -41,6 +42,7 @@ const BUSINESS_GROUP_ORDER: readonly TrainingResourceBusinessGroupCode[] = [
   'fine-motor',
   'soothing-aids',
   'life-skills',
+  'cognitive-development',
 ]
 
 export const TRAINING_PLAN_MODULE_LABELS: Record<TrainingPlanModuleCode, string> = {
@@ -52,6 +54,7 @@ export const TRAINING_PLAN_MODULE_LABELS: Record<TrainingPlanModuleCode, string>
   'fine-motor': TRAINING_RESOURCE_BUSINESS_GROUP_LABELS['fine-motor'],
   'soothing-aids': TRAINING_RESOURCE_BUSINESS_GROUP_LABELS['soothing-aids'],
   'life-skills': TRAINING_RESOURCE_BUSINESS_GROUP_LABELS['life-skills'],
+  'cognitive-development': TRAINING_RESOURCE_BUSINESS_GROUP_LABELS['cognitive-development'],
 }
 
 export const TRAINING_PLAN_MODULE_OPTIONS: readonly TrainingPlanModuleOption[] = [
@@ -80,6 +83,7 @@ const TRAINING_PLAN_MODULE_ALIASES: Record<TrainingPlanStoredModuleCode, Trainin
   'soothing-aids': 'soothing-aids',
   'life-skills': 'life-skills',
   life_skills: 'life-skills',
+  'cognitive-development': 'cognitive-development',
 }
 
 export function isTrainingPlanModuleCode(value: unknown): value is TrainingPlanModuleCode {

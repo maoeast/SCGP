@@ -38,7 +38,7 @@ export interface EntitlementsInfo {
   debugOrigin?: string
 }
 
-const DEV_MOCK_ALLOWED_MODULES = ['sensory', 'emotional', 'social', 'life_skills'] as const
+const DEV_MOCK_ALLOWED_MODULES = ['sensory', 'emotional', 'social', 'life_skills', 'cognitive'] as const
 const BUSINESS_MODULE_CODES = ['sensory', 'emotional', 'social', 'cognitive', 'life_skills'] as const
 const ENABLE_DEV_ACTIVATION_BYPASS =
   import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_ACTIVATION_BYPASS === 'true'

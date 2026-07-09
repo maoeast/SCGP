@@ -27,6 +27,7 @@ export const TEACHING_MATERIAL_DIMENSION_MODULE_MAP: Record<TeachingMaterialDime
   'life-skills': ModuleCode.LIFE_SKILLS,
   'fine-motor': ModuleCode.SENSORY,
   'soothing-aids': ModuleCode.EMOTIONAL,
+  'cognitive-development': ModuleCode.COGNITIVE,
 }
 
 export function isTeachingMaterialDimensionCode(value: unknown): value is TeachingMaterialDimensionCode {
@@ -144,6 +145,7 @@ export const TRAINING_RESOURCE_BUSINESS_GROUP_CODES = [
   'fine-motor',
   'life-skills',
   'soothing-aids',
+  'cognitive-development',
 ] as const
 
 export type TrainingResourceBusinessGroupCode = typeof TRAINING_RESOURCE_BUSINESS_GROUP_CODES[number]
@@ -157,6 +159,7 @@ export const TRAINING_RESOURCE_BUSINESS_GROUP_LABELS: Record<TrainingResourceBus
   'fine-motor': '精细动作',
   'life-skills': '生活自理',
   'soothing-aids': '安抚教具',
+  'cognitive-development': '认知发展',
 }
 
 export const TRAINING_RESOURCE_BUSINESS_GROUP_MODULE_MAP: Record<TrainingResourceBusinessGroupCode, ModuleCode> = {
@@ -167,6 +170,7 @@ export const TRAINING_RESOURCE_BUSINESS_GROUP_MODULE_MAP: Record<TrainingResourc
   'fine-motor': ModuleCode.SENSORY,
   'life-skills': ModuleCode.LIFE_SKILLS,
   'soothing-aids': ModuleCode.EMOTIONAL,
+  'cognitive-development': ModuleCode.COGNITIVE,
 }
 
 export function getTrainingResourceBusinessGroupLabel(code: TrainingResourceBusinessGroupCode): string {
@@ -241,6 +245,8 @@ export function resolveTrainingResourceBusinessGroupCode(
       return 'fine-motor'
     case 'soothing-aids':
       return 'soothing-aids'
+    case 'cognitive':
+      return 'cognitive-development'
     case TASK_TRAINING_ENTRY_CODE:
       return TASK_TRAINING_ENTRY_CODE
     case 'sensory-integration':

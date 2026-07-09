@@ -39,11 +39,13 @@ const ROUTE_ENTRY_ALIASES: Record<string, EquipmentTrainingEntryCode> = {
   'fine-motor': 'fine-motor',
   'soothing-aids': 'soothing-aids',
   'life-skills': 'life-skills',
+  'cognitive': 'cognitive',
 }
 
 const UNIQUE_MODULE_ENTRY_MAP: Partial<Record<ModuleCode, EquipmentTrainingEntryCode>> = {
   [ModuleCode.SOCIAL]: 'social-communication',
   [ModuleCode.LIFE_SKILLS]: 'life-skills',
+  [ModuleCode.COGNITIVE]: 'cognitive',
 }
 
 function normalizeRouteValue(value: unknown): string {

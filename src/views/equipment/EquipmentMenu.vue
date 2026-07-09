@@ -54,6 +54,7 @@ import {
   Operation,
   MoonNight,
   House,
+  Cpu,
 } from '@element-plus/icons-vue'
 import { ResourceAPI } from '@/database/resource-api'
 import { useAuthStore } from '@/stores/auth'
@@ -82,6 +83,7 @@ const getModuleIcon = (iconName: string) => {
     Operation,
     MoonNight,
     House,
+    Cpu,
   }
   return iconMap[iconName] || MagicStick
 }

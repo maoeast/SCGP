@@ -67,6 +67,7 @@ const entryEmojis: Record<TrainingEntryCode, string> = {
   'fine-motor': '🧩',
   'soothing-aids': '🧸',
   'life-skills': '🏠',
+  'cognitive': '🧠',
 }
 
 const trainingEntries = computed(() => {

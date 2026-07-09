@@ -2414,7 +2414,7 @@ export async function insertPhysicalEquipmentResourceData(): Promise<void> {
       SELECT id, module_code, name, category, legacy_source, meta_data
       FROM sys_training_resource
       WHERE resource_type = 'equipment'
-        AND module_code IN ('sensory', 'emotional', 'social', 'life_skills')
+        AND module_code IN ('sensory', 'emotional', 'social', 'life_skills', 'cognitive')
     `)
 
     const existingByCode = new Map<string, number>()
@@ -3476,9 +3476,10 @@ async function initializeTeachingMaterialTables(rawDb: any): Promise<void> {
         'social-communication',
         'life-skills',
         'fine-motor',
-        'soothing-aids'
+        'soothing-aids',
+        'cognitive-development'
       )),
-      module_code TEXT NOT NULL CHECK(module_code IN ('sensory', 'emotional', 'social', 'life_skills')),
+      module_code TEXT NOT NULL CHECK(module_code IN ('sensory', 'emotional', 'social', 'life_skills', 'cognitive')),
       file_name TEXT NOT NULL,
       file_type TEXT NOT NULL,
       file_path TEXT NOT NULL UNIQUE,
@@ -3507,6 +3508,67 @@ async function initializeTeachingMaterialTables(rawDb: any): Promise<void> {
   rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_updated ON teaching_material(updated_at DESC)')
   rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_favorite_user ON teaching_material_favorite(user_id)')
   rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_favorite_material ON teaching_material_favorite(material_id)')
+
+  migrateTeachingMaterialCognitiveConstraint(rawDb)
+}
+
+function migrateTeachingMaterialCognitiveConstraint(rawDb: any): void {
+  // 教具页已开放「认知发展」维度（DP6，TEACHING_MATERIAL_DIMENSION_CODES = EQUIPMENT_CATALOG_GROUPS）。
+  // 老库 teaching_material 的 dimension_code / module_code CHECK 不含 cognitive-development / cognitive，
+  // 上传认知教具会被拒。新库由 CREATE TABLE 直接建含 cognitive 的版本；此迁移仅重建老库表放开约束。
+  if (tableSqlContains(rawDb, 'teaching_material', "'cognitive-development'")) {
+    return
+  }
+
+  console.log('[InitDatabase] 迁移 teaching_material CHECK 约束：放开 cognitive-development / cognitive')
+  rawDb.run('PRAGMA foreign_keys = OFF')
+  try {
+    rawDb.run('DROP TABLE IF EXISTS _teaching_material_cognitive_old')
+    rawDb.run('ALTER TABLE teaching_material RENAME TO _teaching_material_cognitive_old')
+    rawDb.run(`
+      CREATE TABLE teaching_material (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        dimension_code TEXT NOT NULL CHECK(dimension_code IN (
+          'sensory-training',
+          'emotional-regulation',
+          'social-communication',
+          'life-skills',
+          'fine-motor',
+          'soothing-aids',
+          'cognitive-development'
+        )),
+        module_code TEXT NOT NULL CHECK(module_code IN ('sensory', 'emotional', 'social', 'life_skills', 'cognitive')),
+        file_name TEXT NOT NULL,
+        file_type TEXT NOT NULL,
+        file_path TEXT NOT NULL UNIQUE,
+        file_size_bytes INTEGER NOT NULL DEFAULT 0,
+        tags TEXT,
+        description TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `)
+    rawDb.run(`
+      INSERT INTO teaching_material (
+        id, title, dimension_code, module_code, file_name, file_type, file_path,
+        file_size_bytes, tags, description, created_at, updated_at
+      )
+      SELECT
+        id, title, dimension_code, module_code, file_name, file_type, file_path,
+        file_size_bytes, tags, description, created_at, updated_at
+      FROM _teaching_material_cognitive_old
+    `)
+    rawDb.run('DROP TABLE _teaching_material_cognitive_old')
+    rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_dimension ON teaching_material(dimension_code)')
+    rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_module ON teaching_material(module_code)')
+    rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_updated ON teaching_material(updated_at DESC)')
+  } catch (error) {
+    console.error('[InitDatabase] teaching_material cognitive CHECK 迁移失败:', error)
+    throw error
+  } finally {
+    rawDb.run('PRAGMA foreign_keys = ON')
+  }
 }
 
 function clearLegacyTeachingMaterialData(rawDb: any): void {

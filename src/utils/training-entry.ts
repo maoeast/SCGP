@@ -12,6 +12,7 @@ export const TRAINING_ENTRY_CODES = [
   'fine-motor',
   'soothing-aids',
   'life-skills',
+  'cognitive',
 ] as const
 
 export type TrainingEntryCode = typeof TRAINING_ENTRY_CODES[number]
@@ -93,6 +94,16 @@ const TRAINING_ENTRY_DEFINITIONS: Record<TrainingEntryCode, TrainingEntryDefinit
     icon: 'House',
     themeColor: '#d97706',
   },
+  'cognitive': {
+    code: 'cognitive',
+    name: '认知发展',
+    description: '围绕认知发展主链开展游戏训练、器材训练与训练记录。',
+    moduleCode: ModuleCode.COGNITIVE,
+    requiredEntitlement: 'cognitive',
+    catalogGroups: ['cognitive-development'],
+    icon: 'Cpu',
+    themeColor: '#13c2c2',
+  },
 }
 
 const LEGACY_ENTRY_ALIASES: Record<string, TrainingEntryCode> = {
@@ -107,6 +118,7 @@ const LEGACY_ENTRY_ALIASES: Record<string, TrainingEntryCode> = {
   'soothing-aids': 'soothing-aids',
   life_skills: 'life-skills',
   'life-skills': 'life-skills',
+  'cognitive': 'cognitive',
 }
 
 const CATALOG_GROUP_ENTRY_MAP: Record<EquipmentCatalogGroupCode, TrainingEntryCode> = {
@@ -116,6 +128,7 @@ const CATALOG_GROUP_ENTRY_MAP: Record<EquipmentCatalogGroupCode, TrainingEntryCo
   'fine-motor': 'fine-motor',
   'soothing-aids': 'soothing-aids',
   'life-skills': 'life-skills',
+  'cognitive-development': 'cognitive',
 }
 
 const MODULE_PRIMARY_ENTITLEMENT_MAP: Record<ModuleCode, EntitlementCode> = {
@@ -239,6 +252,8 @@ export function resolveTrainingEntryCodeFromGameResource(
       return 'social-communication'
     case ModuleCode.LIFE_SKILLS:
       return 'life-skills'
+    case ModuleCode.COGNITIVE:
+      return 'cognitive'
     case ModuleCode.SENSORY:
     default:
       return 'sensory-integration'

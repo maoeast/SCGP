@@ -131,7 +131,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { CircleCheck, Plus, User, ArrowLeft, MagicStick, Sunny, ChatDotRound, Switch } from '@element-plus/icons-vue'
+import { CircleCheck, Plus, User, ArrowLeft, MagicStick, Sunny, ChatDotRound, Switch, Cpu } from '@element-plus/icons-vue'
 import ResourceSelector from '@/components/resources/ResourceSelector.vue'
 import DataEntryForm from '@/components/equipment/DataEntryForm.vue'
 import type { ResourceItem } from '@/types/module'
@@ -237,6 +237,7 @@ const getModuleIcon = (iconName: string) => {
     Operation: MagicStick,
     MoonNight: Sunny,
     House: User,
+    Cpu,
   }
   return iconMap[iconName] || MagicStick
 }

@@ -86,9 +86,9 @@ export const ENTITLEMENT_DEFINITIONS = Object.freeze({
   cognitive: createEntitlementDefinition({
     code: 'cognitive',
     name: '认知发展',
-    status: 'placeholder',
-    uiStrategy: 'lock',
-    description: '预留授权能力包占位，不代表认知发展模块已完整交付。',
+    status: 'active',
+    uiStrategy: 'hide',
+    description: '对应认知发展主链授权能力包。',
   }),
 } satisfies Record<EntitlementCode, Readonly<EntitlementDefinition>>)
 

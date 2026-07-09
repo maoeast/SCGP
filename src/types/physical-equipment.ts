@@ -4,6 +4,7 @@ export const PHYSICAL_EQUIPMENT_DOMAINS = [
   'fine-motor',
   'soothing-aids',
   'daily-living',
+  'cognitive',
 ] as const
 
 export type PhysicalEquipmentDomain = typeof PHYSICAL_EQUIPMENT_DOMAINS[number]

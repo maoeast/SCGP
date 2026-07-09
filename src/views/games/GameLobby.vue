@@ -246,7 +246,8 @@ const ENTRY_EMOJIS: Record<TrainingEntryCode, string> = {
   'social-communication': '👥',
   'fine-motor': '🧩',
   'soothing-aids': '🫶',
-  'life-skills': '🏠'
+  'life-skills': '🏠',
+  'cognitive': '🧠'
 }
 
 const route = useRoute()

@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-05-31
+> last_updated: 2026-07-09
 > Responsibility: new-session handoff entry.
 > Read when: entering the repo or resuming work and needing the fastest route to current truth.
 > Not responsible for: replacing `AGENTS.md`, `.continue-here.md`, or `PROJECT_CONTEXT.md`.

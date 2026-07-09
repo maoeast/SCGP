@@ -475,6 +475,7 @@ const DIMENSION_DESCRIPTIONS: Record<TeachingMaterialDimensionCode, string> = {
   'life-skills': '按生活自理主链组织训练步骤和支持材料。',
   'fine-motor': '按精细动作主链组织练习和辅具资料。',
   'soothing-aids': '按安抚教具体系组织使用说明与支持材料。',
+  'cognitive-development': '按认知发展主链组织教学与认知训练支持材料。',
 }
 
 function getDimensionLabel(dimensionCode: TeachingMaterialDimensionCode): string {
