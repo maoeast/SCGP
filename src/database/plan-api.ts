@@ -34,6 +34,8 @@ export interface TrainingPlan {
   long_term_goals: string | null  // JSON 字符串
   short_term_goals: string | null // JSON 字符串
   description: string | null
+  source: string | null                     // 计划来源（'assessment' = 由评估推荐生成）
+  source_assessment_id: number | null       // 来源评估记录 id（回链评估报告）
   created_at: string
   updated_at: string
 }
@@ -74,6 +76,8 @@ export interface CreatePlanParams {
   long_term_goals?: string[] | null
   short_term_goals?: string[] | null
   description?: string
+  source?: string | null
+  source_assessment_id?: number | null
 }
 
 /**
@@ -128,7 +132,9 @@ export class PlanAPI extends DatabaseAPI {
       status = 'draft',
       long_term_goals = null,
       short_term_goals = null,
-      description = null
+      description = null,
+      source = null,
+      source_assessment_id = null
     } = params
 
     // 将目标数组转为 JSON 字符串
@@ -138,9 +144,12 @@ export class PlanAPI extends DatabaseAPI {
     this.execute(
       `INSERT INTO sys_training_plan (
         name, student_id, module_code, start_date, end_date, status,
-        long_term_goals, short_term_goals, description
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, student_id, module_code, start_date, end_date, status, ltGoalsJson, stGoalsJson, description]
+        long_term_goals, short_term_goals, description, source, source_assessment_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        name, student_id, module_code, start_date, end_date, status,
+        ltGoalsJson, stGoalsJson, description, source, source_assessment_id,
+      ]
     )
 
     return this.getLastInsertId()

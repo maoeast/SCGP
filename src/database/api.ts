@@ -2861,6 +2861,19 @@ export class ReportAPI extends DatabaseAPI {
   }
 
   /**
+   * 按 assess_id 查询报告记录（推荐引擎：训练计划 source_assessment_id → 评估报告回链）。
+   * 返回最近一条（同次评估可能有多类型记录）。
+   */
+  getReportRecordByAssessId(assessId: number): any | null {
+    return this.queryOne(`
+      SELECT * FROM report_record
+      WHERE assess_id = ?
+      ORDER BY created_at DESC
+      LIMIT 1
+    `, [assessId])
+  }
+
+  /**
    * 删除报告记录
    */
   deleteReportRecord(id: number): void {

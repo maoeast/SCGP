@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
+import RecommendationDrawer from '@/features/recommendation/components/RecommendationDrawer.vue'
 </script>
 
 <template>
   <RouterView />
+  <RecommendationDrawer />
 </template>
 
 <style>

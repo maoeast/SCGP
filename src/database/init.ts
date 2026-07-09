@@ -888,6 +888,8 @@ CREATE TABLE IF NOT EXISTS sys_training_plan (
   long_term_goals TEXT,    -- JSON 数组存储长期目标
   short_term_goals TEXT,   -- JSON 数组存储短期目标
   description TEXT,
+  source TEXT,                       -- 计划来源（'assessment' = 由评估推荐生成；NULL = 手工建）
+  source_assessment_id INTEGER,      -- 来源评估记录 id（回链评估报告；nullable）
   is_active INTEGER DEFAULT 1,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -1339,6 +1341,13 @@ export async function initDatabase(): Promise<any> {
       console.log('[InitDatabase] ✅ 系统表初始化完成')
     } catch (sysError) {
       console.warn('[InitDatabase] ⚠️ 系统表初始化失败:', sysError)
+    }
+
+    // ========== 推荐引擎：sys_training_plan 补 source / source_assessment_id 列 ==========
+    try {
+      migrateTrainingPlanSourceColumns(rawDb)
+    } catch (planSourceError) {
+      console.warn('[InitDatabase] ⚠️ sys_training_plan source 列迁移失败:', planSourceError)
     }
 
     // 只在新数据库时插入初始数据
@@ -3569,6 +3578,16 @@ function migrateTeachingMaterialCognitiveConstraint(rawDb: any): void {
   } finally {
     rawDb.run('PRAGMA foreign_keys = ON')
   }
+}
+
+function migrateTrainingPlanSourceColumns(rawDb: any): void {
+  // 推荐引擎：sys_training_plan 增加 source / source_assessment_id 两列（均 nullable），
+  // 用于记录"由评估推荐生成"的计划并回链评估报告。
+  // 新库由 CREATE TABLE 直接建含两列；此迁移仅给老库补列。
+  // 用 safeAddColumn（ALTER TABLE ADD COLUMN，幂等，列存在即跳过），而非表重建 idiom ——
+  // 两列均为 nullable 无 CHECK 约束，表重建对 sys_training_plan（带 FK + 4 索引）风险更高且无必要。
+  safeAddColumn(rawDb, 'sys_training_plan', 'source TEXT')
+  safeAddColumn(rawDb, 'sys_training_plan', 'source_assessment_id INTEGER')
 }
 
 function clearLegacyTeachingMaterialData(rawDb: any): void {

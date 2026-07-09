@@ -53,6 +53,9 @@
         <el-button @click="handleExit" size="large">
           返回列表
         </el-button>
+        <el-button type="success" plain @click="handleRecommend" size="large">
+          器材推荐
+        </el-button>
         <el-button type="primary" @click="handleViewReport" size="large">
           查看报告
         </el-button>
@@ -64,13 +67,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { CircleCheck } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import type { ScoreResult, AssessmentFeedback, StudentContext } from '@/types/assessment'
+import { useRecommendationStore } from '@/stores/recommendation'
 
 interface Props {
   visible: boolean
   scoreResult: ScoreResult | null
   feedback: AssessmentFeedback | null
   student: StudentContext | null
+  /** 关联评估记录 id（生成计划时回链 source_assessment_id） */
+  assessmentId?: number | string
+  /** 量表中文名（计划名 + 徽标） */
+  scaleName?: string
 }
 
 const props = defineProps<Props>()
@@ -78,6 +87,8 @@ const emit = defineEmits<{
   (e: 'view-report'): void
   (e: 'exit'): void
 }>()
+
+const recommendationStore = useRecommendationStore()
 
 // 根据评定等级确定 Tag 类型
 const levelTagType = computed(() => {
@@ -102,6 +113,17 @@ function handleViewReport() {
 
 function handleExit() {
   emit('exit')
+}
+
+function handleRecommend() {
+  if (!props.scoreResult) {
+    ElMessage.warning('评估结果尚未就绪')
+    return
+  }
+  recommendationStore.generate(
+    { scoreResult: props.scoreResult, assessmentId: props.assessmentId },
+    { scaleName: props.scaleName, studentName: props.student?.name },
+  )
 }
 </script>
 
@@ -187,6 +209,7 @@ function handleExit() {
 .dialog-footer {
   display: flex;
   justify-content: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 </style>

@@ -95,6 +95,8 @@
       :score-result="scoreResult"
       :feedback="feedback"
       :student="student"
+      :assessment-id="assessId || undefined"
+      :scale-name="scaleDisplayName"
       @view-report="handleViewReport"
       @exit="handleExit"
     />
@@ -187,6 +189,15 @@ const state = ref<AssessmentState>({
 const scoreResult = ref<ScoreResult | null>(null)
 const feedback = ref<AssessmentFeedback | null>(null)
 const assessId = ref<number | null>(null)
+
+// 量表中文名（推荐引擎计划名 + 徽标）
+const scaleDisplayName = computed(() => {
+  try {
+    return driver.value?.getScaleInfo?.()?.name || scaleCode.value
+  } catch {
+    return scaleCode.value
+  }
+})
 
 interface CBCLDriverProgressBinding {
   setSocialData(data: CBCLSocialCompetenceData): void

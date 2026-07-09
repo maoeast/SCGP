@@ -124,6 +124,17 @@
               </span>
               <h3 class="plan-card__title" :title="plan.name">{{ plan.name }}</h3>
               <p class="plan-card__module">{{ getModuleLabel(plan.module_code) }}</p>
+              <el-tag
+                v-if="plan.source === 'assessment'"
+                class="plan-card__source-badge"
+                size="small"
+                type="success"
+                effect="light"
+                title="点击查看评估报告"
+                @click.stop="handleViewAssessmentReport(plan)"
+              >
+                由评估生成
+              </el-tag>
             </div>
 
             <div class="plan-card__meta">
@@ -722,7 +733,7 @@ import {
 } from '@element-plus/icons-vue'
 import { PlanAPI, type TrainingPlan, type PlanStatus, type PlanResourceMap } from '@/database/plan-api'
 import { ResourceAPI } from '@/database/resource-api'
-import { StudentAPI } from '@/database/api'
+import { StudentAPI, ReportAPI } from '@/database/api'
 import {
   TASK_TRAINING_MODULE_CODE,
   TASK_TRAINING_RESOURCE_TYPE,
@@ -733,6 +744,10 @@ import {
   getEquipmentCatalogGroupLabel,
 } from '@/utils/equipment-catalog-group'
 import { buildTrainingLaunchRoute } from '@/utils/training-launch'
+import {
+  buildAssessmentReportRoute,
+  type AssessmentReportScaleType,
+} from '@/features/assessment/report-routes'
 import { resolveResourceCoverImage, resolveResourceItemCoverImage } from '@/utils/resource-cover'
 import {
   TRAINING_PLAN_FILTER_MODULE_OPTIONS,
@@ -1356,6 +1371,34 @@ function handleViewPlan(plan: TrainingPlan) {
 }
 
 /**
+ * 评估生成计划的回链：source_assessment_id → report_record(report_type) → 评估报告路由。
+ */
+function handleViewAssessmentReport(plan: TrainingPlan) {
+  const assessId = plan.source_assessment_id
+  if (!assessId) {
+    ElMessage.warning('该计划未关联评估记录')
+    return
+  }
+  try {
+    const reportApi = new ReportAPI()
+    const record = reportApi.getReportRecordByAssessId(Number(assessId))
+    if (!record || !record.report_type) {
+      ElMessage.warning('未找到关联的评估报告')
+      return
+    }
+    const route = buildAssessmentReportRoute({
+      scaleType: record.report_type as AssessmentReportScaleType,
+      assessId,
+      studentId: plan.student_id,
+    })
+    router.push(route)
+  } catch (error) {
+    console.error('[PlanList] 跳转评估报告失败:', error)
+    ElMessage.error('跳转评估报告失败')
+  }
+}
+
+/**
  * 智能跳转：根据资源类型启动不同的训练入口
  *
  * 路由传参说明：
@@ -1780,6 +1823,12 @@ onMounted(() => {
   margin: 6px 0 0;
   font-size: 11px;
   color: var(--color-text-secondary, #606266);
+}
+
+.plan-card__source-badge {
+  margin-top: 6px;
+  cursor: pointer;
+  width: fit-content;
 }
 
 .plan-card__meta {
