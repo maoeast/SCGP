@@ -33,6 +33,6 @@ If those four files are not enough, then read `PROJECT_CONTEXT.md`.
 
 ## Current Focus
 
-- 当前授权链主线已经收口到 `effectiveEntitlements`。
-- 后续若继续做授权相关工作，优先检查是否还有“用户可见文案继续把能力包和旧模块口径混用”的残留，而不是回退到旧的 `allowedModules` 直判思路。
-- 当前仓库仍是 dirty，处理授权问题时不要混入现有图片资源、更新配置等无关脏改动。
+- 当前活动任务：**评估→IEP→器材推荐→训练计划 四者联动（推荐引擎叠加）**，计划已批准正在执行。主真源 `.continue-here.md` + `docs/plans/2026-07-09-assessment-recommendation-engine-plan.md`。纯叠加（`src/features/recommendation/`），唯一 schema 改动 `sys_training_plan` 加 `source`/`source_assessment_id` 两列。
+- 认知发展（cognitive）接入已提交 `8d571d1`（仓库已 clean）。
+- 授权链主线已收口到 `effectiveEntitlements`；推荐引擎的 entitlement 硬过滤必须按**器材 category**（非 moduleCode）映射到唯一 entitlement，禁用模块级 `canAccessModuleByEntitlements`（太粗）。
