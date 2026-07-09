@@ -157,10 +157,28 @@ export function generatePlanFromRecommendation(
   const interventions = extractInterventionGoals(extraData)
   const iepTargets = extractIepTargets(extraData)
 
-  // 长期目标：弱势领域 + iepInterventions.long
+  const isConsolidation = result.mode === 'consolidation'
+  // 巩固模式：无弱势维度来源，从选中器材所属领域派生「能力巩固」目标
+  const consolidationDomainLabels = isConsolidation
+    ? Array.from(
+        new Set(
+          selected
+            .map((item) => getUnifiedDomainDefinition(item.domain).label)
+            .filter(Boolean),
+        ),
+      )
+    : []
+
+  // 长期目标：弱势领域 / 巩固领域 + iepInterventions.long
   const longTermGoals: string[] = []
-  for (const weak of result.weakDomains) {
-    longTermGoals.push(`${weak.label}能力提升`)
+  if (isConsolidation) {
+    for (const label of consolidationDomainLabels) {
+      longTermGoals.push(`${label}能力巩固与泛化`)
+    }
+  } else {
+    for (const weak of result.weakDomains) {
+      longTermGoals.push(`${weak.label}能力提升`)
+    }
   }
   for (const longText of interventions.long) {
     if (!longTermGoals.includes(longText)) {
@@ -168,11 +186,17 @@ export function generatePlanFromRecommendation(
     }
   }
 
-  // 短期目标：弱势领域（含 severity）+ iepTargets + iepInterventions.short
+  // 短期目标：弱势领域（含 severity）/ 巩固领域 + iepTargets + iepInterventions.short
   const shortTermGoals: string[] = []
-  for (const weak of result.weakDomains) {
-    const severityLabel = weak.severity === 'danger' ? '重度弱势' : '弱势'
-    shortTermGoals.push(`${weak.label}（${severityLabel}）：针对性训练`)
+  if (isConsolidation) {
+    for (const label of consolidationDomainLabels) {
+      shortTermGoals.push(`${label}：进阶巩固训练`)
+    }
+  } else {
+    for (const weak of result.weakDomains) {
+      const severityLabel = weak.severity === 'danger' ? '重度弱势' : '弱势'
+      shortTermGoals.push(`${weak.label}（${severityLabel}）：针对性训练`)
+    }
   }
   for (const targetText of iepTargets.slice(0, 6)) {
     if (!shortTermGoals.includes(targetText)) {
@@ -207,7 +231,9 @@ export function generatePlanFromRecommendation(
     status: 'draft',
     long_term_goals: longTermGoals.length > 0 ? longTermGoals : null,
     short_term_goals: shortTermGoals.length > 0 ? shortTermGoals : null,
-    description: `由${scaleName || result.scaleCode}评估推荐自动生成，请审阅后激活。`,
+    description: isConsolidation
+      ? `由${scaleName || result.scaleCode}评估生成的能力巩固计划，请审阅后激活。`
+      : `由${scaleName || result.scaleCode}评估推荐自动生成，请审阅后激活。`,
     source: 'assessment',
     source_assessment_id: sourceAssessmentId,
   }

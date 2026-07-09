@@ -1479,3 +1479,12 @@
 - 形状匹配类游戏当前以**独立组件**结构落地：共享视觉件 `WoodenShapeBlock.vue`（`src/components/games/shared/`）由 `WoodBlockPuzzleGame.vue` 与 `GameGrid.vue` 复用，不再把形状/木块逻辑内联回 `GameGrid.vue`。
 - 专题测试：`scripts/tests/sensory-hand-games.test.mjs`、`scripts/tests/sensory-hand-gestures.test.mjs`。
 - 重要实现边界：后续新增形状匹配/手势类感官游戏，应沿用「`hand/` 下独立组件 + `shared/` 复用视觉件」结构，不要把逻辑塞回 `GameGrid.vue` 造成膨胀。
+
+## 58. 2026-07-09 推荐引擎「能力巩固」模式 + usage_count 死代码接通
+
+- 器材推荐引擎已从「单一弱势驱动」扩展为双模式（`recommendation-engine.ts`）：
+  - `mode='weakness'`：原逻辑，评估有弱势时按弱势领域 + 标签打分推荐（行为不变，仅补 `mode` 字段）。
+  - `mode='consolidation'`：评估正常/优秀（无弱势）时，按全部 equipmentSupported 域 + entitlement 硬过滤 + `usageCount` 降序，每域取 top-3 / 默认勾选 1，产出「能力巩固精选」。由 `RecommendationResult.mode` 区分，UI（`RecommendationDrawer`）按模式切「发展概况」卡片与标题。
+- 评估完成弹窗入口文案动态化：`scoreResult.level ∈ [优秀,高常,正常]` → 「能力巩固推荐」，否则「器材推荐」（`CompleteDialog`）。
+- `usage_count` **不再是死字段**：`stores/recommendation.ts` 的 `createDraftPlan()` 在计划挂载成功后对选中器材调 `ResourceAPI.incrementUsageCount(id)`。初期全 0 时巩固精选退化为 `created_at` 顺序，随使用累积真实化。训练记录写入路径计 +1 仍为后续可选增强（碰训练记录主表，独立任务）。
+- 巩固模式计划目标兜底：无弱势维度时从选中器材所属域派生 `${label}能力巩固与泛化`（`plan-generator.ts`）。

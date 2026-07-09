@@ -85,7 +85,9 @@ export interface RecommendationResult {
   scaleCode: string
   studentId: number
   assessmentId?: number | string
-  /** 弱势领域列表（已含 equipmentSupported 标记，severity 降序） */
+  /** 推荐模式：weakness=弱势驱动；consolidation=无弱势时的能力巩固精选 */
+  mode: 'weakness' | 'consolidation'
+  /** 弱势领域列表（已含 equipmentSupported 标记，severity 降序；consolidation 模式为空） */
   weakDomains: WeakDomain[]
   /** 推荐器材（已 entitlement 过滤 + 打分排序，按领域分组顺序） */
   recommendations: RecommendedEquipment[]

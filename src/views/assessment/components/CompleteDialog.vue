@@ -54,7 +54,7 @@
           返回列表
         </el-button>
         <el-button type="success" plain @click="handleRecommend" size="large">
-          器材推荐
+          {{ recommendLabel }}
         </el-button>
         <el-button type="primary" @click="handleViewReport" size="large">
           查看报告
@@ -105,6 +105,12 @@ const levelTagType = computed(() => {
     return 'danger'
   }
   return 'info'
+})
+
+// 推荐入口文案：正常/优秀 → 能力巩固推荐；否则 → 器材推荐
+const recommendLabel = computed(() => {
+  const level = props.scoreResult?.level || ''
+  return ['优秀', '高常', '正常'].includes(level) ? '能力巩固推荐' : '器材推荐'
 })
 
 function handleViewReport() {

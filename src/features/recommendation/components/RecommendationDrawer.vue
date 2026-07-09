@@ -15,8 +15,8 @@
       />
 
       <template v-else-if="result">
-        <!-- 弱势领域 -->
-        <section class="rec-section">
+        <!-- 弱势领域（弱势模式） -->
+        <section v-if="!isConsolidation" class="rec-section">
           <h4 class="section-title">弱势领域</h4>
           <div v-if="weakDomains.length === 0" class="muted">未检测到明显弱势领域。</div>
           <div v-else class="weak-grid">
@@ -35,16 +35,25 @@
           </div>
         </section>
 
+        <!-- 发展概况（巩固模式：无弱势，器材可用于能力巩固） -->
+        <section v-else class="rec-section">
+          <h4 class="section-title">发展概况</h4>
+          <div class="overview-card">
+            <p class="overview-main">✅ 各领域发展均衡，本次评估未发现明显弱势领域。</p>
+            <p class="overview-sub">器材训练同样适用于日常能力巩固与全面发展，以下为按使用热度精选的器材，可按需勾选。</p>
+          </div>
+        </section>
+
         <!-- 推荐器材 -->
         <section class="rec-section">
           <div class="section-head">
-            <h4 class="section-title">推荐器材</h4>
+            <h4 class="section-title">{{ isConsolidation ? '推荐器材（能力巩固精选）' : '推荐器材' }}</h4>
             <span class="section-hint">{{ selectedCount }}/{{ recommendations.length }} 已选</span>
           </div>
 
           <el-empty
             v-if="!hasAnyEquipment"
-            description="暂无配套器材推荐（部分领域如大运动/语言可能无器材包，或当前授权未开通对应能力包）。"
+            :description="isConsolidation ? '当前授权下暂无配套巩固器材，可前往「资源中心」浏览全部器材。' : '暂无配套器材推荐（部分领域如大运动/语言可能无器材包，或当前授权未开通对应能力包）。'"
           />
 
           <div v-else class="equip-list">
@@ -134,6 +143,7 @@ const result = computed(() => store.result)
 const weakDomains = computed(() => store.weakDomains)
 const recommendations = computed(() => store.recommendations)
 const hasAnyEquipment = computed(() => store.result?.hasAnyEquipment ?? false)
+const isConsolidation = computed(() => store.result?.mode === 'consolidation')
 const selectedCount = computed(() => store.selectedCount)
 const lastError = computed(() => store.error)
 
@@ -225,6 +235,27 @@ async function handleCreateDraft() {
 .muted {
   color: #909399;
   font-size: 13px;
+}
+
+.overview-card {
+  background: #f0f9eb;
+  border: 1px solid #c2e7b0;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.overview-main {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.overview-sub {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #606266;
 }
 
 .weak-grid {

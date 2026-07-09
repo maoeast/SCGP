@@ -36,6 +36,10 @@ import type {
 const PER_DOMAIN_CAP = 8
 /** 每个领域默认勾选的器材数（面板可增删） */
 const DEFAULT_SELECTED_PER_DOMAIN = 2
+/** 巩固模式：每个领域最多推荐的器材数（不铺全部，避免选择负担） */
+const CONSOLIDATION_PER_DOMAIN_CAP = 3
+/** 巩固模式：每个领域默认勾选的器材数 */
+const CONSOLIDATION_DEFAULT_SELECTED = 1
 
 /** levelCode 兜底：含这些 token 视为 danger（重度弱势） */
 const DANGER_LEVEL_TOKENS = ['severe', 'delayed', 'abnormal', 'verylow', 'extreme']
@@ -110,6 +114,24 @@ function resolveWeakSeverity(scaleCode: string, dim: DimensionScore): WeaknessSe
 
 function severityRank(severity: WeaknessSeverity): number {
   return severity === 'danger' ? 2 : 1
+}
+
+/**
+ * 域内截断 + 默认勾选（面板可增删）。
+ *
+ * 在已排序的 scored 列表上调用：取前 cap 件，前 defaultSelected 件默认勾选。
+ * 弱势模式与巩固模式共用，仅 cap/默认勾选数不同。
+ */
+function applyCapAndDefaultSelect(
+  scored: RecommendedEquipment[],
+  cap: number,
+  defaultSelected: number,
+): RecommendedEquipment[] {
+  const capped = scored.slice(0, cap)
+  capped.forEach((item, index) => {
+    item.selected = index < defaultSelected
+  })
+  return capped
 }
 
 interface DomainAggregate {
@@ -238,12 +260,10 @@ export function generateRecommendation(
         (b.resource.usageCount || 0) - (a.resource.usageCount || 0),
     )
 
-    const capped = scored.slice(0, PER_DOMAIN_CAP)
-    // 默认勾选域内 top-N（面板可增删）
-    capped.forEach((item, index) => {
-      item.selected = index < DEFAULT_SELECTED_PER_DOMAIN
-    })
-    byDomain.set(weak.domain, capped)
+    byDomain.set(
+      weak.domain,
+      applyCapAndDefaultSelect(scored, PER_DOMAIN_CAP, DEFAULT_SELECTED_PER_DOMAIN),
+    )
   }
 
   // 步骤 5：组装（按弱势领域顺序）+ 跨域 resource.id 去重
@@ -264,7 +284,97 @@ export function generateRecommendation(
     scaleCode,
     studentId,
     assessmentId,
+    mode: 'weakness',
     weakDomains,
+    recommendations,
+    hasAnyEquipment: recommendations.length > 0,
+  }
+}
+
+/**
+ * 能力巩固推荐（无弱势时的精选路径）。
+ *
+ * 评估正常/优秀时无弱势领域，但器材训练对正常孩子同样适用（能力巩固、全面发展、
+ * 预防性练习）。此函数按全部 equipmentSupported 域取候选池，entitlement 硬过滤后
+ * 按使用热度（usageCount）每域取 top-N，产出「能力巩固精选」。
+ *
+ * usage_count 经 createDraftPlan 挂载成功后 +1 接通；初期可能全 0，此时排序退化为
+ * 候选返回顺序（created_at），随使用累积逐步真实化。
+ *
+ * 与 generateRecommendation 的差异仅在领域来源（全部 vs 弱势）与排序依据（热度 vs 标签命中）。
+ *
+ * @param input 评估结果 + 关联评估记录 id
+ * @param ctx 注入的 entitlement 判定 + 已粗筛的全部域候选器材池
+ * @returns 推荐结果（mode='consolidation'，weakDomains 为空）
+ */
+export function generateConsolidationRecommendation(
+  input: RecommendationInput,
+  ctx: RecommendationContext,
+): RecommendationResult {
+  const { scoreResult, assessmentId } = input
+  const { hasEntitlement, candidatePool } = ctx
+
+  // 按 domain 分桶；entitlement 硬过滤
+  const byDomain = new Map<UnifiedDomain, RecommendedEquipment[]>()
+  for (const candidate of candidatePool) {
+    const entitlement = resolveEquipmentEntitlement(candidate.resource)
+    if (!entitlement) continue
+    if (!hasEntitlement(entitlement)) continue
+
+    const matchedTags = matchDomainKeywords(candidate.domain, candidate.resource.tags || [])
+    const item: RecommendedEquipment = {
+      resource: candidate.resource,
+      domain: candidate.domain,
+      matchedTags,
+      score: 0, // 巩固模式不依赖标签打分，仅用 usageCount 排序
+      entitlement,
+      selected: false,
+    }
+    const list = byDomain.get(candidate.domain)
+    if (list) {
+      list.push(item)
+    } else {
+      byDomain.set(candidate.domain, [item])
+    }
+  }
+
+  // 每域：按使用热度降序（次序 resource.id 稳定兜底）→ cap + 默认勾选
+  const orderedDomains: UnifiedDomain[] = Array.from(byDomain.keys())
+  for (const domain of orderedDomains) {
+    const list = byDomain.get(domain)!
+    list.sort(
+      (a, b) =>
+        (b.resource.usageCount || 0) - (a.resource.usageCount || 0) ||
+        (b.resource.id || 0) - (a.resource.id || 0),
+    )
+    byDomain.set(
+      domain,
+      applyCapAndDefaultSelect(
+        list,
+        CONSOLIDATION_PER_DOMAIN_CAP,
+        CONSOLIDATION_DEFAULT_SELECTED,
+      ),
+    )
+  }
+
+  // 跨域 resource.id 去重（保持域顺序）
+  const seenIds = new Set<number>()
+  const recommendations: RecommendedEquipment[] = []
+  for (const domain of orderedDomains) {
+    const items = byDomain.get(domain) || []
+    for (const item of items) {
+      if (seenIds.has(item.resource.id)) continue
+      seenIds.add(item.resource.id)
+      recommendations.push(item)
+    }
+  }
+
+  return {
+    scaleCode: scoreResult.scaleCode,
+    studentId: scoreResult.studentId,
+    assessmentId,
+    mode: 'consolidation',
+    weakDomains: [],
     recommendations,
     hasAnyEquipment: recommendations.length > 0,
   }

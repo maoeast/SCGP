@@ -18,10 +18,12 @@ import { useAuthStore } from './auth'
 import {
   extractWeakDomains,
   generateRecommendation,
+  generateConsolidationRecommendation,
 } from '@/features/recommendation/recommendation-engine'
 import { generatePlanFromRecommendation } from '@/features/recommendation/plan-generator'
 import {
   collectEquipmentFetchGroups,
+  getEquipmentSupportedDomains,
   type UnifiedDomain,
 } from '@/features/recommendation/ability-taxonomy'
 import type {
@@ -108,26 +110,33 @@ export const useRecommendationStore = defineStore('recommendation', {
           scoreResult.scaleCode,
           scoreResult.dimensions || [],
         )
-        const equipmentDomains = Array.from(
-          new Set(
-            weakDomains
-              .filter((d) => d.equipmentSupported)
-              .map((d) => d.domain),
-          ),
-        ) as UnifiedDomain[]
 
-        // 2. 预取候选器材池（按 moduleCode+category 去重，共享 category 多域各挂一份）
-        const candidatePool = this.fetchCandidatePool(equipmentDomains)
-
-        // 3. 引擎：entitlement 硬过滤 + 标签打分
         const authStore = useAuthStore()
-        const result = generateRecommendation(
-          { scoreResult, assessmentId: input.assessmentId },
-          {
-            hasEntitlement: (code) => authStore.hasEntitlementAccess(code),
-            candidatePool,
-          },
-        )
+        const hasEntitlement = (code: string) => authStore.hasEntitlementAccess(code)
+
+        let result: RecommendationResult
+        if (weakDomains.length === 0) {
+          // 无弱势（评估正常/优秀）：能力巩固精选，预取全部 equipmentSupported 域
+          const candidatePool = this.fetchCandidatePool(getEquipmentSupportedDomains())
+          result = generateConsolidationRecommendation(
+            { scoreResult, assessmentId: input.assessmentId },
+            { hasEntitlement, candidatePool },
+          )
+        } else {
+          // 有弱势：原弱势驱动推荐（按弱势 equipmentSupported 域预取）
+          const equipmentDomains = Array.from(
+            new Set(
+              weakDomains
+                .filter((d) => d.equipmentSupported)
+                .map((d) => d.domain),
+            ),
+          ) as UnifiedDomain[]
+          const candidatePool = this.fetchCandidatePool(equipmentDomains)
+          result = generateRecommendation(
+            { scoreResult, assessmentId: input.assessmentId },
+            { hasEntitlement, candidatePool },
+          )
+        }
 
         this.result = result
         this.lastScaleName = options.scaleName ?? null
@@ -197,6 +206,17 @@ export const useRecommendationStore = defineStore('recommendation', {
         },
         planApi,
       )
+      // 挂载成功 → 累加选中器材使用热度（接通 usage_count；失败仅告警，不阻塞计划结果）
+      if (outcome.success && (outcome.attachedCount ?? 0) > 0) {
+        try {
+          const resourceApi = new ResourceAPI()
+          for (const item of selected) {
+            resourceApi.incrementUsageCount(item.resource.id)
+          }
+        } catch (e) {
+          console.warn('[RecommendationStore] usage_count 累加失败（不影响计划）:', e)
+        }
+      }
       this.lastPlanOutcome = outcome
       return outcome
     },
