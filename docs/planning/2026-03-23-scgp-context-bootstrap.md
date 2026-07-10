@@ -109,10 +109,8 @@ SCGP 当前主线已经具备以下可运行能力：
 - `docs/guides/系统使用说明书.md`
 - `docs/guides/系统参数技术文档.md`
 - 历史实施计划、历史设计稿、历史审计和历史数据流图
-- `.planning/`
-- `.archive/`
-- `.claude/`
-- `.gemini/`
+- `docs/archive/`（历史归档：已完成交接稿、旧功能设计稿）
+- `.claude/`、`.gemini/`（代理协作目录，仅放工具配置与命令模板）
 
 ## 7. 任务路由建议
 

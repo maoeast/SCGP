@@ -7,7 +7,9 @@
 - 现行文档：用于理解当前项目、当前架构、当前计划
 - 参考/历史材料：用于追溯背景、参考原始资料、保留旧方案
 
-本说明的目标是减少“入口失效、目录混乱、重复维护”。
+本说明的目标是减少"入口失效、目录混乱、重复维护"。
+
+> 代理规则与执行边界（启动顺序、冲突裁定、编码禁止清单、验证、交接）的唯一来源是根目录 `AGENTS.md`；`CLAUDE.md` 只是它的 `@AGENTS.md` 引用。本文件不重复这些规则，只描述 `docs/` 的目录约定与维护方式。
 
 ## 产品命名规则
 
@@ -22,66 +24,54 @@
 根目录只保留少量入口级文档与代理协作文档：
 
 - `README.md`
-- `AGENTS.md`（代理入口，不属于业务需求文档）
+- `AGENTS.md`（代理规则唯一来源）
+- `CLAUDE.md`（`AGENTS.md` 的引用，不单独维护正文）
 - `HANDOFF.md`
 - `.continue-here.md`
 - `PROJECT_CONTEXT.md`
-- `CLAUDE.md`
 - `重构实施技术规范.md`
 
 其他非入口文档应整理到 `docs/` 对应目录，不应继续堆在根目录。
 
 ### `docs/`
 
-- `docs/INDEX.md`
-  - `docs` 主入口
-- `docs/guides/`
-  - 使用说明、运维说明、操作说明
-- `docs/architecture/`
-  - 架构、设计、审计、系统分析
-- `docs/planning/`
-  - 稳定的需求文档与专题方案
-- `docs/plans/`
-  - 阶段计划、实施计划、重构计划
-- `docs/reports/`
-  - 阶段工作报告、专项检查结果
-- `docs/references/`
-  - 原始量表资料、外部参考文件、脚本样例、导入源文件
-- `docs/analysis/`
-  - 专项分析文档
-- `docs/tech-design/`
-  - 专题技术实现方案、实现标准与底层设计约束
+- `docs/INDEX.md` — `docs` 导航中枢
+- `docs/planning/` — 稳定的需求文档与专题方案
+- `docs/plans/` — 阶段计划、实施计划、重构计划
+- `docs/reports/` — 阶段工作报告、专项检查结果
+- `docs/architecture/` — 架构、设计、审计、系统分析
+- `docs/tech-design/` — 专题技术实现方案、实现标准与底层设计约束
+- `docs/guides/` — 使用说明、运维说明、操作说明
+- `docs/references/` — 原始量表资料、外部参考文件、脚本样例、导入源文件
+- `docs/analysis/` — 专项分析文档
+- `docs/logs/` — 历史归档摘要与专题日志，非默认首读
+- `docs/archive/` — 已完成 / 历史文档（批次交接稿、旧功能设计稿等），不进主索引、不作当前事实来源
 
-## 单一事实来源
+## 事实来源与冲突裁定
 
-默认优先级：
+文档冲突裁定优先级（代码 > `.continue-here.md` > `AGENTS.md` > `docs/INDEX.md` > 其他）见 `AGENTS.md` 开头，本文件不另立优先级，避免双份维护。
 
-1. `README.md` + `重构实施技术规范.md`
-2. `PROJECT_CONTEXT.md`
-3. 当前仍在执行的 `docs/plans/*.md` 与最新 `docs/reports/*.md`
-4. `docs/planning/*.md`
+补充：
 
-`docs/references/` 中的内容默认不是单一事实来源，除非文档中明确声明。
+- `docs/references/` 中的内容默认不是当前事实来源，除非文档中明确声明
+- `docs/archive/`、`docs/logs/` 内文档为历史记录，需要时再查
 
 ## 新增文档时的规则
 
-- 如果文档是“当前怎么做”，优先放 `guides/`、`architecture/`、`planning/`、`plans/`、`tech-design/`
-- 如果文档是“今天做了什么”，放 `reports/`
-- 如果文档是“原始资料/脚本/外部文档/题库整理”，放 `references/`
+- "当前怎么做" → 优先放 `guides/`、`architecture/`、`planning/`、`plans/`、`tech-design/`
+- "今天做了什么" → 放 `reports/`
+- "原始资料 / 脚本 / 外部文档 / 题库整理" → 放 `references/`
+- "已完成、仅作历史保留" → 放 `archive/`
 - 不要把新文档直接堆在 `docs/` 根目录
 
 ## 维护规则
 
 - 新增或移动文档后，更新 `docs/INDEX.md`
 - 不再把失效路径写进 `docs/INDEX.md`
-- 历史材料尽量归入 `docs/references/` 或 `.archive/`
+- 历史材料归入 `docs/archive/`（或 `docs/references/`），不再使用 `.archive/`
 - 如果某文档已废弃，优先在文档开头注明状态，而不是继续让它充当主入口
-- 如果某文档仍保留但内容属于旧产品阶段，必须在开头标明“历史文档/原始需求/旧交付稿”
+- 如果某文档仍保留但内容属于旧产品阶段，必须在开头标明"历史文档 / 原始需求 / 旧交付稿"
 
 ## 备注
 
-- `.planning/` 主要是过程型协作材料
-- `.archive/` 主要是历史归档
-- `.claude/`、`.gemini/` 主要是代理协作目录和命令模板
-- 其中 `gsd` 目录是给代理执行开发流程用的命令集，不属于业务模块或正式产品文档
-- 上述目录都不应替代 `docs/` 主文档体系
+历史框架残留（`.planning/`、`gsd/` 命令集、superpowers 插件等）已于 2026-07-08 清除，不再属于任何流程的输入；`.claude/` 等代理协作目录只放工具配置与命令模板，不替代 `docs/` 主文档体系。
