@@ -1,6 +1,7 @@
 import type { Component } from 'vue'
 import {
   Avatar,
+  Cpu,
   DataAnalysis,
   EditPen,
   HomeFilled,
@@ -30,6 +31,8 @@ export const ASSESSMENT_SCALE_CODES = [
   'fine_motor',
   'gmfm_88',
   'tgmd_3',
+  'brief',
+  'crt',
 ] as const
 
 export type AssessmentScaleCode = typeof ASSESSMENT_SCALE_CODES[number]
@@ -85,6 +88,7 @@ export const ASSESSMENT_TABS: AssessmentTabDefinition[] = [
   { id: 'social-communication', label: '社交沟通' },
   { id: 'fine-motor', label: '精细动作' },
   { id: 'life-skills', label: '生活自理' },
+  { id: 'cognitive', label: '认知发展' },
 ]
 
 export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
@@ -273,8 +277,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       label: '儿心量表Ⅱ',
       description: '评估儿童大运动、精细动作、适应能力、语言与社会行为发展水平',
     },
-    entryTabs: ['sensory-integration', 'fine-motor', 'social-communication', 'life-skills'],
-    accessEntitlementsAnyOf: ['sensory_integration', 'fine_motor', 'social_communication', 'life_skills'],
+    entryTabs: ['sensory-integration', 'fine-motor', 'social-communication', 'life-skills', 'cognitive'],
+    accessEntitlementsAnyOf: ['sensory_integration', 'fine_motor', 'social_communication', 'life_skills', 'cognitive'],
     accessModulesAnyOf: ['sensory'],
   },
   {
@@ -339,6 +343,48 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['fine-motor'],
     accessEntitlementsAnyOf: ['fine_motor'],
     accessModulesAnyOf: ['sensory'],
+  },
+  {
+    code: 'brief',
+    title: '执行功能评估量表',
+    subtitle: '(BRIEF 自编 DRAFT)',
+    icon: Cpu,
+    buttonType: 'primary',
+    iconClass: 'brief-icon',
+    ageRange: '2 - 18岁（学前 BRIEF-P / 学龄 BRIEF-2 自动切换）',
+    questionCount: '学前15道 / 学龄27道',
+    dimensions: '评估维度：抑制、自我监控、转换、情感控制、任务发起、工作记忆、计划与组织、任务监控、物品组织（按年龄分版）',
+    timeEstimate: '约10-15分钟',
+    studentSelectorTitle: '选择评估学生 - BRIEF执行功能量表',
+    studentSelectorTag: {
+      type: 'primary',
+      label: 'BRIEF 执行功能',
+      description: '评估儿童执行功能（抑制、工作记忆、计划组织等）发展水平',
+    },
+    entryTabs: ['cognitive'],
+    accessEntitlementsAnyOf: ['cognitive'],
+    accessModulesAnyOf: ['cognitive'],
+  },
+  {
+    code: 'crt',
+    title: '瑞文图形推理测验',
+    subtitle: '(CRT 自编 DRAFT)',
+    icon: DataAnalysis,
+    buttonType: 'primary',
+    iconClass: 'crt-icon',
+    ageRange: '5.5 - 16.5岁',
+    questionCount: '7道（SPM 五组示例题，DRAFT）',
+    dimensions: '评估维度：A 知觉辨别、B 类同比较、C 比较推理、D 系列关系、E 抽象推理（SPM 五组）',
+    timeEstimate: '约10-15分钟',
+    studentSelectorTitle: '选择评估学生 - 瑞文CRT图形推理测验',
+    studentSelectorTag: {
+      type: 'primary',
+      label: '瑞文 CRT 图形推理',
+      description: '评估儿童图形推理与抽象思维能力（儿童本人作答）',
+    },
+    entryTabs: ['cognitive'],
+    accessEntitlementsAnyOf: ['cognitive'],
+    accessModulesAnyOf: ['cognitive'],
   },
 ]
 

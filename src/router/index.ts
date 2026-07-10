@@ -123,6 +123,8 @@ const SRS2Report = () => import('@/views/assessment/srs2/Report.vue')
 
 // CBCL 报告页面
 const CBCLReport = () => import('@/views/assessment/cbcl/Report.vue')
+const BRIEFReport = () => import('@/views/assessment/brief/Report.vue')
+const CRTReport = () => import('@/views/assessment/crt/Report.vue')
 const FineMotorReport = () => import('@/views/assessment/fine-motor/Report.vue')
 const Cnbsr2016Report = () => import('@/views/assessment/cnbsr2016/Report.vue')
 const Gmfm88Report = () => import('@/views/assessment/gmfm-88/Report.vue')
@@ -1044,6 +1046,26 @@ const router = createRouter({
           component: Tgmd3Report,
           meta: {
             title: 'TGMD-3评估报告',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'assessment/brief/report/:assessId',
+          name: 'BRIEFReport',
+          component: BRIEFReport,
+          meta: {
+            title: 'BRIEF执行功能问卷评估报告',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'assessment/crt/report/:assessId',
+          name: 'CRTReport',
+          component: CRTReport,
+          meta: {
+            title: '瑞文CRT图形推理评估报告',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

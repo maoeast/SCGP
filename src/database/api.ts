@@ -2729,6 +2729,114 @@ export class ResourceAPI extends DatabaseAPI {
   }
 }
 
+// BRIEF 执行功能评估相关操作（DRAFT：自编题目 + 本地常模）
+export class BRIEFAssessmentAPI extends DatabaseAPI {
+  createAssessment(data: {
+    student_id: number
+    age_months: number
+    gender: string
+    version: string
+    raw_answers: string
+    dimension_scores: string
+    total_raw_score: number
+    total_t_score: number
+    level: string
+    level_code: string | null
+    extra_data: string | null
+    start_time: string
+    end_time: string
+  }): number {
+    this.execute(
+      `INSERT INTO brief_assess
+        (student_id, age_months, gender, version, raw_answers, dimension_scores,
+         total_raw_score, total_t_score, level, level_code, extra_data, start_time, end_time)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        data.student_id,
+        data.age_months,
+        data.gender,
+        data.version,
+        data.raw_answers,
+        data.dimension_scores,
+        data.total_raw_score,
+        data.total_t_score,
+        data.level,
+        data.level_code,
+        data.extra_data,
+        data.start_time,
+        data.end_time
+      ]
+    )
+    return this.getLastInsertId()
+  }
+
+  getAssessment(id: number): any | null {
+    return this.queryOne('SELECT * FROM brief_assess WHERE id = ?', [id])
+  }
+
+  getStudentAssessments(studentId: number): any[] {
+    return this.query(
+      'SELECT * FROM brief_assess WHERE student_id = ? ORDER BY created_at DESC',
+      [studentId]
+    )
+  }
+}
+
+// 瑞文 CRT 图形推理评估相关操作（DRAFT：自编占位矩阵 + 占位常模）
+export class CRTAssessmentAPI extends DatabaseAPI {
+  createAssessment(data: {
+    student_id: number
+    age_months: number
+    gender: string
+    raw_answers: string
+    total_raw_score: number
+    total_questions: number
+    percentile_rank: number
+    iq_estimate: number
+    level: string
+    level_code: string | null
+    unit_scores: string
+    extra_data: string | null
+    start_time: string
+    end_time: string
+  }): number {
+    this.execute(
+      `INSERT INTO crt_assess
+        (student_id, age_months, gender, raw_answers, total_raw_score, total_questions,
+         percentile_rank, iq_estimate, level, level_code, unit_scores, extra_data, start_time, end_time)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        data.student_id,
+        data.age_months,
+        data.gender,
+        data.raw_answers,
+        data.total_raw_score,
+        data.total_questions,
+        data.percentile_rank,
+        data.iq_estimate,
+        data.level,
+        data.level_code,
+        data.unit_scores,
+        data.extra_data,
+        data.start_time,
+        data.end_time
+      ]
+    )
+    return this.getLastInsertId()
+  }
+
+  getAssessment(id: number): any | null {
+    return this.queryOne('SELECT * FROM crt_assess WHERE id = ?', [id])
+  }
+
+  getStudentAssessments(studentId: number): any[] {
+    return this.query(
+      'SELECT * FROM crt_assess WHERE student_id = ? ORDER BY created_at DESC',
+      [studentId]
+    )
+  }
+}
+
 // 报告记录相关操作
 export class ReportAPI extends DatabaseAPI {
   private resolveModuleCode(reportType: string, moduleCode?: string): string | null {
@@ -2742,6 +2850,14 @@ export class ReportAPI extends DatabaseAPI {
       return 'sensory'
     }
 
+    if (reportType === 'brief') {
+      return 'cognitive'
+    }
+
+    if (reportType === 'crt') {
+      return 'cognitive'
+    }
+
     return null
   }
 
@@ -2750,7 +2866,7 @@ export class ReportAPI extends DatabaseAPI {
    */
   saveReportRecord(record: {
     student_id: number
-    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional' | 'fine_motor' | 'cnbsr2016' | 'gmfm_88' | 'tgmd_3'
+    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional' | 'fine_motor' | 'cnbsr2016' | 'gmfm_88' | 'tgmd_3' | 'brief' | 'crt'
     assess_id?: number
     plan_id?: number
     training_record_id?: number

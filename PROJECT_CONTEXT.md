@@ -1488,3 +1488,11 @@
 - 评估完成弹窗入口文案动态化：`scoreResult.level ∈ [优秀,高常,正常]` → 「能力巩固推荐」，否则「器材推荐」（`CompleteDialog`）。
 - `usage_count` **不再是死字段**：`stores/recommendation.ts` 的 `createDraftPlan()` 在计划挂载成功后对选中器材调 `ResourceAPI.incrementUsageCount(id)`。初期全 0 时巩固精选退化为 `created_at` 顺序，随使用累积真实化。训练记录写入路径计 +1 仍为后续可选增强（碰训练记录主表，独立任务）。
 - 巩固模式计划目标兜底：无弱势维度时从选中器材所属域派生 `${label}能力巩固与泛化`（`plan-generator.ts`）。
+
+## 59. 2026-07-10 认知发展模块（BRIEF + 瑞文 CRT）接入 + 评估通用图片选项能力
+
+- 能力评估新增「认知发展」tab（`cognitive` entitlement 已 active），挂 Cnbsr2016（复用）、BRIEF 执行功能问卷、瑞文 CRT 图形推理三个量表。BRIEF/CRT 均走「自编题目/原创矩阵 + 占位常模」DRAFT 路线，规避版权（BRIEF 非 PAR 原题、CRT 非 Pearson 原图），仅筛查/监测用。
+- 评估渲染层新增**通用图片选项能力**：`ScaleOption`/`ScaleQuestion` 加 `imagePath?`，`QuestionCard.vue` 通用分支新增题干图 + 2×3 图片选项网格。CRT 矩阵/选项图由 `src/utils/crt-matrix.ts` 按 SPM 五组规律程序化生成 SVG→data-URI，经 `resolvePresetResourceUrl` 透传。后续图形绩效题（Phase 3 综合认知自测）复用此通路，无需新建专用分支。
+- 持久化范式：每量表专属 `_assess` 表 + `report_record.report_type` 白名单（init.ts 新库 CHECK + migrate-report-constraints.ts 重建表 CHECK + needsMigration 判定）。新量表接入照此复刻（BRIEF/CRT 均如此）。
+- ⚠️ 版权/合规：`assets/resources/images/raven60/`（420 张疑似真实瑞文 SPM 图）在工作区，**已决定不纳入提交/产品**；认知模块正式版用代码生成原创矩阵。后续若接入须先确认版权。
+- 现实边界：BRIEF+CRT 代码级 type-check + training-route-access 4/4 通过，均未提交；真机 E2E 未跑；题目/常模 DRAFT 待专业心理测量审核。

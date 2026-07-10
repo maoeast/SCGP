@@ -107,6 +107,47 @@ export const SCALE_DIMENSION_MAPPING: Readonly<Record<string, ScaleDimensionMap>
     behavior: ['emotional'],
   },
 
+  // ---- brief（执行功能问卷，DRAFT 自编）：runtime code 英文（_p 后缀为学前版）；
+  //       全部执行功能维度 → cognitive（执行功能是认知发展的核心子域）----
+  brief: {
+    // 学前 BRIEF-P
+    inhibit_p: ['cognitive'],
+    shift_p: ['cognitive'],
+    emotional_control_p: ['cognitive'],
+    working_memory_p: ['cognitive'],
+    plan_organize_p: ['cognitive'],
+    // 学龄 BRIEF-2
+    inhibit: ['cognitive'],
+    self_monitor: ['cognitive'],
+    shift: ['cognitive'],
+    emotional_control: ['cognitive'],
+    initiate: ['cognitive'],
+    working_memory: ['cognitive'],
+    plan_organize: ['cognitive'],
+    task_monitor: ['cognitive'],
+    organization_of_materials: ['cognitive'],
+    // 中文 name 兜底（多量表共享同名维度，按 scaleCode 隔离互不影响）
+    抑制: ['cognitive'],
+    转换: ['cognitive'],
+    情感控制: ['cognitive'],
+    工作记忆: ['cognitive'],
+    计划与组织: ['cognitive'],
+    自我监控: ['cognitive'],
+    任务发起: ['cognitive'],
+    任务监控: ['cognitive'],
+    物品组织: ['cognitive'],
+  },
+
+  // ---- crt（瑞文图形推理，DRAFT 自编）：五组 runtime code unit_a..unit_e；
+  //       全部 → cognitive（图形推理是认知发展的核心子域）----
+  crt: {
+    unit_a: ['cognitive'],
+    unit_b: ['cognitive'],
+    unit_c: ['cognitive'],
+    unit_d: ['cognitive'],
+    unit_e: ['cognitive'],
+  },
+
   // ---- fine_motor：runtime code 英文；static label 中文（全 → fine_motor）----
   fine_motor: {
     hand_grasp: ['fine_motor'],

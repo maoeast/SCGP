@@ -67,6 +67,8 @@ export interface ScaleOption {
   description?: string
   /** 对应分值 */
   score: number
+  /** 选项图片路径（可选，resource:// 相对路径或 data-URI；用于图形推理等图片选项） */
+  imagePath?: string
 }
 
 /**
@@ -87,6 +89,8 @@ export interface ScaleQuestion {
   metadata?: Record<string, any>
   /** 语音文件路径（可选） */
   audioPath?: string
+  /** 题干图片路径（可选，resource:// 相对路径或 data-URI；用于图形推理等题干图） */
+  imagePath?: string
 }
 
 // ============================================================

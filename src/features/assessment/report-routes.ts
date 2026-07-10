@@ -13,6 +13,8 @@ export type AssessmentReportScaleType =
   | 'fine_motor'
   | 'gmfm_88'
   | 'tgmd_3'
+  | 'brief'
+  | 'crt'
 
 export interface AssessmentReportRouteInput {
   scaleType: AssessmentReportScaleType
@@ -69,6 +71,10 @@ export function buildAssessmentReportRoute({
       return `/assessment/gmfm_88/report/${normalizedAssessId}`
     case 'tgmd_3':
       return `/assessment/tgmd_3/report/${normalizedAssessId}`
+    case 'brief':
+      return `/assessment/brief/report/${normalizedAssessId}`
+    case 'crt':
+      return `/assessment/crt/report/${normalizedAssessId}`
     default:
       return '/assessment'
   }

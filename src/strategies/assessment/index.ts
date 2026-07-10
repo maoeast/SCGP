@@ -21,6 +21,8 @@ import { FineMotorDriver } from './FineMotorDriver'
 import { Cnbsr2016Driver } from './Cnbsr2016Driver'
 import { Gmfm88Driver } from './Gmfm88Driver'
 import { Tgmd3Driver } from './Tgmd3Driver'
+import { BRIEFDriver } from './BRIEFDriver'
+import { CRTDriver } from './CRTDriver'
 
 // 导出基类供其他驱动器继承
 export { BaseDriver } from './BaseDriver'
@@ -39,6 +41,8 @@ const driverRegistry: Record<string, new () => ScaleDriver> = {
   'cnbsr2016': Cnbsr2016Driver,
   'gmfm_88': Gmfm88Driver,
   'tgmd_3': Tgmd3Driver,
+  'brief': BRIEFDriver,
+  'crt': CRTDriver,
 }
 
 // 驱动器实例缓存
@@ -133,3 +137,5 @@ export { FineMotorDriver } from './FineMotorDriver'
 export { Cnbsr2016Driver } from './Cnbsr2016Driver'
 export { Gmfm88Driver } from './Gmfm88Driver'
 export { Tgmd3Driver } from './Tgmd3Driver'
+export { BRIEFDriver } from './BRIEFDriver'
+export { CRTDriver } from './CRTDriver'

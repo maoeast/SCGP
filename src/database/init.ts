@@ -449,7 +449,7 @@ CREATE INDEX IF NOT EXISTS idx_login_log_time ON login_log(login_time DESC);
 CREATE TABLE IF NOT EXISTS report_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
-  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88', 'tgmd_3')),
+  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88', 'tgmd_3', 'brief', 'crt')),
   assess_id INTEGER,
   plan_id INTEGER,
   training_record_id INTEGER,
@@ -496,6 +496,53 @@ CREATE TABLE IF NOT EXISTS csirs_assess_detail (
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (assess_id) REFERENCES csirs_assess(id)
 );
+
+-- BRIEF 执行功能评估主表（DRAFT：自编题目 + 本地常模，构造对齐 BRIEF-P / BRIEF-2）
+CREATE TABLE IF NOT EXISTS brief_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,
+  gender TEXT,
+  version TEXT,                       -- 'preschool' | 'school'
+  raw_answers TEXT NOT NULL,          -- JSON: { qid: { v, s, t } }
+  dimension_scores TEXT NOT NULL,     -- JSON: { dimCode: { name, rawScore, rawMean, tScore, level, levelName } }
+  total_raw_score INTEGER,
+  total_t_score REAL,                 -- 全局执行复合 GEC 的 T 分
+  level TEXT,
+  level_code TEXT,
+  extra_data TEXT,                    -- JSON: 复合分（gec/bri/eri/cri 或 isci/flex/emc）
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+-- BRIEF 评估表索引
+CREATE INDEX IF NOT EXISTS idx_brief_assess_student ON brief_assess(student_id);
+
+-- 瑞文 CRT 图形推理评估主表（DRAFT：自编占位矩阵 + 占位常模，构造对齐 SPM 五组）
+CREATE TABLE IF NOT EXISTS crt_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,
+  gender TEXT,
+  raw_answers TEXT NOT NULL,          -- JSON: { qid: { v, s, t } }（v=选项索引，s=0/1 是否答对）
+  total_raw_score INTEGER,            -- 答对题数
+  total_questions INTEGER,            -- 总题数
+  percentile_rank REAL,               -- 百分位（占位常模）
+  iq_estimate REAL,                   -- 离差 IQ 估算（占位常模，M=100 SD=15）
+  level TEXT,
+  level_code TEXT,
+  unit_scores TEXT,                   -- JSON: { unitCode: { name, correct, total, ability } }
+  extra_data TEXT,                    -- JSON: { draftNorm, iq, percentile }
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+-- 瑞文 CRT 评估表索引
+CREATE INDEX IF NOT EXISTS idx_crt_assess_student ON crt_assess(student_id);
 
 -- Conners PSQ 表 (父母问卷 48题)
 CREATE TABLE IF NOT EXISTS conners_psq_assess (

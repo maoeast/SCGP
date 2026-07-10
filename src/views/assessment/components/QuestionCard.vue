@@ -122,8 +122,13 @@
 
       <!-- 通用布局（非 CNBS-R2016 / TGMD-3） -->
       <template v-else>
-        <!-- 题目内容 -->
-        <div class="question-title">
+        <!-- 题干图片（图形推理等绩效题） -->
+        <div v-if="question.imagePath" class="question-image-stem">
+          <img :src="resolveImage(question.imagePath)" :alt="question.content" />
+          <div v-if="question.content" class="question-image-caption">{{ question.content }}</div>
+        </div>
+        <!-- 题目内容（文字题干） -->
+        <div v-else class="question-title">
           {{ question.content }}
         </div>
 
@@ -170,9 +175,23 @@
 
         <!-- 选项列表 -->
         <div class="answer-options" :class="{ 'is-skipped': isSkipped }">
-          <!-- 垂直排列 -->
+          <!-- 图片选项网格（图形推理等绩效题） -->
+          <div v-if="hasImageOptions" class="image-options-grid">
+            <div
+              v-for="option in question.options"
+              :key="option.value"
+              class="image-option"
+              :class="{ 'is-selected': selectedValue === option.value }"
+              @click="!isSkipped && handleAnswerChange(option.value)"
+            >
+              <img v-if="option.imagePath" :src="resolveImage(option.imagePath)" :alt="option.label" />
+              <span v-else class="image-option-fallback">{{ option.label }}</span>
+            </div>
+          </div>
+
+          <!-- 垂直排列（文字选项） -->
           <el-radio-group
-            v-if="optionsLayout === 'vertical'"
+            v-else-if="optionsLayout === 'vertical'"
             v-model="selectedValue"
             @change="handleAnswerChange"
             class="vertical-options"
@@ -238,6 +257,7 @@
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { Microphone, InfoFilled, CircleCheck } from '@element-plus/icons-vue'
 import type { ScaleQuestion } from '@/types/assessment'
+import { resolvePresetResourceUrl } from '@/utils/preset-resource'
 
 export interface AnswerWithDescription {
   value: number | string
@@ -316,6 +336,16 @@ const showDescriptionInput = computed(() => {
          selectedValue.value !== 0 &&
          selectedValue.value !== '0'
 })
+
+// 是否含图片选项（图形推理等绩效题）
+const hasImageOptions = computed(() => {
+  return Boolean(props.question.imagePath) || props.question.options.some((o) => Boolean(o.imagePath))
+})
+
+// 解析题干 / 选项图片为可用 URL（data-URI 或 resource:// 原样透传）
+function resolveImage(path?: string): string {
+  return path ? resolvePresetResourceUrl(path) : ''
+}
 
 // CNBS-R2016 答案处理
 function handleCnbsAnswer(value: 0 | 1) {
@@ -920,6 +950,66 @@ onBeforeUnmount(() => {
   font-size: 13px;
   color: #909399;
   text-align: right;
+}
+
+/* ====== 图片选项（图形推理等绩效题） ====== */
+.question-image-stem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.question-image-stem img {
+  max-width: 360px;
+  width: 100%;
+  border: 1px solid #e4e7ed;
+  border-radius: 12px;
+  background: #fff;
+}
+.question-image-caption {
+  font-size: 15px;
+  color: #606266;
+  text-align: center;
+}
+.image-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.image-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  aspect-ratio: 1 / 1;
+  border: 2px solid #e4e7ed;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.image-option:hover {
+  border-color: #409eff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.15);
+}
+.image-option.is-selected {
+  border-color: #409eff;
+  background: #ecf5ff;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.25);
+}
+.image-option img {
+  max-width: 100%;
+  max-height: 100%;
+}
+.image-option-fallback {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
 }
 
 @media (max-width: 768px) {
