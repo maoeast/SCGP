@@ -449,7 +449,7 @@ CREATE INDEX IF NOT EXISTS idx_login_log_time ON login_log(login_time DESC);
 CREATE TABLE IF NOT EXISTS report_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
-  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88', 'tgmd_3', 'brief', 'crt')),
+  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88', 'tgmd_3', 'brief', 'crt', 'cognitive_self')),
   assess_id INTEGER,
   plan_id INTEGER,
   training_record_id INTEGER,
@@ -543,6 +543,32 @@ CREATE TABLE IF NOT EXISTS crt_assess (
 
 -- 瑞文 CRT 评估表索引
 CREATE INDEX IF NOT EXISTS idx_crt_assess_student ON crt_assess(student_id);
+
+-- 综合认知自测（视空间·图形匹配）绩效题评估主表（DRAFT：自编匹配题 + 占位常模）
+CREATE TABLE IF NOT EXISTS cognitive_self_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,
+  gender TEXT,
+  raw_answers TEXT NOT NULL,          -- JSON: { qid: { v, s, t, rt } }（v=选项索引，s=0/1 是否答对，rt=真反应时 ms）
+  total_raw_score INTEGER,            -- 答对题数
+  total_questions INTEGER,            -- 总题数
+  percentile_rank REAL,               -- 百分位（占位常模）
+  iq_estimate REAL,                   -- 离差 IQ 估算（占位常模，M=100 SD=15）
+  level TEXT,
+  level_code TEXT,
+  unit_scores TEXT,                   -- JSON: { dimCode: { name, correct, total } }
+  accuracy_rate REAL NOT NULL DEFAULT 0 CHECK(accuracy_rate BETWEEN 0 AND 1),  -- 正确率 0-1
+  avg_response_time REAL NOT NULL DEFAULT 0,  -- 平均真反应时（ms）；首次未采到为 0
+  extra_data TEXT,                    -- JSON: { draftNorm, iq, percentile, accuracyAvailable, reactionAvailable, hasRealData }
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+-- 综合认知自测评估表索引
+CREATE INDEX IF NOT EXISTS idx_cognitive_self_assess_student ON cognitive_self_assess(student_id);
 
 -- Conners PSQ 表 (父母问卷 48题)
 CREATE TABLE IF NOT EXISTS conners_psq_assess (

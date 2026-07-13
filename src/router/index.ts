@@ -125,6 +125,7 @@ const SRS2Report = () => import('@/views/assessment/srs2/Report.vue')
 const CBCLReport = () => import('@/views/assessment/cbcl/Report.vue')
 const BRIEFReport = () => import('@/views/assessment/brief/Report.vue')
 const CRTReport = () => import('@/views/assessment/crt/Report.vue')
+const CognitiveSelfReport = () => import('@/views/assessment/cognitive-self/Report.vue')
 const FineMotorReport = () => import('@/views/assessment/fine-motor/Report.vue')
 const Cnbsr2016Report = () => import('@/views/assessment/cnbsr2016/Report.vue')
 const Gmfm88Report = () => import('@/views/assessment/gmfm-88/Report.vue')
@@ -1066,6 +1067,16 @@ const router = createRouter({
           component: CRTReport,
           meta: {
             title: '瑞文CRT图形推理评估报告',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'assessment/cognitive-self/report/:assessId',
+          name: 'CognitiveSelfReport',
+          component: CognitiveSelfReport,
+          meta: {
+            title: '综合认知自测（图形匹配）评估报告',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }

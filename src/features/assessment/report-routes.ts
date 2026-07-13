@@ -15,6 +15,7 @@ export type AssessmentReportScaleType =
   | 'tgmd_3'
   | 'brief'
   | 'crt'
+  | 'cognitive_self'
 
 export interface AssessmentReportRouteInput {
   scaleType: AssessmentReportScaleType
@@ -75,6 +76,8 @@ export function buildAssessmentReportRoute({
       return `/assessment/brief/report/${normalizedAssessId}`
     case 'crt':
       return `/assessment/crt/report/${normalizedAssessId}`
+    case 'cognitive_self':
+      return `/assessment/cognitive-self/report/${normalizedAssessId}`
     default:
       return '/assessment'
   }

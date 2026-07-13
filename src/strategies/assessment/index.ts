@@ -23,6 +23,7 @@ import { Gmfm88Driver } from './Gmfm88Driver'
 import { Tgmd3Driver } from './Tgmd3Driver'
 import { BRIEFDriver } from './BRIEFDriver'
 import { CRTDriver } from './CRTDriver'
+import { CognitiveSelfDriver } from './CognitiveSelfDriver'
 
 // 导出基类供其他驱动器继承
 export { BaseDriver } from './BaseDriver'
@@ -43,6 +44,7 @@ const driverRegistry: Record<string, new () => ScaleDriver> = {
   'tgmd_3': Tgmd3Driver,
   'brief': BRIEFDriver,
   'crt': CRTDriver,
+  'cognitive_self': CognitiveSelfDriver,
 }
 
 // 驱动器实例缓存
@@ -139,3 +141,4 @@ export { Gmfm88Driver } from './Gmfm88Driver'
 export { Tgmd3Driver } from './Tgmd3Driver'
 export { BRIEFDriver } from './BRIEFDriver'
 export { CRTDriver } from './CRTDriver'
+export { CognitiveSelfDriver } from './CognitiveSelfDriver'

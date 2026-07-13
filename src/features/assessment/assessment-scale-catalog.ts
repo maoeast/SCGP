@@ -33,6 +33,7 @@ export const ASSESSMENT_SCALE_CODES = [
   'tgmd_3',
   'brief',
   'crt',
+  'cognitive_self',
 ] as const
 
 export type AssessmentScaleCode = typeof ASSESSMENT_SCALE_CODES[number]
@@ -381,6 +382,27 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
       type: 'primary',
       label: '瑞文 CRT 图形推理',
       description: '评估儿童图形推理与抽象思维能力（儿童本人作答）',
+    },
+    entryTabs: ['cognitive'],
+    accessEntitlementsAnyOf: ['cognitive'],
+    accessModulesAnyOf: ['cognitive'],
+  },
+  {
+    code: 'cognitive_self',
+    title: '综合认知自测',
+    subtitle: '(图形匹配 DRAFT)',
+    icon: DataAnalysis,
+    buttonType: 'primary',
+    iconClass: 'cognitive-self-icon',
+    ageRange: '5.5 - 16.5岁',
+    questionCount: '12道（视空间图形匹配，DRAFT）',
+    dimensions: '评估维度：基础辨别（形状/颜色）、细节辨别（方向/数量/大小）；同时记录正确率与反应时',
+    timeEstimate: '约5-8分钟',
+    studentSelectorTitle: '选择评估学生 - 综合认知自测（图形匹配）',
+    studentSelectorTag: {
+      type: 'primary',
+      label: '综合认知自测 图形匹配',
+      description: '评估儿童视空间辨别与加工速度（儿童本人作答，绩效题）',
     },
     entryTabs: ['cognitive'],
     accessEntitlementsAnyOf: ['cognitive'],

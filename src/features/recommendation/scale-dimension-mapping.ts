@@ -148,6 +148,13 @@ export const SCALE_DIMENSION_MAPPING: Readonly<Record<string, ScaleDimensionMap>
     unit_e: ['cognitive'],
   },
 
+  // ---- cognitive_self（综合认知自测·视空间图形匹配，DRAFT）：两个难度维度；
+  //       全部 → cognitive（视空间辨别是认知发展的核心子域）----
+  cognitive_self: {
+    match_basic: ['cognitive'],
+    match_detail: ['cognitive'],
+  },
+
   // ---- fine_motor：runtime code 英文；static label 中文（全 → fine_motor）----
   fine_motor: {
     hand_grasp: ['fine_motor'],
