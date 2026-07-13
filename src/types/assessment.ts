@@ -383,6 +383,14 @@ export interface ScaleDriver {
   /** 评估维度列表 */
   readonly dimensions: string[]
 
+  /**
+   * 是否为「试次级绩效题」（performance task）。
+   * 默认 false：问卷 / 选择型量表走 QuestionCard。
+   * true 时由容器改用 PerformanceTrialBoard，采集刺激呈现→反应的真反应时。
+   * 可选属性；BaseDriver 提供默认值 false，绩效题子类覆写为 true。
+   */
+  readonly isPerformanceTask?: boolean
+
   // ========== 题目管理 ==========
 
   /**

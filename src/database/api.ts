@@ -2837,6 +2837,66 @@ export class CRTAssessmentAPI extends DatabaseAPI {
   }
 }
 
+// 综合认知自测（视空间·图形匹配）绩效题评估相关操作（DRAFT：自编匹配题 + 占位常模）
+export class CognitiveSelfAssessmentAPI extends DatabaseAPI {
+  createAssessment(data: {
+    student_id: number
+    age_months: number
+    gender: string
+    raw_answers: string
+    total_raw_score: number
+    total_questions: number
+    percentile_rank: number
+    iq_estimate: number
+    level: string
+    level_code: string | null
+    unit_scores: string
+    accuracy_rate: number
+    avg_response_time: number
+    extra_data: string | null
+    start_time: string
+    end_time: string
+  }): number {
+    this.execute(
+      `INSERT INTO cognitive_self_assess
+        (student_id, age_months, gender, raw_answers, total_raw_score, total_questions,
+         percentile_rank, iq_estimate, level, level_code, unit_scores,
+         accuracy_rate, avg_response_time, extra_data, start_time, end_time)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        data.student_id,
+        data.age_months,
+        data.gender,
+        data.raw_answers,
+        data.total_raw_score,
+        data.total_questions,
+        data.percentile_rank,
+        data.iq_estimate,
+        data.level,
+        data.level_code,
+        data.unit_scores,
+        data.accuracy_rate,
+        data.avg_response_time,
+        data.extra_data,
+        data.start_time,
+        data.end_time
+      ]
+    )
+    return this.getLastInsertId()
+  }
+
+  getAssessment(id: number): any | null {
+    return this.queryOne('SELECT * FROM cognitive_self_assess WHERE id = ?', [id])
+  }
+
+  getStudentAssessments(studentId: number): any[] {
+    return this.query(
+      'SELECT * FROM cognitive_self_assess WHERE student_id = ? ORDER BY created_at DESC',
+      [studentId]
+    )
+  }
+}
+
 // 报告记录相关操作
 export class ReportAPI extends DatabaseAPI {
   private resolveModuleCode(reportType: string, moduleCode?: string): string | null {
@@ -2858,6 +2918,10 @@ export class ReportAPI extends DatabaseAPI {
       return 'cognitive'
     }
 
+    if (reportType === 'cognitive_self') {
+      return 'cognitive'
+    }
+
     return null
   }
 
@@ -2866,7 +2930,7 @@ export class ReportAPI extends DatabaseAPI {
    */
   saveReportRecord(record: {
     student_id: number
-    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional' | 'fine_motor' | 'cnbsr2016' | 'gmfm_88' | 'tgmd_3' | 'brief' | 'crt'
+    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional' | 'fine_motor' | 'cnbsr2016' | 'gmfm_88' | 'tgmd_3' | 'brief' | 'crt' | 'cognitive_self'
     assess_id?: number
     plan_id?: number
     training_record_id?: number

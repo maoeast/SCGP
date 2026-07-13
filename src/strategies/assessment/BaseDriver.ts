@@ -43,6 +43,15 @@ export abstract class BaseDriver implements ScaleDriver {
   abstract readonly totalQuestions: number
   abstract readonly dimensions: string[]
 
+  // ========== 可选默认属性（子类可覆写）==========
+
+  /**
+   * 是否为试次级绩效题（默认 false）。
+   * 绩效题子类覆写为 true，容器据此切换到 PerformanceTrialBoard 并采集真反应时。
+   * 显式标注 boolean，避免字面量类型 false 阻止子类覆写为 true。
+   */
+  readonly isPerformanceTask: boolean = false
+
   // ========== 抽象方法（子类必须实现）==========
 
   /**
@@ -141,7 +150,9 @@ export abstract class BaseDriver implements ScaleDriver {
       result[key] = {
         v: value.value,
         s: value.score,
-        t: value.timestamp
+        t: value.timestamp,
+        // 反应时（ms）：绩效题写真 RT，问卷型无此字段则为 undefined（向后兼容）
+        rt: value.responseTime
       }
     }
     return result

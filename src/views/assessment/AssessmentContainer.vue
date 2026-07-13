@@ -45,14 +45,21 @@
         </template>
       </el-card>
 
-      <!-- 题目卡片 -->
+      <!-- 题目卡片（绩效题用 PerformanceTrialBoard，其余量表用 QuestionCard） -->
       <QuestionCard
-        v-if="currentQuestion"
+        v-if="currentQuestion && !driver?.isPerformanceTask"
         :question="currentQuestion"
         :answer="currentAnswerValue"
         :question-index="state.currentIndex"
         :total-count="questions.length"
         :is-skipped="isCurrentQuestionSkipped"
+        @answer="handleAnswer"
+      />
+      <PerformanceTrialBoard
+        v-else-if="currentQuestion && driver?.isPerformanceTask"
+        :question="currentQuestion"
+        :question-index="state.currentIndex"
+        :total-count="questions.length"
         @answer="handleAnswer"
       />
 
@@ -146,6 +153,7 @@ import {
 // 子组件
 import WelcomeDialog from './components/WelcomeDialog.vue'
 import QuestionCard from './components/QuestionCard.vue'
+import PerformanceTrialBoard from './components/PerformanceTrialBoard.vue'
 import CompleteDialog from './components/CompleteDialog.vue'
 import CBCLSocialForm from './cbcl/SocialForm.vue'
 
@@ -459,6 +467,8 @@ function handlePageChange(page: number) {
 interface AnswerWithDescription {
   value: number | string
   description?: string
+  /** 真反应时（ms），仅绩效题 PerformanceTrialBoard 传入；问卷型不带此字段 */
+  reactionTimeMs?: number | null
 }
 
 function handleAnswer(value: number | string | AnswerWithDescription) {
@@ -469,11 +479,13 @@ function handleAnswer(value: number | string | AnswerWithDescription) {
   // 解析答案值和说明内容
   let answerValue: number | string
   let description: string | undefined
+  let reactionTimeMs: number | null | undefined
 
   if (typeof value === 'object' && 'value' in value) {
-    // 对象格式：包含说明内容
+    // 对象格式：包含说明内容 / 绩效题真反应时
     answerValue = value.value
     description = value.description
+    reactionTimeMs = value.reactionTimeMs
   } else {
     // 简单值格式
     answerValue = value
@@ -508,6 +520,11 @@ function handleAnswer(value: number | string | AnswerWithDescription) {
     score: option.score,
     timestamp: Date.now(),
     responseTime: Date.now() - (state.value.metadata?.lastAnswerTime || state.value.startTime)
+  }
+
+  // 绩效题：用真反应时覆盖问卷型的「答题区间」伪 RT（仅当 payload 带有效 RT 时）
+  if (reactionTimeMs != null) {
+    answerRecord.responseTime = reactionTimeMs
   }
 
   // 如果有说明内容，保存到 metadata
