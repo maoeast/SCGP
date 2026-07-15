@@ -54,6 +54,8 @@ AIimages/
 
 # Large files
 assets/resources/videos/
+# raven60: 已取得授权，当前仅本地保留，暂不纳入版本库
+assets/resources/images/raven60/
 
 # System files
 nul

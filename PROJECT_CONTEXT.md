@@ -1494,5 +1494,13 @@
 - 能力评估新增「认知发展」tab（`cognitive` entitlement 已 active），挂 Cnbsr2016（复用）、BRIEF 执行功能问卷、瑞文 CRT 图形推理三个量表。BRIEF/CRT 均走「自编题目/原创矩阵 + 占位常模」DRAFT 路线，规避版权（BRIEF 非 PAR 原题、CRT 非 Pearson 原图），仅筛查/监测用。
 - 评估渲染层新增**通用图片选项能力**：`ScaleOption`/`ScaleQuestion` 加 `imagePath?`，`QuestionCard.vue` 通用分支新增题干图 + 2×3 图片选项网格。CRT 矩阵/选项图由 `src/utils/crt-matrix.ts` 按 SPM 五组规律程序化生成 SVG→data-URI，经 `resolvePresetResourceUrl` 透传。后续图形绩效题（Phase 3 综合认知自测）复用此通路，无需新建专用分支。
 - 持久化范式：每量表专属 `_assess` 表 + `report_record.report_type` 白名单（init.ts 新库 CHECK + migrate-report-constraints.ts 重建表 CHECK + needsMigration 判定）。新量表接入照此复刻（BRIEF/CRT 均如此）。
-- ⚠️ 版权/合规：`assets/resources/images/raven60/`（420 张疑似真实瑞文 SPM 图）在工作区，**已决定不纳入提交/产品**；认知模块正式版用代码生成原创矩阵。后续若接入须先确认版权。
+- ✅ 版权/合规（2026-07-15 修订）：`assets/resources/images/raven60/`（420 张瑞文 SPM 图）**已取得授权**，当前仅本地保留（已加入 .gitignore），暂不纳入版本库；认知模块 CRT 正式版仍用代码生成原创矩阵。如需接入 raven60 可直接纳入，无版权障碍（§59 末尾「不纳入/接入须先确认版权」的旧约束已解除）。
 - 现实边界：BRIEF+CRT 代码级 type-check + training-route-access 4/4 通过，均未提交；真机 E2E 未跑；题目/常模 DRAFT 待专业心理测量审核。
+
+## 60. 2026-07-15 认知模块 Phase 3（cognitive_self）完成 + raven60 授权状态澄清 + 文档对齐
+
+- Phase 3「综合认知自测·视空间图形匹配绩效题」(cognitive_self) 已实现并提交推送：拆 2 提交 `7dd6516`（数据层 + CognitiveSelfDriver + useTrialTimer 计时引擎 + PerformanceTrialBoard）+ `b735071`（cognitive_self_assess 表 + 注册 + 目录 + 维度映射 + 路由 + Report.vue）。main = origin/main（0/0），type-check ✅、training-route-access 4/4 ✅。
+- 评估主链首个试次级真反应时绩效题：`ScaleDriver.isPerformanceTask` flag 分流，`PerformanceTrialBoard` 自包含 `useTrialTimer`（刺激呈现锚定的真 RT），经 emit→handleAnswer 覆盖既有「伪 RT」写入 `ScaleAnswer.responseTime`，既有 14 量表零回归。
+- ⚠️ 现实边界：真机 E2E 未跑；题库（2 维度 match_basic/match_detail 各 6 题，4 选 1）与常模均为 DRAFT，需专业心理测量审核 + 本地常模采集；MVP 无强制时限（推迟 Phase 3.1）。
+- raven60 版权状态反转：420 张瑞文 SPM 图**已取得授权**，当前仅本地保留（加入 .gitignore），暂不纳入版本库；§59 末尾「不纳入/接入须先确认版权」的旧约束已解除，如需接入可直接纳入。
+- 清理：`AGENTS.min.md`（被 `AGENTS.md` 统一规则源取代）正式删除；交接文档（`.continue-here.md` / `会话启动.md` 本次交接区块）刷新为 Phase 3 已提交推送状态，修正此前「未提交/方向待定」的滞后表述。
