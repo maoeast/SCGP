@@ -1,4 +1,9 @@
 import type { TeachingMaterialDimensionCode } from '@/utils/resource-center-business'
+import {
+  deleteManagedFile as serviceDeleteManagedFile,
+  normalizeRelativePath,
+  resolveAbsolutePath,
+} from '@/utils/resource-file-service'
 
 export interface TeachingMaterialStoredFile {
   fileName: string
@@ -8,8 +13,6 @@ export interface TeachingMaterialStoredFile {
 }
 
 class TeachingMaterialFileManager {
-  private managedRootPromise: Promise<string> | null = null
-
   async saveBrowserFile(
     file: File,
     dimensionCode: TeachingMaterialDimensionCode
@@ -43,12 +46,7 @@ class TeachingMaterialFileManager {
   }
 
   async deleteManagedFile(relativePath: string): Promise<boolean> {
-    if (!window.electronAPI) {
-      return true
-    }
-
-    const absolutePath = await this.resolveManagedAbsolutePath(relativePath)
-    return window.electronAPI.deleteFile(absolutePath)
+    return serviceDeleteManagedFile(relativePath)
   }
 
   async openManagedFile(relativePath: string): Promise<boolean> {
@@ -57,7 +55,7 @@ class TeachingMaterialFileManager {
       return true
     }
 
-    const absolutePath = await this.resolveManagedAbsolutePath(relativePath)
+    const absolutePath = await resolveAbsolutePath(relativePath)
     const result: any = await window.electronAPI.openFile(absolutePath)
     if (typeof result === 'boolean') {
       return result
@@ -71,8 +69,7 @@ class TeachingMaterialFileManager {
   }
 
   async resolveManagedAbsolutePath(relativePath: string): Promise<string> {
-    const managedRoot = await this.getManagedRootPath()
-    return joinFileSystemPath(managedRoot, normalizeRelativePath(relativePath))
+    return resolveAbsolutePath(relativePath)
   }
 
   private async saveBytes(
@@ -84,7 +81,7 @@ class TeachingMaterialFileManager {
     const relativePath = buildManagedRelativePath(dimensionCode, fileName)
 
     if (window.electronAPI) {
-      const absolutePath = await this.resolveManagedAbsolutePath(relativePath)
+      const absolutePath = await resolveAbsolutePath(relativePath)
       const directoryPath = absolutePath.replace(/[\\/][^\\/]+$/, '')
       await window.electronAPI.ensureDir(directoryPath)
 
@@ -101,21 +98,6 @@ class TeachingMaterialFileManager {
       fileSizeBytes: bytes.byteLength,
     }
   }
-
-  private async getManagedRootPath(): Promise<string> {
-    if (!this.managedRootPromise) {
-      this.managedRootPromise = (async () => {
-        if (!window.electronAPI) {
-          return '/resources'
-        }
-
-        const userDataPath = await window.electronAPI.getUserDataPath()
-        return joinFileSystemPath(userDataPath, 'resources')
-      })()
-    }
-
-    return this.managedRootPromise
-  }
 }
 
 function buildManagedRelativePath(
@@ -128,23 +110,6 @@ function buildManagedRelativePath(
 
 function sanitizeFileName(fileName: string): string {
   return fileName.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_').trim() || 'material.bin'
-}
-
-function normalizeRelativePath(value: string): string {
-  return value
-    .replace(/\\/g, '/')
-    .replace(/^\/+/, '')
-    .replace(/\/+/g, '/')
-}
-
-function joinFileSystemPath(basePath: string, relativePath: string): string {
-  const separator = basePath.includes('\\') ? '\\' : '/'
-  const cleanedBase = basePath.replace(/[\\/]+$/, '')
-  const cleanedRelative = relativePath
-    .replace(/^[\\/]+/, '')
-    .replace(/[\\/]+/g, separator)
-
-  return `${cleanedBase}${separator}${cleanedRelative}`
 }
 
 function getFileName(filePath: string): string {

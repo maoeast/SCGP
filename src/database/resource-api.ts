@@ -9,6 +9,8 @@
 
 import { DatabaseAPI } from './api'
 import type { ModuleCode, ResourceItem, ResourceQueryOptions } from '@/types/module'
+import { extractResourceFileRefs } from '@/utils/resource-file-refs'
+import { deleteManagedFile } from '@/utils/resource-file-service'
 
 /**
  * 通用资源 API 类
@@ -533,6 +535,25 @@ export class ResourceAPI extends DatabaseAPI {
       return false
     }
 
+    // 替换即删旧：仅当封面 / 元数据变更时，记录新旧托管文件引用
+    const replacingFiles = data.coverImage !== undefined || data.metadata !== undefined
+    let oldFileRefs: string[] = []
+    let newFileRefs: string[] = []
+    if (replacingFiles) {
+      const oldRow = this.queryOne(
+        'SELECT cover_image, meta_data FROM sys_training_resource WHERE id = ?',
+        [id]
+      )
+      const oldCover = oldRow?.cover_image
+      const oldMeta = oldRow?.meta_data
+      oldFileRefs = extractResourceFileRefs({ cover_image: oldCover, meta_data: oldMeta })
+      newFileRefs = extractResourceFileRefs({
+        cover_image: data.coverImage !== undefined ? data.coverImage : oldCover,
+        meta_data:
+          data.metadata !== undefined ? (data.metadata ? JSON.stringify(data.metadata) : null) : oldMeta,
+      })
+    }
+
     // 构建 UPDATE 语句
     const updates: string[] = []
     const params: any[] = []
@@ -574,6 +595,14 @@ export class ResourceAPI extends DatabaseAPI {
       SET ${updates.join(', ')}
       WHERE id = ?
     `, params)
+
+    // 替换后清理：旧引用减新引用，跨表计数==0 才删物理文件
+    if (replacingFiles) {
+      const toDelete = oldFileRefs.filter((rel) => !newFileRefs.includes(rel))
+      if (toDelete.length > 0) {
+        this.purgeUnreferencedFiles(toDelete)
+      }
+    }
 
     // 处理标签更新（如果提供了 tags）
     if (data.tags !== undefined) {
@@ -648,6 +677,13 @@ export class ResourceAPI extends DatabaseAPI {
    * @returns 是否删除成功
    */
   hardDeleteResource(id: number): boolean {
+    // 删前抽取托管文件引用（主行删除后无法再读）
+    const row = this.queryOne(
+      'SELECT cover_image, meta_data FROM sys_training_resource WHERE id = ?',
+      [id]
+    )
+    const refs = row ? extractResourceFileRefs(row) : []
+
     // 先删除标签关联
     this.execute('DELETE FROM sys_resource_tag_map WHERE resource_id = ?', [id])
 
@@ -657,8 +693,58 @@ export class ResourceAPI extends DatabaseAPI {
     // 删除资源本身
     this.execute('DELETE FROM sys_training_resource WHERE id = ?', [id])
 
+    // 物理文件清理（主行已删，跨表计数==0 才删）
+    if (refs.length > 0) {
+      this.purgeUnreferencedFiles(refs)
+    }
+
     console.log(`[ResourceAPI.hardDeleteResource] 永久删除资源: ID=${id}`)
     return true
+  }
+
+  /**
+   * 跨表引用计数：某托管相对路径在 sys_training_resource（cover_image / meta_data）
+   * 与 teaching_material（file_path 全等）中的被引用次数。
+   *
+   * 删物理文件前确认无其它行引用，避免误删共享文件。
+   * cover_image / meta_data 用 LIKE（路径含时间戳/uuid，碰撞可忽略；'_' 通配只会过计数 → 保守安全）。
+   */
+  private countResourceFileReferences(relativePath: string): number {
+    const like = `%${relativePath}%`
+    const resRow = this.queryOne(
+      'SELECT COUNT(*) as cnt FROM sys_training_resource WHERE cover_image LIKE ? OR meta_data LIKE ?',
+      [like, like]
+    )
+    const tmRow = this.queryOne(
+      'SELECT COUNT(*) as cnt FROM teaching_material WHERE file_path = ?',
+      [relativePath]
+    )
+    return Number(resRow?.cnt || 0) + Number(tmRow?.cnt || 0)
+  }
+
+  /**
+   * 尽力删除一组托管物理文件（每个先经跨表引用计数确认 == 0），失败仅 warn 不阻断。
+   * 文件删除为异步 IPC，此处 fire-and-forget：DB 操作已完成，文件清理失败由 Phase 3 GC 兜底。
+   */
+  private purgeUnreferencedFiles(relativePaths: string[]): void {
+    const toDelete = relativePaths.filter((rel) => this.countResourceFileReferences(rel) === 0)
+    if (toDelete.length === 0) {
+      return
+    }
+    void this.deleteFilesBestEffort(toDelete)
+  }
+
+  private async deleteFilesBestEffort(relativePaths: string[]): Promise<void> {
+    for (const rel of relativePaths) {
+      try {
+        const ok = await deleteManagedFile(rel)
+        if (!ok) {
+          console.warn(`[ResourceAPI] 物理文件清理失败（可能已不存在）: ${rel}`)
+        }
+      } catch (error) {
+        console.warn(`[ResourceAPI] 物理文件清理异常: ${rel}`, error)
+      }
+    }
   }
 
   /**

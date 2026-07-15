@@ -486,6 +486,7 @@ import {
   generateSceneImages,
   type GeneratedSceneImageCandidate,
 } from '@/services/scene-image-generation'
+import { purgeAbandonedSceneCandidates } from '@/utils/resource-file-service'
 import {
   createEmotionScenePrompt,
   createEmotionScenePromptOption,
@@ -754,6 +755,8 @@ function updateSolutionOptionalField<K extends keyof EmotionSceneSolution>(
 }
 
 async function handleGenerateImages() {
+  // 重新生成前，清理上一批未选中的候选图物理文件（当前已选 imageUrl 保留；apply 时机删会破坏同批次改选）
+  await purgeAbandonedSceneCandidates(generatedCandidates.value, props.modelValue.imageUrl)
   isGeneratingImages.value = true
   try {
     const candidates = await generateSceneImages({
