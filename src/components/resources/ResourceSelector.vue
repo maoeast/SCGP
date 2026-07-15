@@ -12,6 +12,16 @@
         </el-option>
       </el-select>
       <el-input v-model="searchKeyword" placeholder="搜索..." prefix-icon="Search" clearable size="small" class="search-input" @input="handleSearch" />
+      <el-button
+        class="favorite-toggle"
+        size="small"
+        :type="showFavoritesOnly ? 'warning' : 'default'"
+        :icon="showFavoritesOnly ? StarFilled : Star"
+        plain
+        @click="toggleFavoritesOnly"
+      >
+        {{ showFavoritesOnly ? '全部' : '收藏' }}
+      </el-button>
     </div>
     <div v-if="loading" class="loading-container">
       <el-skeleton :rows="6" animated />
@@ -31,6 +41,15 @@
           <div class="resource-name">{{ item.name }}</div>
           <div class="resource-category">{{ getItemCategoryLabel(item) }}</div>
         </div>
+        <el-icon
+          class="favorite-star"
+          :class="{ active: item.isFavorite }"
+          :title="item.isFavorite ? '取消收藏' : '收藏'"
+          @click="toggleFavorite(item, $event)"
+        >
+          <StarFilled v-if="item.isFavorite" />
+          <Star v-else />
+        </el-icon>
       </div>
     </div>
   </div>
@@ -39,6 +58,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Star, StarFilled } from '@element-plus/icons-vue'
 import type { ModuleCode, ResourceItem, ResourceQueryOptions } from '@/types/module'
 import { useAuthStore } from '@/stores/auth'
 import { isAccessControlledItemVisible } from '@/utils/access-visibility'
@@ -120,6 +140,7 @@ const selectedResource = ref<ResourceItem | null>(props.modelValue)
 const searchKeyword = ref(props.keyword || '')
 const selectedCategory = ref(props.category)
 const debounceTimer = ref<number | null>(null)
+const showFavoritesOnly = ref(props.favoritesOnly)
 
 // 动态生成分类按钮（从 categoryCounts 获取）
 const categoryButtons = computed(() => {
@@ -182,6 +203,29 @@ const handleSearch = () => {
 const selectResource = (item: ResourceItem) => {
   selectedResource.value = item
   emit('update:modelValue', item)
+}
+
+// 切换资源收藏（星标点击，阻止冒泡以免触发选中）
+const toggleFavorite = (item: ResourceItem, event: Event) => {
+  event.stopPropagation()
+  const userId = authStore.user?.id
+  if (!userId || !api.value) return
+  try {
+    const nowFavorite = api.value.toggleFavorite(userId, item.id)
+    item.isFavorite = nowFavorite
+    // 仅看收藏模式下取消收藏，则移出当前列表
+    if (!nowFavorite && showFavoritesOnly.value) {
+      resources.value = resources.value.filter((r) => r.id !== item.id)
+    }
+  } catch (error: any) {
+    console.error('Toggle favorite failed:', error)
+    ElMessage.error('收藏操作失败')
+  }
+}
+
+const toggleFavoritesOnly = () => {
+  showFavoritesOnly.value = !showFavoritesOnly.value
+  loadData()
 }
 
 const getResourceImage = (item: ResourceItem) => {
@@ -296,6 +340,7 @@ const loadData = async () => {
   loading.value = true
   try {
     api.value = new ResourceAPI()
+    const userId = authStore.user?.id
     const queryOptions: ResourceQueryOptions = {
       moduleCode: props.moduleCode,
       resourceType: props.resourceType,
@@ -304,7 +349,8 @@ const loadData = async () => {
         : undefined,
       keyword: searchKeyword.value || undefined,
       tags: props.tags,
-      favoritesOnly: props.favoritesOnly
+      favoritesOnly: showFavoritesOnly.value,
+      userId
     }
     let data = api.value.getResources(queryOptions)
     if (props.trainingEntry) {
@@ -325,6 +371,12 @@ const loadData = async () => {
     )
 
     data = sortGameResources(data)
+
+    // 回填收藏状态（仅登录用户）
+    if (userId) {
+      const favIds = new Set(api.value.getFavoriteResourceIds(userId))
+      data.forEach((item) => { item.isFavorite = favIds.has(item.id) })
+    }
 
     resources.value = data
     categoryCounts.value = props.resourceType === 'equipment'
@@ -392,6 +444,10 @@ watch(selectedResource, (newVal) => {
   flex: 1;
 }
 
+.favorite-toggle {
+  flex-shrink: 0;
+}
+
 .category-count {
   float: right;
   color: #909399;
@@ -457,6 +513,19 @@ watch(selectedResource, (newVal) => {
 .resource-category {
   font-size: 12px;
   color: #606266;
+}
+
+.favorite-star {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: #c0c4cc;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.favorite-star:hover,
+.favorite-star.active {
+  color: #e6a23c;
 }
 
 .loading-container,

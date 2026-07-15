@@ -163,15 +163,14 @@ export class ResourceAPI extends DatabaseAPI {
       }
     }
 
-    // 添加仅显示收藏筛选
-    if (options.favoritesOnly) {
-      // TODO: 实现 favorites 筛选（需要 sys_favorites 表）
-      // sql += ` AND EXISTS (
-      //   SELECT 1 FROM sys_favorites f
-      //   WHERE f.resource_id = tr.id
-      //     AND f.user_id = ?
-      // )`
-      // params.push(currentUserId)
+    // 添加仅显示收藏筛选（统一资源模型 sys_favorites）
+    if (options.favoritesOnly && options.userId) {
+      sql += ` AND EXISTS (
+        SELECT 1 FROM sys_favorites f
+        WHERE f.resource_id = tr.id
+          AND f.user_id = ?
+      )`
+      params.push(options.userId)
     }
 
     // 组装完整查询
@@ -189,6 +188,40 @@ export class ResourceAPI extends DatabaseAPI {
     return this.dedupePhysicalEquipmentResources(
       results.map((row: any) => this.mapToResourceItem(row))
     )
+  }
+
+  /**
+   * 切换资源收藏状态（已收藏则取消，未收藏则添加）
+   * @returns 操作后的收藏状态：true=已收藏，false=已取消
+   */
+  toggleFavorite(userId: number, resourceId: number): boolean {
+    const existed = this.query(
+      'SELECT 1 FROM sys_favorites WHERE user_id = ? AND resource_id = ?',
+      [userId, resourceId]
+    )
+    if (existed.length > 0) {
+      this.execute(
+        'DELETE FROM sys_favorites WHERE user_id = ? AND resource_id = ?',
+        [userId, resourceId]
+      )
+      return false
+    }
+    this.execute(
+      'INSERT OR IGNORE INTO sys_favorites (user_id, resource_id) VALUES (?, ?)',
+      [userId, resourceId]
+    )
+    return true
+  }
+
+  /**
+   * 获取用户收藏的所有资源 ID（用于批量回填收藏状态）
+   */
+  getFavoriteResourceIds(userId: number): number[] {
+    const rows = this.query(
+      'SELECT resource_id FROM sys_favorites WHERE user_id = ?',
+      [userId]
+    )
+    return rows.map((row: any) => row.resource_id as number)
   }
 
   /**

@@ -130,6 +130,9 @@ export interface ResourceQueryOptions {
   // 是否只返回收藏资源
   favoritesOnly?: boolean
 
+  // 当前用户 ID（收藏筛选/回填所需）
+  userId?: number
+
   // 是否包含自定义资源
   includeCustom?: boolean
 
@@ -193,6 +196,9 @@ export interface ResourceItem {
 
   // UI 临时状态
   statusLoading?: boolean
+
+  // 是否已被当前用户收藏（运行时回填，非持久字段）
+  isFavorite?: boolean
 
   // 迁移溯源字段（用于图片加载和兼容性）
   legacyId?: number
