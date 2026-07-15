@@ -1512,6 +1512,7 @@
   - 预置（永不删 / 不进备份）前缀 = `docs/`、`images/`、`videos/`、`audio/`（随包 `assets/resources`）
   - 唯一正确可写根 = `userData/resources`（协议 `resource://` 读序：userData/resources → assets/resources，未命中 -6）
 - `sys_training_resource` 删/替现在清物理文件（`hardDeleteResource` / `updateResource` 钩入 `src/database/resource-api.ts`）：删前抽 `cover_image` + `meta_data` 托管引用 → **跨表计数**（sys_training_resource cover/meta LIKE + teaching_material.file_path 全等）== 0 才删，防误删共享；软删 `deleteResource` 仍不动文件（可恢复语义）。
-- 公共文件服务 `src/utils/resource-file-service.ts`（`resolveAbsolutePath` / `deleteManagedFile` / `getManagedRoot` + `purgeAbandonedSceneCandidates`）；`teaching-material-file-manager.ts` 已改为复用（对外 API 不变）。Phase 2 备份 / Phase 3 GC 复用此服务。
+- 公共文件服务 `src/utils/resource-file-service.ts`（`resolveAbsolutePath` / `deleteManagedFile` / `getManagedRoot`）；`teaching-material-file-manager.ts` 已改为复用（对外 API 不变）。Phase 2 备份 / Phase 3 GC 复用此服务。
 - ⚠️ 残留技术债：`src/utils/resource-manager.ts`（link B，用废弃 `getAppPath()` = 安装目录/resources，生产路径 bug）有 1 处活引用（`PlanList.vue handlePreviewResource → openWithSystem`）未删，迁移到新服务另起子任务；link A（`ResourceUpload.vue` + `SAVE_ASSET` IPC）已删。
 - 现实边界：Phase 1 type-check ✅ + 单测 ✅，真机验证待跑；Phase 2（备份纳入物理文件 zip 归档 v3.0）/ Phase 3（孤儿 GC）未启动。计划 `docs/plans/2026-07-15-a4-resource-file-lifecycle-plan.md`。
+- AI 生图功能整体移除（2026-07-15）：链路 D（情绪场景 / 表达关心编辑器的 Gemini 场景图生成）确认为忘删的未用功能，整体删除 `src/services/scene-image-generation.ts` + `main.mjs` Gemini 生图基建（GEMINI_IMAGE_MODEL / getGeminiApiKey / generateGeminiSceneImage / sanitizeFileSegment / mimeTypeToExtension + `ai:generate-scene-images` IPC）+ 两 editor AI 按钮/候选网格/handlers + §3.5 候选图清理 helper（`purgeAbandonedSceneCandidates` / `ManagedFileRef`）；保留 `imageUrl` 手动输入。type-check ✅，diff 5 文件 +3/-515。link D 孤儿源从根消除（比 §3.5 regenerate 清理更干净）。

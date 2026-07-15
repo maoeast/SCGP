@@ -29,7 +29,7 @@
 | A `SAVE_ASSET` IPC | `main.mjs:640-700`；调用方 `ResourceUpload.vue:250` | `userData/resources` ✅ | **死代码**（`ResourceUpload.vue` 全 src 无 import，唯一命中是 2026-04 code-review 文档） |
 | B `ResourceManager.saveFile` | `resource-manager.ts:130-190`；调用方 `Resources.vue:539` | `getAppPath()`→生产=**安装目录/resources** ❌ | **死代码**（`Resources.vue` 路由 `router/index.ts:1095` 是 `redirect:'/resource-center'`+`hideInMenu`，组件从不挂载；import 是死 import） |
 | C `TeachingMaterialFileManager` | `teaching-material-file-manager.ts:78-103`；调用方 `TeachingMaterials.vue:658`、`resource-importer.ts:146` | `userData/resources` ✅ | **活，健康**（删 DB 行后 `deleteManagedFile`，DB 写失败有文件回滚） |
-| D AI 场景图主进程直写 | `main.mjs:816-863`；调用方 `EmotionSceneEditor.vue:759`、`CareExpressionEditor.vue:814` | `userData/resources/uploaded/ai-scenes/` ✅ | **活，有孤儿**：未选中候选图写盘后无人删（`EmotionSceneEditor.vue:773-776 applyGeneratedCandidate` 只写选中项 url） |
+| D AI 场景图主进程直写 | （已删除） | `userData/resources/uploaded/ai-scenes/` | **已移除（2026-07-15）**：AI 生图功能整体删除，链路 D 不复存在，孤儿源从根消除。详见 §3.5。 |
 
 > `get-app-path` 生产 bug 坐实：`main.mjs:1127-1144` 返回 `path.dirname(process.execPath)+'/resources'`，既非 `userData/resources` 也非 `assets/resources` → 链路 B 生产环境写盘的文件协议读不到。链路 B 已死，无需修，直接删。
 
@@ -87,9 +87,12 @@
 - 仅当 `data.coverImage !== undefined` 或 `data.metadata !== undefined`：先读旧行 → `oldRefs=extractResourceFileRefs(oldRow)`；构造 `newRow={...oldRow, cover_image:data.coverImage??old, meta_data:data.metadata??old}` → `newRefs=extractResourceFileRefs(newRow)`；`toDelete = oldRefs − newRefs`；UPDATE 成功后对每个 `toDelete` 跨表计数==0 才删文件。
 - 不改其它字段更新逻辑。
 
-### 3.5 AI 候选图清理（链路 D）
-- `EmotionSceneEditor.vue:773-776` / `CareExpressionEditor.vue:814` `applyGeneratedCandidate`：用户选中一张后，对其余候选 url 抽托管路径 → 跨表计数==0 → 删除（候选刚生成、必然零引用，可直接删）。
-- 不改 `main.mjs:816-863` 生成逻辑（仍写多张候选供选）；仅渲染侧清理未选中。
+### 3.5 AI 候选图清理（链路 D）—— ⚠️ 已废弃（2026-07-15）
+
+> **整体移除**：AI 生图功能（情绪场景 / 表达关心编辑器）经确认为忘删的未用功能，已整体删除 —— `src/services/scene-image-generation.ts`、`main.mjs` Gemini 生图基建、两 editor 的 AI 按钮 / 候选网格 / handlers，连同本节描述的 `purgeAbandonedSceneCandidates` / `ManagedFileRef` 清理 helper 一并移除。link D 孤儿源从根消除，比 regenerate 时机清理更干净；保留 `imageUrl` 手动输入。type-check ✅。下方原始方案保留作历史记录。
+
+- ~~`EmotionSceneEditor.vue:773-776` / `CareExpressionEditor.vue:814` `applyGeneratedCandidate`：用户选中一张后，对其余候选 url 抽托管路径 → 跨表计数==0 → 删除（候选刚生成、必然零引用，可直接删）。~~
+- ~~不改 `main.mjs:816-863` 生成逻辑（仍写多张候选供选）；仅渲染侧清理未选中。~~
 
 ### 3.6 死代码清理（删前 grep 复核零活引用）
 - 删 `src/components/ResourceUpload.vue` + `electron/main.mjs:640-700 SAVE_ASSET` IPC + `electron/preload.mjs` 对应绑定。
@@ -98,7 +101,7 @@
 
 ### 3.7 Phase 1 验证
 - `npm run type-check`。
-- 真机（Electron）：①硬删一个有封面/AI 图的资源 → 磁盘对应文件消失，预置图不动；②编辑替换封面 → 旧托管文件删、预置不动；③AI 生成场景图选一张 → 其余候选从磁盘消失；④软删→恢复 → 文件仍在。
+- 真机（Electron）：①硬删一个有封面/AI 图的资源 → 磁盘对应文件消失，预置图不动；②编辑替换封面 → 旧托管文件删、预置不动；③（AI 生图已移除，不再适用）；④软删→恢复 → 文件仍在。
 
 ---
 
