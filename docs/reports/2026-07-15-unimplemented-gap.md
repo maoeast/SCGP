@@ -24,10 +24,10 @@
 |----|------|----------|------|----------|
 | A1 | DB Worker 主链未接入 | 文件齐全（`db.worker.ts`/`db-bridge.ts`/`command-queue.ts`）但只在 dev 工具触发，生产仍**主线程跑 SQL.js** | `sqljs-loader.ts` 无 worker 引用；AGENTS §3 | ⬜ 未开始 |
 | A2 | Image Worker 不存在 | 运行时无图像 Worker，图像处理走构建期脚本 | `src/workers/` 无 image worker | ⬜ 未开始 |
-| A3 | 备份/恢复未覆盖全 schema | 偏向旧表导出，`sys_training_resource`/`sys_tags`/`sys_resource_tag_map`/班级扩展表未完整纳入 | AGENTS §3 技术债；git log 无 backup 提交 | ⬜ 未开始 |
+| A3 | 备份/恢复未覆盖全 schema | **已闭环**（2026-04-03 `8eb7e6e`）：`backup.ts` 动态全表枚举 `sqlite_master` + 排除 `_new` 临时表 + 班级链重算 + 外键校验；资源**物理文件**未含（属 A4） | gap 报告/AGENTS §3 **已过时** | ✅ 已闭环 |
 | A4 | 资源文件生命周期未收口 | `resource://` 可用，但物理文件新增/替换/删除/清理无统一主链，易出孤儿文件 | AGENTS §3 技术债 | ⬜ 未开始 |
 | A5 | 注册表动态路由未完成 | 路由仍是 `router/index.ts` 静态表；`ModuleRegistry` 只注册 **3 模块**（sensory/emotional/social），cognitive/life_skills/resource 未注册 | `module-registry.ts:364-454`；AGENTS §3 | ⬜ 未开始 |
-| A6 | 资源收藏查询未实现 | `sys_favorites` 表已建，但查询逻辑仍是 **TODO 桩**：`resource-api.ts:167-168` | grep 命中 | ⬜ 未开始 |
+| A6 | 资源收藏查询未实现 | **已闭环**：查询激活 + `toggleFavorite`/`getFavoriteResourceIds` + ResourceSelector 星标/「仅看收藏」；type-check ✅，真机待验 | grep 命中 | 🔄 代码完成待真机 |
 | A7 | 命名残留旧阶段名 | 代码默认值/缓存 key/备份 metadata 仍有旧名 | AGENTS §3 技术债 | ⬜ 未开始 |
 | A8 | dev/迁移工具仍混在主路由树 | 已用 `devOnlyRouteNames` 生产屏蔽，但仍挂在路由表内（未收敛到独立开关） | `router/index.ts:143-154`；AGENTS §3 | ⬜ 未开始 |
 
