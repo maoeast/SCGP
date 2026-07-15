@@ -85,6 +85,8 @@
               </div>
             </section>
           </div>
+
+          <ResourceHealthCheck />
         </div>
       </el-tab-pane>
 
@@ -257,6 +259,7 @@ import { getEntitlementDefinition } from '@/features/entitlements/entitlement-ca
 import { backupManager } from '@/utils/backup'
 import UserManagement from './system/UserManagement.vue'
 import SystemSettings from './system/SystemSettings.vue'
+import ResourceHealthCheck from './system/ResourceHealthCheck.vue'
 import UpdatePanel from './updates/UpdatePanel.vue'
 
 const authStore = useAuthStore()
