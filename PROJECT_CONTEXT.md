@@ -1504,3 +1504,14 @@
 - ⚠️ 现实边界：真机 E2E 未跑；题库（2 维度 match_basic/match_detail 各 6 题，4 选 1）与常模均为 DRAFT，需专业心理测量审核 + 本地常模采集；MVP 无强制时限（推迟 Phase 3.1）。
 - raven60 版权状态反转：420 张瑞文 SPM 图**已取得授权**，当前仅本地保留（加入 .gitignore），暂不纳入版本库；§59 末尾「不纳入/接入须先确认版权」的旧约束已解除，如需接入可直接纳入。
 - 清理：`AGENTS.min.md`（被 `AGENTS.md` 统一规则源取代）正式删除；交接文档（`.continue-here.md` / `会话启动.md` 本次交接区块）刷新为 Phase 3 已提交推送状态，修正此前「未提交/方向待定」的滞后表述。
+
+## 61. 2026-07-15 A4 资源文件生命周期 Phase 1：托管路径规则 + 删/替即清物理文件
+
+- 资源物理文件判定规则（**全局约束**，备份 / GC / 新资源功能共用，见 `src/utils/resource-file-refs.ts`）：
+  - 托管（可删 / 进备份）前缀 = `uploaded/`、`teaching-materials/`
+  - 预置（永不删 / 不进备份）前缀 = `docs/`、`images/`、`videos/`、`audio/`（随包 `assets/resources`）
+  - 唯一正确可写根 = `userData/resources`（协议 `resource://` 读序：userData/resources → assets/resources，未命中 -6）
+- `sys_training_resource` 删/替现在清物理文件（`hardDeleteResource` / `updateResource` 钩入 `src/database/resource-api.ts`）：删前抽 `cover_image` + `meta_data` 托管引用 → **跨表计数**（sys_training_resource cover/meta LIKE + teaching_material.file_path 全等）== 0 才删，防误删共享；软删 `deleteResource` 仍不动文件（可恢复语义）。
+- 公共文件服务 `src/utils/resource-file-service.ts`（`resolveAbsolutePath` / `deleteManagedFile` / `getManagedRoot` + `purgeAbandonedSceneCandidates`）；`teaching-material-file-manager.ts` 已改为复用（对外 API 不变）。Phase 2 备份 / Phase 3 GC 复用此服务。
+- ⚠️ 残留技术债：`src/utils/resource-manager.ts`（link B，用废弃 `getAppPath()` = 安装目录/resources，生产路径 bug）有 1 处活引用（`PlanList.vue handlePreviewResource → openWithSystem`）未删，迁移到新服务另起子任务；link A（`ResourceUpload.vue` + `SAVE_ASSET` IPC）已删。
+- 现实边界：Phase 1 type-check ✅ + 单测 ✅，真机验证待跑；Phase 2（备份纳入物理文件 zip 归档 v3.0）/ Phase 3（孤儿 GC）未启动。计划 `docs/plans/2026-07-15-a4-resource-file-lifecycle-plan.md`。
