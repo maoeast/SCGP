@@ -1516,3 +1516,13 @@
 - ⚠️ 残留技术债：`src/utils/resource-manager.ts`（link B，用废弃 `getAppPath()` = 安装目录/resources，生产路径 bug）有 1 处活引用（`PlanList.vue handlePreviewResource → openWithSystem`）未删，迁移到新服务另起子任务；link A（`ResourceUpload.vue` + `SAVE_ASSET` IPC）已删。
 - 现实边界：Phase 1 type-check ✅ + 单测 ✅，真机验证待跑；Phase 2（备份纳入物理文件 zip 归档 v3.0）/ Phase 3（孤儿 GC）未启动。计划 `docs/plans/2026-07-15-a4-resource-file-lifecycle-plan.md`。
 - AI 生图功能整体移除（2026-07-15）：链路 D（情绪场景 / 表达关心编辑器的 Gemini 场景图生成）确认为忘删的未用功能，整体删除 `src/services/scene-image-generation.ts` + `main.mjs` Gemini 生图基建（GEMINI_IMAGE_MODEL / getGeminiApiKey / generateGeminiSceneImage / sanitizeFileSegment / mimeTypeToExtension + `ai:generate-scene-images` IPC）+ 两 editor AI 按钮/候选网格/handlers + §3.5 候选图清理 helper（`purgeAbandonedSceneCandidates` / `ManagedFileRef`）；保留 `imageUrl` 手动输入。type-check ✅，diff 5 文件 +3/-515。link D 孤儿源从根消除（比 §3.5 regenerate 清理更干净）。
+
+## 62. 2026-07-15 A4 资源文件生命周期 Phase 2：备份纳入物理文件 zip 归档（v2.0→3.0）
+
+- 备份格式升级 `BACKUP_VERSION` 2.0→3.0，`SUPPORTED_BACKUP_VERSIONS` 保留 1.0/2.0（降级兼容）；恢复 v1.0/2.0 备份时仅提示「不含资源文件」不报错。
+- `BackupData` 增 `resourceArchive?: { version, fileCount, totalBytes, checksum, payload }`（payload = zip 归档加密串）；`metadata.resourceArchive` 存摘要供 `getBackupInfo` 不解密展示。载体仍单 `.dat`。
+- 加密二进制能力 `src/utils/crypto.ts` 新增 `encryptBytes` / `decryptBytes`（Uint8Array↔WordArray↔AES，纯 crypto-js）/ `md5Bytes`（完整性 checksum）；round-trip 单测 `tests/crypto-bytes.test.ts` ✅。
+- 新增运行时依赖 **`fflate`**（纯 JS zip，无原生编译，符合 AGENTS §5 禁止清单）；`main.mjs` 加 `pack-resource-archive`（仅 `uploaded/` + `teaching-materials/` 子树）/ `unpack-resource-archive`（防遍历）/ `walk-dir`（递归列目录，Phase 3 GC 复用）IPC + `walkDirRecursive`。
+- `backup.ts` `exportData(includeResources=true)` 打包→加密→入 BackupData；`importData` 在 DB 事务提交后 `restoreResourceArchive` 解包写回，失败不阻断数据恢复。
+- ⚠️ **类型陷阱**：`env.d.ts` 是 `window.electronAPI` 实际生效声明（内联对象类型）；`src/types/electron.d.ts` 的 `declare global` 未进编译，但其 `ElectronAPI` 接口仍被 `src/workers/db-bridge.ts:20` import。改 `window.electronAPI` 类型须改 `env.d.ts`；两处重复声明是既有债。
+- 现实边界：Phase 2 type-check ✅ + crypto/fflate round-trip ✅，**真机验证待做**（导出→清库清 `userData/resources`→恢复→资源图片/教具恢复可显；2.0 旧备份不报错）；建议与 Phase 3 真机合并。commit `809257d`。
