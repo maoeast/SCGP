@@ -86,6 +86,27 @@ declare global {
         createdTime?: string
       }>
 
+      // Phase 2: 资源文件归档（备份 zip）
+      packResourceArchive: () => Promise<{
+        success: boolean
+        error?: string
+        zipBytes: Uint8Array | null
+        manifest: Array<{ rel: string; size: number }>
+        fileCount: number
+        totalBytes: number
+      }>
+      unpackResourceArchive: (zipBytes: Uint8Array) => Promise<{
+        success: boolean
+        error?: string
+        restored: number
+        failed: Array<{ rel: string; error: string }>
+      }>
+      walkDir: (relSubpath?: string) => Promise<{
+        success: boolean
+        error?: string
+        files: Array<{ rel: string; size: number }>
+      }>
+
       // TTS 语音合成
       ttsSynthesize: (
         text: string,

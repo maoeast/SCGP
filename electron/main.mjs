@@ -6,6 +6,7 @@ import crypto from 'crypto'
 import os from 'os'
 import http from 'http'
 import https from 'https'
+import { zipSync, unzipSync } from 'fflate'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
@@ -709,6 +710,166 @@ ipcMain.handle('read-dir', async (event, dirPath) => {
   } catch (error) {
     if (isDev) console.error('读取目录失败:', error)
     return []
+  }
+})
+
+// ========== Phase 2: 资源文件归档（备份 zip）==========
+// 托管子目录（可进备份 / 可删）：与 src/utils/resource-file-refs.ts MANAGED_PREFIXES 一致
+const MANAGED_SUBDIRS = ['uploaded', 'teaching-materials']
+
+/**
+ * 递归遍历目录，返回 [{ rel, abs, size }]（rel 相对 baseDir，正斜杠分隔）。
+ * Phase 2 备份打包与 Phase 3 GC 共用。
+ */
+async function walkDirRecursive(baseDir) {
+  const results = []
+  async function walk(dir, relPrefix) {
+    let entries
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const entry of entries) {
+      const abs = path.join(dir, entry.name)
+      const rel = relPrefix ? `${relPrefix}/${entry.name}` : entry.name
+      if (entry.isDirectory()) {
+        await walk(abs, rel)
+      } else if (entry.isFile()) {
+        let size = 0
+        try {
+          size = (await fs.stat(abs)).size
+        } catch {}
+        results.push({ rel, abs, size })
+      }
+    }
+  }
+  await walk(baseDir, '')
+  return results
+}
+
+/**
+ * 打包托管资源文件为 zip（仅 uploaded/ + teaching-materials/ 子树，跳过预置）。
+ * 返回 { success, zipBytes, manifest, fileCount, totalBytes }。
+ */
+ipcMain.handle('pack-resource-archive', async () => {
+  try {
+    const resourceRoot = getResourceRoot()
+    const collected = [] // [{ rel, abs, size }]
+    for (const sub of MANAGED_SUBDIRS) {
+      const subDir = path.join(resourceRoot, sub)
+      try {
+        await fs.access(subDir)
+      } catch {
+        continue // 托管子目录不存在视为空，跳过
+      }
+      const walked = await walkDirRecursive(subDir)
+      for (const f of walked) {
+        collected.push({ rel: `${sub}/${f.rel}`, abs: f.abs, size: f.size })
+      }
+    }
+
+    // 读字节 → fflate deflate（level 6）打包
+    const zipObj = {}
+    const manifest = []
+    let totalBytes = 0
+    for (const f of collected) {
+      const buf = await fs.readFile(f.abs)
+      zipObj[f.rel] = new Uint8Array(buf)
+      manifest.push({ rel: f.rel, size: f.size })
+      totalBytes += f.size
+    }
+    const zipBytes = zipSync(zipObj, { level: 6 })
+
+    if (isDev) {
+      console.log(`[pack-resource-archive] 打包 ${collected.length} 个文件，zip ${zipBytes.length} 字节`)
+    }
+    return {
+      success: true,
+      zipBytes: new Uint8Array(zipBytes),
+      manifest,
+      fileCount: collected.length,
+      totalBytes
+    }
+  } catch (error) {
+    if (isDev) console.error('[pack-resource-archive] 失败:', error)
+    return { success: false, error: error.message, zipBytes: null, manifest: [], fileCount: 0, totalBytes: 0 }
+  }
+})
+
+/**
+ * 解包资源 zip 到 userData/resources（仅写 uploaded/ + teaching-materials/ 下，防遍历）。
+ * 返回 { success, restored, failed: [{ rel, error }] }；单文件失败不阻断其余。
+ */
+ipcMain.handle('unpack-resource-archive', async (event, zipBytes) => {
+  try {
+    const resourceRoot = getResourceRoot()
+    const entries = unzipSync(new Uint8Array(zipBytes))
+    const normRoot = path.normalize(resourceRoot)
+    let restored = 0
+    const failed = []
+
+    for (const [rel, data] of Object.entries(entries)) {
+      // 安全校验：归一化后必须在托管子目录下、不得包含 ..
+      const normalized = path.normalize(rel).replace(/\\/g, '/')
+      const inManaged = MANAGED_SUBDIRS.some(
+        (sub) => normalized === sub || normalized.startsWith(`${sub}/`)
+      )
+      if (!inManaged || normalized.includes('..')) {
+        failed.push({ rel, error: '路径超出托管范围' })
+        continue
+      }
+      const abs = path.join(resourceRoot, normalized)
+      if (!path.normalize(abs).startsWith(normRoot)) {
+        failed.push({ rel, error: '路径校验失败' })
+        continue
+      }
+      try {
+        await fs.mkdir(path.dirname(abs), { recursive: true })
+        await fs.writeFile(abs, new Uint8Array(data))
+        restored++
+      } catch (e) {
+        failed.push({ rel, error: e.message })
+      }
+    }
+
+    if (isDev) {
+      console.log(`[unpack-resource-archive] 恢复 ${restored} 个文件，失败 ${failed.length} 个`)
+    }
+    return { success: true, restored, failed }
+  } catch (error) {
+    if (isDev) console.error('[unpack-resource-archive] 失败:', error)
+    return { success: false, error: error.message, restored: 0, failed: [] }
+  }
+})
+
+/**
+ * 递归列目录（相对 userData/resources），返回 { success, files: [{ rel, size }] }。
+ * Phase 3 GC 复用；目录不存在视为空。
+ */
+ipcMain.handle('walk-dir', async (event, relSubpath = '') => {
+  try {
+    const resourceRoot = getResourceRoot()
+    const target = relSubpath ? path.join(resourceRoot, relSubpath) : resourceRoot
+    if (!path.normalize(target).startsWith(path.normalize(resourceRoot))) {
+      return { success: false, error: '路径校验失败', files: [] }
+    }
+    try {
+      await fs.access(target)
+    } catch {
+      return { success: true, files: [] }
+    }
+    const walked = await walkDirRecursive(target)
+    return {
+      success: true,
+      files: walked.map((f) => ({
+        rel: relSubpath ? `${relSubpath}/${f.rel}` : f.rel,
+        size: f.size
+      }))
+    }
+  } catch (error) {
+    if (isDev) console.error('[walk-dir] 失败:', error)
+    return { success: false, error: error.message, files: [] }
   }
 })
 

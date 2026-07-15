@@ -77,6 +77,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 获取数据库文件状态
   getDatabaseStats: (dbName) => ipcRenderer.invoke('get-database-stats', dbName),
 
+  // ========== Phase 2: 资源文件归档（备份 zip） ==========
+  // 打包托管资源为 zip（仅 uploaded/ + teaching-materials/）
+  packResourceArchive: () => ipcRenderer.invoke('pack-resource-archive'),
+  // 解包资源 zip 到 userData/resources
+  unpackResourceArchive: (zipBytes) => ipcRenderer.invoke('unpack-resource-archive', zipBytes),
+  // 递归列目录（相对 userData/resources）
+  walkDir: (relSubpath) => ipcRenderer.invoke('walk-dir', relSubpath),
+
   // ========== 软件更新 API ==========
   // TTS 语音合成
   ttsSynthesize: (text, options) => ipcRenderer.invoke('tts:synthesize', { text, ...options }),
@@ -177,6 +185,10 @@ if (!process.contextIsolated) {
     saveDatabaseAtomic: (dbBuffer, dbName) => Promise.resolve({ success: true }),
     getDatabaseStats: (dbName) => Promise.resolve({ exists: false }),
     // TTS 语音合成API模拟
-    ttsSynthesize: (text, options) => Promise.resolve({ success: false, error: 'mock' })
+    ttsSynthesize: (text, options) => Promise.resolve({ success: false, error: 'mock' }),
+    // Phase 2 资源归档API模拟
+    packResourceArchive: () => Promise.resolve({ success: false, error: 'mock', zipBytes: null, manifest: [], fileCount: 0, totalBytes: 0 }),
+    unpackResourceArchive: (zipBytes) => Promise.resolve({ success: false, error: 'mock', restored: 0, failed: [] }),
+    walkDir: (relSubpath) => Promise.resolve({ success: true, files: [] })
   }
 }

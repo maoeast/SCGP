@@ -66,6 +66,27 @@ export interface ElectronAPI {
    */
   readDir: (dirPath: string) => Promise<DirItem[]>
 
+  // ========== Phase 2: 资源文件归档（备份 zip） ==========
+  /**
+   * 打包托管资源文件为 zip（仅 uploaded/ + teaching-materials/ 子树）
+   * @returns Promise<ResourceArchivePackResult> - 加密前的 zip 字节 + 清单
+   */
+  packResourceArchive: () => Promise<ResourceArchivePackResult>
+
+  /**
+   * 解包资源 zip 到 userData/resources（仅写托管子目录，防遍历）
+   * @param zipBytes - zip 字节
+   * @returns Promise<ResourceArchiveUnpackResult> - 恢复/失败统计
+   */
+  unpackResourceArchive: (zipBytes: Uint8Array) => Promise<ResourceArchiveUnpackResult>
+
+  /**
+   * 递归列目录（相对 userData/resources）
+   * @param relSubpath - 相对子路径（可选）
+   * @returns Promise<WalkDirResult> - 文件列表（相对路径 + 字节大小）
+   */
+  walkDir: (relSubpath?: string) => Promise<WalkDirResult>
+
   // ========== 系统操作 ==========
   /**
    * 使用系统默认程序打开文件
@@ -263,6 +284,53 @@ export interface DirItem {
   name: string
   isDirectory: boolean
   isFile: boolean
+}
+
+/**
+ * 资源归档清单项（Phase 2 备份）
+ */
+export interface ResourceArchiveManifestItem {
+  rel: string
+  size: number
+}
+
+/**
+ * 打包资源归档结果
+ */
+export interface ResourceArchivePackResult {
+  success: boolean
+  error?: string
+  zipBytes: Uint8Array | null
+  manifest: ResourceArchiveManifestItem[]
+  fileCount: number
+  totalBytes: number
+}
+
+/**
+ * 解包资源归档结果
+ */
+export interface ResourceArchiveUnpackResult {
+  success: boolean
+  error?: string
+  restored: number
+  failed: { rel: string; error: string }[]
+}
+
+/**
+ * 递归列目录文件项
+ */
+export interface WalkDirFile {
+  rel: string
+  size: number
+}
+
+/**
+ * 递归列目录结果
+ */
+export interface WalkDirResult {
+  success: boolean
+  error?: string
+  files: WalkDirFile[]
 }
 
 /**

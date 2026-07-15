@@ -3,6 +3,9 @@ import CryptoJS from 'crypto-js'
 
 // 加密配置
 const AES_SECRET = 'SPED-PASSWORD-SECURITY-KEY-2025'
+
+/** CryptoJS WordArray 实例类型（crypto-js 默认导入无法在类型位置作命名空间，故取实例类型） */
+type WordArray = InstanceType<typeof CryptoJS.lib.WordArray>
 const SALT_LENGTH = 32
 
 /**
@@ -105,6 +108,66 @@ export function decryptData(encryptedData: string, key?: string): any {
     console.error('数据解密失败:', error)
     return null
   }
+}
+
+/**
+ * Uint8Array → CryptoJS WordArray：每 4 字节打包成一个 32 位字，保持 big-endian 字节序。
+ * 不能直接把 Uint8Array 传给 WordArray.create（会被当成稀疏字数组，导致字节错位膨胀）。
+ */
+function bytesToWordArray(bytes: Uint8Array): WordArray {
+  const words: number[] = []
+  for (let i = 0; i < bytes.length; i++) {
+    const wordIndex = i >>> 2
+    const shift = 24 - (i % 4) * 8
+    words[wordIndex] = (((words[wordIndex] ?? 0) | ((bytes[i] ?? 0) << shift))) >>> 0
+  }
+  return CryptoJS.lib.WordArray.create(words, bytes.length)
+}
+
+/**
+ * CryptoJS WordArray → Uint8Array：按 sigBytes 截断取回原始字节。
+ */
+function wordArrayToBytes(wordArray: WordArray): Uint8Array {
+  const { words, sigBytes } = wordArray
+  const bytes = new Uint8Array(sigBytes)
+  for (let i = 0; i < sigBytes; i++) {
+    bytes[i] = ((words[i >>> 2] ?? 0) >>> (24 - (i % 4) * 8)) & 0xff
+  }
+  return bytes
+}
+
+/**
+ * 加密二进制数据（Uint8Array）→ OpenSSL 格式 base64 字符串。
+ * 供备份 zip 归档加密；与 encryptData 共用 AES_SECRET，纯 crypto-js 无新依赖。
+ */
+export function encryptBytes(bytes: Uint8Array, key?: string): string {
+  const useKey = key || AES_SECRET
+  return CryptoJS.AES.encrypt(bytesToWordArray(bytes), useKey).toString()
+}
+
+/**
+ * 解密二进制数据（encryptBytes 的逆操作）。
+ * 密钥错误 / 数据损坏 / padding 错误时返回 null，语义与 decryptData 一致。
+ */
+export function decryptBytes(payload: string, key?: string): Uint8Array | null {
+  if (!payload) return null
+  try {
+    const useKey = key || AES_SECRET
+    const decrypted = CryptoJS.AES.decrypt(payload, useKey)
+    // crypto-js 对非法/错误密文可能返回负 sigBytes（padding 异常），视为失败而非抛 RangeError
+    if (decrypted.sigBytes < 0) return null
+    return wordArrayToBytes(decrypted)
+  } catch (error) {
+    console.error('二进制解密失败:', error)
+    return null
+  }
+}
+
+/**
+ * 计算二进制的 MD5（hex），用于备份归档完整性校验（非安全用途）。
+ */
+export function md5Bytes(bytes: Uint8Array): string {
+  return CryptoJS.MD5(bytesToWordArray(bytes)).toString()
 }
 
 /**

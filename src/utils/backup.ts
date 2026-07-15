@@ -3,16 +3,28 @@ import { getDatabase } from '@/database/init'
 import { smQuestions } from '@/database/sm-questions'
 import { smAgeRanges, smRawToSQTable } from '@/database/sm-norms'
 import { weefimCategories, weefimQuestions } from '@/database/weefim-data'
-import { encryptData, decryptData } from './crypto'
+import { encryptData, decryptData, encryptBytes, decryptBytes, md5Bytes } from './crypto'
 
-const BACKUP_VERSION = '2.0'
-const SUPPORTED_BACKUP_VERSIONS = new Set(['1.0', BACKUP_VERSION])
+const BACKUP_VERSION = '3.0'
+const SUPPORTED_BACKUP_VERSIONS = new Set(['1.0', '2.0', BACKUP_VERSION])
 const EXCLUDED_BACKUP_TABLES = new Set([
   'task_step_new',
   'train_plan_detail_new',
   'train_log_new',
   'equipment_training_records_new',
 ])
+
+/**
+ * 资源归档载荷（Phase 2）：托管资源文件的 zip 加密串 + 完整性元信息。
+ */
+export interface ResourceArchivePayload {
+  version: number
+  fileCount: number
+  totalBytes: number
+  checksum: string
+  /** encryptBytes 返回的 base64 密文（zip 归档加密串） */
+  payload: string
+}
 
 export interface BackupData {
   version: string
@@ -23,7 +35,14 @@ export interface BackupData {
     totalRecords: number
     tableCount: number
     tableNames?: string[]
+    /** 资源归档摘要（供 getBackupInfo 不解密 payload 即可展示） */
+    resourceArchive?: {
+      fileCount: number
+      totalBytes: number
+    }
   }
+  /** Phase 2+：托管资源文件 zip 归档（加密串）；2.0/1.0 备份无此字段 */
+  resourceArchive?: ResourceArchivePayload
 }
 
 export class BackupManager {
@@ -253,7 +272,7 @@ export class BackupManager {
   }
 
   // 导出数据
-  async exportData(includeSystemConfig = true): Promise<string> {
+  async exportData(includeSystemConfig = true, includeResources = true): Promise<string> {
     try {
       const db = getDatabase()
       const tables: Record<string, any[]> = {}
@@ -282,6 +301,27 @@ export class BackupManager {
         }
       }
 
+      // 打包托管资源文件（Phase 2）：失败不阻断备份，仅省略归档
+      let resourceArchive: ResourceArchivePayload | undefined
+      if (includeResources && window.electronAPI?.packResourceArchive) {
+        try {
+          const packed = await window.electronAPI.packResourceArchive()
+          if (packed.success && packed.zipBytes) {
+            resourceArchive = {
+              version: 1,
+              fileCount: packed.fileCount,
+              totalBytes: packed.totalBytes,
+              checksum: md5Bytes(packed.zipBytes),
+              payload: encryptBytes(packed.zipBytes),
+            }
+          } else if (!packed.success) {
+            console.warn('资源归档打包失败，备份将不含资源文件:', packed.error)
+          }
+        } catch (error) {
+          console.warn('资源归档打包异常，备份将不含资源文件:', error)
+        }
+      }
+
       // 构建备份数据
       const backupData: BackupData = {
         version: BACKUP_VERSION,
@@ -292,7 +332,16 @@ export class BackupManager {
           totalRecords,
           tableCount: Object.keys(tables).length,
           tableNames: backupTables,
+          ...(resourceArchive
+            ? {
+                resourceArchive: {
+                  fileCount: resourceArchive.fileCount,
+                  totalBytes: resourceArchive.totalBytes,
+                },
+              }
+            : {}),
         },
+        ...(resourceArchive ? { resourceArchive } : {}),
       }
 
       // 加密备份数据
@@ -402,9 +451,45 @@ export class BackupManager {
       } finally {
         db.run(`PRAGMA foreign_keys = ${foreignKeysEnabled ? 'ON' : 'OFF'}`)
       }
+
+      // 恢复资源物理文件（Phase 2）：DB 已成功提交后执行，失败不阻断数据恢复
+      if (backupData.resourceArchive?.payload) {
+        await this.restoreResourceArchive(backupData.resourceArchive)
+      } else if (backupData.version === '1.0' || backupData.version === '2.0') {
+        console.warn(`v${backupData.version} 备份不含资源文件，恢复后图片/教具可能缺失`)
+      }
     } catch (error) {
       console.error('导入数据失败:', error)
       throw error
+    }
+  }
+
+  /**
+   * 恢复资源归档（Phase 2）：解密 payload → unpack IPC 写回 userData/resources。
+   * 解密/解包失败仅告警，不抛错（不让资源文件失败阻断 DB 数据恢复）。
+   */
+  private async restoreResourceArchive(archive: ResourceArchivePayload): Promise<void> {
+    if (!window.electronAPI?.unpackResourceArchive) {
+      console.warn('当前环境不支持资源文件恢复，跳过（数据已恢复）')
+      return
+    }
+    try {
+      const zipBytes = decryptBytes(archive.payload)
+      if (!zipBytes) {
+        console.warn('资源归档解密失败，跳过资源恢复（数据已恢复）')
+        return
+      }
+      const result = await window.electronAPI.unpackResourceArchive(zipBytes)
+      if (result.success) {
+        console.log(`资源文件恢复：${result.restored} 个成功，${result.failed.length} 个失败`)
+        if (result.failed.length > 0) {
+          console.warn('资源文件恢复部分失败:', result.failed)
+        }
+      } else {
+        console.warn('资源文件解包失败（数据已恢复）:', result.error)
+      }
+    } catch (error) {
+      console.warn('资源文件恢复异常，不阻断数据恢复:', error)
     }
   }
 
