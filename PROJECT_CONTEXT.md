@@ -1567,3 +1567,12 @@
 - 聊天 UI 美化（`74deb11`）：assistant 回复用 `markdown-it`+`DOMPurify`（纯 JS 零原生，新增 `src/utils/render-markdown.ts`）渲染（表格/列表/标题/代码块）+ CSS 流式呼吸光标；输入框重构为统一圆角容器（曲别针合并图片+文档入口按类型自动分流、textarea minRows2/maxRows8、生成报告、发送圆形按钮同处一容器）；抽屉宽度固定 480px → 窗口 33%。不加 highlight.js（省体积）。
 - ⚠️ 影响 Phase 5：tool 列表仍**全局写死**（`AI_TOOLS`，`src/services/ai-tools.ts`），`runToolLoop`（`ai-tool-loop.ts`）永远传完整列表不按 agent 过滤；`ai_agent.skills_config`/`model_params` 列已建未消费。Phase 5（`ai_skill`/`ai_agent_skill` 两表）应实现「按 agent 挂载 skill」，`generate_report` 即首个生成类技能、`report_type` 字段为其预留扩展点。
 - 现实边界：两专题 type-check ✅ + 真机验证 ✅（报告生成全链路；UI 渲染/光标/输入框/合并入口；暗色未测但走 Element Plus CSS 变量自适应）。本地 main ahead origin/main 9 未 push。
+
+## 68. 2026-07-17 AI 智能体 Phase 5 技能包（按 agent 挂载工具 + 知识技能注入 systemPrompt，真机已验）
+
+- Phase 5 落地「按 agent 挂载技能」替代全局硬编码 `AI_TOOLS`（`src/services/ai-tools.ts`）。新增 `ai_skill`(kind CHECK 'tool'/'knowledge') + `ai_agent_skill`(M:N 绑定，Phase 5 唯一绑定源) 两表；`ai_agent.skills_config` 退役为遗留列（不删免迁移）。
+- 5A 工具维度：`filterTools(toolCodes|null)` 按 agent 绑定的 tool_code 过滤 `AI_TOOLS`（null/[]→全量兜底防回归）；`dispatchTool` 加 `allowed` 白名单越权防御；`runToolLoop` 收 `tools?` 参数。向后兼容回填（CROSS JOIN + NOT EXISTS）给零绑定旧 agent 补全部工具型技能。
+- 5B 知识维度：内置专业角色知识包放 `src/data/skills/<名>/SKILL.md`+`references/`，`src/data/skills/index.ts` 用 `import.meta.glob('...?raw',eager)` build 时读取 + 极简 frontmatter 解析（不引依赖），导出 `BUILTIN_KNOWLEDGE_SKILLS`。`init.ts` 用 **INSERT OR IGNORE + UPDATE 保留 id 的 upsert**（非 OR REPLACE——后者改 id 致绑定 orphan；sql.js FK 默认 OFF 不 CASCADE）入 `ai_skill`(kind='knowledge')，`knowledge_payload={content}`。`AIApi.getAgentKnowledgePrompt(agentId)` join 绑定拼接正文，120k 字符截断；`sendChat` 单点注入 systemPrompt（`ai.ts:492` try 内首行，tool_calls/流式两路径共用）。
+- glob 覆盖非标准结构（`52dbfa8`）：`developmental-screening-assessment` 把参考 md 散放技能根目录（非 `references/`），加 `rootRefModules`(`./*/*.md` 过滤 SKILL.md/README) 并入注入。
+- 知识技能**默认不挂**（新建 agent 只默认工具；知识手动按需挂控 token）。UI「挂载技能」用 `el-option-group` 分「工具」「知识」两组，单 `skillIds` 数组（绑定不分 kind）。
+- 现实边界：type-check ✅ + 真机 ✅（工具过滤、知识注入、不回归均验）。3 commit 已 push origin/main：`96a2d18`(feat)/`792ab4f`(handoff)/`52dbfa8`(glob fix)。Phase 5C（技能库整页 CRUD / references 按需勾选 / 自定义知识技能）留后续。
