@@ -2,11 +2,12 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound, Document, Picture, Tickets } from '@element-plus/icons-vue'
+import { ChatDotRound, Paperclip, Promotion, Tickets } from '@element-plus/icons-vue'
 import type { AiAttachmentRef } from '@/database/ai-api'
 import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
 import { resolveAbsolutePath } from '@/utils/resource-file-service'
 import { useAiStore } from '@/stores/ai'
+import { renderMarkdown } from '@/utils/render-markdown'
 
 const router = useRouter()
 const aiStore = useAiStore()
@@ -17,7 +18,6 @@ const scrollRef = ref()
 const pendingImages = ref<Array<{ file: File; previewUrl: string }>>([])
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const pendingDocuments = ref<Array<{ file: File }>>([])
-const docInputRef = ref<HTMLInputElement | null>(null)
 
 // ===== 流式 IPC 事件回调（onMounted 注册，onUnmounted 解绑，引用须稳定）=====
 const chunkHandler = (_event: unknown, payload: { delta?: string } | undefined) => {
@@ -95,17 +95,30 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
-function triggerPickImage() {
+/** 曲别针入口：图片与文档统一选择，按类型自动分流到图片预览 / 文档 chip */
+function triggerPickFile() {
+  if (aiStore.sending) return
   fileInputRef.value?.click()
 }
 async function onFileChange(e: Event) {
   const target = e.target as HTMLInputElement
   const files = target.files
   if (!files) return
+  const allowedDoc = new Set(['pdf', 'docx', 'xlsx'])
   for (const f of Array.from(files)) {
-    if (!f.type.startsWith('image/')) continue
-    const previewUrl = await readFileAsDataUrl(f)
-    pendingImages.value.push({ file: f, previewUrl })
+    const ext = (f.name.split('.').pop() || '').toLowerCase()
+    if (f.type.startsWith('image/')) {
+      if (!supportsVision.value) {
+        ElMessage.warning(`当前模型不支持图片，已跳过：${f.name}`)
+        continue
+      }
+      const previewUrl = await readFileAsDataUrl(f)
+      pendingImages.value.push({ file: f, previewUrl })
+    } else if (allowedDoc.has(ext)) {
+      pendingDocuments.value.push({ file: f })
+    } else {
+      ElMessage.warning(`不支持的文件：${f.name}（仅支持图片 / PDF / Word / Excel）`)
+    }
   }
   target.value = '' // 允许重复选同一文件
 }
@@ -113,30 +126,12 @@ function removePendingImage(idx: number) {
   pendingImages.value.splice(idx, 1)
 }
 
-// ===== Phase 4：文档上传（PDF / Word .docx / Excel .xlsx → 抽文本进对话）=====
+// 附件文件类型判定（消息气泡内区分图片 / 文档展示）
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico'])
 function isImageExt(fileType: string): boolean {
   return IMAGE_EXTS.has((fileType || '').toLowerCase())
 }
 
-function triggerPickDocument() {
-  docInputRef.value?.click()
-}
-async function onDocChange(e: Event) {
-  const target = e.target as HTMLInputElement
-  const files = target.files
-  if (!files) return
-  const allowed = new Set(['pdf', 'docx', 'xlsx'])
-  for (const f of Array.from(files)) {
-    const ext = (f.name.split('.').pop() || '').toLowerCase()
-    if (!allowed.has(ext)) {
-      ElMessage.warning(`不支持的文档格式：${f.name}（仅支持 PDF / Word .docx / Excel .xlsx）`)
-      continue
-    }
-    pendingDocuments.value.push({ file: f })
-  }
-  target.value = '' // 允许重复选同一文件
-}
 function removePendingDocument(idx: number) {
   pendingDocuments.value.splice(idx, 1)
 }
@@ -208,7 +203,7 @@ async function confirmDeleteSession(id: number) {
     v-model="drawerVisible"
     title="AI 智能体"
     direction="rtl"
-    size="480px"
+    size="33%"
     class="ai-drawer"
   >
     <template #header>
@@ -298,7 +293,9 @@ async function confirmDeleteSession(id: number) {
                 >📄 {{ a.fileName }}</span>
               </template>
             </div>
-            {{ msg.content }}
+            <template v-if="msg.role === 'user'">{{ msg.content }}</template>
+            <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
+            <span v-if="msg.pending" class="streaming-cursor" aria-hidden="true"></span>
           </div>
         </div>
       </el-scrollbar>
@@ -327,55 +324,55 @@ async function confirmDeleteSession(id: number) {
             <el-button class="ai-pending-del" link size="small" @click="removePendingDocument(idx)">×</el-button>
           </div>
         </div>
-        <div class="ai-input-row">
-          <el-tooltip
-            :content="supportsVision ? '添加图片' : '当前模型不支持图片'"
-            placement="top"
-            :disabled="supportsVision"
-          >
-            <el-button
-              class="ai-img-btn"
-              :disabled="!supportsVision || aiStore.sending"
-              @click="triggerPickImage"
+        <div class="ai-composer">
+          <el-tooltip :content="supportsVision ? '添加图片 / 文档' : '添加文档（当前模型不支持图片）'" placement="top">
+            <button
+              class="composer-btn"
+              type="button"
+              :disabled="aiStore.sending"
+              aria-label="添加图片或文档"
+              @click="triggerPickFile"
             >
-              <el-icon><Picture /></el-icon>
-            </el-button>
+              <el-icon><Paperclip /></el-icon>
+            </button>
           </el-tooltip>
           <input
             ref="fileInputRef"
             type="file"
-            accept="image/*"
+            accept="image/*,.pdf,.docx,.xlsx"
             multiple
             class="ai-file-input"
             @change="onFileChange"
           />
-          <el-tooltip content="添加文档（PDF / Word / Excel）" placement="top">
-            <el-button class="ai-img-btn" :disabled="aiStore.sending" @click="triggerPickDocument">
-              <el-icon><Document /></el-icon>
-            </el-button>
-          </el-tooltip>
-          <input
-            ref="docInputRef"
-            type="file"
-            accept=".pdf,.docx,.xlsx"
-            multiple
-            class="ai-file-input"
-            @change="onDocChange"
-          />
           <el-input
             v-model="inputText"
             type="textarea"
-            :autosize="{ minRows: 1, maxRows: 4 }"
+            :autosize="{ minRows: 2, maxRows: 8 }"
+            resize="none"
             placeholder="输入问题，Enter 发送 / Shift+Enter 换行"
             :disabled="aiStore.sending"
             @keydown.enter.exact.prevent="send"
           />
           <el-tooltip content="生成报告（导出 Word）" placement="top">
-            <el-button class="ai-img-btn" :disabled="aiStore.sending" @click="generateReport">
+            <button
+              class="composer-btn"
+              type="button"
+              :disabled="aiStore.sending"
+              aria-label="生成报告"
+              @click="generateReport"
+            >
               <el-icon><Tickets /></el-icon>
-            </el-button>
+            </button>
           </el-tooltip>
-          <el-button type="primary" :loading="aiStore.sending" :disabled="!canSend" @click="send">发送</el-button>
+          <button
+            class="composer-btn composer-send"
+            type="button"
+            :disabled="!canSend || aiStore.sending"
+            aria-label="发送"
+            @click="send"
+          >
+            <el-icon><Promotion /></el-icon>
+          </button>
         </div>
       </div>
     </template>
@@ -492,8 +489,6 @@ async function confirmDeleteSession(id: number) {
 }
 .msg-bubble {
   max-width: 80%;
-  max-height: 400px;
-  overflow-y: auto;
   padding: 10px 12px;
   border-radius: 10px;
   font-size: 14px;
@@ -507,12 +502,102 @@ async function confirmDeleteSession(id: number) {
   border-bottom-right-radius: 2px;
 }
 .is-assistant .msg-bubble {
+  max-width: 90%;
   background: var(--el-fill-color-light, #f5f7fa);
   color: var(--el-text-color-primary, #303133);
   border-bottom-left-radius: 2px;
 }
 .msg-bubble.pending {
   opacity: 0.85;
+}
+
+/* ===== Markdown 渲染（assistant 回复）+ 流式光标 ===== */
+.markdown-body {
+  white-space: normal;
+}
+.markdown-body :deep(h1),
+.markdown-body :deep(h2),
+.markdown-body :deep(h3),
+.markdown-body :deep(h4) {
+  margin: 0.6em 0 0.3em;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.markdown-body :deep(h1) { font-size: 1.25em; }
+.markdown-body :deep(h2) { font-size: 1.15em; }
+.markdown-body :deep(h3) { font-size: 1.05em; }
+.markdown-body :deep(p) { margin: 0.3em 0; }
+.markdown-body :deep(ul),
+.markdown-body :deep(ol) { margin: 0.3em 0; padding-left: 1.4em; }
+.markdown-body :deep(li) { margin: 0.15em 0; }
+.markdown-body :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5em 0;
+  font-size: 0.92em;
+}
+.markdown-body :deep(th),
+.markdown-body :deep(td) {
+  border: 1px solid var(--el-border-color, #dcdfe6);
+  padding: 4px 8px;
+  text-align: left;
+  white-space: normal;
+}
+.markdown-body :deep(th) {
+  background: var(--el-fill-color-light, #f5f7fa);
+  font-weight: 600;
+}
+.markdown-body :deep(pre) {
+  background: var(--el-fill-color-dark, #e9e9eb);
+  border-radius: 6px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  margin: 0.5em 0;
+  font-size: 0.88em;
+}
+.markdown-body :deep(code) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--el-fill-color, #f5f7fa);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+.markdown-body :deep(pre code) {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+.markdown-body :deep(blockquote) {
+  margin: 0.4em 0;
+  padding-left: 0.8em;
+  border-left: 3px solid var(--el-border-color, #dcdfe6);
+  color: var(--el-text-color-secondary, #909399);
+}
+.markdown-body :deep(a) {
+  color: var(--el-color-primary, #409eff);
+  text-decoration: none;
+}
+.markdown-body :deep(a:hover) { text-decoration: underline; }
+.markdown-body :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--el-border-color, #dcdfe6);
+  margin: 0.6em 0;
+}
+.markdown-body :deep(img) { max-width: 100%; border-radius: 4px; }
+
+.streaming-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--el-color-primary, #409eff);
+  border-radius: 1px;
+  animation: ai-cursor-blink 1s infinite;
+}
+@keyframes ai-cursor-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
 }
 .tool-steps {
   display: flex;
@@ -545,16 +630,68 @@ async function confirmDeleteSession(id: number) {
 .ai-usage .el-progress {
   flex: 1;
 }
-.ai-input-row {
+/* ===== 输入框容器：曲别针 / textarea / 生成报告 / 发送 同处一个圆角容器 ===== */
+.ai-composer {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: 4px;
+  padding: 6px 6px 6px 8px;
+  border: 1.5px solid var(--el-border-color, #dcdfe6);
+  border-radius: 16px;
+  background: var(--el-bg-color, #fff);
+  transition: border-color 0.15s ease;
 }
-.ai-input-row .el-input {
+.ai-composer:focus-within {
+  border-color: var(--el-color-primary, #409eff);
+}
+.ai-composer :deep(.el-textarea) {
   flex: 1;
+  min-width: 0;
 }
-.ai-img-btn {
+.ai-composer :deep(.el-textarea__inner) {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 6px 4px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.composer-btn {
   flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--el-text-color-secondary, #909399);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.composer-btn:hover:not(:disabled) {
+  background: var(--el-fill-color-light, #f5f7fa);
+  color: var(--el-text-color-primary, #303133);
+}
+.composer-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.composer-send {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--el-color-primary, #409eff);
+  color: #fff;
+}
+.composer-send:hover:not(:disabled) {
+  background: var(--el-color-primary-light-3, #79bbff);
+  color: #fff;
+}
+.composer-send:disabled {
+  background: var(--el-fill-color-dark, #e9e9eb);
+  color: var(--el-text-color-placeholder, #a8abb2);
 }
 .ai-file-input {
   display: none;
