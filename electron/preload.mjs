@@ -93,6 +93,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // payload: { encKey(密文), messages, systemPrompt, model, baseUrl }；明文 Key 不进渲染进程
   aiChat: (payload) => ipcRenderer.invoke('ai:chat', payload),
 
+  // Phase 4：抽取文档文本（PDF / Word .docx / Excel .xlsx → 纯文本，供 AI 阅读）
+  extractDocumentText: (filePath) => ipcRenderer.invoke('extract-document-text', filePath),
+
   // 更新相关 IPC 调用
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
 
@@ -201,6 +204,8 @@ if (!process.contextIsolated) {
     unpackResourceArchive: (zipBytes) => Promise.resolve({ success: false, error: 'mock', restored: 0, failed: [] }),
     walkDir: (relSubpath) => Promise.resolve({ success: true, files: [] }),
     // AI 智能体 API 模拟
-    aiChat: (payload) => Promise.resolve({ success: false, error: 'mock', errorKind: 'mock' })
+    aiChat: (payload) => Promise.resolve({ success: false, error: 'mock', errorKind: 'mock' }),
+    // Phase 4 文档抽取模拟
+    extractDocumentText: (filePath) => Promise.resolve({ success: false, error: 'mock' })
   }
 }

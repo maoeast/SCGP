@@ -26,6 +26,16 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
+/** 浏览器 File → Uint8Array（FileReader.readAsArrayBuffer，用于文档落盘） */
+function readFileAsBytes(file: File): Promise<Uint8Array> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(new Uint8Array(reader.result as ArrayBuffer))
+    reader.onerror = () => reject(reader.error || new Error('读取文档失败'))
+    reader.readAsArrayBuffer(file)
+  })
+}
+
 /** dataUrl 的 base64 段 → bytes（用于落盘） */
 function dataUrlToBytes(dataUrl: string): Uint8Array {
   const base64 = dataUrl.split(',')[1] || ''
@@ -88,6 +98,50 @@ class AiAttachmentManager {
       sizeBytes: file.size,
     }
     return { ref, dataUrl }
+  }
+
+  /**
+   * 保存一份文档（Phase 4）：落盘到 uploaded/ai-attachments/{sessionId}/（与图片同前缀，
+   * 自动进 A4 备份 + 孤儿 GC），并调 Main 抽取纯文本。
+   * - text：拼进当轮 user 消息内容上送模型（不另存 dataUrl）
+   * - ref：落 ai_chat_message.attachments（与图片 ref 同列，GC 扫描不区分类型）
+   * 抽取失败（扫描件/不支持格式）抛错，由调用方决定是否中断整轮发送。
+   */
+  async saveDocument(
+    file: File,
+    sessionId: number,
+  ): Promise<{ ref: AiAttachmentRef; text: string; truncated: boolean }> {
+    const fileName = sanitizeFileName(file.name || 'document.bin')
+    const fileType = getFileExtension(file.name || 'document.bin')
+    const relativePath = buildAttachmentRelativePath(sessionId, fileName)
+
+    if (!window.electronAPI) {
+      throw new Error('文档处理需要在桌面端环境运行。')
+    }
+
+    const bytes = await readFileAsBytes(file)
+    const absolutePath = await resolveAbsolutePath(relativePath)
+    const directoryPath = absolutePath.replace(/[\\/][^\\/]+$/, '')
+    await window.electronAPI.ensureDir(directoryPath)
+    const saved = await window.electronAPI.saveFile(absolutePath, bytes)
+    if (!saved) {
+      throw new Error(`文档保存失败: ${fileName}`)
+    }
+
+    const result = await window.electronAPI.extractDocumentText(absolutePath)
+    if (!result.success || !result.text) {
+      throw new Error(
+        result.error || `文档《${fileName}》无法提取文本，可能是扫描件或不支持的格式。`,
+      )
+    }
+
+    const ref: AiAttachmentRef = {
+      rel: relativePath,
+      fileName,
+      fileType,
+      sizeBytes: file.size,
+    }
+    return { ref, text: result.text, truncated: !!result.truncated }
   }
 
   /**

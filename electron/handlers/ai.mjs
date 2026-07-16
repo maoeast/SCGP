@@ -12,12 +12,17 @@
  */
 
 import CryptoJS from 'crypto-js'
+import fs from 'node:fs/promises'
+import { pathToFileURL } from 'node:url'
 
 // 必须与 src/utils/crypto.ts 的 AES_SECRET 完全一致（渲染侧 encryptData 用同一常量加密 API Key）
 const AES_SECRET = 'SPED-PASSWORD-SECURITY-KEY-2025'
 
 const DEFAULT_BASE_URL = 'https://api.deepseek.com'
 const REQUEST_TIMEOUT_MS = 60_000
+
+// Phase 4：文档文本抽取上限（字符数）。超长截断，防 token 预算爆炸。
+const MAX_EXTRACT_CHARS = 20_000
 
 /** 复刻 src/utils/crypto.ts 的 decryptData（主进程为 .mjs，无法直接 import .ts） */
 function decryptData(encryptedData, key) {
@@ -187,6 +192,69 @@ async function streamChat(event, apiKey, apiBase, model, messages, systemPrompt,
   return { success: true, content: fullContent, usage }
 }
 
+/**
+ * Phase 4：文档文本抽取器（PDF / Word .docx / Excel .xlsx → 纯文本）。
+ * 三库均在调用时 dynamic import，首次抽取才加载，AI 模块启动零成本。
+ * 全部纯 JS、零原生依赖（pdfjs-dist / mammoth / exceljs），符合 AGENTS §5 红线。
+ */
+
+/** PDF → 文本：pdfjs-dist v6 在 Node 必须用 legacy/build（含 Node 兼容，不依赖 DOMMatrix 等 DOM 全局）。
+ *  workerSrc 指向已安装的 legacy worker（pdf.js 在 worker_threads 解析）。 */
+async function extractPdfText(bytes) {
+  const { createRequire } = await import('node:module')
+  const nodeRequire = createRequire(import.meta.url)
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
+  // Windows 上 resolve 返回裸盘符路径（如 E:\...）会被 ESM loader 误判为协议 'e:'，
+  // 必须 pathToFileURL 转成 file:///E:/... 才能被 Node worker 加载。
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(
+    nodeRequire.resolve('pdfjs-dist/legacy/build/pdf.worker.mjs'),
+  ).href
+
+  const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(bytes) })
+  const doc = await loadingTask.promise
+  const pageCount = doc.numPages
+  let text = ''
+  try {
+    for (let i = 1; i <= pageCount; i += 1) {
+      const page = await doc.getPage(i)
+      const content = await page.getTextContent()
+      text += content.items.map((it) => it.str || '').join(' ') + '\n'
+      // 早停：已远超上限就不读后续页，防超大 PDF 拖慢抽取
+      if (text.length > MAX_EXTRACT_CHARS * 2) break
+    }
+  } finally {
+    // v6 清理用 loadingTask.destroy()（doc.destroy 在 v6 已移除）
+    await loadingTask.destroy().catch(() => {})
+  }
+  return { text, pageCount }
+}
+
+/** Word .docx → 文本：mammoth extractRawText（接受 Node Buffer） */
+async function extractDocxText(bytes) {
+  const mod = await import('mammoth')
+  const mammoth = mod.default || mod
+  const result = await mammoth.extractRawText({ buffer: bytes })
+  return { text: result.value || '' }
+}
+
+/** Excel .xlsx → 文本：exceljs 逐工作表逐行拼成 TSV 样式（含工作表名标题） */
+async function extractXlsxText(bytes) {
+  const mod = await import('exceljs')
+  const ExcelJS = mod.default || mod
+  const wb = new ExcelJS.Workbook()
+  await wb.xlsx.load(bytes)
+  const lines = []
+  wb.eachSheet((sheet) => {
+    lines.push(`【工作表：${sheet.name}】`)
+    sheet.eachRow({ includeEmpty: false }, (row) => {
+      // row.values 为 1-based（[0] 恒 undefined），从 1 起取实际单元格
+      const cells = (row.values || []).slice(1).map((v) => (v == null ? '' : String(v)))
+      lines.push(cells.join('\t'))
+    })
+  })
+  return { text: lines.join('\n') }
+}
+
 export function initAIHandlers(ipcMain) {
   ipcMain.handle('ai:chat', async (event, payload) => {
     try {
@@ -268,5 +336,48 @@ export function initAIHandlers(ipcMain) {
     }
   })
 
-  console.log('[AI] AI 处理器已注册（多 provider 代理，支持流式）')
+  // Phase 4：文档文本抽取（PDF / Word .docx / Excel .xlsx → 纯文本，供 AI 阅读）
+  // 输入绝对路径，按扩展名分发到对应 extractor；超长截断到 MAX_EXTRACT_CHARS；扫描件/损坏返回失败。
+  ipcMain.handle('extract-document-text', async (event, absPath) => {
+    try {
+      if (!absPath || typeof absPath !== 'string') {
+        return { success: false, error: '未提供文档路径。' }
+      }
+      const ext = (absPath.toLowerCase().split('.').pop() || '').trim()
+      if (!['pdf', 'docx', 'xlsx'].includes(ext)) {
+        return {
+          success: false,
+          error: `暂不支持的文档格式 .${ext}（支持 PDF、Word .docx、Excel .xlsx）。旧版 .doc/.xls 请另存为对应格式后上传。`,
+        }
+      }
+      const bytes = await fs.readFile(absPath)
+
+      const result =
+        ext === 'pdf' ? await extractPdfText(bytes)
+          : ext === 'docx' ? await extractDocxText(bytes)
+            : await extractXlsxText(bytes)
+
+      let text = (result.text || '').replace(/\u0000/g, '').trim()
+      let truncated = false
+      if (text.length > MAX_EXTRACT_CHARS) {
+        text = text.slice(0, MAX_EXTRACT_CHARS)
+        truncated = true
+      }
+      if (!text) {
+        return {
+          success: false,
+          error: '未能从文档提取到文本（可能是扫描件 PDF 或不含文本层的文档），请提供可选中文本层的文件。',
+        }
+      }
+      return { success: true, text, truncated, pageCount: result.pageCount }
+    } catch (error) {
+      console.error('[AI] 文档文本抽取失败:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      }
+    }
+  })
+
+  console.log('[AI] AI 处理器已注册（多 provider 代理，支持流式 + Phase 4 文档抽取）')
 }

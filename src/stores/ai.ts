@@ -17,6 +17,12 @@ import type { ToolStep } from '@/services/ai-tools'
 import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
 import { ElMessage } from 'element-plus'
 
+/** 图片附件扩展名集合（Phase 4：文档附件文本已进 content，多模态只把图片附件做成 image_url） */
+const IMAGE_FILE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico'])
+function isImageFileExt(fileType: string): boolean {
+  return IMAGE_FILE_EXTS.has((fileType || '').toLowerCase())
+}
+
 /**
  * AI 智能体子系统 store（setup 风格，仿 systemConfig.ts）。
  *
@@ -313,14 +319,17 @@ export const useAiStore = defineStore('ai', () => {
     if (delta) streamingContent.value += delta
   }
 
-  /** 发送一条消息（流式）；失败返回 { ok:false, error }。attachments 为可选图片（Phase 3 vision） */
+  /** 发送一条消息（流式）；失败返回 { ok:false, error }。
+   *  attachments 为可选图片（Phase 3 vision）；documents 为可选文档（Phase 4，抽文本进 content）。 */
   async function sendChat(
     text: string,
     attachments?: File[],
+    documents?: File[],
   ): Promise<{ ok: boolean; error?: string }> {
     const content = text.trim()
     const hasImages = !!attachments && attachments.length > 0
-    if (!content && !hasImages) return { ok: false }
+    const hasDocuments = !!documents && documents.length > 0
+    if (!content && !hasImages && !hasDocuments) return { ok: false }
     if (!providerConfig.value?.enabled) return { ok: false, error: 'AI 智能体未启用。' }
     if (!providerConfig.value?.providerEnabled) {
       return { ok: false, error: '当前模型 provider 未启用，请在系统设置中启用后再试。' }
@@ -345,6 +354,10 @@ export const useAiStore = defineStore('ai', () => {
     if (attachments && attachments.some((f) => f.size >= 1024 * 1024)) {
       ElMessage.warning('图片较大，可能消耗较多额度。')
     }
+    // Phase 4：文档体积上限（抽文本前先拦，避免对超大文件做无谓解析）
+    if (documents && documents.some((f) => f.size > 10 * 1024 * 1024)) {
+      return { ok: false, error: '单个文档不能超过 10MB。' }
+    }
 
     await ensureDb()
     const a = api()
@@ -354,7 +367,7 @@ export const useAiStore = defineStore('ai', () => {
       if (!uid) {
         return { ok: false, error: '未获取到登录用户，请重新登录后再试。' }
       }
-      const titleBase = content || (hasImages ? '图片对话' : '新对话')
+      const titleBase = content || (hasImages ? '图片对话' : hasDocuments ? '文档对话' : '新对话')
       currentSessionId.value = a.createSession(currentAgent.value.code, uid, titleBase.slice(0, 20))
     }
     const sessionId = currentSessionId.value
@@ -375,18 +388,38 @@ export const useAiStore = defineStore('ai', () => {
       }
     }
 
+    // Phase 4：落盘文档并抽取纯文本。文本拼进 content（持久化 + 跨轮重发天然带上）；
+    // doc refs 并入 attachmentRefs（与图片同 attachments 列，GC/备份不区分类型）。
+    let docBlocks = ''
+    if (hasDocuments && documents) {
+      try {
+        const docResults = await Promise.all(
+          documents.map((f) => aiAttachmentManager.saveDocument(f, sessionId)),
+        )
+        for (const d of docResults) {
+          attachmentRefs.push(d.ref)
+          docBlocks += `\n\n【文档《${d.ref.fileName}》内容${d.truncated ? '（已截断）' : ''}】\n${d.text}`
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        return { ok: false, error: `文档处理失败：${msg}` }
+      }
+    }
+    // 文档文本并入 user 消息内容（仅有文档无文字时给默认提示）
+    const fullContent = docBlocks ? (content || '请阅读并分析以下文档内容。') + docBlocks : content
+
     // 入库 user 消息并加入当前列表（DB content 存纯文本，attachments 列存元信息）
     a.saveMessage({
       sessionId,
       role: 'user',
-      content,
+      content: fullContent,
       attachments: attachmentRefs.length > 0 ? attachmentRefs : null,
     })
     currentMessages.value.push({
       id: 0,
       sessionId,
       role: 'user',
-      content,
+      content: fullContent,
       attachments: attachmentRefs.length > 0 ? attachmentRefs : null,
       tokensPrompt: 0,
       tokensCompletion: 0,
@@ -408,25 +441,25 @@ export const useAiStore = defineStore('ai', () => {
       return { role: m.role, content: m.content }
     })
 
-    // Phase 3：最近1轮带图——把最后一个有附件的 user 消息 content 替换为多模态数组
-    // （本轮新图用缓存 dataUrl；历史图当轮重读 base64）。其余历史保留纯文本。
+    // Phase 3：最近1轮带图——把最后一个含【图片】附件的 user 消息 content 替换为多模态数组
+    // （本轮新图用缓存 dataUrl；历史图当轮重读 base64）。文档附件文本已进 content（text part），不走 image_url。
     if (providerConfig.value.supportsVision) {
       for (let i = currentMessages.value.length - 1; i >= 0; i--) {
         const m = currentMessages.value[i]
         if (!m || m.role !== 'user' || !m.attachments || m.attachments.length === 0) continue
+        const imgRefs = m.attachments.filter((r) => isImageFileExt(r.fileType))
+        if (imgRefs.length === 0) continue
         const histItem = history[i]
         if (!histItem || histItem.role === 'assistant') continue
         const isCurrent = i === currentMessages.value.length - 1
         const urls =
-          isCurrent && attachmentDataUrls.length === m.attachments.length
+          isCurrent && attachmentDataUrls.length === imgRefs.length
             ? attachmentDataUrls
-            : await Promise.all(
-                m.attachments.map((r) => aiAttachmentManager.readAsDataUrl(r)),
-              )
+            : await Promise.all(imgRefs.map((r) => aiAttachmentManager.readAsDataUrl(r)))
         const parts: Array<
           { type: 'image_url'; image_url: { url: string } } | { type: 'text'; text: string }
         > = []
-        m.attachments.forEach((r, j) => {
+        imgRefs.forEach((r, j) => {
           if (urls[j]) parts.push({ type: 'image_url', image_url: { url: urls[j] } })
         })
         if (m.content) parts.push({ type: 'text', text: m.content })

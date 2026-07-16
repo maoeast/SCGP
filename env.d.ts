@@ -147,6 +147,19 @@ declare global {
         toolCalls?: Array<{ id: string; type: 'function'; function: { name: string; arguments: string } }>
       }>
 
+      /**
+       * Phase 4：抽取文档文本（PDF / Word .docx / Excel .xlsx → 纯文本，供 AI 阅读）
+       * @param filePath - 文档绝对路径
+       * @returns 成功返回 { text, truncated?, pageCount? }；失败返回 { success:false, error }
+       */
+      extractDocumentText: (filePath: string) => Promise<{
+        success: boolean
+        text?: string
+        truncated?: boolean
+        pageCount?: number
+        error?: string
+      }>
+
       // 通用 IPC / 更新能力
       invoke: (channel: string, ...args: any[]) => Promise<any>
       on: (channel: string, callback: (...args: any[]) => void) => void

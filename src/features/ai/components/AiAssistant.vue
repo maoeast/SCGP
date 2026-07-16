@@ -2,9 +2,10 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound, Picture } from '@element-plus/icons-vue'
+import { ChatDotRound, Document, Picture } from '@element-plus/icons-vue'
 import type { AiAttachmentRef } from '@/database/ai-api'
 import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
+import { resolveAbsolutePath } from '@/utils/resource-file-service'
 import { useAiStore } from '@/stores/ai'
 
 const router = useRouter()
@@ -15,6 +16,8 @@ const inputText = ref('')
 const scrollRef = ref()
 const pendingImages = ref<Array<{ file: File; previewUrl: string }>>([])
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const pendingDocuments = ref<Array<{ file: File }>>([])
+const docInputRef = ref<HTMLInputElement | null>(null)
 
 // ===== 流式 IPC 事件回调（onMounted 注册，onUnmounted 解绑，引用须稳定）=====
 const chunkHandler = (_event: unknown, payload: { delta?: string } | undefined) => {
@@ -42,7 +45,12 @@ const budgetPercent = computed(() => {
 })
 
 const supportsVision = computed(() => !!aiStore.providerConfig?.supportsVision)
-const canSend = computed(() => !!inputText.value.trim() || pendingImages.value.length > 0)
+const canSend = computed(
+  () =>
+    !!inputText.value.trim() ||
+    pendingImages.value.length > 0 ||
+    pendingDocuments.value.length > 0,
+)
 
 const displayMessages = computed(() => {
   const list: Array<{
@@ -105,15 +113,55 @@ function removePendingImage(idx: number) {
   pendingImages.value.splice(idx, 1)
 }
 
+// ===== Phase 4：文档上传（PDF / Word .docx / Excel .xlsx → 抽文本进对话）=====
+const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico'])
+function isImageExt(fileType: string): boolean {
+  return IMAGE_EXTS.has((fileType || '').toLowerCase())
+}
+
+function triggerPickDocument() {
+  docInputRef.value?.click()
+}
+async function onDocChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  const files = target.files
+  if (!files) return
+  const allowed = new Set(['pdf', 'docx', 'xlsx'])
+  for (const f of Array.from(files)) {
+    const ext = (f.name.split('.').pop() || '').toLowerCase()
+    if (!allowed.has(ext)) {
+      ElMessage.warning(`不支持的文档格式：${f.name}（仅支持 PDF / Word .docx / Excel .xlsx）`)
+      continue
+    }
+    pendingDocuments.value.push({ file: f })
+  }
+  target.value = '' // 允许重复选同一文件
+}
+function removePendingDocument(idx: number) {
+  pendingDocuments.value.splice(idx, 1)
+}
+
+async function openAttachment(ref: AiAttachmentRef) {
+  try {
+    const abs = await resolveAbsolutePath(ref.rel)
+    await window.electronAPI.openFile(abs)
+  } catch {
+    /* 忽略打开失败 */
+  }
+}
+
 async function send() {
   const text = inputText.value.trim()
   const imgs = [...pendingImages.value]
-  if ((!text && imgs.length === 0) || aiStore.sending) return
+  const docs = [...pendingDocuments.value]
+  if ((!text && imgs.length === 0 && docs.length === 0) || aiStore.sending) return
   inputText.value = ''
   pendingImages.value = []
+  pendingDocuments.value = []
   const res = await aiStore.sendChat(
     text,
     imgs.map((p) => p.file),
+    docs.map((p) => p.file),
   )
   if (!res.ok && res.error) {
     ElMessage.error(res.error)
@@ -229,11 +277,15 @@ async function confirmDeleteSession(id: number) {
               >🔧 {{ step.label }}{{ step.ok ? '' : '（失败）' }}</div>
             </div>
             <div v-if="msg.attachments && msg.attachments.length > 0" class="att-row">
-              <img
-                v-for="(a, aIdx) in msg.attachments"
-                :key="aIdx"
-                :src="aiAttachmentManager.getFileUrl(a)"
-              />
+              <template v-for="(a, aIdx) in msg.attachments" :key="aIdx">
+                <img v-if="isImageExt(a.fileType)" :src="aiAttachmentManager.getFileUrl(a)" />
+                <span
+                  v-else
+                  class="att-doc"
+                  :title="`打开原件：${a.fileName}`"
+                  @click="openAttachment(a)"
+                >📄 {{ a.fileName }}</span>
+              </template>
             </div>
             {{ msg.content }}
           </div>
@@ -258,6 +310,12 @@ async function confirmDeleteSession(id: number) {
             <el-button class="ai-pending-del" link size="small" @click="removePendingImage(idx)">×</el-button>
           </div>
         </div>
+        <div v-if="pendingDocuments.length > 0" class="ai-pending-docs">
+          <div v-for="(p, idx) in pendingDocuments" :key="idx" class="ai-pending-doc">
+            <span class="ai-pending-doc-name">📄 {{ p.file.name }}</span>
+            <el-button class="ai-pending-del" link size="small" @click="removePendingDocument(idx)">×</el-button>
+          </div>
+        </div>
         <div class="ai-input-row">
           <el-tooltip
             :content="supportsVision ? '添加图片' : '当前模型不支持图片'"
@@ -279,6 +337,19 @@ async function confirmDeleteSession(id: number) {
             multiple
             class="ai-file-input"
             @change="onFileChange"
+          />
+          <el-tooltip content="添加文档（PDF / Word / Excel）" placement="top">
+            <el-button class="ai-img-btn" :disabled="aiStore.sending" @click="triggerPickDocument">
+              <el-icon><Document /></el-icon>
+            </el-button>
+          </el-tooltip>
+          <input
+            ref="docInputRef"
+            type="file"
+            accept=".pdf,.docx,.xlsx"
+            multiple
+            class="ai-file-input"
+            @change="onDocChange"
           />
           <el-input
             v-model="inputText"
@@ -405,6 +476,8 @@ async function confirmDeleteSession(id: number) {
 }
 .msg-bubble {
   max-width: 80%;
+  max-height: 400px;
+  overflow-y: auto;
   padding: 10px 12px;
   border-radius: 10px;
   font-size: 14px;
@@ -511,5 +584,41 @@ async function confirmDeleteSession(id: number) {
   height: 80px;
   object-fit: cover;
   border-radius: 6px;
+}
+.att-doc {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.85;
+}
+.att-doc:hover {
+  opacity: 1;
+}
+.ai-pending-docs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 0;
+}
+.ai-pending-doc {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--el-border-color-lighter, #e4e7ed);
+  background: var(--el-fill-color-light, #f5f7fa);
+  font-size: 12px;
+}
+.ai-pending-doc-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>
