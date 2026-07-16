@@ -1544,3 +1544,10 @@
 - 豆包（火山方舟，已核对官方文档 2026-07）：种子 doubao 行（`https://ark.cn-beijing.volces.com/api/v3`，vision=1/tool_calls=1/thinking=0/enabled=0），走 OpenAI **Chat Completions** 兼容（`${baseUrl}/chat/completions`，Bearer 鉴权），**model 填推理接入点 ID `ep-xxx`**（用户特有，种子留空不可预填）；未用 `/responses`。
 - thinking 条件化：`ai.mjs` 的 `thinking:{type:'disabled'}` 改按 `supportsThinking` 条件展开（DeepSeek 加、豆包不加，规避 OpenAI 兼容接口对未知字段拒收）；`describeHttpError` 文案去 DeepSeek 硬编码（传 `providerName`）；IPC payload 加 `supportsThinking`/`providerName`（生效类型在 `env.d.ts`，非 `src/types/electron.d.ts`）。
 - 现实边界：type-check ✅；真机 DeepSeek 侧绿（老库 Key 迁移 + 流式不回归）；**豆包连接/流式待火山方舟 Key + 接入点 ID 后补验**。已提交本地 main（`1548186`）。plan：`.claude/plans/purring-riding-pie.md`（Phase 1–5，Phase 1 完成，Phase 2 待开）。
+
+## 65. 2026-07-16 AI 智能体 Phase 2（function calling）+ Phase 3（图片 vision）完成
+
+- Phase 2（`affb747`）：渲染端 tool 循环（`src/services/ai-tool-loop.ts` + `ai-tools.ts` 7 工具，含 list_equipment），Main 仅透传 tools + 解析 tool_calls（零数据层改造，不破「明文 Key 只在 Main」）；非流式 MAX 5 轮，纯问答保留流式零回归；tool 过程不入库。
+- Phase 3（`074431e`）：多模态 content 全链路（`buildMessages` 数组分支 + 双声明 aiChat content 联合类型 + tool-loop messages + sendChat 出站拼「最近1轮带图」）；新建 `src/utils/ai-attachment-manager.ts`（图片落 `uploaded/ai-attachments/{sessionId}/` + FileReader→dataUrl + resource:// 展示）；按 `supportsVision` 能力位开关，DeepSeek 无 vision 时 UI 禁用图片按钮。主链真机已验（豆包 `doubao-seed-2-1-turbo-260628` + Chat Completions + `image_url` 看图回答）。
+- ⚠️ 全局约束（影响后续）：任何新附件/文件引用源必须纳入 `src/utils/resource-reconcile.ts` 的 `collectReferencedPaths`，否则 A4 孤儿 GC 会当孤儿删（Phase 3 已加 `ai_chat_message.attachments`；Phase 4 文档附件同理）。附件落 `uploaded/` 自动进 A4 备份 + GC。
+- 现实边界：type-check ✅，Phase 3 主链真机已验；防御项（多轮重发 / GC 回归 / deleteSession 清文件 / vision+FC 同请求）待补验；canvas 图片压缩留后。剩 Phase 4（文档 PDF/Word，需新依赖 `pdf-parse`+`mammoth` 待确认）+ Phase 5（技能包 `ai_skill`/`ai_agent_skill` 两表）。
