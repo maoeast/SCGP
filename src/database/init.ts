@@ -1497,6 +1497,14 @@ export async function initDatabase(): Promise<any> {
       console.warn('[InitDatabase] ⚠️  班级管理模块初始化失败:', classError)
     }
 
+    // ========== AI 智能体模块初始化 ==========
+    try {
+      await initializeAITables(rawDb)
+      console.log('[InitDatabase] ✅ AI 智能体模块初始化完成')
+    } catch (aiError) {
+      console.warn('[InitDatabase] ⚠️  AI 智能体模块初始化失败:', aiError)
+    }
+
     // ========== 模块化统计支持迁移 ==========
     try {
       const { needsModuleCodeMigration, runModuleCodeMigration } = await import('./migration/migrate-module-code')
@@ -3690,6 +3698,93 @@ function getSqlJsTableCount(rawDb: any, tableName: string): number {
   } catch {
     return 0
   }
+}
+
+async function initializeAITables(rawDb: any): Promise<void> {
+  console.log('[AITables] 开始初始化 AI 智能体表结构...')
+
+  // 1. 智能体定义表（角色 = 提示词 + 技能 + 模型参数）
+  rawDb.run(`CREATE TABLE IF NOT EXISTS ai_agent (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    system_prompt TEXT NOT NULL DEFAULT '',
+    skills_config TEXT,
+    model_params TEXT,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    sort INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`)
+
+  // 2. 聊天会话表（user_id 隔离：每个教师只看自己的会话；admin 经 listAllSessions 看全部）
+  rawDb.run(`CREATE TABLE IF NOT EXISTS ai_chat_session (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    agent_code TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '新对话',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`)
+
+  // 旧库幂等补 user_id 列；历史 NULL 会话归默认管理员(id=1)，避免成为无人可见的孤儿
+  safeAddColumn(rawDb, 'ai_chat_session', 'user_id INTEGER')
+  try {
+    rawDb.run(`UPDATE ai_chat_session SET user_id = 1 WHERE user_id IS NULL`)
+  } catch (e: any) {
+    console.warn('[AITables] 历史会话 user_id 回填警告:', e?.message)
+  }
+
+  // 3. 聊天消息表（含 token 与估费，兼作额度账本明细）
+  rawDb.run(`CREATE TABLE IF NOT EXISTS ai_chat_message (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL DEFAULT '',
+    tokens_prompt INTEGER NOT NULL DEFAULT 0,
+    tokens_completion INTEGER NOT NULL DEFAULT 0,
+    est_cost_yuan REAL NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES ai_chat_session(id) ON DELETE CASCADE
+  )`)
+
+  // 4. 索引
+  const indexStatements = [
+    `CREATE INDEX IF NOT EXISTS idx_ai_agent_code ON ai_agent(code)`,
+    `CREATE INDEX IF NOT EXISTS idx_ai_agent_enabled ON ai_agent(enabled)`,
+    `CREATE INDEX IF NOT EXISTS idx_ai_chat_msg_session ON ai_chat_message(session_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_ai_chat_msg_time ON ai_chat_message(created_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_ai_chat_session_updated ON ai_chat_session(updated_at)`,
+  ]
+  for (const stmt of indexStatements) {
+    try {
+      rawDb.run(stmt)
+    } catch (error: any) {
+      if (!error.message.includes('already exists')) {
+        console.warn('[AITables] 索引创建警告:', error.message)
+      }
+    }
+  }
+
+  // 5. 种子：预设「特教老师智能体」（幂等，已存在则跳过）
+  const seedSystemPrompt = `你是一位拥有 15 年以上经验的特殊教育老师，擅长 IEP（个别化教育计划）制定、行为干预与融合教育，熟悉自闭症谱系（ASD）、注意缺陷多动障碍（ADHD）、学习障碍等特殊需要儿童的支持策略。
+
+回答要求：
+- 使用简体中文，语气专业、温暖、可操作；
+- 给出具体、可落地的建议，必要时分点说明；
+- 结合儿童发展规律与循证实践；
+- 涉及医学诊断、用药、严重行为或情绪危机时，必须提示使用者咨询医生、心理师或相关专业人员，AI 回答不能替代专业诊断与干预。`
+
+  try {
+    rawDb.run(
+      `INSERT OR IGNORE INTO ai_agent (code, name, system_prompt, enabled, sort) VALUES (?, ?, ?, 1, 0)`,
+      ['special_ed_teacher', '特教老师', seedSystemPrompt],
+    )
+  } catch (seedError: any) {
+    console.warn('[AITables] 种子智能体写入警告:', seedError?.message)
+  }
+
+  console.log('[AITables] ✅ AI 智能体表结构初始化完成')
 }
 
 async function initializeClassTables(rawDb: any): Promise<void> {

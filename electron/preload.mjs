@@ -89,6 +89,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // TTS 语音合成
   ttsSynthesize: (text, options) => ipcRenderer.invoke('tts:synthesize', { text, ...options }),
 
+  // ========== AI 智能体（DeepSeek 代理）==========
+  // payload: { encKey(密文), messages, systemPrompt, model, baseUrl }；明文 Key 不进渲染进程
+  aiChat: (payload) => ipcRenderer.invoke('ai:chat', payload),
+
   // 更新相关 IPC 调用
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
 
@@ -101,7 +105,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'update:download-progress',
       'update:update-downloaded',
       'update:error',
-      'update:before-quit'
+      'update:before-quit',
+      'ai:chunk',
+      'ai:done',
+      'ai:error'
     ]
     if (validChannels.includes(channel)) {
       const channelRegistry = getChannelListenerRegistry(channel)
@@ -119,7 +126,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'update:download-progress',
       'update:update-downloaded',
       'update:error',
-      'update:before-quit'
+      'update:before-quit',
+      'ai:chunk',
+      'ai:done',
+      'ai:error'
     ]
     if (validChannels.includes(channel)) {
       const channelRegistry = ipcListenerRegistry.get(channel)
@@ -189,6 +199,8 @@ if (!process.contextIsolated) {
     // Phase 2 资源归档API模拟
     packResourceArchive: () => Promise.resolve({ success: false, error: 'mock', zipBytes: null, manifest: [], fileCount: 0, totalBytes: 0 }),
     unpackResourceArchive: (zipBytes) => Promise.resolve({ success: false, error: 'mock', restored: 0, failed: [] }),
-    walkDir: (relSubpath) => Promise.resolve({ success: true, files: [] })
+    walkDir: (relSubpath) => Promise.resolve({ success: true, files: [] }),
+    // AI 智能体 API 模拟
+    aiChat: (payload) => Promise.resolve({ success: false, error: 'mock', errorKind: 'mock' })
   }
 }

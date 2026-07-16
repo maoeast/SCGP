@@ -52,6 +52,23 @@ async function loadTTSHandlers() {
   }
 }
 
+// ========== AI 智能体（DeepSeek 代理）功能 ==========
+// 延迟加载 handlers/ai.mjs。流式回推用 handler 的 event.sender.send，无需 mainWindow 引用。
+let aiHandlersLoaded = false
+
+async function loadAIHandlers() {
+  if (aiHandlersLoaded) return
+  try {
+    const aiModule = await import('./handlers/ai.mjs')
+    aiModule.initAIHandlers(ipcMain)
+    aiHandlersLoaded = true
+    console.log('[AI] AI 处理器模块已加载')
+  } catch (error) {
+    console.warn('[AI] AI 处理器模块加载失败:', error.message)
+    console.warn('[AI] AI 智能体功能将不可用')
+  }
+}
+
 // 更可靠的开发环境检测：通过 app.isPackaged 或命令行参数判断
 const isDev = !app.isPackaged || process.env.NODE_ENV === 'development'
 const devServerUrl = process.env.SCGP_DEV_SERVER_URL
@@ -501,6 +518,9 @@ app.whenReady().then(async () => {
 
   // ========== 初始化 TTS 语音合成功能 ==========
   await loadTTSHandlers()
+
+  // ========== 初始化 AI 智能体（DeepSeek 代理）功能 ==========
+  await loadAIHandlers()
 
   // 创建窗口
   createWindow()

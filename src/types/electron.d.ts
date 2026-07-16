@@ -238,6 +238,31 @@ export interface ElectronAPI {
   ) => Promise<TTSResult & { audioBase64?: string }>
 
   /**
+   * AI 智能体对话（DeepSeek 代理；主进程解密 Key 后调用）
+   * @param payload - encKey 为密文，由渲染进程从 system_config 读出后传入
+   */
+  aiChat: (payload: {
+    encKey: string
+    messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
+    systemPrompt?: string
+    model?: string
+    baseUrl?: string
+    stream?: boolean
+  }) => Promise<{
+    success: boolean
+    content?: string
+    usage?: {
+      promptTokens: number
+      completionTokens: number
+      promptCacheHitTokens: number
+      promptCacheMissTokens: number
+    }
+    error?: string
+    errorKind?: string
+    httpStatus?: number
+  }>
+
+  /**
    * 通用 IPC 调用方法
    * @param channel - IPC 通道名称
    * @param args - 参数列表

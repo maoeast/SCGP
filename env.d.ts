@@ -117,6 +117,28 @@ declare global {
         error?: string
       }>
 
+      // AI 智能体（DeepSeek 代理；主进程解密 Key 后调用，渲染进程只传密文）
+      aiChat: (payload: {
+        encKey: string
+        messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
+        systemPrompt?: string
+        model?: string
+        baseUrl?: string
+        stream?: boolean
+      }) => Promise<{
+        success: boolean
+        content?: string
+        usage?: {
+          promptTokens: number
+          completionTokens: number
+          promptCacheHitTokens: number
+          promptCacheMissTokens: number
+        }
+        error?: string
+        errorKind?: string
+        httpStatus?: number
+      }>
+
       // 通用 IPC / 更新能力
       invoke: (channel: string, ...args: any[]) => Promise<any>
       on: (channel: string, callback: (...args: any[]) => void) => void

@@ -1526,3 +1526,14 @@
 - `backup.ts` `exportData(includeResources=true)` 打包→加密→入 BackupData；`importData` 在 DB 事务提交后 `restoreResourceArchive` 解包写回，失败不阻断数据恢复。
 - ⚠️ **类型陷阱**：`env.d.ts` 是 `window.electronAPI` 实际生效声明（内联对象类型）；`src/types/electron.d.ts` 的 `declare global` 未进编译，但其 `ElectronAPI` 接口仍被 `src/workers/db-bridge.ts:20` import。改 `window.electronAPI` 类型须改 `env.d.ts`；两处重复声明是既有债。
 - 现实边界：Phase 2 type-check ✅ + crypto/fflate round-trip ✅，**真机验证待做**（导出→清库清 `userData/resources`→恢复→资源图片/教具恢复可显；2.0 旧备份不报错）；建议与 Phase 3 真机合并。commit `809257d`。
+
+## 63. 2026-07-16 AI 聊天智能体子系统（DeepSeek 接入，代码级落地，运行时待验）
+
+- 新增子系统：管理员预设「提示词+技能」打包成角色（预设「特教老师」种子），普通老师经全局悬浮入口（`App.vue` 挂 `AiAssistant.vue`）流式提问；模型接 DeepSeek，每校（=每个本地客户端）单独配 API Key 与月度额度。
+- 架构：DeepSeek 调用在 **Electron Main 进程**（`electron/handlers/ai.mjs`，绕 CORS），渲染进程只经 IPC 传 API Key【密文】，明文 Key 仅存 Main 内存；流式经 `event.sender.send('ai:chunk/done/error')` 回推（用 handler 自带 sender，无需 mainWindow 引用）。
+- 数据：新建 3 表 `ai_agent`/`ai_chat_session`/`ai_chat_message`（`init.ts` 的 `initializeAITables`，模块化建表范式，幂等）；provider 配置（API Key 密文/base_url/模型/预算/截断/总开关）复用 `system_config` KV 表。数据门面 `AIApi extends DatabaseAPI`（`src/database/ai-api.ts`）。
+- 安全/加密：API Key 用 `crypto.ts` 的 `encryptData`/`decryptData`（AES_SECRET 源码常量）加密，密文存 `system_config`，随 `database.sqlite` 备份**跨机迁移**。威胁模型=防明文落盘（用户选定，非高安全）；Main 进程复刻 `decryptData` 解密。
+- 授权/额度：独立开关（配有效 Key 即用，**不**耦合训练 entitlement、不改激活码签发端）；软额度按 DeepSeek `usage` 本地记账估费（`ai_chat_message` 明细 + 本月聚合），超预算可选截断。
+- DeepSeek 事实（已核对官网 `api-docs.deepseek.com`，2026-07）：默认模型 `deepseek-v4-flash`（`deepseek-chat`/`deepseek-reasoner` 2026-07-24 弃用）；端点 `${baseUrl}/chat/completions`（baseUrl 默认 `https://api.deepseek.com`，勿硬编码 `/v1`，否则 baseUrl 带 /v1 时双拼 404）；估费 1/0.02/2 元·百万token（cache miss/hit/output，v4-flash）；默认非思考 `thinking.type=disabled`（避免 reasoning_tokens 计费）；流式 `stream_options.include_usage` 末块带 usage；`prompt_tokens = prompt_cache_hit + prompt_cache_miss`。
+- 现实边界：4 Phase type-check ✅，**真机端到端验证待做**（配真实 Key 跑通测试连接+流式问答+备份迁移）；**未提交**。plan：`.claude/plans/velvety-foraging-perlis.md`。
+- **更新（2026-07-16 #2）**：真机验证全绿并提交本地 main；增会话按 `user_id` 隔离（每人只看自己，admin 有「全部会话」管理视图，全局预算+全局 Key，旧 NULL 会话迁移归 admin=1）；`setConfig`/`saveAgent` 改 `ON CONFLICT … DO UPDATE` 原子 upsert，修 sql.js read-then-write 撞 `system_config.key`/`ai_agent.code` UNIQUE 的隐患。

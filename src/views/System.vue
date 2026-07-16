@@ -96,6 +96,12 @@
         </div>
       </el-tab-pane>
 
+      <el-tab-pane label="AI 智能体" name="ai-agent">
+        <div class="system-tab-panel scgp-tab-panel">
+          <AiAgentConfig />
+        </div>
+      </el-tab-pane>
+
       <el-tab-pane v-if="isDevMode" label="开发者调试" name="devtools">
         <div class="system-tab-panel scgp-tab-panel">
           <div class="scgp-content-toolbar">
@@ -255,16 +261,19 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
+import { useRoute } from 'vue-router'
 import { getEntitlementDefinition } from '@/features/entitlements/entitlement-catalog'
 import { backupManager } from '@/utils/backup'
 import UserManagement from './system/UserManagement.vue'
 import SystemSettings from './system/SystemSettings.vue'
 import ResourceHealthCheck from './system/ResourceHealthCheck.vue'
+import AiAgentConfig from './system/AiAgentConfig.vue'
 import UpdatePanel from './updates/UpdatePanel.vue'
 
 const authStore = useAuthStore()
 
-const activeTab = ref('users')
+const route = useRoute()
+const activeTab = ref((route.query.tab as string) || 'users')
 
 const isBackingUp = ref(false)
 const isRestoring = ref(false)
