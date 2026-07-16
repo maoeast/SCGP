@@ -31,6 +31,12 @@ const refModules = import.meta.glob<{ default: string }>('./*/references/*.md', 
   eager: true,
   query: '?raw',
 })
+// 技能根目录直接散放的 md（如 developmental-screening-assessment 的领域参考文件，
+// 不在 references/ 子目录）；与 SKILL.md 去重（main glob 已处理主体）
+const rootRefModules = import.meta.glob<{ default: string }>('./*/*.md', {
+  eager: true,
+  query: '?raw',
+})
 
 /** 极简 frontmatter 解析：取首部 ---...--- 块内的 name / description，body 为剩余正文 */
 function parseFrontmatter(md: string): { name: string; description: string; body: string } {
@@ -81,6 +87,15 @@ for (const [path, mod] of Object.entries(refModules)) {
   const title = refTitleFromPath(path)
   if (/^readme$/i.test(title)) continue // 跳过 README（索引页，无实质方法论）
   dirMap.get(dir)!.refs.push({ title, body: mod?.default ?? '' })
+}
+// 技能根目录散放的 md（非 SKILL.md / README）也并入 references（覆盖 developmental 等非标准结构）
+for (const [path, mod] of Object.entries(rootRefModules)) {
+  const base = path.split('/').pop() || ''
+  if (/^skill\.md$/i.test(base) || /^readme\.md$/i.test(base)) continue
+  const dir = skillDirFromPath(path)
+  if (!dir) continue
+  if (!dirMap.has(dir)) dirMap.set(dir, { main: null, refs: [] })
+  dirMap.get(dir)!.refs.push({ title: base.replace(/\.md$/i, ''), body: mod?.default ?? '' })
 }
 
 export const BUILTIN_KNOWLEDGE_SKILLS: BuiltinKnowledgeSkill[] = Array.from(dirMap.entries())
