@@ -1560,3 +1560,10 @@
 - 多模态过滤修正：sendChat 把「最近1轮带图」逻辑改为只对**图片**附件（`isImageFileExt`）做 image_url，文档附件文本已进 content（text part），混发图+文不串扰。
 - ⚠️ 技术选型（影响后续）：文档抽取锁定 `pdfjs-dist`+`mammoth`+`exceljs`（纯 JS 零原生依赖，符合 AGENTS §5）。**勿再用 `pdf-parse`**：当前 latest（2.x）依赖原生 `@napi-rs/canvas`，已否决；旧版 1.1.1 停更且有 CVE。pdfjs-dist v6 在 Node 三坑：必须 `legacy/build/` 入口（避 `DOMMatrix`）、`pathToFileURL` 处理 Windows 裸盘符路径（避 `protocol 'e:'`）、`loadingTask.destroy()`（v6 移除 `doc.destroy`）。
 - 现实边界：type-check ✅ + 抽取逻辑用真实文档 Node 冒烟验证（SCQ PDF 11页/9049字、感统 docx 3798字、TGMD-3 xlsx 14行）；**真机（渲染端→IPC→Main 接线）待验**。剩 Phase 5（技能包）。
+
+## 67. 2026-07-16 AI 智能体插入两专题（结构化报告生成 + 聊天 UI 美化，真机已验）
+
+- 结构化报告生成（`b6c5dd6`）：新增 `generate_report` tool——AI 在 function calling 循环内采数据（学生/评估/训练）后把结构化内容填进 tool 参数，渲染端复用 `exportWordDocument`（`src/utils/export-word.ts`）生成 `.docx` 下载。新增 `src/utils/ai-report-word-builder.ts`（AI 友好扁平 schema → `WordExportPayload` + 全量兜底截断）。**首个有副作用 tool**：tool result 只回小状态 JSON（`{ok,fileName,sectionCount}`）不塞 blob（`serialize` 有 6000 字符截断）。`MAX_TOOL_ROUNDS` 5→7。
+- 聊天 UI 美化（`74deb11`）：assistant 回复用 `markdown-it`+`DOMPurify`（纯 JS 零原生，新增 `src/utils/render-markdown.ts`）渲染（表格/列表/标题/代码块）+ CSS 流式呼吸光标；输入框重构为统一圆角容器（曲别针合并图片+文档入口按类型自动分流、textarea minRows2/maxRows8、生成报告、发送圆形按钮同处一容器）；抽屉宽度固定 480px → 窗口 33%。不加 highlight.js（省体积）。
+- ⚠️ 影响 Phase 5：tool 列表仍**全局写死**（`AI_TOOLS`，`src/services/ai-tools.ts`），`runToolLoop`（`ai-tool-loop.ts`）永远传完整列表不按 agent 过滤；`ai_agent.skills_config`/`model_params` 列已建未消费。Phase 5（`ai_skill`/`ai_agent_skill` 两表）应实现「按 agent 挂载 skill」，`generate_report` 即首个生成类技能、`report_type` 字段为其预留扩展点。
+- 现实边界：两专题 type-check ✅ + 真机验证 ✅（报告生成全链路；UI 渲染/光标/输入框/合并入口；暗色未测但走 Element Plus CSS 变量自适应）。本地 main ahead origin/main 9 未 push。
