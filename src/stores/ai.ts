@@ -8,12 +8,13 @@ import {
   type AiChatMessage,
   type AiProviderConfig,
   type AiAttachmentRef,
+  type AiSkill,
   type DeepSeekUsage,
 } from '@/database/ai-api'
 import { encryptData } from '@/utils/crypto'
 import { useAuthStore } from '@/stores/auth'
 import { runToolLoop } from '@/services/ai-tool-loop'
-import type { ToolStep } from '@/services/ai-tools'
+import { filterTools, type ToolStep } from '@/services/ai-tools'
 import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
 import { ElMessage } from 'element-plus'
 
@@ -36,6 +37,10 @@ function isImageFileExt(fileType: string): boolean {
 export const useAiStore = defineStore('ai', () => {
   const agents = ref<AiAgent[]>([])
   const providers = ref<AiProvider[]>([])
+  /** 工具型技能目录（Phase 5：agent 编辑对话框「挂载技能」多选项；5A 内静态，仅 loadAll 加载） */
+  const toolSkills = ref<AiSkill[]>([])
+  /** 知识型技能目录（Phase 5B：专业角色知识包；对话框「挂载技能」知识组选项） */
+  const knowledgeSkills = ref<AiSkill[]>([])
   const providerConfig = ref<AiProviderConfig | null>(null)
   const monthUsage = ref<{ costYuan: number; assistantCount: number; period: string }>({
     costYuan: 0,
@@ -65,6 +70,8 @@ export const useAiStore = defineStore('ai', () => {
       const a = api()
       agents.value = a.listAgents()
       providers.value = a.listProviders()
+      toolSkills.value = a.listToolSkills()
+      knowledgeSkills.value = a.listKnowledgeSkills()
       providerConfig.value = a.getProviderConfig()
       monthUsage.value = a.getMonthUsage()
       // 默认选中第一个启用智能体
@@ -174,16 +181,28 @@ export const useAiStore = defineStore('ai', () => {
     }
   }
 
-  async function saveAgent(input: Parameters<AIApi['saveAgent']>[0]) {
+  async function saveAgent(input: Parameters<AIApi['saveAgent']>[0]): Promise<number> {
     await ensureDb()
-    api().saveAgent(input)
+    const id = api().saveAgent(input)
     agents.value = api().listAgents()
+    return id
   }
 
   async function deleteAgent(id: number) {
     await ensureDb()
     api().deleteAgent(id)
     agents.value = api().listAgents()
+  }
+
+  // Phase 5：技能挂载（按 agent 过滤工具）
+  async function getAgentSkillIds(agentId: number): Promise<number[]> {
+    await ensureDb()
+    return api().getAgentSkillIds(agentId)
+  }
+
+  async function setAgentSkills(agentId: number, skillIds: number[]) {
+    await ensureDb()
+    api().setAgentSkills(agentId, skillIds)
   }
 
   // ==================== Phase 4：会话与流式 ====================
@@ -473,6 +492,11 @@ export const useAiStore = defineStore('ai', () => {
     lastError.value = ''
     toolSteps.value = []
 
+    // Phase 5B：把该 agent 挂载的知识型技能（专业方法论 Markdown）注入 systemPrompt
+    const knowledgePrompt = a.getAgentKnowledgePrompt(currentAgent.value.id)
+    const systemPrompt = knowledgePrompt
+      ? `${currentAgent.value.systemPrompt}\n\n以下是你掌握的专业技能知识，请据此回答：\n\n${knowledgePrompt}`
+      : currentAgent.value.systemPrompt
     try {
       if (providerConfig.value.supportsToolCalls) {
         // Phase 2：function calling tool 循环（非流式，渲染端执行本地工具）
@@ -480,10 +504,11 @@ export const useAiStore = defineStore('ai', () => {
           encKey: providerConfig.value.apiKeyEnc,
           baseUrl: providerConfig.value.baseUrl,
           model: providerConfig.value.defaultModel,
-          systemPrompt: currentAgent.value.systemPrompt,
+          systemPrompt,
           supportsThinking: providerConfig.value.supportsThinking,
           providerName: providerConfig.value.providerName,
           messages: history,
+          tools: filterTools(a.getAgentToolCodes(currentAgent.value.id)),
           onToolStep: (step) => {
             toolSteps.value.push(step)
           },
@@ -512,7 +537,7 @@ export const useAiStore = defineStore('ai', () => {
       const res = await window.electronAPI.aiChat({
         encKey: providerConfig.value.apiKeyEnc,
         messages: history,
-        systemPrompt: currentAgent.value.systemPrompt,
+        systemPrompt,
         model: providerConfig.value.defaultModel,
         baseUrl: providerConfig.value.baseUrl,
         stream: true,
@@ -571,6 +596,10 @@ export const useAiStore = defineStore('ai', () => {
     testConnection,
     saveAgent,
     deleteAgent,
+    toolSkills,
+    knowledgeSkills,
+    getAgentSkillIds,
+    setAgentSkills,
     // Phase 4
     currentAgentCode,
     currentSessionId,

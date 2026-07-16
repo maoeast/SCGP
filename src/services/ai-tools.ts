@@ -244,6 +244,17 @@ export function toolLabel(name: string): string {
   return TOOL_LABELS[name] || name
 }
 
+/**
+ * 按 tool_code 白名单过滤工具 schema（Phase 5：按 agent 挂载）。
+ * - null / [] → 返回全量 AI_TOOLS（安全兜底：绑定解析失败时绝不静默清空工具）。
+ * - 否则仅保留 function.name 命中白名单的工具；白名单中的孤儿 code（无对应 def）忽略。
+ */
+export function filterTools(toolCodes: string[] | null): AiToolDef[] {
+  if (!toolCodes || toolCodes.length === 0) return AI_TOOLS
+  const allow = new Set(toolCodes)
+  return AI_TOOLS.filter((t) => allow.has(t.function.name))
+}
+
 // ==================== 体积护栏 ====================
 
 const MAX_RESULT_CHARS = 6000
@@ -282,7 +293,16 @@ function clampLimit(raw: any, def: number, max: number): number {
  * @param name 工具名
  * @param argsJson 模型给出的参数 JSON 字符串（OpenAI tool_call.function.arguments）
  */
-export async function dispatchTool(name: string, argsJson: string): Promise<ToolResult> {
+export async function dispatchTool(
+  name: string,
+  argsJson: string,
+  allowed?: Set<string>,
+): Promise<ToolResult> {
+  // Phase 5：白名单防御——模型若幻觉出该 agent 未挂载的工具名，直接拒绝。
+  // （理论上只发了过滤后的 schema，模型不应看到其他工具；此处双保险。）
+  if (allowed && !allowed.has(name)) {
+    return fail(`该智能体未挂载工具：${name}`)
+  }
   let args: Record<string, any> = {}
   try {
     args = argsJson ? JSON.parse(argsJson) : {}

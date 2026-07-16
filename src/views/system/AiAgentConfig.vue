@@ -126,6 +126,7 @@ const agentForm = reactive({
   name: '',
   systemPrompt: '',
   enabled: true,
+  skillIds: [] as number[],
 })
 
 function openCreate() {
@@ -135,16 +136,19 @@ function openCreate() {
   agentForm.name = ''
   agentForm.systemPrompt = ''
   agentForm.enabled = true
+  // 新建默认挂载全部工具（保持升级前「全部工具」行为；用户可按需取消勾选）
+  agentForm.skillIds = aiStore.toolSkills.map((s) => s.id)
   dialogVisible.value = true
 }
 
-function openEdit(agent: AiAgent) {
+async function openEdit(agent: AiAgent) {
   editing.value = true
   agentForm.id = agent.id
   agentForm.code = agent.code
   agentForm.name = agent.name
   agentForm.systemPrompt = agent.systemPrompt
   agentForm.enabled = agent.enabled
+  agentForm.skillIds = await aiStore.getAgentSkillIds(agent.id)
   dialogVisible.value = true
 }
 
@@ -154,12 +158,14 @@ async function saveAgent() {
     return
   }
   try {
-    await aiStore.saveAgent({
+    // saveAgent 返回 agent id（新建/更新统一）；再持久化技能挂载
+    const id = await aiStore.saveAgent({
       code: agentForm.code.trim(),
       name: agentForm.name.trim(),
       systemPrompt: agentForm.systemPrompt,
       enabled: agentForm.enabled,
     })
+    await aiStore.setAgentSkills(id, agentForm.skillIds)
     ElMessage.success(editing.value ? '智能体已更新' : '智能体已创建')
     dialogVisible.value = false
   } catch (e) {
@@ -389,6 +395,36 @@ async function removeSession(id: number) {
         </el-form-item>
         <el-form-item label="启用">
           <el-switch v-model="agentForm.enabled" />
+        </el-form-item>
+        <el-form-item label="挂载技能">
+          <el-select
+            v-model="agentForm.skillIds"
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            placeholder="选择该智能体挂载的工具与知识技能"
+            style="width: 100%"
+          >
+            <el-option-group label="工具（可调用的功能）">
+              <el-option
+                v-for="s in aiStore.toolSkills"
+                :key="s.id"
+                :label="s.name"
+                :value="s.id"
+              />
+            </el-option-group>
+            <el-option-group label="知识（注入专业方法论到对话）">
+              <el-option
+                v-for="s in aiStore.knowledgeSkills"
+                :key="s.id"
+                :label="s.name"
+                :value="s.id"
+              />
+            </el-option-group>
+          </el-select>
+          <div class="field-hint">
+            「工具」控制可调用功能；「知识」注入专业角色知识包（如言语治疗师 / 蒙特梭利教师）到对话。新建默认挂载全部工具、不挂知识；工具留空则挂载全部工具。
+          </div>
         </el-form-item>
         <el-form-item label="提示词">
           <el-input

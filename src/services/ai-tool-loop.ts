@@ -10,7 +10,7 @@
  *
  * 计费：tool 循环可能多轮，累计各轮 usage 再回传 store，estimateCostYuan 更接近真实花费。
  */
-import { AI_TOOLS, dispatchTool, toolLabel, type AiToolCall, type ToolStep } from '@/services/ai-tools'
+import { AI_TOOLS, dispatchTool, toolLabel, type AiToolCall, type AiToolDef, type ToolStep } from '@/services/ai-tools'
 import type { DeepSeekUsage } from '@/database/ai-api'
 
 // 典型报告流程（search_students→get_student→get_assessment→list_training_sessions→generate_report）已 5 轮，留 2 轮余量
@@ -36,6 +36,11 @@ export interface RunToolLoopParams {
   providerName: string
   /** 初始对话历史（user/system/assistant 可见消息，由 store 从 currentMessages 映射；Phase 3 支持多模态数组 content） */
   messages: Array<{ role: 'user' | 'system' | 'assistant'; content: string | MultimodalContent }>
+  /**
+   * Phase 5：该 agent 挂载的工具子集（store 用 filterTools(getAgentToolCodes) 算出后传入）。
+   * 不传 → 全量 AI_TOOLS（兼容/兜底）。本数组同时作 dispatchTool 的白名单防御源。
+   */
+  tools?: AiToolDef[]
   /** 每次工具调用完成时回调（供 UI 展示 tool 气泡） */
   onToolStep?: (step: ToolStep) => void
 }
@@ -72,6 +77,10 @@ export async function runToolLoop(params: RunToolLoopParams): Promise<RunToolLoo
     promptCacheMissTokens += Number(u.promptCacheMissTokens || 0)
   }
 
+  // Phase 5：按 agent 挂载的工具子集（未传则全量兜底）；allowedToolNames 同时作 dispatch 白名单防御。
+  const activeTools = params.tools ?? AI_TOOLS
+  const allowedToolNames = new Set(activeTools.map((t) => t.function.name))
+
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     const res = await window.electronAPI.aiChat({
       encKey: params.encKey,
@@ -82,7 +91,7 @@ export async function runToolLoop(params: RunToolLoopParams): Promise<RunToolLoo
       stream: false,
       supportsThinking: params.supportsThinking,
       providerName: params.providerName,
-      tools: AI_TOOLS,
+      tools: activeTools,
     })
 
     if (!res.success) {
@@ -114,7 +123,7 @@ export async function runToolLoop(params: RunToolLoopParams): Promise<RunToolLoo
     // 逐个执行工具，结果作为 tool 消息回传
     for (const tc of toolCalls) {
       const step: ToolStep = { name: tc.function.name, label: toolLabel(tc.function.name), ok: false }
-      const result = await dispatchTool(tc.function.name, tc.function.arguments || '{}')
+      const result = await dispatchTool(tc.function.name, tc.function.arguments || '{}', allowedToolNames)
       step.ok = result.ok
       toolSteps.push(step)
       params.onToolStep?.(step)

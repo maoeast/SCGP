@@ -50,6 +50,22 @@ export interface AiAgent {
   updatedAt: string
 }
 
+/** 技能目录行（ai_skill 表）。Phase 5 本期只用 kind='tool'（映射 AI_TOOLS 工具）；knowledge 型留 5B。 */
+export interface AiSkill {
+  id: number
+  code: string
+  name: string
+  description: string
+  kind: 'tool' | 'knowledge'
+  toolCode: string | null
+  knowledgePayload: Record<string, any> | null // 5B 用，本期恒 null
+  promptTemplate: string | null // 5B 用
+  enabled: boolean
+  sort: number
+  createdAt: string
+  updatedAt: string
+}
+
 /** 单个 provider 行（ai_provider 表） */
 export interface AiProvider {
   id: number
@@ -141,6 +157,9 @@ export function estimateCostYuan(usage: DeepSeekUsage | null | undefined): numbe
   return Math.round(cost * 10000) / 10000 // 保留 4 位
 }
 
+/** 知识型技能注入 systemPrompt 的总字符上限（~30k token；超出截断防上下文爆炸） */
+const MAX_KNOWLEDGE_PROMPT_CHARS = 120000
+
 function parseJsonObject(value: unknown): Record<string, any> | null {
   if (!value) return null
   if (typeof value === 'object') return value as Record<string, any>
@@ -160,6 +179,23 @@ function rowToAgent(row: any): AiAgent {
     systemPrompt: row.system_prompt || '',
     skillsConfig: parseJsonObject(row.skills_config),
     modelParams: parseJsonObject(row.model_params),
+    enabled: Number(row.enabled) === 1,
+    sort: Number(row.sort || 0),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+function rowToSkill(row: any): AiSkill {
+  return {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    description: row.description || '',
+    kind: row.kind === 'knowledge' ? 'knowledge' : 'tool',
+    toolCode: row.tool_code != null ? String(row.tool_code) : null,
+    knowledgePayload: parseJsonObject(row.knowledge_payload),
+    promptTemplate: row.prompt_template != null ? String(row.prompt_template) : null,
     enabled: Number(row.enabled) === 1,
     sort: Number(row.sort || 0),
     createdAt: row.created_at,
@@ -235,7 +271,106 @@ export class AIApi extends DatabaseAPI {
   }
 
   deleteAgent(id: number): boolean {
+    // FK CASCADE 可能未启用（sql.js 默认 PRAGMA foreign_keys=OFF），显式清绑定防孤儿
+    this.execute('DELETE FROM ai_agent_skill WHERE agent_id = ?', [id])
     return this.execute('DELETE FROM ai_agent WHERE id = ?', [id]) > 0
+  }
+
+  // ==================== 技能与挂载（Phase 5：按 agent 挂载工具）====================
+
+  /** 全部启用的工具型技能（UI 多选项；本期只有 tool 型） */
+  listToolSkills(): AiSkill[] {
+    return this.query(
+      `SELECT * FROM ai_skill WHERE kind = 'tool' AND enabled = 1 ORDER BY sort ASC, id ASC`,
+    ).map(rowToSkill)
+  }
+
+  /** agent 已绑定且启用的 skill_id 列表（UI 回填多选用） */
+  getAgentSkillIds(agentId: number): number[] {
+    return this.query(
+      `SELECT skill_id FROM ai_agent_skill WHERE agent_id = ? AND enabled = 1 ORDER BY sort ASC`,
+      [agentId],
+    ).map((r: any) => Number(r.skill_id))
+  }
+
+  /** agent 可用工具的 tool_code 列表（sendChat 过滤 AI_TOOLS 用） */
+  getAgentToolCodes(agentId: number): string[] {
+    return this.query(
+      `SELECT s.tool_code AS tool_code
+         FROM ai_agent_skill x
+         JOIN ai_skill s ON s.id = x.skill_id
+        WHERE x.agent_id = ? AND x.enabled = 1 AND s.enabled = 1
+          AND s.kind = 'tool' AND s.tool_code IS NOT NULL
+        ORDER BY x.sort ASC`,
+      [agentId],
+    )
+      .map((r: any) => (r.tool_code != null ? String(r.tool_code) : null))
+      .filter((c: string | null): c is string => !!c)
+  }
+
+  /** 整体替换 agent 的技能绑定（事务：删全部 → 插入选中）。UI 保存用。 */
+  setAgentSkills(agentId: number, skillIds: number[]): void {
+    const rawDb = typeof this.db?.getRawDB === 'function' ? this.db.getRawDB() : this.db
+    rawDb.run('BEGIN TRANSACTION')
+    try {
+      this.execute('DELETE FROM ai_agent_skill WHERE agent_id = ?', [agentId])
+      skillIds.forEach((sid, i) => {
+        this.execute(
+          `INSERT OR IGNORE INTO ai_agent_skill (agent_id, skill_id, enabled, sort) VALUES (?, ?, 1, ?)`,
+          [agentId, sid, i],
+        )
+      })
+      rawDb.run('COMMIT')
+    } catch (error) {
+      try {
+        rawDb.run('ROLLBACK')
+      } catch {
+        /* ignore rollback failures */
+      }
+      throw error
+    }
+  }
+
+  // ---- 知识型技能（Phase 5B：专业角色知识包，注入 systemPrompt）----
+
+  /** 全部启用的知识型技能（UI 多选项「知识」组） */
+  listKnowledgeSkills(): AiSkill[] {
+    return this.query(
+      `SELECT * FROM ai_skill WHERE kind = 'knowledge' AND enabled = 1 ORDER BY sort ASC, id ASC`,
+    ).map(rowToSkill)
+  }
+
+  /**
+   * 拼接该 agent 挂载的知识型技能正文（注入 systemPrompt 用）。
+   * 每技能正文 = knowledge_payload.content（SKILL.md 主体 + references），多技能以分隔线串联。
+   * 总字符上限 MAX_KNOWLEDGE_PROMPT_CHARS（~30k token）截断并标注，防上下文爆炸。
+   */
+  getAgentKnowledgePrompt(agentId: number): string {
+    const rows = this.query(
+      `SELECT s.name, s.knowledge_payload
+         FROM ai_agent_skill x
+         JOIN ai_skill s ON s.id = x.skill_id
+        WHERE x.agent_id = ? AND x.enabled = 1 AND s.enabled = 1
+          AND s.kind = 'knowledge' AND s.knowledge_payload IS NOT NULL
+        ORDER BY x.sort ASC`,
+      [agentId],
+    )
+    if (!rows.length) return ''
+    const parts = rows
+      .map((r: any) => {
+        const payload = parseJsonObject(r.knowledge_payload)
+        const content = payload && payload.content ? String(payload.content) : ''
+        return content ? `## 专业技能：${r.name}\n\n${content}` : ''
+      })
+      .filter(Boolean)
+    const full = parts.join('\n\n---\n\n')
+    if (full.length > MAX_KNOWLEDGE_PROMPT_CHARS) {
+      return (
+        full.slice(0, MAX_KNOWLEDGE_PROMPT_CHARS) +
+        `\n\n[...专业技能知识已截断，原始 ${full.length} 字符]`
+      )
+    }
+    return full
   }
 
   // ==================== Provider（多模型抽象：ai_provider 表 + 全局 KV）====================

@@ -9,6 +9,7 @@ import {
   SELF_CARE_TASK_SEED_SUMMARY,
   type SelfCareTaskSeedMode,
 } from '@/data/self-care-task-seed'
+import { BUILTIN_KNOWLEDGE_SKILLS } from '@/data/skills'
 
 const schemaSQL = `
 -- 学生表
@@ -3768,6 +3769,34 @@ async function initializeAITables(rawDb: any): Promise<void> {
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   )`)
 
+  // ai_skill：技能目录（工具型 / 知识型）。本期只用 tool；knowledge_payload / prompt_template 列预留 5B。
+  rawDb.run(`CREATE TABLE IF NOT EXISTS ai_skill (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    kind TEXT NOT NULL DEFAULT 'tool' CHECK(kind IN ('tool','knowledge')),
+    tool_code TEXT,
+    knowledge_payload TEXT,
+    prompt_template TEXT,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    sort INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`)
+
+  // ai_agent_skill：智能体↔技能 多对多绑定（Phase 5 唯一绑定源；ai_agent.skills_config 退役为遗留列）
+  rawDb.run(`CREATE TABLE IF NOT EXISTS ai_agent_skill (
+    agent_id INTEGER NOT NULL,
+    skill_id INTEGER NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    sort INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (agent_id, skill_id),
+    FOREIGN KEY (agent_id) REFERENCES ai_agent(id) ON DELETE CASCADE,
+    FOREIGN KEY (skill_id) REFERENCES ai_skill(id) ON DELETE CASCADE
+  )`)
+
   // 索引
   const indexStatements = [
     `CREATE INDEX IF NOT EXISTS idx_ai_agent_code ON ai_agent(code)`,
@@ -3776,6 +3805,7 @@ async function initializeAITables(rawDb: any): Promise<void> {
     `CREATE INDEX IF NOT EXISTS idx_ai_chat_msg_time ON ai_chat_message(created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_ai_chat_session_updated ON ai_chat_session(updated_at)`,
     `CREATE INDEX IF NOT EXISTS idx_ai_provider_code ON ai_provider(code)`,
+    `CREATE INDEX IF NOT EXISTS idx_ai_agent_skill_agent ON ai_agent_skill(agent_id)`,
   ]
   for (const stmt of indexStatements) {
     try {
@@ -3873,6 +3903,67 @@ async function initializeAITables(rawDb: any): Promise<void> {
     )
   } catch (seedError: any) {
     console.warn('[AITables] 种子智能体写入警告:', seedError?.message)
+  }
+
+  // 种子 ai_skill：每个现有工具一条「工具型」技能（INSERT OR IGNORE 幂等）。
+  // ⚠️ 单一事实源 = src/services/ai-tools.ts 的 AI_TOOLS；新增/改名工具须同步改本数组与中文 label。
+  const TOOL_SKILL_SEED: Array<{ code: string; name: string }> = [
+    { code: 'list_students', name: '查询学生列表' },
+    { code: 'get_student', name: '查询学生详情' },
+    { code: 'search_students', name: '搜索学生' },
+    { code: 'get_assessment', name: '查询评估记录' },
+    { code: 'list_training_sessions', name: '查询训练记录' },
+    { code: 'list_equipment', name: '查询训练器材' },
+    { code: 'get_ai_usage', name: '查询本月用量' },
+    { code: 'generate_report', name: '生成报告' },
+  ]
+  try {
+    TOOL_SKILL_SEED.forEach((t, i) => {
+      rawDb.run(
+        `INSERT OR IGNORE INTO ai_skill (code, name, kind, tool_code, enabled, sort)
+         VALUES (?, ?, 'tool', ?, 1, ?)`,
+        [`tool_${t.code}`, t.name, t.code, i],
+      )
+    })
+  } catch (skillSeedError: any) {
+    console.warn('[AITables] 技能种子写入警告:', skillSeedError?.message)
+  }
+
+  // 种子 ai_skill：内置知识型技能（Phase 5B，专业角色知识包）。
+  // ⚠️ 单一事实源 = src/data/skills/<技能名>/ 的 SKILL.md + references（build 时 import.meta.glob 读取）。
+  // upsert 保留 id：INSERT OR IGNORE 确保行存在（不动 id）+ UPDATE 刷新正文（每次启动以源文件为准）；
+  // 不用 INSERT OR REPLACE——它会改 id 致 ai_agent_skill 绑定 orphan（sql.js FK 默认 OFF 不 CASCADE）。
+  // 知识技能不自动绑定：按需手动挂，避免每个 agent 默认注入全部专业知识致 token 爆炸。
+  try {
+    BUILTIN_KNOWLEDGE_SKILLS.forEach((k, i) => {
+      const code = `knowledge_${k.code}`
+      rawDb.run(
+        `INSERT OR IGNORE INTO ai_skill (code, name, kind, enabled, sort) VALUES (?, ?, 'knowledge', 1, ?)`,
+        [code, k.name || k.code, i],
+      )
+      rawDb.run(
+        `UPDATE ai_skill SET name = ?, description = ?, knowledge_payload = ? WHERE code = ?`,
+        [k.name || k.code, k.description, JSON.stringify({ content: k.content }), code],
+      )
+    })
+  } catch (knowledgeSeedError: any) {
+    console.warn('[AITables] 知识技能种子写入警告:', knowledgeSeedError?.message)
+  }
+
+  // 向后兼容：对没有任何技能绑定的现存 agent，一次性补全全部「工具型」技能
+  // （含 special_ed_teacher 种子 agent），保持升级前「全部工具」行为不回归。
+  // 幂等：补过的 agent 有了绑定，NOT EXISTS 不再命中。
+  try {
+    rawDb.run(
+      `INSERT OR IGNORE INTO ai_agent_skill (agent_id, skill_id, enabled, sort)
+       SELECT a.id, s.id, 1, s.sort
+       FROM ai_agent a
+       CROSS JOIN ai_skill s
+       WHERE s.kind = 'tool' AND s.enabled = 1
+         AND NOT EXISTS (SELECT 1 FROM ai_agent_skill x WHERE x.agent_id = a.id)`,
+    )
+  } catch (bindSeedError: any) {
+    console.warn('[AITables] 技能绑定回填警告:', bindSeedError?.message)
   }
 
   console.log('[AITables] ✅ AI 智能体表结构初始化完成')
