@@ -243,13 +243,18 @@ export interface ElectronAPI {
    */
   aiChat: (payload: {
     encKey: string
-    messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
+    messages: Array<
+      | { role: 'user' | 'system'; content: string }
+      | { role: 'assistant'; content?: string; tool_calls?: Array<{ id: string; type: 'function'; function: { name: string; arguments: string } }> }
+      | { role: 'tool'; content: string; tool_call_id: string }
+    >
     systemPrompt?: string
     model?: string
     baseUrl?: string
     stream?: boolean
     supportsThinking?: boolean
     providerName?: string
+    tools?: Array<{ type: 'function'; function: { name: string; description?: string; parameters?: Record<string, any> } }>
   }) => Promise<{
     success: boolean
     content?: string
@@ -262,6 +267,7 @@ export interface ElectronAPI {
     error?: string
     errorKind?: string
     httpStatus?: number
+    toolCalls?: Array<{ id: string; type: 'function'; function: { name: string; arguments: string } }>
   }>
 
   /**

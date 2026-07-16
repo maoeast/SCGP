@@ -65,7 +65,25 @@ function buildMessages(messages, systemPrompt) {
   if (systemPrompt) full.push({ role: 'system', content: systemPrompt })
   if (Array.isArray(messages)) {
     for (const m of messages) {
-      if (m && m.role && typeof m.content === 'string') {
+      if (!m || !m.role) continue
+      // function calling：工具结果消息（role:'tool'，必须带 tool_call_id）
+      if (m.role === 'tool') {
+        if (typeof m.content === 'string' && m.tool_call_id) {
+          full.push({ role: 'tool', tool_call_id: m.tool_call_id, content: m.content })
+        }
+        continue
+      }
+      // function calling：上一轮请求调用工具的 assistant 消息需原样回填（含 tool_calls）
+      if (m.role === 'assistant' && Array.isArray(m.tool_calls) && m.tool_calls.length > 0) {
+        full.push({
+          role: 'assistant',
+          content: typeof m.content === 'string' ? m.content : '',
+          tool_calls: m.tool_calls,
+        })
+        continue
+      }
+      // 普通消息（user / system / 纯文本 assistant）
+      if (typeof m.content === 'string') {
         full.push({ role: m.role, content: m.content })
       }
     }
@@ -169,7 +187,7 @@ async function streamChat(event, apiKey, apiBase, model, messages, systemPrompt,
 export function initAIHandlers(ipcMain) {
   ipcMain.handle('ai:chat', async (event, payload) => {
     try {
-      const { encKey, messages, systemPrompt, model, baseUrl, stream, supportsThinking, providerName } = payload || {}
+      const { encKey, messages, systemPrompt, model, baseUrl, stream, supportsThinking, providerName, tools } = payload || {}
       const label = providerName || '模型服务'
 
       if (!encKey) {
@@ -204,7 +222,13 @@ export function initAIHandlers(ipcMain) {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${apiKey}`,
           },
-          body: JSON.stringify({ model: useModel, messages: fullMessages, stream: false, ...(supportsThinking ? { thinking: { type: 'disabled' } } : {}) }),
+          body: JSON.stringify({
+            model: useModel,
+            messages: fullMessages,
+            stream: false,
+            ...(supportsThinking ? { thinking: { type: 'disabled' } } : {}),
+            ...(Array.isArray(tools) && tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
+          }),
           signal: controller.signal,
         })
 
@@ -215,11 +239,13 @@ export function initAIHandlers(ipcMain) {
         }
 
         const data = await response.json()
+        const toolCalls = data?.choices?.[0]?.message?.tool_calls
         return {
           success: true,
           content: data?.choices?.[0]?.message?.content || '',
           usage: mapUsage(data?.usage),
           model: data?.model || useModel,
+          toolCalls: Array.isArray(toolCalls) && toolCalls.length > 0 ? toolCalls : undefined,
         }
       } catch (networkError) {
         if (networkError?.name === 'AbortError') {

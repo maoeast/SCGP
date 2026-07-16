@@ -173,7 +173,17 @@ async function confirmDeleteSession(id: number) {
           class="msg-row"
           :class="msg.role === 'user' ? 'is-user' : 'is-assistant'"
         >
-          <div class="msg-bubble" :class="{ pending: msg.pending }">{{ msg.content }}</div>
+          <div class="msg-bubble" :class="{ pending: msg.pending }">
+            <div v-if="msg.pending && aiStore.toolSteps.length > 0" class="tool-steps">
+              <div
+                v-for="(step, sIdx) in aiStore.toolSteps"
+                :key="sIdx"
+                class="tool-step"
+                :class="{ failed: !step.ok }"
+              >🔧 {{ step.label }}{{ step.ok ? '' : '（失败）' }}</div>
+            </div>
+            {{ msg.content }}
+          </div>
         </div>
       </el-scrollbar>
     </div>
@@ -334,6 +344,21 @@ async function confirmDeleteSession(id: number) {
 }
 .msg-bubble.pending {
   opacity: 0.85;
+}
+.tool-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--el-border-color, #dcdfe6);
+}
+.tool-step {
+  font-size: 12px;
+  color: var(--el-text-color-secondary, #909399);
+}
+.tool-step.failed {
+  color: var(--el-color-danger, #f56c6c);
 }
 
 .ai-footer {

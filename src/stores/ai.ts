@@ -11,6 +11,8 @@ import {
 } from '@/database/ai-api'
 import { encryptData } from '@/utils/crypto'
 import { useAuthStore } from '@/stores/auth'
+import { runToolLoop } from '@/services/ai-tool-loop'
+import type { ToolStep } from '@/services/ai-tools'
 
 /**
  * AI 智能体子系统 store（setup 风格，仿 systemConfig.ts）。
@@ -182,6 +184,8 @@ export const useAiStore = defineStore('ai', () => {
   const streamingContent = ref('')
   const sending = ref(false)
   const lastError = ref('')
+  /** 本次 sendChat 的工具调用步骤（仅 sending 期间有值，供 UI 展示气泡；不入库） */
+  const toolSteps = ref<ToolStep[]>([])
 
   // ==================== 会话隔离（按登录用户）====================
   type SessionRow = {
@@ -344,8 +348,43 @@ export const useAiStore = defineStore('ai', () => {
     sending.value = true
     streamingContent.value = ''
     lastError.value = ''
+    toolSteps.value = []
 
     try {
+      if (providerConfig.value.supportsToolCalls) {
+        // Phase 2：function calling tool 循环（非流式，渲染端执行本地工具）
+        const result = await runToolLoop({
+          encKey: providerConfig.value.apiKeyEnc,
+          baseUrl: providerConfig.value.baseUrl,
+          model: providerConfig.value.defaultModel,
+          systemPrompt: currentAgent.value.systemPrompt,
+          supportsThinking: providerConfig.value.supportsThinking,
+          providerName: providerConfig.value.providerName,
+          messages: history,
+          onToolStep: (step) => {
+            toolSteps.value.push(step)
+          },
+        })
+        const usage: DeepSeekUsage | null = result.usage || null
+        const finalContent = result.content
+        a.saveMessage({ sessionId, role: 'assistant', content: finalContent, usage })
+        currentMessages.value.push({
+          id: 0,
+          sessionId,
+          role: 'assistant',
+          content: finalContent,
+          tokensPrompt: usage?.promptTokens || 0,
+          tokensCompletion: usage?.completionTokens || 0,
+          estCostYuan: estimateCostYuan(usage),
+          createdAt: new Date().toISOString(),
+        })
+        monthUsage.value = a.getMonthUsage()
+        await loadSessions()
+        if (isAdmin()) allSessions.value = a.listAllSessions()
+        return { ok: true }
+      }
+
+      // 原流式路径（provider 不支持 tool_calls 时，行为与 Phase 1 一致）
       const res = await window.electronAPI.aiChat({
         encKey: providerConfig.value.apiKeyEnc,
         messages: history,
@@ -414,6 +453,7 @@ export const useAiStore = defineStore('ai', () => {
     streamingContent,
     sending,
     lastError,
+    toolSteps,
     currentAgent,
     canChat,
     overBudget,
