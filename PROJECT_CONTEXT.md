@@ -1537,3 +1537,10 @@
 - DeepSeek 事实（已核对官网 `api-docs.deepseek.com`，2026-07）：默认模型 `deepseek-v4-flash`（`deepseek-chat`/`deepseek-reasoner` 2026-07-24 弃用）；端点 `${baseUrl}/chat/completions`（baseUrl 默认 `https://api.deepseek.com`，勿硬编码 `/v1`，否则 baseUrl 带 /v1 时双拼 404）；估费 1/0.02/2 元·百万token（cache miss/hit/output，v4-flash）；默认非思考 `thinking.type=disabled`（避免 reasoning_tokens 计费）；流式 `stream_options.include_usage` 末块带 usage；`prompt_tokens = prompt_cache_hit + prompt_cache_miss`。
 - 现实边界：4 Phase type-check ✅，**真机端到端验证待做**（配真实 Key 跑通测试连接+流式问答+备份迁移）；**未提交**。plan：`.claude/plans/velvety-foraging-perlis.md`。
 - **更新（2026-07-16 #2）**：真机验证全绿并提交本地 main；增会话按 `user_id` 隔离（每人只看自己，admin 有「全部会话」管理视图，全局预算+全局 Key，旧 NULL 会话迁移归 admin=1）；`setConfig`/`saveAgent` 改 `ON CONFLICT … DO UPDATE` 原子 upsert，修 sql.js read-then-write 撞 `system_config.key`/`ai_agent.code` UNIQUE 的隐患。
+
+## 64. 2026-07-16 AI 智能体细化一期 Phase 1：多 provider 抽象（豆包接入 + 能力位，代码级落地，DeepSeek 侧真机绿）
+
+- 多 provider：新建 `ai_provider` 表（code/base_url/api_key_enc/default_model/能力位 `supports_vision/tool_calls/thinking`/enabled/sort），能力位 Phase 1 以 **provider 为粒度**；老库 `system_config.deepseek_*` 迁入 `ai_provider.deepseek` 行（幂等不覆盖已配置），全局（active/budget/block/总开关）留 `system_config` KV；`getProviderConfig` = active provider 行 + 全局 KV 组合视图；旧 `deepseek_*` KV 迁移后保留（新版只读 provider 行，旧 KV 作孤儿不参与判权）。
+- 豆包（火山方舟，已核对官方文档 2026-07）：种子 doubao 行（`https://ark.cn-beijing.volces.com/api/v3`，vision=1/tool_calls=1/thinking=0/enabled=0），走 OpenAI **Chat Completions** 兼容（`${baseUrl}/chat/completions`，Bearer 鉴权），**model 填推理接入点 ID `ep-xxx`**（用户特有，种子留空不可预填）；未用 `/responses`。
+- thinking 条件化：`ai.mjs` 的 `thinking:{type:'disabled'}` 改按 `supportsThinking` 条件展开（DeepSeek 加、豆包不加，规避 OpenAI 兼容接口对未知字段拒收）；`describeHttpError` 文案去 DeepSeek 硬编码（传 `providerName`）；IPC payload 加 `supportsThinking`/`providerName`（生效类型在 `env.d.ts`，非 `src/types/electron.d.ts`）。
+- 现实边界：type-check ✅；真机 DeepSeek 侧绿（老库 Key 迁移 + 流式不回归）；**豆包连接/流式待火山方舟 Key + 接入点 ID 后补验**。已提交本地 main（`1548186`）。plan：`.claude/plans/purring-riding-pie.md`（Phase 1–5，Phase 1 完成，Phase 2 待开）。
