@@ -44,20 +44,20 @@ function mapUsage(usage) {
 }
 
 /** 将 HTTP 错误状态码映射为可读中文提示（含 DeepSeek error.message） */
-function describeHttpError(status, body) {
-  let deepseekMessage = ''
+function describeHttpError(status, body, providerName = '模型服务') {
+  let providerMessage = ''
   try {
     const parsed = typeof body === 'string' ? JSON.parse(body) : body
-    deepseekMessage = parsed?.error?.message || parsed?.message || ''
+    providerMessage = parsed?.error?.message || parsed?.message || ''
   } catch {
     /* ignore */
   }
-  const suffix = deepseekMessage ? `（${deepseekMessage}）` : ''
+  const suffix = providerMessage ? `（${providerMessage}）` : ''
 
-  if (status === 401) return { kind: 'auth', message: `API Key 无效或已失效，请在系统设置检查 DeepSeek API Key。${suffix}` }
-  if (status === 402) return { kind: 'insufficient_balance', message: `DeepSeek 账户余额不足，请登录 DeepSeek 平台充值。${suffix}` }
+  if (status === 401) return { kind: 'auth', message: `${providerName} 的 API Key 无效或已失效，请在系统设置检查。${suffix}` }
+  if (status === 402) return { kind: 'insufficient_balance', message: `${providerName} 账户余额不足，请登录对应平台充值。${suffix}` }
   if (status === 429) return { kind: 'rate_limit', message: `请求过于频繁或触发限流，请稍后再试。${suffix}` }
-  return { kind: 'http_error', message: `DeepSeek 返回错误（HTTP ${status}）${deepseekMessage ? '：' + deepseekMessage : ''}` }
+  return { kind: 'http_error', message: `${providerName} 返回错误（HTTP ${status}）${providerMessage ? '：' + providerMessage : ''}` }
 }
 
 function buildMessages(messages, systemPrompt) {
@@ -74,7 +74,7 @@ function buildMessages(messages, systemPrompt) {
 }
 
 /** 流式调用：边收边 event.sender.send('ai:chunk')，最终 invoke 返回完整结果（与 done 事件一致） */
-async function streamChat(event, apiKey, apiBase, model, messages, systemPrompt) {
+async function streamChat(event, apiKey, apiBase, model, messages, systemPrompt, supportsThinking, providerName) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
@@ -91,7 +91,7 @@ async function streamChat(event, apiKey, apiBase, model, messages, systemPrompt)
         messages: buildMessages(messages, systemPrompt),
         stream: true,
         stream_options: { include_usage: true },
-        thinking: { type: 'disabled' },
+        ...(supportsThinking ? { thinking: { type: 'disabled' } } : {}),
       }),
       signal: controller.signal,
     })
@@ -106,7 +106,7 @@ async function streamChat(event, apiKey, apiBase, model, messages, systemPrompt)
   if (!response.ok) {
     clearTimeout(timer)
     const errBody = await response.text().catch(() => '')
-    const info = describeHttpError(response.status, errBody)
+    const info = describeHttpError(response.status, errBody, providerName)
     try {
       event?.sender?.send('ai:error', { errorKind: info.kind, error: info.message })
     } catch {
@@ -169,10 +169,11 @@ async function streamChat(event, apiKey, apiBase, model, messages, systemPrompt)
 export function initAIHandlers(ipcMain) {
   ipcMain.handle('ai:chat', async (event, payload) => {
     try {
-      const { encKey, messages, systemPrompt, model, baseUrl, stream } = payload || {}
+      const { encKey, messages, systemPrompt, model, baseUrl, stream, supportsThinking, providerName } = payload || {}
+      const label = providerName || '模型服务'
 
       if (!encKey) {
-        return { success: false, errorKind: 'no_key', error: '尚未配置 DeepSeek API Key，请先在系统设置中配置。' }
+        return { success: false, errorKind: 'no_key', error: `尚未配置 ${label} 的 API Key，请先在系统设置中配置。` }
       }
 
       const apiKey = decryptData(encKey)
@@ -190,7 +191,7 @@ export function initAIHandlers(ipcMain) {
       const useModel = model || 'deepseek-v4-flash'
 
       if (stream) {
-        return await streamChat(event, apiKey, apiBase, useModel, messages, systemPrompt)
+        return await streamChat(event, apiKey, apiBase, useModel, messages, systemPrompt, supportsThinking, providerName)
       }
 
       // 非流式（用于连接测试等）
@@ -203,13 +204,13 @@ export function initAIHandlers(ipcMain) {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${apiKey}`,
           },
-          body: JSON.stringify({ model: useModel, messages: fullMessages, stream: false, thinking: { type: 'disabled' } }),
+          body: JSON.stringify({ model: useModel, messages: fullMessages, stream: false, ...(supportsThinking ? { thinking: { type: 'disabled' } } : {}) }),
           signal: controller.signal,
         })
 
         if (!response.ok) {
           const errBody = await response.text().catch(() => '')
-          const info = describeHttpError(response.status, errBody)
+          const info = describeHttpError(response.status, errBody, providerName)
           return { success: false, errorKind: info.kind, error: info.message, httpStatus: response.status }
         }
 
@@ -238,5 +239,5 @@ export function initAIHandlers(ipcMain) {
     }
   })
 
-  console.log('[AI] AI 处理器已注册（DeepSeek 代理，支持流式）')
+  console.log('[AI] AI 处理器已注册（多 provider 代理，支持流式）')
 }

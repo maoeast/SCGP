@@ -13,29 +13,47 @@ onMounted(() => {
   aiStore.loadAll()
 })
 
-// ===== DeepSeek 配置表单 =====
+// ===== 模型服务配置表单（当前 active provider 的编辑视图 + 全局额度）=====
 const configForm = reactive({
+  activeProviderCode: '',
   apiKeyInput: '',
-  baseUrl: 'https://api.deepseek.com',
-  defaultModel: 'deepseek-v4-flash',
+  baseUrl: '',
+  defaultModel: '',
+  providerEnabled: true,
   monthlyBudgetYuan: 100,
   blockOnOverage: false,
   enabled: true,
 })
 
-const apiKeyPlaceholder = computed(() =>
-  aiStore.providerConfig?.apiKeyEnc
-    ? '已配置（重新输入可更新，留空保存则不变）'
-    : '请输入 DeepSeek API Key（sk-...）',
-)
+const apiKeyPlaceholder = computed(() => {
+  const cfg = aiStore.providerConfig
+  if (cfg?.apiKeyEnc) return '已配置（重新输入可更新，留空保存则不变）'
+  return `请输入 ${cfg?.providerName || '模型服务'} API Key`
+})
 
-// providerConfig 加载后回填非 Key 字段
+// 能力位（只读标识，来自 provider 行）
+const capabilityTags = computed(() => {
+  const cfg = aiStore.providerConfig
+  const tags: Array<{ label: string; type: 'success' | 'warning' | 'info' }> = []
+  if (!cfg) return tags
+  if (cfg.supportsVision) tags.push({ label: '支持图片', type: 'success' })
+  if (cfg.supportsToolCalls) tags.push({ label: '工具调用', type: 'warning' })
+  if (cfg.supportsThinking) tags.push({ label: '思考模式', type: 'info' })
+  return tags
+})
+
+// 豆包等火山方舟 provider 的 model 是「接入点 ID」（ep-xxx），与 DeepSeek 模型名不同
+const isDoubao = computed(() => aiStore.providerConfig?.activeProviderCode === 'doubao')
+
+// providerConfig 加载后回填表单（含能力位与 provider 自身启用状态）
 watch(
   () => aiStore.providerConfig,
   (cfg) => {
     if (!cfg) return
+    configForm.activeProviderCode = cfg.activeProviderCode
     configForm.baseUrl = cfg.baseUrl
     configForm.defaultModel = cfg.defaultModel
+    configForm.providerEnabled = cfg.providerEnabled
     configForm.monthlyBudgetYuan = cfg.monthlyBudgetYuan
     configForm.blockOnOverage = cfg.blockOnOverage
     configForm.enabled = cfg.enabled
@@ -43,14 +61,20 @@ watch(
   { immediate: true },
 )
 
+/** 切换当前编辑/生效的 provider（即时切换 active，sendChat/testConnection 随之用新 provider） */
+async function onProviderChange(code: string) {
+  await aiStore.setActiveProvider(code)
+}
+
 const saving = ref(false)
 async function saveConfig() {
   saving.value = true
   try {
     await aiStore.saveProviderConfig({
       apiKeyPlain: configForm.apiKeyInput, // 空串=不变（store 内部处理），非空=更新
-      baseUrl: configForm.baseUrl.trim() || 'https://api.deepseek.com',
-      defaultModel: configForm.defaultModel.trim() || 'deepseek-v4-flash',
+      baseUrl: configForm.baseUrl.trim(),
+      defaultModel: configForm.defaultModel.trim(),
+      providerEnabled: configForm.providerEnabled,
       monthlyBudgetYuan: Number(configForm.monthlyBudgetYuan) || 0,
       blockOnOverage: configForm.blockOnOverage,
       enabled: configForm.enabled,
@@ -189,17 +213,43 @@ async function removeSession(id: number) {
 
 <template>
   <div class="ai-agent-config">
-    <!-- DeepSeek 配置 -->
+    <!-- 模型服务配置 -->
     <el-card shadow="never" class="config-card">
       <template #header>
         <div class="card-header">
-          <span>DeepSeek 模型配置</span>
-          <el-tag v-if="aiStore.isConfigured" type="success" size="small">已配置</el-tag>
-          <el-tag v-else type="info" size="small">未配置</el-tag>
+          <span>模型服务配置</span>
+          <el-tag v-if="aiStore.isConfigured" type="success" size="small">已配置 Key</el-tag>
+          <el-tag v-else type="info" size="small">未配置 Key</el-tag>
         </div>
       </template>
 
       <el-form label-width="120px" label-position="right">
+        <el-form-item label="模型服务">
+          <el-select
+            v-model="configForm.activeProviderCode"
+            placeholder="选择模型服务"
+            style="width: 280px"
+            @change="onProviderChange"
+          >
+            <el-option
+              v-for="p in aiStore.providers"
+              :key="p.code"
+              :label="p.name"
+              :value="p.code"
+            >
+              <span>{{ p.name }}</span>
+              <el-tag v-if="!p.enabled" size="small" type="info" style="margin-left: 8px">未启用</el-tag>
+            </el-option>
+          </el-select>
+          <div class="field-hint" style="margin-top: 4px; margin-left: 0">
+            <span>能力：</span>
+            <el-tag v-for="t in capabilityTags" :key="t.label" :type="t.type" size="small" style="margin-right: 6px">
+              {{ t.label }}
+            </el-tag>
+            <span v-if="capabilityTags.length === 0">—</span>
+          </div>
+        </el-form-item>
+
         <el-form-item label="API Key">
           <el-input
             v-model="configForm.apiKeyInput"
@@ -220,7 +270,18 @@ async function removeSession(id: number) {
         </el-form-item>
 
         <el-form-item label="默认模型">
-          <el-input v-model="configForm.defaultModel" placeholder="deepseek-v4-flash" />
+          <el-input
+            v-model="configForm.defaultModel"
+            :placeholder="isDoubao ? '接入点 ID，如 ep-2024xxxxxx-xxxxx' : 'deepseek-v4-flash'"
+          />
+          <div v-if="isDoubao" class="field-hint">
+            豆包填「推理接入点 ID」（火山方舟控制台创建接入点后获得，形如 ep-xxx），非模型名。
+          </div>
+        </el-form-item>
+
+        <el-form-item label="启用此服务">
+          <el-switch v-model="configForm.providerEnabled" />
+          <span class="field-hint-inline">关闭后该服务不可用于对话（与下方「AI 总开关」独立）</span>
         </el-form-item>
 
         <el-form-item label="月度预算(元)">
@@ -233,8 +294,9 @@ async function removeSession(id: number) {
           <span class="field-hint-inline">开启后，本月花费超预算时阻止继续提问</span>
         </el-form-item>
 
-        <el-form-item label="启用智能体">
+        <el-form-item label="AI 总开关">
           <el-switch v-model="configForm.enabled" />
+          <span class="field-hint-inline">全局关闭后所有模型服务不可用</span>
         </el-form-item>
 
         <el-form-item>

@@ -117,7 +117,7 @@ declare global {
         error?: string
       }>
 
-      // AI 智能体（DeepSeek 代理；主进程解密 Key 后调用，渲染进程只传密文）
+      // AI 智能体（多 provider 代理；主进程解密 Key 后调用，渲染进程只传密文）
       aiChat: (payload: {
         encKey: string
         messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
@@ -125,6 +125,8 @@ declare global {
         model?: string
         baseUrl?: string
         stream?: boolean
+        supportsThinking?: boolean
+        providerName?: string
       }) => Promise<{
         success: boolean
         content?: string

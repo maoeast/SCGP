@@ -238,8 +238,8 @@ export interface ElectronAPI {
   ) => Promise<TTSResult & { audioBase64?: string }>
 
   /**
-   * AI 智能体对话（DeepSeek 代理；主进程解密 Key 后调用）
-   * @param payload - encKey 为密文，由渲染进程从 system_config 读出后传入
+   * AI 智能体对话（多 provider 代理；主进程解密 Key 后调用）
+   * @param payload - encKey 为密文，由渲染进程从 ai_provider 行读出后传入
    */
   aiChat: (payload: {
     encKey: string
@@ -248,6 +248,8 @@ export interface ElectronAPI {
     model?: string
     baseUrl?: string
     stream?: boolean
+    supportsThinking?: boolean
+    providerName?: string
   }) => Promise<{
     success: boolean
     content?: string

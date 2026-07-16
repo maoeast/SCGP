@@ -4,6 +4,7 @@ import {
   AIApi,
   estimateCostYuan,
   type AiAgent,
+  type AiProvider,
   type AiChatMessage,
   type AiProviderConfig,
   type DeepSeekUsage,
@@ -23,6 +24,7 @@ import { useAuthStore } from '@/stores/auth'
  */
 export const useAiStore = defineStore('ai', () => {
   const agents = ref<AiAgent[]>([])
+  const providers = ref<AiProvider[]>([])
   const providerConfig = ref<AiProviderConfig | null>(null)
   const monthUsage = ref<{ costYuan: number; assistantCount: number; period: string }>({
     costYuan: 0,
@@ -51,6 +53,7 @@ export const useAiStore = defineStore('ai', () => {
       await ensureDb()
       const a = api()
       agents.value = a.listAgents()
+      providers.value = a.listProviders()
       providerConfig.value = a.getProviderConfig()
       monthUsage.value = a.getMonthUsage()
       // 默认选中第一个启用智能体
@@ -77,20 +80,52 @@ export const useAiStore = defineStore('ai', () => {
   }
 
   /**
-   * 保存 provider 配置。
-   * - 传 apiKeyPlain（明文）：非空则加密存密文，空串则清除 Key；
-   * - 不传 apiKeyPlain：保留已有 Key 不变；
-   * - 其余字段直接 upsert。
+   * 保存配置：写入【当前 active provider】的 key/baseUrl/model（per-provider 行），
+   * 以及全局的 budget/enabled/blockOnOverage（system_config KV）。
+   * - apiKeyPlain（明文）：非空加密存密文，空串清除 Key，不传保留；
+   * - baseUrl/defaultModel 写入 active provider 行；
+   * - monthlyBudgetYuan/blockOnOverage/enabled 写入全局 KV。
    */
-  async function saveProviderConfig(input: Partial<AiProviderConfig> & { apiKeyPlain?: string }) {
+  async function saveProviderConfig(input: {
+    apiKeyPlain?: string
+    baseUrl?: string
+    defaultModel?: string
+    providerEnabled?: boolean
+    monthlyBudgetYuan?: number
+    blockOnOverage?: boolean
+    enabled?: boolean
+  }) {
     await ensureDb()
     const a = api()
-    const toUpsert: Partial<AiProviderConfig> = { ...input }
+    const code = a.getActiveProviderCode()
+    const providerInput: {
+      code: string
+      apiKeyEnc?: string
+      baseUrl?: string
+      defaultModel?: string
+      enabled?: boolean
+    } = { code }
     if (input.apiKeyPlain !== undefined) {
-      toUpsert.apiKeyEnc = input.apiKeyPlain.trim() ? encryptData(input.apiKeyPlain.trim()) : ''
-      delete (toUpsert as Record<string, unknown>).apiKeyPlain
+      providerInput.apiKeyEnc = input.apiKeyPlain.trim() ? encryptData(input.apiKeyPlain.trim()) : ''
     }
-    a.upsertProviderConfig(toUpsert)
+    if (input.baseUrl !== undefined) providerInput.baseUrl = input.baseUrl
+    if (input.defaultModel !== undefined) providerInput.defaultModel = input.defaultModel
+    if (input.providerEnabled !== undefined) providerInput.enabled = input.providerEnabled
+    a.saveProvider(providerInput)
+    a.saveGlobalConfig({
+      monthlyBudgetYuan: input.monthlyBudgetYuan,
+      blockOnOverage: input.blockOnOverage,
+      enabled: input.enabled,
+    })
+    providers.value = a.listProviders()
+    providerConfig.value = a.getProviderConfig()
+  }
+
+  /** 切换当前生效 provider（并刷新 providerConfig 视图） */
+  async function setActiveProvider(code: string) {
+    await ensureDb()
+    const a = api()
+    a.setActiveProvider(code)
     providerConfig.value = a.getProviderConfig()
   }
 
@@ -110,6 +145,8 @@ export const useAiStore = defineStore('ai', () => {
         systemPrompt: '你是连通性测试助手，请极简回复。',
         model: cfg.defaultModel,
         baseUrl: cfg.baseUrl,
+        supportsThinking: cfg.supportsThinking,
+        providerName: cfg.providerName,
       })
       if (res.success) {
         lastTestResult.value = { ok: true, message: '连接成功：' + (res.content?.trim().slice(0, 40) || '已响应') }
@@ -172,6 +209,7 @@ export const useAiStore = defineStore('ai', () => {
   const canChat = computed(
     () =>
       !!providerConfig.value?.enabled &&
+      !!providerConfig.value?.providerEnabled &&
       !!providerConfig.value?.apiKeyEnc &&
       !!currentAgent.value &&
       !sending.value,
@@ -259,6 +297,9 @@ export const useAiStore = defineStore('ai', () => {
     const content = text.trim()
     if (!content) return { ok: false }
     if (!providerConfig.value?.enabled) return { ok: false, error: 'AI 智能体未启用。' }
+    if (!providerConfig.value?.providerEnabled) {
+      return { ok: false, error: '当前模型 provider 未启用，请在系统设置中启用后再试。' }
+    }
     if (!providerConfig.value?.apiKeyEnc) {
       return { ok: false, error: '尚未配置 API Key，请在「系统设置 → AI 智能体」中配置。' }
     }
@@ -312,6 +353,8 @@ export const useAiStore = defineStore('ai', () => {
         model: providerConfig.value.defaultModel,
         baseUrl: providerConfig.value.baseUrl,
         stream: true,
+        supportsThinking: providerConfig.value.supportsThinking,
+        providerName: providerConfig.value.providerName,
       })
 
       if (res.success) {
@@ -349,6 +392,7 @@ export const useAiStore = defineStore('ai', () => {
   return {
     // Phase 3
     agents,
+    providers,
     providerConfig,
     monthUsage,
     loading,
@@ -358,6 +402,7 @@ export const useAiStore = defineStore('ai', () => {
     enabledAgents,
     loadAll,
     reloadUsage,
+    setActiveProvider,
     saveProviderConfig,
     testConnection,
     saveAgent,

@@ -3748,13 +3748,32 @@ async function initializeAITables(rawDb: any): Promise<void> {
     FOREIGN KEY (session_id) REFERENCES ai_chat_session(id) ON DELETE CASCADE
   )`)
 
-  // 4. 索引
+  // provider 表（多模型抽象：DeepSeek / 豆包 统一为 OpenAI 兼容协议 + 能力位）
+  // 能力位以 provider 为粒度（Phase 1）；Phase 3 vision/Phase 2 FC 会按 supports_* 开关。
+  rawDb.run(`CREATE TABLE IF NOT EXISTS ai_provider (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    base_url TEXT NOT NULL DEFAULT '',
+    api_key_enc TEXT NOT NULL DEFAULT '',
+    default_model TEXT NOT NULL DEFAULT '',
+    supports_vision INTEGER NOT NULL DEFAULT 0,
+    supports_tool_calls INTEGER NOT NULL DEFAULT 0,
+    supports_thinking INTEGER NOT NULL DEFAULT 0,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    sort INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`)
+
+  // 索引
   const indexStatements = [
     `CREATE INDEX IF NOT EXISTS idx_ai_agent_code ON ai_agent(code)`,
     `CREATE INDEX IF NOT EXISTS idx_ai_agent_enabled ON ai_agent(enabled)`,
     `CREATE INDEX IF NOT EXISTS idx_ai_chat_msg_session ON ai_chat_message(session_id)`,
     `CREATE INDEX IF NOT EXISTS idx_ai_chat_msg_time ON ai_chat_message(created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_ai_chat_session_updated ON ai_chat_session(updated_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_ai_provider_code ON ai_provider(code)`,
   ]
   for (const stmt of indexStatements) {
     try {
@@ -3766,7 +3785,77 @@ async function initializeAITables(rawDb: any): Promise<void> {
     }
   }
 
-  // 5. 种子：预设「特教老师智能体」（幂等，已存在则跳过）
+  // provider 迁移与种子：
+  // - deepseek：旧库从 system_config 的 deepseek_* KV 迁入（首次），新库用默认值；已存在则不覆盖
+  // - doubao：种子（火山方舟 OpenAI 兼容；model 填接入点 ID ep-xxx，用户特有故留空；enabled=0 待配 Key）
+  // - ai_active_provider：未设置则默认 deepseek（system_config KV）
+  // 注：旧 deepseek_* KV 迁移后保留（getProviderConfig 新版只读 ai_provider 行，旧 KV 仅作孤儿不参与判权）
+  try {
+    const readConfigKV = (key: string): string | null => {
+      try {
+        const stmt = rawDb.prepare('SELECT value FROM system_config WHERE key = ?')
+        stmt.bind([key])
+        let value: string | null = null
+        if (stmt.step()) {
+          const row = stmt.getAsObject()
+          value = row.value != null ? String(row.value) : null
+        }
+        stmt.free()
+        return value
+      } catch {
+        return null
+      }
+    }
+    const providerExists = (code: string): boolean => {
+      try {
+        const res = rawDb.exec(`SELECT 1 FROM ai_provider WHERE code = '${code}' LIMIT 1`)
+        return !!(res && res.length > 0 && res[0].values.length > 0)
+      } catch {
+        return false
+      }
+    }
+
+    if (!providerExists('deepseek')) {
+      const oldKey = readConfigKV('deepseek_api_key')
+      const oldBaseUrl = readConfigKV('deepseek_base_url')
+      const oldModel = readConfigKV('deepseek_default_model')
+      rawDb.run(
+        `INSERT INTO ai_provider
+           (code, name, base_url, api_key_enc, default_model,
+            supports_vision, supports_tool_calls, supports_thinking, enabled, sort)
+         VALUES ('deepseek', 'DeepSeek', ?, ?, ?, 0, 1, 1, 1, 1)`,
+        [
+          oldBaseUrl || 'https://api.deepseek.com',
+          oldKey || '',
+          oldModel || 'deepseek-v4-flash',
+        ],
+      )
+      if (oldKey) {
+        console.log('[AITables] 已迁移 system_config.deepseek_* 到 ai_provider.deepseek 行')
+      }
+    }
+
+    if (!providerExists('doubao')) {
+      rawDb.run(
+        `INSERT INTO ai_provider
+           (code, name, base_url, api_key_enc, default_model,
+            supports_vision, supports_tool_calls, supports_thinking, enabled, sort)
+         VALUES ('doubao', '豆包（火山方舟）', 'https://ark.cn-beijing.volces.com/api/v3', '', '', 1, 1, 0, 0, 2)`,
+      )
+    }
+
+    if (!readConfigKV('ai_active_provider')) {
+      rawDb.run(
+        `INSERT INTO system_config (key, value, description)
+         VALUES ('ai_active_provider', 'deepseek', '当前生效的 AI provider code')
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      )
+    }
+  } catch (providerSeedError: any) {
+    console.warn('[AITables] provider 迁移/种子警告:', providerSeedError?.message)
+  }
+
+  // 6. 种子：预设「特教老师智能体」（幂等，已存在则跳过）
   const seedSystemPrompt = `你是一位拥有 15 年以上经验的特殊教育老师，擅长 IEP（个别化教育计划）制定、行为干预与融合教育，熟悉自闭症谱系（ASD）、注意缺陷多动障碍（ADHD）、学习障碍等特殊需要儿童的支持策略。
 
 回答要求：

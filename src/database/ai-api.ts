@@ -4,7 +4,7 @@ import { DatabaseAPI } from './api'
  * AI 智能体子系统数据访问层。
  *
  * 负责 ai_agent / ai_chat_session / ai_chat_message 三张表的 CRUD，
- * 以及 DeepSeek provider 配置（复用 system_config KV 表）。
+ * 以及多 provider 配置（ai_provider 表 + system_config 全局 KV）。
  *
  * 安全边界：本文件只存/读 API Key 的【密文】（crypto.ts encryptData 加密），
  * 明文 Key 永远不进渲染进程——解密在 Electron Main 进程的 ai handler 里完成。
@@ -22,19 +22,16 @@ const DEEPSEEK_PRICE = {
   output: 2,
 } as const
 
-// provider 配置在 system_config 表中的 key
+// AI 全局配置在 system_config 表中的 key（per-provider 的连接/能力位在 ai_provider 表）
 const CONFIG_KEY = {
-  apiKey: 'deepseek_api_key', // 密文
-  baseUrl: 'deepseek_base_url', // 默认 https://api.deepseek.com
-  defaultModel: 'deepseek_default_model', // 默认 deepseek-chat
+  activeProvider: 'ai_active_provider', // 当前生效 provider code
   monthlyBudget: 'ai_monthly_budget_yuan', // 月度预算（元），默认 100
   blockOnOverage: 'ai_block_on_overage', // '1'/'0' 超预算是否硬截断
   enabled: 'ai_enabled', // '1'/'0' 总开关
 } as const
 
 const DEFAULTS = {
-  baseUrl: 'https://api.deepseek.com',
-  defaultModel: 'deepseek-v4-flash',
+  activeProvider: 'deepseek',
   monthlyBudgetYuan: 100,
   blockOnOverage: false,
   enabled: true,
@@ -53,13 +50,41 @@ export interface AiAgent {
   updatedAt: string
 }
 
+/** 单个 provider 行（ai_provider 表） */
+export interface AiProvider {
+  id: number
+  code: string
+  name: string
+  baseUrl: string
+  apiKeyEnc: string // 密文；未配置时为 ''
+  defaultModel: string
+  supportsVision: boolean
+  supportsToolCalls: boolean
+  supportsThinking: boolean
+  enabled: boolean
+  sort: number
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * 当前生效 provider 的视图（供 store/UI/sendChat）：由 ai_provider.active 行 + 全局 KV 组合。
+ * activeProviderCode、providerName、supportsVision/ToolCalls/Thinking、providerEnabled 来自 active provider 行；
+ * monthlyBudgetYuan/blockOnOverage/enabled 来自 system_config 全局 KV。
+ */
 export interface AiProviderConfig {
+  activeProviderCode: string
+  providerName: string
+  supportsVision: boolean
+  supportsToolCalls: boolean
+  supportsThinking: boolean
+  providerEnabled: boolean // active provider 自身是否启用
   apiKeyEnc: string // 密文；未配置时为 ''
   baseUrl: string
   defaultModel: string
   monthlyBudgetYuan: number
   blockOnOverage: boolean
-  enabled: boolean
+  enabled: boolean // 全局 AI 总开关
 }
 
 export interface AiChatMessage {
@@ -121,6 +146,24 @@ function rowToAgent(row: any): AiAgent {
   }
 }
 
+function rowToProvider(row: any): AiProvider {
+  return {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    baseUrl: row.base_url || '',
+    apiKeyEnc: row.api_key_enc || '',
+    defaultModel: row.default_model || '',
+    supportsVision: Number(row.supports_vision) === 1,
+    supportsToolCalls: Number(row.supports_tool_calls) === 1,
+    supportsThinking: Number(row.supports_thinking) === 1,
+    enabled: Number(row.enabled) === 1,
+    sort: Number(row.sort || 0),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
 export class AIApi extends DatabaseAPI {
   // ==================== 智能体 ====================
 
@@ -174,7 +217,7 @@ export class AIApi extends DatabaseAPI {
     return this.execute('DELETE FROM ai_agent WHERE id = ?', [id]) > 0
   }
 
-  // ==================== Provider 配置（system_config KV）====================
+  // ==================== Provider（多模型抽象：ai_provider 表 + 全局 KV）====================
 
   private getConfig(key: string): string | null {
     const row = this.queryOne('SELECT value FROM system_config WHERE key = ?', [key])
@@ -192,33 +235,135 @@ export class AIApi extends DatabaseAPI {
     )
   }
 
-  getProviderConfig(): AiProviderConfig {
-    return {
-      apiKeyEnc: this.getConfig(CONFIG_KEY.apiKey) || '',
-      baseUrl: this.getConfig(CONFIG_KEY.baseUrl) || DEFAULTS.baseUrl,
-      defaultModel: this.getConfig(CONFIG_KEY.defaultModel) || DEFAULTS.defaultModel,
-      monthlyBudgetYuan: Number(this.getConfig(CONFIG_KEY.monthlyBudget) || DEFAULTS.monthlyBudgetYuan),
-      blockOnOverage: this.getConfig(CONFIG_KEY.blockOnOverage) === '1',
-      enabled: this.getConfig(CONFIG_KEY.enabled) !== '0', // 默认启用
+  listProviders(): AiProvider[] {
+    return this.query('SELECT * FROM ai_provider ORDER BY sort ASC, id ASC').map(rowToProvider)
+  }
+
+  getProviderByCode(code: string): AiProvider | null {
+    const row = this.queryOne('SELECT * FROM ai_provider WHERE code = ?', [code])
+    return row ? rowToProvider(row) : null
+  }
+
+  getActiveProviderCode(): string {
+    return this.getConfig(CONFIG_KEY.activeProvider) || DEFAULTS.activeProvider
+  }
+
+  /** 切换当前生效 provider（system_config KV） */
+  setActiveProvider(code: string): void {
+    this.setConfig(CONFIG_KEY.activeProvider, code)
+  }
+
+  /** 保存单个 provider 的配置（per-provider：key/baseUrl/model/enabled/能力位） */
+  saveProvider(input: {
+    code: string
+    apiKeyEnc?: string
+    baseUrl?: string
+    defaultModel?: string
+    supportsVision?: boolean
+    supportsToolCalls?: boolean
+    supportsThinking?: boolean
+    enabled?: boolean
+    name?: string
+  }): void {
+    const sets: string[] = []
+    const params: any[] = []
+    if (input.apiKeyEnc !== undefined) {
+      sets.push('api_key_enc = ?')
+      params.push(input.apiKeyEnc)
     }
+    if (input.baseUrl !== undefined) {
+      sets.push('base_url = ?')
+      params.push(input.baseUrl)
+    }
+    if (input.defaultModel !== undefined) {
+      sets.push('default_model = ?')
+      params.push(input.defaultModel)
+    }
+    if (input.supportsVision !== undefined) {
+      sets.push('supports_vision = ?')
+      params.push(input.supportsVision ? 1 : 0)
+    }
+    if (input.supportsToolCalls !== undefined) {
+      sets.push('supports_tool_calls = ?')
+      params.push(input.supportsToolCalls ? 1 : 0)
+    }
+    if (input.supportsThinking !== undefined) {
+      sets.push('supports_thinking = ?')
+      params.push(input.supportsThinking ? 1 : 0)
+    }
+    if (input.enabled !== undefined) {
+      sets.push('enabled = ?')
+      params.push(input.enabled ? 1 : 0)
+    }
+    if (input.name !== undefined) {
+      sets.push('name = ?')
+      params.push(input.name)
+    }
+    if (sets.length === 0) return
+    sets.push('updated_at = CURRENT_TIMESTAMP')
+    params.push(input.code)
+    this.execute(`UPDATE ai_provider SET ${sets.join(', ')} WHERE code = ?`, params)
   }
 
-  /** 仅返回 API Key 密文，供 ai:chat IPC 传给 Main 解密（渲染进程永不持有明文） */
-  getApiKeyEncrypted(): string {
-    return this.getConfig(CONFIG_KEY.apiKey) || ''
-  }
-
-  isProviderConfigured(): boolean {
-    return !!this.getConfig(CONFIG_KEY.apiKey)
-  }
-
-  upsertProviderConfig(input: Partial<AiProviderConfig>): void {
-    if (input.apiKeyEnc !== undefined) this.setConfig(CONFIG_KEY.apiKey, input.apiKeyEnc)
-    if (input.baseUrl !== undefined) this.setConfig(CONFIG_KEY.baseUrl, input.baseUrl)
-    if (input.defaultModel !== undefined) this.setConfig(CONFIG_KEY.defaultModel, input.defaultModel)
+  /** 保存全局 AI 配置（月度预算 / 超预算截断 / 总开关） */
+  saveGlobalConfig(input: {
+    monthlyBudgetYuan?: number
+    blockOnOverage?: boolean
+    enabled?: boolean
+  }): void {
     if (input.monthlyBudgetYuan !== undefined) this.setConfig(CONFIG_KEY.monthlyBudget, String(input.monthlyBudgetYuan))
     if (input.blockOnOverage !== undefined) this.setConfig(CONFIG_KEY.blockOnOverage, input.blockOnOverage ? '1' : '0')
     if (input.enabled !== undefined) this.setConfig(CONFIG_KEY.enabled, input.enabled ? '1' : '0')
+  }
+
+  /** 当前生效 provider 的完整视图（active 行 + 全局 KV） */
+  getProviderConfig(): AiProviderConfig {
+    const activeCode = this.getActiveProviderCode()
+    const provider = this.getProviderByCode(activeCode) || this.getProviderByCode(DEFAULTS.activeProvider)
+    const monthlyBudgetYuan = Number(this.getConfig(CONFIG_KEY.monthlyBudget) || DEFAULTS.monthlyBudgetYuan)
+    const blockOnOverage = this.getConfig(CONFIG_KEY.blockOnOverage) === '1'
+    const enabled = this.getConfig(CONFIG_KEY.enabled) !== '0' // 默认启用
+    if (!provider) {
+      // ai_provider 表尚未种子（理论上 initializeAITables 已种子；兜底防 NPE）
+      return {
+        activeProviderCode: activeCode,
+        providerName: activeCode,
+        supportsVision: false,
+        supportsToolCalls: false,
+        supportsThinking: false,
+        providerEnabled: false,
+        apiKeyEnc: '',
+        baseUrl: '',
+        defaultModel: '',
+        monthlyBudgetYuan,
+        blockOnOverage,
+        enabled,
+      }
+    }
+    return {
+      activeProviderCode: provider.code,
+      providerName: provider.name,
+      supportsVision: provider.supportsVision,
+      supportsToolCalls: provider.supportsToolCalls,
+      supportsThinking: provider.supportsThinking,
+      providerEnabled: provider.enabled,
+      apiKeyEnc: provider.apiKeyEnc,
+      baseUrl: provider.baseUrl,
+      defaultModel: provider.defaultModel,
+      monthlyBudgetYuan,
+      blockOnOverage,
+      enabled,
+    }
+  }
+
+  /** 仅返回当前生效 provider 的 API Key 密文，供 ai:chat IPC 传 Main 解密（渲染进程永不持有明文） */
+  getApiKeyEncrypted(): string {
+    const provider = this.getProviderByCode(this.getActiveProviderCode())
+    return provider?.apiKeyEnc || ''
+  }
+
+  isProviderConfigured(): boolean {
+    return !!this.getApiKeyEncrypted()
   }
 
   // ==================== 会话与消息 ====================
