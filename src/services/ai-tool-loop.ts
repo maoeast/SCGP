@@ -13,7 +13,8 @@
 import { AI_TOOLS, dispatchTool, toolLabel, type AiToolCall, type ToolStep } from '@/services/ai-tools'
 import type { DeepSeekUsage } from '@/database/ai-api'
 
-const MAX_TOOL_ROUNDS = 5
+// 典型报告流程（search_students→get_student→get_assessment→list_training_sessions→generate_report）已 5 轮，留 2 轮余量
+const MAX_TOOL_ROUNDS = 7
 
 /** 多模态内容（Phase 3 vision）：OpenAI content 数组（image_url 在前、text 在后，对齐豆包官方示例） */
 type MultimodalContent = Array<

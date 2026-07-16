@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound, Document, Picture } from '@element-plus/icons-vue'
+import { ChatDotRound, Document, Picture, Tickets } from '@element-plus/icons-vue'
 import type { AiAttachmentRef } from '@/database/ai-api'
 import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
 import { resolveAbsolutePath } from '@/utils/resource-file-service'
@@ -162,6 +162,17 @@ async function send() {
     text,
     imgs.map((p) => p.file),
     docs.map((p) => p.file),
+  )
+  if (!res.ok && res.error) {
+    ElMessage.error(res.error)
+  }
+}
+
+/** 「生成报告」快捷按钮：发一句引导语，由 AI 自行调用 generate_report 工具导出 Word */
+async function generateReport() {
+  if (aiStore.sending) return
+  const res = await aiStore.sendChat(
+    '请帮我生成一份 Word 报告。如需指定学生或报告类型请先与我确认，再调用 generate_report 工具导出。',
   )
   if (!res.ok && res.error) {
     ElMessage.error(res.error)
@@ -359,6 +370,11 @@ async function confirmDeleteSession(id: number) {
             :disabled="aiStore.sending"
             @keydown.enter.exact.prevent="send"
           />
+          <el-tooltip content="生成报告（导出 Word）" placement="top">
+            <el-button class="ai-img-btn" :disabled="aiStore.sending" @click="generateReport">
+              <el-icon><Tickets /></el-icon>
+            </el-button>
+          </el-tooltip>
           <el-button type="primary" :loading="aiStore.sending" :disabled="!canSend" @click="send">发送</el-button>
         </div>
       </div>

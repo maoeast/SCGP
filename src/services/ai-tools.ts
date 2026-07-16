@@ -11,6 +11,8 @@
  */
 import { StudentAPI, TrainingSessionAPI, ReportAPI, EquipmentAPI } from '@/database/api'
 import { AIApi } from '@/database/ai-api'
+import { exportWordDocument } from '@/utils/export-word'
+import { buildAIReportWordPayload, type AIReportInput } from '@/utils/ai-report-word-builder'
 
 // ==================== 类型 ====================
 
@@ -145,6 +147,84 @@ export const AI_TOOLS: AiToolDef[] = [
       parameters: { type: 'object', properties: {} },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'generate_report',
+      description:
+        '当用户需要生成可下载的 Word 报告（如训练计划、评估总结、IEP 等）时调用。应先用查库工具（get_student / get_assessment / list_training_sessions 等）采集该学生数据，再把结构化内容填入本工具参数，导出为 .docx 文件。约束：sections 总数 ≤ 8、每个 table 的 rows ≤ 20、每段 text ≤ 500 字。',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: '报告标题' },
+          subtitle: { type: 'string', description: '副标题（可选）' },
+          report_type: {
+            type: 'string',
+            enum: ['general', 'iep_plan', 'training_plan', 'assessment_summary'],
+            description: '报告类型，预留；默认 general',
+          },
+          student_name: { type: 'string', description: '学生姓名，用于生成文件名' },
+          meta: {
+            type: 'array',
+            description: '基本信息键值对，渲染为报告顶部的「基本信息」表',
+            items: {
+              type: 'object',
+              properties: {
+                label: { type: 'string' },
+                value: { type: 'string' },
+              },
+              required: ['label', 'value'],
+            },
+          },
+          sections: {
+            type: 'array',
+            description: '报告正文段落，按顺序渲染',
+            items: {
+              type: 'object',
+              properties: {
+                type: {
+                  type: 'string',
+                  enum: ['paragraph', 'list', 'table', 'kv_table'],
+                  description: '段落类型',
+                },
+                heading: { type: 'string', description: '小节标题（可选）' },
+                text: { type: 'string', description: 'type=paragraph 时的正文' },
+                items: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'type=list 时的条目',
+                },
+                columns: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'type=table 时的列名',
+                },
+                rows: {
+                  type: 'array',
+                  items: { type: 'array', items: { type: 'string' } },
+                  description: 'type=table 时的数据行（二维字符串数组）',
+                },
+                rows_kv: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      label: { type: 'string' },
+                      value: { type: 'string' },
+                    },
+                    required: ['label', 'value'],
+                  },
+                  description: 'type=kv_table 时的键值行',
+                },
+              },
+              required: ['type'],
+            },
+          },
+        },
+        required: ['title', 'sections'],
+      },
+    },
+  },
 ]
 
 // ==================== 工具元信息（UI 文案）====================
@@ -157,6 +237,7 @@ const TOOL_LABELS: Record<string, string> = {
   list_training_sessions: '查询训练记录',
   list_equipment: '查询训练器材',
   get_ai_usage: '查询本月用量',
+  generate_report: '生成报告',
 }
 
 export function toolLabel(name: string): string {
@@ -308,6 +389,18 @@ export async function dispatchTool(name: string, argsJson: string): Promise<Tool
       case 'get_ai_usage': {
         const usage = new AIApi().getMonthUsage()
         return serialize(usage)
+      }
+
+      case 'generate_report': {
+        // 首个有副作用（触发文件下载）的工具：导出 Word 后只回传小状态 JSON，
+        // 绝不把 docx 内容塞进 tool result（serialize 有 6000 字符截断，模型也无需回读全文）。
+        const payload = buildAIReportWordPayload(args as AIReportInput)
+        await exportWordDocument(payload)
+        return serialize({
+          ok: true,
+          fileName: `${payload.filename}.docx`,
+          sectionCount: payload.sections.length,
+        })
       }
 
       default:
