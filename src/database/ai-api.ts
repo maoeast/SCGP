@@ -87,11 +87,32 @@ export interface AiProviderConfig {
   enabled: boolean // 全局 AI 总开关
 }
 
+/** AI 聊天附件元信息（存 ai_chat_message.attachments JSON 列；不含 base64 dataUrl） */
+export interface AiAttachmentRef {
+  rel: string
+  fileName: string
+  fileType: string
+  sizeBytes: number
+}
+
+/** 安全解析 attachments JSON 列（脏数据返回 null，不抛） */
+function parseAttachmentRefs(raw: unknown): AiAttachmentRef[] | null {
+  if (!raw || typeof raw !== 'string') return null
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? (parsed as AiAttachmentRef[]) : null
+  } catch {
+    return null
+  }
+}
+
 export interface AiChatMessage {
   id: number
   sessionId: number
   role: 'user' | 'assistant' | 'system'
   content: string
+  /** 附件元信息（JSON 解析后；无附件为 null） */
+  attachments: AiAttachmentRef[] | null
   tokensPrompt: number
   tokensCompletion: number
   estCostYuan: number
@@ -433,6 +454,7 @@ export class AIApi extends DatabaseAPI {
       sessionId: r.session_id,
       role: r.role,
       content: r.content,
+      attachments: parseAttachmentRefs(r.attachments),
       tokensPrompt: Number(r.tokens_prompt || 0),
       tokensCompletion: Number(r.tokens_completion || 0),
       estCostYuan: Number(r.est_cost_yuan || 0),
@@ -445,15 +467,18 @@ export class AIApi extends DatabaseAPI {
     role: 'user' | 'assistant' | 'system'
     content: string
     usage?: DeepSeekUsage | null
+    attachments?: AiAttachmentRef[] | null
   }): number {
     const tokensPrompt = Number(input.usage?.promptTokens || 0)
     const tokensCompletion = Number(input.usage?.completionTokens || 0)
     // 仅 assistant 回复计入花费（user 消息的 usage 为上一轮 assistant 的，不重复计）
     const estCost = input.role === 'assistant' ? estimateCostYuan(input.usage) : 0
+    const attachmentsJson =
+      input.attachments && input.attachments.length > 0 ? JSON.stringify(input.attachments) : null
     this.execute(
-      `INSERT INTO ai_chat_message (session_id, role, content, tokens_prompt, tokens_completion, est_cost_yuan)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [input.sessionId, input.role, input.content, tokensPrompt, tokensCompletion, estCost],
+      `INSERT INTO ai_chat_message (session_id, role, content, tokens_prompt, tokens_completion, est_cost_yuan, attachments)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [input.sessionId, input.role, input.content, tokensPrompt, tokensCompletion, estCost, attachmentsJson],
     )
     this.touchSession(input.sessionId)
     return this.getLastInsertId()

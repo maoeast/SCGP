@@ -85,6 +85,9 @@ function buildMessages(messages, systemPrompt) {
       // 普通消息（user / system / 纯文本 assistant）
       if (typeof m.content === 'string') {
         full.push({ role: m.role, content: m.content })
+      } else if (Array.isArray(m.content)) {
+        // 多模态（Phase 3 vision）：content 为 OpenAI 数组 [{type:'text'},{type:'image_url'}]，原样透传
+        full.push({ role: m.role, content: m.content })
       }
     }
   }

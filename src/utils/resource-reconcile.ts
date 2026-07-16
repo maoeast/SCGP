@@ -54,8 +54,8 @@ export interface PurgeResult {
 /**
  * 收集 DB 中被引用的「托管」相对路径集（同步）。
  *
- * 扫描 `sys_training_resource`（cover_image + meta_data）与 `teaching_material.file_path`，
- * 归一后只保留命中托管前缀的路径。
+ * 扫描 `sys_training_resource`（cover_image + meta_data）、`teaching_material.file_path`
+ * 与 `ai_chat_message.attachments`（Phase 3 vision 附件 JSON），归一后只保留命中托管前缀的路径。
  *
  * 注意：`sys_training_resource` **不过滤 is_active** —— 软删资源保留文件以便恢复，
  * 其文件必须算「在用」，否则一软删就被 GC 误清。
@@ -91,6 +91,30 @@ export function collectReferencedPaths(): Set<string> {
     }
   } catch (error) {
     console.warn('[resource-reconcile] 读取 teaching_material 引用失败:', error)
+  }
+
+  // ai_chat_message：attachments JSON 列（Phase 3 vision 附件，[{rel,fileName,fileType,sizeBytes}]）
+  try {
+    const msgRows = db.all(
+      'SELECT attachments FROM ai_chat_message WHERE attachments IS NOT NULL'
+    ) as Array<{ attachments?: unknown }>
+    for (const row of msgRows) {
+      let parsed: unknown
+      try {
+        parsed = typeof row.attachments === 'string' ? JSON.parse(row.attachments) : null
+      } catch {
+        continue
+      }
+      if (!Array.isArray(parsed)) continue
+      for (const item of parsed as Array<{ rel?: unknown }>) {
+        const rel = normalizeResourceUrl(item?.rel)
+        if (rel && isManagedResourcePath(rel)) {
+          refs.add(rel)
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('[resource-reconcile] 读取 ai_chat_message 引用失败:', error)
   }
 
   return refs

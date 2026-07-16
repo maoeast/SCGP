@@ -244,7 +244,7 @@ export interface ElectronAPI {
   aiChat: (payload: {
     encKey: string
     messages: Array<
-      | { role: 'user' | 'system'; content: string }
+      | { role: 'user' | 'system'; content: string | Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } }> }
       | { role: 'assistant'; content?: string; tool_calls?: Array<{ id: string; type: 'function'; function: { name: string; arguments: string } }> }
       | { role: 'tool'; content: string; tool_call_id: string }
     >

@@ -15,8 +15,14 @@ import type { DeepSeekUsage } from '@/database/ai-api'
 
 const MAX_TOOL_ROUNDS = 5
 
+/** 多模态内容（Phase 3 vision）：OpenAI content 数组（image_url 在前、text 在后，对齐豆包官方示例） */
+type MultimodalContent = Array<
+  | { type: 'image_url'; image_url: { url: string } }
+  | { type: 'text'; text: string }
+>
+
 type LoopMessage =
-  | { role: 'user' | 'system'; content: string }
+  | { role: 'user' | 'system'; content: string | MultimodalContent }
   | { role: 'assistant'; content?: string; tool_calls?: AiToolCall[] }
   | { role: 'tool'; content: string; tool_call_id: string }
 
@@ -27,8 +33,8 @@ export interface RunToolLoopParams {
   systemPrompt: string
   supportsThinking: boolean
   providerName: string
-  /** 初始对话历史（user/system/assistant 可见消息，由 store 从 currentMessages 映射） */
-  messages: Array<{ role: 'user' | 'system' | 'assistant'; content: string }>
+  /** 初始对话历史（user/system/assistant 可见消息，由 store 从 currentMessages 映射；Phase 3 支持多模态数组 content） */
+  messages: Array<{ role: 'user' | 'system' | 'assistant'; content: string | MultimodalContent }>
   /** 每次工具调用完成时回调（供 UI 展示 tool 气泡） */
   onToolStep?: (step: ToolStep) => void
 }
@@ -43,8 +49,12 @@ export interface RunToolLoopResult {
 export async function runToolLoop(params: RunToolLoopParams): Promise<RunToolLoopResult> {
   const messages: LoopMessage[] = []
   for (const m of params.messages) {
-    if (m.role === 'assistant') messages.push({ role: 'assistant', content: m.content })
-    else messages.push({ role: m.role === 'system' ? 'system' : 'user', content: m.content })
+    if (m.role === 'assistant') {
+      // assistant 消息不带图，content 收窄为 string（LoopMessage assistant 分支只接受 string）
+      messages.push({ role: 'assistant', content: typeof m.content === 'string' ? m.content : '' })
+    } else {
+      messages.push({ role: m.role === 'system' ? 'system' : 'user', content: m.content })
+    }
   }
   const toolSteps: ToolStep[] = []
   let lastTextContent = ''

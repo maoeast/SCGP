@@ -3747,6 +3747,8 @@ async function initializeAITables(rawDb: any): Promise<void> {
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (session_id) REFERENCES ai_chat_session(id) ON DELETE CASCADE
   )`)
+  // Phase 3：附件元信息 JSON 列（[{rel,fileName,fileType,sizeBytes}]，不含 base64）
+  safeAddColumn(rawDb, 'ai_chat_message', 'attachments TEXT')
 
   // provider 表（多模型抽象：DeepSeek / 豆包 统一为 OpenAI 兼容协议 + 能力位）
   // 能力位以 provider 为粒度（Phase 1）；Phase 3 vision/Phase 2 FC 会按 supports_* 开关。

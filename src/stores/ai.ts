@@ -7,12 +7,15 @@ import {
   type AiProvider,
   type AiChatMessage,
   type AiProviderConfig,
+  type AiAttachmentRef,
   type DeepSeekUsage,
 } from '@/database/ai-api'
 import { encryptData } from '@/utils/crypto'
 import { useAuthStore } from '@/stores/auth'
 import { runToolLoop } from '@/services/ai-tool-loop'
 import type { ToolStep } from '@/services/ai-tools'
+import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
+import { ElMessage } from 'element-plus'
 
 /**
  * AI 智能体子系统 store（setup 风格，仿 systemConfig.ts）。
@@ -275,14 +278,28 @@ export const useAiStore = defineStore('ai', () => {
   /** 删除会话（教师删自己的；admin 经此删任意）；刷新列表与用量 */
   async function deleteSession(id: number) {
     await ensureDb()
-    api().deleteSession(id)
+    const a = api()
+    // Phase 3：删除会话前清理其附件物理文件（DB 行→deleteManagedFile，失败仅日志不阻断）
+    try {
+      const msgs = a.listMessages(id)
+      for (const m of msgs) {
+        if (m.attachments) {
+          for (const ref of m.attachments) {
+            await aiAttachmentManager.deleteAttachment(ref).catch(() => {})
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[aiStore] 清理会话附件失败:', e)
+    }
+    a.deleteSession(id)
     if (currentSessionId.value === id) {
       currentSessionId.value = null
       currentMessages.value = []
     }
     await loadSessions()
-    if (isAdmin()) allSessions.value = api().listAllSessions()
-    monthUsage.value = api().getMonthUsage()
+    if (isAdmin()) allSessions.value = a.listAllSessions()
+    monthUsage.value = a.getMonthUsage()
   }
 
   /** admin 审计：读取任意会话的完整消息（只读，不影响当前会话状态） */
@@ -296,10 +313,14 @@ export const useAiStore = defineStore('ai', () => {
     if (delta) streamingContent.value += delta
   }
 
-  /** 发送一条消息（流式）；失败返回 { ok:false, error } */
-  async function sendChat(text: string): Promise<{ ok: boolean; error?: string }> {
+  /** 发送一条消息（流式）；失败返回 { ok:false, error }。attachments 为可选图片（Phase 3 vision） */
+  async function sendChat(
+    text: string,
+    attachments?: File[],
+  ): Promise<{ ok: boolean; error?: string }> {
     const content = text.trim()
-    if (!content) return { ok: false }
+    const hasImages = !!attachments && attachments.length > 0
+    if (!content && !hasImages) return { ok: false }
     if (!providerConfig.value?.enabled) return { ok: false, error: 'AI 智能体未启用。' }
     if (!providerConfig.value?.providerEnabled) {
       return { ok: false, error: '当前模型 provider 未启用，请在系统设置中启用后再试。' }
@@ -314,6 +335,16 @@ export const useAiStore = defineStore('ai', () => {
         error: `本月 AI 用量已达预算上限（${monthUsage.value.costYuan.toFixed(4)} / ${providerConfig.value.monthlyBudgetYuan} 元）。如需继续，请在系统设置调整预算或关闭截断。`,
       }
     }
+    // Phase 3 vision 校验
+    if (hasImages && !providerConfig.value.supportsVision) {
+      return { ok: false, error: '当前模型不支持图片，请切换到支持视觉的模型（如豆包）。' }
+    }
+    if (attachments && attachments.some((f) => f.size > 5 * 1024 * 1024)) {
+      return { ok: false, error: '图片不能超过 5MB，请压缩或换图。' }
+    }
+    if (attachments && attachments.some((f) => f.size >= 1024 * 1024)) {
+      ElMessage.warning('图片较大，可能消耗较多额度。')
+    }
 
     await ensureDb()
     const a = api()
@@ -323,27 +354,86 @@ export const useAiStore = defineStore('ai', () => {
       if (!uid) {
         return { ok: false, error: '未获取到登录用户，请重新登录后再试。' }
       }
-      currentSessionId.value = a.createSession(currentAgent.value.code, uid, content.slice(0, 20))
+      const titleBase = content || (hasImages ? '图片对话' : '新对话')
+      currentSessionId.value = a.createSession(currentAgent.value.code, uid, titleBase.slice(0, 20))
     }
     const sessionId = currentSessionId.value
 
-    // 入库 user 消息并加入当前列表
-    a.saveMessage({ sessionId, role: 'user', content })
+    // Phase 3：落盘图片附件（supportsVision 已校验为 true），取元信息 refs + 当轮 dataUrl
+    let attachmentRefs: AiAttachmentRef[] = []
+    let attachmentDataUrls: string[] = []
+    if (hasImages && attachments) {
+      try {
+        const saved = await Promise.all(
+          attachments.map((f) => aiAttachmentManager.saveAttachment(f, sessionId)),
+        )
+        attachmentRefs = saved.map((s) => s.ref)
+        attachmentDataUrls = saved.map((s) => s.dataUrl)
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        return { ok: false, error: `图片保存失败：${msg}` }
+      }
+    }
+
+    // 入库 user 消息并加入当前列表（DB content 存纯文本，attachments 列存元信息）
+    a.saveMessage({
+      sessionId,
+      role: 'user',
+      content,
+      attachments: attachmentRefs.length > 0 ? attachmentRefs : null,
+    })
     currentMessages.value.push({
       id: 0,
       sessionId,
       role: 'user',
       content,
+      attachments: attachmentRefs.length > 0 ? attachmentRefs : null,
       tokensPrompt: 0,
       tokensCompletion: 0,
       estCostYuan: 0,
       createdAt: new Date().toISOString(),
     })
 
-    const history = currentMessages.value.map((m) => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content,
-    }))
+    type HistoryMessage =
+      | {
+          role: 'user' | 'system'
+          content:
+            | string
+            | Array<{ type: 'image_url'; image_url: { url: string } } | { type: 'text'; text: string }>
+        }
+      | { role: 'assistant'; content: string }
+
+    const history: HistoryMessage[] = currentMessages.value.map((m): HistoryMessage => {
+      if (m.role === 'assistant') return { role: 'assistant', content: m.content }
+      return { role: m.role, content: m.content }
+    })
+
+    // Phase 3：最近1轮带图——把最后一个有附件的 user 消息 content 替换为多模态数组
+    // （本轮新图用缓存 dataUrl；历史图当轮重读 base64）。其余历史保留纯文本。
+    if (providerConfig.value.supportsVision) {
+      for (let i = currentMessages.value.length - 1; i >= 0; i--) {
+        const m = currentMessages.value[i]
+        if (!m || m.role !== 'user' || !m.attachments || m.attachments.length === 0) continue
+        const histItem = history[i]
+        if (!histItem || histItem.role === 'assistant') continue
+        const isCurrent = i === currentMessages.value.length - 1
+        const urls =
+          isCurrent && attachmentDataUrls.length === m.attachments.length
+            ? attachmentDataUrls
+            : await Promise.all(
+                m.attachments.map((r) => aiAttachmentManager.readAsDataUrl(r)),
+              )
+        const parts: Array<
+          { type: 'image_url'; image_url: { url: string } } | { type: 'text'; text: string }
+        > = []
+        m.attachments.forEach((r, j) => {
+          if (urls[j]) parts.push({ type: 'image_url', image_url: { url: urls[j] } })
+        })
+        if (m.content) parts.push({ type: 'text', text: m.content })
+        if (parts.length > 0) histItem.content = parts
+        break
+      }
+    }
 
     sending.value = true
     streamingContent.value = ''
@@ -373,6 +463,7 @@ export const useAiStore = defineStore('ai', () => {
           sessionId,
           role: 'assistant',
           content: finalContent,
+          attachments: null,
           tokensPrompt: usage?.promptTokens || 0,
           tokensCompletion: usage?.completionTokens || 0,
           estCostYuan: estimateCostYuan(usage),
@@ -405,6 +496,7 @@ export const useAiStore = defineStore('ai', () => {
           sessionId,
           role: 'assistant',
           content: finalContent,
+          attachments: null,
           tokensPrompt: usage?.promptTokens || 0,
           tokensCompletion: usage?.completionTokens || 0,
           estCostYuan: estimateCostYuan(usage),

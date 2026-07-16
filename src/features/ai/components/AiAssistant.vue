@@ -2,7 +2,9 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound } from '@element-plus/icons-vue'
+import { ChatDotRound, Picture } from '@element-plus/icons-vue'
+import type { AiAttachmentRef } from '@/database/ai-api'
+import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
 import { useAiStore } from '@/stores/ai'
 
 const router = useRouter()
@@ -11,6 +13,8 @@ const aiStore = useAiStore()
 const drawerVisible = ref(false)
 const inputText = ref('')
 const scrollRef = ref()
+const pendingImages = ref<Array<{ file: File; previewUrl: string }>>([])
+const fileInputRef = ref<HTMLInputElement | null>(null)
 
 // ===== 流式 IPC 事件回调（onMounted 注册，onUnmounted 解绑，引用须稳定）=====
 const chunkHandler = (_event: unknown, payload: { delta?: string } | undefined) => {
@@ -37,10 +41,19 @@ const budgetPercent = computed(() => {
   return Math.min(100, Math.round((aiStore.monthUsage.costYuan / budget) * 100))
 })
 
+const supportsVision = computed(() => !!aiStore.providerConfig?.supportsVision)
+const canSend = computed(() => !!inputText.value.trim() || pendingImages.value.length > 0)
+
 const displayMessages = computed(() => {
-  const list: Array<{ role: string; content: string; pending?: boolean }> = aiStore.currentMessages.map((m) => ({
+  const list: Array<{
+    role: string
+    content: string
+    pending?: boolean
+    attachments?: AiAttachmentRef[] | null
+  }> = aiStore.currentMessages.map((m) => ({
     role: m.role,
     content: m.content,
+    attachments: m.attachments,
   }))
   if (aiStore.sending || aiStore.streamingContent) {
     list.push({ role: 'assistant', content: aiStore.streamingContent || '正在思考…', pending: true })
@@ -64,11 +77,44 @@ async function openDrawer() {
   scrollToBottom()
 }
 
+// 浏览器 File → data URL（预览用；CSP 允许 data:，避免 blob: 被拦）
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(reader.error || new Error('读取图片失败'))
+    reader.readAsDataURL(file)
+  })
+}
+
+function triggerPickImage() {
+  fileInputRef.value?.click()
+}
+async function onFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  const files = target.files
+  if (!files) return
+  for (const f of Array.from(files)) {
+    if (!f.type.startsWith('image/')) continue
+    const previewUrl = await readFileAsDataUrl(f)
+    pendingImages.value.push({ file: f, previewUrl })
+  }
+  target.value = '' // 允许重复选同一文件
+}
+function removePendingImage(idx: number) {
+  pendingImages.value.splice(idx, 1)
+}
+
 async function send() {
   const text = inputText.value.trim()
-  if (!text || aiStore.sending) return
+  const imgs = [...pendingImages.value]
+  if ((!text && imgs.length === 0) || aiStore.sending) return
   inputText.value = ''
-  const res = await aiStore.sendChat(text)
+  pendingImages.value = []
+  const res = await aiStore.sendChat(
+    text,
+    imgs.map((p) => p.file),
+  )
   if (!res.ok && res.error) {
     ElMessage.error(res.error)
   }
@@ -182,6 +228,13 @@ async function confirmDeleteSession(id: number) {
                 :class="{ failed: !step.ok }"
               >🔧 {{ step.label }}{{ step.ok ? '' : '（失败）' }}</div>
             </div>
+            <div v-if="msg.attachments && msg.attachments.length > 0" class="att-row">
+              <img
+                v-for="(a, aIdx) in msg.attachments"
+                :key="aIdx"
+                :src="aiAttachmentManager.getFileUrl(a)"
+              />
+            </div>
             {{ msg.content }}
           </div>
         </div>
@@ -199,7 +252,34 @@ async function confirmDeleteSession(id: number) {
             :status="budgetPercent >= 90 ? 'warning' : ''"
           />
         </div>
+        <div v-if="pendingImages.length > 0" class="ai-pending-images">
+          <div v-for="(p, idx) in pendingImages" :key="idx" class="ai-pending-item">
+            <img :src="p.previewUrl" />
+            <el-button class="ai-pending-del" link size="small" @click="removePendingImage(idx)">×</el-button>
+          </div>
+        </div>
         <div class="ai-input-row">
+          <el-tooltip
+            :content="supportsVision ? '添加图片' : '当前模型不支持图片'"
+            placement="top"
+            :disabled="supportsVision"
+          >
+            <el-button
+              class="ai-img-btn"
+              :disabled="!supportsVision || aiStore.sending"
+              @click="triggerPickImage"
+            >
+              <el-icon><Picture /></el-icon>
+            </el-button>
+          </el-tooltip>
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept="image/*"
+            multiple
+            class="ai-file-input"
+            @change="onFileChange"
+          />
           <el-input
             v-model="inputText"
             type="textarea"
@@ -208,7 +288,7 @@ async function confirmDeleteSession(id: number) {
             :disabled="aiStore.sending"
             @keydown.enter.exact.prevent="send"
           />
-          <el-button type="primary" :loading="aiStore.sending" @click="send">发送</el-button>
+          <el-button type="primary" :loading="aiStore.sending" :disabled="!canSend" @click="send">发送</el-button>
         </div>
       </div>
     </template>
@@ -383,5 +463,53 @@ async function confirmDeleteSession(id: number) {
 }
 .ai-input-row .el-input {
   flex: 1;
+}
+.ai-img-btn {
+  flex-shrink: 0;
+}
+.ai-file-input {
+  display: none;
+}
+.ai-pending-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 0;
+}
+.ai-pending-item {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter, #e4e7ed);
+}
+.ai-pending-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ai-pending-del {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--el-fill-color-light, #f5f7fa);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  color: var(--el-color-danger, #f56c6c);
+}
+.att-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.att-row img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
 }
 </style>
