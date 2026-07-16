@@ -1551,3 +1551,12 @@
 - Phase 3（`074431e`）：多模态 content 全链路（`buildMessages` 数组分支 + 双声明 aiChat content 联合类型 + tool-loop messages + sendChat 出站拼「最近1轮带图」）；新建 `src/utils/ai-attachment-manager.ts`（图片落 `uploaded/ai-attachments/{sessionId}/` + FileReader→dataUrl + resource:// 展示）；按 `supportsVision` 能力位开关，DeepSeek 无 vision 时 UI 禁用图片按钮。主链真机已验（豆包 `doubao-seed-2-1-turbo-260628` + Chat Completions + `image_url` 看图回答）。
 - ⚠️ 全局约束（影响后续）：任何新附件/文件引用源必须纳入 `src/utils/resource-reconcile.ts` 的 `collectReferencedPaths`，否则 A4 孤儿 GC 会当孤儿删（Phase 3 已加 `ai_chat_message.attachments`；Phase 4 文档附件同理）。附件落 `uploaded/` 自动进 A4 备份 + GC。
 - 现实边界：type-check ✅，Phase 3 主链真机已验；防御项（多轮重发 / GC 回归 / deleteSession 清文件 / vision+FC 同请求）待补验；canvas 图片压缩留后。剩 Phase 4（文档 PDF/Word，需新依赖 `pdf-parse`+`mammoth` 待确认）+ Phase 5（技能包 `ai_skill`/`ai_agent_skill` 两表）。
+
+## 66. 2026-07-16 AI 智能体 Phase 4（文档上传 PDF/Word/Excel 抽文本，代码级落地，真机待验）
+
+- Phase 4（`045aada`）：聊天面板上传 PDF/Word/Excel → Main 抽纯文本（非多模态/非 RAG）拼进 user 消息 content 上送模型；DeepSeek 与豆包都能用，**无需能力位**（文本通用，文档按钮始终可用）。
+- 新增 Main IPC `extract-document-text`（`ai.mjs`，懒加载三库按扩展名分发）：`.pdf`→pdfjs-dist、`.docx`→mammoth、`.xlsx`→exceljs；截断 2 万字 + `truncated` 标记；扫描件/不支持格式返回失败提示。preload + 双 d.ts（`env.d.ts`/`src/types/electron.d.ts`）暴露 `extractDocumentText`。
+- 复用 Phase 3 附件生命周期：文档落同款 `uploaded/ai-attachments/{sessionId}/` 前缀 + `attachments` JSON 列 → **零 DB 迁移**，A4 备份/GC 自动覆盖（GC 扫描不区分文件类型）。抽取文本持久化进 content，跨轮重发天然带上（比 Phase 3 图片重读 dataUrl 更简单）。
+- 多模态过滤修正：sendChat 把「最近1轮带图」逻辑改为只对**图片**附件（`isImageFileExt`）做 image_url，文档附件文本已进 content（text part），混发图+文不串扰。
+- ⚠️ 技术选型（影响后续）：文档抽取锁定 `pdfjs-dist`+`mammoth`+`exceljs`（纯 JS 零原生依赖，符合 AGENTS §5）。**勿再用 `pdf-parse`**：当前 latest（2.x）依赖原生 `@napi-rs/canvas`，已否决；旧版 1.1.1 停更且有 CVE。pdfjs-dist v6 在 Node 三坑：必须 `legacy/build/` 入口（避 `DOMMatrix`）、`pathToFileURL` 处理 Windows 裸盘符路径（避 `protocol 'e:'`）、`loadingTask.destroy()`（v6 移除 `doc.destroy`）。
+- 现实边界：type-check ✅ + 抽取逻辑用真实文档 Node 冒烟验证（SCQ PDF 11页/9049字、感统 docx 3798字、TGMD-3 xlsx 14行）；**真机（渲染端→IPC→Main 接线）待验**。剩 Phase 5（技能包）。
