@@ -5,9 +5,12 @@ import {
   estimateCostYuan,
   type AiAgent,
   type AiProvider,
+  type AiProviderModel,
   type AiChatMessage,
   type AiProviderConfig,
   type AiAttachmentRef,
+  type AiSessionHistoryPage,
+  type AiSessionHistoryQuery,
   type AiSkill,
   type AiAgentSkillBinding,
   type AiKnowledgeSkillInput,
@@ -39,6 +42,7 @@ function isImageFileExt(fileType: string): boolean {
 export const useAiStore = defineStore('ai', () => {
   const agents = ref<AiAgent[]>([])
   const providers = ref<AiProvider[]>([])
+  const providerModels = ref<AiProviderModel[]>([])
   /** 工具型技能目录（Phase 5：agent 编辑对话框「挂载技能」多选项；5A 内静态，仅 loadAll 加载） */
   const toolSkills = ref<AiSkill[]>([])
   /** 知识型技能目录（Phase 5B：专业角色知识包；对话框「挂载技能」知识组选项） */
@@ -46,8 +50,8 @@ export const useAiStore = defineStore('ai', () => {
   /** 知识技能完整目录（含停用项，仅技能库管理页使用）。 */
   const allKnowledgeSkills = ref<AiSkill[]>([])
   const providerConfig = ref<AiProviderConfig | null>(null)
-  const monthUsage = ref<{ costYuan: number; assistantCount: number; period: string }>({
-    costYuan: 0,
+  const monthUsage = ref<{ totalTokens: number; assistantCount: number; period: string }>({
+    totalTokens: 0,
     assistantCount: 0,
     period: '',
   })
@@ -74,6 +78,7 @@ export const useAiStore = defineStore('ai', () => {
       const a = api()
       agents.value = a.listAgents()
       providers.value = a.listProviders()
+      providerModels.value = a.listProviderModels(a.getActiveProviderCode())
       toolSkills.value = a.listToolSkills()
       knowledgeSkills.value = a.listKnowledgeSkills()
       allKnowledgeSkills.value = a.listAllKnowledgeSkills()
@@ -103,18 +108,18 @@ export const useAiStore = defineStore('ai', () => {
   }
 
   /**
-   * 保存配置：写入【当前 active provider】的 key/baseUrl/model（per-provider 行），
-   * 以及全局的 budget/enabled/blockOnOverage（system_config KV）。
+   * 保存配置：写入【当前 active provider】的 key/baseUrl/当前模型（per-provider 行），
+   * 以及全局的 token budget/enabled/blockOnOverage（system_config KV）。
    * - apiKeyPlain（明文）：非空加密存密文，空串清除 Key，不传保留；
    * - baseUrl/defaultModel 写入 active provider 行；
-   * - monthlyBudgetYuan/blockOnOverage/enabled 写入全局 KV。
+   * - monthlyBudgetTokens/blockOnOverage/enabled 写入全局 KV。
    */
   async function saveProviderConfig(input: {
     apiKeyPlain?: string
     baseUrl?: string
     defaultModel?: string
     providerEnabled?: boolean
-    monthlyBudgetYuan?: number
+    monthlyBudgetTokens?: number
     blockOnOverage?: boolean
     enabled?: boolean
   }) {
@@ -136,11 +141,12 @@ export const useAiStore = defineStore('ai', () => {
     if (input.providerEnabled !== undefined) providerInput.enabled = input.providerEnabled
     a.saveProvider(providerInput)
     a.saveGlobalConfig({
-      monthlyBudgetYuan: input.monthlyBudgetYuan,
+      monthlyBudgetTokens: input.monthlyBudgetTokens,
       blockOnOverage: input.blockOnOverage,
       enabled: input.enabled,
     })
     providers.value = a.listProviders()
+    providerModels.value = a.listProviderModels(code)
     providerConfig.value = a.getProviderConfig()
   }
 
@@ -149,10 +155,52 @@ export const useAiStore = defineStore('ai', () => {
     await ensureDb()
     const a = api()
     a.setActiveProvider(code)
+    providers.value = a.listProviders()
+    providerModels.value = a.listProviderModels(code)
     providerConfig.value = a.getProviderConfig()
   }
 
-  /** 测试 DeepSeek 连接（用已配置的密文 Key 调一次最小问答，明文 Key 不进渲染进程） */
+  async function setActiveProviderModel(modelCode: string) {
+    await ensureDb()
+    const a = api()
+    const providerCode = a.getActiveProviderCode()
+    a.setActiveProviderModel(providerCode, modelCode)
+    providers.value = a.listProviders()
+    providerModels.value = a.listProviderModels(providerCode)
+    providerConfig.value = a.getProviderConfig()
+  }
+
+  async function saveProviderModel(input: {
+    id?: number
+    code: string
+    name: string
+    modelId: string
+    supportsVision?: boolean
+    supportsToolCalls?: boolean
+    supportsThinking?: boolean
+    enabled?: boolean
+    sort?: number
+  }): Promise<number> {
+    await ensureDb()
+    const a = api()
+    const providerCode = a.getActiveProviderCode()
+    const id = a.saveProviderModel({ ...input, providerCode })
+    providerModels.value = a.listProviderModels(providerCode)
+    providerConfig.value = a.getProviderConfig()
+    return id
+  }
+
+  async function deleteProviderModel(id: number) {
+    await ensureDb()
+    const a = api()
+    const providerCode = a.getActiveProviderCode()
+    const deleted = a.deleteProviderModel(id)
+    providerModels.value = a.listProviderModels(providerCode)
+    providerConfig.value = a.getProviderConfig()
+    return deleted
+  }
+
+  /** 测试当前模型连接（用已配置的密文 Key 调一次最小问答，明文 Key 不进渲染进程） */
   async function testConnection(): Promise<{ ok: boolean; message: string }> {
     testing.value = true
     try {
@@ -160,6 +208,10 @@ export const useAiStore = defineStore('ai', () => {
       const cfg = api().getProviderConfig()
       if (!cfg.apiKeyEnc) {
         lastTestResult.value = { ok: false, message: '尚未配置 API Key，请先填写并保存。' }
+        return lastTestResult.value
+      }
+      if (!cfg.defaultModel) {
+        lastTestResult.value = { ok: false, message: '尚未选择可用模型，请先配置并启用模型。' }
         return lastTestResult.value
       }
       const res = await window.electronAPI.aiChat({
@@ -274,13 +326,16 @@ export const useAiStore = defineStore('ai', () => {
   type SessionRow = {
     id: number
     agent_code: string
+    agent_name: string | null
     title: string
     message_count: number
+    total_tokens: number
     created_at: string
     updated_at: string
   }
   type AllSessionRow = SessionRow & { user_id: number | null; username: string | null; role: string | null }
   const sessions = ref<SessionRow[]>([])
+  const sessionTotal = ref(0)
   const allSessions = ref<AllSessionRow[]>([])
 
   function currentUserId(): number {
@@ -303,8 +358,8 @@ export const useAiStore = defineStore('ai', () => {
   )
   const overBudget = computed(() => {
     const cfg = providerConfig.value
-    if (!cfg || cfg.monthlyBudgetYuan <= 0) return false
-    return monthUsage.value.costYuan >= cfg.monthlyBudgetYuan
+    if (!cfg || cfg.monthlyBudgetTokens <= 0) return false
+    return monthUsage.value.totalTokens >= cfg.monthlyBudgetTokens
   })
 
   function selectAgent(code: string) {
@@ -329,9 +384,11 @@ export const useAiStore = defineStore('ai', () => {
       const uid = currentUserId()
       if (!uid) {
         sessions.value = []
+        sessionTotal.value = 0
         return
       }
-      sessions.value = api().listSessions(uid)
+      sessions.value = api().listSessions(uid, 6)
+      sessionTotal.value = api().countSessions(uid)
       if (!currentSessionId.value && sessions.value.length > 0) {
         await selectSession(sessions.value[0]!.id)
       }
@@ -344,15 +401,56 @@ export const useAiStore = defineStore('ai', () => {
   async function selectSession(id: number) {
     try {
       await ensureDb()
+      const uid = currentUserId()
+      const session = uid ? api().getSessionForUser(id, uid) : null
+      if (!session) throw new Error('会话不存在或无权访问')
       currentSessionId.value = id
-      currentMessages.value = api().listMessages(id)
+      currentMessages.value = api().listMessagesForUser(id, uid)
       streamingContent.value = ''
       lastError.value = ''
-      const row = sessions.value.find((s) => s.id === id)
-      if (row?.agent_code) currentAgentCode.value = row.agent_code
+      currentAgentCode.value = session.agent_code
     } catch (e) {
       console.error('[aiStore] 加载会话消息失败:', e)
     }
+  }
+
+  async function loadMySessionHistory(query: AiSessionHistoryQuery = {}): Promise<AiSessionHistoryPage> {
+    await ensureDb()
+    const uid = currentUserId()
+    if (!uid) return { items: [], total: 0 }
+    return api().listSessionHistory(uid, query)
+  }
+
+  async function getMySessionMessages(id: number): Promise<AiChatMessage[]> {
+    await ensureDb()
+    const uid = currentUserId()
+    if (!uid || !api().getSessionForUser(id, uid)) throw new Error('会话不存在或无权访问')
+    return api().listMessagesForUser(id, uid)
+  }
+
+  async function deleteMySession(id: number) {
+    await ensureDb()
+    const uid = currentUserId()
+    const a = api()
+    if (!uid || !a.getSessionForUser(id, uid)) throw new Error('会话不存在或无权删除')
+    try {
+      const msgs = a.listMessagesForUser(id, uid)
+      for (const m of msgs) {
+        for (const ref of m.attachments || []) {
+          await aiAttachmentManager.deleteAttachment(ref).catch(() => {})
+        }
+      }
+    } catch (e) {
+      console.warn('[aiStore] 清理会话附件失败:', e)
+    }
+    if (!a.deleteSessionForUser(id, uid)) throw new Error('删除会话失败')
+    if (currentSessionId.value === id) {
+      currentSessionId.value = null
+      currentMessages.value = []
+    }
+    await loadSessions()
+    if (isAdmin()) allSessions.value = a.listAllSessions()
+    monthUsage.value = a.getMonthUsage()
   }
 
   /** 删除会话（教师删自己的；admin 经此删任意）；刷新列表与用量 */
@@ -411,11 +509,14 @@ export const useAiStore = defineStore('ai', () => {
     if (!providerConfig.value?.apiKeyEnc) {
       return { ok: false, error: '尚未配置 API Key，请在「系统设置 → AI 智能体」中配置。' }
     }
+    if (!providerConfig.value?.defaultModel) {
+      return { ok: false, error: '尚未选择可用模型，请在「系统设置 → AI 智能体」中配置模型。' }
+    }
     if (!currentAgent.value) return { ok: false, error: '请先选择一个智能体。' }
     if (providerConfig.value.blockOnOverage && overBudget.value) {
       return {
         ok: false,
-        error: `本月 AI 用量已达预算上限（${monthUsage.value.costYuan.toFixed(4)} / ${providerConfig.value.monthlyBudgetYuan} 元）。如需继续，请在系统设置调整预算或关闭截断。`,
+        error: `本月 AI 用量已达额度上限（${monthUsage.value.totalTokens} / ${providerConfig.value.monthlyBudgetTokens} Tokens）。如需继续，请在系统设置调整额度或关闭截断。`,
       }
     }
     // Phase 3 vision 校验
@@ -497,6 +598,7 @@ export const useAiStore = defineStore('ai', () => {
       attachments: attachmentRefs.length > 0 ? attachmentRefs : null,
       tokensPrompt: 0,
       tokensCompletion: 0,
+      tokensTotal: 0,
       estCostYuan: 0,
       createdAt: new Date().toISOString(),
     })
@@ -577,6 +679,7 @@ export const useAiStore = defineStore('ai', () => {
           role: 'assistant',
           content: finalContent,
           attachments: null,
+          tokensTotal: usage?.totalTokens || (usage?.promptTokens || 0) + (usage?.completionTokens || 0),
           tokensPrompt: usage?.promptTokens || 0,
           tokensCompletion: usage?.completionTokens || 0,
           estCostYuan: estimateCostYuan(usage),
@@ -610,6 +713,7 @@ export const useAiStore = defineStore('ai', () => {
           role: 'assistant',
           content: finalContent,
           attachments: null,
+          tokensTotal: usage?.totalTokens || (usage?.promptTokens || 0) + (usage?.completionTokens || 0),
           tokensPrompt: usage?.promptTokens || 0,
           tokensCompletion: usage?.completionTokens || 0,
           estCostYuan: estimateCostYuan(usage),
@@ -637,6 +741,7 @@ export const useAiStore = defineStore('ai', () => {
     // Phase 3
     agents,
     providers,
+    providerModels,
     providerConfig,
     monthUsage,
     loading,
@@ -647,6 +752,9 @@ export const useAiStore = defineStore('ai', () => {
     loadAll,
     reloadUsage,
     setActiveProvider,
+    setActiveProviderModel,
+    saveProviderModel,
+    deleteProviderModel,
     saveProviderConfig,
     testConnection,
     saveAgent,
@@ -679,9 +787,13 @@ export const useAiStore = defineStore('ai', () => {
     sendChat,
     // 会话隔离与历史
     sessions,
+    sessionTotal,
     allSessions,
     loadSessions,
     selectSession,
+    loadMySessionHistory,
+    getMySessionMessages,
+    deleteMySession,
     deleteSession,
     getViewMessages,
   }

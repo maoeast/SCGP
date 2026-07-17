@@ -37,14 +37,23 @@ function decryptData(encryptedData, key) {
   }
 }
 
-/** 把 DeepSeek 返回的 usage 映射为前端 DeepSeekUsage 结构 */
+/** 把 OpenAI 兼容 provider 返回的 usage 映射为前端统一结构 */
 function mapUsage(usage) {
   if (!usage) return null
+  const promptTokens = usage.prompt_tokens ?? 0
+  const completionTokens = usage.completion_tokens ?? 0
+  const promptCacheHitTokens =
+    usage.prompt_cache_hit_tokens ??
+    usage.prompt_tokens_details?.cached_tokens ??
+    0
   return {
-    promptTokens: usage.prompt_tokens ?? 0,
-    completionTokens: usage.completion_tokens ?? 0,
-    promptCacheHitTokens: usage.prompt_cache_hit_tokens ?? 0,
-    promptCacheMissTokens: usage.prompt_cache_miss_tokens ?? 0,
+    totalTokens: usage.total_tokens ?? promptTokens + completionTokens,
+    promptTokens,
+    completionTokens,
+    promptCacheHitTokens,
+    promptCacheMissTokens:
+      usage.prompt_cache_miss_tokens ??
+      Math.max(0, promptTokens - promptCacheHitTokens),
   }
 }
 

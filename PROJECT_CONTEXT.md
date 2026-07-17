@@ -1529,7 +1529,7 @@
 
 ## 63. 2026-07-16 AI 聊天智能体子系统（DeepSeek 接入，代码级落地，运行时待验）
 
-- 新增子系统：管理员预设「提示词+技能」打包成角色（预设「特教老师」种子），普通老师经全局悬浮入口（`App.vue` 挂 `AiAssistant.vue`）流式提问；模型接 DeepSeek，每校（=每个本地客户端）单独配 API Key 与月度额度。
+- 新增子系统：管理员预设「提示词+技能」打包成角色（当时仅有「特教老师」初始种子，现已按 §71 升级为 5 个内置场景智能体），普通老师经全局悬浮入口（`App.vue` 挂 `AiAssistant.vue`）流式提问；模型接 DeepSeek，每校（=每个本地客户端）单独配 API Key 与月度额度。
 - 架构：DeepSeek 调用在 **Electron Main 进程**（`electron/handlers/ai.mjs`，绕 CORS），渲染进程只经 IPC 传 API Key【密文】，明文 Key 仅存 Main 内存；流式经 `event.sender.send('ai:chunk/done/error')` 回推（用 handler 自带 sender，无需 mainWindow 引用）。
 - 数据：新建 3 表 `ai_agent`/`ai_chat_session`/`ai_chat_message`（`init.ts` 的 `initializeAITables`，模块化建表范式，幂等）；provider 配置（API Key 密文/base_url/模型/预算/截断/总开关）复用 `system_config` KV 表。数据门面 `AIApi extends DatabaseAPI`（`src/database/ai-api.ts`）。
 - 安全/加密：API Key 用 `crypto.ts` 的 `encryptData`/`decryptData`（AES_SECRET 源码常量）加密，密文存 `system_config`，随 `database.sqlite` 备份**跨机迁移**。威胁模型=防明文落盘（用户选定，非高安全）；Main 进程复刻 `decryptData` 解密。
@@ -1576,3 +1576,47 @@
 - glob 覆盖非标准结构（`52dbfa8`）：`developmental-screening-assessment` 把参考 md 散放技能根目录（非 `references/`），加 `rootRefModules`(`./*/*.md` 过滤 SKILL.md/README) 并入注入。
 - 知识技能**默认不挂**（新建 agent 只默认工具；知识手动按需挂控 token）。UI「挂载技能」用 `el-option-group` 分「工具」「知识」两组，单 `skillIds` 数组（绑定不分 kind）。
 - 现实边界：type-check ✅ + 真机 ✅（工具过滤、知识注入、不回归均验）。3 commit 已 push origin/main：`96a2d18`(feat)/`792ab4f`(handoff)/`52dbfa8`(glob fix)。Phase 5C（技能库整页 CRUD / references 按需勾选 / 自定义知识技能）留后续。
+
+## 69. 2026-07-17 AI 智能体 Phase 5C（技能库治理 + references 按需注入，本轮代码级完成）
+
+- `ai_skill` 新增 `source_type/source_url/license/evidence_level/risk_level/audience` 治理字段；`ai_agent_skill` 新增 `config`，存每个 agent 对知识技能的 `referenceIds`。迁移均通过 `safeAddColumn` 幂等补列。
+- 内置知识 payload 从 Phase 5B 的 `{content}` 演进为 `{body,references,metadata}`。`referenceIds=null/缺失` 保持旧绑定的全量 references；`[]` 只注入主体；有 id 时只注入勾选资料。`getAgentKnowledgePrompt` 继续执行总 120k 字符护栏。
+- 系统设置 AI 页新增知识技能库：内置技能正文只读、可启停；本地知识技能可创建/编辑/删除；编辑 agent 时可按技能选择“全部 / 指定 / 不选”references。内置源文件每次启动 upsert 刷新，不允许被 DB UI 覆盖。
+- 新增本地原创教师端知识包：`child-adolescent-mental-health-support`（学校支持、非诊断、危机转介边界）与 `inclusive-training-adaptation`（融合训练适配、保留目标、通用调整优先）。前者不提供量表评分、诊断或危机替代；两者均未直接复制外部 GitHub 技能内容。
+- 代码验证：契约测试 4/4、`npm run type-check`、`npm run build:web` 均通过；桌面真机 UI/DB 迁移/模型端到端尚未跑。本轮本地开发服务器在浏览器验收中响应中断，详见 `.learnings/ERRORS.md` `ERR-20260717-002`。
+
+## 70. 2026-07-17 内置知识技能中国学校场景本土化
+
+- 7 个内置知识技能统一补齐 `license/evidence_level/risk_level/audience=教师端` 治理字段；保留既有 skill code，避免启动 upsert 改 id 或破坏 agent 绑定。
+- 高风险三包整包重写：
+  - `special-education-teacher`：从美国 IDEIA/FAPE/LRE 法定流程改为国内随班就读、资源教室、一人一案、课堂支持与校内协作。
+  - `speech-therapist`：从美国持证治疗师、英文音位与临床量表方案改为普通话/方言/双语差异识别、功能性沟通、课堂支持和听力/医疗转介边界。
+  - `developmental-screening-assessment`：从自由描述生成 DQ/ASD 风险与模拟量表，收口为自然情境发展观察、教育支持与正式评估转介；明确禁止聊天评分。
+- 旧美国制度/临床处方 references 与三份体量过大的发展筛查整合稿已从可注入源删除，替换为每包 2–3 份 SCGP 本地原创、可按需勾选的中文 reference。
+- 其余四包同步本土化：蒙台梭利改为适配中国园校的“理念启发”；家校沟通默认化名/去标识且不再作虚假“不上传第三方”承诺；心理支持与融合活动补齐国内学校角色分工、一人一案和属地流程边界。
+- 新增 `scripts/tests/ai-skill-localization-contract.test.mjs`：验证禁用美国制度/资质/量表术语、教师端治理字段、国内场景关键词、隐私与非诊断边界及本地 reference 完整性。验证结果 8/8；既有技能库契约 4/4；`npm run type-check`、`npm run build:web` 通过。生产构建仅有既有动态导入/大 chunk 警告；桌面真机与真实模型问答仍按用户决定暂停。
+
+## 71. 2026-07-17 五个教师端内置场景智能体（代码级完成）
+
+- 7 个知识技能不按“一技能一智能体”拆成 7 个入口，而是按教师工作意图组合为 5 个内置预设：`一人一策`、`沟通有方`、`成长看得见`、`家校好好说`、`心晴陪伴`。
+- `src/data/ai-agent-presets.ts` 是内置预设单一事实源，统一定义名称、简介、系统提示词、4 个快捷提问、工具白名单、知识技能和指定 reference。五个提示词均锁定教师端、最小必要信息、记录与推测分离、非诊断及学校危机流程边界。
+- 旧 `special_ed_teacher` 编号原位升级为「一人一策」，因此已有聊天会话无需改 `agent_code`；其余四个使用稳定新 code。启动时保留管理员的启停状态，同步名称/提示词/排序，并在事务内精确重建内置技能绑定；任一技能缺失时回滚，避免留下半套配置。
+- 系统设置中内置智能体可启停、不可编辑或删除；数据 API 同样阻止删除。自定义智能体继续允许新增、编辑和删除。聊天空状态显示当前内置智能体简介与快捷提问，报告按钮只在该预设挂载 `generate_report` 时展示。
+- 新增 `scripts/tests/ai-builtin-agent-presets-contract.test.mjs`，覆盖 5 个预设、7 个技能、默认 reference 存在性、启动同步、快捷提问和内置保护。代码级验证已通过；桌面启动迁移、实际下拉选择、快捷提问和真实模型输出仍待后续真机验收。
+
+## 72. 2026-07-17 AI 智能体教师入口与管理界面完成真机验收
+
+- 系统管理中的 5 个内置智能体改为卡片式展示，面向学校管理员保留角色支持说明和启停能力；知识技能库移至仅开发态可见的“开发者调试”。
+- 系统首页原快捷操作区改为 AI 助手入口，展示已启用的内置智能体；详情弹窗的“开始聊天”会选择对应角色、新建对话并打开全局 AI 助手抽屉。
+- `npm run type-check`、内置智能体契约测试 6/6、`git diff --check` 与用户桌面真机验收均通过；当前专题改动仍在未提交工作区。
+
+## 73. 2026-07-17 AI 智能体 Token 额度口径与账单对账约束
+
+- AI 助手月度额度展示已从人民币切到 Token；默认免费额度上限为 `10,000,000 Tokens`，会话列表与管理员审计页也已展示每会话 `total_tokens`。
+- 当前应用内 token 账本来自 provider 响应 usage 与本地 `ai_chat_message.tokens_prompt / tokens_completion` 聚合，只能视为应用侧统计。
+- 学校交付后的账单必须有 provider 官方依据；后续必须补查火山方舟 / DeepSeek 是否提供官方 token 明细接口、账单查询接口或控制台导出能力，再决定最终对账方案。
+
+## 74. 2026-07-17 AI 个人会话历史分层
+
+- 聊天抽屉仅查询最近 6 条会话；完整的「我的 AI 会话」由个人资料入口进入，支持智能体、日期范围、关键词筛选及分页。
+- 个人历史的读取、查看消息、继续对话、删除均经 `user_id` 约束；管理员全局会话审计仍在系统管理页，不能复用个人历史查询。

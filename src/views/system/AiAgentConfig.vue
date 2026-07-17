@@ -3,8 +3,11 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAiStore } from '@/stores/ai'
 import { useAuthStore } from '@/stores/auth'
-import type { AiAgent, AiAgentSkillBinding, AiSkill } from '@/database/ai-api'
+import type { AiAgent, AiAgentSkillBinding, AiChatMessage, AiProviderModel, AiSkill } from '@/database/ai-api'
 import { getBuiltinAgentPreset, isBuiltinAgentCode } from '@/data/ai-agent-presets'
+import AiAgentAvatar from '@/features/ai/components/AiAgentAvatar.vue'
+import AiChatTranscript from '@/features/ai/components/AiChatTranscript.vue'
+import { formatTokenCount } from '@/features/ai/usage-format'
 
 const aiStore = useAiStore()
 const authStore = useAuthStore()
@@ -21,7 +24,7 @@ const configForm = reactive({
   baseUrl: '',
   defaultModel: '',
   providerEnabled: true,
-  monthlyBudgetYuan: 100,
+  monthlyBudgetTokens: 10_000_000,
   blockOnOverage: false,
   enabled: true,
 })
@@ -55,7 +58,7 @@ watch(
     configForm.baseUrl = cfg.baseUrl
     configForm.defaultModel = cfg.defaultModel
     configForm.providerEnabled = cfg.providerEnabled
-    configForm.monthlyBudgetYuan = cfg.monthlyBudgetYuan
+    configForm.monthlyBudgetTokens = cfg.monthlyBudgetTokens
     configForm.blockOnOverage = cfg.blockOnOverage
     configForm.enabled = cfg.enabled
   },
@@ -68,6 +71,27 @@ async function onProviderChange(code: string) {
 }
 
 const saving = ref(false)
+const modelDialogVisible = ref(false)
+const modelEditing = ref(false)
+const modelForm = reactive({
+  id: 0,
+  code: '',
+  name: '',
+  modelId: '',
+  supportsVision: false,
+  supportsToolCalls: true,
+  supportsThinking: false,
+  enabled: true,
+  sort: 0,
+})
+
+const activeModelCode = computed({
+  get: () => aiStore.providerConfig?.activeModelCode || '',
+  set: (code: string) => {
+    if (code) void aiStore.setActiveProviderModel(code)
+  },
+})
+
 async function saveConfig() {
   saving.value = true
   try {
@@ -76,7 +100,7 @@ async function saveConfig() {
       baseUrl: configForm.baseUrl.trim(),
       defaultModel: configForm.defaultModel.trim(),
       providerEnabled: configForm.providerEnabled,
-      monthlyBudgetYuan: Number(configForm.monthlyBudgetYuan) || 0,
+      monthlyBudgetTokens: Number(configForm.monthlyBudgetTokens) || 0,
       blockOnOverage: configForm.blockOnOverage,
       enabled: configForm.enabled,
     })
@@ -86,6 +110,64 @@ async function saveConfig() {
     ElMessage.error('保存失败：' + (e instanceof Error ? e.message : String(e)))
   } finally {
     saving.value = false
+  }
+}
+
+function openCreateModel() {
+  modelEditing.value = false
+  modelForm.id = 0
+  modelForm.code = ''
+  modelForm.name = ''
+  modelForm.modelId = ''
+  modelForm.supportsVision = !!aiStore.providerConfig?.supportsVision
+  modelForm.supportsToolCalls = !!aiStore.providerConfig?.supportsToolCalls
+  modelForm.supportsThinking = !!aiStore.providerConfig?.supportsThinking
+  modelForm.enabled = true
+  modelForm.sort = aiStore.providerModels.length + 1
+  modelDialogVisible.value = true
+}
+
+function openEditModel(model: AiProviderModel) {
+  modelEditing.value = true
+  modelForm.id = model.id
+  modelForm.code = model.code
+  modelForm.name = model.name
+  modelForm.modelId = model.modelId
+  modelForm.supportsVision = model.supportsVision
+  modelForm.supportsToolCalls = model.supportsToolCalls
+  modelForm.supportsThinking = model.supportsThinking
+  modelForm.enabled = model.enabled
+  modelForm.sort = model.sort
+  modelDialogVisible.value = true
+}
+
+async function saveModel() {
+  try {
+    await aiStore.saveProviderModel({
+      id: modelEditing.value ? modelForm.id : undefined,
+      code: modelForm.code.trim(),
+      name: modelForm.name.trim(),
+      modelId: modelForm.modelId.trim(),
+      supportsVision: modelForm.supportsVision,
+      supportsToolCalls: modelForm.supportsToolCalls,
+      supportsThinking: modelForm.supportsThinking,
+      enabled: modelForm.enabled,
+      sort: Number(modelForm.sort) || 0,
+    })
+    modelDialogVisible.value = false
+    ElMessage.success(modelEditing.value ? '模型已更新' : '模型已添加')
+  } catch (e) {
+    ElMessage.error('保存模型失败：' + (e instanceof Error ? e.message : String(e)))
+  }
+}
+
+async function removeModel(model: AiProviderModel) {
+  try {
+    await ElMessageBox.confirm(`确定删除模型「${model.name}」吗？`, '删除确认', { type: 'warning' })
+    await aiStore.deleteProviderModel(model.id)
+    ElMessage.success('模型已删除')
+  } catch (e) {
+    if (e instanceof Error) ElMessage.error(e.message)
   }
 }
 
@@ -113,9 +195,28 @@ async function testConnection() {
 
 // ===== 用量展示 =====
 const budgetPercent = computed(() => {
-  const budget = aiStore.providerConfig?.monthlyBudgetYuan || 0
+  const budget = aiStore.providerConfig?.monthlyBudgetTokens || 0
   if (budget <= 0) return 0
-  return Math.min(100, Math.round((aiStore.monthUsage.costYuan / budget) * 100))
+  return Math.min(100, Math.round((aiStore.monthUsage.totalTokens / budget) * 100))
+})
+
+const budgetUsageRatio = computed(() => {
+  const budget = aiStore.providerConfig?.monthlyBudgetTokens || 0
+  if (budget <= 0) return 0
+  return aiStore.monthUsage.totalTokens / budget
+})
+
+const isBudgetExceeded = computed(() => budgetUsageRatio.value > 1)
+
+const budgetOveragePercent = computed(() => {
+  if (!isBudgetExceeded.value) return 0
+  return Math.round((budgetUsageRatio.value - 1) * 100)
+})
+
+const budgetProgressStatus = computed(() => {
+  if (isBudgetExceeded.value) return 'exception'
+  if (budgetPercent.value >= 90) return 'warning'
+  return undefined
 })
 
 // ===== 智能体管理 =====
@@ -291,14 +392,6 @@ function getAgentAlias(agent: AiAgent): string {
   return getBuiltinAgentPreset(agent.code)?.name ?? '自定义智能体'
 }
 
-function getAgentAvatarText(agent: AiAgent): string {
-  return (getBuiltinAgentPreset(agent.code)?.avatarText ?? agent.name.trim().slice(0, 1)) || '智'
-}
-
-function getAgentAvatarTone(agent: AiAgent): string {
-  return getBuiltinAgentPreset(agent.code)?.avatarTone ?? 'custom'
-}
-
 function getAgentExpertiseTags(agent: AiAgent): string[] {
   return getBuiltinAgentPreset(agent.code)?.expertiseTags ?? ['自定义支持']
 }
@@ -312,14 +405,29 @@ function openAgentDetail(agent: AiAgent) {
   detailDialogVisible.value = true
 }
 
+function getRoleLabel(role?: string): string {
+  if (role === 'admin') return '管理员'
+  if (role === 'teacher') return '教师'
+  return role || ''
+}
+
+function getRoleTagType(role?: string): 'danger' | 'success' | 'info' {
+  if (role === 'admin') return 'danger'
+  if (role === 'teacher') return 'success'
+  return 'info'
+}
+
 // ===== 全部会话管理（仅 admin）=====
 const sessionMsgVisible = ref(false)
-const sessionMessages = ref<Array<{ role: string; content: string }>>([])
+const sessionMessages = ref<AiChatMessage[]>([])
+const sessionDialogTitle = ref('会话消息')
 
 async function viewSession(id: number) {
   try {
     const msgs = await aiStore.getViewMessages(id)
-    sessionMessages.value = msgs.map((m) => ({ role: m.role, content: m.content }))
+    const session = aiStore.allSessions.find((item) => item.id === id)
+    sessionDialogTitle.value = session?.title || '会话消息'
+    sessionMessages.value = msgs
     sessionMsgVisible.value = true
   } catch (e) {
     ElMessage.error('加载会话消息失败：' + (e instanceof Error ? e.message : String(e)))
@@ -396,13 +504,54 @@ async function removeSession(id: number) {
         </el-form-item>
 
         <el-form-item label="默认模型">
-          <el-input
-            v-model="configForm.defaultModel"
-            :placeholder="isDoubao ? '接入点 ID，如 ep-2024xxxxxx-xxxxx' : 'deepseek-v4-flash'"
-          />
-          <div v-if="isDoubao" class="field-hint">
-            豆包填「推理接入点 ID」（火山方舟控制台创建接入点后获得，形如 ep-xxx），非模型名。
-          </div>
+          <el-select
+            v-model="activeModelCode"
+            placeholder="选择当前用于对话的模型"
+            style="width: 360px"
+            :disabled="aiStore.providerModels.length === 0"
+          >
+            <el-option
+              v-for="model in aiStore.providerModels"
+              :key="model.code"
+              :label="`${model.name}（${model.modelId}）`"
+              :value="model.code"
+              :disabled="!model.enabled"
+            >
+              <span>{{ model.name }}</span>
+              <span class="model-option-id">{{ model.modelId }}</span>
+              <el-tag v-if="!model.enabled" size="small" type="info">未启用</el-tag>
+            </el-option>
+          </el-select>
+          <el-button style="margin-left: 8px" @click="openCreateModel">新增模型</el-button>
+        </el-form-item>
+
+        <el-form-item label="模型清单">
+          <el-table :data="aiStore.providerModels" size="small" border class="model-table" empty-text="暂无模型">
+            <el-table-column prop="name" label="名称" min-width="140" show-overflow-tooltip />
+            <el-table-column prop="modelId" label="模型 ID / 接入点" min-width="220" show-overflow-tooltip />
+            <el-table-column label="能力" min-width="180">
+              <template #default="{ row }">
+                <el-tag v-if="row.supportsVision" size="small" type="success">图片</el-tag>
+                <el-tag v-if="row.supportsToolCalls" size="small" type="warning">工具</el-tag>
+                <el-tag v-if="row.supportsThinking" size="small" type="info">思考</el-tag>
+                <span v-if="!row.supportsVision && !row.supportsToolCalls && !row.supportsThinking">—</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="90">
+              <template #default="{ row }">
+                <span class="model-status" :class="{ 'model-status--enabled': row.enabled }">
+                  <span class="model-status__dot" aria-hidden="true"></span>
+                  {{ row.enabled ? '启用' : '停用' }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="130" fixed="right">
+              <template #default="{ row }">
+                <el-button link type="primary" size="small" @click="openEditModel(row)">编辑</el-button>
+                <el-button link type="danger" size="small" @click="removeModel(row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
         </el-form-item>
 
         <el-form-item label="启用此服务">
@@ -410,14 +559,25 @@ async function removeSession(id: number) {
           <span class="field-hint-inline">关闭后该服务不可用于对话（与下方「AI 总开关」独立）</span>
         </el-form-item>
 
-        <el-form-item label="月度预算(元)">
-          <el-input-number v-model="configForm.monthlyBudgetYuan" :min="0" :step="10" controls-position="right" />
-          <span class="field-hint-inline">本月已用 {{ aiStore.monthUsage.costYuan.toFixed(4) }} 元</span>
+        <el-form-item label="月度额度">
+          <el-input
+            v-model.number="configForm.monthlyBudgetTokens"
+            class="budget-token-input"
+            type="number"
+            min="0"
+            step="100000"
+          >
+            <template #append>Tokens</template>
+          </el-input>
+          <span class="field-hint-inline">
+            额度 {{ formatTokenCount(configForm.monthlyBudgetTokens) }} Tokens，本月已用
+            {{ formatTokenCount(aiStore.monthUsage.totalTokens) }} Tokens
+          </span>
         </el-form-item>
 
         <el-form-item label="超预算截断">
           <el-switch v-model="configForm.blockOnOverage" />
-          <span class="field-hint-inline">开启后，本月花费超预算时阻止继续提问</span>
+          <span class="field-hint-inline">开启后，本月 Token 用量超额度时阻止继续提问</span>
         </el-form-item>
 
         <el-form-item label="AI 总开关">
@@ -438,11 +598,15 @@ async function removeSession(id: number) {
     <el-card shadow="never" class="config-card">
       <template #header><span>本月用量</span></template>
       <div class="usage-row">
-        <div class="usage-text">
-          {{ aiStore.monthUsage.costYuan.toFixed(4) }} / {{ aiStore.providerConfig?.monthlyBudgetYuan ?? 0 }} 元
-          · {{ aiStore.monthUsage.assistantCount }} 次回复
+        <div class="usage-text" :class="{ 'usage-text--overage': isBudgetExceeded }">
+          <span>
+            {{ formatTokenCount(aiStore.monthUsage.totalTokens) }} /
+            {{ formatTokenCount(aiStore.providerConfig?.monthlyBudgetTokens) }} Tokens
+            · {{ aiStore.monthUsage.assistantCount }} 次回复
+          </span>
+          <strong v-if="isBudgetExceeded">已超额 {{ budgetOveragePercent }}%</strong>
         </div>
-        <el-progress :percentage="budgetPercent" :status="budgetPercent >= 90 ? 'warning' : ''" />
+        <el-progress :percentage="budgetPercent" :status="budgetProgressStatus" />
       </div>
     </el-card>
 
@@ -451,7 +615,6 @@ async function removeSession(id: number) {
       <template #header>
         <div class="card-header">
           <span>智能体管理</span>
-          <el-button type="primary" size="small" @click="openCreate">新增智能体</el-button>
         </div>
       </template>
 
@@ -469,9 +632,7 @@ async function removeSession(id: number) {
             @click="openAgentDetail(agent)"
           >
             <span class="agent-card__identity">
-              <span class="agent-avatar" :class="`agent-avatar--${getAgentAvatarTone(agent)}`" aria-hidden="true">
-                {{ getAgentAvatarText(agent) }}
-              </span>
+              <AiAgentAvatar :agent-code="agent.code" :agent-name="agent.name" size="md" />
               <span class="agent-card__titles">
                 <span class="agent-card__name-line">
                   <strong>{{ getAgentDisplayName(agent) }}</strong>
@@ -508,6 +669,11 @@ async function removeSession(id: number) {
             </div>
           </div>
         </article>
+        <button type="button" class="agent-card agent-card--create" @click="openCreate">
+          <span class="agent-create-icon" aria-hidden="true">+</span>
+          <strong>新增智能体</strong>
+          <span>为学校自定义一个提示词、工具和知识技能组合。</span>
+        </button>
       </div>
       <el-empty v-else description="暂无智能体" :image-size="72" />
     </el-card>
@@ -518,17 +684,30 @@ async function removeSession(id: number) {
         <div class="card-header"><span>全部会话（管理员视图）</span></div>
       </template>
       <el-table :data="aiStore.allSessions" stripe size="small" empty-text="暂无会话">
-        <el-table-column prop="title" label="标题" min-width="140" show-overflow-tooltip />
+        <el-table-column label="标题" min-width="220" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span class="session-title" :title="row.title">{{ row.title }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="所属用户" width="150">
           <template #default="{ row }">
-            <span>{{ row.username || '—' }}</span>
-            <el-tag v-if="row.role" size="small" :type="row.role === 'admin' ? 'danger' : 'info'" style="margin-left: 6px">
-              {{ row.role }}
+            <span class="session-user">{{ row.username || '—' }}</span>
+            <el-tag v-if="row.role" size="small" :type="getRoleTagType(row.role)" effect="plain" style="margin-left: 6px">
+              {{ getRoleLabel(row.role) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="agent_code" label="智能体" width="150" show-overflow-tooltip />
+        <el-table-column label="智能体" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span>{{ row.agent_name || row.agent_code }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="message_count" label="消息数" width="80" />
+        <el-table-column label="Token 总量" width="130">
+          <template #default="{ row }">
+            {{ formatTokenCount(row.total_tokens) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="updated_at" label="最后更新" width="160" />
         <el-table-column label="操作" width="140" fixed="right">
           <template #default="{ row }">
@@ -549,13 +728,7 @@ async function removeSession(id: number) {
     >
       <template v-if="selectedAgent" #header>
         <div class="agent-detail__header">
-          <span
-            class="agent-avatar agent-avatar--large"
-            :class="`agent-avatar--${getAgentAvatarTone(selectedAgent)}`"
-            aria-hidden="true"
-          >
-            {{ getAgentAvatarText(selectedAgent) }}
-          </span>
+          <AiAgentAvatar :agent-code="selectedAgent.code" :agent-name="selectedAgent.name" size="lg" />
           <div class="agent-detail__identity">
             <div class="agent-detail__title-line">
               <h3>{{ getAgentDisplayName(selectedAgent) }}</h3>
@@ -608,6 +781,39 @@ async function removeSession(id: number) {
     </el-dialog>
 
     <!-- 编辑对话框 -->
+    <el-dialog v-model="modelDialogVisible" :title="modelEditing ? '编辑模型' : '新增模型'" width="560px">
+      <el-form label-width="120px">
+        <el-form-item label="模型编号">
+          <el-input v-model="modelForm.code" placeholder="如 doubao_seed_vision" />
+          <div class="field-hint">本地编号，仅支持小写字母、数字、下划线和连字符。</div>
+        </el-form-item>
+        <el-form-item label="显示名称">
+          <el-input v-model="modelForm.name" placeholder="如 豆包 Seed Vision" />
+        </el-form-item>
+        <el-form-item :label="isDoubao ? '接入点 ID' : '模型 ID'">
+          <el-input
+            v-model="modelForm.modelId"
+            :placeholder="isDoubao ? 'ep-xxxxxxxxxxxxxxxx' : 'deepseek-v4-flash'"
+          />
+        </el-form-item>
+        <el-form-item label="能力">
+          <el-checkbox v-model="modelForm.supportsVision">支持图片</el-checkbox>
+          <el-checkbox v-model="modelForm.supportsToolCalls">支持工具调用</el-checkbox>
+          <el-checkbox v-model="modelForm.supportsThinking">支持思考字段</el-checkbox>
+        </el-form-item>
+        <el-form-item label="启用">
+          <el-switch v-model="modelForm.enabled" />
+        </el-form-item>
+        <el-form-item label="排序">
+          <el-input-number v-model="modelForm.sort" :min="0" controls-position="right" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="modelDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveModel">保存</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog v-model="dialogVisible" :title="editing ? '编辑智能体' : '新增智能体'" width="640px">
       <el-form label-width="90px">
         <el-form-item label="编号">
@@ -681,12 +887,9 @@ async function removeSession(id: number) {
     </el-dialog>
 
     <!-- 会话消息查看对话框（admin） -->
-    <el-dialog v-model="sessionMsgVisible" title="会话消息" width="640px">
+    <el-dialog v-model="sessionMsgVisible" :title="sessionDialogTitle" width="760px">
       <div class="session-msg-list">
-        <div v-for="(m, idx) in sessionMessages" :key="idx" class="session-msg" :class="m.role">
-          <span class="session-msg-role">{{ m.role }}</span>
-          <span class="session-msg-content">{{ m.content }}</span>
-        </div>
+        <AiChatTranscript :messages="sessionMessages" />
         <div v-if="sessionMessages.length === 0" class="session-msg-empty">无消息</div>
       </div>
     </el-dialog>
@@ -725,6 +928,47 @@ async function removeSession(id: number) {
   color: var(--el-text-color-secondary, #909399);
 }
 
+.model-table {
+  width: 100%;
+}
+
+.model-option-id {
+  margin-left: 8px;
+  color: var(--el-text-color-secondary, #909399);
+  font-size: 12px;
+}
+
+.model-table :deep(.el-tag + .el-tag) {
+  margin-left: 4px;
+}
+
+.model-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--el-text-color-secondary, #909399);
+  font-size: 12px;
+}
+
+.model-status__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--el-text-color-placeholder, #a8abb2);
+}
+
+.model-status--enabled {
+  color: var(--el-color-success-dark-2, #529b2e);
+}
+
+.model-status--enabled .model-status__dot {
+  background: var(--el-color-success, #67c23a);
+}
+
+.budget-token-input {
+  width: 260px;
+}
+
 .reference-selection-list {
   width: 100%;
   display: flex;
@@ -753,8 +997,22 @@ async function removeSession(id: number) {
 }
 
 .usage-text {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   font-size: 14px;
   color: var(--el-text-color-primary, #303133);
+}
+
+.usage-text--overage {
+  color: var(--el-color-danger, #f56c6c);
+}
+
+.usage-text--overage strong {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 650;
 }
 
 .agent-management-card :deep(.el-card__body) {
@@ -770,6 +1028,7 @@ async function removeSession(id: number) {
 .agent-card {
   display: flex;
   min-width: 0;
+  min-height: 286px;
   flex-direction: column;
   overflow: hidden;
   border-radius: 12px;
@@ -782,7 +1041,7 @@ async function removeSession(id: number) {
 
 .agent-card__main {
   display: flex;
-  min-height: 214px;
+  min-height: 232px;
   width: 100%;
   flex: 1;
   flex-direction: column;
@@ -807,51 +1066,6 @@ async function removeSession(id: number) {
   min-width: 0;
   align-items: center;
   gap: 12px;
-}
-
-.agent-avatar {
-  display: inline-flex;
-  width: 52px;
-  height: 52px;
-  flex: 0 0 52px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 14px;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-  outline: 1px solid rgb(31 35 41 / 8%);
-  outline-offset: -1px;
-}
-
-.agent-avatar--teaching {
-  background: #e9f2ff;
-  color: #245a9a;
-}
-
-.agent-avatar--communication {
-  background: #e7f6f2;
-  color: #17685a;
-}
-
-.agent-avatar--observation {
-  background: #fff3dc;
-  color: #8a5a12;
-}
-
-.agent-avatar--family {
-  background: #f7ece8;
-  color: #8a4936;
-}
-
-.agent-avatar--wellbeing {
-  background: #f0edf9;
-  color: #5f4b8b;
-}
-
-.agent-avatar--custom {
-  background: var(--el-fill-color-light, #f2f3f5);
-  color: var(--el-text-color-regular, #606266);
 }
 
 .agent-card__titles {
@@ -887,13 +1101,13 @@ async function removeSession(id: number) {
 .agent-card__support {
   display: -webkit-box;
   overflow: hidden;
-  min-height: 68px;
+  min-height: 46px;
   color: var(--el-text-color-regular, #606266);
   font-size: 14px;
   line-height: 1.65;
   text-wrap: pretty;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
 }
 
 .agent-card__tags {
@@ -971,10 +1185,63 @@ async function removeSession(id: number) {
   background: var(--el-color-success, #67c23a);
 }
 
-.agent-card--disabled .agent-avatar,
+.agent-card--disabled :deep(.ai-agent-avatar),
 .agent-card--disabled .agent-card__support,
 .agent-card--disabled .agent-card__tags {
   opacity: 0.68;
+}
+
+.agent-card--create {
+  min-height: 286px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  border: 1px dashed var(--el-border-color, #dcdfe6);
+  background:
+    linear-gradient(135deg, rgb(64 158 255 / 6%), transparent 42%),
+    var(--el-bg-color, #ffffff);
+  color: var(--el-text-color-regular, #606266);
+  cursor: pointer;
+  text-align: center;
+}
+
+.agent-card--create strong {
+  color: var(--el-text-color-primary, #303133);
+  font-size: 16px;
+}
+
+.agent-card--create span:last-child {
+  max-width: 220px;
+  color: var(--el-text-color-secondary, #909399);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.agent-create-icon {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--el-color-primary-light-9, #ecf5ff);
+  color: var(--el-color-primary, #409eff);
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.session-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-user {
+  color: var(--el-text-color-primary, #303133);
+  font-weight: 500;
 }
 
 .agent-detail__header {
@@ -982,14 +1249,6 @@ async function removeSession(id: number) {
   padding-right: 28px;
   align-items: flex-start;
   gap: 14px;
-}
-
-.agent-avatar--large {
-  width: 64px;
-  height: 64px;
-  flex-basis: 64px;
-  border-radius: 16px;
-  font-size: 24px;
 }
 
 .agent-detail__identity {
@@ -1146,34 +1405,8 @@ async function removeSession(id: number) {
 .session-msg-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   max-height: 60vh;
   overflow-y: auto;
-}
-
-.session-msg {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: var(--el-fill-color-light, #f5f7fa);
-}
-
-.session-msg.user {
-  align-items: flex-end;
-}
-
-.session-msg-role {
-  font-size: 11px;
-  color: var(--el-text-color-secondary, #909399);
-}
-
-.session-msg-content {
-  font-size: 13px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
 }
 
 .session-msg-empty {

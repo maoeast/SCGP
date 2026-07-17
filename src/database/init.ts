@@ -3743,6 +3743,7 @@ async function initializeAITables(rawDb: any): Promise<void> {
     session_id INTEGER NOT NULL,
     role TEXT NOT NULL,
     content TEXT NOT NULL DEFAULT '',
+    tokens_total INTEGER NOT NULL DEFAULT 0,
     tokens_prompt INTEGER NOT NULL DEFAULT 0,
     tokens_completion INTEGER NOT NULL DEFAULT 0,
     est_cost_yuan REAL NOT NULL DEFAULT 0,
@@ -3750,7 +3751,16 @@ async function initializeAITables(rawDb: any): Promise<void> {
     FOREIGN KEY (session_id) REFERENCES ai_chat_session(id) ON DELETE CASCADE
   )`)
   // Phase 3：附件元信息 JSON 列（[{rel,fileName,fileType,sizeBytes}]，不含 base64）
+  safeAddColumn(rawDb, 'ai_chat_message', 'tokens_total INTEGER NOT NULL DEFAULT 0')
   safeAddColumn(rawDb, 'ai_chat_message', 'attachments TEXT')
+  try {
+    rawDb.run(`UPDATE ai_chat_message
+      SET tokens_total = COALESCE(tokens_prompt, 0) + COALESCE(tokens_completion, 0)
+      WHERE COALESCE(tokens_total, 0) = 0
+        AND (COALESCE(tokens_prompt, 0) + COALESCE(tokens_completion, 0)) > 0`)
+  } catch (e: any) {
+    console.warn('[AITables] 历史 AI token 总量回填警告:', e?.message)
+  }
 
   // provider 表（多模型抽象：DeepSeek / 豆包 统一为 OpenAI 兼容协议 + 能力位）
   // 能力位以 provider 为粒度（Phase 1）；Phase 3 vision/Phase 2 FC 会按 supports_* 开关。
@@ -3768,6 +3778,23 @@ async function initializeAITables(rawDb: any): Promise<void> {
     sort INTEGER NOT NULL DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`)
+
+  rawDb.run(`CREATE TABLE IF NOT EXISTS ai_provider_model (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    provider_code TEXT NOT NULL,
+    code TEXT NOT NULL,
+    name TEXT NOT NULL,
+    model_id TEXT NOT NULL,
+    supports_vision INTEGER NOT NULL DEFAULT 0,
+    supports_tool_calls INTEGER NOT NULL DEFAULT 0,
+    supports_thinking INTEGER NOT NULL DEFAULT 0,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    sort INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(provider_code, code),
+    FOREIGN KEY (provider_code) REFERENCES ai_provider(code) ON DELETE CASCADE
   )`)
 
   // ai_skill：技能目录（工具型 / 知识型）+ 来源、许可、证据和风险治理元数据。
@@ -3822,6 +3849,7 @@ async function initializeAITables(rawDb: any): Promise<void> {
     `CREATE INDEX IF NOT EXISTS idx_ai_chat_msg_time ON ai_chat_message(created_at)`,
     `CREATE INDEX IF NOT EXISTS idx_ai_chat_session_updated ON ai_chat_session(updated_at)`,
     `CREATE INDEX IF NOT EXISTS idx_ai_provider_code ON ai_provider(code)`,
+    `CREATE INDEX IF NOT EXISTS idx_ai_provider_model_provider ON ai_provider_model(provider_code)`,
     `CREATE INDEX IF NOT EXISTS idx_ai_agent_skill_agent ON ai_agent_skill(agent_id)`,
   ]
   for (const stmt of indexStatements) {
@@ -3889,9 +3917,10 @@ async function initializeAITables(rawDb: any): Promise<void> {
         `INSERT INTO ai_provider
            (code, name, base_url, api_key_enc, default_model,
             supports_vision, supports_tool_calls, supports_thinking, enabled, sort)
-         VALUES ('doubao', '豆包（火山方舟）', 'https://ark.cn-beijing.volces.com/api/v3', '', '', 1, 1, 0, 0, 2)`,
+         VALUES ('doubao', '火山方舟', 'https://ark.cn-beijing.volces.com/api/v3', '', '', 1, 1, 0, 0, 2)`,
       )
     }
+    rawDb.run(`UPDATE ai_provider SET name = '火山方舟' WHERE code = 'doubao' AND name = '豆包（火山方舟）'`)
 
     if (!readConfigKV('ai_active_provider')) {
       rawDb.run(
@@ -3899,6 +3928,93 @@ async function initializeAITables(rawDb: any): Promise<void> {
          VALUES ('ai_active_provider', 'deepseek', '当前生效的 AI provider code')
          ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
       )
+    }
+
+    const modelExists = (providerCode: string, code: string): boolean => {
+      try {
+        const stmt = rawDb.prepare('SELECT 1 FROM ai_provider_model WHERE provider_code = ? AND code = ? LIMIT 1')
+        stmt.bind([providerCode, code])
+        const ok = stmt.step()
+        stmt.free()
+        return ok
+      } catch {
+        return false
+      }
+    }
+    const readProvider = (code: string): any | null => {
+      try {
+        const stmt = rawDb.prepare('SELECT * FROM ai_provider WHERE code = ? LIMIT 1')
+        stmt.bind([code])
+        const row = stmt.step() ? stmt.getAsObject() : null
+        stmt.free()
+        return row
+      } catch {
+        return null
+      }
+    }
+    const seedModel = (
+      providerCode: string,
+      code: string,
+      name: string,
+      modelId: string,
+      supportsVision: number,
+      supportsToolCalls: number,
+      supportsThinking: number,
+      enabled: number,
+      sort: number,
+    ) => {
+      if (modelExists(providerCode, code)) return
+      rawDb.run(
+        `INSERT INTO ai_provider_model
+           (provider_code, code, name, model_id, supports_vision, supports_tool_calls, supports_thinking, enabled, sort)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [providerCode, code, name, modelId, supportsVision, supportsToolCalls, supportsThinking, enabled, sort],
+      )
+    }
+
+    const deepseek = readProvider('deepseek')
+    seedModel(
+      'deepseek',
+      'deepseek_v4_flash',
+      'DeepSeek V4 Flash',
+      String(deepseek?.default_model || 'deepseek-v4-flash'),
+      0,
+      1,
+      1,
+      1,
+      1,
+    )
+    seedModel('deepseek', 'deepseek_v4_pro', 'DeepSeek V4 Pro', 'deepseek-v4-pro', 0, 1, 1, 1, 2)
+
+    const doubao = readProvider('doubao')
+    const doubaoDefaultModel = String(doubao?.default_model || '').trim()
+    const placeholderModel = (() => {
+      try {
+        const stmt = rawDb.prepare(
+          `SELECT model_id FROM ai_provider_model
+            WHERE provider_code = 'doubao' AND code = 'doubao_endpoint_primary'
+            LIMIT 1`,
+        )
+        const row = stmt.step() ? stmt.getAsObject() : null
+        stmt.free()
+        return row?.model_id != null ? String(row.model_id) : ''
+      } catch {
+        return ''
+      }
+    })()
+    rawDb.run(`DELETE FROM ai_provider_model WHERE provider_code = 'doubao' AND code = 'doubao_endpoint_primary'`)
+    if (doubaoDefaultModel && placeholderModel && doubaoDefaultModel === placeholderModel) {
+      const stmt = rawDb.prepare(
+        `SELECT model_id FROM ai_provider_model
+          WHERE provider_code = 'doubao' AND enabled = 1
+          ORDER BY sort ASC, id ASC
+          LIMIT 1`,
+      )
+      const row = stmt.step() ? stmt.getAsObject() : null
+      stmt.free()
+      rawDb.run(`UPDATE ai_provider SET default_model = ? WHERE code = 'doubao'`, [
+        row?.model_id != null ? String(row.model_id) : '',
+      ])
     }
   } catch (providerSeedError: any) {
     console.warn('[AITables] provider 迁移/种子警告:', providerSeedError?.message)

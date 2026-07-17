@@ -48,6 +48,7 @@
 - [2026-05-08-self-care-training-module-implementation-plan.md](./planning/2026-05-08-self-care-training-module-implementation-plan.md)
 - [2026-05-20-entitlement-module-refactor-review-proposal.md](./planning/2026-05-20-entitlement-module-refactor-review-proposal.md)
 - [2026-05-28-air-conductor-implementation-plan.md](./planning/2026-05-28-air-conductor-implementation-plan.md)
+- [2026-07-17-resource-room-training-assistant-pilot.md](./planning/2026-07-17-resource-room-training-assistant-pilot.md) — 教师端 AI 资源教室训练助理 P0 试点问答与验收标准
 
 历史 / 基线：
 
@@ -72,6 +73,7 @@
 
 ### `docs/reports` — 工作报告、差距分析与复盘
 
+- [2026-07-17-current-project-gap-and-recommendations.md](./reports/2026-07-17-current-project-gap-and-recommendations.md) — 当前项目功能完成度调查、未收口项与推进建议
 - [2026-03-13-scgp-prd-gap-analysis.md](./reports/2026-03-13-scgp-prd-gap-analysis.md)
 - [2026-03-11-assessment-cleanup.md](./reports/2026-03-11-assessment-cleanup.md)
 - [2026-03-20-emotion-games-layout-debug-lessons.md](./reports/2026-03-20-emotion-games-layout-debug-lessons.md)

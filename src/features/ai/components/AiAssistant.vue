@@ -2,13 +2,13 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound, Paperclip, Promotion, Tickets } from '@element-plus/icons-vue'
+import { ChatDotRound, Paperclip, Promotion, Setting, Tickets } from '@element-plus/icons-vue'
 import type { AiAttachmentRef } from '@/database/ai-api'
-import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
-import { resolveAbsolutePath } from '@/utils/resource-file-service'
 import { useAiStore } from '@/stores/ai'
-import { renderMarkdown } from '@/utils/render-markdown'
 import { getBuiltinAgentPreset } from '@/data/ai-agent-presets'
+import AiAgentAvatar from '@/features/ai/components/AiAgentAvatar.vue'
+import AiChatTranscript from '@/features/ai/components/AiChatTranscript.vue'
+import { formatTokenCount } from '@/features/ai/usage-format'
 import {
   AI_ASSISTANT_OPEN_EVENT,
   type AiAssistantOpenDetail,
@@ -33,7 +33,7 @@ const errorHandler = (_event: unknown, payload: { error?: string } | undefined) 
 }
 const assistantOpenHandler = (event: Event) => {
   const detail = (event as CustomEvent<AiAssistantOpenDetail>).detail
-  void openDrawer(detail?.agentCode)
+  void openDrawer(detail?.agentCode, detail?.sessionId)
 }
 
 onMounted(async () => {
@@ -50,12 +50,26 @@ onUnmounted(() => {
 })
 
 const budgetPercent = computed(() => {
-  const budget = aiStore.providerConfig?.monthlyBudgetYuan || 0
+  const budget = aiStore.providerConfig?.monthlyBudgetTokens || 0
   if (budget <= 0) return 0
-  return Math.min(100, Math.round((aiStore.monthUsage.costYuan / budget) * 100))
+  return Math.min(100, Math.round((aiStore.monthUsage.totalTokens / budget) * 100))
 })
 
 const supportsVision = computed(() => !!aiStore.providerConfig?.supportsVision)
+const enabledModels = computed(() => aiStore.providerModels.filter((model) => model.enabled))
+const activeModelCode = computed({
+  get: () => aiStore.providerConfig?.activeModelCode || '',
+  set: (code: string) => {
+    if (code) void aiStore.setActiveProviderModel(code)
+  },
+})
+const currentModelLabel = computed(() => aiStore.providerConfig?.activeModelName || '未选择模型')
+const currentModelId = computed(() => aiStore.providerConfig?.defaultModel || '')
+const currentAgentSubtitle = computed(() => {
+  const role = currentPreset.value?.displayName || aiStore.currentAgent?.name || '智能体'
+  const model = currentModelLabel.value
+  return `${role} · ${model}`
+})
 const currentPreset = computed(() => getBuiltinAgentPreset(aiStore.currentAgentCode))
 const starterPrompts = computed(() => currentPreset.value?.starterPrompts ?? [])
 const canGenerateReport = computed(
@@ -70,7 +84,7 @@ const canSend = computed(
 
 const displayMessages = computed(() => {
   const list: Array<{
-    role: string
+    role: 'user' | 'assistant' | 'system'
     content: string
     pending?: boolean
     attachments?: AiAttachmentRef[] | null
@@ -95,9 +109,11 @@ function scrollToBottom() {
 watch(() => aiStore.streamingContent, scrollToBottom)
 watch(() => aiStore.currentMessages.length, scrollToBottom)
 
-async function openDrawer(agentCode?: string) {
+async function openDrawer(agentCode?: string, sessionId?: number) {
   if (!aiStore.providerConfig || aiStore.agents.length === 0) await aiStore.loadAll()
-  if (agentCode) {
+  if (sessionId) {
+    await aiStore.selectSession(sessionId)
+  } else if (agentCode) {
     const agent = aiStore.enabledAgents.find((item) => item.code === agentCode)
     if (!agent) {
       ElMessage.warning('该智能体当前未启用，请联系学校管理员。')
@@ -112,6 +128,10 @@ async function openDrawer(agentCode?: string) {
 function getAgentOptionLabel(code: string, name: string) {
   const preset = getBuiltinAgentPreset(code)
   return preset ? `${preset.displayName} · ${preset.name}` : name
+}
+
+function getModelOptionLabel(name: string, modelId: string) {
+  return modelId ? `${name} · ${modelId}` : name
 }
 
 // 浏览器 File → data URL（预览用；CSP 允许 data:，避免 blob: 被拦）
@@ -155,23 +175,8 @@ function removePendingImage(idx: number) {
   pendingImages.value.splice(idx, 1)
 }
 
-// 附件文件类型判定（消息气泡内区分图片 / 文档展示）
-const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico'])
-function isImageExt(fileType: string): boolean {
-  return IMAGE_EXTS.has((fileType || '').toLowerCase())
-}
-
 function removePendingDocument(idx: number) {
   pendingDocuments.value.splice(idx, 1)
-}
-
-async function openAttachment(ref: AiAttachmentRef) {
-  try {
-    const abs = await resolveAbsolutePath(ref.rel)
-    await window.electronAPI.openFile(abs)
-  } catch {
-    /* 忽略打开失败 */
-  }
 }
 
 async function send() {
@@ -216,13 +221,21 @@ function gotoSettings() {
   router.push({ name: 'System', query: { tab: 'ai-agent' } })
 }
 
+function viewAllHistory() {
+  drawerVisible.value = false
+  void router.push({
+    name: 'AiChatHistory',
+    query: aiStore.currentAgentCode ? { agent: aiStore.currentAgentCode } : undefined,
+  })
+}
+
 // 历史会话折叠面板
 const sessionCollapse = ref<string[]>([])
 
 async function confirmDeleteSession(id: number) {
   try {
     await ElMessageBox.confirm('确定删除该会话吗？', '删除确认', { type: 'warning' })
-    await aiStore.deleteSession(id)
+    await aiStore.deleteMySession(id)
     ElMessage.success('已删除')
   } catch {
     /* 取消 */
@@ -241,43 +254,117 @@ async function confirmDeleteSession(id: number) {
     title="AI 智能体"
     direction="rtl"
     size="33%"
+    :show-close="false"
     class="ai-drawer"
   >
     <template #header>
       <div class="ai-drawer-header">
-        <el-select
-          :model-value="aiStore.currentAgentCode"
-          placeholder="选择智能体"
-          size="small"
-          class="agent-select"
-          @change="(v: string) => aiStore.selectAgent(v)"
-        >
-          <el-option
-            v-for="agent in aiStore.enabledAgents"
-            :key="agent.code"
-            :label="getAgentOptionLabel(agent.code, agent.name)"
-            :value="agent.code"
+        <div class="ai-drawer-titlebar">
+          <AiAgentAvatar
+            v-if="aiStore.currentAgentCode"
+            :agent-code="aiStore.currentAgentCode"
+            :agent-name="aiStore.currentAgent?.name || ''"
+            size="sm"
           />
-        </el-select>
-        <el-button size="small" plain @click="aiStore.newChat">新对话</el-button>
+          <div class="ai-title-main">
+            <el-select
+              :model-value="aiStore.currentAgentCode"
+              placeholder="选择智能体"
+              size="small"
+              class="agent-select"
+              @change="(v: string) => aiStore.selectAgent(v)"
+            >
+              <el-option
+                v-for="agent in aiStore.enabledAgents"
+                :key="agent.code"
+                :label="getAgentOptionLabel(agent.code, agent.name)"
+                :value="agent.code"
+              />
+            </el-select>
+            <div class="ai-subtitle" :title="currentAgentSubtitle">
+              <span>{{ currentAgentSubtitle }}</span>
+              <span v-if="currentModelId" class="ai-model-id">{{ currentModelId }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="ai-header-actions">
+          <el-popover placement="bottom-end" trigger="click" width="280" popper-class="ai-model-popover">
+            <template #reference>
+              <button
+                class="ai-icon-action"
+                type="button"
+                aria-label="模型与设置"
+              >
+                <el-icon><Setting /></el-icon>
+              </button>
+            </template>
+            <div class="ai-model-panel">
+              <div class="ai-model-panel__label">当前模型</div>
+              <el-select
+                v-model="activeModelCode"
+                placeholder="选择模型"
+                size="small"
+                class="model-select"
+                :disabled="aiStore.sending || enabledModels.length === 0"
+              >
+                <el-option
+                  v-for="model in enabledModels"
+                  :key="model.code"
+                  :label="getModelOptionLabel(model.name, model.modelId)"
+                  :value="model.code"
+                >
+                  <div class="model-option">
+                    <span>{{ model.name }}</span>
+                    <small>{{ model.modelId }}</small>
+                  </div>
+                </el-option>
+              </el-select>
+            </div>
+          </el-popover>
+          <button
+            class="ai-icon-action ai-new-chat-btn"
+            type="button"
+            aria-label="新对话"
+            title="新对话"
+            @click="aiStore.newChat"
+          >
+            +
+          </button>
+          <button
+            class="ai-icon-action ai-close-btn"
+            type="button"
+            aria-label="关闭会话面板"
+            title="关闭"
+            @click="drawerVisible = false"
+          >
+            ×
+          </button>
+        </div>
       </div>
     </template>
 
     <!-- 未配置 Key 引导 -->
     <div v-if="!aiStore.isConfigured" class="ai-empty">
-      <p>尚未配置 DeepSeek API Key。</p>
+      <p>尚未配置模型服务 API Key。</p>
       <el-button type="primary" size="small" @click="gotoSettings">前往配置</el-button>
     </div>
 
     <div v-else class="ai-body">
-      <!-- 历史会话（可折叠） -->
+      <!-- 最近会话（最多 6 条；完整历史在个人资料页管理） -->
       <el-collapse
         v-if="aiStore.sessions.length > 0"
         v-model="sessionCollapse"
         class="ai-session-collapse"
       >
         <el-collapse-item name="sessions">
-          <template #title>历史会话 ({{ aiStore.sessions.length }})</template>
+          <template #title>
+            <div class="ai-session-collapse-title">
+              <span>最近会话 ({{ aiStore.sessions.length }})</span>
+              <el-button link type="primary" size="small" @click.stop="viewAllHistory">
+                查看全部历史
+              </el-button>
+            </div>
+          </template>
           <div class="ai-session-list">
             <div
               v-for="s in aiStore.sessions"
@@ -302,6 +389,12 @@ async function confirmDeleteSession(id: number) {
       <!-- 消息列表 -->
       <el-scrollbar ref="scrollRef" class="ai-msg-scroll">
         <div v-if="displayMessages.length === 0" class="ai-empty ai-welcome">
+          <AiAgentAvatar
+            v-if="aiStore.currentAgentCode"
+            :agent-code="aiStore.currentAgentCode"
+            :agent-name="aiStore.currentAgent?.name || ''"
+            size="lg"
+          />
           <p class="welcome-title">向「{{ aiStore.currentAgent?.name || '智能体' }}」提问吧</p>
           <p v-if="currentPreset" class="welcome-tagline">{{ currentPreset.tagline }}</p>
           <div v-if="starterPrompts.length > 0" class="starter-prompts">
@@ -317,44 +410,16 @@ async function confirmDeleteSession(id: number) {
             </button>
           </div>
         </div>
-        <div
-          v-for="(msg, idx) in displayMessages"
-          :key="idx"
-          class="msg-row"
-          :class="msg.role === 'user' ? 'is-user' : 'is-assistant'"
-        >
-          <div class="msg-bubble" :class="{ pending: msg.pending }">
-            <div v-if="msg.pending && aiStore.toolSteps.length > 0" class="tool-steps">
-              <div
-                v-for="(step, sIdx) in aiStore.toolSteps"
-                :key="sIdx"
-                class="tool-step"
-                :class="{ failed: !step.ok }"
-              >🔧 {{ step.label }}{{ step.ok ? '' : '（失败）' }}</div>
-            </div>
-            <div v-if="msg.attachments && msg.attachments.length > 0" class="att-row">
-              <template v-for="(a, aIdx) in msg.attachments" :key="aIdx">
-                <img v-if="isImageExt(a.fileType)" :src="aiAttachmentManager.getFileUrl(a)" />
-                <span
-                  v-else
-                  class="att-doc"
-                  :title="`打开原件：${a.fileName}`"
-                  @click="openAttachment(a)"
-                >📄 {{ a.fileName }}</span>
-              </template>
-            </div>
-            <template v-if="msg.role === 'user'">{{ msg.content }}</template>
-            <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
-            <span v-if="msg.pending" class="streaming-cursor" aria-hidden="true"></span>
-          </div>
-        </div>
+        <AiChatTranscript v-else :messages="displayMessages" :tool-steps="aiStore.toolSteps" />
       </el-scrollbar>
     </div>
 
     <template #footer>
       <div class="ai-footer">
         <div class="ai-usage">
-          <span>本月 {{ aiStore.monthUsage.costYuan.toFixed(4) }} / {{ aiStore.providerConfig?.monthlyBudgetYuan ?? 0 }} 元</span>
+          <span>
+            本月 {{ formatTokenCount(aiStore.monthUsage.totalTokens) }} / {{ formatTokenCount(aiStore.providerConfig?.monthlyBudgetTokens) }} Tokens
+          </span>
           <el-progress
             :percentage="budgetPercent"
             :show-text="false"
@@ -377,13 +442,14 @@ async function confirmDeleteSession(id: number) {
         <div class="ai-composer">
           <el-tooltip :content="supportsVision ? '添加图片 / 文档' : '添加文档（当前模型不支持图片）'" placement="top">
             <button
-              class="composer-btn"
+              class="composer-btn composer-attach"
               type="button"
               :disabled="aiStore.sending"
               aria-label="添加图片或文档"
               @click="triggerPickFile"
             >
               <el-icon><Paperclip /></el-icon>
+              <span>附件</span>
             </button>
           </el-tooltip>
           <input
@@ -455,13 +521,127 @@ async function confirmDeleteSession(id: number) {
 .ai-drawer-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
   width: 100%;
+  min-width: 0;
+}
+:global(.ai-drawer .el-drawer__header) {
+  align-items: center;
+  margin-bottom: 0;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--el-border-color-lighter, #e4e7ed);
+}
+:global(.ai-drawer .el-drawer__body) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+}
+:global(.ai-drawer .el-drawer__footer) {
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--el-border-color-lighter, #e4e7ed);
+}
+.ai-drawer-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.ai-title-main {
+  flex: 1;
+  min-width: 0;
 }
 .agent-select {
-  flex: 1;
+  width: 100%;
 }
-
+.agent-select :deep(.el-select__wrapper) {
+  padding-left: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+.agent-select :deep(.el-select__placeholder) {
+  color: var(--el-text-color-primary, #303133);
+  font-size: 16px;
+  font-weight: 700;
+}
+.ai-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 2px;
+  color: var(--el-text-color-secondary, #909399);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.ai-subtitle span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-model-id {
+  max-width: 150px;
+  color: var(--el-text-color-placeholder, #a8abb2);
+}
+.ai-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.ai-icon-action {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--el-text-color-regular, #606266);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.ai-icon-action:hover {
+  background: var(--el-fill-color-light, #f5f7fa);
+  color: var(--el-text-color-primary, #303133);
+}
+.ai-icon-action .el-icon {
+  font-size: 17px;
+}
+.ai-close-btn {
+  color: var(--el-text-color-secondary, #909399);
+}
+.model-select {
+  width: 100%;
+}
+:global(.ai-model-popover) {
+  padding: 12px;
+}
+.ai-model-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ai-model-panel__label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary, #909399);
+}
+.model-option {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.25;
+}
+.model-option small {
+  color: var(--el-text-color-secondary, #909399);
+  font-size: 11px;
+}
 .ai-empty {
   display: flex;
   flex-direction: column;
@@ -526,8 +706,36 @@ async function confirmDeleteSession(id: number) {
 
 .ai-session-collapse {
   flex-shrink: 0;
+  margin: 0;
+  padding: 0 16px;
   border-top: none;
   border-bottom: 1px solid var(--el-border-color-lighter, #e4e7ed);
+  background: var(--el-bg-color, #fff);
+}
+.ai-session-collapse :deep(.el-collapse-item__header) {
+  background: transparent;
+  border-bottom: none;
+  color: var(--el-text-color-regular, #606266);
+  font-size: 13px;
+  font-weight: 600;
+}
+.ai-session-collapse :deep(.el-collapse-item__wrap) {
+  background: transparent;
+  border-bottom: none;
+}
+.ai-session-collapse :deep(.el-collapse-item__content) {
+  padding-bottom: 8px;
+}
+.ai-session-collapse-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+.ai-session-collapse-title .el-button {
+  padding: 0;
+  font-weight: 400;
 }
 
 .ai-session-list {
@@ -570,143 +778,8 @@ async function confirmDeleteSession(id: number) {
   flex: 1;
   min-height: 0;
 }
-
-.msg-row {
-  display: flex;
-  margin-bottom: 12px;
-}
-.msg-row.is-user {
-  justify-content: flex-end;
-}
-.msg-row.is-assistant {
-  justify-content: flex-start;
-}
-.msg-bubble {
-  max-width: 80%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-.is-user .msg-bubble {
-  background: var(--el-color-primary, #409eff);
-  color: #fff;
-  border-bottom-right-radius: 2px;
-}
-.is-assistant .msg-bubble {
-  max-width: 90%;
-  background: var(--el-fill-color-light, #f5f7fa);
-  color: var(--el-text-color-primary, #303133);
-  border-bottom-left-radius: 2px;
-}
-.msg-bubble.pending {
-  opacity: 0.85;
-}
-
-/* ===== Markdown 渲染（assistant 回复）+ 流式光标 ===== */
-.markdown-body {
-  white-space: normal;
-}
-.markdown-body :deep(h1),
-.markdown-body :deep(h2),
-.markdown-body :deep(h3),
-.markdown-body :deep(h4) {
-  margin: 0.6em 0 0.3em;
-  font-weight: 600;
-  line-height: 1.3;
-}
-.markdown-body :deep(h1) { font-size: 1.25em; }
-.markdown-body :deep(h2) { font-size: 1.15em; }
-.markdown-body :deep(h3) { font-size: 1.05em; }
-.markdown-body :deep(p) { margin: 0.3em 0; }
-.markdown-body :deep(ul),
-.markdown-body :deep(ol) { margin: 0.3em 0; padding-left: 1.4em; }
-.markdown-body :deep(li) { margin: 0.15em 0; }
-.markdown-body :deep(table) {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 0.5em 0;
-  font-size: 0.92em;
-}
-.markdown-body :deep(th),
-.markdown-body :deep(td) {
-  border: 1px solid var(--el-border-color, #dcdfe6);
-  padding: 4px 8px;
-  text-align: left;
-  white-space: normal;
-}
-.markdown-body :deep(th) {
-  background: var(--el-fill-color-light, #f5f7fa);
-  font-weight: 600;
-}
-.markdown-body :deep(pre) {
-  background: var(--el-fill-color-dark, #e9e9eb);
-  border-radius: 6px;
-  padding: 8px 10px;
-  overflow-x: auto;
-  margin: 0.5em 0;
-  font-size: 0.88em;
-}
-.markdown-body :deep(code) {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  background: var(--el-fill-color, #f5f7fa);
-  padding: 1px 4px;
-  border-radius: 3px;
-  font-size: 0.9em;
-}
-.markdown-body :deep(pre code) {
-  background: none;
-  padding: 0;
-  font-size: inherit;
-}
-.markdown-body :deep(blockquote) {
-  margin: 0.4em 0;
-  padding-left: 0.8em;
-  border-left: 3px solid var(--el-border-color, #dcdfe6);
-  color: var(--el-text-color-secondary, #909399);
-}
-.markdown-body :deep(a) {
-  color: var(--el-color-primary, #409eff);
-  text-decoration: none;
-}
-.markdown-body :deep(a:hover) { text-decoration: underline; }
-.markdown-body :deep(hr) {
-  border: none;
-  border-top: 1px solid var(--el-border-color, #dcdfe6);
-  margin: 0.6em 0;
-}
-.markdown-body :deep(img) { max-width: 100%; border-radius: 4px; }
-
-.streaming-cursor {
-  display: inline-block;
-  width: 7px;
-  height: 1em;
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  background: var(--el-color-primary, #409eff);
-  border-radius: 1px;
-  animation: ai-cursor-blink 1s infinite;
-}
-@keyframes ai-cursor-blink {
-  0%, 50% { opacity: 1; }
-  50.01%, 100% { opacity: 0; }
-}
-.tool-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 6px;
-  padding-bottom: 6px;
-  border-bottom: 1px dashed var(--el-border-color, #dcdfe6);
-}
-.tool-step {
-  font-size: 12px;
-  color: var(--el-text-color-secondary, #909399);
-}
-.tool-step.failed {
-  color: var(--el-color-danger, #f56c6c);
+.ai-msg-scroll :deep(.el-scrollbar__view) {
+  padding: 18px 16px;
 }
 
 .ai-footer {
@@ -764,6 +837,12 @@ async function confirmDeleteSession(id: number) {
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
+.composer-attach {
+  width: auto;
+  gap: 4px;
+  padding: 0 8px;
+  font-size: 12px;
+}
 .composer-btn:hover:not(:disabled) {
   background: var(--el-fill-color-light, #f5f7fa);
   color: var(--el-text-color-primary, #303133);
@@ -819,31 +898,6 @@ async function confirmDeleteSession(id: number) {
   height: 18px;
   padding: 0;
   color: var(--el-color-danger, #f56c6c);
-}
-.att-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 6px;
-}
-.att-row img {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 6px;
-}
-.att-doc {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 6px;
-  border: 1px solid currentColor;
-  font-size: 12px;
-  cursor: pointer;
-  opacity: 0.85;
-}
-.att-doc:hover {
-  opacity: 1;
 }
 .ai-pending-docs {
   display: flex;

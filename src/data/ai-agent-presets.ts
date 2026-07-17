@@ -223,7 +223,7 @@ ${COMMON_TEACHER_BOUNDARIES}`,
       '学生最近明显退缩，教师可以先观察和支持什么？',
       '学生在同伴冲突后持续低落，课堂上怎样提供支持？',
       '怎样和家长沟通学生的情绪变化，但不写成诊断？',
-      '学生表达不想活了，教师现在应该按什么顺序处理？',
+      '学生出现明显情绪危机信号时，教师应该按什么顺序处理？',
     ],
     toolCodes: ['search_students', 'get_student', 'get_assessment', 'list_training_sessions'],
     knowledgeSkills: [

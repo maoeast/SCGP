@@ -27,14 +27,15 @@ const DEEPSEEK_PRICE = {
 // AI 全局配置在 system_config 表中的 key（per-provider 的连接/能力位在 ai_provider 表）
 const CONFIG_KEY = {
   activeProvider: 'ai_active_provider', // 当前生效 provider code
-  monthlyBudget: 'ai_monthly_budget_yuan', // 月度预算（元），默认 100
+  monthlyBudgetTokens: 'ai_monthly_budget_tokens', // 月度预算（token），默认 1000 万
+  monthlyBudgetYuanLegacy: 'ai_monthly_budget_yuan', // 历史字段，仅兼容旧库读取
   blockOnOverage: 'ai_block_on_overage', // '1'/'0' 超预算是否硬截断
   enabled: 'ai_enabled', // '1'/'0' 总开关
 } as const
 
 const DEFAULTS = {
   activeProvider: 'deepseek',
-  monthlyBudgetYuan: 100,
+  monthlyBudgetTokens: 10_000_000,
   blockOnOverage: false,
   enabled: true,
 } as const
@@ -113,14 +114,33 @@ export interface AiProvider {
   updatedAt: string
 }
 
+/** 单个 provider 下可选的模型 / 推理接入点。 */
+export interface AiProviderModel {
+  id: number
+  providerCode: string
+  code: string
+  name: string
+  modelId: string
+  supportsVision: boolean
+  supportsToolCalls: boolean
+  supportsThinking: boolean
+  enabled: boolean
+  sort: number
+  createdAt: string
+  updatedAt: string
+}
+
 /**
  * 当前生效 provider 的视图（供 store/UI/sendChat）：由 ai_provider.active 行 + 全局 KV 组合。
- * activeProviderCode、providerName、supportsVision/ToolCalls/Thinking、providerEnabled 来自 active provider 行；
+ * activeProviderCode、providerName、providerEnabled 来自 active provider 行；
+ * 模型 ID 与 supportsVision/ToolCalls/Thinking 优先来自 active provider 下的当前模型，缺失时回退 provider 行；
  * monthlyBudgetYuan/blockOnOverage/enabled 来自 system_config 全局 KV。
  */
 export interface AiProviderConfig {
   activeProviderCode: string
   providerName: string
+  activeModelCode: string
+  activeModelName: string
   supportsVision: boolean
   supportsToolCalls: boolean
   supportsThinking: boolean
@@ -128,7 +148,7 @@ export interface AiProviderConfig {
   apiKeyEnc: string // 密文；未配置时为 ''
   baseUrl: string
   defaultModel: string
-  monthlyBudgetYuan: number
+  monthlyBudgetTokens: number
   blockOnOverage: boolean
   enabled: boolean // 全局 AI 总开关
 }
@@ -159,14 +179,42 @@ export interface AiChatMessage {
   content: string
   /** 附件元信息（JSON 解析后；无附件为 null） */
   attachments: AiAttachmentRef[] | null
+  tokensTotal: number
   tokensPrompt: number
   tokensCompletion: number
   estCostYuan: number
   createdAt: string
 }
 
-/** DeepSeek chat completion 返回的 usage（映射后） */
+/** 当前用户可见的会话摘要。 */
+export interface AiChatSession {
+  id: number
+  agent_code: string
+  agent_name: string | null
+  title: string
+  message_count: number
+  total_tokens: number
+  created_at: string
+  updated_at: string
+}
+
+export interface AiSessionHistoryQuery {
+  page?: number
+  pageSize?: number
+  agentCode?: string
+  keyword?: string
+  updatedFrom?: string
+  updatedTo?: string
+}
+
+export interface AiSessionHistoryPage {
+  items: AiChatSession[]
+  total: number
+}
+
+/** OpenAI 兼容 provider chat completion 返回的 usage（映射后） */
 export interface DeepSeekUsage {
+  totalTokens?: number
   promptTokens?: number
   completionTokens?: number
   promptCacheHitTokens?: number
@@ -249,6 +297,23 @@ function rowToProvider(row: any): AiProvider {
     baseUrl: row.base_url || '',
     apiKeyEnc: row.api_key_enc || '',
     defaultModel: row.default_model || '',
+    supportsVision: Number(row.supports_vision) === 1,
+    supportsToolCalls: Number(row.supports_tool_calls) === 1,
+    supportsThinking: Number(row.supports_thinking) === 1,
+    enabled: Number(row.enabled) === 1,
+    sort: Number(row.sort || 0),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+function rowToProviderModel(row: any): AiProviderModel {
+  return {
+    id: Number(row.id),
+    providerCode: row.provider_code || '',
+    code: row.code || '',
+    name: row.name || '',
+    modelId: row.model_id || '',
     supportsVision: Number(row.supports_vision) === 1,
     supportsToolCalls: Number(row.supports_tool_calls) === 1,
     supportsThinking: Number(row.supports_thinking) === 1,
@@ -561,9 +626,54 @@ export class AIApi extends DatabaseAPI {
     return this.query('SELECT * FROM ai_provider ORDER BY sort ASC, id ASC').map(rowToProvider)
   }
 
+  listProviderModels(providerCode: string, enabledOnly = false): AiProviderModel[] {
+    return this.query(
+      `SELECT * FROM ai_provider_model
+        WHERE provider_code = ? ${enabledOnly ? 'AND enabled = 1' : ''}
+        ORDER BY sort ASC, id ASC`,
+      [providerCode],
+    ).map(rowToProviderModel)
+  }
+
+  listAllProviderModels(enabledOnly = false): AiProviderModel[] {
+    return this.query(
+      `SELECT * FROM ai_provider_model
+        ${enabledOnly ? 'WHERE enabled = 1' : ''}
+        ORDER BY provider_code ASC, sort ASC, id ASC`,
+    ).map(rowToProviderModel)
+  }
+
   getProviderByCode(code: string): AiProvider | null {
     const row = this.queryOne('SELECT * FROM ai_provider WHERE code = ?', [code])
     return row ? rowToProvider(row) : null
+  }
+
+  private getActiveProviderModel(provider: AiProvider): AiProviderModel | null {
+    if (!provider.defaultModel) return null
+    const row =
+      this.queryOne(
+        `SELECT * FROM ai_provider_model
+          WHERE provider_code = ? AND enabled = 1 AND model_id = ?
+          ORDER BY sort ASC, id ASC
+          LIMIT 1`,
+        [provider.code, provider.defaultModel],
+      ) ||
+      this.queryOne(
+        `SELECT * FROM ai_provider_model
+          WHERE provider_code = ? AND enabled = 1 AND code = ?
+          ORDER BY sort ASC, id ASC
+          LIMIT 1`,
+        [provider.code, provider.defaultModel],
+      )
+    return row ? rowToProviderModel(row) : null
+  }
+
+  private getMonthlyBudgetTokens(): number {
+    const raw =
+      this.getConfig(CONFIG_KEY.monthlyBudgetTokens) || this.getConfig(CONFIG_KEY.monthlyBudgetYuanLegacy)
+    const value = Number(raw || DEFAULTS.monthlyBudgetTokens)
+    if (!Number.isFinite(value) || value < 0) return DEFAULTS.monthlyBudgetTokens
+    return Math.floor(value)
   }
 
   getActiveProviderCode(): string {
@@ -627,13 +737,128 @@ export class AIApi extends DatabaseAPI {
     this.execute(`UPDATE ai_provider SET ${sets.join(', ')} WHERE code = ?`, params)
   }
 
+  saveProviderModel(input: {
+    id?: number
+    providerCode: string
+    code: string
+    name: string
+    modelId: string
+    supportsVision?: boolean
+    supportsToolCalls?: boolean
+    supportsThinking?: boolean
+    enabled?: boolean
+    sort?: number
+  }): number {
+    const providerCode = input.providerCode.trim()
+    const code = input.code.trim()
+    const modelId = input.modelId.trim()
+    const name = input.name.trim() || modelId
+    if (!providerCode || !code || !modelId) throw new Error('请填写模型编号、名称和模型 ID')
+    if (!/^[a-z0-9_-]+$/.test(code)) throw new Error('模型编号仅支持小写字母、数字、下划线和连字符')
+
+    const provider = this.getProviderByCode(providerCode)
+    if (!provider) throw new Error('模型服务不存在')
+    const enabled = input.enabled === false ? 0 : 1
+    const sort = input.sort ?? 0
+    const previous = input.id
+      ? this.queryOne('SELECT code, model_id FROM ai_provider_model WHERE id = ? AND provider_code = ?', [
+          input.id,
+          providerCode,
+        ])
+      : null
+
+    if (input.id) {
+      this.execute(
+        `UPDATE ai_provider_model
+            SET code = ?, name = ?, model_id = ?, supports_vision = ?, supports_tool_calls = ?,
+                supports_thinking = ?, enabled = ?, sort = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND provider_code = ?`,
+        [
+          code,
+          name,
+          modelId,
+          input.supportsVision === undefined ? (provider.supportsVision ? 1 : 0) : input.supportsVision ? 1 : 0,
+          input.supportsToolCalls === undefined ? (provider.supportsToolCalls ? 1 : 0) : input.supportsToolCalls ? 1 : 0,
+          input.supportsThinking === undefined ? (provider.supportsThinking ? 1 : 0) : input.supportsThinking ? 1 : 0,
+          enabled,
+          sort,
+          input.id,
+          providerCode,
+        ],
+      )
+      if (
+        enabled &&
+        (!provider.defaultModel ||
+          !this.getActiveProviderModel(provider) ||
+          provider.defaultModel === String(previous?.model_id || ''))
+      ) {
+        this.saveProvider({ code: providerCode, defaultModel: modelId })
+      }
+      return input.id
+    }
+
+    this.execute(
+      `INSERT INTO ai_provider_model
+         (provider_code, code, name, model_id, supports_vision, supports_tool_calls, supports_thinking, enabled, sort)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        providerCode,
+        code,
+        name,
+        modelId,
+        input.supportsVision === undefined ? (provider.supportsVision ? 1 : 0) : input.supportsVision ? 1 : 0,
+        input.supportsToolCalls === undefined ? (provider.supportsToolCalls ? 1 : 0) : input.supportsToolCalls ? 1 : 0,
+        input.supportsThinking === undefined ? (provider.supportsThinking ? 1 : 0) : input.supportsThinking ? 1 : 0,
+        enabled,
+        sort,
+      ],
+    )
+    if (enabled && (!provider.defaultModel || !this.getActiveProviderModel(provider))) {
+      this.saveProvider({ code: providerCode, defaultModel: modelId })
+    }
+    return this.getLastInsertId()
+  }
+
+  setActiveProviderModel(providerCode: string, modelCode: string): void {
+    const row = this.queryOne(
+      `SELECT model_id FROM ai_provider_model WHERE provider_code = ? AND code = ? AND enabled = 1`,
+      [providerCode, modelCode],
+    )
+    if (!row?.model_id) throw new Error('模型不存在或未启用')
+    this.saveProvider({ code: providerCode, defaultModel: String(row.model_id) })
+  }
+
+  deleteProviderModel(id: number): boolean {
+    const row = this.queryOne('SELECT provider_code, model_id FROM ai_provider_model WHERE id = ?', [id])
+    if (!row) return false
+    const provider = this.getProviderByCode(String(row.provider_code))
+    const countRow = this.queryOne('SELECT COUNT(*) AS cnt FROM ai_provider_model WHERE provider_code = ?', [
+      row.provider_code,
+    ])
+    if (Number(countRow?.cnt || 0) <= 1) throw new Error('每个模型服务至少保留一个模型')
+    const deleted = this.execute('DELETE FROM ai_provider_model WHERE id = ?', [id]) > 0
+    if (deleted && provider?.defaultModel === String(row.model_id)) {
+      const next = this.queryOne(
+        `SELECT model_id FROM ai_provider_model
+          WHERE provider_code = ? AND enabled = 1
+          ORDER BY sort ASC, id ASC
+          LIMIT 1`,
+        [row.provider_code],
+      )
+      this.saveProvider({ code: String(row.provider_code), defaultModel: next?.model_id ? String(next.model_id) : '' })
+    }
+    return deleted
+  }
+
   /** 保存全局 AI 配置（月度预算 / 超预算截断 / 总开关） */
   saveGlobalConfig(input: {
-    monthlyBudgetYuan?: number
+    monthlyBudgetTokens?: number
     blockOnOverage?: boolean
     enabled?: boolean
   }): void {
-    if (input.monthlyBudgetYuan !== undefined) this.setConfig(CONFIG_KEY.monthlyBudget, String(input.monthlyBudgetYuan))
+    if (input.monthlyBudgetTokens !== undefined) {
+      this.setConfig(CONFIG_KEY.monthlyBudgetTokens, String(Math.max(0, Math.floor(input.monthlyBudgetTokens))))
+    }
     if (input.blockOnOverage !== undefined) this.setConfig(CONFIG_KEY.blockOnOverage, input.blockOnOverage ? '1' : '0')
     if (input.enabled !== undefined) this.setConfig(CONFIG_KEY.enabled, input.enabled ? '1' : '0')
   }
@@ -642,7 +867,7 @@ export class AIApi extends DatabaseAPI {
   getProviderConfig(): AiProviderConfig {
     const activeCode = this.getActiveProviderCode()
     const provider = this.getProviderByCode(activeCode) || this.getProviderByCode(DEFAULTS.activeProvider)
-    const monthlyBudgetYuan = Number(this.getConfig(CONFIG_KEY.monthlyBudget) || DEFAULTS.monthlyBudgetYuan)
+    const monthlyBudgetTokens = this.getMonthlyBudgetTokens()
     const blockOnOverage = this.getConfig(CONFIG_KEY.blockOnOverage) === '1'
     const enabled = this.getConfig(CONFIG_KEY.enabled) !== '0' // 默认启用
     if (!provider) {
@@ -650,6 +875,8 @@ export class AIApi extends DatabaseAPI {
       return {
         activeProviderCode: activeCode,
         providerName: activeCode,
+        activeModelCode: '',
+        activeModelName: '',
         supportsVision: false,
         supportsToolCalls: false,
         supportsThinking: false,
@@ -657,22 +884,26 @@ export class AIApi extends DatabaseAPI {
         apiKeyEnc: '',
         baseUrl: '',
         defaultModel: '',
-        monthlyBudgetYuan,
+        monthlyBudgetTokens,
         blockOnOverage,
         enabled,
       }
     }
+    const activeModel = this.getActiveProviderModel(provider)
+    const hasModelRows = this.listProviderModels(provider.code).length > 0
     return {
       activeProviderCode: provider.code,
       providerName: provider.name,
-      supportsVision: provider.supportsVision,
-      supportsToolCalls: provider.supportsToolCalls,
-      supportsThinking: provider.supportsThinking,
+      activeModelCode: activeModel?.code || '',
+      activeModelName: activeModel?.name || (hasModelRows ? '' : provider.defaultModel),
+      supportsVision: activeModel?.supportsVision ?? provider.supportsVision,
+      supportsToolCalls: activeModel?.supportsToolCalls ?? provider.supportsToolCalls,
+      supportsThinking: activeModel?.supportsThinking ?? provider.supportsThinking,
       providerEnabled: provider.enabled,
       apiKeyEnc: provider.apiKeyEnc,
       baseUrl: provider.baseUrl,
-      defaultModel: provider.defaultModel,
-      monthlyBudgetYuan,
+      defaultModel: activeModel?.modelId || (hasModelRows ? '' : provider.defaultModel),
+      monthlyBudgetTokens,
       blockOnOverage,
       enabled,
     }
@@ -699,16 +930,95 @@ export class AIApi extends DatabaseAPI {
   }
 
   /** 当前用户视角：只列自己的会话（按 updated_at 倒序，带消息数） */
-  listSessions(userId: number, limit = 50): Array<{ id: number; agent_code: string; title: string; message_count: number; created_at: string; updated_at: string }> {
+  listSessions(userId: number, limit = 50): AiChatSession[] {
     return this.query(
       `SELECT s.*,
-              (SELECT COUNT(*) FROM ai_chat_message m WHERE m.session_id = s.id) AS message_count
+              a.name AS agent_name,
+              (SELECT COUNT(*) FROM ai_chat_message m WHERE m.session_id = s.id) AS message_count,
+              (SELECT COALESCE(SUM(COALESCE(NULLIF(m.tokens_total, 0), COALESCE(m.tokens_prompt, 0) + COALESCE(m.tokens_completion, 0))), 0)
+                 FROM ai_chat_message m
+                WHERE m.session_id = s.id) AS total_tokens
        FROM ai_chat_session s
+       LEFT JOIN ai_agent a ON a.code = s.agent_code
        WHERE s.user_id = ?
        ORDER BY s.updated_at DESC
        LIMIT ?`,
       [userId, limit],
     )
+  }
+
+  countSessions(userId: number): number {
+    const row = this.queryOne('SELECT COUNT(*) AS total FROM ai_chat_session WHERE user_id = ?', [userId])
+    return Number(row?.total || 0)
+  }
+
+  /** 个人历史页查询：始终按 user_id 过滤，不复用管理员的全局审计查询。 */
+  listSessionHistory(userId: number, query: AiSessionHistoryQuery = {}): AiSessionHistoryPage {
+    const pageSize = Math.min(100, Math.max(10, Math.floor(Number(query.pageSize) || 20)))
+    const page = Math.max(1, Math.floor(Number(query.page) || 1))
+    const filters = ['s.user_id = ?']
+    const params: Array<string | number> = [userId]
+    const agentCode = query.agentCode?.trim()
+    const keyword = query.keyword?.trim()
+
+    if (agentCode) {
+      filters.push('s.agent_code = ?')
+      params.push(agentCode)
+    }
+    if (keyword) {
+      const like = `%${keyword}%`
+      filters.push(`(
+        s.title LIKE ? OR EXISTS (
+          SELECT 1 FROM ai_chat_message m
+          WHERE m.session_id = s.id AND m.content LIKE ?
+        )
+      )`)
+      params.push(like, like)
+    }
+    if (query.updatedFrom) {
+      filters.push('s.updated_at >= ?')
+      params.push(`${query.updatedFrom} 00:00:00`)
+    }
+    if (query.updatedTo) {
+      filters.push('s.updated_at <= ?')
+      params.push(`${query.updatedTo} 23:59:59`)
+    }
+
+    const where = filters.join(' AND ')
+    const total = Number(
+      this.queryOne(`SELECT COUNT(*) AS total FROM ai_chat_session s WHERE ${where}`, params)?.total || 0,
+    )
+    const items = this.query(
+      `SELECT s.*,
+              a.name AS agent_name,
+              (SELECT COUNT(*) FROM ai_chat_message m WHERE m.session_id = s.id) AS message_count,
+              (SELECT COALESCE(SUM(COALESCE(NULLIF(m.tokens_total, 0), COALESCE(m.tokens_prompt, 0) + COALESCE(m.tokens_completion, 0))), 0)
+                 FROM ai_chat_message m
+                WHERE m.session_id = s.id) AS total_tokens
+       FROM ai_chat_session s
+       LEFT JOIN ai_agent a ON a.code = s.agent_code
+       WHERE ${where}
+       ORDER BY s.updated_at DESC
+       LIMIT ? OFFSET ?`,
+      [...params, pageSize, (page - 1) * pageSize],
+    ) as AiChatSession[]
+    return { items, total }
+  }
+
+  getSessionForUser(sessionId: number, userId: number): AiChatSession | null {
+    const row = this.queryOne(
+      `SELECT s.*,
+              a.name AS agent_name,
+              (SELECT COUNT(*) FROM ai_chat_message m WHERE m.session_id = s.id) AS message_count,
+              (SELECT COALESCE(SUM(COALESCE(NULLIF(m.tokens_total, 0), COALESCE(m.tokens_prompt, 0) + COALESCE(m.tokens_completion, 0))), 0)
+                 FROM ai_chat_message m
+                WHERE m.session_id = s.id) AS total_tokens
+       FROM ai_chat_session s
+       LEFT JOIN ai_agent a ON a.code = s.agent_code
+       WHERE s.id = ? AND s.user_id = ?`,
+      [sessionId, userId],
+    )
+    return (row as AiChatSession | undefined) || null
   }
 
   /** admin 视角：全部会话（LEFT JOIN user 带用户名/角色），不过滤 user_id */
@@ -718,17 +1028,23 @@ export class AIApi extends DatabaseAPI {
     username: string | null
     role: string | null
     agent_code: string
+    agent_name: string | null
     title: string
     message_count: number
+    total_tokens: number
     created_at: string
     updated_at: string
   }> {
     return this.query(
-      `SELECT s.id, s.user_id, u.username, u.role, s.agent_code, s.title,
+      `SELECT s.id, s.user_id, u.username, u.role, s.agent_code, a.name AS agent_name, s.title,
               (SELECT COUNT(*) FROM ai_chat_message m WHERE m.session_id = s.id) AS message_count,
+              (SELECT COALESCE(SUM(COALESCE(NULLIF(m.tokens_total, 0), COALESCE(m.tokens_prompt, 0) + COALESCE(m.tokens_completion, 0))), 0)
+                 FROM ai_chat_message m
+                WHERE m.session_id = s.id) AS total_tokens,
               s.created_at, s.updated_at
        FROM ai_chat_session s
        LEFT JOIN user u ON u.id = s.user_id
+       LEFT JOIN ai_agent a ON a.code = s.agent_code
        ORDER BY s.updated_at DESC
        LIMIT ?`,
       [limit],
@@ -756,11 +1072,22 @@ export class AIApi extends DatabaseAPI {
       role: r.role,
       content: r.content,
       attachments: parseAttachmentRefs(r.attachments),
+      tokensTotal: Number(r.tokens_total || Number(r.tokens_prompt || 0) + Number(r.tokens_completion || 0)),
       tokensPrompt: Number(r.tokens_prompt || 0),
       tokensCompletion: Number(r.tokens_completion || 0),
       estCostYuan: Number(r.est_cost_yuan || 0),
       createdAt: r.created_at,
     }))
+  }
+
+  listMessagesForUser(sessionId: number, userId: number): AiChatMessage[] {
+    return this.getSessionForUser(sessionId, userId) ? this.listMessages(sessionId) : []
+  }
+
+  deleteSessionForUser(sessionId: number, userId: number): boolean {
+    if (!this.getSessionForUser(sessionId, userId)) return false
+    this.deleteSession(sessionId)
+    return true
   }
 
   saveMessage(input: {
@@ -772,30 +1099,32 @@ export class AIApi extends DatabaseAPI {
   }): number {
     const tokensPrompt = Number(input.usage?.promptTokens || 0)
     const tokensCompletion = Number(input.usage?.completionTokens || 0)
+    const tokensTotal = Number(input.usage?.totalTokens || tokensPrompt + tokensCompletion)
     // 仅 assistant 回复计入花费（user 消息的 usage 为上一轮 assistant 的，不重复计）
     const estCost = input.role === 'assistant' ? estimateCostYuan(input.usage) : 0
     const attachmentsJson =
       input.attachments && input.attachments.length > 0 ? JSON.stringify(input.attachments) : null
     this.execute(
-      `INSERT INTO ai_chat_message (session_id, role, content, tokens_prompt, tokens_completion, est_cost_yuan, attachments)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [input.sessionId, input.role, input.content, tokensPrompt, tokensCompletion, estCost, attachmentsJson],
+      `INSERT INTO ai_chat_message (session_id, role, content, tokens_total, tokens_prompt, tokens_completion, est_cost_yuan, attachments)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [input.sessionId, input.role, input.content, tokensTotal, tokensPrompt, tokensCompletion, estCost, attachmentsJson],
     )
     this.touchSession(input.sessionId)
     return this.getLastInsertId()
   }
 
-  /** 本月（按 created_at 的 UTC YYYY-MM）累计花费与 assistant 消息数，用于额度展示/判断 */
-  getMonthUsage(): { costYuan: number; assistantCount: number; period: string } {
+  /** 本月（按 created_at 的 UTC YYYY-MM）累计 token 与 assistant 消息数，用于额度展示/判断 */
+  getMonthUsage(): { totalTokens: number; assistantCount: number; period: string } {
     const period = new Date().toISOString().slice(0, 7) // YYYY-MM (UTC)，与 CURRENT_TIMESTAMP 对齐
     const row = this.queryOne(
-      `SELECT COALESCE(SUM(est_cost_yuan), 0) AS cost, COUNT(*) AS cnt
+      `SELECT COALESCE(SUM(COALESCE(NULLIF(tokens_total, 0), COALESCE(tokens_prompt, 0) + COALESCE(tokens_completion, 0))), 0) AS total_tokens,
+              COUNT(*) AS cnt
        FROM ai_chat_message
        WHERE role = 'assistant' AND strftime('%Y-%m', created_at) = ?`,
       [period],
     )
     return {
-      costYuan: Math.round(Number(row?.cost || 0) * 10000) / 10000,
+      totalTokens: Number(row?.total_tokens || 0),
       assistantCount: Number(row?.cnt || 0),
       period,
     }

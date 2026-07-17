@@ -73,13 +73,7 @@
             @click="openAgentDetail(item.preset)"
           >
             <span class="home-agent-card__identity">
-              <span
-                class="home-agent-avatar"
-                :class="`home-agent-avatar--${item.preset.avatarTone}`"
-                aria-hidden="true"
-              >
-                {{ item.preset.avatarText }}
-              </span>
+              <AiAgentAvatar :agent-code="item.preset.code" :agent-name="item.preset.name" size="md" />
               <span class="home-agent-card__titles">
                 <strong>{{ item.preset.displayName }}</strong>
                 <span>{{ item.preset.name }}</span>
@@ -121,13 +115,11 @@
     >
       <template v-if="selectedHomeAgent" #header>
         <div class="home-agent-detail__header">
-          <span
-            class="home-agent-avatar home-agent-avatar--large"
-            :class="`home-agent-avatar--${selectedHomeAgent.preset.avatarTone}`"
-            aria-hidden="true"
-          >
-            {{ selectedHomeAgent.preset.avatarText }}
-          </span>
+          <AiAgentAvatar
+            :agent-code="selectedHomeAgent.preset.code"
+            :agent-name="selectedHomeAgent.preset.name"
+            size="lg"
+          />
           <div class="home-agent-detail__identity">
             <h3>{{ selectedHomeAgent.preset.displayName }}</h3>
             <div>{{ selectedHomeAgent.preset.name }}</div>
@@ -428,6 +420,7 @@ import {
   UserFilled,
 } from '@element-plus/icons-vue'
 import StudentAvatar from '@/components/student/StudentAvatar.vue'
+import AiAgentAvatar from '@/features/ai/components/AiAgentAvatar.vue'
 import {
   DashboardAPI,
   type DashboardScheduleItem,
@@ -1001,46 +994,6 @@ onMounted(() => {
   gap: 12px;
 }
 
-.home-agent-avatar {
-  display: inline-flex;
-  width: 52px;
-  height: 52px;
-  flex: 0 0 52px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 14px;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-  outline: 1px solid rgb(31 35 41 / 8%);
-  outline-offset: -1px;
-}
-
-.home-agent-avatar--teaching {
-  background: #e9f2ff;
-  color: #245a9a;
-}
-
-.home-agent-avatar--communication {
-  background: #e7f6f2;
-  color: #17685a;
-}
-
-.home-agent-avatar--observation {
-  background: #fff3dc;
-  color: #8a5a12;
-}
-
-.home-agent-avatar--family {
-  background: #f7ece8;
-  color: #8a4936;
-}
-
-.home-agent-avatar--wellbeing {
-  background: #f0edf9;
-  color: #5f4b8b;
-}
-
 .home-agent-card__titles {
   display: flex;
   min-width: 0;
@@ -1114,14 +1067,6 @@ onMounted(() => {
   align-items: flex-start;
   gap: 14px;
   padding-right: 28px;
-}
-
-.home-agent-avatar--large {
-  width: 64px;
-  height: 64px;
-  flex-basis: 64px;
-  border-radius: 16px;
-  font-size: 24px;
 }
 
 .home-agent-detail__identity {

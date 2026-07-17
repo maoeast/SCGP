@@ -143,7 +143,7 @@ export const AI_TOOLS: AiToolDef[] = [
     type: 'function',
     function: {
       name: 'get_ai_usage',
-      description: '获取本月 AI 用量统计（累计花费元数、assistant 消息条数、计费周期）。',
+      description: '获取本月 AI 用量统计（累计 token 数、assistant 消息条数、计费周期）。',
       parameters: { type: 'object', properties: {} },
     },
   },

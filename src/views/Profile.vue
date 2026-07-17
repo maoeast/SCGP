@@ -36,6 +36,19 @@
       </article>
     </section>
 
+    <section class="scgp-page-panel profile-ai-history">
+      <div class="scgp-content-toolbar">
+        <div class="scgp-content-toolbar__main">
+          <h2 class="scgp-content-toolbar__title">AI 聊天历史</h2>
+          <p class="scgp-content-toolbar__description">查看、续聊或删除当前账号与 AI 智能体的历史会话。</p>
+        </div>
+        <el-button type="primary" @click="router.push({ name: 'AiChatHistory' })">
+          <i class="fas fa-comments"></i>
+          查看聊天历史
+        </el-button>
+      </div>
+    </section>
+
     <section class="profile-grid">
       <section class="scgp-page-panel profile-panel">
         <div class="scgp-content-toolbar">
@@ -225,6 +238,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
@@ -232,6 +246,7 @@ import { UserAPI } from '@/database/api'
 
 const authStore = useAuthStore()
 const userAPI = new UserAPI()
+const router = useRouter()
 
 // 表单引用
 const profileFormRef = ref<FormInstance>()
@@ -453,6 +468,10 @@ onMounted(() => {
 
 .profile-panel {
   padding: 22px;
+}
+
+.profile-ai-history {
+  padding: 20px 22px;
 }
 
 .profile-panel--logs {

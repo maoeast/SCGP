@@ -136,6 +136,7 @@ declare global {
         success: boolean
         content?: string
         usage?: {
+          totalTokens: number
           promptTokens: number
           completionTokens: number
           promptCacheHitTokens: number

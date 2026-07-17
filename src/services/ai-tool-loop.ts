@@ -64,15 +64,19 @@ export async function runToolLoop(params: RunToolLoopParams): Promise<RunToolLoo
   }
   const toolSteps: ToolStep[] = []
   let lastTextContent = ''
+  let totalTokens = 0
   let promptTokens = 0
   let completionTokens = 0
   let promptCacheHitTokens = 0
   let promptCacheMissTokens = 0
 
-  const addUsage = (u: { promptTokens?: number; completionTokens?: number; promptCacheHitTokens?: number; promptCacheMissTokens?: number } | undefined) => {
+  const addUsage = (u: { totalTokens?: number; promptTokens?: number; completionTokens?: number; promptCacheHitTokens?: number; promptCacheMissTokens?: number } | undefined) => {
     if (!u) return
-    promptTokens += Number(u.promptTokens || 0)
-    completionTokens += Number(u.completionTokens || 0)
+    const prompt = Number(u.promptTokens || 0)
+    const completion = Number(u.completionTokens || 0)
+    promptTokens += prompt
+    completionTokens += completion
+    totalTokens += Number(u.totalTokens || prompt + completion)
     promptCacheHitTokens += Number(u.promptCacheHitTokens || 0)
     promptCacheMissTokens += Number(u.promptCacheMissTokens || 0)
   }
@@ -108,7 +112,7 @@ export async function runToolLoop(params: RunToolLoopParams): Promise<RunToolLoo
       // 无工具调用 → 本轮正文即最终答案
       return {
         content: lastTextContent,
-        usage: { promptTokens, completionTokens, promptCacheHitTokens, promptCacheMissTokens },
+        usage: { totalTokens, promptTokens, completionTokens, promptCacheHitTokens, promptCacheMissTokens },
         toolSteps,
       }
     }
@@ -134,7 +138,7 @@ export async function runToolLoop(params: RunToolLoopParams): Promise<RunToolLoo
   // 达上限仍有 tool_calls：返回最后已知正文 + 提示
   return {
     content: lastTextContent + '\n\n（已达工具调用轮次上限，以上为当前可提供的信息。）',
-    usage: { promptTokens, completionTokens, promptCacheHitTokens, promptCacheMissTokens },
+    usage: { totalTokens, promptTokens, completionTokens, promptCacheHitTokens, promptCacheMissTokens },
     toolSteps,
   }
 }

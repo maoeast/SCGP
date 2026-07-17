@@ -33,6 +33,7 @@ const System = () => import('@/views/System.vue')
 const Activation = () => import('@/views/Activation.vue')
 const StudentDetail = () => import('@/views/StudentDetail.vue')
 const Profile = () => import('@/views/Profile.vue')
+const AiChatHistory = () => import('@/views/AiChatHistory.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 const SQLTest = () => import('@/views/SQLTest.vue')
 const WeeFIMTest = () => import('@/views/WeeFIMTest.vue')
@@ -266,6 +267,16 @@ const router = createRouter({
           component: Profile,
           meta: {
             title: '个人资料',
+            hideInMenu: true,
+            roles: ['admin', 'teacher']
+          }
+        },
+        {
+          path: 'profile/ai-chat-history',
+          name: 'AiChatHistory',
+          component: AiChatHistory,
+          meta: {
+            title: '我的 AI 会话',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }
