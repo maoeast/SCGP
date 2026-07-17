@@ -85,6 +85,13 @@ if (isDev) {
   app.commandLine.appendSwitch('allow-insecure-localhost', 'true')
 }
 
+const testUserDataDir = process.env.SCGP_TEST_USER_DATA_DIR
+if (isDev && testUserDataDir) {
+  const resolvedTestUserDataDir = path.resolve(testUserDataDir)
+  app.setPath('userData', resolvedTestUserDataDir)
+  console.log('[Electron] 使用隔离 userData 目录:', resolvedTestUserDataDir)
+}
+
 function probeDevServer(urlString) {
   return new Promise((resolve, reject) => {
     const url = new URL(urlString)

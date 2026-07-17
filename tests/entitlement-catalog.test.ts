@@ -28,8 +28,8 @@ assert.deepEqual(mixedResolution.entitlementDebugOrigins.fine_motor, [
   'direct_license_entitlement',
 ])
 
-assert.equal(ENTITLEMENT_DEFINITIONS.cognitive.status, 'placeholder')
-assert.equal(ENTITLEMENT_DEFINITIONS.cognitive.uiStrategy, 'lock')
+assert.equal(ENTITLEMENT_DEFINITIONS.cognitive.status, 'active')
+assert.equal(ENTITLEMENT_DEFINITIONS.cognitive.uiStrategy, 'hide')
 
 const unknownResolution = resolveEffectiveEntitlementDetails(['unknown_bundle', 'cognitive'])
 assert.deepEqual(unknownResolution.effectiveEntitlements, ['cognitive'])

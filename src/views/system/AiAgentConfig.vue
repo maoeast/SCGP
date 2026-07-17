@@ -95,8 +95,9 @@ const activeModelCode = computed({
 async function saveConfig() {
   saving.value = true
   try {
+    const apiKeyPlain = configForm.apiKeyInput.trim()
     await aiStore.saveProviderConfig({
-      apiKeyPlain: configForm.apiKeyInput, // 空串=不变（store 内部处理），非空=更新
+      ...(apiKeyPlain ? { apiKeyPlain } : {}),
       baseUrl: configForm.baseUrl.trim(),
       defaultModel: configForm.defaultModel.trim(),
       providerEnabled: configForm.providerEnabled,

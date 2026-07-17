@@ -57,6 +57,22 @@ npm run dev
 npm run type-check
 ```
 
+### 核心验证门禁
+
+```bash
+npm run verify:core
+```
+
+用于功能批次提交前的基础回归，包含类型检查、评估/报告/授权/训练路由/资源中心/更新配置/AI 内置智能体与技能库等核心契约测试。
+
+### 发布验证门禁
+
+```bash
+npm run verify:release
+```
+
+用于发布候选前验证，在 `verify:core` 通过后继续执行前端生产构建。
+
 ### 导入物理器材资源草稿
 
 ```bash

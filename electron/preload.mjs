@@ -90,6 +90,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   ttsSynthesize: (text, options) => ipcRenderer.invoke('tts:synthesize', { text, ...options }),
 
   // ========== AI 智能体（DeepSeek 代理）==========
+  protectAiApiKey: (plainKey) => ipcRenderer.invoke('ai:protect-api-key', plainKey),
+  migrateAiApiKey: (encKey) => ipcRenderer.invoke('ai:migrate-api-key', encKey),
   // payload: { encKey(密文), messages, systemPrompt, model, baseUrl }；明文 Key 不进渲染进程
   aiChat: (payload) => ipcRenderer.invoke('ai:chat', payload),
 
@@ -204,6 +206,8 @@ if (!process.contextIsolated) {
     unpackResourceArchive: (zipBytes) => Promise.resolve({ success: false, error: 'mock', restored: 0, failed: [] }),
     walkDir: (relSubpath) => Promise.resolve({ success: true, files: [] }),
     // AI 智能体 API 模拟
+    protectAiApiKey: (plainKey) => Promise.resolve({ success: false, error: 'mock', errorKind: 'mock' }),
+    migrateAiApiKey: (encKey) => Promise.resolve({ success: true, keyEnc: encKey || '', migrated: false }),
     aiChat: (payload) => Promise.resolve({ success: false, error: 'mock', errorKind: 'mock' }),
     // Phase 4 文档抽取模拟
     extractDocumentText: (filePath) => Promise.resolve({ success: false, error: 'mock' })

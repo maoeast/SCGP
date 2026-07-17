@@ -8,9 +8,8 @@ import { isBuiltinAgentCode } from '@/data/ai-agent-presets'
  * 负责 ai_agent / ai_chat_session / ai_chat_message 三张表的 CRUD，
  * 以及多 provider 配置（ai_provider 表 + system_config 全局 KV）。
  *
- * 安全边界：本文件只存/读 API Key 的【密文】（crypto.ts encryptData 加密），
- * 明文 Key 永远不进渲染进程——解密在 Electron Main 进程的 ai handler 里完成。
- * 详见 A4 AI 智能体接入计划。
+ * 安全边界：本文件只存/读 API Key 的【密文】（Electron Main safeStorage 加密）。
+ * 明文 Key 只经 preload IPC 送入 Main 保护；对话时也只在 Electron Main 解密使用。
  */
 
 // ===== DeepSeek 估费常量（单位：元 / 百万 token）=====

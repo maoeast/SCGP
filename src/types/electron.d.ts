@@ -241,6 +241,10 @@ export interface ElectronAPI {
    * AI 智能体对话（多 provider 代理；主进程解密 Key 后调用）
    * @param payload - encKey 为密文，由渲染进程从 ai_provider 行读出后传入
    */
+  protectAiApiKey: (plainKey: string) => Promise<AISecretProtectResult>
+
+  migrateAiApiKey: (encKey: string) => Promise<AISecretMigrateResult>
+
   aiChat: (payload: {
     encKey: string
     messages: Array<
@@ -404,6 +408,17 @@ export interface TTSResult {
   success: boolean
   audioBase64?: string
   error?: string
+}
+
+export interface AISecretProtectResult {
+  success: boolean
+  keyEnc?: string
+  error?: string
+  errorKind?: string
+}
+
+export interface AISecretMigrateResult extends AISecretProtectResult {
+  migrated?: boolean
 }
 
 export type MediaPermissionKind = 'microphone' | 'camera'

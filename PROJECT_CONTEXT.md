@@ -1620,3 +1620,16 @@
 
 - 聊天抽屉仅查询最近 6 条会话；完整的「我的 AI 会话」由个人资料入口进入，支持智能体、日期范围、关键词筛选及分页。
 - 个人历史的读取、查看消息、继续对话、删除均经 `user_id` 约束；管理员全局会话审计仍在系统管理页，不能复用个人历史查询。
+
+## 75. 2026-07-18 收口 C01-C04：报告中心、验证门禁、备份加密与恢复语义
+
+- C01-C02 已完成：15 个评估量表报告中心 catalog 与核心验证门禁已落地，`verify:core` / `verify:release` 成为当前回归入口。
+- C03-C04 已完成并通过桌面 UAT：新备份为 v4 口令信封（PBKDF2-SHA-256 + AES-256-GCM），资源归档在外层口令信封内；旧 v1-v3 备份只读兼容。
+- 备份恢复当前语义：`importData()` 返回结构化结果，DB 恢复成功后资源文件失败不回滚 DB，但 UI 必须显示部分成功 / 资源失败并引导资源健康检查。
+- 下一批固定为 C05：AI provider API Key 改为 Electron Main `safeStorage` 保护，备份保留 provider 配置但不得携带可跨机解密的 Key。
+
+## 76. 2026-07-18 收口 C05：AI provider Key safeStorage 迁移
+
+- C05 已完成并通过桌面 UAT：AI provider API Key 新密文格式为 `safe:v1:<base64>`，由 Electron Main `safeStorage` 加解密；renderer 不再生成 provider Key 密文。
+- 旧 AES provider Key 只允许在 `electron/handlers/ai-secrets.mjs` 迁移入口只读兼容，后续 `1.0.8` 清理；正常聊天发送链不再使用旧固定 secret。
+- v4 备份导出会清空副本中的 `ai_provider.api_key_enc` 并写入 `providerSecretsIncluded: false`；恢复后必须提示重新配置模型服务 Key。

@@ -64,10 +64,25 @@
                 <div v-if="backupInfo" class="system-backup-info">
                   <h4>备份文件信息</h4>
                   <ul>
+                    <li>备份版本：{{ backupInfo.backupVersion }}</li>
                     <li>记录数：{{ backupInfo.totalRecords }}</li>
                     <li>表数量：{{ backupInfo.tableCount }}</li>
                     <li>系统：{{ backupInfo.systemName }}</li>
                   </ul>
+                  <el-alert
+                    v-if="backupInfo.requiresUpgrade"
+                    title="这是旧版备份。恢复成功后请立即重新导出 v4 口令备份。"
+                    type="warning"
+                    show-icon
+                    :closable="false"
+                  />
+                  <el-alert
+                    v-if="backupInfo.providerSecretsIncluded === false"
+                    title="备份不包含 AI 模型服务 API Key。恢复后请在 AI 智能体设置中重新配置。"
+                    type="info"
+                    show-icon
+                    :closable="false"
+                  />
                 </div>
 
                 <div class="scgp-warning-block">
@@ -265,7 +280,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { useRoute } from 'vue-router'
 import { getEntitlementDefinition } from '@/features/entitlements/entitlement-catalog'
-import { backupManager } from '@/utils/backup'
+import { backupManager, type BackupInfo } from '@/utils/backup'
+import { BACKUP_MIN_PASSWORD_LENGTH } from '@/utils/backup-crypto'
+import type { BackupImportResult, ResourceRestoreResult } from '@/utils/backup-restore-result'
 import UserManagement from './system/UserManagement.vue'
 import SystemSettings from './system/SystemSettings.vue'
 import ResourceHealthCheck from './system/ResourceHealthCheck.vue'
@@ -281,7 +298,8 @@ const activeTab = ref((route.query.tab as string) || 'users')
 const isBackingUp = ref(false)
 const isRestoring = ref(false)
 const selectedFile = ref<File | null>(null)
-const backupInfo = ref<any>(null)
+const backupInfo = ref<BackupInfo | null>(null)
+const backupPassword = ref('')
 const fileInput = ref<HTMLInputElement>()
 
 const systemName = ref('')
@@ -345,12 +363,22 @@ const entitlementDebugRows = computed(() =>
 
 const handleBackup = async () => {
   try {
+    const password = await promptBackupPassword('请设置本次备份口令', true)
+    const confirmation = await promptBackupPassword('请再次输入备份口令', true)
+    if (password !== confirmation) {
+      ElMessage.error('两次输入的备份口令不一致')
+      return
+    }
+
     isBackingUp.value = true
-    await backupManager.downloadBackup()
+    await backupManager.downloadBackup(password)
     ElMessage.success('备份成功')
   } catch (error) {
+    if (isUserCancel(error)) {
+      return
+    }
     console.error('备份失败:', error)
-    ElMessage.error('备份失败，请重试')
+    ElMessage.error(`备份失败：${(error as Error).message || '请重试'}`)
   } finally {
     isBackingUp.value = false
   }
@@ -372,11 +400,20 @@ const handleFileSelect = async (event: Event) => {
 
   try {
     const content = await backupManager.loadBackupFromFile(file)
-    backupInfo.value = backupManager.getBackupInfo(content)
+    const password = await promptBackupPassword('请输入备份口令以读取文件信息')
+    backupPassword.value = password
+    backupInfo.value = await backupManager.getBackupInfo(content, password)
   } catch (error) {
+    if (isUserCancel(error)) {
+      selectedFile.value = null
+      backupInfo.value = null
+      backupPassword.value = ''
+      return
+    }
     console.error('读取备份文件失败:', error)
     backupInfo.value = null
-    ElMessage.error('备份文件格式错误')
+    backupPassword.value = ''
+    ElMessage.error(`读取备份文件失败：${(error as Error).message || '备份文件格式错误'}`)
   }
 }
 
@@ -392,16 +429,88 @@ const handleRestore = async () => {
   try {
     isRestoring.value = true
     const content = await backupManager.loadBackupFromFile(selectedFile.value)
-    await backupManager.importData(content, { overwrite: true })
-    ElMessage.success('数据恢复成功')
+    const password = backupPassword.value || (await promptBackupPassword('请输入备份口令以恢复数据'))
+    const result = await backupManager.importData(content, password, { overwrite: true })
+    showRestoreResult(result)
     selectedFile.value = null
     backupInfo.value = null
+    backupPassword.value = ''
   } catch (error) {
+    if (isUserCancel(error)) {
+      return
+    }
     console.error('恢复失败:', error)
     ElMessage.error(`恢复失败：${(error as Error).message}`)
   } finally {
     isRestoring.value = false
   }
+}
+
+const promptBackupPassword = async (title: string, requireStrong = false): Promise<string> => {
+  const result = await ElMessageBox.prompt('', title, {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    inputType: 'password',
+    inputPlaceholder: requireStrong ? `至少 ${BACKUP_MIN_PASSWORD_LENGTH} 个字符` : '请输入备份口令',
+    inputValidator: (value: string) => {
+      if (!value) return '请输入备份口令'
+      if (requireStrong && value.length < BACKUP_MIN_PASSWORD_LENGTH) {
+        return `备份口令至少需要 ${BACKUP_MIN_PASSWORD_LENGTH} 个字符`
+      }
+      return true
+    },
+  }) as { value: string }
+
+  return String(result.value)
+}
+
+const getResourceRestoreMessage = (resources: ResourceRestoreResult): string => {
+  if (resources.status === 'restored') {
+    return `资源文件已恢复：${resources.restored} 个。`
+  }
+
+  if (resources.status === 'partial') {
+    return `资源文件部分恢复：${resources.restored} 个成功，${resources.failed.length} 个失败。请进入资源健康检查核对缺失文件。`
+  }
+
+  if (resources.status === 'failed') {
+    const firstError = resources.failed[0]?.error || '未知错误'
+    return `数据已恢复，但资源文件恢复失败：${firstError}。请进入资源健康检查核对缺失文件。`
+  }
+
+  if (resources.reason === 'no_resource_archive') {
+    return '备份中不包含资源归档，仅恢复了数据库。'
+  }
+
+  if (resources.reason === 'legacy_without_resource_archive') {
+    return '旧版备份不包含资源归档，仅恢复了数据库。'
+  }
+
+  return '当前环境未执行资源文件恢复，仅恢复了数据库。'
+}
+
+const showRestoreResult = (result: BackupImportResult) => {
+  const resourceMessage = getResourceRestoreMessage(result.resources)
+  const upgradeMessage = result.requiresUpgrade ? '旧版备份已恢复，请立即重新导出 v4 口令备份。' : ''
+  const providerSecretMessage =
+    result.providerSecretsIncluded === false ? 'AI 模型服务 API Key 未随备份恢复，请重新配置。' : ''
+  const message = [resourceMessage, upgradeMessage, providerSecretMessage].filter(Boolean).join(' ')
+
+  if (result.resources.status === 'restored' && !result.requiresUpgrade) {
+    ElMessage.success(`数据恢复成功。${message}`)
+    return
+  }
+
+  if (result.resources.status === 'partial' || result.resources.status === 'failed' || result.requiresUpgrade) {
+    ElMessage.warning(`数据已恢复。${message}`)
+    return
+  }
+
+  ElMessage.info(`数据已恢复。${message}`)
+}
+
+const isUserCancel = (error: unknown): boolean => {
+  return error === 'cancel' || error === 'close' || (error as { action?: string })?.action === 'cancel'
 }
 
 const copyMachineCode = async () => {

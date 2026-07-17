@@ -56,6 +56,7 @@
 
 ### `docs/plans` — 阶段实施计划与执行路线
 
+- [2026-07-18-project-closeout-execution-plan.md](./plans/2026-07-18-project-closeout-execution-plan.md) — 基于当前代码事实的未完成项收口顺序、批次边界与验收门禁
 - [2026-03-13-scgp-executable-roadmap.md](./plans/2026-03-13-scgp-executable-roadmap.md)
 - [2026-03-12-emotional-module-implementation-plan.md](./plans/2026-03-12-emotional-module-implementation-plan.md)
 - [2026-04-08-care-scene-immersive-execution-plan.md](./plans/2026-04-08-care-scene-immersive-execution-plan.md)

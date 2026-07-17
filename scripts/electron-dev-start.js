@@ -24,6 +24,26 @@ let viteProcess = null
 let electronProcess = null
 let isShuttingDown = false
 
+function parseArgs(argv) {
+  const options = {
+    userDataDir: process.env.SCGP_TEST_USER_DATA_DIR || '',
+  }
+
+  for (let index = 0; index < argv.length; index++) {
+    const arg = argv[index]
+    if (arg === '--user-data-dir') {
+      options.userDataDir = argv[index + 1] || ''
+      index++
+    } else if (arg.startsWith('--user-data-dir=')) {
+      options.userDataDir = arg.slice('--user-data-dir='.length)
+    }
+  }
+
+  return options
+}
+
+const cliOptions = parseArgs(process.argv.slice(2))
+
 const colors = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
@@ -200,12 +220,20 @@ function spawnElectronProcess() {
   colorLog(`启动 Electron，并注入开发地址: ${DEV_SERVER_URL}`, 'cyan')
 
   const electronCliPath = resolveProjectCliPath('electron', 'cli.js')
+  const testUserDataDir = cliOptions.userDataDir
+    ? path.resolve(ROOT_DIR, cliOptions.userDataDir)
+    : ''
+
+  if (testUserDataDir) {
+    colorLog(`使用隔离 userData 目录: ${testUserDataDir}`, 'yellow')
+  }
 
   electronProcess = spawn(process.execPath, [electronCliPath, '.'], {
     cwd: ROOT_DIR,
     env: {
       ...process.env,
       SCGP_DEV_SERVER_URL: DEV_SERVER_URL,
+      ...(testUserDataDir ? { SCGP_TEST_USER_DATA_DIR: testUserDataDir } : {}),
     },
     stdio: 'inherit',
   })

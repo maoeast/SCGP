@@ -105,10 +105,8 @@
             :key="item.key"
             :class="['reports-type-card', `reports-type-card--${item.tone}`]"
           >
-            <span v-if="item.isPlaceholder" class="reports-type-card__badge">占位</span>
             <span class="reports-type-card__name">{{ item.label }}</span>
             <strong class="reports-type-card__count">{{ item.value }}</strong>
-            <span v-if="item.isPlaceholder" class="reports-type-card__meta">评估入口已占位，报告链路未开发</span>
           </article>
         </div>
       </article>
@@ -221,10 +219,14 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { RefreshRight, Search } from '@element-plus/icons-vue'
 import { useStudentStore } from '@/stores/student'
 import { ReportAPI } from '@/database/api'
+import { buildAssessmentReportRoute } from '@/features/assessment/report-routes'
 import {
-  buildAssessmentReportRoute,
-  type AssessmentReportScaleType,
-} from '@/features/assessment/report-routes'
+  ASSESSMENT_REPORT_CATALOG,
+  deriveAssessmentReportCounts,
+  getAssessmentReportCatalogItem,
+  isAssessmentReportScaleType,
+  type AssessmentReportCounts,
+} from '@/features/assessment/report-center-catalog'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 
 interface ReportTypeOption {
@@ -234,35 +236,9 @@ interface ReportTypeOption {
   tone: 'blue' | 'teal' | 'amber' | 'coral'
 }
 
-type AssessmentCardTone = 'blue' | 'teal' | 'amber' | 'coral' | 'placeholder'
-type AssessmentStatisticsKey =
-  | 'sm_count'
-  | 'weefim_count'
-  | 'csirs_count'
-  | 'conners_psq_count'
-  | 'conners_trs_count'
-  | 'sdq_count'
-  | 'srs2_count'
-  | 'cbcl_count'
-  | 'cnbsr2016_count'
-  | 'fine_motor_count'
-  | 'gmfm_88_count'
-  | 'tgmd_3_count'
-
 interface ReportStatistics {
   total: number
-  sm_count: number
-  weefim_count: number
-  csirs_count: number
-  conners_psq_count: number
-  conners_trs_count: number
-  sdq_count: number
-  srs2_count: number
-  cbcl_count: number
-  cnbsr2016_count: number
-  fine_motor_count: number
-  gmfm_88_count: number
-  tgmd_3_count: number
+  assessment: AssessmentReportCounts
   emotional_count: number
   iep_count: number
   training_count: number
@@ -271,18 +247,12 @@ interface ReportStatistics {
 type QuickRangeKey = 'all' | 'week' | 'month' | ''
 
 const REPORT_TYPE_OPTIONS: ReportTypeOption[] = [
-  { value: 'sm', label: 'S-M 评估报告', category: 'assessment', tone: 'blue' },
-  { value: 'weefim', label: 'WeeFIM 评估报告', category: 'assessment', tone: 'teal' },
-  { value: 'csirs', label: 'CSIRS 评估报告', category: 'assessment', tone: 'coral' },
-  { value: 'conners-psq', label: 'Conners PSQ 报告', category: 'assessment', tone: 'amber' },
-  { value: 'conners-trs', label: 'Conners TRS 报告', category: 'assessment', tone: 'blue' },
-  { value: 'sdq', label: 'SDQ 评估报告', category: 'assessment', tone: 'amber' },
-  { value: 'srs2', label: 'SRS-2 评估报告', category: 'assessment', tone: 'teal' },
-  { value: 'cbcl', label: 'CBCL 评估报告', category: 'assessment', tone: 'coral' },
-  { value: 'cnbsr2016', label: '儿心量表Ⅱ评估报告', category: 'assessment', tone: 'teal' },
-  { value: 'fine_motor', label: '小肌肉功能发展评估报告', category: 'assessment', tone: 'blue' },
-  { value: 'gmfm_88', label: 'GMFM-88 评估报告', category: 'assessment', tone: 'coral' },
-  { value: 'tgmd_3', label: 'TGMD-3 评估报告', category: 'assessment', tone: 'amber' },
+  ...ASSESSMENT_REPORT_CATALOG.map((item) => ({
+    value: item.code,
+    label: item.selectLabel,
+    category: 'assessment' as const,
+    tone: item.tone,
+  })),
   { value: 'emotional', label: '情绪行为调节模块报告', category: 'intervention', tone: 'amber' },
   { value: 'iep', label: 'IEP 报告', category: 'intervention', tone: 'blue' },
   { value: 'training', label: '训练报告', category: 'intervention', tone: 'teal' },
@@ -293,27 +263,6 @@ const QUICK_RANGE_OPTIONS = [
   { key: 'week', label: '本周' },
   { key: 'month', label: '本月' },
 ] as const satisfies ReadonlyArray<{ key: Exclude<QuickRangeKey, ''>; label: string }>
-
-const ASSESSMENT_CARD_DEFINITIONS: Array<{
-  key: string
-  label: string
-  tone: AssessmentCardTone
-  valueKey?: AssessmentStatisticsKey
-  isPlaceholder?: boolean
-}> = [
-  { key: 'sm', label: 'S-M', tone: 'blue', valueKey: 'sm_count' },
-  { key: 'weefim', label: 'WeeFIM', tone: 'teal', valueKey: 'weefim_count' },
-  { key: 'csirs', label: 'CSIRS', tone: 'coral', valueKey: 'csirs_count' },
-  { key: 'conners-psq', label: 'Conners PSQ', tone: 'amber', valueKey: 'conners_psq_count' },
-  { key: 'conners-trs', label: 'Conners TRS', tone: 'blue', valueKey: 'conners_trs_count' },
-  { key: 'sdq', label: 'SDQ', tone: 'amber', valueKey: 'sdq_count' },
-  { key: 'srs2', label: 'SRS-2', tone: 'teal', valueKey: 'srs2_count' },
-  { key: 'cbcl', label: 'CBCL', tone: 'coral', valueKey: 'cbcl_count' },
-  { key: 'cnbsr2016', label: '儿心量表Ⅱ', tone: 'teal', valueKey: 'cnbsr2016_count' },
-  { key: 'fine_motor', label: 'FMDA', tone: 'blue', valueKey: 'fine_motor_count' },
-  { key: 'gmfm_88', label: 'GMFM-88', tone: 'coral', valueKey: 'gmfm_88_count' },
-  { key: 'tgmd_3', label: 'TGMD-3', tone: 'amber', valueKey: 'tgmd_3_count' },
-]
 
 const router = useRouter()
 const studentStore = useStudentStore()
@@ -343,18 +292,7 @@ const pagedReportList = computed(() => {
   return reportList.value.slice(start, start + pageSize.value)
 })
 const assessmentReportCount = computed(() =>
-  statistics.value.sm_count
-  + statistics.value.weefim_count
-  + statistics.value.csirs_count
-  + statistics.value.conners_psq_count
-  + statistics.value.conners_trs_count
-  + statistics.value.sdq_count
-  + statistics.value.srs2_count
-  + statistics.value.cbcl_count
-  + statistics.value.cnbsr2016_count
-  + statistics.value.fine_motor_count
-  + statistics.value.gmfm_88_count
-  + statistics.value.tgmd_3_count,
+  Object.values(statistics.value.assessment).reduce((total, count) => total + count, 0),
 )
 const interventionReportCount = computed(() =>
   statistics.value.emotional_count
@@ -363,9 +301,11 @@ const interventionReportCount = computed(() =>
 )
 
 const assessmentTypeCards = computed(() =>
-  ASSESSMENT_CARD_DEFINITIONS.map((item) => ({
-    ...item,
-    value: item.valueKey ? statistics.value[item.valueKey] : 0,
+  ASSESSMENT_REPORT_CATALOG.map((item) => ({
+    key: item.code,
+    label: item.cardLabel,
+    tone: item.tone,
+    value: statistics.value.assessment[item.code],
   })),
 )
 
@@ -377,38 +317,14 @@ const interventionTypeCards = computed(() => [
 
 function deriveReportStatistics(records: any[]): ReportStatistics {
   const next: ReportStatistics = {
-    total: 0,
-    sm_count: 0,
-    weefim_count: 0,
-    csirs_count: 0,
-    conners_psq_count: 0,
-    conners_trs_count: 0,
-    sdq_count: 0,
-    srs2_count: 0,
-    cbcl_count: 0,
-    cnbsr2016_count: 0,
-    fine_motor_count: 0,
-    gmfm_88_count: 0,
-    tgmd_3_count: 0,
+    total: records.length,
+    assessment: deriveAssessmentReportCounts(records),
     emotional_count: 0,
     iep_count: 0,
     training_count: 0,
   }
 
   records.forEach((row) => {
-    next.total += 1
-    if (row.report_type === 'sm') next.sm_count += 1
-    if (row.report_type === 'weefim') next.weefim_count += 1
-    if (row.report_type === 'csirs') next.csirs_count += 1
-    if (row.report_type === 'conners-psq') next.conners_psq_count += 1
-    if (row.report_type === 'conners-trs') next.conners_trs_count += 1
-    if (row.report_type === 'sdq') next.sdq_count += 1
-    if (row.report_type === 'srs2') next.srs2_count += 1
-    if (row.report_type === 'cbcl') next.cbcl_count += 1
-    if (row.report_type === 'cnbsr2016') next.cnbsr2016_count += 1
-    if (row.report_type === 'fine_motor') next.fine_motor_count += 1
-    if (row.report_type === 'gmfm_88') next.gmfm_88_count += 1
-    if (row.report_type === 'tgmd_3') next.tgmd_3_count += 1
     if (row.report_type === 'emotional') next.emotional_count += 1
     if (row.report_type === 'iep') next.iep_count += 1
     if (row.report_type === 'training') next.training_count += 1
@@ -418,19 +334,11 @@ function deriveReportStatistics(records: any[]): ReportStatistics {
 }
 
 function getReportTypeTagType(type: string) {
+  if (isAssessmentReportScaleType(type)) {
+    return getAssessmentReportCatalogItem(type).tagType
+  }
+
   const typeMap: Record<string, 'warning' | 'success' | 'danger' | 'primary' | 'info'> = {
-    sm: 'warning',
-    weefim: 'success',
-    csirs: 'danger',
-    'conners-psq': 'primary',
-    'conners-trs': 'info',
-    sdq: 'warning',
-    srs2: 'primary',
-    cbcl: 'success',
-    cnbsr2016: 'success',
-    fine_motor: 'primary',
-    gmfm_88: 'danger',
-    tgmd_3: 'warning',
     emotional: 'warning',
     iep: 'danger',
     training: 'primary',
@@ -559,24 +467,9 @@ function resetFilters() {
 }
 
 function viewReport(report: any) {
-  const assessmentReportTypes = new Set<AssessmentReportScaleType>([
-    'sm',
-    'weefim',
-    'csirs',
-    'conners-psq',
-    'conners-trs',
-    'sdq',
-    'srs2',
-    'cbcl',
-    'cnbsr2016',
-    'fine_motor',
-    'gmfm_88',
-    'tgmd_3',
-  ])
-
-  if (assessmentReportTypes.has(report.report_type as AssessmentReportScaleType)) {
+  if (isAssessmentReportScaleType(report.report_type)) {
     router.push(buildAssessmentReportRoute({
-      scaleType: report.report_type as AssessmentReportScaleType,
+      scaleType: report.report_type,
       assessId: report.assess_id,
       studentId: report.student_id,
     }))
@@ -826,28 +719,6 @@ onMounted(async () => {
   line-height: 1;
 }
 
-.reports-type-card__badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  display: inline-flex;
-  align-items: center;
-  min-height: 20px;
-  padding: 0 8px;
-  border-radius: 999px;
-  border: 1px solid #f2d39a;
-  background: #fff7e7;
-  color: #9a6507;
-  font-size: 11px;
-  line-height: 1;
-}
-
-.reports-type-card__meta {
-  color: var(--scgp-subtle);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
 .reports-type-card--blue {
   background: linear-gradient(180deg, #f4f8ff 0%, #ffffff 100%);
 }
@@ -862,12 +733,6 @@ onMounted(async () => {
 
 .reports-type-card--coral {
   background: linear-gradient(180deg, #fff4ee 0%, #ffffff 100%);
-}
-
-.reports-type-card--placeholder {
-  border-style: dashed;
-  border-color: #d7dee8;
-  background: linear-gradient(180deg, #fbfcfe 0%, #ffffff 100%);
 }
 
 .reports-table-panel {

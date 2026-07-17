@@ -7,35 +7,20 @@
  * - 流式（stream:true）：逐 chunk 经 event.sender.send('ai:chunk') 回推，末尾 'ai:done'/'ai:error'；
  *   使用 handler 自带 event.sender，无需 mainWindow 引用。
  *
- * 安全边界注记：AES_SECRET 与 src/utils/crypto.ts 同源（用户选定「可随备份跨机迁移」方案），
- * 属「防明文落盘」级别保护，不承诺防能读源码者。详见 A4 AI 智能体接入计划。
+ * 安全边界注记：C05 起 provider API Key 使用 Electron Main 的 safeStorage 保护；
+ * 旧 AES 密文仅由 ai-secrets.mjs 的迁移入口只读兼容。
  */
 
-import CryptoJS from 'crypto-js'
+import { safeStorage } from 'electron'
 import fs from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
-
-// 必须与 src/utils/crypto.ts 的 AES_SECRET 完全一致（渲染侧 encryptData 用同一常量加密 API Key）
-const AES_SECRET = 'SPED-PASSWORD-SECURITY-KEY-2025'
+import { registerAISecretHandlers } from './ai-secrets.mjs'
 
 const DEFAULT_BASE_URL = 'https://api.deepseek.com'
 const REQUEST_TIMEOUT_MS = 60_000
 
 // Phase 4：文档文本抽取上限（字符数）。超长截断，防 token 预算爆炸。
 const MAX_EXTRACT_CHARS = 20_000
-
-/** 复刻 src/utils/crypto.ts 的 decryptData（主进程为 .mjs，无法直接 import .ts） */
-function decryptData(encryptedData, key) {
-  try {
-    const useKey = key || AES_SECRET
-    const decrypted = CryptoJS.AES.decrypt(encryptedData, useKey)
-    const jsonStr = decrypted.toString(CryptoJS.enc.Utf8)
-    return JSON.parse(jsonStr)
-  } catch (error) {
-    console.error('[AI] API Key 解密失败:', error)
-    return null
-  }
-}
 
 /** 把 OpenAI 兼容 provider 返回的 usage 映射为前端统一结构 */
 function mapUsage(usage) {
@@ -265,6 +250,8 @@ async function extractXlsxText(bytes) {
 }
 
 export function initAIHandlers(ipcMain) {
+  const aiSecretService = registerAISecretHandlers(ipcMain, safeStorage)
+
   ipcMain.handle('ai:chat', async (event, payload) => {
     try {
       const { encKey, messages, systemPrompt, model, baseUrl, stream, supportsThinking, providerName, tools } = payload || {}
@@ -274,10 +261,15 @@ export function initAIHandlers(ipcMain) {
         return { success: false, errorKind: 'no_key', error: `尚未配置 ${label} 的 API Key，请先在系统设置中配置。` }
       }
 
-      const apiKey = decryptData(encKey)
-      if (!apiKey || typeof apiKey !== 'string') {
-        return { success: false, errorKind: 'decrypt_failed', error: 'API Key 解密失败，请重新配置。' }
+      const secretResult = aiSecretService.decryptApiKey(encKey)
+      if (!secretResult.success) {
+        return {
+          success: false,
+          errorKind: secretResult.errorKind || 'decrypt_failed',
+          error: secretResult.error || 'API Key 解密失败，请重新配置。',
+        }
       }
+      const apiKey = secretResult.apiKey
 
       const fullMessages = buildMessages(messages, systemPrompt)
       const hasUserMessage = fullMessages.some((m) => m.role === 'user' || m.role === 'assistant')

@@ -118,6 +118,19 @@ declare global {
       }>
 
       // AI 智能体（多 provider 代理；主进程解密 Key 后调用，渲染进程只传密文）
+      protectAiApiKey: (plainKey: string) => Promise<{
+        success: boolean
+        keyEnc?: string
+        error?: string
+        errorKind?: string
+      }>
+      migrateAiApiKey: (encKey: string) => Promise<{
+        success: boolean
+        keyEnc?: string
+        migrated?: boolean
+        error?: string
+        errorKind?: string
+      }>
       aiChat: (payload: {
         encKey: string
         messages: Array<

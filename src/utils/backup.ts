@@ -3,10 +3,26 @@ import { getDatabase } from '@/database/init'
 import { smQuestions } from '@/database/sm-questions'
 import { smAgeRanges, smRawToSQTable } from '@/database/sm-norms'
 import { weefimCategories, weefimQuestions } from '@/database/weefim-data'
-import { encryptData, decryptData, encryptBytes, decryptBytes, md5Bytes } from './crypto'
+import { md5Bytes } from './crypto'
+import {
+  base64ToBytes,
+  bytesToBase64,
+  decryptBackupEnvelope,
+  encryptBackupEnvelope,
+  looksLikeBackupCryptoEnvelope,
+} from './backup-crypto'
+import { redactBackupTableRows } from './backup-redaction'
+import { decryptLegacyBackupBytes, decryptLegacyBackupData } from './legacy-backup-crypto'
+import {
+  classifyResourceUnpackResult,
+  failedResourceRestore,
+  skippedResourceRestore,
+  type BackupImportResult,
+  type ResourceRestoreResult,
+} from './backup-restore-result'
 
-const BACKUP_VERSION = '3.0'
-const SUPPORTED_BACKUP_VERSIONS = new Set(['1.0', '2.0', BACKUP_VERSION])
+const BACKUP_VERSION = '4.0'
+const SUPPORTED_BACKUP_VERSIONS = new Set(['1.0', '2.0', '3.0', BACKUP_VERSION])
 const EXCLUDED_BACKUP_TABLES = new Set([
   'task_step_new',
   'train_plan_detail_new',
@@ -15,14 +31,15 @@ const EXCLUDED_BACKUP_TABLES = new Set([
 ])
 
 /**
- * 资源归档载荷（Phase 2）：托管资源文件的 zip 加密串 + 完整性元信息。
+ * 资源归档载荷：v4 由外层口令信封保护，payload 为 zip bytes base64；
+ * v1-v3 兼容路径中 payload 仍是旧固定密钥加密串。
  */
 export interface ResourceArchivePayload {
   version: number
   fileCount: number
   totalBytes: number
   checksum: string
-  /** encryptBytes 返回的 base64 密文（zip 归档加密串） */
+  /** v4: zip bytes base64；v1-v3: legacy encrypted bytes payload */
   payload: string
 }
 
@@ -35,6 +52,8 @@ export interface BackupData {
     totalRecords: number
     tableCount: number
     tableNames?: string[]
+    /** provider API Key 不进入备份；恢复后需重新配置模型服务 Key。 */
+    providerSecretsIncluded?: boolean
     /** 资源归档摘要（供 getBackupInfo 不解密 payload 即可展示） */
     resourceArchive?: {
       fileCount: number
@@ -43,6 +62,11 @@ export interface BackupData {
   }
   /** Phase 2+：托管资源文件 zip 归档（加密串）；2.0/1.0 备份无此字段 */
   resourceArchive?: ResourceArchivePayload
+}
+
+export type BackupInfo = BackupData['metadata'] & {
+  backupVersion: string
+  requiresUpgrade: boolean
 }
 
 export class BackupManager {
@@ -271,8 +295,34 @@ export class BackupManager {
     `)
   }
 
+  private async readBackupData(
+    payload: string,
+    password?: string,
+  ): Promise<{ backupData: BackupData; isLegacy: boolean }> {
+    let jsonStr: string
+    let isLegacy = false
+
+    if (looksLikeBackupCryptoEnvelope(payload)) {
+      jsonStr = await decryptBackupEnvelope(payload, password || '')
+    } else {
+      isLegacy = true
+      const decrypted = decryptLegacyBackupData(payload)
+      if (!decrypted) {
+        throw new Error('旧版备份文件格式错误或文件已损坏')
+      }
+      jsonStr = typeof decrypted === 'string' ? decrypted : JSON.stringify(decrypted)
+    }
+
+    const backupData = JSON.parse(jsonStr) as BackupData
+    if (!SUPPORTED_BACKUP_VERSIONS.has(backupData.version)) {
+      throw new Error(`不支持的备份版本: ${backupData.version}`)
+    }
+
+    return { backupData, isLegacy }
+  }
+
   // 导出数据
-  async exportData(includeSystemConfig = true, includeResources = true): Promise<string> {
+  async exportData(password: string, includeSystemConfig = true, includeResources = true): Promise<string> {
     try {
       const db = getDatabase()
       const tables: Record<string, any[]> = {}
@@ -293,7 +343,7 @@ export class BackupManager {
           }
 
           stmt.free()
-          tables[tableName] = tableData
+          tables[tableName] = redactBackupTableRows(tableName, tableData)
           totalRecords += tableData.length
         } catch (error) {
           console.warn(`导出表 ${tableName} 失败:`, error)
@@ -307,12 +357,13 @@ export class BackupManager {
         try {
           const packed = await window.electronAPI.packResourceArchive()
           if (packed.success && packed.zipBytes) {
+            const zipBytes = new Uint8Array(packed.zipBytes)
             resourceArchive = {
               version: 1,
               fileCount: packed.fileCount,
               totalBytes: packed.totalBytes,
-              checksum: md5Bytes(packed.zipBytes),
-              payload: encryptBytes(packed.zipBytes),
+              checksum: md5Bytes(zipBytes),
+              payload: bytesToBase64(zipBytes),
             }
           } else if (!packed.success) {
             console.warn('资源归档打包失败，备份将不含资源文件:', packed.error)
@@ -332,6 +383,7 @@ export class BackupManager {
           totalRecords,
           tableCount: Object.keys(tables).length,
           tableNames: backupTables,
+          providerSecretsIncluded: false,
           ...(resourceArchive
             ? {
                 resourceArchive: {
@@ -346,7 +398,7 @@ export class BackupManager {
 
       // 加密备份数据
       const jsonStr = JSON.stringify(backupData)
-      return encryptData(jsonStr)
+      return encryptBackupEnvelope(jsonStr, password)
     } catch (error) {
       console.error('导出数据失败:', error)
       throw error
@@ -356,27 +408,24 @@ export class BackupManager {
   // 导入数据
   async importData(
     encryptedData: string,
+    passwordOrOptions:
+      | string
+      | {
+          overwrite?: boolean
+          skipSystemConfig?: boolean
+        } = {},
     options: {
       overwrite?: boolean
       skipSystemConfig?: boolean
     } = {},
-  ): Promise<void> {
+  ): Promise<BackupImportResult> {
     try {
-      // 解密数据
-      const jsonStr = decryptData(encryptedData)
-      if (!jsonStr) {
-        throw new Error('备份文件格式错误或密码不正确')
-      }
-
-      const backupData: BackupData = JSON.parse(jsonStr)
-
-      // 验证版本兼容性
-      if (!SUPPORTED_BACKUP_VERSIONS.has(backupData.version)) {
-        throw new Error(`不支持的备份版本: ${backupData.version}`)
-      }
+      const password = typeof passwordOrOptions === 'string' ? passwordOrOptions : undefined
+      const importOptions = typeof passwordOrOptions === 'string' ? options : passwordOrOptions
+      const { backupData } = await this.readBackupData(encryptedData, password)
 
       const db = getDatabase()
-      const skipTables = options.skipSystemConfig ? ['system_config'] : []
+      const skipTables = importOptions.skipSystemConfig ? ['system_config'] : []
       const restoredEntries = Object.entries(backupData.tables).filter(([tableName]) => !skipTables.includes(tableName))
       const currentTables = new Set(this.getBackupTables(db))
       const missingTables = restoredEntries
@@ -394,7 +443,7 @@ export class BackupManager {
       try {
         db.run('BEGIN TRANSACTION')
 
-        if (options.overwrite) {
+        if (importOptions.overwrite) {
           for (const [tableName] of restoredEntries) {
             db.run(`DELETE FROM ${this.quoteIdentifier(tableName)}`)
           }
@@ -453,10 +502,23 @@ export class BackupManager {
       }
 
       // 恢复资源物理文件（Phase 2）：DB 已成功提交后执行，失败不阻断数据恢复
+      let resources: ResourceRestoreResult
       if (backupData.resourceArchive?.payload) {
-        await this.restoreResourceArchive(backupData.resourceArchive)
+        resources = await this.restoreResourceArchive(backupData.resourceArchive, backupData.version)
       } else if (backupData.version === '1.0' || backupData.version === '2.0') {
         console.warn(`v${backupData.version} 备份不含资源文件，恢复后图片/教具可能缺失`)
+        resources = skippedResourceRestore('legacy_without_resource_archive')
+      } else {
+        resources = skippedResourceRestore('no_resource_archive')
+      }
+
+      return {
+        database: 'restored',
+        resources,
+        backupVersion: backupData.version,
+        requiresUpgrade: backupData.version !== BACKUP_VERSION,
+        totalRecords: backupData.metadata.totalRecords,
+        providerSecretsIncluded: backupData.metadata.providerSecretsIncluded !== false,
       }
     } catch (error) {
       console.error('导入数据失败:', error)
@@ -465,19 +527,29 @@ export class BackupManager {
   }
 
   /**
-   * 恢复资源归档（Phase 2）：解密 payload → unpack IPC 写回 userData/resources。
-   * 解密/解包失败仅告警，不抛错（不让资源文件失败阻断 DB 数据恢复）。
+   * 恢复资源归档：解密 payload → unpack IPC 写回 userData/resources。
+   * DB 已提交后执行；失败不回滚 DB，但必须结构化返回给 UI。
    */
-  private async restoreResourceArchive(archive: ResourceArchivePayload): Promise<void> {
+  private async restoreResourceArchive(
+    archive: ResourceArchivePayload,
+    backupVersion: string,
+  ): Promise<ResourceRestoreResult> {
     if (!window.electronAPI?.unpackResourceArchive) {
       console.warn('当前环境不支持资源文件恢复，跳过（数据已恢复）')
-      return
+      return skippedResourceRestore('unsupported_environment')
     }
     try {
-      const zipBytes = decryptBytes(archive.payload)
+      const zipBytes =
+        backupVersion === BACKUP_VERSION
+          ? base64ToBytes(archive.payload)
+          : decryptLegacyBackupBytes(archive.payload)
       if (!zipBytes) {
         console.warn('资源归档解密失败，跳过资源恢复（数据已恢复）')
-        return
+        return failedResourceRestore('decrypt_failed', '资源归档解密失败')
+      }
+      if (archive.checksum && md5Bytes(zipBytes) !== archive.checksum) {
+        console.warn('资源归档校验失败，跳过资源恢复（数据已恢复）')
+        return failedResourceRestore('checksum_failed', '资源归档校验失败')
       }
       const result = await window.electronAPI.unpackResourceArchive(zipBytes)
       if (result.success) {
@@ -488,15 +560,20 @@ export class BackupManager {
       } else {
         console.warn('资源文件解包失败（数据已恢复）:', result.error)
       }
+      return classifyResourceUnpackResult(result)
     } catch (error) {
       console.warn('资源文件恢复异常，不阻断数据恢复:', error)
+      return failedResourceRestore(
+        'restore_exception',
+        error instanceof Error ? error.message : '资源文件恢复异常',
+      )
     }
   }
 
   // 下载备份文件
-  async downloadBackup(filename?: string): Promise<void> {
+  async downloadBackup(password: string, filename?: string): Promise<void> {
     try {
-      const encryptedData = await this.exportData()
+      const encryptedData = await this.exportData(password)
 
       // 创建 Blob
       const blob = new Blob([encryptedData], { type: 'application/json' })
@@ -542,18 +619,18 @@ export class BackupManager {
     })
   }
 
-  // 获取备份信息（不解密数据）
-  getBackupInfo(encryptedData: string): BackupData['metadata'] | null {
+  // 获取备份信息
+  async getBackupInfo(encryptedData: string, password: string): Promise<BackupInfo> {
     try {
-      const jsonStr = decryptData(encryptedData)
-      if (!jsonStr) {
-        return null
+      const { backupData } = await this.readBackupData(encryptedData, password)
+      return {
+        ...backupData.metadata,
+        backupVersion: backupData.version,
+        requiresUpgrade: backupData.version !== BACKUP_VERSION,
       }
-
-      const backupData: BackupData = JSON.parse(jsonStr)
-      return backupData.metadata
     } catch (error) {
-      return null
+      console.error('读取备份信息失败:', error)
+      throw error
     }
   }
 }

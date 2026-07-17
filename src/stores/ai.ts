@@ -16,7 +16,6 @@ import {
   type AiKnowledgeSkillInput,
   type DeepSeekUsage,
 } from '@/database/ai-api'
-import { encryptData } from '@/utils/crypto'
 import { useAuthStore } from '@/stores/auth'
 import { runToolLoop } from '@/services/ai-tool-loop'
 import { filterTools, type ToolStep } from '@/services/ai-tools'
@@ -71,11 +70,27 @@ export const useAiStore = defineStore('ai', () => {
     await initDatabase()
   }
 
+  async function migrateProviderSecrets(a = api()): Promise<void> {
+    const loadedProviders = a.listProviders()
+    for (const provider of loadedProviders) {
+      if (!provider.apiKeyEnc) continue
+      const result = await window.electronAPI.migrateAiApiKey(provider.apiKeyEnc)
+      if (!result.success) {
+        console.warn(`[aiStore] ${provider.code} API Key 迁移失败:`, result.error)
+        continue
+      }
+      if (result.keyEnc !== undefined && result.keyEnc !== provider.apiKeyEnc) {
+        a.saveProvider({ code: provider.code, apiKeyEnc: result.keyEnc })
+      }
+    }
+  }
+
   async function loadAll() {
     loading.value = true
     try {
       await ensureDb()
       const a = api()
+      await migrateProviderSecrets(a)
       agents.value = a.listAgents()
       providers.value = a.listProviders()
       providerModels.value = a.listProviderModels(a.getActiveProviderCode())
@@ -110,7 +125,7 @@ export const useAiStore = defineStore('ai', () => {
   /**
    * 保存配置：写入【当前 active provider】的 key/baseUrl/当前模型（per-provider 行），
    * 以及全局的 token budget/enabled/blockOnOverage（system_config KV）。
-   * - apiKeyPlain（明文）：非空加密存密文，空串清除 Key，不传保留；
+   * - apiKeyPlain（明文）：非空交 Main safeStorage 加密，空串清除 Key，不传保留；
    * - baseUrl/defaultModel 写入 active provider 行；
    * - monthlyBudgetTokens/blockOnOverage/enabled 写入全局 KV。
    */
@@ -134,7 +149,16 @@ export const useAiStore = defineStore('ai', () => {
       enabled?: boolean
     } = { code }
     if (input.apiKeyPlain !== undefined) {
-      providerInput.apiKeyEnc = input.apiKeyPlain.trim() ? encryptData(input.apiKeyPlain.trim()) : ''
+      const plainKey = input.apiKeyPlain.trim()
+      if (plainKey) {
+        const result = await window.electronAPI.protectAiApiKey(plainKey)
+        if (!result.success || !result.keyEnc) {
+          throw new Error(result.error || 'API Key 安全保存失败')
+        }
+        providerInput.apiKeyEnc = result.keyEnc
+      } else {
+        providerInput.apiKeyEnc = ''
+      }
     }
     if (input.baseUrl !== undefined) providerInput.baseUrl = input.baseUrl
     if (input.defaultModel !== undefined) providerInput.defaultModel = input.defaultModel

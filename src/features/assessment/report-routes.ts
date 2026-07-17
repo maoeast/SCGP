@@ -1,21 +1,7 @@
 import type { RouteLocationRaw } from 'vue-router'
+import type { AssessmentScaleCode } from '@/features/assessment/assessment-scale-catalog'
 
-export type AssessmentReportScaleType =
-  | 'sm'
-  | 'weefim'
-  | 'csirs'
-  | 'conners-psq'
-  | 'conners-trs'
-  | 'sdq'
-  | 'srs2'
-  | 'cbcl'
-  | 'cnbsr2016'
-  | 'fine_motor'
-  | 'gmfm_88'
-  | 'tgmd_3'
-  | 'brief'
-  | 'crt'
-  | 'cognitive_self'
+export type AssessmentReportScaleType = AssessmentScaleCode
 
 export interface AssessmentReportRouteInput {
   scaleType: AssessmentReportScaleType
