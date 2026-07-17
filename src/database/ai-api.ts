@@ -1,4 +1,6 @@
 import { DatabaseAPI } from './api'
+import { buildKnowledgeSkillContent } from '@/data/skills/knowledge-skill-payload'
+import { isBuiltinAgentCode } from '@/data/ai-agent-presets'
 
 /**
  * AI 智能体子系统数据访问层。
@@ -50,7 +52,7 @@ export interface AiAgent {
   updatedAt: string
 }
 
-/** 技能目录行（ai_skill 表）。Phase 5 本期只用 kind='tool'（映射 AI_TOOLS 工具）；knowledge 型留 5B。 */
+/** 技能目录行（ai_skill 表）。 */
 export interface AiSkill {
   id: number
   code: string
@@ -58,12 +60,40 @@ export interface AiSkill {
   description: string
   kind: 'tool' | 'knowledge'
   toolCode: string | null
-  knowledgePayload: Record<string, any> | null // 5B 用，本期恒 null
-  promptTemplate: string | null // 5B 用
+  knowledgePayload: Record<string, any> | null
+  promptTemplate: string | null
+  sourceType: 'tool' | 'builtin' | 'custom'
+  sourceUrl: string
+  license: string
+  evidenceLevel: string
+  riskLevel: string
+  audience: string
   enabled: boolean
   sort: number
   createdAt: string
   updatedAt: string
+}
+
+/** agent↔技能绑定；知识型技能可在每个 agent 上选择需要注入的 references。 */
+export interface AiAgentSkillBinding {
+  skillId: number
+  /** null = 全部引用（兼容 Phase 5B 旧绑定）；[] = 仅主体。 */
+  referenceIds?: string[] | null
+}
+
+export interface AiKnowledgeSkillInput {
+  id?: number
+  /** 自定义技能的短编号（仅字母、数字、连字符；存储时会加 knowledge_custom_ 前缀）。 */
+  code: string
+  name: string
+  description: string
+  body: string
+  sourceUrl?: string
+  license?: string
+  evidenceLevel?: string
+  riskLevel?: string
+  audience?: string
+  enabled?: boolean
 }
 
 /** 单个 provider 行（ai_provider 表） */
@@ -187,6 +217,8 @@ function rowToAgent(row: any): AiAgent {
 }
 
 function rowToSkill(row: any): AiSkill {
+  const sourceType =
+    row.kind === 'tool' ? 'tool' : row.source_type === 'custom' ? 'custom' : 'builtin'
   return {
     id: row.id,
     code: row.code,
@@ -196,6 +228,12 @@ function rowToSkill(row: any): AiSkill {
     toolCode: row.tool_code != null ? String(row.tool_code) : null,
     knowledgePayload: parseJsonObject(row.knowledge_payload),
     promptTemplate: row.prompt_template != null ? String(row.prompt_template) : null,
+    sourceType,
+    sourceUrl: row.source_url || '',
+    license: row.license || '',
+    evidenceLevel: row.evidence_level || '未标注',
+    riskLevel: row.risk_level || '常规',
+    audience: row.audience || '教师',
     enabled: Number(row.enabled) === 1,
     sort: Number(row.sort || 0),
     createdAt: row.created_at,
@@ -246,6 +284,9 @@ export class AIApi extends DatabaseAPI {
     enabled?: boolean
     sort?: number
   }): number {
+    if (isBuiltinAgentCode(input.code)) {
+      throw new Error('内置智能体由系统维护，只允许启用或停用')
+    }
     const skills = input.skillsConfig ? JSON.stringify(input.skillsConfig) : null
     const params = input.modelParams ? JSON.stringify(input.modelParams) : null
     const enabled = input.enabled === false ? 0 : 1
@@ -270,7 +311,17 @@ export class AIApi extends DatabaseAPI {
     return row ? Number(row.id) : this.getLastInsertId()
   }
 
+  /** 内置与自定义智能体统一使用的窄范围启停操作，不改提示词、排序或技能绑定。 */
+  setAgentEnabled(id: number, enabled: boolean): boolean {
+    return this.execute(
+      'UPDATE ai_agent SET enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [enabled ? 1 : 0, id],
+    ) > 0
+  }
+
   deleteAgent(id: number): boolean {
+    const row = this.queryOne('SELECT code FROM ai_agent WHERE id = ?', [id])
+    if (row && isBuiltinAgentCode(String(row.code))) return false
     // FK CASCADE 可能未启用（sql.js 默认 PRAGMA foreign_keys=OFF），显式清绑定防孤儿
     this.execute('DELETE FROM ai_agent_skill WHERE agent_id = ?', [id])
     return this.execute('DELETE FROM ai_agent WHERE id = ?', [id]) > 0
@@ -293,6 +344,21 @@ export class AIApi extends DatabaseAPI {
     ).map((r: any) => Number(r.skill_id))
   }
 
+  /** agent 已绑定技能及其引用选择；供编辑对话框回填。 */
+  getAgentSkillBindings(agentId: number): AiAgentSkillBinding[] {
+    return this.query(
+      `SELECT skill_id, config FROM ai_agent_skill WHERE agent_id = ? AND enabled = 1 ORDER BY sort ASC`,
+      [agentId],
+    ).map((row: any) => {
+      const config = parseJsonObject(row.config)
+      const rawReferenceIds = config?.referenceIds
+      const referenceIds = Array.isArray(rawReferenceIds)
+        ? rawReferenceIds.filter((id): id is string => typeof id === 'string')
+        : null
+      return { skillId: Number(row.skill_id), referenceIds }
+    })
+  }
+
   /** agent 可用工具的 tool_code 列表（sendChat 过滤 AI_TOOLS 用） */
   getAgentToolCodes(agentId: number): string[] {
     return this.query(
@@ -310,14 +376,20 @@ export class AIApi extends DatabaseAPI {
 
   /** 整体替换 agent 的技能绑定（事务：删全部 → 插入选中）。UI 保存用。 */
   setAgentSkills(agentId: number, skillIds: number[]): void {
+    this.setAgentSkillBindings(agentId, skillIds.map((skillId) => ({ skillId })))
+  }
+
+  /** 整体替换 agent 的技能绑定（含每个知识技能的引用选择）。 */
+  setAgentSkillBindings(agentId: number, bindings: AiAgentSkillBinding[]): void {
     const rawDb = typeof this.db?.getRawDB === 'function' ? this.db.getRawDB() : this.db
     rawDb.run('BEGIN TRANSACTION')
     try {
       this.execute('DELETE FROM ai_agent_skill WHERE agent_id = ?', [agentId])
-      skillIds.forEach((sid, i) => {
+      bindings.forEach((binding, i) => {
+        const config = binding.referenceIds === undefined ? null : JSON.stringify({ referenceIds: binding.referenceIds })
         this.execute(
-          `INSERT OR IGNORE INTO ai_agent_skill (agent_id, skill_id, enabled, sort) VALUES (?, ?, 1, ?)`,
-          [agentId, sid, i],
+          `INSERT OR IGNORE INTO ai_agent_skill (agent_id, skill_id, enabled, sort, config) VALUES (?, ?, 1, ?, ?)`,
+          [agentId, binding.skillId, i, config],
         )
       })
       rawDb.run('COMMIT')
@@ -340,6 +412,96 @@ export class AIApi extends DatabaseAPI {
     ).map(rowToSkill)
   }
 
+  /** 全部知识技能（含停用项），仅技能库管理页使用。 */
+  listAllKnowledgeSkills(): AiSkill[] {
+    return this.query(`SELECT * FROM ai_skill WHERE kind = 'knowledge' ORDER BY sort ASC, id ASC`).map(rowToSkill)
+  }
+
+  /** 新建或更新本地自定义知识技能；内置技能正文由 src/data/skills 管理，不允许在 DB 覆盖。 */
+  saveKnowledgeSkill(input: AiKnowledgeSkillInput): number {
+    const rawCode = input.code.trim()
+    const code = rawCode.startsWith('knowledge_custom_') ? rawCode : `knowledge_custom_${rawCode}`
+    if (!/^knowledge_custom_[a-z0-9-]+$/.test(code)) {
+      throw new Error('技能编号仅支持小写字母、数字和连字符')
+    }
+    if (!input.name.trim() || !input.body.trim()) {
+      throw new Error('请填写技能名称和知识正文')
+    }
+
+    const metadata = {
+      sourceType: 'custom' as const,
+      sourceUrl: input.sourceUrl?.trim() || '',
+      license: input.license?.trim() || 'SCGP-local',
+      evidenceLevel: input.evidenceLevel?.trim() || '实践经验',
+      riskLevel: input.riskLevel?.trim() || '常规',
+      audience: input.audience?.trim() || '教师',
+    }
+    const payload = JSON.stringify({ body: input.body.trim(), references: [], metadata })
+    const enabled = input.enabled === false ? 0 : 1
+
+    if (input.id) {
+      const existing = this.queryOne(`SELECT source_type FROM ai_skill WHERE id = ? AND kind = 'knowledge'`, [input.id])
+      if (!existing) throw new Error('知识技能不存在')
+      if (existing.source_type !== 'custom') throw new Error('内置知识技能请在 src/data/skills 中维护')
+      this.execute(
+        `UPDATE ai_skill
+            SET name = ?, description = ?, knowledge_payload = ?, source_url = ?, license = ?,
+                evidence_level = ?, risk_level = ?, audience = ?, enabled = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?`,
+        [
+          input.name.trim(),
+          input.description.trim(),
+          payload,
+          metadata.sourceUrl,
+          metadata.license,
+          metadata.evidenceLevel,
+          metadata.riskLevel,
+          metadata.audience,
+          enabled,
+          input.id,
+        ],
+      )
+      return input.id
+    }
+
+    this.execute(
+      `INSERT INTO ai_skill
+         (code, name, description, kind, knowledge_payload, source_type, source_url, license,
+          evidence_level, risk_level, audience, enabled, sort)
+       VALUES (?, ?, ?, 'knowledge', ?, 'custom', ?, ?, ?, ?, ?, ?, 999)`,
+      [
+        code,
+        input.name.trim(),
+        input.description.trim(),
+        payload,
+        metadata.sourceUrl,
+        metadata.license,
+        metadata.evidenceLevel,
+        metadata.riskLevel,
+        metadata.audience,
+        enabled,
+      ],
+    )
+    return this.getLastInsertId()
+  }
+
+  /** 内置与自定义知识技能均可启停；停用后不会出现在挂载选项或 systemPrompt。 */
+  setKnowledgeSkillEnabled(id: number, enabled: boolean): void {
+    this.execute(
+      `UPDATE ai_skill SET enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND kind = 'knowledge'`,
+      [enabled ? 1 : 0, id],
+    )
+  }
+
+  /** 仅允许删除本地自定义技能，内置技能由代码目录与启动种子维护。 */
+  deleteKnowledgeSkill(id: number): boolean {
+    const existing = this.queryOne(`SELECT source_type FROM ai_skill WHERE id = ? AND kind = 'knowledge'`, [id])
+    if (!existing) return false
+    if (existing.source_type !== 'custom') throw new Error('内置知识技能不能删除')
+    this.execute('DELETE FROM ai_agent_skill WHERE skill_id = ?', [id])
+    return this.execute('DELETE FROM ai_skill WHERE id = ?', [id]) > 0
+  }
+
   /**
    * 拼接该 agent 挂载的知识型技能正文（注入 systemPrompt 用）。
    * 每技能正文 = knowledge_payload.content（SKILL.md 主体 + references），多技能以分隔线串联。
@@ -347,7 +509,7 @@ export class AIApi extends DatabaseAPI {
    */
   getAgentKnowledgePrompt(agentId: number): string {
     const rows = this.query(
-      `SELECT s.name, s.knowledge_payload
+      `SELECT s.name, s.knowledge_payload, x.config AS binding_config
          FROM ai_agent_skill x
          JOIN ai_skill s ON s.id = x.skill_id
         WHERE x.agent_id = ? AND x.enabled = 1 AND s.enabled = 1
@@ -359,7 +521,11 @@ export class AIApi extends DatabaseAPI {
     const parts = rows
       .map((r: any) => {
         const payload = parseJsonObject(r.knowledge_payload)
-        const content = payload && payload.content ? String(payload.content) : ''
+        const bindingConfig = parseJsonObject(r.binding_config)
+        const referenceIds = Array.isArray(bindingConfig?.referenceIds)
+          ? bindingConfig.referenceIds.filter((id): id is string => typeof id === 'string')
+          : null
+        const content = buildKnowledgeSkillContent(payload, referenceIds)
         return content ? `## 专业技能：${r.name}\n\n${content}` : ''
       })
       .filter(Boolean)

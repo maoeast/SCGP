@@ -10,6 +10,7 @@ import {
   type SelfCareTaskSeedMode,
 } from '@/data/self-care-task-seed'
 import { BUILTIN_KNOWLEDGE_SKILLS } from '@/data/skills'
+import { BUILTIN_AGENT_PRESETS } from '@/data/ai-agent-presets'
 
 const schemaSQL = `
 -- 学生表
@@ -3769,7 +3770,7 @@ async function initializeAITables(rawDb: any): Promise<void> {
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   )`)
 
-  // ai_skill：技能目录（工具型 / 知识型）。本期只用 tool；knowledge_payload / prompt_template 列预留 5B。
+  // ai_skill：技能目录（工具型 / 知识型）+ 来源、许可、证据和风险治理元数据。
   rawDb.run(`CREATE TABLE IF NOT EXISTS ai_skill (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     code TEXT NOT NULL UNIQUE,
@@ -3779,11 +3780,25 @@ async function initializeAITables(rawDb: any): Promise<void> {
     tool_code TEXT,
     knowledge_payload TEXT,
     prompt_template TEXT,
+    source_type TEXT NOT NULL DEFAULT 'builtin',
+    source_url TEXT NOT NULL DEFAULT '',
+    license TEXT NOT NULL DEFAULT '',
+    evidence_level TEXT NOT NULL DEFAULT '未标注',
+    risk_level TEXT NOT NULL DEFAULT '常规',
+    audience TEXT NOT NULL DEFAULT '教师',
     enabled INTEGER NOT NULL DEFAULT 1,
     sort INTEGER NOT NULL DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   )`)
+
+  // Phase 5C：旧库补技能治理字段；全部为有默认值的 TEXT，safeAddColumn 幂等且无需重建表。
+  safeAddColumn(rawDb, 'ai_skill', `source_type TEXT NOT NULL DEFAULT 'builtin'`)
+  safeAddColumn(rawDb, 'ai_skill', `source_url TEXT NOT NULL DEFAULT ''`)
+  safeAddColumn(rawDb, 'ai_skill', `license TEXT NOT NULL DEFAULT ''`)
+  safeAddColumn(rawDb, 'ai_skill', `evidence_level TEXT NOT NULL DEFAULT '未标注'`)
+  safeAddColumn(rawDb, 'ai_skill', `risk_level TEXT NOT NULL DEFAULT '常规'`)
+  safeAddColumn(rawDb, 'ai_skill', `audience TEXT NOT NULL DEFAULT '教师'`)
 
   // ai_agent_skill：智能体↔技能 多对多绑定（Phase 5 唯一绑定源；ai_agent.skills_config 退役为遗留列）
   rawDb.run(`CREATE TABLE IF NOT EXISTS ai_agent_skill (
@@ -3796,6 +3811,8 @@ async function initializeAITables(rawDb: any): Promise<void> {
     FOREIGN KEY (agent_id) REFERENCES ai_agent(id) ON DELETE CASCADE,
     FOREIGN KEY (skill_id) REFERENCES ai_skill(id) ON DELETE CASCADE
   )`)
+  // Phase 5C：绑定配置记录每个知识技能的 referenceIds；NULL 保持 Phase 5B「全量引用」兼容语义。
+  safeAddColumn(rawDb, 'ai_agent_skill', 'config TEXT')
 
   // 索引
   const indexStatements = [
@@ -3887,22 +3904,25 @@ async function initializeAITables(rawDb: any): Promise<void> {
     console.warn('[AITables] provider 迁移/种子警告:', providerSeedError?.message)
   }
 
-  // 6. 种子：预设「特教老师智能体」（幂等，已存在则跳过）
-  const seedSystemPrompt = `你是一位拥有 15 年以上经验的特殊教育老师，擅长 IEP（个别化教育计划）制定、行为干预与融合教育，熟悉自闭症谱系（ASD）、注意缺陷多动障碍（ADHD）、学习障碍等特殊需要儿童的支持策略。
-
-回答要求：
-- 使用简体中文，语气专业、温暖、可操作；
-- 给出具体、可落地的建议，必要时分点说明；
-- 结合儿童发展规律与循证实践；
-- 涉及医学诊断、用药、严重行为或情绪危机时，必须提示使用者咨询医生、心理师或相关专业人员，AI 回答不能替代专业诊断与干预。`
-
+  // 6. 种子：教师端内置场景智能体。
+  // 保留 enabled（管理员可启停），名称、提示词与排序以源码目录为准；special_ed_teacher
+  // 沿用旧编号升级为「一人一策」，因此历史会话无需迁移 agent_code。
   try {
-    rawDb.run(
-      `INSERT OR IGNORE INTO ai_agent (code, name, system_prompt, enabled, sort) VALUES (?, ?, ?, 1, 0)`,
-      ['special_ed_teacher', '特教老师', seedSystemPrompt],
-    )
+    BUILTIN_AGENT_PRESETS.forEach((preset, index) => {
+      rawDb.run(
+        `INSERT OR IGNORE INTO ai_agent (code, name, system_prompt, enabled, sort)
+         VALUES (?, ?, ?, 1, ?)`,
+        [preset.code, preset.name, preset.systemPrompt, index],
+      )
+      rawDb.run(
+        `UPDATE ai_agent
+            SET name = ?, system_prompt = ?, sort = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE code = ?`,
+        [preset.name, preset.systemPrompt, index, preset.code],
+      )
+    })
   } catch (seedError: any) {
-    console.warn('[AITables] 种子智能体写入警告:', seedError?.message)
+    console.warn('[AITables] 内置智能体种子写入警告:', seedError?.message)
   }
 
   // 种子 ai_skill：每个现有工具一条「工具型」技能（INSERT OR IGNORE 幂等）。
@@ -3942,25 +3962,105 @@ async function initializeAITables(rawDb: any): Promise<void> {
         [code, k.name || k.code, i],
       )
       rawDb.run(
-        `UPDATE ai_skill SET name = ?, description = ?, knowledge_payload = ? WHERE code = ?`,
-        [k.name || k.code, k.description, JSON.stringify({ content: k.content }), code],
+        `UPDATE ai_skill
+            SET name = ?, description = ?, knowledge_payload = ?, source_type = ?, source_url = ?, license = ?,
+                evidence_level = ?, risk_level = ?, audience = ?
+          WHERE code = ?`,
+        [
+          k.name || k.code,
+          k.description,
+          JSON.stringify({ body: k.body, references: k.references, metadata: k.metadata }),
+          k.metadata.sourceType,
+          k.metadata.sourceUrl,
+          k.metadata.license,
+          k.metadata.evidenceLevel,
+          k.metadata.riskLevel,
+          k.metadata.audience,
+          code,
+        ],
       )
     })
   } catch (knowledgeSeedError: any) {
     console.warn('[AITables] 知识技能种子写入警告:', knowledgeSeedError?.message)
   }
 
-  // 向后兼容：对没有任何技能绑定的现存 agent，一次性补全全部「工具型」技能
-  // （含 special_ed_teacher 种子 agent），保持升级前「全部工具」行为不回归。
+  // 内置智能体的工具与知识技能采用固定预设：每次启动先清理该预设的旧绑定再精确回填。
+  // 自定义智能体不受影响；知识 referenceIds 写入 config，避免默认注入无关资料。
+  let presetBindingTransactionStarted = false
+  try {
+    rawDb.run('BEGIN TRANSACTION')
+    presetBindingTransactionStarted = true
+    const resolveAiSeedId = (table: 'ai_agent' | 'ai_skill', code: string): number => {
+      const stmt = rawDb.prepare(`SELECT id FROM ${table} WHERE code = ?`)
+      try {
+        stmt.bind([code])
+        return stmt.step() ? Number(stmt.getAsObject().id) : -1
+      } finally {
+        stmt.free()
+      }
+    }
+
+    BUILTIN_AGENT_PRESETS.forEach((preset) => {
+      const agentId = resolveAiSeedId('ai_agent', preset.code)
+      if (agentId < 0) throw new Error(`未找到内置智能体：${preset.code}`)
+
+      rawDb.run(`DELETE FROM ai_agent_skill WHERE agent_id = ?`, [agentId])
+
+      let bindingSort = 0
+      preset.toolCodes.forEach((toolCode) => {
+        const skillCode = `tool_${toolCode}`
+        const skillId = resolveAiSeedId('ai_skill', skillCode)
+        if (skillId < 0) throw new Error(`内置智能体 ${preset.code} 缺少工具技能：${skillCode}`)
+        rawDb.run(
+          `INSERT OR IGNORE INTO ai_agent_skill (agent_id, skill_id, enabled, sort, config)
+           VALUES (?, ?, 1, ?, NULL)`,
+          [agentId, skillId, bindingSort++],
+        )
+      })
+      preset.knowledgeSkills.forEach((binding) => {
+        const skillCode = `knowledge_${binding.code}`
+        const skillId = resolveAiSeedId('ai_skill', skillCode)
+        if (skillId < 0) throw new Error(`内置智能体 ${preset.code} 缺少知识技能：${skillCode}`)
+        rawDb.run(
+          `INSERT OR IGNORE INTO ai_agent_skill (agent_id, skill_id, enabled, sort, config)
+           VALUES (?, ?, 1, ?, ?)`,
+          [
+            agentId,
+            skillId,
+            bindingSort++,
+            JSON.stringify({ referenceIds: binding.referenceIds }),
+          ],
+        )
+      })
+    })
+    rawDb.run('COMMIT')
+    presetBindingTransactionStarted = false
+  } catch (presetBindingError: any) {
+    if (presetBindingTransactionStarted) {
+      try {
+        rawDb.run('ROLLBACK')
+      } catch (rollbackError: any) {
+        console.warn('[AITables] 内置智能体技能绑定回滚警告:', rollbackError?.message)
+      }
+    }
+    console.warn('[AITables] 内置智能体技能绑定同步警告:', presetBindingError?.message)
+  }
+
+  // 向后兼容：对不在内置预设目录且没有任何技能绑定的现存 agent，一次性补全全部工具型技能，
+  // 保持升级前自定义智能体的「全部工具」行为不回归。
   // 幂等：补过的 agent 有了绑定，NOT EXISTS 不再命中。
   try {
+    const builtinAgentCodes = BUILTIN_AGENT_PRESETS.map((preset) => preset.code)
+    const builtinAgentPlaceholders = builtinAgentCodes.map(() => '?').join(', ')
     rawDb.run(
       `INSERT OR IGNORE INTO ai_agent_skill (agent_id, skill_id, enabled, sort)
        SELECT a.id, s.id, 1, s.sort
        FROM ai_agent a
        CROSS JOIN ai_skill s
        WHERE s.kind = 'tool' AND s.enabled = 1
+         AND a.code NOT IN (${builtinAgentPlaceholders})
          AND NOT EXISTS (SELECT 1 FROM ai_agent_skill x WHERE x.agent_id = a.id)`,
+      builtinAgentCodes,
     )
   } catch (bindSeedError: any) {
     console.warn('[AITables] 技能绑定回填警告:', bindSeedError?.message)

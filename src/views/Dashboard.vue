@@ -51,43 +51,133 @@
       </div>
     </section>
 
-    <section class="dashboard-surface scgp-surface">
+    <section class="dashboard-surface scgp-surface" v-loading="aiStore.loading">
       <div class="dashboard-section-header">
         <div>
-          <h2>快捷操作区</h2>
-          <p>将高频业务入口收口到一个区域，减少在模块之间来回切换。</p>
+          <h2>AI 助手</h2>
+          <p>选择最贴近当前工作的智能体，查看它能提供的支持并开始对话。</p>
         </div>
+        <span class="agent-section-count">{{ homeAgents.length }} 个已启用</span>
       </div>
 
-      <div class="quick-grid">
-        <button
-          v-for="action in visibleQuickActions"
-          :key="action.label"
-          type="button"
-          :class="[
-            'quick-card',
-            `quick-card--${action.tone}`,
-          ]"
-          @click="goTo(action)"
+      <div v-if="homeAgents.length > 0" class="home-agent-grid">
+        <article
+          v-for="item in homeAgents"
+          :key="item.preset.code"
+          class="home-agent-card"
         >
-          <div class="quick-card__topline">
-            <span class="quick-card__badge">推荐入口</span>
-            <el-icon class="quick-card__arrow"><ArrowRight /></el-icon>
-          </div>
+          <button
+            type="button"
+            class="home-agent-card__main"
+            :aria-label="`查看${item.preset.displayName}详情`"
+            @click="openAgentDetail(item.preset)"
+          >
+            <span class="home-agent-card__identity">
+              <span
+                class="home-agent-avatar"
+                :class="`home-agent-avatar--${item.preset.avatarTone}`"
+                aria-hidden="true"
+              >
+                {{ item.preset.avatarText }}
+              </span>
+              <span class="home-agent-card__titles">
+                <strong>{{ item.preset.displayName }}</strong>
+                <span>{{ item.preset.name }}</span>
+              </span>
+            </span>
 
-          <div class="quick-card__icon">
-            <el-icon :size="24">
-              <component :is="action.icon" />
-            </el-icon>
-          </div>
+            <span class="home-agent-card__support">{{ item.preset.teacherSupport }}</span>
 
-          <div class="quick-card__body">
-            <h3>{{ action.label }}</h3>
-            <p>{{ action.description }}</p>
-          </div>
-        </button>
+            <span class="home-agent-card__tags" aria-label="擅长场景">
+              <span
+                v-for="tag in item.preset.expertiseTags"
+                :key="tag"
+                class="home-agent-tag"
+              >
+                {{ tag }}
+              </span>
+            </span>
+
+            <span class="home-agent-card__action">
+              查看详情
+              <el-icon><ArrowRight /></el-icon>
+            </span>
+          </button>
+        </article>
       </div>
+      <el-empty
+        v-else-if="!aiStore.loading"
+        description="暂无已启用的 AI 智能体，请联系学校管理员"
+        :image-size="72"
+      />
     </section>
+
+    <el-dialog
+      v-model="agentDetailVisible"
+      width="600px"
+      class="home-agent-detail-dialog"
+      destroy-on-close
+      append-to-body
+    >
+      <template v-if="selectedHomeAgent" #header>
+        <div class="home-agent-detail__header">
+          <span
+            class="home-agent-avatar home-agent-avatar--large"
+            :class="`home-agent-avatar--${selectedHomeAgent.preset.avatarTone}`"
+            aria-hidden="true"
+          >
+            {{ selectedHomeAgent.preset.avatarText }}
+          </span>
+          <div class="home-agent-detail__identity">
+            <h3>{{ selectedHomeAgent.preset.displayName }}</h3>
+            <div>{{ selectedHomeAgent.preset.name }}</div>
+            <p>{{ selectedHomeAgent.preset.tagline }}</p>
+          </div>
+        </div>
+      </template>
+
+      <div v-if="selectedHomeAgent" class="home-agent-detail__content">
+        <section class="home-agent-detail__section">
+          <h4>可以怎样支持老师</h4>
+          <p>{{ selectedHomeAgent.preset.teacherSupport }}</p>
+        </section>
+
+        <section class="home-agent-detail__section">
+          <h4>擅长场景</h4>
+          <div class="home-agent-detail__tags">
+            <el-tag
+              v-for="tag in selectedHomeAgent.preset.expertiseTags"
+              :key="tag"
+              effect="plain"
+            >
+              {{ tag }}
+            </el-tag>
+          </div>
+        </section>
+
+        <section class="home-agent-detail__section">
+          <h4>可以这样问</h4>
+          <div class="home-agent-prompt-list">
+            <div
+              v-for="prompt in selectedHomeAgent.preset.starterPrompts"
+              :key="prompt"
+              class="home-agent-prompt"
+            >
+              “{{ prompt }}”
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <template v-if="selectedHomeAgent" #footer>
+        <div class="home-agent-detail__footer">
+          <span>开始后将使用“{{ selectedHomeAgent.preset.name }}”新建一段对话。</span>
+          <el-button type="primary" size="large" @click="startAgentChat">
+            开始聊天
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
 
     <section class="dashboard-surface scgp-surface">
       <div class="dashboard-section-header">
@@ -330,11 +420,8 @@ import { ElMessage } from 'element-plus'
 import {
   ArrowRight,
   Calendar,
-  DataAnalysis,
   EditPen,
   Finished,
-  MagicStick,
-  Monitor,
   RefreshRight,
   VideoPlay,
   Warning,
@@ -346,13 +433,14 @@ import {
   type DashboardScheduleItem,
   type DashboardSnapshot,
 } from '@/database/dashboard-api'
-import {
-  filterVisibleAccessControlledItems,
-  isAccessControlledItemVisible,
-  type AccessControlledItem,
-} from '@/utils/access-visibility'
 import { resolveTrainingLaunch } from '@/utils/training-launch'
 import { useAuthStore } from '@/stores/auth'
+import { useAiStore } from '@/stores/ai'
+import {
+  BUILTIN_AGENT_PRESETS,
+  type BuiltinAgentPreset,
+} from '@/data/ai-agent-presets'
+import { openAiAssistant } from '@/features/ai/assistant-launcher'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart } from 'echarts/charts'
@@ -363,20 +451,13 @@ import VChart from 'vue-echarts'
 use([CanvasRenderer, LineChart, GridComponent, TooltipComponent])
 
 type DashboardTone = 'blue' | 'amber' | 'green' | 'coral'
-type QuickActionTone = 'blue' | 'teal' | 'coral' | 'green'
-type QuickAction = AccessControlledItem & {
-  label: string
-  description: string
-  path: string
-  icon: any
-  tone: QuickActionTone
-}
 
 const BUSINESS_MODULE_TOTAL = 5
 
 const router = useRouter()
 const dashboardApi = new DashboardAPI()
 const authStore = useAuthStore()
+const aiStore = useAiStore()
 
 const loading = ref(false)
 const snapshot = ref<DashboardSnapshot>({
@@ -441,43 +522,6 @@ const metrics = computed(() => ([
   },
 ]))
 
-const quickActions: QuickAction[] = [
-  {
-    label: '快速发起评估',
-    description: '进入量表选择页，快速为学生建立或更新评估基线。',
-    path: '/assessment',
-    accessScope: 'global',
-    icon: EditPen,
-    tone: 'blue' as QuickActionTone,
-  },
-  {
-    label: '启动感官游戏',
-    description: '进入游戏训练模块，按学生和模块快速开始训练。',
-    path: '/games/menu',
-    accessScope: 'entitlement',
-    entitlementCode: 'sensory_integration',
-    icon: Monitor,
-    tone: 'teal' as QuickActionTone,
-  },
-  {
-    label: '情绪场景训练',
-    description: '进入情绪行为模块，围绕真实场景开展情绪与关心训练。',
-    path: '/emotional/menu',
-    accessScope: 'entitlement',
-    entitlementCode: 'emotional',
-    icon: MagicStick,
-    tone: 'coral' as QuickActionTone,
-  },
-  {
-    label: '录入训练记录',
-    description: '查看并进入各模块训练记录入口，承接日常训练复盘。',
-    path: '/training-records/menu',
-    accessScope: 'global',
-    icon: DataAnalysis,
-    tone: 'green' as QuickActionTone,
-  },
-]
-
 const displayedAnomalies = computed(() => snapshot.value.anomalies.slice(0, 4))
 const displayedAssessmentAlerts = computed(() => snapshot.value.assessmentAlerts.slice(0, 4))
 const accessibleModuleCount = computed(() =>
@@ -485,11 +529,17 @@ const accessibleModuleCount = computed(() =>
     .filter((moduleCode) => authStore.hasModuleAccess(moduleCode))
     .length
 )
-const visibleQuickActions = computed(() => filterVisibleAccessControlledItems(
-  quickActions,
-  authStore.hasModuleAccess,
-  authStore.hasEntitlementAccess,
-))
+const agentDetailVisible = ref(false)
+const selectedHomeAgentCode = ref('')
+const homeAgents = computed(() =>
+  BUILTIN_AGENT_PRESETS.map((preset) => ({
+    preset,
+    agent: aiStore.agents.find((agent) => agent.code === preset.code),
+  })).filter((item) => item.agent?.enabled),
+)
+const selectedHomeAgent = computed(() =>
+  homeAgents.value.find((item) => item.preset.code === selectedHomeAgentCode.value) ?? null,
+)
 
 const trendOption = computed<EChartsOption>(() => ({
   tooltip: {
@@ -567,7 +617,7 @@ const focusPanel = computed(() => {
 
   return {
     title: '今天的训练节奏相对平稳',
-    description: '当前没有待处理的训练日程或显著预警，可以从快捷入口进入日常业务。',
+    description: '当前没有待处理的训练日程或显著预警，可以从 AI 助手选择需要的工作支持。',
   }
 })
 
@@ -594,12 +644,16 @@ function getModuleLabel(moduleCode: string) {
   return moduleLabelMap[moduleCode] || moduleCode || '训练模块'
 }
 
-function goTo(action: QuickAction) {
-  if (!isAccessControlledItemVisible(action, authStore.hasModuleAccess, authStore.hasEntitlementAccess)) {
-    ElMessage.warning('当前功能未授权，请联系厂商开通对应能力包')
-    return
-  }
-  router.push(action.path)
+function openAgentDetail(preset: BuiltinAgentPreset) {
+  selectedHomeAgentCode.value = preset.code
+  agentDetailVisible.value = true
+}
+
+function startAgentChat() {
+  if (!selectedHomeAgent.value) return
+  const agentCode = selectedHomeAgent.value.preset.code
+  agentDetailVisible.value = false
+  openAiAssistant(agentCode)
 }
 
 function goToStudentDetail(studentId: number) {
@@ -883,114 +937,300 @@ onMounted(() => {
   color: var(--scgp-warning);
 }
 
-.quick-grid {
+.agent-section-count {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--scgp-primary-soft);
+  color: var(--scgp-primary);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.home-agent-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
   margin-top: 18px;
 }
 
-.quick-card {
+.home-agent-card {
   display: flex;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--el-bg-color, #ffffff);
+  box-shadow: 0 1px 3px rgb(31 35 41 / 12%);
+  transition-property: transform, box-shadow;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-agent-card__main {
+  display: flex;
+  min-height: 250px;
+  width: 100%;
   flex-direction: column;
   gap: 14px;
-  min-height: 214px;
   padding: 18px;
-  border-radius: 20px;
-  border: 1px solid var(--scgp-border);
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  touch-action: manipulation;
+  transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.quick-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 18px 36px rgba(143, 169, 204, 0.16);
+.home-agent-card__main:active {
+  transform: scale(0.98);
 }
 
-.quick-card__topline {
+.home-agent-card__main:focus-visible {
+  outline: 2px solid var(--el-color-primary, #409eff);
+  outline-offset: -3px;
+}
+
+.home-agent-card__identity {
   display: flex;
+  min-width: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
 }
 
-.quick-card__badge {
+.home-agent-avatar {
   display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid currentColor;
-  font-size: 12px;
-  line-height: 1;
-  opacity: 0.92;
-}
-
-.quick-card__arrow {
-  color: var(--scgp-subtle);
-}
-
-.quick-card__icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
-  display: inline-flex;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
   align-items: center;
   justify-content: center;
+  border-radius: 14px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  outline: 1px solid rgb(31 35 41 / 8%);
+  outline-offset: -1px;
 }
 
-.quick-card__body {
+.home-agent-avatar--teaching {
+  background: #e9f2ff;
+  color: #245a9a;
+}
+
+.home-agent-avatar--communication {
+  background: #e7f6f2;
+  color: #17685a;
+}
+
+.home-agent-avatar--observation {
+  background: #fff3dc;
+  color: #8a5a12;
+}
+
+.home-agent-avatar--family {
+  background: #f7ece8;
+  color: #8a4936;
+}
+
+.home-agent-avatar--wellbeing {
+  background: #f0edf9;
+  color: #5f4b8b;
+}
+
+.home-agent-card__titles {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-agent-card__titles strong {
+  overflow: hidden;
+  color: var(--el-text-color-primary, #303133);
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-agent-card__titles span {
+  color: var(--el-text-color-secondary, #909399);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.home-agent-card__support {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 68px;
+  color: var(--el-text-color-regular, #606266);
+  font-size: 14px;
+  line-height: 1.65;
+  text-wrap: pretty;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.home-agent-card__tags,
+.home-agent-detail__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.home-agent-tag {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--el-fill-color-light, #f2f3f5);
+  color: var(--el-text-color-regular, #606266);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.home-agent-card__action {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--el-border-color-lighter, #ebeef5);
+  color: var(--el-color-primary, #409eff);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.home-agent-detail__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding-right: 28px;
+}
+
+.home-agent-avatar--large {
+  width: 64px;
+  height: 64px;
+  flex-basis: 64px;
+  border-radius: 16px;
+  font-size: 24px;
+}
+
+.home-agent-detail__identity {
+  min-width: 0;
+  flex: 1;
+}
+
+.home-agent-detail__identity h3 {
+  margin: 0;
+  color: var(--el-text-color-primary, #303133);
+  font-size: 21px;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.012em;
+}
+
+.home-agent-detail__identity > div {
+  margin-top: 3px;
+  color: var(--el-text-color-secondary, #909399);
+  font-size: 13px;
+}
+
+.home-agent-detail__identity p {
+  margin: 8px 0 0;
+  color: var(--el-text-color-regular, #606266);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.home-agent-detail__content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.home-agent-detail__section h4 {
+  margin: 0 0 10px;
+  color: var(--el-text-color-secondary, #909399);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.home-agent-detail__section p {
+  margin: 0;
+  color: var(--el-text-color-regular, #606266);
+  font-size: 14px;
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+.home-agent-prompt-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.quick-card__body h3 {
-  margin: 0;
-  color: var(--scgp-text);
-  font-size: 17px;
-}
-
-.quick-card__body p {
-  margin: 0;
-  color: var(--scgp-muted);
+.home-agent-prompt {
+  padding: 10px 12px;
+  border: 1px solid var(--el-border-color-lighter, #ebeef5);
+  border-radius: 8px;
+  background: var(--el-fill-color-extra-light, #fafafa);
+  color: var(--el-text-color-regular, #606266);
   font-size: 13px;
-  line-height: 1.7;
+  line-height: 1.55;
 }
 
-.quick-card--blue {
-  color: var(--scgp-primary);
+.home-agent-detail__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  text-align: left;
 }
 
-.quick-card--blue .quick-card__icon {
-  background: var(--scgp-primary-soft);
+.home-agent-detail__footer > span {
+  color: var(--el-text-color-secondary, #909399);
+  font-size: 12px;
+  line-height: 1.6;
 }
 
-.quick-card--teal {
-  color: var(--scgp-teal);
+:global(.home-agent-detail-dialog) {
+  max-width: calc(100vw - 32px);
+  border-radius: 14px;
 }
 
-.quick-card--teal .quick-card__icon {
-  background: var(--scgp-teal-soft);
+:global(.home-agent-detail-dialog .el-dialog__body) {
+  max-height: min(62vh, 620px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: 18px;
 }
 
-.quick-card--coral {
-  color: var(--scgp-coral);
+:global(.home-agent-detail-dialog .el-dialog__footer) {
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--el-border-color-lighter, #ebeef5);
 }
 
-.quick-card--coral .quick-card__icon {
-  background: var(--scgp-coral-soft);
+@media (hover: hover) {
+  .home-agent-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgb(31 35 41 / 13%);
+  }
 }
 
-.quick-card--green {
-  color: var(--scgp-success);
-}
-
-.quick-card--green .quick-card__icon {
-  background: #eaf8f0;
+@media (prefers-reduced-motion: reduce) {
+  .home-agent-card,
+  .home-agent-card__main {
+    transition: none;
+  }
 }
 
 .recent-student-list {
@@ -1202,7 +1442,7 @@ onMounted(() => {
     grid-template-columns: 1fr;
   }
 
-  .quick-grid {
+  .home-agent-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1220,7 +1460,7 @@ onMounted(() => {
 
   .dashboard-highlight-grid,
   .dashboard-hero__metrics,
-  .quick-grid {
+  .home-agent-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1242,6 +1482,24 @@ onMounted(() => {
 
   .schedule-item__actions :deep(.el-button) {
     width: 100%;
+  }
+
+  .home-agent-card__main {
+    min-height: auto;
+  }
+
+  .home-agent-detail__header {
+    padding-right: 20px;
+  }
+
+  .home-agent-detail__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .home-agent-detail__footer :deep(.el-button) {
+    width: 100%;
+    margin-left: 0;
   }
 }
 </style>

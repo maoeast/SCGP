@@ -113,6 +113,8 @@
             </div>
           </div>
 
+          <AiSkillLibrary />
+
           <div class="system-card-grid">
             <section class="system-card scgp-surface system-card--danger">
               <div class="scgp-section-heading">
@@ -268,6 +270,7 @@ import UserManagement from './system/UserManagement.vue'
 import SystemSettings from './system/SystemSettings.vue'
 import ResourceHealthCheck from './system/ResourceHealthCheck.vue'
 import AiAgentConfig from './system/AiAgentConfig.vue'
+import AiSkillLibrary from './system/AiSkillLibrary.vue'
 import UpdatePanel from './updates/UpdatePanel.vue'
 
 const authStore = useAuthStore()

@@ -9,6 +9,8 @@ import {
   type AiProviderConfig,
   type AiAttachmentRef,
   type AiSkill,
+  type AiAgentSkillBinding,
+  type AiKnowledgeSkillInput,
   type DeepSeekUsage,
 } from '@/database/ai-api'
 import { encryptData } from '@/utils/crypto'
@@ -41,6 +43,8 @@ export const useAiStore = defineStore('ai', () => {
   const toolSkills = ref<AiSkill[]>([])
   /** 知识型技能目录（Phase 5B：专业角色知识包；对话框「挂载技能」知识组选项） */
   const knowledgeSkills = ref<AiSkill[]>([])
+  /** 知识技能完整目录（含停用项，仅技能库管理页使用）。 */
+  const allKnowledgeSkills = ref<AiSkill[]>([])
   const providerConfig = ref<AiProviderConfig | null>(null)
   const monthUsage = ref<{ costYuan: number; assistantCount: number; period: string }>({
     costYuan: 0,
@@ -72,6 +76,7 @@ export const useAiStore = defineStore('ai', () => {
       providers.value = a.listProviders()
       toolSkills.value = a.listToolSkills()
       knowledgeSkills.value = a.listKnowledgeSkills()
+      allKnowledgeSkills.value = a.listAllKnowledgeSkills()
       providerConfig.value = a.getProviderConfig()
       monthUsage.value = a.getMonthUsage()
       // 默认选中第一个启用智能体
@@ -194,15 +199,65 @@ export const useAiStore = defineStore('ai', () => {
     agents.value = api().listAgents()
   }
 
+  async function setAgentEnabled(id: number, enabled: boolean) {
+    await ensureDb()
+    api().setAgentEnabled(id, enabled)
+    agents.value = api().listAgents()
+  }
+
   // Phase 5：技能挂载（按 agent 过滤工具）
   async function getAgentSkillIds(agentId: number): Promise<number[]> {
     await ensureDb()
     return api().getAgentSkillIds(agentId)
   }
 
+  async function getAgentSkillBindings(agentId: number): Promise<AiAgentSkillBinding[]> {
+    await ensureDb()
+    return api().getAgentSkillBindings(agentId)
+  }
+
   async function setAgentSkills(agentId: number, skillIds: number[]) {
     await ensureDb()
-    api().setAgentSkills(agentId, skillIds)
+    const a = api()
+    a.setAgentSkills(agentId, skillIds)
+    toolSkills.value = a.listToolSkills()
+    knowledgeSkills.value = a.listKnowledgeSkills()
+    allKnowledgeSkills.value = a.listAllKnowledgeSkills()
+  }
+
+  async function setAgentSkillBindings(agentId: number, bindings: AiAgentSkillBinding[]) {
+    await ensureDb()
+    const a = api()
+    a.setAgentSkillBindings(agentId, bindings)
+    toolSkills.value = a.listToolSkills()
+    knowledgeSkills.value = a.listKnowledgeSkills()
+    allKnowledgeSkills.value = a.listAllKnowledgeSkills()
+  }
+
+  async function saveKnowledgeSkill(input: AiKnowledgeSkillInput): Promise<number> {
+    await ensureDb()
+    const a = api()
+    const id = a.saveKnowledgeSkill(input)
+    knowledgeSkills.value = a.listKnowledgeSkills()
+    allKnowledgeSkills.value = a.listAllKnowledgeSkills()
+    return id
+  }
+
+  async function setKnowledgeSkillEnabled(id: number, enabled: boolean) {
+    await ensureDb()
+    const a = api()
+    a.setKnowledgeSkillEnabled(id, enabled)
+    knowledgeSkills.value = a.listKnowledgeSkills()
+    allKnowledgeSkills.value = a.listAllKnowledgeSkills()
+  }
+
+  async function deleteKnowledgeSkill(id: number) {
+    await ensureDb()
+    const a = api()
+    const deleted = a.deleteKnowledgeSkill(id)
+    knowledgeSkills.value = a.listKnowledgeSkills()
+    allKnowledgeSkills.value = a.listAllKnowledgeSkills()
+    return deleted
   }
 
   // ==================== Phase 4：会话与流式 ====================
@@ -596,10 +651,17 @@ export const useAiStore = defineStore('ai', () => {
     testConnection,
     saveAgent,
     deleteAgent,
+    setAgentEnabled,
     toolSkills,
     knowledgeSkills,
+    allKnowledgeSkills,
     getAgentSkillIds,
+    getAgentSkillBindings,
     setAgentSkills,
+    setAgentSkillBindings,
+    saveKnowledgeSkill,
+    setKnowledgeSkillEnabled,
+    deleteKnowledgeSkill,
     // Phase 4
     currentAgentCode,
     currentSessionId,

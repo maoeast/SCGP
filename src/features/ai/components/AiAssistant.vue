@@ -8,6 +8,11 @@ import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
 import { resolveAbsolutePath } from '@/utils/resource-file-service'
 import { useAiStore } from '@/stores/ai'
 import { renderMarkdown } from '@/utils/render-markdown'
+import { getBuiltinAgentPreset } from '@/data/ai-agent-presets'
+import {
+  AI_ASSISTANT_OPEN_EVENT,
+  type AiAssistantOpenDetail,
+} from '@/features/ai/assistant-launcher'
 
 const router = useRouter()
 const aiStore = useAiStore()
@@ -26,16 +31,22 @@ const chunkHandler = (_event: unknown, payload: { delta?: string } | undefined) 
 const errorHandler = (_event: unknown, payload: { error?: string } | undefined) => {
   if (payload?.error) ElMessage.error(payload.error)
 }
+const assistantOpenHandler = (event: Event) => {
+  const detail = (event as CustomEvent<AiAssistantOpenDetail>).detail
+  void openDrawer(detail?.agentCode)
+}
 
 onMounted(async () => {
   window.electronAPI.on('ai:chunk', chunkHandler)
   window.electronAPI.on('ai:error', errorHandler)
+  window.addEventListener(AI_ASSISTANT_OPEN_EVENT, assistantOpenHandler)
   await aiStore.loadAll()
 })
 
 onUnmounted(() => {
   window.electronAPI.off('ai:chunk', chunkHandler)
   window.electronAPI.off('ai:error', errorHandler)
+  window.removeEventListener(AI_ASSISTANT_OPEN_EVENT, assistantOpenHandler)
 })
 
 const budgetPercent = computed(() => {
@@ -45,6 +56,11 @@ const budgetPercent = computed(() => {
 })
 
 const supportsVision = computed(() => !!aiStore.providerConfig?.supportsVision)
+const currentPreset = computed(() => getBuiltinAgentPreset(aiStore.currentAgentCode))
+const starterPrompts = computed(() => currentPreset.value?.starterPrompts ?? [])
+const canGenerateReport = computed(
+  () => !currentPreset.value || currentPreset.value.toolCodes.includes('generate_report'),
+)
 const canSend = computed(
   () =>
     !!inputText.value.trim() ||
@@ -79,10 +95,23 @@ function scrollToBottom() {
 watch(() => aiStore.streamingContent, scrollToBottom)
 watch(() => aiStore.currentMessages.length, scrollToBottom)
 
-async function openDrawer() {
+async function openDrawer(agentCode?: string) {
+  if (!aiStore.providerConfig || aiStore.agents.length === 0) await aiStore.loadAll()
+  if (agentCode) {
+    const agent = aiStore.enabledAgents.find((item) => item.code === agentCode)
+    if (!agent) {
+      ElMessage.warning('该智能体当前未启用，请联系学校管理员。')
+      return
+    }
+    aiStore.selectAgent(agentCode)
+  }
   drawerVisible.value = true
-  if (!aiStore.providerConfig) await aiStore.loadAll()
   scrollToBottom()
+}
+
+function getAgentOptionLabel(code: string, name: string) {
+  const preset = getBuiltinAgentPreset(code)
+  return preset ? `${preset.displayName} · ${preset.name}` : name
 }
 
 // 浏览器 File → data URL（预览用；CSP 允许 data:，避免 blob: 被拦）
@@ -174,6 +203,14 @@ async function generateReport() {
   }
 }
 
+async function sendStarterPrompt(prompt: string) {
+  if (aiStore.sending) return
+  const res = await aiStore.sendChat(prompt)
+  if (!res.ok && res.error) {
+    ElMessage.error(res.error)
+  }
+}
+
 function gotoSettings() {
   drawerVisible.value = false
   router.push({ name: 'System', query: { tab: 'ai-agent' } })
@@ -195,7 +232,7 @@ async function confirmDeleteSession(id: number) {
 
 <template>
   <!-- 全局悬浮入口 -->
-  <button class="ai-fab" :aria-label="'AI 智能体'" @click="openDrawer">
+  <button class="ai-fab" :aria-label="'AI 智能体'" @click="openDrawer()">
     <el-icon :size="24"><ChatDotRound /></el-icon>
   </button>
 
@@ -218,7 +255,7 @@ async function confirmDeleteSession(id: number) {
           <el-option
             v-for="agent in aiStore.enabledAgents"
             :key="agent.code"
-            :label="agent.name"
+            :label="getAgentOptionLabel(agent.code, agent.name)"
             :value="agent.code"
           />
         </el-select>
@@ -264,8 +301,21 @@ async function confirmDeleteSession(id: number) {
 
       <!-- 消息列表 -->
       <el-scrollbar ref="scrollRef" class="ai-msg-scroll">
-        <div v-if="displayMessages.length === 0" class="ai-empty">
-          <p>向「{{ aiStore.currentAgent?.name || '智能体' }}」提问吧～</p>
+        <div v-if="displayMessages.length === 0" class="ai-empty ai-welcome">
+          <p class="welcome-title">向「{{ aiStore.currentAgent?.name || '智能体' }}」提问吧</p>
+          <p v-if="currentPreset" class="welcome-tagline">{{ currentPreset.tagline }}</p>
+          <div v-if="starterPrompts.length > 0" class="starter-prompts">
+            <button
+              v-for="prompt in starterPrompts"
+              :key="prompt"
+              class="starter-prompt"
+              type="button"
+              :disabled="aiStore.sending"
+              @click="sendStarterPrompt(prompt)"
+            >
+              {{ prompt }}
+            </button>
+          </div>
         </div>
         <div
           v-for="(msg, idx) in displayMessages"
@@ -353,7 +403,7 @@ async function confirmDeleteSession(id: number) {
             :disabled="aiStore.sending"
             @keydown.enter.exact.prevent="send"
           />
-          <el-tooltip content="生成报告（导出 Word）" placement="top">
+          <el-tooltip v-if="canGenerateReport" content="生成报告（导出 Word）" placement="top">
             <button
               class="composer-btn"
               type="button"
@@ -421,6 +471,50 @@ async function confirmDeleteSession(id: number) {
   padding: 40px 16px;
   color: var(--el-text-color-secondary, #909399);
   text-align: center;
+}
+
+.ai-welcome {
+  justify-content: flex-start;
+  min-height: 100%;
+  padding-top: 56px;
+}
+.welcome-title {
+  margin: 0;
+  color: var(--el-text-color-primary, #303133);
+  font-size: 16px;
+  font-weight: 600;
+}
+.welcome-tagline {
+  margin: -4px 0 4px;
+  font-size: 13px;
+}
+.starter-prompts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  width: min(100%, 420px);
+}
+.starter-prompt {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--el-border-color-light, #dcdfe6);
+  border-radius: 10px;
+  background: var(--el-bg-color, #fff);
+  color: var(--el-text-color-regular, #606266);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: left;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.starter-prompt:hover:not(:disabled) {
+  border-color: var(--el-color-primary-light-5, #a0cfff);
+  background: var(--el-color-primary-light-9, #ecf5ff);
+  color: var(--el-color-primary, #409eff);
+}
+.starter-prompt:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .ai-body {
