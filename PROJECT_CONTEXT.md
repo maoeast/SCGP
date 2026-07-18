@@ -1633,3 +1633,9 @@
 - C05 已完成并通过桌面 UAT：AI provider API Key 新密文格式为 `safe:v1:<base64>`，由 Electron Main `safeStorage` 加解密；renderer 不再生成 provider Key 密文。
 - 旧 AES provider Key 只允许在 `electron/handlers/ai-secrets.mjs` 迁移入口只读兼容，后续 `1.0.8` 清理；正常聊天发送链不再使用旧固定 secret。
 - v4 备份导出会清空副本中的 `ai_provider.api_key_enc` 并写入 `providerSecretsIncluded: false`；恢复后必须提示重新配置模型服务 Key。
+
+## 77. 2026-07-18 收口 C06 与短期 AI provider Key 交付治理
+
+- C06 已完成：删除 AI 会话时先在 DB 事务内删除消息与会话，事务失败不碰物理附件；DB 提交后只删除剩余引用数为 0 的附件文件，文件删除失败不回滚 DB。
+- `ai_provider` 新增学校归属、后台 Key 备注、轮换提醒日期；系统设置页可维护这些元信息，便于每校独立 Key 的账单核对、泄露停用和轮换。
+- API Key 分发短期策略：每所学校在 provider 后台创建独立 Key 并设置官方额度；SCGP 本地仍只用 Electron Main `safeStorage` 保存真实 Key，不做可离线自动解密的短加密码。

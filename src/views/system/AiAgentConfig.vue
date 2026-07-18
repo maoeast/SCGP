@@ -21,6 +21,9 @@ onMounted(() => {
 const configForm = reactive({
   activeProviderCode: '',
   apiKeyInput: '',
+  keyOwnerName: '',
+  keyLabel: '',
+  keyExpiresAt: '',
   baseUrl: '',
   defaultModel: '',
   providerEnabled: true,
@@ -49,12 +52,26 @@ const capabilityTags = computed(() => {
 // 豆包等火山方舟 provider 的 model 是「接入点 ID」（ep-xxx），与 DeepSeek 模型名不同
 const isDoubao = computed(() => aiStore.providerConfig?.activeProviderCode === 'doubao')
 
+const keyRotationHint = computed(() => {
+  const expiresAt = configForm.keyExpiresAt
+  if (!expiresAt) return '建议每 3-6 个月轮换一次学校专属 Key。'
+  const expiresTime = Date.parse(`${expiresAt}T00:00:00`)
+  if (!Number.isFinite(expiresTime)) return '请填写有效的轮换提醒日期。'
+  const days = Math.ceil((expiresTime - Date.now()) / (24 * 60 * 60 * 1000))
+  if (days < 0) return `已超过轮换提醒日期 ${Math.abs(days)} 天，请尽快在大模型后台更换 Key。`
+  if (days <= 14) return `距离轮换提醒还有 ${days} 天，请准备更换学校专属 Key。`
+  return `距离轮换提醒还有 ${days} 天。`
+})
+
 // providerConfig 加载后回填表单（含能力位与 provider 自身启用状态）
 watch(
   () => aiStore.providerConfig,
   (cfg) => {
     if (!cfg) return
     configForm.activeProviderCode = cfg.activeProviderCode
+    configForm.keyOwnerName = cfg.keyOwnerName
+    configForm.keyLabel = cfg.keyLabel
+    configForm.keyExpiresAt = cfg.keyExpiresAt
     configForm.baseUrl = cfg.baseUrl
     configForm.defaultModel = cfg.defaultModel
     configForm.providerEnabled = cfg.providerEnabled
@@ -98,6 +115,9 @@ async function saveConfig() {
     const apiKeyPlain = configForm.apiKeyInput.trim()
     await aiStore.saveProviderConfig({
       ...(apiKeyPlain ? { apiKeyPlain } : {}),
+      keyOwnerName: configForm.keyOwnerName.trim(),
+      keyLabel: configForm.keyLabel.trim(),
+      keyExpiresAt: configForm.keyExpiresAt || '',
       baseUrl: configForm.baseUrl.trim(),
       defaultModel: configForm.defaultModel.trim(),
       providerEnabled: configForm.providerEnabled,
@@ -498,6 +518,29 @@ async function removeSession(id: number) {
               清除 Key
             </el-button>
           </div>
+        </el-form-item>
+
+        <el-form-item label="Key 归属">
+          <el-input v-model="configForm.keyOwnerName" placeholder="如 杭州某某学校" />
+          <div class="field-hint">
+            交付时请在大模型后台为每所学校单独创建 Key，并在后台设置额度。
+          </div>
+        </el-form-item>
+
+        <el-form-item label="后台备注">
+          <el-input v-model="configForm.keyLabel" placeholder="如 scgp-hz-school-202607" />
+          <div class="field-hint">填写大模型后台中的 Key 名称或备注，便于账单核对与泄露停用。</div>
+        </el-form-item>
+
+        <el-form-item label="轮换提醒">
+          <el-date-picker
+            v-model="configForm.keyExpiresAt"
+            type="date"
+            value-format="YYYY-MM-DD"
+            placeholder="选择下次换 Key 日期"
+            style="width: 220px"
+          />
+          <span class="field-hint-inline">{{ keyRotationHint }}</span>
         </el-form-item>
 
         <el-form-item label="接口地址">

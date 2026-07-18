@@ -3770,6 +3770,9 @@ async function initializeAITables(rawDb: any): Promise<void> {
     name TEXT NOT NULL,
     base_url TEXT NOT NULL DEFAULT '',
     api_key_enc TEXT NOT NULL DEFAULT '',
+    key_owner_name TEXT NOT NULL DEFAULT '',
+    key_label TEXT NOT NULL DEFAULT '',
+    key_expires_at TEXT NOT NULL DEFAULT '',
     default_model TEXT NOT NULL DEFAULT '',
     supports_vision INTEGER NOT NULL DEFAULT 0,
     supports_tool_calls INTEGER NOT NULL DEFAULT 0,
@@ -3779,6 +3782,9 @@ async function initializeAITables(rawDb: any): Promise<void> {
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   )`)
+  safeAddColumn(rawDb, 'ai_provider', `key_owner_name TEXT NOT NULL DEFAULT ''`)
+  safeAddColumn(rawDb, 'ai_provider', `key_label TEXT NOT NULL DEFAULT ''`)
+  safeAddColumn(rawDb, 'ai_provider', `key_expires_at TEXT NOT NULL DEFAULT ''`)
 
   rawDb.run(`CREATE TABLE IF NOT EXISTS ai_provider_model (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -103,6 +103,9 @@ export interface AiProvider {
   name: string
   baseUrl: string
   apiKeyEnc: string // 密文；未配置时为 ''
+  keyOwnerName: string
+  keyLabel: string
+  keyExpiresAt: string
   defaultModel: string
   supportsVision: boolean
   supportsToolCalls: boolean
@@ -145,6 +148,9 @@ export interface AiProviderConfig {
   supportsThinking: boolean
   providerEnabled: boolean // active provider 自身是否启用
   apiKeyEnc: string // 密文；未配置时为 ''
+  keyOwnerName: string
+  keyLabel: string
+  keyExpiresAt: string
   baseUrl: string
   defaultModel: string
   monthlyBudgetTokens: number
@@ -183,6 +189,11 @@ export interface AiChatMessage {
   tokensCompletion: number
   estCostYuan: number
   createdAt: string
+}
+
+export interface AiSessionDeleteResult {
+  deleted: boolean
+  attachments: AiAttachmentRef[]
 }
 
 /** 当前用户可见的会话摘要。 */
@@ -295,6 +306,9 @@ function rowToProvider(row: any): AiProvider {
     name: row.name,
     baseUrl: row.base_url || '',
     apiKeyEnc: row.api_key_enc || '',
+    keyOwnerName: row.key_owner_name || '',
+    keyLabel: row.key_label || '',
+    keyExpiresAt: row.key_expires_at || '',
     defaultModel: row.default_model || '',
     supportsVision: Number(row.supports_vision) === 1,
     supportsToolCalls: Number(row.supports_tool_calls) === 1,
@@ -321,6 +335,17 @@ function rowToProviderModel(row: any): AiProviderModel {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
+}
+
+function dedupeAttachmentRefs(refs: AiAttachmentRef[]): AiAttachmentRef[] {
+  const seen = new Set<string>()
+  const result: AiAttachmentRef[] = []
+  for (const ref of refs) {
+    if (!ref?.rel || seen.has(ref.rel)) continue
+    seen.add(ref.rel)
+    result.push(ref)
+  }
+  return result
 }
 
 export class AIApi extends DatabaseAPI {
@@ -688,6 +713,9 @@ export class AIApi extends DatabaseAPI {
   saveProvider(input: {
     code: string
     apiKeyEnc?: string
+    keyOwnerName?: string
+    keyLabel?: string
+    keyExpiresAt?: string
     baseUrl?: string
     defaultModel?: string
     supportsVision?: boolean
@@ -701,6 +729,18 @@ export class AIApi extends DatabaseAPI {
     if (input.apiKeyEnc !== undefined) {
       sets.push('api_key_enc = ?')
       params.push(input.apiKeyEnc)
+    }
+    if (input.keyOwnerName !== undefined) {
+      sets.push('key_owner_name = ?')
+      params.push(input.keyOwnerName)
+    }
+    if (input.keyLabel !== undefined) {
+      sets.push('key_label = ?')
+      params.push(input.keyLabel)
+    }
+    if (input.keyExpiresAt !== undefined) {
+      sets.push('key_expires_at = ?')
+      params.push(input.keyExpiresAt)
     }
     if (input.baseUrl !== undefined) {
       sets.push('base_url = ?')
@@ -881,6 +921,9 @@ export class AIApi extends DatabaseAPI {
         supportsThinking: false,
         providerEnabled: false,
         apiKeyEnc: '',
+        keyOwnerName: '',
+        keyLabel: '',
+        keyExpiresAt: '',
         baseUrl: '',
         defaultModel: '',
         monthlyBudgetTokens,
@@ -900,6 +943,9 @@ export class AIApi extends DatabaseAPI {
       supportsThinking: activeModel?.supportsThinking ?? provider.supportsThinking,
       providerEnabled: provider.enabled,
       apiKeyEnc: provider.apiKeyEnc,
+      keyOwnerName: provider.keyOwnerName,
+      keyLabel: provider.keyLabel,
+      keyExpiresAt: provider.keyExpiresAt,
       baseUrl: provider.baseUrl,
       defaultModel: activeModel?.modelId || (hasModelRows ? '' : provider.defaultModel),
       monthlyBudgetTokens,
@@ -1058,9 +1104,25 @@ export class AIApi extends DatabaseAPI {
     this.execute('UPDATE ai_chat_session SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', [id])
   }
 
-  deleteSession(id: number): void {
-    this.execute('DELETE FROM ai_chat_message WHERE session_id = ?', [id])
-    this.execute('DELETE FROM ai_chat_session WHERE id = ?', [id])
+  deleteSession(id: number): AiSessionDeleteResult {
+    const messages = this.listMessages(id)
+    const attachments = dedupeAttachmentRefs(messages.flatMap((message) => message.attachments || []))
+    const rawDb = typeof this.db?.getRawDB === 'function' ? this.db.getRawDB() : this.db
+
+    rawDb.run('BEGIN TRANSACTION')
+    try {
+      this.execute('DELETE FROM ai_chat_message WHERE session_id = ?', [id])
+      const deleted = this.execute('DELETE FROM ai_chat_session WHERE id = ?', [id]) > 0
+      rawDb.run('COMMIT')
+      return { deleted, attachments }
+    } catch (error) {
+      try {
+        rawDb.run('ROLLBACK')
+      } catch {
+        /* ignore rollback failures */
+      }
+      throw error
+    }
   }
 
   listMessages(sessionId: number): AiChatMessage[] {
@@ -1083,10 +1145,20 @@ export class AIApi extends DatabaseAPI {
     return this.getSessionForUser(sessionId, userId) ? this.listMessages(sessionId) : []
   }
 
-  deleteSessionForUser(sessionId: number, userId: number): boolean {
-    if (!this.getSessionForUser(sessionId, userId)) return false
-    this.deleteSession(sessionId)
-    return true
+  deleteSessionForUser(sessionId: number, userId: number): AiSessionDeleteResult {
+    if (!this.getSessionForUser(sessionId, userId)) return { deleted: false, attachments: [] }
+    return this.deleteSession(sessionId)
+  }
+
+  countAttachmentReferences(rel: string): number {
+    if (!rel) return 0
+    const rows = this.query('SELECT attachments FROM ai_chat_message WHERE attachments IS NOT NULL')
+    let count = 0
+    for (const row of rows) {
+      const refs = parseAttachmentRefs(row.attachments) || []
+      count += refs.filter((ref) => ref.rel === rel).length
+    }
+    return count
   }
 
   saveMessage(input: {

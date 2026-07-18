@@ -126,11 +126,14 @@ export const useAiStore = defineStore('ai', () => {
    * 保存配置：写入【当前 active provider】的 key/baseUrl/当前模型（per-provider 行），
    * 以及全局的 token budget/enabled/blockOnOverage（system_config KV）。
    * - apiKeyPlain（明文）：非空交 Main safeStorage 加密，空串清除 Key，不传保留；
-   * - baseUrl/defaultModel 写入 active provider 行；
+   * - baseUrl/defaultModel/学校 Key 归属元信息写入 active provider 行；
    * - monthlyBudgetTokens/blockOnOverage/enabled 写入全局 KV。
    */
   async function saveProviderConfig(input: {
     apiKeyPlain?: string
+    keyOwnerName?: string
+    keyLabel?: string
+    keyExpiresAt?: string
     baseUrl?: string
     defaultModel?: string
     providerEnabled?: boolean
@@ -144,6 +147,9 @@ export const useAiStore = defineStore('ai', () => {
     const providerInput: {
       code: string
       apiKeyEnc?: string
+      keyOwnerName?: string
+      keyLabel?: string
+      keyExpiresAt?: string
       baseUrl?: string
       defaultModel?: string
       enabled?: boolean
@@ -161,6 +167,9 @@ export const useAiStore = defineStore('ai', () => {
       }
     }
     if (input.baseUrl !== undefined) providerInput.baseUrl = input.baseUrl
+    if (input.keyOwnerName !== undefined) providerInput.keyOwnerName = input.keyOwnerName
+    if (input.keyLabel !== undefined) providerInput.keyLabel = input.keyLabel
+    if (input.keyExpiresAt !== undefined) providerInput.keyExpiresAt = input.keyExpiresAt
     if (input.defaultModel !== undefined) providerInput.defaultModel = input.defaultModel
     if (input.providerEnabled !== undefined) providerInput.enabled = input.providerEnabled
     a.saveProvider(providerInput)
@@ -452,49 +461,54 @@ export const useAiStore = defineStore('ai', () => {
     return api().listMessagesForUser(id, uid)
   }
 
-  async function deleteMySession(id: number) {
+  async function cleanupDeletedSessionAttachments(a: AIApi, attachments: AiAttachmentRef[]): Promise<AiAttachmentRef[]> {
+    const failed: AiAttachmentRef[] = []
+    for (const ref of attachments) {
+      try {
+        if (a.countAttachmentReferences(ref.rel) > 0) continue
+        const deleted = await aiAttachmentManager.deleteAttachment(ref)
+        if (!deleted) failed.push(ref)
+      } catch (error) {
+        console.warn('[aiStore] 清理会话附件失败:', ref.rel, error)
+        failed.push(ref)
+      }
+    }
+    if (failed.length > 0) {
+      ElMessage.warning('会话已删除，部分附件文件稍后可通过资源健康检查清理。')
+    }
+    return failed
+  }
+
+  async function deleteMySession(id: number): Promise<{ failedAttachments: AiAttachmentRef[] }> {
     await ensureDb()
     const uid = currentUserId()
     const a = api()
     if (!uid || !a.getSessionForUser(id, uid)) throw new Error('会话不存在或无权删除')
+    const result = a.deleteSessionForUser(id, uid)
+    if (!result.deleted) throw new Error('删除会话失败')
+    const failedAttachments = await cleanupDeletedSessionAttachments(a, result.attachments)
     try {
-      const msgs = a.listMessagesForUser(id, uid)
-      for (const m of msgs) {
-        for (const ref of m.attachments || []) {
-          await aiAttachmentManager.deleteAttachment(ref).catch(() => {})
-        }
+      if (currentSessionId.value === id) {
+        currentSessionId.value = null
+        currentMessages.value = []
       }
-    } catch (e) {
-      console.warn('[aiStore] 清理会话附件失败:', e)
+      await loadSessions()
+      if (isAdmin()) allSessions.value = a.listAllSessions()
+      monthUsage.value = a.getMonthUsage()
+      return { failedAttachments }
+    } catch (error) {
+      console.error('[aiStore] 删除会话后刷新状态失败:', error)
+      throw error
     }
-    if (!a.deleteSessionForUser(id, uid)) throw new Error('删除会话失败')
-    if (currentSessionId.value === id) {
-      currentSessionId.value = null
-      currentMessages.value = []
-    }
-    await loadSessions()
-    if (isAdmin()) allSessions.value = a.listAllSessions()
-    monthUsage.value = a.getMonthUsage()
   }
 
   /** 删除会话（教师删自己的；admin 经此删任意）；刷新列表与用量 */
-  async function deleteSession(id: number) {
+  async function deleteSession(id: number): Promise<{ failedAttachments: AiAttachmentRef[] }> {
     await ensureDb()
     const a = api()
-    // Phase 3：删除会话前清理其附件物理文件（DB 行→deleteManagedFile，失败仅日志不阻断）
-    try {
-      const msgs = a.listMessages(id)
-      for (const m of msgs) {
-        if (m.attachments) {
-          for (const ref of m.attachments) {
-            await aiAttachmentManager.deleteAttachment(ref).catch(() => {})
-          }
-        }
-      }
-    } catch (e) {
-      console.warn('[aiStore] 清理会话附件失败:', e)
-    }
-    a.deleteSession(id)
+    const result = a.deleteSession(id)
+    if (!result.deleted) throw new Error('删除会话失败')
+    const failedAttachments = await cleanupDeletedSessionAttachments(a, result.attachments)
     if (currentSessionId.value === id) {
       currentSessionId.value = null
       currentMessages.value = []
@@ -502,6 +516,7 @@ export const useAiStore = defineStore('ai', () => {
     await loadSessions()
     if (isAdmin()) allSessions.value = a.listAllSessions()
     monthUsage.value = a.getMonthUsage()
+    return { failedAttachments }
   }
 
   /** admin 审计：读取任意会话的完整消息（只读，不影响当前会话状态） */
