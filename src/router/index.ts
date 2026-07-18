@@ -20,6 +20,7 @@ import {
   getTrainingEntryRequiredEntitlement,
 } from '@/utils/training-entry'
 import { resolveRouteModuleCode } from '@/utils/training-route-access'
+import { devRoutes, DEV_ROUTE_NAMES } from '@/router/dev-routes'
 
 // 路由懒加载
 const Login = () => import('@/views/Login.vue')
@@ -35,17 +36,6 @@ const StudentDetail = () => import('@/views/StudentDetail.vue')
 const Profile = () => import('@/views/Profile.vue')
 const AiChatHistory = () => import('@/views/AiChatHistory.vue')
 const NotFound = () => import('@/views/NotFound.vue')
-const SQLTest = () => import('@/views/SQLTest.vue')
-const WeeFIMTest = () => import('@/views/WeeFIMTest.vue')
-const ActivationAdmin = () => import('@/views/ActivationAdmin.vue')
-const WorkerTest = () => import('@/views/devtools/WorkerTest.vue')
-const SchemaMigration = () => import('@/views/devtools/SchemaMigration.vue')
-const MigrationVerification = () => import('@/views/devtools/MigrationVerification.vue')
-const ModuleDevTools = () => import('@/views/devtools/ModuleDevTools.vue')
-const BenchmarkRunner = () => import('@/views/devtools/BenchmarkRunner.vue')
-const ClassManagementTest = () => import('@/views/devtools/ClassManagementTest.vue')
-const ClassSnapshotVerification = () => import('@/views/devtools/ClassSnapshotVerification.vue')
-const ClassSnapshotTestLite = () => import('@/views/devtools/ClassSnapshotTestLite.vue')
 const ClassManagement = () => import('@/views/admin/ClassManagement.vue')
 const StudentClassAssignment = () => import('@/views/admin/StudentClassAssignment.vue')
 const ResourceManager = () => import('@/views/admin/ResourceManager.vue')
@@ -140,19 +130,6 @@ const processRef = typeof window !== 'undefined' ? ((window as any).process as {
 const isElectron = !!processRef?.type
 // 开发环境下也可以通过检查是否有 electronAPI 来判断
 const isElectronEnv = !!(window as any).electronAPI || isElectron
-
-const devOnlyRouteNames = new Set([
-  'SQLTest',
-  'WeeFIMTest',
-  'WorkerTest',
-  'SchemaMigration',
-  'MigrationVerification',
-  'ModuleDevTools',
-  'BenchmarkRunner',
-  'ClassManagementTest',
-  'ClassSnapshotVerification',
-  'ClassSnapshotTestLite',
-])
 
 const TRAINING_ENTRY_REQUIRED_ENTITLEMENTS = Array.from(new Set(
   getAllTrainingEntries().map((entry) => entry.requiredEntitlement)
@@ -1144,101 +1121,6 @@ const router = createRouter({
           }
         },
         {
-          path: 'sql-test',
-          name: 'SQLTest',
-          component: SQLTest,
-          meta: {
-            title: 'SQL.js测试',
-            hideInMenu: true
-          }
-        },
-        {
-          path: 'weefim-test',
-          name: 'WeeFIMTest',
-          component: WeeFIMTest,
-          meta: {
-            title: 'WeeFIM数据测试',
-            hideInMenu: true
-          }
-        },
-        {
-          path: 'worker-test',
-          name: 'WorkerTest',
-          component: WorkerTest,
-          meta: {
-            title: 'Database Worker测试',
-            hideInMenu: true
-          }
-        },
-        {
-          path: 'schema-migration',
-          name: 'SchemaMigration',
-          component: SchemaMigration,
-          meta: {
-            title: 'Schema 2.0 迁移工具',
-            hideInMenu: true
-          }
-        },
-        {
-          path: 'migration-verification',
-          name: 'MigrationVerification',
-          component: MigrationVerification,
-          meta: {
-            title: 'Phase 1.5 迁移验证',
-            hideInMenu: true
-          }
-        },
-        {
-          path: 'module-devtools',
-          name: 'ModuleDevTools',
-          component: ModuleDevTools,
-          meta: {
-            title: '模块开发者工具',
-            hideInMenu: true,
-            roles: ['admin']
-          }
-        },
-        {
-          path: 'benchmark-runner',
-          name: 'BenchmarkRunner',
-          component: BenchmarkRunner,
-          meta: {
-            title: '性能基准测试',
-            hideInMenu: true,
-            roles: ['admin']
-          }
-        },
-        {
-          path: 'class-management-test',
-          name: 'ClassManagementTest',
-          component: ClassManagementTest,
-          meta: {
-            title: '班级管理测试',
-            hideInMenu: true,
-            roles: ['admin']
-          }
-        },
-        {
-          path: 'class-snapshot-verification',
-          name: 'ClassSnapshotVerification',
-          component: ClassSnapshotVerification,
-          meta: {
-            title: '班级快照验证',
-            hideInMenu: true,
-            roles: ['admin']
-          }
-        },
-        {
-          path: 'class-test-lite',
-          name: 'ClassSnapshotTestLite',
-          component: ClassSnapshotTestLite,
-          meta: {
-            title: '班级快照轻量测试',
-            hideInMenu: true,
-            roles: ['admin']
-          }
-        },
-        {
           path: 'class-management',
           name: 'ClassManagement',
           component: ClassManagement,
@@ -1268,17 +1150,9 @@ const router = createRouter({
             roles: ['admin']
           }
         },
-        {
-          path: 'activation-admin',
-          name: 'ActivationAdmin',
-          component: ActivationAdmin,
-          meta: {
-            title: '激活管理',
-            icon: 'key',
-            roles: ['admin'],
-            hideInMenu: true // 开发环境工具，默认隐藏
-          }
-        }
+        // 开发专用路由（测试 / 迁移 / 基准 / 开发者工具 / 激活管理）：
+        // 生产构建下 devRoutes 折叠为空数组，对应 chunk 被 Rollup 移除。
+        ...devRoutes
       ]
     },
     {
@@ -1320,7 +1194,7 @@ router.beforeEach(async (to, from, next) => {
 
   const authStore = useAuthStore()
 
-  if (!import.meta.env.DEV && typeof to.name === 'string' && devOnlyRouteNames.has(to.name)) {
+  if (!import.meta.env.DEV && typeof to.name === 'string' && DEV_ROUTE_NAMES.has(to.name)) {
     ElMessage.warning('当前版本不开放调试或测试路由')
     next('/dashboard')
     return
