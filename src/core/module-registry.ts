@@ -10,7 +10,7 @@
  * 4. 配置管理：持久化模块配置
  */
 
-import { ModuleCode, type ModuleMetadata, type ModuleConfig, type IEPStrategy, type ResourceItem } from '@/types/module'
+import { ModuleCode, type ModuleMetadata, type ModuleConfig, type ResourceItem } from '@/types/module'
 
 /**
  * 模块注册表单例类
@@ -20,9 +20,6 @@ class ModuleRegistryImpl {
 
   // 已注册的模块列表
   private modules: Map<ModuleCode, ModuleMetadata> = new Map()
-
-  // IEP 策略映射
-  private strategies: Map<string, IEPStrategy> = new Map()
 
   // 模块配置映射
   private configs: Map<ModuleCode, ModuleConfig> = new Map()
@@ -129,60 +126,6 @@ class ModuleRegistryImpl {
    */
   hasModule(code: ModuleCode): boolean {
     return this.modules.has(code)
-  }
-
-  // ========== IEP 策略管理 ==========
-
-  /**
-   * 注册 IEP 策略
-   * @param strategy - IEP 策略
-   */
-  registerIEPSstrategy(strategy: IEPStrategy): void {
-    const { name } = strategy
-
-    // 检查策略名称是否有效
-    if (!name || typeof name !== 'string') {
-      console.warn('[ModuleRegistry] 无效的策略名称')
-      return
-    }
-
-    // 检查是否已注册
-    if (this.strategies.has(name)) {
-      console.warn(`[ModuleRegistry] 策略已注册: ${name}`)
-      return
-    }
-
-    // 注册策略
-    this.strategies.set(name, strategy)
-    console.log(`[ModuleRegistry] 已注册 IEP 策略: ${strategy.displayName}`)
-  }
-
-  /**
-   * 获取模块的 IEP 策略
-   * @param moduleCode - 模块代码
-   * @returns IEP 策略或 undefined
-   */
-  getIEPSstrategy(moduleCode: ModuleCode): IEPStrategy | undefined {
-    // 获取模块元数据
-    const module = this.getModule(moduleCode)
-    if (!module) {
-      console.warn(`[ModuleRegistry] 模块不存在: ${moduleCode}`)
-      return undefined
-    }
-
-    // 根据模块代码查找对应的策略
-    // 策略命名约定: {ModuleCode}IEPStrategy
-    const strategyName = `${moduleCode}_iep_strategy`
-
-    return this.strategies.get(strategyName)
-  }
-
-  /**
-   * 获取所有已注册的 IEP 策略
-   * @returns IEP 策略列表
-   */
-  getAllIEPSstrategies(): IEPStrategy[] {
-    return Array.from(this.strategies.values())
   }
 
   // ========== 配置管理 ==========

@@ -79,34 +79,6 @@
             />
           </div>
         </el-card>
-
-        <!-- IEP 策略列表 -->
-        <el-card shadow="never" class="mt-4">
-          <template #header>
-            <span>IEP 策略 ({{ strategies.length }})</span>
-          </template>
-
-          <div class="strategy-list">
-            <div
-              v-for="strategy in strategies"
-              :key="strategy.name"
-              class="strategy-item"
-            >
-              <div class="strategy-info">
-                <div class="strategy-name">{{ strategy.displayName }}</div>
-                <div class="strategy-modules">
-                  支持: {{ strategy.supportedModules.join(', ') }}
-                </div>
-              </div>
-            </div>
-
-            <el-empty
-              v-if="strategies.length === 0"
-              description="暂无已注册策略"
-              :image-size="60"
-            />
-          </div>
-        </el-card>
       </div>
 
       <!-- 右侧：模块详情和配置 -->
@@ -243,174 +215,6 @@
               <el-empty v-else description="暂无配置" :image-size="60" />
             </div>
           </el-card>
-
-          <!-- IEP 策略测试器 -->
-          <el-card shadow="never">
-            <template #header>
-              <span>IEP 策略测试器</span>
-            </template>
-
-            <div class="iep-tester">
-              <!-- 策略信息 -->
-              <el-alert
-                v-if="moduleStrategy"
-                :title="`已找到策略: ${moduleStrategy.displayName}`"
-                type="success"
-                :closable="false"
-                class="mb-4"
-              >
-                <template #default>
-                  <p>策略名称: {{ moduleStrategy.name }}</p>
-                  <p>支持模块: {{ moduleStrategy.supportedModules.join(', ') }}</p>
-                </template>
-              </el-alert>
-              <el-alert
-                v-else
-                title="未找到 IEP 策略"
-                type="info"
-                :closable="false"
-                class="mb-4"
-              >
-                该模块暂未注册 IEP 生成策略
-              </el-alert>
-
-              <!-- 测试表单 -->
-              <el-form
-                v-if="moduleStrategy"
-                ref="testFormRef"
-                :model="testFormData"
-                label-width="100px"
-                size="small"
-              >
-                <el-form-item label="学生姓名">
-                  <el-input v-model="testFormData.studentName" placeholder="请输入学生姓名" />
-                </el-form-item>
-
-                <el-form-item label="训练类型">
-                  <el-radio-group v-model="testFormData.trainingType">
-                    <el-radio value="equipment">器材训练</el-radio>
-                    <el-radio value="game">游戏训练</el-radio>
-                  </el-radio-group>
-                </el-form-item>
-
-                <!-- 器材训练测试数据 -->
-                <template v-if="testFormData.trainingType === 'equipment'">
-                  <el-form-item label="器材名称">
-                    <el-input v-model="testFormData.equipmentName" placeholder="例如: 触觉球" />
-                  </el-form-item>
-                  <el-form-item label="分类">
-                    <el-select v-model="testFormData.category" placeholder="选择分类">
-                      <el-option label="触觉" value="tactile" />
-                      <el-option label="前庭觉" value="vestibular" />
-                      <el-option label="本体觉" value="proprioceptive" />
-                      <el-option label="视觉" value="visual" />
-                      <el-option label="听觉" value="auditory" />
-                      <el-option label="嗅觉" value="olfactory" />
-                      <el-option label="味觉" value="gustatory" />
-                      <el-option label="综合" value="integration" />
-                    </el-select>
-                  </el-form-item>
-                  <el-form-item label="评分 (1-5)">
-                    <el-input-number
-                      v-model="testFormData.score"
-                      :min="1"
-                      :max="5"
-                      :step="0.5"
-                    />
-                  </el-form-item>
-                  <el-form-item label="辅助等级">
-                    <el-select v-model="testFormData.promptLevel" placeholder="选择辅助等级">
-                      <el-option label="1- 独立完成" :value="1" />
-                      <el-option label="2- 口头提示" :value="2" />
-                      <el-option label="3- 视觉提示" :value="3" />
-                      <el-option label="4- 触摸引导" :value="4" />
-                      <el-option label="5- 身体辅助" :value="5" />
-                    </el-select>
-                  </el-form-item>
-                  <el-form-item label="能力标签">
-                    <el-input
-                      v-model="testFormData.abilityTags"
-                      placeholder="例如: 手眼协调,精细动作"
-                    />
-                  </el-form-item>
-                </template>
-
-                <!-- 游戏训练测试数据 -->
-                <template v-else>
-                  <el-form-item label="任务类型">
-                    <el-select v-model="testFormData.taskId" placeholder="选择任务">
-                      <el-option label="颜色配对" :value="1" />
-                      <el-option label="形状识别" :value="2" />
-                      <el-option label="物品配对" :value="3" />
-                      <el-option label="视觉追踪" :value="4" />
-                      <el-option label="声音辨别" :value="5" />
-                      <el-option label="听指令做动作" :value="6" />
-                      <el-option label="节奏模仿" :value="7" />
-                    </el-select>
-                  </el-form-item>
-                  <el-form-item label="准确率">
-                    <el-slider
-                      v-model="testFormData.accuracy"
-                      :min="0"
-                      :max="1"
-                      :step="0.01"
-                      :format-tooltip="(v: number) => `${(v * 100).toFixed(0)}%`"
-                    />
-                  </el-form-item>
-                  <el-form-item label="平均响应时间(ms)">
-                    <el-input-number
-                      v-model="testFormData.avgResponseTime"
-                      :min="0"
-                      :max="10000"
-                      :step="100"
-                    />
-                  </el-form-item>
-                </template>
-
-                <el-form-item>
-                  <el-button
-                    type="primary"
-                    :loading="testing"
-                    @click="runIEPTest"
-                  >
-                    <el-icon><VideoPlay /></el-icon>
-                    运行测试
-                  </el-button>
-                  <el-button @click="resetTestForm">重置表单</el-button>
-                </el-form-item>
-              </el-form>
-
-              <!-- 测试结果 -->
-              <div v-if="testResult" class="test-result">
-                <el-divider content-position="left">测试结果</el-divider>
-                <el-alert
-                  :title="testResult.success ? '测试成功' : '测试失败'"
-                  :type="testResult.success ? 'success' : 'error'"
-                  :closable="false"
-                  class="mb-3"
-                >
-                  <template #default>
-                    <p>格式: {{ testResult.format || 'N/A' }}</p>
-                  </template>
-                </el-alert>
-
-                <!-- JSON 结果查看器 -->
-                <el-tabs v-model="resultTab">
-                  <el-tab-pane label="格式化" name="formatted">
-                    <pre class="result-json">{{ testResult.content }}</pre>
-                  </el-tab-pane>
-                  <el-tab-pane label="原始" name="raw">
-                    <el-input
-                      type="textarea"
-                      :rows="10"
-                      :model-value="testResult.content"
-                      readonly
-                    />
-                  </el-tab-pane>
-                </el-tabs>
-              </div>
-            </div>
-          </el-card>
         </template>
 
         <!-- 未选择模块 -->
@@ -443,11 +247,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  Setting, Refresh, Edit, RefreshLeft, VideoPlay
+  Setting, Refresh, Edit, RefreshLeft
 } from '@element-plus/icons-vue'
 import { ModuleRegistry } from '@/core/module-registry'
-import { ModuleCode, type ModuleMetadata, type IEPResult } from '@/types/module'
-import { IEPGenerator } from '@/utils/iep-generator-refactored'
+import { ModuleCode, type ModuleMetadata } from '@/types/module'
 
 const router = useRouter()
 
@@ -455,43 +258,18 @@ const router = useRouter()
 
 const isDevEnvironment = computed(() => import.meta.env.DEV)
 const modules = ref<ModuleMetadata[]>([])
-const strategies = ref<any[]>([])
 const selectedModule = ref<ModuleMetadata | null>(null)
 const moduleConfig = ref<any>(null)
 const moduleEnabled = ref(true)
-const moduleStrategy = computed(() => {
-  if (!selectedModule.value) return null
-  return ModuleRegistry.getIEPSstrategy(selectedModule.value.code)
-})
 
 // 配置编辑
 const configEditDialogVisible = ref(false)
 const configEditText = ref('')
 
-// IEP 测试
-const testing = ref(false)
-const testResult = ref<IEPResult | null>(null)
-const resultTab = ref('formatted')
-const testFormData = ref({
-  studentName: '测试学生',
-  trainingType: 'equipment',
-  // 器材训练数据
-  equipmentName: '触觉球',
-  category: 'tactile',
-  score: 4,
-  promptLevel: 2,
-  abilityTags: '手眼协调,精细动作',
-  // 游戏训练数据
-  taskId: 1,
-  accuracy: 0.75,
-  avgResponseTime: 1200
-})
-
 // ========== 生命周期 ==========
 
 onMounted(() => {
   loadModules()
-  loadStrategies()
 })
 
 // ========== 数据加载 ==========
@@ -500,13 +278,8 @@ function loadModules() {
   modules.value = ModuleRegistry.getAllModules()
 }
 
-function loadStrategies() {
-  strategies.value = ModuleRegistry.getAllIEPSstrategies()
-}
-
 function refreshModules() {
   loadModules()
-  loadStrategies()
   ElMessage.success('已刷新模块列表')
 }
 
@@ -606,100 +379,6 @@ function resetConfig() {
   }).catch(() => {
     // 用户取消
   })
-}
-
-// ========== IEP 策略测试 ==========
-
-async function runIEPTest() {
-  if (!moduleStrategy.value || !selectedModule.value) {
-    ElMessage.warning('未找到可用的 IEP 策略')
-    return
-  }
-
-  testing.value = true
-  testResult.value = null
-
-  try {
-    // 准备测试数据
-    let trainingData: any
-
-    if (testFormData.value.trainingType === 'equipment') {
-      // 器材训练数据
-      trainingData = {
-        equipment: {
-          name: testFormData.value.equipmentName,
-          category: testFormData.value.category,
-          ability_tags: testFormData.value.abilityTags.split(',').map(s => s.trim()).filter(Boolean)
-        },
-        score: testFormData.value.score,
-        promptLevel: testFormData.value.promptLevel
-      }
-    } else {
-      // 游戏训练数据
-      trainingData = {
-        taskId: testFormData.value.taskId,
-        sessionData: {
-          taskId: testFormData.value.taskId,
-          accuracy: testFormData.value.accuracy,
-          avgResponseTime: testFormData.value.avgResponseTime,
-          totalTrials: 20,
-          behavior: {
-            impulsivityScore: 50,
-            fatigueIndex: 0.8
-          },
-          errors: {
-            omission: 2,
-            commission: 1
-          },
-          trackingStats: testFormData.value.taskId === 4 ? {
-            timeOnTargetPercent: 0.75
-          } : undefined,
-          rhythmStats: testFormData.value.taskId === 7 ? {
-            timingErrorAvg: 150
-          } : undefined
-        }
-      }
-    }
-
-    // 调用 IEP 生成器
-    const result = await IEPGenerator.generate({
-      studentName: testFormData.value.studentName,
-      moduleCode: selectedModule.value.code,
-      trainingData
-    })
-
-    testResult.value = result
-
-    if (result.success) {
-      ElMessage.success('IEP 生成成功')
-    } else {
-      ElMessage.error(`IEP 生成失败: ${result.error}`)
-    }
-  } catch (error: any) {
-    ElMessage.error(`测试失败: ${error.message}`)
-    testResult.value = {
-      success: false,
-      error: error.message
-    }
-  } finally {
-    testing.value = false
-  }
-}
-
-function resetTestForm() {
-  testFormData.value = {
-    studentName: '测试学生',
-    trainingType: 'equipment',
-    equipmentName: '触觉球',
-    category: 'tactile',
-    score: 4,
-    promptLevel: 2,
-    abilityTags: '手眼协调,精细动作',
-    taskId: 1,
-    accuracy: 0.75,
-    avgResponseTime: 1200
-  }
-  testResult.value = null
 }
 
 // ========== 辅助函数 ==========
@@ -828,31 +507,6 @@ function goBack() {
   flex-shrink: 0;
 }
 
-/* 策略列表 */
-.strategy-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.strategy-item {
-  padding: 10px;
-  border-radius: 6px;
-  background-color: #f5f7fa;
-}
-
-.strategy-name {
-  font-weight: 600;
-  font-size: 13px;
-  color: #303133;
-}
-
-.strategy-modules {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
-}
-
 /* 右侧模块详情 */
 .module-detail-section {
   flex: 1;
@@ -874,28 +528,6 @@ function goBack() {
 
 .config-viewer {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-}
-
-/* IEP 测试器 */
-.iep-tester {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.test-result {
-  margin-top: 16px;
-}
-
-.result-json {
-  background-color: #f5f7fa;
-  padding: 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  line-height: 1.5;
-  max-height: 300px;
-  overflow-y: auto;
-  margin: 0;
 }
 
 /* 响应式 */

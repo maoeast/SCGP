@@ -18,7 +18,7 @@
  * ```
  */
 
-import { ModuleCode, type IEPResult } from '@/types/module'
+import { ModuleCode } from '@/types/module'
 import { ModuleRegistry } from '@/core/module-registry'
 import { TaskID, type GameSessionData, type IEPReport, type IEPReportSection } from '@/types/games'
 import { CATEGORY_LABELS } from '@/types/equipment'
@@ -58,7 +58,6 @@ export interface EquipmentTrainingData {
 
 /**
  * 器材训练报告接口
- * @deprecated 使用 IEPResult 替代
  */
 export interface EquipmentIEPReport {
   studentName: string

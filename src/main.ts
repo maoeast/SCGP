@@ -6,7 +6,6 @@ import pinia from './stores'
 import router from './router'
 import { initDatabase } from './database/init'
 import { initializeBuiltinModules } from './core/module-registry'
-import { initializeStrategies } from './core/strategies-init'
 import { useAuthStore } from './stores/auth'
 import { useSystemConfigStore } from './stores/systemConfig'
 import ElementPlus from 'element-plus'
@@ -103,9 +102,6 @@ async function initializeApp() {
 
     // 初始化模块注册表
     initializeBuiltinModules()
-
-    // 初始化 IEP 策略
-    initializeStrategies()
 
     // 使用插件
     app.use(pinia)

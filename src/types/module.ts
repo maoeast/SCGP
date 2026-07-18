@@ -223,46 +223,6 @@ export interface ModuleConfig {
   defaults?: Record<string, any>
 }
 
-// ========== IEP 策略相关类型 ==========
-
-/**
- * IEP 生成策略接口
- *
- * Phase 3.3: 业务逻辑策略化
- *
- * 每个模块可以实现自己的 IEP 生成策略
- */
-export interface IEPStrategy {
-  // 策略名称（唯一标识符）
-  name: string
-
-  // 策略显示名称
-  displayName: string
-
-  // 支持的模块代码列表
-  supportedModules: ModuleCode[]
-
-  // 生成 IEP
-  generateIEP(data: any): Promise<IEPResult>
-}
-
-/**
- * IEP 生成结果
- */
-export interface IEPResult {
-  // 是否成功
-  success: boolean
-
-  // 生成的 IEP 内容
-  content?: string
-
-  // IEP 类型（html, docx, pdf 等）
-  format?: string
-
-  // 错误信息
-  error?: string
-}
-
 // ========== 模块注册表 ==========
 
 /**
@@ -279,12 +239,6 @@ export interface ModuleRegistry {
 
   // 注册模块
   registerModule(metadata: ModuleMetadata): void
-
-  // 获取模块的 IEP 策略
-  getIEPSstrategy(moduleCode: ModuleCode): IEPStrategy | undefined
-
-  // 注册 IEP 策略
-  registerIEPSstrategy(strategy: IEPStrategy): void
 
   // 获取模块配置
   getModuleConfig(moduleCode: ModuleCode): ModuleConfig | undefined
@@ -331,18 +285,5 @@ export function isResourceItem(item: any): item is ResourceItem {
     typeof item.name === 'string' &&
     typeof item.moduleCode === 'string' &&
     isValidModuleCode(item.moduleCode)
-  )
-}
-
-/**
- * IEP 策略类型守卫
- */
-export function isIEPSstrategy(strategy: any): strategy is IEPStrategy {
-  return (
-    typeof strategy === 'object' &&
-    typeof strategy.name === 'string' &&
-    typeof strategy.displayName === 'string' &&
-    Array.isArray(strategy.supportedModules) &&
-    typeof strategy.generateIEP === 'function'
   )
 }
