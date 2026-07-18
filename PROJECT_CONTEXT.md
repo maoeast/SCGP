@@ -1713,3 +1713,9 @@
 - 验证：`node scripts/export-resources.cjs --help` 正常；`grep -rn "better-sqlite3" package.json package-lock.json scripts src electron` 零命中（exit 1）；`npm run verify:release`（type-check + test:core:node + test:core:ts + build:web 40.06s）全绿；`git diff --check` 干净。
 - 桌面 UAT（About 文案真机显示）留待 C13 终验，本轮记「代码已实现 / 待桌面 UAT」。
 - 下一批次 C12（更新/签名/升级发布门禁）被外部输入阻塞：需正式 HTTPS 更新目录 URL + Windows 代码签名证书 + Windows 验收机，三样齐备前不开工。
+
+## 86. 2026-07-18 生产调试信息清理门禁
+
+- `build:web` 现在固定在 Vite 构建后执行 `sanitize:production`，对 `dist` 下 HTML/CSS/JS/MJS 做调试标记块清理与残留扫描；`console.*`、`debugger`、devtools/vconsole/eruda 等生产残留会让构建后门禁失败。
+- 生产 Vite 构建不加载 `vite-plugin-vue-devtools`；Electron 生产态默认抑制主进程运行时日志并屏蔽常见 DevTools 快捷键。
+- 该批为 C12/C13 阻塞期间独立技术债，已通过 `npm run verify:release`，但仍未提交。
