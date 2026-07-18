@@ -1670,3 +1670,14 @@
 - 口径决策（用户拍板「显式映射，保留全字段」）：`get_student` 改 `SELECT *` 为 dispatcher 层显式字段映射，保留现有全字段（`name`/`disorder`/`avatar_path` 等），仅防止 `student` 表未来加列被 `SELECT *` 自动外发；外发面与现状一致。不做脱敏——`name`/`disorder` 是 AI 给建议的必要输入，知情同意由 C07 首次发送门禁层（§79）兜底。其余 7 个工具维持现状。
 - 注意：`.claude/skills/sqlite-db-manager/references/database-schema.md` 的 student schema（diagnosis/notes/admission_date）为历史文档，与运行时 `init.ts`/`schema.sql`（字段为 `disorder`，无 notes/admission_date）冲突，以代码为准。
 - 验证：`npm run type-check`。
+
+## 82. 2026-07-18 C08 开发路由生产隔离
+
+- 11 个开发专用路由（`SQLTest`/`WeeFIMTest`/`WorkerTest`/`SchemaMigration`/`MigrationVerification`/`ModuleDevTools`/`BenchmarkRunner`/`ClassManagementTest`/`ClassSnapshotVerification`/`ClassSnapshotTestLite`/`ActivationAdmin`）从 `src/router/index.ts` 的 Layout children 移出，集中到新增 `src/router/dev-routes.ts`。
+- 隔离机制：route record 与组件动态 import 工厂**一并内联**在 `devRoutes = import.meta.env.DEV ? [...] : []` 三元内。Vite 生产构建把 `import.meta.env.DEV` 静态替换为 `false` 后，整块进入 dead 分支被 Rollup tree-shake，对应 chunk 不再生成——而非仅靠全局守卫拦截访问。
+- `DEV_ROUTE_NAMES`（守卫纵深保护 + 边界测试事实源）**故意做成独立字符串字面量集合**，不通过 `.map()` 从 `devRoutes` 派生：否则生产态（`devRoutes` 已折叠为 `[]`）该映射仍会让组件 import 工厂可达，破坏 tree-shaking。集合只含字符串、不引用组件，可安全常驻生产 bundle。
+- `ActivationAdmin` 一并纳入 dev 隔离（原 `devOnlyRouteNames` 不含它）；`router/index.ts` 全局守卫现统一用 `DEV_ROUTE_NAMES`，纵深保护覆盖全部 11 个 name。
+- `ClassManagement` / `StudentClassAssignment` / `ResourceManager` 是正式管理能力，**保留生产路由不动**。
+- 边界验证双层：`scripts/tests/dev-route-production-boundary.test.mjs`（源码契约层——断言 DEV 三元包裹、`index.ts` 不再静态引用 dev 组件、`devRoutes` 声明与 `DEV_ROUTE_NAMES` 一致、正式管理路由未被误移）；`build:web` 后 `grep` 扫 `dist/assets`（构建产物层——dev 页面 title 与 dev 组件 chunk 文件名均无命中）。
+- 验证：`npm run type-check` EXIT=0；`node --test scripts/tests/dev-route-production-boundary.test.mjs scripts/tests/training-route-access.test.mjs` 11/11；`npm run build:web` 39s 成功；`dist/assets` 内容与 chunk 文件名扫描均 exit=1（无命中）。
+- 桌面 UAT（生产包访问 `/sql-test`、`/module-devtools`、`/activation-admin` 等确认无 route record）留待 C13 终验矩阵「生产边界」行。
