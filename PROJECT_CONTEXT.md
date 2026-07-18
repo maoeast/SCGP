@@ -1692,3 +1692,13 @@
 - 边界测试：新增 `scripts/tests/module-registry-consistency.test.mjs`（源码契约层——4 断言：6 模块全覆盖无重复、route ∈ 5 通用入口白名单、旧路径黑名单零回归、social·cognitive experimental），沿用 C08 源码解析范式（`readFileSync` 正则，不 jiti 运行时加载以避开单例构造调 `localStorage`），挂进 `test:core:node`。
 - 验证：`npm run type-check` EXIT=0；`npm run verify:core`（test:core:node 58/58 含新测试 4 项 + test:core:ts 3/3）；`npm run build:web` 39.42s。
 - 范围外：`ModuleRegistryImpl` 的 strategy Map/API 未动（C10 清理 IEP 策略试验链）；C08 遗留的 `dev-route-production-boundary.test.mjs` 仍未挂进 `verify:core`（用户确认不做）。
+
+## 84. 2026-07-18 C10 IEP 双主链清理
+
+- 删除未进生产页面、仅由开发工具调用的 IEP 策略试验链，消除「两个同名 `IEPGenerator`」双主链：生产主链 `src/utils/iep-generator.ts`（静态类，`IEPReport.vue`/`Records.vue` 消费）保留为唯一生成器；策略试验链整体删除。
+- 删除整文件：`src/core/strategies-init.ts`、`src/strategies/SensoryIEPStrategy.ts`、`src/utils/iep-generator-refactored.ts`（refactored 生成器仅被 dev-only `ModuleDevTools.vue` 调用）。
+- 收口：`main.ts` 去 `initializeStrategies()` 启动调用；`module-registry.ts` 删 strategy Map + `registerIEPSstrategy`/`getIEPSstrategy`/`getAllIEPSstrategies` 三方法（registry 收敛为「模块元数据 + 开发诊断」单一职责）；`types/module.ts` 删 `IEPStrategy`/`IEPResult` 接口 + registry 接口内两条 strategy 方法 + `isIEPSstrategy` 守卫；`ModuleDevTools.vue` 删「IEP 策略列表」卡 + 「IEP 策略测试器」卡 + 相关 script/style，保留模块元数据诊断。
+- 连带清理（删类型的强制副作用，非生产生成器内部重构）：`iep-generator.ts` 去 vestigial `type IEPResult` import（正文未用）+ 失效 `@deprecated 使用 IEPResult 替代` 注释。
+- 边界：生产 IEP 静态 API 与内部实现零改动；授权/路由/catalog/DB 零影响。
+- 验证：`npm run type-check` EXIT=0；`npm run verify:core`（test:core:node 58/58 + test:core:ts 3/3）；`npm run build:web` 39.03s；`grep` 断言 src 内 `initializeStrategies|registerIEPSstrategy|getIEPSstrategy|getAllIEPSstrategies|iep-generator-refactored|SensoryIEPStrategy|IEPStrategy|IEPResult` 零命中。
+- 桌面 UAT（感官器材/感官游戏/社交游戏/生活自理 L03·L05/Tier3 低样本报告）留待 C13 终验矩阵「IEP」行，本轮只到「代码已实现 / 待桌面 UAT」。
