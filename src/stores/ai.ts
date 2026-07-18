@@ -811,6 +811,12 @@ export const useAiStore = defineStore('ai', () => {
     }
   }
 
+  /** 管理员：重置所有用户的 AI 隐私告知确认（清除全部 `ai:privacy_ack:user:*` KV），下次发送重新触发告知。返回清除条数。 */
+  async function resetAllPrivacyAck(): Promise<number> {
+    await ensureDb()
+    return api().resetAllPrivacyAck()
+  }
+
   return {
     // Phase 3
     agents,
@@ -870,5 +876,7 @@ export const useAiStore = defineStore('ai', () => {
     deleteMySession,
     deleteSession,
     getViewMessages,
+    // C07：隐私告知管理
+    resetAllPrivacyAck,
   }
 })

@@ -1652,5 +1652,13 @@
 - 落地：`AIApi.isPrivacyAcked/acknowledgePrivacy`（ai-api.ts，复用 getConfig/setConfig）；`sendChat` 在校验链通过、createSession 副作用前弹 `ElMessageBox.confirm`（HTML 静态文案 `AI_PRIVACY_NOTICE_HTML`，无用户输入注入风险），确认=记忆并继续，取消=静默 return {ok:false}。
 - 告知文案枚举 5 类外发内容：输入文本 / 图片 vision / 文档抽取文本 / 智能体挂载的专业知识技能 / AI 工具查询结果（学生·评估·训练·资源数据）。
 - `AiAssistant.vue` 的 send/generateReport/sendStarterPrompt 3 入口经 sendChat 统一覆盖，组件层无需改。
-- 本批不做：字段级脱敏、tool result 最小化、系统设置重置入口（重置入口为告知文案承诺的闭环项，留作下一步）。
+- 本批不做：字段级脱敏、tool result 最小化（重置入口见 §80）。
 - 验证：`npm run type-check` EXIT=0。
+
+## 80. 2026-07-18 C07 隐私告知重置入口
+
+- 系统设置「AI 智能体 → 模型服务配置」card 新增「重置全部教师的告知确认」入口：二次确认后清除所有 `ai:privacy_ack:user:*` KV，返回清除条数；用于更新告知文案或合规复查后让全员下次发送重新确认。
+- 落地：`AIApi.resetAllPrivacyAck`（`DELETE FROM system_config WHERE key LIKE 'ai:privacy_ack:user:%'`）；ai store 导出 `resetAllPrivacyAck`；`AiAgentConfig.vue` 加 `resetPrivacyAck` handler + form-item。
+- 语义为「全局重置」（非单用户），与系统设置管理定位一致；门禁本身仍按「每个登录用户首次」触发。
+- 验证：`npm run type-check` EXIT=0。
+- C07 至此门禁 + 重置闭环完成；字段脱敏与 tool result 最小化仍未做（下一步优先 tool result 学生敏感字段裁剪）。

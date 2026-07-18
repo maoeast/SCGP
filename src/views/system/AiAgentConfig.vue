@@ -214,6 +214,21 @@ async function testConnection() {
   }
 }
 
+/** 管理员：重置所有教师的「AI 外发隐私告知」确认（清除 ai:privacy_ack:user:* KV）。 */
+async function resetPrivacyAck() {
+  try {
+    await ElMessageBox.confirm(
+      '将清除所有教师的「AI 外发隐私告知」确认记录。下次发送内容时，每位教师都会重新看到告知并需再次确认。\n通常用于更新告知文案或合规复查后让全员重新确认。是否继续？',
+      '重置隐私告知确认',
+      { confirmButtonText: '重置', cancelButtonText: '取消', type: 'warning' },
+    )
+  } catch {
+    return /* 用户取消 */
+  }
+  const n = await aiStore.resetAllPrivacyAck()
+  ElMessage.success(n > 0 ? `已重置 ${n} 位教师的告知确认` : '当前没有任何已确认记录')
+}
+
 // ===== 用量展示 =====
 const budgetPercent = computed(() => {
   const budget = aiStore.providerConfig?.monthlyBudgetTokens || 0
@@ -634,6 +649,18 @@ async function removeSession(id: number) {
           <el-button :loading="aiStore.testing" :disabled="!aiStore.isConfigured" @click="testConnection">
             测试连接
           </el-button>
+        </el-form-item>
+
+        <el-form-item label="隐私告知">
+          <div class="field-hint">
+            每位教师首次向 AI 发送内容前会弹出「外发隐私告知」，确认后按账号记忆、不再重复弹出。
+          </div>
+          <div class="field-hint">
+            <el-button link type="warning" size="small" @click="resetPrivacyAck">
+              重置全部教师的告知确认
+            </el-button>
+            <span class="field-hint-inline">用于更新告知文案或合规复查后，让所有人下次发送重新确认</span>
+          </div>
         </el-form-item>
       </el-form>
     </el-card>

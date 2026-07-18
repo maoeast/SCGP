@@ -658,6 +658,18 @@ export class AIApi extends DatabaseAPI {
     this.setConfig(`ai:privacy_ack:user:${userId}`, new Date().toISOString())
   }
 
+  /** 清除全部用户的隐私告知确认（删除所有 `ai:privacy_ack:user:*` KV），返回清除条数。下次发送将重新触发告知。 */
+  resetAllPrivacyAck(): number {
+    const row = this.queryOne(
+      `SELECT COUNT(*) AS total FROM system_config WHERE key LIKE 'ai:privacy_ack:user:%'`,
+    )
+    const before = row ? Number(row.total) : 0
+    if (before > 0) {
+      this.execute(`DELETE FROM system_config WHERE key LIKE 'ai:privacy_ack:user:%'`)
+    }
+    return before
+  }
+
   listProviders(): AiProvider[] {
     return this.query('SELECT * FROM ai_provider ORDER BY sort ASC, id ASC').map(rowToProvider)
   }
