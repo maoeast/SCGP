@@ -362,90 +362,185 @@ export const ModuleRegistry = ModuleRegistryImpl.getInstance()
  * 此函数在应用启动时调用
  */
 export function initializeBuiltinModules(): void {
-  // 感官统合训练模块
+  // 感官统合训练模块（名下含 sensory-integration + fine-motor 两个训练入口）
   ModuleRegistry.registerModule({
     code: ModuleCode.SENSORY,
     name: '感官统合训练',
-    description: '提供触觉、嗅觉、视觉、听觉、味觉、本体觉和综合训练',
+    description: '感官统合主链：游戏训练、器材训练、训练记录与 S-M 评估',
     icon: 'Sensation',
     themeColor: '#67c23a',
     version: '1.0.0',
     status: 'active',
     features: [
       {
+        code: 'games',
+        name: '游戏训练',
+        description: '感官游戏训练入口',
+        status: 'active',
+        route: '/games/menu'
+      },
+      {
+        code: 'equipment',
+        name: '器材训练',
+        description: '感官器材训练入口',
+        status: 'active',
+        route: '/equipment/menu'
+      },
+      {
         code: 'training_records',
         name: '训练记录',
-        description: '记录和管理学生的感官训练记录',
+        description: '训练记录汇总入口',
         status: 'active',
-        route: '/sensory/training-records'
+        route: '/training-records/menu'
       },
       {
         code: 'assessment',
-        name: '评估管理',
-        description: 'S-M 量表评估',
+        name: '评估',
+        description: 'S-M 量表等评估入口',
         status: 'active',
-        route: '/sensory/assessment'
-      },
-      {
-        code: 'iep_generation',
-        name: 'IEP 生成',
-        description: '生成个别化教育计划',
-        status: 'active',
-        route: '/sensory/iep'
+        route: '/assessment'
       }
     ]
   })
 
-  // 情绪调节模块
+  // 情绪调节模块（名下含 emotional-regulation + soothing-aids 两个训练入口）
   ModuleRegistry.registerModule({
     code: ModuleCode.EMOTIONAL,
     name: '情绪调节',
-    description: '放松训练、情绪识别和情绪管理',
+    description: '情绪调节主链：游戏训练、器材训练与训练记录',
     icon: 'Emotion',
     themeColor: '#e6a23c',
     version: '1.0.0',
     status: 'active',
     features: [
       {
-        code: 'relaxation_training',
-        name: '放松训练',
-        description: '深呼吸、渐进式肌肉放松等训练',
+        code: 'games',
+        name: '游戏训练',
+        description: '情绪游戏训练入口',
         status: 'active',
-        route: '/emotional/relaxation'
+        route: '/games/menu'
       },
       {
-        code: 'emotion_recognition',
-        name: '情绪识别',
-        description: '识别和理解基本情绪',
+        code: 'equipment',
+        name: '器材训练',
+        description: '情绪器材训练入口',
         status: 'active',
-        route: '/emotional/recognition'
+        route: '/equipment/menu'
+      },
+      {
+        code: 'training_records',
+        name: '训练记录',
+        description: '训练记录汇总入口',
+        status: 'active',
+        route: '/training-records/menu'
       }
     ]
   })
 
-  // 社交沟通模块
+  // 社交沟通模块（experimental，内容持续补全中）
   ModuleRegistry.registerModule({
     code: ModuleCode.SOCIAL,
     name: '社交沟通',
-    description: '对话练习、社交故事和沟通技能训练',
+    description: '社交沟通主链，当前为试验态',
     icon: 'ChatDotRound',
     themeColor: '#409eff',
     version: '1.0.0',
     status: 'experimental',
     features: [
       {
-        code: 'conversation_practice',
-        name: '对话练习',
-        description: '模拟对话场景进行练习',
+        code: 'games',
+        name: '游戏训练',
+        description: '社交游戏训练入口',
         status: 'coming_soon',
-        route: '/social/conversation'
+        route: '/games/menu'
       },
       {
-        code: 'social_stories',
-        name: '社交故事',
-        description: '通过故事学习社交规则',
+        code: 'equipment',
+        name: '器材训练',
+        description: '社交器材训练入口',
         status: 'coming_soon',
-        route: '/social/stories'
+        route: '/equipment/menu'
+      }
+    ]
+  })
+
+  // 认知发展模块（experimental，内容持续补全中）
+  ModuleRegistry.registerModule({
+    code: ModuleCode.COGNITIVE,
+    name: '认知发展',
+    description: '认知发展主链，当前为试验态',
+    icon: 'Cpu',
+    themeColor: '#13c2c2',
+    version: '1.0.0',
+    status: 'experimental',
+    features: [
+      {
+        code: 'training_records',
+        name: '训练记录',
+        description: '训练记录汇总入口',
+        status: 'coming_soon',
+        route: '/training-records/menu'
+      },
+      {
+        code: 'assessment',
+        name: '评估',
+        description: '认知自测等评估入口',
+        status: 'coming_soon',
+        route: '/assessment'
+      }
+    ]
+  })
+
+  // 生活技能模块
+  ModuleRegistry.registerModule({
+    code: ModuleCode.LIFE_SKILLS,
+    name: '生活自理',
+    description: '生活自理主链：游戏训练、器材训练与训练记录',
+    icon: 'House',
+    themeColor: '#d97706',
+    version: '1.0.0',
+    status: 'active',
+    features: [
+      {
+        code: 'games',
+        name: '游戏训练',
+        description: '生活技能游戏训练入口',
+        status: 'active',
+        route: '/games/menu'
+      },
+      {
+        code: 'equipment',
+        name: '器材训练',
+        description: '生活技能器材训练入口',
+        status: 'active',
+        route: '/equipment/menu'
+      },
+      {
+        code: 'training_records',
+        name: '训练记录',
+        description: '训练记录汇总入口',
+        status: 'active',
+        route: '/training-records/menu'
+      }
+    ]
+  })
+
+  // 资源管理模块（跨模块）
+  ModuleRegistry.registerModule({
+    code: ModuleCode.RESOURCE,
+    name: '资源管理',
+    description: '跨模块训练资源与教具统一管理',
+    icon: 'Files',
+    themeColor: '#909399',
+    version: '1.0.0',
+    status: 'active',
+    features: [
+      {
+        code: 'resource_center',
+        name: '资源中心',
+        description: '统一资源中心入口',
+        status: 'active',
+        route: '/resource-center'
       }
     ]
   })
