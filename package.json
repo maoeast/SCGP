@@ -1,6 +1,6 @@
 {
   "name": "scgp",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": true,
   "type": "module",
   "main": "electron/main.mjs",
@@ -25,6 +25,7 @@
     "test:core:ts": "npx jiti tests/entitlement-catalog.test.ts && npx jiti tests/resource-file-refs.test.ts && npx jiti tests/crypto-bytes.test.ts",
     "verify:core": "npm run type-check && npm run test:core:node && npm run test:core:ts",
     "verify:release": "npm run verify:core && npm run build:web",
+    "release:verify": "node scripts/release-verify.mjs",
     "lint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
     "electron": "electron .",
@@ -80,7 +81,7 @@
     "publish": [
       {
         "provider": "generic",
-        "url": "http://124.220.104.199/scgp/win"
+        "url": "https://maohedong.top/scgp/win"
       }
     ],
     "win": {

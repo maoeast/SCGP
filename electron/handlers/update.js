@@ -15,7 +15,11 @@ const UPDATE_CONFIG_FILE_NAME = 'update-config.json'
 const UPDATE_URL_MISSING_MESSAGE =
   '未配置自有更新源 URL，请在 update-config.json 中设置 url，例如 https://updates.example.com/scgp/win'
 const LEGACY_DEFAULT_UPDATE_URL = 'https://upadate.hzxckj308.com/scgp/win'
-const DEFAULT_UPDATE_URL = 'http://124.220.104.199/scgp/win'
+const LEGACY_HTTP_IP_UPDATE_URL = 'http://124.220.104.199/scgp/win'
+const DEFAULT_UPDATE_URL = 'https://maohedong.top/scgp/win'
+
+// 历史自有更新源：检测到这些旧地址时，自动迁移到当前 HTTPS 默认地址
+const LEGACY_UPDATE_URLS = [LEGACY_DEFAULT_UPDATE_URL, LEGACY_HTTP_IP_UPDATE_URL]
 
 // 默认更新配置
 const DEFAULT_FEED_CONFIG = {
@@ -48,10 +52,11 @@ function normalizeFeedConfig(rawConfig = {}) {
   const fallbackUrl = normalizeUpdateUrl(DEFAULT_FEED_CONFIG.url)
   const rawUrl = typeof rawConfig.url === 'string' ? rawConfig.url : fallbackUrl
   const normalizedRawUrl = normalizeUpdateUrl(rawUrl)
-  const migratedUrl =
-    normalizedRawUrl === normalizeUpdateUrl(LEGACY_DEFAULT_UPDATE_URL)
-      ? fallbackUrl
-      : normalizedRawUrl
+  const migratedUrl = LEGACY_UPDATE_URLS.some(
+    (legacyUrl) => normalizedRawUrl === normalizeUpdateUrl(legacyUrl),
+  )
+    ? fallbackUrl
+    : normalizedRawUrl
   const normalizedConfig = {
     ...DEFAULT_FEED_CONFIG,
     provider: 'generic',

@@ -16,31 +16,36 @@ async function readPackageJson() {
   return JSON.parse(await readRepoFile('package.json'))
 }
 
-test('update handlers default to generic self-hosted provider instead of GitHub releases', async () => {
+test('update handlers default to the HTTPS self-hosted provider on maohedong.top', async () => {
   const updateHandlerSource = await readRepoFile('electron/handlers/update.js')
 
   assert.match(updateHandlerSource, /provider:\s*'generic'/, 'default provider should be generic')
   assert.match(
     updateHandlerSource,
+    /https:\/\/maohedong\.top\/scgp\/win/,
+    'default self-hosted update URL should be HTTPS on maohedong.top',
+  )
+  assert.match(
+    updateHandlerSource,
     /http:\/\/124\.220\.104\.199\/scgp\/win/,
-    'default self-hosted update URL should point to the Tencent Cloud server IP',
+    'legacy HTTP IP must remain in source as a migration source',
   )
   assert.doesNotMatch(updateHandlerSource, /owner:\s*'maoeast'/, 'GitHub owner should not remain in defaults')
   assert.doesNotMatch(updateHandlerSource, /repo:\s*'Self-Care-ATS'/, 'GitHub repo should not remain in defaults')
 })
 
-test('update handlers migrate the legacy hosted update URL to the current Tencent Cloud IP', async () => {
+test('update handlers migrate every legacy self-hosted URL to the current HTTPS default', async () => {
   const updateHandlerSource = await readRepoFile('electron/handlers/update.js')
 
   assert.match(
     updateHandlerSource,
     /https:\/\/upadate\.hzxckj308\.com\/scgp\/win/,
-    'legacy self-hosted update URL should remain detectable for migration',
+    'legacy hzxckj URL should remain detectable for migration',
   )
   assert.match(
     updateHandlerSource,
-    /normalizedRawUrl\s*===\s*normalizeUpdateUrl\(LEGACY_DEFAULT_UPDATE_URL\)/,
-    'legacy self-hosted update URL should be migrated to the current default URL',
+    /LEGACY_UPDATE_URLS\.some/,
+    'migration should evaluate the full legacy URL set, not a single hard-coded URL',
   )
 })
 
@@ -64,9 +69,9 @@ test('windows installer artifact name stays aligned with updater metadata path',
     [
       {
         provider: 'generic',
-        url: 'http://124.220.104.199/scgp/win',
+        url: 'https://maohedong.top/scgp/win',
       },
     ],
-    'electron-builder publish config should target the self-hosted update URL',
+    'electron-builder publish config should target the HTTPS self-hosted update URL',
   )
 })
