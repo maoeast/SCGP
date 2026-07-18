@@ -646,6 +646,18 @@ export class AIApi extends DatabaseAPI {
     )
   }
 
+  // ==================== Privacy consent（首次发送前隐私告知，按 userId 记忆）====================
+
+  /** 该用户是否已确认 AI 外发隐私告知（首次发送前弹 confirm，确认后不再弹）。 */
+  isPrivacyAcked(userId: number): boolean {
+    return this.getConfig(`ai:privacy_ack:user:${userId}`) != null
+  }
+
+  /** 标记该用户已确认隐私告知（存 ISO 时间戳，便于审计；可经系统设置重置后重新触发）。 */
+  acknowledgePrivacy(userId: number): void {
+    this.setConfig(`ai:privacy_ack:user:${userId}`, new Date().toISOString())
+  }
+
   listProviders(): AiProvider[] {
     return this.query('SELECT * FROM ai_provider ORDER BY sort ASC, id ASC').map(rowToProvider)
   }

@@ -20,13 +20,32 @@ import { useAuthStore } from '@/stores/auth'
 import { runToolLoop } from '@/services/ai-tool-loop'
 import { filterTools, type ToolStep } from '@/services/ai-tools'
 import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 /** 图片附件扩展名集合（Phase 4：文档附件文本已进 content，多模态只把图片附件做成 image_url） */
 const IMAGE_FILE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico'])
 function isImageFileExt(fileType: string): boolean {
   return IMAGE_FILE_EXTS.has((fileType || '').toLowerCase())
 }
+
+/**
+ * C07：首次发送前 AI 外发隐私告知文案。静态文案（无用户输入），用 HTML 列表清晰枚举外发范围。
+ * 在 sendChat 入口经 ElMessageBox.confirm 展示，确认后按 userId 记忆，不再弹（可在系统设置重置）。
+ */
+const AI_PRIVACY_NOTICE_HTML = `
+<div style="line-height:1.7">
+  你即将向 <b>外部 AI 模型服务</b>发送内容进行处理。请知悉以下内容<b>会上传到云端</b>：
+  <ul style="margin:8px 0;padding-left:22px">
+    <li>你输入的<b>文本</b>；</li>
+    <li>上传的<b>图片</b>（当模型支持视觉时）；</li>
+    <li>上传文档（PDF / Word / Excel）<b>抽取出的文本</b>；</li>
+    <li>当前智能体挂载的<b>专业知识技能</b>；</li>
+    <li>AI 调用工具时读取的<b>学生、评估、训练、资源</b>等数据。</li>
+  </ul>
+  其中可能包含<b>学生身份、诊断结论、评估结果</b>等敏感信息，请确认内容适宜外发后再发送。<br/>
+  确认后将按当前账号记忆，本次及后续对话不再提醒（可在系统设置重置）。
+</div>
+`
 
 /**
  * AI 智能体子系统 store（setup 风格，仿 systemConfig.ts）。
@@ -575,6 +594,22 @@ export const useAiStore = defineStore('ai', () => {
 
     await ensureDb()
     const a = api()
+
+    // C07：首次发送前隐私告知门禁（按 userId 记忆，确认一次后不再弹；取消则静默中止）
+    const privacyUid = currentUserId()
+    if (privacyUid && !a.isPrivacyAcked(privacyUid)) {
+      try {
+        await ElMessageBox.confirm(AI_PRIVACY_NOTICE_HTML, 'AI 外发隐私告知', {
+          confirmButtonText: '我已知悉，继续发送',
+          cancelButtonText: '取消发送',
+          type: 'warning',
+          dangerouslyUseHTMLString: true,
+        })
+        a.acknowledgePrivacy(privacyUid)
+      } catch {
+        return { ok: false } // 用户取消，静默中止本次发送（不弹错误）
+      }
+    }
 
     if (!currentSessionId.value) {
       const uid = currentUserId()

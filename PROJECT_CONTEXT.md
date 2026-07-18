@@ -1639,3 +1639,18 @@
 - C06 已完成：删除 AI 会话时先在 DB 事务内删除消息与会话，事务失败不碰物理附件；DB 提交后只删除剩余引用数为 0 的附件文件，文件删除失败不回滚 DB。
 - `ai_provider` 新增学校归属、后台 Key 备注、轮换提醒日期；系统设置页可维护这些元信息，便于每校独立 Key 的账单核对、泄露停用和轮换。
 - API Key 分发短期策略：每所学校在 provider 后台创建独立 Key 并设置官方额度；SCGP 本地仍只用 Electron Main `safeStorage` 保存真实 Key，不做可离线自动解密的短加密码。
+
+## 78. 2026-07-18 C07 AI 外发面审计
+
+- 已确认 AI provider 外发面：`sendChat` 会发送用户输入、会话历史、智能体 system prompt、挂载知识技能正文；图片以最近一轮 data URL 外发；PDF/DOCX/XLSX 会先在 Main 抽取最多 20,000 字文本再拼入 user content。
+- tool loop 会把本地工具查询结果作为 `role: tool` JSON 回传 provider；当前涉及学生基础字段、单学生完整 student 行、报告记录摘要、训练场次摘要、器材名称/描述/能力标签。
+- 发送前隐私告知门禁已实现（见 79）；尚未实现自动脱敏、tool result 字段级最小化与系统设置重置入口。
+
+## 79. 2026-07-18 C07 首次发送前隐私告知门禁
+
+- `sendChat` 入口已加首次发送前隐私告知门禁：确认按「每个登录用户首次」触发，记忆存 DB `system_config`（key=`ai:privacy_ack:user:<userId>`，值=ISO 时间戳），随备份走。
+- 落地：`AIApi.isPrivacyAcked/acknowledgePrivacy`（ai-api.ts，复用 getConfig/setConfig）；`sendChat` 在校验链通过、createSession 副作用前弹 `ElMessageBox.confirm`（HTML 静态文案 `AI_PRIVACY_NOTICE_HTML`，无用户输入注入风险），确认=记忆并继续，取消=静默 return {ok:false}。
+- 告知文案枚举 5 类外发内容：输入文本 / 图片 vision / 文档抽取文本 / 智能体挂载的专业知识技能 / AI 工具查询结果（学生·评估·训练·资源数据）。
+- `AiAssistant.vue` 的 send/generateReport/sendStarterPrompt 3 入口经 sendChat 统一覆盖，组件层无需改。
+- 本批不做：字段级脱敏、tool result 最小化、系统设置重置入口（重置入口为告知文案承诺的闭环项，留作下一步）。
+- 验证：`npm run type-check` EXIT=0。
