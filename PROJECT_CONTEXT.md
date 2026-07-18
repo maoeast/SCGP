@@ -1662,3 +1662,11 @@
 - 语义为「全局重置」（非单用户），与系统设置管理定位一致；门禁本身仍按「每个登录用户首次」触发。
 - 验证：`npm run type-check` EXIT=0。
 - C07 至此门禁 + 重置闭环完成；字段脱敏与 tool result 最小化仍未做（下一步优先 tool result 学生敏感字段裁剪）。
+
+## 81. 2026-07-18 C07 tool result 外发面盘点与字段口径
+
+- 盘点 8 个工具回传 provider 的字段：`list_students` / `search_students` / `get_assessment` / `list_training_sessions` 均已在 dispatcher 层显式字段映射（裁过）；`list_equipment` / `get_ai_usage` 无学生 PII；`generate_report` 仅回传 `{ok,fileName,sectionCount}` 小状态。唯一未裁剪的是 `get_student`——原走 `StudentAPI.getStudentById` 的 `SELECT *` 整行 serialize。
+- 学生敏感字段分级：高敏 PII（`name`/`birthday`/`student_no`/`avatar_path`）、高敏医疗（`disorder`）、低价值噪音（`avatar_path` 本地路径 / `created_at` / `updated_at` / `current_class_id` / 内部 `assess_id`）。
+- 口径决策（用户拍板「显式映射，保留全字段」）：`get_student` 改 `SELECT *` 为 dispatcher 层显式字段映射，保留现有全字段（`name`/`disorder`/`avatar_path` 等），仅防止 `student` 表未来加列被 `SELECT *` 自动外发；外发面与现状一致。不做脱敏——`name`/`disorder` 是 AI 给建议的必要输入，知情同意由 C07 首次发送门禁层（§79）兜底。其余 7 个工具维持现状。
+- 注意：`.claude/skills/sqlite-db-manager/references/database-schema.md` 的 student schema（diagnosis/notes/admission_date）为历史文档，与运行时 `init.ts`/`schema.sql`（字段为 `disorder`，无 notes/admission_date）冲突，以代码为准。
+- 验证：`npm run type-check`。

@@ -334,8 +334,24 @@ export async function dispatchTool(
 
       case 'get_student': {
         if (!args.id) return fail('缺少参数 id')
-        const student = await new StudentAPI().getStudentById(Number(args.id))
-        if (!student) return fail(`未找到 id=${args.id} 的学生`)
+        const s = await new StudentAPI().getStudentById(Number(args.id))
+        if (!s) return fail(`未找到 id=${args.id} 的学生`)
+        // 显式字段映射（C07 tool result 口径，见 PROJECT_CONTEXT §81）：保留现有全字段（单学生档案
+        // 场景 AI 合理需要），仅避免 SELECT * 在 student 表未来加列时把新列自动外发给 provider。
+        // 不做脱敏——name/disorder 是 AI 给出建议的必要输入，知情同意由 C07 首次发送门禁层兜底。
+        const student = {
+          id: s.id,
+          name: s.name,
+          gender: s.gender,
+          birthday: s.birthday,
+          student_no: s.student_no,
+          disorder: s.disorder,
+          avatar_path: s.avatar_path,
+          current_class_id: s.current_class_id,
+          current_class_name: s.current_class_name,
+          created_at: s.created_at,
+          updated_at: s.updated_at,
+        }
         return serialize(student)
       }
 
