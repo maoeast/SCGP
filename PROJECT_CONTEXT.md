@@ -1702,3 +1702,14 @@
 - 边界：生产 IEP 静态 API 与内部实现零改动；授权/路由/catalog/DB 零影响。
 - 验证：`npm run type-check` EXIT=0；`npm run verify:core`（test:core:node 58/58 + test:core:ts 3/3）；`npm run build:web` 39.03s；`grep` 断言 src 内 `initializeStrategies|registerIEPSstrategy|getIEPSstrategy|getAllIEPSstrategies|iep-generator-refactored|SensoryIEPStrategy|IEPStrategy|IEPResult` 零命中。
 - 桌面 UAT（感官器材/感官游戏/社交游戏/生活自理 L03·L05/Tier3 低样本报告）留待 C13 终验矩阵「IEP」行，本轮只到「代码已实现 / 待桌面 UAT」。
+
+## 85. 2026-07-18 C11 旧命名与原生开发依赖清理
+
+- About 文案统一：`AboutDialog.vue` `<h2>` 从旧阶段名「感官能力发展系统」改为「SCGP / 星愿能力发展平台」（与 `package.json` description 一致）；版本仍读 `useUpdateService().updateState.currentVersion`，不新增硬编码。「感官能力发展系统」在 src 下仅此一处用户可见残留。
+- 原生依赖清除：`npm uninstall --save-dev better-sqlite3` 移除 17 包（含原生编译树），devDependencies 与 lockfile 均无残留，符合「零额外原生依赖」红线（AGENTS.md 禁止清单）。
+- `scripts/export-resources.cjs` 引擎从 `better-sqlite3` 切到 `sql.js`，沿用运行时主线 `export-current-emotion-scenes.mjs` 的 `initSqlJs({ locateFile: node_modules/sql.js/dist })` + `fs.readFileSync` → `new SQL.Database(buffer)` + `.exec()` 范式；CLI 输入输出契约不变（同样定位 `self-care-ats/database_backup.db`、同样查 `resource_meta`、同样写 `exported-resources.ts`）。
+- 脚本补 `--help`/`-h` 只读分支（先于 DB 读取返回，禁止用真实 DB 验证导出）；修正头注释错误扩展名示例 `.js`→`.cjs`、输出文件 `.sql`→`.ts`；注释里去掉 `better-sqlite3` 字面量以通过 grep 零命中门禁。
+- 边界：不改 `appId: com.sic.ads`、localStorage key、历史 migration 日志与兼容注释。
+- 验证：`node scripts/export-resources.cjs --help` 正常；`grep -rn "better-sqlite3" package.json package-lock.json scripts src electron` 零命中（exit 1）；`npm run verify:release`（type-check + test:core:node + test:core:ts + build:web 40.06s）全绿；`git diff --check` 干净。
+- 桌面 UAT（About 文案真机显示）留待 C13 终验，本轮记「代码已实现 / 待桌面 UAT」。
+- 下一批次 C12（更新/签名/升级发布门禁）被外部输入阻塞：需正式 HTTPS 更新目录 URL + Windows 代码签名证书 + Windows 验收机，三样齐备前不开工。
