@@ -13,43 +13,28 @@
  */
 
 import { getDatabase } from '@/database/init'
+import { isManagedResourcePath } from './resource-file-refs'
 import {
-  extractResourceFileRefs,
-  normalizeResourceUrl,
-  isManagedResourcePath,
-} from './resource-file-refs'
+  buildOrphanReport,
+  collectReferencedPathsFromRows,
+  type DiskFile,
+  type OrphanReport,
+  type PurgeResult,
+  type ResourceReferenceRows,
+} from './resource-reconcile-core'
 import { deleteManagedFile } from './resource-file-service'
+
+export {
+  buildOrphanReport,
+  collectReferencedPathsFromRows,
+  type DiskFile,
+  type OrphanReport,
+  type PurgeResult,
+  type ResourceReferenceRows,
+} from './resource-reconcile-core'
 
 /** 磁盘上的托管子树（与 main.mjs MANAGED_SUBDIRS + resource-file-refs MANAGED_PREFIXES 一致） */
 const MANAGED_SUBTREES = ['uploaded', 'teaching-materials'] as const
-
-/** 磁盘文件描述（托管相对路径 + 字节大小） */
-export interface DiskFile {
-  rel: string
-  size: number
-}
-
-/** 孤儿体检报告（dry-run，只读） */
-export interface OrphanReport {
-  /** 孤儿文件（磁盘存在但无 DB 引用） */
-  orphans: DiskFile[]
-  /** 孤儿占用字节 */
-  totalBytes: number
-  /** 磁盘托管文件总数（含在用 + 孤儿） */
-  totalDiskFiles: number
-  /** 磁盘托管文件总字节（含在用 + 孤儿） */
-  totalDiskBytes: number
-}
-
-/** 清理结果 */
-export interface PurgeResult {
-  /** 成功删除数 */
-  deleted: number
-  /** 失败项（含路径校验未过 + 删除失败） */
-  failed: Array<{ rel: string }>
-  /** 实际释放字节（仅成功删除项） */
-  freedBytes: number
-}
 
 /**
  * 收集 DB 中被引用的「托管」相对路径集（同步）。
@@ -62,62 +47,36 @@ export interface PurgeResult {
  */
 export function collectReferencedPaths(): Set<string> {
   const db = getDatabase()
-  const refs = new Set<string>()
+  const rows: ResourceReferenceRows = {}
 
   // sys_training_resource：cover_image + meta_data（含软删行，文件保留以便恢复）
   try {
-    const resourceRows = db.all(
+    rows.resourceRows = db.all(
       'SELECT cover_image, meta_data FROM sys_training_resource'
     ) as Array<{ cover_image?: unknown; meta_data?: unknown }>
-    for (const row of resourceRows) {
-      for (const rel of extractResourceFileRefs(row)) {
-        refs.add(rel)
-      }
-    }
   } catch (error) {
     console.warn('[resource-reconcile] 读取 sys_training_resource 引用失败:', error)
   }
 
   // teaching_material：file_path 为无 resource:// 前缀的相对路径
   try {
-    const materialRows = db.all(
+    rows.materialRows = db.all(
       'SELECT file_path FROM teaching_material'
     ) as Array<{ file_path?: unknown }>
-    for (const row of materialRows) {
-      const rel = normalizeResourceUrl(row.file_path)
-      if (rel && isManagedResourcePath(rel)) {
-        refs.add(rel)
-      }
-    }
   } catch (error) {
     console.warn('[resource-reconcile] 读取 teaching_material 引用失败:', error)
   }
 
   // ai_chat_message：attachments JSON 列（Phase 3 vision 附件，[{rel,fileName,fileType,sizeBytes}]）
   try {
-    const msgRows = db.all(
+    rows.messageRows = db.all(
       'SELECT attachments FROM ai_chat_message WHERE attachments IS NOT NULL'
     ) as Array<{ attachments?: unknown }>
-    for (const row of msgRows) {
-      let parsed: unknown
-      try {
-        parsed = typeof row.attachments === 'string' ? JSON.parse(row.attachments) : null
-      } catch {
-        continue
-      }
-      if (!Array.isArray(parsed)) continue
-      for (const item of parsed as Array<{ rel?: unknown }>) {
-        const rel = normalizeResourceUrl(item?.rel)
-        if (rel && isManagedResourcePath(rel)) {
-          refs.add(rel)
-        }
-      }
-    }
   } catch (error) {
     console.warn('[resource-reconcile] 读取 ai_chat_message 引用失败:', error)
   }
 
-  return refs
+  return collectReferencedPathsFromRows(rows)
 }
 
 /**
@@ -157,22 +116,7 @@ export async function findOrphans(): Promise<OrphanReport> {
   const referenced = collectReferencedPaths()
   const disk = await collectDiskPaths()
 
-  const orphans: DiskFile[] = []
-  let totalDiskBytes = 0
-  for (const f of disk) {
-    totalDiskBytes += f.size
-    if (!referenced.has(f.rel)) {
-      orphans.push(f)
-    }
-  }
-
-  const totalBytes = orphans.reduce((sum, f) => sum + f.size, 0)
-  return {
-    orphans,
-    totalBytes,
-    totalDiskFiles: disk.length,
-    totalDiskBytes,
-  }
+  return buildOrphanReport(referenced, disk)
 }
 
 /**

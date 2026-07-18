@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
 
-import { type PluginOption, type UserConfig } from 'vite'
+import { type ConfigEnv, type PluginOption, type UserConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 const require = createRequire(import.meta.url)
@@ -19,8 +19,12 @@ function canEnableVueDevTools() {
   }
 }
 
-async function resolvePlugins() {
+async function resolvePlugins(isProductionBuild: boolean) {
   const plugins: PluginOption[] = [vue()]
+
+  if (isProductionBuild) {
+    return plugins
+  }
 
   if (!canEnableVueDevTools()) {
     console.warn('[vite] Skip vite-plugin-vue-devtools: missing optional dependency @babel/core')
@@ -32,8 +36,11 @@ async function resolvePlugins() {
   return plugins
 }
 
-export default (async (): Promise<UserConfig> => {
-  const plugins = await resolvePlugins()
+export default (async (configEnv?: ConfigEnv): Promise<UserConfig> => {
+  const command = configEnv?.command || 'serve'
+  const mode = configEnv?.mode || 'development'
+  const isProductionBuild = command === 'build' && mode === 'production'
+  const plugins = await resolvePlugins(isProductionBuild)
 
   return {
     plugins,

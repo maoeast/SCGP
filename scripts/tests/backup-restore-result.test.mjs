@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import createJiti from 'jiti'
@@ -69,4 +70,18 @@ test('resource restore result helpers preserve skipped and failed reasons', () =
     failed: [{ error: '资源归档校验失败' }],
     reason: 'checksum_failed',
   })
+})
+
+test('system restore UI distinguishes resource partial and failed states', () => {
+  const source = readFileSync(resolve(projectRoot, 'src/views/System.vue'), 'utf8')
+
+  assert.match(source, /resources\.status === 'partial'/)
+  assert.match(source, /资源文件部分恢复/)
+  assert.match(source, /请进入资源健康检查核对缺失文件/)
+  assert.match(source, /resources\.status === 'failed'/)
+  assert.match(source, /数据已恢复，但资源文件恢复失败/)
+  assert.match(source, /resources\.reason === 'legacy_without_resource_archive'/)
+  assert.match(source, /旧版备份不包含资源归档，仅恢复了数据库/)
+  assert.match(source, /providerSecretsIncluded === false/)
+  assert.match(source, /AI 模型服务 API Key 未随备份恢复，请重新配置/)
 })

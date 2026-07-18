@@ -85,6 +85,10 @@ if (isDev) {
   app.commandLine.appendSwitch('allow-insecure-localhost', 'true')
 }
 
+function shouldEmitRuntimeLogs() {
+  return isDev || process.env.SCGP_ENABLE_PROD_LOGS === '1'
+}
+
 const testUserDataDir = process.env.SCGP_TEST_USER_DATA_DIR
 if (isDev && testUserDataDir) {
   const resolvedTestUserDataDir = path.resolve(testUserDataDir)
@@ -142,6 +146,9 @@ async function waitForDevServer(urlString, timeoutMs = 60000) {
  * 此函数包装所有日志调用以防止应用崩溃
  */
 function safeLog(...args) {
+  if (!shouldEmitRuntimeLogs()) {
+    return
+  }
   if (!process.stdout?.writable || process.stdout.destroyed) {
     return
   }
@@ -157,6 +164,9 @@ function safeLog(...args) {
 }
 
 function safeWarn(...args) {
+  if (!shouldEmitRuntimeLogs()) {
+    return
+  }
   if (!process.stderr?.writable || process.stderr.destroyed) {
     return
   }
@@ -170,6 +180,9 @@ function safeWarn(...args) {
 }
 
 function safeError(...args) {
+  if (!shouldEmitRuntimeLogs()) {
+    return
+  }
   if (!process.stderr?.writable || process.stderr.destroyed) {
     return
   }
@@ -187,6 +200,10 @@ function swallowBrokenPipe(stream) {
 
   stream.on('error', (error) => {
     if (error?.code === 'EPIPE') {
+      return
+    }
+
+    if (!shouldEmitRuntimeLogs()) {
       return
     }
 
@@ -249,6 +266,24 @@ function getMediaPermissionSettingsUrl(permission) {
   }
 
   return null
+}
+
+function isDeveloperToolsShortcut(input) {
+  const key = String(input?.key || '').toLowerCase()
+  const controlOrCommand = Boolean(input?.control || input?.meta)
+  const shift = Boolean(input?.shift)
+  const alt = Boolean(input?.alt)
+
+  if (key === 'f12') {
+    return true
+  }
+
+  if (controlOrCommand && shift && ['i', 'j', 'c'].includes(key)) {
+    return true
+  }
+
+  // macOS: Cmd+Option+I/J/C.
+  return Boolean(input?.meta && alt && ['i', 'j', 'c'].includes(key))
 }
 
 // ========== Phase 2.1: resource:// 协议注册 ==========
@@ -352,6 +387,13 @@ function createWindow() {
     show: false // 先不显示，等加载完成后再显示
   })
 
+  if (!isDev) {
+    mainWindow.removeMenu()
+    mainWindow.webContents.on('devtools-opened', () => {
+      mainWindow?.webContents.closeDevTools()
+    })
+  }
+
   async function loadRendererApp() {
     if (isDev) {
       try {
@@ -400,6 +442,11 @@ function createWindow() {
 
   // 监听键盘事件 - F11 切换全屏，ESC 退出全屏
   mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (!isDev && isDeveloperToolsShortcut(input)) {
+      event.preventDefault()
+      return
+    }
+
     if (input.key === 'F11') {
       mainWindow.setFullScreen(!mainWindow.isFullScreen())
       event.preventDefault()
