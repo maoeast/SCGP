@@ -10,7 +10,7 @@
       <!-- 应用图标和名称 -->
       <div class="app-info">
         <div class="app-icon">🧠</div>
-        <h2>感官能力发展系统</h2>
+        <h2>SCGP / 星愿能力发展平台</h2>
         <p class="version">版本 {{ updateState.currentVersion }}</p>
         <p class="copyright">© 2013-2026 杭州炫灿科技有限公司</p>
       </div>

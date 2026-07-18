@@ -4,13 +4,38 @@
  * 导出 resource_meta 表数据为 INSERT 语句
  *
  * 使用方法:
- *   node scripts/export-resources.js
+ *   node scripts/export-resources.cjs            导出资源到 exported-resources.ts
+ *   node scripts/export-resources.cjs --help     查看帮助（只读，不读取数据库）
  *
- * 输出文件: scripts/exported-resources.sql
+ * 输出文件: scripts/exported-resources.ts
+ * 数据库引擎: sql.js（与运行时主线一致，零额外原生依赖）
  */
 
 const fs = require('fs');
 const path = require('path');
+
+const REPO_ROOT = path.resolve(__dirname, '..');
+
+// 只读帮助分支：禁止用真实 DB 验证导出
+function printHelp() {
+  console.log('export-resources.cjs — 导出 resource_meta 表数据为 INSERT 语句');
+  console.log('');
+  console.log('使用方法:');
+  console.log('  node scripts/export-resources.cjs            导出资源到 scripts/exported-resources.ts');
+  console.log('  node scripts/export-resources.cjs --help     显示此帮助（只读，不读取数据库）');
+  console.log('');
+  console.log('数据库引擎: sql.js（与运行时主线一致，零额外原生依赖）');
+  console.log('输出文件: scripts/exported-resources.ts');
+}
+
+// 初始化 sql.js（wasm 定位与运行时主线 export-current-emotion-scenes.mjs 一致）
+async function loadSqlJs() {
+  const sqlJsImport = require('sql.js');
+  const initSqlJs = typeof sqlJsImport === 'function' ? sqlJsImport : sqlJsImport.default;
+  return initSqlJs({
+    locateFile: (file) => path.join(REPO_ROOT, 'node_modules', 'sql.js', 'dist', file),
+  });
+}
 
 // 从 IndexedDB 或本地文件读取数据库
 async function getDatabaseData() {
@@ -31,29 +56,27 @@ async function getDatabaseData() {
   return userDatabasePath;
 }
 
-// 使用 better-sqlite3 读取数据库
-function exportResourceTable(dbPath) {
-  let Database;
+// 使用 sql.js 只读查询数据库（替代原生编译的 sqlite 驱动）
+async function exportResourceTable(SQL, dbPath) {
+  const buffer = fs.readFileSync(dbPath);
+  // sql.js 为内存型 WASM 引擎，此处仅 SELECT 且不写回文件，天然只读
+  const db = new SQL.Database(buffer);
+
   try {
-    Database = require('better-sqlite3');
-  } catch (e) {
-    console.error('❌ 需要安装 better-sqlite3:');
-    console.log('   npm install better-sqlite3 --save-dev');
-    process.exit(1);
+    const result = db.exec(`
+      SELECT id, title, type, category, path, size_kb, tags, description
+      FROM resource_meta
+      ORDER BY id
+    `);
+
+    const columns = result?.[0]?.columns || [];
+    const values = result?.[0]?.values || [];
+    return values.map((row) =>
+      Object.fromEntries(columns.map((col, idx) => [col, row[idx]]))
+    );
+  } finally {
+    db.close();
   }
-
-  const db = new Database(dbPath, { readonly: true });
-
-  // 查询所有资源
-  const resources = db.prepare(`
-    SELECT id, title, type, category, path, size_kb, tags, description
-    FROM resource_meta
-    ORDER BY id
-  `).all();
-
-  db.close();
-
-  return resources;
 }
 
 // 生成 INSERT 语句
@@ -135,15 +158,25 @@ function escapeString(str) {
 
 // 主函数
 async function main() {
+  // 只读帮助分支：不读取数据库
+  const args = process.argv.slice(2);
+  if (args.includes('--help') || args.includes('-h')) {
+    printHelp();
+    return;
+  }
+
   try {
     console.log('📦 开始导出资源数据...\n');
+
+    // 初始化 sql.js 引擎
+    const SQL = await loadSqlJs();
 
     // 获取数据库路径
     const dbPath = await getDatabaseData();
     console.log('✅ 找到数据库文件\n');
 
     // 导出资源表
-    const resources = exportResourceTable(dbPath);
+    const resources = await exportResourceTable(SQL, dbPath);
     console.log(`✅ 读取到 ${resources.length} 条资源记录\n`);
 
     // 生成 INSERT 语句
