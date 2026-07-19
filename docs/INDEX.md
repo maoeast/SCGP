@@ -37,6 +37,7 @@
 - [2026-03-20-emotion-games-prd.md](./planning/2026-03-20-emotion-games-prd.md)
 - [emotion-games-dev-guidelines.md](./planning/emotion-games-dev-guidelines.md)
 - [mvp-games-playtest-tuning-guide.md](./planning/mvp-games-playtest-tuning-guide.md)
+- [2026-07-19-cognitive-games-prd.md](./planning/2026-07-19-cognitive-games-prd.md) — 认知发展 10 个新游戏立项 PRD（玩法/三级难度/训练目标/素材来源，草案待评审，未动代码）
 
 专题方案（按需读，`docs/planning/` 目录另有更多中文命名 PRD 与 MediaPipe / 表情 / 生活自理等专题稿）：
 
