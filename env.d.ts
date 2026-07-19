@@ -160,6 +160,17 @@ declare global {
         httpStatus?: number
         toolCalls?: Array<{ id: string; type: 'function'; function: { name: string; arguments: string } }>
       }>
+      aiListModels: (payload: {
+        encKey: string
+        baseUrl?: string
+        providerName?: string
+      }) => Promise<{
+        success: boolean
+        models?: Array<Record<string, any>> // raw provider 返回，shape 因 provider 而异（Ark 富 metadata / DeepSeek 简版）
+        error?: string
+        errorKind?: string
+        httpStatus?: number
+      }>
 
       /**
        * Phase 4：抽取文档文本（PDF / Word .docx / Excel .xlsx → 纯文本，供 AI 阅读）

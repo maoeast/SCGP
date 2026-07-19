@@ -4,6 +4,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAiStore } from '@/stores/ai'
 import { useAuthStore } from '@/stores/auth'
 import type { AiAgent, AiAgentSkillBinding, AiChatMessage, AiProviderModel, AiSkill } from '@/database/ai-api'
+import type { ProviderModelOption } from '@/stores/ai'
 import { getBuiltinAgentPreset, isBuiltinAgentCode } from '@/data/ai-agent-presets'
 import AiAgentAvatar from '@/features/ai/components/AiAgentAvatar.vue'
 import AiChatTranscript from '@/features/ai/components/AiChatTranscript.vue'
@@ -134,6 +135,16 @@ async function saveConfig() {
   }
 }
 
+// 厂商白名单：只放行 doubao-seed-* 与 deepseek-*，其余厂商（glm/kimi/qwen 等）不出现
+const ALLOWED_MODEL_PREFIXES = ['doubao-seed-', 'deepseek-'] as const
+const fetchedModels = ref<ProviderModelOption[]>([])
+const pickedModelId = ref('')
+const chatModels = computed(() =>
+  fetchedModels.value.filter(
+    (m) => m.isChatModel && ALLOWED_MODEL_PREFIXES.some((p) => m.id.startsWith(p)),
+  ),
+)
+
 function openCreateModel() {
   modelEditing.value = false
   modelForm.id = 0
@@ -145,6 +156,8 @@ function openCreateModel() {
   modelForm.supportsThinking = !!aiStore.providerConfig?.supportsThinking
   modelForm.enabled = true
   modelForm.sort = aiStore.providerModels.length + 1
+  fetchedModels.value = []
+  pickedModelId.value = ''
   modelDialogVisible.value = true
 }
 
@@ -160,6 +173,28 @@ function openEditModel(model: AiProviderModel) {
   modelForm.enabled = model.enabled
   modelForm.sort = model.sort
   modelDialogVisible.value = true
+}
+
+async function fetchModelList() {
+  const res = await aiStore.listModels()
+  if (!res.ok) {
+    ElMessage.error(res.message)
+    return
+  }
+  fetchedModels.value = res.models
+  pickedModelId.value = ''
+  ElMessage.success(`拉取成功，过滤出 ${chatModels.value.length} 个可用模型（仅 doubao-seed- / deepseek-）`)
+}
+
+function onPickModel(id: string) {
+  const model = fetchedModels.value.find((m) => m.id === id)
+  if (!model) return
+  modelForm.modelId = model.id
+  if (!modelForm.name.trim()) modelForm.name = model.name
+  modelForm.supportsVision = model.supportsVision
+  modelForm.supportsToolCalls = model.supportsToolCalls
+  modelForm.supportsThinking = model.supportsThinking
+  ElMessage.success('已回填模型 ID、名称与能力位')
 }
 
 async function saveModel() {
@@ -861,11 +896,45 @@ async function removeSession(id: number) {
         <el-form-item label="显示名称">
           <el-input v-model="modelForm.name" placeholder="如 豆包 Seed Vision" />
         </el-form-item>
-        <el-form-item :label="isDoubao ? '接入点 ID' : '模型 ID'">
+        <el-form-item :label="isDoubao ? '接入点 / 模型 ID' : '模型 ID'">
           <el-input
             v-model="modelForm.modelId"
-            :placeholder="isDoubao ? 'ep-xxxxxxxxxxxxxxxx' : 'deepseek-v4-flash'"
+            :placeholder="isDoubao ? 'doubao-seed-1-6-250615 或 ep-xxx' : 'deepseek-v4-flash'"
           />
+          <div class="field-hint">
+            <el-button
+              link
+              type="primary"
+              size="small"
+              :loading="aiStore.fetchingModels"
+              :disabled="!aiStore.isConfigured"
+              @click="fetchModelList"
+            >
+              拉取模型列表
+            </el-button>
+            <span v-if="!aiStore.isConfigured">需先配置并保存 API Key</span>
+          </div>
+          <el-select
+            v-if="fetchedModels.length > 0"
+            v-model="pickedModelId"
+            filterable
+            clearable
+            placeholder="从拉取的列表选择（自动回填名称与能力位）"
+            style="width: 100%; margin-top: 8px"
+            @change="onPickModel"
+          >
+            <el-option
+              v-for="m in chatModels"
+              :key="m.id"
+              :label="`${m.name}（${m.id}）`"
+              :value="m.id"
+            >
+              <span>{{ m.name }}</span>
+              <el-tag v-if="m.status === 'Retiring'" size="small" type="info" style="margin-left: 6px">将下线</el-tag>
+              <el-tag v-if="m.supportsVision" size="small" type="success" style="margin-left: 6px">图片</el-tag>
+              <el-tag v-if="m.supportsThinking" size="small" type="info" style="margin-left: 6px">思考</el-tag>
+            </el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="能力">
           <el-checkbox v-model="modelForm.supportsVision">支持图片</el-checkbox>

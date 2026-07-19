@@ -337,6 +337,57 @@ export function initAIHandlers(ipcMain) {
     }
   })
 
+  // 拉取 provider 的 OpenAI 兼容模型清单（GET {baseUrl}/models）。明文 Key 仅在 Main 解密后使用，不回传渲染。
+  // 用于「系统管理-AI智能体 → 新增模型」对话框「拉取模型列表」按钮，避免手填 modelId。
+  ipcMain.handle('ai:list-models', async (_event, payload) => {
+    try {
+      const { encKey, baseUrl, providerName } = payload || {}
+      const label = providerName || '模型服务'
+      if (!encKey) {
+        return { success: false, errorKind: 'no_key', error: `尚未配置 ${label} 的 API Key，请先在系统设置中配置。` }
+      }
+      const secretResult = aiSecretService.decryptApiKey(encKey)
+      if (!secretResult.success) {
+        return {
+          success: false,
+          errorKind: secretResult.errorKind || 'decrypt_failed',
+          error: secretResult.error || 'API Key 解密失败，请重新配置。',
+        }
+      }
+      const apiKey = secretResult.apiKey
+      const apiBase = (baseUrl || DEFAULT_BASE_URL).replace(/\/$/, '')
+
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+      try {
+        const response = await fetch(`${apiBase}/models`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${apiKey}` },
+          signal: controller.signal,
+        })
+        if (!response.ok) {
+          const errBody = await response.text().catch(() => '')
+          const info = describeHttpError(response.status, errBody, providerName)
+          return { success: false, errorKind: info.kind, error: info.message, httpStatus: response.status }
+        }
+        const data = await response.json()
+        // raw 数组透传，归一化/过滤在渲染层做（适配各 provider 不同 shape）
+        const models = Array.isArray(data?.data) ? data.data : []
+        return { success: true, models }
+      } catch (networkError) {
+        if (networkError?.name === 'AbortError') {
+          return { success: false, errorKind: 'timeout', error: `请求超时（${REQUEST_TIMEOUT_MS / 1000}s），请稍后重试。` }
+        }
+        return { success: false, errorKind: 'network', error: `网络请求失败：${networkError?.message || String(networkError)}` }
+      } finally {
+        clearTimeout(timer)
+      }
+    } catch (error) {
+      console.error('[AI] ai:list-models 处理异常:', error)
+      return { success: false, errorKind: 'internal', error: error instanceof Error ? error.message : String(error) }
+    }
+  })
+
   // Phase 4：文档文本抽取（PDF / Word .docx / Excel .xlsx → 纯文本，供 AI 阅读）
   // 输入绝对路径，按扩展名分发到对应 extractor；超长截断到 MAX_EXTRACT_CHARS；扫描件/损坏返回失败。
   ipcMain.handle('extract-document-text', async (event, absPath) => {

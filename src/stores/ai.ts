@@ -29,6 +29,52 @@ function isImageFileExt(fileType: string): boolean {
 }
 
 /**
+ * provider /models 清单归一化后的单个模型选项（供「新增模型」下拉渲染 + 选中回填能力位）。
+ * raw 来源是各 provider 的 OpenAI 兼容 GET /models 返回（Ark 富 metadata、DeepSeek 简版），字段可能缺失。
+ */
+export interface ProviderModelOption {
+  id: string
+  name: string
+  domain: string
+  status: string
+  /** 过滤用：非生成/嵌入/路由类 + status≠Shutdown + task_type 含文本生成或 VQA */
+  isChatModel: boolean
+  supportsVision: boolean
+  supportsToolCalls: boolean
+  supportsThinking: boolean
+  contextWindow?: number
+}
+
+/** raw provider /models 条目 → 归一化 ProviderModelOption（防御各 provider 不同 shape，缺失字段走默认值） */
+function mapToProviderModelOption(raw: Record<string, any>): ProviderModelOption {
+  const id = String(raw?.id ?? '')
+  const domain = String(raw?.domain ?? '')
+  const status = String(raw?.status ?? '')
+  const inputModalities: string[] = Array.isArray(raw?.modalities?.input_modalities)
+    ? raw.modalities.input_modalities
+    : []
+  const tasks: string[] = Array.isArray(raw?.task_type) ? raw.task_type : []
+  const excludedDomains = ['Embedding', 'ImageGeneration', 'VideoGeneration', '3DGeneration', 'Router']
+  const isChatModel =
+    id.length > 0 &&
+    !excludedDomains.includes(domain) &&
+    status !== 'Shutdown' &&
+    (tasks.length === 0 || tasks.some((t) => t === 'TextGeneration' || t === 'VisualQuestionAnswering'))
+  return {
+    id,
+    name: String(raw?.name ?? id),
+    domain,
+    status,
+    isChatModel,
+    supportsVision: inputModalities.includes('image'),
+    supportsToolCalls: raw?.features?.tools?.function_calling === true,
+    supportsThinking:
+      typeof raw?.token_limits?.max_reasoning_token_length === 'number' || /thinking|reasoner|-r1\b/i.test(id),
+    contextWindow: typeof raw?.token_limits?.context_window === 'number' ? raw.token_limits.context_window : undefined,
+  }
+}
+
+/**
  * C07：首次发送前 AI 外发隐私告知文案。静态文案（无用户输入），用 HTML 列表清晰枚举外发范围。
  * 在 sendChat 入口经 ElMessageBox.confirm 展示，确认后按 userId 记忆，不再弹（可在系统设置重置）。
  */
@@ -76,6 +122,8 @@ export const useAiStore = defineStore('ai', () => {
   const loading = ref(false)
   const testing = ref(false)
   const lastTestResult = ref<{ ok: boolean; message: string } | null>(null)
+  /** 「拉取模型列表」进行中（新增模型对话框按钮 loading） */
+  const fetchingModels = ref(false)
 
   const isConfigured = computed(() => !!providerConfig.value?.apiKeyEnc)
   const enabledAgents = computed(() => agents.value.filter((a) => a.enabled))
@@ -287,6 +335,38 @@ export const useAiStore = defineStore('ai', () => {
       return lastTestResult.value
     } finally {
       testing.value = false
+    }
+  }
+
+  /**
+   * 拉取当前 provider 的 OpenAI 兼容模型清单（GET {baseUrl}/models），归一化后返回。
+   * 明文 Key 不进渲染：只把密文 encKey 经 ai:list-models IPC 交 Main 解密后请求。
+   * 厂商过滤（doubao-seed-/deepseek-）留在 UI 层；此处只剔除非对话类与 Shutdown。
+   */
+  async function listModels(): Promise<{ ok: boolean; models: ProviderModelOption[]; message: string }> {
+    fetchingModels.value = true
+    try {
+      await ensureDb()
+      const cfg = api().getProviderConfig()
+      if (!cfg.apiKeyEnc) {
+        return { ok: false, models: [], message: '尚未配置 API Key，请先填写并保存。' }
+      }
+      const res = await window.electronAPI.aiListModels({
+        encKey: cfg.apiKeyEnc,
+        baseUrl: cfg.baseUrl,
+        providerName: cfg.providerName,
+      })
+      if (!res.success) {
+        return { ok: false, models: [], message: res.error || '拉取失败' }
+      }
+      const models = (res.models ?? [])
+        .map((raw) => mapToProviderModelOption(raw as Record<string, any>))
+        .filter((m) => m.id.length > 0)
+      return { ok: true, models, message: `已拉取 ${models.length} 个模型` }
+    } catch (e) {
+      return { ok: false, models: [], message: e instanceof Error ? e.message : String(e) }
+    } finally {
+      fetchingModels.value = false
     }
   }
 
@@ -827,6 +907,7 @@ export const useAiStore = defineStore('ai', () => {
     loading,
     testing,
     lastTestResult,
+    fetchingModels,
     isConfigured,
     enabledAgents,
     loadAll,
@@ -837,6 +918,7 @@ export const useAiStore = defineStore('ai', () => {
     deleteProviderModel,
     saveProviderConfig,
     testConnection,
+    listModels,
     saveAgent,
     deleteAgent,
     setAgentEnabled,
