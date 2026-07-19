@@ -1,6 +1,9 @@
 import type { RouteLocationRaw } from 'vue-router'
 import {
+  BRIEFAssessmentAPI,
   CBCLAssessmentAPI,
+  CRTAssessmentAPI,
+  CognitiveSelfAssessmentAPI,
   Cnbsr2016AssessmentAPI,
   ConnersPSQAPI,
   ConnersTRSAPI,
@@ -13,22 +16,16 @@ import {
 } from '@/database/api'
 import { getDatabase } from '@/database/init'
 import {
+  ASSESSMENT_SCALE_CATALOG,
+  type AssessmentScaleCode,
+} from '@/features/assessment/assessment-scale-catalog'
+import {
   buildAssessmentReportRoute as buildSharedAssessmentReportRoute,
 } from '@/features/assessment/report-routes'
 
-export type AssessmentScaleType =
-  | 'sm'
-  | 'weefim'
-  | 'csirs'
-  | 'conners-psq'
-  | 'conners-trs'
-  | 'sdq'
-  | 'srs2'
-  | 'cbcl'
-  | 'cnbsr2016'
-  | 'fine_motor'
-  | 'gmfm_88'
-  | 'tgmd_3'
+// 保守保留别名：直接别名到 catalog 的 AssessmentScaleCode（全 15 量表白名单），
+// 不再维护第 7 处并行枚举；加量表时 catalog 即真源
+export type AssessmentScaleType = AssessmentScaleCode
 
 export interface StudentAssessmentRecord {
   id: string
@@ -41,20 +38,10 @@ export interface StudentAssessmentRecord {
   createdAt: string
 }
 
-const SCALE_LABEL_MAP: Record<AssessmentScaleType, string> = {
-  sm: 'S-M量表',
-  weefim: 'WeeFIM量表',
-  csirs: 'CSIRS量表',
-  'conners-psq': 'Conners PSQ',
-  'conners-trs': 'Conners TRS',
-  sdq: 'SDQ量表',
-  srs2: 'SRS-2量表',
-  cbcl: 'CBCL量表',
-  cnbsr2016: '儿心量表Ⅱ',
-  fine_motor: '小肌肉功能发展评估量表',
-  gmfm_88: 'GMFM-88粗大运动功能评定量表',
-  tgmd_3: 'TGMD-3大肌肉动作发展测验',
-}
+// scaleLabel 从 catalog recordsLabel 派生（单一真源），覆盖全 15 量表
+const SCALE_LABEL_MAP: Record<AssessmentScaleCode, string> = Object.fromEntries(
+  ASSESSMENT_SCALE_CATALOG.map((item) => [item.code, item.recordsLabel]),
+) as Record<AssessmentScaleCode, string>
 
 const LEVEL_LABEL_MAP: Record<string, string> = {
   normal: '正常',
@@ -109,6 +96,9 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
   const fineMotorApi = new FineMotorAssessmentAPI()
   const gmfm88Api = new Gmfm88AssessmentAPI()
   const tgmd3Api = new Tgmd3AssessmentAPI()
+  const briefApi = new BRIEFAssessmentAPI()
+  const crtApi = new CRTAssessmentAPI()
+  const cognitiveSelfApi = new CognitiveSelfAssessmentAPI()
 
   const smRecords = smApi.getStudentAssessments(studentId).map((record: any) => ({
     id: `sm-${record.id}`,
@@ -273,20 +263,61 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))
 
-  return [
-    ...smRecords,
-    ...weefimRecords,
-    ...csirsRecords,
-    ...connersPSQRecords,
-    ...connersTRSRecords,
-    ...sdqRecords,
-    ...srs2Records,
-    ...cbclRecords,
-    ...cnbsr2016Records,
-    ...fineMotorRecords,
-    ...gmfm88Records,
-    ...tgmd3Records,
-  ].sort((left, right) => getSortTime(right.createdAt) - getSortTime(left.createdAt))
+  const briefRecords = briefApi.getStudentAssessments(studentId).map((record: any) => ({
+    id: `brief-${record.id}`,
+    studentId,
+    assessId: record.id,
+    scaleType: 'brief' as const,
+    scaleLabel: SCALE_LABEL_MAP.brief,
+    scoreText: `原始 ${formatNullableNumber(record.total_raw_score)} / T ${formatNullableNumber(record.total_t_score)}`,
+    levelText: formatLevel(record.level_code || record.level),
+    createdAt: record.end_time || record.created_at || record.start_time || '',
+  }))
+
+  const crtRecords = crtApi.getStudentAssessments(studentId).map((record: any) => ({
+    id: `crt-${record.id}`,
+    studentId,
+    assessId: record.id,
+    scaleType: 'crt' as const,
+    scaleLabel: SCALE_LABEL_MAP.crt,
+    scoreText: `原始 ${formatNullableNumber(record.total_raw_score)}/${formatNullableNumber(record.total_questions)} / IQ ${formatNullableNumber(record.iq_estimate)}`,
+    levelText: formatLevel(record.level_code || record.level),
+    createdAt: record.end_time || record.created_at || record.start_time || '',
+  }))
+
+  const cognitiveSelfRecords = cognitiveSelfApi.getStudentAssessments(studentId).map((record: any) => ({
+    id: `cognitive_self-${record.id}`,
+    studentId,
+    assessId: record.id,
+    scaleType: 'cognitive_self' as const,
+    scaleLabel: SCALE_LABEL_MAP.cognitive_self,
+    scoreText: `正确率 ${formatNullableNumber(record.accuracy_rate)}% / 反应时 ${formatNullableNumber(record.avg_response_time)}ms`,
+    levelText: formatLevel(record.level_code || record.level),
+    createdAt: record.end_time || record.created_at || record.start_time || '',
+  }))
+
+  // catalog 驱动合并：迭代顺序跟随 catalog；加量表须在 recordsByScale 补 builder
+  const recordsByScale: Record<AssessmentScaleCode, StudentAssessmentRecord[]> = {
+    sm: smRecords,
+    weefim: weefimRecords,
+    csirs: csirsRecords,
+    'conners-psq': connersPSQRecords,
+    'conners-trs': connersTRSRecords,
+    sdq: sdqRecords,
+    srs2: srs2Records,
+    cbcl: cbclRecords,
+    cnbsr2016: cnbsr2016Records,
+    fine_motor: fineMotorRecords,
+    gmfm_88: gmfm88Records,
+    tgmd_3: tgmd3Records,
+    brief: briefRecords,
+    crt: crtRecords,
+    cognitive_self: cognitiveSelfRecords,
+  }
+
+  return ASSESSMENT_SCALE_CATALOG
+    .flatMap((item) => recordsByScale[item.code] ?? [])
+    .sort((left, right) => getSortTime(right.createdAt) - getSortTime(left.createdAt))
 }
 
 export function buildAssessmentReportRoute(

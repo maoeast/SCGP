@@ -744,10 +744,8 @@ import {
   getEquipmentCatalogGroupLabel,
 } from '@/utils/equipment-catalog-group'
 import { buildTrainingLaunchRoute } from '@/utils/training-launch'
-import {
-  buildAssessmentReportRoute,
-  type AssessmentReportScaleType,
-} from '@/features/assessment/report-routes'
+import { buildAssessmentReportRoute } from '@/features/assessment/report-routes'
+import { isAssessmentReportScaleType } from '@/features/assessment/report-center-catalog'
 import { resolveResourceCoverImage, resolveResourceItemCoverImage } from '@/utils/resource-cover'
 import {
   TRAINING_PLAN_FILTER_MODULE_OPTIONS,
@@ -1386,8 +1384,13 @@ function handleViewAssessmentReport(plan: TrainingPlan) {
       ElMessage.warning('未找到关联的评估报告')
       return
     }
+    // type guard：防 DB report_type 脏值（非量表类型）路由到 fallback（§7 高风险相邻）
+    if (!isAssessmentReportScaleType(record.report_type)) {
+      ElMessage.warning('关联的评估报告类型无效')
+      return
+    }
     const route = buildAssessmentReportRoute({
-      scaleType: record.report_type as AssessmentReportScaleType,
+      scaleType: record.report_type,
       assessId,
       studentId: plan.student_id,
     })

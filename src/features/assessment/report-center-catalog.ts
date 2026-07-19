@@ -1,7 +1,12 @@
-import type { AssessmentScaleCode } from '@/features/assessment/assessment-scale-catalog'
+import { ASSESSMENT_SCALE_CATALOG } from '@/features/assessment/assessment-scale-catalog'
+import type {
+  AssessmentScaleCode,
+  AssessmentReportTone,
+  AssessmentReportTagType,
+} from '@/features/assessment/assessment-scale-catalog'
 
-export type AssessmentReportTone = 'blue' | 'teal' | 'amber' | 'coral'
-export type AssessmentReportTagType = 'warning' | 'success' | 'danger' | 'primary' | 'info'
+// 类型真源已移至 assessment-scale-catalog；此处保留导出以兼容现有消费方
+export type { AssessmentReportTone, AssessmentReportTagType } from '@/features/assessment/assessment-scale-catalog'
 
 export interface AssessmentReportCatalogItem {
   code: AssessmentScaleCode
@@ -11,23 +16,14 @@ export interface AssessmentReportCatalogItem {
   tagType: AssessmentReportTagType
 }
 
-export const ASSESSMENT_REPORT_CATALOG = [
-  { code: 'sm', selectLabel: 'S-M 评估报告', cardLabel: 'S-M', tone: 'blue', tagType: 'warning' },
-  { code: 'weefim', selectLabel: 'WeeFIM 评估报告', cardLabel: 'WeeFIM', tone: 'teal', tagType: 'success' },
-  { code: 'csirs', selectLabel: 'CSIRS 评估报告', cardLabel: 'CSIRS', tone: 'coral', tagType: 'danger' },
-  { code: 'conners-psq', selectLabel: 'Conners PSQ 报告', cardLabel: 'Conners PSQ', tone: 'amber', tagType: 'primary' },
-  { code: 'conners-trs', selectLabel: 'Conners TRS 报告', cardLabel: 'Conners TRS', tone: 'blue', tagType: 'info' },
-  { code: 'sdq', selectLabel: 'SDQ 评估报告', cardLabel: 'SDQ', tone: 'amber', tagType: 'warning' },
-  { code: 'srs2', selectLabel: 'SRS-2 评估报告', cardLabel: 'SRS-2', tone: 'teal', tagType: 'primary' },
-  { code: 'cbcl', selectLabel: 'CBCL 评估报告', cardLabel: 'CBCL', tone: 'coral', tagType: 'success' },
-  { code: 'cnbsr2016', selectLabel: '儿心量表Ⅱ评估报告', cardLabel: '儿心量表Ⅱ', tone: 'teal', tagType: 'success' },
-  { code: 'fine_motor', selectLabel: '小肌肉功能发展评估报告', cardLabel: 'FMDA', tone: 'blue', tagType: 'primary' },
-  { code: 'gmfm_88', selectLabel: 'GMFM-88 评估报告', cardLabel: 'GMFM-88', tone: 'coral', tagType: 'danger' },
-  { code: 'tgmd_3', selectLabel: 'TGMD-3 评估报告', cardLabel: 'TGMD-3', tone: 'amber', tagType: 'warning' },
-  { code: 'brief', selectLabel: 'BRIEF 执行功能报告（草案）', cardLabel: 'BRIEF（草案）', tone: 'blue', tagType: 'primary' },
-  { code: 'crt', selectLabel: 'CRT 图形推理报告（草案）', cardLabel: 'CRT（草案）', tone: 'teal', tagType: 'primary' },
-  { code: 'cognitive_self', selectLabel: '综合认知自测报告（草案）', cardLabel: '认知自测（草案）', tone: 'amber', tagType: 'primary' },
-] as const satisfies ReadonlyArray<AssessmentReportCatalogItem>
+// 退化为 catalog 派生层：selectLabel/cardLabel/tone/tagType 全部来自单一真源
+export const ASSESSMENT_REPORT_CATALOG: ReadonlyArray<AssessmentReportCatalogItem> = ASSESSMENT_SCALE_CATALOG.map((item) => ({
+  code: item.code,
+  selectLabel: item.reportSelectLabel,
+  cardLabel: item.reportCardLabel,
+  tone: item.reportTone,
+  tagType: item.reportTagType,
+}))
 
 export type AssessmentReportCounts = Record<AssessmentScaleCode, number>
 

@@ -45,7 +45,9 @@ Handoff：`.continue-here.md` 记当前唯一下一步（优先更新）；`HAND
 - 授权事实来源 `authStore.effectiveEntitlements`（entitlement-first）；`allowedModules` / 许可证 `am` 仅保留兼容与调试语义，不是最终判权来源
 - **未完成**：DB Worker 主链、Image Worker 主链、注册表动态路由、完整多模块平台
 
-当前优先技术债：备份 / 恢复未覆盖全 schema、资源文件生命周期未收口、资源收藏未完成、评估入口仍硬编码、命名残留旧阶段名、开发 / 迁移工具仍混在主路由树。
+当前优先技术债：资源收藏未完成（资源中心「训练资源」Tab 未接收藏 UI + `teaching_material_favorite` 与 `sys_favorites` 两套并行表）、评估入口仍硬编码（catalog / driverRegistry / 报告路由多处并行枚举）、命名残留旧阶段名（产品名「训练系统 vs 平台」口径分叉 + `Layout.vue` ATS 折叠标题等 UI 旧名）。
+
+已闭环不再列入（细节见 PROJECT_CONTEXT）：备份全 schema（§22，`backup.ts` 动态全表 v4.0）、资源文件生命周期（§61-62，Phase1/2/3 收口）、开发/迁移工具路由隔离（§82，C08 四层隔离 + 契约测试）。
 
 ---
 

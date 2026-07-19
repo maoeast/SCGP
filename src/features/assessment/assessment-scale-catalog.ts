@@ -50,6 +50,12 @@ export type BusinessModuleCode = typeof BUSINESS_MODULE_CODES[number]
 
 type AssessmentTone = 'primary' | 'success' | 'warning' | 'danger' | 'info'
 
+// 报告中心色板（与 buttonType 的 AssessmentTone 不同，独立 4 色；report-center-catalog 复用）
+export type AssessmentReportTone = 'blue' | 'teal' | 'amber' | 'coral'
+export type AssessmentReportTagType = 'warning' | 'success' | 'danger' | 'primary' | 'info'
+// 报告路由参数形态：sm/weefim 用 query（保外链/书签兼容），其余用 path params
+export type ReportPathParamStyle = 'params' | 'query'
+
 export interface AssessmentScaleTag {
   type: AssessmentTone
   label: string
@@ -76,7 +82,20 @@ export interface AssessmentScaleCatalogItem {
   studentSelectorTag: AssessmentScaleTag
   entryTabs: TrainingEntryCode[]
   accessEntitlementsAnyOf?: EntitlementCode[]
+  // 过渡态：授权链已 entitlement-first，此 module fallback 仅保留兼容；删除属授权重构单独 scope
   accessModulesAnyOf: BusinessModuleCode[]
+  // —— 报告/枚举派生字段（catalog 作单一真源；B/C/D/E/F/G 从此派生，加量表时 TS 强制补齐）——
+  urlSlug: string
+  reportRouteName: string
+  reportPathParamStyle: ReportPathParamStyle
+  reportComponentFolder: string
+  reportMetaTitle: string
+  reportTone: AssessmentReportTone
+  reportTagType: AssessmentReportTagType
+  reportSelectLabel: string
+  reportCardLabel: string
+  recordsLabel: string
+  isDraft: boolean
 }
 
 export type AssessmentModuleAccessChecker = (moduleCode: BusinessModuleCode) => boolean
@@ -113,6 +132,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['life-skills', 'social-communication'],
     accessEntitlementsAnyOf: ['life_skills'],
     accessModulesAnyOf: ['life_skills'],
+    urlSlug: 'sm',
+    reportRouteName: 'SMReport',
+    reportPathParamStyle: 'query',
+    reportComponentFolder: 'sm',
+    reportMetaTitle: 'S-M量表评估报告',
+    reportTone: 'blue',
+    reportTagType: 'warning',
+    reportSelectLabel: 'S-M 评估报告',
+    reportCardLabel: 'S-M',
+    recordsLabel: 'S-M量表',
+    isDraft: false,
   },
   {
     code: 'weefim',
@@ -134,6 +164,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['life-skills'],
     accessEntitlementsAnyOf: ['life_skills'],
     accessModulesAnyOf: ['life_skills'],
+    urlSlug: 'weefim',
+    reportRouteName: 'WeeFIMReport',
+    reportPathParamStyle: 'query',
+    reportComponentFolder: 'weefim',
+    reportMetaTitle: 'WeeFIM量表评估报告',
+    reportTone: 'teal',
+    reportTagType: 'success',
+    reportSelectLabel: 'WeeFIM 评估报告',
+    reportCardLabel: 'WeeFIM',
+    recordsLabel: 'WeeFIM量表',
+    isDraft: false,
   },
   {
     code: 'csirs',
@@ -155,6 +196,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['sensory-integration'],
     accessEntitlementsAnyOf: ['sensory_integration'],
     accessModulesAnyOf: ['sensory'],
+    urlSlug: 'csirs',
+    reportRouteName: 'CSIRSReport',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'csirs',
+    reportMetaTitle: 'CSIRS感觉统合评估报告',
+    reportTone: 'coral',
+    reportTagType: 'danger',
+    reportSelectLabel: 'CSIRS 评估报告',
+    reportCardLabel: 'CSIRS',
+    recordsLabel: 'CSIRS量表',
+    isDraft: false,
   },
   {
     code: 'conners-psq',
@@ -176,6 +228,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['emotional-regulation', 'soothing-aids'],
     accessEntitlementsAnyOf: ['emotional', 'soothing_aids'],
     accessModulesAnyOf: ['emotional'],
+    urlSlug: 'conners-psq',
+    reportRouteName: 'ConnersPSQReport',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'conners-psq',
+    reportMetaTitle: 'Conners父母问卷评估报告',
+    reportTone: 'amber',
+    reportTagType: 'primary',
+    reportSelectLabel: 'Conners PSQ 报告',
+    reportCardLabel: 'Conners PSQ',
+    recordsLabel: 'Conners PSQ',
+    isDraft: false,
   },
   {
     code: 'conners-trs',
@@ -197,6 +260,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['emotional-regulation'],
     accessEntitlementsAnyOf: ['emotional'],
     accessModulesAnyOf: ['emotional'],
+    urlSlug: 'conners-trs',
+    reportRouteName: 'ConnersTRSReport',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'conners-trs',
+    reportMetaTitle: 'Conners教师问卷评估报告',
+    reportTone: 'blue',
+    reportTagType: 'info',
+    reportSelectLabel: 'Conners TRS 报告',
+    reportCardLabel: 'Conners TRS',
+    recordsLabel: 'Conners TRS',
+    isDraft: false,
   },
   {
     code: 'sdq',
@@ -218,6 +292,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['emotional-regulation', 'social-communication'],
     accessEntitlementsAnyOf: ['emotional', 'social_communication'],
     accessModulesAnyOf: ['emotional', 'social'],
+    urlSlug: 'sdq',
+    reportRouteName: 'SDQReport',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'sdq',
+    reportMetaTitle: 'SDQ长处和困难问卷评估报告',
+    reportTone: 'amber',
+    reportTagType: 'warning',
+    reportSelectLabel: 'SDQ 评估报告',
+    reportCardLabel: 'SDQ',
+    recordsLabel: 'SDQ量表',
+    isDraft: false,
   },
   {
     code: 'srs2',
@@ -239,6 +324,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['social-communication'],
     accessEntitlementsAnyOf: ['social_communication'],
     accessModulesAnyOf: ['social'],
+    urlSlug: 'srs2',
+    reportRouteName: 'SRS2Report',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'srs2',
+    reportMetaTitle: 'SRS-2社交反应量表评估报告',
+    reportTone: 'teal',
+    reportTagType: 'primary',
+    reportSelectLabel: 'SRS-2 评估报告',
+    reportCardLabel: 'SRS-2',
+    recordsLabel: 'SRS-2量表',
+    isDraft: false,
   },
   {
     code: 'cbcl',
@@ -260,6 +356,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['emotional-regulation', 'soothing-aids'],
     accessEntitlementsAnyOf: ['emotional', 'soothing_aids'],
     accessModulesAnyOf: ['emotional'],
+    urlSlug: 'cbcl',
+    reportRouteName: 'CBCLReport',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'cbcl',
+    reportMetaTitle: 'CBCL儿童行为量表评估报告',
+    reportTone: 'coral',
+    reportTagType: 'success',
+    reportSelectLabel: 'CBCL 评估报告',
+    reportCardLabel: 'CBCL',
+    recordsLabel: 'CBCL量表',
+    isDraft: false,
   },
   {
     code: 'cnbsr2016',
@@ -281,6 +388,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['sensory-integration', 'fine-motor', 'social-communication', 'life-skills', 'cognitive'],
     accessEntitlementsAnyOf: ['sensory_integration', 'fine_motor', 'social_communication', 'life_skills', 'cognitive'],
     accessModulesAnyOf: ['sensory'],
+    urlSlug: 'cnbsr2016',
+    reportRouteName: 'Cnbsr2016Report',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'cnbsr2016',
+    reportMetaTitle: '儿心量表Ⅱ评估报告',
+    reportTone: 'teal',
+    reportTagType: 'success',
+    reportSelectLabel: '儿心量表Ⅱ评估报告',
+    reportCardLabel: '儿心量表Ⅱ',
+    recordsLabel: '儿心量表Ⅱ',
+    isDraft: false,
   },
   {
     code: 'tgmd_3',
@@ -302,6 +420,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['sensory-integration'],
     accessEntitlementsAnyOf: ['sensory_integration'],
     accessModulesAnyOf: ['sensory'],
+    urlSlug: 'tgmd_3',
+    reportRouteName: 'Tgmd3Report',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'tgmd-3',
+    reportMetaTitle: 'TGMD-3评估报告',
+    reportTone: 'amber',
+    reportTagType: 'warning',
+    reportSelectLabel: 'TGMD-3 评估报告',
+    reportCardLabel: 'TGMD-3',
+    recordsLabel: 'TGMD-3大肌肉动作发展测验',
+    isDraft: false,
   },
   {
     code: 'gmfm_88',
@@ -323,6 +452,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['sensory-integration'],
     accessEntitlementsAnyOf: ['sensory_integration'],
     accessModulesAnyOf: ['sensory'],
+    urlSlug: 'gmfm_88',
+    reportRouteName: 'Gmfm88Report',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'gmfm-88',
+    reportMetaTitle: 'GMFM-88评估报告',
+    reportTone: 'coral',
+    reportTagType: 'danger',
+    reportSelectLabel: 'GMFM-88 评估报告',
+    reportCardLabel: 'GMFM-88',
+    recordsLabel: 'GMFM-88粗大运动功能评定量表',
+    isDraft: false,
   },
   {
     code: 'fine_motor',
@@ -344,6 +484,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['fine-motor'],
     accessEntitlementsAnyOf: ['fine_motor'],
     accessModulesAnyOf: ['sensory'],
+    urlSlug: 'fine_motor',
+    reportRouteName: 'FineMotorReport',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'fine-motor',
+    reportMetaTitle: '小肌肉功能发展评估量表报告',
+    reportTone: 'blue',
+    reportTagType: 'primary',
+    reportSelectLabel: '小肌肉功能发展评估报告',
+    reportCardLabel: 'FMDA',
+    recordsLabel: '小肌肉功能发展评估量表',
+    isDraft: false,
   },
   {
     code: 'brief',
@@ -365,6 +516,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['cognitive'],
     accessEntitlementsAnyOf: ['cognitive'],
     accessModulesAnyOf: ['cognitive'],
+    urlSlug: 'brief',
+    reportRouteName: 'BRIEFReport',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'brief',
+    reportMetaTitle: 'BRIEF执行功能问卷评估报告',
+    reportTone: 'blue',
+    reportTagType: 'primary',
+    reportSelectLabel: 'BRIEF 执行功能报告（草案）',
+    reportCardLabel: 'BRIEF（草案）',
+    recordsLabel: 'BRIEF执行功能量表',
+    isDraft: true,
   },
   {
     code: 'crt',
@@ -386,6 +548,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['cognitive'],
     accessEntitlementsAnyOf: ['cognitive'],
     accessModulesAnyOf: ['cognitive'],
+    urlSlug: 'crt',
+    reportRouteName: 'CRTReport',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'crt',
+    reportMetaTitle: '瑞文CRT图形推理评估报告',
+    reportTone: 'teal',
+    reportTagType: 'primary',
+    reportSelectLabel: 'CRT 图形推理报告（草案）',
+    reportCardLabel: 'CRT（草案）',
+    recordsLabel: '瑞文CRT图形推理',
+    isDraft: true,
   },
   {
     code: 'cognitive_self',
@@ -407,6 +580,17 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     entryTabs: ['cognitive'],
     accessEntitlementsAnyOf: ['cognitive'],
     accessModulesAnyOf: ['cognitive'],
+    urlSlug: 'cognitive-self',
+    reportRouteName: 'CognitiveSelfReport',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'cognitive-self',
+    reportMetaTitle: '综合认知自测（图形匹配）评估报告',
+    reportTone: 'amber',
+    reportTagType: 'primary',
+    reportSelectLabel: '综合认知自测报告（草案）',
+    reportCardLabel: '认知自测（草案）',
+    recordsLabel: '综合认知自测',
+    isDraft: true,
   },
 ]
 

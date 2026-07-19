@@ -7,6 +7,7 @@
  */
 
 import type { ScaleDriver, ScaleInfo } from '@/types/assessment'
+import type { AssessmentScaleCode } from '@/features/assessment/assessment-scale-catalog'
 
 // 静态导入所有驱动器（Vite 不支持 require）
 import { SMDriver } from './SMDriver'
@@ -28,8 +29,9 @@ import { CognitiveSelfDriver } from './CognitiveSelfDriver'
 // 导出基类供其他驱动器继承
 export { BaseDriver } from './BaseDriver'
 
-// 驱动器类注册表
-const driverRegistry: Record<string, new () => ScaleDriver> = {
+// 驱动器类注册表：key 集合由 satisfies 强制对齐 catalog 的 AssessmentScaleCode 全集
+// （加量表时若漏注册 driver，TS 报错；type-only 依赖，不引入 catalog 运行时/bundle 回归）
+const driverRegistry = {
   'sm': SMDriver,
   'weefim': WeeFIMDriver,
   'csirs': CSIRSDriver,
@@ -45,7 +47,7 @@ const driverRegistry: Record<string, new () => ScaleDriver> = {
   'brief': BRIEFDriver,
   'crt': CRTDriver,
   'cognitive_self': CognitiveSelfDriver,
-}
+} as const satisfies Record<AssessmentScaleCode, new () => ScaleDriver>
 
 // 驱动器实例缓存
 const driverCache: Map<string, ScaleDriver> = new Map()
@@ -62,8 +64,8 @@ export function getDriverByScaleCode(scaleCode: string): ScaleDriver {
   const cached = driverCache.get(scaleCode)
   if (cached) return cached
 
-  // 从注册表获取驱动器类
-  const DriverClass = driverRegistry[scaleCode]
+  // 从注册表获取驱动器类（scaleCode 运行时可能为任意字符串，cast 后由下方 !DriverClass 守卫）
+  const DriverClass = driverRegistry[scaleCode as AssessmentScaleCode]
   if (!DriverClass) {
     throw new Error(`[AssessmentStrategy] 未找到量表驱动器: ${scaleCode}`)
   }

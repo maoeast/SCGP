@@ -11,6 +11,7 @@ import {
   getAssessmentScaleCatalogItem,
   isAssessmentScaleAuthorized,
 } from '@/features/assessment/assessment-scale-catalog'
+import { assessmentLegacyRedirectRoutes, assessmentReportRoutes } from '@/features/assessment/assessment-report-routes'
 import { selfCareRoutes } from '@/features/self-care/self-care-routes'
 import {
   getEquipmentTrainingEntryRequiredEntitlement,
@@ -96,31 +97,8 @@ const EquipmentRecords = () => import('@/views/equipment/Records.vue')
 // 评估相关页面
 const AssessmentSelect = () => import('@/views/assessment/AssessmentSelect.vue')
 const SelectStudent = () => import('@/views/assessment/SelectStudent.vue')
-// 旧版评估页面已归档，保留报告页面
-const SMReport = () => import('@/views/assessment/sm/Report.vue')
-const WeeFIMReport = () => import('@/views/assessment/weefim/Report.vue')
-const CSIRSReport = () => import('@/views/assessment/csirs/Report.vue')
+// CSIRS 历史评估对比（非报告路由，独立保留；15 个 Report.vue 由 assessment-report-routes 生成化懒加载）
 const CSIRSHistory = () => import('@/views/assessment/csirs/History.vue')
-
-// Conners 报告页面（评估页面已归档）
-const ConnersPSQReport = () => import('@/views/assessment/conners-psq/Report.vue')
-const ConnersTRSReport = () => import('@/views/assessment/conners-trs/Report.vue')
-
-// SDQ 报告页面
-const SDQReport = () => import('@/views/assessment/sdq/Report.vue')
-
-// SRS-2 报告页面
-const SRS2Report = () => import('@/views/assessment/srs2/Report.vue')
-
-// CBCL 报告页面
-const CBCLReport = () => import('@/views/assessment/cbcl/Report.vue')
-const BRIEFReport = () => import('@/views/assessment/brief/Report.vue')
-const CRTReport = () => import('@/views/assessment/crt/Report.vue')
-const CognitiveSelfReport = () => import('@/views/assessment/cognitive-self/Report.vue')
-const FineMotorReport = () => import('@/views/assessment/fine-motor/Report.vue')
-const Cnbsr2016Report = () => import('@/views/assessment/cnbsr2016/Report.vue')
-const Gmfm88Report = () => import('@/views/assessment/gmfm-88/Report.vue')
-const Tgmd3Report = () => import('@/views/assessment/tgmd-3/Report.vue')
 
 // 通用评估容器（Phase 4 重构）
 const AssessmentContainer = () => import('@/views/assessment/AssessmentContainer.vue')
@@ -863,208 +841,17 @@ const router = createRouter({
             roles: ['admin', 'teacher']
           }
         },
-        // ===== 旧版评估路由重定向（已归档） =====
-        {
-          path: 'assessment/sm/assessment/:studentId',
-          redirect: (to: any) => `/assessment/unified/sm/${to.params.studentId}`
-        },
-        {
-          path: 'assessment/weefim/assessment/:studentId',
-          redirect: (to: any) => `/assessment/unified/weefim/${to.params.studentId}`
-        },
-        {
-          path: 'assessment/csirs/:studentId',
-          redirect: (to: any) => `/assessment/unified/csirs/${to.params.studentId}`
-        },
-        {
-          path: 'assessment/conners-psq/:studentId',
-          redirect: (to: any) => `/assessment/unified/conners-psq/${to.params.studentId}`
-        },
-        {
-          path: 'assessment/conners-trs/:studentId',
-          redirect: (to: any) => `/assessment/unified/conners-trs/${to.params.studentId}`
-        },
-        {
-          path: 'assessment/sdq/:studentId',
-          redirect: (to: any) => `/assessment/unified/sdq/${to.params.studentId}`
-        },
-        {
-          path: 'assessment/srs2/:studentId',
-          redirect: (to: any) => `/assessment/unified/srs2/${to.params.studentId}`
-        },
-        {
-          path: 'assessment/cbcl/:studentId',
-          redirect: (to: any) => `/assessment/unified/cbcl/${to.params.studentId}`
-        },
-        {
-          path: 'assessment/fine_motor/:studentId',
-          redirect: (to: any) => `/assessment/unified/fine_motor/${to.params.studentId}`
-        },
-        {
-          path: 'assessment/gmfm_88/:studentId',
-          redirect: (to: any) => `/assessment/unified/gmfm_88/${to.params.studentId}`
-        },
-        {
-          path: 'assessment/tgmd_3/:studentId',
-          redirect: (to: any) => `/assessment/unified/tgmd_3/${to.params.studentId}`
-        },
-        // ===== 报告页面（保留） =====
-        {
-          path: 'assessment/sm/report',
-          name: 'SMReport',
-          component: SMReport,
-          meta: {
-            title: 'S-M量表评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/weefim/report',
-          name: 'WeeFIMReport',
-          component: WeeFIMReport,
-          meta: {
-            title: 'WeeFIM量表评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/csirs/report/:assessId',
-          name: 'CSIRSReport',
-          component: CSIRSReport,
-          meta: {
-            title: 'CSIRS感觉统合评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
+        // ===== 旧版评估路由重定向（catalog 生成化，见 features/assessment/assessment-report-routes.ts） =====
+        ...assessmentLegacyRedirectRoutes,
+        // ===== 报告页面（catalog 生成化，见 features/assessment/assessment-report-routes.ts） =====
+        ...assessmentReportRoutes,
+        // CSIRS 历史评估对比：非报告路由，保留原位（path 与报告集不重叠）
         {
           path: 'assessment/csirs/history/:studentId',
           name: 'CSIRSHistory',
           component: CSIRSHistory,
           meta: {
             title: 'CSIRS历史评估对比',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/conners-psq/report/:assessId',
-          name: 'ConnersPSQReport',
-          component: ConnersPSQReport,
-          meta: {
-            title: 'Conners父母问卷评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/conners-trs/report/:assessId',
-          name: 'ConnersTRSReport',
-          component: ConnersTRSReport,
-          meta: {
-            title: 'Conners教师问卷评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/sdq/report/:assessId',
-          name: 'SDQReport',
-          component: SDQReport,
-          meta: {
-            title: 'SDQ长处和困难问卷评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/srs2/report/:assessId',
-          name: 'SRS2Report',
-          component: SRS2Report,
-          meta: {
-            title: 'SRS-2社交反应量表评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/cbcl/report/:assessId',
-          name: 'CBCLReport',
-          component: CBCLReport,
-          meta: {
-            title: 'CBCL儿童行为量表评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/fine_motor/report/:assessId',
-          name: 'FineMotorReport',
-          component: FineMotorReport,
-          meta: {
-            title: '小肌肉功能发展评估量表报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/cnbsr2016/report/:assessId',
-          name: 'Cnbsr2016Report',
-          component: Cnbsr2016Report,
-          meta: {
-            title: '儿心量表Ⅱ评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/gmfm_88/report/:assessId',
-          name: 'Gmfm88Report',
-          component: Gmfm88Report,
-          meta: {
-            title: 'GMFM-88评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/tgmd_3/report/:assessId',
-          name: 'Tgmd3Report',
-          component: Tgmd3Report,
-          meta: {
-            title: 'TGMD-3评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/brief/report/:assessId',
-          name: 'BRIEFReport',
-          component: BRIEFReport,
-          meta: {
-            title: 'BRIEF执行功能问卷评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/crt/report/:assessId',
-          name: 'CRTReport',
-          component: CRTReport,
-          meta: {
-            title: '瑞文CRT图形推理评估报告',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
-        },
-        {
-          path: 'assessment/cognitive-self/report/:assessId',
-          name: 'CognitiveSelfReport',
-          component: CognitiveSelfReport,
-          meta: {
-            title: '综合认知自测（图形匹配）评估报告',
             hideInMenu: true,
             roles: ['admin', 'teacher']
           }
