@@ -81,6 +81,7 @@ const EnergyBallPage = () => import('@/views/emotional/games/EnergyBallPage.vue'
 const ExpressionDetectivePage = () => import('@/views/emotional/games/ExpressionDetectivePage.vue')
 const ExpressionDuelPage = () => import('@/views/emotional/games/ExpressionDuelPage.vue')
 const PatternNextPage = () => import('@/views/emotional/games/PatternNextPage.vue')
+const MemoryMatchPage = () => import('@/views/emotional/games/MemoryMatchPage.vue')
 
 // 训练记录模块（Phase 4.6 重构）
 const TrainingRecordsMenu = () => import('@/views/training-records/TrainingRecordsMenu.vue')
@@ -662,6 +663,17 @@ const router = createRouter({
           component: PatternNextPage,
           meta: {
             title: '图形找规律',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/memory-match',
+          name: 'MemoryMatchGame',
+          component: MemoryMatchPage,
+          meta: {
+            title: '记忆翻牌',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,
