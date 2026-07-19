@@ -1754,3 +1754,11 @@
 - PRD §7 第 0 条定位已决策 = B（IEP 级可追踪）：每个认知游戏 `performanceData` 必须含 `actual_params`（本局实际生成参数）。PRD：`docs/planning/2026-07-19-cognitive-games-prd.md`。
 - IEP 报告消费端（`generateCognitiveReport` 等 4 处：GameContainer 白名单加 cognitive + IEPReport K 前缀路由 + iep-generator 新方法 + normalizer K03 规则）留后续专题，actual_params 已留好零迁移接入。
 - 验证：type-check + build:web + 实机 UAT 通过；commit `424724c`（feat）+ `fbeab72`（docs）已 push origin/main。
+
+## 91. 2026-07-19 认知发展游戏包 P0 第二个游戏 K01 接入
+
+- cognitive 训练入口第二个游戏 `K01_MEMORY_MATCH`（记忆翻牌 / Concentration，视觉工作记忆，纯 SVG）已落地：registry 条目 + `MemoryMatchGame.vue` / `MemoryMatchPage.vue` + 路由；认知发展模块游戏数 1→2。完全复用 §90 底座（cognitive-games-api + GameContainer moduleCode dispatch + registry/Page/router），**未改容器/API**。
+- **玩法**：三档难度对齐 PRD §4——L1 `2×2 / 2 对 / 翻错不翻回`、L2 `4×3 / 6 对 / 翻错 1.2s 翻回`、L3 `4×4 / 8 对 / 相似干扰`（同形近色造近似干扰）。统一状态机：`flipBackOnMismatch=false` 让 L1 revealed 卡累积、任意同 pairId 两张自动点亮，无需为 L1 单写规则；L2/L3 两张未配则锁定 + 延迟翻回。
+- **actual_params（IEP 级纵向追踪）**：顶层保留与 cognitive-games-api 强耦合的键 `accuracy_ratio`（首配命中 / 目标对数）+ `average_response_ms`；`actual_params` 含 `session_type='K01_MEMORY_MATCH'`、`grid_size`、`pair_count`、`flip_back_on_mismatch`、`use_similar_distractors`、`card_front_mode='svg'`（预留 `'webp'` 物品认知模式后续接入）+ 每对 `trials`（`first_try_correct` = 配对步紧接该对首次翻开、`flip_attempts`、`response_ms`）。
+- **卡面素材决策（用户选定）**：v1 纯程序化 SVG + 预留 `CARD_FRONT_MODE` 字段；卡背 CSS/SVG 生成统一花纹，零图片素材。
+- 验证：type-check + build:web + 实机 UAT 通过。
