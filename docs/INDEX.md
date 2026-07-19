@@ -49,6 +49,7 @@
 - [2026-05-20-entitlement-module-refactor-review-proposal.md](./planning/2026-05-20-entitlement-module-refactor-review-proposal.md)
 - [2026-05-28-air-conductor-implementation-plan.md](./planning/2026-05-28-air-conductor-implementation-plan.md)
 - [2026-07-17-resource-room-training-assistant-pilot.md](./planning/2026-07-17-resource-room-training-assistant-pilot.md) — 教师端 AI 资源教室训练助理 P0 试点问答与验收标准
+- [2026-07-19-assessment-entry-dynamicization-plan.md](./planning/2026-07-19-assessment-entry-dynamicization-plan.md) — 评估入口动态化（catalog 单一真源 + 报告路由派生）+ AGENTS §3 技术债清单校正，已批准待执行
 
 历史 / 基线：
 

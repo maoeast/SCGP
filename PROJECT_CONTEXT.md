@@ -1729,3 +1729,19 @@
 - 服务器部署走 tailscale + `openclaw.pem`（登 `ubuntu` 用户，免密 sudo）；开发机代理 fake-ip 污染外部 HTTPS/DNS 探测，外部服务验证必须在服务器或干净设备做。
 - 新增 `release-deploy` skill（`.claude/skills/release-deploy/`）固化打包→校验→上传→部署→验证两源流程；`scripts/release-verify.mjs` + `npm run release:verify` 校验 latest.yml 完整性（防 latest.yml 被 exe 内容覆盖，曾实际发生）。
 - 1.0.7 已打包部署，真机 1.0.6→1.0.7 自动升级验证通过；commit `d4b86fd` + `64f6604` + `27ebeeb` 已 push。
+
+## 88. 2026-07-19 §3 技术债核实结论 + 评估入口动态化计划
+
+- 对 AGENTS §3「当前优先技术债」6 条做只读核实：备份/恢复全 schema（已闭环，§22，`backup.ts` 动态全表 v4.0）、资源文件生命周期（已收口，§61-62 Phase1/2/3）、开发/迁移工具路由隔离（已隔离，§82 C08 四层）三条实际已完成，仅 §3 文案滞后。
+- 真实欠账 3 条：资源收藏半成品（资源中心「训练资源」Tab 未接收藏 UI + `teaching_material_favorite` 与 `sys_favorites` 两套并行表）、评估入口仍硬编码（catalog / driverRegistry / report-center catalog / report-route switch / 报告路由表 / legacy redirects / student-detail 聚合器 7 处并行枚举，其中 student-detail 聚合器漏 brief/crt/cognitive_self 是真 bug）、命名残留部分清理（产品名「训练系统 vs 平台」口径分叉 + `Layout.vue` ATS 折叠标题等）。
+- 评估入口动态化实施计划已立并批准（中等 scope）：catalog 作单一真源，B/C/D/E/G 五处派生 + F 生成化，顺带修 student-detail bug；不动作答主链 `AssessmentContainer` 硬分支、不动 ScaleDriver 接口、不补报告路由 entitlement 守卫（单独列债）。
+- 执行蓝图：`docs/planning/2026-07-19-assessment-entry-dynamicization-plan.md`；认知校正——「儿心-II/TGMD-3/GMFM/FMDA 占位」是 §15 旧状态已过时，当前 15 个量表全部完整实现，仅 brief/crt/cognitive_self 标 DRAFT。
+
+## 89. 2026-07-19 评估入口动态化闭环（A 九步 + D）
+
+- 按计划蓝图执行完毕：AGENTS §3 文案校正（D，移除 3 条已闭环、保留 3 条真实欠账 + 已闭环脚注）；A1-A9 catalog 单一真源落地。
+- A 真源 `assessment-scale-catalog.ts` 扩 11+1 字段（urlSlug/reportRouteName/reportPathParamStyle/reportComponentFolder/reportTone/reportTagType/reportSelectLabel/reportCardLabel/recordsLabel/isDraft + `reportMetaTitle`[plan 字段表未列但生成路由 meta.title 必需]），15 条数据从下游真实值填齐。
+- 派生/生成化：D `report-routes.ts` switch→catalog 派生（5 调用方零改动）；C `report-center-catalog.ts` 退化为 `ASSESSMENT_SCALE_CATALOG.map`；新建 `assessment-report-routes.ts` 双导出（records 纯元数据 + components 动态 import + routes 合成 + legacy redirects 生成化）；E `router/index.ts` 删 15 手写报告路由 + 14 const 懒加载，`...assessmentReportRoutes`，CSIRSHistory 保留原位；B `driverRegistry` `as const satisfies Record<AssessmentScaleCode,...>`；G 补 brief/crt/cognitive_self 3 builder 修漏量表 bug + 合并改 catalog flatMap + SCALE_LABEL_MAP 改 recordsLabel 派生 + AssessmentScaleType 别名到 AssessmentScaleCode。
+- 验证：`npm run type-check` clean；`npm run build:web` 成功（Vite 模板字面量 `@/views/assessment/${folder}/Report.vue` 动态 import 正确切 chunk）；现有 `assessment-report-center-catalog.test.mjs` 3/3、`dev-route-production-boundary.test.mjs` 7/7、新增 `assessment-entry-dynamicization.test.mjs` 7 断言全绿。
+- 未做（单独列债）：报告路由 entitlement 守卫——`assessmentReportRoutes` 未挂 `beforeEnter`（与作答主链 `createAssessmentScaleAccessGuard` 不同源）；`getDriverAsync`/`getRegisteredScales`/`isScaleRegistered`/`clearDriverCache` 死代码未清。两者均不在本 scope。
+- driver 类不进 catalog（避 bundle 回归 + catalog↔driver 循环依赖），仅 type-only 依赖 `AssessmentScaleCode`；SM/WeeFIM 报告保 query 参数形态，sm/weefim legacy redirect 保 `/assessment/` 中缀特例（书签兼容）。
