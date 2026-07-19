@@ -21,7 +21,7 @@
 1. 本 PRD 覆盖 10 个游戏的玩法 / 三级难度 / 训练目标 / 素材来源 / 元数据，达到"实施时可直接转 registry 条目 + 组件需求"的颗粒度。
 2. 明确与现有规范（emotion-games-prd §一 全局约束）、认知 52 器材资源、统一训练记录主表的接入边界。
 3. 给出 P0/P1/P2 优先级与待决策点，供评审后排期。
-4. 明确本游戏包"训练随机化"与"数据可追踪性"的定位取舍（见 §7-1 决策点），避免后续因定位不清导致 `summary_payload` 字段设计返工。
+4. 明确本游戏包"训练随机化"与"数据可追踪性"的定位取舍（**已决策 2026-07-19：IEP 级可追踪 / 选 B**，见 §7 第 0 条），避免后续因定位不清导致 `summary_payload` 字段设计返工。
 
 ---
 
@@ -114,9 +114,9 @@ difficultyLocked: false,
 - **方案 A（新建 `game_cognitive_records`）**：与 emotional 旧表对称——但与 `docs/planning/2026-04-01-unified-training-record-schema-plan.md` §3.2「不继续新增用户可见主记录表 / 不采用一游戏一张表」**直接冲突**，**不推荐**。
 - **方案 B（推荐）**：接入**统一训练记录主表 `training_session`** + 游戏家族明细表（复用 `training_session_game_detail`，或认知特有指标多时新增 `training_session_cognitive_game_detail`），复用已有 `TrainingSessionWriter`。已核对：`training_session` 表与统一 writer 已在 `src/database/init.ts` + `src/database/training-session-writer.ts` 落地（非纯计划态），认知游戏以 `module_code='cognitive'` / `session_family`（建议 `cognitive_game`）写入即可，授权与筛选走 `module_code` / `entry_code`，无需独立建表。
 
-`training_session` 主表已含 `accuracy_rate` / `avg_response_time_ms` 摘要字段，认知特有指标（范式标签 `paradigm`、难度级、本局参数）放 `summary_payload`（JSON）。建议 `summary_payload` 至少含：`paradigm`（范式标签，便于跨游戏聚合）/ `difficultyLevel` / `correctCount` / `totalCount` / `avgResponseMs`。
+`training_session` 主表已含 `accuracy_rate` / `avg_response_time_ms` 摘要字段，认知特有指标（范式标签 `paradigm`、难度级、本局参数）放 `summary_payload`（JSON）。`summary_payload` 至少含：`paradigm`（范式标签，便于跨游戏聚合）/ `difficultyLevel` / `correctCount` / `totalCount` / `avgResponseMs` / **`actualParams`（本局实际生成参数，IEP 追踪必需，见下段）**。
 
-> **若本游戏包定位为需支撑 IEP 纵向进度追踪**（见 §7-1 决策）：`summary_payload` 除 `difficultyLevel` 标签外，**还必须记录本局实际生成的参数值**（如 K01 本局网格大小/对数、K09 本局序列长度、K04 本局干扰项数等具体数字）。否则同一 `difficultyLevel` 标签下不同局的实际难度不等价，"响应时间从 2.3s 降到 1.5s"这类跨局对比会失真——无法区分是孩子进步还是该局题目恰好更简单。
+> **【已定 B / IEP 级可追踪】**`summary_payload` 除 `difficultyLevel` 标签外，**必须记录本局实际生成的参数值**（如 K01 本局网格大小/对数、K09 本局序列长度、K04 本局干扰项数、K03 本局规律类型与序列长度等具体数字）。原因：同一 `difficultyLevel` 标签下不同局的实际难度不等价，"响应时间从 2.3s 降到 1.5s"这类跨局对比会失真——无法区分是孩子进步还是该局题目恰好更简单。各游戏 `actualParams` 的精确字段在 K03 实施方案中定稿后回填本节。
 
 ### 3.4 entryPath 命名空间（待决策，见 §7-2）
 
@@ -406,17 +406,17 @@ PRD 暂按方案 A 写（slug 见各游戏节），最终随 §7-2 决策调整�
 
 ## 7. 待决策点（评审时确认）
 
-0. **【最高优先级】本游戏包定位：纯训练工具 vs IEP 级可追踪**。§4 几乎每个游戏 `repeatPlayHint` 都强调"每次内容随机变化"，而 §3.3 要求记录指标供跨局聚合——两者冲突：若同一 `difficultyLevel` 标签下不同局的实际参数不同，"响应时间下降"这类跨局对比将无法区分是孩子进步还是该局题目更简单。需二选一定位：
-   - **A. 纯训练工具**：接受局间难度不完全等价，专注防止死记硬背，`summary_payload` 只记 `difficultyLevel` 标签即可；
-   - **B. 需支撑 IEP 纵向进度追踪**：局间难度必须可比，`summary_payload` 除 `difficultyLevel` 外还必须记本局实际参数（网格/对数/序列长度/干扰数，见 §3.3 末段）。
-   此定位直接决定 §3.3 的 `summary_payload` 字段设计，须先于库表字段定稿。
+0. **【已决策 2026-07-19】本游戏包定位：IEP 级可追踪（选 B）**。§4 几乎每个游戏 `repeatPlayHint` 都强调"每次内容随机变化"，而 §3.3 要求记录指标供跨局聚合——两者冲突：若同一 `difficultyLevel` 标签下不同局的实际参数不同，"响应时间下降"这类跨局对比将无法区分是孩子进步还是该局题目更简单。原二选一：
+   - A. 纯训练工具：接受局间难度不完全等价，`summary_payload` 只记 `difficultyLevel` 标签；
+   - B. 需支撑 IEP 纵向进度追踪：局间难度必须可比，`summary_payload` 除 `difficultyLevel` 外还必须记本局实际参数。
+   **决策：B。** 据此 §3.3 `summary_payload` 字段设计已定方向（须含本局实际生成参数 `actualParams`，见 §3.3），具体 schema 在 P0 首个游戏 K03 实施方案中定稿；并联动第 7 条——认知指标须与 `src/utils/iep-generator.ts` 对齐以便进 IEP。
 1. **库表落点**（§3.3，已核对 unified schema 现状）：方案 A（新建 `game_cognitive_records`）与 `docs/planning/2026-04-01-unified-training-record-schema-plan.md` §3.2「不新增用户可见主记录表 / 不采用一游戏一张表」**直接冲突**；**已倾向方案 B**（接入已落地的 `training_session` + 游戏家族明细表，复用 `TrainingSessionWriter`）。评审确认即按方案 B 推进。
 2. **entryPath 命名空间**（§3.4）：沿用 `/emotional/games/<slug>`（零路由改动，但附明确重构触发条件）还是新建 `/cognitive/games/<slug>`（语义干净）？
 3. **gameCode K 前缀**是否采纳（避免与 soothing 的 C 冲突）。
 4. **认知物品 SVG 图标库**（原影响 P0 的 K04 启动）：**已倾向 P0 阶段用器材 webp 顶替、不建库**；P1/P2 视器材库覆盖度再决定是否仍需建库。
 5. **K10 与 S03 的关系**：独立新组件 vs 复用 S03 故事接龙板骨架改造（影响工作量估算）。
 6. **难度教师可控范围**：是否允许教师关闭 L3（部分低龄/重度儿童不适用 K04-L3 抽象维度、K09-L3 反向复现）。
-7. **认知指标上报口径**（§3.3 `summary_payload`）：是否需要预先与 IEP 报告生成端（`src/utils/iep-generator.ts`）对齐，以便认知训练数据能进 IEP；与第 0 条定位联动。
+7. **认知指标上报口径**（§3.3 `summary_payload`）：**【随第 0 条已定为 B】**认知训练数据须能进 IEP，故须与 IEP 报告生成端（`src/utils/iep-generator.ts`）对齐 `summary_payload` 的 `paradigm` / `actualParams` 口径；具体对齐在 K03 实施方案中落实（需先读 `iep-generator.ts` 确认其消费的训练数据结构）。
 
 ---
 
@@ -449,3 +449,4 @@ PRD 暂按方案 A 写（slug 见各游戏节），最终随 §7-2 决策调整�
 | 9 | §8 下一步补实测校准 | §8 新增第 4 步、原第 4 步顺延为第 5 步 | P0 落地后插入「3-5 名儿童小范围实测」，据实测锁定各难度级数值再定稿 P1/P2，不直接沿用当前设计假设数字 |
 | 10 | 核对 unified schema 现状 | §3.3 整段重写 + §7 第 1/7 条措辞调整 | 已核对：`docs/planning/2026-04-01-unified-training-record-schema-plan.md` 有详细字段草案且 `training_session` + `TrainingSessionWriter` 已落地（非纯计划态），该 schema §3.2 明确禁止新建独立游戏表——据此把方案 A 标为「不推荐/冲突」、方案 B 标为「已倾向」，字段名 `performance_data` 更正为实际的 `summary_payload` |
 | 附 | 顺手修正引用路径错误 | §3.3、§7 第 1 条 | 原文误写 `docs/plans/2026-04-01-...`（plans），实际文件在 `docs/planning/`（planning），已更正——属第 10 条「与现状对齐」范畴 |
+| 11 | §7 第 0 条定位决策落地 | §0 成功标准 4、§3.3 字段段 + 末段、§7 第 0 条、§7 第 7 条 | 用户评审敲定定位 = B（IEP 级可追踪）：第 0 条从「待决策」标为「已决策」；§3.3 `summary_payload` 从条件态收口为确定要求（须含 `actualParams` 本局实际参数）；第 7 条标记须与 `iep-generator.ts` 对齐。具体 `actualParams` schema 留待 K03 实施方案定稿 |

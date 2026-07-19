@@ -881,6 +881,38 @@ export const CUSTOM_GAME_REGISTRY: ReadonlyArray<CustomGameDefinition> = [
       repeatPlayHint: '每次会轮换上学情境、干扰物和书包主题，让孩子在反复练习中慢慢学会出门前的整理与判断。',
     },
   },
+  {
+    gameCode: 'K03_PATTERN_NEXT',
+    name: '图形找规律',
+    description: '观察一排按规律排列的图形，从底部候选里选出空位上该出现的下一个，练习规律推理与逻辑思维。',
+    moduleCode: ModuleCode.COGNITIVE,
+    trainingEntryCode: 'cognitive',
+    entryPath: '/emotional/games/pattern-next',
+    category: 'reasoning',
+    tags: ['认知发展', '规律推理', '逻辑思维', '模式补全'],
+    coverImage: '🔵',
+    maxPlayers: 1,
+    requiredPermissions: [],
+    permissionPolicy: 'all_required',
+    difficultyLocked: false,
+    badge: {
+      badgeCode: 'BADGE_PATTERN_PRO',
+      badgeName: '规律小侦探徽章',
+      visualThemeTag: 'pattern-detective',
+      iconToken: 'shape-sequence',
+      paletteToken: 'cognitive-teal',
+    },
+    metadata: {
+      emoji: '🔵',
+      color: 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 46%, #ffd666 100%)',
+      duration: '3-5分钟',
+      difficulty: '三级规律进阶',
+      therapeuticGoal: '规律推理',
+      cognitiveLoad: 'medium',
+      previewDescription: '看看这排图形是按什么规律排的，猜猜空着的那个位置应该放什么，再从下面的候选里挑出最合适的那一个。',
+      repeatPlayHint: '每次的规律、图形和颜色都会变，越练越能看出藏起来的小秘密。',
+    },
+  },
 ]
 
 const CUSTOM_GAME_REGISTRY_MAP = new Map<string, CustomGameDefinition>(

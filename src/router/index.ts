@@ -80,6 +80,7 @@ const EchoParrotPage = () => import('@/views/emotional/games/EchoParrotPage.vue'
 const EnergyBallPage = () => import('@/views/emotional/games/EnergyBallPage.vue')
 const ExpressionDetectivePage = () => import('@/views/emotional/games/ExpressionDetectivePage.vue')
 const ExpressionDuelPage = () => import('@/views/emotional/games/ExpressionDuelPage.vue')
+const PatternNextPage = () => import('@/views/emotional/games/PatternNextPage.vue')
 
 // 训练记录模块（Phase 4.6 重构）
 const TrainingRecordsMenu = () => import('@/views/training-records/TrainingRecordsMenu.vue')
@@ -650,6 +651,17 @@ const router = createRouter({
           component: PackBagPage,
           meta: {
             title: '上学包包装一装',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/pattern-next',
+          name: 'PatternNextGame',
+          component: PatternNextPage,
+          meta: {
+            title: '图形找规律',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

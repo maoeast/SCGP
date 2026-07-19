@@ -162,6 +162,8 @@ import {
   type CustomGamePermission,
 } from '@/data/custom-game-registry'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
+import { CognitiveGamesAPI } from '@/database/cognitive-games-api'
+import { ModuleCode } from '@/types/module'
 import { DatabaseAPI, GameTrainingAPI } from '@/database/api'
 import { normalizeGameMetrics } from '@/utils/game-performance-normalizer'
 import {
@@ -197,6 +199,7 @@ const props = withDefaults(defineProps<{
 const route = useRoute()
 const router = useRouter()
 const api = new EmotionalGamesAPI()
+const cognitiveApi = new CognitiveGamesAPI()
 const gameDefinition = computed(() => getRequiredCustomGameDefinition(props.gameCode))
 
 type PermissionPreflightState =
@@ -1090,6 +1093,9 @@ async function persistTerminalState(
 
   try {
     const startedAtMs = sessionStartedAt.value ?? Date.now()
+    // 认知游戏（K 系列）走 CognitiveGamesAPI 落 training_session，
+    // 不复用 EmotionalGamesAPI（那会误写 game_emotion_records 造成串台）。
+    const isCognitiveGame = gameDefinition.value.moduleCode === ModuleCode.COGNITIVE
 
     if (isGroupLaunch.value) {
       const groupPayload = normalizeGroupPayload(status, payload)
@@ -1131,7 +1137,7 @@ async function persistTerminalState(
       }
     } else {
       const exitTrigger = payload?.exitTrigger || null
-      const result = await api.persistSession({
+      const persistInput = {
         studentId: primaryStudentId.value,
         gameCode: props.gameCode,
         startedAt: new Date(startedAtMs).toISOString(),
@@ -1143,7 +1149,10 @@ async function persistTerminalState(
         exitTrigger,
         sessionGroupId: resolveSessionGroupId(payload),
         sessionParticipants: resolvedParticipantStudentIds.value,
-      })
+      }
+      const result = isCognitiveGame
+        ? await cognitiveApi.persistSession(persistInput)
+        : await api.persistSession(persistInput)
 
       persistenceMessage.value = status === 'completed'
         ? `已静默保存本次训练${result.badgeUnlockCount ? `，徽章累计 ${result.badgeUnlockCount} 次` : ''}`
