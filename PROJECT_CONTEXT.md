@@ -1745,3 +1745,12 @@
 - 验证：`npm run type-check` clean；`npm run build:web` 成功（Vite 模板字面量 `@/views/assessment/${folder}/Report.vue` 动态 import 正确切 chunk）；现有 `assessment-report-center-catalog.test.mjs` 3/3、`dev-route-production-boundary.test.mjs` 7/7、新增 `assessment-entry-dynamicization.test.mjs` 7 断言全绿。
 - 未做（单独列债）：报告路由 entitlement 守卫——`assessmentReportRoutes` 未挂 `beforeEnter`（与作答主链 `createAssessmentScaleAccessGuard` 不同源）；`getDriverAsync`/`getRegisteredScales`/`isScaleRegistered`/`clearDriverCache` 死代码未清。两者均不在本 scope。
 - driver 类不进 catalog（避 bundle 回归 + catalog↔driver 循环依赖），仅 type-only 依赖 `AssessmentScaleCode`；SM/WeeFIM 报告保 query 参数形态，sm/weefim legacy redirect 保 `/assessment/` 中缀特例（书签兼容）。
+
+## 90. 2026-07-19 认知发展游戏包 P0 首样板 K03 接入
+
+- cognitive 训练入口首个游戏 `K03_PATTERN_NEXT`（模式补全，纯 SVG）已落地：registry 条目 + `PatternNextGame.vue` / `PatternNextPage.vue` 组件 + 路由；认知发展模块游戏数 0→1。
+- **认知游戏落库模式（K01/K04/K05 后续直接复用）**：cognitive 游戏不经 `EmotionalGamesAPI`（那会写 `game_emotion_records` 串台），走新建 `src/database/cognitive-games-api.ts` → `TrainingSessionWriter.upsertSession`，`source_table='cognitive_game_inline'` 合成源（不新建表，符合 unified schema §3.2），`session_family='cognitive_game'`；`actual_params` 显式透传 summary_payload 顶层（绕过 `pickScalarSummaryMetrics` 嵌套过滤）支撑 IEP 级纵向追踪。
+- **GameContainer moduleCode dispatch**：`src/views/emotional/games/GameContainer.vue` 的 `persistTerminalState` 单人分支按 `gameDefinition.moduleCode === ModuleCode.COGNITIVE` 分发到 `CognitiveGamesAPI`，否则走 `EmotionalGamesAPI`。新认知游戏只需加 registry 条目 + 组件 + Page + 路由，**无需再改容器/API**。
+- PRD §7 第 0 条定位已决策 = B（IEP 级可追踪）：每个认知游戏 `performanceData` 必须含 `actual_params`（本局实际生成参数）。PRD：`docs/planning/2026-07-19-cognitive-games-prd.md`。
+- IEP 报告消费端（`generateCognitiveReport` 等 4 处：GameContainer 白名单加 cognitive + IEPReport K 前缀路由 + iep-generator 新方法 + normalizer K03 规则）留后续专题，actual_params 已留好零迁移接入。
+- 验证：type-check + build:web + 实机 UAT 通过；commit `424724c`（feat）+ `fbeab72`（docs）已 push origin/main。
