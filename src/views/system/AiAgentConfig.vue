@@ -555,21 +555,32 @@ async function removeSession(id: number) {
           </div>
         </el-form-item>
 
-        <el-form-item label="API Key">
-          <el-input
-            v-model="configForm.apiKeyInput"
-            type="password"
-            show-password
-            :placeholder="apiKeyPlaceholder"
-          />
-          <div class="field-hint">
-            API Key 加密存储于本地数据库，仅在本机解密使用。
-            <el-button v-if="aiStore.isConfigured" link type="danger" size="small" @click="clearApiKey">
-              清除 Key
-            </el-button>
-          </div>
-        </el-form-item>
+        <el-row :gutter="16">
+          <el-col :xs="24" :sm="12">
+            <el-form-item label="API Key">
+              <el-input
+                v-model="configForm.apiKeyInput"
+                type="password"
+                show-password
+                :placeholder="apiKeyPlaceholder"
+              />
+              <div class="field-hint">
+                API Key 加密存储于本地数据库，仅在本机解密使用。
+                <el-button v-if="aiStore.isConfigured" link type="danger" size="small" @click="clearApiKey">
+                  清除 Key
+                </el-button>
+              </div>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item label="接口地址">
+              <el-input v-model="configForm.baseUrl" placeholder="https://api.deepseek.com" />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
+        <!-- 学校管理员无需这三项（Key 归属 / 后台备注 / 轮换提醒），暂时注释隐藏；
+             脚本侧 configForm 字段、keyRotationHint、saveConfig 透传保留，需要时取消注释即可恢复。
         <el-form-item label="Key 归属">
           <el-input v-model="configForm.keyOwnerName" placeholder="如 杭州某某学校" />
           <div class="field-hint">
@@ -592,10 +603,7 @@ async function removeSession(id: number) {
           />
           <span class="field-hint-inline">{{ keyRotationHint }}</span>
         </el-form-item>
-
-        <el-form-item label="接口地址">
-          <el-input v-model="configForm.baseUrl" placeholder="https://api.deepseek.com" />
-        </el-form-item>
+        -->
 
         <el-form-item label="默认模型">
           <el-select
