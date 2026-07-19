@@ -1719,3 +1719,13 @@
 - `build:web` 现在固定在 Vite 构建后执行 `sanitize:production`，对 `dist` 下 HTML/CSS/JS/MJS 做调试标记块清理与残留扫描；`console.*`、`debugger`、devtools/vconsole/eruda 等生产残留会让构建后门禁失败。
 - 生产 Vite 构建不加载 `vite-plugin-vue-devtools`；Electron 生产态默认抑制主进程运行时日志并屏蔽常见 DevTools 快捷键。
 - 该批为 C12/C13 阻塞期间独立技术债，已通过 `npm run verify:release`，但仍未提交。
+
+## 87. 2026-07-19 C12 自动更新链 HTTPS 切换闭环
+
+- 桌面端自动更新默认源从 `http://124.220.104.199/scgp/win` 切到 `https://maohedong.top/scgp/win`（用户自有域名 + DigiCert/Let's Encrypt DV 证书，nginx 自托管 generic provider）。
+- `electron/handlers/update.js` 的 `LEGACY_UPDATE_URLS` 现收纳两条旧地址（hzxckj + 旧 http IP），老 1.0.x 用户升级时无感迁移到当前 HTTPS 默认地址。
+- 旧 http IP 源保留（与 HTTPS 主源同物理目录 `/home/lighthouse/scgp/win/`），作为老用户升级跳板；两源 `latest.yml` 均指向当前版本。
+- Windows 安装包不签名（`cscInfo=null`），安装触发 SmartScreen 蓝屏为已知取舍，不购买代码签名证书。
+- 服务器部署走 tailscale + `openclaw.pem`（登 `ubuntu` 用户，免密 sudo）；开发机代理 fake-ip 污染外部 HTTPS/DNS 探测，外部服务验证必须在服务器或干净设备做。
+- 新增 `release-deploy` skill（`.claude/skills/release-deploy/`）固化打包→校验→上传→部署→验证两源流程；`scripts/release-verify.mjs` + `npm run release:verify` 校验 latest.yml 完整性（防 latest.yml 被 exe 内容覆盖，曾实际发生）。
+- 1.0.7 已打包部署，真机 1.0.6→1.0.7 自动升级验证通过；commit `d4b86fd` + `64f6604` + `27ebeeb` 已 push。
