@@ -58,7 +58,7 @@
               :key="idx"
               type="button"
               class="pool-item"
-              :class="{ 'item--used': item.used, 'item--bounce': item.bouncing }"
+              :class="{ 'item--used': item.used, 'item--removable': item.used && isRemovePhase, 'item--bounce': item.bouncing }"
               :disabled="phase !== 'playing'"
               @click="onPoolItemClick(idx)"
             >
@@ -296,6 +296,13 @@ function clearTimers() {
 // ── 主题 ─────────────────────────────────────────────────
 const themeStyle = computed(() => ({ '--game-accent': '#fa8c16', '--game-bg': '#fff9f0' }))
 
+// 拿走阶段：已放入筐的物品变为"可取出"，需与普通 used（不可点）区分视觉
+const isRemovePhase = computed(() =>
+  activeMode.value === 'count'
+  && countPhase.value === 'adjust'
+  && countRound.value?.adjust?.op === 'remove',
+)
+
 // ── 模式 B 选项 ───────────────────────────────────────────
 const compareOptions = computed(() => {
   const base = [
@@ -453,14 +460,45 @@ function afterWrong(hint: string) {
   feedbackVisible.value = true
 }
 
-// ── 模式 A：点选物品入筐 ─────────────────────────────────
+// ── 模式 A：点选物品入筐 / 从筐取出 ──────────────────────
+function recordCountTrial() {
+  const round = countRound.value!
+  recordTrial({
+    targetNumber: round.targetNumber,
+    adjustOp: round.adjust?.op,
+    adjustAmount: round.adjust?.amount,
+    finalNumber: round.adjust?.finalNumber ?? round.targetNumber,
+  })
+}
+
 function onPoolItemClick(idx: number) {
   if (phase.value !== 'playing') return
   if (!countRound.value) return
   const item = poolItems.value[idx]
-  if (!item || item.used) return
+  if (!item) return
 
   markBoardDirtyOnce()
+
+  // L3 "拿走"阶段：点已放入筐的物品（used）把它取出，减到 finalNumber 即过关
+  if (isRemovePhase.value) {
+    if (!item.used) {
+      // 点了不在筐里的物品，温和提示（不算加入，只提示）
+      item.bouncing = true
+      afterWrong('现在要从筐里拿走哦，点一下已经放进筐里的星星。')
+      setTimeout(() => { item.bouncing = false }, 500)
+      return
+    }
+    item.used = false
+    basketCount.value--
+    if (basketCount.value === countRound.value.adjust!.finalNumber) {
+      recordCountTrial()
+      afterCorrect()
+    }
+    return
+  }
+
+  // 添加模式（base 阶段 或 adjust+add 阶段）
+  if (item.used) return
   const currentTarget = countPhase.value === 'base'
     ? countRound.value.targetNumber
     : countRound.value.adjust!.finalNumber
@@ -481,29 +519,15 @@ function onPoolItemClick(idx: number) {
 
   if (basketCount.value === currentTarget) {
     if (countPhase.value === 'base' && countRound.value.adjust && props.difficulty === 3) {
+      // 进入增减二段：加法继续放、减法改为从筐取出（basketCount 保持在 targetNumber）
       countPhase.value = 'adjust'
-      if (countRound.value.adjust.op === 'remove') {
-        const removeCount = countRound.value.adjust.amount
-        let restored = 0
-        for (let i = poolItems.value.length - 1; i >= 0 && restored < removeCount; i--) {
-          if (poolItems.value[i]?.used) {
-            poolItems.value[i]!.used = false
-            restored++
-          }
-        }
-      }
       statusLabel.value = '好！再来'
       stageMessage.value = countRound.value.adjust.op === 'add'
         ? `再放 ${countRound.value.adjust.amount} 个！`
         : `拿走 ${countRound.value.adjust.amount} 个！`
       feedbackVisible.value = false
     } else {
-      recordTrial({
-        targetNumber: countRound.value.targetNumber,
-        adjustOp: countRound.value.adjust?.op,
-        adjustAmount: countRound.value.adjust?.amount,
-        finalNumber: countRound.value.adjust?.finalNumber ?? countRound.value.targetNumber,
-      })
+      recordCountTrial()
       afterCorrect()
     }
   }
@@ -727,6 +751,19 @@ startRound()
   opacity: .25;
   border-color: #bdbdbd;
   cursor: not-allowed;
+}
+
+/* 拿走阶段：已放入筐的物品变为"可取出"，恢复可点提示 */
+.pool-item.item--removable {
+  opacity: .85;
+  border-color: var(--game-accent, #fa8c16);
+  border-style: dashed;
+  cursor: pointer;
+}
+
+.pool-item.item--removable:hover {
+  opacity: 1;
+  transform: translateY(-2px);
 }
 
 @keyframes bounce-back {
