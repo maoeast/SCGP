@@ -82,6 +82,7 @@ const ExpressionDetectivePage = () => import('@/views/emotional/games/Expression
 const ExpressionDuelPage = () => import('@/views/emotional/games/ExpressionDuelPage.vue')
 const PatternNextPage = () => import('@/views/emotional/games/PatternNextPage.vue')
 const MemoryMatchPage = () => import('@/views/emotional/games/MemoryMatchPage.vue')
+const OddOneOutPage = () => import('@/views/emotional/games/OddOneOutPage.vue')
 
 // 训练记录模块（Phase 4.6 重构）
 const TrainingRecordsMenu = () => import('@/views/training-records/TrainingRecordsMenu.vue')
@@ -674,6 +675,17 @@ const router = createRouter({
           component: MemoryMatchPage,
           meta: {
             title: '记忆翻牌',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/odd-one-out',
+          name: 'OddOneOutGame',
+          component: OddOneOutPage,
+          meta: {
+            title: '哪个不同类',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

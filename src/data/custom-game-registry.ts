@@ -945,6 +945,38 @@ export const CUSTOM_GAME_REGISTRY: ReadonlyArray<CustomGameDefinition> = [
       repeatPlayHint: '每次的规律、图形和颜色都会变，越练越能看出藏起来的小秘密。',
     },
   },
+  {
+    gameCode: 'K04_ODD_ONE_OUT',
+    name: '哪个不同类',
+    description: '从几样东西中找出与其他不同类别的那一个，练习语义归类与概念理解。',
+    moduleCode: ModuleCode.COGNITIVE,
+    trainingEntryCode: 'cognitive',
+    entryPath: '/emotional/games/odd-one-out',
+    category: 'reasoning',
+    tags: ['认知发展', '语义归类', '概念理解', '分类思维'],
+    coverImage: '🔶',
+    maxPlayers: 1,
+    requiredPermissions: [],
+    permissionPolicy: 'all_required',
+    difficultyLocked: false,
+    badge: {
+      badgeCode: 'BADGE_CATEGORY_STAR',
+      badgeName: '分类小专家徽章',
+      visualThemeTag: 'category-expert',
+      iconToken: 'odd-one-out',
+      paletteToken: 'cognitive-teal',
+    },
+    metadata: {
+      emoji: '🔶',
+      color: 'linear-gradient(135deg, #fa8c16 0%, #ffc53d 46%, #fffbe6 100%)',
+      duration: '3-5分钟',
+      difficulty: '三级分类进阶',
+      therapeuticGoal: '语义归类',
+      cognitiveLoad: 'medium',
+      previewDescription: '看看这几样东西，哪一个和其他的不是同一类？找出那个"不一样的"吧！',
+      repeatPlayHint: '每次出现的图案和类别都会变，越练越能发现事物之间的共同点。',
+    },
+  },
 ]
 
 const CUSTOM_GAME_REGISTRY_MAP = new Map<string, CustomGameDefinition>(
