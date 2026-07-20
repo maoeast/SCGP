@@ -167,15 +167,22 @@ function buildPerformanceData() {
   const avgRtMs = total > 0
     ? Math.round(trials.value.reduce((s, t) => s + t.responseTimeMs, 0) / total)
     : 0
+  // 字段名严格对齐认知落库契约（cognitive-games-api 只认 accuracy_ratio /
+  // average_response_ms / 嵌套 actual_params，与 K03 样板一致）；
+  // 顶层扁平指标进 metrics，本局实际参数进 actual_params 支撑 IEP 级纵向追踪。
   return {
     paradigm: 'odd_one_out',
-    session_type: 'K04_ODD_ONE_OUT',
-    difficulty: props.difficulty,
+    difficulty_level: props.difficulty,
     total_rounds: total,
     correct_rounds: correct,
-    accuracy: total > 0 ? parseFloat((correct / total).toFixed(2)) : 0,
-    avg_response_time_ms: avgRtMs,
-    trials: trials.value,
+    accuracy_ratio: total > 0 ? parseFloat((correct / total).toFixed(4)) : 0,
+    average_response_ms: avgRtMs,
+    response_times_ms: trials.value.map(t => t.responseTimeMs),
+    actual_params: {
+      session_type: 'K04_ODD_ONE_OUT',
+      choice_counts: trials.value.map(t => t.choiceCount),
+      trials: trials.value,
+    },
   }
 }
 

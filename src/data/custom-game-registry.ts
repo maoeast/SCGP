@@ -977,6 +977,38 @@ export const CUSTOM_GAME_REGISTRY: ReadonlyArray<CustomGameDefinition> = [
       repeatPlayHint: '每次出现的图案和类别都会变，越练越能发现事物之间的共同点。',
     },
   },
+  {
+    gameCode: 'K05_NUMBER_SENSE',
+    name: '数感小铺',
+    description: '看数字取物品放进小筐，或比较两组多少，练习基数、序数与增减数感奠基能力。',
+    moduleCode: ModuleCode.COGNITIVE,
+    trainingEntryCode: 'cognitive',
+    entryPath: '/emotional/games/number-sense',
+    category: 'number-sense',
+    tags: ['认知发展', '数感', '基数', '多少比较', '增减'],
+    coverImage: '🔢',
+    maxPlayers: 1,
+    requiredPermissions: [],
+    permissionPolicy: 'all_required',
+    difficultyLocked: false,
+    badge: {
+      badgeCode: 'BADGE_LITTLE_COUNTER',
+      badgeName: '数数小能手徽章',
+      visualThemeTag: 'little-counter',
+      iconToken: 'number-sense',
+      paletteToken: 'cognitive-orange',
+    },
+    metadata: {
+      emoji: '🔢',
+      color: 'linear-gradient(135deg, #fa8c16 0%, #ffd666 46%, #fff7e6 100%)',
+      duration: '3-6分钟',
+      difficulty: '三级数感进阶',
+      therapeuticGoal: '数感奠基',
+      cognitiveLoad: 'medium',
+      previewDescription: '看看数字是几，就把几个好朋友拖进小筐；或者比一比哪边的更多、哪边的更少。',
+      repeatPlayHint: '每次的数字、物品和比较方式都会换，让小脑袋慢慢学会数和比。',
+    },
+  },
 ]
 
 const CUSTOM_GAME_REGISTRY_MAP = new Map<string, CustomGameDefinition>(

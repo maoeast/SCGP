@@ -83,6 +83,7 @@ const ExpressionDuelPage = () => import('@/views/emotional/games/ExpressionDuelP
 const PatternNextPage = () => import('@/views/emotional/games/PatternNextPage.vue')
 const MemoryMatchPage = () => import('@/views/emotional/games/MemoryMatchPage.vue')
 const OddOneOutPage = () => import('@/views/emotional/games/OddOneOutPage.vue')
+const NumberSensePage = () => import('@/views/emotional/games/NumberSensePage.vue')
 
 // 训练记录模块（Phase 4.6 重构）
 const TrainingRecordsMenu = () => import('@/views/training-records/TrainingRecordsMenu.vue')
@@ -686,6 +687,17 @@ const router = createRouter({
           component: OddOneOutPage,
           meta: {
             title: '哪个不同类',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/number-sense',
+          name: 'NumberSenseGame',
+          component: NumberSensePage,
+          meta: {
+            title: '数感小铺',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,
