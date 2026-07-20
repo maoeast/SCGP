@@ -96,18 +96,19 @@ function buildMixedCategoryRound(items: OddItem[], choiceCount: number): OddRoun
     bucket.push(item)
     byCategory.set(item.category, bucket)
   }
+  // 只挑「陪衬项数量够」的类别当主类别（需 choiceCount-1 个同类项），保证能凑出「N 个同类 + 1 个异类」
   const categories = [...byCategory.keys()]
-  const oddCategory = categories[Math.floor(Math.random() * categories.length)]!
-  const mainCategories = categories.filter((c) => c !== oddCategory)
+  const eligibleMainCategories = categories.filter(
+    (c) => (byCategory.get(c)?.length ?? 0) >= choiceCount - 1,
+  )
+  const mainCategory = eligibleMainCategories[Math.floor(Math.random() * eligibleMainCategories.length)]!
+  // 异类从其余任意类别里选一个
+  const oddCategories = categories.filter((c) => c !== mainCategory)
+  const oddCategory = oddCategories[Math.floor(Math.random() * oddCategories.length)]!
 
+  // 主类别里取 choiceCount-1 个同类项，异类别里取 1 个落单项
+  const mainItems = pickRandom(byCategory.get(mainCategory) ?? [], choiceCount - 1)
   const oddItem = pickRandom(byCategory.get(oddCategory) ?? [], 1)[0]!
-  const mainItems: OddItem[] = []
-  for (let i = 0; i < choiceCount - 1; i += 1) {
-    const cat = mainCategories[i % mainCategories.length]!
-    const bucket = (byCategory.get(cat) ?? []).filter((it) => !mainItems.includes(it))
-    const picked = pickRandom(bucket, 1)[0]
-    if (picked) mainItems.push(picked)
-  }
 
   const roundItems = shuffle([oddItem, ...mainItems])
   return { items: roundItems, oddItemId: oddItem.id }
