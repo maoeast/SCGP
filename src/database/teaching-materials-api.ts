@@ -16,6 +16,7 @@ export interface TeachingMaterialItem {
   fileSizeBytes: number
   description?: string
   tags: string[]
+  sequenceOrder?: number
   isFavorite: boolean
   createdAt?: string
   updatedAt?: string
@@ -55,6 +56,7 @@ export class TeachingMaterialsAPI extends DatabaseAPI {
         tm.file_size_bytes,
         tm.description,
         tm.tags,
+        tm.sequence_order,
         tm.created_at,
         tm.updated_at,
         CASE WHEN tf.id IS NOT NULL THEN 1 ELSE 0 END AS is_favorite
@@ -88,7 +90,9 @@ export class TeachingMaterialsAPI extends DatabaseAPI {
       params.push(pattern, pattern, pattern, pattern)
     }
 
-    sql += ' ORDER BY tm.updated_at DESC, tm.id DESC'
+    // 排序优先级：sequence_order（数值步骤序号，降序）> updated_at（更新时间）> id
+    // sequence_order 为 NULL 的记录（无步骤序号的辅助资料）排在最后
+    sql += ' ORDER BY tm.sequence_order DESC NULLS LAST, tm.updated_at DESC, tm.id DESC'
 
     return this.query(sql, params).map((row) => this.mapRow(row))
   }
@@ -168,6 +172,7 @@ export class TeachingMaterialsAPI extends DatabaseAPI {
       fileSizeBytes: Number(row.file_size_bytes || 0),
       description: row.description ? String(row.description) : undefined,
       tags: splitTags(row.tags),
+      sequenceOrder: row.sequence_order != null ? Number(row.sequence_order) : undefined,
       isFavorite: Number(row.is_favorite || 0) === 1,
       createdAt: row.created_at ? String(row.created_at) : undefined,
       updatedAt: row.updated_at ? String(row.updated_at) : undefined,

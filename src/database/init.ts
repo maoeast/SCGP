@@ -11,6 +11,7 @@ import {
 } from '@/data/self-care-task-seed'
 import { BUILTIN_KNOWLEDGE_SKILLS } from '@/data/skills'
 import { BUILTIN_AGENT_PRESETS } from '@/data/ai-agent-presets'
+import presetTeachingMaterialsData from '@/data/preset-teaching-materials.json'
 
 const schemaSQL = `
 -- 学生表
@@ -3578,6 +3579,7 @@ async function initializeTeachingMaterialTables(rawDb: any): Promise<void> {
       file_size_bytes INTEGER NOT NULL DEFAULT 0,
       tags TEXT,
       description TEXT,
+      sequence_order INTEGER NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
@@ -3598,10 +3600,13 @@ async function initializeTeachingMaterialTables(rawDb: any): Promise<void> {
   rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_dimension ON teaching_material(dimension_code)')
   rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_module ON teaching_material(module_code)')
   rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_updated ON teaching_material(updated_at DESC)')
+  rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_sequence ON teaching_material(sequence_order)')
   rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_favorite_user ON teaching_material_favorite(user_id)')
   rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_favorite_material ON teaching_material_favorite(material_id)')
 
   migrateTeachingMaterialCognitiveConstraint(rawDb)
+  seedPresetTeachingMaterials(rawDb)
+  migrateTeachingMaterialSequenceOrder(rawDb)
 }
 
 function migrateTeachingMaterialCognitiveConstraint(rawDb: any): void {
@@ -3661,6 +3666,112 @@ function migrateTeachingMaterialCognitiveConstraint(rawDb: any): void {
   } finally {
     rawDb.run('PRAGMA foreign_keys = ON')
   }
+}
+
+function seedPresetTeachingMaterials(rawDb: any): void {
+  // 预置视频资料库：303 条视频记录（SFX 解压到 {installDir}/resources/assets/resources/videos/）
+  // 幂等：检查 assets/resources/videos/ 前缀是否存在，已有则跳过
+  const existing = rawDb.exec(`
+    SELECT COUNT(*) as count
+    FROM teaching_material
+    WHERE file_path LIKE 'assets/resources/videos/%'
+  `)
+
+  if (existing?.[0]?.values?.[0]?.[0] > 0) {
+    console.log('[InitDatabase] 预置视频资料已存在，跳过 seed')
+    return
+  }
+
+  console.log('[InitDatabase] 正在插入 303 条预置视频资料...')
+
+  const presetData = presetTeachingMaterialsData as Array<{
+    title: string
+    dimensionCode: string
+    moduleCode: string
+    fileName: string
+    filePath: string
+    fileSizeBytes: number
+  }>
+
+  if (!presetData || !Array.isArray(presetData) || presetData.length === 0) {
+    console.error('[InitDatabase] 预置视频数据为空或格式错误')
+    return
+  }
+
+  const stmt = rawDb.prepare(`
+    INSERT INTO teaching_material (
+      title,
+      dimension_code,
+      module_code,
+      file_name,
+      file_type,
+      file_path,
+      file_size_bytes,
+      description,
+      tags,
+      created_at,
+      updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  `)
+
+  for (const item of presetData) {
+    stmt.run([
+      item.title,
+      item.dimensionCode,
+      item.moduleCode,
+      item.fileName,
+      'mp4',
+      item.filePath,
+      item.fileSizeBytes,
+      null, // description
+      null, // tags
+    ])
+  }
+
+  stmt.free()
+  console.log(`[InitDatabase] 已插入 ${presetData.length} 条预置视频资料`)
+}
+
+function migrateTeachingMaterialSequenceOrder(rawDb: any): void {
+  // 教学资料排序字段迁移：为已有记录回填 sequence_order（从标题前导数字提取）
+  // 新建库已有此字段（CREATE TABLE 含 sequence_order INTEGER NULL）；
+  // 此迁移仅给老库补列 + 回填数据。
+  // 幂等：列存在则跳过 ALTER TABLE，但总是执行回填（支持新增预置资料时补齐 sequence_order）。
+
+  // Step 1: 检查列是否存在
+  const columns = rawDb.exec('PRAGMA table_info(teaching_material)')
+  const hasSequenceOrder = columns?.[0]?.values?.some((col: any[]) => col[1] === 'sequence_order') || false
+
+  if (!hasSequenceOrder) {
+    console.log('[InitDatabase] 迁移：teaching_material 增加 sequence_order 字段')
+    rawDb.run('ALTER TABLE teaching_material ADD COLUMN sequence_order INTEGER NULL')
+  }
+
+  // Step 2: 回填 sequence_order（从标题前导数字提取）
+  // 只回填当前为 NULL 的记录（支持幂等 + 手动调整不被覆盖）
+  const result = rawDb.exec('SELECT id, title FROM teaching_material WHERE sequence_order IS NULL')
+  const materials = result?.[0]?.values || []
+
+  if (materials.length === 0) {
+    return
+  }
+
+  console.log(`[InitDatabase] 迁移：回填 ${materials.length} 条记录的 sequence_order`)
+  const stmt = rawDb.prepare('UPDATE teaching_material SET sequence_order = ? WHERE id = ?')
+
+  let backfilled = 0
+  for (const [id, title] of materials) {
+    if (typeof title !== 'string') continue
+    const match = title.match(/^(\d+)/)
+    if (match?.[1]) {
+      const sequenceNum = parseInt(match[1], 10)
+      stmt.run([sequenceNum, id])
+      backfilled++
+    }
+  }
+
+  stmt.free()
+  console.log(`[InitDatabase] 迁移：已回填 ${backfilled} 条记录的 sequence_order（${materials.length - backfilled} 条无前导数字）`)
 }
 
 function migrateTrainingPlanSourceColumns(rawDb: any): void {
