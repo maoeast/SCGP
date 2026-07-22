@@ -7,7 +7,7 @@ const props = withDefaults(
   defineProps<{
     agentCode: string
     agentName?: string
-    size?: 'sm' | 'md' | 'lg'
+    size?: 'sm' | 'md' | 'lg' | 'xl'
   }>(),
   {
     agentName: '',
@@ -82,6 +82,16 @@ const tone = computed(() => preset.value?.avatarTone ?? 'custom')
 
 .ai-agent-avatar--lg span {
   font-size: 24px;
+}
+
+.ai-agent-avatar--xl {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+}
+
+.ai-agent-avatar--xl span {
+  font-size: 26px;
 }
 
 .ai-agent-avatar--teaching {

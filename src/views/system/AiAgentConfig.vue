@@ -746,7 +746,7 @@ async function removeSession(id: number) {
             @click="openAgentDetail(agent)"
           >
             <span class="agent-card__identity">
-              <AiAgentAvatar :agent-code="agent.code" :agent-name="agent.name" size="md" />
+              <AiAgentAvatar :agent-code="agent.code" :agent-name="agent.name" size="xl" />
               <span class="agent-card__titles">
                 <span class="agent-card__name-line">
                   <strong>{{ getAgentDisplayName(agent) }}</strong>

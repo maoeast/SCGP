@@ -1,8 +1,8 @@
-import teachingAvatar from '@/assets/ai-agent-avatars/teaching.svg?url'
-import communicationAvatar from '@/assets/ai-agent-avatars/communication.svg?url'
-import observationAvatar from '@/assets/ai-agent-avatars/observation.svg?url'
-import familyAvatar from '@/assets/ai-agent-avatars/family.svg?url'
-import wellbeingAvatar from '@/assets/ai-agent-avatars/wellbeing.svg?url'
+import teachingAvatar from '@/assets/ai-agent-avatars/个别化教学专家.png'
+import communicationAvatar from '@/assets/ai-agent-avatars/课堂沟通支持专家.png'
+import observationAvatar from '@/assets/ai-agent-avatars/成长观察助手.png'
+import familyAvatar from '@/assets/ai-agent-avatars/家校沟通助手.png'
+import wellbeingAvatar from '@/assets/ai-agent-avatars/情绪支持助手.png'
 
 const BUILTIN_AGENT_AVATAR_MAP: Record<string, string> = {
   special_ed_teacher: teachingAvatar,
