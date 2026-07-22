@@ -73,7 +73,7 @@
             @click="openAgentDetail(item.preset)"
           >
             <span class="home-agent-card__identity">
-              <AiAgentAvatar :agent-code="item.preset.code" :agent-name="item.preset.name" size="md" />
+              <AiAgentAvatar :agent-code="item.preset.code" :agent-name="item.preset.name" size="xl" />
               <span class="home-agent-card__titles">
                 <strong>{{ item.preset.displayName }}</strong>
                 <span>{{ item.preset.name }}</span>
