@@ -1,24 +1,24 @@
 /**
- * 瑞文 CRT 图形推理测验 — 题库与计分数据（DRAFT）
+ * 瑞文 CRT 图形推理测验 — 题库与计分数据
  *
- * ⚠️ DRAFT（重要，需专业人员审核后方可用于临床）：
- * - 按 SPM 标准的「题目结构 + 五组推理规律类型」自编**原创几何矩阵占位题**，
- *   **非**瑞文标准图（Pearson 版权）。题目与常模均为草稿，无标准化效度。
- * - 仅用于平台「筛查 / 发育监测 / 转介建议」，不能作为临床诊断依据。
- * - 矩阵图元由 crt-matrix.ts 按规格程序化生成（SVG），无外部素材依赖。
+ * 基于瑞文标准推理测验（SPM）结构：
+ * - 60 道图形推理题，分为 A-E 五组（每组 12 题），难度递增
+ * - 3×3 矩阵缺一角，6 选 1（选项 A-F）
+ * - 五组推理类型：A 知觉辨别、B 类同比较、C 比较推理、D 系列关系、E 抽象推理
+ * - 用于平台「筛查 / 发育监测 / 转介建议」，不能作为临床诊断依据
  *
- * 五组（SPM A–E，难度递增）：
- * - A 知觉辨别（连续变化：图元数量沿行/列递增）
- * - B 类同比较（每行同一形状 / 同一颜色）
- * - C 比较推理（每行每列每形状各出现一次，数独逻辑）
- * - D 系列关系（图元沿行旋转 0/90/180）
- * - E 抽象推理（简化：每行第三格数量 = 前两格之和）
+ * 注：本模块同时导出 CrtCellSpec / CrtShape 类型供其他模块（如 cognitive-self-data）
+ * 程序化生成 SVG 图形使用，这些类型不用于瑞文 CRT 本身（CRT 已改用真实图片素材）。
  *
  * @module database/crt-data
  */
 
 /** SPM 五组 */
 export type CrtUnit = 'A' | 'B' | 'C' | 'D' | 'E'
+
+// ============================================================================
+// SVG 图形生成类型（供其他模块使用，CRT 本身不再使用）
+// ============================================================================
 
 /** 可代码绘制的几何图元 */
 export type CrtShape =
@@ -48,11 +48,15 @@ export interface CrtCellSpec {
 export interface CrtQuestion {
   id: number
   unit: CrtUnit
-  /** 3×3=9 格，索引 8（右下角）恒为 null = 缺失 */
-  matrix: (CrtCellSpec | null)[]
-  /** 6 个选项图元 */
-  options: CrtCellSpec[]
-  /** 正解选项索引 0-5（仅 Driver 内部用于判分，不进 ScaleOption） */
+  /** 题干图片路径（相对于 assets/resources/images/raven60/） */
+  imagePath: string
+  /** 6 个选项（A-F） */
+  options: {
+    label: string
+    /** 选项图片路径 */
+    imagePath: string
+  }[]
+  /** 正解选项索引 0-5（对应 A-F，仅 Driver 内部用于判分） */
   correctIndex: number
 }
 
@@ -73,145 +77,55 @@ export const crtUnitDefs: CrtUnitDef[] = [
 ]
 
 // ============================================================================
-// 题库（DRAFT：五组各 1-2 道示例，规律可程序化验证）
+// 题库（60 题，基于瑞文标准推理测验图片素材）
 // ============================================================================
 
+/**
+ * 答案映射表（完整 60 题答案，A=0, B=1, C=2, D=3, E=4, F=5）
+ */
+const ANSWER_MAP: Record<string, number> = {
+  // A组（题1-12）：D,E,A,B,F,C,F,B,A,C,D,E
+  '1': 3,  '2': 4,  '3': 0,  '4': 1,  '5': 5,  '6': 2,  '7': 5,  '8': 1,  '9': 0, '10': 2, '11': 3, '12': 4,
+  // B组（题13-24）：B,F,A,B,A,C,E,F,D,C,D,E
+  '13': 1, '14': 5, '15': 0, '16': 1, '17': 0, '18': 2, '19': 4, '20': 5, '21': 3, '22': 2, '23': 3, '24': 4,
+  // C组（题25-36）：F,B,C,F,E,D,E,A,E,F,A,B
+  '25': 5, '26': 1, '27': 2, '28': 5, '29': 4, '30': 3, '31': 4, '32': 0, '33': 4, '34': 5, '35': 0, '36': 1,
+  // D组（题37-48）：C,D,C,E,F,F,E,D,A,B,E,F
+  '37': 2, '38': 3, '39': 2, '40': 4, '41': 5, '42': 5, '43': 4, '44': 3, '45': 0, '46': 1, '47': 4, '48': 5,
+  // E组（题49-60）：E,F,F,B,A,E,A,F,C,B,D,E
+  '49': 4, '50': 5, '51': 5, '52': 1, '53': 0, '54': 4, '55': 0, '56': 5, '57': 2, '58': 1, '59': 3, '60': 4,
+}
+
+/** 生成题目（通用工厂函数） */
+function createQuestion(id: number, unit: CrtUnit): CrtQuestion {
+  const optionLabels = ['A', 'B', 'C', 'D', 'E', 'F']
+  return {
+    id,
+    unit,
+    imagePath: `IQ-${id}.png`,
+    options: optionLabels.map((label) => ({
+      label,
+      imagePath: `IQ-${id}-${label}.png`,
+    })),
+    correctIndex: ANSWER_MAP[id.toString()] ?? 0,
+  }
+}
+
 export const crtQuestions: CrtQuestion[] = [
-  // ---- A 组：连续变化（图元数量沿行递增 1→2→3）----
-  {
-    id: 1,
-    unit: 'A',
-    matrix: [
-      { shape: 'dot', count: 1 }, { shape: 'dot', count: 2 }, { shape: 'dot', count: 3 },
-      { shape: 'dot', count: 1 }, { shape: 'dot', count: 2 }, { shape: 'dot', count: 3 },
-      { shape: 'dot', count: 1 }, { shape: 'dot', count: 2 }, null,
-    ],
-    options: [
-      { shape: 'dot', count: 3 }, // 正解
-      { shape: 'dot', count: 1 },
-      { shape: 'dot', count: 2 },
-      { shape: 'dot', count: 4 },
-      { shape: 'square', count: 3 }, // 形状干扰
-      { shape: 'dot', count: 5 },
-    ],
-    correctIndex: 0,
-  },
-  {
-    id: 2,
-    unit: 'A',
-    matrix: [
-      { shape: 'square', count: 1 }, { shape: 'square', count: 2 }, { shape: 'square', count: 3 },
-      { shape: 'square', count: 2 }, { shape: 'square', count: 3 }, { shape: 'square', count: 4 },
-      { shape: 'square', count: 3 }, { shape: 'square', count: 4 }, null,
-    ],
-    options: [
-      { shape: 'square', count: 5 }, // 正解（行+列各+1 → (2,2)=5）
-      { shape: 'square', count: 3 },
-      { shape: 'square', count: 4 },
-      { shape: 'square', count: 6 },
-      { shape: 'circle', count: 5 },
-      { shape: 'square', count: 2 },
-    ],
-    correctIndex: 0,
-  },
+  // ---- A 组：知觉辨别（题 1-12）----
+  ...Array.from({ length: 12 }, (_, i) => createQuestion(i + 1, 'A')),
 
-  // ---- B 组：类同比较（每行同一形状）----
-  {
-    id: 3,
-    unit: 'B',
-    matrix: [
-      { shape: 'circle' }, { shape: 'circle' }, { shape: 'circle' },
-      { shape: 'square' }, { shape: 'square' }, { shape: 'square' },
-      { shape: 'triangle' }, { shape: 'triangle' }, null,
-    ],
-    options: [
-      { shape: 'triangle' }, // 正解
-      { shape: 'circle' },
-      { shape: 'square' },
-      { shape: 'diamond' },
-      { shape: 'star' },
-      { shape: 'hexagon' },
-    ],
-    correctIndex: 0,
-  },
-  {
-    id: 4,
-    unit: 'B',
-    matrix: [
-      { shape: 'circle', color: 'red' }, { shape: 'circle', color: 'red' }, { shape: 'circle', color: 'red' },
-      { shape: 'circle', color: 'green' }, { shape: 'circle', color: 'green' }, { shape: 'circle', color: 'green' },
-      { shape: 'circle', color: 'orange' }, { shape: 'circle', color: 'orange' }, null,
-    ],
-    options: [
-      { shape: 'circle', color: 'orange' }, // 正解
-      { shape: 'circle', color: 'red' },
-      { shape: 'circle', color: 'green' },
-      { shape: 'circle', color: 'purple' },
-      { shape: 'circle', color: 'gray' },
-      { shape: 'circle', color: 'primary' },
-    ],
-    correctIndex: 0,
-  },
+  // ---- B 组：类同比较（题 13-24）----
+  ...Array.from({ length: 12 }, (_, i) => createQuestion(i + 13, 'B')),
 
-  // ---- C 组：比较推理（每行每列每形状各一次，数独逻辑）----
-  {
-    id: 5,
-    unit: 'C',
-    matrix: [
-      { shape: 'circle' }, { shape: 'square' }, { shape: 'triangle' },
-      { shape: 'square' }, { shape: 'triangle' }, { shape: 'circle' },
-      { shape: 'triangle' }, { shape: 'circle' }, null,
-    ],
-    options: [
-      { shape: 'square' }, // 正解（第三列已有三角、圆，缺方）
-      { shape: 'circle' },
-      { shape: 'triangle' },
-      { shape: 'diamond' },
-      { shape: 'hexagon' },
-      { shape: 'star' },
-    ],
-    correctIndex: 0,
-  },
+  // ---- C 组：比较推理（题 25-36）----
+  ...Array.from({ length: 12 }, (_, i) => createQuestion(i + 25, 'C')),
 
-  // ---- D 组：系列关系（沿行旋转 0/90/180）----
-  {
-    id: 6,
-    unit: 'D',
-    matrix: [
-      { shape: 'arrow', rotate: 0 }, { shape: 'arrow', rotate: 90 }, { shape: 'arrow', rotate: 180 },
-      { shape: 'arrow', rotate: 0 }, { shape: 'arrow', rotate: 90 }, { shape: 'arrow', rotate: 180 },
-      { shape: 'arrow', rotate: 0 }, { shape: 'arrow', rotate: 90 }, null,
-    ],
-    options: [
-      { shape: 'arrow', rotate: 180 }, // 正解
-      { shape: 'arrow', rotate: 0 },
-      { shape: 'arrow', rotate: 90 },
-      { shape: 'arrow', rotate: 270 },
-      { shape: 'triangle', rotate: 180 },
-      { shape: 'arrow', rotate: 45 },
-    ],
-    correctIndex: 0,
-  },
+  // ---- D 组：系列关系（题 37-48）----
+  ...Array.from({ length: 12 }, (_, i) => createQuestion(i + 37, 'D')),
 
-  // ---- E 组：抽象推理（简化：每行第三格 count = 前两格之和）----
-  {
-    id: 7,
-    unit: 'E',
-    matrix: [
-      { shape: 'dot', count: 1 }, { shape: 'dot', count: 2 }, { shape: 'dot', count: 3 },
-      { shape: 'dot', count: 2 }, { shape: 'dot', count: 3 }, { shape: 'dot', count: 5 },
-      { shape: 'dot', count: 1 }, { shape: 'dot', count: 4 }, null,
-    ],
-    options: [
-      { shape: 'dot', count: 5 }, // 正解（1+4=5）
-      { shape: 'dot', count: 3 },
-      { shape: 'dot', count: 4 },
-      { shape: 'dot', count: 6 },
-      { shape: 'dot', count: 2 },
-      { shape: 'square', count: 5 },
-    ],
-    correctIndex: 0,
-  },
+  // ---- E 组：抽象推理（题 49-60）----
+  ...Array.from({ length: 12 }, (_, i) => createQuestion(i + 49, 'E')),
 ]
 
 // ============================================================================

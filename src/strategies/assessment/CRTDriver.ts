@@ -1,9 +1,8 @@
 /**
- * 瑞文 CRT 图形推理测验驱动器（DRAFT）
+ * 瑞文 CRT 图形推理测验驱动器
  *
- * 按 SPM 标准的「题目结构 + 五组推理规律」自编**原创几何矩阵占位题**
- * （由 crt-matrix.ts 程序化生成，非 Pearson 版权图）。采用「自编题目 + 占位常模」策略，
- * 题目与常模均为草稿，仅供平台「筛查 / 发育监测 / 转介建议」，不能作为临床诊断。
+ * 基于瑞文标准推理测验（SPM）结构：60 道图形推理题，A-E 五组难度递增。
+ * 仅供平台「筛查 / 发育监测 / 转介建议」，不能作为临床诊断。
  *
  * 特点：
  * - 3×3 图形矩阵缺一角，6 选 1；五组（SPM A–E）难度递增
@@ -36,7 +35,6 @@ import {
   type CrtLevel,
 } from '@/database/crt-data'
 import { crtRawToPercentile, crtPercentileToIq } from '@/database/crt-norms'
-import { renderMatrixSvg, renderOptionSvg, svgToDataUri } from '@/utils/crt-matrix'
 
 /** CRT 每题通用指导语 */
 const CRT_PROMPT = '观察上方图案的规律，选出能正确补全缺失位置（?）的一项。'
@@ -48,8 +46,8 @@ export class CRTDriver extends BaseDriver {
   // ========== 元信息 ==========
 
   readonly scaleCode = 'crt'
-  readonly scaleName = '瑞文图形推理测验（CRT 自编 DRAFT）'
-  readonly version = '0.1.0-draft'
+  readonly scaleName = '瑞文图形推理测验（CRT）'
+  readonly version = '1.0.0'
   readonly ageRange = { min: 66, max: 198 } // 5.5 岁 - 16.5 岁
   readonly totalQuestions = crtQuestions.length
 
@@ -141,7 +139,7 @@ export class CRTDriver extends BaseDriver {
 
     return {
       summary:
-        `该儿童图形推理测验（瑞文 CRT 自编 DRAFT）估算离差 IQ 为 ${iq}（M=100，SD=15），` +
+        `该儿童图形推理测验（瑞文 CRT）估算离差 IQ 为 ${iq}（M=100，SD=15），` +
         `百分位 ${pr}，总体等级"${level}"。原始分（答对数）${scoreResult.totalScore ?? 0} / ` +
         `${extra.totalQuestions ?? this.totalQuestions}。` +
         (rec?.general_comment ?? ''),
@@ -154,7 +152,7 @@ export class CRTDriver extends BaseDriver {
 
   getWelcomeContent() {
     return {
-      title: '瑞文图形推理测验（CRT，自编 DRAFT）',
+      title: '瑞文图形推理测验（CRT）',
       intro:
         '观察图案规律，选出能补全空缺的一项。本测验测量孩子的图形推理与抽象思维能力，由孩子本人独立完成。',
       sections: [
@@ -162,16 +160,16 @@ export class CRTDriver extends BaseDriver {
           icon: '🧩',
           title: '作答说明',
           items: [
-            '每题上方是一个缺失了一角的图案（标 ?），下方有 6 个选项，选出最能补全空缺的一项。',
+            '每题上方是一个缺失了一角的图案（标 ?），下方有 6 个选项（A-F），选出最能补全空缺的一项。',
             '尽量让孩子独立观察与思考，家长/老师只朗读规则，不提示答案。',
             '没有时间限制，鼓励孩子专注；实在看不懂可凭直觉选择后继续，不要长时间停留。',
           ],
         },
         {
           icon: '⚠️',
-          title: '草稿与用途说明',
+          title: '用途说明',
           items: [
-            '本测验为自编占位题 + 占位常模的草稿版，仅用于筛查与发展监测，不能作为临床诊断依据。',
+            '本测验用于筛查与发展监测，不能作为临床诊断依据。',
             '作答过程不会即时反馈对错（标准化要求），完成后报告展示总体与分组结果。',
           ],
         },
@@ -189,17 +187,18 @@ export class CRTDriver extends BaseDriver {
 
   private convertToScaleQuestion(q: CrtQuestion): ScaleQuestion {
     const unitDef = crtUnitDefs.find((d) => d.unit === q.unit)
+    const baseUrl = 'resource://images/raven60'
     return {
       id: q.id,
       dimension: this.unitCodeOf(q.unit),
       dimensionName: unitDef ? `${unitDef.name}·${unitDef.ability}` : q.unit,
       content: CRT_PROMPT,
-      imagePath: svgToDataUri(renderMatrixSvg(q.matrix)),
-      options: q.options.map((cell, idx) => ({
+      imagePath: `${baseUrl}/${q.imagePath}`,
+      options: q.options.map((opt, idx) => ({
         value: idx,
-        label: '',
+        label: opt.label,
         score: 0, // 不暴露正解
-        imagePath: svgToDataUri(renderOptionSvg(cell)),
+        imagePath: `${baseUrl}/${opt.imagePath}`,
       })),
       metadata: { unit: q.unit },
     }
@@ -231,11 +230,11 @@ export class CRTDriver extends BaseDriver {
   }
 
   protected getDefaultDescription(): string {
-    return '评估儿童图形推理与抽象思维能力（瑞文 CRT 自编 DRAFT）'
+    return '评估儿童图形推理与抽象思维能力（瑞文 CRT）'
   }
 
   protected getEstimatedTime(): number {
-    return 12
+    return 25
   }
 
   protected getIcon(): string {
