@@ -113,31 +113,50 @@
           :key="material.id"
           class="material-card"
         >
-          <div class="material-icon">
-            <el-icon :size="28" :style="{ color: getFileIconColor(material.fileType) }">
-              <component :is="getFileIcon(material.fileType)" />
-            </el-icon>
+          <div class="material-thumbnail">
+            <img
+              :src="`/assets/resources/images/teaching-materials/${material.dimensionCode}/${material.id}.jpg`"
+              :alt="material.title"
+              class="thumbnail-image"
+              @error="handleImageError"
+            />
+            <div class="thumbnail-fallback">
+              <el-icon :size="32" :style="{ color: getFileIconColor(material.fileType) }">
+                <component :is="getFileIcon(material.fileType)" />
+              </el-icon>
+            </div>
+
+            <div v-if="material.sequenceOrder" class="sequence-badge">
+              {{ String(material.sequenceOrder).padStart(2, '0') }}
+            </div>
+
+            <button
+              class="favorite-icon"
+              :class="{ active: material.isFavorite }"
+              @click.stop="toggleFavorite(material)"
+            >
+              <el-icon><Star /></el-icon>
+            </button>
+
+            <div
+              v-if="materialsStore.currentFileCategory === 'all'"
+              class="file-type-badge"
+            >
+              {{ material.fileType.toUpperCase() }}
+            </div>
           </div>
 
           <div class="material-body">
-            <div class="material-top">
-              <h4>{{ material.title }}</h4>
-              <div class="material-badges">
-                <el-tag size="small" effect="plain">
-                  {{ getDimensionLabel(material.dimensionCode) }}
-                </el-tag>
-                <el-tag size="small" type="success" effect="plain">
-                  {{ getFileCategoryLabel(resolveFileCategory(material.fileType)) }}
-                </el-tag>
-              </div>
-            </div>
+            <h4 class="material-title">{{ material.title }}</h4>
 
-            <p class="description">{{ material.description || '暂无描述' }}</p>
+            <p v-if="material.description" class="description">
+              {{ material.description }}
+            </p>
 
             <div class="meta-row">
-              <span>{{ material.fileType.toUpperCase() }}</span>
               <span>{{ formatFileSize(material.fileSizeBytes) }}</span>
-              <span>{{ formatDate(material.updatedAt) }}</span>
+              <span>·</span>
+              <span>{{ formatDateShort(material.updatedAt) }}</span>
             </div>
 
             <div v-if="material.tags.length > 0" class="tags">
@@ -155,15 +174,7 @@
 
           <div class="material-actions">
             <el-button
-              :type="material.isFavorite ? 'warning' : 'default'"
-              circle
-              size="small"
-              @click="toggleFavorite(material)"
-            >
-              <el-icon><Star /></el-icon>
-            </el-button>
-            <el-button
-              type="primary"
+              text
               circle
               size="small"
               @click="openMaterial(material)"
@@ -171,7 +182,7 @@
               <el-icon><View /></el-icon>
             </el-button>
             <el-button
-              type="success"
+              text
               circle
               size="small"
               @click="showMaterialDetail(material)"
@@ -180,7 +191,7 @@
             </el-button>
             <el-button
               v-if="!readOnly"
-              type="danger"
+              text
               circle
               size="small"
               @click="deleteMaterial(material)"
@@ -581,6 +592,21 @@ function formatDate(value?: string): string {
   })
 }
 
+function formatDateShort(value?: string): string {
+  if (!value) {
+    return '未知'
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${month}-${day}`
+}
+
 function getFileIcon(type: string) {
   const lowerType = type.toLowerCase()
   if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv'].includes(lowerType)) {
@@ -606,11 +632,22 @@ function getFileIconColor(type: string): string {
   if (['pdf'].includes(lowerType)) return '#d14343'
   if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv'].includes(lowerType)) return '#3b82f6'
   if (['mp4', 'avi', 'mov', 'wmv', 'webm', 'mkv', 'm4v'].includes(lowerType)) return '#7c3aed'
-  if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'].includes(lowerType)) return '#ea580c'
-  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'].includes(lowerType)) return '#16a34a'
-  if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(lowerType)) return '#0ea5e9'
-  return '#64748b'
+  if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'].includes(lowerType)) return '#10b981'
+  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'].includes(lowerType)) return '#f59e0b'
+  if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(lowerType)) return '#06b6d4'
+  return '#6b7280'
 }
+
+function handleImageError(event: Event) {
+  // 图片加载失败时显示占位符
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
+  const placeholder = img.nextElementSibling
+  if (placeholder && placeholder.classList.contains('thumbnail-fallback')) {
+    (placeholder as HTMLElement).style.display = 'flex'
+  }
+}
+
 
 async function chooseSourceFolder() {
   if (!window.electronAPI?.selectFolder) {
@@ -910,65 +947,150 @@ defineExpose({
 }
 
 .material-card {
+  position: relative;
   display: flex;
-  gap: 14px;
-  padding: 16px;
+  flex-direction: column;
   border: 1px solid #ebeef5;
   border-radius: 10px;
-  background: #fafbfc;
+  background: #fff;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
 }
 
-.material-icon {
-  width: 52px;
-  height: 52px;
-  flex-shrink: 0;
+.material-card:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.material-card:hover .material-actions {
+  opacity: 1;
+}
+
+.material-thumbnail {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 aspect ratio */
+  background: #f5f7fa;
+  overflow: hidden;
+}
+
+.thumbnail-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnail-fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  opacity: 0.9;
+}
+
+.sequence-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.favorite-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(4px);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  background: #f0f2f5;
+}
+
+.favorite-icon:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.1);
+}
+
+.favorite-icon.active {
+  background: rgba(245, 158, 11, 0.9);
+  color: #fff;
+}
+
+.file-type-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: uppercase;
 }
 
 .material-body {
   flex: 1;
-  min-width: 0;
-}
-
-.material-top {
+  padding: 14px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.material-badges {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.material-top h4 {
+.material-title {
   margin: 0;
   font-size: 14px;
+  font-weight: 500;
   color: #303133;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .description {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: 12px;
   color: #909399;
-  line-height: 1.6;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .meta-row {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
-  color: #94a3b8;
+  color: #a0aec0;
 }
 
 .tags {
@@ -978,9 +1100,35 @@ defineExpose({
 }
 
 .material-actions {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.material-actions .el-button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.material-actions .el-button:hover {
+  color: #303133;
+  border-color: #d1d5db;
+  background: #fff;
+}
+
+@media (hover: none) {
+  .material-actions {
+    opacity: 1;
+  }
 }
 
 .batch-import-content {
