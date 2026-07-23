@@ -160,6 +160,13 @@ export interface ElectronAPI {
   getUserDataPath: () => Promise<string>
 
   /**
+   * 获取应用资源目录（{installDir}/resources）
+   * 用于访问 SFX 解压到安装目录的预置资源（如视频库）
+   * @returns Promise<string> - 应用资源目录路径
+   */
+  getAppResourcesPath: () => Promise<string>
+
+  /**
    * 加载数据库文件（用于初始化）
    * @returns Promise<Uint8Array | null> - 数据库 Buffer，不存在时返回 null
    */

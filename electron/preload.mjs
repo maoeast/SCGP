@@ -54,6 +54,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 获取用户数据目录
   getUserDataPath: () => ipcRenderer.invoke('get-user-data-path'),
 
+  // 获取应用资源目录（{installDir}/resources）
+  getAppResourcesPath: () => ipcRenderer.invoke('get-app-resources-path'),
+
   // 加载数据库文件（用于初始化）
   // 直接返回 Buffer | null
   loadDatabaseFile: () => ipcRenderer.invoke('db:load'),
@@ -193,6 +196,7 @@ if (!process.contextIsolated) {
     }),
     // 数据库备份API模拟
     getUserDataPath: () => Promise.resolve('/mock/userdata'),
+    getAppResourcesPath: () => Promise.resolve('/mock/app-resources'),
     loadDatabaseFile: () => Promise.resolve(null),  // 直接返回 null
     writeDatabaseFile: (filePath, data) => Promise.resolve({ success: true }),
     readDatabaseFile: (filePath) => Promise.resolve({ success: false }),

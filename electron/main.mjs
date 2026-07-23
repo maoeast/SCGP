@@ -998,6 +998,11 @@ ipcMain.handle('get-user-data-path', () => {
   return app.getPath('userData')
 })
 
+// 获取应用资源目录（{installDir}/resources）
+ipcMain.handle('get-app-resources-path', () => {
+  return process.resourcesPath
+})
+
 // 加载数据库文件（用于初始化）
 ipcMain.handle('db:load', async () => {
   const dbPath = path.join(app.getPath('userData'), 'database.sqlite')

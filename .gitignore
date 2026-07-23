@@ -52,6 +52,11 @@ AGENTS.rar
 # Local generated image workspace
 AIimages/
 
+# Local database and teaching-material export artifacts
+/database.sqlite
+/scripts/database.sqlite
+/scripts/teaching-materials-export.json
+
 # Large files
 assets/resources/videos/
 # raven60: 已取得授权，当前仅本地保留，暂不纳入版本库

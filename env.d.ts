@@ -55,6 +55,7 @@ declare global {
 
       // 数据库备份专用 API
       getUserDataPath: () => Promise<string>
+      getAppResourcesPath: () => Promise<string>
       loadDatabaseFile: () => Promise<Uint8Array | null>
       writeDatabaseFile: (filePath: string, data: Uint8Array) => Promise<{
         success: boolean

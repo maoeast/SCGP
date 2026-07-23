@@ -1,17 +1,17 @@
 # 预置视频资料功能实现文档
 
-> 功能：在资源中心-教学资料中预置 303 个视频资料（1.3GB），视频通过自解压包离线安装，不计入主程序体积。
+> 功能：在资源中心-教学资料中预置 389 个视频资料（约 5.1GB 原始文件），视频通过自解压包离线安装，不计入主程序体积。
 
 ## 一、功能概述
 
 ### 1.1 用户视角
 
-- **已解压场景**：用户在「资源中心 → 教学资料」看到 303 个预置视频缩略图，点击播放正常
+- **已解压场景**：用户在「资源中心 → 教学资料」看到 389 个预置视频缩略图，点击播放正常
 - **未解压场景**：仅显示缩略图、名称、维度等元数据，点击播放提示"视频文件缺失，请安装预置视频资料包"
 
 ### 1.2 安装流程
 
-1. 用户收到 `scgp-preset-videos.exe`（~1.2GB 自解压文件）
+1. 用户收到 `scgp-preset-videos.exe`（体积以实际压缩结果为准）
 2. 双击运行，选择 SCGP 安装目录（如 `D:\Program Files\scgp\`）
 3. 自动解压到 `{installDir}/resources/assets/resources/videos/`
 4. 重启 SCGP，视频资料立即可用
@@ -29,7 +29,7 @@
 
 ### 2.2 数据库结构
 
-**teaching_material 表**（303 条预置记录由 `seedPresetTeachingMaterials` 写入）：
+**teaching_material 表**（389 条预置记录由 `seedPresetTeachingMaterials` 写入）：
 
 ```sql
 INSERT INTO teaching_material (
@@ -63,7 +63,7 @@ const resourcesPath = await window.electronAPI.getAppResourcesPath()
 ### 2.4 数据源
 
 **预置数据清单**：`src/data/preset-teaching-materials.json`
-- 303 条记录
+- 389 条记录
 - 按 7 个业务维度分组（安抚教具、情绪调节、感官训练、生活自理、社交沟通、精细动作、认知发展）
 - 每条包含 `title`, `dimensionCode`, `moduleCode`, `fileName`, `filePath`, `fileSizeBytes`
 
@@ -86,19 +86,19 @@ node scripts/test-preset-videos.cjs
 
 **输出示例**：
 ```
-✅ JSON 文件加载成功，共 303 条记录
+✅ JSON 文件加载成功，共 389 条记录
 
 📊 数据统计:
 按维度分组:
   - soothing-aids: 29 个
   - emotional-regulation: 32 个
   - sensory-training: 64 个
-  - life-skills: 45 个
+  - life-skills: 131 个
   - social-communication: 51 个
   - fine-motor: 32 个
   - cognitive-development: 50 个
 
-总计: 303 个, 1323.07 MB
+总计: 389 个, 5218.62 MB
 ```
 
 ### 3.2 打包自解压文件
@@ -118,7 +118,7 @@ node scripts/package-preset-videos.cjs
 4. 合并 `7z.sfx` + SFX 配置 + 压缩包 → `dist/scgp-preset-videos.exe`
 5. 清理临时文件
 
-**输出**：`dist/scgp-preset-videos.exe`（约 1.2GB）
+**输出**：`dist/scgp-preset-videos.exe`（体积以实际压缩结果为准）
 
 **SFX 配置**：
 - 标题：「SCGP 星愿能力发展平台 - 预置视频资料库」
@@ -130,22 +130,22 @@ node scripts/package-preset-videos.cjs
 ### 4.1 .gitignore 规则
 
 ```gitignore
-# 预置视频源文件（1.3GB，不计入版本控制）
-src/data/preset-teaching-materials.json
+# 预置视频源文件（约 5.1GB，不计入版本控制）
+assets/resources/videos/
 ```
 
 ### 4.2 Electron Builder 配置
 
-**确认** `electron-builder.json5` 中 **不包含** `assets/resources/videos/` 路径，避免打包到主程序：
+**确认** `package.json` 的 `build.extraResources.filter` 显式排除 `assets/resources/videos/`，避免打包到主程序：
 
-```json5
+```json
 {
-  files: [
-    "dist/**/*",
-    "electron/**/*",
-    "!electron/handlers/ai/**/*",  // 排除 AI handlers
-    "!**/node_modules/*/{CHANGELOG.md,README.md,...}",
-    // 注意：不要添加 assets/resources/videos/
+  "extraResources": [
+    {
+      "from": "assets/resources",
+      "to": "assets/resources",
+      "filter": ["**/*", "!videos/**/*"]
+    }
   ]
 }
 ```
@@ -171,7 +171,7 @@ src/data/preset-teaching-materials.json
 
 | 文件                                      | 说明                      | 纳入 Git |
 | ----------------------------------------- | ------------------------- | -------- |
-| `src/data/preset-teaching-materials.json` | 303 条预置视频元数据（41KB） | ❌        |
+| `src/data/preset-teaching-materials.json` | 389 条预置视频元数据（约 67KB） | ✅        |
 | `scripts/test-preset-videos.cjs`          | 数据验证脚本              | ✅        |
 | `scripts/package-preset-videos.cjs`       | 自解压文件打包脚本        | ✅        |
 | `docs/preset-videos-guide.md`             | 用户使用指南              | ✅        |
@@ -192,9 +192,9 @@ src/data/preset-teaching-materials.json
 2. **检查数据库**：打开应用后，执行 SQL 查询
    ```sql
    SELECT COUNT(*) FROM teaching_material WHERE is_preset = 1;
-   -- 预期：303
+   -- 预期：389
    ```
-3. **查看界面**：进入「资源中心 → 教学资料」，应看到 303 个视频缩略图
+3. **查看界面**：进入「资源中心 → 教学资料」，应看到 389 个视频缩略图
 4. **点击播放**：提示"视频文件缺失"（因为开发环境没有物理文件）
 
 ### 6.2 生产环境验证
@@ -205,7 +205,7 @@ src/data/preset-teaching-materials.json
 4. **验证解压结果**：
    ```powershell
    dir "D:\Program Files\scgp\resources\assets\resources\videos"
-   # 应看到 7 个子文件夹，共 303 个 .mp4 文件
+   # 应看到 7 个业务维度目录，共 389 个 .mp4 文件
    ```
 5. **启动应用并播放**：视频正常播放
 
@@ -248,7 +248,7 @@ src/data/preset-teaching-materials.json
 **常见原因**：
 - 7-Zip 未安装或不在 `C:\Program Files\7-Zip\`
 - 视频源文件路径错误（不在 `G:\SCGP_Rec\Video\带水印\`）
-- 磁盘空间不足（临时目录需要 1.3GB，输出文件需要 1.2GB）
+- 磁盘空间不足（临时目录至少需要约 5.1GB，另需预留压缩包输出空间）
 
 **解决方案**：
 - 安装 7-Zip：https://www.7-zip.org/

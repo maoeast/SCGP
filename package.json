@@ -56,7 +56,8 @@
         "from": "assets/resources",
         "to": "assets/resources",
         "filter": [
-          "**/*"
+          "**/*",
+          "!videos/**/*"
         ]
       }
     ],
