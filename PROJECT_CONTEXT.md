@@ -1762,3 +1762,9 @@
 - **actual_params（IEP 级纵向追踪）**：顶层保留与 cognitive-games-api 强耦合的键 `accuracy_ratio`（首配命中 / 目标对数）+ `average_response_ms`；`actual_params` 含 `session_type='K01_MEMORY_MATCH'`、`grid_size`、`pair_count`、`flip_back_on_mismatch`、`use_similar_distractors`、`card_front_mode='svg'`（预留 `'webp'` 物品认知模式后续接入）+ 每对 `trials`（`first_try_correct` = 配对步紧接该对首次翻开、`flip_attempts`、`response_ms`）。
 - **卡面素材决策（用户选定）**：v1 纯程序化 SVG + 预留 `CARD_FRONT_MODE` 字段；卡背 CSS/SVG 生成统一花纹，零图片素材。
 - 验证：type-check + build:web + 实机 UAT 通过。
+
+## 92. 2026-07-23 预置视频资源路径收口
+
+- 389 条预置教学视频元数据由 `src/data/preset-teaching-materials.json` 维护；原始视频约 5.1GB，不纳入 Git 或主安装包。
+- `assets/` 前缀资源通过 `get-app-resources-path` IPC 解析到 `{installDir}/resources`，并作为只读资源拒绝进入托管文件删除链；其他相对路径仍解析到 `{userData}/resources`。
+- `package.json` 的 `build.extraResources.filter` 显式排除 `videos/**/*`；验证脚本支持 life-skills 子目录并已核对 389 条源文件。提交：`243965c`。
