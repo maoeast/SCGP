@@ -14,22 +14,38 @@
         <h2 v-show="sidebarCollapsed">ATS</h2>
       </div>
 
-      <nav class="sidebar-nav">
-        <a
-          v-for="route in menuRoutes"
-          :key="route.path"
-          :href="route.path"
-          class="nav-item"
-          :class="{ active: isActive(route.path) }"
-          :title="route.meta.title"
-          @click.prevent="handleMenuClick(route)"
-          v-show="hasRole(route.meta.roles)"
+      <nav class="sidebar-nav" aria-label="主导航">
+        <section
+          v-for="group in menuGroups"
+          :key="group.id"
+          class="nav-group"
+          :aria-label="sidebarCollapsed ? group.title : undefined"
+          :aria-labelledby="sidebarCollapsed ? undefined : `nav-group-${group.id}`"
         >
-          <i class="icon" :class="`fas fa-${route.meta.icon}`"></i>
-          <span class="nav-text" v-show="!sidebarCollapsed">{{
-            route.meta.displayTitle || route.meta.title
-          }}</span>
-        </a>
+          <h3
+            v-show="!sidebarCollapsed"
+            :id="`nav-group-${group.id}`"
+            class="nav-group-title"
+          >
+            {{ group.title }}
+          </h3>
+
+          <a
+            v-for="menuItem in group.items"
+            :key="menuItem.path"
+            :href="menuItem.path"
+            class="nav-item"
+            :class="{ active: isActive(menuItem.path) }"
+            :title="menuItem.meta.displayTitle"
+            :aria-current="isActive(menuItem.path) ? 'page' : undefined"
+            @click.prevent="handleMenuClick(menuItem)"
+          >
+            <i class="icon" :class="`fas fa-${menuItem.meta.icon}`" aria-hidden="true"></i>
+            <span v-show="!sidebarCollapsed" class="nav-text">
+              {{ menuItem.meta.displayTitle }}
+            </span>
+          </a>
+        </section>
       </nav>
 
       <div class="sidebar-footer">
@@ -77,7 +93,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, type RouteRecordNormalized } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
@@ -91,15 +107,28 @@ import {
 interface MenuRouteItem extends AccessControlledItem {
   path: string
   meta: {
-    title: string
     displayTitle: string
-    activeMenu?: string
-    icon?: string
+    icon: string
     roles?: string[]
-    moduleCode?: string
-    requiredEntitlement?: string
-    requiredEntitlementsAnyOf?: string[]
   }
+}
+
+interface MenuGroup {
+  id: string
+  title: string
+  items: MenuRouteItem[]
+}
+
+interface MenuItemConfig {
+  routeName: string
+  displayTitle: string
+  icon: string
+}
+
+interface MenuGroupConfig {
+  id: string
+  title: string
+  items: readonly MenuItemConfig[]
 }
 
 const route = useRoute()
@@ -109,72 +138,114 @@ const systemConfigStore = useSystemConfigStore()
 
 const sidebarCollapsed = ref(false)
 
-// 菜单路由
-const menuRoutes = computed<MenuRouteItem[]>(() => {
+const menuGroupConfigs: readonly MenuGroupConfig[] = [
+  {
+    id: 'overview',
+    title: '概览',
+    items: [
+      { routeName: 'Dashboard', displayTitle: '系统首页', icon: 'house' },
+    ],
+  },
+  {
+    id: 'students-and-classes',
+    title: '学生与班级',
+    items: [
+      { routeName: 'Students', displayTitle: '学生管理', icon: 'user-graduate' },
+      { routeName: 'ClassManagement', displayTitle: '班级管理', icon: 'school' },
+      { routeName: 'StudentClassAssignment', displayTitle: '学生分班', icon: 'users' },
+    ],
+  },
+  {
+    id: 'training-and-assessment',
+    title: '训练与评估',
+    items: [
+      { routeName: 'Assessment', displayTitle: '能力评估', icon: 'clipboard-check' },
+      { routeName: 'TrainingPlan', displayTitle: '训练计划', icon: 'calendar-check' },
+      { routeName: 'SelfCareTraining', displayTitle: '自理训练', icon: 'list-check' },
+      { routeName: 'EmotionalTraining', displayTitle: '情绪行为', icon: 'face-smile' },
+      { routeName: 'GameTraining', displayTitle: '游戏训练', icon: 'gamepad' },
+      { routeName: 'EquipmentTraining', displayTitle: '器材训练', icon: 'dumbbell' },
+    ],
+  },
+  {
+    id: 'records-and-system',
+    title: '记录与系统',
+    items: [
+      { routeName: 'TrainingRecordsModule', displayTitle: '训练记录', icon: 'clock-rotate-left' },
+      { routeName: 'Reports', displayTitle: '报告生成', icon: 'file-lines' },
+      { routeName: 'ResourceCenter', displayTitle: '资源中心', icon: 'folder-open' },
+      { routeName: 'System', displayTitle: '系统管理', icon: 'gear' },
+    ],
+  },
+]
+
+const hasRole = (roles?: string[]) => {
+  if (!roles || roles.length === 0) return true
+  return roles.includes(authStore.user?.role || '')
+}
+
+const createMenuRouteItem = (
+  menuRoute: RouteRecordNormalized,
+  itemConfig: MenuItemConfig,
+): MenuRouteItem => {
+  const moduleCode = typeof menuRoute.meta.moduleCode === 'string'
+    ? menuRoute.meta.moduleCode
+    : undefined
+  const entitlementCode = typeof menuRoute.meta.requiredEntitlement === 'string'
+    ? menuRoute.meta.requiredEntitlement
+    : undefined
+  const entitlementCodes = Array.isArray(menuRoute.meta.requiredEntitlementsAnyOf)
+    ? menuRoute.meta.requiredEntitlementsAnyOf.filter(
+      (value): value is string => typeof value === 'string',
+    )
+    : undefined
+
+  return {
+    path: menuRoute.path,
+    accessScope: (
+      entitlementCodes
+        ? 'entitlement-any'
+        : entitlementCode
+          ? 'entitlement'
+          : moduleCode
+            ? 'module'
+            : 'global'
+    ) as AccessScope,
+    moduleCode,
+    entitlementCode,
+    entitlementCodes,
+    meta: {
+      displayTitle: itemConfig.displayTitle,
+      icon: itemConfig.icon,
+      roles: Array.isArray(menuRoute.meta.roles) ? menuRoute.meta.roles as string[] : undefined,
+    },
+  }
+}
+
+const menuGroups = computed<MenuGroup[]>(() => {
   const routes = router
     .getRoutes()
     .filter((r) => r.meta?.title && !r.meta?.hideInMenu && r.path !== '/')
+  const routesByName = new Map(routes.map((menuRoute) => [String(menuRoute.name || ''), menuRoute]))
 
-  // 指定的菜单顺序
-  const menuOrder = [
-    'Dashboard', // 系统首页
-    'Students', // 学生管理
-    'ClassManagement', // 班级管理
-    'StudentClassAssignment', // 学生分班
-    'Assessment', // 能力评估
-    'TrainingPlan', // 训练计划
-    'SelfCareTraining', // 自理训练
-    'EmotionalTraining', // 情绪行为
-    'GameTraining', // 游戏训练
-    'EquipmentTraining', // 器材训练
-    'TrainingRecordsModule', // 训练记录
-    'Reports', // 报告生成
-    'ResourceCenter', // 资源中心
-    'System', // 系统管理
-  ]
+  return menuGroupConfigs.map((group) => ({
+    id: group.id,
+    title: group.title,
+    items: group.items.flatMap((itemConfig) => {
+      const menuRoute = routesByName.get(itemConfig.routeName)
+      if (!menuRoute) return []
 
-  return routes
-    .sort((a, b) => {
-      const indexA = menuOrder.indexOf(a.name as string)
-      const indexB = menuOrder.indexOf(b.name as string)
-      const orderA = indexA === -1 ? 999 : indexA
-      const orderB = indexB === -1 ? 999 : indexB
-      return orderA - orderB
-    })
-    .map((r) => ({
-      path: r.path,
-      accessScope: (
-        Array.isArray(r.meta.requiredEntitlementsAnyOf)
-          ? 'entitlement-any'
-          : typeof r.meta.requiredEntitlement === 'string'
-            ? 'entitlement'
-            : typeof r.meta.moduleCode === 'string'
-              ? 'module'
-              : 'global'
-      ) as AccessScope,
-      moduleCode: typeof r.meta.moduleCode === 'string' ? r.meta.moduleCode : undefined,
-      entitlementCode: typeof r.meta.requiredEntitlement === 'string' ? r.meta.requiredEntitlement : undefined,
-      entitlementCodes: Array.isArray(r.meta.requiredEntitlementsAnyOf)
-        ? r.meta.requiredEntitlementsAnyOf.filter((value): value is string => typeof value === 'string')
-        : undefined,
-      meta: {
-        title: String(r.meta.title || ''),
-        displayTitle: String(r.meta.title || ''),
-        activeMenu: typeof r.meta.activeMenu === 'string' ? r.meta.activeMenu : undefined,
-        icon: typeof r.meta.icon === 'string' ? r.meta.icon : undefined,
-        roles: Array.isArray(r.meta.roles) ? r.meta.roles as string[] : undefined,
-        moduleCode: typeof r.meta.moduleCode === 'string' ? r.meta.moduleCode : undefined,
-        requiredEntitlement: typeof r.meta.requiredEntitlement === 'string' ? r.meta.requiredEntitlement : undefined,
-        requiredEntitlementsAnyOf: Array.isArray(r.meta.requiredEntitlementsAnyOf)
-          ? r.meta.requiredEntitlementsAnyOf.filter((value): value is string => typeof value === 'string')
-          : undefined,
-      },
-    }))
-    .filter((menuRoute) => filterVisibleAccessControlledItems(
-      [menuRoute],
-      authStore.hasModuleAccess,
-      authStore.hasEntitlementAccess,
-    ).length > 0)
+      const item = createMenuRouteItem(menuRoute, itemConfig)
+
+      const hasAccess = filterVisibleAccessControlledItems(
+        [item],
+        authStore.hasModuleAccess,
+        authStore.hasEntitlementAccess,
+      ).length > 0
+
+      return hasAccess && hasRole(item.meta.roles) ? [item] : []
+    }),
+  })).filter((group) => group.items.length > 0)
 })
 
 // 页面标题
@@ -207,12 +278,6 @@ const isActive = (path: string) => {
     }
   }
   return false
-}
-
-// 判断是否有权限
-const hasRole = (roles?: string[]) => {
-  if (!roles || roles.length === 0) return true
-  return roles.includes(authStore.user?.role || '')
 }
 
 const handleMenuClick = (route: MenuRouteItem) => {
@@ -294,26 +359,28 @@ onMounted(() => {
 }
 
 .sidebar {
-  width: 250px;
-  background: #2c3e50;
-  color: white;
+  width: 252px;
+  background: #111827;
+  color: #e5edf8;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s;
+  border-right: 1px solid rgba(148, 163, 184, 0.1);
+  box-shadow: 8px 0 24px rgba(15, 23, 42, 0.08);
+  transition: width 0.25s ease;
   position: relative;
   z-index: 100;
 }
 
 .sidebar.collapsed {
-  width: 70px;
+  width: 72px;
 }
 
 .sidebar-logo {
-  padding: 15px 20px;
+  padding: 18px 20px 14px;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #34495e;
+  background: #0d1525;
   min-height: auto;
 }
 
@@ -330,61 +397,125 @@ onMounted(() => {
 }
 
 .sidebar-header {
-  padding: 20px;
+  padding: 14px 20px 18px;
   text-align: center;
-  border-bottom: 1px solid #34495e;
+  background: #0d1525;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .sidebar-header h2 {
   margin: 0;
-  font-size: 20px;
+  color: #e5edf8;
+  font-size: 18px;
   font-weight: 600;
+  line-height: 1.4;
 }
 
 .sidebar-nav {
   flex: 1;
-  padding: 20px 0;
+  padding: 14px 0;
   overflow-y: auto;
+  scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
+  scrollbar-width: thin;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+  border-radius: 3px;
+}
+
+.nav-group {
+  margin-bottom: 16px;
+}
+
+.nav-group:last-child {
+  margin-bottom: 0;
+}
+
+.nav-group-title {
+  margin: 0;
+  padding: 0 26px 6px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: 0;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 15px 25px;
-  color: #bdc3c7;
+  min-height: 52px;
+  margin: 2px 10px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  gap: 14px;
+  color: #9aa8bc;
   text-decoration: none;
-  transition: all 0.3s;
+  border-left: 3px solid transparent;
+  border-radius: 6px;
+  touch-action: manipulation;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.12s ease;
   position: relative;
 }
 
-.nav-item:hover {
-  background: #34495e;
-  color: white;
-}
-
 .nav-item.active {
-  background: #3498db;
-  color: white;
+  border-left-color: #3b82f6;
+  background: linear-gradient(
+    90deg,
+    rgba(59, 130, 246, 0.12) 0%,
+    rgba(59, 130, 246, 0.05) 48%,
+    rgba(59, 130, 246, 0) 100%
+  );
+  color: #f8fafc;
 }
 
-.nav-item.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: #2980b9;
+.nav-item.active .icon {
+  color: #60a5fa;
+}
+
+.nav-item:active {
+  transform: scale(0.98);
 }
 
 .nav-item .icon {
   width: 20px;
+  flex: 0 0 20px;
   text-align: center;
-  margin-right: 15px;
+  font-size: 16px;
 }
 
-.collapsed .nav-item .icon {
-  margin-right: 0;
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  margin-right: 8px;
+  margin-left: 8px;
+  padding-right: 0;
+  padding-left: 0;
+  gap: 0;
+}
+
+@media (hover: hover) {
+  .nav-item:hover {
+    background: rgba(148, 163, 184, 0.1);
+    color: #dbe7f5;
+  }
+
+  .nav-item.active:hover {
+    background: linear-gradient(
+      90deg,
+      rgba(59, 130, 246, 0.15) 0%,
+      rgba(59, 130, 246, 0.06) 48%,
+      rgba(59, 130, 246, 0) 100%
+    );
+  }
 }
 
 .nav-text {
@@ -394,28 +525,47 @@ onMounted(() => {
 }
 
 .sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid #34495e;
+  padding: 14px 16px 18px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .logout-btn {
   width: 100%;
-  padding: 10px;
-  background: transparent;
-  border: 1px solid #e74c3c;
-  color: #e74c3c;
-  border-radius: 4px;
+  min-height: 48px;
+  padding: 0 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 0;
+  color: #f87171;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  transition: all 0.3s;
+  gap: 12px;
+  font: inherit;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .logout-btn:hover {
-  background: #e74c3c;
-  color: white;
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
+.nav-item:focus-visible,
+.logout-btn:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.sidebar.collapsed .sidebar-footer {
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+.sidebar.collapsed .logout-btn {
+  padding: 0;
 }
 
 .main-container {
