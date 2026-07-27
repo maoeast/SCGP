@@ -45,6 +45,10 @@ export interface ProviderModelOption {
   contextWindow?: number
 }
 
+interface AiSendChatOptions {
+  editMessageId?: number
+}
+
 /** raw provider /models 条目 → 归一化 ProviderModelOption（防御各 provider 不同 shape，缺失字段走默认值） */
 function mapToProviderModelOption(raw: Record<string, any>): ProviderModelOption {
   const id = String(raw?.id ?? '')
@@ -560,7 +564,11 @@ export const useAiStore = defineStore('ai', () => {
     return api().listMessagesForUser(id, uid)
   }
 
-  async function cleanupDeletedSessionAttachments(a: AIApi, attachments: AiAttachmentRef[]): Promise<AiAttachmentRef[]> {
+  async function cleanupDeletedSessionAttachments(
+    a: AIApi,
+    attachments: AiAttachmentRef[],
+    warningMessage = '会话已删除，部分附件文件稍后可通过资源健康检查清理。',
+  ): Promise<AiAttachmentRef[]> {
     const failed: AiAttachmentRef[] = []
     for (const ref of attachments) {
       try {
@@ -573,7 +581,7 @@ export const useAiStore = defineStore('ai', () => {
       }
     }
     if (failed.length > 0) {
-      ElMessage.warning('会话已删除，部分附件文件稍后可通过资源健康检查清理。')
+      ElMessage.warning(warningMessage)
     }
     return failed
   }
@@ -635,11 +643,17 @@ export const useAiStore = defineStore('ai', () => {
     text: string,
     attachments?: File[],
     documents?: File[],
+    options: AiSendChatOptions = {},
   ): Promise<{ ok: boolean; error?: string }> {
     const content = text.trim()
     const hasImages = !!attachments && attachments.length > 0
     const hasDocuments = !!documents && documents.length > 0
-    if (!content && !hasImages && !hasDocuments) return { ok: false }
+    const editMessageId = Number(options.editMessageId || 0)
+    const isEditing = editMessageId > 0
+    if ((!content && !hasImages && !hasDocuments) || (isEditing && !content)) return { ok: false }
+    if (isEditing && (hasImages || hasDocuments)) {
+      return { ok: false, error: '编辑消息时不能新增附件。' }
+    }
     if (!providerConfig.value?.enabled) return { ok: false, error: 'AI 智能体未启用。' }
     if (!providerConfig.value?.providerEnabled) {
       return { ok: false, error: '当前模型 provider 未启用，请在系统设置中启用后再试。' }
@@ -691,8 +705,12 @@ export const useAiStore = defineStore('ai', () => {
       }
     }
 
-    if (!currentSessionId.value) {
-      const uid = currentUserId()
+    const uid = currentUserId()
+    if (isEditing) {
+      if (!uid || !currentSessionId.value) {
+        return { ok: false, error: '当前会话不可编辑，请重新打开后再试。' }
+      }
+    } else if (!currentSessionId.value) {
       if (!uid) {
         return { ok: false, error: '未获取到登录用户，请重新登录后再试。' }
       }
@@ -700,6 +718,7 @@ export const useAiStore = defineStore('ai', () => {
       currentSessionId.value = a.createSession(currentAgent.value.code, uid, titleBase.slice(0, 20))
     }
     const sessionId = currentSessionId.value
+    if (!sessionId) return { ok: false, error: '当前会话不可用，请重新打开后再试。' }
 
     // Phase 3：落盘图片附件（supportsVision 已校验为 true），取元信息 refs + 当轮 dataUrl
     let attachmentRefs: AiAttachmentRef[] = []
@@ -737,25 +756,45 @@ export const useAiStore = defineStore('ai', () => {
     // 文档文本并入 user 消息内容（仅有文档无文字时给默认提示）
     const fullContent = docBlocks ? (content || '请阅读并分析以下文档内容。') + docBlocks : content
 
-    // 入库 user 消息并加入当前列表（DB content 存纯文本，attachments 列存元信息）
-    a.saveMessage({
-      sessionId,
-      role: 'user',
-      content: fullContent,
-      attachments: attachmentRefs.length > 0 ? attachmentRefs : null,
-    })
-    currentMessages.value.push({
-      id: 0,
-      sessionId,
-      role: 'user',
-      content: fullContent,
-      attachments: attachmentRefs.length > 0 ? attachmentRefs : null,
-      tokensPrompt: 0,
-      tokensCompletion: 0,
-      tokensTotal: 0,
-      estCostYuan: 0,
-      createdAt: new Date().toISOString(),
-    })
+    if (isEditing) {
+      const target = currentMessages.value.find((message) => message.id === editMessageId)
+      if (!target || target.role !== 'user' || target.attachments?.length) {
+        return { ok: false, error: '只能编辑当前会话最后一条不含附件的用户消息。' }
+      }
+      const result = a.editLastUserMessageForUser(sessionId, uid, editMessageId, fullContent)
+      if (!result.updated) {
+        return { ok: false, error: '消息已变化，请重新打开会话后再试。' }
+      }
+      await cleanupDeletedSessionAttachments(
+        a,
+        result.removedAttachments,
+        '消息已更新，部分旧附件文件稍后可通过资源健康检查清理。',
+      )
+      currentMessages.value = a.listMessagesForUser(sessionId, uid)
+      monthUsage.value = a.getMonthUsage()
+      await loadSessions()
+      if (isAdmin()) allSessions.value = a.listAllSessions()
+    } else {
+      // 入库 user 消息并加入当前列表（DB content 存纯文本，attachments 列存元信息）
+      const userMessageId = a.saveMessage({
+        sessionId,
+        role: 'user',
+        content: fullContent,
+        attachments: attachmentRefs.length > 0 ? attachmentRefs : null,
+      })
+      currentMessages.value.push({
+        id: userMessageId,
+        sessionId,
+        role: 'user',
+        content: fullContent,
+        attachments: attachmentRefs.length > 0 ? attachmentRefs : null,
+        tokensPrompt: 0,
+        tokensCompletion: 0,
+        tokensTotal: 0,
+        estCostYuan: 0,
+        createdAt: new Date().toISOString(),
+      })
+    }
 
     type HistoryMessage =
       | {
@@ -826,9 +865,14 @@ export const useAiStore = defineStore('ai', () => {
         })
         const usage: DeepSeekUsage | null = result.usage || null
         const finalContent = result.content
-        a.saveMessage({ sessionId, role: 'assistant', content: finalContent, usage })
+        const assistantMessageId = a.saveMessage({
+          sessionId,
+          role: 'assistant',
+          content: finalContent,
+          usage,
+        })
         currentMessages.value.push({
-          id: 0,
+          id: assistantMessageId,
           sessionId,
           role: 'assistant',
           content: finalContent,
@@ -860,9 +904,14 @@ export const useAiStore = defineStore('ai', () => {
       if (res.success) {
         const finalContent = res.content || streamingContent.value
         const usage = (res.usage as DeepSeekUsage | null) || null
-        a.saveMessage({ sessionId, role: 'assistant', content: finalContent, usage })
+        const assistantMessageId = a.saveMessage({
+          sessionId,
+          role: 'assistant',
+          content: finalContent,
+          usage,
+        })
         currentMessages.value.push({
-          id: 0,
+          id: assistantMessageId,
           sessionId,
           role: 'assistant',
           content: finalContent,

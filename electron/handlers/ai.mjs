@@ -15,6 +15,7 @@ import { safeStorage } from 'electron'
 import fs from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 import { registerAISecretHandlers } from './ai-secrets.mjs'
+import { AIStreamTimeoutError, consumeAIStream } from './ai-stream.mjs'
 
 const DEFAULT_BASE_URL = 'https://api.deepseek.com'
 const REQUEST_TIMEOUT_MS = 60_000
@@ -96,10 +97,13 @@ function buildMessages(messages, systemPrompt) {
 /** 流式调用：边收边 event.sender.send('ai:chunk')，最终 invoke 返回完整结果（与 done 事件一致） */
 async function streamChat(event, apiKey, apiBase, model, messages, systemPrompt, supportsThinking, providerName) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const requestTimer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
   let response
   try {
+    // The request timeout ends when headers arrive. Stream consumption has a
+    // separate idle watchdog so a long-running response is not cut off by a
+    // total-duration timer.
     response = await fetch(`${apiBase}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -116,15 +120,15 @@ async function streamChat(event, apiKey, apiBase, model, messages, systemPrompt,
       signal: controller.signal,
     })
   } catch (networkError) {
-    clearTimeout(timer)
+    clearTimeout(requestTimer)
     if (networkError?.name === 'AbortError') {
       return { success: false, errorKind: 'timeout', error: `请求超时（${REQUEST_TIMEOUT_MS / 1000}s），请稍后重试。` }
     }
     return { success: false, errorKind: 'network', error: `网络请求失败：${networkError?.message || String(networkError)}` }
   }
+  clearTimeout(requestTimer)
 
   if (!response.ok) {
-    clearTimeout(timer)
     const errBody = await response.text().catch(() => '')
     const info = describeHttpError(response.status, errBody, providerName)
     try {
@@ -135,55 +139,37 @@ async function streamChat(event, apiKey, apiBase, model, messages, systemPrompt,
     return { success: false, errorKind: info.kind, error: info.message, httpStatus: response.status }
   }
 
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder('utf-8')
-  let buffer = ''
-  let fullContent = ''
-  let usage = null
-
   try {
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      buffer += decoder.decode(value, { stream: true })
-
-      let idx
-      // SSE 事件以空行（\n\n）分隔
-      while ((idx = buffer.indexOf('\n\n')) >= 0) {
-        const rawEvent = buffer.slice(0, idx)
-        buffer = buffer.slice(idx + 2)
-        for (const line of rawEvent.split('\n')) {
-          if (!line.startsWith('data:')) continue
-          const data = line.slice(5).trim()
-          if (!data || data === '[DONE]') continue
-          try {
-            const json = JSON.parse(data)
-            const delta = json?.choices?.[0]?.delta?.content
-            if (delta) {
-              fullContent += delta
-              try {
-                event?.sender?.send('ai:chunk', { delta })
-              } catch {
-                /* ignore */
-              }
-            }
-            if (json?.usage) usage = mapUsage(json.usage)
-          } catch {
-            /* 忽略不完整的 JSON 片段 */
-          }
+    const { content, usage } = await consumeAIStream({
+      response,
+      controller,
+      mapUsage,
+      onDelta: (delta) => {
+        try {
+          event?.sender?.send('ai:chunk', { delta })
+        } catch {
+          /* ignore */
         }
-      }
-    }
-  } finally {
-    clearTimeout(timer)
-  }
+      },
+      idleTimeoutMs: REQUEST_TIMEOUT_MS,
+    })
 
-  try {
-    event?.sender?.send('ai:done', { content: fullContent, usage })
-  } catch {
-    /* ignore */
+    try {
+      event?.sender?.send('ai:done', { content, usage })
+    } catch {
+      /* ignore */
+    }
+    return { success: true, content, usage }
+  } catch (streamError) {
+    if (streamError instanceof AIStreamTimeoutError) {
+      return { success: false, errorKind: 'timeout', error: streamError.message }
+    }
+    return {
+      success: false,
+      errorKind: 'network',
+      error: `流式响应失败：${streamError?.message || String(streamError)}`,
+    }
   }
-  return { success: true, content: fullContent, usage }
 }
 
 /**

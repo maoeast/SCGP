@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { EditPen } from '@element-plus/icons-vue'
 import type { AiAttachmentRef } from '@/database/ai-api'
 import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
 import { resolveAbsolutePath } from '@/utils/resource-file-service'
@@ -6,6 +8,7 @@ import { renderMarkdown } from '@/utils/render-markdown'
 import type { ToolStep } from '@/services/ai-tools'
 
 export interface AiTranscriptMessage {
+  id?: number
   role: 'user' | 'assistant' | 'system'
   content: string
   pending?: boolean
@@ -16,11 +19,35 @@ const props = withDefaults(
   defineProps<{
     messages: AiTranscriptMessage[]
     toolSteps?: ToolStep[]
+    editable?: boolean
+    editingDisabled?: boolean
   }>(),
   {
     toolSteps: () => [],
+    editable: false,
+    editingDisabled: false,
   },
 )
+
+const emit = defineEmits<{
+  editMessage: [payload: { id: number; content: string }]
+}>()
+
+const editableMessageId = computed<number | null>(() => {
+  if (!props.editable) return null
+  for (let i = props.messages.length - 1; i >= 0; i--) {
+    const message = props.messages[i]
+    if (!message || message.role !== 'user') continue
+    if (!message.id || message.id <= 0 || message.attachments?.length) return null
+    return message.id
+  }
+  return null
+})
+
+function requestEdit(message: AiTranscriptMessage) {
+  if (props.editingDisabled || message.id !== editableMessageId.value) return
+  emit('editMessage', { id: message.id, content: message.content })
+}
 
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico'])
 function isImageExt(fileType: string): boolean {
@@ -41,7 +68,7 @@ async function openAttachment(ref: AiAttachmentRef) {
   <div class="ai-transcript">
     <div
       v-for="(msg, idx) in messages"
-      :key="idx"
+      :key="msg.id ? `${msg.role}-${msg.id}` : `${msg.role}-${idx}`"
       class="msg-row"
       :class="msg.role === 'user' ? 'is-user' : 'is-assistant'"
     >
@@ -69,6 +96,19 @@ async function openAttachment(ref: AiAttachmentRef) {
         <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
         <span v-if="msg.pending" class="streaming-cursor" aria-hidden="true"></span>
       </div>
+      <div v-if="msg.id === editableMessageId" class="msg-actions">
+        <el-tooltip content="编辑这条消息" placement="bottom">
+          <button
+            class="msg-action-btn"
+            type="button"
+            :disabled="editingDisabled"
+            aria-label="编辑这条消息"
+            @click="requestEdit(msg)"
+          >
+            <el-icon><EditPen /></el-icon>
+          </button>
+        </el-tooltip>
+      </div>
     </div>
   </div>
 </template>
@@ -82,14 +122,16 @@ async function openAttachment(ref: AiAttachmentRef) {
 
 .msg-row {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .msg-row.is-user {
-  justify-content: flex-end;
+  align-items: flex-end;
 }
 
 .msg-row.is-assistant {
-  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .msg-bubble {
@@ -117,6 +159,44 @@ async function openAttachment(ref: AiAttachmentRef) {
 
 .msg-bubble.pending {
   opacity: 0.85;
+}
+
+.msg-actions {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  margin-top: 2px;
+}
+
+.msg-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--el-text-color-secondary, #909399);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.msg-action-btn:hover:not(:disabled),
+.msg-action-btn:focus-visible {
+  background: var(--el-fill-color-light, #f5f7fa);
+  color: var(--el-text-color-primary, #303133);
+}
+
+.msg-action-btn:focus-visible {
+  outline: 2px solid var(--el-color-primary-light-5, #a0cfff);
+  outline-offset: 1px;
+}
+
+.msg-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .markdown-body {

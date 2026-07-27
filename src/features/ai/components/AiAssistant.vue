@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound, Paperclip, Promotion, Setting, Tickets } from '@element-plus/icons-vue'
+import { ChatDotRound, Close, Paperclip, Promotion, Setting, Tickets } from '@element-plus/icons-vue'
 import type { AiAttachmentRef } from '@/database/ai-api'
 import { useAiStore } from '@/stores/ai'
 import { getBuiltinAgentPreset } from '@/data/ai-agent-presets'
@@ -19,6 +19,8 @@ const aiStore = useAiStore()
 
 const drawerVisible = ref(false)
 const inputText = ref('')
+const inputRef = ref<{ focus: () => void } | null>(null)
+const editingMessageId = ref<number | null>(null)
 const scrollRef = ref()
 const pendingImages = ref<Array<{ file: File; previewUrl: string }>>([])
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -84,11 +86,13 @@ const canSend = computed(
 
 const displayMessages = computed(() => {
   const list: Array<{
+    id?: number
     role: 'user' | 'assistant' | 'system'
     content: string
     pending?: boolean
     attachments?: AiAttachmentRef[] | null
   }> = aiStore.currentMessages.map((m) => ({
+    id: m.id,
     role: m.role,
     content: m.content,
     attachments: m.attachments,
@@ -108,6 +112,17 @@ function scrollToBottom() {
 
 watch(() => aiStore.streamingContent, scrollToBottom)
 watch(() => aiStore.currentMessages.length, scrollToBottom)
+watch(
+  [() => aiStore.currentSessionId, () => aiStore.currentAgentCode],
+  ([sessionId, agentCode], [previousSessionId, previousAgentCode]) => {
+    if (
+      editingMessageId.value !== null &&
+      (sessionId !== previousSessionId || agentCode !== previousAgentCode)
+    ) {
+      cancelMessageEdit()
+    }
+  },
+)
 
 async function openDrawer(agentCode?: string, sessionId?: number) {
   if (!aiStore.providerConfig || aiStore.agents.length === 0) await aiStore.loadAll()
@@ -146,7 +161,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 
 /** 曲别针入口：图片与文档统一选择，按类型自动分流到图片预览 / 文档 chip */
 function triggerPickFile() {
-  if (aiStore.sending) return
+  if (aiStore.sending || editingMessageId.value !== null) return
   fileInputRef.value?.click()
 }
 async function onFileChange(e: Event) {
@@ -181,6 +196,19 @@ function removePendingDocument(idx: number) {
 
 async function send() {
   const text = inputText.value.trim()
+  const editMessageId = editingMessageId.value
+  if (editMessageId !== null) {
+    if (!text || aiStore.sending) return
+    const res = await aiStore.sendChat(text, undefined, undefined, { editMessageId })
+    if (res.ok) {
+      inputText.value = ''
+      editingMessageId.value = null
+    } else if (res.error) {
+      ElMessage.error(res.error)
+    }
+    return
+  }
+
   const imgs = [...pendingImages.value]
   const docs = [...pendingDocuments.value]
   if ((!text && imgs.length === 0 && docs.length === 0) || aiStore.sending) return
@@ -195,6 +223,20 @@ async function send() {
   if (!res.ok && res.error) {
     ElMessage.error(res.error)
   }
+}
+
+function beginMessageEdit(payload: { id: number; content: string }) {
+  if (aiStore.sending) return
+  editingMessageId.value = payload.id
+  inputText.value = payload.content
+  pendingImages.value = []
+  pendingDocuments.value = []
+  nextTick(() => inputRef.value?.focus())
+}
+
+function cancelMessageEdit() {
+  editingMessageId.value = null
+  inputText.value = ''
 }
 
 /** 「生成报告」快捷按钮：发一句引导语，由 AI 自行调用 generate_report 工具导出 Word */
@@ -410,7 +452,14 @@ async function confirmDeleteSession(id: number) {
             </button>
           </div>
         </div>
-        <AiChatTranscript v-else :messages="displayMessages" :tool-steps="aiStore.toolSteps" />
+        <AiChatTranscript
+          v-else
+          :messages="displayMessages"
+          :tool-steps="aiStore.toolSteps"
+          editable
+          :editing-disabled="aiStore.sending"
+          @edit-message="beginMessageEdit"
+        />
       </el-scrollbar>
     </div>
 
@@ -427,6 +476,20 @@ async function confirmDeleteSession(id: number) {
             :status="budgetPercent >= 90 ? 'warning' : ''"
           />
         </div>
+        <div v-if="editingMessageId !== null" class="ai-editing-notice">
+          <span>正在编辑上一条消息</span>
+          <el-tooltip content="取消编辑" placement="top">
+            <button
+              class="ai-editing-cancel"
+              type="button"
+              :disabled="aiStore.sending"
+              aria-label="取消编辑"
+              @click="cancelMessageEdit"
+            >
+              <el-icon><Close /></el-icon>
+            </button>
+          </el-tooltip>
+        </div>
         <div v-if="pendingImages.length > 0" class="ai-pending-images">
           <div v-for="(p, idx) in pendingImages" :key="idx" class="ai-pending-item">
             <img :src="p.previewUrl" />
@@ -440,11 +503,18 @@ async function confirmDeleteSession(id: number) {
           </div>
         </div>
         <div class="ai-composer">
-          <el-tooltip :content="supportsVision ? '添加图片 / 文档' : '添加文档（当前模型不支持图片）'" placement="top">
+          <el-tooltip
+            :content="editingMessageId !== null
+              ? '编辑消息时不能新增附件'
+              : supportsVision
+                ? '添加图片 / 文档'
+                : '添加文档（当前模型不支持图片）'"
+            placement="top"
+          >
             <button
               class="composer-btn composer-attach"
               type="button"
-              :disabled="aiStore.sending"
+              :disabled="aiStore.sending || editingMessageId !== null"
               aria-label="添加图片或文档"
               @click="triggerPickFile"
             >
@@ -461,15 +531,22 @@ async function confirmDeleteSession(id: number) {
             @change="onFileChange"
           />
           <el-input
+            ref="inputRef"
             v-model="inputText"
             type="textarea"
             :autosize="{ minRows: 2, maxRows: 8 }"
             resize="none"
-            placeholder="输入问题，Enter 发送 / Shift+Enter 换行"
+            :placeholder="editingMessageId !== null
+              ? '修改消息内容'
+              : '输入问题，Enter 发送 / Shift+Enter 换行'"
             :disabled="aiStore.sending"
             @keydown.enter.exact.prevent="send"
           />
-          <el-tooltip v-if="canGenerateReport" content="生成报告（导出 Word）" placement="top">
+          <el-tooltip
+            v-if="canGenerateReport && editingMessageId === null"
+            content="生成报告（导出 Word）"
+            placement="top"
+          >
             <button
               class="composer-btn"
               type="button"
@@ -484,7 +561,7 @@ async function confirmDeleteSession(id: number) {
             class="composer-btn composer-send"
             type="button"
             :disabled="!canSend || aiStore.sending"
-            aria-label="发送"
+            :aria-label="editingMessageId !== null ? '保存并重新生成' : '发送'"
             @click="send"
           >
             <el-icon><Promotion /></el-icon>
@@ -796,6 +873,44 @@ async function confirmDeleteSession(id: number) {
 }
 .ai-usage .el-progress {
   flex: 1;
+}
+.ai-editing-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+  padding: 4px 8px 4px 10px;
+  border-left: 3px solid var(--el-color-primary, #409eff);
+  background: var(--el-color-primary-light-9, #ecf5ff);
+  color: var(--el-text-color-regular, #606266);
+  font-size: 12px;
+}
+.ai-editing-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--el-text-color-secondary, #909399);
+  cursor: pointer;
+}
+.ai-editing-cancel:hover:not(:disabled),
+.ai-editing-cancel:focus-visible {
+  background: var(--el-color-primary-light-8, #d9ecff);
+  color: var(--el-text-color-primary, #303133);
+}
+.ai-editing-cancel:focus-visible {
+  outline: 2px solid var(--el-color-primary-light-5, #a0cfff);
+  outline-offset: 1px;
+}
+.ai-editing-cancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 /* ===== 输入框容器：曲别针 / textarea / 生成报告 / 发送 同处一个圆角容器 ===== */
 .ai-composer {

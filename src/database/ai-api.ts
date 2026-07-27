@@ -196,6 +196,11 @@ export interface AiSessionDeleteResult {
   attachments: AiAttachmentRef[]
 }
 
+export interface AiMessageEditResult {
+  updated: boolean
+  removedAttachments: AiAttachmentRef[]
+}
+
 /** 当前用户可见的会话摘要。 */
 export interface AiChatSession {
   id: number
@@ -1172,6 +1177,74 @@ export class AIApi extends DatabaseAPI {
   deleteSessionForUser(sessionId: number, userId: number): AiSessionDeleteResult {
     if (!this.getSessionForUser(sessionId, userId)) return { deleted: false, attachments: [] }
     return this.deleteSession(sessionId)
+  }
+
+  /**
+   * 编辑当前用户会话中的最后一条 user 消息，并截断其后的旧回复。
+   * 只允许最后一条 user 消息，避免从历史中段产生隐式分支。
+   */
+  editLastUserMessageForUser(
+    sessionId: number,
+    userId: number,
+    messageId: number,
+    content: string,
+  ): AiMessageEditResult {
+    if (!content.trim() || !this.getSessionForUser(sessionId, userId)) {
+      return { updated: false, removedAttachments: [] }
+    }
+
+    const target = this.queryOne(
+      'SELECT id, role, attachments FROM ai_chat_message WHERE id = ? AND session_id = ?',
+      [messageId, sessionId],
+    )
+    const latestUser = this.queryOne(
+      `SELECT id
+       FROM ai_chat_message
+       WHERE session_id = ? AND role = 'user'
+       ORDER BY id DESC
+       LIMIT 1`,
+      [sessionId],
+    )
+    if (
+      target?.role !== 'user' ||
+      Number(latestUser?.id) !== messageId ||
+      (parseAttachmentRefs(target.attachments)?.length || 0) > 0
+    ) {
+      return { updated: false, removedAttachments: [] }
+    }
+
+    const removedAttachments = dedupeAttachmentRefs(
+      this.listMessages(sessionId)
+        .filter((message) => message.id > messageId)
+        .flatMap((message) => message.attachments || []),
+    )
+    const rawDb = typeof this.db?.getRawDB === 'function' ? this.db.getRawDB() : this.db
+
+    rawDb.run('BEGIN TRANSACTION')
+    try {
+      const updated =
+        this.execute(
+          `UPDATE ai_chat_message
+           SET content = ?
+           WHERE id = ? AND session_id = ? AND role = 'user'`,
+          [content.trim(), messageId, sessionId],
+        ) > 0
+      if (!updated) throw new Error('编辑消息失败')
+      this.execute('DELETE FROM ai_chat_message WHERE session_id = ? AND id > ?', [
+        sessionId,
+        messageId,
+      ])
+      this.touchSession(sessionId)
+      rawDb.run('COMMIT')
+      return { updated: true, removedAttachments }
+    } catch (error) {
+      try {
+        rawDb.run('ROLLBACK')
+      } catch {
+        /* ignore rollback failures */
+      }
+      throw error
+    }
   }
 
   countAttachmentReferences(rel: string): number {
