@@ -93,7 +93,7 @@ function processCsv(csvInfo) {
       productName: name,
       resourceCode,
       imageFilename: `${resourceCode}.webp`,
-      assetPath: `src/assets/images/physical-equipment/${imageFile}`,
+      assetPath: `assets/resources/images/physical-equipment/${imageFile}`,
     })
   }
   return results

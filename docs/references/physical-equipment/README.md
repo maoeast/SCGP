@@ -82,7 +82,7 @@ soothing-aids-weighted-lap-pad-001
 
 本目录中的 CSV 和草稿图片命名，最终会映射到：
 
-- `src/assets/images/physical-equipment/`
+- `assets/resources/images/physical-equipment/<domain>/`（运行时经 `resource://` 解析）
 
 那一侧是运行时目录，只放已经确定可被程序引用的图片资源。
 

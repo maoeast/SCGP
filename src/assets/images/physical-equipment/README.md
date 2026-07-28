@@ -1,6 +1,8 @@
 # 物理器材图片目录
 
-本目录用于存放将来会被程序直接引用的物理器材图片。
+> 2026-07-28 起图片物理路径已统一：WebP 迁至 `assets/resources/images/physical-equipment/<domain>/`，运行时经 `resource://images/physical-equipment/<domain>/<resourceCode>.webp` 解析；本目录只保留解析模块 `images.ts`（含已落地 key 清单）与各 domain 说明，不再存放图片字节。
+
+~~本目录用于存放将来会被程序直接引用的物理器材图片。~~（图片已迁出，见上方说明）
 
 与 `src/assets/images/equipment/` 的关系：
 - `equipment/`：当前感官器材的旧规则目录，依赖 `category + legacy_id`

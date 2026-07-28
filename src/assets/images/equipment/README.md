@@ -1,16 +1,11 @@
 # 器材图片使用说明
 
+> 2026-07-28 起图片物理路径已统一：WebP 迁至 `assets/resources/images/equipment/`，运行时经 `resource://images/equipment/{category}-{id}.webp` 解析；本目录只保留解析模块 `images.ts`（含已落地 key 清单）与本说明。命名规则 `{category}-{id}.webp` 不变。
+
 ## 目录结构
 
-```
-src/assets/images/equipment/
-├── images.ts          # 图片加载模块
-├── README.md          # 本文件
-├── tactile-1.webp     # 触觉-感官手环 (待添加)
-├── tactile-2.webp     # 触觉-感官石 (待添加)
-├── ...
-└── integration-62.webp  # 最后一个器材 (待添加)
-```
+当前运行时图片目录：`assets/resources/images/equipment/`（扁平 `{category}-{id}.webp`）。
+本目录仅保留 `images.ts`（解析 + key 清单）与本文档，不再存放图片字节。
 
 ## 添加真实图片
 
@@ -49,6 +44,7 @@ visual-30.webp    # ID=30 的视觉器材（流动光球）
 1. 准备图片文件（96x96px 或 128x128px 的 WebP 格式）
 2. 重命名为 `{category}-{id}.webp`
 3. 放入此目录 (`src/assets/images/equipment/`)
+   （现已统一为 `assets/resources/images/equipment/`）
 4. 运行 `npm run dev` 或 `npm run electron:dev`
 
 ### 4. 自动回退

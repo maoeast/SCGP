@@ -1,5 +1,7 @@
 # 器材图片文件名对照表
 
+> 2026-07-28 起 WebP 已迁至 `assets/resources/images/equipment/`（命名 `{category}-{id}.webp` 不变，运行时经 `resource://` 解析）。下方对照表的历史命名映射仍有效。
+
 > 当前版本基于 2026-03-26 导入的感官 CSV 资源生成
 > 共 63 种器材
 > 文件命名格式：`{category}-{id}.webp`

@@ -3,7 +3,7 @@
  * 基于 2026-03-26 导入的感官综合发展资源 CSV 生成的 63 种器材
  *
  * 图片说明：
- * - 优先使用真实图片：src/assets/images/equipment/{category}-{id}.webp
+ * - 优先使用真实图片：assets/resources/images/equipment/{category}-{id}.webp（resource:// 解析）
  * - 如果真实图片不存在，自动使用占位符（颜色 + 首字母）
  */
 

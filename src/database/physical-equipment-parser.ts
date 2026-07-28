@@ -153,7 +153,8 @@ function buildGeneratedResourceCode(
 }
 
 function getSuggestedAssetPath(domain: PhysicalEquipmentDomain, resourceCode: string): string {
-  return `src/assets/images/physical-equipment/${domain}/${resourceCode}.webp`
+  // 图片已统一迁至 assets/resources/images/physical-equipment/，运行时经 resource:// 解析
+  return `assets/resources/images/physical-equipment/${domain}/${resourceCode}.webp`
 }
 
 function findFirstHeader(
