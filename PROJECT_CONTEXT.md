@@ -1768,3 +1768,9 @@
 - 389 条预置教学视频元数据由 `src/data/preset-teaching-materials.json` 维护；原始视频约 5.1GB，不纳入 Git 或主安装包。
 - `assets/` 前缀资源通过 `get-app-resources-path` IPC 解析到 `{installDir}/resources`，并作为只读资源拒绝进入托管文件删除链；其他相对路径仍解析到 `{userData}/resources`。
 - `package.json` 的 `build.extraResources.filter` 显式排除 `videos/**/*`；验证脚本支持 life-skills 子目录并已核对 389 条源文件。提交：`243965c`。
+
+## 93. 2026-07-27 登录页主题背景媒体与托管资源扩展
+
+- `system_config.login_theme_backgrounds` 按 `warm-glow` / `calm-blue` / `lush-green` / `custom` 分别保存 `{ image, video }`；登录页固定按视频、图片、程序化星空降级。
+- 登录背景写入 `userData/resources/login-backgrounds/`，配置保存 `resource://` 引用；全局托管前缀扩为 `uploaded/`、`teaching-materials/`、`login-backgrounds/`，备份、恢复与孤儿 GC 必须同步覆盖。
+- 暖黄、静蓝与润绿是生产固定完整预置，只有自定义主题接受主色配置；开发构建额外支持预设主色临时调试；真实 Electron 媒体与重启持久化仍待用户手测。

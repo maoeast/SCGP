@@ -68,7 +68,7 @@ export interface ElectronAPI {
 
   // ========== Phase 2: 资源文件归档（备份 zip） ==========
   /**
-   * 打包托管资源文件为 zip（仅 uploaded/ + teaching-materials/ 子树）
+   * 打包托管资源文件为 zip（uploaded/ + teaching-materials/ + login-backgrounds/ 子树）
    * @returns Promise<ResourceArchivePackResult> - 加密前的 zip 字节 + 清单
    */
   packResourceArchive: () => Promise<ResourceArchivePackResult>

@@ -34,7 +34,7 @@ assert.equal(normalizeResourceUrl(123 as unknown as string), '')
 assert.equal(normalizeResourceUrl('😀'), '😀')
 
 // ---- 前缀常量 ----
-assert.deepEqual([...MANAGED_PREFIXES], ['uploaded/', 'teaching-materials/'])
+assert.deepEqual([...MANAGED_PREFIXES], ['uploaded/', 'teaching-materials/', 'login-backgrounds/'])
 assert.deepEqual([...PRESET_PREFIXES], ['docs/', 'images/', 'videos/', 'audio/'])
 
 // ---- isManagedResourcePath ----

@@ -789,7 +789,7 @@ ipcMain.handle('read-dir', async (event, dirPath) => {
 
 // ========== Phase 2: 资源文件归档（备份 zip）==========
 // 托管子目录（可进备份 / 可删）：与 src/utils/resource-file-refs.ts MANAGED_PREFIXES 一致
-const MANAGED_SUBDIRS = ['uploaded', 'teaching-materials']
+const MANAGED_SUBDIRS = ['uploaded', 'teaching-materials', 'login-backgrounds']
 
 /**
  * 递归遍历目录，返回 [{ rel, abs, size }]（rel 相对 baseDir，正斜杠分隔）。
@@ -823,7 +823,7 @@ async function walkDirRecursive(baseDir) {
 }
 
 /**
- * 打包托管资源文件为 zip（仅 uploaded/ + teaching-materials/ 子树，跳过预置）。
+ * 打包托管资源文件为 zip（uploaded/ + teaching-materials/ + login-backgrounds/，跳过预置）。
  * 返回 { success, zipBytes, manifest, fileCount, totalBytes }。
  */
 ipcMain.handle('pack-resource-archive', async () => {
@@ -872,7 +872,7 @@ ipcMain.handle('pack-resource-archive', async () => {
 })
 
 /**
- * 解包资源 zip 到 userData/resources（仅写 uploaded/ + teaching-materials/ 下，防遍历）。
+ * 解包资源 zip 到 userData/resources（仅写托管子目录，防遍历）。
  * 返回 { success, restored, failed: [{ rel, error }] }；单文件失败不阻断其余。
  */
 ipcMain.handle('unpack-resource-archive', async (event, zipBytes) => {

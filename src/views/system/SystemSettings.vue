@@ -91,44 +91,93 @@
                 />
               </el-select>
             </el-form-item>
-            <template v-if="settings.loginThemeVariant === 'custom'">
-              <el-form-item label="背景图片">
-                <div class="logo-upload">
-                  <div v-if="customBgPreviewUrl" class="logo-preview logo-preview--wide">
-                    <img :src="customBgPreviewUrl" alt="背景图片预览" />
-                    <el-button type="danger" size="small" @click="removeCustomBg" class="remove-btn">
-                      删除
+            <el-form-item label="背景媒体">
+              <div class="background-media-editor">
+                <div class="background-media-editor__heading">
+                  <strong>{{ currentThemeLabel }}背景</strong>
+                  <span class="system-settings-help">登录页优先播放 MP4，视频加载或播放失败时使用图片兜底。</span>
+                </div>
+                <div class="background-media-grid">
+                  <div class="background-media-card">
+                    <span class="background-media-card__label">背景视频（MP4）</span>
+                    <video
+                      v-if="currentBackgroundPreview.video"
+                      :src="currentBackgroundPreview.video"
+                      class="background-media-preview background-media-preview--video"
+                      controls
+                      muted
+                      loop
+                      preload="metadata"
+                    ></video>
+                    <el-upload
+                      v-else
+                      :auto-upload="false"
+                      :show-file-list="false"
+                      accept="video/mp4,.mp4"
+                      :on-change="handleBackgroundVideoChange"
+                    >
+                      <el-button plain>选择 MP4 视频</el-button>
+                    </el-upload>
+                    <el-button
+                      v-if="currentBackgroundPreview.video"
+                      type="danger"
+                      link
+                      @click="removeCurrentBackground('video')"
+                    >
+                      删除视频
                     </el-button>
+                    <span class="system-settings-help">建议 1920x1080，单个文件不超过 100MB。</span>
                   </div>
-                  <el-upload
-                    v-else
-                    :auto-upload="false"
-                    :show-file-list="false"
-                    accept="image/*"
-                    :on-change="handleCustomBgChange"
-                  >
-                    <el-button plain>选择背景图片</el-button>
-                  </el-upload>
-                  <span class="system-settings-help">推荐分辨率 1920x1080 及以上，支持 PNG、JPG 格式，不超过 4MB。</span>
+                  <div class="background-media-card">
+                    <span class="background-media-card__label">图片兜底</span>
+                    <img
+                      v-if="currentBackgroundPreview.image"
+                      :src="currentBackgroundPreview.image"
+                      class="background-media-preview"
+                      alt="登录背景图片预览"
+                    />
+                    <el-upload
+                      v-else
+                      :auto-upload="false"
+                      :show-file-list="false"
+                      accept="image/*"
+                      :on-change="handleBackgroundImageChange"
+                    >
+                      <el-button plain>选择背景图片</el-button>
+                    </el-upload>
+                    <el-button
+                      v-if="currentBackgroundPreview.image"
+                      type="danger"
+                      link
+                      @click="removeCurrentBackground('image')"
+                    >
+                      删除图片
+                    </el-button>
+                    <span class="system-settings-help">支持 PNG、JPG、WEBP，单个文件不超过 4MB。</span>
+                  </div>
                 </div>
-              </el-form-item>
-              <el-form-item label="按钮颜色">
-                <div class="system-settings-inline">
-                  <el-color-picker v-model="settings.themePrimaryColor" />
-                  <el-input v-model="settings.themePrimaryColor" class="system-settings-color-input" />
-                  <span class="system-settings-help">选择登录按钮的主色调。</span>
-                </div>
-              </el-form-item>
-            </template>
-            <template v-else>
-              <el-form-item label="主色">
-                <div class="system-settings-inline">
-                  <el-color-picker v-model="settings.themePrimaryColor" />
-                  <el-input v-model="settings.themePrimaryColor" class="system-settings-color-input" />
-                  <span class="system-settings-help">建议使用蓝色系，按钮与聚焦态会同步更新。</span>
-                </div>
-              </el-form-item>
-            </template>
+              </div>
+            </el-form-item>
+            <el-form-item label="主色">
+              <div class="system-settings-inline">
+                <el-color-picker
+                  v-model="settings.themePrimaryColor"
+                  :disabled="!canEditPrimaryColor"
+                />
+                <el-input
+                  v-model="settings.themePrimaryColor"
+                  class="system-settings-color-input"
+                  :disabled="!canEditPrimaryColor"
+                />
+                <span class="system-settings-help">
+                  {{ isLoginThemeDebugMode && currentThemeVariant !== 'custom'
+                    ? '开发调试模式：可临时调整预设主色，实时观察按钮、输入框聚焦态与交互阴影。'
+                    : currentThemeVariant === 'custom'
+                    ? '自定义主色会同步更新按钮、输入框聚焦态与交互阴影。'
+                    : '预置主题使用固定主色，切换主题时会同步更新全部交互颜色。' }}
+                </span>
+              </div>
+            </el-form-item>
             <el-form-item label="卡片透明度">
               <div class="system-settings-inline">
                 <el-slider
@@ -213,7 +262,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Check } from '@element-plus/icons-vue'
 import { initDatabase } from '@/database/init'
@@ -222,20 +271,71 @@ import {
   DEFAULT_LOGIN_PRIMARY_COLOR,
   LOGIN_THEME_PRESETS,
   applyLoginThemeVariables,
+  getEffectiveLoginPrimaryColor,
   normalizeHexColor,
   normalizeLoginThemeVariant,
+  type LoginThemeVariant,
 } from '@/utils/login-theme'
+import {
+  cloneLoginBackgrounds,
+  createBundledLoginBackgrounds,
+  createDefaultLoginBackgrounds,
+  deleteLoginBackgroundFile,
+  getLoginBackgroundUrl,
+  hasLoginBackgroundMedia,
+  LOGIN_BACKGROUND_PRESET_VERSION,
+  LOGIN_BACKGROUND_VARIANTS,
+  parseLoginBackgrounds,
+  saveLoginBackgroundFile,
+  serializeLoginBackgrounds,
+  type LoginBackgroundKind,
+  type LoginBackgrounds,
+} from '@/utils/login-background'
 
 const systemConfigStore = useSystemConfigStore()
 
 const saving = ref(false)
+const isHydratingSettings = ref(false)
+const isLoginThemeDebugMode = import.meta.env.DEV
 
 const systemLogoPreviewUrl = ref('')
 const systemLogoFile = ref<File | null>(null)
 const loginLogoPreviewUrl = ref('')
 const loginLogoFile = ref<File | null>(null)
-const customBgPreviewUrl = ref('')
-const customBgFile = ref<File | null>(null)
+
+type BackgroundFileMap = Record<LoginThemeVariant, Record<LoginBackgroundKind, File | null>>
+type BackgroundPreviewMap = Record<LoginThemeVariant, Record<LoginBackgroundKind, string>>
+
+const createBackgroundFileMap = (): BackgroundFileMap => ({
+  'warm-glow': { image: null, video: null },
+  'calm-blue': { image: null, video: null },
+  'lush-green': { image: null, video: null },
+  custom: { image: null, video: null },
+})
+
+const createBackgroundPreviewMap = (backgrounds: LoginBackgrounds): BackgroundPreviewMap => ({
+  'warm-glow': {
+    image: getLoginBackgroundUrl(backgrounds['warm-glow'].image),
+    video: getLoginBackgroundUrl(backgrounds['warm-glow'].video),
+  },
+  'calm-blue': {
+    image: getLoginBackgroundUrl(backgrounds['calm-blue'].image),
+    video: getLoginBackgroundUrl(backgrounds['calm-blue'].video),
+  },
+  'lush-green': {
+    image: getLoginBackgroundUrl(backgrounds['lush-green'].image),
+    video: getLoginBackgroundUrl(backgrounds['lush-green'].video),
+  },
+  custom: {
+    image: getLoginBackgroundUrl(backgrounds.custom.image),
+    video: getLoginBackgroundUrl(backgrounds.custom.video),
+  },
+})
+
+const backgroundFiles = reactive<BackgroundFileMap>(createBackgroundFileMap())
+const backgroundPreviews = reactive<BackgroundPreviewMap>(
+  createBackgroundPreviewMap(createDefaultLoginBackgrounds()),
+)
 
 const settings = reactive({
   systemName: '星愿能力发展训练系统',
@@ -244,7 +344,7 @@ const settings = reactive({
   loginThemeVariant: 'warm-glow',
   themePrimaryColor: DEFAULT_LOGIN_PRIMARY_COLOR,
   brandPanelDescription: '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。',
-  loginCustomBgImage: '',
+  loginBackgrounds: createDefaultLoginBackgrounds(),
   loginCardBgOpacity: 92,
   autoBackup: true,
   backupInterval: 7,
@@ -258,14 +358,24 @@ const loginThemeOptions = Object.entries(LOGIN_THEME_PRESETS).map(([value, prese
   label: preset.label,
 }))
 
+const currentThemeVariant = computed(() => normalizeLoginThemeVariant(settings.loginThemeVariant))
+const currentThemeLabel = computed(() => LOGIN_THEME_PRESETS[currentThemeVariant.value].label)
+const currentBackgroundPreview = computed(() => backgroundPreviews[currentThemeVariant.value])
+const canEditPrimaryColor = computed(
+  () => isLoginThemeDebugMode || currentThemeVariant.value === 'custom',
+)
+const customThemePrimaryColor = ref(DEFAULT_LOGIN_PRIMARY_COLOR)
+
 const originalThemeSnapshot = ref({
   variant: systemConfigStore.loginThemeVariant,
   primaryColor: systemConfigStore.themePrimaryColor,
   customBgImage: systemConfigStore.loginCustomBgImage,
   cardBgOpacity: systemConfigStore.loginCardOpacity,
+  backgrounds: createDefaultLoginBackgrounds(),
 })
 
 const loadSettings = async () => {
+  isHydratingSettings.value = true
   try {
     settings.systemVersion = window.electronAPI
       ? await window.electronAPI.getAppVersion()
@@ -276,6 +386,10 @@ const loadSettings = async () => {
     const configs = db.all(`
       SELECT key, value FROM system_config
     `)
+
+    let serializedBackgrounds = ''
+    let backgroundPresetVersion = ''
+    let legacyCustomBgImage = ''
 
     configs.forEach((config: any) => {
       const key = config.key
@@ -308,9 +422,14 @@ const loadSettings = async () => {
         case 'brand_panel_description':
           settings.brandPanelDescription = value
           break
+        case 'login_theme_backgrounds':
+          serializedBackgrounds = value || ''
+          break
+        case 'login_theme_backgrounds_preset_version':
+          backgroundPresetVersion = value || ''
+          break
         case 'login_custom_bg_image':
-          settings.loginCustomBgImage = value
-          customBgPreviewUrl.value = value
+          legacyCustomBgImage = value || ''
           break
         case 'login_card_opacity':
           settings.loginCardBgOpacity = Math.round((parseFloat(value) || 0.92) * 100)
@@ -333,14 +452,38 @@ const loadSettings = async () => {
       }
     })
 
+    let loadedBackgrounds = parseLoginBackgrounds(serializedBackgrounds)
+    if (!loadedBackgrounds.custom.image && legacyCustomBgImage) {
+      loadedBackgrounds.custom.image = legacyCustomBgImage
+    }
+    if (!backgroundPresetVersion && !hasLoginBackgroundMedia(loadedBackgrounds)) {
+      loadedBackgrounds = createBundledLoginBackgrounds()
+    }
+    settings.loginBackgrounds = loadedBackgrounds
+    settings.themePrimaryColor = getEffectiveLoginPrimaryColor(
+      normalizeLoginThemeVariant(settings.loginThemeVariant),
+      settings.themePrimaryColor,
+      isLoginThemeDebugMode,
+    )
+    if (currentThemeVariant.value === 'custom') {
+      customThemePrimaryColor.value = settings.themePrimaryColor
+    }
+    syncBackgroundPreviews()
+
     originalThemeSnapshot.value = {
       variant: normalizeLoginThemeVariant(settings.loginThemeVariant),
       primaryColor: normalizeHexColor(settings.themePrimaryColor, DEFAULT_LOGIN_PRIMARY_COLOR),
-      customBgImage: settings.loginCustomBgImage,
+      customBgImage: loadedBackgrounds.custom.image,
       cardBgOpacity: settings.loginCardBgOpacity / 100,
+      backgrounds: cloneLoginBackgrounds(loadedBackgrounds),
     }
   } catch (error) {
     console.error('加载系统设置失败:', error)
+  } finally {
+    // Flush variant watchers while hydration is still active so saved debug
+    // colors are not replaced by a preset default after the async load.
+    await nextTick()
+    isHydratingSettings.value = false
   }
 }
 
@@ -355,9 +498,34 @@ const handleSave = async () => {
       loginLogoPreviewUrl.value = await readFileAsDataUrl(loginLogoFile.value)
     }
 
-    if (customBgFile.value) {
-      customBgPreviewUrl.value = await readFileAsDataUrl(customBgFile.value)
-      settings.loginCustomBgImage = customBgPreviewUrl.value
+    const nextBackgrounds = cloneLoginBackgrounds(settings.loginBackgrounds)
+    const backgroundRefsToDelete: string[] = []
+    const normalizedThemeVariant = normalizeLoginThemeVariant(settings.loginThemeVariant)
+    const effectivePrimaryColor = getEffectiveLoginPrimaryColor(
+      normalizedThemeVariant,
+      settings.themePrimaryColor,
+      isLoginThemeDebugMode,
+    )
+    settings.themePrimaryColor = effectivePrimaryColor
+
+    for (const variant of LOGIN_BACKGROUND_VARIANTS) {
+      for (const kind of ['image', 'video'] as LoginBackgroundKind[]) {
+        const pendingFile = backgroundFiles[variant][kind]
+        const oldRef = originalThemeSnapshot.value.backgrounds[variant][kind]
+
+        if (pendingFile) {
+          nextBackgrounds[variant][kind] = await saveLoginBackgroundFile(
+            pendingFile,
+            variant,
+            kind,
+          )
+          if (oldRef && oldRef !== nextBackgrounds[variant][kind]) {
+            backgroundRefsToDelete.push(oldRef)
+          }
+        } else if (!nextBackgrounds[variant][kind] && oldRef) {
+          backgroundRefsToDelete.push(oldRef)
+        }
+      }
     }
 
     const db = await initDatabase()
@@ -369,10 +537,12 @@ const handleSave = async () => {
       login_logo_path: loginLogoPreviewUrl.value,
       auto_backup: settings.autoBackup.toString(),
       backup_interval: settings.backupInterval.toString(),
-      login_theme_variant: normalizeLoginThemeVariant(settings.loginThemeVariant),
-      theme_primary_color: normalizeHexColor(settings.themePrimaryColor, DEFAULT_LOGIN_PRIMARY_COLOR),
+      login_theme_variant: normalizedThemeVariant,
+      theme_primary_color: effectivePrimaryColor,
       brand_panel_description: settings.brandPanelDescription,
-      login_custom_bg_image: settings.loginThemeVariant === 'custom' ? settings.loginCustomBgImage : '',
+      login_theme_backgrounds: serializeLoginBackgrounds(nextBackgrounds),
+      login_theme_backgrounds_preset_version: LOGIN_BACKGROUND_PRESET_VERSION,
+      login_custom_bg_image: nextBackgrounds.custom.image,
       login_card_opacity: (settings.loginCardBgOpacity / 100).toFixed(2),
       default_report_format: settings.defaultReportFormat,
       include_student_avatar: settings.includeStudentAvatar.toString(),
@@ -400,18 +570,28 @@ const handleSave = async () => {
       console.log('✅ 数据库已显式保存')
     }
 
+    for (const oldRef of backgroundRefsToDelete) {
+      const deleted = await deleteLoginBackgroundFile(oldRef)
+      if (!deleted) {
+        console.warn('[SystemSettings] 旧登录背景文件清理失败:', oldRef)
+      }
+    }
+
     await systemConfigStore.loadConfig()
+    settings.loginBackgrounds = cloneLoginBackgrounds(nextBackgrounds)
     originalThemeSnapshot.value = {
       variant: systemConfigStore.loginThemeVariant,
       primaryColor: systemConfigStore.themePrimaryColor,
       customBgImage: systemConfigStore.loginCustomBgImage,
       cardBgOpacity: systemConfigStore.loginCardOpacity,
+      backgrounds: cloneLoginBackgrounds(nextBackgrounds),
     }
 
     ElMessage.success('系统设置保存成功')
     systemLogoFile.value = null
     loginLogoFile.value = null
-    customBgFile.value = null
+    clearPendingBackgroundFiles()
+    syncBackgroundPreviews()
   } catch (error) {
     console.error('保存系统设置失败:', error)
     ElMessage.error('保存失败，请重试')
@@ -421,12 +601,44 @@ const handleSave = async () => {
 }
 
 const ensureImageFile = (selectedFile: File) => {
+  if (!selectedFile) {
+    return false
+  }
   if (!selectedFile.type.startsWith('image/')) {
     ElMessage.error('请选择图片文件')
     return false
   }
   if (selectedFile.size > 2 * 1024 * 1024) {
     ElMessage.error('图片大小不能超过2MB')
+    return false
+  }
+  return true
+}
+
+const ensureBackgroundFile = (selectedFile: File, kind: LoginBackgroundKind) => {
+  if (!selectedFile) {
+    return false
+  }
+
+  if (kind === 'video') {
+    const isMp4 = selectedFile.type === 'video/mp4' || /\.mp4$/i.test(selectedFile.name)
+    if (!isMp4) {
+      ElMessage.error('背景视频仅支持 MP4 文件')
+      return false
+    }
+    if (selectedFile.size > 100 * 1024 * 1024) {
+      ElMessage.error('背景视频不能超过 100MB')
+      return false
+    }
+    return true
+  }
+
+  if (!selectedFile.type.startsWith('image/')) {
+    ElMessage.error('请选择图片文件')
+    return false
+  }
+  if (selectedFile.size > 4 * 1024 * 1024) {
+    ElMessage.error('背景图片不能超过 4MB')
     return false
   }
   return true
@@ -469,6 +681,59 @@ const handleLoginLogoChange = (file: any) => {
   reader.readAsDataURL(selectedFile)
 }
 
+const revokePreviewUrl = (value: string) => {
+  if (value.startsWith('blob:')) {
+    URL.revokeObjectURL(value)
+  }
+}
+
+const syncBackgroundPreviews = () => {
+  for (const variant of LOGIN_BACKGROUND_VARIANTS) {
+    for (const kind of ['image', 'video'] as LoginBackgroundKind[]) {
+      revokePreviewUrl(backgroundPreviews[variant][kind])
+      backgroundPreviews[variant][kind] = getLoginBackgroundUrl(
+        settings.loginBackgrounds[variant][kind],
+      )
+    }
+  }
+}
+
+const clearPendingBackgroundFiles = () => {
+  for (const variant of LOGIN_BACKGROUND_VARIANTS) {
+    backgroundFiles[variant].image = null
+    backgroundFiles[variant].video = null
+  }
+}
+
+const handleBackgroundFileChange = (file: any, kind: LoginBackgroundKind) => {
+  const selectedFile = file?.raw as File | undefined
+  if (!selectedFile || !ensureBackgroundFile(selectedFile, kind)) {
+    return
+  }
+
+  const variant = currentThemeVariant.value
+  revokePreviewUrl(backgroundPreviews[variant][kind])
+  backgroundFiles[variant][kind] = selectedFile
+  backgroundPreviews[variant][kind] = URL.createObjectURL(selectedFile)
+  settings.loginBackgrounds[variant][kind] = backgroundPreviews[variant][kind]
+}
+
+const handleBackgroundImageChange = (file: any) => {
+  handleBackgroundFileChange(file, 'image')
+}
+
+const handleBackgroundVideoChange = (file: any) => {
+  handleBackgroundFileChange(file, 'video')
+}
+
+const removeCurrentBackground = (kind: LoginBackgroundKind) => {
+  const variant = currentThemeVariant.value
+  revokePreviewUrl(backgroundPreviews[variant][kind])
+  backgroundPreviews[variant][kind] = ''
+  backgroundFiles[variant][kind] = null
+  settings.loginBackgrounds[variant][kind] = ''
+}
+
 const removeSystemLogo = () => {
   systemLogoPreviewUrl.value = ''
   systemLogoFile.value = null
@@ -479,50 +744,70 @@ const removeLoginLogo = () => {
   loginLogoFile.value = null
 }
 
-const handleCustomBgChange = (file: any) => {
-  const selectedFile = file.raw
-  if (!ensureImageFile(selectedFile)) {
-    return
-  }
-
-  customBgFile.value = selectedFile
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    customBgPreviewUrl.value = e.target?.result as string
-    settings.loginCustomBgImage = customBgPreviewUrl.value
-  }
-  reader.readAsDataURL(selectedFile)
-}
-
-const removeCustomBg = () => {
-  customBgPreviewUrl.value = ''
-  customBgFile.value = null
-  settings.loginCustomBgImage = ''
-}
-
 onMounted(() => {
   loadSettings()
 })
 
 watch(
-  () => [settings.loginThemeVariant, settings.themePrimaryColor, settings.loginCustomBgImage, settings.loginCardBgOpacity],
-  ([variant, primaryColor, bgImage, cardOpacity]) => {
-    applyLoginThemeVariables({
-      variant: normalizeLoginThemeVariant(variant as string),
-      primaryColor: normalizeHexColor(primaryColor as string, DEFAULT_LOGIN_PRIMARY_COLOR),
-      customBgImage: bgImage as string,
-      cardBgOpacity: (cardOpacity as number) / 100,
-    })
+  () => settings.loginThemeVariant,
+  (variant) => {
+    if (isHydratingSettings.value) {
+      return
+    }
+
+    const normalizedVariant = normalizeLoginThemeVariant(variant)
+    settings.themePrimaryColor = normalizedVariant === 'custom'
+      ? customThemePrimaryColor.value
+      : LOGIN_THEME_PRESETS[normalizedVariant].primary
   },
 )
 
+watch(
+  () => settings.themePrimaryColor,
+  (primaryColor) => {
+    if (currentThemeVariant.value === 'custom') {
+      customThemePrimaryColor.value = normalizeHexColor(
+        primaryColor,
+        DEFAULT_LOGIN_PRIMARY_COLOR,
+      )
+    }
+  },
+)
+
+watch(
+  () => [
+    settings.loginThemeVariant,
+    settings.themePrimaryColor,
+    settings.loginCardBgOpacity,
+    serializeLoginBackgrounds(settings.loginBackgrounds),
+  ],
+  ([variant, primaryColor, cardOpacity]) => {
+    const normalizedVariant = normalizeLoginThemeVariant(variant as string)
+    applyLoginThemeVariables({
+      variant: normalizedVariant,
+      primaryColor: normalizeHexColor(primaryColor as string, DEFAULT_LOGIN_PRIMARY_COLOR),
+      customBgImage: settings.loginBackgrounds[normalizedVariant].image,
+      cardBgOpacity: (cardOpacity as number) / 100,
+      allowPresetPrimaryColorOverride: isLoginThemeDebugMode,
+    })
+  },
+  { immediate: true },
+)
+
 onUnmounted(() => {
+  for (const variant of LOGIN_BACKGROUND_VARIANTS) {
+    for (const kind of ['image', 'video'] as LoginBackgroundKind[]) {
+      revokePreviewUrl(backgroundPreviews[variant][kind])
+    }
+  }
+
   const snapshot = originalThemeSnapshot.value
   applyLoginThemeVariables({
     variant: snapshot.variant,
     primaryColor: snapshot.primaryColor,
     customBgImage: snapshot.customBgImage,
     cardBgOpacity: snapshot.cardBgOpacity,
+    allowPresetPrimaryColorOverride: isLoginThemeDebugMode,
   })
 })
 </script>
@@ -600,6 +885,63 @@ onUnmounted(() => {
   position: absolute;
   top: 5px;
   right: 5px;
+}
+
+.background-media-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 660px);
+}
+
+.background-media-editor__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.background-media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.background-media-card {
+  min-height: 196px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 14px;
+  border: 1px solid var(--scgp-border, #dfe6ee);
+  border-radius: 8px;
+  background: var(--scgp-surface-soft, #f8fafc);
+  box-sizing: border-box;
+}
+
+.background-media-card__label {
+  color: var(--scgp-text, #243447);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.background-media-preview {
+  width: 100%;
+  height: 116px;
+  border-radius: 6px;
+  background: #e9eef5;
+  object-fit: cover;
+}
+
+.background-media-preview--video {
+  object-position: center;
+}
+
+@media (max-width: 720px) {
+  .background-media-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 :deep(.el-form-item) {

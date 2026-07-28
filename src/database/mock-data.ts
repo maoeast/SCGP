@@ -127,13 +127,15 @@ const mockData: MockTableData = {
   system_config: [
     { id: 1, key: 'system_name', value: '星愿能力发展训练系统', description: '系统名称' },
     { id: 2, key: 'system_version', value: '1.0.1', description: '系统版本' },
-    { id: 3, key: 'login_theme_variant', value: 'classic-blue', description: '登录页主题预设' },
-    { id: 4, key: 'theme_primary_color', value: '#4d8bbd', description: '登录页主色' },
+    { id: 3, key: 'login_theme_variant', value: 'warm-glow', description: '登录页主题预设' },
+    { id: 4, key: 'theme_primary_color', value: '#E6B93C', description: '登录页主色' },
     { id: 5, key: 'login_logo_path', value: '', description: '登录页 Logo' },
     { id: 6, key: 'brand_panel_description', value: '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。', description: '登录页品牌说明' },
-    { id: 7, key: 'auto_backup', value: 'true', description: '是否自动备份' },
-    { id: 8, key: 'backup_interval', value: '7', description: '备份间隔（天）' },
-    { id: 9, key: 'trial_days', value: '7', description: '试用天数' },
+    { id: 7, key: 'login_theme_backgrounds', value: '{"warm-glow":{"image":"resource://login-backgrounds/warm-glow/background.jpg","video":"resource://login-backgrounds/warm-glow/background.mp4"},"calm-blue":{"image":"resource://login-backgrounds/calm-blue/background.jpg","video":"resource://login-backgrounds/calm-blue/background.mp4"},"lush-green":{"image":"resource://login-backgrounds/lush-green/background.jpg","video":"resource://login-backgrounds/lush-green/background.mp4"},"custom":{"image":"","video":""}}', description: '登录页主题背景媒体' },
+    { id: 11, key: 'login_theme_backgrounds_preset_version', value: '1', description: '登录页主题背景预置版本' },
+    { id: 8, key: 'auto_backup', value: 'true', description: '是否自动备份' },
+    { id: 9, key: 'backup_interval', value: '7', description: '备份间隔（天）' },
+    { id: 10, key: 'trial_days', value: '7', description: '试用天数' },
   ],
 }
 

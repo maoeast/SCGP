@@ -56,10 +56,12 @@ withDefaults(defineProps<Props>(), {
 }
 
 .primary-button.is-active:not(:disabled) {
-  background: linear-gradient(135deg, #FFD000, #FF8C00);
-  box-shadow:
-    0 8px 28px rgba(255, 140, 0, 0.4),
-    0 0 40px rgba(255, 200, 0, 0.15);
+  background: linear-gradient(
+    135deg,
+    var(--login-primary-gradient-start, #E6B93C),
+    var(--login-primary-gradient-end, #E38B3A)
+  );
+  box-shadow: 0 8px 28px var(--login-button-shadow, rgba(227, 139, 58, 0.4));
   animation: btn-breathe 2.4s ease-in-out infinite;
 }
 
@@ -70,9 +72,7 @@ withDefaults(defineProps<Props>(), {
 }
 
 .primary-button.is-active:hover:not(:disabled) {
-  box-shadow:
-    0 12px 36px rgba(255, 140, 0, 0.5),
-    0 0 50px rgba(255, 200, 0, 0.2);
+  box-shadow: 0 12px 36px var(--login-button-shadow, rgba(227, 139, 58, 0.5));
 }
 
 .primary-button:focus-visible {
@@ -114,14 +114,10 @@ withDefaults(defineProps<Props>(), {
 
 @keyframes btn-breathe {
   0%, 100% {
-    box-shadow:
-      0 8px 28px rgba(255, 140, 0, 0.35),
-      0 0 30px rgba(255, 200, 0, 0.1);
+    box-shadow: 0 8px 28px var(--login-button-shadow, rgba(227, 139, 58, 0.35));
   }
   50% {
-    box-shadow:
-      0 8px 28px rgba(255, 140, 0, 0.5),
-      0 0 48px rgba(255, 200, 0, 0.2);
+    box-shadow: 0 12px 36px var(--login-button-shadow, rgba(227, 139, 58, 0.5));
   }
 }
 

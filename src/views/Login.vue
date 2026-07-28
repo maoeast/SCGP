@@ -3,7 +3,8 @@
     <GalaxyBackground
       class="login-shell__background"
       :variant="loginThemeVariant"
-      :custom-bg-image="systemConfigStore.loginCustomBgImage"
+      :background-image="systemConfigStore.activeLoginBackground.image"
+      :background-video="systemConfigStore.activeLoginBackground.video"
     />
     <div class="login-shell__veil"></div>
 
@@ -55,6 +56,7 @@ const REMEMBERED_USERNAME_KEY = 'scgp_login_username'
 const defaultSystemName = '星愿能力发展训练系统'
 const defaultSchoolName = 'XX学校'
 const defaultTagline = '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步'
+const isLoginThemeDebugMode = import.meta.env.DEV
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -171,13 +173,19 @@ watch(
 )
 
 watch(
-  () => [systemConfigStore.loginThemeVariant, systemConfigStore.loginCardOpacity, systemConfigStore.loginCustomBgImage],
+  () => [
+    systemConfigStore.loginThemeVariant,
+    systemConfigStore.loginCardOpacity,
+    systemConfigStore.activeLoginBackground.image,
+    systemConfigStore.activeLoginBackground.video,
+  ],
   () => {
     applyLoginThemeVariables({
       variant: systemConfigStore.loginThemeVariant,
       cardBgOpacity: systemConfigStore.loginCardOpacity,
-      customBgImage: systemConfigStore.loginCustomBgImage,
+      customBgImage: systemConfigStore.activeLoginBackground.image,
       primaryColor: systemConfigStore.themePrimaryColor,
+      allowPresetPrimaryColorOverride: isLoginThemeDebugMode,
     })
   },
   { immediate: true },

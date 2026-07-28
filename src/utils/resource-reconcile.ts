@@ -4,7 +4,7 @@
  * 历史遗留 + 未来漂移的孤儿物理文件清理（维护动作，非自动）。
  *
  * - 托管路径规则见 docs/plans/2026-07-15-a4-resource-file-lifecycle-plan.md §2.7：
- *   可删/进备份前缀 = `uploaded/`、`teaching-materials/`；预置（docs/images/videos/audio/）永不删。
+ *   可删/进备份前缀 = `uploaded/`、`teaching-materials/`、`login-backgrounds/`；预置资源永不删。
  * - dry-run 优先：先 `findOrphans()` 展示报告，用户确认后才 `purgeOrphans()`。
  * - 不做启动自动清理（避免误删 + 性能抖动）。
  *
@@ -34,13 +34,12 @@ export {
 } from './resource-reconcile-core'
 
 /** 磁盘上的托管子树（与 main.mjs MANAGED_SUBDIRS + resource-file-refs MANAGED_PREFIXES 一致） */
-const MANAGED_SUBTREES = ['uploaded', 'teaching-materials'] as const
+const MANAGED_SUBTREES = ['uploaded', 'teaching-materials', 'login-backgrounds'] as const
 
 /**
  * 收集 DB 中被引用的「托管」相对路径集（同步）。
  *
- * 扫描 `sys_training_resource`（cover_image + meta_data）、`teaching_material.file_path`
- * 与 `ai_chat_message.attachments`（Phase 3 vision 附件 JSON），归一后只保留命中托管前缀的路径。
+ * 扫描资源、教学材料、AI 附件与登录主题背景配置，归一后只保留命中托管前缀的路径。
  *
  * 注意：`sys_training_resource` **不过滤 is_active** —— 软删资源保留文件以便恢复，
  * 其文件必须算「在用」，否则一软删就被 GC 误清。
@@ -76,13 +75,21 @@ export function collectReferencedPaths(): Set<string> {
     console.warn('[resource-reconcile] 读取 ai_chat_message 引用失败:', error)
   }
 
+  try {
+    rows.configRows = db.all(
+      "SELECT value FROM system_config WHERE key = 'login_theme_backgrounds'"
+    ) as Array<{ value?: unknown }>
+  } catch (error) {
+    console.warn('[resource-reconcile] 读取登录背景引用失败:', error)
+  }
+
   return collectReferencedPathsFromRows(rows)
 }
 
 /**
  * 收集磁盘上的托管文件（异步）。
  *
- * 通过 `walk-dir` IPC 递归列 `userData/resources` 下的 `uploaded` + `teaching-materials` 子树。
+ * 通过 `walk-dir` IPC 递归列 `userData/resources` 下的托管子树。
  * 子目录不存在视为空；非 Electron 环境返回空数组。
  */
 export async function collectDiskPaths(): Promise<DiskFile[]> {

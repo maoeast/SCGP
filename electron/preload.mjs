@@ -81,7 +81,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getDatabaseStats: (dbName) => ipcRenderer.invoke('get-database-stats', dbName),
 
   // ========== Phase 2: 资源文件归档（备份 zip） ==========
-  // 打包托管资源为 zip（仅 uploaded/ + teaching-materials/）
+  // 打包托管资源为 zip（uploaded/ + teaching-materials/ + login-backgrounds/）
   packResourceArchive: () => ipcRenderer.invoke('pack-resource-archive'),
   // 解包资源 zip 到 userData/resources
   unpackResourceArchive: (zipBytes) => ipcRenderer.invoke('unpack-resource-archive', zipBytes),

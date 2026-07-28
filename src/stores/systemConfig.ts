@@ -4,10 +4,21 @@ import {
   DEFAULT_LOGIN_PRIMARY_COLOR,
   DEFAULT_LOGIN_THEME_VARIANT,
   applyLoginThemeVariables,
+  getEffectiveLoginPrimaryColor,
   normalizeHexColor,
   normalizeLoginThemeVariant,
   type LoginThemeVariant,
 } from '@/utils/login-theme'
+import {
+  cloneLoginBackgrounds,
+  createBundledLoginBackgrounds,
+  createDefaultLoginBackgrounds,
+  hasLoginBackgroundMedia,
+  normalizeLoginBackgroundRef,
+  parseLoginBackgrounds,
+  serializeLoginBackgrounds,
+  type LoginBackgrounds,
+} from '@/utils/login-background'
 
 // 默认 Logo 路径（使用 public 目录下的图片）
 // 在 Electron 环境中，需要使用相对路径，因为打包后使用 file:// 协议
@@ -30,6 +41,7 @@ const LEGACY_SYSTEM_NAME = '生活自理适应综合训练'
 const LEGACY_SYSTEM_NAME_ALT = '感官综合训练与评估'
 const CURRENT_SYSTEM_NAME = '星愿能力发展训练系统'
 const DEFAULT_BRAND_PANEL_DESCRIPTION = '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。'
+const IS_LOGIN_THEME_DEBUG_MODE = import.meta.env.DEV
 
 function normalizeSystemName(value: string) {
   return value === LEGACY_SYSTEM_NAME || value === LEGACY_SYSTEM_NAME_ALT
@@ -46,7 +58,9 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
   const loginThemeVariant = ref<LoginThemeVariant>(DEFAULT_LOGIN_THEME_VARIANT)
   const themePrimaryColor = ref(DEFAULT_LOGIN_PRIMARY_COLOR)
   const brandPanelDescription = ref(DEFAULT_BRAND_PANEL_DESCRIPTION)
-  const loginCustomBgImage = ref('')
+  const loginBackgrounds = ref<LoginBackgrounds>(createDefaultLoginBackgrounds())
+  const loginCustomBgImage = computed(() => loginBackgrounds.value.custom.image)
+  const activeLoginBackground = computed(() => loginBackgrounds.value[loginThemeVariant.value])
   const loginCardOpacity = ref(0.92)
   const loading = ref(false)
 
@@ -70,8 +84,9 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
     applyLoginThemeVariables({
       variant: loginThemeVariant.value,
       primaryColor: themePrimaryColor.value,
-      customBgImage: loginCustomBgImage.value,
+      customBgImage: activeLoginBackground.value.image,
       cardBgOpacity: loginCardOpacity.value,
+      allowPresetPrimaryColorOverride: IS_LOGIN_THEME_DEBUG_MODE,
     })
   }
 
@@ -86,8 +101,12 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
       loginThemeVariant.value = DEFAULT_LOGIN_THEME_VARIANT
       themePrimaryColor.value = DEFAULT_LOGIN_PRIMARY_COLOR
       brandPanelDescription.value = DEFAULT_BRAND_PANEL_DESCRIPTION
-      loginCustomBgImage.value = ''
+      loginBackgrounds.value = createDefaultLoginBackgrounds()
       loginCardOpacity.value = 0.92
+
+      let serializedBackgrounds = ''
+      let backgroundPresetVersion = ''
+      let legacyCustomBgImage = ''
 
       const { initDatabase } = await import('@/database/init')
       const db = await initDatabase()
@@ -131,14 +150,34 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
           case 'brand_panel_description':
             brandPanelDescription.value = value || DEFAULT_BRAND_PANEL_DESCRIPTION
             break
+          case 'login_theme_backgrounds':
+            serializedBackgrounds = value || ''
+            break
+          case 'login_theme_backgrounds_preset_version':
+            backgroundPresetVersion = value || ''
+            break
           case 'login_custom_bg_image':
-            loginCustomBgImage.value = value || ''
+            legacyCustomBgImage = value || ''
             break
           case 'login_card_opacity':
             loginCardOpacity.value = Math.min(Math.max(parseFloat(value) || 0.92, 0.3), 1.0)
             break
         }
       })
+
+      let parsedBackgrounds = parseLoginBackgrounds(serializedBackgrounds)
+      if (!parsedBackgrounds.custom.image && legacyCustomBgImage) {
+        parsedBackgrounds.custom.image = normalizeLoginBackgroundRef(legacyCustomBgImage)
+      }
+      if (!backgroundPresetVersion && !hasLoginBackgroundMedia(parsedBackgrounds)) {
+        parsedBackgrounds = createBundledLoginBackgrounds()
+      }
+      loginBackgrounds.value = parsedBackgrounds
+      themePrimaryColor.value = getEffectiveLoginPrimaryColor(
+        loginThemeVariant.value,
+        themePrimaryColor.value,
+        IS_LOGIN_THEME_DEBUG_MODE,
+      )
 
       // 更新页面标题
       if (systemName.value) {
@@ -166,7 +205,13 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
       } else if (key === 'login_theme_variant') {
         normalizedValue = normalizeLoginThemeVariant(value)
       } else if (key === 'theme_primary_color') {
-        normalizedValue = normalizeHexColor(value, DEFAULT_LOGIN_PRIMARY_COLOR)
+        normalizedValue = getEffectiveLoginPrimaryColor(
+          loginThemeVariant.value,
+          normalizeHexColor(value, DEFAULT_LOGIN_PRIMARY_COLOR),
+          IS_LOGIN_THEME_DEBUG_MODE,
+        )
+      } else if (key === 'login_theme_backgrounds') {
+        normalizedValue = serializeLoginBackgrounds(parseLoginBackgrounds(value))
       }
 
       // 检查配置是否存在
@@ -201,14 +246,28 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
         loginLogoPath.value = normalizedValue
       } else if (key === 'login_theme_variant') {
         loginThemeVariant.value = normalizeLoginThemeVariant(normalizedValue)
+        themePrimaryColor.value = getEffectiveLoginPrimaryColor(
+          loginThemeVariant.value,
+          themePrimaryColor.value,
+          IS_LOGIN_THEME_DEBUG_MODE,
+        )
         applyTheme()
       } else if (key === 'theme_primary_color') {
-        themePrimaryColor.value = normalizeHexColor(normalizedValue, DEFAULT_LOGIN_PRIMARY_COLOR)
+        themePrimaryColor.value = getEffectiveLoginPrimaryColor(
+          loginThemeVariant.value,
+          normalizeHexColor(normalizedValue, DEFAULT_LOGIN_PRIMARY_COLOR),
+          IS_LOGIN_THEME_DEBUG_MODE,
+        )
         applyTheme()
       } else if (key === 'brand_panel_description') {
         brandPanelDescription.value = normalizedValue || DEFAULT_BRAND_PANEL_DESCRIPTION
+      } else if (key === 'login_theme_backgrounds') {
+        loginBackgrounds.value = parseLoginBackgrounds(normalizedValue)
+        applyTheme()
       } else if (key === 'login_custom_bg_image') {
-        loginCustomBgImage.value = normalizedValue
+        const nextBackgrounds = cloneLoginBackgrounds(loginBackgrounds.value)
+        nextBackgrounds.custom.image = normalizeLoginBackgroundRef(normalizedValue)
+        loginBackgrounds.value = nextBackgrounds
         applyTheme()
       } else if (key === 'login_card_opacity') {
         loginCardOpacity.value = Math.min(Math.max(parseFloat(normalizedValue) || 0.92, 0.3), 1.0)
@@ -228,7 +287,9 @@ export const useSystemConfigStore = defineStore('systemConfig', () => {
     loginThemeVariant,
     themePrimaryColor,
     brandPanelDescription,
+    loginBackgrounds,
     loginCustomBgImage,
+    activeLoginBackground,
     loginCardOpacity,
     displayLogoPath,
     displayLoginLogoPath,

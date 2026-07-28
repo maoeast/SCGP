@@ -36,6 +36,7 @@ export interface ResourceReferenceRows {
   resourceRows?: Array<{ cover_image?: unknown; meta_data?: unknown }>
   materialRows?: Array<{ file_path?: unknown }>
   messageRows?: Array<{ attachments?: unknown }>
+  configRows?: Array<{ value?: unknown }>
 }
 
 export function collectReferencedPathsFromRows(rows: ResourceReferenceRows): Set<string> {
@@ -66,6 +67,26 @@ export function collectReferencedPathsFromRows(rows: ResourceReferenceRows): Set
       const rel = normalizeResourceUrl(item?.rel)
       if (rel && isManagedResourcePath(rel)) {
         refs.add(rel)
+      }
+    }
+  }
+
+  for (const row of rows.configRows || []) {
+    let parsed: unknown
+    try {
+      parsed = typeof row.value === 'string' ? JSON.parse(row.value) : null
+    } catch {
+      continue
+    }
+    if (!parsed || typeof parsed !== 'object') continue
+
+    for (const media of Object.values(parsed as Record<string, unknown>)) {
+      if (!media || typeof media !== 'object') continue
+      for (const value of Object.values(media as Record<string, unknown>)) {
+        const rel = normalizeResourceUrl(value)
+        if (rel && isManagedResourcePath(rel)) {
+          refs.add(rel)
+        }
       }
     }
   }

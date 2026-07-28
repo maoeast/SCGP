@@ -1,4 +1,4 @@
-export type LoginThemeVariant = 'warm-glow' | 'calm-blue' | 'custom'
+export type LoginThemeVariant = 'warm-glow' | 'calm-blue' | 'lush-green' | 'custom'
 
 export interface LoginThemePreset {
   label: string
@@ -60,6 +60,8 @@ export interface LoginThemeConfig {
   primaryColor: string
   customBgImage?: string
   cardBgOpacity?: number
+  /** Development-only override for tuning preset interaction colors. */
+  allowPresetPrimaryColorOverride?: boolean
 }
 
 export const DEFAULT_LOGIN_THEME_VARIANT: LoginThemeVariant = 'warm-glow'
@@ -67,7 +69,7 @@ export const DEFAULT_LOGIN_PRIMARY_COLOR = '#E6B93C'
 
 export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = {
   'warm-glow': {
-    label: '暖光',
+    label: '暖黄',
     primary: '#E6B93C',
     primaryGradientStart: '#E6B93C',
     primaryGradientEnd: '#E38B3A',
@@ -198,6 +200,73 @@ export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = 
       'rgba(79, 179, 191, 0.68)',
       'rgba(58, 152, 163, 0.38)',
       'rgba(58, 152, 163, 0)',
+    ],
+  },
+  'lush-green': {
+    label: '润绿',
+    primary: '#72BE2F',
+    primaryGradientStart: '#72BE2F',
+    primaryGradientEnd: '#55A923',
+    brandStart: '#9BD6E8',
+    brandEnd: '#A9D9C1',
+    brandSoft: '#E8F7EF',
+    pageBg: '#E8F6F2',
+    badgeBackground: 'rgba(255, 255, 255, 0.3)',
+    badgeText: '#3C7567',
+    shellBg: '#CBEAE8',
+    shellVeil:
+      'radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.28), transparent 22%), radial-gradient(circle at 82% 84%, rgba(114, 190, 47, 0.12), transparent 24%), linear-gradient(135deg, rgba(155, 214, 232, 0.14) 0%, rgba(169, 217, 193, 0.22) 100%)',
+    layoutBg: 'rgba(255, 255, 255, 0.32)',
+    layoutBorder: 'rgba(255, 255, 255, 0.52)',
+    layoutShadow: '0 36px 100px rgba(65, 137, 111, 0.22)',
+    brandPanelBg:
+      'radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.32), transparent 24%), radial-gradient(circle at 76% 78%, rgba(114, 190, 47, 0.2), transparent 26%), linear-gradient(155deg, #9BD6E8 0%, #9DD4DF 46%, #A9D9C1 100%)',
+    brandPanelText: '#ffffff',
+    brandBadgeText: '#3C7567',
+    brandTagline: 'rgba(255, 255, 255, 0.84)',
+    formPaneBg:
+      'radial-gradient(circle at left center, rgba(114, 190, 47, 0.1), transparent 26%), linear-gradient(180deg, rgba(250, 255, 253, 0.94) 0%, rgba(255, 255, 255, 0.98) 100%)',
+    buttonShadow: 'rgba(87, 169, 35, 0.34)',
+    buttonDisabledStart: '#C4D7C5',
+    buttonDisabledEnd: '#B2C9B6',
+    galaxyBg: '#CBEAE8',
+    galaxyVignette:
+      'radial-gradient(circle at center, transparent 0 54%, rgba(114, 190, 47, 0.08) 74%, rgba(65, 156, 139, 0.16) 100%), linear-gradient(180deg, rgba(203, 234, 232, 0) 0%, rgba(169, 217, 193, 0.14) 100%)',
+    galaxyParticlePalette: [
+      'rgb(114, 190, 47)',
+      'rgb(87, 169, 35)',
+      'rgb(74, 167, 155)',
+      'rgb(113, 194, 177)',
+      'rgb(155, 214, 232)',
+      'rgb(164, 214, 128)',
+      'rgb(207, 239, 224)',
+      'rgb(82, 150, 139)',
+    ],
+    galaxyDustPalette: [
+      'rgb(114, 190, 47)',
+      'rgb(87, 169, 35)',
+      'rgb(113, 194, 177)',
+      'rgb(155, 214, 232)',
+      'rgb(82, 150, 139)',
+    ],
+    galaxyBaseGradient: '#CBEAE8',
+    galaxyLowerGlow: [
+      'rgba(114, 190, 47, 0.16)',
+      'rgba(114, 190, 47, 0.07)',
+      'rgba(114, 190, 47, 0)',
+    ],
+    galaxyMainGlow: [
+      'rgba(155, 214, 232, 0.2)',
+      'rgba(113, 194, 177, 0.17)',
+      'rgba(114, 190, 47, 0.08)',
+      'rgba(114, 190, 47, 0)',
+    ],
+    galaxyCoreGlow: [
+      'rgba(247, 255, 250, 0.92)',
+      'rgba(207, 239, 224, 0.88)',
+      'rgba(114, 190, 47, 0.64)',
+      'rgba(74, 167, 155, 0.34)',
+      'rgba(74, 167, 155, 0)',
     ],
   },
   custom: {
@@ -336,6 +405,18 @@ export function getLoginThemePreset(variant: LoginThemeVariant) {
   return LOGIN_THEME_PRESETS[variant]
 }
 
+export function getEffectiveLoginPrimaryColor(
+  variant: LoginThemeVariant,
+  configuredColor?: string | null,
+  allowPresetPrimaryColorOverride = false,
+) {
+  const preset = getLoginThemePreset(variant)
+  if (variant !== 'custom' && !allowPresetPrimaryColorOverride) {
+    return preset.primary
+  }
+  return normalizeHexColor(configuredColor, preset.primary)
+}
+
 export function applyLoginThemeVariables(config: Partial<LoginThemeConfig> = {}) {
   if (typeof document === 'undefined') {
     return
@@ -343,14 +424,21 @@ export function applyLoginThemeVariables(config: Partial<LoginThemeConfig> = {})
 
   const variant = normalizeLoginThemeVariant(config.variant)
   const preset = getLoginThemePreset(variant)
-  const primary = normalizeHexColor(config.primaryColor, preset.primary)
+  const primary = getEffectiveLoginPrimaryColor(
+    variant,
+    config.primaryColor,
+    config.allowPresetPrimaryColorOverride,
+  )
   const style = document.documentElement.style
 
   const isCustom = variant === 'custom'
-  // For custom theme, derive button gradient directly from user-selected primary color
-  const gradientStart = isCustom ? primary : preset.primaryGradientStart
-  const gradientEnd = isCustom ? mixHexColors(primary, '#000000', 0.18) : preset.primaryGradientEnd
-  const buttonShadow = isCustom ? colorToRgba(primary, 0.3) : preset.buttonShadow
+  // Every variant derives the button gradient from the effective primary color.
+  // This prevents a preset's active state from retaining a stale warm-orange color.
+  const gradientStart = primary
+  const gradientEnd = isCustom
+    ? mixHexColors(primary, '#000000', 0.18)
+    : mixHexColors(primary, preset.primaryGradientEnd, 0.45)
+  const buttonShadow = colorToRgba(primary, 0.3)
 
   style.setProperty('--login-primary', primary)
   style.setProperty('--login-primary-hover', mixHexColors(primary, preset.brandStart, 0.22))
@@ -386,14 +474,18 @@ export function applyLoginThemeVariables(config: Partial<LoginThemeConfig> = {})
   const safeOpacity = String(clamp(cardOpacity, 0.3, 1.0))
   style.setProperty('--login-card-bg-opacity', safeOpacity)
 
-  // For warm-glow / calm-blue, the form pane is near-opaque white, which blocks
+  // For preset themes, the form pane is near-opaque white, which blocks
   // the background even when the card is transparent. Apply the same card
   // opacity to the form pane so the background (starfield) shows through.
   if (isCustom) {
     style.setProperty('--login-form-pane-bg', preset.formPaneBg)
   } else {
     // Preserve the theme tint colour but use card opacity
-    const tint = variant === 'calm-blue' ? '244,250,251' : '255,251,246'
+    const tint = variant === 'calm-blue'
+      ? '244,250,251'
+      : variant === 'lush-green'
+        ? '247,253,249'
+        : '255,251,246'
     style.setProperty(
       '--login-form-pane-bg',
       `linear-gradient(180deg, rgba(${tint},${safeOpacity}) 0%, rgba(255,255,255,${safeOpacity}) 100%)`,

@@ -3,16 +3,16 @@
  *
  * 统一「托管 / 预置」路径判定，供删除/替换/备份/GC 共用。
  *
- * - 托管（managed）：用户上传的文件，可删、进备份。前缀 uploaded/、teaching-materials/
+ * - 托管（managed）：用户上传的文件，可删、进备份。前缀 uploaded/、teaching-materials/、login-backgrounds/
  * - 预置（preset）：随包内置资源，永不删、不进备份。前缀 docs/、images/、videos/、audio/
  *
  * 判定依据见 docs/plans/2026-07-15-a4-resource-file-lifecycle-plan.md §2.7：
- * 活写盘链路 C 写 teaching-materials/、链路 D 写 uploaded/ai-scenes/；
+ * 活写盘链路 C 写 teaching-materials/、链路 D 写 uploaded/ai-scenes/，登录设置写 login-backgrounds/；
  * 预置前缀来自 assets/resources。
  */
 
 /** 托管前缀：用户文件，可删 / 进备份 */
-export const MANAGED_PREFIXES = ['uploaded/', 'teaching-materials/'] as const
+export const MANAGED_PREFIXES = ['uploaded/', 'teaching-materials/', 'login-backgrounds/'] as const
 /** 预置前缀：随包内置，永不删 / 不进备份 */
 export const PRESET_PREFIXES = ['docs/', 'images/', 'videos/', 'audio/'] as const
 

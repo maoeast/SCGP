@@ -72,6 +72,7 @@ void main() {
 /* ── Theme ── */
 function getStarColor(v: LoginThemeVariant): Color {
   if (v === 'calm-blue') return new Color('#d8f0f8')
+  if (v === 'lush-green') return new Color('#d8f3dc')
   if (v === 'custom') return new Color('#fff0c0')
   return new Color('#ffe8b0')
 }

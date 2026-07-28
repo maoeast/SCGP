@@ -16,7 +16,7 @@ const {
   collectReferencedPathsFromRows,
 } = jiti('../../src/utils/resource-reconcile-core.ts')
 
-test('resource reconcile collects managed references across resources, materials, and AI attachments', () => {
+test('resource reconcile collects managed references across resources, materials, AI attachments, and login backgrounds', () => {
   const refs = collectReferencedPathsFromRows({
     resourceRows: [
       {
@@ -46,9 +46,22 @@ test('resource reconcile collects managed references across resources, materials
         attachments: 'not json',
       },
     ],
+    configRows: [
+      {
+        value: JSON.stringify({
+          'warm-glow': {
+            image: 'resource://login-backgrounds/warm-glow/fallback.jpg',
+            video: 'resource://login-backgrounds/warm-glow/loop.mp4',
+          },
+          'calm-blue': { image: '', video: '' },
+        }),
+      },
+    ],
   })
 
   assert.deepEqual([...refs].sort(), [
+    'login-backgrounds/warm-glow/fallback.jpg',
+    'login-backgrounds/warm-glow/loop.mp4',
     'teaching-materials/fine_motor/card.pdf',
     'uploaded/ai-attachments/a.png',
     'uploaded/ai-scenes/scene-a.webp',
