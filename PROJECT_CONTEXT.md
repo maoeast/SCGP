@@ -1774,3 +1774,8 @@
 - `system_config.login_theme_backgrounds` 按 `warm-glow` / `calm-blue` / `lush-green` / `custom` 分别保存 `{ image, video }`；登录页固定按视频、图片、程序化星空降级。
 - 登录背景写入 `userData/resources/login-backgrounds/`，配置保存 `resource://` 引用；全局托管前缀扩为 `uploaded/`、`teaching-materials/`、`login-backgrounds/`，备份、恢复与孤儿 GC 必须同步覆盖。
 - 暖黄、静蓝与润绿是生产固定完整预置，只有自定义主题接受主色配置；开发构建额外支持预设主色临时调试；真实 Electron 媒体与重启持久化仍待用户手测。
+
+## 94. 2026-07-28 用户头像存储与显示约束
+
+- `student.avatar_path` 与 `user.avatar_path` 同时支持预置 canonical 路径 `images/user-avatars/...` 或 Canvas 压缩 Data URL；显示必须经 `resolvePresetResourceUrl()`，不得将构建环境 URL 持久化。
+- 预置头像按界面隔离为学生 6 张与当前账号 6 张；上传/拍照不进入 `uploaded/` 托管文件生命周期。
