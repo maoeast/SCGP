@@ -48,12 +48,6 @@
         </section>
       </nav>
 
-      <div class="sidebar-footer">
-        <button class="logout-btn" @click="handleLogout">
-          <i class="fas fa-right-from-bracket"></i>
-          <span v-show="!sidebarCollapsed">退出</span>
-        </button>
-      </div>
     </div>
 
     <!-- 主内容区 -->
@@ -68,10 +62,49 @@
         </div>
 
         <div class="header-right">
-          <div class="user-info" @click="goToProfile" title="点击查看个人资料">
-            <span class="user-name">{{ authStore.user?.name }}</span>
-            <span class="user-role">{{ getRoleName(authStore.user?.role) }}</span>
-          </div>
+          <el-dropdown
+            trigger="click"
+            placement="bottom-end"
+            popper-class="user-menu-dropdown"
+            @command="handleUserMenuCommand"
+          >
+            <button
+              type="button"
+              class="user-menu-trigger"
+              title="打开用户菜单"
+              aria-label="打开用户菜单"
+            >
+              <span class="user-info">
+                <span class="user-name">{{ authStore.user?.name }}</span>
+                <span class="user-role">{{ getRoleName(authStore.user?.role) }}</span>
+              </span>
+              <i class="fas fa-angle-down user-menu-chevron" aria-hidden="true"></i>
+            </button>
+
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item class="user-menu-dropdown-item" command="profile">
+                  <i class="fas fa-user user-menu-item-icon" aria-hidden="true"></i>
+                  <span>个人资料</span>
+                </el-dropdown-item>
+                <el-dropdown-item class="user-menu-dropdown-item" command="ai-chat-history">
+                  <i class="fas fa-comments user-menu-item-icon" aria-hidden="true"></i>
+                  <span>AI 聊天记录</span>
+                </el-dropdown-item>
+                <el-dropdown-item
+                  class="user-menu-dropdown-item user-menu-logout-item"
+                  command="logout"
+                  divided
+                >
+                  <i
+                    class="fas fa-right-from-bracket user-menu-item-icon"
+                    aria-hidden="true"
+                  ></i>
+                  <span>退出登录</span>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <div class="activation-status">
             <span class="status-dot" :class="{ active: authStore.isActivated }"></span>
             <span>{{ getActivationText() }}</span>
@@ -332,9 +365,20 @@ const handleLogout = async () => {
   }
 }
 
-// 跳转到个人资料页面
-const goToProfile = () => {
-  router.push('/profile')
+const handleUserMenuCommand = (command: string | number | object) => {
+  if (command === 'profile') {
+    router.push('/profile')
+    return
+  }
+
+  if (command === 'ai-chat-history') {
+    router.push({ name: 'AiChatHistory' })
+    return
+  }
+
+  if (command === 'logout') {
+    void handleLogout()
+  }
 }
 
 onMounted(() => {
@@ -468,18 +512,19 @@ onMounted(() => {
 }
 
 .nav-item.active {
-  border-left-color: #3b82f6;
+  border-left-color: #38bdf8;
   background: linear-gradient(
     90deg,
-    rgba(59, 130, 246, 0.12) 0%,
-    rgba(59, 130, 246, 0.05) 48%,
-    rgba(59, 130, 246, 0) 100%
+    rgba(14, 165, 233, 0.32) 0%,
+    rgba(14, 165, 233, 0.18) 52%,
+    rgba(14, 165, 233, 0.07) 82%,
+    rgba(14, 165, 233, 0) 100%
   );
   color: #f8fafc;
 }
 
 .nav-item.active .icon {
-  color: #60a5fa;
+  color: #7dd3fc;
 }
 
 .nav-item:active {
@@ -511,9 +556,10 @@ onMounted(() => {
   .nav-item.active:hover {
     background: linear-gradient(
       90deg,
-      rgba(59, 130, 246, 0.15) 0%,
-      rgba(59, 130, 246, 0.06) 48%,
-      rgba(59, 130, 246, 0) 100%
+      rgba(14, 165, 233, 0.38) 0%,
+      rgba(14, 165, 233, 0.22) 52%,
+      rgba(14, 165, 233, 0.09) 82%,
+      rgba(14, 165, 233, 0) 100%
     );
   }
 }
@@ -524,48 +570,9 @@ onMounted(() => {
   transition: opacity 0.3s;
 }
 
-.sidebar-footer {
-  padding: 14px 16px 18px;
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
-}
-
-.logout-btn {
-  width: 100%;
-  min-height: 48px;
-  padding: 0 14px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 0;
-  color: #f87171;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  font: inherit;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-.logout-btn:hover {
-  background: rgba(239, 68, 68, 0.18);
-  color: #fca5a5;
-}
-
-.nav-item:focus-visible,
-.logout-btn:focus-visible {
+.nav-item:focus-visible {
   outline: 2px solid #60a5fa;
   outline-offset: 2px;
-}
-
-.sidebar.collapsed .sidebar-footer {
-  padding-right: 12px;
-  padding-left: 12px;
-}
-
-.sidebar.collapsed .logout-btn {
-  padding: 0;
 }
 
 .main-container {
@@ -623,18 +630,33 @@ onMounted(() => {
   gap: 20px;
 }
 
+.user-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  transition: background 0.2s ease;
+}
+
+.user-menu-trigger:hover {
+  background: #f0f0f0;
+}
+
+.user-menu-trigger:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
 .user-info {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 8px;
-  transition: all 0.3s;
-}
-
-.user-info:hover {
-  background: #f0f0f0;
 }
 
 .user-name {
@@ -645,6 +667,47 @@ onMounted(() => {
 .user-role {
   font-size: 12px;
   color: #666;
+}
+
+.user-menu-chevron {
+  color: #64748b;
+  font-size: 13px;
+}
+
+:global(.user-menu-dropdown .user-menu-item-icon) {
+  width: 18px;
+  margin-right: 8px;
+  text-align: center;
+}
+
+:global(.user-menu-dropdown .user-menu-dropdown-item) {
+  min-height: 44px;
+  padding: 0 16px;
+}
+
+:global(.user-menu-dropdown .user-menu-logout-item) {
+  --el-dropdown-menuItem-hover-color: #b91c1c;
+  --el-dropdown-menuItem-hover-fill: #fef2f2;
+  color: #dc2626 !important;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+:global(.user-menu-dropdown .user-menu-logout-item .user-menu-item-icon),
+:global(.user-menu-dropdown .user-menu-logout-item span) {
+  color: inherit !important;
+}
+
+:global(.user-menu-dropdown .user-menu-logout-item:not(.is-disabled):hover),
+:global(.user-menu-dropdown .user-menu-logout-item:not(.is-disabled):focus) {
+  background-color: #fef2f2 !important;
+  color: #b91c1c !important;
+}
+
+:global(.user-menu-dropdown .user-menu-logout-item:not(.is-disabled):active) {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
 }
 
 .activation-status {

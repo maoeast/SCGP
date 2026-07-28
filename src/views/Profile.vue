@@ -39,12 +39,12 @@
     <section class="scgp-page-panel profile-ai-history">
       <div class="scgp-content-toolbar">
         <div class="scgp-content-toolbar__main">
-          <h2 class="scgp-content-toolbar__title">AI 聊天历史</h2>
+          <h2 class="scgp-content-toolbar__title">AI 聊天记录</h2>
           <p class="scgp-content-toolbar__description">查看、续聊或删除当前账号与 AI 智能体的历史会话。</p>
         </div>
         <el-button type="primary" @click="router.push({ name: 'AiChatHistory' })">
           <i class="fas fa-comments"></i>
-          查看聊天历史
+          查看聊天记录
         </el-button>
       </div>
     </section>
