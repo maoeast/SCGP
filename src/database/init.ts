@@ -424,6 +424,7 @@ CREATE TABLE IF NOT EXISTS user (
   role TEXT NOT NULL CHECK(role IN ('admin', 'teacher')),
   name TEXT NOT NULL,
   email TEXT,
+  avatar_path TEXT,
   last_login TEXT,
   is_active INTEGER DEFAULT 1,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -1226,6 +1227,8 @@ export async function initDatabase(): Promise<any> {
     if (!isNewDb) {
       console.log('🔄 执行数据库迁移（旧数据库）')
       try {
+        safeAddColumn(rawDb, 'user', 'avatar_path TEXT')
+
         // 检查 train_log 表是否有 completion_details 列
         const tableInfo = db.all("PRAGMA table_info(train_log)")
         const hasCompletionDetails = tableInfo.some((col: any) => col.name === 'completion_details')

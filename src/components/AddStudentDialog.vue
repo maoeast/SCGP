@@ -9,15 +9,27 @@
       </div>
 
       <form @submit.prevent="submitStudentForm" class="dialog-body">
-        <div class="form-group">
-          <label for="name">姓名 <span class="required">*</span></label>
-          <input
-            id="name"
-            v-model="studentForm.name"
-            type="text"
-            required
-            placeholder="请输入学生姓名"
-          />
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">姓名 <span class="required">*</span></label>
+            <input
+              id="name"
+              v-model="studentForm.name"
+              type="text"
+              required
+              placeholder="请输入学生姓名"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="studentNo">学号</label>
+            <input
+              id="studentNo"
+              v-model="studentForm.student_no"
+              type="text"
+              placeholder="可选，留空则自动生成"
+            />
+          </div>
         </div>
 
         <div class="form-row">
@@ -43,77 +55,49 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="studentNo">学号</label>
-          <input
-            id="studentNo"
-            v-model="studentForm.student_no"
-            type="text"
-            placeholder="可选，留空则自动生成"
-          />
-        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="disorder">诊断类型</label>
+            <select id="disorder" v-model="studentForm.disorder">
+              <option value="">请选择</option>
+              <option v-for="option in diagnosisOptions" :key="option" :value="option">
+                {{ option }}
+              </option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="disorder">诊断类型</label>
-          <select id="disorder" v-model="studentForm.disorder">
-            <option value="">请选择</option>
-            <option v-for="option in diagnosisOptions" :key="option" :value="option">
-              {{ option }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="classId">所属班级</label>
-          <select id="classId" v-model="studentForm.classId">
-            <option value="">暂不分班</option>
-            <option v-for="cls in availableClasses" :key="cls.id" :value="cls.id">
-              {{ cls.name }}
-            </option>
-          </select>
-          <small v-if="availableClasses.length === 0" class="text-muted">
-            当前学年暂无可用班级，请先创建班级。
-          </small>
+          <div class="form-group">
+            <label for="classId">所属班级</label>
+            <select id="classId" v-model="studentForm.classId">
+              <option value="">暂不分班</option>
+              <option v-for="cls in availableClasses" :key="cls.id" :value="cls.id">
+                {{ cls.name }}
+              </option>
+            </select>
+            <small v-if="availableClasses.length === 0" class="text-muted">
+              当前学年暂无可用班级，请先创建班级。
+            </small>
+          </div>
         </div>
 
         <div class="form-group">
           <label>头像</label>
-          <div class="avatar-upload">
-            <div class="avatar-preview-shell">
+          <AvatarPicker
+            v-model="avatarPreview"
+            :presets="studentAvatarPresets"
+            preset-label="学生预置头像"
+            :fallback-name="studentForm.name"
+            :fallback-tone="studentForm.gender === '女' ? 'student-female' : 'student-male'"
+          >
+            <template #preview="{ avatarUrl }">
               <StudentAvatar
                 :name="studentForm.name"
                 :gender="studentForm.gender || undefined"
-                :avatar-url="avatarPreview || undefined"
+                :avatar-url="avatarUrl"
                 size="lg"
               />
-              <button v-if="avatarPreview" type="button" class="btn-remove" @click="removeAvatar">
-                <i class="fas fa-xmark"></i>
-              </button>
-            </div>
-            <input
-              ref="avatarInput"
-              type="file"
-              accept="image/*"
-              @change="handleAvatarChange"
-              style="display: none"
-            />
-            <div class="avatar-buttons">
-              <button type="button" class="btn-upload" @click="showCameraMenu">
-                <i class="fas fa-camera"></i>
-                头像
-              </button>
-              <div v-if="cameraMenuVisible" class="camera-menu">
-                <button type="button" @click="openCamera">
-                  <i class="fas fa-camera"></i>
-                  拍照
-                </button>
-                <button type="button" @click="triggerAvatarUpload">
-                  <i class="fas fa-arrow-up-from-bracket"></i>
-                  本地上传
-                </button>
-              </div>
-            </div>
-          </div>
+            </template>
+          </AvatarPicker>
         </div>
         <div class="dialog-footer">
           <button type="button" class="btn-secondary" @click="$emit('close')">取消</button>
@@ -124,55 +108,11 @@
       </form>
     </div>
 
-    <!-- 摄像头对话框 -->
-    <div v-if="showCameraDialog" class="dialog-overlay">
-      <div class="camera-dialog">
-        <div class="dialog-header">
-          <h2>拍照</h2>
-          <button @click="closeCameraDialog" class="btn-close">
-            <i class="fas fa-xmark"></i>
-          </button>
-        </div>
-        <div class="camera-body">
-          <video
-            ref="cameraVideo"
-            autoplay
-            playsinline
-            v-show="!photoTaken"
-          ></video>
-          <canvas
-            ref="cameraCanvas"
-            v-show="photoTaken"
-            class="camera-preview"
-          ></canvas>
-          <div class="camera-controls">
-            <button
-              v-if="!photoTaken"
-              @click="takePhoto"
-              class="btn-capture"
-            >
-              <i class="fas fa-camera"></i>
-              拍照
-            </button>
-            <div v-else class="photo-actions">
-              <button @click="retakePhoto" class="btn-secondary">
-                <i class="fas fa-redo"></i>
-                重拍
-              </button>
-              <button @click="confirmPhoto" class="btn-primary">
-                <i class="fas fa-check"></i>
-                确认
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useStudentStore } from '@/stores/student'
 import { classAPI } from '@/database/class-api'
@@ -180,6 +120,8 @@ import { getCurrentAcademicYear } from '@/types/class'
 import type { ClassInfo } from '@/types/class'
 import { STANDARD_DATE_PICKER_PROPS, disableFutureDates } from '@/utils/date-picker'
 import StudentAvatar from '@/components/student/StudentAvatar.vue'
+import AvatarPicker from '@/components/common/AvatarPicker.vue'
+import { STUDENT_AVATAR_PRESETS } from '@/utils/avatar-presets'
 import { DIAGNOSIS_OPTIONS } from '@/utils/student-display'
 
 const emit = defineEmits<{
@@ -215,16 +157,10 @@ const props = defineProps<{
 const studentStore = useStudentStore()
 const standardDatePickerProps = STANDARD_DATE_PICKER_PROPS
 const diagnosisOptions = DIAGNOSIS_OPTIONS
+const studentAvatarPresets = STUDENT_AVATAR_PRESETS
 
 const saving = ref(false)
 const avatarPreview = ref('')
-const avatarInput = ref<HTMLInputElement | null>(null)
-const cameraMenuVisible = ref(false)
-const showCameraDialog = ref(false)
-const photoTaken = ref(false)
-const cameraVideo = ref<HTMLVideoElement | null>(null)
-const cameraCanvas = ref<HTMLCanvasElement | null>(null)
-const cameraStream = ref<MediaStream | null>(null)
 const availableClasses = ref<ClassInfo[]>([])
 
 function createEmptyStudentForm(): StudentFormState {
@@ -257,10 +193,6 @@ function normalizeDiagnosisValue(value?: string): string {
   return value?.trim() || ''
 }
 
-function triggerAvatarUpload() {
-  avatarInput.value?.click()
-}
-
 const studentForm = ref<StudentFormState>({
   name: '',
   gender: '',
@@ -269,122 +201,6 @@ const studentForm = ref<StudentFormState>({
   disorder: '',
   classId: null as number | null
 })
-
-// 方法
-const handleAvatarChange = (e: Event) => {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      avatarPreview.value = e.target?.result as string
-    }
-    reader.readAsDataURL(file)
-  }
-}
-
-const removeAvatar = () => {
-  avatarPreview.value = ''
-  if (avatarInput.value) {
-    avatarInput.value.value = ''
-  }
-}
-
-// 头像菜单相关
-const showCameraMenu = () => {
-  cameraMenuVisible.value = !cameraMenuVisible.value
-}
-
-// 关闭摄像头对话框
-const closeCameraDialog = async () => {
-  showCameraDialog.value = false
-  photoTaken.value = false
-  cameraMenuVisible.value = false
-  if (cameraStream.value) {
-    cameraStream.value.getTracks().forEach(track => track.stop())
-    cameraStream.value = null
-  }
-}
-
-const openCamera = async () => {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices()
-    const hasCamera = devices.some(device => device.kind === 'videoinput')
-
-    if (!hasCamera) {
-      ElMessage.warning('\u672a\u68c0\u6d4b\u5230\u6444\u50cf\u5934\u8bbe\u5907\uff0c\u8bf7\u4f7f\u7528\u6587\u4ef6\u4e0a\u4f20\u65b9\u5f0f')
-      cameraMenuVisible.value = false
-      // 自动触发文件上传
-      setTimeout(() => {
-        triggerAvatarUpload()
-      }, 100)
-      return
-    }
-
-    showCameraDialog.value = true
-    cameraMenuVisible.value = false
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: 'user',
-        width: { ideal: 640 },
-        height: { ideal: 480 }
-      }
-    })
-    cameraStream.value = stream
-    if (cameraVideo.value) {
-      cameraVideo.value.srcObject = stream
-    }
-  } catch (error: unknown) {
-    console.error('无法访问摄像头:', error)
-    closeCameraDialog()
-
-    const errorName = typeof error === 'object' && error !== null && 'name' in error
-      ? String(error.name)
-      : ''
-
-    if (errorName === 'NotFoundError') {
-      ElMessage.warning('未找到摄像头设备，请使用文件上传方式')
-    } else if (errorName === 'NotAllowedError' || errorName === 'PermissionDeniedError') {
-      ElMessage.warning('摄像头权限被拒绝，请在浏览器设置中允许访问摄像头，或使用文件上传方式')
-    } else if (errorName === 'NotReadableError') {
-      ElMessage.error('\u6444\u50cf\u5934\u88ab\u5176\u4ed6\u5e94\u7528\u5360\u7528\uff0c\u8bf7\u5173\u95ed\u5176\u4ed6\u4f7f\u7528\u6444\u50cf\u5934\u7684\u7a0b\u5e8f\u540e\u91cd\u8bd5')
-    } else {
-      ElMessage.error(`\u65e0\u6cd5\u8bbf\u95ee\u6444\u50cf\u5934: ${getErrorMessage(error)}`)
-    }
-
-    setTimeout(() => {
-      triggerAvatarUpload()
-    }, 500)
-  }
-}
-
-// 拍照
-const takePhoto = () => {
-  if (cameraVideo.value && cameraCanvas.value) {
-    const video = cameraVideo.value
-    const canvas = cameraCanvas.value
-    const context = canvas.getContext('2d')
-
-    if (context) {
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      context.drawImage(video, 0, 0)
-      photoTaken.value = true
-    }
-  }
-}
-
-// 重拍
-const retakePhoto = () => {
-  photoTaken.value = false
-}
-
-// 确认照片
-const confirmPhoto = () => {
-  if (cameraCanvas.value) {
-    avatarPreview.value = cameraCanvas.value.toDataURL('image/jpeg', 0.8)
-    closeCameraDialog()
-  }
-}
 
 const submitStudentForm = async () => {
   try {
@@ -489,12 +305,6 @@ const loadAvailableClasses = () => {
 onMounted(() => {
   initializeForm()
   loadAvailableClasses()
-})
-
-onUnmounted(() => {
-  if (cameraStream.value) {
-    cameraStream.value.getTracks().forEach(track => track.stop())
-  }
 })
 </script>
 
@@ -755,12 +565,12 @@ onUnmounted(() => {
 }
 
 .btn-primary {
-  background: #4CAF50;
+  background: #409eff;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #45a049;
+  background: #337ecc;
 }
 
 .btn-primary:disabled {

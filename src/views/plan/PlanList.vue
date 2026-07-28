@@ -320,9 +320,12 @@
                   :value="student.id"
                 >
                   <div style="display: flex; align-items: center; gap: 10px;">
-                    <el-avatar :size="24" :src="student.avatar_path">
-                      {{ student.name?.charAt(0) }}
-                    </el-avatar>
+                    <StudentAvatar
+                      :name="student.name"
+                      :gender="student.gender"
+                      :avatar-url="student.avatar_path"
+                      size="sm"
+                    />
                     <span>{{ student.name }}</span>
                     <span style="color: #909399; font-size: 12px;">
                       {{ student.student_no || '' }}

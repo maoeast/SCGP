@@ -412,7 +412,7 @@ export class UserAPI extends DatabaseAPI {
   // 获取所有用户
   async getAllUsers(): Promise<any[]> {
     return await this.queryAsync(`
-      SELECT id, username, role, name, email, last_login, is_active, created_at
+      SELECT id, username, role, name, email, avatar_path, last_login, is_active, created_at
       FROM user
       ORDER BY created_at DESC
     `)
@@ -421,7 +421,7 @@ export class UserAPI extends DatabaseAPI {
   // 根据ID获取用户
   async getUserById(id: number): Promise<any | null> {
     return await this.queryOneAsync(
-      'SELECT id, username, role, name, email, last_login, is_active, created_at FROM user WHERE id = ?',
+      'SELECT id, username, role, name, email, avatar_path, last_login, is_active, created_at FROM user WHERE id = ?',
       [id]
     )
   }
@@ -472,6 +472,7 @@ export class UserAPI extends DatabaseAPI {
     role?: 'admin' | 'teacher'
     name?: string
     email?: string
+    avatar_path?: string | null
     is_active?: number
   }): Promise<boolean> {
     const user = await this.getUserById(id)
@@ -504,6 +505,10 @@ export class UserAPI extends DatabaseAPI {
     if (userData.email !== undefined) {
       updates.push('email = ?')
       params.push(userData.email)
+    }
+    if (userData.avatar_path !== undefined) {
+      updates.push('avatar_path = ?')
+      params.push(userData.avatar_path || null)
     }
     if (userData.is_active !== undefined) {
       updates.push('is_active = ?')

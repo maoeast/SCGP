@@ -1,3 +1,5 @@
+import { resolvePresetResourceUrl } from '@/utils/preset-resource'
+
 export const DIAGNOSIS_OPTIONS = [
   '视力障碍',
   '听力障碍',
@@ -65,7 +67,7 @@ export function resolveStudentAvatarUrl(avatarUrl?: string | null): string {
   if (!normalized || isGeneratedStudentFallbackAvatar(normalized)) {
     return ''
   }
-  return normalized
+  return resolvePresetResourceUrl(normalized)
 }
 
 export function getStudentInitial(name?: string | null): string {

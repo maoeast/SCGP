@@ -254,6 +254,7 @@ CREATE TABLE IF NOT EXISTS user (
   role TEXT NOT NULL CHECK(role IN ('admin', 'teacher')),
   name TEXT NOT NULL,
   email TEXT,
+  avatar_path TEXT,
   last_login TEXT,
   is_active INTEGER DEFAULT 1,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,

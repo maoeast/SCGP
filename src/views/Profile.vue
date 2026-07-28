@@ -55,7 +55,7 @@
           <div class="scgp-content-toolbar__main">
             <h2 class="scgp-content-toolbar__title">基本信息</h2>
             <p class="scgp-content-toolbar__description">
-              用户名保持只读，姓名和邮箱将同步更新到当前登录账号。
+              用户名保持只读，姓名和头像将同步更新到当前登录账号。
             </p>
           </div>
 
@@ -69,14 +69,28 @@
           label-width="100px"
           class="profile-form"
         >
-          <el-form-item label="用户名">
-            <el-input v-model="profileForm.username" disabled>
-              <template #prepend>
-                <i class="fas fa-user"></i>
-              </template>
-            </el-input>
-            <div class="form-tip">用户名不可修改。</div>
-          </el-form-item>
+          <el-row :gutter="16" class="profile-form__account-row">
+            <el-col :xs="24" :sm="12">
+              <el-form-item label="用户名">
+                <el-input v-model="profileForm.username" disabled>
+                  <template #prepend>
+                    <i class="fas fa-user"></i>
+                  </template>
+                </el-input>
+                <div class="form-tip">用户名不可修改。</div>
+              </el-form-item>
+            </el-col>
+
+            <el-col :xs="24" :sm="12">
+              <el-form-item label="角色">
+                <el-input v-model="roleName" disabled>
+                  <template #prepend>
+                    <i class="fas fa-shield-halved"></i>
+                  </template>
+                </el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
 
           <el-form-item label="姓名" prop="name">
             <el-input v-model="profileForm.name" placeholder="请输入您的姓名">
@@ -86,20 +100,16 @@
             </el-input>
           </el-form-item>
 
-          <el-form-item label="角色">
-            <el-input v-model="roleName" disabled>
-              <template #prepend>
-                <i class="fas fa-shield-halved"></i>
-              </template>
-            </el-input>
-          </el-form-item>
-
-          <el-form-item label="邮箱" prop="email">
-            <el-input v-model="profileForm.email" placeholder="请输入邮箱（可选）">
-              <template #prepend>
-                <i class="fas fa-envelope"></i>
-              </template>
-            </el-input>
+          <el-form-item label="头像">
+            <div class="profile-avatar-field">
+              <AvatarPicker
+                v-model="profileForm.avatar_path"
+                :presets="teacherAvatarPresets"
+                preset-label="教师预置头像"
+                :fallback-name="profileForm.name"
+              />
+              <div class="form-tip">可选择预置头像，也可上传图片或拍照。</div>
+            </div>
           </el-form-item>
 
           <el-form-item class="profile-form__actions">
@@ -243,10 +253,13 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { UserAPI } from '@/database/api'
+import AvatarPicker from '@/components/common/AvatarPicker.vue'
+import { TEACHER_AVATAR_PRESETS } from '@/utils/avatar-presets'
 
 const authStore = useAuthStore()
 const userAPI = new UserAPI()
 const router = useRouter()
+const teacherAvatarPresets = TEACHER_AVATAR_PRESETS
 
 // 表单引用
 const profileFormRef = ref<FormInstance>()
@@ -264,7 +277,7 @@ const loginLogs = ref<any[]>([])
 const profileForm = reactive({
   username: '',
   name: '',
-  email: ''
+  avatar_path: '',
 })
 
 // 密码表单
@@ -300,9 +313,6 @@ const latestLoginLabel = computed(() => {
 const profileRules: FormRules = {
   name: [
     { required: true, message: '请输入您的姓名', trigger: 'blur' }
-  ],
-  email: [
-    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
   ]
 }
 
@@ -335,7 +345,7 @@ const loadProfile = () => {
   if (authStore.user) {
     profileForm.username = authStore.user.username
     profileForm.name = authStore.user.name || ''
-    profileForm.email = authStore.user.email || ''
+    profileForm.avatar_path = authStore.user.avatar_path || ''
   }
 }
 
@@ -351,12 +361,13 @@ const handleSaveProfile = async () => {
       await userAPI.updateUser(authStore.user!.id, {
         username: profileForm.username,
         name: profileForm.name,
-        email: profileForm.email || undefined
+        avatar_path: profileForm.avatar_path || null,
       })
 
-      // 更新 store 中的用户信息
-      authStore.user!.name = profileForm.name
-      authStore.user!.email = profileForm.email
+      authStore.updateCurrentUser({
+        name: profileForm.name,
+        avatar_path: profileForm.avatar_path || null,
+      })
 
       ElMessage.success('个人信息保存成功')
     } catch (error: any) {
@@ -487,6 +498,14 @@ onMounted(() => {
 .profile-form,
 .password-form {
   padding-top: 18px;
+}
+
+.profile-avatar-field {
+  width: 100%;
+}
+
+.profile-form__account-row {
+  margin-bottom: 0;
 }
 
 .profile-form__actions :deep(.el-form-item__content) {

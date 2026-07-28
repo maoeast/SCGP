@@ -14,6 +14,7 @@ export interface User {
   role: 'admin' | 'teacher'
   name: string
   email?: string
+  avatar_path?: string | null
   last_login?: string
 }
 
@@ -211,6 +212,16 @@ export const useAuthStore = defineStore('auth', {
       this.token = null
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user_info')
+    },
+
+    updateCurrentUser(userInfo: Partial<User>) {
+      if (!this.user) return
+
+      this.user = {
+        ...this.user,
+        ...userInfo,
+      }
+      localStorage.setItem('user_info', JSON.stringify(this.user))
     },
 
     // 从localStorage恢复登录状态

@@ -74,6 +74,10 @@
               title="打开用户菜单"
               aria-label="打开用户菜单"
             >
+              <span class="user-avatar" :class="{ 'has-image': currentUserAvatarUrl }">
+                <img v-if="currentUserAvatarUrl" :src="currentUserAvatarUrl" :alt="`${authStore.user?.name || '当前用户'}头像`" />
+                <span v-else>{{ currentUserInitial }}</span>
+              </span>
               <span class="user-info">
                 <span class="user-name">{{ authStore.user?.name }}</span>
                 <span class="user-role">{{ getRoleName(authStore.user?.role) }}</span>
@@ -131,6 +135,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
 import { performConfirmedLogout } from '@/utils/auth-ui'
+import { resolveAvatarUrl } from '@/utils/avatar-presets'
 import {
   filterVisibleAccessControlledItems,
   type AccessControlledItem,
@@ -170,6 +175,8 @@ const authStore = useAuthStore()
 const systemConfigStore = useSystemConfigStore()
 
 const sidebarCollapsed = ref(false)
+const currentUserAvatarUrl = computed(() => resolveAvatarUrl(authStore.user?.avatar_path))
+const currentUserInitial = computed(() => authStore.user?.name?.trim().charAt(0).toUpperCase() || '?')
 
 const menuGroupConfigs: readonly MenuGroupConfig[] = [
   {
@@ -651,6 +658,27 @@ onMounted(() => {
 .user-menu-trigger:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #edf4ff;
+  color: #486a93;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .user-info {
