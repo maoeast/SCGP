@@ -6,7 +6,7 @@
         <p class="subtitle">管理学生档案、基本信息与评估记录 · 共 {{ filteredStudents.length }} 名学生</p>
       </div>
       <div class="header-right">
-        <el-button @click="showImportModal = true">
+        <el-button @click="openImportModal">
           <el-icon><Upload /></el-icon>
           批量导入
         </el-button>
@@ -169,11 +169,11 @@
       @saved="handleStudentSaved"
     />
 
-    <div v-if="showImportModal" class="modal-overlay" @click.self="showImportModal = false">
+    <div v-if="showImportModal" class="modal-overlay" @click.self="closeImportModal">
       <div class="modal">
         <div class="modal-header">
           <h2>批量导入学生</h2>
-          <button class="close-btn" @click="showImportModal = false">
+          <button class="close-btn" :disabled="importingStudents" @click="closeImportModal">
             <i class="fas fa-xmark"></i>
           </button>
         </div>
@@ -191,13 +191,34 @@
               type="file"
               accept=".xlsx,.xls"
               style="display: none"
+              :disabled="importingStudents"
               @change="handleFileSelect"
             />
-            <button class="btn btn-primary" @click="triggerFileInput">
+            <button class="btn btn-primary" :disabled="importingStudents" @click="triggerFileInput">
               <i class="fas fa-arrow-up-from-bracket"></i>
               选择文件
             </button>
             <span v-if="selectedFile" class="file-name">{{ selectedFile.name }}</span>
+          </div>
+          <div class="import-actions">
+            <button
+              class="btn btn-primary"
+              :disabled="!selectedFile || importingStudents"
+              @click="importStudents"
+            >
+              {{ importingStudents ? '正在导入...' : '开始导入' }}
+            </button>
+          </div>
+          <div v-if="importResults.length > 0" class="import-results" aria-live="polite">
+            <p class="import-results__summary">
+              导入完成：成功 {{ importSuccessCount }} 条，失败 {{ importFailureCount }} 条
+            </p>
+            <ul class="import-results__list">
+              <li v-for="result in importResults" :key="result.sourceRow" :class="result.status">
+                <span>第 {{ result.sourceRow }} 行{{ result.name ? `（${result.name}）` : '' }}</span>
+                <span>{{ result.message }}</span>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
@@ -225,6 +246,12 @@ import {
   getStudentAge,
   resolveDiagnosisType,
 } from '@/utils/student-display'
+import {
+  getStudentImportWriteError,
+  readStudentImportWorkbook,
+  validateStudentImportRow,
+  type StudentImportInput,
+} from '@/utils/student-import'
 
 type GenderFilter = '' | '男' | '女'
 const diagnosisOptions = DIAGNOSIS_OPTIONS.map(value => ({
@@ -234,6 +261,13 @@ const diagnosisOptions = DIAGNOSIS_OPTIONS.map(value => ({
 type DiagnosisFilter = DiagnosisType | ''
 
 interface StudentListItem extends Student {}
+
+interface StudentImportResult {
+  sourceRow: number
+  name: string
+  status: 'success' | 'failure'
+  message: string
+}
 
 const genderTabs: Array<{ label: string; value: GenderFilter }> = [
   { label: '全部', value: '' },
@@ -251,6 +285,8 @@ const showAddModal = ref(false)
 const showImportModal = ref(false)
 const selectedFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
+const importingStudents = ref(false)
+const importResults = ref<StudentImportResult[]>([])
 const editingStudent = ref<StudentListItem | null>(null)
 const classOptions = ref<ClassInfo[]>([])
 
@@ -307,6 +343,9 @@ const summaryStats = computed(() => {
   }
 })
 
+const importSuccessCount = computed(() => importResults.value.filter(result => result.status === 'success').length)
+const importFailureCount = computed(() => importResults.value.filter(result => result.status === 'failure').length)
+
 function getAge(birthday: string): number {
   return getStudentAge(birthday)
 }
@@ -355,6 +394,22 @@ function loadClasses() {
 
 function triggerFileInput() {
   fileInput.value?.click()
+}
+
+function openImportModal() {
+  selectedFile.value = null
+  importResults.value = []
+  showImportModal.value = true
+}
+
+function closeImportModal() {
+  if (importingStudents.value) return
+  showImportModal.value = false
+  selectedFile.value = null
+  importResults.value = []
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
 }
 
 function closeModal() {
@@ -408,6 +463,106 @@ async function deleteStudent(student: StudentListItem) {
 function handleFileSelect(event: Event) {
   const target = event.target as HTMLInputElement
   selectedFile.value = target.files?.[0] || null
+  importResults.value = []
+}
+
+function createGeneratedStudentNo(sourceRow: number, reservedStudentNos: Set<string>): string {
+  const prefix = `STU${Date.now()}${String(sourceRow).padStart(3, '0')}`
+  let suffix = 0
+  let generated = prefix
+
+  while (reservedStudentNos.has(generated)) {
+    suffix += 1
+    generated = `${prefix}${suffix}`
+  }
+
+  return generated
+}
+
+async function importStudents() {
+  const file = selectedFile.value
+  if (!file) {
+    ElMessage.warning('请先选择 Excel 文件')
+    return
+  }
+
+  importingStudents.value = true
+  importResults.value = []
+
+  try {
+    const rows = readStudentImportWorkbook(await file.arrayBuffer())
+    if (rows.length === 0) {
+      ElMessage.warning('Excel 中没有可导入的学生数据')
+      return
+    }
+
+    await studentStore.loadStudents()
+    const reservedStudentNos = new Set(
+      studentStore.students
+        .map(student => student.student_no?.trim())
+        .filter((studentNo): studentNo is string => Boolean(studentNo))
+    )
+    const validRows: Array<{ sourceRow: number; name: string; input: StudentImportInput }> = []
+    const results: StudentImportResult[] = []
+
+    for (const row of rows) {
+      const validation = validateStudentImportRow(
+        row,
+        reservedStudentNos,
+        sourceRow => createGeneratedStudentNo(sourceRow, reservedStudentNos),
+      )
+      const name = String(row.name ?? '').trim()
+
+      if (!validation.input) {
+        results.push({
+          sourceRow: row.sourceRow,
+          name,
+          status: 'failure',
+          message: validation.error || '数据校验失败',
+        })
+        continue
+      }
+
+      validRows.push({
+        sourceRow: row.sourceRow,
+        name: validation.input.name,
+        input: {
+          ...validation.input,
+          disorder: resolveDiagnosisType(validation.input.disorder) || validation.input.disorder,
+        },
+      })
+    }
+
+    if (validRows.length > 0) {
+      const writeResults = await studentStore.addStudents(validRows.map(row => row.input))
+      writeResults.forEach((writeResult, index) => {
+        const source = validRows[index]
+        if (!source) return
+
+        results.push({
+          sourceRow: source.sourceRow,
+          name: source.name,
+          status: writeResult.error ? 'failure' : 'success',
+          message: writeResult.error ? getStudentImportWriteError(writeResult.error) : '导入成功',
+        })
+      })
+    }
+
+    importResults.value = results.sort((left, right) => left.sourceRow - right.sourceRow)
+    if (importSuccessCount.value > 0 && importFailureCount.value === 0) {
+      ElMessage.success(`成功导入 ${importSuccessCount.value} 名学生`)
+    } else if (importSuccessCount.value > 0) {
+      ElMessage.warning(`导入完成：成功 ${importSuccessCount.value} 条，失败 ${importFailureCount.value} 条`)
+    } else {
+      ElMessage.error(`没有学生导入成功，共 ${importFailureCount.value} 条失败`)
+    }
+  } catch (error: unknown) {
+    console.error('批量导入学生失败:', error)
+    const message = error instanceof Error ? error.message : '请检查文件后重试'
+    ElMessage.error(`批量导入失败：${message}`)
+  } finally {
+    importingStudents.value = false
+  }
 }
 
 function downloadTemplate() {
@@ -874,6 +1029,62 @@ onMounted(async () => {
 .file-name {
   color: #606266;
   font-size: 13px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.import-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.import-results {
+  margin-top: 18px;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.import-results__summary {
+  margin: 0;
+  padding: 12px 14px;
+  background: #f5f7fa;
+  color: #303133;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.import-results__list {
+  max-height: 220px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.import-results__list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 14px;
+  border-top: 1px solid #ebeef5;
+  color: #606266;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.import-results__list li span:last-child {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.import-results__list li.success span:last-child {
+  color: #2aa071;
+}
+
+.import-results__list li.failure span:last-child {
+  color: #d9485f;
 }
 
 .btn {
@@ -898,6 +1109,16 @@ onMounted(async () => {
 
 .btn-primary:hover {
   background: #2f7fe2;
+}
+
+.btn:disabled,
+.close-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-primary:disabled:hover {
+  background: #409eff;
 }
 
 .btn-outline {

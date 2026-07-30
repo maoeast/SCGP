@@ -15,6 +15,14 @@ export interface Student {
   updated_at: string
 }
 
+export type StudentCreateInput = Omit<Student, 'id' | 'created_at' | 'updated_at'>
+
+export interface StudentBulkAddResult {
+  student: StudentCreateInput
+  id?: number
+  error?: unknown
+}
+
 export const useStudentStore = defineStore('student', {
   state: () => ({
     students: [] as Student[],
@@ -75,7 +83,7 @@ export const useStudentStore = defineStore('student', {
     },
 
     // 添加学生
-    async addStudent(student: Omit<Student, 'id' | 'created_at' | 'updated_at'>) {
+    async addStudent(student: StudentCreateInput) {
       try {
         this.loading = true
         const api = new StudentAPI()
@@ -86,6 +94,33 @@ export const useStudentStore = defineStore('student', {
         return id
       } catch (error) {
         console.error('添加学生失败:', error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // 批量导入逐行写入，保留每一行的失败结果，并在全部结束后统一刷新列表。
+    async addStudents(students: StudentCreateInput[]): Promise<StudentBulkAddResult[]> {
+      try {
+        this.loading = true
+        const api = new StudentAPI()
+        const results: StudentBulkAddResult[] = []
+
+        for (const student of students) {
+          try {
+            const id = await api.addStudent(student)
+            results.push({ student, id })
+          } catch (error) {
+            console.error('批量添加学生失败:', student, error)
+            results.push({ student, error })
+          }
+        }
+
+        this.students = await api.getAllStudents()
+        return results
+      } catch (error) {
+        console.error('批量添加学生失败:', error)
         throw error
       } finally {
         this.loading = false
