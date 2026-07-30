@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-07-09
+> last_updated: 2026-07-30
 > Responsibility: new-session handoff entry.
 > Read when: entering the repo or resuming work and needing the fastest route to current truth.
 > Not responsible for: replacing `AGENTS.md`, `.continue-here.md`, or `PROJECT_CONTEXT.md`.
@@ -33,6 +33,7 @@ If those four files are not enough, then read `PROJECT_CONTEXT.md`.
 
 ## Current Focus
 
-- 当前活动任务：**评估→IEP→器材推荐→训练计划 四者联动（推荐引擎叠加）**，计划已批准正在执行。主真源 `.continue-here.md` + `docs/plans/2026-07-09-assessment-recommendation-engine-plan.md`。纯叠加（`src/features/recommendation/`），唯一 schema 改动 `sys_training_plan` 加 `source`/`source_assessment_id` 两列。
-- 认知发展（cognitive）接入已提交 `8d571d1`（仓库已 clean）。
-- 授权链主线已收口到 `effectiveEntitlements`；推荐引擎的 entitlement 硬过滤必须按**器材 category**（非 moduleCode）映射到唯一 entitlement，禁用模块级 `canAccessModuleByEntitlements`（太粗）。
+- AI 批次已提交为 `5dce049 feat(ai): expand assistant presets and report tools`，核心 Node 契约测试 100/100 通过。
+- 学生批量导入闭环已完成：Excel 读取、字段和学号预检、逐行实际写入、逐项成功/失败反馈、结束后的学生列表刷新均已接入；`npx jiti tests/student-import.test.ts` 和 `npm run type-check` 已通过。
+- 用户手册 Markdown、DOCX、S024 重新实拍、截图审批和采集工具已按当前代码修订；`node scripts/manual/validate-user-manual.mjs` 和审批截图校验均已通过。
+- 之后按既定顺序提交手册工具、学生导入、实拍修复，不清理或混入未归属文件。

@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">SCGP 平台使用架构</title>
+  <desc id="desc">教师和管理员通过角色与能力包访问学生、评估、计划、训练、记录、报告、资源和系统管理，本地数据库和资源目录保存数据，加密备份用于恢复，AI 服务按隐私告知条件外发。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#4a6572"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#17323d" flood-opacity="0.12"/>
+    </filter>
+    <style>
+      .title{font:700 34px 'Microsoft YaHei',Arial,sans-serif;fill:#17323d}
+      .subtitle{font:400 17px 'Microsoft YaHei',Arial,sans-serif;fill:#60737c}
+      .section{font:700 20px 'Microsoft YaHei',Arial,sans-serif;fill:#17323d}
+      .label{font:700 18px 'Microsoft YaHei',Arial,sans-serif;fill:#17323d}
+      .body{font:400 15px 'Microsoft YaHei',Arial,sans-serif;fill:#425963}
+      .small{font:400 13px 'Microsoft YaHei',Arial,sans-serif;fill:#60737c}
+      .box{stroke:#d6e0e3;stroke-width:1.5;filter:url(#shadow)}
+      .arrow{stroke:#4a6572;stroke-width:2.2;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="720" fill="#f7faf9"/>
+  <text x="60" y="62" class="title">SCGP 平台使用架构</text>
+  <text x="60" y="94" class="subtitle">角色和授权决定入口，业务数据本地优先，AI 是经过配置与告知的可选外部能力</text>
+
+  <text x="60" y="145" class="section">使用者</text>
+  <rect x="60" y="165" width="210" height="118" rx="8" fill="#fff4d6" class="box"/>
+  <text x="84" y="204" class="label">教师</text>
+  <text x="84" y="234" class="body">学生、评估、计划</text>
+  <text x="84" y="258" class="body">训练、记录、报告</text>
+  <rect x="60" y="304" width="210" height="118" rx="8" fill="#e8f5f1" class="box"/>
+  <text x="84" y="343" class="label">管理员</text>
+  <text x="84" y="373" class="body">教师业务 + 班级分班</text>
+  <text x="84" y="397" class="body">资源、账号、备份、更新</text>
+
+  <path d="M270 225 H328" class="arrow"/>
+  <path d="M270 363 H328" class="arrow"/>
+
+  <text x="330" y="145" class="section">访问控制与平台入口</text>
+  <rect x="330" y="165" width="300" height="257" rx="8" fill="#ffffff" class="box"/>
+  <rect x="354" y="190" width="252" height="54" rx="6" fill="#e9f2fb" stroke="#b9d3e8"/>
+  <text x="480" y="223" text-anchor="middle" class="label">登录账号与角色</text>
+  <path d="M480 244 V268" class="arrow"/>
+  <rect x="354" y="270" width="252" height="54" rx="6" fill="#fff0e8" stroke="#efc5b2"/>
+  <text x="480" y="303" text-anchor="middle" class="label">有效能力包授权</text>
+  <path d="M480 324 V348" class="arrow"/>
+  <rect x="354" y="350" width="252" height="48" rx="6" fill="#edf6ee" stroke="#bdd8c1"/>
+  <text x="480" y="380" text-anchor="middle" class="label">动态菜单与生产路由</text>
+
+  <path d="M630 294 H684" class="arrow"/>
+
+  <text x="686" y="145" class="section">用户可见业务</text>
+  <rect x="686" y="165" width="454" height="257" rx="8" fill="#ffffff" class="box"/>
+  <rect x="710" y="190" width="126" height="62" rx="6" fill="#e7f4f0" stroke="#b3d8cf"/>
+  <text x="773" y="218" text-anchor="middle" class="label">学生</text>
+  <text x="773" y="240" text-anchor="middle" class="small">班级与档案</text>
+  <rect x="850" y="190" width="126" height="62" rx="6" fill="#fff3d9" stroke="#ead5a6"/>
+  <text x="913" y="218" text-anchor="middle" class="label">评估</text>
+  <text x="913" y="240" text-anchor="middle" class="small">15 项目录</text>
+  <rect x="990" y="190" width="126" height="62" rx="6" fill="#fbe9e5" stroke="#e7bdb3"/>
+  <text x="1053" y="218" text-anchor="middle" class="label">计划</text>
+  <text x="1053" y="240" text-anchor="middle" class="small">目标与资源</text>
+  <rect x="710" y="272" width="126" height="62" rx="6" fill="#e9f2fb" stroke="#b9d3e8"/>
+  <text x="773" y="300" text-anchor="middle" class="label">训练</text>
+  <text x="773" y="322" text-anchor="middle" class="small">游戏/器材/情境</text>
+  <rect x="850" y="272" width="126" height="62" rx="6" fill="#f0ecf8" stroke="#cbc0de"/>
+  <text x="913" y="300" text-anchor="middle" class="label">记录</text>
+  <text x="913" y="322" text-anchor="middle" class="small">筛选与导出</text>
+  <rect x="990" y="272" width="126" height="62" rx="6" fill="#eef2e8" stroke="#cad4bb"/>
+  <text x="1053" y="300" text-anchor="middle" class="label">报告</text>
+  <text x="1053" y="322" text-anchor="middle" class="small">查看与导出</text>
+  <rect x="780" y="354" width="126" height="44" rx="6" fill="#f7f0e6" stroke="#dbc9ad"/>
+  <text x="843" y="382" text-anchor="middle" class="label">资源中心</text>
+  <rect x="920" y="354" width="126" height="44" rx="6" fill="#e8f5f1" stroke="#b3d8cf"/>
+  <text x="983" y="382" text-anchor="middle" class="label">系统管理</text>
+
+  <text x="60" y="485" class="section">数据与外部能力</text>
+  <rect x="60" y="510" width="310" height="145" rx="8" fill="#ffffff" class="box"/>
+  <text x="84" y="548" class="label">本机数据库</text>
+  <text x="84" y="579" class="body">学生、评估、计划、训练、报告</text>
+  <text x="84" y="604" class="body">账号、资源元数据、系统配置</text>
+  <text x="84" y="632" class="small">本地优先，经应用保存主链持久化</text>
+  <rect x="410" y="510" width="250" height="145" rx="8" fill="#ffffff" class="box"/>
+  <text x="434" y="548" class="label">托管资源目录</text>
+  <text x="434" y="579" class="body">上传图片、教具文件</text>
+  <text x="434" y="604" class="body">登录品牌背景媒体</text>
+  <text x="434" y="632" class="small">资源体检识别未引用文件</text>
+  <rect x="700" y="510" width="210" height="145" rx="8" fill="#fff4d6" class="box"/>
+  <text x="724" y="548" class="label">加密备份</text>
+  <text x="724" y="579" class="body">数据库 + 托管资源</text>
+  <text x="724" y="604" class="body">口令保护的 .dat 文件</text>
+  <text x="724" y="632" class="small">不包含 AI API Key</text>
+  <rect x="950" y="510" width="190" height="145" rx="8" fill="#fbe9e5" class="box"/>
+  <text x="974" y="548" class="label">外部 AI 服务</text>
+  <text x="974" y="579" class="body">管理员配置模型</text>
+  <text x="974" y="604" class="body">用户确认外发告知</text>
+  <text x="974" y="632" class="small">只在需要时调用</text>
+
+  <path d="M845 422 V482 H215 V510" class="arrow"/>
+  <path d="M900 422 V470 H535 V510" class="arrow"/>
+  <path d="M370 582 H410" class="arrow"/>
+  <path d="M660 582 H700" class="arrow"/>
+  <path d="M1045 422 V510" class="arrow"/>
+</svg>

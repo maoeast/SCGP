@@ -62,6 +62,10 @@ export default (async (configEnv?: ConfigEnv): Promise<UserConfig> => {
       host: '0.0.0.0',
       port: 5173,
       strictPort: false,
+      watch: {
+        // Electron writes locked browser state under this disposable capture workspace.
+        ignored: ['**/output/manual-screenshot-capture/**'],
+      },
       fs: {
         strict: false,
       },

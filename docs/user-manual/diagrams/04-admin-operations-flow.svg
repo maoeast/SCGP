@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">管理员初始化与数据安全流程</title>
+  <desc id="desc">管理员先激活和核对授权，再配置学校品牌、用户班级、资源和可选 AI；日常维护通过手动加密备份、更新前备份、受控恢复与资源体检确保数据安全。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#4b6570"/></marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="6" flood-color="#17323d" flood-opacity="0.11"/></filter>
+    <style>
+      .title{font:700 34px 'Microsoft YaHei',Arial,sans-serif;fill:#17323d}.subtitle{font:400 17px 'Microsoft YaHei',Arial,sans-serif;fill:#60737c}
+      .lane{font:700 22px 'Microsoft YaHei',Arial,sans-serif;fill:#17323d}.label{font:700 18px 'Microsoft YaHei',Arial,sans-serif;fill:#17323d}.body{font:400 14px 'Microsoft YaHei',Arial,sans-serif;fill:#425963}.small{font:400 13px 'Microsoft YaHei',Arial,sans-serif;fill:#60737c}
+      .box{stroke:#d5e0e3;stroke-width:1.5;filter:url(#shadow)}.arrow{stroke:#4b6570;stroke-width:2.2;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1200" height="720" fill="#f7faf9"/>
+  <text x="60" y="62" class="title">管理员初始化与数据安全流程</text>
+  <text x="60" y="94" class="subtitle">配置工作和数据维护分两条线进行，关键变更前都回到手动备份</text>
+
+  <rect x="60" y="135" width="1080" height="230" rx="8" fill="#ffffff" stroke="#d5e0e3"/>
+  <text x="85" y="173" class="lane">首次部署与账号准备</text>
+  <rect x="85" y="205" width="180" height="105" rx="8" fill="#fff4d6" class="box"/>
+  <text x="175" y="242" text-anchor="middle" class="label">1. 激活</text>
+  <text x="175" y="270" text-anchor="middle" class="body">复制机器码</text>
+  <text x="175" y="292" text-anchor="middle" class="body">验证激活码</text>
+  <rect x="300" y="205" width="180" height="105" rx="8" fill="#e9f2fb" class="box"/>
+  <text x="390" y="242" text-anchor="middle" class="label">2. 核对授权</text>
+  <text x="390" y="270" text-anchor="middle" class="body">关于页查看</text>
+  <text x="390" y="292" text-anchor="middle" class="body">有效能力包</text>
+  <rect x="515" y="205" width="180" height="105" rx="8" fill="#e8f5f1" class="box"/>
+  <text x="605" y="242" text-anchor="middle" class="label">3. 品牌与账号</text>
+  <text x="605" y="270" text-anchor="middle" class="body">学校名称、主题</text>
+  <text x="605" y="292" text-anchor="middle" class="body">管理员/教师账号</text>
+  <rect x="730" y="205" width="180" height="105" rx="8" fill="#eef2e8" class="box"/>
+  <text x="820" y="242" text-anchor="middle" class="label">4. 业务基础</text>
+  <text x="820" y="270" text-anchor="middle" class="body">学年、班级、学生</text>
+  <text x="820" y="292" text-anchor="middle" class="body">资源状态</text>
+  <rect x="945" y="205" width="170" height="105" rx="8" fill="#f0ecf8" class="box"/>
+  <text x="1030" y="242" text-anchor="middle" class="label">5. 可选 AI</text>
+  <text x="1030" y="270" text-anchor="middle" class="body">模型、额度</text>
+  <text x="1030" y="292" text-anchor="middle" class="body">智能体和隐私告知</text>
+  <path d="M265 257 H300" class="arrow"/><path d="M480 257 H515" class="arrow"/><path d="M695 257 H730" class="arrow"/><path d="M910 257 H945" class="arrow"/>
+
+  <rect x="60" y="400" width="1080" height="245" rx="8" fill="#ffffff" stroke="#d5e0e3"/>
+  <text x="85" y="438" class="lane">日常数据安全与重大变更</text>
+  <rect x="85" y="470" width="200" height="115" rx="8" fill="#fff4d6" class="box"/>
+  <text x="185" y="507" text-anchor="middle" class="label">手动加密备份</text>
+  <text x="185" y="535" text-anchor="middle" class="body">12 字符以上口令</text>
+  <text x="185" y="559" text-anchor="middle" class="small">数据库 + 托管资源</text>
+  <rect x="330" y="470" width="200" height="115" rx="8" fill="#e9f2fb" class="box"/>
+  <text x="430" y="507" text-anchor="middle" class="label">执行重大变更</text>
+  <text x="430" y="535" text-anchor="middle" class="body">更新 / 批量资源调整</text>
+  <text x="430" y="559" text-anchor="middle" class="small">不在训练或评估中操作</text>
+  <rect x="575" y="470" width="200" height="115" rx="8" fill="#fbe9e5" class="box"/>
+  <text x="675" y="507" text-anchor="middle" class="label">需要时受控恢复</text>
+  <text x="675" y="535" text-anchor="middle" class="body">核对版本和记录数</text>
+  <text x="675" y="559" text-anchor="middle" class="small">恢复将覆盖当前全部数据</text>
+  <rect x="820" y="470" width="295" height="115" rx="8" fill="#e8f5f1" class="box"/>
+  <text x="967" y="507" text-anchor="middle" class="label">恢复后验证</text>
+  <text x="967" y="535" text-anchor="middle" class="body">资源体检、抽查业务数据</text>
+  <text x="967" y="559" text-anchor="middle" class="small">重新配置 AI Key；旧备份升级为 v4</text>
+  <path d="M285 527 H330" class="arrow"/><path d="M530 527 H575" class="arrow"/><path d="M775 527 H820" class="arrow"/>
+
+  <rect x="210" y="668" width="780" height="34" rx="8" fill="#fbe9e5" stroke="#e7bdb3"/>
+  <text x="600" y="691" text-anchor="middle" class="body">自动备份当前仅保存配置，不得替代“立即备份”</text>
+</svg>

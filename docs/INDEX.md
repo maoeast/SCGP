@@ -102,6 +102,13 @@
 - [系统使用说明书.md（历史交付稿）](./guides/系统使用说明书.md)
 - [系统参数技术文档.md（历史交付稿）](./guides/系统参数技术文档.md)
 
+### `docs/user-manual` — 当前用户手册
+
+- [SCGP / 星愿能力发展平台用户使用手册（Markdown）](./user-manual/SCGP-星愿能力发展平台用户使用手册.md) — 教师与管理员合并版；以当前代码、路由和有效文档为准，截图采用 `S001`–`S212` 单一可复现状态编号占位
+- `./user-manual/SCGP-星愿能力发展平台用户使用手册.docx` — 对应 Word 交付稿
+- [SCGP 用户手册截图执行清单](./user-manual/SCGP-用户手册截图执行清单.md) — 212 项逐项列明真实路由模板、角色、数据配置、操作、断言、裁切、采集模式、安全级别与正文锚点
+- `./user-manual/diagrams/` — 4 幅架构图与流程图的可编辑 SVG 源文件及 Word 嵌入用 PNG
+
 ### `docs/tech-design` — 底层技术方案
 
 - [sql_js_持久化模块标准实现方案_V1.1.md](./tech-design/sql_js_持久化模块标准实现方案_V1.1.md)

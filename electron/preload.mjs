@@ -1,6 +1,65 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 const ipcListenerRegistry = new Map()
+const manualScreenshotCapture = process.env.SCGP_MANUAL_SCREENSHOT_CAPTURE === 'true'
+let manualScreenshotReportRequestCount = 0
+
+function getManualScreenshotAiReportResponse() {
+  const scripted = document.documentElement?.dataset.scgpManualAiScriptedReport === '1'
+  if (!manualScreenshotCapture || !scripted) {
+    manualScreenshotReportRequestCount = 0
+    return null
+  }
+
+  manualScreenshotReportRequestCount += 1
+  if (manualScreenshotReportRequestCount === 1) {
+    return {
+      success: true,
+      content: '正在生成隔离演示报告。',
+      usage: {
+        totalTokens: 120,
+        promptTokens: 70,
+        completionTokens: 50,
+        promptCacheHitTokens: 0,
+        promptCacheMissTokens: 70,
+      },
+      toolCalls: [
+        {
+          id: 'manual-screenshot-generate-report',
+          type: 'function',
+          function: {
+            name: 'generate_report',
+            arguments: JSON.stringify({
+              title: '资源教室训练支持报告',
+              subtitle: '隔离截图导出演示',
+              report_type: 'training_plan',
+              student_name: '星愿一号',
+              sections: [
+                {
+                  type: 'paragraph',
+                  heading: '训练建议',
+                  text: '本报告仅用于用户手册隔离截图演示。',
+                },
+              ],
+            }),
+          },
+        },
+      ],
+    }
+  }
+
+  return {
+    success: true,
+    content: '报告工具已执行，已在隔离导出接收器中生成《资源教室训练支持报告》。',
+    usage: {
+      totalTokens: 96,
+      promptTokens: 54,
+      completionTokens: 42,
+      promptCacheHitTokens: 0,
+      promptCacheMissTokens: 54,
+    },
+  }
+}
 
 function getChannelListenerRegistry(channel) {
   if (!ipcListenerRegistry.has(channel)) {
@@ -96,7 +155,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   protectAiApiKey: (plainKey) => ipcRenderer.invoke('ai:protect-api-key', plainKey),
   migrateAiApiKey: (encKey) => ipcRenderer.invoke('ai:migrate-api-key', encKey),
   // payload: { encKey(密文), messages, systemPrompt, model, baseUrl }；明文 Key 不进渲染进程
-  aiChat: (payload) => ipcRenderer.invoke('ai:chat', payload),
+  aiChat: (payload) => getManualScreenshotAiReportResponse() || ipcRenderer.invoke('ai:chat', payload),
   // payload: { encKey(密文), baseUrl, providerName } → 拉取 OpenAI 兼容 /models 清单（明文 Key 仅 Main 解密用）
   aiListModels: (payload) => ipcRenderer.invoke('ai:list-models', payload),
 
