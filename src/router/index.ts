@@ -85,6 +85,9 @@ const MemoryMatchPage = () => import('@/views/emotional/games/MemoryMatchPage.vu
 const MissingItemPage = () => import('@/views/emotional/games/MissingItemPage.vue')
 const EchoSeqPage = () => import('@/views/emotional/games/EchoSeqPage.vue')
 const StoryOrderPage = () => import('@/views/emotional/games/StoryOrderPage.vue')
+const SizeOrderPage = () => import('@/views/emotional/games/SizeOrderPage.vue')
+const SpotDiffPage = () => import('@/views/emotional/games/SpotDiffPage.vue')
+const MazeRunPage = () => import('@/views/emotional/games/MazeRunPage.vue')
 const OddOneOutPage = () => import('@/views/emotional/games/OddOneOutPage.vue')
 const NumberSensePage = () => import('@/views/emotional/games/NumberSensePage.vue')
 
@@ -734,6 +737,39 @@ const router = createRouter({
           component: StoryOrderPage,
           meta: {
             title: '故事排序',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/size-order',
+          name: 'SizeOrderGame',
+          component: SizeOrderPage,
+          meta: {
+            title: '排排队',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/spot-diff',
+          name: 'SpotDiffGame',
+          component: SpotDiffPage,
+          meta: {
+            title: '找不同',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/maze-run',
+          name: 'MazeRunGame',
+          component: MazeRunPage,
+          meta: {
+            title: '小迷宫',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,
