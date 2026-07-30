@@ -43,11 +43,11 @@ Handoff：`.continue-here.md` 记当前唯一下一步（优先更新）；`HAND
 - 评估主链 `AssessmentContainer + ScaleDriver`；模块系统已有 `ModuleRegistry`
 - 路由仍是静态路由表，不是注册表动态装配
 - 授权事实来源 `authStore.effectiveEntitlements`（entitlement-first）；`allowedModules` / 许可证 `am` 仅保留兼容与调试语义，不是最终判权来源
-- **未完成**：DB Worker 主链、Image Worker 主链、注册表动态路由、完整多模块平台
+- **未完成**：DB Worker 主链、Image Worker 主链、注册表动态路由（模块已全注册但路由仍是静态表）、资源文件孤儿 GC（Phase 3）
 
-当前优先技术债：资源收藏未完成（资源中心「训练资源」Tab 未接收藏 UI + `teaching_material_favorite` 与 `sys_favorites` 两套并行表）、评估入口仍硬编码（catalog / driverRegistry / 报告路由多处并行枚举）、命名残留旧阶段名（产品名「训练系统 vs 平台」口径分叉 + `Layout.vue` ATS 折叠标题等 UI 旧名）。
+当前优先技术债：命名残留旧阶段名（migration 注释/SIC-ADS 头注释残留，活跃源码头已修 C11）、dev/迁移工具仍在路由树（生产屏蔽但表内存在）。
 
-已闭环不再列入（细节见 PROJECT_CONTEXT）：备份全 schema（§22，`backup.ts` 动态全表 v4.0）、资源文件生命周期（§61-62，Phase1/2/3 收口）、开发/迁移工具路由隔离（§82，C08 四层隔离 + 契约测试）。
+已闭环不再列入（细节见 PROJECT_CONTEXT）：备份全 schema（§22，v4.0）、资源文件生命周期（§61-62，Phase1/2）、开发/迁移工具路由隔离（§82，C08）、ModuleRegistry 6 模块全注册（C09）、评估入口动态化（§88-89，catalog 单一真源）、资源收藏（A6）、IEP 策略机制退役（C10）。
 
 ---
 
