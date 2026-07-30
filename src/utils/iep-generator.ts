@@ -201,6 +201,100 @@ export class IEPGenerator {
     }
   }
 
+  // ==========================================
+  // 认知发展游戏报告生成（cognitive 模块）
+  // ==========================================
+
+  /** 认知 K 系列游戏 code -> 中文名映射 */
+  private static readonly COGNITIVE_GAME_NAMES: Record<string, string> = {
+    K01_MEMORY_MATCH: '记忆翻牌',
+    K02_MISSING_ITEM: '少了什么',
+    K03_PATTERN_NEXT: '模式补全',
+    K04_ODD_ONE_OUT: '哪个不同类',
+    K05_NUMBER_SENSE: '数感大比拼',
+    K06_SIZE_ORDER: '排排队',
+    K07_SPOT_DIFF: '找不同',
+    K08_MAZE_RUN: '小迷宫',
+    K09_ECHO_SEQ: '序列复现',
+    K10_STORY_ORDER: '故事排序',
+  }
+
+  /**
+   * 生成认知发展游戏 IEP 报告
+   */
+  static generateCognitiveReport(
+    studentName: string,
+    gameCode: string,
+    performanceData: Record<string, any>,
+  ): IEPReport {
+    const taskName = this.COGNITIVE_GAME_NAMES[gameCode] || '认知训练'
+    const sections = this.generateCognitiveSections(gameCode, performanceData)
+    const summary = this.generateCognitiveSummary(studentName, taskName, performanceData, sections)
+
+    return {
+      studentName,
+      taskName,
+      reportDate: new Date().toLocaleDateString('zh-CN'),
+      sections,
+      summary,
+    }
+  }
+
+  private static generateCognitiveSections(
+    gameCode: string,
+    performanceData: Record<string, any>,
+  ): IEPReportSection[] {
+    const data = performanceData && typeof performanceData === 'object' ? performanceData : {}
+    const correct = this.numOr(data.correct, 0)
+    const total = this.numOr(data.total, 0)
+    const hasStats = total > 0
+
+    const domainLabels: Record<string, string> = {
+      K01_MEMORY_MATCH: '工作记忆', K02_MISSING_ITEM: '短时记忆',
+      K03_PATTERN_NEXT: '模式推理', K04_ODD_ONE_OUT: '归类能力',
+      K05_NUMBER_SENSE: '数感', K06_SIZE_ORDER: '序列排序',
+      K07_SPOT_DIFF: '视觉辨别', K08_MAZE_RUN: '路径规划',
+      K09_ECHO_SEQ: '序列工作记忆', K10_STORY_ORDER: '时序因果',
+    }
+
+    return [
+      {
+        category: '完成情况',
+        performance: hasStats
+          ? `本次共 ${total} 轮任务中，正确完成 ${correct} 轮。`
+          : '本次未采集到量化数据。',
+        suggestions: hasStats && correct < total
+          ? ['鼓励孩子逐步提高正确率，每次尝试都是进步。', '从较低难度开始，建立成功体验后再逐步增加挑战。']
+          : ['孩子表现很好！可以适当增加难度挑战更高认知负荷的任务。'],
+      },
+      {
+        category: '认知能力域',
+        performance: `训练目标：${domainLabels[gameCode] || '综合认知能力'}。该游戏通过反复练习帮助提升相关认知功能。`,
+        suggestions: [
+          '建议定期（每周 2-3 次）进行该类型认知训练，保持能力稳定发展。',
+          '可与教师沟通，将训练重点与课堂学习目标相衔接。',
+        ],
+      },
+    ]
+  }
+
+  private static generateCognitiveSummary(
+    studentName: string,
+    taskName: string,
+    performanceData: Record<string, any>,
+    sections: IEPReportSection[],
+  ): string {
+    const data = performanceData && typeof performanceData === 'object' ? performanceData : {}
+    const correct = this.numOr(data.correct, 0)
+    const total = this.numOr(data.total, 0)
+
+    if (total > 0) {
+      const pct = Math.round((correct / total) * 100)
+      return `${studentName} 在${taskName}训练中完成了 ${total} 轮任务，正确 ${correct} 轮（${pct}%）。`
+    }
+    return `${studentName} 完成了${taskName}认知训练。建议持续练习以建立稳定认知基础。`
+  }
+
   /**
    * 社交游戏 code -> 中文名映射
    */

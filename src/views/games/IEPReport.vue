@@ -159,10 +159,10 @@ const error = ref<string>()
 const report = ref<IEPReport>()
 const sessionData = ref<GameSessionData>()
 const student = ref<any>()
-// 游戏（社交 / 精细动作 / 生活自理）报告：raw_data 原对象（含 gameCode / performanceData）
+// 游戏（社交 / 精细动作 / 生活自理 / 认知）报告：raw_data 原对象（含 gameCode / performanceData）
 const gameRecordRaw = ref<any>()
 
-type GameReportBranch = 'social' | 'fine-motor' | 'life-skills'
+type GameReportBranch = 'social' | 'fine-motor' | 'life-skills' | 'cognitive'
 
 // 按 raw_data.gameCode 前缀判定报告分支；经典感官路径无 gameCode，返回 null
 function resolveGameReportBranch(gameCode: unknown): GameReportBranch | null {
@@ -170,6 +170,7 @@ function resolveGameReportBranch(gameCode: unknown): GameReportBranch | null {
   if (gameCode.startsWith('S')) return 'social'
   if (gameCode.startsWith('F')) return 'fine-motor'
   if (gameCode.startsWith('L')) return 'life-skills'
+  if (gameCode.startsWith('K')) return 'cognitive'
   return 'social' // 未知前缀兜底走社交（沿用旧行为）
 }
 
@@ -298,8 +299,10 @@ const loadReport = async () => {
         report.value = IEPGenerator.generateSocialReport(studentName, gameCode, perf)
       } else if (branch === 'fine-motor') {
         report.value = IEPGenerator.generateFineMotorReport(studentName, gameCode, perf)
-      } else {
+      } else if (branch === 'life-skills') {
         report.value = IEPGenerator.generateLifeSkillsReport(studentName, gameCode, perf)
+      } else {
+        report.value = IEPGenerator.generateCognitiveReport(studentName, gameCode, perf)
       }
     } else {
       // 解析会话数据（经典感官原路径保持不变）

@@ -80,6 +80,7 @@ interface GameExtractionRule {
 // Phase 1 填 Tier 1 三游戏（F03/L03/L05）；Phase 2 补 Tier 2 四游戏（F04/L01/L02/L04，用 accuracyDerived 派生正确率）；
 // Phase 3 补 Tier 3 三游戏（F02/F01/F05，近似指标口径；F05 用 reactionArrayField 取数组反应时均值）。
 // social 六个 code 共享同一条遗留规则，行为与原 runSocialIepChain 的手写提取保持一致（不破坏社交闭环）。
+// cognitive K01-K10 十条规则：correct/total 计数，无反应时，时长走会话兜底。
 // 后续扩展（如 G07）直接在此加行即可。
 
 const SOCIAL_GAME_CODES = [
@@ -193,6 +194,20 @@ const GAME_EXTRACTION_RULES: Record<string, GameExtractionRule> = {
 // social 六个 code 共享同一条规则
 for (const code of SOCIAL_GAME_CODES) {
   GAME_EXTRACTION_RULES[code] = SOCIAL_RULE
+}
+
+// cognitive K 系列 10 游戏：correct/total 计数，无反应时/正确率，时长走会话兜底
+const COGNITIVE_GAME_CODES = [
+  'K01_MEMORY_MATCH', 'K02_MISSING_ITEM', 'K03_PATTERN_NEXT',
+  'K04_ODD_ONE_OUT', 'K05_NUMBER_SENSE', 'K06_SIZE_ORDER',
+  'K07_SPOT_DIFF', 'K08_MAZE_RUN', 'K09_ECHO_SEQ', 'K10_STORY_ORDER',
+]
+const COGNITIVE_RULE: GameExtractionRule = {
+  realityFields: ['correct', 'total'],
+  duration: { kind: 'session' },
+}
+for (const code of COGNITIVE_GAME_CODES) {
+  GAME_EXTRACTION_RULES[code] = COGNITIVE_RULE
 }
 
 // ========== 工具函数 ==========
