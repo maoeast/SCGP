@@ -439,10 +439,9 @@ export class ActivationManager {
       }
     } catch (error) {
       console.error('激活验证失败:', error)
-      const errorMessage = error instanceof Error ? error.message : '未知错误'
       return {
         success: false,
-        message: `激活失败: ${errorMessage}`
+        message: '激活码无效或已损坏，请核对后重试'
       }
     }
   }

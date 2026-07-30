@@ -5,6 +5,7 @@
       v-if="phase === 'welcome'"
       :visible="true"
       :driver="driver"
+      :student="student"
       @start="handleStartAssessment"
     />
 

@@ -183,7 +183,7 @@ import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { EmotionalTrainingAPI } from '@/database/emotional-api'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
-import { GameTrainingAPI, StudentAPI } from '@/database/api'
+import { GameTrainingAPI, StudentAPI, TrainingSessionAPI, type TrainingSessionRecord } from '@/database/api'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 import { getTrainingEntry, type TrainingEntryCode } from '@/utils/training-entry'
 import { exportGameRecordsExcel } from '../exportTrainingRecords'
@@ -221,12 +221,15 @@ const activeDatePreset = ref<QuickRangeKey>('all')
 const standardDateRangePickerProps = STANDARD_DATE_RANGE_PICKER_PROPS
 const gameTrainingApi = new GameTrainingAPI()
 const emotionalGamesApi = new EmotionalGamesAPI()
+const trainingSessionApi = new TrainingSessionAPI()
 
 const currentEntry = computed(() => (props.entryCode ? getTrainingEntry(props.entryCode) : null))
 const isFixedStudentMode = computed(() => Number(props.studentId || 0) > 0)
 const isEmotionalEntry = computed(() => currentEntry.value?.moduleCode === 'emotional')
 const showCompletionStatusColumn = computed(() => {
-  return isEmotionalEntry.value || records.value.some((row) => row?.record_source === 'emotional_game')
+  return isEmotionalEntry.value || records.value.some((row) =>
+    row?.record_source === 'emotional_game' || row?.record_source === 'training_session'
+  )
 })
 const showStudentFilter = computed(() => !props.hideStudentFilter && !isFixedStudentMode.value)
 const showStudentColumn = computed(() => !isFixedStudentMode.value)
@@ -447,10 +450,50 @@ function getCustomGameRecords(studentId: number) {
   return emotionalGamesApi.getStudentRecordsByEntry(studentId, props.entryCode)
 }
 
+function mapTrainingSessionRecord(record: TrainingSessionRecord) {
+  const timestamp = Date.parse(record.started_at)
+  return {
+    id: record.id,
+    student_id: record.student_id,
+    student_name: record.student_name || '未知',
+    task_id: record.task_id,
+    task_name: record.task_name_snapshot || record.resource_name || '训练任务',
+    resource_id: record.resource_id,
+    resource_type: record.resource_type || 'game',
+    session_type: record.session_family,
+    entry_code: record.entry_code,
+    timestamp: Number.isFinite(timestamp) ? timestamp : 0,
+    duration: record.duration_ms,
+    accuracy_rate: record.accuracy_rate,
+    avg_response_time: record.avg_response_time_ms,
+    raw_data: record.summary_payload || {},
+    class_id: record.class_id,
+    class_name: record.class_name,
+    module_code: record.module_code,
+    created_at: record.created_at,
+    completion_status: record.completion_status,
+    exit_trigger: record.summary_payload?.exitTrigger || null,
+    record_source: 'training_session',
+  }
+}
+
+function getUnifiedCognitiveGameRecords(studentId: number) {
+  if (props.entryCode !== 'cognitive') {
+    return []
+  }
+
+  return trainingSessionApi.listSessions({
+    studentId,
+    entryCode: props.entryCode,
+    sessionFamily: 'cognitive_game',
+  }).map(mapTrainingSessionRecord)
+}
+
 function getStudentGameRecords(studentId: number, studentName?: string) {
   const nextRecords = [
     ...gameTrainingApi.getStudentTrainingRecords(studentId, undefined, undefined, props.entryCode),
     ...getCustomGameRecords(studentId),
+    ...getUnifiedCognitiveGameRecords(studentId),
   ]
 
   return studentName ? mapStudentName(nextRecords, studentName) : nextRecords

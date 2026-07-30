@@ -11,6 +11,12 @@
     draggable
   >
     <div class="welcome-content">
+      <div v-if="student" class="welcome-student">
+        <span class="welcome-student__label">评估对象</span>
+        <strong>{{ student.name }}</strong>
+        <span>{{ student.gender }} · {{ studentAgeLabel }}</span>
+      </div>
+
       <p class="welcome-intro" v-if="welcomeContent?.intro">
         {{ welcomeContent.intro }}
       </p>
@@ -75,11 +81,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ScaleDriver } from '@/types/assessment'
+import type { ScaleDriver, StudentContext } from '@/types/assessment'
 
 interface Props {
   visible: boolean
   driver: ScaleDriver | null
+  student: StudentContext | null
 }
 
 const props = defineProps<Props>()
@@ -98,6 +105,15 @@ const estimatedTime = computed(() => {
   return props.driver?.getScaleInfo()?.estimatedTime || 15
 })
 
+const studentAgeLabel = computed(() => {
+  if (!props.student) return ''
+  const years = Math.floor(props.student.ageInMonths / 12)
+  const months = props.student.ageInMonths % 12
+  if (years === 0) return `${months}个月`
+  if (months === 0) return `${years}岁`
+  return `${years}岁${months}个月`
+})
+
 function handleStart() {
   emit('start')
 }
@@ -105,7 +121,29 @@ function handleStart() {
 
 <style scoped>
 .welcome-content {
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
   padding: 10px 0;
+}
+
+.welcome-student {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #eef6ff;
+  color: #4e5969;
+  font-size: 14px;
+}
+
+.welcome-student__label {
+  color: #6b7788;
+}
+
+.welcome-student strong {
+  color: #1d4ed8;
 }
 
 .welcome-intro {

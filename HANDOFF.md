@@ -33,7 +33,7 @@ If those four files are not enough, then read `PROJECT_CONTEXT.md`.
 
 ## Current Focus
 
-- AI 批次已提交为 `5dce049 feat(ai): expand assistant presets and report tools`，核心 Node 契约测试 100/100 通过。
-- 学生批量导入闭环已完成：Excel 读取、字段和学号预检、逐行实际写入、逐项成功/失败反馈、结束后的学生列表刷新均已接入；`npx jiti tests/student-import.test.ts` 和 `npm run type-check` 已通过。
+- 本轮按 AI、手册工具、学生导入、实拍修复四批整理并提交。开始新任务前先以 `.continue-here.md` 和 Git 现场确认当前状态。
+- 学生批量导入闭环已接入 Excel 读取、字段与学号预检、逐行写入、逐项结果反馈和列表刷新；`npx jiti tests/student-import.test.ts`、`npm run type-check` 已通过。
 - 用户手册 Markdown、DOCX、S024 重新实拍、截图审批和采集工具已按当前代码修订；`node scripts/manual/validate-user-manual.mjs` 和审批截图校验均已通过。
-- 之后按既定顺序提交手册工具、学生导入、实拍修复，不清理或混入未归属文件。
+- 实拍修复覆盖器材信息可见性、评估对象信息、CRT 日期、认知训练记录和激活错误脱敏；激活契约测试已通过。

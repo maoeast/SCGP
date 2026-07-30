@@ -198,8 +198,9 @@ const studentAge = computed(() => {
 })
 
 const assessDate = computed(() => {
-  if (!assessData.value?.assess_date) return '未知'
-  return new Date(assessData.value.assess_date).toLocaleDateString('zh-CN')
+  const date = assessData.value?.assess_date || assessData.value?.start_time
+  if (!date) return '未知'
+  return new Date(date).toLocaleDateString('zh-CN')
 })
 
 const strengths = computed<string[]>(() => {

@@ -40,6 +40,12 @@
         <div class="resource-info">
           <div class="resource-name">{{ item.name }}</div>
           <div class="resource-category">{{ getItemCategoryLabel(item) }}</div>
+          <p v-if="props.resourceType === 'equipment' && item.description" class="resource-description">
+            {{ item.description }}
+          </p>
+          <div v-if="props.resourceType === 'equipment' && item.tags.length" class="resource-tags">
+            <span v-for="tag in item.tags.slice(0, 3)" :key="tag" class="resource-tag">{{ tag }}</span>
+          </div>
         </div>
         <el-icon
           class="favorite-star"
@@ -513,6 +519,37 @@ watch(selectedResource, (newVal) => {
 .resource-category {
   font-size: 12px;
   color: #606266;
+}
+
+.resource-description {
+  display: -webkit-box;
+  margin: 4px 0 0;
+  overflow: hidden;
+  color: #606266;
+  font-size: 12px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.resource-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.resource-tag {
+  max-width: 100%;
+  padding: 1px 6px;
+  overflow: hidden;
+  border-radius: 4px;
+  color: #476884;
+  background: #eef5fb;
+  font-size: 11px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .favorite-star {
