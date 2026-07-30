@@ -11,9 +11,9 @@
  * 用户把技能文件夹拷进 src/data/skills/ 后重启即生效（init.ts 的 upsert 会刷新正文）。
  */
 export interface BuiltinKnowledgeSkill {
-  /** 技能 code（取自 SKILL.md frontmatter 的 name 字段，如 'speech-therapist'） */
+  /** 技能 code（取自 SKILL.md frontmatter 的 name 字段，如 'speech-therapist'）。 */
   code: string
-  /** 展示名（取自 frontmatter name） */
+  /** 展示名（优先取 frontmatter display_name，未配置时回退 name）。 */
   name: string
   /** 技能简介（取自 frontmatter description） */
   description: string
@@ -52,6 +52,7 @@ const rootRefModules = import.meta.glob<{ default: string }>('./*/*.md', {
 /** 极简 frontmatter 解析：取首部常用单行字段，body 为剩余正文。 */
 function parseFrontmatter(md: string): {
   name: string
+  displayName: string
   description: string
   license: string
   evidenceLevel: string
@@ -63,6 +64,7 @@ function parseFrontmatter(md: string): {
   if (!match) {
     return {
       name: '',
+      displayName: '',
       description: '',
       license: '',
       evidenceLevel: '未标注',
@@ -85,6 +87,7 @@ function parseFrontmatter(md: string): {
   }
   return {
     name: pickLine('name'),
+    displayName: pickLine('display_name'),
     description: pickLine('description'),
     license: pickLine('license'),
     evidenceLevel: pickLine('evidence_level') || '未标注',
@@ -154,7 +157,7 @@ export const BUILTIN_KNOWLEDGE_SKILLS: BuiltinKnowledgeSkill[] = Array.from(dirM
       .sort((a, b) => a.title.localeCompare(b.title))
     return {
       code: fm.name,
-      name: fm.name,
+      name: fm.displayName || fm.name,
       description: fm.description,
       body: fm.body.trim(),
       references,

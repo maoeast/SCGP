@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { useAiStore } from '@/stores/ai'
 import { useAuthStore } from '@/stores/auth'
 import type { AiAgent, AiAgentSkillBinding, AiChatMessage, AiProviderModel, AiSkill } from '@/database/ai-api'
@@ -13,6 +14,7 @@ import { formatTokenCount } from '@/features/ai/usage-format'
 const aiStore = useAiStore()
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.isAdmin)
+const MAX_MONTHLY_BUDGET_TOKENS = 10_000_000
 
 onMounted(() => {
   aiStore.loadAll()
@@ -29,7 +31,7 @@ const configForm = reactive({
   defaultModel: '',
   providerEnabled: true,
   monthlyBudgetTokens: 10_000_000,
-  blockOnOverage: false,
+  blockOnOverage: true,
   enabled: true,
 })
 
@@ -83,6 +85,15 @@ watch(
   { immediate: true },
 )
 
+watch(
+  () => configForm.monthlyBudgetTokens,
+  (value) => {
+    if (value > MAX_MONTHLY_BUDGET_TOKENS) {
+      configForm.monthlyBudgetTokens = MAX_MONTHLY_BUDGET_TOKENS
+    }
+  },
+)
+
 /** 切换当前编辑/生效的 provider（即时切换 active，sendChat/testConnection 随之用新 provider） */
 async function onProviderChange(code: string) {
   await aiStore.setActiveProvider(code)
@@ -122,7 +133,7 @@ async function saveConfig() {
       baseUrl: configForm.baseUrl.trim(),
       defaultModel: configForm.defaultModel.trim(),
       providerEnabled: configForm.providerEnabled,
-      monthlyBudgetTokens: Number(configForm.monthlyBudgetTokens) || 0,
+      monthlyBudgetTokens: Math.min(MAX_MONTHLY_BUDGET_TOKENS, Math.max(0, Number(configForm.monthlyBudgetTokens) || 0)),
       blockOnOverage: configForm.blockOnOverage,
       enabled: configForm.enabled,
     })
@@ -667,6 +678,7 @@ async function removeSession(id: number) {
             class="budget-token-input"
             type="number"
             min="0"
+            :max="MAX_MONTHLY_BUDGET_TOKENS"
             step="100000"
           >
             <template #append>Tokens</template>
@@ -727,8 +739,11 @@ async function removeSession(id: number) {
     <!-- 智能体管理 -->
     <el-card shadow="never" class="config-card agent-management-card">
       <template #header>
-        <div class="card-header">
+        <div class="card-header agent-management-header">
           <span>智能体管理</span>
+          <el-button class="agent-create-button" type="primary" :icon="Plus" @click="openCreate">
+            新增
+          </el-button>
         </div>
       </template>
 
@@ -783,11 +798,6 @@ async function removeSession(id: number) {
             </div>
           </div>
         </article>
-        <button type="button" class="agent-card agent-card--create" @click="openCreate">
-          <span class="agent-create-icon" aria-hidden="true">+</span>
-          <strong>新增智能体</strong>
-          <span>为学校自定义一个提示词、工具和知识技能组合。</span>
-        </button>
       </div>
       <el-empty v-else description="暂无智能体" :image-size="72" />
     </el-card>
@@ -1059,6 +1069,15 @@ async function removeSession(id: number) {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.agent-management-header {
+  justify-content: space-between;
+}
+
+.agent-create-button {
+  min-height: 32px;
+  padding-inline: 14px;
 }
 
 .field-hint {
@@ -1337,47 +1356,6 @@ async function removeSession(id: number) {
 .agent-card--disabled .agent-card__support,
 .agent-card--disabled .agent-card__tags {
   opacity: 0.68;
-}
-
-.agent-card--create {
-  min-height: 286px;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 24px;
-  border: 1px dashed var(--el-border-color, #dcdfe6);
-  background:
-    linear-gradient(135deg, rgb(64 158 255 / 6%), transparent 42%),
-    var(--el-bg-color, #ffffff);
-  color: var(--el-text-color-regular, #606266);
-  cursor: pointer;
-  text-align: center;
-}
-
-.agent-card--create strong {
-  color: var(--el-text-color-primary, #303133);
-  font-size: 16px;
-}
-
-.agent-card--create span:last-child {
-  max-width: 220px;
-  color: var(--el-text-color-secondary, #909399);
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.agent-create-icon {
-  display: inline-flex;
-  width: 42px;
-  height: 42px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--el-color-primary-light-9, #ecf5ff);
-  color: var(--el-color-primary, #409eff);
-  font-size: 26px;
-  font-weight: 300;
-  line-height: 1;
 }
 
 .session-title {

@@ -35,9 +35,11 @@ const CONFIG_KEY = {
 const DEFAULTS = {
   activeProvider: 'deepseek',
   monthlyBudgetTokens: 10_000_000,
-  blockOnOverage: false,
+  blockOnOverage: true,
   enabled: true,
 } as const
+
+const MAX_MONTHLY_BUDGET_TOKENS = DEFAULTS.monthlyBudgetTokens
 
 export interface AiAgent {
   id: number
@@ -726,7 +728,7 @@ export class AIApi extends DatabaseAPI {
       this.getConfig(CONFIG_KEY.monthlyBudgetTokens) || this.getConfig(CONFIG_KEY.monthlyBudgetYuanLegacy)
     const value = Number(raw || DEFAULTS.monthlyBudgetTokens)
     if (!Number.isFinite(value) || value < 0) return DEFAULTS.monthlyBudgetTokens
-    return Math.floor(value)
+    return Math.min(MAX_MONTHLY_BUDGET_TOKENS, Math.floor(value))
   }
 
   getActiveProviderCode(): string {
@@ -925,7 +927,10 @@ export class AIApi extends DatabaseAPI {
     enabled?: boolean
   }): void {
     if (input.monthlyBudgetTokens !== undefined) {
-      this.setConfig(CONFIG_KEY.monthlyBudgetTokens, String(Math.max(0, Math.floor(input.monthlyBudgetTokens))))
+      const monthlyBudgetTokens = Number.isFinite(input.monthlyBudgetTokens)
+        ? Math.min(MAX_MONTHLY_BUDGET_TOKENS, Math.max(0, Math.floor(input.monthlyBudgetTokens)))
+        : DEFAULTS.monthlyBudgetTokens
+      this.setConfig(CONFIG_KEY.monthlyBudgetTokens, String(monthlyBudgetTokens))
     }
     if (input.blockOnOverage !== undefined) this.setConfig(CONFIG_KEY.blockOnOverage, input.blockOnOverage ? '1' : '0')
     if (input.enabled !== undefined) this.setConfig(CONFIG_KEY.enabled, input.enabled ? '1' : '0')
@@ -936,7 +941,7 @@ export class AIApi extends DatabaseAPI {
     const activeCode = this.getActiveProviderCode()
     const provider = this.getProviderByCode(activeCode) || this.getProviderByCode(DEFAULTS.activeProvider)
     const monthlyBudgetTokens = this.getMonthlyBudgetTokens()
-    const blockOnOverage = this.getConfig(CONFIG_KEY.blockOnOverage) === '1'
+    const blockOnOverage = this.getConfig(CONFIG_KEY.blockOnOverage) !== '0' // 默认开启，显式关闭才放行
     const enabled = this.getConfig(CONFIG_KEY.enabled) !== '0' // 默认启用
     if (!provider) {
       // ai_provider 表尚未种子（理论上 initializeAITables 已种子；兜底防 NPE）

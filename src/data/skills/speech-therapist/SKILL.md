@@ -1,5 +1,6 @@
 ---
 name: speech-therapist
+display_name: 言语语言评估与干预支持
 description: This skill should be used when a teacher asks about "学生说话听不清", "普通话表达困难", "课堂语言理解", "功能性沟通", "口吃课堂支持", "沟通板或图片沟通", or "是否需要言语语言专业评估" in a Chinese school setting.
 version: 2.0.0
 license: SCGP-local

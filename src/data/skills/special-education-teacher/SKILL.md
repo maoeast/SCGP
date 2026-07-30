@@ -1,5 +1,6 @@
 ---
 name: special-education-teacher
+display_name: 特殊教育专业支持
 description: This skill should be used when a teacher asks about "随班就读支持", "资源教室训练", "一人一案", "个别化教育计划", "课堂行为支持", "融合课堂调适", or "特殊需要学生家校协作" in a Chinese school setting.
 version: 2.0.0
 license: SCGP-local

@@ -1,5 +1,6 @@
 ---
 name: montessori-teacher
+display_name: 蒙特梭利教学支持
 description: This skill should be used when a teacher asks about "蒙台梭利理念活动", "区域环境怎么布置", "生活自理材料", "幼儿自主选择活动", "工作循环", or "如何把蒙氏原则用于中国幼儿园或资源教室" without requiring a full Montessori programme.
 version: 2.0.0
 license: SCGP-local

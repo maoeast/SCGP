@@ -1,5 +1,6 @@
 ---
 name: child-adolescent-mental-health-support
+display_name: 儿童青少年心理健康支持
 description: This skill should be used when a teacher asks about "学生持续情绪低落", "课堂明显退缩", "同伴冲突后的支持", "学校心理支持怎么做", "怎样与监护人沟通情绪观察", or "出现自伤自杀表达怎么办" in a Chinese school setting.
 version: 1.1.0
 license: SCGP-local

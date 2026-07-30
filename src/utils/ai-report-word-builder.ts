@@ -48,6 +48,11 @@ export interface AIReportInput {
   sections: AIReportSection[]
 }
 
+export interface BuildAIReportWordPayloadOptions {
+  /** 已保存的回答再次导出时保留全文；模型工具调用仍使用默认截断。 */
+  preserveParagraphText?: boolean
+}
+
 // ==================== 体量护栏 ====================
 
 const MAX_SECTIONS = 8
@@ -142,7 +147,10 @@ function toStringMatrix(arr: unknown): string[][] {
 
 // ==================== section 映射 ====================
 
-function mapSection(raw: AIReportSection): WordSection | null {
+function mapSection(
+  raw: AIReportSection,
+  options: BuildAIReportWordPayloadOptions,
+): WordSection | null {
   const heading = clampText(raw.heading, MAX_FIELD_CHARS) || undefined
 
   switch (raw.type) {
@@ -177,7 +185,9 @@ function mapSection(raw: AIReportSection): WordSection | null {
     case 'paragraph':
     default: {
       // 非法 type 一并降级为 paragraph；text 内多个换行拆成多段
-      const text = clampText(raw.text, MAX_PARAGRAPH_CHARS)
+      const text = options.preserveParagraphText
+        ? cleanText(raw.text)
+        : clampText(raw.text, MAX_PARAGRAPH_CHARS)
       const paragraphs = text
         .split('\n')
         .map((s) => s.trim())
@@ -194,7 +204,10 @@ function mapSection(raw: AIReportSection): WordSection | null {
  * 把 generate_report 工具参数映射为 WordExportPayload。
  * 全量防御：字段缺失兜底、类型不符降级、超长截断，保证 exportWordDocument 不会因模型输出而崩。
  */
-export function buildAIReportWordPayload(input: AIReportInput): WordExportPayload {
+export function buildAIReportWordPayload(
+  input: AIReportInput,
+  options: BuildAIReportWordPayloadOptions = {},
+): WordExportPayload {
   const title = clampText(input.title, MAX_TITLE_CHARS) || 'AI 生成报告'
   const studentName = cleanText(input.student_name)
   const filename = buildFilename(prefixForReportType(input.report_type, input.title), studentName)
@@ -206,7 +219,7 @@ export function buildAIReportWordPayload(input: AIReportInput): WordExportPayloa
   for (const raw of rawSections) {
     if (sections.length >= MAX_SECTIONS) break
     if (!raw || typeof raw !== 'object') continue
-    const mapped = mapSection(raw as AIReportSection)
+    const mapped = mapSection(raw as AIReportSection, options)
     if (mapped) sections.push(mapped)
   }
 

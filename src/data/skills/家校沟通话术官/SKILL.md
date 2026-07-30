@@ -1,5 +1,6 @@
 ---
 name: 家校沟通话术官
+display_name: 家校沟通话术
 description: This skill should be used when a teacher asks to "给家长发微信", "准备家长电话沟通", "设计家长面谈提纲", "反馈学生训练情况", "沟通课堂行为", or "就敏感学生事件联系监护人" in a Chinese school setting.
 version: 2.0.0
 license: SCGP-local

@@ -2,12 +2,15 @@
 import { RouterView } from 'vue-router'
 import RecommendationDrawer from '@/features/recommendation/components/RecommendationDrawer.vue'
 import AiAssistant from '@/features/ai/components/AiAssistant.vue'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 </script>
 
 <template>
   <RouterView />
   <RecommendationDrawer />
-  <AiAssistant />
+  <AiAssistant v-if="authStore.isLoggedIn" />
 </template>
 
 <style>

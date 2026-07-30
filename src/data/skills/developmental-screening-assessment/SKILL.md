@@ -1,5 +1,6 @@
 ---
 name: developmental-screening-assessment
+display_name: 儿童发展筛查与评估支持
 description: This skill should be used when a teacher asks about "儿童发展观察", "发展里程碑是否需要关注", "如何记录大运动精细动作语言社交适应表现", "是否建议专业评估", or "怎样把观察转成教师支持计划" without asking the AI to diagnose or score a formal scale.
 version: 2.0.0
 license: SCGP-local

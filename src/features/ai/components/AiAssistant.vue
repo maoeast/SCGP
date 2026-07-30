@@ -2,13 +2,16 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound, Close, Paperclip, Promotion, Setting, Tickets } from '@element-plus/icons-vue'
+import { Close, Paperclip, Promotion, Setting, Tickets } from '@element-plus/icons-vue'
 import type { AiAttachmentRef } from '@/database/ai-api'
 import { useAiStore } from '@/stores/ai'
 import { getBuiltinAgentPreset } from '@/data/ai-agent-presets'
 import AiAgentAvatar from '@/features/ai/components/AiAgentAvatar.vue'
+import AiAssistantFloatingButton from '@/features/ai/components/AiAssistantFloatingButton.vue'
 import AiChatTranscript from '@/features/ai/components/AiChatTranscript.vue'
 import { formatTokenCount } from '@/features/ai/usage-format'
+import { buildAIReportWordPayload } from '@/utils/ai-report-word-builder'
+import { exportWordDocument } from '@/utils/export-word'
 import {
   AI_ASSISTANT_OPEN_EVENT,
   type AiAssistantOpenDetail,
@@ -145,6 +148,17 @@ function getAgentOptionLabel(code: string, name: string) {
   return preset ? `${preset.displayName} · ${preset.name}` : name
 }
 
+function formatSessionUpdatedAt(value: string) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hour = String(date.getHours()).padStart(2, '0')
+  const minute = String(date.getMinutes()).padStart(2, '0')
+  return `${month}-${day} ${hour}:${minute}`
+}
+
 function getModelOptionLabel(name: string, modelId: string) {
   return modelId ? `${name} · ${modelId}` : name
 }
@@ -250,6 +264,37 @@ async function generateReport() {
   }
 }
 
+/** 导出已完成的单条助手回答，不再额外发送生成报告请求。 */
+async function exportAssistantMessage({ content }: { content: string }) {
+  const answer = content.trim()
+  if (!answer) return
+
+  const agentName = currentPreset.value?.displayName || aiStore.currentAgent?.name || 'AI 智能体'
+  try {
+    await exportWordDocument(
+      buildAIReportWordPayload(
+        {
+          title: `${agentName}回答`,
+          subtitle: 'AI 智能体回答导出',
+          report_type: 'general',
+          sections: [
+            {
+              type: 'paragraph',
+              heading: '回答内容',
+              text: answer,
+            },
+          ],
+        },
+        { preserveParagraphText: true },
+      ),
+    )
+    ElMessage.success('已导出本条回答为 Word')
+  } catch (error) {
+    console.error('[AiAssistant] 导出回答失败:', error)
+    ElMessage.error('导出回答失败，请重试。')
+  }
+}
+
 async function sendStarterPrompt(prompt: string) {
   if (aiStore.sending) return
   const res = await aiStore.sendChat(prompt)
@@ -287,9 +332,7 @@ async function confirmDeleteSession(id: number) {
 
 <template>
   <!-- 全局悬浮入口 -->
-  <button class="ai-fab" :aria-label="'AI 智能体'" @click="openDrawer()">
-    <el-icon :size="24"><ChatDotRound /></el-icon>
-  </button>
+  <AiAssistantFloatingButton v-if="!drawerVisible" @open="openDrawer()" />
 
   <el-drawer
     v-model="drawerVisible"
@@ -415,14 +458,20 @@ async function confirmDeleteSession(id: number) {
               :class="{ active: s.id === aiStore.currentSessionId }"
               @click="aiStore.selectSession(s.id)"
             >
-              <span class="ai-session-title">{{ s.title || '新对话' }}</span>
-              <el-button
-                class="ai-session-del"
-                link
-                type="danger"
-                size="small"
-                @click.stop="confirmDeleteSession(s.id)"
-              >删</el-button>
+              <div class="ai-session-copy">
+                <span class="ai-session-title">{{ s.title || '新对话' }}</span>
+                <span class="ai-session-time">{{ formatSessionUpdatedAt(s.updated_at) }}</span>
+              </div>
+              <div class="ai-session-actions">
+                <el-button link type="primary" size="small" @click.stop="aiStore.selectSession(s.id)">继续</el-button>
+                <el-button
+                  class="ai-session-del"
+                  link
+                  type="danger"
+                  size="small"
+                  @click.stop="confirmDeleteSession(s.id)"
+                >删</el-button>
+              </div>
             </div>
           </div>
         </el-collapse-item>
@@ -458,7 +507,9 @@ async function confirmDeleteSession(id: number) {
           :tool-steps="aiStore.toolSteps"
           editable
           :editing-disabled="aiStore.sending"
+          :export-assistant-messages="canGenerateReport"
           @edit-message="beginMessageEdit"
+          @export-assistant-message="exportAssistantMessage"
         />
       </el-scrollbar>
     </div>
@@ -503,25 +554,42 @@ async function confirmDeleteSession(id: number) {
           </div>
         </div>
         <div class="ai-composer">
-          <el-tooltip
-            :content="editingMessageId !== null
-              ? '编辑消息时不能新增附件'
-              : supportsVision
-                ? '添加图片 / 文档'
-                : '添加文档（当前模型不支持图片）'"
-            placement="top"
-          >
-            <button
-              class="composer-btn composer-attach"
-              type="button"
-              :disabled="aiStore.sending || editingMessageId !== null"
-              aria-label="添加图片或文档"
-              @click="triggerPickFile"
+          <div class="composer-utility-actions">
+            <el-tooltip
+              v-if="canGenerateReport && editingMessageId === null"
+              content="生成报告（导出 Word）"
+              placement="top"
             >
-              <el-icon><Paperclip /></el-icon>
-              <span>附件</span>
-            </button>
-          </el-tooltip>
+              <button
+                class="composer-btn"
+                type="button"
+                :disabled="aiStore.sending"
+                aria-label="生成报告"
+                @click="generateReport"
+              >
+                <el-icon><Tickets /></el-icon>
+              </button>
+            </el-tooltip>
+            <el-tooltip
+              :content="editingMessageId !== null
+                ? '编辑消息时不能新增附件'
+                : supportsVision
+                  ? '添加图片 / 文档'
+                  : '添加文档（当前模型不支持图片）'"
+              placement="top"
+            >
+              <button
+                class="composer-btn composer-attach"
+                type="button"
+                :disabled="aiStore.sending || editingMessageId !== null"
+                aria-label="添加图片或文档"
+                @click="triggerPickFile"
+              >
+                <el-icon><Paperclip /></el-icon>
+                <span>附件</span>
+              </button>
+            </el-tooltip>
+          </div>
           <input
             ref="fileInputRef"
             type="file"
@@ -542,59 +610,25 @@ async function confirmDeleteSession(id: number) {
             :disabled="aiStore.sending"
             @keydown.enter.exact.prevent="send"
           />
-          <el-tooltip
-            v-if="canGenerateReport && editingMessageId === null"
-            content="生成报告（导出 Word）"
-            placement="top"
-          >
+          <el-tooltip :content="editingMessageId !== null ? '保存并重新生成' : '发送'" placement="top">
             <button
-              class="composer-btn"
+              class="composer-btn composer-send"
               type="button"
-              :disabled="aiStore.sending"
-              aria-label="生成报告"
-              @click="generateReport"
+              :disabled="!canSend || aiStore.sending"
+              :aria-label="editingMessageId !== null ? '保存并重新生成' : '发送'"
+              @click="send"
             >
-              <el-icon><Tickets /></el-icon>
+              <el-icon><Promotion /></el-icon>
             </button>
           </el-tooltip>
-          <button
-            class="composer-btn composer-send"
-            type="button"
-            :disabled="!canSend || aiStore.sending"
-            :aria-label="editingMessageId !== null ? '保存并重新生成' : '发送'"
-            @click="send"
-          >
-            <el-icon><Promotion /></el-icon>
-          </button>
         </div>
+        <p class="ai-composer-disclaimer">由 AI 助手提供服务，回答仅供参考</p>
       </div>
     </template>
   </el-drawer>
 </template>
 
 <style scoped>
-.ai-fab {
-  position: fixed;
-  right: 28px;
-  bottom: 28px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: none;
-  background: var(--el-color-primary, #409eff);
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  transition: transform 0.15s ease;
-}
-.ai-fab:hover {
-  transform: scale(1.06);
-}
-
 .ai-drawer-header {
   display: flex;
   align-items: center;
@@ -844,11 +878,34 @@ async function confirmDeleteSession(id: number) {
   font-weight: 500;
 }
 
-.ai-session-title {
+.ai-session-copy {
+  display: grid;
   flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.ai-session-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ai-session-time {
+  color: var(--el-text-color-secondary, #909399);
+  font-size: 11px;
+}
+
+.ai-session-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+.ai-session-actions :deep(.el-button) {
+  margin-left: 0;
+  padding: 0 2px;
 }
 
 .ai-msg-scroll {
@@ -912,7 +969,7 @@ async function confirmDeleteSession(id: number) {
   cursor: not-allowed;
   opacity: 0.45;
 }
-/* ===== 输入框容器：曲别针 / textarea / 生成报告 / 发送 同处一个圆角容器 ===== */
+/* ===== 输入框容器：报告 / 附件纵向工具列、textarea、发送 同处一个圆角容器 ===== */
 .ai-composer {
   display: flex;
   align-items: flex-end;
@@ -952,6 +1009,13 @@ async function confirmDeleteSession(id: number) {
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
+.composer-utility-actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
 .composer-attach {
   width: auto;
   gap: 4px;
@@ -980,6 +1044,13 @@ async function confirmDeleteSession(id: number) {
 .composer-send:disabled {
   background: var(--el-fill-color-dark, #e9e9eb);
   color: var(--el-text-color-placeholder, #a8abb2);
+}
+.ai-composer-disclaimer {
+  margin: 6px 4px 0;
+  color: var(--el-text-color-placeholder, #a8abb2);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
 }
 .ai-file-input {
   display: none;

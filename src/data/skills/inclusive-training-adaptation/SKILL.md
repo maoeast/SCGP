@@ -1,5 +1,6 @@
 ---
 name: inclusive-training-adaptation
+display_name: 融合教育训练适配支持
 description: This skill should be used when a teacher asks "这个训练怎么降门槛但不降目标", "资源教室活动怎样适配", "融合课堂如何调整材料", "学生不能用口语怎么参与", or "怎样逐步撤除提示" in a Chinese school setting.
 version: 1.1.0
 license: SCGP-local

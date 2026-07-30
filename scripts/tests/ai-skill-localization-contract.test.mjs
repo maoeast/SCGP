@@ -95,6 +95,19 @@ test('心理支持和融合训练技能保留教师端边界', () => {
   assert.match(readSkill('inclusive-training-adaptation'), /保留训练目标|不降低训练目标/)
 })
 
+test('康复器材技能以系统实际器材信息为起点，并保留专业升级边界', () => {
+  const code = 'rehabilitation-equipment-and-exercise-support'
+  assert.equal(existsSync(join(skillsRoot, code, 'SKILL.md')), true)
+  assertGovernanceFields(code)
+
+  const content = readMarkdownTree(code)
+  assert.match(content, /查询训练器材/)
+  assert.match(content, /器材库.*不.*诊断|不.*把.*器材库.*诊断/)
+  assert.match(content, /暂停并转介/)
+  assert.match(content, /厂家说明书/)
+  assert.match(content, /不得.*自行改动|不可自行改变/)
+})
+
 test('SKILL.md 中声明的本地 reference 文件均存在', () => {
   const codes = [
     'special-education-teacher',
@@ -104,6 +117,7 @@ test('SKILL.md 中声明的本地 reference 文件均存在', () => {
     '家校沟通话术官',
     'child-adolescent-mental-health-support',
     'inclusive-training-adaptation',
+    'rehabilitation-equipment-and-exercise-support',
   ]
 
   for (const code of codes) {

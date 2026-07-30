@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { EditPen } from '@element-plus/icons-vue'
+import { Download, EditPen } from '@element-plus/icons-vue'
 import type { AiAttachmentRef } from '@/database/ai-api'
 import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
 import { resolveAbsolutePath } from '@/utils/resource-file-service'
@@ -21,16 +21,19 @@ const props = withDefaults(
     toolSteps?: ToolStep[]
     editable?: boolean
     editingDisabled?: boolean
+    exportAssistantMessages?: boolean
   }>(),
   {
     toolSteps: () => [],
     editable: false,
     editingDisabled: false,
+    exportAssistantMessages: false,
   },
 )
 
 const emit = defineEmits<{
   editMessage: [payload: { id: number; content: string }]
+  exportAssistantMessage: [payload: { content: string }]
 }>()
 
 const editableMessageId = computed<number | null>(() => {
@@ -47,6 +50,21 @@ const editableMessageId = computed<number | null>(() => {
 function requestEdit(message: AiTranscriptMessage) {
   if (props.editingDisabled || message.id !== editableMessageId.value) return
   emit('editMessage', { id: message.id, content: message.content })
+}
+
+function canExportAssistantMessage(message: AiTranscriptMessage): boolean {
+  return (
+    props.exportAssistantMessages &&
+    message.role === 'assistant' &&
+    !message.pending &&
+    !!message.id &&
+    !!message.content.trim()
+  )
+}
+
+function requestAssistantMessageExport(message: AiTranscriptMessage) {
+  if (!canExportAssistantMessage(message)) return
+  emit('exportAssistantMessage', { content: message.content })
 }
 
 const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico'])
@@ -96,8 +114,11 @@ async function openAttachment(ref: AiAttachmentRef) {
         <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
         <span v-if="msg.pending" class="streaming-cursor" aria-hidden="true"></span>
       </div>
-      <div v-if="msg.id === editableMessageId" class="msg-actions">
-        <el-tooltip content="编辑这条消息" placement="bottom">
+      <div
+        v-if="msg.id === editableMessageId || canExportAssistantMessage(msg)"
+        class="msg-actions"
+      >
+        <el-tooltip v-if="msg.id === editableMessageId" content="编辑这条消息" placement="bottom">
           <button
             class="msg-action-btn"
             type="button"
@@ -106,6 +127,17 @@ async function openAttachment(ref: AiAttachmentRef) {
             @click="requestEdit(msg)"
           >
             <el-icon><EditPen /></el-icon>
+          </button>
+        </el-tooltip>
+        <el-tooltip v-if="canExportAssistantMessage(msg)" content="导出本条回答为 Word" placement="bottom">
+          <button
+            class="msg-action-btn msg-export-btn"
+            type="button"
+            aria-label="导出本条回答为 Word"
+            @click="requestAssistantMessageExport(msg)"
+          >
+            <el-icon><Download /></el-icon>
+            <span>导出 Word</span>
           </button>
         </el-tooltip>
       </div>
@@ -197,6 +229,13 @@ async function openAttachment(ref: AiAttachmentRef) {
 .msg-action-btn:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+
+.msg-export-btn {
+  width: auto;
+  gap: 4px;
+  padding: 0 6px;
+  font-size: 12px;
 }
 
 .markdown-body {

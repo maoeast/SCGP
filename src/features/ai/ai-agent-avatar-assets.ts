@@ -9,6 +9,7 @@ const BUILTIN_AGENT_AVATAR_PATHS: Record<string, string> = {
   scgp_builtin_growth_observer: 'images/ai-agent-avatars/成长观察助手.png',
   scgp_builtin_family_communication: 'images/ai-agent-avatars/家校沟通助手.png',
   scgp_builtin_wellbeing_support: 'images/ai-agent-avatars/情绪支持助手.png',
+  scgp_builtin_rehabilitation_training: 'images/ai-agent-avatars/康复训练支持专家.png',
 }
 
 export function getBuiltinAgentAvatarUrl(code: string): string | null {

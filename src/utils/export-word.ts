@@ -60,6 +60,17 @@ export interface WordExportPayload {
   sections: WordSection[]
 }
 
+type WordExportReceiver = (blob: Blob, fileName: string) => void | Promise<void>
+
+function getWordExportReceiver(): WordExportReceiver | null {
+  const captureWindow = window as Window & {
+    __SCGP_MANUAL_CAPTURE_EXPORT_WORD__?: WordExportReceiver
+  }
+  return typeof captureWindow.__SCGP_MANUAL_CAPTURE_EXPORT_WORD__ === 'function'
+    ? captureWindow.__SCGP_MANUAL_CAPTURE_EXPORT_WORD__
+    : null
+}
+
 const FONT_FAMILY = 'Microsoft YaHei'
 const TEXT_COLOR = '333333'
 const MUTED_COLOR = '666666'
@@ -286,5 +297,11 @@ export async function exportWordDocument(payload: WordExportPayload): Promise<vo
   })
 
   const blob = await Packer.toBlob(doc)
-  saveAs(blob, `${payload.filename}.docx`)
+  const fileName = `${payload.filename}.docx`
+  const receiver = getWordExportReceiver()
+  if (receiver) {
+    await receiver(blob, fileName)
+    return
+  }
+  saveAs(blob, fileName)
 }
