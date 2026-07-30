@@ -82,6 +82,9 @@ const ExpressionDetectivePage = () => import('@/views/emotional/games/Expression
 const ExpressionDuelPage = () => import('@/views/emotional/games/ExpressionDuelPage.vue')
 const PatternNextPage = () => import('@/views/emotional/games/PatternNextPage.vue')
 const MemoryMatchPage = () => import('@/views/emotional/games/MemoryMatchPage.vue')
+const MissingItemPage = () => import('@/views/emotional/games/MissingItemPage.vue')
+const EchoSeqPage = () => import('@/views/emotional/games/EchoSeqPage.vue')
+const StoryOrderPage = () => import('@/views/emotional/games/StoryOrderPage.vue')
 const OddOneOutPage = () => import('@/views/emotional/games/OddOneOutPage.vue')
 const NumberSensePage = () => import('@/views/emotional/games/NumberSensePage.vue')
 
@@ -698,6 +701,39 @@ const router = createRouter({
           component: NumberSensePage,
           meta: {
             title: '数感小铺',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/missing-item',
+          name: 'MissingItemGame',
+          component: MissingItemPage,
+          meta: {
+            title: '少了什么',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/echo-seq',
+          name: 'EchoSeqGame',
+          component: EchoSeqPage,
+          meta: {
+            title: '序列复现',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'emotional/games/story-order',
+          name: 'StoryOrderGame',
+          component: StoryOrderPage,
+          meta: {
+            title: '故事排序',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,
