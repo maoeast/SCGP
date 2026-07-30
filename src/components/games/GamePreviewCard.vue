@@ -263,8 +263,8 @@
         :loading="starting"
         @click="showConfigInline ? handleStartGame() : showConfigDialog()"
       >
-        <span class="start-icon">{{ showConfigInline ? '🖐️' : '🚀' }}</span>
-        <span class="start-text">{{ showConfigInline ? '进入全屏训练' : '开始游戏' }}</span>
+        <span class="start-icon">🎮</span>
+        <span class="start-text">进入全屏训练</span>
       </el-button>
       <p class="start-hint">
         {{ showConfigInline ? '参数将在进入训练时直接生效' : '点击按钮配置训练参数，系统将记录训练数据' }}
@@ -988,14 +988,14 @@ watch(
   border: none;
   border-radius: 28px;
   font-size: 18px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
   transition: all 0.3s ease;
 }
 
 .start-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
 }
 
 .start-button:active {

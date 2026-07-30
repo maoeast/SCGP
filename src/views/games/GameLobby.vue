@@ -1,6 +1,5 @@
 <template>
   <div class="page-container workspace-page">
-    <!-- 面包屑导航 -->
     <div class="breadcrumb-wrapper">
       <el-breadcrumb separator="/">
         <el-breadcrumb-item :to="{ path: '/games/menu' }">游戏训练</el-breadcrumb-item>
@@ -11,7 +10,6 @@
       </el-breadcrumb>
     </div>
 
-    <!-- 页面头部 -->
     <div class="page-header">
       <div class="header-left">
         <h1>{{ currentEntry?.name || '游戏训练' }} - 游戏大厅</h1>
@@ -21,7 +19,6 @@
         </p>
       </div>
       <div class="header-right">
-        <!-- 模块快捷切换器 -->
         <div class="module-switcher">
           <span class="switcher-emoji">{{ getEntryEmoji(currentEntryCode) }}</span>
           <span class="switcher-label">切换入口</span>
@@ -54,75 +51,69 @@
     </div>
 
     <div class="content-wrapper workspace-split">
-      <!-- 左侧：游戏选择器 -->
+      <!-- 左侧：统一游戏卡片列表 -->
       <div class="selector-section workspace-pane">
-        <template v-if="usesRegistryBackedGameLobby">
-          <div class="emotion-selector">
-            <button
-              v-for="game in registryBackedGames"
-              :key="game.id"
-              class="emotion-game-card"
-              :class="{ selected: selectedGame?.id === game.id }"
-              type="button"
-              @click="selectEmotionalGame(game)"
+        <div class="game-card-list">
+          <button
+            v-for="game in allGames"
+            :key="game.id"
+            class="game-card"
+            :class="{ selected: selectedGame?.id === game.id }"
+            type="button"
+            @click="selectGame(game)"
+          >
+            <div
+              class="game-card-emoji"
+              :style="{ background: String(game.metadata?.color || 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)') }"
             >
-              <div
-                class="emotion-game-emoji"
-                :style="{ background: String(game.metadata?.color || 'linear-gradient(135deg, #ffd3a5 0%, #fd6585 100%)') }"
-              >
-                {{ game.metadata?.emoji || game.coverImage || '🎮' }}
-              </div>
-              <div class="emotion-game-copy">
-                <strong>{{ game.name }}</strong>
-                <span>{{ game.metadata?.therapeuticGoal || '情绪调节游戏' }}</span>
-              </div>
-            </button>
-          </div>
-        </template>
-
-        <ResourceSelector
-          v-else
-          v-model="selectedGame"
-          v-model:category="selectedCategory"
-          :module-code="currentEntry.moduleCode"
-          :training-entry="currentEntryCode"
-          resource-type="game"
-        />
+              {{ game.metadata?.emoji || game.coverImage || '🎮' }}
+            </div>
+            <div class="game-card-copy">
+              <strong>{{ game.name }}</strong>
+              <span>{{ game.metadata?.therapeuticGoal || game.description || '' }}</span>
+            </div>
+          </button>
+          <el-empty v-if="allGames.length === 0" description="该模块暂无可用的游戏" :image-size="100" />
+        </div>
       </div>
 
-      <!-- 右侧：游戏预览卡片 -->
+      <!-- 右侧：统一游戏预览 -->
       <div class="preview-section workspace-pane">
-        <template v-if="usesRegistryBackedGameLobby && selectedGame">
-          <el-card class="emotion-preview-card workspace-pane-card">
-            <div class="emotion-preview-header">
+        <template v-if="selectedGame">
+          <el-card class="preview-card workspace-pane-card">
+            <!-- 预览头 -->
+            <div class="preview-header">
               <div
-                class="emotion-preview-emoji"
-                :style="{ background: String(selectedGame.metadata?.color || 'linear-gradient(135deg, #ffd3a5 0%, #fd6585 100%)') }"
+                class="preview-emoji"
+                :style="{ background: String(selectedGame.metadata?.color || 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)') }"
               >
                 {{ selectedGame.metadata?.emoji || selectedGame.coverImage || '🎮' }}
               </div>
-              <div class="emotion-preview-copy">
+              <div class="preview-copy">
                 <h2>{{ selectedGame.name }}</h2>
                 <p>{{ selectedGame.description }}</p>
-                <div class="emotion-preview-tags">
-                  <el-tag size="small" type="warning">{{ selectedGame.metadata?.therapeuticGoal || '情绪调节' }}</el-tag>
-                  <el-tag size="small" type="info">{{ selectedGame.metadata?.duration || '2-4分钟' }}</el-tag>
+                <div class="preview-tags">
+                  <el-tag v-if="selectedGame.metadata?.therapeuticGoal" size="small" type="warning">{{ selectedGame.metadata.therapeuticGoal }}</el-tag>
+                  <el-tag v-if="selectedGame.metadata?.duration" size="small" type="info">{{ selectedGame.metadata.duration }}</el-tag>
+                  <el-tag v-if="selectedGame.metadata?.difficulty" size="small">{{ selectedGame.metadata.difficulty }}</el-tag>
                 </div>
               </div>
             </div>
 
-            <div class="emotion-preview-body">
-              <div class="preview-block">
+            <!-- 预览体 -->
+            <div class="preview-body">
+              <div v-if="selectedGame.metadata?.previewDescription" class="preview-block">
                 <h4>玩法说明</h4>
-                <p class="emotion-preview-dynamic">{{ getEmotionalPreviewDescription(selectedGame) }}</p>
+                <p>{{ selectedGame.metadata.previewDescription }}</p>
               </div>
 
-              <div class="preview-block">
+              <div v-if="selectedGame.metadata?.repeatPlayHint" class="preview-block">
                 <h4>重复可玩提示</h4>
-                <p>{{ selectedGame.metadata?.repeatPlayHint || '可根据孩子当下状态反复练习，切换不同难度保持新鲜感。' }}</p>
+                <p>{{ selectedGame.metadata.repeatPlayHint }}</p>
               </div>
 
-              <div class="preview-block">
+              <!-- 难度选择（registry-backed 游戏） -->
+              <div v-if="usesRegistryBackedGameLobby" class="preview-block">
                 <h4>开始前难度</h4>
                 <el-radio-group
                   v-model="selectedEmotionalDifficulty"
@@ -135,10 +126,11 @@
                 </el-radio-group>
               </div>
 
+              <!-- 协作伙伴 -->
               <div v-if="requiresPartnerSelection" class="preview-block">
                 <h4>协作伙伴</h4>
                 <p class="preview-block__hint">
-                  这个游戏需要 2 名学生共享同一场次，完成后会同时写入两人的训练记录。
+                  这个游戏需要 2 名学生共享同一场次。
                 </p>
                 <el-select
                   v-model="selectedPartnerStudentId"
@@ -162,34 +154,33 @@
                 <p v-if="selectedPartnerStudent" class="partner-chip">
                   已选择搭档：{{ selectedPartnerStudent.name }}
                 </p>
-                <p v-else-if="availablePartnerStudents.length === 0" class="partner-empty">
-                  当前没有可选的第二位学生，请先在学生管理中添加学生后再开始合作游戏。
-                </p>
               </div>
+
+              <!-- 资源配置（sensory 类游戏用 GamePreviewCard） -->
+              <GamePreviewCard
+                v-if="!usesRegistryBackedGameLobby"
+                class="preview-game-config"
+                :game="selectedGame"
+                :student-id="studentId"
+                launch-variant="sensory-immersive"
+                @start-game="handleStartGame"
+              />
             </div>
 
-            <div class="emotion-preview-actions">
+            <!-- 启动按钮（registry-backed 游戏） -->
+            <div v-if="usesRegistryBackedGameLobby" class="preview-actions">
               <el-button
-                type="primary"
                 size="large"
-                class="emotion-start-button"
+                class="start-button"
                 :disabled="!canStartSelectedGame"
                 @click="handleStartEmotionalGame"
               >
-                开始游戏
+                <span class="start-icon">🎮</span>
+                <span class="start-text">进入全屏训练</span>
               </el-button>
             </div>
           </el-card>
         </template>
-
-        <GamePreviewCard
-          v-else-if="selectedGame"
-          class="workspace-pane-card"
-          :game="selectedGame"
-          :student-id="studentId"
-          :launch-variant="isSensoryEntry ? 'sensory-immersive' : 'default'"
-          @start-game="handleStartGame"
-        />
 
         <el-empty
           v-else
@@ -210,7 +201,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
-import ResourceSelector from '@/components/resources/ResourceSelector.vue'
 import GamePreviewCard from '@/components/games/GamePreviewCard.vue'
 import type { ResourceItem } from '@/types/module'
 import { StudentAPI } from '@/database/api'
@@ -226,7 +216,6 @@ import {
   type TrainingEntryCode,
 } from '@/utils/training-entry'
 
-// 类型定义
 interface Student {
   id: number
   name: string
@@ -239,7 +228,6 @@ interface Student {
   current_class_name?: string | null
 }
 
-// 入口 Emoji 映射
 const ENTRY_EMOJIS: Record<TrainingEntryCode, string> = {
   'sensory-integration': '🎮',
   'emotional-regulation': '😊',
@@ -247,16 +235,15 @@ const ENTRY_EMOJIS: Record<TrainingEntryCode, string> = {
   'fine-motor': '🧩',
   'soothing-aids': '🫶',
   'life-skills': '🏠',
-  'cognitive': '🧠'
+  'cognitive': '🧠',
 }
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-// 当前训练入口代码
 const currentEntryCode = ref<TrainingEntryCode>(
-  resolveTrainingEntryCode(route.query.entry, route.query.module)
+  resolveTrainingEntryCode(route.query.entry, route.query.module),
 )
 
 const currentEntry = computed(() => getTrainingEntry(currentEntryCode.value))
@@ -271,7 +258,6 @@ function parseParticipantStudentIds(rawValue: unknown): number[] {
     : rawValue !== undefined && rawValue !== null
       ? [rawValue]
       : []
-
   return Array.from(new Set(
     sourceValues
       .flatMap((item) => String(item || '').split(/[,\|]/))
@@ -281,22 +267,19 @@ function parseParticipantStudentIds(rawValue: unknown): number[] {
   ))
 }
 
-// 学生相关状态
 const studentId = ref<number>(routeStudentId)
 const student = ref<Student | null>(null)
 const studentLoading = ref(false)
 const allStudents = ref<Student[]>([])
+
+const selectedGame = ref<ResourceItem | null>(null)
+const selectedEmotionalDifficulty = ref<1 | 2 | 3>(1)
+const selectedPartnerStudentId = ref<number | null>(null)
 const initialParticipantIds = parseParticipantStudentIds(route.query.participantStudentIds)
 const initialPartnerStudentId = initialParticipantIds.find((id) => id !== routeStudentId) || null
 
-// 游戏选择相关状态
-const selectedGame = ref<ResourceItem | null>(null)
-const selectedCategory = ref<string>('all')
-const selectedEmotionalDifficulty = ref<1 | 2 | 3>(1)
-const selectedPartnerStudentId = ref<number | null>(initialPartnerStudentId)
-
+// ---- 统一游戏列表：registry + resource API 合并 ----
 const isEmotionalEntry = computed(() => currentEntryCode.value === 'emotional-regulation')
-const isSensoryEntry = computed(() => currentEntryCode.value === 'sensory-integration')
 
 const createRegistryBackedGameItem = (game: CustomGameDefinition, index: number): ResourceItem => ({
   id: -2001 - index,
@@ -327,12 +310,37 @@ const registryBackedGames = computed(() => {
   if (isEmotionalEntry.value) {
     return EMOTIONAL_GAME_CATALOG
   }
-
   return getCustomGamesByTrainingEntry(currentEntryCode.value)
     .map((game, index) => createRegistryBackedGameItem(game, index))
 })
 
+const resourceBackedGames = ref<ResourceItem[]>([])
+
+const loadResourceBackedGames = () => {
+  try {
+    const api = new ResourceAPI()
+    const entry = currentEntry.value
+    const resources = api.getResources({
+      moduleCode: entry.moduleCode,
+      resourceType: 'game',
+    })
+    resourceBackedGames.value = resources.filter((resource) =>
+      matchesTrainingEntryResource(resource, currentEntryCode.value),
+    )
+  } catch (error) {
+    console.error('加载资源游戏列表失败:', error)
+    resourceBackedGames.value = []
+  }
+}
+
+const allGames = computed(() => {
+  const registry = registryBackedGames.value
+  if (registry.length > 0) return registry
+  return resourceBackedGames.value
+})
+
 const usesRegistryBackedGameLobby = computed(() => registryBackedGames.value.length > 0)
+
 const selectedGameMaxPlayers = computed(() => {
   const raw = Number(selectedGame.value?.metadata?.maxPlayers || 1)
   return raw === 2 ? 2 : 1
@@ -342,41 +350,29 @@ const availablePartnerStudents = computed(() => {
   return allStudents.value.filter((candidate) => candidate.id !== studentId.value)
 })
 const selectedPartnerStudent = computed(() => {
-  if (!selectedPartnerStudentId.value) {
-    return null
-  }
-
+  if (!selectedPartnerStudentId.value) return null
   return availablePartnerStudents.value.find((candidate) => candidate.id === selectedPartnerStudentId.value) || null
 })
 const canStartSelectedGame = computed(() => {
-  if (!selectedGame.value) {
-    return false
-  }
-
-  if (!requiresPartnerSelection.value) {
-    return true
-  }
-
+  if (!selectedGame.value) return false
+  if (!requiresPartnerSelection.value) return true
   return Boolean(selectedPartnerStudent.value)
 })
 
-// 获取入口 Emoji
 const getEntryEmoji = (entryCode: TrainingEntryCode): string => {
   return ENTRY_EMOJIS[entryCode] || '🎮'
 }
 
-// 获取入口游戏数量
 const getEntryGameCount = (entryCode: TrainingEntryCode): number => {
   const registryBackedGameCount = entryCode === 'emotional-regulation'
     ? getEmotionalGameCount()
     : getCustomGamesByTrainingEntry(entryCode).length
-
   try {
     const api = new ResourceAPI()
     const entry = getTrainingEntry(entryCode)
     const resources = api.getResources({
       moduleCode: entry.moduleCode,
-      resourceType: 'game'
+      resourceType: 'game',
     })
     const resourceCount = resources.filter((resource) => matchesTrainingEntryResource(resource, entryCode)).length
     return resourceCount > 0 ? resourceCount : registryBackedGameCount
@@ -385,53 +381,38 @@ const getEntryGameCount = (entryCode: TrainingEntryCode): number => {
   }
 }
 
-const getEmotionalPreviewDescription = (game: ResourceItem): string => {
-  const previewDescription = game.metadata?.previewDescription
-  if (typeof previewDescription === 'string' && previewDescription.trim()) {
-    return previewDescription
-  }
-
-  return game.description || '璇峰厛閫夋嫨涓€涓儏缁皟鑺傛父鎴忋€?'
-}
-
-// 处理入口切换
-const handleEntryChange = (newEntryCode: TrainingEntryCode) => {
-  // 清空当前选择
-  selectedGame.value = null
-  selectedCategory.value = 'all'
-  selectedEmotionalDifficulty.value = 1
-  selectedPartnerStudentId.value = null
-  currentEntryCode.value = newEntryCode
-
-  // 更新 URL（保持学生ID不变）
-  router.replace({
-    path: `/games/lobby/${studentId.value}`,
-    query: {
-      entry: newEntryCode,
-      module: getTrainingEntry(newEntryCode).moduleCode
-    }
-  })
-
-  ElMessage.success(`已切换到 ${getTrainingEntry(newEntryCode).name}`)
-}
-
-const selectEmotionalGame = (game: ResourceItem) => {
+const selectGame = (game: ResourceItem) => {
   selectedGame.value = game
-
   if (game.metadata?.difficultyLocked) {
     selectedEmotionalDifficulty.value = 1
   }
 }
 
-// 加载学生信息
+const handleEntryChange = (newEntryCode: TrainingEntryCode) => {
+  selectedGame.value = null
+  selectedEmotionalDifficulty.value = 1
+  selectedPartnerStudentId.value = null
+  currentEntryCode.value = newEntryCode
+  resourceBackedGames.value = []
+  loadResourceBackedGames()
+
+  router.replace({
+    path: `/games/lobby/${studentId.value}`,
+    query: {
+      entry: newEntryCode,
+      module: getTrainingEntry(newEntryCode).moduleCode,
+    },
+  })
+
+  ElMessage.success(`已切换到 ${getTrainingEntry(newEntryCode).name}`)
+}
+
 const loadStudent = async () => {
   if (!studentId.value) return
-
   studentLoading.value = true
   try {
     const api = new StudentAPI()
     student.value = await api.getStudentById(studentId.value)
-
     if (!student.value) {
       ElMessage.error('未找到该学生')
       goBackToStudentList()
@@ -452,17 +433,14 @@ const loadStudents = async () => {
     allStudents.value = Array.isArray(students) ? students : []
   } catch (error: any) {
     console.error('加载学生列表失败:', error)
-    ElMessage.error('加载学生列表失败')
   }
 }
 
-// 处理开始游戏
 const handleStartGame = (gameConfig: {
   resourceId: number
   taskId: number
   mode: string
   studentId: number
-  // 训练配置参数
   gridSize?: number
   rounds?: number
   timeLimit?: number
@@ -474,44 +452,27 @@ const handleStartGame = (gameConfig: {
   bubblePopMode?: string
   bubblePopDifficulty?: string
 }) => {
-  console.log('[GameLobby] 开始游戏:', gameConfig)
-
-  // 构建查询参数
   const query: Record<string, string> = {
-      studentId: String(gameConfig.studentId),
-      studentName: student.value?.name || '',
-      resourceId: String(gameConfig.resourceId),
-      taskId: String(gameConfig.taskId),
-      mode: gameConfig.mode,
-      entry: currentEntryCode.value,
-      module: currentEntry.value.moduleCode
-    }
-
-  // 添加训练配置参数
+    studentId: String(gameConfig.studentId),
+    studentName: student.value?.name || '',
+    resourceId: String(gameConfig.resourceId),
+    taskId: String(gameConfig.taskId),
+    mode: gameConfig.mode,
+    entry: currentEntryCode.value,
+    module: currentEntry.value.moduleCode,
+  }
   if (gameConfig.gridSize !== undefined) query.gridSize = String(gameConfig.gridSize)
   if (gameConfig.rounds !== undefined) query.rounds = String(gameConfig.rounds)
   if (gameConfig.timeLimit !== undefined) query.timeLimit = String(gameConfig.timeLimit)
   if (gameConfig.duration !== undefined) query.duration = String(gameConfig.duration)
   if (gameConfig.targetSize !== undefined) query.targetSize = String(gameConfig.targetSize)
   if (gameConfig.targetSpeed !== undefined) query.targetSpeed = String(gameConfig.targetSpeed)
-  if (gameConfig.airXylophoneDifficulty) {
-    query.airXylophoneDifficulty = gameConfig.airXylophoneDifficulty
-  }
-  if (gameConfig.woodBlockDifficulty) {
-    query.woodBlockDifficulty = gameConfig.woodBlockDifficulty
-  }
-  if (gameConfig.bubblePopMode) {
-    query.bubblePopMode = gameConfig.bubblePopMode
-  }
-  if (gameConfig.bubblePopDifficulty) {
-    query.bubblePopDifficulty = gameConfig.bubblePopDifficulty
-  }
+  if (gameConfig.airXylophoneDifficulty) query.airXylophoneDifficulty = gameConfig.airXylophoneDifficulty
+  if (gameConfig.woodBlockDifficulty) query.woodBlockDifficulty = gameConfig.woodBlockDifficulty
+  if (gameConfig.bubblePopMode) query.bubblePopMode = gameConfig.bubblePopMode
+  if (gameConfig.bubblePopDifficulty) query.bubblePopDifficulty = gameConfig.bubblePopDifficulty
 
-  // 跳转到游戏播放页面
-  router.push({
-    path: '/games/play',
-    query
-  })
+  router.push({ path: '/games/play', query })
 }
 
 const handleStartEmotionalGame = () => {
@@ -540,43 +501,31 @@ const handleStartEmotionalGame = () => {
     query.participantStudentNames = [student.value?.name || '', selectedPartnerStudent.value.name].join('|')
   }
 
-  router.push({
-    path: entryPath,
-    query,
-  })
+  router.push({ path: entryPath, query })
 }
 
-// 返回学生列表
 const goBackToStudentList = () => {
   router.push({
     path: '/games/select-student',
-    query: {
-      entry: currentEntryCode.value,
-      module: currentEntry.value.moduleCode
-    }
+    query: { entry: currentEntryCode.value, module: currentEntry.value.moduleCode },
   })
 }
 
-// 初始化
 onMounted(async () => {
   if (!studentId.value) {
     ElMessage.error('缺少学生ID')
     goBackToStudentList()
     return
   }
-
-  await Promise.all([
-    loadStudent(),
-    loadStudents(),
-  ])
-
+  await Promise.all([loadStudent(), loadStudents()])
+  loadResourceBackedGames()
 })
 
 watch(registryBackedGames, (games) => {
   if (games.length === 0) {
+    selectedGame.value = null
     return
   }
-
   const selectedGameCode = typeof selectedGame.value?.metadata?.gameCode === 'string'
     ? selectedGame.value.metadata.gameCode
     : ''
@@ -585,14 +534,14 @@ watch(registryBackedGames, (games) => {
   selectedEmotionalDifficulty.value = 1
 }, { immediate: true })
 
-watch(usesRegistryBackedGameLobby, (value) => {
-  if (value) {
-    if (!selectedGame.value) {
-      selectedGame.value = registryBackedGames.value[0] || null
-    }
-    selectedEmotionalDifficulty.value = 1
-  } else {
+watch(resourceBackedGames, (games) => {
+  if (registryBackedGames.value.length > 0) return
+  if (games.length === 0) {
     selectedGame.value = null
+    return
+  }
+  if (!selectedGame.value || !games.some((g) => g.id === selectedGame.value!.id)) {
+    selectedGame.value = games[0] || null
   }
 })
 
@@ -603,22 +552,18 @@ watch(
       selectedPartnerStudentId.value = null
       return
     }
-
-    const hasCurrentSelection = availablePartnerStudents.value.some((candidate) => candidate.id === selectedPartnerStudentId.value)
-    if (hasCurrentSelection) {
-      return
-    }
-
-    if (initialPartnerStudentId && availablePartnerStudents.value.some((candidate) => candidate.id === initialPartnerStudentId)) {
+    const hasCurrentSelection = availablePartnerStudents.value.some(
+      (candidate) => candidate.id === selectedPartnerStudentId.value,
+    )
+    if (hasCurrentSelection) return
+    if (initialPartnerStudentId && availablePartnerStudents.value.some((c) => c.id === initialPartnerStudentId)) {
       selectedPartnerStudentId.value = initialPartnerStudentId
       return
     }
-
     if (availablePartnerStudents.value.length === 1) {
       selectedPartnerStudentId.value = availablePartnerStudents.value[0]?.id || null
       return
     }
-
     selectedPartnerStudentId.value = null
   },
   { immediate: true },
@@ -639,13 +584,15 @@ watch(
   flex-direction: column;
 }
 
-.emotion-selector {
+/* ---- 统一左侧卡片列表 ---- */
+.game-card-list {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  width: 100%;
 }
 
-.emotion-game-card {
+.game-card {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -658,78 +605,86 @@ watch(
   transition: all 0.2s ease;
 }
 
-.emotion-game-card:hover,
-.emotion-game-card.selected {
+.game-card:hover,
+.game-card.selected {
   border-color: #f5a623;
   background: #fffaf0;
   box-shadow: 0 10px 24px rgba(245, 166, 35, 0.12);
 }
 
-.emotion-game-emoji,
-.emotion-preview-emoji {
+.game-card-emoji {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  width: 72px;
+  height: 72px;
   color: #fff;
   font-size: 34px;
   border-radius: 18px;
   box-shadow: 0 14px 26px rgba(245, 108, 108, 0.18);
 }
 
-.emotion-game-emoji {
-  width: 72px;
-  height: 72px;
-}
-
-.emotion-game-copy {
+.game-card-copy {
   display: flex;
   flex-direction: column;
   gap: 6px;
   text-align: left;
 }
 
-.emotion-game-copy strong {
+.game-card-copy strong {
   font-size: 17px;
   color: #303133;
 }
 
-.emotion-game-copy span {
+.game-card-copy span {
   font-size: 13px;
   color: #909399;
 }
 
-.emotion-preview-header {
+/* ---- 统一右侧预览卡片 ---- */
+.preview-card {
+  border-radius: 18px;
+}
+
+.preview-header {
   display: flex;
   gap: 18px;
   align-items: flex-start;
 }
 
-.emotion-preview-emoji {
+.preview-emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   width: 88px;
   height: 88px;
+  color: #fff;
   font-size: 40px;
+  border-radius: 18px;
+  box-shadow: 0 14px 26px rgba(245, 108, 108, 0.18);
 }
 
-.emotion-preview-copy h2 {
+.preview-copy h2 {
   margin: 0;
   font-size: 24px;
   color: #303133;
 }
 
-.emotion-preview-copy p {
+.preview-copy p {
   margin: 10px 0 0;
   color: #606266;
   line-height: 1.7;
 }
 
-.emotion-preview-tags {
+.preview-tags {
   display: flex;
   gap: 8px;
   margin-top: 14px;
 }
 
-.emotion-preview-body {
+.preview-body {
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -757,6 +712,10 @@ watch(
   margin-bottom: 12px !important;
 }
 
+.preview-game-config {
+  margin-top: 4px;
+}
+
 .partner-select {
   width: 100%;
 }
@@ -773,30 +732,49 @@ watch(
   color: #909399;
 }
 
-.partner-chip,
-.partner-empty {
+.partner-chip {
   margin-top: 10px !important;
   font-size: 13px;
-}
-
-.partner-chip {
   color: #7a5618 !important;
 }
 
-.partner-empty {
-  color: #c05621 !important;
-}
-
-.emotion-preview-actions {
+.preview-actions {
   margin-top: 22px;
   text-align: center;
 }
 
-.emotion-start-button {
-  min-width: 220px;
+.start-button {
+  width: 100%;
+  max-width: 340px;
+  height: 58px;
+  border: none;
+  border-radius: 28px;
+  font-size: 18px;
+  background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+  transition: all 0.3s ease;
 }
 
-/* 模块切换器样式 */
+.start-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
+}
+
+.start-button:active {
+  transform: translateY(0);
+}
+
+.start-icon {
+  margin-right: 8px;
+  font-size: 22px;
+}
+
+.start-text {
+  font-weight: 500;
+  color: #fff;
+}
+
+/* ---- 模块切换器 ---- */
 .module-switcher {
   display: flex;
   align-items: center;
