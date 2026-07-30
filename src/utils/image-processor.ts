@@ -1,5 +1,5 @@
 /**
- * SIC-ADS 图片处理工具
+ * SCGP 图片处理工具
  *
  * Phase 2.2: 基于 Canvas 的图片压缩和格式转换
  * 零原生依赖，使用浏览器 Canvas API

@@ -1,5 +1,5 @@
 /**
- * SIC-ADS 模块注册表
+ * SCGP 模块注册表
  *
  * Phase 3.2: 模块化基础设施
  *
@@ -380,56 +380,77 @@ export function initializeBuiltinModules(): void {
     ]
   })
 
-  // 社交沟通模块（experimental，内容持续补全中）
+  // 社交沟通模块
   ModuleRegistry.registerModule({
     code: ModuleCode.SOCIAL,
     name: '社交沟通',
-    description: '社交沟通主链，当前为试验态',
+    description: '社交沟通训练与评估',
     icon: 'ChatDotRound',
     themeColor: '#409eff',
     version: '1.0.0',
-    status: 'experimental',
+    status: 'active',
     features: [
       {
         code: 'games',
         name: '游戏训练',
         description: '社交游戏训练入口',
-        status: 'coming_soon',
+        status: 'active',
         route: '/games/menu'
       },
       {
         code: 'equipment',
         name: '器材训练',
         description: '社交器材训练入口',
-        status: 'coming_soon',
+        status: 'active',
         route: '/equipment/menu'
+      },
+      {
+        code: 'training_records',
+        name: '训练记录',
+        description: '社交训练记录汇总',
+        status: 'active',
+        route: '/training-records/menu'
       }
     ]
   })
 
-  // 认知发展模块（experimental，内容持续补全中）
+  // 认知发展模块
   ModuleRegistry.registerModule({
     code: ModuleCode.COGNITIVE,
     name: '认知发展',
-    description: '认知发展主链，当前为试验态',
+    description: '认知发展训练与评估',
     icon: 'Cpu',
     themeColor: '#13c2c2',
     version: '1.0.0',
-    status: 'experimental',
+    status: 'active',
     features: [
       {
-        code: 'training_records',
-        name: '训练记录',
-        description: '训练记录汇总入口',
-        status: 'coming_soon',
-        route: '/training-records/menu'
+        code: 'games',
+        name: '游戏训练',
+        description: '认知游戏训练入口',
+        status: 'active',
+        route: '/games/menu'
+      },
+      {
+        code: 'equipment',
+        name: '器材训练',
+        description: '认知器材训练入口',
+        status: 'active',
+        route: '/equipment/menu'
       },
       {
         code: 'assessment',
         name: '评估',
-        description: '认知自测等评估入口',
-        status: 'coming_soon',
+        description: '认知评估入口',
+        status: 'active',
         route: '/assessment'
+      },
+      {
+        code: 'training_records',
+        name: '训练记录',
+        description: '认知训练记录汇总',
+        status: 'active',
+        route: '/training-records/menu'
       }
     ]
   })
