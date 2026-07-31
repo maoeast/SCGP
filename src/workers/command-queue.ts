@@ -96,17 +96,13 @@ export class DatabaseCommandQueue {
     }
 
     this.worker.onerror = (error: ErrorEvent) => {
-      // 打印详细的 Worker 错误信息
-      console.error('[DatabaseCommandQueue] ❌ Worker crashed!')
-      console.error('[DatabaseCommandQueue] Message:', error.message)
-      console.error('[DatabaseCommandQueue] Filename:', error.filename)
-      console.error('[DatabaseCommandQueue] Line:', error.lineno)
-      console.error('[DatabaseCommandQueue] Col:', error.colno)
-      console.error('[DatabaseCommandQueue] Error object:', error)
-      console.error('[DatabaseCommandQueue] Stack:', error.error)
+      // Worker 模块加载失败时 message/filename/lineno 为 undefined（非 JS 异常）
+      const detail = error.message
+        ? `${error.message} (${error.filename}:${error.lineno})`
+        : 'Worker 模块加载失败（WASM/import 未就绪）'
+      console.warn('[DatabaseCommandQueue] Worker 未就绪:', detail)
 
-      this.log('Worker error:', error)
-      this.rejectAllPending(new Error(`Worker error: ${error.message} (line ${error.lineno})`))
+      this.rejectAllPending(new Error(`Worker error: ${detail}`))
     }
   }
 

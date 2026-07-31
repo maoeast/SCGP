@@ -1607,6 +1607,14 @@ export async function initDatabase(): Promise<any> {
         console.log('[InitDatabase] ✅ 初始化阶段变更已保存')
       }
 
+      // A1: 并行启动 Worker 路径（不阻塞主线程，失败不影响主功能）
+      // 仅在 DEV 环境或显式设置 VITE_USE_DB_WORKER 时启用
+      if (import.meta.env.DEV || (import.meta as any).env?.VITE_USE_DB_WORKER) {
+        initWorkerPath(dbBuffer, isNewDb).catch((err) => {
+          console.warn('[InitDatabase] Worker 并行初始化未就绪（可忽略）:', String(err).slice(0, 120))
+        })
+      }
+
       return db
     } catch (error) {
       console.error('SQL.js数据库初始化失败:', error)
@@ -1630,6 +1638,32 @@ export async function initDatabase(): Promise<any> {
     initPromise = null
   }
 }
+
+/**
+ * A1: Worker 路径并行初始化（后台静默运行，不阻塞主线程）
+ *
+ * 在主线程数据库初始化完成后，同时在 Worker 中加载同一份 dbBuffer，
+ * 使得后续可通过 getWorkerBridge() 获取 worker 端的 bridge 实例。
+ *
+ * @param dbBuffer 数据库二进制数据
+ * @param isNewDb 是否为新数据库
+ */
+async function initWorkerPath(dbBuffer: Uint8Array | null, isNewDb: boolean): Promise<void> {
+  try {
+    const { initDatabaseViaWorker, setWorkerBridge } = await import('./worker-init')
+    const { bridge } = await initDatabaseViaWorker({
+      dbBuffer,
+      schemaSql: schemaSQL,
+      isNewDb,
+    })
+    setWorkerBridge(bridge)
+    console.log('[InitDatabase] 🧵 Worker 并行初始化完成，bridge 已就绪')
+  } catch (error) {
+    console.warn('[InitDatabase] Worker 初始化跳过:', String(error).slice(0, 150))
+    // 不抛出，Worker 路径失败不影响主功能
+  }
+}
+
 
 // 插入初始数据到数据库
 async function insertInitialDataToDB(database: any, options: { tasks?: boolean; steps?: boolean } = { tasks: true, steps: true }) {
@@ -2812,6 +2846,9 @@ export function getDatabase(): any {
   }
   return db;
 }
+
+// A1: Worker 路径的 bridge 实例（异步查询入口，仅在 Worker 并行初始化成功后才非 null）
+export { getWorkerBridge } from './worker-init'
 
 // 导出数据库
 export async function exportDatabase(): Promise<Uint8Array> {

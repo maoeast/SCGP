@@ -60,8 +60,10 @@ export class DatabaseBridge {
 
   /**
    * 初始化 Worker
+   * @param dbPath 数据库路径（Electron 环境）
+   * @param dbData 数据库二进制数据（直接传入 Buffer，绕过文件系统）
    */
-  async init(dbPath?: string): Promise<void> {
+  async init(dbPath?: string, dbData?: Uint8Array): Promise<void> {
     if (this.worker) {
       throw new Error('Worker already initialized')
     }
@@ -85,7 +87,7 @@ export class DatabaseBridge {
     this.setupSaveListener()
 
     // 初始化数据库
-    const response = await this.enqueue('init', { dbPath })
+    const response = await this.enqueue('init', { dbPath, dbData })
 
     if (response.success) {
       this.isReady = true
