@@ -11,7 +11,7 @@
  * 4. 质量控制（0.1-1.0）
  */
 
-interface CompressOptions {
+export interface CompressOptions {
   quality?: number        // 压缩质量 0.1-1.0，默认 0.8
   maxWidth?: number      // 最大宽度，默认 1920
   maxHeight?: number     // 最大高度，默认 1080
@@ -19,7 +19,7 @@ interface CompressOptions {
   enableWebP?: boolean  // 是否启用 WebP（如果浏览器支持）
 }
 
-interface CompressResult {
+export interface CompressResult {
   success: boolean
   blob?: Blob
   dataUrl?: string
@@ -209,3 +209,69 @@ export function generateUniqueFileName(originalName: string): string {
   // 组合：原名_时间戳_随机.扩展名
   return `${nameWithoutExt}_${timestamp}_${randomStr}${ext}`
 }
+
+// ========== A2: Worker 路径（自动选择） ==========
+
+/**
+ * 压缩图片（自动选择最优路径）
+ *
+ * - 浏览器支持 Worker → 走 Worker 路径（不阻塞主线程）
+ * - 不支持 → 回退到主线程 Canvas 路径
+ *
+ * 返回结果与 compressImage 一致。
+ */
+export async function compressImageAuto(
+  file: File,
+  options: CompressOptions = {}
+): Promise<CompressResult> {
+  // 尝试 Worker 路径
+  const { isImageWorkerSupported, compressImageViaWorker } = await import('./image-worker-bridge')
+  if (isImageWorkerSupported()) {
+    return compressImageViaWorker(file, options)
+  }
+  // 回退主线程
+  return compressImage(file, options)
+}
+
+/**
+ * 批量压缩（Worker 并行处理，自动回退）
+ *
+ * Worker 路径下并发处理，大幅提升批量场景性能。
+ */
+export async function compressImagesAuto(
+  files: File[],
+  options: CompressOptions = {}
+): Promise<CompressResult[]> {
+  const { isImageWorkerSupported, compressImageViaWorker } = await import('./image-worker-bridge')
+
+  if (isImageWorkerSupported()) {
+    // Worker 路径：并发处理（注意不要超过浏览器并发限制，保守 4 并发）
+    const CONCURRENCY = 4
+    const results: CompressResult[] = []
+
+    for (let i = 0; i < files.length; i += CONCURRENCY) {
+      const batch = files.slice(i, i + CONCURRENCY)
+      const batchResults = await Promise.all(
+        batch.map((file) => {
+          if (!file.type.startsWith('image/')) {
+            return Promise.resolve({
+              success: false,
+              originalSize: file.size,
+              compressedSize: 0,
+              compressionRatio: 1,
+              format: 'unknown',
+              error: '非图片文件',
+            } as CompressResult)
+          }
+          return compressImageViaWorker(file, options)
+        })
+      )
+      results.push(...batchResults)
+    }
+    return results
+  }
+
+  // 回退主线程串行
+  return compressImages(files, options)
+}
+
