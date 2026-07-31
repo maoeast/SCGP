@@ -24,16 +24,12 @@
             :disabled="phase !== 'playing' || lockedWrong === item.id"
             @click="onItemClick(item.id)"
           >
-            <svg class="item-svg" viewBox="-50 -50 100 100">
-              <circle v-if="item.shape === 'circle'" r="34" :fill="item.color" />
-              <rect v-else-if="item.shape === 'square'" x="-34" y="-34" width="68" height="68" rx="10" :fill="item.color" />
-              <polygon v-else-if="item.shape === 'triangle'" points="0,-40 36,28 -36,28" :fill="item.color" />
-              <polygon v-else-if="item.shape === 'star'" points="0,-40 9,-12 38,-12 15,7 23,38 0,18 -23,38 -15,7 -38,-12 -9,-12" :fill="item.color" />
-              <polygon v-else-if="item.shape === 'hexagon'" points="0,-38 33,-19 33,19 0,38 -33,19 -33,-19" :fill="item.color" />
-              <polygon v-else-if="item.shape === 'diamond'" points="0,-40 34,0 0,40 -34,0" :fill="item.color" />
-              <polygon v-else-if="item.shape === 'pentagon'" points="0,-40 38,-12 24,32 -24,32 -38,-12" :fill="item.color" />
-              <path v-else :fill="item.color" d="M0,30 C -22,14 -38,-2 -38,-16 C -38,-30 -26,-38 -16,-38 C -8,-38 -2,-32 0,-26 C 2,-32 8,-38 16,-38 C 26,-38 38,-30 38,-16 C 38,-2 22,14 0,30 Z" />
-            </svg>
+            <img
+              class="item-img"
+              :src="itemImageSrc(item)"
+              :alt="item.label"
+              draggable="false"
+            />
             <span class="item-label">{{ item.label }}</span>
           </button>
         </div>
@@ -126,6 +122,11 @@ function clearTimers() {
   if (badgeTimer.value) { clearTimeout(badgeTimer.value); badgeTimer.value = null }
   if (completeTimer.value) { clearTimeout(completeTimer.value); completeTimer.value = null }
   if (resetTimer.value) { clearTimeout(resetTimer.value); resetTimer.value = null }
+}
+
+function itemImageSrc(item: { imageKey: string }): string {
+  // 预置资源经 resource:// 协议解析（打包后位于 resources/assets/resources/images/cognitive/items/）
+  return `resource://images/cognitive/items/${item.imageKey}.png`
 }
 
 function markBoardDirtyOnce() {
@@ -386,7 +387,14 @@ onUnmounted(() => clearTimers())
 .item-card.card--correct  { border-color: #43a047; background: #e8f5e9; box-shadow: 0 0 0 3px #a5d6a7; }
 .item-card.card--wrong    { border-color: #e53935; background: #fce4ec; opacity: .6; }
 
-.item-svg { width: 64px; height: 64px; }
+.item-img {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  border-radius: 10px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
 .item-label { font-size: 13px; color: #37474f; font-weight: 500; }
 
 .feedback-strip {

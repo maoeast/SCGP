@@ -1,0 +1,200 @@
+{
+  "generated_at": "2026-07-31T17:08:18.813Z",
+  "model": "gpt-image-2",
+  "style": "儿童绘本贴纸风格",
+  "note": "通用物品池：K02 少了什么 / K04 哪个不同类 共用，1:1 正方形贴纸，运行时等比缩放",
+  "items": [
+    {
+      "kind": "cat",
+      "name": "小猫",
+      "size": "1:1",
+      "file": "cat.png"
+    },
+    {
+      "kind": "dog",
+      "name": "小狗",
+      "size": "1:1",
+      "file": "dog.png"
+    },
+    {
+      "kind": "rabbit",
+      "name": "兔子",
+      "size": "1:1",
+      "file": "rabbit.png"
+    },
+    {
+      "kind": "rose",
+      "name": "玫瑰",
+      "size": "1:1",
+      "file": "rose.png"
+    },
+    {
+      "kind": "sunflower",
+      "name": "向日葵",
+      "size": "1:1",
+      "file": "sunflower.png"
+    },
+    {
+      "kind": "tulip",
+      "name": "郁金香",
+      "size": "1:1",
+      "file": "tulip.png"
+    },
+    {
+      "kind": "lily",
+      "name": "百合",
+      "size": "1:1",
+      "file": "lily.png"
+    },
+    {
+      "kind": "bread",
+      "name": "面包",
+      "size": "1:1",
+      "file": "bread.png"
+    },
+    {
+      "kind": "pear",
+      "name": "梨",
+      "size": "1:1",
+      "file": "pear.png"
+    },
+    {
+      "kind": "grape",
+      "name": "葡萄",
+      "size": "1:1",
+      "file": "grape.png"
+    },
+    {
+      "kind": "tomato",
+      "name": "番茄",
+      "size": "1:1",
+      "file": "tomato.png"
+    },
+    {
+      "kind": "potato",
+      "name": "土豆",
+      "size": "1:1",
+      "file": "potato.png"
+    },
+    {
+      "kind": "car",
+      "name": "小汽车",
+      "size": "1:1",
+      "file": "car.png"
+    },
+    {
+      "kind": "bus",
+      "name": "公交车",
+      "size": "1:1",
+      "file": "bus.png"
+    },
+    {
+      "kind": "bike",
+      "name": "自行车",
+      "size": "1:1",
+      "file": "bike.png"
+    },
+    {
+      "kind": "cup",
+      "name": "杯子",
+      "size": "1:1",
+      "file": "cup.png"
+    },
+    {
+      "kind": "chair",
+      "name": "椅子",
+      "size": "1:1",
+      "file": "chair.png"
+    },
+    {
+      "kind": "towel",
+      "name": "毛巾",
+      "size": "1:1",
+      "file": "towel.png"
+    },
+    {
+      "kind": "plane",
+      "name": "飞机",
+      "size": "1:1",
+      "file": "plane.png"
+    },
+    {
+      "kind": "bird",
+      "name": "小鸟",
+      "size": "1:1",
+      "file": "bird.png"
+    },
+    {
+      "kind": "butterfly",
+      "name": "蝴蝶",
+      "size": "1:1",
+      "file": "butterfly.png"
+    },
+    {
+      "kind": "kite",
+      "name": "风筝",
+      "size": "1:1",
+      "file": "kite.png"
+    },
+    {
+      "kind": "fish",
+      "name": "小鱼",
+      "size": "1:1",
+      "file": "fish.png"
+    },
+    {
+      "kind": "boat",
+      "name": "小船",
+      "size": "1:1",
+      "file": "boat.png"
+    },
+    {
+      "kind": "duck",
+      "name": "鸭子",
+      "size": "1:1",
+      "file": "duck.png"
+    },
+    {
+      "kind": "lifebuoy",
+      "name": "救生圈",
+      "size": "1:1",
+      "file": "lifebuoy.png"
+    },
+    {
+      "kind": "leaf",
+      "name": "树叶",
+      "size": "1:1",
+      "file": "leaf.png"
+    },
+    {
+      "kind": "rock",
+      "name": "石头",
+      "size": "1:1",
+      "file": "rock.png"
+    },
+    {
+      "kind": "star",
+      "name": "星星",
+      "size": "1:1",
+      "file": "star.png"
+    },
+    {
+      "kind": "ball",
+      "name": "皮球",
+      "size": "1:1",
+      "file": "ball.png"
+    },
+    {
+      "kind": "book",
+      "name": "书本",
+      "size": "1:1",
+      "file": "book.png"
+    },
+    {
+      "kind": "flower",
+      "name": "花朵",
+      "size": "1:1",
+      "file": "flower.png"
+    }
+  ]
+}

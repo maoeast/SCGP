@@ -1,21 +1,11 @@
-// K04_ODD_ONE_OUT 语义归类数据：程序化 SVG 图标库，按类别组织，供组件按难度抽题
-export type OddShapeKind =
-  | 'circle'
-  | 'square'
-  | 'triangle'
-  | 'star'
-  | 'hexagon'
-  | 'diamond'
-  | 'pentagon'
-  | 'heart'
-
+// K04_ODD_ONE_OUT 语义归类数据：贴纸图物品库（assets/resources/images/cognitive/items/），按类别组织，供组件按难度抽题
 export interface OddItem {
   id: string
   label: string
   category: string
   functionTags: string[]
-  shape: OddShapeKind
-  color: string
+  /** 对应 assets/resources/images/cognitive/items/{imageKey}.png */
+  imageKey: string
 }
 
 export interface OddRoundSpec {
@@ -26,52 +16,52 @@ export interface OddRoundSpec {
 
 // L1：大类混合（动物/植物/食物/交通/日用品），3 选 1，找出与另外两个大类不同的那个
 const L1_ITEMS: OddItem[] = [
-  { id: 'l1-cat', label: '猫', category: 'animal', functionTags: [], shape: 'circle', color: '#ff9f43' },
-  { id: 'l1-dog', label: '狗', category: 'animal', functionTags: [], shape: 'circle', color: '#ffa94d' },
-  { id: 'l1-rabbit', label: '兔子', category: 'animal', functionTags: [], shape: 'circle', color: '#ffb74d' },
-  { id: 'l1-rose', label: '玫瑰', category: 'plant', functionTags: [], shape: 'pentagon', color: '#ff6b81' },
-  { id: 'l1-sunflower', label: '向日葵', category: 'plant', functionTags: [], shape: 'pentagon', color: '#ffd43b' },
-  { id: 'l1-tree', label: '大树', category: 'plant', functionTags: [], shape: 'pentagon', color: '#51cf66' },
-  { id: 'l1-apple', label: '苹果', category: 'food', functionTags: [], shape: 'circle', color: '#ff6b6b' },
-  { id: 'l1-banana', label: '香蕉', category: 'food', functionTags: [], shape: 'diamond', color: '#ffe066' },
-  { id: 'l1-bread', label: '面包', category: 'food', functionTags: [], shape: 'square', color: '#e8b06a' },
-  { id: 'l1-car', label: '汽车', category: 'vehicle', functionTags: [], shape: 'square', color: '#4dabf7' },
-  { id: 'l1-bus', label: '公交车', category: 'vehicle', functionTags: [], shape: 'square', color: '#339af0' },
-  { id: 'l1-bike', label: '自行车', category: 'vehicle', functionTags: [], shape: 'triangle', color: '#22b8cf' },
-  { id: 'l1-cup', label: '杯子', category: 'daily', functionTags: [], shape: 'hexagon', color: '#9775fa' },
-  { id: 'l1-chair', label: '椅子', category: 'daily', functionTags: [], shape: 'hexagon', color: '#845ef7' },
-  { id: 'l1-towel', label: '毛巾', category: 'daily', functionTags: [], shape: 'square', color: '#748ffc' },
+  { id: 'l1-cat', label: '猫', category: 'animal', functionTags: [], imageKey: 'cat' },
+  { id: 'l1-dog', label: '狗', category: 'animal', functionTags: [], imageKey: 'dog' },
+  { id: 'l1-rabbit', label: '兔子', category: 'animal', functionTags: [], imageKey: 'rabbit' },
+  { id: 'l1-rose', label: '玫瑰', category: 'plant', functionTags: [], imageKey: 'rose' },
+  { id: 'l1-sunflower', label: '向日葵', category: 'plant', functionTags: [], imageKey: 'sunflower' },
+  { id: 'l1-tree', label: '大树', category: 'plant', functionTags: [], imageKey: 'tree' },
+  { id: 'l1-apple', label: '苹果', category: 'food', functionTags: [], imageKey: 'apple' },
+  { id: 'l1-banana', label: '香蕉', category: 'food', functionTags: [], imageKey: 'banana' },
+  { id: 'l1-bread', label: '面包', category: 'food', functionTags: [], imageKey: 'bread' },
+  { id: 'l1-car', label: '汽车', category: 'vehicle', functionTags: [], imageKey: 'car' },
+  { id: 'l1-bus', label: '公交车', category: 'vehicle', functionTags: [], imageKey: 'bus' },
+  { id: 'l1-bike', label: '自行车', category: 'vehicle', functionTags: [], imageKey: 'bike' },
+  { id: 'l1-cup', label: '杯子', category: 'daily', functionTags: [], imageKey: 'cup' },
+  { id: 'l1-chair', label: '椅子', category: 'daily', functionTags: [], imageKey: 'chair' },
+  { id: 'l1-towel', label: '毛巾', category: 'daily', functionTags: [], imageKey: 'towel' },
 ]
 
 // L2：细分类别（同大类"动物"下再细分猫科/植物等），4 选 1
 const L2_ITEMS: OddItem[] = [
-  { id: 'l2-cat', label: '猫', category: 'pet-mammal', functionTags: [], shape: 'circle', color: '#ff9f43' },
-  { id: 'l2-dog', label: '狗', category: 'pet-mammal', functionTags: [], shape: 'circle', color: '#ffa94d' },
-  { id: 'l2-rabbit2', label: '兔子', category: 'pet-mammal', functionTags: [], shape: 'circle', color: '#ffb74d' },
-  { id: 'l2-rose2', label: '玫瑰', category: 'flower', functionTags: [], shape: 'pentagon', color: '#ff6b81' },
-  { id: 'l2-tulip', label: '郁金香', category: 'flower', functionTags: [], shape: 'pentagon', color: '#f783ac' },
-  { id: 'l2-lily', label: '百合', category: 'flower', functionTags: [], shape: 'pentagon', color: '#eebefa' },
-  { id: 'l2-apple2', label: '苹果', category: 'fruit', functionTags: [], shape: 'circle', color: '#ff6b6b' },
-  { id: 'l2-pear', label: '梨', category: 'fruit', functionTags: [], shape: 'circle', color: '#c0eb75' },
-  { id: 'l2-grape', label: '葡萄', category: 'fruit', functionTags: [], shape: 'circle', color: '#9775fa' },
-  { id: 'l2-carrot', label: '胡萝卜', category: 'vegetable', functionTags: [], shape: 'triangle', color: '#ff922b' },
-  { id: 'l2-tomato', label: '番茄', category: 'vegetable', functionTags: [], shape: 'circle', color: '#fa5252' },
-  { id: 'l2-potato', label: '土豆', category: 'vegetable', functionTags: [], shape: 'diamond', color: '#d9a86c' },
+  { id: 'l2-cat', label: '猫', category: 'pet-mammal', functionTags: [], imageKey: 'cat' },
+  { id: 'l2-dog', label: '狗', category: 'pet-mammal', functionTags: [], imageKey: 'dog' },
+  { id: 'l2-rabbit2', label: '兔子', category: 'pet-mammal', functionTags: [], imageKey: 'rabbit' },
+  { id: 'l2-rose2', label: '玫瑰', category: 'flower', functionTags: [], imageKey: 'rose' },
+  { id: 'l2-tulip', label: '郁金香', category: 'flower', functionTags: [], imageKey: 'tulip' },
+  { id: 'l2-lily', label: '百合', category: 'flower', functionTags: [], imageKey: 'lily' },
+  { id: 'l2-apple2', label: '苹果', category: 'fruit', functionTags: [], imageKey: 'apple' },
+  { id: 'l2-pear', label: '梨', category: 'fruit', functionTags: [], imageKey: 'pear' },
+  { id: 'l2-grape', label: '葡萄', category: 'fruit', functionTags: [], imageKey: 'grape' },
+  { id: 'l2-carrot', label: '胡萝卜', category: 'vegetable', functionTags: [], imageKey: 'carrot' },
+  { id: 'l2-tomato', label: '番茄', category: 'vegetable', functionTags: [], imageKey: 'tomato' },
+  { id: 'l2-potato', label: '土豆', category: 'vegetable', functionTags: [], imageKey: 'potato' },
 ]
 
 // L3：功能/抽象维度（跨大类，按"会不会飞"等功能属性归类），5 选 1，正确答案需附归类理由
 const L3_ITEMS: OddItem[] = [
-  { id: 'l3-plane', label: '飞机', category: 'transport', functionTags: ['flies'], shape: 'triangle', color: '#4dabf7' },
-  { id: 'l3-bird', label: '小鸟', category: 'animal', functionTags: ['flies'], shape: 'triangle', color: '#66d9e8' },
-  { id: 'l3-butterfly', label: '蝴蝶', category: 'insect', functionTags: ['flies'], shape: 'triangle', color: '#e599f7' },
-  { id: 'l3-kite', label: '风筝', category: 'toy', functionTags: ['flies'], shape: 'diamond', color: '#ffd43b' },
-  { id: 'l3-fish', label: '鱼', category: 'animal', functionTags: ['swims'], shape: 'circle', color: '#3bc9db' },
+  { id: 'l3-plane', label: '飞机', category: 'transport', functionTags: ['flies'], imageKey: 'plane' },
+  { id: 'l3-bird', label: '小鸟', category: 'animal', functionTags: ['flies'], imageKey: 'bird' },
+  { id: 'l3-butterfly', label: '蝴蝶', category: 'insect', functionTags: ['flies'], imageKey: 'butterfly' },
+  { id: 'l3-kite', label: '风筝', category: 'toy', functionTags: ['flies'], imageKey: 'kite' },
+  { id: 'l3-fish', label: '鱼', category: 'animal', functionTags: ['swims'], imageKey: 'fish' },
 
-  { id: 'l3-boat', label: '小船', category: 'transport', functionTags: ['floats'], shape: 'triangle', color: '#4dabf7' },
-  { id: 'l3-duck', label: '鸭子', category: 'animal', functionTags: ['floats'], shape: 'circle', color: '#ffe066' },
-  { id: 'l3-lifebuoy', label: '救生圈', category: 'daily', functionTags: ['floats'], shape: 'hexagon', color: '#ff8787' },
-  { id: 'l3-leaf', label: '树叶', category: 'plant', functionTags: ['floats'], shape: 'pentagon', color: '#69db7c' },
-  { id: 'l3-rock', label: '石头', category: 'nature', functionTags: ['sinks'], shape: 'square', color: '#868e96' },
+  { id: 'l3-boat', label: '小船', category: 'transport', functionTags: ['floats'], imageKey: 'boat' },
+  { id: 'l3-duck', label: '鸭子', category: 'animal', functionTags: ['floats'], imageKey: 'duck' },
+  { id: 'l3-lifebuoy', label: '救生圈', category: 'daily', functionTags: ['floats'], imageKey: 'lifebuoy' },
+  { id: 'l3-leaf', label: '树叶', category: 'plant', functionTags: ['floats'], imageKey: 'leaf' },
+  { id: 'l3-rock', label: '石头', category: 'nature', functionTags: ['sinks'], imageKey: 'rock' },
 ]
 
 const L3_RATIONALE: Record<string, string> = {

@@ -30,7 +30,7 @@
               :key="item.id"
               class="item-card item-visible"
             >
-              <div class="item-icon" v-html="itemSvg(item)"></div>
+              <div class="item-icon"><img class="item-img" :src="itemImageSrc(item)" :alt="item.name" draggable="false" /></div>
               <span class="item-label">{{ item.name }}</span>
             </div>
           </div>
@@ -61,7 +61,7 @@
                 </div>
               </template>
               <template v-else>
-                <div class="item-icon" v-html="itemSvg(item)"></div>
+                <div class="item-icon"><img class="item-img" :src="itemImageSrc(item)" :alt="item.name" draggable="false" /></div>
                 <span class="item-label">{{ item.name }}</span>
               </template>
             </div>
@@ -81,7 +81,7 @@
               :disabled="selectedId !== null"
               @click="onSelect(candidate.id)"
             >
-              <div class="item-icon" v-html="candidateSvg(candidate)"></div>
+              <div class="item-icon"><img class="item-img" :src="itemImageSrc(candidate)" :alt="candidate.name" draggable="false" /></div>
               <span class="item-label">{{ candidate.name }}</span>
             </button>
           </div>
@@ -116,7 +116,8 @@ import type {
 interface ItemDef {
   id: string
   name: string
-  svgKey: string
+  /** 对应 assets/resources/images/cognitive/items/{imageKey}.png */
+  imageKey: string
 }
 
 interface DifficultyConfig {
@@ -139,37 +140,22 @@ const emit = defineEmits<{
   complete: [payload: EmotionGameCompletionPayload]
 }>()
 
-// ---- SVG icons ----
-const SVG_MAP: Record<string, string> = {
-  apple: `<svg viewBox="0 0 80 80"><circle cx="40" cy="45" r="24" fill="#ff4d4f"/><path d="M40 21 Q40 8 50 10" stroke="#52c41a" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="48" cy="8" rx="8" ry="5" fill="#52c41a" transform="rotate(-20 48 8)"/></svg>`,
-  banana: `<svg viewBox="0 0 80 80"><path d="M40 12 Q55 10 60 35 Q65 60 35 70 Q10 65 15 40 Q20 15 40 12Z" fill="#fadb14"/><path d="M40 12 Q42 15 40 18" stroke="#d48806" stroke-width="1.5" fill="none"/></svg>`,
-  cat: `<svg viewBox="0 0 80 80"><ellipse cx="40" cy="48" rx="22" ry="18" fill="#ffc069"/><circle cx="40" cy="44" rx="14" ry="12" fill="#fff5e6"/><circle cx="33" cy="42" r="3" fill="#333"/><circle cx="47" cy="42" r="3" fill="#333"/><ellipse cx="40" cy="48" rx="2" ry="1.5" fill="#ff85c0"/><path d="M33 56 Q40 60 47 56" stroke="#333" stroke-width="1.5" fill="none"/><polygon points="24,30 18,18 32,28" fill="#ffc069"/><polygon points="56,30 62,18 48,28" fill="#ffc069"/></svg>`,
-  dog: `<svg viewBox="0 0 80 80"><ellipse cx="40" cy="46" rx="20" ry="16" fill="#d48806"/><ellipse cx="40" cy="42" rx="12" ry="10" fill="#fffbe6"/><circle cx="34" cy="40" r="2.5" fill="#333"/><circle cx="46" cy="40" r="2.5" fill="#333"/><circle cx="40" cy="44" r="3" fill="#333"/><path d="M32 54 Q40 56 48 54" stroke="#333" stroke-width="1.5" fill="none"/><ellipse cx="22" cy="26" rx="8" ry="10" fill="#d48806" transform="rotate(-15 22 26)"/><ellipse cx="58" cy="26" rx="8" ry="10" fill="#d48806" transform="rotate(15 58 26)"/></svg>`,
-  star: `<svg viewBox="0 0 80 80"><polygon points="40,10 48,32 72,32 53,46 60,68 40,54 20,68 27,46 8,32 32,32" fill="#fadb14" stroke="#fa8c16" stroke-width="2"/></svg>`,
-  ball: `<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="28" fill="#ff4d4f"/><path d="M16 22 Q40 32 64 22" stroke="#fff" stroke-width="3" fill="none"/><path d="M16 58 Q40 48 64 58" stroke="#fff" stroke-width="3" fill="none"/><circle cx="40" cy="40" r="28" fill="none" stroke="#d9363e" stroke-width="2"/></svg>`,
-  cup: `<svg viewBox="0 0 80 80"><path d="M20 30 L25 68 Q27 72 40 72 Q53 72 55 68 L60 30Z" fill="#69c0ff"/><path d="M58 30 Q70 30 72 42 Q74 54 62 54 L60 54" stroke="#69c0ff" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="40" cy="30" rx="20" ry="5" fill="#91d5ff"/></svg>`,
-  book: `<svg viewBox="0 0 80 80"><rect x="18" y="16" width="36" height="50" rx="3" fill="#1890ff"/><rect x="24" y="22" width="24" height="4" rx="2" fill="#fff" opacity="0.5"/><rect x="24" y="30" width="20" height="3" rx="1.5" fill="#fff" opacity="0.4"/><rect x="24" y="37" width="22" height="3" rx="1.5" fill="#fff" opacity="0.4"/><rect x="24" y="44" width="16" height="3" rx="1.5" fill="#fff" opacity="0.3"/><rect x="52" y="16" width="10" height="50" rx="2" fill="#096dd9"/><line x1="57" y1="16" x2="57" y2="66" stroke="#fff" stroke-width="1" opacity="0.3"/></svg>`,
-  flower: `<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="10" fill="#fadb14"/><ellipse cx="40" cy="26" rx="8" ry="12" fill="#ff85c0" transform="rotate(0 40 40)"/><ellipse cx="40" cy="26" rx="8" ry="12" fill="#ff85c0" transform="rotate(72 40 40)"/><ellipse cx="40" cy="26" rx="8" ry="12" fill="#ff85c0" transform="rotate(144 40 40)"/><ellipse cx="40" cy="26" rx="8" ry="12" fill="#ff85c0" transform="rotate(216 40 40)"/><ellipse cx="40" cy="26" rx="8" ry="12" fill="#ff85c0" transform="rotate(288 40 40)"/><rect x="38" y="50" width="4" height="22" rx="2" fill="#52c41a"/></svg>`,
-  car: `<svg viewBox="0 0 80 80"><rect x="12" y="32" width="56" height="22" rx="6" fill="#ff4d4f"/><rect x="20" y="22" width="30" height="14" rx="5" fill="#ff4d4f"/><rect x="22" y="24" width="10" height="10" rx="2" fill="#87e8de"/><rect x="34" y="24" width="10" height="10" rx="2" fill="#87e8de"/><circle cx="26" cy="58" r="8" fill="#333"/><circle cx="26" cy="58" r="4" fill="#888"/><circle cx="54" cy="58" r="8" fill="#333"/><circle cx="54" cy="58" r="4" fill="#888"/></svg>`,
-  fish: `<svg viewBox="0 0 80 80"><ellipse cx="36" cy="40" rx="24" ry="14" fill="#69c0ff"/><polygon points="60,40 76,26 76,54" fill="#69c0ff"/><circle cx="24" cy="38" r="4" fill="#fff"/><circle cx="25" cy="38" r="2" fill="#333"/><ellipse cx="34" cy="44" rx="6" ry="2" fill="#1890ff" opacity="0.4"/></svg>`,
-  house: `<svg viewBox="0 0 80 80"><polygon points="40,10 8,44 72,44" fill="#ffc069"/><rect x="14" y="44" width="52" height="28" fill="#fff5e6" stroke="#d48806" stroke-width="1.5"/><rect x="32" y="52" width="16" height="20" rx="2" fill="#d48806"/><rect x="24" y="50" width="8" height="8" fill="#87e8de" stroke="#d48806" stroke-width="0.5"/></svg>`,
-}
-
-const DEFAULT_ITEM: ItemDef = { id: 'apple', name: '苹果', svgKey: 'apple' }
+// ---- 物品池：贴纸图经 resource:// 协议加载（assets/resources/images/cognitive/items/） ----
+const DEFAULT_ITEM: ItemDef = { id: 'apple', name: '苹果', imageKey: 'apple' }
 
 const ITEM_POOL: ItemDef[] = [
-  { id: 'apple', name: '苹果', svgKey: 'apple' },
-  { id: 'banana', name: '香蕉', svgKey: 'banana' },
-  { id: 'cat', name: '小猫', svgKey: 'cat' },
-  { id: 'dog', name: '小狗', svgKey: 'dog' },
-  { id: 'star', name: '星星', svgKey: 'star' },
-  { id: 'ball', name: '皮球', svgKey: 'ball' },
-  { id: 'cup', name: '杯子', svgKey: 'cup' },
-  { id: 'book', name: '书本', svgKey: 'book' },
-  { id: 'flower', name: '花朵', svgKey: 'flower' },
-  { id: 'car', name: '小车', svgKey: 'car' },
-  { id: 'fish', name: '小鱼', svgKey: 'fish' },
-  { id: 'house', name: '房子', svgKey: 'house' },
+  { id: 'apple', name: '苹果', imageKey: 'apple' },
+  { id: 'banana', name: '香蕉', imageKey: 'banana' },
+  { id: 'cat', name: '小猫', imageKey: 'cat' },
+  { id: 'dog', name: '小狗', imageKey: 'dog' },
+  { id: 'star', name: '星星', imageKey: 'star' },
+  { id: 'ball', name: '皮球', imageKey: 'ball' },
+  { id: 'cup', name: '杯子', imageKey: 'cup' },
+  { id: 'book', name: '书本', imageKey: 'book' },
+  { id: 'flower', name: '花朵', imageKey: 'flower' },
+  { id: 'car', name: '小车', imageKey: 'car' },
+  { id: 'fish', name: '小鱼', imageKey: 'fish' },
+  { id: 'house', name: '房子', imageKey: 'house' },
 ]
 
 const DIFFICULTY_LEVELS: Record<number, DifficultyConfig> = {
@@ -226,12 +212,9 @@ const themeStyle = computed(() => ({
   '--theme-color': '#13c2c2',
 }))
 
-function itemSvg(item: ItemDef): string {
-  return SVG_MAP[item.svgKey] || SVG_MAP.apple!
-}
-
-function candidateSvg(item: ItemDef): string {
-  return SVG_MAP[item.svgKey] || SVG_MAP.apple!
+function itemImageSrc(item: ItemDef): string {
+  // 预置资源经 resource:// 协议解析（打包后位于 resources/assets/resources/images/cognitive/items/）
+  return `resource://images/cognitive/items/${item.imageKey}.png`
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -508,13 +491,20 @@ watch(
 }
 
 .item-icon {
-  width: 80px;
-  height: 80px;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.item-icon :deep(svg) {
+.item-img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .item-label {

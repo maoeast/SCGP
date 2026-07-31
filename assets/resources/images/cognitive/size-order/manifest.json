@@ -1,0 +1,56 @@
+{
+  "generated_at": "2026-07-31T16:46:00.669Z",
+  "model": "gpt-image-2",
+  "style": "儿童绘本贴纸风格",
+  "note": "大小物品 1:1 等比缩放；长短物品 2:1 横向贯穿，运行时 object-fit:cover + object-position:left 裁右端",
+  "items": [
+    {
+      "kind": "turtle",
+      "name": "乌龟",
+      "size": "1:1",
+      "file": "turtle.png"
+    },
+    {
+      "kind": "sun",
+      "name": "太阳",
+      "size": "1:1",
+      "file": "sun.png"
+    },
+    {
+      "kind": "bear",
+      "name": "小熊",
+      "size": "1:1",
+      "file": "bear.png"
+    },
+    {
+      "kind": "watermelon",
+      "name": "西瓜",
+      "size": "1:1",
+      "file": "watermelon.png"
+    },
+    {
+      "kind": "cucumber",
+      "name": "黄瓜",
+      "size": "2:1",
+      "file": "cucumber.png"
+    },
+    {
+      "kind": "snake",
+      "name": "小蛇",
+      "size": "2:1",
+      "file": "snake.png"
+    },
+    {
+      "kind": "sausage",
+      "name": "香肠",
+      "size": "2:1",
+      "file": "sausage.png"
+    },
+    {
+      "kind": "toothbrush",
+      "name": "牙刷",
+      "size": "2:1",
+      "file": "toothbrush.png"
+    }
+  ]
+}
