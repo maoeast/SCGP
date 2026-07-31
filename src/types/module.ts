@@ -79,6 +79,16 @@ export interface ModuleMetadata {
 
   // 模块功能列表
   features: ModuleFeature[]
+
+  // 侧边栏菜单配置：该模块对应的路由名称（如 'EmotionalTraining'、'SelfCareTraining'）
+  // 设置后侧边栏自动生成该模块的菜单项，菜单组由 menuGroup 决定
+  menuRouteName?: string
+
+  // 侧边栏菜单分组，与 Layout.vue 中 menuGroupConfigs.id 对应
+  menuGroup?: string
+
+  // 侧边栏菜单图标（FontAwesome 图标名，如 'face-smile'、'list-check'）
+  menuIcon?: string
 }
 
 /**
@@ -97,8 +107,11 @@ export interface ModuleFeature {
   // 功能状态
   status: 'active' | 'coming_soon' | 'deprecated'
 
-  // 关联的页面路由
+  // 关联的页面路由（URL 路径，如 '/games/menu'）
   route?: string
+
+  // 关联的路由名称（router route name，如 'GameTraining'），用于菜单高亮与权限匹配
+  routeName?: string
 
   // 所需权限
   permissions?: string[]

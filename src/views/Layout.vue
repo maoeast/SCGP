@@ -136,6 +136,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
 import { performConfirmedLogout } from '@/utils/auth-ui'
 import { resolveAvatarUrl } from '@/utils/avatar-presets'
+import { ModuleRegistry } from '@/core/module-registry'
+import type { ModuleFeature } from '@/types/module'
 import {
   filterVisibleAccessControlledItems,
   type AccessControlledItem,
@@ -199,25 +201,77 @@ const menuGroupConfigs: readonly MenuGroupConfig[] = [
     id: 'training-and-assessment',
     title: '训练与评估',
     items: [
+      // 系统级条目（手写固定）
       { routeName: 'Assessment', displayTitle: '能力评估', icon: 'clipboard-check' },
       { routeName: 'TrainingPlan', displayTitle: '训练计划', icon: 'calendar-check' },
-      { routeName: 'SelfCareTraining', displayTitle: '自理训练', icon: 'list-check' },
-      { routeName: 'EmotionalTraining', displayTitle: '情绪行为', icon: 'face-smile' },
-      { routeName: 'GameTraining', displayTitle: '游戏训练', icon: 'gamepad' },
-      { routeName: 'EquipmentTraining', displayTitle: '器材训练', icon: 'dumbbell' },
+      // 模块条目由 buildModuleMenuItems() 动态生成，不在此手写
     ],
   },
   {
     id: 'records-and-system',
     title: '记录与系统',
     items: [
-      { routeName: 'TrainingRecordsModule', displayTitle: '训练记录', icon: 'clock-rotate-left' },
+      // 系统级条目（手写固定）
       { routeName: 'Reports', displayTitle: '报告生成', icon: 'file-lines' },
-      { routeName: 'ResourceCenter', displayTitle: '资源中心', icon: 'folder-open' },
       { routeName: 'System', displayTitle: '系统管理', icon: 'gear' },
+      // 模块条目由 buildModuleMenuItems() 动态生成，不在此手写
     ],
   },
 ]
+
+/**
+ * 从 ModuleRegistry 动态生成模块级别的菜单条目，按分组返回。
+ *
+ * - 模块自有入口：模块设置了 menuRouteName + menuGroup + status==='active'，归入对应分组
+ * - 共享功能入口：若任意活跃模块的 features 中某 feature 的 routeName 不为空且
+ *   feature.status==='active'，则在对应菜单组中显示该共享入口
+ */
+function buildModuleMenuItems(): Map<string, MenuItemConfig[]> {
+  const activeModules = ModuleRegistry.getActiveModules()
+  const result = new Map<string, MenuItemConfig[]>()
+  const addedRouteNames = new Set<string>()
+
+  const addToGroup = (groupId: string, item: MenuItemConfig) => {
+    if (!result.has(groupId)) result.set(groupId, [])
+    result.get(groupId)!.push(item)
+  }
+
+  // 1. 模块自有菜单入口
+  for (const mod of activeModules) {
+    if (mod.menuRouteName && mod.menuGroup && mod.menuIcon) {
+      addToGroup(mod.menuGroup, {
+        routeName: mod.menuRouteName,
+        displayTitle: mod.name,
+        icon: mod.menuIcon,
+      })
+      addedRouteNames.add(mod.menuRouteName)
+    }
+  }
+
+  // 2. 共享功能入口
+  const sharedFeatureConfigs: Array<{ featureCode: string; routeName: string; displayTitle: string; icon: string; groupId: string }> = [
+    { featureCode: 'games', routeName: 'GameTraining', displayTitle: '游戏训练', icon: 'gamepad', groupId: 'training-and-assessment' },
+    { featureCode: 'equipment', routeName: 'EquipmentTraining', displayTitle: '器材训练', icon: 'dumbbell', groupId: 'training-and-assessment' },
+    { featureCode: 'training_records', routeName: 'TrainingRecordsModule', displayTitle: '训练记录', icon: 'clock-rotate-left', groupId: 'records-and-system' },
+  ]
+
+  for (const cfg of sharedFeatureConfigs) {
+    if (addedRouteNames.has(cfg.routeName)) continue
+    const anyActive = activeModules.some((mod) => {
+      const feat = mod.features.find((f: ModuleFeature) => f.code === cfg.featureCode)
+      return feat && feat.status === 'active'
+    })
+    if (anyActive) {
+      addToGroup(cfg.groupId, {
+        routeName: cfg.routeName,
+        displayTitle: cfg.displayTitle,
+        icon: cfg.icon,
+      })
+    }
+  }
+
+  return result
+}
 
 const hasRole = (roles?: string[]) => {
   if (!roles || roles.length === 0) return true
@@ -268,24 +322,34 @@ const menuGroups = computed<MenuGroup[]>(() => {
     .filter((r) => r.meta?.title && !r.meta?.hideInMenu && r.path !== '/')
   const routesByName = new Map(routes.map((menuRoute) => [String(menuRoute.name || ''), menuRoute]))
 
-  return menuGroupConfigs.map((group) => ({
-    id: group.id,
-    title: group.title,
-    items: group.items.flatMap((itemConfig) => {
-      const menuRoute = routesByName.get(itemConfig.routeName)
-      if (!menuRoute) return []
+  // 从 ModuleRegistry 动态生成模块菜单条目，按分组索引
+  const moduleItemsByGroup = buildModuleMenuItems()
 
-      const item = createMenuRouteItem(menuRoute, itemConfig)
+  return menuGroupConfigs.map((group) => {
+    // 系统级条目
+    const systemItems = group.items
+    // 模块级条目（注册表动态生成）
+    const moduleItems = moduleItemsByGroup.get(group.id) ?? []
 
-      const hasAccess = filterVisibleAccessControlledItems(
-        [item],
-        authStore.hasModuleAccess,
-        authStore.hasEntitlementAccess,
-      ).length > 0
+    return {
+      id: group.id,
+      title: group.title,
+      items: [...systemItems, ...moduleItems].flatMap((itemConfig) => {
+        const menuRoute = routesByName.get(itemConfig.routeName)
+        if (!menuRoute) return []
 
-      return hasAccess && hasRole(item.meta.roles) ? [item] : []
-    }),
-  })).filter((group) => group.items.length > 0)
+        const item = createMenuRouteItem(menuRoute, itemConfig)
+
+        const hasAccess = filterVisibleAccessControlledItems(
+          [item],
+          authStore.hasModuleAccess,
+          authStore.hasEntitlementAccess,
+        ).length > 0
+
+        return hasAccess && hasRole(item.meta.roles) ? [item] : []
+      }),
+    }
+  }).filter((group) => group.items.length > 0)
 })
 
 // 页面标题

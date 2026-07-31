@@ -320,28 +320,32 @@ export function initializeBuiltinModules(): void {
         name: '游戏训练',
         description: '感官游戏训练入口',
         status: 'active',
-        route: '/games/menu'
+        route: '/games/menu',
+        routeName: 'GameTraining'
       },
       {
         code: 'equipment',
         name: '器材训练',
         description: '感官器材训练入口',
         status: 'active',
-        route: '/equipment/menu'
+        route: '/equipment/menu',
+        routeName: 'EquipmentTraining'
       },
       {
         code: 'training_records',
         name: '训练记录',
         description: '训练记录汇总入口',
         status: 'active',
-        route: '/training-records/menu'
+        route: '/training-records/menu',
+        routeName: 'TrainingRecordsModule'
       },
       {
         code: 'assessment',
         name: '评估',
         description: 'S-M 量表等评估入口',
         status: 'active',
-        route: '/assessment'
+        route: '/assessment',
+        routeName: 'Assessment'
       }
     ]
   })
@@ -355,27 +359,33 @@ export function initializeBuiltinModules(): void {
     themeColor: '#e6a23c',
     version: '1.0.0',
     status: 'active',
+    menuRouteName: 'EmotionalTraining',
+    menuGroup: 'training-and-assessment',
+    menuIcon: 'face-smile',
     features: [
       {
         code: 'games',
         name: '游戏训练',
         description: '情绪游戏训练入口',
         status: 'active',
-        route: '/games/menu'
+        route: '/games/menu',
+        routeName: 'GameTraining'
       },
       {
         code: 'equipment',
         name: '器材训练',
         description: '情绪器材训练入口',
         status: 'active',
-        route: '/equipment/menu'
+        route: '/equipment/menu',
+        routeName: 'EquipmentTraining'
       },
       {
         code: 'training_records',
         name: '训练记录',
         description: '训练记录汇总入口',
         status: 'active',
-        route: '/training-records/menu'
+        route: '/training-records/menu',
+        routeName: 'TrainingRecordsModule'
       }
     ]
   })
@@ -395,21 +405,24 @@ export function initializeBuiltinModules(): void {
         name: '游戏训练',
         description: '社交游戏训练入口',
         status: 'active',
-        route: '/games/menu'
+        route: '/games/menu',
+        routeName: 'GameTraining'
       },
       {
         code: 'equipment',
         name: '器材训练',
         description: '社交器材训练入口',
         status: 'active',
-        route: '/equipment/menu'
+        route: '/equipment/menu',
+        routeName: 'EquipmentTraining'
       },
       {
         code: 'training_records',
         name: '训练记录',
         description: '社交训练记录汇总',
         status: 'active',
-        route: '/training-records/menu'
+        route: '/training-records/menu',
+        routeName: 'TrainingRecordsModule'
       }
     ]
   })
@@ -429,28 +442,32 @@ export function initializeBuiltinModules(): void {
         name: '游戏训练',
         description: '认知游戏训练入口',
         status: 'active',
-        route: '/games/menu'
+        route: '/games/menu',
+        routeName: 'GameTraining'
       },
       {
         code: 'equipment',
         name: '器材训练',
         description: '认知器材训练入口',
         status: 'active',
-        route: '/equipment/menu'
+        route: '/equipment/menu',
+        routeName: 'EquipmentTraining'
       },
       {
         code: 'assessment',
         name: '评估',
         description: '认知评估入口',
         status: 'active',
-        route: '/assessment'
+        route: '/assessment',
+        routeName: 'Assessment'
       },
       {
         code: 'training_records',
         name: '训练记录',
         description: '认知训练记录汇总',
         status: 'active',
-        route: '/training-records/menu'
+        route: '/training-records/menu',
+        routeName: 'TrainingRecordsModule'
       }
     ]
   })
@@ -464,27 +481,33 @@ export function initializeBuiltinModules(): void {
     themeColor: '#d97706',
     version: '1.0.0',
     status: 'active',
+    menuRouteName: 'SelfCareTraining',
+    menuGroup: 'training-and-assessment',
+    menuIcon: 'list-check',
     features: [
       {
         code: 'games',
         name: '游戏训练',
         description: '生活技能游戏训练入口',
         status: 'active',
-        route: '/games/menu'
+        route: '/games/menu',
+        routeName: 'GameTraining'
       },
       {
         code: 'equipment',
         name: '器材训练',
         description: '生活技能器材训练入口',
         status: 'active',
-        route: '/equipment/menu'
+        route: '/equipment/menu',
+        routeName: 'EquipmentTraining'
       },
       {
         code: 'training_records',
         name: '训练记录',
         description: '训练记录汇总入口',
         status: 'active',
-        route: '/training-records/menu'
+        route: '/training-records/menu',
+        routeName: 'TrainingRecordsModule'
       }
     ]
   })
@@ -498,13 +521,17 @@ export function initializeBuiltinModules(): void {
     themeColor: '#909399',
     version: '1.0.0',
     status: 'active',
+    menuRouteName: 'ResourceCenter',
+    menuGroup: 'records-and-system',
+    menuIcon: 'folder-open',
     features: [
       {
         code: 'resource_center',
         name: '资源中心',
         description: '统一资源中心入口',
         status: 'active',
-        route: '/resource-center'
+        route: '/resource-center',
+        routeName: 'ResourceCenter'
       }
     ]
   })
