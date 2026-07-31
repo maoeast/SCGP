@@ -9,10 +9,12 @@ import https from 'https'
 import { zipSync, unzipSync } from 'fflate'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
+import { createRequire } from 'module'
 
 // 在 ES 模块中获取 __dirname 和 __filename
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+const require = createRequire(import.meta.url)
 const rawConsoleLog = console.log.bind(console)
 const rawConsoleWarn = console.warn.bind(console)
 const rawConsoleError = console.error.bind(console)
@@ -71,6 +73,19 @@ async function loadAIHandlers() {
 
 // 更可靠的开发环境检测：通过 app.isPackaged 或命令行参数判断
 const isDev = !app.isPackaged || process.env.NODE_ENV === 'development'
+
+// 生产构建默认禁用 DevTools。调试打包时在 package.json 的 build.extraMetadata 中设 scgpDebugDevtools: true
+// 客户交付打包时保持 false
+let devToolsEnabled = isDev
+try {
+  const pkg = require('../package.json')
+  if (pkg.scgpDebugDevtools === true) {
+    devToolsEnabled = true
+  }
+} catch {
+  // package.json 不可读时回退到 isDev
+}
+
 const devServerUrl = process.env.SCGP_DEV_SERVER_URL
   || (
     fsSync.existsSync(path.join(__dirname, '../dev-cert.pem'))
@@ -380,8 +395,7 @@ function createWindow() {
       webviewTag: false,
       // 确保输入框正常工作
       nativeWindowOpen: true,
-      // 仅开发环境启用开发者工具，生产环境禁用
-      devTools: isDev
+      devTools: devToolsEnabled
     },
     icon: path.join(__dirname, '../build/icon.ico'), // 应用图标
     show: false // 先不显示，等加载完成后再显示
@@ -389,9 +403,18 @@ function createWindow() {
 
   if (!isDev) {
     mainWindow.removeMenu()
-    mainWindow.webContents.on('devtools-opened', () => {
-      mainWindow?.webContents.closeDevTools()
-    })
+    // 生产调试：仅当 SCGP_DEBUG_DEVTOOLS=1 打包时才允许 Ctrl+Shift+F12 打开 DevTools
+    if (devToolsEnabled) {
+      mainWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.control && input.shift && input.key === 'F12') {
+          if (mainWindow?.webContents.isDevToolsOpened()) {
+            mainWindow?.webContents.closeDevTools()
+          } else {
+            mainWindow?.webContents.openDevTools()
+          }
+        }
+      })
+    }
   }
 
   async function loadRendererApp() {

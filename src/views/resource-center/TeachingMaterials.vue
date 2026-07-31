@@ -115,7 +115,7 @@
         >
           <div class="material-thumbnail">
             <img
-              :src="`/assets/resources/images/teaching-materials/${material.dimensionCode}/${material.id}.jpg`"
+              :src="`resource://images/teaching-materials/${material.dimensionCode}/${material.id}.jpg`"
               :alt="material.title"
               class="thumbnail-image"
               @error="handleImageError"

@@ -1558,7 +1558,21 @@ export async function initDatabase(): Promise<any> {
       await initializeEmotionalTables(rawDb)
       console.log('[InitDatabase] ✅ emotional 模块表初始化完成')
     } catch (emotionalSchemaError) {
-      console.warn('[InitDatabase] ⚠️  emotional 模块表初始化失败:', emotionalSchemaError)
+      console.error('[InitDatabase] ❌ emotional 模块表初始化失败（教学资料将不可用）:', emotionalSchemaError)
+      // 标记初始化失败，供后续诊断使用
+      if (typeof window !== 'undefined') {
+        ;(window as any).__SCGP_EMOTIONAL_INIT_FAILED__ = String(emotionalSchemaError)
+      }
+    }
+
+    // 独立迁移：补全 teaching_material.sequence_order 列（不依赖 emotional 链路是否成功）
+    ensureTeachingMaterialSequenceOrder(rawDb)
+
+    // 独立迁移：预置教学资料种子数据（不依赖 emotional 链路是否成功）
+    try {
+      seedPresetTeachingMaterials(rawDb)
+    } catch (seedError) {
+      console.error('[InitDatabase] ❌ 教学资料种子数据写入失败:', seedError)
     }
 
     // ========== 游戏资源迁移 ==========
@@ -3648,9 +3662,14 @@ async function initializeTeachingMaterialTables(rawDb: any): Promise<void> {
   rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_favorite_user ON teaching_material_favorite(user_id)')
   rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_favorite_material ON teaching_material_favorite(material_id)')
 
+  // DDL（建表/建索引）失败应抛出，属于基础设施故障
   migrateTeachingMaterialCognitiveConstraint(rawDb)
-  seedPresetTeachingMaterials(rawDb)
-  migrateTeachingMaterialSequenceOrder(rawDb)
+  // 种子数据由 initDatabase() 主流程中独立调用 seedPresetTeachingMaterials(rawDb)
+  try {
+    migrateTeachingMaterialSequenceOrder(rawDb)
+  } catch (seqError) {
+    console.error('[InitDatabase] 教学资料排序字段迁移失败（表结构不受影响）:', seqError)
+  }
 }
 
 function migrateTeachingMaterialCognitiveConstraint(rawDb: any): void {
@@ -3713,8 +3732,15 @@ function migrateTeachingMaterialCognitiveConstraint(rawDb: any): void {
 }
 
 function seedPresetTeachingMaterials(rawDb: any): void {
-  // 预置视频资料库：303 条视频记录（SFX 解压到 {installDir}/resources/assets/resources/videos/）
+  // 预置视频资料库：389 条视频记录（SFX 解压到 {installDir}/resources/assets/resources/videos/）
   // 幂等：检查 assets/resources/videos/ 前缀是否存在，已有则跳过
+
+  // 表不存在则跳过（由 initializeTeachingMaterialTables 创建）
+  if (!tableExists(rawDb, 'teaching_material')) {
+    console.warn('[InitDatabase] teaching_material 表不存在，跳过种子数据')
+    return
+  }
+
   const existing = rawDb.exec(`
     SELECT COUNT(*) as count
     FROM teaching_material
@@ -3726,7 +3752,7 @@ function seedPresetTeachingMaterials(rawDb: any): void {
     return
   }
 
-  console.log('[InitDatabase] 正在插入 303 条预置视频资料...')
+  console.log('[InitDatabase] 正在插入 389 条预置视频资料...')
 
   const presetData = presetTeachingMaterialsData as Array<{
     title: string
@@ -3774,6 +3800,32 @@ function seedPresetTeachingMaterials(rawDb: any): void {
 
   stmt.free()
   console.log(`[InitDatabase] 已插入 ${presetData.length} 条预置视频资料`)
+}
+
+
+/**
+ * 独立迁移：确保 teaching_material 表有 sequence_order 列。
+ * 与 emotional 模块初始化链路解耦——即使 initializeEmotionalTables 失败，
+ * 也不会阻塞此迁移，避免查询时出现 "no such column: tm.sequence_order"。
+ */
+function ensureTeachingMaterialSequenceOrder(rawDb: any): void {
+  try {
+    // 表不存在则无需处理
+    if (!tableExists(rawDb, 'teaching_material')) {
+      return
+    }
+
+    const columns = rawDb.exec('PRAGMA table_info(teaching_material)')
+    const hasSequenceOrder = columns?.[0]?.values?.some((col: any[]) => col[1] === 'sequence_order') || false
+
+    if (!hasSequenceOrder) {
+      console.log('[InitDatabase] 独立迁移：teaching_material 增加 sequence_order 字段')
+      rawDb.run('ALTER TABLE teaching_material ADD COLUMN sequence_order INTEGER NULL')
+      rawDb.run('CREATE INDEX IF NOT EXISTS idx_teaching_material_sequence ON teaching_material(sequence_order)')
+    }
+  } catch (error) {
+    console.error('[InitDatabase] ensureTeachingMaterialSequenceOrder 失败:', error)
+  }
 }
 
 function migrateTeachingMaterialSequenceOrder(rawDb: any): void {

@@ -111,7 +111,8 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
       })
     } catch (loadError) {
       console.error('[TeachingMaterialsStore] loadMaterials failed:', loadError)
-      error.value = '加载教学资料失败'
+      const detail = loadError instanceof Error ? loadError.message : String(loadError)
+      error.value = `加载教学资料失败${detail ? '：' + detail : ''}`
     } finally {
       isLoading.value = false
     }
@@ -128,7 +129,8 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
       return true
     } catch (addError) {
       console.error('[TeachingMaterialsStore] addMaterialRecord failed:', addError)
-      error.value = '保存教学资料失败'
+      const addDetail = addError instanceof Error ? addError.message : String(addError)
+      error.value = `保存教学资料失败${addDetail ? '：' + addDetail : ''}`
       return false
     }
   }
@@ -151,7 +153,8 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
       return true
     } catch (deleteError) {
       console.error('[TeachingMaterialsStore] deleteMaterial failed:', deleteError)
-      error.value = '删除教学资料失败'
+      const delDetail = deleteError instanceof Error ? deleteError.message : String(deleteError)
+      error.value = `删除教学资料失败${delDetail ? '：' + delDetail : ''}`
       return false
     }
   }
@@ -167,7 +170,8 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
       return isFavorite
     } catch (favoriteError) {
       console.error('[TeachingMaterialsStore] toggleFavorite failed:', favoriteError)
-      error.value = '收藏操作失败'
+      const favDetail = favoriteError instanceof Error ? favoriteError.message : String(favoriteError)
+      error.value = `收藏操作失败${favDetail ? '：' + favDetail : ''}`
       return false
     }
   }
@@ -177,7 +181,8 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
       return await teachingMaterialFileManager.openManagedFile(material.filePath)
     } catch (openError) {
       console.error('[TeachingMaterialsStore] openMaterial failed:', openError)
-      error.value = '打开资料失败'
+      const openDetail = openError instanceof Error ? openError.message : String(openError)
+      error.value = `打开资料失败${openDetail ? '：' + openDetail : ''}`
       return false
     }
   }

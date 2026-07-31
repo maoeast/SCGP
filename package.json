@@ -1,6 +1,6 @@
 {
   "name": "scgp",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "main": "electron/main.mjs",
@@ -48,10 +48,13 @@
   },
   "build": {
     "appId": "com.sic.ads",
-    "productName": "SCGP 星愿能力发展训练系统",
+    "productName": "星愿能力发展训练系统",
     "directories": {
       "output": "release",
       "buildResources": "build"
+    },
+    "extraMetadata": {
+      "scgpDebugDevtools": true
     },
     "extraResources": [
       {
