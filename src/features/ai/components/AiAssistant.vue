@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Close, Paperclip, Promotion, Setting, Tickets } from '@element-plus/icons-vue'
 import type { AiAttachmentRef } from '@/database/ai-api'
@@ -18,6 +18,7 @@ import {
 } from '@/features/ai/assistant-launcher'
 
 const router = useRouter()
+const route = useRoute()
 const aiStore = useAiStore()
 
 const drawerVisible = ref(false)
@@ -87,8 +88,11 @@ const canSend = computed(
     pendingDocuments.value.length > 0,
 )
 
+const MAX_VISIBLE_MESSAGES = 60
+const showAllMessages = ref(false)
+
 const displayMessages = computed(() => {
-  const list: Array<{
+  const all: Array<{
     id?: number
     role: 'user' | 'assistant' | 'system'
     content: string
@@ -101,10 +105,18 @@ const displayMessages = computed(() => {
     attachments: m.attachments,
   }))
   if (aiStore.sending || aiStore.streamingContent) {
-    list.push({ role: 'assistant', content: aiStore.streamingContent || '正在思考…', pending: true })
+    all.push({ role: 'assistant', content: aiStore.streamingContent || '正在思考…', pending: true })
   }
-  return list
+  if (showAllMessages.value || all.length <= MAX_VISIBLE_MESSAGES) return all
+  return all.slice(all.length - MAX_VISIBLE_MESSAGES)
 })
+
+const hiddenMessageCount = computed(() => {
+  const total = aiStore.currentMessages.length + (aiStore.sending || aiStore.streamingContent ? 1 : 0)
+  return Math.max(0, total - MAX_VISIBLE_MESSAGES)
+})
+
+const isImmersiveRoute = computed(() => route.meta.immersiveShell === true)
 
 function scrollToBottom() {
   nextTick(() => {
@@ -118,6 +130,7 @@ watch(() => aiStore.currentMessages.length, scrollToBottom)
 watch(
   [() => aiStore.currentSessionId, () => aiStore.currentAgentCode],
   ([sessionId, agentCode], [previousSessionId, previousAgentCode]) => {
+    showAllMessages.value = false
     if (
       editingMessageId.value !== null &&
       (sessionId !== previousSessionId || agentCode !== previousAgentCode)
@@ -332,7 +345,7 @@ async function confirmDeleteSession(id: number) {
 
 <template>
   <!-- 全局悬浮入口 -->
-  <AiAssistantFloatingButton v-if="!drawerVisible" @open="openDrawer()" />
+  <AiAssistantFloatingButton v-if="!drawerVisible && !isImmersiveRoute" @open="openDrawer()" />
 
   <el-drawer
     v-model="drawerVisible"
@@ -501,6 +514,14 @@ async function confirmDeleteSession(id: number) {
             </button>
           </div>
         </div>
+        <div
+          v-if="hiddenMessageCount > 0 && !showAllMessages"
+          class="ai-show-more"
+        >
+          <el-button link type="primary" @click="showAllMessages = true">
+            查看更早的 {{ hiddenMessageCount }} 条消息
+          </el-button>
+        </div>
         <AiChatTranscript
           v-else
           :messages="displayMessages"
@@ -602,7 +623,7 @@ async function confirmDeleteSession(id: number) {
             ref="inputRef"
             v-model="inputText"
             type="textarea"
-            :autosize="{ minRows: 2, maxRows: 8 }"
+            :rows="3"
             resize="none"
             :placeholder="editingMessageId !== null
               ? '修改消息内容'
@@ -907,6 +928,17 @@ async function confirmDeleteSession(id: number) {
   margin-left: 0;
   padding: 0 2px;
 }
+
+.ai-show-more {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 8px;
+}
+
+.ai-show-more .el-button {
+  font-size: 13px;
+}
+
 
 .ai-msg-scroll {
   flex: 1;

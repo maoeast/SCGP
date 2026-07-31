@@ -19,12 +19,14 @@
 | C10 | IEP 策略退役 | 同上 B4 |
 | C11 | better-sqlite3 移除 | 已清，`export-resources.cjs` 切 `sql.js` |
 | - | 评估入口硬编码 | 已 catalog 驱动，15 量表自动覆盖 |
+| B1-P2 | 认知 P2 三游戏 K06/K07/K08 | ✅ 已提交 `048f2ba`（SizeOrder/SpotDiff/MazeRun + 路由 + registry） |
+| B1-K | 认知 K 前缀 IEP 报告消费端 | ✅ 已提交 `35f8a07`（iep-generator 新方法 + normalizer 规则 + IEPReport 路由） |
 
 ---
 
-## 二、代码已写、未提交（差一步 commit）
+## 二、代码已写、已提交 ✅（7/30 当日下午全部 commit）
 
-### 认知 P1 三游戏（K02 少了什么 / K09 序列复现 / K10 因果排序）
+### 认知 P1 三游戏（K02 少了什么 / K09 序列复现 / K10 因果排序）—— 已提交 `4b9acf2`
 
 | 文件 | 状态 | 行数 |
 |------|------|------|
@@ -45,11 +47,11 @@ Registry 条目已在 `src/data/custom-game-registry.ts`（modified, uncommitted
 - `/emotional/games/echo-seq` → `EchoSeqGame`
 - `/emotional/games/story-order` → `StoryOrderGame`
 
-**TODO**：commit → `npm run type-check` → `npm run build:web` → 真机 UAT
+**✅ 已提交**：`4b9acf2`（7/30 17:41），type-check + build:web 通过，真机 UAT 待做
 
 ---
 
-## 三、纯配置修正（5 分钟工作量，不改逻辑）
+## 三、纯配置修正 ✅ 已提交 `cb73017`（7/30 17:44）
 
 ### 3.1 社交模块 registry 声明过期
 
@@ -99,15 +101,13 @@ features: [
 
 ---
 
-## 四、真正未实现（代码零存在）
+## 四、真正未实现（代码零存在 / 未接入生产链）
 
 | ID | 缺口 | 核实方式 |
 |----|------|----------|
-| **B1-P2** | 认知 P2 三游戏：K06 排排队 / K07 找不同 / K08 小迷宫 | `grep K06\|K07\|K08` registry → 0 |
-| **A2** | Image Worker | `src/workers/` 下无 image worker 文件 |
-| **A1** | DB Worker 生产主链 | 文件在 `src/workers/db.worker.ts` 但 `sqljs-loader.ts` 不走 worker，仅 `WorkerTest.vue` devtools 触发 |
-| **A4-P3** | 资源文件孤儿 GC | Phase1+2 代码完成（删替清物理 + zip 归档），Phase3 孤儿扫描未开始 |
-| **B1-K** | 认知 K 前缀 IEP 报告消费端 | 4 处待补：GameContainer 白名单 + IEPReport 路由 + iep-generator 新方法 + normalizer 规则 |
+| **A1** | DB Worker 生产主链 | 文件在 `src/workers/db.worker.ts`（代码完善）但 `sqljs-loader.ts` 不走 worker，仍在渲染进程主线程通过 `<script>` 直载 SQL.js |
+| **A2** | Image Worker | `src/workers/` 下无 image worker 文件，零代码 |
+| **A4-P3** | 资源文件孤儿 GC | ⚠️ **纠正**：代码已完成（`feaef64` 7/15 已提交），`findOrphans`/`purgeOrphans` + ResourceHealthCheck.vue UI 已挂载 System.vue。当前为"代码完成，真机待验" |
 | **C3** | raven60 接入 | 420 张瑞文图已授权，仅本地 `.gitignore` 保留 |
 
 ### 内容质量（非纯代码任务，需专业资源）
@@ -156,8 +156,9 @@ features: [
 |----|------|
 | A6 资源收藏 | 代码完成，真机待验 |
 | A4 Phase1+2 备份 zip 归档 | 代码完成（crypto + fflate round-trip ✅），真机待验 |
+| **A4-P3 孤儿 GC** | **代码完成**（`feaef64` 7/15），`findOrphans` dry-run + `purgeOrphans` + ResourceHealthCheck UI，真机待验 |
 | R2 资源备份恢复 E2E | 待演练 |
-| R3 AI 隐私收口 | 待处理 |
+| R3 AI 隐私收口 | 代码完成（`AI_PRIVACY_NOTICE_HTML` 弹窗 + `hasPrivacyAck`/`setPrivacyAck` KV + 管理员 `resetAllPrivacyAcks`），真机待验 |
 
 ---
 
@@ -166,7 +167,10 @@ features: [
 1. ~~**立即 commit**：认知 P1 三游戏~~ ✅ 已提交 `4b9acf2`
 2. ~~**顺手 5 分钟**：社交 + 认知 module-registry 声明更新~~ ✅ 已提交 `cb73017`
 3. ~~**顺手 5 分钟**：修 4 处活跃源码头 SIC-ADS 注释残留~~ ✅ 已提交 `cb73017`
-4. **需要计划**：认知 P2 三游戏（K06/K07/K08）
-5. **需要计划**：DB Worker 主链接入 / Image Worker / 孤儿 GC
+4. ~~**需要计划**：认知 P2 三游戏（K06/K07/K08）~~ ✅ 已提交 `048f2ba`
+5. ~~**需要计划**：DB Worker 主链接入 / Image Worker / 孤儿 GC~~ → 拆分现状：
+   - **A4-P3 孤儿 GC**：代码完成，真机待验（`feaef64` 7/15）
+   - **A1 DB Worker**：待接入生产链（worker 代码已有）
+   - **A2 Image Worker**：零代码，待启动
 6. **内容专项**：BRIEF/CognitiveSelf 量表 DRAFT → 正式化（需专业资源）
 7. **内容专项**：FineMotor/GMFM-88 常模补充（CSIRS/SDQ/TGMD-3/CNBSR2016/CRT 已有常模）
