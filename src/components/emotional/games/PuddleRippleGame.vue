@@ -50,12 +50,7 @@
 
           <div class="horizon-band" :style="{ background: sessionTheme.horizonGradient }"></div>
 
-          <div
-            ref="pondSurfaceRef"
-            class="pond-surface"
-            :style="{ background: sessionTheme.pondGradient }"
-            @pointerdown.prevent="handlePointerDown"
-          >
+          <div ref="pondSurfaceRef" class="pond-surface" :style="{ background: sessionTheme.pondGradient }">
             <div class="pond-shimmer pond-shimmer--left"></div>
             <div class="pond-shimmer pond-shimmer--right"></div>
 
@@ -71,8 +66,14 @@
                 animationDelay: `${leaf.delay}s`,
                 animationDuration: `${leaf.duration}s`,
                 background: leaf.color,
-                transform: `rotate(${leaf.rotation}deg)`,
+                '--leaf-rotate': `${leaf.rotation}deg`,
               }"
+            />
+
+            <canvas
+              ref="pondCanvasRef"
+              class="ripple-canvas"
+              @pointerdown.prevent="handlePointerDown"
             />
 
             <div
@@ -83,13 +84,6 @@
               <div class="guidance-core"></div>
               <span class="guidance-label">{{ currentPrompt.label }}</span>
             </div>
-
-            <div
-              v-for="ripple in ripples"
-              :key="ripple.id"
-              class="water-ripple"
-              :style="getRippleStyle(ripple)"
-            />
 
             <div
               v-for="marker in touchMarkers"
@@ -386,6 +380,14 @@ const FLOATING_LEAVES: readonly FloatingLeaf[] = [
   { id: 5, left: 82, top: 36, size: 26, rotation: -20, delay: 0.2, duration: 7.2, color: 'linear-gradient(135deg, #ffdca5 0%, #f0b36a 100%)' },
 ]
 
+// ========== 波纹 Canvas 常量 ==========
+const MAX_RIPPLES = 32
+const RIPPLE_MAX_RADIUS = 228
+
+// 波纹扩散速度与淡出速率（px/ms）
+const RIPPLE_SPEED: Record<RippleSource, number> = { tap: 82, hold: 62, prompt: 96 }
+const RIPPLE_FADE: Record<RippleSource, number> = { tap: 0.00054, hold: 0.00054, prompt: 0.00066 }
+
 const props = defineProps<{
   difficulty: EmotionGameDifficulty
   settings: EmotionGameSettings
@@ -399,13 +401,14 @@ const emit = defineEmits<{
 }>()
 
 const pondSurfaceRef = ref<HTMLElement | null>(null)
+const pondCanvasRef = ref<HTMLCanvasElement | null>(null)
+
 const phase = ref<Phase>('ready')
 const activeDifficulty = ref<EmotionGameDifficulty>(props.difficulty)
 const sessionTheme = ref<Theme>(pickRandomTheme())
 const stageMessage = ref(DIFFICULTY_CONFIGS[props.difficulty].readyText)
 const helperMessage = ref(DIFFICULTY_CONFIGS[props.difficulty].helperText)
 const showBadge = ref(false)
-const ripples = ref<Ripple[]>([])
 const touchMarkers = ref<Array<{ id: number; xRatio: number; yRatio: number }>>([])
 const currentPrompt = ref<GuidedPrompt | null>(null)
 
@@ -419,6 +422,8 @@ const maxConcurrentTouches = ref(0)
 const holdSamplesMs = ref<number[]>([])
 const promptResponseTimesMs = ref<number[]>([])
 
+// 波纹内部状态：非响应式数组，每帧由 Canvas 直接绘制，避免 DOM diff
+let rippleList: Ripple[] = []
 const activePointers = new Map<number, ActivePointer>()
 const activeTimeouts = new Set<number>()
 
@@ -429,6 +434,10 @@ let hasPointerListeners = false
 let rippleId = 0
 let promptId = 0
 let roundDirty = false
+let pondWidth = 0
+let pondHeight = 0
+let pondDpr = 1
+let pondResizeObserver: ResizeObserver | null = null
 
 const displayDifficulty = computed(() => (phase.value === 'ready' ? props.difficulty : activeDifficulty.value))
 const difficultyConfig = computed(() => DIFFICULTY_CONFIGS[displayDifficulty.value])
@@ -676,7 +685,7 @@ function clearActivePointers(flushSamples = false) {
 }
 
 function resetMetrics() {
-  ripples.value = []
+  rippleList = []
   touchMarkers.value = []
   currentPrompt.value = null
   rippleCount.value = 0
@@ -801,23 +810,7 @@ function createRipple(xRatio: number, yRatio: number, source: RippleSource) {
     source,
   }
 
-  ripples.value = [...ripples.value.slice(-24), nextRipple]
-}
-
-function getRippleStyle(ripple: Ripple) {
-  const diameter = ripple.radius * 2
-  return {
-    left: `${ripple.xRatio * 100}%`,
-    top: `${ripple.yRatio * 100}%`,
-    width: `${diameter}px`,
-    height: `${diameter}px`,
-    marginLeft: `${-ripple.radius}px`,
-    marginTop: `${-ripple.radius}px`,
-    opacity: ripple.opacity,
-    borderWidth: `${ripple.lineWidth}px`,
-    borderColor: `hsla(${ripple.hue}, 78%, 96%, ${Math.min(1, ripple.opacity + 0.12)})`,
-    boxShadow: `0 0 0 ${Math.max(0, ripple.lineWidth - 1)}px rgba(255, 255, 255, ${ripple.opacity * 0.18}) inset`,
-  }
+  rippleList = [...rippleList.slice(-(MAX_RIPPLES - 1)), nextRipple]
 }
 
 function getRelativePoint(event: PointerEvent): PointRatio | null {
@@ -924,7 +917,7 @@ function handlePointerDown(event: PointerEvent) {
   attachPointerListeners()
 
   try {
-    pondSurfaceRef.value?.setPointerCapture?.(event.pointerId)
+    pondCanvasRef.value?.setPointerCapture?.(event.pointerId)
   } catch {
     // ignore capture failures
   }
@@ -986,34 +979,98 @@ function handlePointerUp(event: PointerEvent) {
   syncTouchMarkers()
 
   try {
-    pondSurfaceRef.value?.releasePointerCapture?.(event.pointerId)
+    pondCanvasRef.value?.releasePointerCapture?.(event.pointerId)
   } catch {
     // ignore release failures
+  }
+}
+
+// ========== Canvas 波纹渲染 ==========
+
+function syncPondCanvasSize() {
+  const canvas = pondCanvasRef.value
+  const host = pondSurfaceRef.value
+  if (!canvas || !host) {
+    return
+  }
+
+  const width = host.clientWidth
+  const height = host.clientHeight
+  if (width <= 0 || height <= 0) {
+    return
+  }
+
+  pondDpr = Math.min(2, window.devicePixelRatio || 1)
+  pondWidth = width
+  pondHeight = height
+
+  const pixelWidth = Math.round(width * pondDpr)
+  const pixelHeight = Math.round(height * pondDpr)
+  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+    canvas.width = pixelWidth
+    canvas.height = pixelHeight
+  }
+}
+
+function drawRipples(now: number) {
+  const canvas = pondCanvasRef.value
+  if (!canvas) {
+    return
+  }
+
+  if (pondWidth <= 0 || pondHeight <= 0) {
+    syncPondCanvasSize()
+    if (pondWidth <= 0 || pondHeight <= 0) {
+      return
+    }
+  }
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    return
+  }
+
+  ctx.setTransform(pondDpr, 0, 0, pondDpr, 0, 0)
+  ctx.clearRect(0, 0, pondWidth, pondHeight)
+
+  const deltaMs = Math.min(48, Math.max(0, now - lastFrameAt))
+
+  rippleList = rippleList
+    .map((ripple) => {
+      const speed = RIPPLE_SPEED[ripple.source]
+      const fade = RIPPLE_FADE[ripple.source]
+      return {
+        ...ripple,
+        radius: ripple.radius + speed * (deltaMs / 1000),
+        opacity: ripple.opacity - fade * deltaMs,
+      }
+    })
+    .filter((ripple) => ripple.opacity > 0.02 && ripple.radius < RIPPLE_MAX_RADIUS)
+
+  for (const ripple of rippleList) {
+    const x = ripple.xRatio * pondWidth
+    const y = ripple.yRatio * pondHeight
+    const alpha = Math.min(1, ripple.opacity + 0.12)
+
+    // 外层主环
+    ctx.beginPath()
+    ctx.arc(x, y, ripple.radius, 0, Math.PI * 2)
+    ctx.strokeStyle = `hsla(${ripple.hue}, 78%, 96%, ${alpha})`
+    ctx.lineWidth = ripple.lineWidth
+    ctx.stroke()
+
+    // 内发光环（模拟原 DOM 版 box-shadow inset）
+    ctx.beginPath()
+    ctx.arc(x, y, Math.max(0, ripple.radius - ripple.lineWidth + 1), 0, Math.PI * 2)
+    ctx.strokeStyle = `rgba(255, 255, 255, ${ripple.opacity * 0.18})`
+    ctx.lineWidth = ripple.lineWidth - 1
+    ctx.stroke()
   }
 }
 
 function stepAnimation(now: number) {
   if (!lastFrameAt) {
     lastFrameAt = now
-  }
-
-  const deltaMs = Math.min(48, Math.max(0, now - lastFrameAt))
-  lastFrameAt = now
-
-  if (ripples.value.length > 0) {
-    const nextRipples = ripples.value
-      .map((ripple) => {
-        const speed = ripple.source === 'hold' ? 62 : ripple.source === 'prompt' ? 96 : 82
-        const fade = ripple.source === 'prompt' ? 0.00066 : 0.00054
-        return {
-          ...ripple,
-          radius: ripple.radius + speed * (deltaMs / 1000),
-          opacity: ripple.opacity - fade * deltaMs,
-        }
-      })
-      .filter((ripple) => ripple.opacity > 0.02 && ripple.radius < 228)
-
-    ripples.value = nextRipples
   }
 
   if (!props.paused && phase.value === 'playing') {
@@ -1035,7 +1092,28 @@ function stepAnimation(now: number) {
     }
   }
 
+  drawRipples(now)
+  lastFrameAt = now
+
+  if (!props.paused) {
+    animationFrame = window.requestAnimationFrame(stepAnimation)
+  }
+}
+
+function startAnimationLoop() {
+  if (animationFrame || props.paused) {
+    return
+  }
+
+  lastFrameAt = 0
   animationFrame = window.requestAnimationFrame(stepAnimation)
+}
+
+function stopAnimationLoop() {
+  if (animationFrame) {
+    window.cancelAnimationFrame(animationFrame)
+    animationFrame = 0
+  }
 }
 
 watch(
@@ -1051,9 +1129,11 @@ watch(
     if (paused) {
       clearActivePointers(true)
       props.audio.stopAmbient()
+      stopAnimationLoop()
       return
     }
 
+    startAnimationLoop()
     if (phase.value === 'playing') {
       startAmbientIfNeeded()
     }
@@ -1076,18 +1156,27 @@ watch(
 
 onMounted(() => {
   resetForDifficulty(props.difficulty)
-  animationFrame = window.requestAnimationFrame(stepAnimation)
+  syncPondCanvasSize()
+
+  pondResizeObserver = new ResizeObserver(() => {
+    syncPondCanvasSize()
+  })
+  if (pondSurfaceRef.value) {
+    pondResizeObserver.observe(pondSurfaceRef.value)
+  }
+
+  startAnimationLoop()
 })
 
 onBeforeUnmount(() => {
+  pondResizeObserver?.disconnect()
+  pondResizeObserver = null
+
   clearAllTimers()
   clearActivePointers(false)
   detachPointerListeners()
+  stopAnimationLoop()
   props.audio.stopAll()
-  if (animationFrame) {
-    window.cancelAnimationFrame(animationFrame)
-    animationFrame = 0
-  }
 })
 </script>
 
@@ -1259,6 +1348,16 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
+.ripple-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
 .pond-shimmer {
   position: absolute;
   border-radius: 999px;
@@ -1325,14 +1424,6 @@ onBeforeUnmount(() => {
   font-size: 12px;
   white-space: nowrap;
   box-shadow: 0 10px 18px rgba(67, 106, 131, 0.14);
-}
-
-.water-ripple {
-  position: absolute;
-  z-index: 4;
-  border-style: solid;
-  border-radius: 999px;
-  pointer-events: none;
 }
 
 .touch-marker {
