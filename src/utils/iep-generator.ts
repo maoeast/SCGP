@@ -751,7 +751,12 @@ export class IEPGenerator {
       L02_DRESS_UP: '我会穿衣服',
       L03_BRUSH_TEETH: '刷牙小卫士',
       L04_SET_TABLE: '摆桌子帮帮忙',
-      L05_PACK_BAG: '上学包包装一装'
+      L05_PACK_BAG: '上学包包装一装',
+      L06_STEADY_SPOON: '稳稳送一勺',
+      L07_BODY_SIGNAL: '身体信号小灯塔',
+      L08_TOWEL_TWIST: '毛巾拧拧工坊',
+      L09_HOME_SOUND: '家里声音小侦探',
+      L10_MARKET_PAY: '超市付款小能手'
     }
     return names[gameCode] || '生活自理训练'
   }
@@ -929,6 +934,166 @@ export class IEPGenerator {
         suggestions: [
           '用桌垫上的轮廓图做辅助：先让孩子把餐具对齐轮廓，再逐步撤除提示培养独立摆放。',
           '放错位置时，引导孩子重新看一眼座位与锚点再调整，而不是直接帮他摆好。'
+        ]
+      })
+    } else if (gameCode === 'L06_STEADY_SPOON') {
+      // 稳稳送一勺：稳定送勺占比 + 平均送达用时 + 稳定控制与手部协调
+      const stabilityPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子送勺时是否太快、偏离通道或突然转向。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较稳定地沿通道把食物送到嘴边，速度控制与路径保持发展良好。'
+          : hasAccuracy
+            ? '能参与送勺动作，但偶尔会过快或偏离通道，需要在更慢的节奏下多练“慢慢走、沿通道走”。'
+            : '本次能完成送勺交互，建议在后续训练中持续记录稳定送勺占比以评估运动控制。'
+
+      sections.push({
+        category: '稳定送勺准确率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('稳定送勺', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录稳定送勺占比以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每次送勺用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '在真实进餐时先示范“碗边拿勺—慢慢送到嘴边”，让孩子看清平稳的送勺节奏。',
+          '把“太快”改成“慢一点，稳稳走”，用具体口令帮助孩子在动作中调节速度。',
+          '当孩子平稳送达时，描述他控制住的部分（没有洒、没有急转），强化稳定动作。'
+        ]
+      })
+      sections.push({
+        category: '稳定控制与手部协调',
+        performance: stabilityPerformance,
+        suggestions: [
+          '先让孩子用空勺沿桌面上的宽通道练习慢速移动，再过渡到带食物的真实进餐。',
+          '进餐时把食物切成小份，降低端送难度，让孩子在成功中积累稳定控制的信心。'
+        ]
+      })
+    } else if (gameCode === 'L07_BODY_SIGNAL') {
+      // 身体信号小灯塔：信号识别准确率 + 平均响应时 + 主动表达与求助
+      const signalPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能根据身体线索认出正确的信号。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较准确地把身体线索对应到正确信号，身体觉察与信号识别发展良好。'
+          : hasAccuracy
+            ? '能参与信号识别，但偶尔会把相近的身体感觉弄混，需要更多“先感觉、再对照”的提示。'
+            : '本次能完成信号识别交互，建议在后续训练中持续记录识别准确率以评估身体觉察。'
+
+      sections.push({
+        category: '身体信号识别准确率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('身体信号识别', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录识别准确率以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均从线索出现到正确识别的响应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '在生活中把身体感觉说出来：“你的肚子咕咕叫了，是不是饿了？”帮助孩子把感觉和信号连起来。',
+          '当孩子主动说出“想上厕所 / 饿了 / 累了”时，立即回应并肯定，强化求助行为。',
+          '用绘本或图卡反复对应“感觉—信号—请求”三件套，让表达句式稳定下来。'
+        ]
+      })
+      sections.push({
+        category: '主动表达与求助',
+        performance: signalPerformance,
+        suggestions: [
+          '固定求助句式（“我想上厕所，请带我去”），先在游戏中练习，再迁移到真实情境。',
+          '在如厕、饭前等真实时机提醒孩子先感受身体，再开口表达，逐步减少成人代答。'
+        ]
+      })
+    } else if (gameCode === 'L08_TOWEL_TWIST') {
+      // 毛巾拧拧工坊：双侧协调占比 + 平均拧动用时 + 双手配合与力量控制
+      const coordinationPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子能否让左右两端沿相反方向协调移动。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较协调地让双手沿相反方向完成拧动，双侧协调与力量配合发展良好。'
+          : hasAccuracy
+            ? '能参与双手拧动，但偶尔会两手同向或中途松手，需要更多“一左一右、握住再动”的提示。'
+            : '本次能完成拧动交互，建议在后续训练中持续记录双侧协调占比以评估动作配合。'
+
+      sections.push({
+        category: '双侧协调准确率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('双侧协调', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录双侧协调占比以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每次完整拧动用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '真实拧毛巾时先让孩子握住两端，成人带着手做一次“一左一右”的示范。',
+          '用口令“握住—朝相反方向转—转满就停”把双侧动作拆成小步。',
+          '当孩子完成一次完整拧动时，描述他的双手配合（一只手往前、一只手往后），强化协调感。'
+        ]
+      })
+      sections.push({
+        category: '双手配合与力量控制',
+        performance: coordinationPerformance,
+        suggestions: [
+          '先用轻软的小毛巾练习，再逐步换到需要更多力量的真毛巾，让力量难度循序渐进。',
+          '拧动前先练习“双手同时握住”，减少中途松手，再逐步加快到正常拧干节奏。'
+        ]
+      })
+    } else if (gameCode === 'L09_HOME_SOUND') {
+      // 家里声音小侦探：声音识别与安全应对准确率 + 平均响应时 + 听觉识别与安全反应
+      const safetyPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子能否听出声音来源并选择安全反应。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较准确地把声音对应到来源并选择安全反应，听觉识别与安全意识发展良好。'
+          : hasAccuracy
+            ? '能参与声音判断，但偶尔会把相近声音弄混或选择不安全做法，需要更多“先听清、再行动”的提示。'
+            : '本次能完成声音互动，建议在后续训练中持续记录识别与应对准确率以评估听觉判断。'
+
+      sections.push({
+        category: '声音识别与安全应对准确率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('声音识别与安全应对', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录识别与应对准确率以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每轮从声音播放到安全行动完成用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '在家听到真实声音（门铃、水壶）时，先说“听一听，这是什么声音？”，再引导安全做法。',
+          '把声音和行动配对讲给孩子听：“听到水壶响，先关小火，再叫大人。”',
+          '当孩子选对安全反应时，描述他听到的关键线索，强化“先听、再想、再做”的链条。'
+        ]
+      })
+      sections.push({
+        category: '听觉识别与安全反应',
+        performance: safetyPerformance,
+        suggestions: [
+          '用家里的真实声音做听声练习，先近距离、安静环境，再逐步增加干扰。',
+          '对听觉敏感或听觉受限的孩子，配合文字图卡说明声音来源，声音只是辅助线索。'
+        ]
+      })
+    } else if (gameCode === 'L10_MARKET_PAY') {
+      // 超市付款小能手：付款准确率 + 平均付款用时 + 货币认知与数量规划
+      const paymentPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子能否用硬币凑出商品价格并主动核对。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较准确地用硬币凑出价格并主动核对付款，货币认知与数量规划发展良好。'
+          : hasAccuracy
+            ? '能参与凑钱付款，但偶尔会少付或多付，需要更多“先数一数、再核对”的提示。'
+            : '本次能完成付款交互，建议在后续训练中持续记录付款准确率以评估货币认知。'
+
+      sections.push({
+        category: '付款准确率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('付款', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录付款准确率以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每件商品从出现到精确付款用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '在真实购物付款时先一起看价签，再让孩子说出“要几枚硬币”，再逐枚放进收银台。',
+          '把“先数一遍、再核对”变成固定习惯，鼓励孩子主动检查“够不够、多没多”。',
+          '当孩子精确付款或自己纠正差额时，描述他数钱和检查的过程，强化自主核对。'
+        ]
+      })
+      sections.push({
+        category: '货币认知与数量规划',
+        performance: paymentPerformance,
+        suggestions: [
+          '先用 1 元硬币练习数量对应，再逐步加入 2 元、5 元，让面值组合循序渐进。',
+          '少付或多付时，引导孩子自己再加一枚或退回一枚，而不是直接告诉他正确答案。'
         ]
       })
     } else {

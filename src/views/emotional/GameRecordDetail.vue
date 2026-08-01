@@ -705,6 +705,41 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '情境得分', value: formatNullableNumber(raw.context_understanding_score, '分') },
         { label: '最终得分', value: formatNullableNumber(raw.score, '分') },
       ]
+    case 'L06_STEADY_SPOON':
+      return [
+        { label: '完成勺数', value: formatCountPair(raw.delivered_scoops, raw.target_scoops, '勺') },
+        { label: '泼洒次数', value: formatNullableNumber(raw.spill_events, '次') },
+        { label: '稳定送勺', value: formatPercent(raw.stable_motion_ratio) },
+        { label: '平均送达', value: formatResponseTime(raw.average_delivery_ms as number) },
+      ]
+    case 'L07_BODY_SIGNAL':
+      return [
+        { label: '识别信号', value: formatCountPair(raw.recognized_signals, raw.target_rounds, '次') },
+        { label: '认错次数', value: formatNullableNumber(raw.wrong_signal_choices, '次') },
+        { label: '请求完成', value: formatNullableNumber(raw.requests_completed, '次') },
+        { label: '平均响应', value: formatResponseTime(raw.average_response_ms as number) },
+      ]
+    case 'L08_TOWEL_TWIST':
+      return [
+        { label: '完成拧动', value: formatCountPair(raw.completed_twists, raw.target_twists, '次') },
+        { label: '方向错误', value: formatNullableNumber(raw.direction_mismatches, '次') },
+        { label: '协调占比', value: formatPercent(raw.coordinated_motion_ratio) },
+        { label: '平均拧动', value: formatResponseTime(raw.average_twist_ms as number) },
+      ]
+    case 'L09_HOME_SOUND':
+      return [
+        { label: '来源匹配', value: formatNullableNumber(raw.source_matches, '次') },
+        { label: '安全应对', value: formatNullableNumber(raw.safe_responses, '次') },
+        { label: '错误选择', value: formatNullableNumber(raw.wrong_source_choices, '次') },
+        { label: '平均响应', value: formatResponseTime(raw.average_response_ms as number) },
+      ]
+    case 'L10_MARKET_PAY':
+      return [
+        { label: '精确付款', value: formatCountPair(raw.exact_payments, raw.target_purchases, '件') },
+        { label: '少付核对', value: formatNullableNumber(raw.underpayment_checks, '次') },
+        { label: '多付核对', value: formatNullableNumber(raw.overpayment_checks, '次') },
+        { label: '平均付款', value: formatResponseTime(raw.average_payment_ms as number) },
+      ]
     case 'G07_MONSTER':
       return [
         { label: '正确投喂', value: formatNullableNumber(raw.correct_drops, '次') },
@@ -961,6 +996,71 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '复盘次数', value: formatNullableNumber(raw.review_cycles, '次') },
         { label: '选择记录', value: formatResponseTimeList(raw.selection_times_ms, '次') },
         { label: '情境主题', value: String(raw.scenario_title || raw.scenario_id || '-') },
+      ]
+    case 'L06_STEADY_SPOON':
+      return [
+        { label: '目标勺数', value: formatNullableNumber(raw.target_scoops, '勺') },
+        { label: '完成勺数', value: formatNullableNumber(raw.delivered_scoops, '勺') },
+        { label: '泼洒次数', value: formatNullableNumber(raw.spill_events, '次') },
+        { label: '稳定送勺占比', value: formatPercent(raw.stable_motion_ratio) },
+        { label: '路径偏移', value: formatPercent(raw.path_deviation_ratio) },
+        { label: '重新抓握', value: formatNullableNumber(raw.regrasp_count, '次') },
+        { label: '提示次数', value: formatNullableNumber(raw.hint_count, '次') },
+        { label: '各次送达', value: formatResponseTimeList(raw.delivery_times_ms, '次') },
+        { label: '平均送达', value: formatResponseTime(raw.average_delivery_ms as number) },
+        { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
+      ]
+    case 'L07_BODY_SIGNAL':
+      return [
+        { label: '目标轮数', value: formatNullableNumber(raw.target_rounds, '轮') },
+        { label: '识别信号', value: formatNullableNumber(raw.recognized_signals, '次') },
+        { label: '认错次数', value: formatNullableNumber(raw.wrong_signal_choices, '次') },
+        { label: '请求完成', value: formatNullableNumber(raw.requests_completed, '次') },
+        { label: '松手次数', value: formatNullableNumber(raw.request_hold_breaks, '次') },
+        { label: '提示次数', value: formatNullableNumber(raw.hint_count, '次') },
+        { label: '各次响应', value: formatResponseTimeList(raw.response_times_ms, '次') },
+        { label: '平均响应', value: formatResponseTime(raw.average_response_ms as number) },
+        { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
+      ]
+    case 'L08_TOWEL_TWIST':
+      return [
+        { label: '目标拧动', value: formatNullableNumber(raw.target_twists, '次') },
+        { label: '完成拧动', value: formatNullableNumber(raw.completed_twists, '次') },
+        { label: '方向错误', value: formatNullableNumber(raw.direction_mismatches, '次') },
+        { label: '松手次数', value: formatNullableNumber(raw.grip_releases, '次') },
+        { label: '协调占比', value: formatPercent(raw.coordinated_motion_ratio) },
+        { label: '提示次数', value: formatNullableNumber(raw.hint_count, '次') },
+        { label: '各次拧动', value: formatResponseTimeList(raw.twist_times_ms, '次') },
+        { label: '平均拧动', value: formatResponseTime(raw.average_twist_ms as number) },
+        { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
+      ]
+    case 'L09_HOME_SOUND':
+      return [
+        { label: '目标轮数', value: formatNullableNumber(raw.target_rounds, '轮') },
+        { label: '来源匹配', value: formatNullableNumber(raw.source_matches, '次') },
+        { label: '来源选错', value: formatNullableNumber(raw.wrong_source_choices, '次') },
+        { label: '安全应对', value: formatNullableNumber(raw.safe_responses, '次') },
+        { label: '不安全选择', value: formatNullableNumber(raw.unsafe_response_choices, '次') },
+        { label: '重播次数', value: formatNullableNumber(raw.replay_count, '次') },
+        { label: '提示次数', value: formatNullableNumber(raw.hint_count, '次') },
+        { label: '各次响应', value: formatResponseTimeList(raw.response_times_ms, '次') },
+        { label: '平均响应', value: formatResponseTime(raw.average_response_ms as number) },
+        { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
+      ]
+    case 'L10_MARKET_PAY':
+      return [
+        { label: '目标件数', value: formatNullableNumber(raw.target_purchases, '件') },
+        { label: '完成件数', value: formatNullableNumber(raw.completed_purchases, '件') },
+        { label: '精确付款', value: formatNullableNumber(raw.exact_payments, '次') },
+        { label: '少付核对', value: formatNullableNumber(raw.underpayment_checks, '次') },
+        { label: '多付核对', value: formatNullableNumber(raw.overpayment_checks, '次') },
+        { label: '错误核对', value: formatNullableNumber(raw.incorrect_payment_checks, '次') },
+        { label: '纠错动作', value: formatNullableNumber(raw.correction_actions, '次') },
+        { label: '投放硬币', value: formatNullableNumber(raw.coins_placed, '枚') },
+        { label: '提示次数', value: formatNullableNumber(raw.hint_count, '次') },
+        { label: '各次付款', value: formatResponseTimeList(raw.payment_times_ms, '次') },
+        { label: '平均付款', value: formatResponseTime(raw.average_payment_ms as number) },
+        { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
       ]
     case 'G07_MONSTER':
       return [
