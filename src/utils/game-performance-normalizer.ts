@@ -63,7 +63,16 @@ interface GameExtractionRule {
    * 要求 correct 与 wrong 都为有效数值、且 correct+wrong > 0，否则该游戏本局正确率记为 null。
    * 派生结果天然在 0-1，不读 accuracyScale（正确率本就是比值）。
    */
-  accuracyDerived?: { correctFields: string[]; wrongFields: string[] }
+  accuracyDerived?: {
+    correctFields: string[]
+    wrongFields: string[]
+    /**
+     * true 时 correctFields / wrongFields 内全部有效字段求和后参与派生
+     * （用于正确数分布在多个字段的游戏，如 L09 的 source_matches + safe_responses）。
+     * 默认 false：与既有行为一致，只取每侧第一个有效字段。
+     */
+    sumCorrect?: boolean
+  }
   /** 平均反应时源字段（按顺序尝试，单位 ms）；不声明则无反应时口径 */
   reactionFields?: string[]
   /**
@@ -128,6 +137,56 @@ const GAME_EXTRACTION_RULES: Record<string, GameExtractionRule> = {
     accuracyFields: ['context_understanding_score'],
     accuracyScale: 'percent',
     reactionFields: ['average_selection_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
+
+  // ===== Tier 3：生活自理（L06–L10 新增） =====
+  L06_STEADY_SPOON: {
+    // 稳稳送一勺：stable_motion_ratio(0-1) 稳定采样占比 + average_delivery_ms + total_duration_seconds(秒)
+    realityFields: ['stable_motion_ratio', 'delivered_scoops'],
+    accuracyFields: ['stable_motion_ratio'],
+    accuracyScale: 'ratio',
+    reactionFields: ['average_delivery_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
+  L07_BODY_SIGNAL: {
+    // 身体信号小灯塔：派生 recognized_signals/(recognized+wrong)_signal_choices + average_response_ms + total_duration_seconds(秒)
+    realityFields: ['recognized_signals'],
+    accuracyDerived: {
+      correctFields: ['recognized_signals'],
+      wrongFields: ['wrong_signal_choices'],
+    },
+    reactionFields: ['average_response_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
+  L08_TOWEL_TWIST: {
+    // 毛巾拧拧工坊：coordinated_motion_ratio(0-1) 双侧协调占比 + average_twist_ms + total_duration_seconds(秒)
+    realityFields: ['coordinated_motion_ratio', 'completed_twists'],
+    accuracyFields: ['coordinated_motion_ratio'],
+    accuracyScale: 'ratio',
+    reactionFields: ['average_twist_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
+  L09_HOME_SOUND: {
+    // 家里声音小侦探：派生 (source_matches+safe_responses)/(全部来源与行动选择) + average_response_ms + total_duration_seconds(秒)
+    // 正确数分布在两个字段，用 sumCorrect 求和后参与派生
+    realityFields: ['source_matches', 'safe_responses'],
+    accuracyDerived: {
+      correctFields: ['source_matches', 'safe_responses'],
+      wrongFields: ['wrong_source_choices', 'unsafe_response_choices'],
+      sumCorrect: true,
+    },
+    reactionFields: ['average_response_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
+  L10_MARKET_PAY: {
+    // 超市付款小能手：派生 exact_payments/(exact+incorrect)_payment_checks + average_payment_ms + total_duration_seconds(秒)
+    realityFields: ['exact_payments'],
+    accuracyDerived: {
+      correctFields: ['exact_payments'],
+      wrongFields: ['incorrect_payment_checks'],
+    },
+    reactionFields: ['average_payment_ms'],
     duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
   },
 
@@ -252,11 +311,34 @@ function pickFirstValid(data: Record<string, any>, fields: string[] | undefined)
   return null
 }
 
+/**
+ * 对字段列表内全部有效数值求和（至少一个有效才返回）。
+ * 用于正确数/错误数分布在多个字段、需要按同一口径合并的规则（如 L09）。
+ */
+function sumValidFields(data: Record<string, any>, fields: string[] | undefined): { field: string; value: number } | null {
+  if (!fields || fields.length === 0) {
+    return null
+  }
+  let total = 0
+  let found = false
+  for (const field of fields) {
+    if (isValidNumber(data[field])) {
+      total += Number(data[field])
+      found = true
+    }
+  }
+  return found ? { field: fields.join('+'), value: total } : null
+}
+
 function resolveAccuracy(rule: GameExtractionRule, data: Record<string, any>): number | null {
   // 派生正确率优先：correct/(correct+wrong)。需二者都有效且分母 > 0，否则记 null（渲染层隐藏准确率卡）。
   if (rule.accuracyDerived) {
-    const correct = pickFirstValid(data, rule.accuracyDerived.correctFields)
-    const wrong = pickFirstValid(data, rule.accuracyDerived.wrongFields)
+    const correct = rule.accuracyDerived.sumCorrect
+      ? sumValidFields(data, rule.accuracyDerived.correctFields)
+      : pickFirstValid(data, rule.accuracyDerived.correctFields)
+    const wrong = rule.accuracyDerived.sumCorrect
+      ? sumValidFields(data, rule.accuracyDerived.wrongFields)
+      : pickFirstValid(data, rule.accuracyDerived.wrongFields)
     if (!correct || !wrong) {
       return null
     }

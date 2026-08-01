@@ -368,6 +368,71 @@ function deriveAccuracyRate(
       }
       break
     }
+    case 'L06_STEADY_SPOON': {
+      const stableMotionRatio = Number(performanceData.stable_motion_ratio)
+      if (Number.isFinite(stableMotionRatio)) {
+        return Math.max(0, Math.min(1, stableMotionRatio))
+      }
+
+      const deliveredScoops = Number(performanceData.delivered_scoops || 0)
+      const targetScoops = Number(performanceData.target_scoops || 0)
+      if (targetScoops > 0) {
+        return Math.max(0, Math.min(1, deliveredScoops / targetScoops))
+      }
+      break
+    }
+    case 'L07_BODY_SIGNAL': {
+      const recognizedSignals = Number(performanceData.recognized_signals || 0)
+      const wrongSignalChoices = Number(performanceData.wrong_signal_choices || 0)
+      const totalChoices = recognizedSignals + wrongSignalChoices
+      if (totalChoices > 0) {
+        return Math.max(0, Math.min(1, recognizedSignals / totalChoices))
+      }
+
+      const targetRounds = Number(performanceData.target_rounds || 0)
+      if (targetRounds > 0) {
+        return Math.max(0, Math.min(1, recognizedSignals / targetRounds))
+      }
+      break
+    }
+    case 'L08_TOWEL_TWIST': {
+      const coordinatedMotionRatio = Number(performanceData.coordinated_motion_ratio)
+      if (Number.isFinite(coordinatedMotionRatio)) {
+        return Math.max(0, Math.min(1, coordinatedMotionRatio))
+      }
+
+      const completedTwists = Number(performanceData.completed_twists || 0)
+      const targetTwists = Number(performanceData.target_twists || 0)
+      if (targetTwists > 0) {
+        return Math.max(0, Math.min(1, completedTwists / targetTwists))
+      }
+      break
+    }
+    case 'L09_HOME_SOUND': {
+      const sourceMatches = Number(performanceData.source_matches || 0)
+      const wrongSourceChoices = Number(performanceData.wrong_source_choices || 0)
+      const safeResponses = Number(performanceData.safe_responses || 0)
+      const unsafeResponseChoices = Number(performanceData.unsafe_response_choices || 0)
+      const totalChoices = sourceMatches + wrongSourceChoices + safeResponses + unsafeResponseChoices
+      if (totalChoices > 0) {
+        return Math.max(0, Math.min(1, (sourceMatches + safeResponses) / totalChoices))
+      }
+      break
+    }
+    case 'L10_MARKET_PAY': {
+      const exactPayments = Number(performanceData.exact_payments || 0)
+      const incorrectPaymentChecks = Number(performanceData.incorrect_payment_checks || 0)
+      const totalChecks = exactPayments + incorrectPaymentChecks
+      if (totalChecks > 0) {
+        return Math.max(0, Math.min(1, exactPayments / totalChecks))
+      }
+
+      const targetPurchases = Number(performanceData.target_purchases || 0)
+      if (targetPurchases > 0) {
+        return Math.max(0, Math.min(1, exactPayments / targetPurchases))
+      }
+      break
+    }
     case 'G07_MONSTER': {
       const correctDrops = Number(performanceData.correct_drops || 0)
       const wrongDrops = Number(performanceData.wrong_drops || 0)
@@ -511,6 +576,31 @@ function deriveAvgResponseTime(
       return averageNumericValues(performanceData.selection_times_ms)
         ?? (Number.isFinite(Number(performanceData.average_selection_ms))
           ? Number(performanceData.average_selection_ms)
+          : null)
+    case 'L06_STEADY_SPOON':
+      return averageNumericValues(performanceData.delivery_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_delivery_ms))
+          ? Number(performanceData.average_delivery_ms)
+          : null)
+    case 'L07_BODY_SIGNAL':
+      return averageNumericValues(performanceData.response_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_response_ms))
+          ? Number(performanceData.average_response_ms)
+          : null)
+    case 'L08_TOWEL_TWIST':
+      return averageNumericValues(performanceData.twist_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_twist_ms))
+          ? Number(performanceData.average_twist_ms)
+          : null)
+    case 'L09_HOME_SOUND':
+      return averageNumericValues(performanceData.response_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_response_ms))
+          ? Number(performanceData.average_response_ms)
+          : null)
+    case 'L10_MARKET_PAY':
+      return averageNumericValues(performanceData.payment_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_payment_ms))
+          ? Number(performanceData.average_payment_ms)
           : null)
     case 'S03_STORY_SEQ':
       return averageNumericValues(performanceData.response_times_ms)
