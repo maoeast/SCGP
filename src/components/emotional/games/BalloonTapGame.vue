@@ -16,14 +16,6 @@
         <span>目标进度</span>
         <strong>{{ progressLabel }}</strong>
       </div>
-      <div class="hud-card">
-        <span>过早点按</span>
-        <strong>{{ earlyTaps }} 次</strong>
-      </div>
-      <div class="hud-card">
-        <span>稳定连击</span>
-        <strong>{{ maxStreak }} 次</strong>
-      </div>
     </div>
 
     <div ref="playFieldRef" class="play-field">
@@ -61,10 +53,6 @@
           <strong>{{ fieldStatus }}</strong>
           <span>{{ helperMessage }}</span>
         </div>
-        <div class="field-footer__right">
-          <span>漏掉窗口 {{ missedWindows }} 次</span>
-          <span v-if="difficultyConfig.restChance > 0">稳稳放行 {{ calmSkips }} 次</span>
-        </div>
       </div>
     </div>
 
@@ -77,23 +65,6 @@
       <h2>刺破慢气球</h2>
       <p>{{ stageMessage }}</p>
       <small>{{ fieldHint }}</small>
-
-      <div class="tip-grid">
-        <div class="tip-card">
-          <strong>目标气球</strong>
-          <span>慢慢飘进金色圈后，再稳稳地点一下。</span>
-        </div>
-        <div class="tip-card">
-          <strong v-if="difficultyConfig.restChance > 0">休息气球</strong>
-          <strong v-else>等待提示</strong>
-          <span>
-            {{ difficultyConfig.restChance > 0
-              ? '看到带小云朵的休息气球时，先别点，让它自己飘过去。'
-              : '这关先专心等时机，不需要抢着马上点。'
-            }}
-          </span>
-        </div>
-      </div>
     </div>
 
     <transition name="badge-pop">
@@ -162,6 +133,18 @@ interface BalloonState {
   colors: readonly [string, string]
 }
 
+// 目标区（金色圈）：水平居中收窄，让孩子把注意力锁定在一个点上，而不是扫视整条横线。
+// 视觉圈左右边界 = 场宽 × [TARGET_ZONE_LEFT_RATIO, TARGET_ZONE_RIGHT_RATIO]（窄屏放宽，见 isBalloonInTargetBand），
+// 点击判定与视觉一致（y 在带内且 x 落在圈内才算“进圈”）。
+const TARGET_ZONE_LEFT_RATIO = 0.22
+const TARGET_ZONE_RIGHT_RATIO = 0.78
+// 窄屏（场宽 ≤ 640px）下与 .target-band 的 @media 一致，圈放宽到 68% 屏宽。
+const TARGET_ZONE_LEFT_RATIO_NARROW = 0.16
+const TARGET_ZONE_RIGHT_RATIO_NARROW = 0.84
+// 气球生成 x 范围收窄到圈内，保证每只气球都会飘过金色圈。
+const BALLOON_SPAWN_X_MIN_RATIO = 0.3
+const BALLOON_SPAWN_X_MAX_RATIO = 0.7
+
 const DIFFICULTY_CONFIGS: Record<EmotionGameDifficulty, DifficultyConfig> = {
   1: {
     goalPops: 4,
@@ -170,7 +153,7 @@ const DIFFICULTY_CONFIGS: Record<EmotionGameDifficulty, DifficultyConfig> = {
     speedRange: [72, 90],
     swayAmplitude: 22,
     swaySpeedRange: [1.2, 1.6],
-    balloonRadius: 42,
+    balloonRadius: 48,
     spawnGapMs: 320,
     restChance: 0,
     shortLabel: '简单 · 宽等待区',
@@ -186,7 +169,7 @@ const DIFFICULTY_CONFIGS: Record<EmotionGameDifficulty, DifficultyConfig> = {
     speedRange: [86, 104],
     swayAmplitude: 34,
     swaySpeedRange: [1.5, 2.0],
-    balloonRadius: 40,
+    balloonRadius: 46,
     spawnGapMs: 260,
     restChance: 0,
     shortLabel: '中等 · 更稳地等',
@@ -202,7 +185,7 @@ const DIFFICULTY_CONFIGS: Record<EmotionGameDifficulty, DifficultyConfig> = {
     speedRange: [98, 116],
     swayAmplitude: 42,
     swaySpeedRange: [1.8, 2.3],
-    balloonRadius: 38,
+    balloonRadius: 44,
     spawnGapMs: 220,
     restChance: 0.35,
     shortLabel: '困难 · 还要先放行',
@@ -450,7 +433,7 @@ function createBalloon(kind: BalloonKind): BalloonState {
   const swaySpeed = randomBetween(difficultyConfig.value.swaySpeedRange[0], difficultyConfig.value.swaySpeedRange[1])
   const swayPhase = randomBetween(0, Math.PI * 2)
   const radius = difficultyConfig.value.balloonRadius + randomBetween(-3, 3)
-  const baseX = randomBetween(width * 0.18, width * 0.82)
+  const baseX = randomBetween(width * BALLOON_SPAWN_X_MIN_RATIO, width * BALLOON_SPAWN_X_MAX_RATIO)
   const swayAmplitude = difficultyConfig.value.swayAmplitude + randomBetween(-8, 10)
 
   speedSamples.value = [...speedSamples.value, Math.round(speed)]
@@ -509,7 +492,14 @@ function removeBalloon(balloonId: number) {
 }
 
 function isBalloonInTargetBand(balloon: BalloonState) {
-  return balloon.y >= targetBandTopPx.value && balloon.y <= targetBandBottomPx.value
+  const inVertical = balloon.y >= targetBandTopPx.value && balloon.y <= targetBandBottomPx.value
+  if (!inVertical) {
+    return false
+  }
+  const narrow = fieldRect.value.width <= 640
+  const zoneLeft = fieldRect.value.width * (narrow ? TARGET_ZONE_LEFT_RATIO_NARROW : TARGET_ZONE_LEFT_RATIO)
+  const zoneRight = fieldRect.value.width * (narrow ? TARGET_ZONE_RIGHT_RATIO_NARROW : TARGET_ZONE_RIGHT_RATIO)
+  return balloon.x >= zoneLeft && balloon.x <= zoneRight
 }
 
 function setBalloonBounce(balloon: BalloonState) {
@@ -785,10 +775,11 @@ onBeforeUnmount(() => {
 .balloon-tap-game {
   position: relative;
   min-height: 100%;
-  padding: 24px;
+  /* 顶部留出 GameContainer 悬浮工具栏（安静退出/当前学生）的空间，避免 hud 卡片与其重叠 */
+  padding: 112px 24px 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   overflow: hidden;
 }
 
@@ -846,8 +837,9 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  /* 只保留信息性/正面进度两张卡：失败计数不给孩子看，全部数据仍进 performanceData 供教师后台分析 */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .hud-card,
@@ -857,14 +849,16 @@ onBeforeUnmount(() => {
 }
 
 .hud-card {
-  padding: 14px 16px;
-  border-radius: 20px;
+  padding: 12px 14px;
+  border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.45);
   background: rgba(255, 255, 255, 0.74);
   box-shadow: 0 16px 36px rgba(50, 92, 126, 0.12);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .hud-card span {
@@ -904,12 +898,15 @@ onBeforeUnmount(() => {
 
 .target-band {
   position: absolute;
-  left: 6%;
-  right: 6%;
+  /* 居中聚焦的目标区（约 56% 屏宽），让孩子的注意力锁定在一点，而不是扫视整条横线 */
+  left: 22%;
+  width: 56%;
   border-radius: 999px;
-  border: 2px dashed rgba(255, 196, 87, 0.86);
-  background: linear-gradient(90deg, rgba(255, 245, 196, 0.54), rgba(255, 244, 205, 0.26));
-  box-shadow: 0 0 0 8px rgba(255, 232, 174, 0.22);
+  border: 3px solid rgba(255, 196, 87, 0.9);
+  background: linear-gradient(180deg, rgba(255, 247, 208, 0.66), rgba(255, 240, 185, 0.4));
+  box-shadow:
+    0 0 0 10px rgba(255, 232, 174, 0.28),
+    inset 0 0 18px rgba(255, 214, 120, 0.35);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -948,10 +945,13 @@ onBeforeUnmount(() => {
   height: calc(100% - 54px);
   border-radius: 50% 50% 44% 44%;
   background: linear-gradient(180deg, var(--balloon-start), var(--balloon-end));
+  /* 白色描边 + 加深外阴影：浅色天空背景下让触摸目标更清晰 */
+  border: 3px solid rgba(255, 255, 255, 0.9);
   box-shadow:
+    0 0 0 2px rgba(31, 64, 87, 0.14),
     inset -10px -16px 24px rgba(255, 255, 255, 0.14),
     inset 14px 18px 26px rgba(255, 255, 255, 0.26),
-    0 20px 28px rgba(51, 83, 107, 0.2);
+    0 22px 30px rgba(51, 83, 107, 0.26);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -988,6 +988,8 @@ onBeforeUnmount(() => {
 }
 
 .balloon-card--rest .balloon-shell {
+  /* 休息气球保持浅色弱化，描边也弱一点，维持与目标气球的区分度 */
+  border-color: rgba(255, 255, 255, 0.6);
   color: #40546a;
   text-shadow: none;
 }
@@ -1010,15 +1012,14 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 16px;
+  padding: 10px 14px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.74);
   border: 1px solid rgba(255, 255, 255, 0.54);
   color: #2a536b;
 }
 
-.field-footer__left,
-.field-footer__right {
+.field-footer__left {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1028,22 +1029,21 @@ onBeforeUnmount(() => {
   font-size: 15px;
 }
 
-.field-footer__left span,
-.field-footer__right span {
+.field-footer__left span {
   font-size: 13px;
 }
 
 .instruction-panel {
   position: relative;
   z-index: 1;
-  padding: 20px 22px;
-  border-radius: 24px;
+  padding: 14px 18px;
+  border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   background: rgba(255, 255, 255, 0.78);
   box-shadow: 0 18px 40px rgba(42, 84, 104, 0.12);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .panel-tags {
@@ -1067,7 +1067,7 @@ onBeforeUnmount(() => {
 
 .instruction-panel h2 {
   margin: 0;
-  font-size: 30px;
+  font-size: 26px;
   color: #22445c;
 }
 
@@ -1079,31 +1079,6 @@ onBeforeUnmount(() => {
 }
 
 .instruction-panel small {
-  color: #587589;
-  line-height: 1.6;
-}
-
-.tip-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.tip-card {
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(247, 251, 255, 0.96), rgba(238, 247, 255, 0.88));
-  border: 1px solid rgba(197, 222, 241, 0.82);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.tip-card strong {
-  color: #244c67;
-}
-
-.tip-card span {
   color: #587589;
   line-height: 1.6;
 }
@@ -1145,38 +1120,41 @@ onBeforeUnmount(() => {
   transform: translateY(12px);
 }
 
-@media (max-width: 900px) {
+/* 窄屏下 GameContainer 工具栏换行变高（约 180px），游戏顶部同步加大避让 */
+@media (max-width: 1080px) {
   .balloon-tap-game {
-    padding: 16px;
+    padding: 196px 16px 16px;
   }
+}
 
-  .hud-panel,
-  .tip-grid {
+@media (max-width: 900px) {
+  .hud-panel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .play-field {
     min-height: 420px;
   }
-
-  .field-footer {
-    flex-direction: column;
-  }
 }
 
 @media (max-width: 640px) {
-  .hud-panel,
-  .tip-grid {
+  .hud-panel {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .instruction-panel h2 {
-    font-size: 26px;
+    font-size: 24px;
   }
 
   .target-band {
-    left: 4%;
-    right: 4%;
+    /* 窄屏下金色圈放宽一点，仍保持居中的聚焦区域 */
+    left: 16%;
+    width: 68%;
+  }
+
+  .field-footer {
+    left: 14px;
+    right: 14px;
   }
 }
 </style>
