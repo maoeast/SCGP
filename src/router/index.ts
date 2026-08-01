@@ -72,6 +72,11 @@ const DressUpPage = () => import('@/views/emotional/games/DressUpPage.vue')
 const BrushTeethPage = () => import('@/views/emotional/games/BrushTeethPage.vue')
 const SetTablePage = () => import('@/views/emotional/games/SetTablePage.vue')
 const PackBagPage = () => import('@/views/emotional/games/PackBagPage.vue')
+const SteadySpoonPage = () => import('@/views/emotional/games/SteadySpoonPage.vue')
+const BodySignalPage = () => import('@/views/emotional/games/BodySignalPage.vue')
+const TowelTwistPage = () => import('@/views/emotional/games/TowelTwistPage.vue')
+const HomeSoundPage = () => import('@/views/emotional/games/HomeSoundPage.vue')
+const MarketPayPage = () => import('@/views/emotional/games/MarketPayPage.vue')
 const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterPage.vue')
 const EmotionMirrorPage = () => import('@/views/emotional/games/EmotionMirrorPage.vue')
 const StorySequencePage = () => import('@/views/emotional/games/StorySequencePage.vue')
@@ -660,6 +665,61 @@ const router = createRouter({
           component: PackBagPage,
           meta: {
             title: '上学包包装一装',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'life-skills/games/steady-spoon',
+          name: 'SteadySpoonGame',
+          component: SteadySpoonPage,
+          meta: {
+            title: '稳稳送一勺',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'life-skills/games/body-signal',
+          name: 'BodySignalGame',
+          component: BodySignalPage,
+          meta: {
+            title: '身体信号小灯塔',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'life-skills/games/towel-twist',
+          name: 'TowelTwistGame',
+          component: TowelTwistPage,
+          meta: {
+            title: '毛巾拧拧工坊',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'life-skills/games/home-sound',
+          name: 'HomeSoundGame',
+          component: HomeSoundPage,
+          meta: {
+            title: '家里声音小侦探',
+            hideInMenu: true,
+            roles: ['admin', 'teacher'],
+            immersiveShell: true,
+          }
+        },
+        {
+          path: 'life-skills/games/market-pay',
+          name: 'MarketPayGame',
+          component: MarketPayPage,
+          meta: {
+            title: '超市付款小能手',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,
