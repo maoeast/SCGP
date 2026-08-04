@@ -122,15 +122,6 @@ const GAME_EXTRACTION_RULES: Record<string, GameExtractionRule> = {
   },
 
   // ===== Tier 1：生活自理 =====
-  L03_BRUSH_TEETH: {
-    // 刷牙小卫士：directional_accuracy_score(0-1) + average_swipe_ms + duration_seconds(秒)
-    // 注意字段名是 duration_seconds，不是 total_duration_seconds
-    realityFields: ['directional_accuracy_score'],
-    accuracyFields: ['directional_accuracy_score'],
-    accuracyScale: 'ratio',
-    reactionFields: ['average_swipe_ms'],
-    duration: { kind: 'seconds', fields: ['duration_seconds'] },
-  },
   L05_PACK_BAG: {
     // 上学包包装一装：context_understanding_score(0-100，需÷100) + average_selection_ms + total_duration_seconds(秒)
     realityFields: ['context_understanding_score'],
@@ -215,21 +206,6 @@ const GAME_EXTRACTION_RULES: Record<string, GameExtractionRule> = {
     reactionFields: ['average_crossing_ms'],
     duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
   },
-  L14_FOLD_CLOTHES: {
-    // 叠衣小能手：fold_accuracy_ratio 直接 ratio + average_fold_time_ms + total_duration_seconds
-    realityFields: ['fold_accuracy_ratio', 'folded_items'],
-    accuracyFields: ['fold_accuracy_ratio'],
-    accuracyScale: 'ratio',
-    reactionFields: ['average_fold_time_ms'],
-    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
-  },
-  L15_SWEEP_FLOOR: {
-    // 扫地小旋风：cleared_piles/(cleared+wrong_direction) 派生 + average_pile_time_ms + total_duration_seconds
-    realityFields: ['cleared_piles'],
-    accuracyDerived: { correctFields: ['cleared_piles'], wrongFields: ['wrong_direction_swipes'] },
-    reactionFields: ['average_pile_time_ms'],
-    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
-  },
 
   // ===== Tier 2：精细动作 =====
   F04_TRACK_BUILD: {
@@ -265,29 +241,6 @@ const GAME_EXTRACTION_RULES: Record<string, GameExtractionRule> = {
     realityFields: ['successful_pops'],
     reactionArrayField: 'window_response_ms',
     duration: { kind: 'session' },
-  },
-
-  // ===== Tier 2：生活自理 =====
-  L01_WASH_HANDS: {
-    // 洗手小能手：派生 correct_action_count/(correct+wrong)_action + average_action_ms + total_duration_seconds(秒)
-    realityFields: ['correct_action_count'],
-    accuracyDerived: { correctFields: ['correct_action_count'], wrongFields: ['wrong_action_count'] },
-    reactionFields: ['average_action_ms'],
-    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
-  },
-  L02_DRESS_UP: {
-    // 我会穿衣服：派生 completed_item_count/(completed+wrong)_placements + average_selection_ms + total_duration_seconds(秒)
-    realityFields: ['completed_item_count'],
-    accuracyDerived: { correctFields: ['completed_item_count'], wrongFields: ['wrong_placements'] },
-    reactionFields: ['average_selection_ms'],
-    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
-  },
-  L04_SET_TABLE: {
-    // 摆桌子帮帮忙：派生 completed_places/(completed+wrong)_placements + average_placement_ms + total_duration_seconds(秒)
-    realityFields: ['completed_places'],
-    accuracyDerived: { correctFields: ['completed_places'], wrongFields: ['wrong_placements'] },
-    reactionFields: ['average_placement_ms'],
-    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
   },
 }
 
@@ -461,7 +414,7 @@ function resolveDuration(
 /**
  * 把游戏 performanceData 归一化为标准指标。
  *
- * @param gameCode 游戏 code（如 F03_RECYCLING / L03_BRUSH_TEETH / L05_PACK_BAG / S01_BURGER）
+ * @param gameCode 游戏 code（如 F03_RECYCLING / L05_PACK_BAG / S01_BURGER）
  * @param performanceData 游戏组件 emit 的原始数据（可能是空壳 {event}）
  * @param sessionDurationMs 本局会话时长（毫秒），duration 缺失时的兜底来源
  */

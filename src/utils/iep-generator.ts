@@ -181,7 +181,7 @@ export class IEPGenerator {
 
   /**
    * 生成生活自理游戏 IEP 报告（不带 taskId）
-   * Phase 1：L03_BRUSH_TEETH 刷牙小卫士 / L05_PACK_BAG 上学包包装一装
+   * Phase 1：L05_PACK_BAG 上学包包装一装
    */
   static generateLifeSkillsReport(
     studentName: string,
@@ -743,14 +743,10 @@ export class IEPGenerator {
   // ---------- 生活自理：私有辅助 ----------
 
   /**
-   * 生活自理游戏 code -> 中文名映射（Phase 1 仅 L03/L05 落地，其余为 Phase 2 预留）
+   * 生活自理游戏 code -> 中文名映射（Phase 1 仅 L05 落地，其余为 Phase 2 预留）
    */
   private static getLifeSkillGameName(gameCode: string): string {
     const names: Record<string, string> = {
-      L01_WASH_HANDS: '洗手小能手',
-      L02_DRESS_UP: '我会穿衣服',
-      L03_BRUSH_TEETH: '刷牙小卫士',
-      L04_SET_TABLE: '摆桌子帮帮忙',
       L05_PACK_BAG: '上学包包装一装',
       L06_STEADY_SPOON: '稳稳送一勺',
       L07_BODY_SIGNAL: '身体信号小灯塔',
@@ -759,9 +755,7 @@ export class IEPGenerator {
       L10_MARKET_PAY: '超市付款小能手',
       L11_FACE_WASH: '洗脸小镜子',
       L12_POUR_WATER: '倒水小帮手',
-      L13_ROAD_CROSS: '安全过马路',
-      L14_FOLD_CLOTHES: '叠衣小能手',
-      L15_SWEEP_FLOOR: '扫地小旋风'
+      L13_ROAD_CROSS: '安全过马路'
     }
     return names[gameCode] || '生活自理训练'
   }
@@ -781,39 +775,7 @@ export class IEPGenerator {
     const reaction = metrics.avgResponseTimeMs
     const hasReaction = reaction !== null
 
-    if (gameCode === 'L03_BRUSH_TEETH') {
-      // 刷牙小卫士：刷牙路径 + 方向准确度
-      const pathPerformance = !metrics.hasRealData
-        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否按区域顺序完成刷牙路径。'
-        : hasAccuracy && (accuracy as number) >= 0.7
-          ? '能较完整地按区域顺序完成刷牙路径，动作规划与方向控制发展良好。'
-          : hasAccuracy
-            ? '能参与刷牙动作，但区域顺序和方向仍偶尔出错，需要在更慢的节奏下多练“先看区域再刷”。'
-            : '本次能完成刷牙交互，建议在后续训练中持续记录方向准确度以评估动作规划。'
-
-      sections.push({
-        category: '刷牙方向准确度',
-        performance: hasAccuracy
-          ? this.buildAccuracyPerformance('刷牙方向', accuracy as number, true)
-          : '本次未采集到量化指标，建议在后续训练中持续记录刷牙方向准确度以支撑评估。',
-        behavior: hasReaction
-          ? `本次平均每个刷牙区域的动作反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
-          : '',
-        suggestions: [
-          '在真实刷牙时复述“上牙从上往下、下牙从下往上、里外都要刷”，把游戏中的方向迁移到生活。',
-          '可以先对着镜子慢动作示范，再让孩子模仿，帮助建立正确的刷牙路径。',
-          '当孩子按正确方向刷动时，及时肯定他注意到的区域顺序（先外侧、再内侧、最后咬合面）。'
-        ]
-      })
-      sections.push({
-        category: '刷牙路径与动作规划',
-        performance: pathPerformance,
-        suggestions: [
-          '用儿歌或口令把刷牙步骤串起来（“先刷外面、再刷里面、最后刷上面”），帮助记忆路径。',
-          '可配合牙齿模型做练习，先在模型上走一遍正确路径，再回到真实刷牙。'
-        ]
-      })
-    } else if (gameCode === 'L05_PACK_BAG') {
+    if (gameCode === 'L05_PACK_BAG') {
       // 上学包包装一装：情境计划 + 执行功能
       const execPerformance = !metrics.hasRealData
         ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能根据情境挑出合适物品并整理入包。'
@@ -843,102 +805,6 @@ export class IEPGenerator {
         suggestions: [
           '用图文清单做辅助：先和孩子一起列“今天要带的物品”，再对照清单逐项装包。',
           '逐步撤除清单提示，鼓励孩子独立判断“该带 / 不该带”，培养自主整理能力。'
-        ]
-      })
-    } else if (gameCode === 'L01_WASH_HANDS') {
-      // 洗手小能手：步骤完成准确率 + 反应时 + 洗手步骤与顺序
-      const stepPerformance = !metrics.hasRealData
-        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否按正确顺序完成洗手各步骤。'
-        : hasAccuracy && (accuracy as number) >= 0.7
-          ? '能较稳定地按顺序完成洗手各步骤，步骤理解与自理独立性发展良好。'
-          : hasAccuracy
-            ? '能参与洗手步骤，但顺序或漏步仍偶尔出错，需要在更慢的节奏下多练“先做哪步、再做哪步”。'
-            : '本次能完成洗手交互，建议在后续训练中持续记录步骤正确率以评估自理步骤理解。'
-
-      sections.push({
-        category: '洗手步骤完成准确率',
-        performance: hasAccuracy
-          ? this.buildAccuracyPerformance('洗手步骤', accuracy as number, true)
-          : '本次未采集到量化指标，建议在后续训练中持续记录步骤正确率以支撑评估。',
-        behavior: hasReaction
-          ? `本次平均每个动作反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
-          : '',
-        suggestions: [
-          '在真实洗手时复述“打湿—抹肥皂—搓手心—搓手背—冲干净—擦干”，把游戏中的步骤迁移到生活。',
-          '可以先和孩子口头复述一遍顺序再动手，建立“先想顺序、再动手做”的自理习惯。',
-          '当孩子按正确顺序完成步骤时，及时肯定他记牢的先后关系，给予具体反馈。'
-        ]
-      })
-      sections.push({
-        category: '洗手步骤与顺序',
-        performance: stepPerformance,
-        suggestions: [
-          '用图文步骤卡贴在洗手台旁，先对照卡片逐步完成，再逐步撤除提示培养独立自理。',
-          '把漏步或乱序当作提醒信号，引导孩子回到“上一步是什么、下一步是什么”重新梳理。'
-        ]
-      })
-    } else if (gameCode === 'L02_DRESS_UP') {
-      // 我会穿衣服：穿衣物品放置准确率 + 反应时 + 穿衣顺序与放置
-      const dressPerformance = !metrics.hasRealData
-        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能按情境挑出衣物并放到正确位置。'
-        : hasAccuracy && (accuracy as number) >= 0.7
-          ? '能较稳定地把衣物放到正确位置，顺序理解与放置准确度发展良好。'
-          : hasAccuracy
-            ? '能参与穿衣放置，但位置或顺序仍偶尔出错，需要更多“先看位置再放”的提示。'
-            : '本次能完成穿衣交互，建议在后续训练中持续记录放置正确率以评估顺序理解。'
-
-      sections.push({
-        category: '穿衣物品放置准确率',
-        performance: hasAccuracy
-          ? this.buildAccuracyPerformance('穿衣物品', accuracy as number, true)
-          : '本次未采集到量化指标，建议在后续训练中持续记录放置正确率以支撑评估。',
-        behavior: hasReaction
-          ? `本次平均每次选择反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
-          : '',
-        suggestions: [
-          '出门或起床前和孩子一起说一说“先穿哪件、再穿哪件、放在哪里”，把顺序迁移到真实穿衣。',
-          '先引导孩子口头指出每件衣物的位置，再动手放置，建立“先想位置、再做选择”的习惯。',
-          '当孩子把衣物放到正确位置时，描述他注意到的位置线索（左右、上下、里外），强化观察。'
-        ]
-      })
-      sections.push({
-        category: '穿衣顺序与物品放置',
-        performance: dressPerformance,
-        suggestions: [
-          '用穿衣顺序图卡做辅助：先和孩子一起排出“内层—外层、上—下”的顺序，再逐件完成。',
-          '放错位置时，引导孩子重新看一眼目标位置再调整，而不是直接帮他放好。'
-        ]
-      })
-    } else if (gameCode === 'L04_SET_TABLE') {
-      // 摆桌子帮帮忙：摆放位置准确率 + 反应时 + 空间定位与摆放
-      const placePerformance = !metrics.hasRealData
-        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能按锚点把餐具摆到正确位置。'
-        : hasAccuracy && (accuracy as number) >= 0.7
-          ? '能较稳定地按锚点把餐具摆到正确位置，空间定位与对应能力发展良好。'
-          : hasAccuracy
-            ? '能参与餐具摆放，但位置对应仍偶尔出错，需要更多“先对锚点再放”的提示。'
-            : '本次能完成摆放交互，建议在后续训练中持续记录摆放正确率以评估空间定位。'
-
-      sections.push({
-        category: '摆放位置准确率',
-        performance: hasAccuracy
-          ? this.buildAccuracyPerformance('摆放位置', accuracy as number, true)
-          : '本次未采集到量化指标，建议在后续训练中持续记录摆放正确率以支撑评估。',
-        behavior: hasReaction
-          ? `本次平均每次摆放反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
-          : '',
-        suggestions: [
-          '在真实摆桌时复述“碗在中间、筷子在右边、勺子在左边”，把游戏中的位置迁移到生活。',
-          '先引导孩子口头指出每个座位对应的位置，再动手摆放，建立“先对锚点、再放餐具”的习惯。',
-          '当孩子把餐具摆到正确位置时，描述他注意到的空间线索（左右、里外、远近），强化观察。'
-        ]
-      })
-      sections.push({
-        category: '空间定位与餐具摆放',
-        performance: placePerformance,
-        suggestions: [
-          '用桌垫上的轮廓图做辅助：先让孩子把餐具对齐轮廓，再逐步撤除提示培养独立摆放。',
-          '放错位置时，引导孩子重新看一眼座位与锚点再调整，而不是直接帮他摆好。'
         ]
       })
     } else if (gameCode === 'L06_STEADY_SPOON') {
@@ -1195,70 +1061,6 @@ export class IEPGenerator {
         suggestions: [
           '先在安全区域练习"停—看—走"三步口令，再逐步应用到真实路口。',
           '对冲动性较强的孩子，可以先用"拉住手等绿灯"的身体辅助，逐步撤除。'
-        ]
-      })
-    } else if (gameCode === 'L14_FOLD_CLOTHES') {
-      // 叠衣小能手：折叠准确率 + 方向性滑动
-      const foldPerformance = !metrics.hasRealData
-        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能沿折叠线完成对齐折叠动作。'
-        : hasAccuracy && (accuracy as number) >= 0.7
-          ? '能较准确地沿折叠线完成对齐，方向性滑动与家务参与意识发展良好。'
-          : hasAccuracy
-            ? '能参与折叠动作，但对齐精度偶尔不够，需要在更宽松的容差下多练"边对边、慢慢推"。'
-            : '本次能完成叠衣交互，建议在后续训练中持续记录折叠精度以评估方向控制。'
-
-      sections.push({
-        category: '折叠准确率',
-        performance: hasAccuracy
-          ? this.buildAccuracyPerformance('折叠', accuracy as number, true)
-          : '本次未采集到量化指标，建议在后续训练中持续记录折叠准确率以支撑评估。',
-        behavior: hasReaction
-          ? `本次平均每次折叠用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
-          : '',
-        suggestions: [
-          '在真实叠衣时先示范"找到边、对齐、推过去"的三步，再让孩子模仿。',
-          '选择质地偏硬、边线清晰的衣物（如毛巾、方巾）从易到难练习。',
-          '当孩子完成对齐折叠时，肯定他注意到的边线对应关系，强化方向控制。'
-        ]
-      })
-      sections.push({
-        category: '方向性滑动与家务参与',
-        performance: foldPerformance,
-        suggestions: [
-          '把叠衣服变成亲子家务游戏：一起比赛谁能把毛巾叠得更整齐。',
-          '从单折开始（对折一次），再逐步增加到二折、三折，循序渐进。'
-        ]
-      })
-    } else if (gameCode === 'L15_SWEEP_FLOOR') {
-      // 扫地小旋风：清扫完成率 + 方向判断
-      const sweepPerformance = !metrics.hasRealData
-        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能判断正确方向并持续做短滑动推扫碎屑。'
-        : hasAccuracy && (accuracy as number) >= 0.7
-          ? '能较准确地判断簸箕方向并把碎屑推扫干净，方向判断与重复动作完成能力发展良好。'
-          : hasAccuracy
-            ? '能参与扫地动作，但方向判断偶尔出错，需要更明确的方向箭头提示帮助。'
-            : '本次能完成扫地交互，建议在后续训练中持续记录方向正确率以评估方向判断。'
-
-      sections.push({
-        category: '清扫完成率',
-        performance: hasAccuracy
-          ? this.buildAccuracyPerformance('清扫', accuracy as number, true)
-          : '本次未采集到量化指标，建议在后续训练中持续记录清扫完成率以支撑评估。',
-        behavior: hasReaction
-          ? `本次平均每堆碎屑清扫用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
-          : '',
-        suggestions: [
-          '在真实扫地时先让孩子看一看簸箕在哪边，用手指方向再开始扫，建立"先看方向再动手"的习惯。',
-          '从小面积、碎屑集中的区域开始练习，再逐步扩大范围。',
-          '当孩子朝正确方向完成推扫时，描述他做对了什么（看到簸箕→朝那边推），强化方向判断。'
-        ]
-      })
-      sections.push({
-        category: '方向判断与重复动作',
-        performance: sweepPerformance,
-        suggestions: [
-          '先用胶带在地上标出"扫这边"的箭头辅助，逐步撤除视觉提示。',
-          '把扫地分成"看方向—推三下—再看"的节奏，帮助孩子建立重复动作的稳定性。'
         ]
       })
     } else {

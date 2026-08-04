@@ -670,34 +670,6 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '安抚选择', value: String(raw.support_card_label || '-') },
         { label: '匹配程度', value: formatPercent(raw.support_fit_score) },
       ]
-    case 'L01_WASH_HANDS':
-      return [
-        { label: '完成动作', value: formatNullableNumber(raw.correct_action_count, '步') },
-        { label: '错序次数', value: formatNullableNumber(raw.sequence_wrong_attempts, '次') },
-        { label: '错误动作', value: formatNullableNumber(raw.wrong_action_count, '次') },
-        { label: '平均动作', value: formatResponseTime(raw.average_action_ms as number) },
-      ]
-    case 'L02_DRESS_UP':
-      return [
-        { label: '完成衣物', value: formatCountPair(raw.completed_item_count, raw.target_item_count, '件') },
-        { label: '错误放置', value: formatNullableNumber(raw.wrong_placements, '次') },
-        { label: '平均选择', value: formatResponseTime(raw.average_selection_ms as number) },
-        { label: '天气主题', value: String(raw.weather_theme_title || raw.weather_theme || '-') },
-      ]
-    case 'L03_BRUSH_TEETH':
-      return [
-        { label: '完成区域', value: formatCountPair(raw.cleaned_zone_count, raw.target_zone_count, '块') },
-        { label: '正确刷动', value: formatNullableNumber(raw.correct_swipes, '次') },
-        { label: '错误方向', value: formatNullableNumber(raw.wrong_swipes, '次') },
-        { label: '方向准确', value: formatPercent(raw.directional_accuracy_score) },
-      ]
-    case 'L04_SET_TABLE':
-      return [
-        { label: '完成餐位', value: formatCountPair(raw.completed_places, raw.target_place_count, '个') },
-        { label: '错误放置', value: formatNullableNumber(raw.wrong_placements, '次') },
-        { label: '平均摆放', value: formatResponseTime(raw.average_placement_ms as number) },
-        { label: '桌面主题', value: String(raw.session_theme_title || raw.session_theme || '-') },
-      ]
     case 'L05_PACK_BAG':
       return [
         { label: '正确装入', value: formatCountPair(raw.correctly_packed_count, raw.required_item_count, '件') },
@@ -760,20 +732,6 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '闯红灯', value: formatNullableNumber(raw.red_light_attempts, '次') },
         { label: '未完成', value: formatNullableNumber(raw.incomplete_crossings, '次') },
         { label: '平均通过', value: formatResponseTime(raw.average_crossing_ms as number) },
-      ]
-    case 'L14_FOLD_CLOTHES':
-      return [
-        { label: '完成件数', value: formatCountPair(raw.folded_items, raw.target_items, '件') },
-        { label: '未对齐', value: formatNullableNumber(raw.misaligned_folds, '次') },
-        { label: '折叠精度', value: formatPercent(raw.fold_accuracy_ratio) },
-        { label: '平均折叠', value: formatResponseTime(raw.average_fold_time_ms as number) },
-      ]
-    case 'L15_SWEEP_FLOOR':
-      return [
-        { label: '清扫堆数', value: formatCountPair(raw.cleared_piles, raw.target_piles, '堆') },
-        { label: '方向错误', value: formatNullableNumber(raw.wrong_direction_swipes, '次') },
-        { label: '效率比', value: formatPercent(raw.efficiency_ratio) },
-        { label: '平均清扫', value: formatResponseTime(raw.average_pile_time_ms as number) },
       ]
     case 'G07_MONSTER':
       return [
@@ -973,54 +931,6 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '可选心情', value: formatMappedStringList(raw.available_mood_ids, moodMeterMoodLabelMap, '其他心情') },
         { label: '可选安抚卡', value: formatMappedStringList(raw.available_support_ids, moodMeterSupportLabelMap, '其他安抚方式') },
       ]
-    case 'L01_WASH_HANDS':
-      return [
-        { label: '完成动作', value: formatNullableNumber(raw.correct_action_count, '步') },
-        { label: '错序次数', value: formatNullableNumber(raw.sequence_wrong_attempts, '次') },
-        { label: '错误动作', value: formatNullableNumber(raw.wrong_action_count, '次') },
-        { label: '打湿用时', value: formatNullableNumber(raw.phase2_action_times?.wetHandsSec, '秒') },
-        { label: '打泡用时', value: formatNullableNumber(raw.phase2_action_times?.soapApplySec, '秒') },
-        { label: '搓洗用时', value: formatNullableNumber(raw.phase2_action_times?.scrubbingSec, '秒') },
-        { label: '冲洗用时', value: formatNullableNumber(raw.phase2_action_times?.rinseSec, '秒') },
-        { label: '搓洗进度', value: formatNullableNumber(raw.scrub_progress_px, ' px') },
-        { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
-        { label: '动作顺序', value: formatMappedStringList(raw.completed_step_codes, washHandsStepLabelMap, '其他动作') },
-        { label: '排序结果', value: formatMappedStringList(raw.completed_sequence_codes, washHandsStepLabelMap, '其他动作') },
-      ]
-    case 'L02_DRESS_UP':
-      return [
-        { label: '目标衣物', value: formatNullableNumber(raw.target_item_count, '件') },
-        { label: '完成衣物', value: formatNullableNumber(raw.completed_item_count, '件') },
-        { label: '错误放置', value: formatNullableNumber(raw.wrong_placements, '次') },
-        { label: '提示次数', value: formatNullableNumber(raw.prompt_count, '次') },
-        { label: '最高提示', value: formatNullableNumber(raw.highest_prompt_level, '级') },
-        { label: '已穿衣物', value: formatPlainStringList(raw.placed_item_labels) },
-        { label: '选择记录', value: formatResponseTimeList(raw.selection_times_ms, '次') },
-        { label: '天气主题', value: String(raw.weather_theme_title || raw.weather_theme || '-') },
-      ]
-    case 'L03_BRUSH_TEETH':
-      return [
-        { label: '覆盖比例', value: formatPercent(raw.final_coverage_percent) },
-        { label: '方向准确', value: formatPercent(raw.directional_accuracy_score) },
-        { label: '完成区域', value: formatCountPair(raw.cleaned_zone_count, raw.target_zone_count, '块') },
-        { label: '正确刷动', value: formatNullableNumber(raw.correct_swipes, '次') },
-        { label: '错误方向', value: formatNullableNumber(raw.wrong_swipes, '次') },
-        { label: '最高提示', value: formatNullableNumber(raw.highest_prompt_level, '级') },
-        { label: '刷动记录', value: formatResponseTimeList(raw.swipe_durations_ms, '次') },
-        { label: '区域列表', value: formatPlainStringList(raw.zone_labels) },
-      ]
-    case 'L04_SET_TABLE':
-      return [
-        { label: '目标餐位', value: formatNullableNumber(raw.target_place_count, '个') },
-        { label: '完成餐位', value: formatNullableNumber(raw.completed_places, '个') },
-        { label: '错误放置', value: formatNullableNumber(raw.wrong_placements, '次') },
-        { label: '提示次数', value: formatNullableNumber(raw.prompt_count, '次') },
-        { label: '最高提示', value: formatNullableNumber(raw.highest_prompt_level, '级') },
-        { label: '已摆餐具', value: formatPlainStringList(raw.placed_item_labels) },
-        { label: '位置锚点', value: formatPlainStringList(raw.anchor_labels) },
-        { label: '摆放记录', value: formatResponseTimeList(raw.placement_times_ms, '次') },
-        { label: '桌面主题', value: String(raw.session_theme_title || raw.session_theme || '-') },
-      ]
     case 'L05_PACK_BAG':
       return [
         { label: '需要带的', value: formatPlainStringList(raw.required_item_labels) },
@@ -1128,28 +1038,6 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '等待占比', value: formatPercent(raw.wait_compliance_ratio) },
         { label: '平均过马路', value: formatResponseTime(raw.average_crossing_ms as number) },
         { label: '各次用时', value: formatResponseTimeList(raw.crossing_times_ms, '次') },
-        { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
-      ]
-    case 'L14_FOLD_CLOTHES':
-      return [
-        { label: '目标件数', value: formatNullableNumber(raw.target_items, '件') },
-        { label: '完成件数', value: formatNullableNumber(raw.folded_items, '件') },
-        { label: '对齐错误', value: formatNullableNumber(raw.misaligned_folds, '次') },
-        { label: '折叠精度', value: formatPercent(raw.fold_accuracy_ratio) },
-        { label: '各件精度', value: formatResponseTimeList(raw.item_fold_ratios, '件') },
-        { label: '平均折叠', value: formatResponseTime(raw.average_fold_time_ms as number) },
-        { label: '各件用时', value: formatResponseTimeList(raw.fold_times_ms, '次') },
-        { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
-      ]
-    case 'L15_SWEEP_FLOOR':
-      return [
-        { label: '目标堆数', value: formatNullableNumber(raw.target_piles, '堆') },
-        { label: '清理堆数', value: formatNullableNumber(raw.cleared_piles, '堆') },
-        { label: '方向错误', value: formatNullableNumber(raw.wrong_direction_swipes, '次') },
-        { label: '簸箕对齐', value: formatPercent(raw.dustpan_alignment_ratio) },
-        { label: '各堆对齐', value: formatResponseTimeList(raw.pile_alignment_ratios, '堆') },
-        { label: '平均清扫', value: formatResponseTime(raw.average_pile_time_ms as number) },
-        { label: '各堆用时', value: formatResponseTimeList(raw.pile_times_ms, '次') },
         { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
       ]
     case 'G07_MONSTER':

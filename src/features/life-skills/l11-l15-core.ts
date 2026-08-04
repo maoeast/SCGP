@@ -4,8 +4,6 @@ export const L11_L15_GAME_CODES = [
   'L11_FACE_WASH',
   'L12_POUR_WATER',
   'L13_ROAD_CROSS',
-  'L14_FOLD_CLOTHES',
-  'L15_SWEEP_FLOOR',
 ] as const
 
 export type L11L15GameCode = (typeof L11_L15_GAME_CODES)[number]
@@ -106,65 +104,12 @@ export function isCrossingSafe(light: TrafficLight, hasTurningCar: boolean): boo
   return true
 }
 
-// ========== L14: 叠衣小能手 ==========
-
-export interface FoldClothesDifficultyConfig {
-  targetItems: number
-  /** 每件衣物需要折叠的次数 */
-  foldsPerItem: number
-  /** 对齐容差（占衣物宽度比例） */
-  alignmentToleranceRatio: number
-  /** 是否显示动画引导 */
-  showGuideAnimation: boolean
-}
-
-export const FOLD_CLOTHES_DIFFICULTIES: Record<EmotionGameDifficulty, FoldClothesDifficultyConfig> = {
-  1: { targetItems: 3, foldsPerItem: 1, alignmentToleranceRatio: 0.2, showGuideAnimation: true },
-  2: { targetItems: 4, foldsPerItem: 2, alignmentToleranceRatio: 0.15, showGuideAnimation: true },
-  3: { targetItems: 5, foldsPerItem: 3, alignmentToleranceRatio: 0.1, showGuideAnimation: false },
-}
-
-export type FoldDirection = 'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top'
-
-export function isFoldAligned(offsetRatio: number, tolerance: number): boolean {
-  return Math.abs(offsetRatio) <= tolerance
-}
-
-// ========== L15: 扫地小旋风 ==========
-
-export interface SweepFloorDifficultyConfig {
-  targetPiles: number
-  /** 簸箕宽度（占容器宽度比例） */
-  dustpanWidthRatio: number
-  /** 每堆碎屑数 */
-  debrisPerPile: number
-  /** 是否显示方向箭头 */
-  showDirectionArrow: boolean
-}
-
-export const SWEEP_FLOOR_DIFFICULTIES: Record<EmotionGameDifficulty, SweepFloorDifficultyConfig> = {
-  1: { targetPiles: 3, dustpanWidthRatio: 0.25, debrisPerPile: 4, showDirectionArrow: true },
-  2: { targetPiles: 4, dustpanWidthRatio: 0.2, debrisPerPile: 5, showDirectionArrow: true },
-  3: { targetPiles: 5, dustpanWidthRatio: 0.16, debrisPerPile: 6, showDirectionArrow: false },
-}
-
-export type SweepDirection = 'left' | 'right' | 'up' | 'down'
-
-export function isSweepDirectionCorrect(
-  sweepDirection: SweepDirection,
-  dustpanDirection: SweepDirection,
-): boolean {
-  return sweepDirection === dustpanDirection
-}
-
 // ========== 图片资源路径（resource:// 协议） ==========
 
 /** 场景底图 */
 export const L11_SCENE_URL = 'resource://images/self-care/scenes/facewash-basin-scene.png'
 export const L12_SCENE_URL = 'resource://images/self-care/scenes/pourwater-table-scene.png'
 export const L13_SCENE_URL = 'resource://images/self-care/scenes/roadcross-intersection-scene.png'
-export const L14_SCENE_URL = 'resource://images/self-care/scenes/foldclothes-bed-scene.png'
-export const L15_SCENE_URL = 'resource://images/self-care/scenes/sweepfloor-room-scene.png'
 
 /** L11 洗脸进度图（浅绿底，后续色键去底） */
 export const FACE_WASH_PROGRESS_IMAGES = {
@@ -185,26 +130,6 @@ export const ROAD_CROSS_PROGRESS_IMAGES = {
 } as const
 
 export type RoadCrossProgressKey = keyof typeof ROAD_CROSS_PROGRESS_IMAGES
-
-/** L14 叠衣进度图 */
-export const FOLD_CLOTHES_PROGRESS_IMAGES = {
-  spread: 'resource://images/self-care/progress/foldclothes-spread.png',
-  left: 'resource://images/self-care/progress/foldclothes-left.png',
-  right: 'resource://images/self-care/progress/foldclothes-right.png',
-  bottom: 'resource://images/self-care/progress/foldclothes-bottom.png',
-} as const
-
-export type FoldClothesProgressKey = keyof typeof FOLD_CLOTHES_PROGRESS_IMAGES
-
-/** L15 扫地进度图 */
-export const SWEEP_FLOOR_PROGRESS_IMAGES = {
-  messy: 'resource://images/self-care/progress/sweepfloor-messy.png',
-  'left-done': 'resource://images/self-care/progress/sweepfloor-left-done.png',
-  'mid-done': 'resource://images/self-care/progress/sweepfloor-mid-done.png',
-  'all-clean': 'resource://images/self-care/progress/sweepfloor-all-clean.png',
-} as const
-
-export type SweepFloorProgressKey = keyof typeof SWEEP_FLOOR_PROGRESS_IMAGES
 
 // ========== 共用工具 ==========
 

@@ -142,11 +142,11 @@ test('game music profile mapping stays stable for legacy sensory tasks and regis
   }), 'warm-social')
   assert.equal(resolveCustomGameMusicProfile({
     trainingEntryCode: 'life-skills',
-    gameCode: 'L01_WASH_HANDS',
+    gameCode: 'L05_PACK_BAG',
   }), 'calm')
   assert.equal(hasCustomGameBackgroundMusic({
     trainingEntryCode: 'life-skills',
-    gameCode: 'L01_WASH_HANDS',
+    gameCode: 'L05_PACK_BAG',
   }), false)
 })
 

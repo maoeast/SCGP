@@ -67,10 +67,6 @@ const StarTracePage = () => import('@/views/emotional/games/StarTracePage.vue')
 const RecyclingSortPage = () => import('@/views/emotional/games/RecyclingSortPage.vue')
 const TrackBuildPage = () => import('@/views/emotional/games/TrackBuildPage.vue')
 const BalloonTapPage = () => import('@/views/emotional/games/BalloonTapPage.vue')
-const WashHandsPage = () => import('@/views/emotional/games/WashHandsPage.vue')
-const DressUpPage = () => import('@/views/emotional/games/DressUpPage.vue')
-const BrushTeethPage = () => import('@/views/emotional/games/BrushTeethPage.vue')
-const SetTablePage = () => import('@/views/emotional/games/SetTablePage.vue')
 const PackBagPage = () => import('@/views/emotional/games/PackBagPage.vue')
 const SteadySpoonPage = () => import('@/views/emotional/games/SteadySpoonPage.vue')
 const BodySignalPage = () => import('@/views/emotional/games/BodySignalPage.vue')
@@ -80,8 +76,6 @@ const MarketPayPage = () => import('@/views/emotional/games/MarketPayPage.vue')
 const FaceWashPage = () => import('@/views/emotional/games/FaceWashPage.vue')
 const PourWaterPage = () => import('@/views/emotional/games/PourWaterPage.vue')
 const RoadCrossPage = () => import('@/views/emotional/games/RoadCrossPage.vue')
-const FoldClothesPage = () => import('@/views/emotional/games/FoldClothesPage.vue')
-const SweepFloorPage = () => import('@/views/emotional/games/SweepFloorPage.vue')
 const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterPage.vue')
 const EmotionMirrorPage = () => import('@/views/emotional/games/EmotionMirrorPage.vue')
 const StorySequencePage = () => import('@/views/emotional/games/StorySequencePage.vue')
@@ -621,50 +615,6 @@ const router = createRouter({
           }
         },
         {
-          path: 'emotional/games/wash-hands',
-          name: 'WashHandsGame',
-          component: WashHandsPage,
-          meta: {
-            title: '洗手小能手',
-            hideInMenu: true,
-            roles: ['admin', 'teacher'],
-            immersiveShell: true,
-          }
-        },
-        {
-          path: 'emotional/games/dress-up',
-          name: 'DressUpGame',
-          component: DressUpPage,
-          meta: {
-            title: '我会穿衣服',
-            hideInMenu: true,
-            roles: ['admin', 'teacher'],
-            immersiveShell: true,
-          }
-        },
-        {
-          path: 'emotional/games/brush-teeth',
-          name: 'BrushTeethGame',
-          component: BrushTeethPage,
-          meta: {
-            title: '刷牙小卫士',
-            hideInMenu: true,
-            roles: ['admin', 'teacher'],
-            immersiveShell: true,
-          }
-        },
-        {
-          path: 'emotional/games/set-table',
-          name: 'SetTableGame',
-          component: SetTablePage,
-          meta: {
-            title: '摆桌子帮帮忙',
-            hideInMenu: true,
-            roles: ['admin', 'teacher'],
-            immersiveShell: true,
-          }
-        },
-        {
           path: 'emotional/games/pack-bag',
           name: 'PackBagGame',
           component: PackBagPage,
@@ -758,28 +708,6 @@ const router = createRouter({
           component: RoadCrossPage,
           meta: {
             title: '安全过马路',
-            hideInMenu: true,
-            roles: ['admin', 'teacher'],
-            immersiveShell: true,
-          }
-        },
-        {
-          path: 'life-skills/games/fold-clothes',
-          name: 'FoldClothesGame',
-          component: FoldClothesPage,
-          meta: {
-            title: '叠衣小能手',
-            hideInMenu: true,
-            roles: ['admin', 'teacher'],
-            immersiveShell: true,
-          }
-        },
-        {
-          path: 'life-skills/games/sweep-floor',
-          name: 'SweepFloorGame',
-          component: SweepFloorPage,
-          meta: {
-            title: '扫地小旋风',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,
