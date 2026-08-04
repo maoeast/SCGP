@@ -189,6 +189,47 @@ const GAME_EXTRACTION_RULES: Record<string, GameExtractionRule> = {
     reactionFields: ['average_payment_ms'],
     duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
   },
+  L11_FACE_WASH: {
+    // 洗脸小镜子：cleaned_zones/(cleaned+incomplete) 派生 + average_circle_time_ms + total_duration_seconds
+    realityFields: ['cleaned_zones'],
+    accuracyDerived: { correctFields: ['cleaned_zones'], wrongFields: ['incomplete_circles'] },
+    reactionFields: ['average_circle_time_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
+  L12_POUR_WATER: {
+    // 倒水小帮手：fill_accuracy_ratio 直接 ratio + average_fill_time_ms + total_duration_seconds
+    realityFields: ['fill_accuracy_ratio', 'filled_cups'],
+    accuracyFields: ['fill_accuracy_ratio'],
+    accuracyScale: 'ratio',
+    reactionFields: ['average_fill_time_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
+  L13_ROAD_CROSS: {
+    // 安全过马路：safe_crossings/(safe+red_light_attempts+incomplete) 派生 + average_crossing_ms + total_duration_seconds
+    realityFields: ['safe_crossings'],
+    accuracyDerived: {
+      correctFields: ['safe_crossings'],
+      wrongFields: ['red_light_attempts', 'incomplete_crossings'],
+      sumCorrect: false,
+    },
+    reactionFields: ['average_crossing_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
+  L14_FOLD_CLOTHES: {
+    // 叠衣小能手：fold_accuracy_ratio 直接 ratio + average_fold_time_ms + total_duration_seconds
+    realityFields: ['fold_accuracy_ratio', 'folded_items'],
+    accuracyFields: ['fold_accuracy_ratio'],
+    accuracyScale: 'ratio',
+    reactionFields: ['average_fold_time_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
+  L15_SWEEP_FLOOR: {
+    // 扫地小旋风：cleared_piles/(cleared+wrong_direction) 派生 + average_pile_time_ms + total_duration_seconds
+    realityFields: ['cleared_piles'],
+    accuracyDerived: { correctFields: ['cleared_piles'], wrongFields: ['wrong_direction_swipes'] },
+    reactionFields: ['average_pile_time_ms'],
+    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
+  },
 
   // ===== Tier 2：精细动作 =====
   F04_TRACK_BUILD: {

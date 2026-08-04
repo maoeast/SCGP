@@ -756,7 +756,12 @@ export class IEPGenerator {
       L07_BODY_SIGNAL: '身体信号小灯塔',
       L08_TOWEL_TWIST: '毛巾拧拧工坊',
       L09_HOME_SOUND: '家里声音小侦探',
-      L10_MARKET_PAY: '超市付款小能手'
+      L10_MARKET_PAY: '超市付款小能手',
+      L11_FACE_WASH: '洗脸小镜子',
+      L12_POUR_WATER: '倒水小帮手',
+      L13_ROAD_CROSS: '安全过马路',
+      L14_FOLD_CLOTHES: '叠衣小能手',
+      L15_SWEEP_FLOOR: '扫地小旋风'
     }
     return names[gameCode] || '生活自理训练'
   }
@@ -1071,7 +1076,7 @@ export class IEPGenerator {
         : hasAccuracy && (accuracy as number) >= 0.7
           ? '能较准确地用硬币凑出价格并主动核对付款，货币认知与数量规划发展良好。'
           : hasAccuracy
-            ? '能参与凑钱付款，但偶尔会少付或多付，需要更多“先数一数、再核对”的提示。'
+            ? '能参与凑钱付款，但偶尔会少付或多付，需要更多"先数一数、再核对"的提示。'
             : '本次能完成付款交互，建议在后续训练中持续记录付款准确率以评估货币认知。'
 
       sections.push({
@@ -1083,8 +1088,8 @@ export class IEPGenerator {
           ? `本次平均每件商品从出现到精确付款用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
           : '',
         suggestions: [
-          '在真实购物付款时先一起看价签，再让孩子说出“要几枚硬币”，再逐枚放进收银台。',
-          '把“先数一遍、再核对”变成固定习惯，鼓励孩子主动检查“够不够、多没多”。',
+          '在真实购物付款时先一起看价签，再让孩子说出"要几枚硬币"，再逐枚放进收银台。',
+          '把"先数一遍、再核对"变成固定习惯，鼓励孩子主动检查"够不够、多没多"。',
           '当孩子精确付款或自己纠正差额时，描述他数钱和检查的过程，强化自主核对。'
         ]
       })
@@ -1094,6 +1099,166 @@ export class IEPGenerator {
         suggestions: [
           '先用 1 元硬币练习数量对应，再逐步加入 2 元、5 元，让面值组合循序渐进。',
           '少付或多付时，引导孩子自己再加一枚或退回一枚，而不是直接告诉他正确答案。'
+        ]
+      })
+    } else if (gameCode === 'L11_FACE_WASH') {
+      // 洗脸小镜子：擦洗完成率 + 圆形擦拭手势
+      const washPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能在面部各区域完成完整的圆形擦洗动作。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较完整地在面部各区域完成圆形擦洗动作，手势覆盖与个人卫生意识发展良好。'
+          : hasAccuracy
+            ? '能参与擦洗动作，但部分区域弧线覆盖不完整，需要在更大的目标区域下多练"画圆圈擦脸"。'
+            : '本次能完成洗脸交互，建议在后续训练中持续记录弧线覆盖率以评估擦洗手势。'
+
+      sections.push({
+        category: '洗脸区域完成率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('洗脸区域', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录区域完成率以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每个区域画圈用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '在真实洗脸时引导孩子"额头画圆圈、左脸画圆圈、右脸画圆圈"，把游戏中的画圈动作迁移到生活。',
+          '先在纸上或镜子上练习画大圆圈，再过渡到真实洗脸时的圆形擦拭动作。',
+          '当孩子完成完整圆形擦洗时，描述他覆盖的区域和动作流畅度，强化正确手势。'
+        ]
+      })
+      sections.push({
+        category: '圆形擦拭手势与卫生习惯',
+        performance: washPerformance,
+        suggestions: [
+          '用镜子作为反馈：让孩子看着镜子中的脸一边画圈一边确认哪里还没洗到。',
+          '从大区域（整个脸颊）开始，逐步缩小目标区域，让手势更精细。'
+        ]
+      })
+    } else if (gameCode === 'L12_POUR_WATER') {
+      // 倒水小帮手：倒水精度 + 角度旋转控制
+      const pourPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能控制倾斜角度把水倒到目标水位。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较精准地控制倾斜角度把水倒到目标水位附近，手腕旋转与释放控制发展良好。'
+          : hasAccuracy
+            ? '能参与倒水动作，但水位控制偶尔不准（溢出或不够），需要更多"慢慢倾斜、看准松手"的练习。'
+            : '本次能完成倒水交互，建议在后续训练中持续记录填充精度以评估手腕控制。'
+
+      sections.push({
+        category: '倒水精度',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('倒水', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录倒水精度以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每杯水从开始倒到完成用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '在真实倒水时先从小容器和慢速开始，让孩子练习"慢慢倾斜、看刻度、停手"的三步操作。',
+          '用彩色标记线贴在杯子外侧，给孩子一个清晰的"到这里就停"的视觉提示。',
+          '当孩子倒水接近目标水位时，描述他控制的动作（倾斜角度变化、松手时机），强化精准释放。'
+        ]
+      })
+      sections.push({
+        category: '角度旋转与手腕控制',
+        performance: pourPerformance,
+        suggestions: [
+          '先用空杯子做"假装倒水"的手腕旋转练习，再逐步过渡到真实水壶。',
+          '选择有把手的轻量水壶或杯子，降低重量对手腕控制的干扰。'
+        ]
+      })
+    } else if (gameCode === 'L13_ROAD_CROSS') {
+      // 安全过马路：安全过马路率 + 冲动抑制
+      const crossPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能在红灯时等待、绿灯时再过马路。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较好地在红灯时抑制动作并在绿灯时安全通过，等待意识与出行安全规则理解良好。'
+          : hasAccuracy
+            ? '能参与过马路练习，但偶尔在红灯时冲动行动或绿灯时未能及时通过，需要更多等待练习。'
+            : '本次能完成过马路交互，建议在后续训练中持续记录安全通过率以评估冲动抑制。'
+
+      sections.push({
+        category: '安全过马路完成率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('安全过马路', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录安全通过率以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每次过马路用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '在真实过马路时先一起做"红灯停、绿灯走"的口令练习，把等待变成自然反应。',
+          '使用视觉倒计时辅助（手指数数、数到3再走），帮助孩子建立等待节奏。',
+          '当孩子成功等待红灯并安全通过时，描述他做到了什么（等待、观察、按时出发），强化安全意识。'
+        ]
+      })
+      sections.push({
+        category: '冲动抑制与等待意识',
+        performance: crossPerformance,
+        suggestions: [
+          '先在安全区域练习"停—看—走"三步口令，再逐步应用到真实路口。',
+          '对冲动性较强的孩子，可以先用"拉住手等绿灯"的身体辅助，逐步撤除。'
+        ]
+      })
+    } else if (gameCode === 'L14_FOLD_CLOTHES') {
+      // 叠衣小能手：折叠准确率 + 方向性滑动
+      const foldPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能沿折叠线完成对齐折叠动作。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较准确地沿折叠线完成对齐，方向性滑动与家务参与意识发展良好。'
+          : hasAccuracy
+            ? '能参与折叠动作，但对齐精度偶尔不够，需要在更宽松的容差下多练"边对边、慢慢推"。'
+            : '本次能完成叠衣交互，建议在后续训练中持续记录折叠精度以评估方向控制。'
+
+      sections.push({
+        category: '折叠准确率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('折叠', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录折叠准确率以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每次折叠用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '在真实叠衣时先示范"找到边、对齐、推过去"的三步，再让孩子模仿。',
+          '选择质地偏硬、边线清晰的衣物（如毛巾、方巾）从易到难练习。',
+          '当孩子完成对齐折叠时，肯定他注意到的边线对应关系，强化方向控制。'
+        ]
+      })
+      sections.push({
+        category: '方向性滑动与家务参与',
+        performance: foldPerformance,
+        suggestions: [
+          '把叠衣服变成亲子家务游戏：一起比赛谁能把毛巾叠得更整齐。',
+          '从单折开始（对折一次），再逐步增加到二折、三折，循序渐进。'
+        ]
+      })
+    } else if (gameCode === 'L15_SWEEP_FLOOR') {
+      // 扫地小旋风：清扫完成率 + 方向判断
+      const sweepPerformance = !metrics.hasRealData
+        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能判断正确方向并持续做短滑动推扫碎屑。'
+        : hasAccuracy && (accuracy as number) >= 0.7
+          ? '能较准确地判断簸箕方向并把碎屑推扫干净，方向判断与重复动作完成能力发展良好。'
+          : hasAccuracy
+            ? '能参与扫地动作，但方向判断偶尔出错，需要更明确的方向箭头提示帮助。'
+            : '本次能完成扫地交互，建议在后续训练中持续记录方向正确率以评估方向判断。'
+
+      sections.push({
+        category: '清扫完成率',
+        performance: hasAccuracy
+          ? this.buildAccuracyPerformance('清扫', accuracy as number, true)
+          : '本次未采集到量化指标，建议在后续训练中持续记录清扫完成率以支撑评估。',
+        behavior: hasReaction
+          ? `本次平均每堆碎屑清扫用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
+          : '',
+        suggestions: [
+          '在真实扫地时先让孩子看一看簸箕在哪边，用手指方向再开始扫，建立"先看方向再动手"的习惯。',
+          '从小面积、碎屑集中的区域开始练习，再逐步扩大范围。',
+          '当孩子朝正确方向完成推扫时，描述他做对了什么（看到簸箕→朝那边推），强化方向判断。'
+        ]
+      })
+      sections.push({
+        category: '方向判断与重复动作',
+        performance: sweepPerformance,
+        suggestions: [
+          '先用胶带在地上标出"扫这边"的箭头辅助，逐步撤除视觉提示。',
+          '把扫地分成"看方向—推三下—再看"的节奏，帮助孩子建立重复动作的稳定性。'
         ]
       })
     } else {

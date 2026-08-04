@@ -433,6 +433,75 @@ function deriveAccuracyRate(
       }
       break
     }
+    case 'L11_FACE_WASH': {
+      const cleanedZones = Number(performanceData.cleaned_zones || 0)
+      const incompleteCircles = Number(performanceData.incomplete_circles || 0)
+      const totalZones = cleanedZones + incompleteCircles
+      if (totalZones > 0) {
+        return Math.max(0, Math.min(1, cleanedZones / totalZones))
+      }
+
+      const targetZones = Number(performanceData.target_zones || 0)
+      if (targetZones > 0) {
+        return Math.max(0, Math.min(1, cleanedZones / targetZones))
+      }
+      break
+    }
+    case 'L12_POUR_WATER': {
+      const fillAccuracy = Number(performanceData.fill_accuracy_ratio)
+      if (Number.isFinite(fillAccuracy) && fillAccuracy >= 0) {
+        return Math.max(0, Math.min(1, fillAccuracy))
+      }
+
+      const filledCups = Number(performanceData.filled_cups || 0)
+      const targetCups = Number(performanceData.target_cups || 0)
+      if (targetCups > 0) {
+        return Math.max(0, Math.min(1, filledCups / targetCups))
+      }
+      break
+    }
+    case 'L13_ROAD_CROSS': {
+      const safeCrossings = Number(performanceData.safe_crossings || 0)
+      const redLightAttempts = Number(performanceData.red_light_attempts || 0)
+      const incompleteCrossings = Number(performanceData.incomplete_crossings || 0)
+      const totalAttempts = safeCrossings + redLightAttempts + incompleteCrossings
+      if (totalAttempts > 0) {
+        return Math.max(0, Math.min(1, safeCrossings / totalAttempts))
+      }
+
+      const targetCrossings = Number(performanceData.target_crossings || 0)
+      if (targetCrossings > 0) {
+        return Math.max(0, Math.min(1, safeCrossings / targetCrossings))
+      }
+      break
+    }
+    case 'L14_FOLD_CLOTHES': {
+      const foldAccuracy = Number(performanceData.fold_accuracy_ratio)
+      if (Number.isFinite(foldAccuracy) && foldAccuracy >= 0) {
+        return Math.max(0, Math.min(1, foldAccuracy))
+      }
+
+      const foldedItems = Number(performanceData.folded_items || 0)
+      const targetItems = Number(performanceData.target_items || 0)
+      if (targetItems > 0) {
+        return Math.max(0, Math.min(1, foldedItems / targetItems))
+      }
+      break
+    }
+    case 'L15_SWEEP_FLOOR': {
+      const clearedPiles = Number(performanceData.cleared_piles || 0)
+      const wrongDirectionSwipes = Number(performanceData.wrong_direction_swipes || 0)
+      const totalSweepAttempts = clearedPiles + wrongDirectionSwipes
+      if (totalSweepAttempts > 0) {
+        return Math.max(0, Math.min(1, clearedPiles / totalSweepAttempts))
+      }
+
+      const targetPiles = Number(performanceData.target_piles || 0)
+      if (targetPiles > 0) {
+        return Math.max(0, Math.min(1, clearedPiles / targetPiles))
+      }
+      break
+    }
     case 'G07_MONSTER': {
       const correctDrops = Number(performanceData.correct_drops || 0)
       const wrongDrops = Number(performanceData.wrong_drops || 0)
@@ -601,6 +670,31 @@ function deriveAvgResponseTime(
       return averageNumericValues(performanceData.payment_times_ms)
         ?? (Number.isFinite(Number(performanceData.average_payment_ms))
           ? Number(performanceData.average_payment_ms)
+          : null)
+    case 'L11_FACE_WASH':
+      return averageNumericValues(performanceData.circle_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_circle_time_ms))
+          ? Number(performanceData.average_circle_time_ms)
+          : null)
+    case 'L12_POUR_WATER':
+      return averageNumericValues(performanceData.fill_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_fill_time_ms))
+          ? Number(performanceData.average_fill_time_ms)
+          : null)
+    case 'L13_ROAD_CROSS':
+      return averageNumericValues(performanceData.crossing_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_crossing_ms))
+          ? Number(performanceData.average_crossing_ms)
+          : null)
+    case 'L14_FOLD_CLOTHES':
+      return averageNumericValues(performanceData.fold_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_fold_time_ms))
+          ? Number(performanceData.average_fold_time_ms)
+          : null)
+    case 'L15_SWEEP_FLOOR':
+      return averageNumericValues(performanceData.pile_times_ms)
+        ?? (Number.isFinite(Number(performanceData.average_pile_time_ms))
+          ? Number(performanceData.average_pile_time_ms)
           : null)
     case 'S03_STORY_SEQ':
       return averageNumericValues(performanceData.response_times_ms)
