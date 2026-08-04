@@ -42,7 +42,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  variant: 'warm-glow',
+  variant: 'calm-blue',
   backgroundImage: '',
   backgroundVideo: '',
 })

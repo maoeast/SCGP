@@ -64,8 +64,8 @@ export interface LoginThemeConfig {
   allowPresetPrimaryColorOverride?: boolean
 }
 
-export const DEFAULT_LOGIN_THEME_VARIANT: LoginThemeVariant = 'warm-glow'
-export const DEFAULT_LOGIN_PRIMARY_COLOR = '#E6B93C'
+export const DEFAULT_LOGIN_THEME_VARIANT: LoginThemeVariant = 'calm-blue'
+export const DEFAULT_LOGIN_PRIMARY_COLOR = '#4FB3BF'
 
 export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = {
   'warm-glow': {

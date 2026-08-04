@@ -39,8 +39,8 @@ withDefaults(defineProps<Props>(), {
   border-radius: 24px;
   background: linear-gradient(
     135deg,
-    var(--login-primary-gradient-start, #E6B93C),
-    var(--login-primary-gradient-end, #E38B3A)
+    var(--login-primary-gradient-start, #4FB3BF),
+    var(--login-primary-gradient-end, #3A98A3)
   );
   color: #ffffff;
   font-size: 15px;
@@ -48,7 +48,7 @@ withDefaults(defineProps<Props>(), {
   letter-spacing: 0.01em;
   cursor: pointer;
   overflow: hidden;
-  box-shadow: 0 8px 24px var(--login-button-shadow, rgba(227, 139, 58, 0.3));
+  box-shadow: 0 8px 24px var(--login-button-shadow, rgba(58, 152, 163, 0.3));
   transition:
     transform 0.18s ease,
     box-shadow 0.3s ease,
@@ -58,25 +58,25 @@ withDefaults(defineProps<Props>(), {
 .primary-button.is-active:not(:disabled) {
   background: linear-gradient(
     135deg,
-    var(--login-primary-gradient-start, #E6B93C),
-    var(--login-primary-gradient-end, #E38B3A)
+    var(--login-primary-gradient-start, #4FB3BF),
+    var(--login-primary-gradient-end, #3A98A3)
   );
-  box-shadow: 0 8px 28px var(--login-button-shadow, rgba(227, 139, 58, 0.4));
+  box-shadow: 0 8px 28px var(--login-button-shadow, rgba(58, 152, 163, 0.4));
   animation: btn-breathe 2.4s ease-in-out infinite;
 }
 
 .primary-button:hover:not(:disabled) {
   transform: translateY(-1px);
   filter: brightness(1.08);
-  box-shadow: 0 12px 32px var(--login-button-shadow, rgba(227, 139, 58, 0.4));
+  box-shadow: 0 12px 32px var(--login-button-shadow, rgba(58, 152, 163, 0.4));
 }
 
 .primary-button.is-active:hover:not(:disabled) {
-  box-shadow: 0 12px 36px var(--login-button-shadow, rgba(227, 139, 58, 0.5));
+  box-shadow: 0 12px 36px var(--login-button-shadow, rgba(58, 152, 163, 0.5));
 }
 
 .primary-button:focus-visible {
-  outline: 3px solid var(--login-primary-ring, rgba(227, 139, 58, 0.18));
+  outline: 3px solid var(--login-primary-ring, rgba(58, 152, 163, 0.18));
   outline-offset: 2px;
 }
 
@@ -114,10 +114,10 @@ withDefaults(defineProps<Props>(), {
 
 @keyframes btn-breathe {
   0%, 100% {
-    box-shadow: 0 8px 28px var(--login-button-shadow, rgba(227, 139, 58, 0.35));
+    box-shadow: 0 8px 28px var(--login-button-shadow, rgba(58, 152, 163, 0.35));
   }
   50% {
-    box-shadow: 0 12px 36px var(--login-button-shadow, rgba(227, 139, 58, 0.5));
+    box-shadow: 0 12px 36px var(--login-button-shadow, rgba(58, 152, 163, 0.5));
   }
 }
 

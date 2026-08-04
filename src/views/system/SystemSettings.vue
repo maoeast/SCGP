@@ -341,7 +341,7 @@ const settings = reactive({
   systemName: '星愿能力发展训练系统',
   systemVersion: '1.0.1',
   schoolName: '',
-  loginThemeVariant: 'warm-glow',
+  loginThemeVariant: 'calm-blue',
   themePrimaryColor: DEFAULT_LOGIN_PRIMARY_COLOR,
   brandPanelDescription: '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。',
   loginBackgrounds: createDefaultLoginBackgrounds(),

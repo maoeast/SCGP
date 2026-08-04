@@ -13,7 +13,10 @@ const jiti = createJiti(import.meta.url, {
 })
 
 const {
+  DEFAULT_LOGIN_PRIMARY_COLOR,
+  DEFAULT_LOGIN_THEME_VARIANT,
   getEffectiveLoginPrimaryColor,
+  normalizeLoginThemeVariant,
 } = jiti('../../src/utils/login-theme.ts')
 const {
   createBundledLoginBackgrounds,
@@ -29,6 +32,44 @@ test('login theme presets own their primary colors while custom keeps its config
   assert.equal(getEffectiveLoginPrimaryColor('lush-green', '#E6B93C'), '#72BE2F')
   assert.equal(getEffectiveLoginPrimaryColor('lush-green', '#123456', true), '#123456')
   assert.equal(getEffectiveLoginPrimaryColor('custom', '#123456'), '#123456')
+})
+
+test('default login theme is calm-blue with its primary color', () => {
+  assert.equal(DEFAULT_LOGIN_THEME_VARIANT, 'calm-blue')
+  assert.equal(DEFAULT_LOGIN_PRIMARY_COLOR, '#4FB3BF')
+  // 无配置 / 非法配置时回退到 calm-blue，而不是暖黄
+  assert.equal(normalizeLoginThemeVariant(undefined), 'calm-blue')
+  assert.equal(normalizeLoginThemeVariant(''), 'calm-blue')
+  assert.equal(normalizeLoginThemeVariant('not-a-theme'), 'calm-blue')
+  assert.equal(getEffectiveLoginPrimaryColor('calm-blue', null), '#4FB3BF')
+})
+
+test('database and settings defaults use calm-blue as the initial theme', () => {
+  const sources = {
+    init: readFileSync(resolve(projectRoot, 'src/database/init.ts'), 'utf8'),
+    mock: readFileSync(resolve(projectRoot, 'src/database/mock-data.ts'), 'utf8'),
+    sqljs: readFileSync(resolve(projectRoot, 'src/database/sqljs-init.ts'), 'utf8'),
+    settings: readFileSync(resolve(projectRoot, 'src/views/system/SystemSettings.vue'), 'utf8'),
+  }
+
+  // login_theme_backgrounds JSON 里含 "warm-glow" 变体属于按主题存储的媒体配置，
+  // 因此这里只匹配 login_theme_variant / theme_primary_color 两个 key 的默认值。
+  // 按行提取第二个单引号字符串（第一是 key 自身），避免 case 分支/赋值行误匹配。
+  const valuesForKey = (source, key) =>
+    source
+      .split('\n')
+      .filter((line) => line.includes(key))
+      .map((line) => [...line.matchAll(/'([^'\n]+)'/g)][1]?.[1])
+      .filter(Boolean)
+  const variantValues = Object.values(sources).flatMap((source) => valuesForKey(source, 'login_theme_variant'))
+  const colorValues = Object.values(sources).flatMap((source) => valuesForKey(source, 'theme_primary_color'))
+  const settingsInitial = sources.settings.match(/loginThemeVariant: '([^']+)'/)
+
+  assert.ok(variantValues.length >= 4, '应覆盖 init.ts×2 + mock-data + sqljs-init 的默认值')
+  assert.deepEqual([...new Set(variantValues)], ['calm-blue'])
+  assert.ok(colorValues.length >= 4, '应覆盖 init.ts×2 + mock-data + sqljs-init 的默认值')
+  assert.deepEqual([...new Set(colorValues)], ['#4FB3BF'])
+  assert.equal(settingsInitial?.[1], 'calm-blue')
 })
 
 test('login background config round-trips per theme and tolerates malformed JSON', () => {
@@ -78,6 +119,36 @@ test('bundled login backgrounds use packaged resources for all presets', () => {
       true,
     )
   }
+})
+
+test('login background rendering keeps video -> image -> procedural fallback chain', () => {
+  const backgroundSource = readFileSync(
+    resolve(projectRoot, 'src/components/login/GalaxyBackground.vue'),
+    'utf8',
+  )
+  const loginSource = readFileSync(resolve(projectRoot, 'src/views/Login.vue'), 'utf8')
+
+  // 1. 视频：autoplay muted loop playsinline，加载成功后必须真正 play() 成功
+  assert.match(backgroundSource, /<video[\s\S]*?autoplay[\s\S]*?muted[\s\S]*?loop[\s\S]*?playsinline/)
+  assert.match(backgroundSource, /@error="handleVideoError"/)
+  assert.match(backgroundSource, /@loadeddata="handleVideoLoaded"/)
+  assert.match(backgroundSource, /await videoRef\.value\?\.play\(\)/)
+  assert.match(backgroundSource, /catch \{[\s\S]*?handleVideoError\(\)/)
+
+  // 2. 图片：作为视频 poster 与纯图片兜底
+  assert.match(backgroundSource, /:poster="props\.backgroundImage \|\| undefined"/)
+  assert.match(backgroundSource, /@error="handleImageError"/)
+
+  // 3. 程序化星空：仅当视频失败/未就绪且图片缺失/失败时渲染
+  assert.match(backgroundSource, /StarfieldTunnel/)
+  assert.match(
+    backgroundSource,
+    /v-if="\(!props\.backgroundImage \|\| imageFailed\) && \(!props\.backgroundVideo \|\| videoFailed \|\| !videoReady\)"/,
+  )
+
+  // 4. 登录页把 store 的图片/视频引用传入背景组件
+  assert.match(loginSource, /:background-image="systemConfigStore\.activeLoginBackground\.image"/)
+  assert.match(loginSource, /:background-video="systemConfigStore\.activeLoginBackground\.video"/)
 })
 
 test('login background rendering and resource archive keep the fallback contract', () => {
