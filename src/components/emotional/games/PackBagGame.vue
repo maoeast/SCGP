@@ -1,226 +1,118 @@
 <template>
-  <div class="prototype-game pack-bag-game">
-    <div class="prototype-game__backdrop" aria-hidden="true">
-      <div class="prototype-game__glow prototype-game__glow--left pack-bag-game__glow"></div>
-      <div class="prototype-game__glow prototype-game__glow--right pack-bag-game__glow pack-bag-game__glow--alt"></div>
-      <span
-        v-for="sparkle in sparkles"
-        :key="sparkle.id"
-        class="prototype-game__sparkle"
-        :style="{
-          left: `${sparkle.left}%`,
-          top: `${sparkle.top}%`,
-          width: `${sparkle.size}px`,
-          height: `${sparkle.size}px`,
-          animationDelay: `${sparkle.delay}s`,
-        }"
-      />
+  <div class="pack-game" :class="{ 'is-paused': props.paused }">
+    <header class="pack-game__topbar">
+      <div class="pack-game__step-indicator">
+        <span class="pack-game__step-emoji">{{ currentItem?.emoji ?? '🎒' }}</span>
+        <div class="pack-game__step-text">
+          <strong>{{ topbarStepLabel }}</strong>
+          <small>第 {{ itemIndex + 1 }} / {{ requiredItems.length }} 件</small>
+        </div>
+      </div>
+      <div class="pack-game__progress-segments">
+        <span
+          v-for="(item, index) in requiredItems"
+          :key="item.id"
+          class="pack-game__segment"
+          :class="{
+            'is-done': index < itemIndex,
+            'is-current': index === itemIndex,
+          }"
+        />
+      </div>
+    </header>
+
+    <!-- 情境提示条 -->
+    <div v-if="currentScenario" class="pack-game__scenario">
+      <span class="pack-game__scenario-emoji">{{ currentScenario.emoji }}</span>
+      <div>
+        <strong>{{ currentScenario.title }}</strong>
+        <p>{{ currentScenario.description }}</p>
+      </div>
     </div>
 
-    <section class="prototype-game__hud">
-      <article class="prototype-game__hud-card">
-        <span>当前难度</span>
-        <strong>{{ difficultyConfig.label }}</strong>
-      </article>
-      <article class="prototype-game__hud-card">
-        <span>已装物品</span>
-        <strong>{{ packedCountLabel }}</strong>
-      </article>
-      <article class="prototype-game__hud-card">
-        <span>复盘次数</span>
-        <strong>{{ reviewCycles }} 次</strong>
-      </article>
-      <article class="prototype-game__hud-card">
-        <span>当前情境</span>
-        <strong>{{ currentScenario?.title || '等待开始' }}</strong>
-      </article>
-    </section>
-
-    <section class="prototype-game__layout">
-      <article class="prototype-game__stage prototype-game__surface">
-        <div class="prototype-game__status">
-          <span class="prototype-game__eyebrow">{{ stageEyebrow }}</span>
-          <strong>{{ stageTitle }}</strong>
-          <span class="prototype-game__helper">{{ helperMessage }}</span>
-        </div>
-
-        <section v-if="phase === 'ready'" class="pack-bag-game__intro">
-          <div class="pack-bag-game__bag-preview">
-            <div class="pack-bag-game__bag-shell"></div>
-            <div class="pack-bag-game__bag-flap"></div>
-          </div>
-          <div class="pack-bag-game__intro-copy">
-            <h2>先看今天是什么情境，再挑真正需要带的东西。</h2>
-            <p>有些物品很有吸引力，但不一定真的需要。装好后点“整理好了”，系统会温和地带你复盘。</p>
-          </div>
-        </section>
-
-        <section v-else-if="phase === 'playing'" class="pack-bag-game__play">
-          <div class="pack-bag-game__scenario">
-            <div class="pack-bag-game__scenario-card">
-              <span class="pack-bag-game__scenario-emoji">{{ currentScenario?.emoji }}</span>
-              <div>
-                <strong>{{ currentScenario?.title }}</strong>
-                <p>{{ currentScenario?.description }}</p>
-              </div>
-            </div>
-            <div class="pack-bag-game__checklist">
-              <span
-                v-for="item in requiredItems"
-                :key="item.id"
-                class="pack-bag-game__check-chip"
-                :class="{ 'is-packed': packedItemIds.includes(item.id) }"
-              >
-                {{ item.emoji }} {{ item.label }}
-              </span>
-            </div>
-          </div>
-
-          <div class="pack-bag-game__workspace">
-            <div class="pack-bag-game__item-grid">
-              <button
-                v-for="item in currentItems"
-                :key="item.id"
-                type="button"
-                class="pack-bag-game__item-card"
-                :class="{
-                  'is-packed': packedItemIds.includes(item.id),
-                  'is-hinted': hintedItemId === item.id,
-                }"
-                :disabled="paused"
-                @click="toggleItem(item)"
-              >
-                <span>{{ item.emoji }}</span>
-                <strong>{{ item.label }}</strong>
-                <small>{{ item.shortHint }}</small>
-              </button>
-            </div>
-
-            <div class="pack-bag-game__bag-card">
-              <div class="pack-bag-game__bag-card-header">
-                <strong>书包里</strong>
-                <small>再次点击下方物品卡，可以放回去重选</small>
-              </div>
-              <div class="pack-bag-game__bag-card-grid">
-                <div
-                  v-for="item in packedItems"
-                  :key="item.id"
-                  class="pack-bag-game__packed-chip"
-                >
-                  {{ item.emoji }} {{ item.label }}
-                </div>
-                <div v-if="packedItems.length === 0" class="pack-bag-game__packed-empty">
-                  还没有装入任何物品
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section v-else class="pack-bag-game__complete">
-          <div class="pack-bag-game__complete-card">
-            <span>🎒</span>
-            <strong>书包已经整理好了</strong>
-            <small>{{ currentScenario?.description }}</small>
-          </div>
-        </section>
-      </article>
-
-      <aside class="prototype-game__aside prototype-game__surface">
-        <div class="prototype-game__tags">
-          <span class="prototype-game__tag">生活自理</span>
-          <span class="prototype-game__tag prototype-game__tag--accent">{{ difficultyConfig.shortLabel }}</span>
-        </div>
-
-        <h1 class="prototype-game__title">上学包包装一装</h1>
-        <p class="prototype-game__copy">
-          先理解今天是什么情境，再从一堆物品里挑出真正需要带的，练习计划准备和情境判断。
-        </p>
-
-        <div class="prototype-game__progress">
-          <div class="prototype-game__progress-labels">
-            <span>看情境</span>
-            <span>选物品</span>
-            <span>复盘完成</span>
-          </div>
-          <div class="prototype-game__progress-track">
-            <div class="prototype-game__progress-fill" :style="{ width: `${scorePercent}%` }"></div>
+    <div class="pack-game__stage">
+      <!-- 主展示区：当前要装的物品贴纸 -->
+      <div v-if="currentItem" class="pack-game__item-display" :class="{ 'is-demonstrating': phase === 'demo' }">
+        <img class="pack-game__item-img" :src="itemImageSrc(currentItem)" :alt="currentItem.label" draggable="false" />
+        <!-- 书包（已装物品展示） -->
+        <div class="pack-game__bag">
+          <div class="pack-game__bag-emoji">🎒</div>
+          <div class="pack-game__packed-list">
+            <span v-for="id in packedItemIds" :key="id" class="pack-game__packed-chip">
+              {{ itemEmoji(id) }}
+            </span>
+            <span v-if="packedItemIds.length === 0" class="pack-game__packed-empty">书包还是空的</span>
           </div>
         </div>
+      </div>
 
-        <section class="prototype-game__tip-grid">
-          <article class="prototype-game__tip-card">
-            <strong>需要带的</strong>
-            <span>{{ requiredLabel }}</span>
-          </article>
-          <article class="prototype-game__tip-card">
-            <strong>平均选择</strong>
-            <span>{{ averageSelectionLabel }}</span>
-          </article>
-          <article class="prototype-game__tip-card">
-            <strong>提示等级</strong>
-            <span>{{ highestPromptLabel }}</span>
-          </article>
-          <article class="prototype-game__tip-card">
-            <strong>当前提醒</strong>
-            <span>{{ reviewHint }}</span>
-          </article>
-        </section>
+      <button
+        v-if="phase === 'awaiting'"
+        type="button"
+        class="pack-game__tap-zone"
+        :disabled="props.paused"
+        :aria-label="`把${currentItem?.label}装进书包`"
+        @click="onChildTap"
+      >
+        <span class="pack-game__tap-pulse">🎒</span>
+        <span class="pack-game__tap-label">点这里装进书包</span>
+      </button>
 
-        <div class="prototype-game__actions">
-          <button
-            v-if="phase === 'ready'"
-            type="button"
-            class="prototype-game__button prototype-game__button--primary"
-            @click="startGame"
-          >
-            开始整理书包
-          </button>
+      <div v-if="phase === 'demo'" class="pack-game__demo-hint">
+        <span>👀 这个要带吗？</span>
+      </div>
 
-          <template v-else-if="phase === 'playing'">
-            <button
-              type="button"
-              class="prototype-game__button prototype-game__button--primary"
-              :disabled="paused"
-              @click="submitBag"
-            >
-              整理好了
-            </button>
-            <button
-              type="button"
-              class="prototype-game__button prototype-game__button--secondary"
-              :disabled="paused"
-              @click="requestPrompt"
-            >
-              给一点提示
-            </button>
-            <button
-              type="button"
-              class="prototype-game__button prototype-game__button--ghost"
-              :disabled="paused"
-              @click="resetRound"
-            >
-              重新开始
-            </button>
-          </template>
+      <div class="pack-game__instruction">
+        <p>{{ currentInstruction }}</p>
+      </div>
+    </div>
 
-          <button
-            v-else
-            type="button"
-            class="prototype-game__button prototype-game__button--ghost"
-            @click="resetRound"
-          >
-            再整理一次
-          </button>
+    <footer class="pack-game__footer">
+      <button
+        v-if="phase === 'ready'"
+        type="button"
+        class="pack-game__btn pack-game__btn--primary pack-game__btn--lg"
+        @click="startGame"
+      >
+        <span>🎒</span> 开始整理书包
+      </button>
+
+      <template v-else-if="phase !== 'celebrating'">
+        <button
+          type="button"
+          class="pack-game__btn pack-game__btn--secondary"
+          :disabled="props.paused"
+          @click="replayDemo"
+        >
+          🔁 再看一遍
+        </button>
+        <button
+          type="button"
+          class="pack-game__btn pack-game__btn--ghost"
+          :disabled="props.paused"
+          @click="resetRound"
+        >
+          🔄 重新开始
+        </button>
+      </template>
+
+      <button
+        v-else
+        type="button"
+        class="pack-game__btn pack-game__btn--ghost"
+        @click="resetRound"
+      >
+        🔄 再装一遍
+      </button>
+    </footer>
+
+    <transition name="pack-celebrate">
+      <div v-if="phase === 'celebrating'" class="pack-game__celebrate">
+        <div class="pack-game__celebrate-card">
+          <div class="pack-game__celebrate-icon">🎒</div>
+          <strong>书包整理好啦！</strong>
+          <p>该带的东西都装好啦。</p>
         </div>
-      </aside>
-    </section>
-
-    <transition name="badge-pop">
-      <div v-if="showBadge" class="prototype-game__badge-modal">
-        <div class="prototype-game__badge-icon">🎒</div>
-        <strong>整理书包徽章</strong>
-        <p>你已经根据今天的情境把书包整理好了。</p>
       </div>
     </transition>
   </div>
@@ -233,38 +125,30 @@ import type {
   EmotionGameCompletionPayload,
   EmotionGameDifficulty,
 } from '@/types/emotional/games'
-import { averageNumberList, clampNumber, shuffleArray } from './prototype-game-utils'
 
-type Phase = 'ready' | 'playing' | 'celebrating' | 'finished'
+/**
+ * 上学包包装一装（看-做-反馈 三段式）
+ * 系统按情境依次展示"该带的物品"：看这件要不要带 → 点一下装进书包 → 正反馈。
+ * 与其他 4 游戏不同：这里步骤是情境推理（判断该带什么），系统只呈现该带的，
+ * 不需要孩子从一堆里挑——降低认知负荷，聚焦"认识出门该带什么"。
+ */
 
-interface SparkleDot {
-  id: number
-  left: number
-  top: number
-  size: number
-  delay: number
-}
+type Phase = 'ready' | 'demo' | 'awaiting' | 'celebrating' | 'finished'
 
-interface DifficultyConfig {
-  label: string
-  shortLabel: string
-  scenarioIds: string[]
-}
-
-interface ItemDefinition {
+interface ItemDef {
   id: string
   label: string
   emoji: string
-  shortHint: string
+  imageKey: string
+  imagePool: 'self-care' | 'cognitive'
 }
 
-interface ScenarioDefinition {
+interface ScenarioDef {
   id: string
   title: string
   emoji: string
   description: string
   requiredItemIds: string[]
-  poolItemIds: string[]
 }
 
 const props = defineProps<{
@@ -278,328 +162,221 @@ const emit = defineEmits<{
   complete: [payload: EmotionGameCompletionPayload]
 }>()
 
-const DIFFICULTY_CONFIGS: Record<EmotionGameDifficulty, DifficultyConfig> = {
-  1: {
-    label: '简单 · 基础上学包',
-    shortLabel: '简单',
-    scenarioIds: ['school-basic'],
-  },
-  2: {
-    label: '中等 · 下雨上学',
-    shortLabel: '中等',
-    scenarioIds: ['school-rainy', 'reading-day'],
-  },
-  3: {
-    label: '困难 · 情境选择',
-    shortLabel: '困难',
-    scenarioIds: ['sports-day', 'outdoor-class'],
-  },
+const ITEMS: Record<string, ItemDef> = {
+  book: { id: 'book', label: '图画书', emoji: '📚', imageKey: 'book', imagePool: 'cognitive' },
+  notebook: { id: 'notebook', label: '练习本', emoji: '📓', imageKey: 'notebook', imagePool: 'self-care' },
+  'water-bottle': { id: 'water-bottle', label: '水壶', emoji: '🧃', imageKey: 'water-bottle', imagePool: 'self-care' },
+  tissue: { id: 'tissue', label: '纸巾', emoji: '🧻', imageKey: 'tissue', imagePool: 'self-care' },
+  umbrella: { id: 'umbrella', label: '雨伞', emoji: '☔', imageKey: 'umbrella', imagePool: 'self-care' },
+  towel: { id: 'towel', label: '毛巾', emoji: '🧺', imageKey: 'towel', imagePool: 'self-care' },
+  cap: { id: 'cap', label: '帽子', emoji: '🧢', imageKey: 'cap', imagePool: 'self-care' },
+  sneakers: { id: 'sneakers', label: '运动鞋', emoji: '👟', imageKey: 'sneakers', imagePool: 'self-care' },
 }
 
-const ITEMS: ReadonlyArray<ItemDefinition> = [
-  { id: 'book', label: '图画书', emoji: '📚', shortHint: '上学常用物品' },
-  { id: 'notebook', label: '练习本', emoji: '📓', shortHint: '需要记录时会用到' },
-  { id: 'water-bottle', label: '水壶', emoji: '🧃', shortHint: '外出时常常需要' },
-  { id: 'tissue', label: '纸巾', emoji: '🧻', shortHint: '放一包会更方便' },
-  { id: 'umbrella', label: '雨伞', emoji: '☔', shortHint: '下雨天更需要' },
-  { id: 'towel', label: '毛巾', emoji: '🧺', shortHint: '运动或户外时会用到' },
-  { id: 'cap', label: '帽子', emoji: '🧢', shortHint: '户外时能挡太阳' },
-  { id: 'sneakers', label: '运动鞋', emoji: '👟', shortHint: '去操场时更合适' },
-  { id: 'toy-car', label: '玩具小车', emoji: '🚗', shortHint: '很好玩，但今天不一定需要' },
-  { id: 'plush', label: '毛绒玩偶', emoji: '🧸', shortHint: '抱着舒服，但书包空间有限' },
-  { id: 'apple', label: '苹果', emoji: '🍎', shortHint: '不是今天的重点物品' },
-]
+const SCENARIOS: Record<EmotionGameDifficulty, ScenarioDef[]> = {
+  1: [
+    {
+      id: 'school-basic',
+      title: '今天去上学',
+      emoji: '🏫',
+      description: '带上最基本的学习用品和喝水用具。',
+      requiredItemIds: ['book', 'notebook', 'water-bottle'],
+    },
+  ],
+  2: [
+    {
+      id: 'school-rainy',
+      title: '外面在下雨',
+      emoji: '🌧️',
+      description: '要去学校，外面下雨，记得带雨伞。',
+      requiredItemIds: ['book', 'water-bottle', 'umbrella', 'tissue'],
+    },
+    {
+      id: 'reading-day',
+      title: '今天有阅读活动',
+      emoji: '📖',
+      description: '带上课外书、练习本和水壶。',
+      requiredItemIds: ['book', 'notebook', 'water-bottle', 'tissue'],
+    },
+  ],
+  3: [
+    {
+      id: 'sports-day',
+      title: '今天去操场活动',
+      emoji: '⚽',
+      description: '带上运动要用的东西。',
+      requiredItemIds: ['water-bottle', 'towel', 'sneakers', 'cap'],
+    },
+    {
+      id: 'outdoor-class',
+      title: '今天有户外课',
+      emoji: '🌳',
+      description: '户外活动要带好防护用品。',
+      requiredItemIds: ['water-bottle', 'towel', 'cap', 'tissue'],
+    },
+  ],
+}
 
-const SCENARIOS: ReadonlyArray<ScenarioDefinition> = [
-  {
-    id: 'school-basic',
-    title: '今天去上学',
-    emoji: '🏫',
-    description: '带上最基本的学习用品和喝水用具，就能安心出门。',
-    requiredItemIds: ['book', 'notebook', 'water-bottle'],
-    poolItemIds: ['book', 'notebook', 'water-bottle', 'tissue', 'toy-car', 'apple'],
-  },
-  {
-    id: 'school-rainy',
-    title: '外面在下雨',
-    emoji: '🌧️',
-    description: '要去学校，而且外面在下雨，记得带好能帮助自己出门的东西。',
-    requiredItemIds: ['book', 'water-bottle', 'umbrella', 'tissue'],
-    poolItemIds: ['book', 'water-bottle', 'umbrella', 'tissue', 'toy-car', 'plush', 'apple'],
-  },
-  {
-    id: 'reading-day',
-    title: '今天有阅读活动',
-    emoji: '📖',
-    description: '老师说今天会有阅读活动，准备和读书有关的东西会更合适。',
-    requiredItemIds: ['book', 'notebook', 'water-bottle', 'tissue'],
-    poolItemIds: ['book', 'notebook', 'water-bottle', 'tissue', 'plush', 'apple', 'toy-car'],
-  },
-  {
-    id: 'sports-day',
-    title: '今天去操场活动',
-    emoji: '🏃',
-    description: '要去操场活动，带上能让身体舒服和安全的物品。',
-    requiredItemIds: ['water-bottle', 'towel', 'sneakers', 'cap'],
-    poolItemIds: ['water-bottle', 'towel', 'sneakers', 'cap', 'notebook', 'toy-car', 'plush'],
-  },
-  {
-    id: 'outdoor-class',
-    title: '今天有户外课',
-    emoji: '🌤️',
-    description: '户外课会晒太阳，也可能流汗，要先想想身体会需要什么。',
-    requiredItemIds: ['water-bottle', 'towel', 'cap', 'tissue'],
-    poolItemIds: ['water-bottle', 'towel', 'cap', 'tissue', 'apple', 'plush', 'toy-car'],
-  },
-]
-
-const sparkles: ReadonlyArray<SparkleDot> = [
-  { id: 1, left: 10, top: 18, size: 12, delay: 0.3 },
-  { id: 2, left: 24, top: 78, size: 10, delay: 1.1 },
-  { id: 3, left: 42, top: 16, size: 15, delay: 0.7 },
-  { id: 4, left: 72, top: 18, size: 12, delay: 1.6 },
-  { id: 5, left: 88, top: 56, size: 10, delay: 0.9 },
-]
+const DEMO_MS: Record<EmotionGameDifficulty, number> = {
+  1: 2200,
+  2: 2000,
+  3: 1800,
+}
 
 const phase = ref<Phase>('ready')
 const activeDifficulty = ref<EmotionGameDifficulty>(props.difficulty)
-const helperMessage = ref('先看情境，再挑真正需要带的东西。')
-const currentScenario = ref<ScenarioDefinition | null>(null)
-const currentItems = ref<ItemDefinition[]>([])
+const currentScenario = ref<ScenarioDef | null>(null)
+const itemIndex = ref(0)
 const packedItemIds = ref<string[]>([])
-const promptCount = ref(0)
-const reviewCycles = ref(0)
-const hintedItemId = ref('')
-const selectionTimes = ref<number[]>([])
-const showBadge = ref(false)
-const latestScore = ref(0)
+const replayCount = ref(0)
+const stepResponseMs = ref<number[]>([])
 
-let hasRoundDirty = false
 let roundStartedAt = 0
-let selectionStartedAt = 0
-let celebrationTimer = 0
+let stepStartedAt = 0
+let demoTimer = 0
 
-const difficultyConfig = computed(() => DIFFICULTY_CONFIGS[activeDifficulty.value])
-const packedItems = computed(() => packedItemIds.value
-  .map((itemId) => ITEMS.find((item) => item.id === itemId) || null)
-  .filter((item): item is ItemDefinition => item !== null))
-const requiredItems = computed(() => {
-  if (!currentScenario.value) {
-    return []
-  }
-
+const demoMs = computed(() => DEMO_MS[activeDifficulty.value])
+const requiredItems = computed<ItemDef[]>(() => {
+  if (!currentScenario.value) return []
   return currentScenario.value.requiredItemIds
-    .map((itemId) => ITEMS.find((item) => item.id === itemId) || null)
-    .filter((item): item is ItemDefinition => item !== null)
+    .map((id) => ITEMS[id])
+    .filter((item): item is ItemDef => Boolean(item))
 })
-const packedCountLabel = computed(() => `${packedItemIds.value.length}/${requiredItems.value.length || 0}`)
-const requiredLabel = computed(() => requiredItems.value.map((item) => `${item.emoji} ${item.label}`).join(' / ') || '等待开始')
-const stageEyebrow = computed(() => {
-  if (phase.value === 'ready') return '开始前'
-  if (phase.value === 'playing') return '整理进行中'
-  if (phase.value === 'celebrating') return '已完成'
-  return '等待保存'
+const currentItem = computed<ItemDef | null>(() => requiredItems.value[itemIndex.value] ?? null)
+const isRoundFinished = computed(() => phase.value === 'celebrating' || phase.value === 'finished')
+
+const topbarStepLabel = computed(() => {
+  if (phase.value === 'ready') return '准备好了吗？'
+  if (isRoundFinished.value) return '整理完成！'
+  return `装${currentItem.value?.label ?? ''}`
 })
-const stageTitle = computed(() => {
-  if (phase.value === 'ready') return '先理解今天是什么情境'
-  if (phase.value === 'playing') return '把真正需要的东西装进书包'
-  return '今天的书包已经整理好了'
+
+const currentInstruction = computed(() => {
+  if (phase.value === 'ready') return '准备好了就点「开始整理书包」。'
+  if (phase.value === 'demo') return `${currentScenario.value?.title ?? ''}，要带${currentItem.value?.label ?? ''}。`
+  if (phase.value === 'awaiting') return `点一下，把${currentItem.value?.label ?? ''}装进书包。`
+  if (isRoundFinished.value) return '书包整理好啦，该带的都带上了！'
+  return ''
 })
-const averageSelectionMs = computed(() => averageNumberList(selectionTimes.value))
-const averageSelectionLabel = computed(() => {
-  if (!averageSelectionMs.value) return '还没有选择数据'
-  if (averageSelectionMs.value < 1000) return `${averageSelectionMs.value}ms`
-  return `${(averageSelectionMs.value / 1000).toFixed(1)} 秒`
-})
-const highestPromptLabel = computed(() => `Level ${clampNumber(promptCount.value, 0, 3)}`)
-const scorePercent = computed(() => clampNumber(latestScore.value, 0, 100))
-const reviewHint = computed(() => helperMessage.value)
-const paused = computed(() => props.paused)
+
+function itemImageSrc(item: ItemDef): string {
+  const dir = item.imagePool === 'cognitive' ? 'cognitive/items' : 'self-care/items'
+  return `resource://images/${dir}/${item.imageKey}.png`
+}
+
+function itemEmoji(id: string): string {
+  return ITEMS[id]?.emoji ?? '📦'
+}
+
+function pickScenario(): ScenarioDef {
+  const pool = SCENARIOS[activeDifficulty.value] ?? SCENARIOS[1]!
+  return pool[Math.floor(Math.random() * pool.length)]!
+}
 
 function markDirtyOnce() {
-  if (hasRoundDirty) {
-    return
-  }
-
-  hasRoundDirty = true
-  roundStartedAt = Date.now()
+  roundStartedAt = roundStartedAt || Date.now()
   props.markRoundDirty?.()
-}
-
-function pickScenario(difficulty: EmotionGameDifficulty) {
-  const scenarioPool = SCENARIOS.filter((scenario) => DIFFICULTY_CONFIGS[difficulty].scenarioIds.includes(scenario.id))
-  return shuffleArray(scenarioPool)[0] || scenarioPool[0] || null
-}
-
-function buildItemPool(scenario: ScenarioDefinition) {
-  return shuffleArray(
-    scenario.poolItemIds
-      .map((itemId) => ITEMS.find((item) => item.id === itemId) || null)
-      .filter((item): item is ItemDefinition => item !== null),
-  )
-}
-
-function resetRound() {
-  window.clearTimeout(celebrationTimer)
-  phase.value = 'ready'
-  activeDifficulty.value = props.difficulty
-  helperMessage.value = '先看情境，再挑真正需要带的东西。'
-  currentScenario.value = null
-  currentItems.value = []
-  packedItemIds.value = []
-  promptCount.value = 0
-  reviewCycles.value = 0
-  hintedItemId.value = ''
-  selectionTimes.value = []
-  showBadge.value = false
-  latestScore.value = 0
-  selectionStartedAt = 0
-  props.audio.stopAmbient()
 }
 
 function startGame() {
   markDirtyOnce()
   activeDifficulty.value = props.difficulty
-  currentScenario.value = pickScenario(props.difficulty)
-  currentItems.value = currentScenario.value ? buildItemPool(currentScenario.value) : []
+  currentScenario.value = pickScenario()
   packedItemIds.value = []
-  promptCount.value = 0
-  reviewCycles.value = 0
-  hintedItemId.value = ''
-  selectionTimes.value = []
-  latestScore.value = 0
-  helperMessage.value = currentScenario.value?.description || '先看清今天要去哪里。'
-  phase.value = 'playing'
-  selectionStartedAt = Date.now()
+  itemIndex.value = 0
+  replayCount.value = 0
+  stepResponseMs.value = []
+  enterDemo()
 
-  props.audio.ensureReady().then(() => props.audio.startAmbient()).catch(() => {
-    // Keep the round playable without audio.
-  })
-  props.audio.speak('先看看今天是什么情境，再把真正需要的物品装进书包。')
+  props.audio.ensureReady().then(() => props.audio.startAmbient()).catch(() => {})
 }
 
-function toggleItem(item: ItemDefinition) {
-  if (paused.value || phase.value !== 'playing') {
-    return
-  }
-
-  hintedItemId.value = ''
-
-  if (selectionStartedAt > 0) {
-    selectionTimes.value.push(Date.now() - selectionStartedAt)
-  }
-  selectionStartedAt = Date.now()
-
-  if (packedItemIds.value.includes(item.id)) {
-    packedItemIds.value = packedItemIds.value.filter((currentId) => currentId !== item.id)
-    helperMessage.value = `${item.label} 已经放回去了，可以再想一想。`
-    return
-  }
-
-  packedItemIds.value = [...packedItemIds.value, item.id]
-  helperMessage.value = `已把 ${item.label} 放进书包。`
+function resetRound() {
+  window.clearTimeout(demoTimer)
+  phase.value = 'ready'
+  currentScenario.value = null
+  itemIndex.value = 0
+  packedItemIds.value = []
+  props.audio.stopAmbient()
 }
 
-function requestPrompt() {
-  if (paused.value || phase.value !== 'playing' || !currentScenario.value) {
-    return
-  }
+function enterDemo() {
+  phase.value = 'demo'
+  stepStartedAt = Date.now()
+  const cue = `${currentScenario.value?.title ?? ''}，记得带上${currentItem.value?.label ?? ''}。`
+  props.audio.speak(cue)
 
-  promptCount.value += 1
-  const missingRequired = requiredItems.value.filter((item) => !packedItemIds.value.includes(item.id))
-  hintedItemId.value = missingRequired[0]?.id || ''
-  helperMessage.value = missingRequired[0]
-    ? `先想一想“${missingRequired[0].label}”是不是今天会用到。`
-    : '先检查一下书包里有没有多装了不需要的物品。'
-  props.audio.speak(helperMessage.value)
+  demoTimer = window.setTimeout(() => {
+    phase.value = 'awaiting'
+  }, demoMs.value)
 }
 
-function submitBag() {
-  if (paused.value || phase.value !== 'playing' || !currentScenario.value) {
-    return
+function replayDemo() {
+  if (phase.value !== 'awaiting') return
+  replayCount.value += 1
+  enterDemo()
+}
+
+function onChildTap() {
+  if (phase.value !== 'awaiting' || props.paused) return
+
+  const id = currentItem.value?.id
+  if (!id) return
+
+  if (stepStartedAt > 0) {
+    stepResponseMs.value.push(Date.now() - stepStartedAt)
   }
 
-  const requiredIds = new Set(currentScenario.value.requiredItemIds)
-  const correctlyPacked = packedItemIds.value.filter((itemId) => requiredIds.has(itemId))
-  const wrongItems = packedItemIds.value.filter((itemId) => !requiredIds.has(itemId))
-  const missingRequired = currentScenario.value.requiredItemIds.filter((itemId) => !packedItemIds.value.includes(itemId))
+  packedItemIds.value.push(id)
 
-  const contextUnderstandingScore = clampNumber(Math.round((correctlyPacked.length / currentScenario.value.requiredItemIds.length) * 100), 0, 100)
-  const score = clampNumber(
-    contextUnderstandingScore - wrongItems.length * 12 - promptCount.value * 8,
-    0,
-    100,
-  )
-  latestScore.value = score
+  props.audio.playSuccessCue().catch(() => {})
+  props.audio.speak(`${currentItem.value?.label ?? ''}装好啦！`)
 
-  if (missingRequired.length === 0 && wrongItems.length === 0) {
+  itemIndex.value += 1
+  if (itemIndex.value >= requiredItems.value.length) {
     finishRound()
     return
   }
-
-  reviewCycles.value += 1
-  if (wrongItems.includes('toy-car') || wrongItems.includes('plush')) {
-    helperMessage.value = '玩具留在家等我放学哦，书包里先放今天真正需要的东西。'
-  } else if (missingRequired.length > 0) {
-    const missingLabel = ITEMS.find((item) => item.id === missingRequired[0])?.label || '这件物品'
-    helperMessage.value = `再看看，${missingLabel} 今天是不是也要带上。`
-  } else {
-    helperMessage.value = '再检查一下，书包里有没有多装了今天暂时用不到的东西。'
-  }
-
-  hintedItemId.value = missingRequired[0] || ''
+  window.setTimeout(() => {
+    enterDemo()
+  }, 900)
 }
 
 function finishRound() {
   phase.value = 'celebrating'
-  showBadge.value = true
-  latestScore.value = 100
-  helperMessage.value = '这次整理已经完成啦。'
   props.audio.stopAmbient()
-
   void Promise.allSettled([
     props.audio.playSuccessCue(),
-    Promise.resolve().then(() => props.audio.speak('书包已经整理好了。')),
+    Promise.resolve().then(() => props.audio.speak('书包整理好啦，你可以安心出门啦！')),
   ])
-
-  celebrationTimer = window.setTimeout(() => {
+  demoTimer = window.setTimeout(() => {
     phase.value = 'finished'
     emit('complete', buildCompletionPayload())
-  }, 850)
+  }, 1500)
 }
 
 function buildCompletionPayload(): EmotionGameCompletionPayload {
-  const requiredIds = new Set(currentScenario.value?.requiredItemIds || [])
-  const correctlyPacked = packedItemIds.value.filter((itemId) => requiredIds.has(itemId))
-  const wrongItemIds = packedItemIds.value.filter((itemId) => !requiredIds.has(itemId))
-  const requiredItemLabels = requiredItems.value.map((item) => item.label)
-  const wrongItemLabels = wrongItemIds
-    .map((itemId) => ITEMS.find((item) => item.id === itemId)?.label || '')
-    .filter(Boolean)
+  const totalDurationSeconds = roundStartedAt > 0 ? Number(((Date.now() - roundStartedAt) / 1000).toFixed(1)) : 0
+  const avgMs = stepResponseMs.value.length > 0
+    ? Math.round(stepResponseMs.value.reduce((a, b) => a + b, 0) / stepResponseMs.value.length)
+    : 0
 
   return {
     performanceData: {
       event: 'game_complete',
-      required_item_count: requiredIds.size,
-      correctly_packed_count: correctlyPacked.length,
-      wrong_item_count: wrongItemIds.length,
-      context_understanding_score: requiredIds.size > 0
-        ? Math.round((correctlyPacked.length / requiredIds.size) * 100)
-        : 0,
-      highest_prompt_level: clampNumber(promptCount.value, 0, 3),
-      prompt_count: promptCount.value,
-      is_auto_completed: false,
-      score: latestScore.value,
-      packed_item_labels: packedItems.value.map((item) => item.label),
-      required_item_labels: requiredItemLabels,
-      wrong_item_labels: wrongItemLabels,
-      scenario_id: currentScenario.value?.id || '',
-      scenario_title: currentScenario.value?.title || '',
-      review_cycles: reviewCycles.value,
-      average_selection_ms: averageSelectionMs.value,
-      selection_times_ms: [...selectionTimes.value],
-      total_duration_seconds: roundStartedAt > 0 ? Number(((Date.now() - roundStartedAt) / 1000).toFixed(1)) : 0,
+      interaction_mode: 'watch-do-feedback',
+      required_item_count: requiredItems.value.length,
+      packed_item_count: packedItemIds.value.length,
+      packed_item_ids: [...packedItemIds.value],
+      packed_item_labels: packedItemIds.value.map((id) => ITEMS[id]?.label ?? id),
+      scenario_id: currentScenario.value?.id ?? '',
+      scenario_title: currentScenario.value?.title ?? '',
+      replay_count: replayCount.value,
+      step_response_ms: [...stepResponseMs.value],
+      average_step_ms: avgMs,
+      total_duration_seconds: totalDurationSeconds,
       difficulty_level: activeDifficulty.value,
+      is_auto_completed: false,
     },
   }
 }
@@ -607,10 +384,7 @@ function buildCompletionPayload(): EmotionGameCompletionPayload {
 watch(
   () => props.difficulty,
   (difficulty) => {
-    if (phase.value !== 'ready') {
-      return
-    }
-
+    if (phase.value !== 'ready') return
     activeDifficulty.value = difficulty
   },
 )
@@ -618,244 +392,432 @@ watch(
 watch(
   () => props.paused,
   (isPaused) => {
-    if (!isPaused) {
-      return
-    }
-
-    props.audio.stopAmbient()
+    if (isPaused) props.audio.stopAmbient()
   },
 )
 
 onBeforeUnmount(() => {
-  window.clearTimeout(celebrationTimer)
+  window.clearTimeout(demoTimer)
   props.audio.stopAll()
 })
 </script>
 
 <style scoped>
-@import './prototype-game-shared.css';
-
-.pack-bag-game {
-  --prototype-background: linear-gradient(135deg, #7eb6ff 0%, #89d5c0 46%, #ffd67c 100%);
-  --prototype-progress: linear-gradient(135deg, #2563eb 0%, #14b8a6 100%);
-}
-
-.pack-bag-game__glow {
-  background: rgba(125, 211, 252, 0.28);
-}
-
-.pack-bag-game__glow--alt {
-  background: rgba(253, 224, 71, 0.22);
-}
-
-.pack-bag-game__intro {
-  display: grid;
-  grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
-  gap: 26px;
-  align-items: center;
-  min-height: 100%;
-}
-
-.pack-bag-game__intro-copy h2 {
-  margin: 0 0 12px;
-  font-size: 2rem;
-  line-height: 1.2;
-}
-
-.pack-bag-game__intro-copy p {
-  margin: 0;
-  line-height: 1.76;
-}
-
-.pack-bag-game__bag-preview,
-.pack-bag-game__bag-card {
+.pack-game {
   position: relative;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.68);
-}
-
-.pack-bag-game__bag-preview {
-  display: grid;
-  place-items: center;
-  min-height: 300px;
-}
-
-.pack-bag-game__bag-shell,
-.pack-bag-game__bag-flap {
-  position: absolute;
-  display: block;
-  border-radius: 32px;
-}
-
-.pack-bag-game__bag-shell {
-  width: 220px;
-  height: 210px;
-  background: linear-gradient(180deg, #1d4ed8 0%, #2563eb 100%);
-}
-
-.pack-bag-game__bag-flap {
-  top: 58px;
-  width: 180px;
-  height: 84px;
-  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
-}
-
-.pack-bag-game__play {
-  display: grid;
-  gap: 18px;
-}
-
-.pack-bag-game__scenario {
-  display: grid;
-  gap: 14px;
-}
-
-.pack-bag-game__scenario-card,
-.pack-bag-game__checklist {
+  box-sizing: border-box;
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 16px 18px;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.62);
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
+  padding: 16px;
+  overflow: hidden;
+  color: #213547;
+  background: linear-gradient(160deg, #dbeafe 0%, #d1fae5 50%, #fef9c3 100%);
+  font-family: inherit;
+  user-select: none;
 }
 
-.pack-bag-game__scenario-emoji {
+.pack-game.is-paused {
+  filter: grayscale(0.4) brightness(0.95);
+  pointer-events: none;
+}
+
+.pack-game__topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+  padding: 10px 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(22, 42, 72, 0.08);
+}
+
+.pack-game__step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pack-game__step-emoji {
   font-size: 2rem;
+  line-height: 1;
 }
 
-.pack-bag-game__scenario-card p {
-  margin: 6px 0 0;
-  line-height: 1.65;
+.pack-game__step-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.pack-bag-game__checklist {
+.pack-game__step-text strong {
+  font-size: 1.2rem;
+}
+
+.pack-game__step-text small {
+  color: rgba(33, 53, 71, 0.6);
+  font-size: 0.82rem;
+}
+
+.pack-game__progress-segments {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.pack-game__segment {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(33, 53, 71, 0.12);
+  transition: background 0.25s ease;
+}
+
+.pack-game__segment.is-current {
+  background: linear-gradient(90deg, #3b82f6, #14b8a6);
+  animation: pack-seg-pulse 1.4s ease-in-out infinite;
+}
+
+.pack-game__segment.is-done {
+  background: #34d399;
+}
+
+@keyframes pack-seg-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* 情境提示 */
+.pack-game__scenario {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 12px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 4px 16px rgba(22, 42, 72, 0.06);
+}
+
+.pack-game__scenario-emoji {
+  font-size: 2.2rem;
+}
+
+.pack-game__scenario strong {
+  font-size: 1.15rem;
+}
+
+.pack-game__scenario p {
+  margin: 2px 0 0;
+  color: rgba(33, 53, 71, 0.7);
+  font-size: 0.95rem;
+}
+
+.pack-game__stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+/* 物品 + 书包展示 */
+.pack-game__item-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8%;
+  position: relative;
+}
+
+.pack-game__item-img {
+  width: 34%;
+  max-width: 240px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 20px rgba(22, 42, 72, 0.25));
+  transition: transform 0.3s ease;
+}
+
+.pack-game__item-display.is-demonstrating .pack-game__item-img {
+  animation: pack-demo-bob 1.6s ease-in-out infinite;
+}
+
+@keyframes pack-demo-bob {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+
+/* 书包 */
+.pack-game__bag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.pack-game__bag-emoji {
+  font-size: 4rem;
+  filter: drop-shadow(0 6px 16px rgba(22, 42, 72, 0.2));
+}
+
+.pack-game__packed-list {
+  display: flex;
   flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  max-width: 180px;
 }
 
-.pack-bag-game__check-chip {
+.pack-game__packed-chip {
+  font-size: 1.8rem;
+  animation: pack-packed-in 0.4s ease-out;
+}
+
+@keyframes pack-packed-in {
+  from { transform: scale(0) translateY(-20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.pack-game__packed-empty {
+  color: rgba(33, 53, 71, 0.4);
+  font-size: 0.9rem;
+}
+
+.pack-game__tap-zone {
+  position: absolute;
+  left: 50%;
+  bottom: 14%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 32px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #3b82f6 0%, #14b8a6 100%);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.45);
+  animation: pack-tap-pulse 1.2s ease-in-out infinite;
+  transition: transform 0.15s ease;
+}
+
+.pack-game__tap-zone:hover:not(:disabled) {
+  transform: translateX(-50%) scale(1.05);
+}
+
+.pack-game__tap-zone:active:not(:disabled) {
+  transform: translateX(-50%) scale(0.96);
+}
+
+.pack-game__tap-zone:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pack-game__tap-pulse {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.pack-game__tap-label {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes pack-tap-pulse {
+  0%, 100% { box-shadow: 0 12px 32px rgba(59, 130, 246, 0.45); }
+  50% { box-shadow: 0 12px 48px rgba(59, 130, 246, 0.7); }
+}
+
+.pack-game__demo-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 14%;
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 12px 24px;
+  border-radius: 999px;
+  background: rgba(33, 53, 71, 0.85);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.pack-game__instruction {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  z-index: 15;
+  max-width: 88%;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: rgba(33, 53, 71, 0.88);
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(22, 42, 72, 0.2);
+  pointer-events: none;
+}
+
+.pack-game__instruction p {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.4;
+}
+
+.pack-game__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.pack-game__btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 1.02rem;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
+  gap: 8px;
 }
 
-.pack-bag-game__check-chip.is-packed {
-  background: rgba(187, 247, 208, 0.82);
+.pack-game__btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(33, 53, 71, 0.16);
 }
 
-.pack-bag-game__workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-  gap: 18px;
-}
-
-.pack-bag-game__item-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.pack-bag-game__item-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  min-height: 146px;
-  padding: 18px;
-  border: 0;
-  border-radius: 22px;
-  cursor: pointer;
-  text-align: left;
-  background: rgba(255, 255, 255, 0.8);
-  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
-}
-
-.pack-bag-game__item-card:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 32px rgba(33, 53, 71, 0.12);
-}
-
-.pack-bag-game__item-card:disabled {
+.pack-game__btn:disabled {
   cursor: not-allowed;
-  opacity: 0.56;
+  opacity: 0.5;
 }
 
-.pack-bag-game__item-card.is-packed {
-  background: rgba(187, 247, 208, 0.82);
+.pack-game__btn--primary {
+  color: #fff;
+  background: linear-gradient(135deg, #3b82f6 0%, #14b8a6 100%);
 }
 
-.pack-bag-game__item-card.is-hinted {
-  outline: 3px solid rgba(59, 130, 246, 0.24);
+.pack-game__btn--lg {
+  padding: 16px 36px;
+  font-size: 1.15rem;
 }
 
-.pack-bag-game__item-card span {
-  font-size: 1.8rem;
+.pack-game__btn--secondary {
+  color: #1f3d5c;
+  background: rgba(255, 255, 255, 0.9);
 }
 
-.pack-bag-game__bag-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px;
+.pack-game__btn--ghost {
+  color: #5f6f82;
+  background: rgba(255, 255, 255, 0.6);
 }
 
-.pack-bag-game__bag-card-header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.pack-bag-game__bag-card-grid {
-  display: grid;
-  gap: 12px;
-}
-
-.pack-bag-game__packed-chip,
-.pack-bag-game__packed-empty {
-  min-height: 52px;
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.8);
-}
-
-.pack-bag-game__packed-chip {
-  background: rgba(191, 219, 254, 0.82);
-}
-
-.pack-bag-game__complete {
+.pack-game__celebrate {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
   display: grid;
   place-items: center;
-  min-height: 100%;
+  background: rgba(22, 42, 72, 0.45);
+  backdrop-filter: blur(4px);
 }
 
-.pack-bag-game__complete-card {
+.pack-game__celebrate-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   align-items: center;
-  padding: 24px 28px;
-  border-radius: 28px;
+  gap: 10px;
+  padding: 32px 40px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 24px 60px rgba(22, 42, 72, 0.3);
   text-align: center;
-  background: rgba(255, 255, 255, 0.74);
 }
 
-.pack-bag-game__complete-card span {
-  font-size: 2rem;
+.pack-game__celebrate-icon {
+  font-size: 3.5rem;
+  animation: pack-bounce 0.8s ease;
 }
 
-@media (max-width: 1120px) {
-  .pack-bag-game__intro,
-  .pack-bag-game__workspace {
-    grid-template-columns: minmax(0, 1fr);
+.pack-game__celebrate-card strong {
+  font-size: 1.5rem;
+}
+
+.pack-game__celebrate-card p {
+  margin: 0;
+  color: rgba(33, 53, 71, 0.7);
+}
+
+@keyframes pack-bounce {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.pack-celebrate-enter-active,
+.pack-celebrate-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.pack-celebrate-enter-from,
+.pack-celebrate-leave-to {
+  opacity: 0;
+}
+
+@media (max-width: 720px) {
+  .pack-game {
+    padding: 10px;
   }
-}
-
-@media (max-width: 760px) {
-  .pack-bag-game__item-grid {
-    grid-template-columns: minmax(0, 1fr);
+  .pack-game__topbar {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 8px 12px;
+  }
+  .pack-game__step-emoji {
+    font-size: 1.6rem;
+  }
+  .pack-game__step-text strong {
+    font-size: 1.05rem;
+  }
+  .pack-game__progress-segments {
+    width: 100%;
+    order: 3;
+  }
+  .pack-game__scenario {
+    padding: 10px 14px;
+  }
+  .pack-game__scenario-emoji {
+    font-size: 1.8rem;
+  }
+  .pack-game__instruction {
+    max-width: 92%;
+    font-size: 0.92rem;
+    padding: 8px 14px;
+  }
+  .pack-game__tap-zone {
+    padding: 14px 24px;
+    font-size: 1.05rem;
+  }
+  .pack-game__btn {
+    padding: 10px 18px;
+    font-size: 0.95rem;
   }
 }
 </style>
