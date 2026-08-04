@@ -670,13 +670,6 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '安抚选择', value: String(raw.support_card_label || '-') },
         { label: '匹配程度', value: formatPercent(raw.support_fit_score) },
       ]
-    case 'L05_PACK_BAG':
-      return [
-        { label: '正确装入', value: formatCountPair(raw.correctly_packed_count, raw.required_item_count, '件') },
-        { label: '错装物品', value: formatNullableNumber(raw.wrong_item_count, '件') },
-        { label: '情境得分', value: formatNullableNumber(raw.context_understanding_score, '分') },
-        { label: '最终得分', value: formatNullableNumber(raw.score, '分') },
-      ]
     case 'L06_STEADY_SPOON':
       return [
         { label: '完成勺数', value: formatCountPair(raw.delivered_scoops, raw.target_scoops, '勺') },
@@ -930,17 +923,6 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '各次选择', value: formatResponseTimeList(raw.choice_times_ms, '次') },
         { label: '可选心情', value: formatMappedStringList(raw.available_mood_ids, moodMeterMoodLabelMap, '其他心情') },
         { label: '可选安抚卡', value: formatMappedStringList(raw.available_support_ids, moodMeterSupportLabelMap, '其他安抚方式') },
-      ]
-    case 'L05_PACK_BAG':
-      return [
-        { label: '需要带的', value: formatPlainStringList(raw.required_item_labels) },
-        { label: '已装物品', value: formatPlainStringList(raw.packed_item_labels) },
-        { label: '错装物品', value: formatPlainStringList(raw.wrong_item_labels) },
-        { label: '提示次数', value: formatNullableNumber(raw.prompt_count, '次') },
-        { label: '最高提示', value: formatNullableNumber(raw.highest_prompt_level, '级') },
-        { label: '复盘次数', value: formatNullableNumber(raw.review_cycles, '次') },
-        { label: '选择记录', value: formatResponseTimeList(raw.selection_times_ms, '次') },
-        { label: '情境主题', value: String(raw.scenario_title || raw.scenario_id || '-') },
       ]
     case 'L06_STEADY_SPOON':
       return [

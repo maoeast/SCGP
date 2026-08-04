@@ -305,19 +305,6 @@ function deriveAccuracyRate(
       }
       break
     }
-    case 'L05_PACK_BAG': {
-      const score = Number(performanceData.score)
-      if (Number.isFinite(score)) {
-        return Math.max(0, Math.min(1, score / 100))
-      }
-
-      const correctlyPackedCount = Number(performanceData.correctly_packed_count || 0)
-      const requiredItemCount = Number(performanceData.required_item_count || 0)
-      if (requiredItemCount > 0) {
-        return Math.max(0, Math.min(1, correctlyPackedCount / requiredItemCount))
-      }
-      break
-    }
     case 'L06_STEADY_SPOON': {
       const stableMotionRatio = Number(performanceData.stable_motion_ratio)
       if (Number.isFinite(stableMotionRatio)) {
@@ -533,11 +520,6 @@ function deriveAvgResponseTime(
       return averageNumericValues(performanceData.choice_times_ms)
         ?? (Number.isFinite(Number(performanceData.average_choice_ms))
           ? Number(performanceData.average_choice_ms)
-          : null)
-    case 'L05_PACK_BAG':
-      return averageNumericValues(performanceData.selection_times_ms)
-        ?? (Number.isFinite(Number(performanceData.average_selection_ms))
-          ? Number(performanceData.average_selection_ms)
           : null)
     case 'L06_STEADY_SPOON':
       return averageNumericValues(performanceData.delivery_times_ms)

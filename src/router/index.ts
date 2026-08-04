@@ -67,7 +67,6 @@ const StarTracePage = () => import('@/views/emotional/games/StarTracePage.vue')
 const RecyclingSortPage = () => import('@/views/emotional/games/RecyclingSortPage.vue')
 const TrackBuildPage = () => import('@/views/emotional/games/TrackBuildPage.vue')
 const BalloonTapPage = () => import('@/views/emotional/games/BalloonTapPage.vue')
-const PackBagPage = () => import('@/views/emotional/games/PackBagPage.vue')
 const SteadySpoonPage = () => import('@/views/emotional/games/SteadySpoonPage.vue')
 const BodySignalPage = () => import('@/views/emotional/games/BodySignalPage.vue')
 const TowelTwistPage = () => import('@/views/emotional/games/TowelTwistPage.vue')
@@ -609,17 +608,6 @@ const router = createRouter({
           component: ExpressionDuelPage,
           meta: {
             title: '双人表情擂台',
-            hideInMenu: true,
-            roles: ['admin', 'teacher'],
-            immersiveShell: true,
-          }
-        },
-        {
-          path: 'emotional/games/pack-bag',
-          name: 'PackBagGame',
-          component: PackBagPage,
-          meta: {
-            title: '上学包包装一装',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

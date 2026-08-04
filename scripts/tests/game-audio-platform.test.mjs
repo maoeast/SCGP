@@ -142,14 +142,13 @@ test('game music profile mapping stays stable for legacy sensory tasks and regis
   }), 'warm-social')
   assert.equal(resolveCustomGameMusicProfile({
     trainingEntryCode: 'life-skills',
-    gameCode: 'L05_PACK_BAG',
+    gameCode: 'L06_STEADY_SPOON',
   }), 'calm')
   assert.equal(hasCustomGameBackgroundMusic({
     trainingEntryCode: 'life-skills',
-    gameCode: 'L05_PACK_BAG',
+    gameCode: 'L06_STEADY_SPOON',
   }), false)
 })
-
 test('game music integration allows Tone worker blobs and avoids re-rendering active parts on every ensureReady call', () => {
   const indexSource = readFileSync(resolve(projectRoot, 'index.html'), 'utf8')
   const engineSource = readFileSync(resolve(projectRoot, 'src/audio/game-music-engine.ts'), 'utf8')

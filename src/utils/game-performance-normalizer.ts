@@ -39,7 +39,7 @@ type AccuracyScale = 'ratio' | 'percent'
 /**
  * 时长提取规则（判别联合，覆盖三种来源）：
  * - session: 无专属时长字段，直接用 sessionDurationMs/1000（如 F03）
- * - seconds: 字段值本身就是秒（如 L03 的 duration_seconds、L05 的 total_duration_seconds）
+ * - seconds: 字段值本身就是秒（如 L06 的 total_duration_seconds）
  * - msHeuristic: 社交遗留的“字段名/数值>10000 判 ms”启发式（社交 performanceData 既有 ms 也有秒）
  */
 type DurationRule =
@@ -86,7 +86,7 @@ interface GameExtractionRule {
 
 // ========== gameCode → 提取规则表 ==========
 //
-// Phase 1 填 Tier 1 三游戏（F03/L03/L05）；Phase 2 补 Tier 2 四游戏（F04/L01/L02/L04，用 accuracyDerived 派生正确率）；
+// Phase 填充：Tier 1（F03 等）+ Tier 2（F04 等，用 accuracyDerived 派生正确率）+ Tier 3 生活自理（L06–L13）；
 // Phase 3 补 Tier 3 三游戏（F02/F01/F05，近似指标口径；F05 用 reactionArrayField 取数组反应时均值）。
 // social 六个 code 共享同一条遗留规则，行为与原 runSocialIepChain 的手写提取保持一致（不破坏社交闭环）。
 // cognitive K01-K10 十条规则：correct/total 计数，无反应时，时长走会话兜底。
@@ -121,17 +121,7 @@ const GAME_EXTRACTION_RULES: Record<string, GameExtractionRule> = {
     duration: { kind: 'session' },
   },
 
-  // ===== Tier 1：生活自理 =====
-  L05_PACK_BAG: {
-    // 上学包包装一装：context_understanding_score(0-100，需÷100) + average_selection_ms + total_duration_seconds(秒)
-    realityFields: ['context_understanding_score'],
-    accuracyFields: ['context_understanding_score'],
-    accuracyScale: 'percent',
-    reactionFields: ['average_selection_ms'],
-    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
-  },
-
-  // ===== Tier 3：生活自理（L06–L10 新增） =====
+  // ===== Tier 3：生活自理（L06–L13） =====
   L06_STEADY_SPOON: {
     // 稳稳送一勺：stable_motion_ratio(0-1) 稳定采样占比 + average_delivery_ms + total_duration_seconds(秒)
     realityFields: ['stable_motion_ratio', 'delivered_scoops'],
@@ -414,7 +404,7 @@ function resolveDuration(
 /**
  * 把游戏 performanceData 归一化为标准指标。
  *
- * @param gameCode 游戏 code（如 F03_RECYCLING / L05_PACK_BAG / S01_BURGER）
+ * @param gameCode 游戏 code（如 F03_RECYCLING / L06_STEADY_SPOON / S01_BURGER）
  * @param performanceData 游戏组件 emit 的原始数据（可能是空壳 {event}）
  * @param sessionDurationMs 本局会话时长（毫秒），duration 缺失时的兜底来源
  */

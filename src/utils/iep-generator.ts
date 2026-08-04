@@ -180,8 +180,7 @@ export class IEPGenerator {
   // ==========================================
 
   /**
-   * 生成生活自理游戏 IEP 报告（不带 taskId）
-   * Phase 1：L05_PACK_BAG 上学包包装一装
+   * 生成生活自理游戏 IEP 报告（L06–L13）
    */
   static generateLifeSkillsReport(
     studentName: string,
@@ -747,7 +746,6 @@ export class IEPGenerator {
    */
   private static getLifeSkillGameName(gameCode: string): string {
     const names: Record<string, string> = {
-      L05_PACK_BAG: '上学包包装一装',
       L06_STEADY_SPOON: '稳稳送一勺',
       L07_BODY_SIGNAL: '身体信号小灯塔',
       L08_TOWEL_TWIST: '毛巾拧拧工坊',
@@ -775,39 +773,7 @@ export class IEPGenerator {
     const reaction = metrics.avgResponseTimeMs
     const hasReaction = reaction !== null
 
-    if (gameCode === 'L05_PACK_BAG') {
-      // 上学包包装一装：情境计划 + 执行功能
-      const execPerformance = !metrics.hasRealData
-        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能根据情境挑出合适物品并整理入包。'
-        : hasAccuracy && (accuracy as number) >= 0.7
-          ? '能较准确地根据情境挑出合适物品并整理入包，执行功能与计划能力发展良好。'
-          : hasAccuracy
-            ? '能参与物品挑选，但偶尔会放入与情境无关的物品，需要更多“先想场景再选”的提示。'
-            : '本次能完成整理交互，建议在后续训练中持续记录情境理解得分以评估执行功能。'
-
-      sections.push({
-        category: '情境理解与计划',
-        performance: hasAccuracy
-          ? this.buildAccuracyPerformance('情境计划', accuracy as number, true)
-          : '本次未采集到量化指标，建议在后续训练中持续记录情境理解得分以支撑评估。',
-        behavior: hasReaction
-          ? `本次平均每次选择反应时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
-          : '',
-        suggestions: [
-          '出门前和孩子一起说一说“今天去哪里、会发生什么、需要带什么”，把情境推理迁移到生活。',
-          '先让孩子口头挑出必需物品，再动手装包，建立“先想场景、再做选择”的计划习惯。',
-          '当孩子选对物品时，描述他注意到的情境线索（天气、活动、地点），强化观察与推理。'
-        ]
-      })
-      sections.push({
-        category: '执行功能与物品整理',
-        performance: execPerformance,
-        suggestions: [
-          '用图文清单做辅助：先和孩子一起列“今天要带的物品”，再对照清单逐项装包。',
-          '逐步撤除清单提示，鼓励孩子独立判断“该带 / 不该带”，培养自主整理能力。'
-        ]
-      })
-    } else if (gameCode === 'L06_STEADY_SPOON') {
+    if (gameCode === 'L06_STEADY_SPOON') {
       // 稳稳送一勺：稳定送勺占比 + 平均送达用时 + 稳定控制与手部协调
       const stabilityPerformance = !metrics.hasRealData
         ? '本次未采集到量化指标，建议在后续训练中关注孩子送勺时是否太快、偏离通道或突然转向。'
