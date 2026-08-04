@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-08-04T09:26:17.446Z",
+  "model": "gpt-image-2",
+  "style": "儿童绘本贴纸风格",
+  "note": "生活自理游戏场景底图：替代 StageArt 背景 SVG，绘本贴纸风 + 场景化底色。缩图后运行时用 resource:// 加载。",
+  "items": [
+    {
+      "kind": "facewash-basin-scene",
+      "game": "facewash",
+      "name": "洗脸台场景",
+      "size": "2:1",
+      "file": "facewash-basin-scene.png"
+    },
+    {
+      "kind": "pourwater-table-scene",
+      "game": "pourwater",
+      "name": "倒水桌面场景",
+      "size": "2:1",
+      "file": "pourwater-table-scene.png"
+    },
+    {
+      "kind": "roadcross-intersection-scene",
+      "game": "roadcross",
+      "name": "马路交叉口场景",
+      "size": "2:1",
+      "file": "roadcross-intersection-scene.png"
+    }
+  ]
+}

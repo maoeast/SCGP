@@ -2,7 +2,7 @@
   "generated_at": "2026-08-04T09:35:07.141Z",
   "model": "gpt-image-2",
   "style": "儿童绘本贴纸风格",
-  "note": "L11-L15 游戏进度状态图：链式生成保证同游戏内视觉一致性。浅绿底(#EAF6EE)，后续色键去底。",
+  "note": "L11/L13 游戏进度状态图：链式生成保证同游戏内视觉一致性。浅绿底(#EAF6EE)，后续色键去底。",
   "chains": [
     {
       "game": "facewash",
@@ -20,24 +20,6 @@
         "roadcross-greenlight",
         "roadcross-crossing",
         "roadcross-safe"
-      ]
-    },
-    {
-      "game": "foldclothes",
-      "steps": [
-        "foldclothes-spread",
-        "foldclothes-left",
-        "foldclothes-right",
-        "foldclothes-bottom"
-      ]
-    },
-    {
-      "game": "sweepfloor",
-      "steps": [
-        "sweepfloor-messy",
-        "sweepfloor-left-done",
-        "sweepfloor-mid-done",
-        "sweepfloor-all-clean"
       ]
     }
   ],
@@ -105,70 +87,6 @@
       "size": "1:1",
       "file": "roadcross-safe.png",
       "from": "roadcross-crossing"
-    },
-    {
-      "kind": "foldclothes-spread",
-      "game": "foldclothes",
-      "name": "foldclothes-spread",
-      "size": "1:1",
-      "file": "foldclothes-spread.png",
-      "from": null
-    },
-    {
-      "kind": "foldclothes-left",
-      "game": "foldclothes",
-      "name": "foldclothes-left",
-      "size": "1:1",
-      "file": "foldclothes-left.png",
-      "from": "foldclothes-spread"
-    },
-    {
-      "kind": "foldclothes-right",
-      "game": "foldclothes",
-      "name": "foldclothes-right",
-      "size": "1:1",
-      "file": "foldclothes-right.png",
-      "from": "foldclothes-left"
-    },
-    {
-      "kind": "foldclothes-bottom",
-      "game": "foldclothes",
-      "name": "foldclothes-bottom",
-      "size": "1:1",
-      "file": "foldclothes-bottom.png",
-      "from": "foldclothes-right"
-    },
-    {
-      "kind": "sweepfloor-messy",
-      "game": "sweepfloor",
-      "name": "sweepfloor-messy",
-      "size": "1:1",
-      "file": "sweepfloor-messy.png",
-      "from": null
-    },
-    {
-      "kind": "sweepfloor-left-done",
-      "game": "sweepfloor",
-      "name": "sweepfloor-left-done",
-      "size": "1:1",
-      "file": "sweepfloor-left-done.png",
-      "from": "sweepfloor-messy"
-    },
-    {
-      "kind": "sweepfloor-mid-done",
-      "game": "sweepfloor",
-      "name": "sweepfloor-mid-done",
-      "size": "1:1",
-      "file": "sweepfloor-mid-done.png",
-      "from": "sweepfloor-left-done"
-    },
-    {
-      "kind": "sweepfloor-all-clean",
-      "game": "sweepfloor",
-      "name": "sweepfloor-all-clean",
-      "size": "1:1",
-      "file": "sweepfloor-all-clean.png",
-      "from": "sweepfloor-mid-done"
     }
   ]
 }
