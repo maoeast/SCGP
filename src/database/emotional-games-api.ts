@@ -370,20 +370,6 @@ function deriveAccuracyRate(
       }
       break
     }
-    case 'L11_FACE_WASH': {
-      const cleanedZones = Number(performanceData.cleaned_zones || 0)
-      const incompleteCircles = Number(performanceData.incomplete_circles || 0)
-      const totalZones = cleanedZones + incompleteCircles
-      if (totalZones > 0) {
-        return Math.max(0, Math.min(1, cleanedZones / totalZones))
-      }
-
-      const targetZones = Number(performanceData.target_zones || 0)
-      if (targetZones > 0) {
-        return Math.max(0, Math.min(1, cleanedZones / targetZones))
-      }
-      break
-    }
     case 'L12_POUR_WATER': {
       const fillAccuracy = Number(performanceData.fill_accuracy_ratio)
       if (Number.isFinite(fillAccuracy) && fillAccuracy >= 0) {
@@ -394,21 +380,6 @@ function deriveAccuracyRate(
       const targetCups = Number(performanceData.target_cups || 0)
       if (targetCups > 0) {
         return Math.max(0, Math.min(1, filledCups / targetCups))
-      }
-      break
-    }
-    case 'L13_ROAD_CROSS': {
-      const safeCrossings = Number(performanceData.safe_crossings || 0)
-      const redLightAttempts = Number(performanceData.red_light_attempts || 0)
-      const incompleteCrossings = Number(performanceData.incomplete_crossings || 0)
-      const totalAttempts = safeCrossings + redLightAttempts + incompleteCrossings
-      if (totalAttempts > 0) {
-        return Math.max(0, Math.min(1, safeCrossings / totalAttempts))
-      }
-
-      const targetCrossings = Number(performanceData.target_crossings || 0)
-      if (targetCrossings > 0) {
-        return Math.max(0, Math.min(1, safeCrossings / targetCrossings))
       }
       break
     }
@@ -546,20 +517,10 @@ function deriveAvgResponseTime(
         ?? (Number.isFinite(Number(performanceData.average_payment_ms))
           ? Number(performanceData.average_payment_ms)
           : null)
-    case 'L11_FACE_WASH':
-      return averageNumericValues(performanceData.circle_times_ms)
-        ?? (Number.isFinite(Number(performanceData.average_circle_time_ms))
-          ? Number(performanceData.average_circle_time_ms)
-          : null)
     case 'L12_POUR_WATER':
       return averageNumericValues(performanceData.fill_times_ms)
         ?? (Number.isFinite(Number(performanceData.average_fill_time_ms))
           ? Number(performanceData.average_fill_time_ms)
-          : null)
-    case 'L13_ROAD_CROSS':
-      return averageNumericValues(performanceData.crossing_times_ms)
-        ?? (Number.isFinite(Number(performanceData.average_crossing_ms))
-          ? Number(performanceData.average_crossing_ms)
           : null)
     case 'S03_STORY_SEQ':
       return averageNumericValues(performanceData.response_times_ms)

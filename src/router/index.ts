@@ -72,9 +72,7 @@ const BodySignalPage = () => import('@/views/emotional/games/BodySignalPage.vue'
 const TowelTwistPage = () => import('@/views/emotional/games/TowelTwistPage.vue')
 const HomeSoundPage = () => import('@/views/emotional/games/HomeSoundPage.vue')
 const MarketPayPage = () => import('@/views/emotional/games/MarketPayPage.vue')
-const FaceWashPage = () => import('@/views/emotional/games/FaceWashPage.vue')
 const PourWaterPage = () => import('@/views/emotional/games/PourWaterPage.vue')
-const RoadCrossPage = () => import('@/views/emotional/games/RoadCrossPage.vue')
 const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterPage.vue')
 const EmotionMirrorPage = () => import('@/views/emotional/games/EmotionMirrorPage.vue')
 const StorySequencePage = () => import('@/views/emotional/games/StorySequencePage.vue')
@@ -669,33 +667,11 @@ const router = createRouter({
           }
         },
         {
-          path: 'life-skills/games/face-wash',
-          name: 'FaceWashGame',
-          component: FaceWashPage,
-          meta: {
-            title: '洗脸小镜子',
-            hideInMenu: true,
-            roles: ['admin', 'teacher'],
-            immersiveShell: true,
-          }
-        },
-        {
           path: 'life-skills/games/pour-water',
           name: 'PourWaterGame',
           component: PourWaterPage,
           meta: {
             title: '倒水小帮手',
-            hideInMenu: true,
-            roles: ['admin', 'teacher'],
-            immersiveShell: true,
-          }
-        },
-        {
-          path: 'life-skills/games/road-cross',
-          name: 'RoadCrossGame',
-          component: RoadCrossPage,
-          meta: {
-            title: '安全过马路',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

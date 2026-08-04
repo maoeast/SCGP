@@ -705,26 +705,12 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '多付核对', value: formatNullableNumber(raw.overpayment_checks, '次') },
         { label: '平均付款', value: formatResponseTime(raw.average_payment_ms as number) },
       ]
-    case 'L11_FACE_WASH':
-      return [
-        { label: '完成区域', value: formatCountPair(raw.cleaned_zones, raw.target_zones, '区') },
-        { label: '未完成圈', value: formatNullableNumber(raw.incomplete_circles, '次') },
-        { label: '覆盖率', value: formatPercent(raw.average_coverage_ratio) },
-        { label: '平均画圈', value: formatResponseTime(raw.average_circle_time_ms as number) },
-      ]
     case 'L12_POUR_WATER':
       return [
         { label: '完成杯数', value: formatCountPair(raw.filled_cups, raw.target_cups, '杯') },
         { label: '溢出次数', value: formatNullableNumber(raw.overflow_events, '次') },
         { label: '填充精度', value: formatPercent(raw.fill_accuracy_ratio) },
         { label: '平均倒水', value: formatResponseTime(raw.average_fill_time_ms as number) },
-      ]
-    case 'L13_ROAD_CROSS':
-      return [
-        { label: '安全通过', value: formatCountPair(raw.safe_crossings, raw.target_crossings, '次') },
-        { label: '闯红灯', value: formatNullableNumber(raw.red_light_attempts, '次') },
-        { label: '未完成', value: formatNullableNumber(raw.incomplete_crossings, '次') },
-        { label: '平均通过', value: formatResponseTime(raw.average_crossing_ms as number) },
       ]
     case 'G07_MONSTER':
       return [
@@ -989,17 +975,6 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '平均付款', value: formatResponseTime(raw.average_payment_ms as number) },
         { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
       ]
-    case 'L11_FACE_WASH':
-      return [
-        { label: '目标区域', value: formatNullableNumber(raw.target_zones, '区') },
-        { label: '完成区域', value: formatNullableNumber(raw.cleaned_zones, '区') },
-        { label: '未完成圈', value: formatNullableNumber(raw.incomplete_circles, '次') },
-        { label: '平均覆盖率', value: formatPercent(raw.average_coverage_ratio) },
-        { label: '覆盖率列表', value: formatResponseTimeList(raw.circle_coverage_ratios, '区') },
-        { label: '平均画圈', value: formatResponseTime(raw.average_circle_time_ms as number) },
-        { label: '各圈用时', value: formatResponseTimeList(raw.circle_times_ms, '次') },
-        { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
-      ]
     case 'L12_POUR_WATER':
       return [
         { label: '目标杯数', value: formatNullableNumber(raw.target_cups, '杯') },
@@ -1009,17 +984,6 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '各杯精度', value: formatResponseTimeList(raw.cup_fill_ratios, '杯') },
         { label: '平均注水', value: formatResponseTime(raw.average_fill_time_ms as number) },
         { label: '各杯用时', value: formatResponseTimeList(raw.fill_times_ms, '次') },
-        { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
-      ]
-    case 'L13_ROAD_CROSS':
-      return [
-        { label: '目标路口', value: formatNullableNumber(raw.target_crossings, '个') },
-        { label: '安全通过', value: formatNullableNumber(raw.safe_crossings, '次') },
-        { label: '闯红灯', value: formatNullableNumber(raw.red_light_attempts, '次') },
-        { label: '未完成', value: formatNullableNumber(raw.incomplete_crossings, '次') },
-        { label: '等待占比', value: formatPercent(raw.wait_compliance_ratio) },
-        { label: '平均过马路', value: formatResponseTime(raw.average_crossing_ms as number) },
-        { label: '各次用时', value: formatResponseTimeList(raw.crossing_times_ms, '次') },
         { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
       ]
     case 'G07_MONSTER':

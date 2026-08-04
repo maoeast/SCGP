@@ -180,7 +180,7 @@ export class IEPGenerator {
   // ==========================================
 
   /**
-   * 生成生活自理游戏 IEP 报告（L06–L13）
+   * 生成已接入生活自理游戏 IEP 报告（L06–L10、L12）
    */
   static generateLifeSkillsReport(
     studentName: string,
@@ -751,9 +751,7 @@ export class IEPGenerator {
       L08_TOWEL_TWIST: '毛巾拧拧工坊',
       L09_HOME_SOUND: '家里声音小侦探',
       L10_MARKET_PAY: '超市付款小能手',
-      L11_FACE_WASH: '洗脸小镜子',
       L12_POUR_WATER: '倒水小帮手',
-      L13_ROAD_CROSS: '安全过马路'
     }
     return names[gameCode] || '生活自理训练'
   }
@@ -933,38 +931,6 @@ export class IEPGenerator {
           '少付或多付时，引导孩子自己再加一枚或退回一枚，而不是直接告诉他正确答案。'
         ]
       })
-    } else if (gameCode === 'L11_FACE_WASH') {
-      // 洗脸小镜子：擦洗完成率 + 圆形擦拭手势
-      const washPerformance = !metrics.hasRealData
-        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能在面部各区域完成完整的圆形擦洗动作。'
-        : hasAccuracy && (accuracy as number) >= 0.7
-          ? '能较完整地在面部各区域完成圆形擦洗动作，手势覆盖与个人卫生意识发展良好。'
-          : hasAccuracy
-            ? '能参与擦洗动作，但部分区域弧线覆盖不完整，需要在更大的目标区域下多练"画圆圈擦脸"。'
-            : '本次能完成洗脸交互，建议在后续训练中持续记录弧线覆盖率以评估擦洗手势。'
-
-      sections.push({
-        category: '洗脸区域完成率',
-        performance: hasAccuracy
-          ? this.buildAccuracyPerformance('洗脸区域', accuracy as number, true)
-          : '本次未采集到量化指标，建议在后续训练中持续记录区域完成率以支撑评估。',
-        behavior: hasReaction
-          ? `本次平均每个区域画圈用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
-          : '',
-        suggestions: [
-          '在真实洗脸时引导孩子"额头画圆圈、左脸画圆圈、右脸画圆圈"，把游戏中的画圈动作迁移到生活。',
-          '先在纸上或镜子上练习画大圆圈，再过渡到真实洗脸时的圆形擦拭动作。',
-          '当孩子完成完整圆形擦洗时，描述他覆盖的区域和动作流畅度，强化正确手势。'
-        ]
-      })
-      sections.push({
-        category: '圆形擦拭手势与卫生习惯',
-        performance: washPerformance,
-        suggestions: [
-          '用镜子作为反馈：让孩子看着镜子中的脸一边画圈一边确认哪里还没洗到。',
-          '从大区域（整个脸颊）开始，逐步缩小目标区域，让手势更精细。'
-        ]
-      })
     } else if (gameCode === 'L12_POUR_WATER') {
       // 倒水小帮手：倒水精度 + 角度旋转控制
       const pourPerformance = !metrics.hasRealData
@@ -995,38 +961,6 @@ export class IEPGenerator {
         suggestions: [
           '先用空杯子做"假装倒水"的手腕旋转练习，再逐步过渡到真实水壶。',
           '选择有把手的轻量水壶或杯子，降低重量对手腕控制的干扰。'
-        ]
-      })
-    } else if (gameCode === 'L13_ROAD_CROSS') {
-      // 安全过马路：安全过马路率 + 冲动抑制
-      const crossPerformance = !metrics.hasRealData
-        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能在红灯时等待、绿灯时再过马路。'
-        : hasAccuracy && (accuracy as number) >= 0.7
-          ? '能较好地在红灯时抑制动作并在绿灯时安全通过，等待意识与出行安全规则理解良好。'
-          : hasAccuracy
-            ? '能参与过马路练习，但偶尔在红灯时冲动行动或绿灯时未能及时通过，需要更多等待练习。'
-            : '本次能完成过马路交互，建议在后续训练中持续记录安全通过率以评估冲动抑制。'
-
-      sections.push({
-        category: '安全过马路完成率',
-        performance: hasAccuracy
-          ? this.buildAccuracyPerformance('安全过马路', accuracy as number, true)
-          : '本次未采集到量化指标，建议在后续训练中持续记录安全通过率以支撑评估。',
-        behavior: hasReaction
-          ? `本次平均每次过马路用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
-          : '',
-        suggestions: [
-          '在真实过马路时先一起做"红灯停、绿灯走"的口令练习，把等待变成自然反应。',
-          '使用视觉倒计时辅助（手指数数、数到3再走），帮助孩子建立等待节奏。',
-          '当孩子成功等待红灯并安全通过时，描述他做到了什么（等待、观察、按时出发），强化安全意识。'
-        ]
-      })
-      sections.push({
-        category: '冲动抑制与等待意识',
-        performance: crossPerformance,
-        suggestions: [
-          '先在安全区域练习"停—看—走"三步口令，再逐步应用到真实路口。',
-          '对冲动性较强的孩子，可以先用"拉住手等绿灯"的身体辅助，逐步撤除。'
         ]
       })
     } else {

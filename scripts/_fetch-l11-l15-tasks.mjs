@@ -11,17 +11,11 @@ const API_BASE = 'https://api.apimart.ai/v1'
 const apiKey = JSON.parse(readFileSync(resolve(root, 'AIimages/config.json'), 'utf8')).api_key
 
 const SCENES_DIR = resolve(root, 'assets/resources/images/self-care/scenes')
-const PROGRESS_DIR = resolve(root, 'assets/resources/images/self-care/progress')
 mkdirSync(SCENES_DIR, { recursive: true })
-mkdirSync(PROGRESS_DIR, { recursive: true })
 
-// 从日志 / 命令行参数 / 硬编码获取 task_id
+// L12 倒水场景图的已提交 task_id
 const SCENE_TASKS = [
-  { key: 'facewash-basin-scene', taskId: 'task_01KZ5M3FR9VFMSV9GEC87WSCR4' },
   { key: 'pourwater-table-scene', taskId: 'task_01KZ5M3G0QZ3A6NMJDBPMK1Z3K' },
-  { key: 'roadcross-intersection-scene', taskId: 'task_01KZ5M3G5KBR180VSWCDNQCFNQ' },
-  { key: 'foldclothes-bed-scene', taskId: 'task_01KZ5M3GJR0AF7EBV32BTJT5CY' },
-  { key: 'sweepfloor-room-scene', taskId: 'task_01KZ5M3GQF13TC32JZV420CS6R' },
 ]
 
 async function pollAndDownload(key, taskId, outDir) {
@@ -88,7 +82,7 @@ async function downloadPng(url, filePath) {
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 
 // ---- main ----
-console.log('=== 拉取 L11-L15 场景图 ===')
+console.log('=== 拉取 L12 倒水场景图 ===')
 for (const { key, taskId } of SCENE_TASKS) {
   await pollAndDownload(key, taskId, SCENES_DIR)
 }
