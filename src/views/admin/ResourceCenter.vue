@@ -2,7 +2,7 @@
   <div class="page-container scgp-admin-page resource-center-page">
     <div class="page-header resource-center-header">
       <div class="header-left">
-        <h1>资源中心</h1>
+        <h1>资源管理</h1>
         <p class="subtitle">统一管理训练资源与教学资料，在同一入口完成浏览、维护、导入与素材目录管理。</p>
       </div>
     </div>

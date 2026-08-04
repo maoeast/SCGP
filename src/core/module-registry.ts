@@ -527,8 +527,8 @@ export function initializeBuiltinModules(): void {
     features: [
       {
         code: 'resource_center',
-        name: '资源中心',
-        description: '统一资源中心入口',
+        name: '资源管理',
+        description: '统一资源管理入口',
         status: 'active',
         route: '/resource-center',
         routeName: 'ResourceCenter'

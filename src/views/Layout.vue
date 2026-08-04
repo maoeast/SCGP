@@ -163,6 +163,7 @@ interface MenuItemConfig {
   routeName: string
   displayTitle: string
   icon: string
+  moduleManaged?: boolean
 }
 
 interface MenuGroupConfig {
@@ -211,10 +212,11 @@ const menuGroupConfigs: readonly MenuGroupConfig[] = [
     id: 'records-and-system',
     title: '记录与系统',
     items: [
-      // 系统级条目（手写固定）
+      // 系统级条目（手写固定，顺序即侧栏显示顺序）
+      { routeName: 'TrainingRecordsModule', displayTitle: '训练记录', icon: 'clock-rotate-left', moduleManaged: true },
       { routeName: 'Reports', displayTitle: '报告生成', icon: 'file-lines' },
+      { routeName: 'ResourceCenter', displayTitle: '资源管理', icon: 'folder-open', moduleManaged: true },
       { routeName: 'System', displayTitle: '系统管理', icon: 'gear' },
-      // 模块条目由 buildModuleMenuItems() 动态生成，不在此手写
     ],
   },
 ]
@@ -229,7 +231,7 @@ const menuGroupConfigs: readonly MenuGroupConfig[] = [
 function buildModuleMenuItems(): Map<string, MenuItemConfig[]> {
   const activeModules = ModuleRegistry.getActiveModules()
   const result = new Map<string, MenuItemConfig[]>()
-  const addedRouteNames = new Set<string>()
+  const registeredRouteNames = new Set<string>()
 
   const addToGroup = (groupId: string, item: MenuItemConfig) => {
     if (!result.has(groupId)) result.set(groupId, [])
@@ -244,7 +246,7 @@ function buildModuleMenuItems(): Map<string, MenuItemConfig[]> {
         displayTitle: mod.name,
         icon: mod.menuIcon,
       })
-      addedRouteNames.add(mod.menuRouteName)
+      registeredRouteNames.add(mod.menuRouteName)
     }
   }
 
@@ -256,7 +258,7 @@ function buildModuleMenuItems(): Map<string, MenuItemConfig[]> {
   ]
 
   for (const cfg of sharedFeatureConfigs) {
-    if (addedRouteNames.has(cfg.routeName)) continue
+    if (registeredRouteNames.has(cfg.routeName)) continue
     const anyActive = activeModules.some((mod) => {
       const feat = mod.features.find((f: ModuleFeature) => f.code === cfg.featureCode)
       return feat && feat.status === 'active'
@@ -330,11 +332,20 @@ const menuGroups = computed<MenuGroup[]>(() => {
     const systemItems = group.items
     // 模块级条目（注册表动态生成）
     const moduleItems = moduleItemsByGroup.get(group.id) ?? []
+    const moduleItemsByRouteName = new Map(moduleItems.map((item) => [item.routeName, item]))
+    // 固定入口只负责稳定排序；若入口由模块提供，则必须先通过注册表准入。
+    const orderedSystemItems = systemItems.flatMap((item) => {
+      const admittedModuleItem = moduleItemsByRouteName.get(item.routeName)
+      if (admittedModuleItem) return [admittedModuleItem]
+      return item.moduleManaged ? [] : [item]
+    })
+    const fixedRouteNames = new Set(systemItems.map((item) => item.routeName))
+    const additionalModuleItems = moduleItems.filter((item) => !fixedRouteNames.has(item.routeName))
 
     return {
       id: group.id,
       title: group.title,
-      items: [...systemItems, ...moduleItems].flatMap((itemConfig) => {
+      items: [...orderedSystemItems, ...additionalModuleItems].flatMap((itemConfig) => {
         const menuRoute = routesByName.get(itemConfig.routeName)
         if (!menuRoute) return []
 

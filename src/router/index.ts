@@ -1013,7 +1013,7 @@ const router = createRouter({
           name: 'ResourceCenter',
           component: ResourceCenter,
           meta: {
-            title: '资源中心',
+            title: '资源管理',
             icon: 'folder-open',
             roles: ['admin', 'teacher']
           }
