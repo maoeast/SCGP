@@ -1,0 +1,127 @@
+{
+  "generated_at": "2026-08-01T11:09:06.275Z",
+  "model": "gpt-image-2",
+  "style": "儿童绘本贴纸风格",
+  "note": "生活自理游戏物品贴纸：1:1 正方形，浅绿底(#EAF6EE)，与认知游戏统一风格。装书包/摆餐桌/刷牙/洗手共用。",
+  "items": [
+    {
+      "kind": "notebook",
+      "name": "练习本",
+      "game": "packbag",
+      "size": "1:1",
+      "file": "notebook.png"
+    },
+    {
+      "kind": "water-bottle",
+      "name": "水壶",
+      "game": "packbag",
+      "size": "1:1",
+      "file": "water-bottle.png"
+    },
+    {
+      "kind": "tissue",
+      "name": "纸巾",
+      "game": "packbag",
+      "size": "1:1",
+      "file": "tissue.png"
+    },
+    {
+      "kind": "umbrella",
+      "name": "雨伞",
+      "game": "packbag",
+      "size": "1:1",
+      "file": "umbrella.png"
+    },
+    {
+      "kind": "towel",
+      "name": "毛巾",
+      "game": "packbag",
+      "size": "1:1",
+      "file": "towel.png"
+    },
+    {
+      "kind": "cap",
+      "name": "帽子",
+      "game": "packbag",
+      "size": "1:1",
+      "file": "cap.png"
+    },
+    {
+      "kind": "sneakers",
+      "name": "运动鞋",
+      "game": "packbag",
+      "size": "1:1",
+      "file": "sneakers.png"
+    },
+    {
+      "kind": "toy-car",
+      "name": "玩具小车",
+      "game": "packbag",
+      "size": "1:1",
+      "file": "toy-car.png"
+    },
+    {
+      "kind": "plush",
+      "name": "毛绒玩偶",
+      "game": "packbag",
+      "size": "1:1",
+      "file": "plush.png"
+    },
+    {
+      "kind": "bowl",
+      "name": "小碗",
+      "game": "settable",
+      "size": "1:1",
+      "file": "bowl.png"
+    },
+    {
+      "kind": "spoon",
+      "name": "勺子",
+      "game": "settable",
+      "size": "1:1",
+      "file": "spoon.png"
+    },
+    {
+      "kind": "chopsticks",
+      "name": "筷子",
+      "game": "settable",
+      "size": "1:1",
+      "file": "chopsticks.png"
+    },
+    {
+      "kind": "napkin",
+      "name": "餐巾",
+      "game": "settable",
+      "size": "1:1",
+      "file": "napkin.png"
+    },
+    {
+      "kind": "cup",
+      "name": "杯子",
+      "game": "settable",
+      "size": "1:1",
+      "file": "cup.png"
+    },
+    {
+      "kind": "toothbrush-kids",
+      "name": "儿童牙刷",
+      "game": "brushteeth",
+      "size": "1:1",
+      "file": "toothbrush-kids.png"
+    },
+    {
+      "kind": "faucet",
+      "name": "水龙头",
+      "game": "washhands",
+      "size": "1:1",
+      "file": "faucet.png"
+    },
+    {
+      "kind": "soap-bottle",
+      "name": "洗手液瓶",
+      "game": "washhands",
+      "size": "1:1",
+      "file": "soap-bottle.png"
+    }
+  ]
+}

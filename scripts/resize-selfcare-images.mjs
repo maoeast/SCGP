@@ -28,9 +28,12 @@ const TARGET_DIRS = [
   resolve(projectRoot, 'assets/resources/images/self-care/progress'),
 ]
 
-// 仅 progress/ 目录做色键去底（进度状态图需要透明背景，用于叠加在场景底图上）
-// scenes/ 是全屏背景图，保留底色；characters/ 已随旧游戏删除
-const CHROMA_KEY_DIR = resolve(projectRoot, 'assets/resources/images/self-care/progress')
+// 需要色键去底的目录：progress（进度状态图，叠加在场景上）+ items（物品贴纸，PackBag 等游戏用）
+// scenes 是全屏背景图，保留底色；characters 已随旧游戏删除
+const CHROMA_KEY_DIRS = [
+  resolve(projectRoot, 'assets/resources/images/self-care/progress'),
+  resolve(projectRoot, 'assets/resources/images/self-care/items'),
+]
 
 // 浅绿底色 #EAF6EE → RGB(234, 246, 238)
 const CHROMA_R = 234
@@ -118,11 +121,9 @@ async function processFile(filePath) {
     }
   }
 
-  // --- 步骤2：色键去底（仅 characters/ 目录） ---
-  const dir = dirname(filePath)
-  const isChromaTarget =
-    dir === CHROMA_KEY_DIR ||
-    resolve(dir) === resolve(CHROMA_KEY_DIR)
+  // --- 步骤2：色键去底（progress/ + items/ 目录） ---
+  const dir = resolve(dirname(filePath))
+  const isChromaTarget = CHROMA_KEY_DIRS.some((d) => resolve(d) === dir)
   let didChroma = false
   if (isChromaTarget) {
     currentImage = chromaKey(currentImage, filePath)
@@ -155,7 +156,7 @@ async function processFile(filePath) {
 
 app.whenReady().then(async () => {
   const allFiles = TARGET_DIRS.flatMap(collectPngs)
-  console.log(`[Resize] 发现 ${allFiles.length} 张 PNG，目标最长边 ${MAX_DIM}px，色键目录: progress/`)
+  console.log(`[Resize] 发现 ${allFiles.length} 张 PNG，目标最长边 ${MAX_DIM}px，色键目录: progress/ + items/`)
 
   let resized = 0
   let skipped = 0
