@@ -6,6 +6,7 @@
 
 - Electron 单窗口 GUI
 - Node.js CLI 发码脚本
+- HTML 离线版（推荐：双击即用，无需安装 Node / 打包）
 
 ## 当前授权口径
 
@@ -45,6 +46,30 @@
 | `soothing_aids` | 安抚系统 | 安抚教具/安抚训练独立授权包，数据归属仍为 `emotional` |
 | `life_skills` | 生活自理 | 自理训练主链、`task_training`、相关量表与资源 |
 | `cognitive` | 认知发展 | 预留授权位，当前仍为占位能力包 |
+
+## HTML 离线版用法（推荐）
+
+无需安装 Node.js 或打包，双击即可在浏览器（Chrome / Edge 等 Chromium 内核）中离线生成激活码。
+
+### 1. 构建（在仓库根目录）
+
+```bash
+node scripts/build-license-generator-html.mjs
+```
+
+产物：`license-generator-dist/scgp-license-generator.html`（standalone 单文件，内嵌签名私钥）。
+
+### 2. 分发与使用
+
+- 将 `scgp-license-generator.html` 直接发送给售后实施人员，双击用浏览器打开即可使用
+- 生成后点击「导出激活文件(.lic)」即可下载激活密钥文件，通过微信 / 邮件发给客户
+- 客户在主程序激活页（或「系统管理 → 关于 → 重新激活 / 更新授权」）点击「导入激活文件」选择 .lic 文件，激活码自动填入，按原流程验证即可
+- 兼容导入生成工具自动保存的 `.txt` 摘要文件（内含「激活码: SPED-...」行）
+
+### 3. 安全注意
+
+- 产物 HTML 内嵌 RSA 签名私钥，仅供售后实施人员内部使用，**请勿外传该 HTML 文件**（因此产物不入版本库，模板 `generator.template.html` 入库）
+- 私钥轮换后需重新运行构建脚本生成新 HTML
 
 ## GUI 用法
 

@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCGP 激活码生成工具（HTML 版）</title>
+<style>
+  :root {
+    --primary: #4FB3BF;
+    --primary-dark: #3A98A3;
+    --bg: #f4f6f8;
+    --surface: #ffffff;
+    --text: #1f2937;
+    --muted: #5f6b7a;
+    --border: #dbe5f0;
+    --danger: #c0392b;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .app-shell { max-width: 1000px; margin: 0 auto; padding: 24px 16px 40px; }
+  .topbar { display: flex; align-items: baseline; gap: 12px; margin-bottom: 20px; }
+  .topbar h1 { font-size: 22px; margin: 0; }
+  .product-pill {
+    font-size: 12px; color: var(--primary-dark);
+    border: 1px solid var(--primary); border-radius: 999px;
+    padding: 2px 10px; background: rgba(79, 179, 191, 0.08);
+  }
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  }
+  .section-heading h2 { margin: 0 0 16px; font-size: 16px; }
+  .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .mode-card {
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px; cursor: pointer;
+    display: block; text-align: center; transition: border-color .15s, background .15s;
+  }
+  .mode-card input { display: none; }
+  .mode-card.is-selected { border-color: var(--primary); background: rgba(79, 179, 191, 0.08); }
+  .mode-title { display: block; font-weight: 600; font-size: 14px; }
+  .mode-copy { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .field { display: block; margin-bottom: 14px; }
+  .field > span { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .field small { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .field.is-hidden { display: none; }
+  .field.is-disabled { opacity: .5; }
+  input[type="text"], input[type="number"], textarea {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 12px; font-size: 14px; outline: none;
+  }
+  input:focus, textarea:focus { border-color: var(--primary); }
+  .input-action-row { display: flex; gap: 8px; }
+  .input-action-row input { flex: 1; }
+  .module-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .module-card {
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; font-size: 13px;
+  }
+  .module-card.is-selected { border-color: var(--primary); background: rgba(79, 179, 191, 0.06); }
+  .module-title { font-weight: 600; }
+  .module-subtitle { color: var(--muted); font-size: 12px; }
+  .actions { display: flex; gap: 10px; margin-top: 18px; }
+  .primary-button {
+    flex: 1; border: none; border-radius: 10px; padding: 11px 16px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .primary-button:disabled { opacity: .6; cursor: not-allowed; }
+  .secondary-button {
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px;
+    background: var(--surface); color: var(--text); font-size: 13px; cursor: pointer;
+  }
+  .secondary-button:disabled { opacity: .5; cursor: not-allowed; }
+  .result-block { margin-top: 4px; }
+  .result-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  #license-output { resize: vertical; min-height: 96px; font-family: Consolas, monospace; font-size: 13px; }
+  .result-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .export-button { background: linear-gradient(135deg, #72BE2F, #55A923); border: none; color: #fff; }
+  .summary-list { margin: 18px 0 0; padding: 0; list-style: none; }
+  .summary-list > div {
+    display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--border); font-size: 13px;
+  }
+  .summary-list dt { color: var(--muted); min-width: 72px; margin: 0; }
+  .summary-list dd { margin: 0; word-break: break-all; }
+  .summary-modules { display: flex; flex-wrap: wrap; gap: 6px; }
+  .summary-module-tag {
+    font-size: 12px; background: rgba(79, 179, 191, 0.1); color: var(--primary-dark);
+    border-radius: 999px; padding: 2px 10px;
+  }
+  .summary-module-tag small { margin-left: 4px; color: var(--muted); }
+  .result-footer { margin-top: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .status-chip {
+    font-size: 12px; border-radius: 999px; padding: 3px 12px;
+    background: #eef2f6; color: var(--muted);
+  }
+  .status-chip[data-state="success"] { background: rgba(114, 190, 47, .12); color: #4a7d1a; }
+  .status-chip[data-state="error"] { background: rgba(192, 57, 43, .1); color: var(--danger); }
+  .status-chip[data-state="loading"] { background: rgba(79, 179, 191, .12); color: var(--primary-dark); }
+  .status-detail { font-size: 12px; color: var(--muted); margin: 0; }
+  .security-note {
+    margin-top: 18px; padding: 12px 14px; border-radius: 10px; font-size: 12px; line-height: 1.7;
+    background: #fff8e7; border: 1px solid #f2dfa4; color: #7a5c14;
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <h1>激活码生成工具</h1>
+    <span class="product-pill">SCGP - 星愿能力发展平台 · HTML 离线版</span>
+  </header>
+
+  <main class="layout">
+    <section class="panel">
+      <div class="section-heading"><h2>授权配置</h2></div>
+
+      <div class="mode-grid">
+        <label class="mode-card">
+          <input type="radio" name="licenseType" value="trial" checked>
+          <span class="mode-title">试用码</span>
+          <span class="mode-copy">7 天，不绑机器</span>
+        </label>
+        <label class="mode-card">
+          <input type="radio" name="licenseType" value="full">
+          <span class="mode-title">正式码</span>
+          <span class="mode-copy">按天数绑机器</span>
+        </label>
+        <label class="mode-card">
+          <input type="radio" name="licenseType" value="permanent">
+          <span class="mode-title">永久码</span>
+          <span class="mode-copy">永久绑机器</span>
+        </label>
+      </div>
+
+      <label class="field" id="machine-field">
+        <span>机器码</span>
+        <div class="input-action-row">
+          <input id="machine-id" type="text" placeholder="请输入或粘贴客户机器码">
+          <button id="paste-machine-button" class="secondary-button" type="button">粘贴</button>
+        </div>
+        <small>试用码无需机器码，正式码和永久码必须填写。</small>
+      </label>
+
+      <label class="field is-hidden" id="days-field">
+        <span>授权天数</span>
+        <input id="days" type="number" min="1" step="1" value="365" placeholder="例如 365">
+        <small>仅「正式码」需要填写正整数天数。</small>
+      </label>
+
+      <div class="field">
+        <span>授权能力包</span>
+        <div id="module-grid" class="module-grid"></div>
+      </div>
+
+      <div class="actions">
+        <button id="generate-button" class="primary-button" type="button">生成激活码</button>
+        <button id="reset-button" class="secondary-button" type="button">重置</button>
+      </div>
+    </section>
+
+    <section id="result-panel" class="panel">
+      <div class="section-heading"><h2>生成结果</h2></div>
+
+      <div class="result-block">
+        <span class="result-label">激活码</span>
+        <textarea id="license-output" rows="5" readonly placeholder="生成后显示，或直接导出激活文件(.lic) 交给客户导入"></textarea>
+        <div class="result-actions">
+          <button id="copy-license-button" class="secondary-button" type="button" disabled>复制激活码</button>
+          <button id="export-license-button" class="secondary-button export-button" type="button" disabled>导出激活文件(.lic)</button>
+        </div>
+      </div>
+
+      <dl class="summary-list">
+        <div><dt>授权类型</dt><dd id="summary-type">—</dd></div>
+        <div><dt>机器码</dt><dd id="summary-machine">—</dd></div>
+        <div><dt>有效期</dt><dd id="summary-validity">—</dd></div>
+        <div><dt>创建时间</dt><dd id="summary-created">—</dd></div>
+        <div><dt>过期时间</dt><dd id="summary-expire">—</dd></div>
+        <div><dt>能力包</dt><dd id="summary-modules" class="summary-modules">—</dd></div>
+      </dl>
+
+      <div class="result-footer">
+        <div id="status-chip" class="status-chip" data-state="idle">等待生成</div>
+        <p id="status-detail" class="status-detail">生成后可将 .lic 激活文件发送给客户，在主程序激活页「导入激活文件」即可。</p>
+      </div>
+
+      <div class="security-note">
+        <strong>安全提示：</strong>本工具为离线本地生成，激活码不会上传网络。文件内嵌签名私钥，仅供售后实施人员内部使用，<strong>请勿外传本 HTML 文件</strong>。
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* =====================================================================
+ * SCGP 激活码生成器（HTML 离线版）
+ *
+ * 签名算法与主程序验证端（src/utils/license-manager.ts）保持一致：
+ *   RSASSA-PKCS1-v1_5 + SHA-256（即 PKCS#1 v1.5 padding）
+ * 封装格式与 generate-license.js 保持一致：
+ *   [4 字节大端 JSON 长度][JSON 载荷][签名] → base64 → 5 字符分组 → SPED- 前缀
+ * ===================================================================== */
+
+/* ---------- 签名私钥（构建时注入；改动请重新运行构建脚本） ---------- */
+const PRIVATE_KEY_PEM = `{{PRIVATE_KEY_PEM}}`;
+
+/* ---------- 授权能力包 ---------- */
+const ENTITLEMENT_META = {
+  sensory_integration: { title: '感官统合', subtitle: 'sensory_integration' },
+  emotional: { title: '情绪发展', subtitle: 'emotional' },
+  social_communication: { title: '社交沟通', subtitle: 'social_communication' },
+  fine_motor: { title: '精细动作', subtitle: 'fine_motor' },
+  soothing_aids: { title: '安抚系统', subtitle: 'soothing_aids' },
+  life_skills: { title: '生活自理', subtitle: 'life_skills' },
+  cognitive: { title: '认知发展', subtitle: 'cognitive' }
+};
+const ENTITLEMENT_CODES = Object.keys(ENTITLEMENT_META);
+const LICENSE_VERSION = '1.0';
+const TRIAL_DAYS = 7;
+
+/* ---------- 载荷生成（与 generate-license.js 一致） ---------- */
+function generateTrialLicense(entitlements) {
+  return {
+    t: 'trial',
+    v: LICENSE_VERSION,
+    c: Date.now(),
+    e: Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000,
+    m: '*',
+    am: [...entitlements]
+  };
+}
+
+function generateFullLicense(machineId, days, entitlements) {
+  return {
+    t: 'full',
+    v: LICENSE_VERSION,
+    m: machineId,
+    c: Date.now(),
+    e: days ? Date.now() + days * 24 * 60 * 60 * 1000 : null,
+    am: [...entitlements],
+    p: !days
+  };
+}
+
+/* ---------- Web Crypto 签名（与主程序验证端同算法） ---------- */
+async function importPrivateKey(pem) {
+  const pemContents = pem
+    .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+    .replace(/-----END PRIVATE KEY-----/g, '')
+    .replace(/\n/g, '');
+
+  const binaryDerString = atob(pemContents);
+  const binaryDer = new Uint8Array(binaryDerString.length);
+  for (let i = 0; i < binaryDerString.length; i++) {
+    binaryDer[i] = binaryDerString.charCodeAt(i);
+  }
+
+  return crypto.subtle.importKey(
+    'pkcs8',
+    binaryDer,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+}
+
+async function encryptLicenseData(licenseData, privateKey) {
+  const jsonData = JSON.stringify(licenseData);
+  const dataBuffer = new TextEncoder().encode(jsonData);
+
+  const signature = await crypto.subtle.sign(
+    { name: 'RSASSA-PKCS1-v1_5' },
+    privateKey,
+    dataBuffer
+  );
+
+  const lengthBuffer = new Uint8Array(4);
+  new DataView(lengthBuffer.buffer).setUint32(0, dataBuffer.length, false);
+
+  const combined = new Uint8Array(4 + dataBuffer.length + signature.byteLength);
+  combined.set(lengthBuffer, 0);
+  combined.set(dataBuffer, 4);
+  combined.set(new Uint8Array(signature), 4 + dataBuffer.length);
+
+  let binary = '';
+  for (let i = 0; i < combined.length; i++) {
+    binary += String.fromCharCode(combined[i]);
+  }
+  return btoa(binary);
+}
+
+function formatLicenseKey(base64Key) {
+  const groups = [];
+  for (let i = 0; i < base64Key.length; i += 5) {
+    groups.push(base64Key.slice(i, i + 5));
+  }
+  return 'SPED-' + groups.join('-');
+}
+
+/* ---------- UI 状态 ---------- */
+const state = { latestKey: '', latestArtifact: null };
+
+const machineInput = document.getElementById('machine-id');
+const daysInput = document.getElementById('days');
+const machineField = document.getElementById('machine-field');
+const daysField = document.getElementById('days-field');
+const entitlementGrid = document.getElementById('module-grid');
+const licenseOutput = document.getElementById('license-output');
+const copyLicenseButton = document.getElementById('copy-license-button');
+const exportLicenseButton = document.getElementById('export-license-button');
+const generateButton = document.getElementById('generate-button');
+const resetButton = document.getElementById('reset-button');
+const pasteMachineButton = document.getElementById('paste-machine-button');
+const statusChip = document.getElementById('status-chip');
+const statusDetail = document.getElementById('status-detail');
+
+function getSelectedType() {
+  return document.querySelector('input[name="licenseType"]:checked')?.value || 'trial';
+}
+
+function getSelectedEntitlements() {
+  return [...document.querySelectorAll('input[name="entitlements"]:checked')].map((el) => el.value);
+}
+
+function renderEntitlements() {
+  entitlementGrid.innerHTML = ENTITLEMENT_CODES.map((code) => {
+    const meta = ENTITLEMENT_META[code];
+    return `
+      <label class="module-card">
+        <input type="checkbox" name="entitlements" value="${code}" checked>
+        <span class="module-content">
+          <span class="module-title">${meta.title}</span>
+          <span class="module-subtitle">${meta.subtitle}</span>
+        </span>
+      </label>
+    `;
+  }).join('');
+}
+
+function syncSelectionStyles() {
+  document.querySelectorAll('.mode-card').forEach((card) => {
+    const input = card.querySelector('input[name="licenseType"]');
+    card.classList.toggle('is-selected', Boolean(input?.checked));
+  });
+  document.querySelectorAll('.module-card').forEach((card) => {
+    const input = card.querySelector('input[name="entitlements"]');
+    card.classList.toggle('is-selected', Boolean(input?.checked));
+  });
+}
+
+function updateVisibility() {
+  const type = getSelectedType();
+  const requiresMachineId = type !== 'trial';
+  const requiresDays = type === 'full';
+
+  machineField.classList.toggle('is-disabled', !requiresMachineId);
+  daysField.classList.toggle('is-hidden', !requiresDays);
+  machineInput.disabled = !requiresMachineId;
+  pasteMachineButton.disabled = !requiresMachineId;
+  daysInput.disabled = !requiresDays;
+
+  if (!requiresMachineId) {
+    machineInput.value = '';
+  }
+  syncSelectionStyles();
+}
+
+function setStatus(stateName, message) {
+  const chipTextMap = { idle: '等待生成', loading: '生成中', success: '已生成', error: '生成失败' };
+  statusChip.dataset.state = stateName;
+  statusChip.textContent = chipTextMap[stateName] || chipTextMap.idle;
+  statusDetail.textContent = message;
+}
+
+function resetSummary() {
+  ['summary-type', 'summary-machine', 'summary-validity', 'summary-created', 'summary-expire'].forEach((id) => {
+    document.getElementById(id).textContent = '—';
+  });
+  document.getElementById('summary-modules').innerHTML = '—';
+}
+
+function renderSummary(summary) {
+  document.getElementById('summary-type').textContent = summary.typeLabel;
+  document.getElementById('summary-machine').textContent = summary.machineIdLabel;
+  document.getElementById('summary-validity').textContent = summary.validityLabel;
+  document.getElementById('summary-created').textContent = summary.createdAtLabel;
+  document.getElementById('summary-expire').textContent = summary.expireAtLabel || '永久或不适用';
+  document.getElementById('summary-modules').innerHTML = summary.entitlements.map((code) => {
+    const meta = ENTITLEMENT_META[code] || { title: code };
+    return `<span class="summary-module-tag">${meta.title}<small>${code}</small></span>`;
+  }).join('');
+}
+
+function buildSummary(licenseData, entitlements, type, machineId, days) {
+  const isTrial = type === 'trial';
+  const isPermanent = type === 'permanent';
+  const fmt = (ts) => (ts ? new Date(ts).toLocaleString('zh-CN') : '');
+  return {
+    typeLabel: isTrial ? '试用版' : '正式版',
+    machineIdLabel: isTrial ? '不绑定机器码' : machineId,
+    validityLabel: isTrial ? `${TRIAL_DAYS}天` : isPermanent ? '永久' : `${days}天`,
+    createdAtLabel: fmt(licenseData.c),
+    expireAtLabel: licenseData.e ? fmt(licenseData.e) : '',
+    entitlements,
+    isPermanent,
+    isTrial
+  };
+}
+
+function validateForm() {
+  const type = getSelectedType();
+  const machineId = machineInput.value.trim();
+  const selectedEntitlements = getSelectedEntitlements();
+
+  if (selectedEntitlements.length === 0) {
+    throw new Error('至少选择一个授权能力包');
+  }
+  if (type !== 'trial' && !machineId) {
+    throw new Error('正式码和永久码必须填写机器码');
+  }
+  if (type === 'full') {
+    const days = Number.parseInt(daysInput.value, 10);
+    if (!Number.isInteger(days) || days <= 0) {
+      throw new Error('正式码的授权天数必须是正整数');
+    }
+  }
+}
+
+function createFilename(type, machineId) {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return type === 'trial'
+    ? `trial_license_${timestamp}.lic`
+    : `license_${machineId.slice(0, 8)}_${timestamp}.lic`;
+}
+
+function exportLicenseFile(formattedKey, filename) {
+  const blob = new Blob([formattedKey + '\n'], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ---------- 生成流程 ---------- */
+let signingKeyPromise = null;
+
+function ensureSigningKey() {
+  if (!signingKeyPromise) {
+    signingKeyPromise = importPrivateKey(PRIVATE_KEY_PEM).catch((error) => {
+      signingKeyPromise = null;
+      throw new Error('签名私钥加载失败：' + (error instanceof Error ? error.message : String(error)));
+    });
+  }
+  return signingKeyPromise;
+}
+
+async function handleGenerate() {
+  try {
+    validateForm();
+    generateButton.disabled = true;
+    setStatus('loading', '正在生成激活码...');
+
+    const type = getSelectedType();
+    const machineId = machineInput.value.trim();
+    const selectedEntitlements = getSelectedEntitlements();
+
+    let licenseData;
+    if (type === 'trial') {
+      licenseData = generateTrialLicense(selectedEntitlements);
+    } else {
+      const days = type === 'full' ? Number.parseInt(daysInput.value, 10) : null;
+      licenseData = generateFullLicense(machineId, days, selectedEntitlements);
+    }
+
+    const privateKey = await ensureSigningKey();
+    const base64Key = await encryptLicenseData(licenseData, privateKey);
+    const formattedKey = formatLicenseKey(base64Key);
+    const summary = buildSummary(
+      licenseData,
+      selectedEntitlements,
+      type,
+      machineId,
+      type === 'full' ? Number.parseInt(daysInput.value, 10) : null
+    );
+
+    state.latestKey = formattedKey;
+    state.latestArtifact = { filename: createFilename(type, machineId), summary };
+    licenseOutput.value = formattedKey;
+    renderSummary(summary);
+    copyLicenseButton.disabled = false;
+    exportLicenseButton.disabled = false;
+    setStatus('success', '激活码已生成，可复制或导出 .lic 激活文件发给客户');
+  } catch (error) {
+    setStatus('error', error instanceof Error ? error.message : '生成激活码失败');
+  } finally {
+    generateButton.disabled = false;
+  }
+}
+
+async function handleCopyLicense() {
+  if (!state.latestKey) return;
+  try {
+    await navigator.clipboard.writeText(state.latestKey);
+    setStatus('success', '激活码已复制到剪贴板');
+  } catch {
+    licenseOutput.select();
+    document.execCommand('copy');
+    setStatus('success', '激活码已复制到剪贴板');
+  }
+}
+
+function handleExportLicense() {
+  if (!state.latestKey || !state.latestArtifact) return;
+  exportLicenseFile(state.latestKey, state.latestArtifact.filename);
+  setStatus('success', `已导出 ${state.latestArtifact.filename}，可发送给客户导入激活`);
+}
+
+async function handlePasteMachineCode() {
+  try {
+    if (pasteMachineButton.disabled) return;
+    const text = await navigator.clipboard.readText();
+    machineInput.value = (text || '').trim();
+    setStatus('idle', '已从剪贴板粘贴机器码');
+  } catch {
+    setStatus('error', '读取剪贴板失败，请手动输入机器码');
+  }
+}
+
+function handleReset() {
+  document.querySelectorAll('input[name="licenseType"]').forEach((radio) => {
+    radio.checked = radio.value === 'trial';
+  });
+  machineInput.value = '';
+  daysInput.value = '365';
+  document.querySelectorAll('input[name="entitlements"]').forEach((input) => {
+    input.checked = true;
+  });
+  licenseOutput.value = '';
+  state.latestKey = '';
+  state.latestArtifact = null;
+  copyLicenseButton.disabled = true;
+  exportLicenseButton.disabled = true;
+  resetSummary();
+  updateVisibility();
+  setStatus('idle', '生成后可将 .lic 激活文件发送给客户，在主程序激活页「导入激活文件」即可。');
+}
+
+/* ---------- 事件绑定 ---------- */
+renderEntitlements();
+updateVisibility();
+resetSummary();
+
+document.querySelectorAll('input[name="licenseType"]').forEach((radio) => {
+  radio.addEventListener('change', updateVisibility);
+});
+entitlementGrid.addEventListener('change', syncSelectionStyles);
+generateButton.addEventListener('click', handleGenerate);
+resetButton.addEventListener('click', handleReset);
+copyLicenseButton.addEventListener('click', handleCopyLicense);
+exportLicenseButton.addEventListener('click', handleExportLicense);
+pasteMachineButton.addEventListener('click', handlePasteMachineCode);
+</script>
+</body>
+</html>

@@ -58,6 +58,9 @@ AIimages/
 /scripts/database.sqlite
 /scripts/teaching-materials-export.json
 
+# License generator HTML artifact (embeds the signing private key — never commit)
+license-generator-dist/scgp-license-generator.html
+
 # Disposable user-manual screenshot capture workspaces and local document backups
 /output/
 /docs/user-manual/*.bak
