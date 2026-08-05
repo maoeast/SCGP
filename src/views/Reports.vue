@@ -5,16 +5,6 @@
         <h1>报告中心</h1>
         <p class="subtitle">统一查看和管理评估、训练与情绪模块报告，减少跨模块查找成本。</p>
       </div>
-      <div class="header-right">
-        <el-button
-          type="warning"
-          :icon="RefreshRight"
-          :loading="migrating"
-          @click="migrateData"
-        >
-          {{ migrating ? '迁移中...' : '迁移历史数据' }}
-        </el-button>
-      </div>
     </div>
 
     <section class="reports-filters scgp-surface scgp-filter-surface">
@@ -216,7 +206,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { RefreshRight, Search } from '@element-plus/icons-vue'
+import { Search } from '@element-plus/icons-vue'
 import { useStudentStore } from '@/stores/student'
 import { ReportAPI } from '@/database/api'
 import { buildAssessmentReportRoute } from '@/features/assessment/report-routes'
@@ -279,7 +269,6 @@ const activeDatePreset = ref<QuickRangeKey>('all')
 const students = ref<any[]>([])
 const reportList = ref<any[]>([])
 const loading = ref(false)
-const migrating = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 
@@ -517,38 +506,6 @@ async function deleteReport(report: any) {
       console.error('删除报告失败:', error)
       ElMessage.error('删除失败')
     }
-  }
-}
-
-async function migrateData() {
-  try {
-    await ElMessageBox.confirm(
-      '此操作将为历史评估数据创建对应的报告记录，不会删除已有数据。',
-      '迁移历史数据',
-      {
-        confirmButtonText: '开始迁移',
-        cancelButtonText: '取消',
-        type: 'warning',
-      },
-    )
-
-    migrating.value = true
-    const api = new ReportAPI()
-    const result = api.migrateAssessmentRecordsToReportRecords()
-
-    if (result.total > 0) {
-      ElMessage.success(`历史数据迁移完成，共处理 ${result.total} 条记录`)
-      await loadReports()
-    } else {
-      ElMessage.info('没有需要迁移的数据')
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('迁移数据失败:', error)
-      ElMessage.error('迁移失败')
-    }
-  } finally {
-    migrating.value = false
   }
 }
 

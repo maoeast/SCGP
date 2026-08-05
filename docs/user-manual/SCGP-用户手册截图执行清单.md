@@ -13,7 +13,7 @@
 - `demo-write` 只能写入可丢弃演示数据库；`isolated-state` 必须使用独立 `userData`、临时资源和受控状态，禁止触碰当前开发数据、正式更新源或真实安装流程。
 - 路由模板中的 `{studentId}`、`{taskId}`、`{...AssessId}` 等变量由对应数据配置加载后解析，不得硬编码正式业务数据。
 - 图片写入 `docs/user-manual/screenshots/Sxxx.png`，正文生成时按唯一的 `[图 Sxxx]` 锚点替换，不依赖模糊标题匹配。
-- 当前 `capture-user-manual-screenshots.mjs` 只实现 S001、S003、S005、S017、S023、S057、S123、S174、S197、S209 的实际处理器；其余场景需按优先级逐批补齐处理器后再执行。
+- 当前 `capture-user-manual-screenshots.mjs` 只实现 S001、S003、S005、S017、S023、S057、S123、S173、S196、S208 的实际处理器；其余场景需按优先级逐批补齐处理器后再执行。
 - 现有 `screenshot-scenes.mjs` 与 `capture-*-screenshots.mjs` 属旧说明书脚本，不得作为本清单的当前执行器。
 
 ## 2. 运行命令与产物
@@ -286,83 +286,82 @@ node scripts/manual/capture-user-manual-screenshots.mjs --ids S017 --run-id audi
 | **S145** | P2 / 待采集 | 删除报告确认 | `/reports` | 教师或管理员 | `reports` | 对可删除演示报告点击删除 | 报告标识、风险说明、取消和确认按钮可见 | Electron 自动 | 隔离状态 | `dialog` | `S145.png` → `[图 S145]` |
 | **S146** | P0 / 待采集 | 评估报告 Word 导出 | `/assessment/sm/report?assessId={smAssessId}&studentId={studentId}` | 教师或管理员 | `reports` | 打开支持 Word 导出的评估报告 | 报告标题和 Word 导出按钮可见 | Electron 自动 | 只读 | `report` | `S146.png` → `[图 S146]` |
 | **S147** | P0 / 待采集 | 情绪报告 Word 导出 | `/emotional/report?studentId={studentId}` | 教师或管理员 | `reports` | 打开情绪报告 | 报告标题和 Word 导出按钮可见 | Electron 自动 | 只读 | `report` | `S147.png` → `[图 S147]` |
-| **S148** | P2 / 待采集 | 历史数据迁移入口 | `/reports` | 教师或管理员 | `reports` | 加载包含历史记录的演示数据库并进入报告中心 | 历史数据迁移入口或维护提示可见；不进入开发迁移路由 | Electron 自动 | 隔离状态 | `main` | `S148.png` → `[图 S148]` |
 
 ### 第 14 章
 
 | ID | 优先级 / 状态 | 页面状态 | 路由模板 | 执行角色 | 数据配置 | 操作步骤 | 可见断言 | 采集 | 安全 | 裁切 | 输出与插入 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **S149** | P0 / 待采集 | 教师只读训练资源列表 | `/resource-center?tab=training` | 教师 | `resources` | 使用教师账号进入训练资源标签 | 筛选和资源列表可见；管理员维护按钮不可见 | Electron 自动 | 只读 | `main` | `S149.png` → `[图 S149]` |
-| **S150** | P1 / 待采集 | 训练资源筛选 | `/resource-center?tab=training` | 教师或管理员 | `resources` | 组合模块、类型、状态或关键词筛选 | 筛选条件和匹配资源结果可见 | Electron 自动 | 只读 | `main` | `S150.png` → `[图 S150]` |
-| **S151** | P0 / 待采集 | 器材封面、说明与标签 | `/resource-center?tab=training` | 教师或管理员 | `resources` | 定位一项器材资源卡片 | 封面、说明和标签在列表详情区域可见；无独立详情页 | Electron 自动 | 只读 | `card` | `S151.png` → `[图 S151]` |
-| **S152** | P0 / 待采集 | 新建自定义训练资源 | `/resource-center?tab=training` | 管理员 | `resources` | 使用管理员账号点击新建自定义资源 | 创建字段、资源类型和保存操作可见 | Electron 自动 | 演示写入 | `dialog` | `S152.png` → `[图 S152]` |
-| **S153** | P1 / 待采集 | 系统预置资源编辑锁定态 | `/resource-center?tab=training` | 管理员 | `resources` | 打开系统预置资源编辑 | 系统字段锁定状态和允许编辑字段可见 | Electron 自动 | 只读 | `dialog` | `S153.png` → `[图 S153]` |
-| **S154** | P1 / 待采集 | 情绪资源包导入预览 | `/resource-center?tab=training` | 管理员 | `resources` | 选择情绪资源包并进入导入预览 | 包信息、待导入统计和确认操作可见 | Electron 自动 | 演示写入 | `dialog` | `S154.png` → `[图 S154]` |
-| **S155** | P1 / 待采集 | 情绪资源包导出预览 | `/resource-center?tab=training` | 管理员 | `resources` | 对情绪资源触发导出预览 | 导出范围、统计和目标说明可见 | Electron 自动 | 只读 | `dialog` | `S155.png` → `[图 S155]` |
-| **S156** | P0 / 待采集 | 训练资源启停 | `/resource-center?tab=training` | 管理员 | `resources` | 定位可启停的演示训练资源并切换状态 | 资源状态开关和更新后的状态可见 | Electron 自动 | 演示写入 | `card` | `S156.png` → `[图 S156]` |
-| **S157** | P2 / 待采集 | 自定义资源软删除确认 | `/resource-center?tab=training` | 管理员 | `resources` | 对可删除自定义资源点击删除 | 资源名称、软删除说明、取消和确认按钮可见 | Electron 自动 | 隔离状态 | `dialog` | `S157.png` → `[图 S157]` |
-| **S158** | P1 / 待采集 | 已禁用资源筛选与恢复 | `/resource-center?tab=training` | 管理员 | `resources` | 筛选已禁用资源并定位可恢复项 | 已禁用状态、筛选条件和恢复入口可见 | Electron 自动 | 演示写入 | `main` | `S158.png` → `[图 S158]` |
-| **S159** | P0 / 待采集 | 教学材料列表与筛选 | `/resource-center?tab=teaching` | 教师或管理员 | `resources` | 切换到教学资料标签 | 筛选工具、材料列表和卡片可见 | Electron 自动 | 只读 | `main` | `S159.png` → `[图 S159]` |
-| **S160** | P0 / 待采集 | 教学材料操作与收藏状态 | `/resource-center?tab=teaching` | 教师或管理员 | `resources` | 定位一张教学材料卡片并切换收藏 | 打开、详情、收藏操作和收藏状态可见 | Electron 自动 | 演示写入 | `card` | `S160.png` → `[图 S160]` |
-| **S161** | P1 / 待采集 | 教学材料详情弹窗 | `/resource-center?tab=teaching` | 教师或管理员 | `resources` | 点击教学材料详情 | 标题、来源、标签、说明和打开操作可见 | Electron 自动 | 只读 | `dialog` | `S161.png` → `[图 S161]` |
-| **S162** | P0 / 待采集 | 我的收藏 | `/resource-center?tab=teaching` | 教师或管理员 | `resources` | 点击我的收藏 | 收藏筛选状态和已收藏材料列表可见 | Electron 自动 | 只读 | `main` | `S162.png` → `[图 S162]` |
-| **S163** | P1 / 待采集 | 教学材料管理工具与来源目录 | `/resource-center?tab=teaching` | 管理员 | `resources` | 使用管理员账号定位教学材料管理工具 | 上传、批量导入和来源目录信息可见 | Electron 自动 | 只读 | `main` | `S163.png` → `[图 S163]` |
-| **S164** | P0 / 待采集 | 单个教学材料上传 | `/resource-center?tab=teaching` | 管理员 | `resources` | 点击上传资料并选择临时演示文件 | 标题、分类、文件待上传状态和上传按钮可见 | Electron 自动 | 演示写入 | `dialog` | `S164.png` → `[图 S164]` |
-| **S165** | P1 / 待采集 | 教学材料批量导入 | `/resource-center?tab=teaching` | 管理员 | `resources` | 点击批量导入并选择临时目录和 CSV | 批量导入步骤、已选路径和执行按钮可见 | Electron 自动 | 演示写入 | `dialog` | `S165.png` → `[图 S165]` |
-| **S166** | P1 / 待采集 | 教学材料导入结果 | `/resource-center?tab=teaching` | 管理员 | `resources` | 执行可丢弃教学材料批量导入 | 成功失败统计通知和更新后的材料列表可见 | Electron 辅助 | 演示写入 | `toast` | `S166.png` → `[图 S166]` |
+| **S148** | P0 / 待采集 | 教师只读训练资源列表 | `/resource-center?tab=training` | 教师 | `resources` | 使用教师账号进入训练资源标签 | 筛选和资源列表可见；管理员维护按钮不可见 | Electron 自动 | 只读 | `main` | `S148.png` → `[图 S148]` |
+| **S149** | P1 / 待采集 | 训练资源筛选 | `/resource-center?tab=training` | 教师或管理员 | `resources` | 组合模块、类型、状态或关键词筛选 | 筛选条件和匹配资源结果可见 | Electron 自动 | 只读 | `main` | `S149.png` → `[图 S149]` |
+| **S150** | P0 / 待采集 | 器材封面、说明与标签 | `/resource-center?tab=training` | 教师或管理员 | `resources` | 定位一项器材资源卡片 | 封面、说明和标签在列表详情区域可见；无独立详情页 | Electron 自动 | 只读 | `card` | `S150.png` → `[图 S150]` |
+| **S151** | P0 / 待采集 | 新建自定义训练资源 | `/resource-center?tab=training` | 管理员 | `resources` | 使用管理员账号点击新建自定义资源 | 创建字段、资源类型和保存操作可见 | Electron 自动 | 演示写入 | `dialog` | `S151.png` → `[图 S151]` |
+| **S152** | P1 / 待采集 | 系统预置资源编辑锁定态 | `/resource-center?tab=training` | 管理员 | `resources` | 打开系统预置资源编辑 | 系统字段锁定状态和允许编辑字段可见 | Electron 自动 | 只读 | `dialog` | `S152.png` → `[图 S152]` |
+| **S153** | P1 / 待采集 | 情绪资源包导入预览 | `/resource-center?tab=training` | 管理员 | `resources` | 选择情绪资源包并进入导入预览 | 包信息、待导入统计和确认操作可见 | Electron 自动 | 演示写入 | `dialog` | `S153.png` → `[图 S153]` |
+| **S154** | P1 / 待采集 | 情绪资源包导出预览 | `/resource-center?tab=training` | 管理员 | `resources` | 对情绪资源触发导出预览 | 导出范围、统计和目标说明可见 | Electron 自动 | 只读 | `dialog` | `S154.png` → `[图 S154]` |
+| **S155** | P0 / 待采集 | 训练资源启停 | `/resource-center?tab=training` | 管理员 | `resources` | 定位可启停的演示训练资源并切换状态 | 资源状态开关和更新后的状态可见 | Electron 自动 | 演示写入 | `card` | `S155.png` → `[图 S155]` |
+| **S156** | P2 / 待采集 | 自定义资源软删除确认 | `/resource-center?tab=training` | 管理员 | `resources` | 对可删除自定义资源点击删除 | 资源名称、软删除说明、取消和确认按钮可见 | Electron 自动 | 隔离状态 | `dialog` | `S156.png` → `[图 S156]` |
+| **S157** | P1 / 待采集 | 已禁用资源筛选与恢复 | `/resource-center?tab=training` | 管理员 | `resources` | 筛选已禁用资源并定位可恢复项 | 已禁用状态、筛选条件和恢复入口可见 | Electron 自动 | 演示写入 | `main` | `S157.png` → `[图 S157]` |
+| **S158** | P0 / 待采集 | 教学材料列表与筛选 | `/resource-center?tab=teaching` | 教师或管理员 | `resources` | 切换到教学资料标签 | 筛选工具、材料列表和卡片可见 | Electron 自动 | 只读 | `main` | `S158.png` → `[图 S158]` |
+| **S159** | P0 / 待采集 | 教学材料操作与收藏状态 | `/resource-center?tab=teaching` | 教师或管理员 | `resources` | 定位一张教学材料卡片并切换收藏 | 打开、详情、收藏操作和收藏状态可见 | Electron 自动 | 演示写入 | `card` | `S159.png` → `[图 S159]` |
+| **S160** | P1 / 待采集 | 教学材料详情弹窗 | `/resource-center?tab=teaching` | 教师或管理员 | `resources` | 点击教学材料详情 | 标题、来源、标签、说明和打开操作可见 | Electron 自动 | 只读 | `dialog` | `S160.png` → `[图 S160]` |
+| **S161** | P0 / 待采集 | 我的收藏 | `/resource-center?tab=teaching` | 教师或管理员 | `resources` | 点击我的收藏 | 收藏筛选状态和已收藏材料列表可见 | Electron 自动 | 只读 | `main` | `S161.png` → `[图 S161]` |
+| **S162** | P1 / 待采集 | 教学材料管理工具与来源目录 | `/resource-center?tab=teaching` | 管理员 | `resources` | 使用管理员账号定位教学材料管理工具 | 上传、批量导入和来源目录信息可见 | Electron 自动 | 只读 | `main` | `S162.png` → `[图 S162]` |
+| **S163** | P0 / 待采集 | 单个教学材料上传 | `/resource-center?tab=teaching` | 管理员 | `resources` | 点击上传资料并选择临时演示文件 | 标题、分类、文件待上传状态和上传按钮可见 | Electron 自动 | 演示写入 | `dialog` | `S163.png` → `[图 S163]` |
+| **S164** | P1 / 待采集 | 教学材料批量导入 | `/resource-center?tab=teaching` | 管理员 | `resources` | 点击批量导入并选择临时目录和 CSV | 批量导入步骤、已选路径和执行按钮可见 | Electron 自动 | 演示写入 | `dialog` | `S164.png` → `[图 S164]` |
+| **S165** | P1 / 待采集 | 教学材料导入结果 | `/resource-center?tab=teaching` | 管理员 | `resources` | 执行可丢弃教学材料批量导入 | 成功失败统计通知和更新后的材料列表可见 | Electron 辅助 | 演示写入 | `toast` | `S165.png` → `[图 S165]` |
 
 ### 第 15 章
 
 | ID | 优先级 / 状态 | 页面状态 | 路由模板 | 执行角色 | 数据配置 | 操作步骤 | 可见断言 | 采集 | 安全 | 裁切 | 输出与插入 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **S167** | P0 / 待采集 | AI 浮动入口 | `/dashboard` | 教师或管理员 | `ai` | 进入登录后首页并定位右下角 | 独立圆形 AI 浮动入口可见且不遮挡主要操作 | Electron 自动 | 只读 | `card` | `S167.png` → `[图 S167]` |
-| **S168** | P0 / 待采集 | AI 助手抽屉 | `/dashboard` | 教师或管理员 | `ai` | 点击 AI 浮动入口 | 助手抽屉、消息区、输入区和关闭入口完整可见 | Electron 自动 | 只读 | `drawer` | `S168.png` → `[图 S168]` |
-| **S169** | P0 / 待采集 | 智能体选择器 | `/dashboard` | 教师或管理员 | `ai` | 在 AI 抽屉展开智能体选择器 | 可用智能体名称、专长或状态可见 | Electron 自动 | 只读 | `popover` | `S169.png` → `[图 S169]` |
-| **S170** | P0 / 待采集 | 模型选择器 | `/dashboard` | 教师或管理员 | `ai` | 在 AI 抽屉展开模型选择器 | 当前模型和可选模型清单可见；无 API Key | Electron 自动 | 只读 | `popover` | `S170.png` → `[图 S170]` |
-| **S171** | P0 / 待采集 | 开场问题与输入区 | `/dashboard` | 教师或管理员 | `ai` | 选择一个内置智能体并保持新会话 | 开场问题、输入区、报告和附件工具可见 | Electron 自动 | 只读 | `drawer` | `S171.png` → `[图 S171]` |
-| **S172** | P1 / 待采集 | 最近会话 | `/dashboard` | 教师或管理员 | `ai` | 打开 AI 抽屉的最近会话区域 | 最近会话标题、时间和继续入口可见 | Electron 自动 | 只读 | `drawer` | `S172.png` → `[图 S172]` |
-| **S173** | P1 / 待采集 | 完整会话历史 | `/profile/ai-chat-history` | 教师或管理员 | `ai` | 从用户菜单进入完整会话历史 | 历史筛选、会话列表和查看删除操作可见 | Electron 自动 | 只读 | `main` | `S173.png` → `[图 S173]` |
-| **S174** | P0 / 待采集 | AI 附件待发送状态 | `/dashboard` | 教师或管理员 | `ai` | 通过原生文件选择器选取临时附件并返回抽屉 | 附件名称、大小、待发送预览和移除入口可见 | Electron 辅助 | 演示写入 | `drawer` | `S174.png` → `[图 S174]` |
-| **S175** | P0 / 待采集 | AI 外发隐私告知 | `/dashboard` | 教师或管理员 | `ai` | 在未确认外发告知的隔离账号首次发送消息 | 隐私告知、数据范围、取消和确认操作可见 | Electron 自动 | 隔离状态 | `dialog` | `S175.png` → `[图 S175]` |
-| **S176** | P0 / 待采集 | 消息编辑与单条导出 | `/dashboard` | 教师或管理员 | `ai` | 定位一条已完成的 AI 回答并展开操作 | 编辑相关入口和单条导出 Word 操作可见 | Electron 自动 | 只读 | `drawer` | `S176.png` → `[图 S176]` |
-| **S177** | P1 / 待采集 | 保存并重新生成编辑态 | `/dashboard` | 教师或管理员 | `ai` | 对用户消息点击编辑 | 编辑提示、原消息回填和保存并重新生成入口可见 | Electron 自动 | 演示写入 | `drawer` | `S177.png` → `[图 S177]` |
-| **S178** | P1 / 待采集 | AI 生成报告入口 | `/dashboard` | 教师或管理员 | `ai` | 展开输入区工具列 | AI 生成报告入口位于附件按钮上方且可见 | Electron 自动 | 只读 | `drawer` | `S178.png` → `[图 S178]` |
-| **S179** | P1 / 待采集 | AI 报告工具执行结果 | `/dashboard` | 教师或管理员 | `ai` | 用脚本化响应执行一次报告工具 | 工具执行状态、回答内容和导出结果可见 | Electron 辅助 | 演示写入 | `drawer` | `S179.png` → `[图 S179]` |
-| **S180** | P0 / 待采集 | 模型服务基础配置 | `/system?tab=ai-agent` | 管理员 | `ai` | 使用管理员账号进入 AI 智能体设置并停留上部 | 模型服务基础配置字段可见；密钥已掩码 | Electron 自动 | 只读 | `main` | `S180.png` → `[图 S180]` |
-| **S181** | P0 / 待采集 | 模型清单与模型编辑 | `/system?tab=ai-agent` | 管理员 | `ai` | 定位模型列表并打开一个演示模型编辑 | 模型清单、模型字段和保存操作可见 | Electron 自动 | 演示写入 | `dialog` | `S181.png` → `[图 S181]` |
-| **S182** | P0 / 待采集 | AI 开关、额度与连接测试 | `/system?tab=ai-agent` | 管理员 | `ai` | 滚动到服务配置下部 | AI 开关、额度、连接测试和边界提示可见 | Electron 自动 | 只读 | `main` | `S182.png` → `[图 S182]` |
-| **S183** | P0 / 待采集 | 智能体网格与启停 | `/system?tab=ai-agent` | 管理员 | `ai` | 滚动到智能体管理区 | 智能体网格、启停状态和标题栏新增按钮可见 | Electron 自动 | 演示写入 | `main` | `S183.png` → `[图 S183]` |
-| **S184** | P0 / 待采集 | 自定义智能体编辑与技能 | `/system?tab=ai-agent` | 管理员 | `ai` | 打开一个自定义智能体编辑 | 名称、角色、技能选择和保存操作可见 | Electron 自动 | 演示写入 | `dialog` | `S184.png` → `[图 S184]` |
-| **S185** | P1 / 待采集 | 知识引用资料与提示词 | `/system?tab=ai-agent` | 管理员 | `ai` | 在智能体编辑中切换到知识与提示词区域 | 知识引用资料、系统提示词和边界说明可见 | Electron 自动 | 演示写入 | `dialog` | `S185.png` → `[图 S185]` |
-| **S186** | P1 / 待采集 | 管理员会话审计 | `/system?tab=ai-agent` | 管理员 | `ai` | 滚动到管理员会话审计并打开预览 | 审计列表、账号、时间和会话预览可见 | Electron 自动 | 只读 | `main` | `S186.png` → `[图 S186]` |
+| **S166** | P0 / 待采集 | AI 浮动入口 | `/dashboard` | 教师或管理员 | `ai` | 进入登录后首页并定位右下角 | 独立圆形 AI 浮动入口可见且不遮挡主要操作 | Electron 自动 | 只读 | `card` | `S166.png` → `[图 S166]` |
+| **S167** | P0 / 待采集 | AI 助手抽屉 | `/dashboard` | 教师或管理员 | `ai` | 点击 AI 浮动入口 | 助手抽屉、消息区、输入区和关闭入口完整可见 | Electron 自动 | 只读 | `drawer` | `S167.png` → `[图 S167]` |
+| **S168** | P0 / 待采集 | 智能体选择器 | `/dashboard` | 教师或管理员 | `ai` | 在 AI 抽屉展开智能体选择器 | 可用智能体名称、专长或状态可见 | Electron 自动 | 只读 | `popover` | `S168.png` → `[图 S168]` |
+| **S169** | P0 / 待采集 | 模型选择器 | `/dashboard` | 教师或管理员 | `ai` | 在 AI 抽屉展开模型选择器 | 当前模型和可选模型清单可见；无 API Key | Electron 自动 | 只读 | `popover` | `S169.png` → `[图 S169]` |
+| **S170** | P0 / 待采集 | 开场问题与输入区 | `/dashboard` | 教师或管理员 | `ai` | 选择一个内置智能体并保持新会话 | 开场问题、输入区、报告和附件工具可见 | Electron 自动 | 只读 | `drawer` | `S170.png` → `[图 S170]` |
+| **S171** | P1 / 待采集 | 最近会话 | `/dashboard` | 教师或管理员 | `ai` | 打开 AI 抽屉的最近会话区域 | 最近会话标题、时间和继续入口可见 | Electron 自动 | 只读 | `drawer` | `S171.png` → `[图 S171]` |
+| **S172** | P1 / 待采集 | 完整会话历史 | `/profile/ai-chat-history` | 教师或管理员 | `ai` | 从用户菜单进入完整会话历史 | 历史筛选、会话列表和查看删除操作可见 | Electron 自动 | 只读 | `main` | `S172.png` → `[图 S172]` |
+| **S173** | P0 / 待采集 | AI 附件待发送状态 | `/dashboard` | 教师或管理员 | `ai` | 通过原生文件选择器选取临时附件并返回抽屉 | 附件名称、大小、待发送预览和移除入口可见 | Electron 辅助 | 演示写入 | `drawer` | `S173.png` → `[图 S173]` |
+| **S174** | P0 / 待采集 | AI 外发隐私告知 | `/dashboard` | 教师或管理员 | `ai` | 在未确认外发告知的隔离账号首次发送消息 | 隐私告知、数据范围、取消和确认操作可见 | Electron 自动 | 隔离状态 | `dialog` | `S174.png` → `[图 S174]` |
+| **S175** | P0 / 待采集 | 消息编辑与单条导出 | `/dashboard` | 教师或管理员 | `ai` | 定位一条已完成的 AI 回答并展开操作 | 编辑相关入口和单条导出 Word 操作可见 | Electron 自动 | 只读 | `drawer` | `S175.png` → `[图 S175]` |
+| **S176** | P1 / 待采集 | 保存并重新生成编辑态 | `/dashboard` | 教师或管理员 | `ai` | 对用户消息点击编辑 | 编辑提示、原消息回填和保存并重新生成入口可见 | Electron 自动 | 演示写入 | `drawer` | `S176.png` → `[图 S176]` |
+| **S177** | P1 / 待采集 | AI 生成报告入口 | `/dashboard` | 教师或管理员 | `ai` | 展开输入区工具列 | AI 生成报告入口位于附件按钮上方且可见 | Electron 自动 | 只读 | `drawer` | `S177.png` → `[图 S177]` |
+| **S178** | P1 / 待采集 | AI 报告工具执行结果 | `/dashboard` | 教师或管理员 | `ai` | 用脚本化响应执行一次报告工具 | 工具执行状态、回答内容和导出结果可见 | Electron 辅助 | 演示写入 | `drawer` | `S178.png` → `[图 S178]` |
+| **S179** | P0 / 待采集 | 模型服务基础配置 | `/system?tab=ai-agent` | 管理员 | `ai` | 使用管理员账号进入 AI 智能体设置并停留上部 | 模型服务基础配置字段可见；密钥已掩码 | Electron 自动 | 只读 | `main` | `S179.png` → `[图 S179]` |
+| **S180** | P0 / 待采集 | 模型清单与模型编辑 | `/system?tab=ai-agent` | 管理员 | `ai` | 定位模型列表并打开一个演示模型编辑 | 模型清单、模型字段和保存操作可见 | Electron 自动 | 演示写入 | `dialog` | `S180.png` → `[图 S180]` |
+| **S181** | P0 / 待采集 | AI 开关、额度与连接测试 | `/system?tab=ai-agent` | 管理员 | `ai` | 滚动到服务配置下部 | AI 开关、额度、连接测试和边界提示可见 | Electron 自动 | 只读 | `main` | `S181.png` → `[图 S181]` |
+| **S182** | P0 / 待采集 | 智能体网格与启停 | `/system?tab=ai-agent` | 管理员 | `ai` | 滚动到智能体管理区 | 智能体网格、启停状态和标题栏新增按钮可见 | Electron 自动 | 演示写入 | `main` | `S182.png` → `[图 S182]` |
+| **S183** | P0 / 待采集 | 自定义智能体编辑与技能 | `/system?tab=ai-agent` | 管理员 | `ai` | 打开一个自定义智能体编辑 | 名称、角色、技能选择和保存操作可见 | Electron 自动 | 演示写入 | `dialog` | `S183.png` → `[图 S183]` |
+| **S184** | P1 / 待采集 | 知识引用资料与提示词 | `/system?tab=ai-agent` | 管理员 | `ai` | 在智能体编辑中切换到知识与提示词区域 | 知识引用资料、系统提示词和边界说明可见 | Electron 自动 | 演示写入 | `dialog` | `S184.png` → `[图 S184]` |
+| **S185** | P1 / 待采集 | 管理员会话审计 | `/system?tab=ai-agent` | 管理员 | `ai` | 滚动到管理员会话审计并打开预览 | 审计列表、账号、时间和会话预览可见 | Electron 自动 | 只读 | `main` | `S185.png` → `[图 S185]` |
 
 ### 第 16 章
 
 | ID | 优先级 / 状态 | 页面状态 | 路由模板 | 执行角色 | 数据配置 | 操作步骤 | 可见断言 | 采集 | 安全 | 裁切 | 输出与插入 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **S187** | P0 / 待采集 | 用户管理列表 | `/system?tab=users` | 管理员 | `system` | 进入系统管理用户标签 | 账号表格、角色、状态和操作列可见 | Electron 自动 | 只读 | `main` | `S187.png` → `[图 S187]` |
-| **S188** | P0 / 待采集 | 新建用户 | `/system?tab=users` | 管理员 | `system` | 点击新建用户 | 用户名、姓名、角色、密码和保存操作可见 | Electron 自动 | 演示写入 | `dialog` | `S188.png` → `[图 S188]` |
-| **S189** | P0 / 待采集 | 编辑用户 | `/system?tab=users` | 管理员 | `system` | 对演示教师账号点击编辑 | 用户名禁用、可编辑资料回填和保存入口可见 | Electron 自动 | 演示写入 | `dialog` | `S189.png` → `[图 S189]` |
-| **S190** | P0 / 待采集 | 重置密码 | `/system?tab=users` | 管理员 | `system` | 对演示账号点击重置密码 | 新密码字段、规则和确认操作可见 | Electron 自动 | 演示写入 | `dialog` | `S190.png` → `[图 S190]` |
-| **S191** | P0 / 待采集 | 账号启停与删除菜单 | `/system?tab=users` | 管理员 | `system` | 展开演示账号操作菜单 | 启停和删除操作可见 | Electron 自动 | 只读 | `popover` | `S191.png` → `[图 S191]` |
-| **S192** | P2 / 待采集 | 删除用户确认 | `/system?tab=users` | 管理员 | `system` | 对可删除演示账号点击删除 | 账号名称、风险说明、取消和确认按钮可见 | Electron 自动 | 隔离状态 | `dialog` | `S192.png` → `[图 S192]` |
-| **S193** | P0 / 待采集 | 数据备份主界面 | `/system?tab=backup` | 管理员 | `backup` | 进入数据备份标签 | 手动备份、恢复和资源体检区域可见 | Electron 自动 | 只读 | `main` | `S193.png` → `[图 S193]` |
-| **S194** | P0 / 待采集 | 设置备份口令 | `/system?tab=backup` | 管理员 | `backup` | 点击立即备份并进入第一个口令提示 | 单个备份口令输入框和确认操作可见 | Electron 自动 | 演示写入 | `dialog` | `S194.png` → `[图 S194]` |
-| **S195** | P0 / 待采集 | 再次确认备份口令 | `/system?tab=backup` | 管理员 | `backup` | 提交第一个口令并进入再次确认 | 单个确认口令输入框和返回确认操作可见 | Electron 自动 | 演示写入 | `dialog` | `S195.png` → `[图 S195]` |
-| **S196** | P0 / 待采集 | 备份文件校验结果 | `/system?tab=backup` | 管理员 | `backup` | 通过文件选择器选取演示备份并等待校验 | 备份版本、表统计和校验结果可见 | Electron 辅助 | 只读 | `main` | `S196.png` → `[图 S196]` |
-| **S197** | P2 / 待采集 | 恢复覆盖确认 | `/system?tab=backup` | 管理员 | `backup` | 对已校验备份点击恢复并停留在覆盖确认 | 原生确认框、覆盖风险和取消确认操作可见 | 原生人工 | 隔离状态 | `native-dialog` | `S197.png` → `[图 S197]` |
-| **S198** | P0 / 待采集 | 恢复完成通知 | `/system?tab=backup` | 管理员 | `backup` | 在可丢弃数据库中完成恢复并等待页面重载 | 恢复完成通知和恢复区域可见 | Electron 辅助 | 隔离状态 | `toast` | `S198.png` → `[图 S198]` |
-| **S199** | P0 / 待采集 | 资源文件体检结果 | `/system?tab=backup` | 管理员 | `backup` | 运行资源文件体检 | 孤儿文件统计、列表和扫描范围说明可见 | Electron 自动 | 只读 | `main` | `S199.png` → `[图 S199]` |
-| **S200** | P2 / 待采集 | 孤儿文件清理确认 | `/system?tab=backup` | 管理员 | `backup` | 对演示孤儿文件点击清理 | 文件数量、风险说明、取消和确认按钮可见 | Electron 自动 | 隔离状态 | `dialog` | `S200.png` → `[图 S200]` |
-| **S201** | P1 / 待采集 | 孤儿文件清理结果 | `/system?tab=backup` | 管理员 | `backup` | 确认清理演示孤儿文件并再次扫描 | 清理结果通知和复检后的统计可见 | Electron 辅助 | 隔离状态 | `toast` | `S201.png` → `[图 S201]` |
-| **S202** | P0 / 待采集 | 系统基础信息 | `/system?tab=settings` | 管理员 | `system` | 进入系统设置标签 | 系统名称、基础参数和保存入口可见 | Electron 自动 | 只读 | `main` | `S202.png` → `[图 S202]` |
-| **S203** | P1 / 待采集 | 登录主题与背景媒体 | `/system?tab=settings` | 管理员 | `system` | 滚动到登录品牌设置上部 | 主题选择、图片和视频背景媒体入口可见 | Electron 自动 | 演示写入 | `main` | `S203.png` → `[图 S203]` |
-| **S204** | P1 / 待采集 | 登录主色、透明度与说明 | `/system?tab=settings` | 管理员 | `system` | 滚动到登录品牌设置下部 | 主色、透明度和说明字段可见 | Electron 自动 | 演示写入 | `main` | `S204.png` → `[图 S204]` |
-| **S205** | P2 / 待采集 | 备份与报告配置 | `/system?tab=settings` | 管理员 | `system` | 滚动到备份与报告配置 | 配置字段和自动备份未接主链等边界提示可见 | Electron 自动 | 只读 | `main` | `S205.png` → `[图 S205]` |
-| **S206** | P0 / 待采集 | 关于、激活与能力包摘要 | `/system?tab=about` | 管理员 | `system` | 进入关于标签 | 产品名、版本、激活状态和能力包摘要可见 | Electron 自动 | 只读 | `card` | `S206.png` → `[图 S206]` |
-| **S207** | P0 / 待采集 | 重新激活或更新授权 | `/system?tab=about` | 管理员 | `system` | 点击重新激活或更新授权并展开表单 | 激活码输入、验证操作和当前授权说明可见 | Electron 自动 | 隔离状态 | `form` | `S207.png` → `[图 S207]` |
-| **S208** | P0 / 待采集 | 软件更新空闲状态 | `/system?tab=about` | 管理员 | `update` | 加载更新空闲状态 | 当前版本、自动检查开关和检查更新入口可见 | Electron 自动 | 隔离状态 | `card` | `S208.png` → `[图 S208]` |
-| **S209** | P0 / 待采集 | 发现新版本与更新日志 | `/system?tab=about` | 管理员 | `update` | 注入发现新版本状态 | 新版本号、更新日志和下载操作可见 | Electron 自动 | 隔离状态 | `card` | `S209.png` → `[图 S209]` |
-| **S210** | P1 / 待采集 | 软件下载进度 | `/system?tab=about` | 管理员 | `update` | 注入下载中状态并固定在中间进度 | 下载百分比和进度条可见；不连接正式更新源 | Electron 辅助 | 隔离状态 | `card` | `S210.png` → `[图 S210]` |
-| **S211** | P1 / 待采集 | 更新下载完成 | `/system?tab=about` | 管理员 | `update` | 注入下载完成状态 | 下载完成说明和重启安装入口可见；不得点击重启 | Electron 自动 | 隔离状态 | `card` | `S211.png` → `[图 S211]` |
-| **S212** | P2 / 待采集 | 已跳过版本与操作日志 | `/system?tab=about` | 管理员 | `update` | 注入已跳过版本并展开更新操作日志 | 跳过状态、版本信息和操作日志可见 | Electron 自动 | 隔离状态 | `main` | `S212.png` → `[图 S212]` |
+| **S186** | P0 / 待采集 | 用户管理列表 | `/system?tab=users` | 管理员 | `system` | 进入系统管理用户标签 | 账号表格、角色、状态和操作列可见 | Electron 自动 | 只读 | `main` | `S186.png` → `[图 S186]` |
+| **S187** | P0 / 待采集 | 新建用户 | `/system?tab=users` | 管理员 | `system` | 点击新建用户 | 用户名、姓名、角色、密码和保存操作可见 | Electron 自动 | 演示写入 | `dialog` | `S187.png` → `[图 S187]` |
+| **S188** | P0 / 待采集 | 编辑用户 | `/system?tab=users` | 管理员 | `system` | 对演示教师账号点击编辑 | 用户名禁用、可编辑资料回填和保存入口可见 | Electron 自动 | 演示写入 | `dialog` | `S188.png` → `[图 S188]` |
+| **S189** | P0 / 待采集 | 重置密码 | `/system?tab=users` | 管理员 | `system` | 对演示账号点击重置密码 | 新密码字段、规则和确认操作可见 | Electron 自动 | 演示写入 | `dialog` | `S189.png` → `[图 S189]` |
+| **S190** | P0 / 待采集 | 账号启停与删除菜单 | `/system?tab=users` | 管理员 | `system` | 展开演示账号操作菜单 | 启停和删除操作可见 | Electron 自动 | 只读 | `popover` | `S190.png` → `[图 S190]` |
+| **S191** | P2 / 待采集 | 删除用户确认 | `/system?tab=users` | 管理员 | `system` | 对可删除演示账号点击删除 | 账号名称、风险说明、取消和确认按钮可见 | Electron 自动 | 隔离状态 | `dialog` | `S191.png` → `[图 S191]` |
+| **S192** | P0 / 待采集 | 数据备份主界面 | `/system?tab=backup` | 管理员 | `backup` | 进入数据备份标签 | 手动备份、恢复和资源体检区域可见 | Electron 自动 | 只读 | `main` | `S192.png` → `[图 S192]` |
+| **S193** | P0 / 待采集 | 设置备份口令 | `/system?tab=backup` | 管理员 | `backup` | 点击立即备份并进入第一个口令提示 | 单个备份口令输入框和确认操作可见 | Electron 自动 | 演示写入 | `dialog` | `S193.png` → `[图 S193]` |
+| **S194** | P0 / 待采集 | 再次确认备份口令 | `/system?tab=backup` | 管理员 | `backup` | 提交第一个口令并进入再次确认 | 单个确认口令输入框和返回确认操作可见 | Electron 自动 | 演示写入 | `dialog` | `S194.png` → `[图 S194]` |
+| **S195** | P0 / 待采集 | 备份文件校验结果 | `/system?tab=backup` | 管理员 | `backup` | 通过文件选择器选取演示备份并等待校验 | 备份版本、表统计和校验结果可见 | Electron 辅助 | 只读 | `main` | `S195.png` → `[图 S195]` |
+| **S196** | P2 / 待采集 | 恢复覆盖确认 | `/system?tab=backup` | 管理员 | `backup` | 对已校验备份点击恢复并停留在覆盖确认 | 原生确认框、覆盖风险和取消确认操作可见 | 原生人工 | 隔离状态 | `native-dialog` | `S196.png` → `[图 S196]` |
+| **S197** | P0 / 待采集 | 恢复完成通知 | `/system?tab=backup` | 管理员 | `backup` | 在可丢弃数据库中完成恢复并等待页面重载 | 恢复完成通知和恢复区域可见 | Electron 辅助 | 隔离状态 | `toast` | `S197.png` → `[图 S197]` |
+| **S198** | P0 / 待采集 | 资源文件体检结果 | `/system?tab=backup` | 管理员 | `backup` | 运行资源文件体检 | 孤儿文件统计、列表和扫描范围说明可见 | Electron 自动 | 只读 | `main` | `S198.png` → `[图 S198]` |
+| **S199** | P2 / 待采集 | 孤儿文件清理确认 | `/system?tab=backup` | 管理员 | `backup` | 对演示孤儿文件点击清理 | 文件数量、风险说明、取消和确认按钮可见 | Electron 自动 | 隔离状态 | `dialog` | `S199.png` → `[图 S199]` |
+| **S200** | P1 / 待采集 | 孤儿文件清理结果 | `/system?tab=backup` | 管理员 | `backup` | 确认清理演示孤儿文件并再次扫描 | 清理结果通知和复检后的统计可见 | Electron 辅助 | 隔离状态 | `toast` | `S200.png` → `[图 S200]` |
+| **S201** | P0 / 待采集 | 系统基础信息 | `/system?tab=settings` | 管理员 | `system` | 进入系统设置标签 | 系统名称、基础参数和保存入口可见 | Electron 自动 | 只读 | `main` | `S201.png` → `[图 S201]` |
+| **S202** | P1 / 待采集 | 登录主题与背景媒体 | `/system?tab=settings` | 管理员 | `system` | 滚动到登录品牌设置上部 | 主题选择、图片和视频背景媒体入口可见 | Electron 自动 | 演示写入 | `main` | `S202.png` → `[图 S202]` |
+| **S203** | P1 / 待采集 | 登录主色、透明度与说明 | `/system?tab=settings` | 管理员 | `system` | 滚动到登录品牌设置下部 | 主色、透明度和说明字段可见 | Electron 自动 | 演示写入 | `main` | `S203.png` → `[图 S203]` |
+| **S204** | P2 / 待采集 | 备份与报告配置 | `/system?tab=settings` | 管理员 | `system` | 滚动到备份与报告配置 | 配置字段和自动备份未接主链等边界提示可见 | Electron 自动 | 只读 | `main` | `S204.png` → `[图 S204]` |
+| **S205** | P0 / 待采集 | 关于、激活与能力包摘要 | `/system?tab=about` | 管理员 | `system` | 进入关于标签 | 产品名、版本、激活状态和能力包摘要可见 | Electron 自动 | 只读 | `card` | `S205.png` → `[图 S205]` |
+| **S206** | P0 / 待采集 | 重新激活或更新授权 | `/system?tab=about` | 管理员 | `system` | 点击重新激活或更新授权并展开表单 | 激活码输入、验证操作和当前授权说明可见 | Electron 自动 | 隔离状态 | `form` | `S206.png` → `[图 S206]` |
+| **S207** | P0 / 待采集 | 软件更新空闲状态 | `/system?tab=about` | 管理员 | `update` | 加载更新空闲状态 | 当前版本、自动检查开关和检查更新入口可见 | Electron 自动 | 隔离状态 | `card` | `S207.png` → `[图 S207]` |
+| **S208** | P0 / 待采集 | 发现新版本与更新日志 | `/system?tab=about` | 管理员 | `update` | 注入发现新版本状态 | 新版本号、更新日志和下载操作可见 | Electron 自动 | 隔离状态 | `card` | `S208.png` → `[图 S208]` |
+| **S209** | P1 / 待采集 | 软件下载进度 | `/system?tab=about` | 管理员 | `update` | 注入下载中状态并固定在中间进度 | 下载百分比和进度条可见；不连接正式更新源 | Electron 辅助 | 隔离状态 | `card` | `S209.png` → `[图 S209]` |
+| **S210** | P1 / 待采集 | 更新下载完成 | `/system?tab=about` | 管理员 | `update` | 注入下载完成状态 | 下载完成说明和重启安装入口可见；不得点击重启 | Electron 自动 | 隔离状态 | `card` | `S210.png` → `[图 S210]` |
+| **S211** | P2 / 待采集 | 已跳过版本与操作日志 | `/system?tab=about` | 管理员 | `update` | 注入已跳过版本并展开更新操作日志 | 跳过状态、版本信息和操作日志可见 | Electron 自动 | 隔离状态 | `main` | `S211.png` → `[图 S211]` |

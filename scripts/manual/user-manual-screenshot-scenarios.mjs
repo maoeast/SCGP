@@ -277,71 +277,70 @@ S144|/reports|either|reports|auto|read-only|main|定位一条支持操作的演�
 S145|/reports|either|reports|auto|isolated-state|dialog|对可删除演示报告点击删除|报告标识、风险说明、取消和确认按钮可见
 S146|/assessment/sm/report?assessId={smAssessId}&studentId={studentId}|either|reports|auto|read-only|report|打开支持 Word 导出的评估报告|报告标题和 Word 导出按钮可见
 S147|/emotional/report?studentId={studentId}|either|reports|auto|read-only|report|打开情绪报告|报告标题和 Word 导出按钮可见
-S148|/reports|either|reports|auto|isolated-state|main|加载包含历史记录的演示数据库并进入报告中心|历史数据迁移入口或维护提示可见；不进入开发迁移路由
-S149|/resource-center?tab=training|teacher|resources|auto|read-only|main|使用教师账号进入训练资源标签|筛选和资源列表可见；管理员维护按钮不可见
-S150|/resource-center?tab=training|either|resources|auto|read-only|main|组合模块、类型、状态或关键词筛选|筛选条件和匹配资源结果可见
-S151|/resource-center?tab=training|either|resources|auto|read-only|card|定位一项器材资源卡片|封面、说明和标签在列表详情区域可见；无独立详情页
-S152|/resource-center?tab=training|admin|resources|auto|demo-write|dialog|使用管理员账号点击新建自定义资源|创建字段、资源类型和保存操作可见
-S153|/resource-center?tab=training|admin|resources|auto|read-only|dialog|打开系统预置资源编辑|系统字段锁定状态和允许编辑字段可见
-S154|/resource-center?tab=training|admin|resources|auto|demo-write|dialog|选择情绪资源包并进入导入预览|包信息、待导入统计和确认操作可见
-S155|/resource-center?tab=training|admin|resources|auto|read-only|dialog|对情绪资源触发导出预览|导出范围、统计和目标说明可见
-S156|/resource-center?tab=training|admin|resources|auto|demo-write|card|定位可启停的演示训练资源并切换状态|资源状态开关和更新后的状态可见
-S157|/resource-center?tab=training|admin|resources|auto|isolated-state|dialog|对可删除自定义资源点击删除|资源名称、软删除说明、取消和确认按钮可见
-S158|/resource-center?tab=training|admin|resources|auto|demo-write|main|筛选已禁用资源并定位可恢复项|已禁用状态、筛选条件和恢复入口可见
-S159|/resource-center?tab=teaching|either|resources|auto|read-only|main|切换到教学资料标签|筛选工具、材料列表和卡片可见
-S160|/resource-center?tab=teaching|either|resources|auto|demo-write|card|定位一张教学材料卡片并切换收藏|打开、详情、收藏操作和收藏状态可见
-S161|/resource-center?tab=teaching|either|resources|auto|read-only|dialog|点击教学材料详情|标题、来源、标签、说明和打开操作可见
-S162|/resource-center?tab=teaching|either|resources|auto|read-only|main|点击我的收藏|收藏筛选状态和已收藏材料列表可见
-S163|/resource-center?tab=teaching|admin|resources|auto|read-only|main|使用管理员账号定位教学材料管理工具|上传、批量导入和来源目录信息可见
-S164|/resource-center?tab=teaching|admin|resources|auto|demo-write|dialog|点击上传资料并选择临时演示文件|标题、分类、文件待上传状态和上传按钮可见
-S165|/resource-center?tab=teaching|admin|resources|auto|demo-write|dialog|点击批量导入并选择临时目录和 CSV|批量导入步骤、已选路径和执行按钮可见
-S166|/resource-center?tab=teaching|admin|resources|assisted|demo-write|toast|执行可丢弃教学材料批量导入|成功失败统计通知和更新后的材料列表可见
-S167|/dashboard|either|ai|auto|read-only|card|进入登录后首页并定位右下角|独立圆形 AI 浮动入口可见且不遮挡主要操作
-S168|/dashboard|either|ai|auto|read-only|drawer|点击 AI 浮动入口|助手抽屉、消息区、输入区和关闭入口完整可见
-S169|/dashboard|either|ai|auto|read-only|popover|在 AI 抽屉展开智能体选择器|可用智能体名称、专长或状态可见
-S170|/dashboard|either|ai|auto|read-only|popover|在 AI 抽屉展开模型选择器|当前模型和可选模型清单可见；无 API Key
-S171|/dashboard|either|ai|auto|read-only|drawer|选择一个内置智能体并保持新会话|开场问题、输入区、报告和附件工具可见
-S172|/dashboard|either|ai|auto|read-only|drawer|打开 AI 抽屉的最近会话区域|最近会话标题、时间和继续入口可见
-S173|/profile/ai-chat-history|either|ai|auto|read-only|main|从用户菜单进入完整会话历史|历史筛选、会话列表和查看删除操作可见
-S174|/dashboard|either|ai|assisted|demo-write|drawer|通过原生文件选择器选取临时附件并返回抽屉|附件名称、大小、待发送预览和移除入口可见
-S175|/dashboard|either|ai|auto|isolated-state|dialog|在未确认外发告知的隔离账号首次发送消息|隐私告知、数据范围、取消和确认操作可见
-S176|/dashboard|either|ai|auto|read-only|drawer|定位一条已完成的 AI 回答并展开操作|编辑相关入口和单条导出 Word 操作可见
-S177|/dashboard|either|ai|auto|demo-write|drawer|对用户消息点击编辑|编辑提示、原消息回填和保存并重新生成入口可见
-S178|/dashboard|either|ai|auto|read-only|drawer|展开输入区工具列|AI 生成报告入口位于附件按钮上方且可见
-S179|/dashboard|either|ai|assisted|demo-write|drawer|用脚本化响应执行一次报告工具|工具执行状态、回答内容和导出结果可见
-S180|/system?tab=ai-agent|admin|ai|auto|read-only|main|使用管理员账号进入 AI 智能体设置并停留上部|模型服务基础配置字段可见；密钥已掩码
-S181|/system?tab=ai-agent|admin|ai|auto|demo-write|dialog|定位模型列表并打开一个演示模型编辑|模型清单、模型字段和保存操作可见
-S182|/system?tab=ai-agent|admin|ai|auto|read-only|main|滚动到服务配置下部|AI 开关、额度、连接测试和边界提示可见
-S183|/system?tab=ai-agent|admin|ai|auto|demo-write|main|滚动到智能体管理区|智能体网格、启停状态和标题栏新增按钮可见
-S184|/system?tab=ai-agent|admin|ai|auto|demo-write|dialog|打开一个自定义智能体编辑|名称、角色、技能选择和保存操作可见
-S185|/system?tab=ai-agent|admin|ai|auto|demo-write|dialog|在智能体编辑中切换到知识与提示词区域|知识引用资料、系统提示词和边界说明可见
-S186|/system?tab=ai-agent|admin|ai|auto|read-only|main|滚动到管理员会话审计并打开预览|审计列表、账号、时间和会话预览可见
-S187|/system?tab=users|admin|system|auto|read-only|main|进入系统管理用户标签|账号表格、角色、状态和操作列可见
-S188|/system?tab=users|admin|system|auto|demo-write|dialog|点击新建用户|用户名、姓名、角色、密码和保存操作可见
-S189|/system?tab=users|admin|system|auto|demo-write|dialog|对演示教师账号点击编辑|用户名禁用、可编辑资料回填和保存入口可见
-S190|/system?tab=users|admin|system|auto|demo-write|dialog|对演示账号点击重置密码|新密码字段、规则和确认操作可见
-S191|/system?tab=users|admin|system|auto|read-only|popover|展开演示账号操作菜单|启停和删除操作可见
-S192|/system?tab=users|admin|system|auto|isolated-state|dialog|对可删除演示账号点击删除|账号名称、风险说明、取消和确认按钮可见
-S193|/system?tab=backup|admin|backup|auto|read-only|main|进入数据备份标签|手动备份、恢复和资源体检区域可见
-S194|/system?tab=backup|admin|backup|auto|demo-write|dialog|点击立即备份并进入第一个口令提示|单个备份口令输入框和确认操作可见
-S195|/system?tab=backup|admin|backup|auto|demo-write|dialog|提交第一个口令并进入再次确认|单个确认口令输入框和返回确认操作可见
-S196|/system?tab=backup|admin|backup|assisted|read-only|main|通过文件选择器选取演示备份并等待校验|备份版本、表统计和校验结果可见
-S197|/system?tab=backup|admin|backup|native|isolated-state|native-dialog|对已校验备份点击恢复并停留在覆盖确认|原生确认框、覆盖风险和取消确认操作可见
-S198|/system?tab=backup|admin|backup|assisted|isolated-state|toast|在可丢弃数据库中完成恢复并等待页面重载|恢复完成通知和恢复区域可见
-S199|/system?tab=backup|admin|backup|auto|read-only|main|运行资源文件体检|孤儿文件统计、列表和扫描范围说明可见
-S200|/system?tab=backup|admin|backup|auto|isolated-state|dialog|对演示孤儿文件点击清理|文件数量、风险说明、取消和确认按钮可见
-S201|/system?tab=backup|admin|backup|assisted|isolated-state|toast|确认清理演示孤儿文件并再次扫描|清理结果通知和复检后的统计可见
-S202|/system?tab=settings|admin|system|auto|read-only|main|进入系统设置标签|系统名称、基础参数和保存入口可见
-S203|/system?tab=settings|admin|system|auto|demo-write|main|滚动到登录品牌设置上部|主题选择、图片和视频背景媒体入口可见
-S204|/system?tab=settings|admin|system|auto|demo-write|main|滚动到登录品牌设置下部|主色、透明度和说明字段可见
-S205|/system?tab=settings|admin|system|auto|read-only|main|滚动到备份与报告配置|配置字段和自动备份未接主链等边界提示可见
-S206|/system?tab=about|admin|system|auto|read-only|card|进入关于标签|产品名、版本、激活状态和能力包摘要可见
-S207|/system?tab=about|admin|system|auto|isolated-state|form|点击重新激活或更新授权并展开表单|激活码输入、验证操作和当前授权说明可见
-S208|/system?tab=about|admin|update|auto|isolated-state|card|加载更新空闲状态|当前版本、自动检查开关和检查更新入口可见
-S209|/system?tab=about|admin|update|auto|isolated-state|card|注入发现新版本状态|新版本号、更新日志和下载操作可见
-S210|/system?tab=about|admin|update|assisted|isolated-state|card|注入下载中状态并固定在中间进度|下载百分比和进度条可见；不连接正式更新源
-S211|/system?tab=about|admin|update|auto|isolated-state|card|注入下载完成状态|下载完成说明和重启安装入口可见；不得点击重启
-S212|/system?tab=about|admin|update|auto|isolated-state|main|注入已跳过版本并展开更新操作日志|跳过状态、版本信息和操作日志可见
+S148|/resource-center?tab=training|teacher|resources|auto|read-only|main|使用教师账号进入训练资源标签|筛选和资源列表可见；管理员维护按钮不可见
+S149|/resource-center?tab=training|either|resources|auto|read-only|main|组合模块、类型、状态或关键词筛选|筛选条件和匹配资源结果可见
+S150|/resource-center?tab=training|either|resources|auto|read-only|card|定位一项器材资源卡片|封面、说明和标签在列表详情区域可见；无独立详情页
+S151|/resource-center?tab=training|admin|resources|auto|demo-write|dialog|使用管理员账号点击新建自定义资源|创建字段、资源类型和保存操作可见
+S152|/resource-center?tab=training|admin|resources|auto|read-only|dialog|打开系统预置资源编辑|系统字段锁定状态和允许编辑字段可见
+S153|/resource-center?tab=training|admin|resources|auto|demo-write|dialog|选择情绪资源包并进入导入预览|包信息、待导入统计和确认操作可见
+S154|/resource-center?tab=training|admin|resources|auto|read-only|dialog|对情绪资源触发导出预览|导出范围、统计和目标说明可见
+S155|/resource-center?tab=training|admin|resources|auto|demo-write|card|定位可启停的演示训练资源并切换状态|资源状态开关和更新后的状态可见
+S156|/resource-center?tab=training|admin|resources|auto|isolated-state|dialog|对可删除自定义资源点击删除|资源名称、软删除说明、取消和确认按钮可见
+S157|/resource-center?tab=training|admin|resources|auto|demo-write|main|筛选已禁用资源并定位可恢复项|已禁用状态、筛选条件和恢复入口可见
+S158|/resource-center?tab=teaching|either|resources|auto|read-only|main|切换到教学资料标签|筛选工具、材料列表和卡片可见
+S159|/resource-center?tab=teaching|either|resources|auto|demo-write|card|定位一张教学材料卡片并切换收藏|打开、详情、收藏操作和收藏状态可见
+S160|/resource-center?tab=teaching|either|resources|auto|read-only|dialog|点击教学材料详情|标题、来源、标签、说明和打开操作可见
+S161|/resource-center?tab=teaching|either|resources|auto|read-only|main|点击我的收藏|收藏筛选状态和已收藏材料列表可见
+S162|/resource-center?tab=teaching|admin|resources|auto|read-only|main|使用管理员账号定位教学材料管理工具|上传、批量导入和来源目录信息可见
+S163|/resource-center?tab=teaching|admin|resources|auto|demo-write|dialog|点击上传资料并选择临时演示文件|标题、分类、文件待上传状态和上传按钮可见
+S164|/resource-center?tab=teaching|admin|resources|auto|demo-write|dialog|点击批量导入并选择临时目录和 CSV|批量导入步骤、已选路径和执行按钮可见
+S165|/resource-center?tab=teaching|admin|resources|assisted|demo-write|toast|执行可丢弃教学材料批量导入|成功失败统计通知和更新后的材料列表可见
+S166|/dashboard|either|ai|auto|read-only|card|进入登录后首页并定位右下角|独立圆形 AI 浮动入口可见且不遮挡主要操作
+S167|/dashboard|either|ai|auto|read-only|drawer|点击 AI 浮动入口|助手抽屉、消息区、输入区和关闭入口完整可见
+S168|/dashboard|either|ai|auto|read-only|popover|在 AI 抽屉展开智能体选择器|可用智能体名称、专长或状态可见
+S169|/dashboard|either|ai|auto|read-only|popover|在 AI 抽屉展开模型选择器|当前模型和可选模型清单可见；无 API Key
+S170|/dashboard|either|ai|auto|read-only|drawer|选择一个内置智能体并保持新会话|开场问题、输入区、报告和附件工具可见
+S171|/dashboard|either|ai|auto|read-only|drawer|打开 AI 抽屉的最近会话区域|最近会话标题、时间和继续入口可见
+S172|/profile/ai-chat-history|either|ai|auto|read-only|main|从用户菜单进入完整会话历史|历史筛选、会话列表和查看删除操作可见
+S173|/dashboard|either|ai|assisted|demo-write|drawer|通过原生文件选择器选取临时附件并返回抽屉|附件名称、大小、待发送预览和移除入口可见
+S174|/dashboard|either|ai|auto|isolated-state|dialog|在未确认外发告知的隔离账号首次发送消息|隐私告知、数据范围、取消和确认操作可见
+S175|/dashboard|either|ai|auto|read-only|drawer|定位一条已完成的 AI 回答并展开操作|编辑相关入口和单条导出 Word 操作可见
+S176|/dashboard|either|ai|auto|demo-write|drawer|对用户消息点击编辑|编辑提示、原消息回填和保存并重新生成入口可见
+S177|/dashboard|either|ai|auto|read-only|drawer|展开输入区工具列|AI 生成报告入口位于附件按钮上方且可见
+S178|/dashboard|either|ai|assisted|demo-write|drawer|用脚本化响应执行一次报告工具|工具执行状态、回答内容和导出结果可见
+S179|/system?tab=ai-agent|admin|ai|auto|read-only|main|使用管理员账号进入 AI 智能体设置并停留上部|模型服务基础配置字段可见；密钥已掩码
+S180|/system?tab=ai-agent|admin|ai|auto|demo-write|dialog|定位模型列表并打开一个演示模型编辑|模型清单、模型字段和保存操作可见
+S181|/system?tab=ai-agent|admin|ai|auto|read-only|main|滚动到服务配置下部|AI 开关、额度、连接测试和边界提示可见
+S182|/system?tab=ai-agent|admin|ai|auto|demo-write|main|滚动到智能体管理区|智能体网格、启停状态和标题栏新增按钮可见
+S183|/system?tab=ai-agent|admin|ai|auto|demo-write|dialog|打开一个自定义智能体编辑|名称、角色、技能选择和保存操作可见
+S184|/system?tab=ai-agent|admin|ai|auto|demo-write|dialog|在智能体编辑中切换到知识与提示词区域|知识引用资料、系统提示词和边界说明可见
+S185|/system?tab=ai-agent|admin|ai|auto|read-only|main|滚动到管理员会话审计并打开预览|审计列表、账号、时间和会话预览可见
+S186|/system?tab=users|admin|system|auto|read-only|main|进入系统管理用户标签|账号表格、角色、状态和操作列可见
+S187|/system?tab=users|admin|system|auto|demo-write|dialog|点击新建用户|用户名、姓名、角色、密码和保存操作可见
+S188|/system?tab=users|admin|system|auto|demo-write|dialog|对演示教师账号点击编辑|用户名禁用、可编辑资料回填和保存入口可见
+S189|/system?tab=users|admin|system|auto|demo-write|dialog|对演示账号点击重置密码|新密码字段、规则和确认操作可见
+S190|/system?tab=users|admin|system|auto|read-only|popover|展开演示账号操作菜单|启停和删除操作可见
+S191|/system?tab=users|admin|system|auto|isolated-state|dialog|对可删除演示账号点击删除|账号名称、风险说明、取消和确认按钮可见
+S192|/system?tab=backup|admin|backup|auto|read-only|main|进入数据备份标签|手动备份、恢复和资源体检区域可见
+S193|/system?tab=backup|admin|backup|auto|demo-write|dialog|点击立即备份并进入第一个口令提示|单个备份口令输入框和确认操作可见
+S194|/system?tab=backup|admin|backup|auto|demo-write|dialog|提交第一个口令并进入再次确认|单个确认口令输入框和返回确认操作可见
+S195|/system?tab=backup|admin|backup|assisted|read-only|main|通过文件选择器选取演示备份并等待校验|备份版本、表统计和校验结果可见
+S196|/system?tab=backup|admin|backup|native|isolated-state|native-dialog|对已校验备份点击恢复并停留在覆盖确认|原生确认框、覆盖风险和取消确认操作可见
+S197|/system?tab=backup|admin|backup|assisted|isolated-state|toast|在可丢弃数据库中完成恢复并等待页面重载|恢复完成通知和恢复区域可见
+S198|/system?tab=backup|admin|backup|auto|read-only|main|运行资源文件体检|孤儿文件统计、列表和扫描范围说明可见
+S199|/system?tab=backup|admin|backup|auto|isolated-state|dialog|对演示孤儿文件点击清理|文件数量、风险说明、取消和确认按钮可见
+S200|/system?tab=backup|admin|backup|assisted|isolated-state|toast|确认清理演示孤儿文件并再次扫描|清理结果通知和复检后的统计可见
+S201|/system?tab=settings|admin|system|auto|read-only|main|进入系统设置标签|系统名称、基础参数和保存入口可见
+S202|/system?tab=settings|admin|system|auto|demo-write|main|滚动到登录品牌设置上部|主题选择、图片和视频背景媒体入口可见
+S203|/system?tab=settings|admin|system|auto|demo-write|main|滚动到登录品牌设置下部|主色、透明度和说明字段可见
+S204|/system?tab=settings|admin|system|auto|read-only|main|滚动到备份与报告配置|配置字段和自动备份未接主链等边界提示可见
+S205|/system?tab=about|admin|system|auto|read-only|card|进入关于标签|产品名、版本、激活状态和能力包摘要可见
+S206|/system?tab=about|admin|system|auto|isolated-state|form|点击重新激活或更新授权并展开表单|激活码输入、验证操作和当前授权说明可见
+S207|/system?tab=about|admin|update|auto|isolated-state|card|加载更新空闲状态|当前版本、自动检查开关和检查更新入口可见
+S208|/system?tab=about|admin|update|auto|isolated-state|card|注入发现新版本状态|新版本号、更新日志和下载操作可见
+S209|/system?tab=about|admin|update|assisted|isolated-state|card|注入下载中状态并固定在中间进度|下载百分比和进度条可见；不连接正式更新源
+S210|/system?tab=about|admin|update|auto|isolated-state|card|注入下载完成状态|下载完成说明和重启安装入口可见；不得点击重启
+S211|/system?tab=about|admin|update|auto|isolated-state|main|注入已跳过版本并展开更新操作日志|跳过状态、版本信息和操作日志可见
 `.trim().split(/\r?\n/u)
 
 const planById = new Map(userManualScreenshotPlan.map((item) => [item.id, item]))

@@ -232,7 +232,7 @@ const SPECIALIZED_AUTOMATION_IDS = new Set([
   'S193',
   'S194',
   'S195',
-  'S196',
+  'S197',
   'S198',
   'S199',
   'S200',
@@ -243,15 +243,14 @@ const SPECIALIZED_AUTOMATION_IDS = new Set([
   'S205',
   'S206',
   'S207',
-  'S208',
+  'S209',
   'S210',
   'S211',
-  'S212',
-  'S197',
-  'S209',
+  'S196',
+  'S208',
 ])
 const DOCUMENTED_AUTOMATION_IDS = new Set(userManualScreenshotScenarios.map((scenario) => scenario.id))
-const SPECIAL_CAPTURE_AUTOMATION_IDS = new Set(['S004', 'S197'])
+const SPECIAL_CAPTURE_AUTOMATION_IDS = new Set(['S004', 'S196'])
 const DEMO_STUDENTS = Object.freeze([
   {
     id: 9001,
@@ -3990,16 +3989,6 @@ async function prepareS147(page, scenario, fixture) {
 
 async function prepareS148(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
-  const reports = page.locator('.reports-page')
-  await reports.waitFor({ state: 'visible', timeout: 30_000 })
-  await reports.getByRole('button', { name: '迁移历史数据' }).waitFor({ state: 'visible', timeout: 20_000 })
-  if (/devtools|migration/iu.test(new URL(page.url()).hash)) {
-    throw new Error(`Historical report scenario must remain in the report center: ${page.url()}`)
-  }
-}
-
-async function prepareS149(page, scenario, fixture) {
-  await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   const center = page.locator('.resource-center-page')
   await center.waitFor({ state: 'visible', timeout: 30_000 })
   await expectText(center, '资源中心')
@@ -4012,7 +4001,7 @@ async function prepareS149(page, scenario, fixture) {
   }
 }
 
-async function prepareS150(page, scenario, fixture) {
+async function prepareS149(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   const resources = page.locator('.training-resources')
   await resources.waitFor({ state: 'visible', timeout: 30_000 })
@@ -4026,7 +4015,7 @@ async function prepareS150(page, scenario, fixture) {
   await resources.locator('.resource-table tbody tr').first().waitFor({ state: 'visible', timeout: 30_000 })
 }
 
-async function prepareS151(page, scenario, fixture) {
+async function prepareS150(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   const resources = page.locator('.training-resources')
   await resources.waitFor({ state: 'visible', timeout: 30_000 })
@@ -4041,7 +4030,7 @@ async function prepareS151(page, scenario, fixture) {
   await row.locator('.tag-item').first().waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS152(page, scenario, fixture) {
+async function prepareS151(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   const resources = page.locator('.training-resources')
   await resources.waitFor({ state: 'visible', timeout: 30_000 })
@@ -4054,7 +4043,7 @@ async function prepareS152(page, scenario, fixture) {
   await dialog.getByRole('button', { name: '创建资源' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS153(page, scenario, fixture) {
+async function prepareS152(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   const resources = page.locator('.training-resources')
   await resources.waitFor({ state: 'visible', timeout: 30_000 })
@@ -4104,7 +4093,7 @@ async function closeVisibleResourceDialogs(page) {
   }
 }
 
-async function prepareS154(page, scenario, fixture, workspace) {
+async function prepareS153(page, scenario, fixture, workspace) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   const resources = await selectEmotionalResourceBusinessGroup(page)
   await resources.getByRole('button', { name: '导入资源包' }).click()
@@ -4128,7 +4117,7 @@ async function prepareS154(page, scenario, fixture, workspace) {
   await dialog.getByRole('button', { name: '开始导入' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS155(page, scenario, fixture) {
+async function prepareS154(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   await closeVisibleResourceDialogs(page)
   const resources = await selectEmotionalResourceBusinessGroup(page)
@@ -4140,7 +4129,7 @@ async function prepareS155(page, scenario, fixture) {
   await dialog.getByRole('button', { name: '导出资源包' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS156(page, scenario, fixture) {
+async function prepareS155(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   await closeVisibleResourceDialogs(page)
   const resources = await selectSensoryResourceBusinessGroup(page)
@@ -4157,7 +4146,7 @@ async function prepareS156(page, scenario, fixture) {
   await row.getByRole('button', { name: '恢复' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS157(page, scenario, fixture) {
+async function prepareS156(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   await closeVisibleResourceDialogs(page)
   const resources = await selectSensoryResourceBusinessGroup(page)
@@ -4174,7 +4163,7 @@ async function prepareS157(page, scenario, fixture) {
   await dialog.getByRole('button', { name: '确认删除' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS158(page, scenario, fixture) {
+async function prepareS157(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   await closeVisibleResourceDialogs(page)
   const resources = await selectSensoryResourceBusinessGroup(page)
@@ -4226,7 +4215,7 @@ async function getTeachingMaterialCard(page) {
   return card
 }
 
-async function prepareS159(page, scenario, fixture) {
+async function prepareS158(page, scenario, fixture) {
   const materials = await prepareTeachingMaterialsPage(page, scenario, fixture)
   await materials.locator('.toolbar').waitFor({ state: 'visible', timeout: 20_000 })
   await materials.locator('.file-category-filter').waitFor({ state: 'visible', timeout: 20_000 })
@@ -4234,7 +4223,7 @@ async function prepareS159(page, scenario, fixture) {
   await getTeachingMaterialCard(page)
 }
 
-async function prepareS160(page, scenario, fixture) {
+async function prepareS159(page, scenario, fixture) {
   await prepareTeachingMaterialsPage(page, scenario, fixture)
   const card = await getTeachingMaterialCard(page)
   await card.locator('.material-actions .el-button').nth(0).waitFor({ state: 'visible', timeout: 20_000 })
@@ -4248,7 +4237,7 @@ async function prepareS160(page, scenario, fixture) {
   }
 }
 
-async function prepareS161(page, scenario, fixture) {
+async function prepareS160(page, scenario, fixture) {
   await prepareTeachingMaterialsPage(page, scenario, fixture)
   const card = await getTeachingMaterialCard(page)
   await card.locator('.material-actions .el-button').nth(1).click()
@@ -4261,7 +4250,7 @@ async function prepareS161(page, scenario, fixture) {
   await dialog.getByRole('button', { name: '打开资料' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS162(page, scenario, fixture) {
+async function prepareS161(page, scenario, fixture) {
   const materials = await prepareTeachingMaterialsPage(page, scenario, fixture)
   await materials.getByRole('button', { name: '我的收藏' }).click()
   await expectText(materials.locator('.content-header'), '当前显示收藏教学资料')
@@ -4269,7 +4258,7 @@ async function prepareS162(page, scenario, fixture) {
   await materials.getByRole('button', { name: '全部资料' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS163(page, scenario, fixture, workspace) {
+async function prepareS162(page, scenario, fixture, workspace) {
   const importFixture = createTeachingMaterialImportFixture(workspace)
   const materials = await prepareTeachingMaterialsPage(page, scenario, fixture, importFixture.sourceFolder)
   await materials.getByRole('button', { name: '更换素材目录' }).waitFor({ state: 'visible', timeout: 20_000 })
@@ -4279,7 +4268,7 @@ async function prepareS163(page, scenario, fixture, workspace) {
   await expectText(materials.locator('.source-folder'), importFixture.sourceFolder)
 }
 
-async function prepareS164(page, scenario, fixture, workspace) {
+async function prepareS163(page, scenario, fixture, workspace) {
   const uploadPath = path.join(workspace.temporary, 'SCGP-上传教学资料演示.txt')
   fs.writeFileSync(uploadPath, 'SCGP teaching material upload fixture\n', 'utf8')
   const materials = await prepareTeachingMaterialsPage(page, scenario, fixture)
@@ -4293,7 +4282,7 @@ async function prepareS164(page, scenario, fixture, workspace) {
   await dialog.getByRole('button', { name: '上传' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS165(page, scenario, fixture, workspace) {
+async function prepareS164(page, scenario, fixture, workspace) {
   const importFixture = createTeachingMaterialImportFixture(workspace)
   const materials = await prepareTeachingMaterialsPage(page, scenario, fixture, importFixture.sourceFolder)
   await materials.getByRole('button', { name: '批量导入' }).click()
@@ -4305,7 +4294,7 @@ async function prepareS165(page, scenario, fixture, workspace) {
   await dialog.getByRole('button', { name: '开始导入' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS166(page, scenario, fixture, workspace) {
+async function prepareS165(page, scenario, fixture, workspace) {
   const importFixture = createTeachingMaterialImportFixture(workspace)
   const materials = await prepareTeachingMaterialsPage(page, scenario, fixture, importFixture.sourceFolder)
   await materials.getByRole('button', { name: '批量导入' }).click()
@@ -4355,7 +4344,7 @@ async function openAiAssistantDrawer(page, scenario, fixture) {
   return drawer
 }
 
-async function prepareS167(page, scenario, fixture) {
+async function prepareS166(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   const launcher = page.locator('.ai-floating-button')
   await launcher.waitFor({ state: 'visible', timeout: 30_000 })
@@ -4367,7 +4356,7 @@ async function prepareS167(page, scenario, fixture) {
   await launcher.getByText('打开 AI 助手', { exact: true }).waitFor({ state: 'attached', timeout: 20_000 })
 }
 
-async function prepareS168(page, scenario, fixture) {
+async function prepareS167(page, scenario, fixture) {
   const drawer = await openAiAssistantDrawer(page, scenario, fixture)
   await drawer.locator('.ai-body').waitFor({ state: 'visible', timeout: 20_000 })
   await drawer.locator('.ai-msg-scroll').waitFor({ state: 'visible', timeout: 20_000 })
@@ -4375,7 +4364,7 @@ async function prepareS168(page, scenario, fixture) {
   await drawer.getByRole('button', { name: '关闭会话面板' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS169(page, scenario, fixture) {
+async function prepareS168(page, scenario, fixture) {
   const drawer = await openAiAssistantDrawer(page, scenario, fixture)
   await drawer.locator('.agent-select .el-select__wrapper').click()
   const options = page.locator('.el-select-dropdown:visible').last()
@@ -4384,7 +4373,7 @@ async function prepareS169(page, scenario, fixture) {
   await expectText(options, '沟通有方')
 }
 
-async function prepareS170(page, scenario, fixture) {
+async function prepareS169(page, scenario, fixture) {
   const drawer = await openAiAssistantDrawer(page, scenario, fixture)
   await drawer.getByRole('button', { name: '模型与设置' }).click()
   const panel = page.locator('.ai-model-panel')
@@ -4397,7 +4386,7 @@ async function prepareS170(page, scenario, fixture) {
   await expectText(options, 'DeepSeek V4 Pro')
 }
 
-async function prepareS171(page, scenario, fixture) {
+async function prepareS170(page, scenario, fixture) {
   const drawer = await openAiAssistantDrawer(page, scenario, fixture)
   await selectElementPlusOption(page, drawer.locator('.agent-select'), '一人一策')
   await drawer.getByRole('button', { name: '新对话' }).click()
@@ -4408,7 +4397,7 @@ async function prepareS171(page, scenario, fixture) {
   await drawer.getByPlaceholder('输入问题，Enter 发送 / Shift+Enter 换行').waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS172(page, scenario, fixture) {
+async function prepareS171(page, scenario, fixture) {
   const drawer = await openAiAssistantDrawer(page, scenario, fixture)
   const sessions = drawer.locator('.ai-session-collapse')
   await sessions.waitFor({ state: 'visible', timeout: 20_000 })
@@ -4423,7 +4412,7 @@ async function prepareS172(page, scenario, fixture) {
   await sessions.getByRole('button', { name: '查看全部历史', exact: true }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS173(page, scenario, fixture) {
+async function prepareS172(page, scenario, fixture) {
   await closeAiAssistantDrawer(page)
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   const history = page.locator('.ai-history-page')
@@ -4439,7 +4428,7 @@ async function prepareS173(page, scenario, fixture) {
   await row.getByRole('button', { name: '删除' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS174(page, scenario, fixture, workspace) {
+async function prepareS173(page, scenario, fixture, workspace) {
   const drawer = await openAiAssistantDrawer(page, scenario, fixture)
   const attachmentPath = path.join(workspace.temporary, 'SCGP-演示附件.pdf')
   fs.writeFileSync(attachmentPath, 'SCGP manual screenshot fixture\n', 'utf8')
@@ -4448,7 +4437,7 @@ async function prepareS174(page, scenario, fixture, workspace) {
     .waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS175(page, scenario, fixture) {
+async function prepareS174(page, scenario, fixture) {
   const drawer = await openAiAssistantDrawer(page, scenario, fixture)
   await drawer.getByRole('button', { name: '新对话' }).click()
   const input = drawer.getByPlaceholder('输入问题，Enter 发送 / Shift+Enter 换行')
@@ -4462,7 +4451,7 @@ async function prepareS175(page, scenario, fixture) {
   await dialog.getByRole('button', { name: '我已知悉，继续发送' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS176(page, scenario, fixture) {
+async function prepareS175(page, scenario, fixture) {
   const drawer = await openAiAssistantDrawer(page, scenario, fixture)
   const sessions = drawer.locator('.ai-session-collapse')
   await sessions.waitFor({ state: 'visible', timeout: 20_000 })
@@ -4479,7 +4468,7 @@ async function prepareS176(page, scenario, fixture) {
   await transcript.getByRole('button', { name: '导出本条回答为 Word' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS177(page, scenario, fixture) {
+async function prepareS176(page, scenario, fixture) {
   const drawer = await openAiAssistantDrawer(page, scenario, fixture)
   await drawer.getByRole('button', { name: '编辑这条消息' }).click()
   await expectText(drawer, '正在编辑上一条消息')
@@ -4496,7 +4485,7 @@ async function prepareS177(page, scenario, fixture) {
     .waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS178(page, scenario, fixture) {
+async function prepareS177(page, scenario, fixture) {
   const drawer = await openAiAssistantDrawer(page, scenario, fixture)
   const reportButton = drawer.getByRole('button', { name: '生成报告' })
   const attachmentButton = drawer.getByRole('button', { name: '添加图片或文档' })
@@ -4514,7 +4503,7 @@ async function prepareS178(page, scenario, fixture) {
     .waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS179(page, scenario, fixture) {
+async function prepareS178(page, scenario, fixture) {
   await page.evaluate(() => {
     document.documentElement.dataset.scgpManualAiScriptedReport = '1'
     window.__SCGP_MANUAL_CAPTURE_EXPORT_WORD__ = async (_blob, fileName) => {
@@ -4553,7 +4542,7 @@ async function openAiAgentConfiguration(page, scenario, fixture) {
   return configuration
 }
 
-async function prepareS180(page, scenario, fixture) {
+async function prepareS179(page, scenario, fixture) {
   const configuration = await openAiAgentConfiguration(page, scenario, fixture)
   const configCard = configuration.locator('.config-card').first()
   await expectText(configCard, '模型服务配置')
@@ -4564,7 +4553,7 @@ async function prepareS180(page, scenario, fixture) {
   await configCard.getByText('默认模型', { exact: true }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS181(page, scenario, fixture) {
+async function prepareS180(page, scenario, fixture) {
   const configuration = await openAiAgentConfiguration(page, scenario, fixture)
   const modelTable = configuration.locator('.model-table')
   await modelTable.waitFor({ state: 'visible', timeout: 30_000 })
@@ -4579,7 +4568,7 @@ async function prepareS181(page, scenario, fixture) {
   await dialog.getByRole('button', { name: '保存' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS182(page, scenario, fixture) {
+async function prepareS181(page, scenario, fixture) {
   const configuration = await openAiAgentConfiguration(page, scenario, fixture)
   const configCard = configuration.locator('.config-card').first()
   await configCard.getByText('AI 总开关', { exact: true }).scrollIntoViewIfNeeded()
@@ -4591,7 +4580,7 @@ async function prepareS182(page, scenario, fixture) {
   await expectText(configCard, '每位教师首次向 AI 发送内容前会弹出')
 }
 
-async function prepareS183(page, scenario, fixture) {
+async function prepareS182(page, scenario, fixture) {
   const configuration = await openAiAgentConfiguration(page, scenario, fixture)
   const agents = configuration.locator('.agent-management-card')
   await agents.scrollIntoViewIfNeeded()
@@ -4613,7 +4602,7 @@ async function openCustomAiAgentEditor(page, scenario, fixture) {
   return dialog
 }
 
-async function prepareS184(page, scenario, fixture) {
+async function prepareS183(page, scenario, fixture) {
   const dialog = await openCustomAiAgentEditor(page, scenario, fixture)
   await expectText(dialog, '编号')
   await expectText(dialog, '名称')
@@ -4627,7 +4616,7 @@ async function prepareS184(page, scenario, fixture) {
   await dialog.getByRole('button', { name: '保存' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS185(page, scenario, fixture) {
+async function prepareS184(page, scenario, fixture) {
   const dialog = await openCustomAiAgentEditor(page, scenario, fixture)
   await expectText(dialog, '引用资料')
   const injectAllReferences = dialog.getByText('注入全部引用资料', { exact: true })
@@ -4640,7 +4629,7 @@ async function prepareS185(page, scenario, fixture) {
   await expectText(dialog, '工具」控制可调用功能；「知识」注入专业方法论')
 }
 
-async function prepareS186(page, scenario, fixture) {
+async function prepareS185(page, scenario, fixture) {
   const configuration = await openAiAgentConfiguration(page, scenario, fixture)
   const sessionCard = configuration.locator('.config-card').filter({
     hasText: '全部会话（管理员视图）',
@@ -4670,7 +4659,7 @@ async function getSystemUserRow(users, name) {
   return row
 }
 
-async function prepareS187(page, scenario, fixture) {
+async function prepareS186(page, scenario, fixture) {
   const users = await openSystemUserManagement(page, scenario, fixture)
   await expectText(users, '用户管理')
   await users.locator('.system-user-stats').waitFor({ state: 'visible', timeout: 20_000 })
@@ -4682,7 +4671,7 @@ async function prepareS187(page, scenario, fixture) {
   await expectText(table, '操作')
 }
 
-async function prepareS188(page, scenario, fixture) {
+async function prepareS187(page, scenario, fixture) {
   const users = await openSystemUserManagement(page, scenario, fixture)
   await users.getByRole('button', { name: '新增用户' }).click()
   const dialog = page.getByRole('dialog', { name: '新增用户' })
@@ -4694,7 +4683,7 @@ async function prepareS188(page, scenario, fixture) {
   await dialog.getByRole('button', { name: '确定' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS189(page, scenario, fixture) {
+async function prepareS188(page, scenario, fixture) {
   const users = await openSystemUserManagement(page, scenario, fixture)
   const row = await getSystemUserRow(users, 'teacher_demo')
   await row.getByRole('button', { name: '编辑' }).click()
@@ -4716,7 +4705,7 @@ async function prepareS189(page, scenario, fixture) {
   await dialog.getByRole('button', { name: '确定' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS190(page, scenario, fixture) {
+async function prepareS189(page, scenario, fixture) {
   const users = await openSystemUserManagement(page, scenario, fixture)
   const row = await getSystemUserRow(users, 'teacher_demo')
   await row.getByRole('button', { name: '重置密码' }).click()
@@ -4731,7 +4720,7 @@ async function prepareS190(page, scenario, fixture) {
   await dialog.getByRole('button', { name: '确定' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS191(page, scenario, fixture) {
+async function prepareS190(page, scenario, fixture) {
   const users = await openSystemUserManagement(page, scenario, fixture)
   const row = await getSystemUserRow(users, 'teacher_demo')
   await row.locator('.system-user-actions__more').click()
@@ -4741,7 +4730,7 @@ async function prepareS191(page, scenario, fixture) {
   await expectText(menu, '删除账号')
 }
 
-async function prepareS192(page, scenario, fixture) {
+async function prepareS191(page, scenario, fixture) {
   const users = await openSystemUserManagement(page, scenario, fixture)
   const row = await getSystemUserRow(users, 'delete_demo')
   await row.locator('.system-user-actions__more').click()
@@ -4787,7 +4776,7 @@ async function ensureBackupOrphanFixture(workspace, fixture) {
   return orphanPath
 }
 
-async function prepareS193(page, scenario, fixture) {
+async function prepareS192(page, scenario, fixture) {
   const panel = await openBackupManagement(page, scenario, fixture)
   await panel.getByRole('button', { name: '立即备份' }).waitFor({ state: 'visible', timeout: 20_000 })
   await panel.getByRole('button', { name: '选择备份文件' }).waitFor({ state: 'visible', timeout: 20_000 })
@@ -4795,7 +4784,7 @@ async function prepareS193(page, scenario, fixture) {
   await expectText(panel, '恢复数据将覆盖当前所有数据')
 }
 
-async function prepareS194(page, scenario, fixture) {
+async function prepareS193(page, scenario, fixture) {
   const panel = await openBackupManagement(page, scenario, fixture)
   await panel.getByRole('button', { name: '立即备份' }).click()
   const prompt = page.getByRole('dialog', { name: '请设置本次备份口令' })
@@ -4804,7 +4793,7 @@ async function prepareS194(page, scenario, fixture) {
   await prompt.getByRole('button', { name: '确定' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS195(page, scenario, fixture) {
+async function prepareS194(page, scenario, fixture) {
   const panel = await openBackupManagement(page, scenario, fixture)
   const firstPrompt = page.getByRole('dialog', { name: '请设置本次备份口令' })
   if (!(await firstPrompt.isVisible())) {
@@ -4820,7 +4809,7 @@ async function prepareS195(page, scenario, fixture) {
   await confirmation.getByRole('button', { name: '确定' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS196(page, scenario, fixture, workspace) {
+async function prepareS195(page, scenario, fixture, workspace) {
   const { panel } = await prepareBackupFileInfo(page, scenario, fixture, workspace)
   const info = panel.locator('.system-backup-info')
   await expectText(info, '备份版本')
@@ -4829,7 +4818,7 @@ async function prepareS196(page, scenario, fixture, workspace) {
   await info.getByText('系统：', { exact: false }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS198(page, scenario, fixture, workspace) {
+async function prepareS197(page, scenario, fixture, workspace) {
   const { panel } = await prepareBackupFileInfo(page, scenario, fixture, workspace)
   const confirmation = new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('Restore confirmation dialog did not open')), 20_000)
@@ -4855,7 +4844,7 @@ async function prepareS198(page, scenario, fixture, workspace) {
   })
 }
 
-async function prepareS199(page, scenario, fixture, workspace) {
+async function prepareS198(page, scenario, fixture, workspace) {
   await ensureBackupOrphanFixture(workspace, fixture)
   const panel = await openBackupManagement(page, scenario, fixture)
   const health = panel.locator('.resource-health-card')
@@ -4867,8 +4856,8 @@ async function prepareS199(page, scenario, fixture, workspace) {
     .waitFor({ state: 'visible', timeout: 30_000 })
 }
 
-async function prepareS200(page, scenario, fixture, workspace) {
-  await prepareS199(page, scenario, fixture, workspace)
+async function prepareS199(page, scenario, fixture, workspace) {
+  await prepareS198(page, scenario, fixture, workspace)
   const health = page.locator('.resource-health-card')
   await health.getByRole('button', { name: /清理选中/ }).click()
   const dialog = page.getByRole('dialog', { name: '确认清理孤儿文件' })
@@ -4878,8 +4867,8 @@ async function prepareS200(page, scenario, fixture, workspace) {
   await dialog.getByRole('button', { name: '删除' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS201(page, scenario, fixture, workspace) {
-  await prepareS199(page, scenario, fixture, workspace)
+async function prepareS200(page, scenario, fixture, workspace) {
+  await prepareS198(page, scenario, fixture, workspace)
   const health = page.locator('.resource-health-card')
   await health.getByRole('button', { name: /清理选中/ }).click()
   const dialog = page.getByRole('dialog', { name: '确认清理孤儿文件' })
@@ -4974,7 +4963,7 @@ async function prepareAndCaptureS004(app, page, scenario, fixture, outputPath) {
   if (!nativeDialogCaptured) throw new Error('Activation failure dialog screen capture was not produced')
 }
 
-async function prepareAndCaptureS197(app, page, scenario, fixture, workspace, outputPath) {
+async function prepareAndCaptureS196(app, page, scenario, fixture, workspace, outputPath) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
   await expectText(page, '数据备份与恢复')
   const { backupPath, password } = await createBackupFixture(page, workspace)
@@ -5017,7 +5006,7 @@ async function prepareAndCaptureS197(app, page, scenario, fixture, workspace, ou
   return { captured: true, captureTarget: 'native-dialog' }
 }
 
-async function prepareS209(page, scenario, fixture) {
+async function prepareS208(page, scenario, fixture) {
   await setUpdateFixtureState(page, {
     currentVersion: '1.0.7',
     latestVersion: '1.1.0-demo',
@@ -5045,7 +5034,7 @@ async function openSystemSettings(page, scenario, fixture) {
   return settings
 }
 
-async function prepareS202(page, scenario, fixture) {
+async function prepareS201(page, scenario, fixture) {
   const settings = await openSystemSettings(page, scenario, fixture)
   await expectText(settings, '基本设置')
   await settings.getByLabel('系统名称').waitFor({ state: 'visible', timeout: 20_000 })
@@ -5053,7 +5042,7 @@ async function prepareS202(page, scenario, fixture) {
   await settings.getByRole('button', { name: '保存设置' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS203(page, scenario, fixture) {
+async function prepareS202(page, scenario, fixture) {
   const settings = await openSystemSettings(page, scenario, fixture)
   const branding = settings.locator('.system-settings-section').filter({ hasText: '登录页品牌与主题' })
   await branding.scrollIntoViewIfNeeded()
@@ -5062,7 +5051,7 @@ async function prepareS203(page, scenario, fixture) {
   await expectText(branding, '图片兜底')
 }
 
-async function prepareS204(page, scenario, fixture) {
+async function prepareS203(page, scenario, fixture) {
   const settings = await openSystemSettings(page, scenario, fixture)
   const branding = settings.locator('.system-settings-section').filter({ hasText: '登录页品牌与主题' })
   await branding.getByLabel('品牌说明').scrollIntoViewIfNeeded()
@@ -5071,7 +5060,7 @@ async function prepareS204(page, scenario, fixture) {
   await branding.getByLabel('品牌说明').waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS205(page, scenario, fixture) {
+async function prepareS204(page, scenario, fixture) {
   const settings = await openSystemSettings(page, scenario, fixture)
   const backup = settings.locator('.system-settings-section').filter({ hasText: '备份设置' })
   const report = settings.locator('.system-settings-section').filter({ hasText: '报告设置' })
@@ -5090,7 +5079,7 @@ async function openSystemAbout(page, scenario, fixture) {
   return about
 }
 
-async function prepareS206(page, scenario, fixture) {
+async function prepareS205(page, scenario, fixture) {
   const about = await openSystemAbout(page, scenario, fixture)
   await expectText(about, 'SCGP / 星愿能力发展平台')
   await expectText(about, '版本')
@@ -5098,7 +5087,7 @@ async function prepareS206(page, scenario, fixture) {
   await expectText(about, '能力包授权')
 }
 
-async function prepareS207(page, scenario, fixture) {
+async function prepareS206(page, scenario, fixture) {
   const about = await openSystemAbout(page, scenario, fixture)
   await about.getByRole('button', { name: '重新激活 / 更新授权' }).click()
   const refreshPanel = about.locator('.system-license-panel').filter({ hasText: '更新当前机器授权' })
@@ -5128,7 +5117,7 @@ async function openUpdatePanel(page, scenario, fixture, values) {
   return panel
 }
 
-async function prepareS208(page, scenario, fixture) {
+async function prepareS207(page, scenario, fixture) {
   const panel = await openUpdatePanel(page, scenario, fixture, {
     currentVersion: '1.0.7', latestVersion: '', updateAvailable: false, isChecking: false,
     isDownloading: false, downloadProgress: 0, downloadSpeed: '', updateDownloaded: false,
@@ -5139,7 +5128,7 @@ async function prepareS208(page, scenario, fixture) {
   await panel.getByRole('button', { name: '检查更新' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS210(page, scenario, fixture) {
+async function prepareS209(page, scenario, fixture) {
   const panel = await openUpdatePanel(page, scenario, fixture, {
     currentVersion: '1.0.7', latestVersion: '1.1.0-demo', updateAvailable: true, isChecking: false,
     isDownloading: true, downloadProgress: 58, downloadSpeed: '2.4 MB/s', updateDownloaded: false,
@@ -5149,7 +5138,7 @@ async function prepareS210(page, scenario, fixture) {
   await expectText(panel, '2.4 MB/s')
 }
 
-async function prepareS211(page, scenario, fixture) {
+async function prepareS210(page, scenario, fixture) {
   const panel = await openUpdatePanel(page, scenario, fixture, {
     currentVersion: '1.0.7', latestVersion: '1.1.0-demo', updateAvailable: true, isChecking: false,
     isDownloading: false, downloadProgress: 100, downloadSpeed: '', updateDownloaded: true,
@@ -5159,7 +5148,7 @@ async function prepareS211(page, scenario, fixture) {
   await panel.getByRole('button', { name: '立即重启' }).waitFor({ state: 'visible', timeout: 20_000 })
 }
 
-async function prepareS212(page, scenario, fixture) {
+async function prepareS211(page, scenario, fixture) {
   const panel = await openUpdatePanel(page, scenario, fixture, {
     currentVersion: '1.0.7', latestVersion: '1.1.0-demo', updateAvailable: true, isChecking: false,
     isDownloading: false, downloadProgress: 0, downloadSpeed: '', updateDownloaded: false,
@@ -5366,7 +5355,7 @@ const prepareHandlers = new Map([
   ['S193', prepareS193],
   ['S194', prepareS194],
   ['S195', prepareS195],
-  ['S196', prepareS196],
+  ['S197', prepareS197],
   ['S198', prepareS198],
   ['S199', prepareS199],
   ['S200', prepareS200],
@@ -5381,7 +5370,6 @@ const prepareHandlers = new Map([
   ['S209', prepareS209],
   ['S210', prepareS210],
   ['S211', prepareS211],
-  ['S212', prepareS212],
 ])
 
 async function captureUnion(page, selectors, outputPath, padding = 18) {
@@ -5621,7 +5609,7 @@ async function captureScenarioRegion(page, scenario, outputPath) {
     ], outputPath)
     return
   }
-  if (scenario.id === 'S007' || scenario.id === 'S009' || scenario.id === 'S011' || scenario.id === 'S136' || scenario.id === 'S198' || scenario.id === 'S201') {
+  if (scenario.id === 'S007' || scenario.id === 'S009' || scenario.id === 'S011' || scenario.id === 'S136' || scenario.id === 'S197' || scenario.id === 'S200') {
     await page.screenshot({ path: outputPath, animations: 'disabled' })
     return
   }
@@ -5629,23 +5617,23 @@ async function captureScenarioRegion(page, scenario, outputPath) {
     await page.locator('.password-form').screenshot({ path: outputPath, animations: 'disabled' })
     return
   }
-  if (scenario.id === 'S209') {
+  if (scenario.id === 'S208') {
     await page.locator('.update-panel .el-card').screenshot({ path: outputPath, animations: 'disabled' })
     return
   }
-  if (scenario.id === 'S156') {
+  if (scenario.id === 'S155') {
     await captureUnion(page, ['.filter-panel', '.resource-table'], outputPath)
     return
   }
-  if (scenario.id === 'S167') {
+  if (scenario.id === 'S166') {
     await page.screenshot({ path: outputPath, animations: 'disabled' })
     return
   }
-  if (scenario.id === 'S169' || scenario.id === 'S170') {
+  if (scenario.id === 'S168' || scenario.id === 'S169') {
     await captureUnion(page, ['.el-drawer:visible', '.el-select-dropdown:visible'], outputPath)
     return
   }
-  if (scenario.id === 'S191') {
+  if (scenario.id === 'S190') {
     await captureUnion(page, ['.system-user-management', '.el-dropdown-menu:visible'], outputPath)
     return
   }
@@ -5679,11 +5667,11 @@ function inspectPng(outputPath) {
   }
 }
 
-async function prepareAndCaptureS166(page, scenario, fixture, workspace, outputPath) {
+async function prepareAndCaptureS165(page, scenario, fixture, workspace, outputPath) {
   const partPaths = ['message', 'result', 'material']
     .map((name) => `${outputPath}.${name}.png`)
   try {
-    await prepareS166(page, scenario, fixture, workspace)
+    await prepareS165(page, scenario, fixture, workspace)
     await redactSensitiveValues(page)
     await page.waitForTimeout(150)
 
@@ -5705,10 +5693,10 @@ async function runScenario(app, page, scenario, fixture, workspace, screenshotDi
   const outputPath = path.join(screenshotDir, scenario.filename)
   if (scenario.id === 'S004') {
     await prepareAndCaptureS004(app, page, scenario, fixture, outputPath)
-  } else if (scenario.id === 'S197') {
-    await prepareAndCaptureS197(app, page, scenario, fixture, workspace, outputPath)
-  } else if (scenario.id === 'S166') {
-    await prepareAndCaptureS166(page, scenario, fixture, workspace, outputPath)
+  } else if (scenario.id === 'S196') {
+    await prepareAndCaptureS196(app, page, scenario, fixture, workspace, outputPath)
+  } else if (scenario.id === 'S165') {
+    await prepareAndCaptureS165(page, scenario, fixture, workspace, outputPath)
   } else {
     const prepare = prepareHandlers.get(scenario.id)
     if (!prepare) throw new Error(`Scenario automation is not implemented yet: ${scenario.id}`)
