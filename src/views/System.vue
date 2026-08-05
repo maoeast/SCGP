@@ -249,8 +249,17 @@
                   @keyup.enter="handleActivationRefresh"
                 />
 
+                  <input
+                    ref="licenseFileInputRef"
+                    type="file"
+                    accept=".lic,.txt,text/plain"
+                    class="license-file-input-hidden"
+                    @change="handleLicenseFileImport"
+                  />
+
                 <div class="system-license-panel__actions">
                   <el-button @click="pasteActivationCode">粘贴激活码</el-button>
+                  <el-button @click="triggerLicenseFileImport">导入激活文件</el-button>
                   <el-button plain @click="closeActivationRefresh">取消</el-button>
                   <el-button
                     type="primary"
@@ -280,6 +289,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 import { useRoute } from 'vue-router'
 import { getEntitlementDefinition } from '@/features/entitlements/entitlement-catalog'
+import { extractLicenseKeyFromFile } from '@/utils/license-file'
 import { backupManager, type BackupInfo } from '@/utils/backup'
 import { BACKUP_MIN_PASSWORD_LENGTH } from '@/utils/backup-crypto'
 import type { BackupImportResult, ResourceRestoreResult } from '@/utils/backup-restore-result'
@@ -310,6 +320,7 @@ const isClearing = ref(false)
 const showActivationRefresh = ref(false)
 const activationCodeInput = ref('')
 const isRefreshingActivation = ref(false)
+const licenseFileInputRef = ref<HTMLInputElement | null>(null)
 
 const isDevMode = computed(() => {
   return (
@@ -548,6 +559,26 @@ const pasteActivationCode = async () => {
   }
 }
 
+// 导入激活文件（.lic / .txt）
+const triggerLicenseFileImport = () => {
+  licenseFileInputRef.value?.click()
+}
+
+const handleLicenseFileImport = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  try {
+    const key = await extractLicenseKeyFromFile(file as File)
+    activationCodeInput.value = key
+    ElMessage.success('已从激活文件读取激活码，请点击「提交并刷新授权」完成更新。')
+  } catch (error) {
+    console.error('读取激活文件失败:', error)
+    ElMessage.error(`读取激活文件失败：${error instanceof Error ? error.message : '未知错误'}`)
+  } finally {
+    input.value = ''
+  }
+}
+
 const handleActivationRefresh = async () => {
   if (!trimmedActivationCode.value) {
     ElMessage.warning('请输入新的激活码')
@@ -639,6 +670,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.license-file-input-hidden {
+  display: none;
+}
+
 .system-tabs {
   flex: 1;
   min-height: 0;

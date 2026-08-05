@@ -43,6 +43,17 @@
                 <i class="fas fa-paste"></i>
                 粘贴
               </button>
+              <button type="button" @click="triggerLicenseFileImport" class="paste-btn" title="导入激活文件（.lic / .txt）">
+                <i class="fas fa-file-import"></i>
+                导入文件
+              </button>
+              <input
+                ref="licenseFileInputRef"
+                type="file"
+                accept=".lic,.txt,text/plain"
+                class="license-file-input-hidden"
+                @change="handleLicenseFileImport"
+              />
             </div>
           </div>
 
@@ -79,6 +90,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
+import { extractLicenseKeyFromFile } from '@/utils/license-file'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -87,6 +99,7 @@ const systemConfigStore = useSystemConfigStore()
 const activationCode = ref('')
 const isActivating = ref(false)
 const showActivationForm = ref(false)
+const licenseFileInputRef = ref<HTMLInputElement | null>(null)
 
 // 在组件挂载时检查激活状态
 onMounted(async () => {
@@ -133,6 +146,26 @@ const copyMachineCode = async () => {
     alert('机器码已复制到剪贴板')
   } catch (error) {
     console.error('复制失败:', error)
+  }
+}
+
+// 导入激活文件（.lic / .txt）
+const triggerLicenseFileImport = () => {
+  licenseFileInputRef.value?.click()
+}
+
+const handleLicenseFileImport = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  try {
+    const key = await extractLicenseKeyFromFile(file as File)
+    activationCode.value = key
+    alert('已从激活文件读取激活码，请点击「验证激活码」完成激活。')
+  } catch (error) {
+    console.error('读取激活文件失败:', error)
+    alert(`读取激活文件失败：${error instanceof Error ? error.message : '未知错误'}`)
+  } finally {
+    input.value = ''
   }
 }
 
@@ -396,6 +429,10 @@ const formatDate = (dateString: string) => {
   border-color: rgba(37, 141, 129, 0.42);
   transform: translateY(-2px);
   box-shadow: 0 8px 18px rgba(37, 141, 129, 0.12);
+}
+
+.license-file-input-hidden {
+  display: none;
 }
 
 .copy-machine-btn:active {
