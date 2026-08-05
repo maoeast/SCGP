@@ -1786,3 +1786,10 @@
 - 激活文件：`.lic` = 纯激活码一行；主程序激活页与「系统管理 → 关于 → 重新激活/更新授权」均可导入（`.lic`/`.txt`，解析只做格式校验，签名验证走原链）；生成端（CLI/GUI/HTML）生成后可一键导出 .lic。
 - HTML 离线生成器：`license-generator-dist/generator.template.html`（模板，入库）+ `scripts/build-license-generator-html.mjs` 注入 `.keys/private.pem` 产出 `scgp-license-generator.html`（双击即用，Web Crypto 签名与 Node/验证端同算法）；**产物内嵌私钥不入库**（.gitignore），私钥轮换后重跑构建脚本。
 
+## 96. 2026-08-05 视知觉图形匹配筛查（cognitive_self）v4 重构落地
+- 原「综合认知自测」重构为 4 级难度题库（2 练习 + 16 正式题）、色盲安全色板（HEX）、渲染器扩展（手性 flag/缺口圆环/内部标记点/镜像/双图元布局，crt-matrix.ts 固定变换顺序）。
+- 输出改为描述性结果（不输出 IQ/百分位，cognitive-self-norms.ts 已废弃标注）；判读与报告全部口语化（教师可读）。
+- 选项每次施测随机洗牌：value 保留题库原始下标，判分与显示顺序解耦（utils/cognitive-shuffle.ts）。
+- 答题板 UI 约束：目标与选项统一 160×160 可见刺激框（图元 88px），点击热区与可见框解耦（PerformanceTrialBoard.vue）。
+- 设计稿 docs/planning/2026-08-05-cognitive-self-difficulty-curve-design.md（v4.1）；门禁测试 tests/cognitive-self-gate.test.ts（12 项）。
+
