@@ -200,10 +200,59 @@ export interface AiChatMessage {
   attachments: AiAttachmentRef[] | null
   /** 本条 assistant 回复关联的工具富产物（路线 C，如图表；无产物为 null） */
   toolArtifacts: ToolArtifact[] | null
+  /** 记忆设计 v4.1：投递状态（''=legacy completed / streaming / completed / cancelled / failed） */
+  deliveryStatus: string
+  /** 消息类型（''=final / final / tool_call / tool_result） */
+  messageKind: string
   tokensTotal: number
   tokensPrompt: number
   tokensCompletion: number
   estCostYuan: number
+  createdAt: string
+}
+
+// ==================== 学生级长期记忆类型（v4.1） ====================
+
+export type AiMemoryCategory = 'observation' | 'preference' | 'advice_given' | 'follow_up'
+export type AiMemoryStatus = 'pending' | 'confirmed' | 'rejected' | 'superseded' | 'archived'
+export type AiMemoryPriority = 'normal' | 'pinned' | 'safety_critical'
+export type AiMemoryConfidence = 'observed' | 'assumed'
+
+export interface AiStudentMemory {
+  id: number
+  studentId: number
+  userId: number
+  createdByType: 'teacher' | 'ai' | 'system'
+  agentCode: string
+  sessionId: number | null
+  sourceMessageId: number | null
+  category: AiMemoryCategory
+  content: string
+  confidence: AiMemoryConfidence
+  status: AiMemoryStatus
+  priority: AiMemoryPriority
+  priorityNote: string
+  confirmedByUserId: number | null
+  confirmedAt: string | null
+  effectiveAt: string
+  expiresAt: string | null
+  deletedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AiMemorySummaryBatch {
+  id: number
+  sessionId: number
+  batchId: string
+  studentId: number
+  fromMessageId: number
+  toMessageId: number
+  inputHash: string
+  state: 'pending' | 'summarizing' | 'done' | 'failed' | 'cancelled'
+  leaseUntil: string | null
+  attemptCount: number
+  lastError: string
   createdAt: string
 }
 
@@ -1182,6 +1231,8 @@ export class AIApi extends DatabaseAPI {
       content: r.content,
       attachments: parseAttachmentRefs(r.attachments),
       toolArtifacts: parseToolArtifacts(r.tool_artifacts),
+      deliveryStatus: r.delivery_status ?? '',
+      messageKind: r.message_kind ?? '',
       tokensTotal: Number(r.tokens_total || Number(r.tokens_prompt || 0) + Number(r.tokens_completion || 0)),
       tokensPrompt: Number(r.tokens_prompt || 0),
       tokensCompletion: Number(r.tokens_completion || 0),
@@ -1285,6 +1336,8 @@ export class AIApi extends DatabaseAPI {
     usage?: DeepSeekUsage | null
     attachments?: AiAttachmentRef[] | null
     toolArtifacts?: ToolArtifact[] | null
+    deliveryStatus?: string
+    messageKind?: string
   }): number {
     const tokensPrompt = Number(input.usage?.promptTokens || 0)
     const tokensCompletion = Number(input.usage?.completionTokens || 0)
@@ -1296,13 +1349,332 @@ export class AIApi extends DatabaseAPI {
     // 路线 C：工具富产物（如图表）序列化为 JSON 存库，关联到 assistant 回复
     const toolArtifactsJson =
       input.toolArtifacts && input.toolArtifacts.length > 0 ? JSON.stringify(input.toolArtifacts) : null
+    const deliveryStatus = input.deliveryStatus ?? (input.role === 'assistant' ? 'completed' : '')
+    const messageKind = input.messageKind ?? 'final'
     this.execute(
-      `INSERT INTO ai_chat_message (session_id, role, content, tokens_total, tokens_prompt, tokens_completion, est_cost_yuan, attachments, tool_artifacts)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [input.sessionId, input.role, input.content, tokensTotal, tokensPrompt, tokensCompletion, estCost, attachmentsJson, toolArtifactsJson],
+      `INSERT INTO ai_chat_message (session_id, role, content, tokens_total, tokens_prompt, tokens_completion, est_cost_yuan, attachments, tool_artifacts, delivery_status, message_kind)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [input.sessionId, input.role, input.content, tokensTotal, tokensPrompt, tokensCompletion, estCost, attachmentsJson, toolArtifactsJson, deliveryStatus, messageKind],
     )
     this.touchSession(input.sessionId)
     return this.getLastInsertId()
+  }
+
+  // ==================== 消息状态机 API（v4.1 §6.3） ====================
+
+  /** 流式路径：先插 streaming 占位行（content 初始为空），返回消息 id 供分块更新 */
+  createAssistantMessage(input: {
+    sessionId: number
+    messageKind?: string
+  }): number {
+    this.execute(
+      `INSERT INTO ai_chat_message (session_id, role, content, delivery_status, message_kind)
+       VALUES (?, 'assistant', '', 'streaming', ?)`,
+      [input.sessionId, input.messageKind ?? 'final'],
+    )
+    return this.getLastInsertId()
+  }
+
+  /** 流式路径：分块更新正文（仅 streaming 态） */
+  updateAssistantChunk(messageId: number, content: string): boolean {
+    return (
+      this.execute(
+        `UPDATE ai_chat_message
+         SET content = ?
+         WHERE id = ? AND delivery_status = 'streaming'`,
+        [content, messageId],
+      ) > 0
+    )
+  }
+
+  /** 流式路径：完成/取消/失败收尾（事务内置状态 + 完成时间） */
+  finalizeAssistantMessage(messageId: number, status: 'completed' | 'cancelled' | 'failed'): boolean {
+    const completedAt = status === 'completed' ? new Date().toISOString() : null
+    return (
+      this.execute(
+        `UPDATE ai_chat_message
+         SET delivery_status = ?, completed_at = ?
+         WHERE id = ? AND delivery_status = 'streaming'`,
+        [status, completedAt, messageId],
+      ) > 0
+    )
+  }
+
+  // ==================== 学生记忆 CRUD（v4.1 §4.1/§7） ====================
+
+  listStudentMemories(studentId: number, statuses?: AiMemoryStatus[]): AiStudentMemory[] {
+    const statusFilter = statuses && statuses.length > 0 ? ` AND status IN (${statuses.map(() => '?').join(',')})` : ''
+    const params: any[] = [studentId, ...(statuses ?? [])]
+    const rows = this.query(
+      `SELECT * FROM ai_student_memory
+       WHERE student_id = ? AND deleted_at IS NULL${statusFilter}
+       ORDER BY
+         CASE priority WHEN 'safety_critical' THEN 0 WHEN 'pinned' THEN 1 ELSE 2 END,
+         updated_at DESC`,
+      params,
+    )
+    return rows.map((r: any) => this.mapMemoryRow(r))
+  }
+
+  addStudentMemory(input: {
+    studentId: number
+    userId: number
+    createdByType?: 'teacher' | 'ai' | 'system'
+    agentCode?: string
+    sessionId?: number | null
+    sourceMessageId?: number | null
+    category: AiMemoryCategory
+    content: string
+    confidence?: AiMemoryConfidence
+    status?: AiMemoryStatus
+    priority?: AiMemoryPriority
+    priorityNote?: string
+    batchId?: string
+    fingerprint?: string
+    possibleDuplicateOf?: number | null
+    supersedesId?: number | null
+    modelProvider?: string
+    modelName?: string
+    promptVersion?: string
+    generationId?: string
+  }): number {
+    const status = input.status ?? (input.createdByType === 'ai' ? 'pending' : 'confirmed')
+    this.execute(
+      `INSERT INTO ai_student_memory (
+        student_id, user_id, created_by_type, agent_code, session_id, source_message_id,
+        category, content, confidence, status, priority, priority_note,
+        batch_id, fingerprint, possible_duplicate_of, supersedes_id,
+        model_provider, model_name, prompt_version, generation_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        input.studentId, input.userId, input.createdByType ?? 'teacher', input.agentCode ?? '',
+        input.sessionId ?? null, input.sourceMessageId ?? null,
+        input.category, input.content, input.confidence ?? 'observed', status,
+        input.priority ?? 'normal', input.priorityNote ?? '',
+        input.batchId ?? '', input.fingerprint ?? '', input.possibleDuplicateOf ?? null,
+        input.supersedesId ?? null,
+        input.modelProvider ?? '', input.modelName ?? '', input.promptVersion ?? '', input.generationId ?? '',
+      ],
+    )
+    const id = this.getLastInsertId()
+    this.writeMemoryAudit(id, 'create', input.userId, null, { status, category: input.category, content: input.content })
+    return id
+  }
+
+  /** 教师确认 pending → confirmed（或拒绝 → rejected）；软删除走 deleteStudentMemory */
+  confirmStudentMemory(memoryId: number, userId: number, status: 'confirmed' | 'rejected' | 'disputed'): boolean {
+    const before = this.queryOne('SELECT * FROM ai_student_memory WHERE id = ?', [memoryId])
+    if (!before) return false
+    const confirmedAt = status === 'confirmed' ? new Date().toISOString() : null
+    const verification = status === 'disputed' ? 'disputed' : 'verified'
+    const updated =
+      this.execute(
+        `UPDATE ai_student_memory
+         SET status = ?, confirmed_by_user_id = ?, confirmed_at = ?,
+             verification_status = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND deleted_at IS NULL`,
+        [status === 'disputed' ? 'confirmed' : status, userId, confirmedAt, verification, memoryId],
+      ) > 0
+    if (updated) this.writeMemoryAudit(memoryId, status === 'rejected' ? 'reject' : 'confirm', userId, before, { status, verification })
+    return updated
+  }
+
+  /** 标记优先级（pinned / safety_critical）：须填依据（v4.1 合同⑤） */
+  markMemoryPriority(memoryId: number, userId: number, priority: 'pinned' | 'safety_critical', note: string): boolean {
+    if (!note.trim()) return false
+    const before = this.queryOne('SELECT * FROM ai_student_memory WHERE id = ?', [memoryId])
+    if (!before) return false
+    const updated =
+      this.execute(
+        `UPDATE ai_student_memory
+         SET priority = ?, priority_note = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND deleted_at IS NULL`,
+        [priority, note.trim(), memoryId],
+      ) > 0
+    if (updated) this.writeMemoryAudit(memoryId, 'mark_priority', userId, before, { priority, note })
+    return updated
+  }
+
+  /** 软删除（deleted_at，审计保留） */
+  deleteStudentMemory(memoryId: number, userId: number): boolean {
+    const before = this.queryOne('SELECT * FROM ai_student_memory WHERE id = ?', [memoryId])
+    if (!before) return false
+    const updated =
+      this.execute(
+        `UPDATE ai_student_memory SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        [memoryId],
+      ) > 0
+    if (updated) this.writeMemoryAudit(memoryId, 'delete', userId, before, { deleted_at: new Date().toISOString() })
+    return updated
+  }
+
+  // ==================== 总结批次（v4.1 §4.4/§6.2） ====================
+
+  /** 阶段 A：创建批次（唯一索引保证每会话单飞；返回 false 表示已有活动批次） */
+  createSummaryBatch(input: {
+    sessionId: number
+    batchId: string
+    studentId: number
+    fromMessageId: number
+    toMessageId: number
+    inputHash: string
+  }): boolean {
+    try {
+      this.execute(
+        `INSERT INTO ai_memory_summary_batch (session_id, batch_id, student_id, from_message_id, to_message_id, input_hash, state)
+         VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
+        [input.sessionId, input.batchId, input.studentId, input.fromMessageId, input.toMessageId, input.inputHash],
+      )
+      return true
+    } catch {
+      return false // 唯一索引冲突：已有活动批次
+    }
+  }
+
+  getSummaryBatch(batchId: string): AiMemorySummaryBatch | null {
+    const row = this.queryOne('SELECT * FROM ai_memory_summary_batch WHERE batch_id = ?', [batchId])
+    return row ? this.mapBatchRow(row) : null
+  }
+
+  /** 阶段 B 前：置 summarizing（CAS：仅 pending 可转） */
+  markBatchSummarizing(batchId: string): boolean {
+    return (
+      this.execute(
+        `UPDATE ai_memory_summary_batch SET state = 'summarizing', updated_at = CURRENT_TIMESTAMP
+         WHERE batch_id = ? AND state = 'pending'`,
+        [batchId],
+      ) > 0
+    )
+  }
+
+  /** 阶段 C：CAS 提交（写候选由调用方在同一事务完成；此处推进水位 + 批次 done） */
+  commitSummaryBatch(batchId: string, watermarkTo: number): boolean {
+    const batch = this.getSummaryBatch(batchId)
+    if (!batch || batch.state !== 'summarizing') return false
+    const rawDb = typeof this.db?.getRawDB === 'function' ? this.db.getRawDB() : this.db
+    rawDb.run('BEGIN TRANSACTION')
+    try {
+      // CAS：水位未变才推进（changes()==1 校验）
+      const pushed =
+        this.execute(
+          `UPDATE ai_chat_session SET memory_watermark = ? WHERE id = ? AND memory_watermark = ?`,
+          [watermarkTo, batch.sessionId, batch.fromMessageId - 1],
+        ) > 0
+      if (!pushed) throw new Error('水位已被并发推进')
+      this.execute(
+        `UPDATE ai_memory_summary_batch SET state = 'done', attempt_count = 0, updated_at = CURRENT_TIMESTAMP
+         WHERE batch_id = ?`,
+        [batchId],
+      )
+      rawDb.run('COMMIT')
+      return true
+    } catch (error) {
+      try {
+        rawDb.run('ROLLBACK')
+      } catch {
+        /* ignore */
+      }
+      this.execute(
+        `UPDATE ai_memory_summary_batch SET state = 'cancelled', last_error = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE batch_id = ?`,
+        [error instanceof Error ? error.message : String(error), batchId],
+      )
+      return false
+    }
+  }
+
+  /** 失败重试：attempt_count +1；达上限（3）置 failed */
+  failSummaryBatch(batchId: string, error: string): void {
+    const batch = this.getSummaryBatch(batchId)
+    if (!batch) return
+    const attempts = batch.attemptCount + 1
+    if (attempts >= 3) {
+      this.execute(
+        `UPDATE ai_memory_summary_batch SET state = 'failed', attempt_count = ?, last_error = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE batch_id = ?`,
+        [attempts, error.slice(0, 500), batchId],
+      )
+    } else {
+      this.execute(
+        `UPDATE ai_memory_summary_batch SET state = 'pending', attempt_count = ?, last_error = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE batch_id = ?`,
+        [attempts, error.slice(0, 500), batchId],
+      )
+    }
+  }
+
+  /** 绑定学生（库级防竞态：存在任一消息即拒绝，v4 §4.3） */
+  bindSessionStudent(sessionId: number, studentId: number): boolean {
+    return (
+      this.execute(
+        `UPDATE ai_chat_session SET student_id = ?
+         WHERE id = ?
+           AND NOT EXISTS (SELECT 1 FROM ai_chat_message WHERE session_id = ?)`,
+        [studentId, sessionId, sessionId],
+      ) > 0
+    )
+  }
+
+  getSessionStudentId(sessionId: number): number | null {
+    const row = this.queryOne('SELECT student_id FROM ai_chat_session WHERE id = ?', [sessionId])
+    const v = row?.student_id
+    return v == null ? null : Number(v)
+  }
+
+  private writeMemoryAudit(
+    memoryId: number,
+    action: string,
+    userId: number | null,
+    before: any | null,
+    after: any | null,
+  ): void {
+    this.execute(
+      `INSERT INTO ai_student_memory_audit (memory_id, action, user_id, before_json, after_json)
+       VALUES (?, ?, ?, ?, ?)`,
+      [memoryId, action, userId ?? null, before ? JSON.stringify(before) : null, after ? JSON.stringify(after) : null],
+    )
+  }
+
+  private mapMemoryRow(r: any): AiStudentMemory {
+    return {
+      id: r.id,
+      studentId: r.student_id,
+      userId: r.user_id,
+      createdByType: r.created_by_type,
+      agentCode: r.agent_code,
+      sessionId: r.session_id ?? null,
+      sourceMessageId: r.source_message_id ?? null,
+      category: r.category,
+      content: r.content,
+      confidence: r.confidence,
+      status: r.status,
+      priority: r.priority,
+      priorityNote: r.priority_note,
+      confirmedByUserId: r.confirmed_by_user_id ?? null,
+      confirmedAt: r.confirmed_at ?? null,
+      effectiveAt: r.effective_at,
+      expiresAt: r.expires_at ?? null,
+      deletedAt: r.deleted_at ?? null,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }
+  }
+
+  private mapBatchRow(r: any): AiMemorySummaryBatch {
+    return {
+      id: r.id,
+      sessionId: r.session_id,
+      batchId: r.batch_id,
+      studentId: r.student_id,
+      fromMessageId: r.from_message_id,
+      toMessageId: r.to_message_id,
+      inputHash: r.input_hash,
+      state: r.state,
+      leaseUntil: r.lease_until ?? null,
+      attemptCount: Number(r.attempt_count || 0),
+      lastError: r.last_error,
+      createdAt: r.created_at,
+    }
   }
 
   /** 本月（按 created_at 的 UTC YYYY-MM）累计 token 与 assistant 消息数，用于额度展示/判断 */

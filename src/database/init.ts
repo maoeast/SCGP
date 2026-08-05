@@ -3943,6 +3943,20 @@ async function initializeAITables(rawDb: any): Promise<void> {
   } catch (e: any) {
     console.warn('[AITables] 历史会话 user_id 回填警告:', e?.message)
   }
+  // 记忆设计 v4.1：学生绑定 + 扫描游标水位（§4.3）
+  safeAddColumn(rawDb, 'ai_chat_session', 'student_id INTEGER')
+  safeAddColumn(rawDb, 'ai_chat_session', 'memory_watermark INTEGER NOT NULL DEFAULT 0')
+  // 迁移防回灌（v4.1 §13）：历史会话水位初始化为现有最大消息 id，默认不自动补总结
+  try {
+    rawDb.run(`UPDATE ai_chat_session
+      SET memory_watermark = (
+        SELECT COALESCE(MAX(id), 0) FROM ai_chat_message m WHERE m.session_id = ai_chat_session.id
+      )
+      WHERE memory_watermark = 0
+        AND EXISTS (SELECT 1 FROM ai_chat_message m2 WHERE m2.session_id = ai_chat_session.id)`)
+  } catch (e: any) {
+    console.warn('[AITables] 历史会话记忆水位初始化警告:', e?.message)
+  }
 
   // 3. 聊天消息表（含 token 与估费，兼作额度账本明细）
   rawDb.run(`CREATE TABLE IF NOT EXISTS ai_chat_message (
@@ -3962,6 +3976,12 @@ async function initializeAITables(rawDb: any): Promise<void> {
   safeAddColumn(rawDb, 'ai_chat_message', 'attachments TEXT')
   // 路线 C：工具富产物 JSON 列（如评估趋势图 echarts 数据），关联到 assistant 回复
   safeAddColumn(rawDb, 'ai_chat_message', 'tool_artifacts TEXT')
+  // 记忆设计 v4.1：消息状态机（streaming→completed/cancelled/failed）+ 完成时间 + 消息类型
+  safeAddColumn(rawDb, 'ai_chat_message', `delivery_status TEXT NOT NULL DEFAULT ''`)
+  safeAddColumn(rawDb, 'ai_chat_message', 'completed_at TEXT')
+  safeAddColumn(rawDb, 'ai_chat_message', `message_kind TEXT NOT NULL DEFAULT ''`)
+  // 历史消息（无列之前）delivery_status='' 视为 legacy completed（可读不补总结）；
+  // message_kind='' 视为 final（v4.1 §4.2/§13：防回灌）
   try {
     rawDb.run(`UPDATE ai_chat_message
       SET tokens_total = COALESCE(tokens_prompt, 0) + COALESCE(tokens_completion, 0)
@@ -4055,6 +4075,97 @@ async function initializeAITables(rawDb: any): Promise<void> {
   )`)
   // Phase 5C：绑定配置记录每个知识技能的 referenceIds；NULL 保持 Phase 5B「全量引用」兼容语义。
   safeAddColumn(rawDb, 'ai_agent_skill', 'config TEXT')
+
+  // ============ 记忆设计 v4.1：学生级长期记忆（§4） ============
+
+  // 4.1 学生记忆表（pending 候选制 → 教师确认 confirmed；可查可删）
+  rawDb.run(`CREATE TABLE IF NOT EXISTS ai_student_memory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_by_type TEXT NOT NULL DEFAULT 'teacher'
+      CHECK (created_by_type IN ('teacher', 'ai', 'system')),
+    agent_code TEXT NOT NULL DEFAULT '',
+    session_id INTEGER,
+    source_message_id INTEGER,
+    source_type TEXT NOT NULL DEFAULT 'chat'
+      CHECK (source_type IN ('chat', 'assessment', 'manual', 'migration')),
+    category TEXT NOT NULL DEFAULT 'observation'
+      CHECK (category IN ('observation', 'preference', 'advice_given', 'follow_up')),
+    content TEXT NOT NULL CHECK (length(content) BETWEEN 1 AND 200),
+    confidence TEXT NOT NULL DEFAULT 'observed'
+      CHECK (confidence IN ('observed', 'assumed')),
+    status TEXT NOT NULL DEFAULT 'pending'
+      CHECK (status IN ('pending', 'confirmed', 'rejected', 'superseded', 'archived')),
+    priority TEXT NOT NULL DEFAULT 'normal'
+      CHECK (priority IN ('normal', 'pinned', 'safety_critical')),
+    priority_note TEXT NOT NULL DEFAULT '',
+    fingerprint TEXT NOT NULL DEFAULT '',
+    possible_duplicate_of INTEGER,
+    supersedes_id INTEGER,
+    batch_id TEXT NOT NULL DEFAULT '',
+    confirmed_by_user_id INTEGER,
+    confirmed_at TEXT,
+    effective_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TEXT,
+    deleted_at TEXT,
+    verification_status TEXT NOT NULL DEFAULT 'unverified'
+      CHECK (verification_status IN ('unverified', 'verified', 'disputed')),
+    model_provider TEXT NOT NULL DEFAULT '',
+    model_name TEXT NOT NULL DEFAULT '',
+    prompt_version TEXT NOT NULL DEFAULT '',
+    generation_id TEXT NOT NULL DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE CASCADE,
+    FOREIGN KEY (session_id) REFERENCES ai_chat_session(id) ON DELETE SET NULL,
+    FOREIGN KEY (source_message_id) REFERENCES ai_chat_message(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (confirmed_by_user_id) REFERENCES user(id) ON DELETE SET NULL,
+    FOREIGN KEY (possible_duplicate_of) REFERENCES ai_student_memory(id) ON DELETE SET NULL,
+    FOREIGN KEY (supersedes_id) REFERENCES ai_student_memory(id) ON DELETE SET NULL
+  )`)
+  rawDb.run(`CREATE INDEX IF NOT EXISTS idx_ai_mem_student ON ai_student_memory(student_id, status)`)
+  rawDb.run(`CREATE INDEX IF NOT EXISTS idx_ai_mem_cat ON ai_student_memory(student_id, category, status)`)
+  rawDb.run(`CREATE INDEX IF NOT EXISTS idx_ai_mem_fp ON ai_student_memory(student_id, fingerprint)`)
+  rawDb.run(`CREATE INDEX IF NOT EXISTS idx_ai_mem_dup ON ai_student_memory(possible_duplicate_of)`)
+
+  // 4.4 总结批次表（两段式事务：调用前持久化批次 → 模型调用 → CAS 提交）
+  rawDb.run(`CREATE TABLE IF NOT EXISTS ai_memory_summary_batch (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL,
+    batch_id TEXT NOT NULL UNIQUE,
+    student_id INTEGER NOT NULL,
+    from_message_id INTEGER NOT NULL,
+    to_message_id INTEGER NOT NULL,
+    input_hash TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT 'pending'
+      CHECK (state IN ('pending', 'summarizing', 'done', 'failed', 'cancelled')),
+    lease_until TEXT,
+    attempt_count INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT NOT NULL DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES ai_chat_session(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES student(id) ON DELETE CASCADE
+  )`)
+  rawDb.run(`CREATE INDEX IF NOT EXISTS idx_ai_batch_session ON ai_memory_summary_batch(session_id, state)`)
+  rawDb.run(`CREATE INDEX IF NOT EXISTS idx_ai_batch_lease ON ai_memory_summary_batch(state, lease_until)`)
+  // 每会话单飞：同一会话最多一个活动批次（v4.1 §6.2）
+  rawDb.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_batch_active
+    ON ai_memory_summary_batch(session_id) WHERE state IN ('pending', 'summarizing')`)
+
+  // 4.5 审计表（不级联删除：记忆软删除 + 审计保留，v4 §4.5）
+  rawDb.run(`CREATE TABLE IF NOT EXISTS ai_student_memory_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    memory_id INTEGER NOT NULL,
+    action TEXT NOT NULL CHECK (action IN ('create', 'confirm', 'reject', 'update', 'delete', 'expire', 'promote', 'mark_priority')),
+    user_id INTEGER,
+    before_json TEXT,
+    after_json TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`)
+  rawDb.run(`CREATE INDEX IF NOT EXISTS idx_ai_mem_audit_memory ON ai_student_memory_audit(memory_id)`)
 
   // 索引
   const indexStatements = [

@@ -79,8 +79,8 @@ test('AiChatMessage 类型 + saveMessage + listMessages 完成持久化往返', 
   // 写入：saveMessage 接收并序列化
   assert.match(src, /toolArtifacts\?: ToolArtifact\[\] \| null/)
   assert.match(src, /toolArtifacts && input\.toolArtifacts\.length > 0 \? JSON\.stringify/)
-  assert.match(src, /INSERT INTO ai_chat_message[\s\S]*tool_artifacts\)/)
-  assert.match(src, /toolArtifactsJson\]/)
+  assert.match(src, /INSERT INTO ai_chat_message[\s\S]*tool_artifacts, delivery_status, message_kind\)/)
+  assert.match(src, /toolArtifactsJson, deliveryStatus, messageKind\]/)
   // 读出：listMessages 反序列化
   assert.match(src, /parseToolArtifacts\(r\.tool_artifacts\)/)
   // 解析函数容错
