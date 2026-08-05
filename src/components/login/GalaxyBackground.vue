@@ -23,33 +23,24 @@
       @error="handleVideoError"
       @loadeddata="handleVideoLoaded"
     ></video>
-    <StarfieldTunnel
-      v-if="(!props.backgroundImage || imageFailed) && (!props.backgroundVideo || videoFailed || !videoReady)"
-      :variant="props.variant"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { LoginThemeVariant } from '@/utils/login-theme'
-import StarfieldTunnel from './StarfieldTunnel.vue'
 
 interface Props {
-  variant?: LoginThemeVariant
   backgroundImage?: string
   backgroundVideo?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  variant: 'calm-blue',
   backgroundImage: '',
   backgroundVideo: '',
 })
 
 const imageFailed = ref(false)
 const videoFailed = ref(false)
-const videoReady = ref(false)
 const videoRef = ref<HTMLVideoElement | null>(null)
 
 const handleImageError = () => {
@@ -58,12 +49,10 @@ const handleImageError = () => {
 
 const handleVideoError = () => {
   videoFailed.value = true
-  videoReady.value = false
 }
 
 const handleVideoLoaded = async () => {
   videoFailed.value = false
-  videoReady.value = true
   try {
     await videoRef.value?.play()
   } catch {
@@ -72,11 +61,10 @@ const handleVideoLoaded = async () => {
 }
 
 watch(
-  () => [props.variant, props.backgroundImage, props.backgroundVideo],
+  () => [props.backgroundImage, props.backgroundVideo],
   () => {
     imageFailed.value = false
     videoFailed.value = false
-    videoReady.value = false
   },
 )
 </script>

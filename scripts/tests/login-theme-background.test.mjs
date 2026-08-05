@@ -121,7 +121,7 @@ test('bundled login backgrounds use packaged resources for all presets', () => {
   }
 })
 
-test('login background rendering keeps video -> image -> procedural fallback chain', () => {
+test('login background rendering keeps video -> image fallback chain (no procedural fallback)', () => {
   const backgroundSource = readFileSync(
     resolve(projectRoot, 'src/components/login/GalaxyBackground.vue'),
     'utf8',
@@ -139,12 +139,9 @@ test('login background rendering keeps video -> image -> procedural fallback cha
   assert.match(backgroundSource, /:poster="props\.backgroundImage \|\| undefined"/)
   assert.match(backgroundSource, /@error="handleImageError"/)
 
-  // 3. 程序化星空：仅当视频失败/未就绪且图片缺失/失败时渲染
-  assert.match(backgroundSource, /StarfieldTunnel/)
-  assert.match(
-    backgroundSource,
-    /v-if="\(!props\.backgroundImage \|\| imageFailed\) && \(!props\.backgroundVideo \|\| videoFailed \|\| !videoReady\)"/,
-  )
+  // 3. 无程序化兜底：Three.js 星空背景（StarfieldTunnel）已移除，mp4 → jpg 为最终兜底链
+  assert.doesNotMatch(backgroundSource, /StarfieldTunnel/)
+  assert.doesNotMatch(backgroundSource, /videoReady/)
 
   // 4. 登录页把 store 的图片/视频引用传入背景组件
   assert.match(loginSource, /:background-image="systemConfigStore\.activeLoginBackground\.image"/)

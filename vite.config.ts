@@ -93,7 +93,6 @@ export default (async (configEnv?: ConfigEnv): Promise<UserConfig> => {
           manualChunks: {
             'element-plus': ['element-plus'],
             echarts: ['echarts', 'vue-echarts'],
-            three: ['three'],
           },
         },
       },

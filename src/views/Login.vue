@@ -2,7 +2,6 @@
   <div class="login-shell">
     <GalaxyBackground
       class="login-shell__background"
-      :variant="loginThemeVariant"
       :background-image="systemConfigStore.activeLoginBackground.image"
       :background-video="systemConfigStore.activeLoginBackground.video"
     />
@@ -42,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import GalaxyBackground from '@/components/login/GalaxyBackground.vue'
 import LoginCard from '@/components/login/LoginCard.vue'
@@ -50,7 +49,7 @@ import SchoolPanel from '@/components/login/SchoolPanel.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
 import { cancelLoginFocusRecovery, scheduleLoginFocusRecovery } from '@/utils/auth-ui'
-import { applyLoginThemeVariables, normalizeLoginThemeVariant } from '@/utils/login-theme'
+import { applyLoginThemeVariables } from '@/utils/login-theme'
 
 const REMEMBERED_USERNAME_KEY = 'scgp_login_username'
 const defaultSystemName = '星愿能力发展训练系统'
@@ -80,10 +79,6 @@ type LoginCardExpose = {
 
 const loginCardRef = ref<LoginCardExpose | null>(null)
 let loginFocusTimerIds: number[] = []
-
-const loginThemeVariant = computed(() =>
-  normalizeLoginThemeVariant(systemConfigStore.loginThemeVariant),
-)
 
 const restoreRememberedUsername = () => {
   const rememberedUsername = localStorage.getItem(REMEMBERED_USERNAME_KEY)

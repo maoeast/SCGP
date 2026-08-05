@@ -37,22 +37,6 @@ export interface LoginThemePreset {
   buttonDisabledStart: string
   /** Button disabled gradient end */
   buttonDisabledEnd: string
-  /** Galaxy background base color */
-  galaxyBg: string
-  /** Galaxy vignette gradient (CSS) */
-  galaxyVignette: string
-  /** Galaxy particle palette */
-  galaxyParticlePalette: string[]
-  /** Galaxy dust palette */
-  galaxyDustPalette: string[]
-  /** Galaxy background base gradient (CSS) */
-  galaxyBaseGradient: string
-  /** Galaxy lower glow colors */
-  galaxyLowerGlow: string[]
-  /** Galaxy main glow color stops */
-  galaxyMainGlow: string[]
-  /** Galaxy core glow colors */
-  galaxyCoreGlow: string[]
 }
 
 export interface LoginThemeConfig {
@@ -95,45 +79,6 @@ export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = 
     buttonShadow: 'rgba(227, 139, 58, 0.3)',
     buttonDisabledStart: '#d4c9a8',
     buttonDisabledEnd: '#c9b896',
-    galaxyBg: '#fff8e7',
-    galaxyVignette:
-      'radial-gradient(circle at center, transparent 0 54%, rgba(242, 201, 76, 0.08) 74%, rgba(242, 153, 74, 0.16) 100%), linear-gradient(180deg, rgba(255, 248, 231, 0) 0%, rgba(242, 153, 74, 0.06) 100%)',
-    galaxyParticlePalette: [
-      'rgb(255, 160, 10)',
-      'rgb(255, 120, 0)',
-      'rgb(230, 100, 0)',
-      'rgb(255, 180, 20)',
-      'rgb(200, 80, 0)',
-      'rgb(255, 90, 0)',
-      'rgb(255, 200, 40)',
-      'rgb(240, 140, 0)',
-    ],
-    galaxyDustPalette: [
-      'rgb(255, 160, 10)',
-      'rgb(255, 130, 0)',
-      'rgb(230, 100, 0)',
-      'rgb(255, 190, 30)',
-      'rgb(200, 80, 0)',
-    ],
-    galaxyBaseGradient: '#fff8e7',
-    galaxyLowerGlow: [
-      'rgba(242, 201, 76, 0.12)',
-      'rgba(242, 201, 76, 0.05)',
-      'rgba(242, 201, 76, 0)',
-    ],
-    galaxyMainGlow: [
-      'rgba(255, 216, 138, 0.14)',
-      'rgba(255, 187, 214, 0.12)',
-      'rgba(255, 153, 198, 0.06)',
-      'rgba(255, 153, 198, 0)',
-    ],
-    galaxyCoreGlow: [
-      'rgba(255, 252, 241, 0.9)',
-      'rgba(255, 236, 188, 0.86)',
-      'rgba(255, 210, 140, 0.64)',
-      'rgba(255, 157, 198, 0.34)',
-      'rgba(255, 157, 198, 0)',
-    ],
   },
   'calm-blue': {
     label: '静蓝',
@@ -162,45 +107,6 @@ export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = 
     buttonShadow: 'rgba(58, 152, 163, 0.35)',
     buttonDisabledStart: '#b0cdd2',
     buttonDisabledEnd: '#98bfc4',
-    galaxyBg: '#D6ECF0',
-    galaxyVignette:
-      'radial-gradient(circle at center, transparent 0 54%, rgba(58, 152, 163, 0.12) 74%, rgba(58, 152, 163, 0.22) 100%), linear-gradient(180deg, rgba(214, 236, 240, 0) 0%, rgba(58, 152, 163, 0.1) 100%)',
-    galaxyParticlePalette: [
-      'rgb(79, 179, 191)',
-      'rgb(58, 152, 163)',
-      'rgb(123, 198, 185)',
-      'rgb(166, 221, 224)',
-      'rgb(150, 210, 218)',
-      'rgb(110, 200, 195)',
-      'rgb(200, 238, 240)',
-      'rgb(90, 168, 178)',
-    ],
-    galaxyDustPalette: [
-      'rgb(79, 179, 191)',
-      'rgb(123, 198, 185)',
-      'rgb(166, 221, 224)',
-      'rgb(150, 210, 218)',
-      'rgb(90, 168, 178)',
-    ],
-    galaxyBaseGradient: '#D6ECF0',
-    galaxyLowerGlow: [
-      'rgba(58, 152, 163, 0.18)',
-      'rgba(58, 152, 163, 0.08)',
-      'rgba(58, 152, 163, 0)',
-    ],
-    galaxyMainGlow: [
-      'rgba(79, 179, 191, 0.2)',
-      'rgba(123, 198, 185, 0.16)',
-      'rgba(58, 152, 163, 0.08)',
-      'rgba(58, 152, 163, 0)',
-    ],
-    galaxyCoreGlow: [
-      'rgba(240, 252, 253, 0.92)',
-      'rgba(166, 221, 224, 0.88)',
-      'rgba(79, 179, 191, 0.68)',
-      'rgba(58, 152, 163, 0.38)',
-      'rgba(58, 152, 163, 0)',
-    ],
   },
   'lush-green': {
     label: '润绿',
@@ -229,45 +135,6 @@ export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = 
     buttonShadow: 'rgba(87, 169, 35, 0.34)',
     buttonDisabledStart: '#C4D7C5',
     buttonDisabledEnd: '#B2C9B6',
-    galaxyBg: '#CBEAE8',
-    galaxyVignette:
-      'radial-gradient(circle at center, transparent 0 54%, rgba(114, 190, 47, 0.08) 74%, rgba(65, 156, 139, 0.16) 100%), linear-gradient(180deg, rgba(203, 234, 232, 0) 0%, rgba(169, 217, 193, 0.14) 100%)',
-    galaxyParticlePalette: [
-      'rgb(114, 190, 47)',
-      'rgb(87, 169, 35)',
-      'rgb(74, 167, 155)',
-      'rgb(113, 194, 177)',
-      'rgb(155, 214, 232)',
-      'rgb(164, 214, 128)',
-      'rgb(207, 239, 224)',
-      'rgb(82, 150, 139)',
-    ],
-    galaxyDustPalette: [
-      'rgb(114, 190, 47)',
-      'rgb(87, 169, 35)',
-      'rgb(113, 194, 177)',
-      'rgb(155, 214, 232)',
-      'rgb(82, 150, 139)',
-    ],
-    galaxyBaseGradient: '#CBEAE8',
-    galaxyLowerGlow: [
-      'rgba(114, 190, 47, 0.16)',
-      'rgba(114, 190, 47, 0.07)',
-      'rgba(114, 190, 47, 0)',
-    ],
-    galaxyMainGlow: [
-      'rgba(155, 214, 232, 0.2)',
-      'rgba(113, 194, 177, 0.17)',
-      'rgba(114, 190, 47, 0.08)',
-      'rgba(114, 190, 47, 0)',
-    ],
-    galaxyCoreGlow: [
-      'rgba(247, 255, 250, 0.92)',
-      'rgba(207, 239, 224, 0.88)',
-      'rgba(114, 190, 47, 0.64)',
-      'rgba(74, 167, 155, 0.34)',
-      'rgba(74, 167, 155, 0)',
-    ],
   },
   custom: {
     label: '自定义',
@@ -294,44 +161,6 @@ export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = 
     buttonShadow: 'rgba(230, 185, 60, 0.3)',
     buttonDisabledStart: '#8a8a9a',
     buttonDisabledEnd: '#7a7a8a',
-    galaxyBg: '#1a1a2e',
-    galaxyVignette: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.2) 100%)',
-    galaxyParticlePalette: [
-      'rgb(230, 185, 60)',
-      'rgb(200, 160, 40)',
-      'rgb(180, 140, 30)',
-      'rgb(255, 200, 60)',
-      'rgb(170, 130, 30)',
-      'rgb(210, 170, 50)',
-      'rgb(240, 195, 55)',
-      'rgb(190, 150, 35)',
-    ],
-    galaxyDustPalette: [
-      'rgb(230, 185, 60)',
-      'rgb(200, 160, 40)',
-      'rgb(180, 140, 30)',
-      'rgb(255, 200, 60)',
-      'rgb(170, 130, 30)',
-    ],
-    galaxyBaseGradient: '#1a1a2e',
-    galaxyLowerGlow: [
-      'rgba(230, 185, 60, 0.12)',
-      'rgba(230, 185, 60, 0.05)',
-      'rgba(230, 185, 60, 0)',
-    ],
-    galaxyMainGlow: [
-      'rgba(230, 185, 60, 0.14)',
-      'rgba(200, 160, 40, 0.12)',
-      'rgba(180, 140, 30, 0.06)',
-      'rgba(180, 140, 30, 0)',
-    ],
-    galaxyCoreGlow: [
-      'rgba(255, 255, 240, 0.9)',
-      'rgba(230, 210, 150, 0.86)',
-      'rgba(200, 170, 80, 0.64)',
-      'rgba(180, 140, 60, 0.34)',
-      'rgba(180, 140, 60, 0)',
-    ],
   },
 }
 
