@@ -123,6 +123,7 @@ test('康复训练支持专家仅绑定最小必要工具、全部康复资料�
     'get_student',
     'get_assessment',
     'get_assessment_trend',
+    'get_student_profile',
     'list_training_sessions',
     'list_equipment',
     'generate_report',

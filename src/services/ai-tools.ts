@@ -13,7 +13,8 @@ import { StudentAPI, TrainingSessionAPI, ReportAPI, EquipmentAPI } from '@/datab
 import { AIApi } from '@/database/ai-api'
 import { exportWordDocument } from '@/utils/export-word'
 import { buildAIReportWordPayload, type AIReportInput } from '@/utils/ai-report-word-builder'
-import { SCORE_ADAPTERS, SUPPORTED_SCALE_CODES, UNSUPPORTED_SCALE_CODES, type LongitudinalScorePayload } from './assessment-score-adapters'
+import { SCORE_ADAPTERS, SUPPORTED_SCALE_CODES, UNSUPPORTED_SCALE_CODES, type LongitudinalScorePayload, type ScoreAdapter, type ScoreSnapshot } from './assessment-score-adapters'
+import { buildStudentProfile, strengthToScore, strengthLabel } from './assessment-profile'
 
 // ==================== 类型 ====================
 
@@ -49,9 +50,9 @@ export interface ToolResult {
 
 /**
  * 工具产物联合类型：每种富产物一个分支。
- * 新增产物类型时扩展此联合 + AiArtifactCard dispatcher。
+ * 新增产物类型时扩展此联合 + AiChatTranscript/AiArtifactCard dispatcher。
  */
-export type ToolArtifact = AssessmentTrendArtifact
+export type ToolArtifact = AssessmentTrendArtifact | ProfileRadarArtifact
 
 /** 评估纵向趋势产物：驱动 echarts 线图渲染。 */
 export interface AssessmentTrendArtifact {
@@ -64,6 +65,17 @@ export interface AssessmentTrendArtifact {
   snapshots: LongitudinalScorePayload['snapshots']
   /** 总分语义说明，图表上方展示，帮助教师正确解读高低分。 */
   scoreNote: string
+}
+
+/** 跨量表学生画像雷达产物：驱动 echarts 雷达图渲染。 */
+export interface ProfileRadarArtifact {
+  kind: 'profile_radar'
+  /** 学生信息。 */
+  student: { id: number; name: string }
+  /** 雷达轴：各发展领域（仅有评估数据的领域）。 */
+  axes: Array<{ domain: string; domainLabel: string }>
+  /** 雷达值：每个领域的强弱量化分（0-100，50=正常，>50 偏强，<50 偏弱）。 */
+  values: Array<{ domain: string; strengthScore: number; strengthLabel: string }>
 }
 
 /** 供 UI 展示的一次工具调用步骤 */
@@ -149,6 +161,20 @@ export const AI_TOOLS: AiToolDef[] = [
           limit: { type: 'number', description: '返回最近 N 次评估（默认全部，最大 50）' },
         },
         required: ['student_id', 'scale_code'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_student_profile',
+      description: '获取某学生「跨量表横向立体画像」：聚合该学生所有已测标准化量表的最近一次评估，按五大发展领域（感觉统合/情绪调节/社交沟通/认知发展/生活自理）分组，给出各领域强弱、跨量表一致性发现与干预优先级建议。区别于 get_assessment_trend（单量表纵向）：本工具横向综合多量表，用于「这个孩子整体面貌如何」「各领域发展均衡吗」「优先干预哪个领域」类问题。注意：只聚合该学生有评估记录的量表；未测领域会在 untestedScales 明确列出，下结论时必须考虑覆盖盲区，不要基于不全数据下全局判断。',
+      parameters: {
+        type: 'object',
+        properties: {
+          student_id: { type: 'number', description: '学生 ID' },
+        },
+        required: ['student_id'],
       },
     },
   },
@@ -281,6 +307,7 @@ const TOOL_LABELS: Record<string, string> = {
   search_students: '搜索学生',
   get_assessment: '查询评估记录',
   get_assessment_trend: '查询量表纵向分数',
+  get_student_profile: '生成跨量表画像',
   list_training_sessions: '查询训练记录',
   list_equipment: '查询训练器材',
   get_ai_usage: '查询本月用量',
@@ -468,6 +495,47 @@ export async function dispatchTool(
               }
             : undefined
         return serialize(payload, artifact)
+      }
+
+      case 'get_student_profile': {
+        // 路线 D：跨量表横向立体画像。聚合该学生所有已测标准化量表的最近一次评估。
+        // 授权差异：未授权量表前端测不了 → DB 无记录 → 自动跳过；只返回有数据的量表。
+        // 部分测试：未测量表在 untestedScales 明确列出，AI 下结论时需考虑覆盖盲区。
+        if (!args.student_id) return fail('缺少参数 student_id')
+        const sid = Number(args.student_id)
+
+        const student = await new StudentAPI().getStudentById(sid)
+        if (!student) return fail(`未找到 id=${sid} 的学生`)
+
+        // 遍历所有适配器，收集有评估记录的量表（升序快照序列）
+        const scaleData: Array<{ scaleCode: string; adapter: ScoreAdapter; snapshots: ScoreSnapshot[] }> = []
+        for (const [code, adapter] of Object.entries(SCORE_ADAPTERS)) {
+          const snapshots = adapter.getLongitudinalScores(sid)
+          if (snapshots && snapshots.length > 0) scaleData.push({ scaleCode: code, adapter, snapshots })
+        }
+
+        const profile = buildStudentProfile(
+          { id: sid, name: student.name, gender: student.gender ?? '' },
+          scaleData,
+          SUPPORTED_SCALE_CODES,
+        )
+
+        // 领域 ≥ 3 才产雷达图 artifact（多边形至少 3 条边；不足时 AI 只输出文字画像）
+        const artifact: ToolArtifact | undefined =
+          profile.domains.length >= 3
+            ? {
+                kind: 'profile_radar',
+                student: { id: sid, name: student.name },
+                axes: profile.domains.map((d) => ({ domain: d.domain, domainLabel: d.domainLabel })),
+                values: profile.domains.map((d) => ({
+                  domain: d.domain,
+                  strengthScore: strengthToScore(d.strength),
+                  strengthLabel: strengthLabel(d.strength),
+                })),
+              }
+            : undefined
+
+        return serialize(profile, artifact)
       }
 
       case 'list_training_sessions': {

@@ -135,3 +135,54 @@ test('store tool 循环分支把 artifacts 持久化到 assistant 消息', () =>
   const sendBlock = src.slice(sendStart, sendEnd)
   assert.match(sendBlock, /toolArtifacts: artifacts/)
 })
+
+// ==================== 路线 D：跨量表横向画像 ====================
+
+test('get_student_profile 工具 schema + dispatch 聚合逻辑存在', () => {
+  const toolsSrc = readProjectFile('src/services/ai-tools.ts')
+  const profileSrc = readProjectFile('src/services/assessment-profile.ts')
+
+  // schema：工具名 + 描述含领域分组与盲区提示
+  assert.match(toolsSrc, /name: 'get_student_profile'/)
+  assert.match(toolsSrc, /五大发展领域/)
+  assert.match(toolsSrc, /untestedScales/)
+  assert.match(toolsSrc, /get_student_profile: '生成跨量表画像'/)
+
+  // dispatch：遍历 SCORE_ADAPTERS + 聚合 + 领域≥3 产雷达 artifact
+  assert.match(toolsSrc, /case 'get_student_profile':/)
+  assert.match(toolsSrc, /Object\.entries\(SCORE_ADAPTERS\)/)
+  assert.match(toolsSrc, /buildStudentProfile\(/)
+  assert.match(toolsSrc, /profile\.domains\.length >= 3/)
+  assert.match(toolsSrc, /kind: 'profile_radar'/)
+
+  // 纯函数模块：领域映射 + 结论生成 + 强弱量化
+  assert.match(profileSrc, /SCALE_DOMAIN_MAP/)
+  assert.match(profileSrc, /DOMAIN_LABELS/)
+  assert.match(profileSrc, /buildScaleConclusion/)
+  assert.match(profileSrc, /strengthToScore/)
+  assert.match(profileSrc, /buildStudentProfile/)
+})
+
+test('ProfileRadarArtifact 类型加入 ToolArtifact 联合', () => {
+  const src = readProjectFile('src/services/ai-tools.ts')
+  assert.match(src, /export type ToolArtifact = AssessmentTrendArtifact \| ProfileRadarArtifact/)
+  assert.match(src, /export interface ProfileRadarArtifact/)
+  assert.match(src, /kind: 'profile_radar'/)
+  assert.match(src, /strengthScore: number/)
+})
+
+test('AiProfileRadar 雷达图组件渲染 ProfileRadarArtifact', () => {
+  const src = readProjectFile('src/features/ai/components/AiProfileRadar.vue')
+  assert.match(src, /defineProps<\{ artifact: ProfileRadarArtifact \}>/)
+  assert.match(src, /import \* as echarts from 'echarts'/)
+  assert.match(src, /type: 'radar'/)
+  assert.match(src, /indicator: axes/)
+  assert.match(src, /chart\.dispose\(\)/)
+})
+
+test('AiChatTranscript 渲染 profile_radar 产物（与 trend 并列）', () => {
+  const src = readProjectFile('src/features/ai/components/AiChatTranscript.vue')
+  assert.match(src, /profileRadarArtifactsOf\(msg\)/)
+  assert.match(src, /a is ProfileRadarArtifact/)
+  assert.match(src, /<AiProfileRadar/)
+})

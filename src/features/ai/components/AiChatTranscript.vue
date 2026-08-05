@@ -5,8 +5,9 @@ import type { AiAttachmentRef } from '@/database/ai-api'
 import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
 import { resolveAbsolutePath } from '@/utils/resource-file-service'
 import { renderMarkdown } from '@/utils/render-markdown'
-import type { AssessmentTrendArtifact, ToolArtifact, ToolStep } from '@/services/ai-tools'
+import type { AssessmentTrendArtifact, ProfileRadarArtifact, ToolArtifact, ToolStep } from '@/services/ai-tools'
 import AiTrendChart from './AiTrendChart.vue'
+import AiProfileRadar from './AiProfileRadar.vue'
 
 export interface AiTranscriptMessage {
   id?: number
@@ -81,6 +82,12 @@ function trendArtifactsOf(msg: AiTranscriptMessage): AssessmentTrendArtifact[] {
   return msg.toolArtifacts.filter((a): a is AssessmentTrendArtifact => a.kind === 'assessment_trend')
 }
 
+/** 提取消息里的画像雷达产物（路线 D：跨量表横向画像） */
+function profileRadarArtifactsOf(msg: AiTranscriptMessage): ProfileRadarArtifact[] {
+  if (!msg.toolArtifacts || msg.toolArtifacts.length === 0) return []
+  return msg.toolArtifacts.filter((a): a is ProfileRadarArtifact => a.kind === 'profile_radar')
+}
+
 async function openAttachment(ref: AiAttachmentRef) {
   try {
     const abs = await resolveAbsolutePath(ref.rel)
@@ -126,6 +133,12 @@ async function openAttachment(ref: AiAttachmentRef) {
           <AiTrendChart
             v-for="(a, tIdx) in trendArtifactsOf(msg)"
             :key="`trend-${msg.id ?? idx}-${tIdx}`"
+            :artifact="a"
+          />
+          <!-- 路线 D：跨量表画像时，在回复下方自动渲染 echarts 雷达图 -->
+          <AiProfileRadar
+            v-for="(a, pIdx) in profileRadarArtifactsOf(msg)"
+            :key="`radar-${msg.id ?? idx}-${pIdx}`"
             :artifact="a"
           />
         </template>
