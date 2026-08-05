@@ -262,7 +262,7 @@ function generateLicenseArtifact(options) {
         days,
         entitlements,
         outputDir = process.cwd(),
-        syncPublicKeyToProject = true
+        syncPublicKeyToProject = false
     } = options || {};
 
     if (!['trial', 'full', 'permanent'].includes(type)) {
@@ -377,12 +377,9 @@ function main() {
     }
 
     if (args.includes('--init')) {
-        const initResult = initializeKeys();
+        const initResult = initializeKeys({ syncPublicKeyToProject: false });
         console.log('密钥初始化完成');
         console.log(`   密钥目录: ${initResult.keyDir}`);
-        if (initResult.publicKeyPath) {
-            console.log(`   公钥同步: ${initResult.publicKeyPath}`);
-        }
         return;
     }
 

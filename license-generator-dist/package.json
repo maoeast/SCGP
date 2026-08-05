@@ -31,8 +31,7 @@
       "renderer.js",
       "styles.css",
       "generate-license.js",
-      ".keys/**/*",
-      "public-key.pem"
+      ".keys/**/*"
     ],
     "win": {
       "target": [
