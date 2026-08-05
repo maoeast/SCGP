@@ -1,17 +1,27 @@
 /**
- * 综合认知自测（视空间·图形匹配）— 题库与计分数据（DRAFT）
+ * 视知觉图形匹配筛查任务（DRAFT）— 题库与维度数据（v4）
  *
- * ⚠️ DRAFT（重要，需专业人员审核后方可用于临床）：
- * - 自编「视空间图形匹配」占位绩效题，测量**视觉辨别 + 加工速度**。
- *   呈现目标图，从干扰项中选出与目标完全相同的一项；记录每题正确性 + 真反应时。
+ * ⚠️ DRAFT（需专业人员审核后方可用于临床）：
+ * - 自编「视空间图形匹配」绩效题，测量**视觉图形匹配表现 + 作答反应时**。
+ *   呈现目标图（全程可见），从 4 个选项中选出与目标完全相同的一项；
+ *   记录每题正确性 + 真反应时。
  * - 题目与常模均为草稿，无标准化效度。仅用于平台「筛查 / 发育监测 / 转介建议」，
- *   不能作为临床诊断依据。
+ *   不能作为临床诊断依据；不输出 IQ / 百分位 / 标准分（见 CognitiveSelfDriver）。
+ * - 设计稿：docs/planning/2026-08-05-cognitive-self-difficulty-curve-design.md（v4）
  * - 图元规格复用 crt-data 的 CrtCellSpec，由 crt-matrix.ts 程序化渲染 SVG，无外部素材。
- * - 与 CRT（图形推理补全）不同：本量表是「找相同」匹配任务，偏加工速度而非推理。
  *
- * 维度（按难度分组，runtime code 与 DimensionScore.code / 维度映射一致）：
- * - match_basic 基础辨别：干扰项形状 / 颜色显著不同
- * - match_detail 细节辨别：需辨别旋转方向 / 图元数量 / 大小比例
+ * 维度（4 级难度，runtime code 与 DimensionScore.code / 维度映射一致）：
+ * - match_basic  基础匹配：形状 / 颜色整体辨别（地板锚题）
+ * - match_fine   精细辨别：方向 30° 步进 / 大小 ±8%
+ * - match_cross  双属性交叉：方向差 30° / 大小差 ±8% / 近色对 / 内部点
+ * - match_expert 高相似逼近：方向差 15° / 大小差 ±6% / 手性镜像 / 缺口 / 内部点 / 布局（无颜色干扰）
+ *
+ * 渲染规格（统一）：目标与选项图元基准外径 88 CSS px（容器 112×112）；
+ * 缺口线宽约 7px、缺口角宽 24°、钟点间隔 30°（0=12 点，顺时针）；
+ * 内部标记点直径约 5–6%（≈8–10px @88）、定位半径 28%、随 rotate 共同旋转。
+ *
+ * 正解位置：16 道正式题中 0/1/2/3 各 4 次、同一位置连续不超 2 次（构建测试验证，
+ * 见 utils/cognitive-match.ts 与 tests）。
  *
  * @module database/cognitive-self-data
  */
@@ -19,12 +29,14 @@
 import type { CrtCellSpec } from '@/database/crt-data'
 
 /** 难度维度 */
-export type CognitiveSelfDimension = 'basic' | 'detail'
+export type CognitiveSelfDimension = 'basic' | 'fine' | 'cross' | 'expert'
 
 /** 一道视空间图形匹配题 */
 export interface CognitiveSelfQuestion {
   id: number
   dimension: CognitiveSelfDimension
+  /** 练习题不计分（正式题前呈现，用于确认规则理解） */
+  isPractice?: boolean
   /** 目标图（儿童需在选项中找到与它完全相同的一项） */
   target: CrtCellSpec
   /** 选项（含 1 正解 + 干扰项） */
@@ -42,235 +54,274 @@ export interface CognitiveSelfDimensionDef {
 }
 
 export const cognitiveSelfDimensions: CognitiveSelfDimensionDef[] = [
-  { code: 'match_basic', dimension: 'basic', name: '基础辨别', ability: '形状 / 颜色视觉辨别' },
-  { code: 'match_detail', dimension: 'detail', name: '细节辨别', ability: '方向 / 数量 / 大小精细辨别' },
+  { code: 'match_basic', dimension: 'basic', name: '基础匹配', ability: '形状 / 颜色整体辨别' },
+  { code: 'match_fine', dimension: 'fine', name: '精细辨别', ability: '方向 / 大小细微辨别' },
+  { code: 'match_cross', dimension: 'cross', name: '双属性交叉', ability: '多属性同步锁定与干扰抑制' },
+  { code: 'match_expert', dimension: 'expert', name: '高相似逼近', ability: '手性镜像 / 缺口 / 内部点 / 布局精细加工' },
 ]
 
+/** 层级口语名（给老师/家长看的报告用，替代术语名） */
+export const COGNITIVE_SELF_LAYER_PLAIN: Record<string, string> = {
+  match_basic: '基础题（认形状、认颜色）',
+  match_fine: '中等题（看方向、看大小）',
+  match_cross: '较难题（几个特征要一起看）',
+  match_expert: '最难题（图形细节非常接近）',
+}
+
 // ============================================================================
-// 题库（DRAFT：12 题，4 选 1；难度递增；正解位置打散避免固定偏好）
+// 固定色板（色盲安全，全题库统一；禁止主题色名）
+// ============================================================================
+
+export const COGNITIVE_SELF_COLORS = {
+  blue: '#0072B2',
+  teal: '#009E73',
+  orange: '#E69F00',
+  yellow: '#F0E442',
+  gray: '#7A7A7A',
+} as const
+
+// ============================================================================
+// 题库（DRAFT：2 练习 + 16 正式题，4 选 1；难度递增；正解位置已打散并平衡）
 // ============================================================================
 
 export const cognitiveSelfQuestions: CognitiveSelfQuestion[] = [
-  // ---- 基础辨别（match_basic）：干扰项形状显著不同 ----
+  // ---- 练习题（不计分；与正式题零重复）----
+  {
+    id: -2, dimension: 'basic', isPractice: true,
+    target: { shape: 'diamond', color: COGNITIVE_SELF_COLORS.gray },
+    options: [
+      { shape: 'diamond', color: COGNITIVE_SELF_COLORS.gray },
+      { shape: 'square', color: COGNITIVE_SELF_COLORS.gray },
+      { shape: 'diamond', color: COGNITIVE_SELF_COLORS.orange },
+      { shape: 'star', color: COGNITIVE_SELF_COLORS.yellow },
+    ],
+    correctIndex: 0,
+  },
+  {
+    id: -1, dimension: 'basic', isPractice: true,
+    target: { shape: 'arrow', rotate: 0 },
+    options: [
+      { shape: 'arrow', rotate: 0 },
+      { shape: 'arrow', rotate: 90 },
+      { shape: 'arrow', rotate: 180 },
+      { shape: 'arrow', rotate: 270 },
+    ],
+    correctIndex: 0,
+  },
+
+  // ---- L1 基础匹配（match_basic）：地板锚题 ----
   {
     id: 1, dimension: 'basic',
-    target: { shape: 'circle', color: 'red' },
+    target: { shape: 'circle', color: COGNITIVE_SELF_COLORS.blue },
     options: [
-      { shape: 'circle', color: 'red' },
-      { shape: 'square', color: 'red' },
-      { shape: 'triangle', color: 'red' },
-      { shape: 'star', color: 'red' },
+      { shape: 'circle', color: COGNITIVE_SELF_COLORS.blue },
+      { shape: 'square', color: COGNITIVE_SELF_COLORS.blue },
+      { shape: 'triangle', color: COGNITIVE_SELF_COLORS.blue },
+      { shape: 'star', color: COGNITIVE_SELF_COLORS.blue },
     ],
     correctIndex: 0,
   },
   {
     id: 2, dimension: 'basic',
-    target: { shape: 'square', color: 'primary' },
+    target: { shape: 'square', color: COGNITIVE_SELF_COLORS.orange },
     options: [
-      { shape: 'circle', color: 'primary' },
-      { shape: 'star', color: 'primary' },
-      { shape: 'square', color: 'primary' },
-      { shape: 'hexagon', color: 'primary' },
+      { shape: 'circle', color: COGNITIVE_SELF_COLORS.orange },
+      { shape: 'square', color: COGNITIVE_SELF_COLORS.orange },
+      { shape: 'star', color: COGNITIVE_SELF_COLORS.orange },
+      { shape: 'hexagon', color: COGNITIVE_SELF_COLORS.orange },
     ],
-    correctIndex: 2,
+    correctIndex: 1,
   },
   {
     id: 3, dimension: 'basic',
-    target: { shape: 'triangle', color: 'green' },
+    target: { shape: 'triangle', color: COGNITIVE_SELF_COLORS.yellow },
     options: [
-      { shape: 'diamond', color: 'green' },
-      { shape: 'triangle', color: 'green' },
-      { shape: 'circle', color: 'green' },
-      { shape: 'square', color: 'green' },
+      { shape: 'triangle', color: COGNITIVE_SELF_COLORS.blue },
+      { shape: 'triangle', color: COGNITIVE_SELF_COLORS.orange },
+      { shape: 'triangle', color: COGNITIVE_SELF_COLORS.yellow },
+      { shape: 'triangle', color: COGNITIVE_SELF_COLORS.gray },
     ],
-    correctIndex: 1,
+    correctIndex: 2,
   },
   {
     id: 4, dimension: 'basic',
-    target: { shape: 'star', color: 'orange' },
+    target: { shape: 'star', color: COGNITIVE_SELF_COLORS.teal },
     options: [
-      { shape: 'hexagon', color: 'orange' },
-      { shape: 'circle', color: 'orange' },
-      { shape: 'diamond', color: 'orange' },
-      { shape: 'star', color: 'orange' },
+      { shape: 'hexagon', color: COGNITIVE_SELF_COLORS.teal },
+      { shape: 'diamond', color: COGNITIVE_SELF_COLORS.teal },
+      { shape: 'circle', color: COGNITIVE_SELF_COLORS.teal },
+      { shape: 'star', color: COGNITIVE_SELF_COLORS.teal },
     ],
     correctIndex: 3,
   },
-  // ---- 基础辨别（match_basic）：颜色辨别（同形状不同颜色）----
+
+  // ---- L2 精细辨别（match_fine）：方向 30° 步进 / 大小 ±8% ----
   {
-    id: 5, dimension: 'basic',
-    target: { shape: 'circle', color: 'red' },
+    id: 5, dimension: 'fine',
+    target: { shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 30 },
     options: [
-      { shape: 'circle', color: 'green' },
-      { shape: 'circle', color: 'red' },
-      { shape: 'circle', color: 'primary' },
-      { shape: 'circle', color: 'orange' },
-    ],
-    correctIndex: 1,
-  },
-  {
-    id: 6, dimension: 'basic',
-    target: { shape: 'hexagon', color: 'purple' },
-    options: [
-      { shape: 'square', color: 'purple' },
-      { shape: 'triangle', color: 'purple' },
-      { shape: 'hexagon', color: 'purple' },
-      { shape: 'star', color: 'purple' },
-    ],
-    correctIndex: 2,
-  },
-  // ---- 细节辨别（match_detail）：方向辨别（同形状不同旋转）----
-  {
-    id: 7, dimension: 'detail',
-    target: { shape: 'arrow', rotate: 90 },
-    options: [
-      { shape: 'arrow', rotate: 90 },
-      { shape: 'arrow', rotate: 0 },
-      { shape: 'arrow', rotate: 180 },
-      { shape: 'arrow', rotate: 270 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 30 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 0 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 60 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 90 },
     ],
     correctIndex: 0,
   },
   {
-    id: 8, dimension: 'detail',
-    target: { shape: 'triangle', rotate: 180 },
+    id: 6, dimension: 'fine',
+    target: { shape: 'diamond', scale: 0.9 },
     options: [
-      { shape: 'triangle', rotate: 0 },
-      { shape: 'triangle', rotate: 90 },
-      { shape: 'triangle', rotate: 180 },
-      { shape: 'triangle', rotate: 270 },
-    ],
-    correctIndex: 2,
-  },
-  // ---- 细节辨别（match_detail）：数量辨别（同形状不同图元数）----
-  {
-    id: 9, dimension: 'detail',
-    target: { shape: 'dot', count: 3 },
-    options: [
-      { shape: 'dot', count: 1 },
-      { shape: 'dot', count: 3 },
-      { shape: 'dot', count: 5 },
-      { shape: 'dot', count: 2 },
+      { shape: 'diamond', scale: 1.0 },
+      { shape: 'diamond', scale: 0.9 },
+      { shape: 'diamond', scale: 0.8 },
+      { shape: 'diamond', scale: 1.1 },
     ],
     correctIndex: 1,
   },
   {
-    id: 10, dimension: 'detail',
-    target: { shape: 'square', count: 2 },
+    id: 7, dimension: 'fine',
+    target: { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 150 },
     options: [
-      { shape: 'square', count: 4 },
-      { shape: 'square', count: 1 },
-      { shape: 'square', count: 3 },
-      { shape: 'square', count: 2 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 120 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 180 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 150 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 90 },
+    ],
+    correctIndex: 2,
+  },
+  {
+    id: 8, dimension: 'fine',
+    target: { shape: 'hexagon', scale: 1.1 },
+    options: [
+      { shape: 'hexagon', scale: 0.9 },
+      { shape: 'hexagon', scale: 1.0 },
+      { shape: 'hexagon', scale: 1.2 },
+      { shape: 'hexagon', scale: 1.1 },
     ],
     correctIndex: 3,
   },
-  // ---- 细节辨别（match_detail）：大小辨别（同形状不同比例）----
+
+  // ---- L3 双属性交叉（match_cross）：方向差 30° / 大小差 ±8% / 近色对 / 内部点 ----
   {
-    id: 11, dimension: 'detail',
-    target: { shape: 'diamond', scale: 0.7 },
+    id: 9, dimension: 'cross',
+    target: { shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 60, scale: 1.0 },
     options: [
-      { shape: 'diamond', scale: 0.7 },
-      { shape: 'diamond', scale: 1 },
-      { shape: 'diamond', scale: 1.3 },
-      { shape: 'diamond', scale: 0.5 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 30, scale: 1.0 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.teal, rotate: 60, scale: 1.0 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 60, scale: 0.85 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 60, scale: 1.0 },
+    ],
+    correctIndex: 3,
+  },
+  {
+    id: 10, dimension: 'cross',
+    target: { shape: 'hexagon', color: COGNITIVE_SELF_COLORS.blue, scale: 1.0, internalMarkPosition: 2 },
+    options: [
+      { shape: 'hexagon', color: COGNITIVE_SELF_COLORS.blue, scale: 1.0, internalMarkPosition: 2 },
+      { shape: 'hexagon', color: COGNITIVE_SELF_COLORS.blue, scale: 1.0, internalMarkPosition: 1 },
+      { shape: 'hexagon', color: COGNITIVE_SELF_COLORS.teal, scale: 1.0, internalMarkPosition: 2 },
+      { shape: 'hexagon', color: COGNITIVE_SELF_COLORS.blue, scale: 0.85, internalMarkPosition: 2 },
     ],
     correctIndex: 0,
   },
   {
-    id: 12, dimension: 'detail',
-    target: { shape: 'arrow', rotate: 0 },
+    id: 11, dimension: 'cross',
+    target: { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 30, scale: 0.85 },
     options: [
-      { shape: 'arrow', rotate: 180 },
-      { shape: 'arrow', rotate: 90 },
-      { shape: 'arrow', rotate: 0 },
-      { shape: 'arrow', rotate: 270 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 60, scale: 0.85 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.yellow, rotate: 30, scale: 0.85 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 30, scale: 0.85 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 30, scale: 1.0 },
     ],
     correctIndex: 2,
   },
+  {
+    id: 12, dimension: 'cross',
+    target: { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 30, scale: 0.85, internalMarkPosition: 6 },
+    options: [
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 60, scale: 0.85, internalMarkPosition: 6 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 30, scale: 0.85, internalMarkPosition: 6 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 30, scale: 1.0, internalMarkPosition: 6 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 30, scale: 0.85, internalMarkPosition: 5 },
+    ],
+    correctIndex: 1,
+  },
+
+  // ---- L4 高相似逼近（match_expert）：方向差 15° / 大小差 ±6% / 手性镜像 / 缺口 / 内部点 / 布局 ----
+  {
+    id: 13, dimension: 'expert',
+    target: { shape: 'flag', color: COGNITIVE_SELF_COLORS.blue, rotate: 30, scale: 1.0 },
+    options: [
+      { shape: 'flag', color: COGNITIVE_SELF_COLORS.blue, rotate: 15, scale: 1.0 },
+      { shape: 'flag', color: COGNITIVE_SELF_COLORS.blue, rotate: 30, scale: 0.92 },
+      { shape: 'flag', color: COGNITIVE_SELF_COLORS.blue, rotate: 30, scale: 1.0, mirrorX: true },
+      { shape: 'flag', color: COGNITIVE_SELF_COLORS.blue, rotate: 30, scale: 1.0 },
+    ],
+    correctIndex: 3,
+  },
+  {
+    id: 14, dimension: 'expert',
+    target: { shape: 'ring', color: COGNITIVE_SELF_COLORS.blue, gapPosition: 2 },
+    options: [
+      { shape: 'ring', color: COGNITIVE_SELF_COLORS.blue, gapPosition: 2 },
+      { shape: 'ring', color: COGNITIVE_SELF_COLORS.blue, gapPosition: 1 },
+      { shape: 'ring', color: COGNITIVE_SELF_COLORS.blue, gapPosition: 3 },
+      { shape: 'ring', color: COGNITIVE_SELF_COLORS.blue, gapPosition: 10 },
+    ],
+    correctIndex: 0,
+  },
+  {
+    id: 15, dimension: 'expert',
+    target: { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 165, scale: 1.0, internalMarkPosition: 3 },
+    options: [
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 150, scale: 1.0, internalMarkPosition: 3 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 165, scale: 0.92, internalMarkPosition: 3 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 165, scale: 1.0, internalMarkPosition: 3 },
+      { shape: 'arrow', color: COGNITIVE_SELF_COLORS.orange, rotate: 165, scale: 1.0, internalMarkPosition: 2 },
+    ],
+    correctIndex: 2,
+  },
+  {
+    id: 16, dimension: 'expert',
+    target: {
+      shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 30,
+      secondary: { shape: 'diamond', color: COGNITIVE_SELF_COLORS.blue },
+      layout: 'diagonal_down',
+    },
+    options: [
+      {
+        shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 30,
+        secondary: { shape: 'diamond', color: COGNITIVE_SELF_COLORS.blue },
+        layout: 'swapped_diagonal_down',
+      },
+      {
+        shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 30,
+        secondary: { shape: 'diamond', color: COGNITIVE_SELF_COLORS.blue },
+        layout: 'diagonal_down',
+      },
+      {
+        shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 30,
+        secondary: { shape: 'diamond', color: COGNITIVE_SELF_COLORS.blue },
+        layout: 'diagonal_up',
+      },
+      {
+        shape: 'arrow', color: COGNITIVE_SELF_COLORS.blue, rotate: 45,
+        secondary: { shape: 'diamond', color: COGNITIVE_SELF_COLORS.blue },
+        layout: 'diagonal_down',
+      },
+    ],
+    correctIndex: 1,
+  },
 ]
 
 // ============================================================================
-// IQ 等级（IQ 越高 = 视空间辨别与加工速度越强；与 crtLevels 同结构便于报告复用）
+// 层级定义（等权计分；无人工权重，见设计稿 §5）
 // ============================================================================
 
-export interface CognitiveSelfLevel {
-  minIq: number
-  level: string
-  levelCode: string
-  description: string
+/** 层级权重（v4：全部等权 1；保留表结构供未来 IRT 校准后替换） */
+export const cognitiveSelfLevelWeights: Record<CognitiveSelfDimension, number> = {
+  basic: 1,
+  fine: 1,
+  cross: 1,
+  expert: 1,
 }
-
-export const cognitiveSelfLevels: CognitiveSelfLevel[] = [
-  { minIq: 0, level: '明显落后', levelCode: 'delayed', description: '视空间辨别与加工速度显著低于同龄典型水平，建议进一步专业评估' },
-  { minIq: 80, level: '边缘水平', levelCode: 'borderline', description: '视空间辨别处于边缘水平，建议关注并提供针对性练习' },
-  { minIq: 90, level: '典型水平', levelCode: 'average', description: '视空间辨别与加工速度处于同龄典型范围' },
-  { minIq: 110, level: '中上水平', levelCode: 'high_average', description: '视空间辨别高于典型水平' },
-  { minIq: 120, level: '优秀', levelCode: 'superior', description: '视空间辨别与加工速度优秀' },
-  { minIq: 130, level: '极优秀', levelCode: 'very_superior', description: '视空间辨别能力极为优秀' },
-]
-
-// ============================================================================
-// 按等级的反馈建议
-// ============================================================================
-
-export interface CognitiveSelfRecommendation {
-  level: string
-  general_comment: string
-  suggestions: string[]
-}
-
-export const cognitiveSelfRecommendations: CognitiveSelfRecommendation[] = [
-  {
-    level: '明显落后',
-    general_comment:
-      '该儿童视空间辨别与加工速度显著低于同龄典型水平，可能影响阅读、书写、方位判断等日常学习任务，建议进一步专业评估。',
-    suggestions: [
-      '建议转介具备资质的心理 / 发育行为专业机构进行系统评估',
-      '从大颗粒、高对比的图形配对入手，逐步缩小差异、提升复杂度',
-      '在专业指导下制定个体化视知觉支持计划，定期追踪进展',
-    ],
-  },
-  {
-    level: '边缘水平',
-    general_comment:
-      '该儿童视空间辨别处于边缘水平，部分精细辨别任务（方向 / 数量 / 大小）存在困难，可通过结构化练习提升。',
-    suggestions: [
-      '提供由易到难的「找相同、找不同、图形配对」视觉辨别练习',
-      '在日常活动中融入方位词、数量比较、大小排序等任务',
-      '关注注意力基础，配合执行功能与加工速度训练',
-    ],
-  },
-  {
-    level: '典型水平',
-    general_comment: '该儿童视空间辨别与加工速度处于同龄典型范围，视觉认知发展正常。',
-    suggestions: [
-      '继续保持适度的视觉辨别挑战，提供进阶的配对与分类活动',
-      '鼓励参与拼图、建构、迷宫等空间关系类游戏',
-    ],
-  },
-  {
-    level: '中上水平',
-    general_comment: '该儿童视空间辨别高于典型水平，视觉加工效率良好。',
-    suggestions: [
-      '提供更具挑战性的复杂图形辨别、空间推理任务',
-      '鼓励参与建构类、美术类、科学探究类活动以发挥优势',
-    ],
-  },
-  {
-    level: '优秀',
-    general_comment: '该儿童视空间辨别与加工速度优秀，视觉信息处理快速准确。',
-    suggestions: [
-      '提供高阶空间推理、几何图形与快速决策类挑战',
-      '可考虑拓展课程，进一步发展视知觉与认知潜能',
-    ],
-  },
-  {
-    level: '极优秀',
-    general_comment: '该儿童视空间辨别能力极为优秀，处于同龄人群的极高水平。',
-    suggestions: [
-      '提供深度拓展与加速学习机会，避免因任务过易而失去兴趣',
-      '关注综合素养发展，帮助其将视知觉优势转化为学习能力',
-    ],
-  },
-]

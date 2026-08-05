@@ -30,18 +30,36 @@ export type CrtShape =
   | 'hexagon'
   | 'arrow'
   | 'dot'
+  | 'ring'
+  | 'flag'
+
+/** 双图元排列方式（配合 secondary 使用，显式坐标生成，禁止整体 SVG mirror） */
+export type CrtCellLayout = 'diagonal_down' | 'diagonal_up' | 'swapped_diagonal_down'
 
 /** 矩阵一格的图元规格 */
 export interface CrtCellSpec {
   shape: CrtShape
-  /** 主题色名（primary/red/green/orange/purple/gray）或具体色值 */
+  /** 主题色名（primary/red/green/orange/purple/gray）或具体色值。
+   *  视知觉图形匹配筛查任务（cognitive_self）一律使用固定 HEX（见 cognitive-self-data.ts 色板），禁用主题色名。 */
   color?: string
-  /** 旋转角度（0/90/180/270，主要 arrow/triangle 用） */
+  /** 旋转角度（0/90/180/270，主要 arrow/triangle 用；筛查任务支持任意角度如 15/30/45/60/150/165） */
   rotate?: number
   /** 同格内图元数量（>1 时横向排列） */
   count?: number
   /** 大小比例 0.5-1.5 */
   scale?: number
+  /** 水平镜像（仅对非对称图形生效，如 flag；对称图形按对称等价表归一） */
+  mirrorX?: boolean
+  /** 垂直镜像 */
+  mirrorY?: boolean
+  /** 缺口圆环的缺口方位（钟面 0–11，0=12 点方向，顺时针递增；仅 shape='ring' 生效） */
+  gapPosition?: number
+  /** 图形内部标记点（小圆点）方位（钟面 0–11，随 rotate 共同旋转） */
+  internalMarkPosition?: number
+  /** 双图元组合：与主图元共同排列（布局题） */
+  secondary?: Pick<CrtCellSpec, 'shape' | 'color' | 'rotate' | 'scale' | 'mirrorX'>
+  /** 双图元排列方式（有 secondary 时生效） */
+  layout?: CrtCellLayout
 }
 
 /** 一道瑞文矩阵题 */
