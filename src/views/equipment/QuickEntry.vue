@@ -38,9 +38,11 @@
               :value="entry.code"
             >
               <div class="module-option">
-                <el-icon :size="16">
-                  <component :is="getModuleIcon(entry.icon)" />
-                </el-icon>
+                <KoboyoIcon
+                  :src="ENTRY_ICON_SVGS[entry.code]"
+                  :size="16"
+                  :color="entry.themeColor"
+                />
                 <span>{{ entry.name }}</span>
                 <el-tag size="small" type="info" class="resource-count-tag">
                   {{ getModuleResourceCount(entry.code) }}项
@@ -131,7 +133,9 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { CircleCheck, Plus, User, ArrowLeft, MagicStick, Sunny, ChatDotRound, Switch, Cpu } from '@element-plus/icons-vue'
+import { CircleCheck, Plus, User, ArrowLeft, Switch } from '@element-plus/icons-vue'
+import KoboyoIcon from '@/components/common/KoboyoIcon.vue'
+import { ENTRY_ICON_SVGS } from '@/utils/koboyo-icon-map'
 import ResourceSelector from '@/components/resources/ResourceSelector.vue'
 import DataEntryForm from '@/components/equipment/DataEntryForm.vue'
 import type { ResourceItem } from '@/types/module'
@@ -227,20 +231,6 @@ const planId = ref<number | null>(
 const resourceName = ref<string>(route.query.resourceName as string || '')
 const sourceTagLabel = computed(() => fromDashboard.value ? '来自首页日程' : '来自训练计划')
 const sourceBackLabel = computed(() => fromDashboard.value ? '返回首页' : '返回计划')
-
-// 获取模块图标组件
-const getModuleIcon = (iconName: string) => {
-  const iconMap: Record<string, any> = {
-    MagicStick,
-    Sunny,
-    ChatDotRound,
-    Operation: MagicStick,
-    MoonNight: Sunny,
-    House: User,
-    Cpu,
-  }
-  return iconMap[iconName] || MagicStick
-}
 
 // 获取入口组资源数量
 const getModuleResourceCount = (entryCode: EquipmentTrainingEntryCode): number => {

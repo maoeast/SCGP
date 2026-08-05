@@ -32,9 +32,11 @@
               :value="entry.code"
             >
               <div class="module-option">
-                <el-icon class="module-option__icon" :size="16">
-                  <component :is="getModuleIcon(entry.icon)" />
-                </el-icon>
+                <KoboyoIcon
+                  :src="ENTRY_ICON_SVGS[entry.code]"
+                  :size="16"
+                  :color="entry.themeColor"
+                />
                 <span class="module-option__label">{{ entry.name }}</span>
                 <el-tag size="small" type="info" class="resource-count-tag">
                   {{ getEntryRecordCount(entry.code) }}项
@@ -74,11 +76,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Switch, MagicStick, Sunny, ChatDotRound, Operation, MoonNight, House } from '@element-plus/icons-vue'
+import { ArrowLeft, Switch } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { EquipmentTrainingAPI, GameTrainingAPI } from '@/database/api'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
 import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
+import KoboyoIcon from '@/components/common/KoboyoIcon.vue'
+import { ENTRY_ICON_SVGS } from '@/utils/koboyo-icon-map'
 import {
   getAllTrainingEntries,
   getTrainingEntry,
@@ -97,19 +101,6 @@ const equipmentApi = new EquipmentTrainingAPI()
 
 function getRouteEntryCode() {
   return resolveTrainingEntryCode(route.params.entryCode)
-}
-
-const getModuleIcon = (iconName: string) => {
-  const iconMap: Record<string, any> = {
-    MagicStick,
-    Sunny,
-    ChatDotRound,
-    Operation,
-    MoonNight,
-    House,
-  }
-
-  return iconMap[iconName] || MagicStick
 }
 
 const getEntryRecordCount = (entryCode: TrainingEntryCode) => {

@@ -23,9 +23,11 @@
             borderColor: entry.themeColor + '60',
             boxShadow: `0 4px 12px ${entry.themeColor}30`
           }">
-            <el-icon :size="40" :color="entry.themeColor">
-              <component :is="getModuleIcon(entry.icon)" />
-            </el-icon>
+            <KoboyoIcon
+              :src="ENTRY_ICON_SVGS[entry.code]"
+              :size="40"
+              :color="entry.themeColor"
+            />
           </div>
 
           <div class="module-info scgp-selection-card__info">
@@ -59,18 +61,14 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  Sunny,
-  ChatDotRound,
-  MagicStick,
-  Operation,
-  MoonNight,
-  House,
   Monitor,
   Box
 } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { GameTrainingAPI, EquipmentTrainingAPI } from '@/database/api'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
+import KoboyoIcon from '@/components/common/KoboyoIcon.vue'
+import { ENTRY_ICON_SVGS } from '@/utils/koboyo-icon-map'
 import {
   getAllTrainingEntries,
   type TrainingEntryCode,
@@ -89,19 +87,6 @@ const trainingEntries = computed(() => {
     authStore.hasEntitlementAccess(entry.requiredEntitlement)
   )
 })
-
-// 获取模块图标
-const getModuleIcon = (iconName: string) => {
-  const iconMap: Record<string, any> = {
-    MagicStick,
-    Sunny,
-    ChatDotRound,
-    Operation,
-    MoonNight,
-    House,
-  }
-  return iconMap[iconName] || MagicStick
-}
 
 // 获取游戏训练记录数量
 const getGameRecordCount = (entryCode: TrainingEntryCode): number => {
