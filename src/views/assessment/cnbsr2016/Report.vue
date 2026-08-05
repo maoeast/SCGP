@@ -10,6 +10,9 @@
           <el-tag v-if="assessment" :type="isAgeSupported ? getStatusTagType(assessment.dq_status) : 'warning'" size="large">
             {{ overallConclusionLabel }}
           </el-tag>
+          <div class="header-actions">
+            <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
+          </div>
         </div>
       </template>
 
@@ -312,7 +315,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft, Clock } from '@element-plus/icons-vue'
 import { Cnbsr2016AssessmentAPI } from '@/database/api'
 import {
   buildCnbsr2016ReportViewModel,
@@ -432,6 +435,12 @@ function formatRichText(text: string) {
 
 function goBack() {
   router.back()
+}
+
+const viewHistory = () => {
+  if (assessment.value?.student_id) {
+    router.push(`/assessment/cnbsr2016/trend/${assessment.value.student_id}`)
+  }
 }
 
 function resetReportState() {

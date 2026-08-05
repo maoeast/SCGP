@@ -13,6 +13,7 @@ import { StudentAPI, TrainingSessionAPI, ReportAPI, EquipmentAPI } from '@/datab
 import { AIApi } from '@/database/ai-api'
 import { exportWordDocument } from '@/utils/export-word'
 import { buildAIReportWordPayload, type AIReportInput } from '@/utils/ai-report-word-builder'
+import { SCORE_ADAPTERS, SUPPORTED_SCALE_CODES, UNSUPPORTED_SCALE_CODES, type LongitudinalScorePayload } from './assessment-score-adapters'
 
 // ==================== 类型 ====================
 
@@ -103,6 +104,26 @@ export const AI_TOOLS: AiToolDef[] = [
           limit: { type: 'number', description: '返回上限，默认 10，最大 50' },
         },
         required: ['student_id'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_assessment_trend',
+      description: '获取某学生「同一量表历次评估」的纵向分数序列（按时间升序），用于纵向对比分析。返回每次的日期、年龄、代表性总分、评定等级与各维度分数。区别于 get_assessment（只返回报告列表摘要）：本工具返回可量化的分数，能支撑「进步/退步维度」「趋势解读」类分析。支持 13 个标准化量表：csirs / conners_psq / conners_trs / srs2 / sdq / cbcl / brief / weefim / cnbsr2016 / fine_motor / gmfm_88 / tgmd_3 / sm。不支持 crt / cognitive_self（实验性占位常模，纵向对比会误导）。',
+      parameters: {
+        type: 'object',
+        properties: {
+          student_id: { type: 'number', description: '学生 ID' },
+          scale_code: {
+            type: 'string',
+            description: '量表代码',
+            enum: SUPPORTED_SCALE_CODES,
+          },
+          limit: { type: 'number', description: '返回最近 N 次评估（默认全部，最大 50）' },
+        },
+        required: ['student_id', 'scale_code'],
       },
     },
   },
@@ -234,6 +255,7 @@ const TOOL_LABELS: Record<string, string> = {
   get_student: '查询学生详情',
   search_students: '搜索学生',
   get_assessment: '查询评估记录',
+  get_assessment_trend: '查询量表纵向分数',
   list_training_sessions: '查询训练记录',
   list_equipment: '查询训练器材',
   get_ai_usage: '查询本月用量',
@@ -382,6 +404,32 @@ export async function dispatchTool(
           assess_id: r.assess_id,
         }))
         return serialize({ total: assessments.length, assessments })
+      }
+
+      case 'get_assessment_trend': {
+        // 纵向分数通道：读取某学生某量表的历次评分，归一化为升序快照。
+        // 与 get_assessment（报告列表摘要）互补——本工具返回可量化分数，支撑纵向分析。
+        if (!args.student_id) return fail('缺少参数 student_id')
+        if (!args.scale_code) return fail('缺少参数 scale_code')
+        const scaleCode = String(args.scale_code)
+        const adapter = SCORE_ADAPTERS[scaleCode]
+        if (!adapter) {
+          if (UNSUPPORTED_SCALE_CODES.includes(scaleCode)) {
+            return fail(`${scaleCode} 为实验性占位常模量表，纵向对比会因常模漂移产生误导，暂不支持。请改用其他标准化量表（${SUPPORTED_SCALE_CODES.join(' / ')}）。`)
+          }
+          return fail(`不支持的量表代码：${scaleCode}（当前支持 ${SUPPORTED_SCALE_CODES.join(' / ')}）`)
+        }
+        let snapshots = adapter.getLongitudinalScores(Number(args.student_id))
+        const limit = args.limit != null ? clampLimit(args.limit, snapshots.length, 50) : null
+        if (limit != null) snapshots = snapshots.slice(-limit) // 取最近 N 次（slice 负索引：尾部）
+        const payload: LongitudinalScorePayload = {
+          scaleCode: adapter.scaleCode,
+          scaleName: adapter.scaleName,
+          count: snapshots.length,
+          snapshots,
+          scoreNote: adapter.scoreNote,
+        }
+        return serialize(payload)
       }
 
       case 'list_training_sessions': {

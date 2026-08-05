@@ -7,6 +7,9 @@
             <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
             <h2>小肌肉功能发展评估报告</h2>
           </div>
+          <div class="header-actions">
+            <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
+          </div>
         </div>
       </template>
 
@@ -211,7 +214,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft, Clock } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { FineMotorAssessmentAPI } from '@/database/api'
 import {
@@ -501,6 +504,12 @@ function getProgressStatus(severity: SeverityType): '' | 'success' | 'warning' |
 
 function goBack() {
   router.back()
+}
+
+const viewHistory = () => {
+  if (assessment.value?.student_id) {
+    router.push(`/assessment/fine_motor/trend/${assessment.value.student_id}`)
+  }
 }
 
 async function loadReport() {

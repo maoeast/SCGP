@@ -365,7 +365,7 @@ const exportWord = async () => {
 // 查看历史
 const viewHistory = () => {
   if (assessment.value?.student_id) {
-    router.push(`/assessment/csirs/history/${assessment.value.student_id}`)
+    router.push(`/assessment/csirs/trend/${assessment.value.student_id}`)
   }
 }
 

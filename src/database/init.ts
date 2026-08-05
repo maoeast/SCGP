@@ -4261,6 +4261,7 @@ async function initializeAITables(rawDb: any): Promise<void> {
     { code: 'get_student', name: '查询学生详情' },
     { code: 'search_students', name: '搜索学生' },
     { code: 'get_assessment', name: '查询评估记录' },
+    { code: 'get_assessment_trend', name: '查询量表纵向分数' },
     { code: 'list_training_sessions', name: '查询训练记录' },
     { code: 'list_equipment', name: '查询训练器材' },
     { code: 'get_ai_usage', name: '查询本月用量' },

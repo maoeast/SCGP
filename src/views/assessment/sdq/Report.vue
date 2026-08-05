@@ -9,6 +9,7 @@
             <h2>SDQ 长处和困难问卷评估报告</h2>
           </div>
           <div class="header-actions">
+            <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button type="primary" :icon="Download" @click="exportWord">导出Word</el-button>
           </div>
         </div>
@@ -204,7 +205,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Download } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, Clock } from '@element-plus/icons-vue'
 import { getDatabase } from '@/database/init'
 import type { SDQAssessRecord, SDQDimensionDetail, SDQStructuredFeedback } from '@/types/sdq'
 import type { ScoreResult } from '@/types/assessment'
@@ -387,6 +388,12 @@ const getCategoryIcon = (category: string): string => {
 
 const goBack = () => {
   router.back()
+}
+
+const viewHistory = () => {
+  if (assessData.value?.student_id) {
+    router.push(`/assessment/sdq/trend/${assessData.value.student_id}`)
+  }
 }
 
 const exportWord = async () => {

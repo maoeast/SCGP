@@ -5,6 +5,7 @@
         <div class="header-content">
           <h2>WeeFIM量表评估报告</h2>
           <div class="header-actions">
+            <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button type="primary" :icon="Download" @click="exportWord">
               导出Word
             </el-button>
@@ -289,7 +290,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Download, Promotion, Reading } from '@element-plus/icons-vue'
+import { Download, Promotion, Reading, Clock } from '@element-plus/icons-vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { RadarChart } from 'echarts/charts'
@@ -318,6 +319,12 @@ const studentStore = useStudentStore()
 const reportData = ref<any>(null)
 const assessId = ref(route.query.assessId as string)
 const studentId = ref(route.query.studentId as string)
+
+const viewHistory = () => {
+  if (studentId.value) {
+    router.push(`/assessment/weefim/trend/${studentId.value}`)
+  }
+}
 
 // 转介选项
 const selectedReferrals = ref<string[]>([])

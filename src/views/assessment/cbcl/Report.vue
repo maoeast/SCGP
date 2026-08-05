@@ -9,6 +9,7 @@
             <h2>CBCL 儿童行为量表评估报告</h2>
           </div>
           <div class="header-actions">
+            <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button type="primary" :icon="Download" @click="exportWord">导出Word</el-button>
           </div>
         </div>
@@ -267,7 +268,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Download } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, Clock } from '@element-plus/icons-vue'
 import { getDatabase } from '@/database/init'
 import * as echarts from 'echarts'
 import { CBCLDriver } from '@/strategies/assessment/CBCLDriver'
@@ -643,6 +644,12 @@ const getLevelType = (level: string) => {
 
 const goBack = () => {
   router.back()
+}
+
+const viewHistory = () => {
+  if (assessData.value?.student_id) {
+    router.push(`/assessment/cbcl/trend/${assessData.value.student_id}`)
+  }
 }
 
 const exportWord = async () => {

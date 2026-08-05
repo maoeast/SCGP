@@ -8,6 +8,7 @@
             <h2>GMFM-88 粗大运动功能评定量表报告</h2>
           </div>
           <div class="header-actions">
+            <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button type="primary" :icon="Download" :disabled="!assessment" @click="exportWord">
               导出Word
             </el-button>
@@ -208,7 +209,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Download } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, Clock } from '@element-plus/icons-vue'
 import { Gmfm88AssessmentAPI } from '@/database/api'
 import { buildGmfm88WordPayload } from '@/utils/assessment-word-builders'
 import { exportWordDocument } from '@/utils/export-word'
@@ -266,6 +267,7 @@ interface GmfmReportTarget {
 
 interface GmfmAssessmentRecord {
   id: number
+  student_id: number
   student_name: string
   student_gender: string
   age_months: number
@@ -329,6 +331,12 @@ function loadReport() {
 
 function goBack() {
   router.back()
+}
+
+const viewHistory = () => {
+  if (assessment.value?.student_id) {
+    router.push(`/assessment/gmfm_88/trend/${assessment.value.student_id}`)
+  }
 }
 
 async function exportWord() {

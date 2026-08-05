@@ -96,6 +96,11 @@ export interface AssessmentScaleCatalogItem {
   reportCardLabel: string
   recordsLabel: string
   isDraft: boolean
+  // —— 纵向趋势派生字段（catalog 作单一真源；趋势路由从此派生）——
+  /** 是否支持纵向趋势分析（13 个标准化量表支持；crt/cognitive_self 占位常模不支持）。 */
+  trendSupported: boolean
+  /** 趋势页路由 name（trendSupported=true 时必填，命名风格 {Pascal}Trend，如 CSIRSTrend）。 */
+  trendRouteName?: string
 }
 
 export type AssessmentModuleAccessChecker = (moduleCode: BusinessModuleCode) => boolean
@@ -143,6 +148,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'S-M',
     recordsLabel: 'S-M量表',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'SMTrend',
   },
   {
     code: 'weefim',
@@ -175,6 +182,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'WeeFIM',
     recordsLabel: 'WeeFIM量表',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'WeeFIMTrend',
   },
   {
     code: 'csirs',
@@ -207,6 +216,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'CSIRS',
     recordsLabel: 'CSIRS量表',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'CSIRSTrend',
   },
   {
     code: 'conners-psq',
@@ -239,6 +250,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'Conners PSQ',
     recordsLabel: 'Conners PSQ',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'ConnersPSQTrend',
   },
   {
     code: 'conners-trs',
@@ -271,6 +284,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'Conners TRS',
     recordsLabel: 'Conners TRS',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'ConnersTRSTrend',
   },
   {
     code: 'sdq',
@@ -303,6 +318,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'SDQ',
     recordsLabel: 'SDQ量表',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'SDQTrend',
   },
   {
     code: 'srs2',
@@ -335,6 +352,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'SRS-2',
     recordsLabel: 'SRS-2量表',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'SRS2Trend',
   },
   {
     code: 'cbcl',
@@ -367,6 +386,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'CBCL',
     recordsLabel: 'CBCL量表',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'CBCLTrend',
   },
   {
     code: 'cnbsr2016',
@@ -399,6 +420,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: '儿心量表Ⅱ',
     recordsLabel: '儿心量表Ⅱ',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'Cnbsr2016Trend',
   },
   {
     code: 'tgmd_3',
@@ -431,6 +454,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'TGMD-3',
     recordsLabel: 'TGMD-3大肌肉动作发展测验',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'Tgmd3Trend',
   },
   {
     code: 'gmfm_88',
@@ -463,6 +488,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'GMFM-88',
     recordsLabel: 'GMFM-88粗大运动功能评定量表',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'Gmfm88Trend',
   },
   {
     code: 'fine_motor',
@@ -495,6 +522,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'FMDA',
     recordsLabel: '小肌肉功能发展评估量表',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'FineMotorTrend',
   },
   {
     code: 'brief',
@@ -527,6 +556,8 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'BRIEF',
     recordsLabel: 'BRIEF执行功能量表',
     isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'BRIEFTrend',
   },
   {
     code: 'crt',
@@ -559,6 +590,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: 'CRT',
     recordsLabel: '瑞文CRT图形推理',
     isDraft: false,
+    trendSupported: false,
   },
   {
     code: 'cognitive_self',
@@ -591,6 +623,7 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     reportCardLabel: '视知觉匹配',
     recordsLabel: '视知觉图形匹配筛查',
     isDraft: false,
+    trendSupported: false,
   },
 ]
 

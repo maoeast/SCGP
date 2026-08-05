@@ -5,6 +5,7 @@
         <div class="header-content">
           <h2>S-M量表评估报告</h2>
           <div class="header-actions">
+            <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button type="primary" :icon="Download" @click="exportWord">
               导出Word
             </el-button>
@@ -228,7 +229,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Download } from '@element-plus/icons-vue'
+import { Download, Clock } from '@element-plus/icons-vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { RadarChart } from 'echarts/charts'
@@ -260,6 +261,12 @@ const smQuestions = ref<any[]>([])
 const reportData = ref<any>(null)
 const assessId = ref(route.query.assessId as string)
 const studentId = ref(route.query.studentId as string)
+
+const viewHistory = () => {
+  if (studentId.value) {
+    router.push(`/assessment/sm/trend/${studentId.value}`)
+  }
+}
 
 // 学生信息
 const student = computed(() =>

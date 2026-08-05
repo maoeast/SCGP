@@ -12,6 +12,7 @@ import {
   isAssessmentScaleAuthorized,
 } from '@/features/assessment/assessment-scale-catalog'
 import { assessmentLegacyRedirectRoutes, assessmentReportRoutes } from '@/features/assessment/assessment-report-routes'
+import { assessmentTrendRoutes } from '@/features/assessment/assessment-trend-routes'
 import { selfCareRoutes } from '@/features/self-care/self-care-routes'
 import {
   getEquipmentTrainingEntryRequiredEntitlement,
@@ -108,8 +109,8 @@ const EquipmentRecords = () => import('@/views/equipment/Records.vue')
 // 评估相关页面
 const AssessmentSelect = () => import('@/views/assessment/AssessmentSelect.vue')
 const SelectStudent = () => import('@/views/assessment/SelectStudent.vue')
-// CSIRS 历史评估对比（非报告路由，独立保留；15 个 Report.vue 由 assessment-report-routes 生成化懒加载）
-const CSIRSHistory = () => import('@/views/assessment/csirs/History.vue')
+// CSIRS 历史评估对比页已下线：旧路由重定向到通用趋势页 /assessment/csirs/trend/:studentId
+// 15 个 Report.vue 由 assessment-report-routes 生成化懒加载；13 个趋势页由 assessment-trend-routes 生成化懒加载
 
 // 通用评估容器（Phase 4 重构）
 const AssessmentContainer = () => import('@/views/assessment/AssessmentContainer.vue')
@@ -977,16 +978,12 @@ const router = createRouter({
         ...assessmentLegacyRedirectRoutes,
         // ===== 报告页面（catalog 生成化，见 features/assessment/assessment-report-routes.ts） =====
         ...assessmentReportRoutes,
-        // CSIRS 历史评估对比：非报告路由，保留原位（path 与报告集不重叠）
+        // ===== 纵向趋势页面（catalog 生成化，见 features/assessment/assessment-trend-routes.ts） =====
+        ...assessmentTrendRoutes,
+        // CSIRS 旧历史页路由重定向到通用趋势页（保外链/书签兼容）
         {
           path: 'assessment/csirs/history/:studentId',
-          name: 'CSIRSHistory',
-          component: CSIRSHistory,
-          meta: {
-            title: 'CSIRS历史评估对比',
-            hideInMenu: true,
-            roles: ['admin', 'teacher']
-          }
+          redirect: (to: any) => `/assessment/csirs/trend/${to.params.studentId}`,
         },
         {
           path: 'reports',

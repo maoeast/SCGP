@@ -8,6 +8,9 @@
             <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
             <h2>BRIEF 执行功能问卷评估报告<el-tag size="small" type="warning" class="draft-tag">自编 DRAFT</el-tag></h2>
           </div>
+          <div class="header-actions">
+            <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
+          </div>
         </div>
       </template>
 
@@ -56,7 +59,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, WarningFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, WarningFilled, Clock } from '@element-plus/icons-vue'
 import { BRIEFAssessmentAPI } from '@/database/api'
 
 const route = useRoute()
@@ -98,6 +101,12 @@ function getTClass(t: number): string {
 
 function goBack() {
   router.back()
+}
+
+const viewHistory = () => {
+  if (assessData.value?.student_id) {
+    router.push(`/assessment/brief/trend/${assessData.value.student_id}`)
+  }
 }
 
 onMounted(() => {

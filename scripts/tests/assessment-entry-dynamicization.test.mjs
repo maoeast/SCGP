@@ -18,6 +18,7 @@ function loadModules() {
     catalog: jiti('../../src/features/assessment/assessment-scale-catalog.ts'),
     reportRoutes: jiti('../../src/features/assessment/report-routes.ts'),
     assessmentReportRoutes: jiti('../../src/features/assessment/assessment-report-routes.ts'),
+    assessmentTrendRoutes: jiti('../../src/features/assessment/assessment-trend-routes.ts'),
   }
 }
 
@@ -113,4 +114,34 @@ test('7. 报告路由 name 集合 === catalog reportRouteName 集合，CSIRSHist
   for (const r of assessmentReportRoutes.assessmentReportRouteRecords) {
     assert.ok(r.path.startsWith('assessment/'), `${r.name} path 异常: ${r.path}`)
   }
+})
+
+test('8. 趋势路由：仅 trendSupported 量表生成，name === trendRouteName，crt/cognitive_self 排除', () => {
+  const { catalog, assessmentTrendRoutes } = loadModules()
+  const trendItems = catalog.ASSESSMENT_SCALE_CATALOG.filter((i) => i.trendSupported)
+  // 支持纵向的量表恰好 13 个
+  assert.equal(trendItems.length, 13, 'trendSupported 量表应为 13 个')
+  // 每个支持的量表必须有 trendRouteName
+  for (const item of trendItems) {
+    assert.ok(item.trendRouteName, `${item.code} trendSupported=true 但缺 trendRouteName`)
+  }
+  // 趋势路由 name 集合 === 支持量表的 trendRouteName 集合
+  const routeNames = assessmentTrendRoutes.assessmentTrendRouteRecords.map((r) => r.name).sort()
+  const catalogNames = trendItems.map((i) => i.trendRouteName).sort()
+  assert.deepEqual(routeNames, catalogNames, '趋势路由 name 集合与 catalog 不一致')
+  // 路径形态：assessment/{urlSlug}/trend/:studentId
+  for (const r of assessmentTrendRoutes.assessmentTrendRouteRecords) {
+    assert.match(r.path, /^assessment\/[\w-]+\/trend\/:studentId$/, `${r.name} path 异常: ${r.path}`)
+  }
+  // crt / cognitive_self 必须被排除
+  const unsupported = catalog.ASSESSMENT_SCALE_CATALOG.filter((i) => !i.trendSupported).map((i) => i.code)
+  assert.deepEqual([...unsupported].sort(), ['cognitive_self', 'crt'], '不支持的量表应只有 crt / cognitive_self')
+  assert.ok(!routeNames.includes('CRTTrend'), 'CRT 不应有趋势路由')
+  assert.ok(!routeNames.includes('CognitiveSelfTrend'), 'cognitive_self 不应有趋势路由')
+})
+
+test('9. trendRouteName 唯一', () => {
+  const { catalog } = loadModules()
+  const names = catalog.ASSESSMENT_SCALE_CATALOG.filter((i) => i.trendRouteName).map((i) => i.trendRouteName)
+  assert.equal(new Set(names).size, names.length, 'trendRouteName 重复')
 })

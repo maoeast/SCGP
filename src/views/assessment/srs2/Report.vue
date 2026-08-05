@@ -9,6 +9,7 @@
             <h2>SRS-2 社交反应量表评估报告</h2>
           </div>
           <div class="header-actions">
+            <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button type="primary" :icon="Download" @click="exportWord">导出Word</el-button>
           </div>
         </div>
@@ -157,7 +158,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Download, WarningFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, WarningFilled, Clock } from '@element-plus/icons-vue'
 import { getDatabase } from '@/database/init'
 import type { ScoreResult } from '@/types/assessment'
 import type { SRS2DimensionDetail, SRS2StructuredFeedback } from '@/types/srs2'
@@ -275,6 +276,12 @@ function getTotalLevelClass(severity: 'success' | 'warning' | 'danger' | undefin
 
 const goBack = () => {
   router.back()
+}
+
+const viewHistory = () => {
+  if (assessData.value?.student_id) {
+    router.push(`/assessment/srs2/trend/${assessData.value.student_id}`)
+  }
 }
 
 const exportWord = async () => {

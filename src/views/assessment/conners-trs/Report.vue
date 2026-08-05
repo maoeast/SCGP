@@ -486,7 +486,7 @@ const exportWord = async () => {
 // 查看历史
 const viewHistory = () => {
   if (assessment.value?.student_id) {
-    router.push(`/assessment/conners-trs/history/${assessment.value.student_id}`)
+    router.push(`/assessment/conners-trs/trend/${assessment.value.student_id}`)
   }
 }
 
