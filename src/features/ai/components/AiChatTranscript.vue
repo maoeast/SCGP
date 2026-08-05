@@ -5,7 +5,8 @@ import type { AiAttachmentRef } from '@/database/ai-api'
 import { aiAttachmentManager } from '@/utils/ai-attachment-manager'
 import { resolveAbsolutePath } from '@/utils/resource-file-service'
 import { renderMarkdown } from '@/utils/render-markdown'
-import type { ToolStep } from '@/services/ai-tools'
+import type { AssessmentTrendArtifact, ToolArtifact, ToolStep } from '@/services/ai-tools'
+import AiTrendChart from './AiTrendChart.vue'
 
 export interface AiTranscriptMessage {
   id?: number
@@ -13,6 +14,8 @@ export interface AiTranscriptMessage {
   content: string
   pending?: boolean
   attachments?: AiAttachmentRef[] | null
+  /** 路线 C：assistant 回复关联的工具富产物（如评估趋势图）；无产物为 null/缺省 */
+  toolArtifacts?: ToolArtifact[] | null
 }
 
 const props = withDefaults(
@@ -72,6 +75,12 @@ function isImageExt(fileType: string): boolean {
   return IMAGE_EXTS.has((fileType || '').toLowerCase())
 }
 
+/** 提取消息里的评估趋势产物（路线 C，目前只支持 assessment_trend 一种富产物） */
+function trendArtifactsOf(msg: AiTranscriptMessage): AssessmentTrendArtifact[] {
+  if (!msg.toolArtifacts || msg.toolArtifacts.length === 0) return []
+  return msg.toolArtifacts.filter((a): a is AssessmentTrendArtifact => a.kind === 'assessment_trend')
+}
+
 async function openAttachment(ref: AiAttachmentRef) {
   try {
     const abs = await resolveAbsolutePath(ref.rel)
@@ -112,6 +121,14 @@ async function openAttachment(ref: AiAttachmentRef) {
         </div>
         <template v-if="msg.role === 'user'">{{ msg.content }}</template>
         <div v-else class="markdown-body" v-html="renderMarkdown(msg.content)"></div>
+        <!-- 路线 C：工具结果含纵向分数时，在回复下方自动渲染 echarts 趋势图 -->
+        <template v-if="msg.role === 'assistant' && !msg.pending">
+          <AiTrendChart
+            v-for="(a, tIdx) in trendArtifactsOf(msg)"
+            :key="`trend-${msg.id ?? idx}-${tIdx}`"
+            :artifact="a"
+          />
+        </template>
         <span v-if="msg.pending" class="streaming-cursor" aria-hidden="true"></span>
       </div>
       <div

@@ -788,6 +788,7 @@ export const useAiStore = defineStore('ai', () => {
         role: 'user',
         content: fullContent,
         attachments: attachmentRefs.length > 0 ? attachmentRefs : null,
+        toolArtifacts: null,
         tokensPrompt: 0,
         tokensCompletion: 0,
         tokensTotal: 0,
@@ -865,11 +866,14 @@ export const useAiStore = defineStore('ai', () => {
         })
         const usage: DeepSeekUsage | null = result.usage || null
         const finalContent = result.content
+        // 路线 C：本轮工具产生的富产物（如评估趋势图），持久化到 assistant 消息
+        const artifacts = result.artifacts && result.artifacts.length > 0 ? result.artifacts : null
         const assistantMessageId = a.saveMessage({
           sessionId,
           role: 'assistant',
           content: finalContent,
           usage,
+          toolArtifacts: artifacts,
         })
         currentMessages.value.push({
           id: assistantMessageId,
@@ -877,6 +881,7 @@ export const useAiStore = defineStore('ai', () => {
           role: 'assistant',
           content: finalContent,
           attachments: null,
+          toolArtifacts: artifacts,
           tokensTotal: usage?.totalTokens || (usage?.promptTokens || 0) + (usage?.completionTokens || 0),
           tokensPrompt: usage?.promptTokens || 0,
           tokensCompletion: usage?.completionTokens || 0,
@@ -916,6 +921,7 @@ export const useAiStore = defineStore('ai', () => {
           role: 'assistant',
           content: finalContent,
           attachments: null,
+          toolArtifacts: null,
           tokensTotal: usage?.totalTokens || (usage?.promptTokens || 0) + (usage?.completionTokens || 0),
           tokensPrompt: usage?.promptTokens || 0,
           tokensCompletion: usage?.completionTokens || 0,

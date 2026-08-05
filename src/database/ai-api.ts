@@ -1,6 +1,7 @@
 import { DatabaseAPI } from './api'
 import { buildKnowledgeSkillContent } from '@/data/skills/knowledge-skill-payload'
 import { isBuiltinAgentCode } from '@/data/ai-agent-presets'
+import type { ToolArtifact } from '@/services/ai-tools'
 
 /**
  * AI 智能体子系统数据访问层。
@@ -179,6 +180,17 @@ function parseAttachmentRefs(raw: unknown): AiAttachmentRef[] | null {
   }
 }
 
+/** 安全解析 tool_artifacts JSON 列（脏数据返回 null，不抛；向下兼容旧消息无此列） */
+function parseToolArtifacts(raw: unknown): ToolArtifact[] | null {
+  if (!raw || typeof raw !== 'string') return null
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? (parsed as ToolArtifact[]) : null
+  } catch {
+    return null
+  }
+}
+
 export interface AiChatMessage {
   id: number
   sessionId: number
@@ -186,6 +198,8 @@ export interface AiChatMessage {
   content: string
   /** 附件元信息（JSON 解析后；无附件为 null） */
   attachments: AiAttachmentRef[] | null
+  /** 本条 assistant 回复关联的工具富产物（路线 C，如图表；无产物为 null） */
+  toolArtifacts: ToolArtifact[] | null
   tokensTotal: number
   tokensPrompt: number
   tokensCompletion: number
@@ -1167,6 +1181,7 @@ export class AIApi extends DatabaseAPI {
       role: r.role,
       content: r.content,
       attachments: parseAttachmentRefs(r.attachments),
+      toolArtifacts: parseToolArtifacts(r.tool_artifacts),
       tokensTotal: Number(r.tokens_total || Number(r.tokens_prompt || 0) + Number(r.tokens_completion || 0)),
       tokensPrompt: Number(r.tokens_prompt || 0),
       tokensCompletion: Number(r.tokens_completion || 0),
@@ -1269,6 +1284,7 @@ export class AIApi extends DatabaseAPI {
     content: string
     usage?: DeepSeekUsage | null
     attachments?: AiAttachmentRef[] | null
+    toolArtifacts?: ToolArtifact[] | null
   }): number {
     const tokensPrompt = Number(input.usage?.promptTokens || 0)
     const tokensCompletion = Number(input.usage?.completionTokens || 0)
@@ -1277,10 +1293,13 @@ export class AIApi extends DatabaseAPI {
     const estCost = input.role === 'assistant' ? estimateCostYuan(input.usage) : 0
     const attachmentsJson =
       input.attachments && input.attachments.length > 0 ? JSON.stringify(input.attachments) : null
+    // 路线 C：工具富产物（如图表）序列化为 JSON 存库，关联到 assistant 回复
+    const toolArtifactsJson =
+      input.toolArtifacts && input.toolArtifacts.length > 0 ? JSON.stringify(input.toolArtifacts) : null
     this.execute(
-      `INSERT INTO ai_chat_message (session_id, role, content, tokens_total, tokens_prompt, tokens_completion, est_cost_yuan, attachments)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [input.sessionId, input.role, input.content, tokensTotal, tokensPrompt, tokensCompletion, estCost, attachmentsJson],
+      `INSERT INTO ai_chat_message (session_id, role, content, tokens_total, tokens_prompt, tokens_completion, est_cost_yuan, attachments, tool_artifacts)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [input.sessionId, input.role, input.content, tokensTotal, tokensPrompt, tokensCompletion, estCost, attachmentsJson, toolArtifactsJson],
     )
     this.touchSession(input.sessionId)
     return this.getLastInsertId()

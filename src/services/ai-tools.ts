@@ -39,6 +39,31 @@ export interface AiToolCall {
 export interface ToolResult {
   ok: boolean
   content: string
+  /**
+   * 类型化的工具产物（路线 C）：供 UI 渲染富组件（如图表）。
+   * content 仍给模型做文字解读；artifact 只回传 UI 层，不进模型上下文。
+   * 未产生富产物的工具，该字段为 undefined。
+   */
+  artifact?: ToolArtifact
+}
+
+/**
+ * 工具产物联合类型：每种富产物一个分支。
+ * 新增产物类型时扩展此联合 + AiArtifactCard dispatcher。
+ */
+export type ToolArtifact = AssessmentTrendArtifact
+
+/** 评估纵向趋势产物：驱动 echarts 线图渲染。 */
+export interface AssessmentTrendArtifact {
+  kind: 'assessment_trend'
+  /** 量表代码（如 csirs / srs2）。 */
+  scaleCode: string
+  /** 量表中文名。 */
+  scaleName: string
+  /** 升序快照（最早在前），驱动 x 轴与数据线。 */
+  snapshots: LongitudinalScorePayload['snapshots']
+  /** 总分语义说明，图表上方展示，帮助教师正确解读高低分。 */
+  scoreNote: string
 }
 
 /** 供 UI 展示的一次工具调用步骤 */
@@ -281,15 +306,17 @@ export function filterTools(toolCodes: string[] | null): AiToolDef[] {
 
 const MAX_RESULT_CHARS = 6000
 
-function serialize(data: unknown): ToolResult {
+function serialize(data: unknown, artifact?: ToolArtifact): ToolResult {
   const json = JSON.stringify(data, null, 2)
   if (json.length > MAX_RESULT_CHARS) {
     return {
       ok: true,
       content: json.slice(0, MAX_RESULT_CHARS) + `\n...[结果已截断，原始长度 ${json.length} 字符]`,
+      // 截断时仍保留 artifact（富产物体积独立于 content，不受文本截断影响）
+      artifact,
     }
   }
-  return { ok: true, content: json }
+  return { ok: true, content: json, artifact }
 }
 
 function fail(message: string, extra?: Record<string, any>): ToolResult {
@@ -429,7 +456,18 @@ export async function dispatchTool(
           snapshots,
           scoreNote: adapter.scoreNote,
         }
-        return serialize(payload)
+        // 路线 C：快照有 2 次及以上才产 artifact（单点无法成趋势线）
+        const artifact: ToolArtifact | undefined =
+          snapshots.length >= 2
+            ? {
+                kind: 'assessment_trend',
+                scaleCode: payload.scaleCode,
+                scaleName: payload.scaleName,
+                snapshots: payload.snapshots,
+                scoreNote: payload.scoreNote,
+              }
+            : undefined
+        return serialize(payload, artifact)
       }
 
       case 'list_training_sessions': {

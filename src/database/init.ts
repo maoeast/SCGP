@@ -3960,6 +3960,8 @@ async function initializeAITables(rawDb: any): Promise<void> {
   // Phase 3：附件元信息 JSON 列（[{rel,fileName,fileType,sizeBytes}]，不含 base64）
   safeAddColumn(rawDb, 'ai_chat_message', 'tokens_total INTEGER NOT NULL DEFAULT 0')
   safeAddColumn(rawDb, 'ai_chat_message', 'attachments TEXT')
+  // 路线 C：工具富产物 JSON 列（如评估趋势图 echarts 数据），关联到 assistant 回复
+  safeAddColumn(rawDb, 'ai_chat_message', 'tool_artifacts TEXT')
   try {
     rawDb.run(`UPDATE ai_chat_message
       SET tokens_total = COALESCE(tokens_prompt, 0) + COALESCE(tokens_completion, 0)

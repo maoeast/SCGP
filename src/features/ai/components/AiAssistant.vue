@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Close, Paperclip, Promotion, Setting, Tickets } from '@element-plus/icons-vue'
 import type { AiAttachmentRef } from '@/database/ai-api'
+import type { ToolArtifact } from '@/services/ai-tools'
 import { useAiStore } from '@/stores/ai'
 import { getBuiltinAgentPreset } from '@/data/ai-agent-presets'
 import AiAgentAvatar from '@/features/ai/components/AiAgentAvatar.vue'
@@ -98,11 +99,13 @@ const displayMessages = computed(() => {
     content: string
     pending?: boolean
     attachments?: AiAttachmentRef[] | null
+    toolArtifacts?: ToolArtifact[] | null
   }> = aiStore.currentMessages.map((m) => ({
     id: m.id,
     role: m.role,
     content: m.content,
     attachments: m.attachments,
+    toolArtifacts: m.toolArtifacts,
   }))
   if (aiStore.sending || aiStore.streamingContent) {
     all.push({ role: 'assistant', content: aiStore.streamingContent || '正在思考…', pending: true })

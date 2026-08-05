@@ -10,7 +10,7 @@
  *
  * 计费：tool 循环可能多轮，累计各轮 usage 再回传 store，estimateCostYuan 更接近真实花费。
  */
-import { AI_TOOLS, dispatchTool, toolLabel, type AiToolCall, type AiToolDef, type ToolStep } from '@/services/ai-tools'
+import { AI_TOOLS, dispatchTool, toolLabel, type AiToolCall, type AiToolDef, type ToolArtifact, type ToolStep } from '@/services/ai-tools'
 import type { DeepSeekUsage } from '@/database/ai-api'
 
 // 典型报告流程（search_students→get_student→get_assessment→list_training_sessions→generate_report）已 5 轮，留 2 轮余量
@@ -49,6 +49,8 @@ export interface RunToolLoopResult {
   content: string
   usage: DeepSeekUsage
   toolSteps: ToolStep[]
+  /** 本轮产生的富产物（路线 C），供 store 持久化 + UI 渲染。按产生顺序排列。 */
+  artifacts: ToolArtifact[]
 }
 
 /** 执行 tool 循环，返回最终回答正文 + 累计 usage + 工具步骤。网络层失败时抛错（带 errorKind）。 */
@@ -63,6 +65,7 @@ export async function runToolLoop(params: RunToolLoopParams): Promise<RunToolLoo
     }
   }
   const toolSteps: ToolStep[] = []
+  const artifacts: ToolArtifact[] = []
   let lastTextContent = ''
   let totalTokens = 0
   let promptTokens = 0
@@ -114,6 +117,7 @@ export async function runToolLoop(params: RunToolLoopParams): Promise<RunToolLoo
         content: lastTextContent,
         usage: { totalTokens, promptTokens, completionTokens, promptCacheHitTokens, promptCacheMissTokens },
         toolSteps,
+        artifacts,
       }
     }
 
@@ -131,6 +135,8 @@ export async function runToolLoop(params: RunToolLoopParams): Promise<RunToolLoo
       step.ok = result.ok
       toolSteps.push(step)
       params.onToolStep?.(step)
+      // 路线 C：收集富产物（如评估趋势），不进模型上下文，只回传 UI 层
+      if (result.artifact) artifacts.push(result.artifact)
       messages.push({ role: 'tool', tool_call_id: tc.id, content: result.content })
     }
   }
@@ -140,5 +146,6 @@ export async function runToolLoop(params: RunToolLoopParams): Promise<RunToolLoo
     content: lastTextContent + '\n\n（已达工具调用轮次上限，以上为当前可提供的信息。）',
     usage: { totalTokens, promptTokens, completionTokens, promptCacheHitTokens, promptCacheMissTokens },
     toolSteps,
+    artifacts,
   }
 }
