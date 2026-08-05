@@ -1779,3 +1779,10 @@
 
 - `student.avatar_path` 与 `user.avatar_path` 同时支持预置 canonical 路径 `images/user-avatars/...` 或 Canvas 压缩 Data URL；显示必须经 `resolvePresetResourceUrl()`，不得将构建环境 URL 持久化。
 - 预置头像按界面隔离为学生 6 张与当前账号 6 张；上传/拍照不进入 `uploaded/` 托管文件生命周期。
+
+## 95. 2026-08-05 激活文件（.lic）与 HTML 离线激活码生成器
+
+- 激活码格式：`[4B 大端 JSON 长度][JSON 载荷 {t,v,m,c,e,am,p}][RSA-2048 签名]` → base64 → 5 字符分组 → `SPED-` 前缀；验证端 `src/utils/license-manager.ts` 内嵌公钥（RSASSA-PKCS1-v1_5 + SHA-256），主程序不再依赖独立 public-key.pem。
+- 激活文件：`.lic` = 纯激活码一行；主程序激活页与「系统管理 → 关于 → 重新激活/更新授权」均可导入（`.lic`/`.txt`，解析只做格式校验，签名验证走原链）；生成端（CLI/GUI/HTML）生成后可一键导出 .lic。
+- HTML 离线生成器：`license-generator-dist/generator.template.html`（模板，入库）+ `scripts/build-license-generator-html.mjs` 注入 `.keys/private.pem` 产出 `scgp-license-generator.html`（双击即用，Web Crypto 签名与 Node/验证端同算法）；**产物内嵌私钥不入库**（.gitignore），私钥轮换后重跑构建脚本。
+
