@@ -2851,8 +2851,9 @@ export class CognitiveSelfAssessmentAPI extends DatabaseAPI {
     raw_answers: string
     total_raw_score: number
     total_questions: number
-    percentile_rank: number
-    iq_estimate: number
+    /** v4：占位常模废弃，落 null */
+    percentile_rank: number | null
+    iq_estimate: number | null
     level: string
     level_code: string | null
     unit_scores: string

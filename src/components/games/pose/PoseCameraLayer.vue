@@ -11,6 +11,7 @@
       :off-frame="offFrame"
       :is-ready="isReady"
       :is-tracking="isTracking"
+      :camera-error="cameraError"
     />
 
     <div v-if="statusText" class="pose-camera-layer__status">
@@ -37,6 +38,8 @@ const stageRef = ref<HTMLElement | null>(null)
 const videoRef = ref<HTMLVideoElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const stream = ref<MediaStream | null>(null)
+/** 相机启动失败原因（人类可读），null 表示相机可用或尚未尝试 */
+const cameraError = ref<string | null>(null)
 const tracker = usePoseTracker({ paused: props.paused })
 
 const {
@@ -81,8 +84,24 @@ async function startCamera() {
     await videoRef.value.play()
     await tracker.initialize(videoRef.value, canvasRef.value)
   } catch (error) {
-    console.error('[PoseCameraLayer] failed to start camera', error)
+    // 相机不可用属于预期场景（无摄像头 / 权限拒绝 / 被占用），
+    // 通过 slot 暴露 cameraError，由上层游戏给出用户提示，不在此处静默或刷错误日志。
+    cameraError.value = describeCameraError(error)
   }
+}
+
+function describeCameraError(error: unknown): string {
+  const name = error instanceof DOMException ? error.name : ''
+  if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+    return '未检测到摄像头'
+  }
+  if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+    return '摄像头权限被拒绝'
+  }
+  if (name === 'NotReadableError' || name === 'TrackStartError') {
+    return '摄像头被其他应用占用'
+  }
+  return '摄像头启动失败'
 }
 
 watch(() => props.paused, (value) => {

@@ -1,7 +1,7 @@
 <template>
   <div class="air-conductor">
     <PoseCameraLayer class="air-conductor__stage" :paused="cameraPaused" @pose-frame="handlePoseFrameEvent">
-      <template #default="{ offFrame }">
+      <template #default="{ offFrame, cameraError }">
         <div class="air-conductor__topbar">
           <div class="air-conductor__topbar-group">
             <span class="air-conductor__badge">Air Conductor</span>
@@ -9,27 +9,51 @@
           </div>
           <div class="air-conductor__topbar-group air-conductor__topbar-group--right">
             <button
-              v-if="phase === 'playing'"
-              type="button"
-              class="air-conductor__pill air-conductor__pill--ghost"
-              @click="pauseRun"
-            >
-              暂停
-            </button>
-            <button
-              v-else-if="phase === 'paused'"
-              type="button"
-              class="air-conductor__pill air-conductor__pill--ghost"
-              @click="resumeRun"
-            >
-              继续
-            </button>
-            <button
+              v-if="cameraError"
               type="button"
               class="air-conductor__pill air-conductor__pill--danger"
-              @click="finishRun"
+              @click="emitCancel"
             >
-              结束训练
+              返回
+            </button>
+            <template v-else>
+              <button
+                v-if="phase === 'playing'"
+                type="button"
+                class="air-conductor__pill air-conductor__pill--ghost"
+                @click="pauseRun"
+              >
+                暂停
+              </button>
+              <button
+                v-else-if="phase === 'paused'"
+                type="button"
+                class="air-conductor__pill air-conductor__pill--ghost"
+                @click="resumeRun"
+              >
+                继续
+              </button>
+              <button
+                type="button"
+                class="air-conductor__pill air-conductor__pill--danger"
+                @click="finishRun"
+              >
+                结束训练
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <div v-if="cameraError" class="air-conductor__overlay-card">
+          <h2>无法开始训练</h2>
+          <p>{{ getCameraErrorHint(cameraError) }}</p>
+          <div class="air-conductor__overlay-actions">
+            <button
+              type="button"
+              class="air-conductor__pill air-conductor__pill--primary"
+              @click="emitCancel"
+            >
+              返回
             </button>
           </div>
         </div>
@@ -156,7 +180,7 @@
               </div>
             </div>
 
-            <div v-if="phase === 'idle'" class="air-conductor__overlay-card">
+            <div v-if="phase === 'idle' && !cameraError" class="air-conductor__overlay-card">
               <h2>准备开始上肢协同训练</h2>
               <p>先站到镜头前，抬起双臂像指挥家一样挥动。开始后会依次进入校准、倒计时和正式训练。</p>
               <div class="air-conductor__overlay-actions">
@@ -213,7 +237,27 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   finish: [session: GameSessionData]
+  /** 相机不可用时用户选择返回（不保存训练记录） */
+  cancel: []
 }>()
+
+/** 相机错误标题 → 补充提示文案 */
+function getCameraErrorHint(error: string): string {
+  switch (error) {
+    case '未检测到摄像头':
+      return '本游戏需要摄像头捕捉手臂动作。请连接摄像头后重试。'
+    case '摄像头权限被拒绝':
+      return '请在系统设置中允许本应用使用摄像头后重试。'
+    case '摄像头被其他应用占用':
+      return '摄像头可能正被其他应用使用，请关闭后重试。'
+    default:
+      return '请检查摄像头连接与权限设置后重试。'
+  }
+}
+
+function emitCancel() {
+  emit('cancel')
+}
 
 const {
   phase,

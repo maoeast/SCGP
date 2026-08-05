@@ -345,6 +345,12 @@ const loadPackageInfo = async () => {
 
 const activationStatus = computed(() => {
   if (authStore.activationInfo.isActivated) {
+    if (authStore.activationInfo.expiresAt) {
+      const expireDate = new Date(authStore.activationInfo.expiresAt)
+      const now = new Date()
+      const daysLeft = Math.ceil((expireDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+      return daysLeft > 0 ? `已激活（剩余${daysLeft}天）` : '已激活（已到期）'
+    }
     return '已激活'
   }
   if (authStore.activationInfo.isInTrial) {
