@@ -57,8 +57,8 @@ test('buildGuardedSystemPrompt 把守卫置于 systemPrompt 最前', () => {
 
 test('sendChat 统一使用守卫层（内置 + 自定义智能体均生效）', () => {
   const src = readProjectFile('src/stores/ai.ts')
-  // 组装处调用守卫函数
-  assert.match(src, /const systemPrompt = buildGuardedSystemPrompt\(currentAgent\.value\.systemPrompt/)
+  // 组装处调用守卫函数（先得 base，再追加记忆注入）
+  assert.match(src, /const baseSystemPrompt = buildGuardedSystemPrompt\(currentAgent\.value\.systemPrompt/)
   // 两处使用同一 systemPrompt 变量（tool 循环 + 流式），守卫对两条路径都生效
   const toolPath = src.indexOf('runToolLoop({')
   const streamPath = src.indexOf('stream: true')
