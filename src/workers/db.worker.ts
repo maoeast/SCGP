@@ -125,6 +125,8 @@ async function performAtomicSave(): Promise<void> {
 
   isSaving = true
   saveTimer = null
+  // 本次保存已接管当前待保存变更；保存期间的新变更会重新置位 isDirty
+  isDirty = false
 
   try {
     console.log('[db.worker] 💾 开始导出数据库...')
