@@ -69,8 +69,8 @@
               />
               <div class="equip-cover">
                 <img
-                  v-if="rec.resource.coverImage"
-                  :src="rec.resource.coverImage"
+                  v-if="resolvedCover(rec.resource)"
+                  :src="resolvedCover(rec.resource)"
                   :alt="rec.resource.name"
                   @error="onCoverError"
                 />
@@ -131,6 +131,8 @@ import { useRecommendationStore } from '@/stores/recommendation'
 import { getUnifiedDomainDefinition } from '@/features/recommendation/ability-taxonomy'
 import { getEntitlementDefinition } from '@/features/entitlements/entitlement-catalog'
 import type { EntitlementCode } from '@/features/entitlements/entitlement-catalog'
+import { resolveResourceItemCoverImage } from '@/utils/resource-cover'
+import type { ResourceItem } from '@/types/module'
 
 const store = useRecommendationStore()
 const router = useRouter()
@@ -176,6 +178,16 @@ function onCoverError(e: Event) {
   if (img) img.style.display = 'none'
 }
 
+/**
+ * 解析器材封面为可用 URL。
+ * 全项目统一走 resolveResourceItemCoverImage：物理器材走 getPhysicalEquipmentImageUrl，
+ * legacy 器材走 getEquipmentImageUrl，其余走 resolvePresetResourceUrl(coverImage)。
+ * 直接用 resource.coverImage 原始相对路径会导致图片无法加载（回归点）。
+ */
+function resolvedCover(resource: ResourceItem): string {
+  return resolveResourceItemCoverImage(resource)
+}
+
 async function handleCreateDraft() {
   creating.value = true
   try {
@@ -192,7 +204,7 @@ async function handleCreateDraft() {
           cancelButtonText: '稍后',
           type: 'success',
         })
-        router.push({ name: 'PlanList' })
+        router.push('/training-plan')
       } catch {
         // 用户选择稍后，不跳转
       }

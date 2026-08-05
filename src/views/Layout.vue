@@ -9,9 +9,9 @@
 
       <div class="sidebar-header">
         <h2 v-show="!sidebarCollapsed">
-          {{ systemConfigStore.systemName || '感官综合训练与评估' }}
+          {{ systemConfigStore.systemName || '星愿能力发展训练系统' }}
         </h2>
-        <h2 v-show="sidebarCollapsed">ATS</h2>
+        <h2 v-show="sidebarCollapsed">SCGP</h2>
       </div>
 
       <nav class="sidebar-nav" aria-label="主导航">
@@ -109,10 +109,6 @@
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <div class="activation-status">
-            <span class="status-dot" :class="{ active: authStore.isActivated }"></span>
-            <span>{{ getActivationText() }}</span>
-          </div>
         </div>
       </header>
 
@@ -367,9 +363,9 @@ const menuGroups = computed<MenuGroup[]>(() => {
 const pageTitle = computed(() => {
   // 首页显示系统名称
   if (route.name === 'Dashboard') {
-    return systemConfigStore.systemName || '感官综合训练与评估'
+    return systemConfigStore.systemName || '星愿能力发展训练系统'
   }
-  return route.meta.title || '感官综合训练与评估'
+  return route.meta.title || '星愿能力发展训练系统'
 })
 
 const isImmersiveRoute = computed(() => route.meta.immersiveShell === true)
@@ -406,21 +402,6 @@ const getRoleName = (role?: string) => {
     teacher: '教师',
   }
   return roleMap[role || ''] || ''
-}
-
-// 获取激活状态文本
-const getActivationText = () => {
-  // 如果已激活
-  if (authStore.activationInfo.isActivated) {
-    if (authStore.activationInfo.expiresAt) {
-      const expireDate = new Date(authStore.activationInfo.expiresAt)
-      const now = new Date()
-      const daysLeft = Math.ceil((expireDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
-      return `已激活（剩余${daysLeft}天）`
-    }
-    return '已激活'
-  }
-  return '未激活'
 }
 
 // 切换侧边栏
@@ -811,27 +792,6 @@ onMounted(() => {
 :global(.user-menu-dropdown .user-menu-logout-item:not(.is-disabled):active) {
   background-color: #fee2e2 !important;
   color: #991b1b !important;
-}
-
-.activation-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #f8f9fa;
-  border-radius: 20px;
-  font-size: 14px;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #e74c3c;
-}
-
-.status-dot.active {
-  background: #2ecc71;
 }
 
 .content {

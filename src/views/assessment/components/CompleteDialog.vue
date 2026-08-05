@@ -1,62 +1,86 @@
+<!-- src/views/assessment/components/CompleteDialog.vue -->
+<!--
+  评估完成结果弹窗。
+
+  设计要点（v2 重构）：
+  - 标题唯一：Dialog 自带 "评估完成" 标题，内部不再重复"评估已完成！"。
+  - 评定等级与评语去重：摘要区只放"短等级标签"（cognitive_self 用 verdict 短名，
+    其余量表用 level 原值，本身即为短词），完整判读句在评语卡片展示，
+    与 feedback.summary 不再二次重复。
+  - cognitive_self 的 level 是完整句子（VERDICT_LABELS），禁止塞进固定尺寸 Tag，
+    改用 verdict 短名映射避免溢出。
+  - 报告实际在进入 complete 阶段前已同步持久化，不存在异步生成过程，
+    故移除"系统正在生成详细报告..."误导文案，按钮全部可用、状态自洽。
+-->
 <template>
   <el-dialog
     :model-value="visible"
     title="评估完成"
-    width="500px"
+    width="520px"
     append-to-body
     :close-on-click-modal="false"
     :close-on-press-escape="false"
     :show-close="false"
     class="complete-dialog"
-    center
   >
     <div class="complete-content">
-      <!-- 成功图标 -->
-      <el-icon class="success-icon" color="#67C23A" :size="60">
-        <CircleCheck />
-      </el-icon>
+      <!-- 成功图标（小尺寸，不重复标题文案） -->
+      <div class="success-row">
+        <el-icon class="success-icon" color="#67C23A" :size="40">
+          <CircleCheck />
+        </el-icon>
+        <span class="success-text">评估结果已生成</span>
+      </div>
 
-      <h3 class="complete-title">评估已完成！</h3>
-
-      <!-- 评估结果摘要 -->
+      <!-- 数据摘要：两列网格 -->
       <div class="result-summary" v-if="scoreResult">
-        <div class="summary-item">
-          <span class="summary-label">学生：</span>
-          <span class="summary-value">{{ student?.name }}</span>
-        </div>
-        <div class="summary-item" v-if="scoreResult.totalScore !== undefined">
-          <span class="summary-label">粗分：</span>
-          <span class="summary-value">{{ scoreResult.totalScore }} 分</span>
-        </div>
-        <div class="summary-item" v-if="scoreResult.standardScore">
-          <span class="summary-label">标准分：</span>
-          <span class="summary-value highlight">{{ scoreResult.standardScore }} 分</span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-label">评定等级：</span>
-          <el-tag :type="levelTagType" size="large">
-            {{ scoreResult.level }}
-          </el-tag>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">学生</span>
+            <span class="summary-value">{{ student?.name || '-' }}</span>
+          </div>
+          <div class="summary-item" v-if="scoreResult.totalScore !== undefined">
+            <span class="summary-label">粗分</span>
+            <span class="summary-value">{{ scoreResult.totalScore }}<span class="unit"> 分</span></span>
+          </div>
+          <div class="summary-item" v-if="accuracyLabel">
+            <span class="summary-label">正确率</span>
+            <span class="summary-value">{{ accuracyLabel }}</span>
+          </div>
+          <div class="summary-item" v-if="avgTimeLabel">
+            <span class="summary-label">平均用时</span>
+            <span class="summary-value">{{ avgTimeLabel }}</span>
+          </div>
+          <div class="summary-item" v-if="scoreResult.standardScore">
+            <span class="summary-label">标准分</span>
+            <span class="summary-value highlight">{{ scoreResult.standardScore }}<span class="unit"> 分</span></span>
+          </div>
+          <div class="summary-item" v-if="shortLevel">
+            <span class="summary-label">评定等级</span>
+            <el-tag :type="levelTagType" size="default" class="level-tag">{{ shortLevel }}</el-tag>
+          </div>
         </div>
       </div>
 
-      <!-- 反馈摘要 -->
-      <div class="feedback-summary" v-if="feedback?.summary">
+      <!-- 评语 / 建议卡片：独立柔和背景，承载完整判读 -->
+      <div class="feedback-card" v-if="feedback?.summary">
+        <div class="feedback-card__title">
+          <el-icon><ChatLineRound /></el-icon>
+          <span>评价与建议</span>
+        </div>
         <p class="feedback-text">{{ feedback.summary }}</p>
       </div>
-
-      <p class="processing-text">系统正在生成详细报告...</p>
     </div>
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="handleExit" size="large">
+        <el-button @click="handleExit" size="large" class="footer-btn">
           返回列表
         </el-button>
-        <el-button type="success" plain @click="handleRecommend" size="large">
+        <el-button plain @click="handleRecommend" size="large" class="footer-btn">
           {{ recommendLabel }}
         </el-button>
-        <el-button type="primary" @click="handleViewReport" size="large">
+        <el-button type="primary" @click="handleViewReport" size="large" class="footer-btn">
           查看报告
         </el-button>
       </div>
@@ -66,7 +90,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { CircleCheck } from '@element-plus/icons-vue'
+import { CircleCheck, ChatLineRound } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { ScoreResult, AssessmentFeedback, StudentContext } from '@/types/assessment'
 import { useRecommendationStore } from '@/stores/recommendation'
@@ -90,27 +114,71 @@ const emit = defineEmits<{
 
 const recommendationStore = useRecommendationStore()
 
+/**
+ * cognitive_self 的 verdict（levelCode）→ 短等级名。
+ * 其余量表的 level 本身即为短词（优秀/正常/边缘…），无需映射。
+ * 映射缺失时回退到完整 level（但完整句子不再用于 Tag，仅作兜底）。
+ */
+const VERDICT_SHORT: Record<string, string> = {
+  stable: '表现稳定',
+  boundary: '难度边界',
+  inconsistent: '表现不稳',
+  unreadable: '不可判读',
+  floor_risk: '基础偏弱',
+  ceiling_risk: '已达上限',
+}
+
+/** 摘要区使用的短等级标签：cognitive_self 用 verdict 短名，其余量表用 level 原值 */
+const shortLevel = computed(() => {
+  const level = props.scoreResult?.level
+  if (!level) return ''
+  const code = props.scoreResult?.levelCode
+  if (code && VERDICT_SHORT[code]) return VERDICT_SHORT[code]
+  // 其余量表 level 多为短词（≤6 字），直接用；过长则截断避免溢出
+  return level.length > 8 ? level.slice(0, 8) + '…' : level
+})
+
 // 根据评定等级确定 Tag 类型
 const levelTagType = computed(() => {
-  const level = props.scoreResult?.level
-  if (!level) return 'info'
+  const level = props.scoreResult?.level || ''
+  const code = props.scoreResult?.levelCode || ''
 
-  if (['优秀', '高常', '正常'].includes(level)) {
+  if (['优秀', '高常', '正常', 'stable', 'ceiling_risk'].includes(level) || ['stable', 'ceiling_risk'].includes(code)) {
     return 'success'
   }
-  if (['边缘', '轻度'].includes(level)) {
+  if (['边缘', '轻度', 'boundary'].includes(level) || ['boundary'].includes(code)) {
     return 'warning'
   }
-  if (['中度', '重度', '极重度'].includes(level)) {
+  if (['中度', '重度', '极重度', 'floor_risk'].includes(level) || ['floor_risk'].includes(code)) {
     return 'danger'
   }
   return 'info'
 })
 
+/** 正确率：cognitive_self 存于 extraData.accuracyRate（0-1），其余量表可能无 */
+const accuracyLabel = computed(() => {
+  const extra = props.scoreResult?.extraData as Record<string, any> | undefined
+  const rate = extra?.accuracyRate
+  if (typeof rate !== 'number') return ''
+  const total = extra?.totalQuestions ?? props.scoreResult?.totalScore ?? 0
+  const correct = props.scoreResult?.totalScore ?? 0
+  return `${Math.round(rate * 100)}%${total > 0 ? ` (${correct}/${total})` : ''}`
+})
+
+/** 平均用时：cognitive_self 存于 extraData.overallMedianRt（ms） */
+const avgTimeLabel = computed(() => {
+  const extra = props.scoreResult?.extraData as Record<string, any> | undefined
+  const rt = extra?.overallMedianRt
+  if (typeof rt !== 'number') return ''
+  return `${(rt / 1000).toFixed(1)} 秒`
+})
+
 // 推荐入口文案：正常/优秀 → 能力巩固推荐；否则 → 器材推荐
 const recommendLabel = computed(() => {
   const level = props.scoreResult?.level || ''
-  return ['优秀', '高常', '正常'].includes(level) ? '能力巩固推荐' : '器材推荐'
+  const code = props.scoreResult?.levelCode || ''
+  const isNormal = ['优秀', '高常', '正常'].includes(level) || ['stable', 'ceiling_risk'].includes(code)
+  return isNormal ? '能力巩固推荐' : '器材推荐'
 })
 
 function handleViewReport() {
@@ -135,87 +203,129 @@ function handleRecommend() {
 
 <style scoped>
 .complete-content {
-  text-align: center;
-  padding: 20px 0;
+  padding: 8px 0 4px;
+}
+
+/* ====== 成功图标行 ====== */
+.success-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .success-icon {
-  margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
-.complete-title {
-  margin: 0 0 20px 0;
-  font-size: 20px;
-  color: #303133;
+.success-text {
+  font-size: 15px;
+  color: #67c23a;
+  font-weight: 600;
 }
 
+/* ====== 数据摘要：两列网格 ====== */
 .result-summary {
   background: #f5f7fa;
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 10px;
+  padding: 16px 20px;
   margin-bottom: 16px;
-  text-align: left;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
 }
 
 .summary-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px dashed #e4e7ed;
-}
-
-.summary-item:last-child {
-  border-bottom: none;
+  min-width: 0;
 }
 
 .summary-label {
   color: #909399;
-  font-size: 14px;
-  min-width: 80px;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
 .summary-value {
   color: #303133;
   font-size: 15px;
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .summary-value.highlight {
   color: #409eff;
-  font-size: 18px;
   font-weight: 600;
 }
 
-.feedback-summary {
+.summary-value .unit {
+  font-size: 13px;
+  font-weight: 400;
+  color: #909399;
+}
+
+.level-tag {
+  margin: 0;
+  max-width: 100%;
+}
+
+/* ====== 评语卡片 ====== */
+.feedback-card {
   background: #fdf6ec;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
-  text-align: left;
+  border: 1px solid #faecd8;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.feedback-card__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #b88230;
+  margin-bottom: 8px;
 }
 
 .feedback-text {
   margin: 0;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: #606266;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  word-break: break-word;
 }
 
-.processing-text {
-  margin: 0;
-  font-size: 13px;
-  color: #909399;
-}
-
+/* ====== Footer 按钮统一三态 ====== */
 .dialog-footer {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
+}
+
+.footer-btn {
+  min-width: 120px;
+}
+
+@media (max-width: 520px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dialog-footer {
+    flex-direction: column;
+  }
+
+  .footer-btn {
+    width: 100%;
+  }
 }
 </style>

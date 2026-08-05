@@ -19,7 +19,7 @@
     <!-- 阶段 2：评估进行中 -->
     <template v-else-if="phase === 'assessing'">
       <!-- 顶部进度区域 -->
-      <el-card class="assessment-header">
+      <el-card v-if="!driver?.isPerformanceTask" class="assessment-header">
         <template #header>
           <div class="header-content">
             <div class="student-info">
@@ -44,6 +44,48 @@
             </div>
           </div>
         </template>
+      </el-card>
+
+      <!-- 绩效题（cognitive_self）合并 Header：单一信息栏，取代"任务总览卡 + 题目卡"双层结构 -->
+      <el-card v-else class="performance-header">
+        <div class="perf-header-content">
+          <div class="perf-header-left">
+            <h3 class="perf-scale-name">{{ driver?.scaleName }}</h3>
+            <div class="perf-student-meta">
+              <span>学生：{{ student?.name }}</span>
+              <span class="perf-meta-divider">·</span>
+              <span>{{ studentAgeLabel }}</span>
+            </div>
+          </div>
+          <div class="perf-header-right">
+            <el-tag
+              v-if="currentQuestion?.dimensionName || currentQuestion?.dimension"
+              size="small"
+              type="info"
+              class="perf-tag"
+            >
+              {{ currentQuestion?.dimensionName || currentQuestion?.dimension }}
+            </el-tag>
+            <el-tag
+              v-if="currentQuestion?.metadata?.isPractice"
+              size="small"
+              type="warning"
+              class="perf-tag"
+            >
+              练习（不计分）
+            </el-tag>
+            <el-tag size="small" type="success" class="perf-tag">⚡ 看准后尽快作答</el-tag>
+            <div class="perf-progress">
+              <span class="perf-progress-count">{{ state.currentIndex + 1 }} / {{ questions.length }}</span>
+              <el-progress
+                :percentage="progress"
+                :show-text="false"
+                :stroke-width="8"
+                class="perf-progress-bar"
+              />
+            </div>
+          </div>
+        </div>
       </el-card>
 
       <!-- 题目卡片（绩效题用 PerformanceTrialBoard，其余量表用 QuestionCard） -->
@@ -245,7 +287,10 @@ const canProceedToNext = computed(() => {
   if (!currentQuestion.value) return false
 
   const answer = state.value.answers[currentQuestion.value.id]
-  if (!answer) return false
+  if (!answer) {
+    // 绩效题（如视知觉图形匹配筛查）：超时未作答也允许进入下一题（由 Driver 记 omitted）
+    return driver.value?.isPerformanceTask === true
+  }
 
   // 如果题目需要说明内容
   if (currentQuestion.value.metadata?.hasDescription) {
@@ -470,6 +515,8 @@ interface AnswerWithDescription {
   description?: string
   /** 真反应时（ms），仅绩效题 PerformanceTrialBoard 传入；问卷型不带此字段 */
   reactionTimeMs?: number | null
+  /** 绩效题扩展元数据（pointerType / anticipatory 标记等） */
+  meta?: Record<string, any>
 }
 
 function handleAnswer(value: number | string | AnswerWithDescription) {
@@ -529,8 +576,11 @@ function handleAnswer(value: number | string | AnswerWithDescription) {
   }
 
   // 如果有说明内容，保存到 metadata
-  if (description !== undefined) {
-    answerRecord.metadata = { description }
+  if (description !== undefined || reactionTimeMs != null) {
+    answerRecord.metadata = {
+      ...(description !== undefined ? { description } : {}),
+      ...((value as AnswerWithDescription).meta ?? {}),
+    }
   }
 
   // 记录答案
@@ -838,13 +888,99 @@ watch(() => route.params, () => {
 
 <style scoped>
 .assessment-container {
-  padding: 20px;
+  padding: 16px 20px;
   max-width: 900px;
   margin: 0 auto;
 }
 
 .assessment-header {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+}
+
+/* ====== 绩效题合并 Header（cognitive_self 专用） ====== */
+.performance-header {
+  margin-bottom: 12px;
+}
+
+.performance-header :deep(.el-card__body) {
+  padding: 14px 20px;
+}
+
+.perf-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.perf-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.perf-scale-name {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: #303133;
+  line-height: 1.4;
+}
+
+.perf-student-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #909399;
+}
+
+.perf-meta-divider {
+  color: #c0c4cc;
+}
+
+.perf-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.perf-tag {
+  margin: 0;
+}
+
+.perf-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+}
+
+.perf-progress-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: #409eff;
+  white-space: nowrap;
+}
+
+.perf-progress-bar {
+  width: 100px;
+}
+
+@media (max-width: 768px) {
+  .perf-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .perf-header-right {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .header-content {
