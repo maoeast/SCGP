@@ -71,7 +71,8 @@ export default (async (configEnv?: ConfigEnv): Promise<UserConfig> => {
       },
     },
     optimizeDeps: {
-      exclude: ['sql.js'],
+      // sql.js 不再排除：DB Worker 需要依赖预构建（ESM 包装）才能在 dev 下加载。
+      // 主线程加载走 ?url + <script> 标签（sqljs-loader.ts），不经过预构建，不受影响。
     },
     worker: {
       format: 'es',
