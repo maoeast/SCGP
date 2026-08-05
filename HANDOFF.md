@@ -33,7 +33,7 @@ If those four files are not enough, then read `PROJECT_CONTEXT.md`.
 
 ## Current Focus
 
-- 本轮按 AI、手册工具、学生导入、实拍修复四批整理并提交。开始新任务前先以 `.continue-here.md` 和 Git 现场确认当前状态。
-- 学生批量导入闭环已接入 Excel 读取、字段与学号预检、逐行写入、逐项结果反馈和列表刷新；`npx jiti tests/student-import.test.ts`、`npm run type-check` 已通过。
-- 用户手册 Markdown、DOCX、S024 重新实拍、截图审批和采集工具已按当前代码修订；`node scripts/manual/validate-user-manual.mjs` 和审批截图校验均已通过。
-- 实拍修复覆盖器材信息可见性、评估对象信息、CRT 日期、认知训练记录和激活错误脱敏；激活契约测试已通过。
+- 当前专题：**DB Worker 处理**（执行计划 `docs/plans/2026-08-05-db-worker-execution-plan.md`）。
+- 已提交：dev 加载修复（`3976298`）、防抖保存循环修复（`b705405`），验证路径打通（WorkerTest 可跑）。
+- 下一步：阶段 0 性能 profile（决策门）——结论写入 `docs/reports/2026-08-05-db-worker-profile.md`，决定是否进阶段 1（渐进接入）。
+- 历史批次（AI、手册工具、学生导入、实拍修复、激活文件）均已提交，细节见 `.continue-here.md` 与 git log。

@@ -58,6 +58,7 @@
 
 ### `docs/plans` — 阶段实施计划与执行路线
 
+- [2026-08-05-db-worker-execution-plan.md](./plans/2026-08-05-db-worker-execution-plan.md) — DB Worker 处理执行计划：先性能 profile 决策门，再按证据渐进接入；含双轨持久化前置、同步桥方案、回退开关
 - [2026-07-18-project-closeout-execution-plan.md](./plans/2026-07-18-project-closeout-execution-plan.md) — 基于当前代码事实的未完成项收口顺序、批次边界与验收门禁
 - [2026-03-13-scgp-executable-roadmap.md](./plans/2026-03-13-scgp-executable-roadmap.md)
 - [2026-03-12-emotional-module-implementation-plan.md](./plans/2026-03-12-emotional-module-implementation-plan.md)
