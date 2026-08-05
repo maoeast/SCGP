@@ -1793,3 +1793,10 @@
 - 答题板 UI 约束：目标与选项统一 160×160 可见刺激框（图元 88px），点击热区与可见框解耦（PerformanceTrialBoard.vue）。
 - 设计稿 docs/planning/2026-08-05-cognitive-self-difficulty-curve-design.md（v4.1）；门禁测试 tests/cognitive-self-gate.test.ts（12 项）。
 
+## 97. 2026-08-05 AI 对话内嵌富产物机制（ToolArtifact）+ 跨量表学生画像（路线 C/D）
+- AI 工具结果新增「富产物」通道：`ToolResult.artifact`（类型化联合 `ToolArtifact`），只回传 UI 层渲染、不进模型上下文；`ai_chat_message` 新增 `tool_artifacts` JSON 列（safeAddColumn），`saveMessage`/`listMessages` 往返持久化，历史会话回看图表仍在。
+- 现有两种富产物：`assessment_trend`（get_assessment_trend，单量表纵向，快照≥2 才产，AiTrendChart.vue 线图）与 `profile_radar`（get_student_profile，跨量表横向画像，领域≥3 才产，AiProfileRadar.vue 雷达图）；AiChatTranscript 按 kind 分发渲染。
+- 画像聚合层 `src/services/assessment-profile.ts`（纯函数，可 jiti 单测）：SCALE_DOMAIN_MAP 把 13 个支持量表映射到 5 大发展领域（sensory/emotional/social/cognitive/life_skills），取各量表最近一次评估，buildScaleConclusion 统一口径结论（scoreNote+level+分数），领域强弱聚合取最差值（weak 优先）；crt/cognitive_self 不参与。
+- 授权差异处理：工具只聚合有评估记录的量表（未授权量表前端测不了→DB 无记录→自动跳过），未测项在 `untestedScales` 透明列出，不引入工具层授权参数。
+- get_student_profile 已挂载到 3 个 agent（一人一策/成长看得见/稳健训练）；营销文档 docs/marketing/2026-08-05-scgp-ai-agent-marketing.md（正式版+口语版+短篇文案）已落库。
+
