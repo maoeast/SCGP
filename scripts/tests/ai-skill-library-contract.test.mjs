@@ -24,6 +24,7 @@ test('内置知识技能展示中文名时保留稳定 code', () => {
 
   const displayNames = {
     '家校沟通话术官': '家校沟通话术',
+    'assessment-profile-interpretation': '跨量表画像综合解读',
     'child-adolescent-mental-health-support': '儿童青少年心理健康支持',
     'developmental-screening-assessment': '儿童发展筛查与评估支持',
     'inclusive-training-adaptation': '融合教育训练适配支持',

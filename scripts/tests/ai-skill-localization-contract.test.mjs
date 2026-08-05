@@ -86,6 +86,21 @@ test('家校沟通技能要求去标识化且不作虚假隐私承诺', () => {
   assert.doesNotMatch(readSkill('家校沟通话术官'), /不会.*上传到第三方/)
 })
 
+test('跨量表画像技能不得输出诊断或风险等级，保留教师端边界', () => {
+  const code = 'assessment-profile-interpretation'
+  assert.equal(existsSync(join(skillsRoot, code, 'SKILL.md')), true)
+  assertGovernanceFields(code)
+
+  const skill = readSkill(code)
+  assert.match(skill, /跨量表|多量表/)
+  assert.match(skill, /不作.*诊断|不输出.*诊断/)
+  assert.match(skill, /风险等级/)
+  assert.match(skill, /分高=好.*分高=差|方向/)
+  assert.match(skill, /相互印证|一致性/)
+  assert.match(skill, /干预优先级/)
+  assert.doesNotMatch(skill, /PHQ-9|GAD-7|ADOS/)
+})
+
 test('心理支持和融合训练技能保留教师端边界', () => {
   for (const code of ['child-adolescent-mental-health-support', 'inclusive-training-adaptation']) {
     assert.equal(existsSync(join(skillsRoot, code, 'SKILL.md')), true)
@@ -118,6 +133,7 @@ test('SKILL.md 中声明的本地 reference 文件均存在', () => {
     'child-adolescent-mental-health-support',
     'inclusive-training-adaptation',
     'rehabilitation-equipment-and-exercise-support',
+    'assessment-profile-interpretation',
   ]
 
   for (const code of codes) {

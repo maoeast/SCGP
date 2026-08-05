@@ -10,7 +10,7 @@ function readProjectFile(relativePath) {
   return readFileSync(resolve(projectRoot, relativePath), 'utf8')
 }
 
-test('内置智能体目录提供 6 个教师场景预设并覆盖 8 个知识技能', () => {
+test('内置智能体目录提供 6 个教师场景预设并覆盖 9 个知识技能', () => {
   const relativePath = 'src/data/ai-agent-presets.ts'
   assert.equal(existsSync(resolve(projectRoot, relativePath)), true, `${relativePath} 应存在`)
 
