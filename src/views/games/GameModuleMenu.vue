@@ -24,7 +24,11 @@
               boxShadow: `0 4px 12px ${entry.themeColor}30`,
             }"
           >
-            <span class="module-emoji">{{ getEntryEmoji(entry.code) }}</span>
+            <KoboyoIcon
+              :src="ENTRY_ICON_SVGS[entry.code]"
+              :size="40"
+              :color="entry.themeColor"
+            />
           </div>
 
           <div class="module-info scgp-selection-card__info">
@@ -51,6 +55,8 @@ import { useAuthStore } from '@/stores/auth'
 import { ResourceAPI } from '@/database/resource-api'
 import { getCustomGamesByTrainingEntry } from '@/data/custom-game-registry'
 import { getEmotionalGameCount } from './emotional-game-catalog'
+import KoboyoIcon from '@/components/common/KoboyoIcon.vue'
+import { ENTRY_ICON_SVGS } from '@/utils/koboyo-icon-map'
 import {
   getAllTrainingEntries,
   matchesTrainingEntryResource,
@@ -60,25 +66,11 @@ import {
 const router = useRouter()
 const authStore = useAuthStore()
 
-const entryEmojis: Record<TrainingEntryCode, string> = {
-  'sensory-integration': '🎮',
-  'emotional-regulation': '😊',
-  'social-communication': '👥',
-  'fine-motor': '🧩',
-  'soothing-aids': '🧸',
-  'life-skills': '🏠',
-  'cognitive': '🧠',
-}
-
 const trainingEntries = computed(() => {
   return getAllTrainingEntries().filter((entry) =>
     authStore.hasEntitlementAccess(entry.requiredEntitlement)
   )
 })
-
-const getEntryEmoji = (entryCode: TrainingEntryCode) => {
-  return entryEmojis[entryCode] || '🎮'
-}
 
 const getResourceCount = (entryCode: TrainingEntryCode) => {
   const registryBackedGameCount = entryCode === 'emotional-regulation'
@@ -126,10 +118,6 @@ const handleEntryClick = (entry: (typeof trainingEntries.value)[number]) => {
 
 .module-card.module-active:hover {
   box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
-}
-
-.module-emoji {
-  font-size: 40px;
 }
 
 .resource-count {

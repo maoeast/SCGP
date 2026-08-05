@@ -1,5 +1,12 @@
 <template>
-  <el-card class="game-preview-card" :class="{ 'game-preview-card--immersive': showConfigInline }">
+  <el-card
+    class="game-preview-card"
+    :class="{
+      'game-preview-card--immersive': showConfigInline,
+      'game-preview-card--compact': compact,
+    }"
+  >
+    <template v-if="!compact">
     <div class="game-header">
       <div class="game-emoji" :style="emojiStyle">
         {{ emoji }}
@@ -46,6 +53,7 @@
         <li>系统会自动记录训练数据</li>
       </ul>
     </div>
+    </template>
 
     <div v-if="showConfigInline" class="config-card">
       <div class="config-section">
@@ -516,15 +524,19 @@ import {
 } from '@/components/games/hand/bubble-pop-game'
 import { TaskID, type GridSize } from '@/types/games'
 import type { ResourceItem } from '@/types/module'
+import { getGameCategoryLabel } from '@/utils/game-category-label'
 
 interface Props {
   game: ResourceItem
   studentId: number
   launchVariant?: 'default' | 'sensory-immersive'
+  /** 紧凑模式：隐藏标题/描述/元数据/说明区，仅保留开始前配置与启动按钮（供宿主页面自行展示头部信息） */
+  compact?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   launchVariant: 'default',
+  compact: false,
 })
 
 const emit = defineEmits<{
@@ -634,21 +646,7 @@ const duration = computed(() => {
   return metaData.value?.duration || '3-5分钟'
 })
 
-const categoryLabel = computed(() => {
-  const labels: Record<string, string> = {
-    motor: '体感训练',
-    visual: '视觉训练',
-    audio: '听觉训练',
-    tactile: '触觉训练',
-    construction: '结构搭建',
-    coordination: '手眼协调',
-    inhibition: '抑制控制',
-    sorting: '分类整理',
-    tracing: '轨迹描摹',
-  }
-
-  return labels[props.game.category || ''] || props.game.category || '综合训练'
-})
+const categoryLabel = computed(() => getGameCategoryLabel(props.game.category))
 
 const categoryTagType = computed(() => {
   const types: Record<string, '' | 'success' | 'warning' | 'danger' | 'info' | 'primary'> = {
@@ -828,6 +826,17 @@ watch(
 <style scoped>
 .game-preview-card {
   height: fit-content;
+}
+
+.game-preview-card--compact {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.game-preview-card--compact :deep(.el-card__body) {
+  padding: 0;
 }
 
 .game-preview-card--immersive {

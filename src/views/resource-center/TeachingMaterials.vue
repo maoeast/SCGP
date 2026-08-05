@@ -113,7 +113,11 @@
           :key="material.id"
           class="material-card"
         >
-          <div class="material-thumbnail">
+          <div
+            class="material-thumbnail"
+            :class="{ 'is-video': isVideoMaterial(material) }"
+            @click="handleThumbnailClick(material)"
+          >
             <img
               :src="`resource://images/teaching-materials/${material.dimensionCode}/${material.id}.jpg`"
               :alt="material.title"
@@ -124,6 +128,10 @@
               <el-icon :size="32" :style="{ color: getFileIconColor(material.fileType) }">
                 <component :is="getFileIcon(material.fileType)" />
               </el-icon>
+            </div>
+
+            <div v-if="isVideoMaterial(material)" class="thumbnail-play-btn" aria-hidden="true">
+              <el-icon :size="26"><VideoPlay /></el-icon>
             </div>
 
             <div v-if="material.sequenceOrder" class="sequence-badge">
@@ -400,6 +408,24 @@
         <el-button type="primary" @click="openMaterial(selectedMaterial)">打开资料</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="videoPreviewVisible"
+      :title="videoPreviewMaterial?.title || '视频预览'"
+      width="720px"
+      class="material-video-dialog"
+      destroy-on-close
+      append-to-body
+      @closed="videoPreviewMaterial = null"
+    >
+      <video
+        v-if="videoPreviewUrl"
+        :src="videoPreviewUrl"
+        class="material-video-player"
+        controls
+        autoplay
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -607,12 +633,40 @@ function formatDateShort(value?: string): string {
   return `${month}-${day}`
 }
 
+const VIDEO_FILE_TYPES = ['mp4', 'avi', 'mov', 'wmv', 'webm', 'mkv', 'm4v']
+
+function isVideoMaterial(material: TeachingMaterialItem): boolean {
+  return VIDEO_FILE_TYPES.includes(String(material.fileType).toLowerCase())
+}
+
+/** 视频内嵌预览状态：卡片封面点击后在本应用内直接播放 */
+const videoPreviewMaterial = ref<TeachingMaterialItem | null>(null)
+const videoPreviewVisible = computed({
+  get: () => videoPreviewMaterial.value !== null,
+  set: (value: boolean) => {
+    if (!value) {
+      videoPreviewMaterial.value = null
+    }
+  },
+})
+const videoPreviewUrl = computed(() => {
+  return videoPreviewMaterial.value
+    ? teachingMaterialFileManager.getFileUrl(videoPreviewMaterial.value.filePath)
+    : ''
+})
+
+function handleThumbnailClick(material: TeachingMaterialItem) {
+  if (isVideoMaterial(material)) {
+    videoPreviewMaterial.value = material
+  }
+}
+
 function getFileIcon(type: string) {
   const lowerType = type.toLowerCase()
   if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv'].includes(lowerType)) {
     return Document
   }
-  if (['mp4', 'avi', 'mov', 'wmv', 'webm', 'mkv', 'm4v'].includes(lowerType)) {
+  if (VIDEO_FILE_TYPES.includes(lowerType)) {
     return VideoPlay
   }
   if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'].includes(lowerType)) {
@@ -631,7 +685,7 @@ function getFileIconColor(type: string): string {
   const lowerType = type.toLowerCase()
   if (['pdf'].includes(lowerType)) return '#d14343'
   if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'csv'].includes(lowerType)) return '#3b82f6'
-  if (['mp4', 'avi', 'mov', 'wmv', 'webm', 'mkv', 'm4v'].includes(lowerType)) return '#7c3aed'
+  if (VIDEO_FILE_TYPES.includes(lowerType)) return '#7c3aed'
   if (['mp3', 'wav', 'ogg', 'aac', 'flac', 'm4a', 'wma'].includes(lowerType)) return '#10b981'
   if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'].includes(lowerType)) return '#f59e0b'
   if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(lowerType)) return '#06b6d4'
@@ -971,6 +1025,42 @@ defineExpose({
   padding-top: 56.25%; /* 16:9 aspect ratio */
   background: #f5f7fa;
   overflow: hidden;
+}
+
+.material-thumbnail.is-video {
+  cursor: pointer;
+}
+
+.thumbnail-play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.material-thumbnail.is-video:hover .thumbnail-play-btn {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.65);
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.material-video-player {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  background: #000;
+  border-radius: 8px;
 }
 
 .thumbnail-image {

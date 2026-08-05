@@ -94,6 +94,7 @@
             :task-id="taskId"
             :duration="duration"
             @finish="handleGameFinish"
+            @cancel="goBack"
           />
 
           <div v-else class="error-view error-view--embedded">
@@ -177,6 +178,7 @@
           :task-id="taskId"
           :duration="duration"
           @finish="handleGameFinish"
+          @cancel="goBack"
         />
 
         <div v-else class="error-view">

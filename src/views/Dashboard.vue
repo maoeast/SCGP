@@ -1135,10 +1135,11 @@ onMounted(() => {
 
 .home-agent-detail__footer {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  text-align: left;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
 }
 
 .home-agent-detail__footer > span {

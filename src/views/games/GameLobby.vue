@@ -20,7 +20,12 @@
       </div>
       <div class="header-right">
         <div class="module-switcher">
-          <span class="switcher-emoji">{{ getEntryEmoji(currentEntryCode) }}</span>
+          <KoboyoIcon
+            class="switcher-icon"
+            :src="ENTRY_ICON_SVGS[currentEntryCode]"
+            :size="24"
+            :color="currentEntry.themeColor"
+          />
           <span class="switcher-label">切换入口</span>
           <el-select
             v-model="currentEntryCode"
@@ -35,7 +40,11 @@
               :value="entry.code"
             >
               <div class="module-option">
-                <span class="option-emoji">{{ getEntryEmoji(entry.code) }}</span>
+                <KoboyoIcon
+                  :src="ENTRY_ICON_SVGS[entry.code]"
+                  :size="16"
+                  :color="entry.themeColor"
+                />
                 <span>{{ entry.name }}</span>
                 <el-tag size="small" type="info" class="resource-count-tag">
                   {{ getEntryGameCount(entry.code) }}个游戏
@@ -66,7 +75,13 @@
               class="game-card-emoji"
               :style="{ background: String(game.metadata?.color || 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)') }"
             >
-              {{ game.metadata?.emoji || game.coverImage || '🎮' }}
+              <KoboyoIcon
+                v-if="getGameIconSvgUrl(game)"
+                :src="getGameIconSvgUrl(game)!"
+                :size="38"
+                color="#ffffff"
+              />
+              <template v-else>{{ game.metadata?.emoji || game.coverImage || '🎮' }}</template>
             </div>
             <div class="game-card-copy">
               <strong>{{ game.name }}</strong>
@@ -81,27 +96,48 @@
       <div class="preview-section workspace-pane">
         <template v-if="selectedGame">
           <el-card class="preview-card workspace-pane-card">
-            <!-- 预览头 -->
+            <!-- 顶栏 Header：图标 + 主标题 + 类型标签 -->
             <div class="preview-header">
               <div
                 class="preview-emoji"
                 :style="{ background: String(selectedGame.metadata?.color || 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)') }"
               >
-                {{ selectedGame.metadata?.emoji || selectedGame.coverImage || '🎮' }}
+                <KoboyoIcon
+                  v-if="getGameIconSvgUrl(selectedGame)"
+                  :src="getGameIconSvgUrl(selectedGame)!"
+                  :size="48"
+                  color="#ffffff"
+                />
+                <template v-else>{{ selectedGame.metadata?.emoji || selectedGame.coverImage || '🎮' }}</template>
               </div>
               <div class="preview-copy">
-                <h2>{{ selectedGame.name }}</h2>
-                <p>{{ selectedGame.description }}</p>
-                <div class="preview-tags">
-                  <el-tag v-if="selectedGame.metadata?.therapeuticGoal" size="small" type="warning">{{ selectedGame.metadata.therapeuticGoal }}</el-tag>
-                  <el-tag v-if="selectedGame.metadata?.duration" size="small" type="info">{{ selectedGame.metadata.duration }}</el-tag>
-                  <el-tag v-if="selectedGame.metadata?.difficulty" size="small">{{ selectedGame.metadata.difficulty }}</el-tag>
+                <div class="preview-title-row">
+                  <h2>{{ selectedGame.name }}</h2>
+                  <el-tag v-if="!usesRegistryBackedGameLobby" type="warning" size="small">
+                    全屏沉浸式训练
+                  </el-tag>
+                </div>
+                <div class="preview-meta">
+                  <span>预计时长：{{ selectedGame.metadata?.duration || '—' }}</span>
+                  <span class="preview-meta__sep">|</span>
+                  <span>难度：{{ selectedGame.metadata?.difficulty || '—' }}</span>
+                  <span class="preview-meta__sep">|</span>
+                  <span>类型：{{ getGameCategoryLabel(selectedGame.category) }}</span>
+                  <template v-if="selectedGame.metadata?.therapeuticGoal">
+                    <span class="preview-meta__sep">|</span>
+                    <span>目标：{{ selectedGame.metadata.therapeuticGoal }}</span>
+                  </template>
                 </div>
               </div>
             </div>
 
-            <!-- 预览体 -->
+            <!-- 内容区 Body -->
             <div class="preview-body">
+              <div class="preview-block">
+                <h4>项目简介</h4>
+                <p>{{ selectedGame.description }}</p>
+              </div>
+
               <div v-if="selectedGame.metadata?.previewDescription" class="preview-block">
                 <h4>玩法说明</h4>
                 <p>{{ selectedGame.metadata.previewDescription }}</p>
@@ -156,13 +192,14 @@
                 </p>
               </div>
 
-              <!-- 资源配置（sensory 类游戏用 GamePreviewCard） -->
+              <!-- 资源配置（sensory 类游戏用 GamePreviewCard 紧凑模式，头部信息已由上方 Header/Meta 展示） -->
               <GamePreviewCard
                 v-if="!usesRegistryBackedGameLobby"
                 class="preview-game-config"
                 :game="selectedGame"
                 :student-id="studentId"
                 launch-variant="sensory-immersive"
+                compact
                 @start-game="handleStartGame"
               />
             </div>
@@ -202,6 +239,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import GamePreviewCard from '@/components/games/GamePreviewCard.vue'
+import KoboyoIcon from '@/components/common/KoboyoIcon.vue'
+import { ENTRY_ICON_SVGS, getGameIconSvg } from '@/utils/koboyo-icon-map'
+import { getGameCategoryLabel } from '@/utils/game-category-label'
 import type { ResourceItem } from '@/types/module'
 import { StudentAPI } from '@/database/api'
 import { ResourceAPI } from '@/database/resource-api'
@@ -226,16 +266,6 @@ interface Student {
   avatar_path?: string
   current_class_id?: number | null
   current_class_name?: string | null
-}
-
-const ENTRY_EMOJIS: Record<TrainingEntryCode, string> = {
-  'sensory-integration': '🎮',
-  'emotional-regulation': '😊',
-  'social-communication': '👥',
-  'fine-motor': '🧩',
-  'soothing-aids': '🫶',
-  'life-skills': '🏠',
-  'cognitive': '🧠',
 }
 
 const route = useRoute()
@@ -359,8 +389,8 @@ const canStartSelectedGame = computed(() => {
   return Boolean(selectedPartnerStudent.value)
 })
 
-const getEntryEmoji = (entryCode: TrainingEntryCode): string => {
-  return ENTRY_EMOJIS[entryCode] || '🎮'
+const getGameIconSvgUrl = (game: ResourceItem): string | undefined => {
+  return getGameIconSvg(game.metadata?.gameCode, game.metadata?.mode)
 }
 
 const getEntryGameCount = (entryCode: TrainingEntryCode): number => {
@@ -672,16 +702,26 @@ watch(
   color: #303133;
 }
 
-.preview-copy p {
-  margin: 10px 0 0;
-  color: #606266;
-  line-height: 1.7;
+.preview-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.preview-tags {
+.preview-meta {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-top: 14px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #909399;
+  line-height: 1.6;
+}
+
+.preview-meta__sep {
+  color: #dcdfe6;
 }
 
 .preview-body {
@@ -791,10 +831,6 @@ watch(
   box-shadow: 0 2px 8px rgba(245, 108, 108, 0.2);
 }
 
-.switcher-emoji {
-  font-size: 20px;
-}
-
 .switcher-label {
   font-size: 14px;
   font-weight: 500;
@@ -824,10 +860,6 @@ watch(
   align-items: center;
   gap: 8px;
   width: 100%;
-}
-
-.option-emoji {
-  font-size: 16px;
 }
 
 .resource-count-tag {
