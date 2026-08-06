@@ -108,6 +108,7 @@
                 v-if="row.resourceType === 'equipment' && getThumbnailUrl(row)"
                 :src="getThumbnailUrl(row)"
                 fit="cover"
+                lazy
                 class="thumbnail-img"
               >
                 <template #error>

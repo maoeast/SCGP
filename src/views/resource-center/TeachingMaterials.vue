@@ -119,7 +119,7 @@
             @click="handleThumbnailClick(material)"
           >
             <img
-              :src="`resource://images/teaching-materials/${material.dimensionCode}/${material.id}.jpg`"
+              v-lazy-image="`resource://images/teaching-materials/${material.dimensionCode}/${material.id}.jpg`"
               :alt="material.title"
               class="thumbnail-image"
               @error="handleImageError"

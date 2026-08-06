@@ -246,6 +246,7 @@
                   v-if="scene.coverImageUrl"
                   :src="scene.coverImageUrl"
                   fit="cover"
+                  lazy
                   class="cover-image"
                 >
                   <template #error>

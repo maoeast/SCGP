@@ -182,6 +182,7 @@
                 v-if="task.coverImageUrl"
                 :src="task.coverImageUrl"
                 fit="cover"
+                lazy
                 class="task-gallery-card__cover-image"
               >
                 <template #error>

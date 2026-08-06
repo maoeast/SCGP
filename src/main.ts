@@ -6,6 +6,7 @@ import pinia from './stores'
 import router from './router'
 import { initDatabase } from './database/init'
 import { initializeBuiltinModules } from './core/module-registry'
+import lazyImageDirective from './directives/lazy-image'
 import { useAuthStore } from './stores/auth'
 import { useSystemConfigStore } from './stores/systemConfig'
 import ElementPlus from 'element-plus'
@@ -118,6 +119,9 @@ async function initializeApp() {
     for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
       app.component(key, component)
     }
+
+    // 注册全局懒加载图片指令
+    app.directive('lazy-image', lazyImageDirective)
 
     // 抑制 ResizeObserver 警告 (Element Plus 组件触发)
     const originalError = console.error

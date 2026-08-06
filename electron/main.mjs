@@ -517,6 +517,26 @@ const getPresetResourceRoot = () => {
   }
 }
 
+// resource:// 路径解析缓存（TTL 30 秒）
+// 列表页会一次性并发请求大量缩略图，每次都做两次 fs.access + 打日志会阻塞主进程；
+// 缓存"已解析成功的绝对路径"，miss 不缓存（避免新导入的资源永远查不到）。
+const RESOURCE_PATH_CACHE_TTL_MS = 30_000
+const RESOURCE_PATH_CACHE_MAX = 500
+const resourcePathCache = new Map() // cleanPath -> { resolvedPath, expiresAt }
+
+// 惰性清理过期缓存，防止 Map 无限增长
+function pruneResourcePathCache() {
+  if (resourcePathCache.size < RESOURCE_PATH_CACHE_MAX) {
+    return
+  }
+  const now = Date.now()
+  for (const [key, entry] of resourcePathCache) {
+    if (entry.expiresAt <= now) {
+      resourcePathCache.delete(key)
+    }
+  }
+}
+
 // 应用准备就绪时创建窗口
 app.whenReady().then(async () => {
   // 注册自定义协议
@@ -538,7 +558,13 @@ app.whenReady().then(async () => {
     // 关键修复：清理开头的斜杠，确保是相对路径
     // 否则 path.resolve() 会将 /images/... 视为绝对路径
     const cleanPath = decodedPath.replace(/^[\\/]+/, '')
-    console.log('[Resource] 请求资源:', decodedPath, '→ 清理后:', cleanPath)
+
+    // 命中缓存直接返回，避免磁盘探测
+    const cached = resourcePathCache.get(cleanPath)
+    if (cached && cached.expiresAt > Date.now()) {
+      callback({ path: cached.resolvedPath })
+      return
+    }
 
     // 优先查找用户数据目录
     const userDataRoot = getResourceRoot()
@@ -549,7 +575,11 @@ app.whenReady().then(async () => {
     if (resolvedUserDataPath.startsWith(userDataRoot)) {
       try {
         await fs.access(resolvedUserDataPath)
-        console.log('[Resource] 从 userData 加载:', resolvedUserDataPath)
+        resourcePathCache.set(cleanPath, {
+          resolvedPath: resolvedUserDataPath,
+          expiresAt: Date.now() + RESOURCE_PATH_CACHE_TTL_MS,
+        })
+        pruneResourcePathCache()
         callback({ path: resolvedUserDataPath })
         return
       } catch {
@@ -566,7 +596,11 @@ app.whenReady().then(async () => {
     if (resolvedPresetPath.startsWith(presetRoot)) {
       try {
         await fs.access(resolvedPresetPath)
-        console.log('[Resource] 从预置资源加载:', resolvedPresetPath)
+        resourcePathCache.set(cleanPath, {
+          resolvedPath: resolvedPresetPath,
+          expiresAt: Date.now() + RESOURCE_PATH_CACHE_TTL_MS,
+        })
+        pruneResourcePathCache()
         callback({ path: resolvedPresetPath })
         return
       } catch {
@@ -576,8 +610,6 @@ app.whenReady().then(async () => {
 
     // 两个位置都没找到
     console.warn('[Resource] 资源未找到:', cleanPath)
-    console.warn('[Resource] 查找路径:', resolvedUserDataPath, resolvedPresetPath)
-    console.warn('[Resource] 资源根目录:', { userDataRoot, presetRoot })
     callback({ error: -6 }) // FILE_NOT_FOUND
   })
   console.log('[Protocol] resource:// 协议已注册')

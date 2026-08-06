@@ -36,7 +36,7 @@
           {{ getEmoji(item) }}
         </div>
         <!-- 器材：显示图片 -->
-        <img v-else :src="getResourceImage(item)" :alt="item.name" class="resource-image" />
+        <img v-else v-lazy-image="getResourceImage(item)" :alt="item.name" class="resource-image" />
         <div class="resource-info">
           <div class="resource-name">{{ item.name }}</div>
           <div class="resource-category">{{ getItemCategoryLabel(item) }}</div>
