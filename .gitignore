@@ -65,6 +65,8 @@ license-generator-dist/scgp-license-generator.html
 /output/
 /docs/user-manual/*.bak
 /docs/user-manual/~$*.docx
+# Word 产物不入库（手册 md 源 + 生成脚本为事实来源，docx 可本地生成）
+/docs/user-manual/*.docx
 
 # Large files
 assets/resources/videos/
