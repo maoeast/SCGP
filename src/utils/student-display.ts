@@ -4,6 +4,7 @@ export const DIAGNOSIS_OPTIONS = [
   '视力障碍',
   '听力障碍',
   '言语障碍',
+  '孤独症谱系障碍',
   '智力障碍',
   '肢体障碍',
   '精神障碍',
@@ -19,6 +20,7 @@ export const DIAGNOSIS_STYLE_MAP: Record<DiagnosisType, { background: string; co
   视力障碍: { background: '#E6F1FB', color: '#0C447C', border: '#B5D4F4' },
   听力障碍: { background: '#EEEDFE', color: '#3C3489', border: '#AFA9EC' },
   言语障碍: { background: '#E1F5EE', color: '#085041', border: '#9FE1CB' },
+  孤独症谱系障碍: { background: '#F3E8FF', color: '#5B21B6', border: '#D8B4FE' },
   智力障碍: { background: '#FAEEDA', color: '#633806', border: '#FAC775' },
   肢体障碍: { background: '#EAF3DE', color: '#27500A', border: '#C0DD97' },
   精神障碍: { background: '#FBEAF0', color: '#72243E', border: '#F4C0D1' },
@@ -38,6 +40,8 @@ export function resolveDiagnosisType(disorder?: string | null): DiagnosisType | 
   if (normalized.includes('视力障碍')) return '视力障碍'
   if (normalized.includes('听力障碍')) return '听力障碍'
   if (normalized.includes('言语障碍') || normalized.includes('语言障碍')) return '言语障碍'
+  // 孤独症谱系障碍（兼容旧写法「自闭症谱系障碍」「自闭症」）
+  if (normalized.includes('孤独症谱系障碍') || normalized.includes('孤独症') || normalized.includes('自闭症')) return '孤独症谱系障碍'
   if (normalized.includes('智力障碍')) return '智力障碍'
   if (normalized.includes('肢体障碍')) return '肢体障碍'
   if (normalized.includes('精神障碍') || normalized.includes('ASD') || normalized.includes('ADHD') || normalized.includes('EBD')) return '精神障碍'

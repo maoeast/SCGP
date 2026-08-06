@@ -27,11 +27,14 @@ import {
   CLASS_TEACHER_MAP,
   DEMO_DATE,
   DIAGNOSIS_PROFILES,
+  ENTRY_BY_MODULE,
   EQUIPMENT_CATEGORIES,
   EQUIPMENT_ENVIRONMENTS,
   EMOTION_SCENE_SUB_MODULES,
   GAME_CODES_BY_STAGE,
+  GAME_ENTRY_BY_PREFIX,
   ID_RANGES,
+  MODULE_BY_ENTRY,
   PLAN_TEMPLATES,
   SCALE_GENERATORS,
   SCALE_REPORT_MODULE,
@@ -213,7 +216,7 @@ function clearDemoData(db, rng) {
   for (const detailTable of detailTables) {
     db.run(`DELETE FROM ${detailTable} WHERE assess_id ${assesses}`)
   }
-  const assessTables = ['sm_assess', 'weefim_assess', 'csirs_assess', 'cnbsr2016_assess', 'fine_motor_assess', 'crt_assess', 'srs2_assess', 'conners_psq_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess']
+  const assessTables = ['sm_assess', 'weefim_assess', 'csirs_assess', 'cnbsr2016_assess', 'fine_motor_assess', 'crt_assess', 'srs2_assess', 'conners_psq_assess', 'conners_trs_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess']
   for (const table of assessTables) {
     db.run(`DELETE FROM ${table} WHERE id ${assesses} OR student_id ${studentBetween}`)
   }
@@ -399,13 +402,26 @@ function seedAssessments(db, students, rng) {
 function pickResourcesByType(db, types, limit = 30) {
   const placeholders = types.map(() => '?').join(', ')
   const result = db.exec(
-    `SELECT id, name, resource_type FROM sys_training_resource
+    `SELECT id, name, resource_type, module_code FROM sys_training_resource
      WHERE is_active = 1 AND resource_type IN (${placeholders})
      ORDER BY id LIMIT ${limit}`,
     types,
   )
   if (!result.length) return []
-  return result[0].values.map(([id, name, type]) => ({ id, name, type }))
+  return result[0].values.map(([id, name, type, moduleCode]) => ({ id, name, type, moduleCode }))
+}
+
+function pickResourcesByTypeAndModule(db, types, modules, limit = 12) {
+  const typePh = types.map(() => '?').join(', ')
+  const modulePh = modules.map(() => '?').join(', ')
+  const result = db.exec(
+    `SELECT id, name, resource_type, module_code FROM sys_training_resource
+     WHERE is_active = 1 AND resource_type IN (${typePh}) AND module_code IN (${modulePh})
+     ORDER BY id LIMIT ${limit}`,
+    [...types, ...modules],
+  )
+  if (!result.length) return []
+  return result[0].values.map(([id, name, type, moduleCode]) => ({ id, name, type, moduleCode }))
 }
 
 function pickResourcesByModule(db, modules, limit = 30) {
@@ -436,6 +452,7 @@ function seedPlans(db, students, assessmentResults, rng) {
   if (!resourcePool.length) {
     throw new Error('目标库没有可用训练资源（sys_training_resource），无法生成训练计划')
   }
+  const plansInfo = [] // { studentId, planId, moduleCode, status }
   for (const { student, assessments } of assessmentResults) {
     const plans = buildPlansForStudent(student, rng, assessments)
     for (const plan of plans) {
@@ -452,6 +469,7 @@ function seedPlans(db, students, assessmentResults, rng) {
                  ${plan.source_assessment_id ? quote('assessment') : 'NULL'},
                  ${plan.source_assessment_id ?? 'NULL'}, 1, ${quote(nowSql())}, ${quote(nowSql())})`,
       )
+      plansInfo.push({ studentId: student.id, planId: planSeq, moduleCode: template.module_code, status: plan.status })
       // 计划资源：随机 2-4 个
       const resourceCount = rng.int(2, Math.min(4, resourcePool.length))
       const chosen = rng.shuffle(resourcePool).slice(0, resourceCount)
@@ -467,22 +485,31 @@ function seedPlans(db, students, assessmentResults, rng) {
       planSeq += 1
     }
   }
-  return planSeq
+  return { planEnd: planSeq, plansInfo }
 }
 
 // ============================================================================
 // 训练记录
 // ============================================================================
 
-function seedTrainingRecords(db, students, rng) {
+function seedTrainingRecords(db, students, rng, plansInfo) {
   let recordSeq = ID_RANGES.trainingRecord[0]
   let equipmentSeq = ID_RANGES.equipmentRecord[0]
   let emotionSeq = ID_RANGES.emotionSession[0]
   let gameSeq = ID_RANGES.gameRecord[0]
   let sessionSeq = ID_RANGES.trainingSession[0]
+  const activePlanByStudent = new Map(
+    (plansInfo || []).filter((p) => p.status === 'active').map((p) => [p.studentId, p]),
+  )
 
-  // 资源池
-  const equipmentPool = pickResourcesByType(db, ['equipment'], 40)
+  // 资源池：器材按模块混合（避免全部落在 sensory 入口）
+  const equipmentPool = [
+    ...pickResourcesByTypeAndModule(db, ['equipment'], ['sensory'], 10),
+    ...pickResourcesByTypeAndModule(db, ['equipment'], ['emotional'], 10),
+    ...pickResourcesByTypeAndModule(db, ['equipment'], ['cognitive'], 10),
+    ...pickResourcesByTypeAndModule(db, ['equipment'], ['life_skills'], 10),
+    ...pickResourcesByTypeAndModule(db, ['equipment'], ['social'], 10),
+  ]
   const emotionScenePool = pickResourcesByType(db, ['emotion_scene', 'care_scene'], 40)
   const sensoryGames = pickResourcesByModule(db, ['sensory', 'cognitive'], 60)
 
@@ -490,17 +517,21 @@ function seedTrainingRecords(db, students, rng) {
     const stage = stageOf(student)
     const gameCodes = GAME_CODES_BY_STAGE[stage]
     const className = CLASSES.find((c) => c.id === student.class_id).name
+    let lastEmotionTrainingRecordId = null
 
-    // ---- 感官/游戏训练（training_records + training_session）----
+    // ---- 游戏训练（training_records + training_session；entry_code 用训练入口 code）----
     const sensoryCount = rng.int(8, 14)
     for (let i = 0; i < sensoryCount; i += 1) {
       const { date, iso, timestampMs } = pickTrainingDate(rng)
       const accuracy = clampNumber(0.55, 1, 0.78 + rng.float(-0.12, 0.12) - (DIAGNOSIS_PROFILES[student.disorder]?.crt || 0) * 0.003)
       const duration = rng.int(60, 240)
-      const entryCode = rng.pick(gameCodes)
+      const gameCode = rng.pick(gameCodes)
+      const entryCode = GAME_ENTRY_BY_PREFIX[gameCode[0]] || 'sensory-integration'
+      const moduleCode = MODULE_BY_ENTRY[entryCode] || 'sensory'
       const roundCount = rng.int(5, 15)
       const correctCount = Math.round(roundCount * accuracy)
       const rawData = {
+        gameCode,
         rounds: roundCount,
         correctCount,
         totalCount: roundCount,
@@ -515,15 +546,15 @@ function seedTrainingRecords(db, students, rng) {
                                        class_id, class_name, module_code, created_at)
          VALUES (${recordSeq}, ${student.id}, NULL, NULL, 'game', 'game', ${quote(entryCode)},
                  ${timestampMs}, ${duration}, ${accuracy.toFixed(4)}, ${rng.int(900, 4500)},
-                 ${quote(JSON.stringify(rawData))}, ${student.class_id}, ${quote(className)}, 'sensory', ${quote(nowSql())})`,
+                 ${quote(JSON.stringify(rawData))}, ${student.class_id}, ${quote(className)}, ${quote(moduleCode)}, ${quote(nowSql())})`,
       )
       db.run(
         `INSERT INTO training_session (id, student_id, module_code, entry_code, session_family, resource_id, resource_type,
                                        task_id, task_name_snapshot, class_id, class_name, started_at, ended_at, duration_ms,
                                        completion_status, accuracy_rate, avg_response_time_ms, summary_payload,
                                        source_table, source_record_id, created_at, updated_at)
-         VALUES (${sessionSeq}, ${student.id}, 'sensory', ${quote(entryCode)}, 'game', NULL, 'game',
-                 NULL, ${quote(entryCode)}, ${student.class_id}, ${quote(className)},
+         VALUES (${sessionSeq}, ${student.id}, ${quote(moduleCode)}, ${quote(entryCode)}, 'game', NULL, 'game',
+                 NULL, ${quote(gameCode)}, ${student.class_id}, ${quote(className)},
                  '${iso} 10:00:00', '${iso} 10:05:00', ${duration * 1000},
                  'completed', ${accuracy.toFixed(4)}, ${rng.int(900, 4500)},
                  ${quote(JSON.stringify(rawData))}, 'training_records', ${trainingRecordId},
@@ -533,12 +564,14 @@ function seedTrainingRecords(db, students, rng) {
       sessionSeq += 1
     }
 
-    // ---- 器材训练（equipment_training_records + training_session）----
+    // ---- 器材训练（equipment_training_records + training_session；entry_code 按器材资源模块映射）----
     if (equipmentPool.length) {
       const equipmentCount = rng.int(3, 6)
       for (let i = 0; i < equipmentCount; i += 1) {
         const { date, iso } = pickTrainingDate(rng)
         const equipment = rng.pick(equipmentPool)
+        const entryCode = ENTRY_BY_MODULE[equipment.moduleCode] || 'sensory-integration'
+        const moduleCode = equipment.moduleCode || 'sensory'
         const score = rng.int(2, 5)
         const promptLevel = clampInt(1, 5, 6 - score + rng.int(0, 1))
         const equipmentId = equipmentSeq
@@ -547,9 +580,9 @@ function seedTrainingRecords(db, students, rng) {
           `INSERT INTO equipment_training_records (id, student_id, equipment_id, entry_code, score, prompt_level,
                                                    duration_seconds, notes, generated_comment, training_date,
                                                    teacher_name, environment, batch_id, module_code, created_at)
-           VALUES (${equipmentSeq}, ${student.id}, ${equipment.id}, 'equipment', ${score}, ${promptLevel},
+           VALUES (${equipmentSeq}, ${student.id}, ${equipment.id}, ${quote(entryCode)}, ${score}, ${promptLevel},
                    ${rng.int(300, 1200)}, ${quote('器材训练')}, ${quote(rng.pick(TRAINING_COMMENTS))},
-                   ${quote(iso)}, ${quote(teacher.name)}, ${quote(rng.pick(EQUIPMENT_ENVIRONMENTS))}, NULL, 'sensory',
+                   ${quote(iso)}, ${quote(teacher.name)}, ${quote(rng.pick(EQUIPMENT_ENVIRONMENTS))}, NULL, ${quote(moduleCode)},
                    ${quote(nowSql())})`,
         )
         db.run(
@@ -557,7 +590,7 @@ function seedTrainingRecords(db, students, rng) {
                                          task_id, task_name_snapshot, class_id, class_name, started_at, ended_at, duration_ms,
                                          completion_status, accuracy_rate, avg_response_time_ms, summary_payload,
                                          source_table, source_record_id, created_at, updated_at)
-           VALUES (${sessionSeq}, ${student.id}, 'sensory', 'equipment', 'equipment', ${equipment.id}, 'equipment',
+           VALUES (${sessionSeq}, ${student.id}, ${quote(moduleCode)}, ${quote(entryCode)}, 'equipment', ${equipment.id}, 'equipment',
                    NULL, ${quote(equipment.name)}, ${student.class_id}, ${quote(className)},
                    '${iso} 09:00:00', '${iso} 09:10:00', ${rng.int(300, 1200) * 1000},
                    'completed', ${(score / 5).toFixed(4)}, ${rng.int(800, 3000)},
@@ -569,7 +602,7 @@ function seedTrainingRecords(db, students, rng) {
       }
     }
 
-    // ---- 情绪场景训练（training_records + emotional_training_session + training_session）----
+    // ---- 情绪场景训练（training_records + emotional_training_session + training_session；entry=emotional-regulation）----
     if (emotionScenePool.length && stage !== 'middle') {
       const emotionCount = rng.int(3, 5)
       for (let i = 0; i < emotionCount; i += 1) {
@@ -583,12 +616,13 @@ function seedTrainingRecords(db, students, rng) {
         const retryCount = rng.int(0, 2)
         const rawData = { questionCount, correctCount, hintCount, retryCount }
         const trainingRecordId = recordSeq
+        lastEmotionTrainingRecordId = trainingRecordId
         db.run(
           `INSERT INTO training_records (id, student_id, task_id, resource_id, resource_type, session_type,
                                          entry_code, timestamp, duration, accuracy_rate, avg_response_time, raw_data,
                                          class_id, class_name, module_code, created_at)
            VALUES (${recordSeq}, ${student.id}, NULL, ${scene.id}, ${quote(scene.type)}, ${quote(subModule)},
-                 ${quote(`E_${scene.type.toUpperCase()}_${scene.id}`)}, ${timestampMs}, ${rng.int(120, 600)},
+                 'emotional-regulation', ${timestampMs}, ${rng.int(120, 600)},
                  ${accuracy.toFixed(4)}, ${rng.int(1200, 6000)}, ${quote(JSON.stringify(rawData))},
                  ${student.class_id}, ${quote(className)}, 'emotional', ${quote(nowSql())})`,
         )
@@ -607,7 +641,7 @@ function seedTrainingRecords(db, students, rng) {
                                          task_id, task_name_snapshot, class_id, class_name, started_at, ended_at, duration_ms,
                                          completion_status, accuracy_rate, avg_response_time_ms, summary_payload,
                                          source_table, source_record_id, created_at, updated_at)
-           VALUES (${sessionSeq}, ${student.id}, 'emotional', ${quote(`E_${scene.type.toUpperCase()}_${scene.id}`)}, ${quote(subModule)},
+           VALUES (${sessionSeq}, ${student.id}, 'emotional', 'emotional-regulation', ${quote(subModule)},
                    ${scene.id}, ${quote(scene.type)}, NULL, ${quote(scene.name)}, ${student.class_id}, ${quote(className)},
                    '${iso} 14:00:00', '${iso} 14:10:00', ${rng.int(120, 600) * 1000},
                    'completed', ${accuracy.toFixed(4)}, ${rng.int(1200, 6000)},
@@ -635,6 +669,7 @@ function seedTrainingRecords(db, students, rng) {
           difficulty,
         }
         const gameId = gameSeq
+        const gameEntryCode = GAME_ENTRY_BY_PREFIX[gameCode[0]] || 'emotional-regulation'
         db.run(
           `INSERT INTO game_emotion_records (id, student_id, game_code, start_time, duration_ms, difficulty_level,
                                              completion_status, performance_data, exit_trigger, created_at)
@@ -646,7 +681,7 @@ function seedTrainingRecords(db, students, rng) {
                                          task_id, task_name_snapshot, class_id, class_name, started_at, ended_at, duration_ms,
                                          completion_status, accuracy_rate, avg_response_time_ms, summary_payload,
                                          source_table, source_record_id, created_at, updated_at)
-           VALUES (${sessionSeq}, ${student.id}, 'emotional', ${quote(gameCode)}, 'game', NULL, 'game',
+           VALUES (${sessionSeq}, ${student.id}, 'emotional', ${quote(gameEntryCode)}, 'emotional_game', NULL, 'game',
                    NULL, ${quote(gameCode)}, ${student.class_id}, ${quote(className)},
                    '${iso} 15:00:00', '${iso} 15:10:00', ${rng.int(120000, 600000)},
                    'completed', ${(performance.score / 100).toFixed(4)}, ${rng.int(800, 4000)},
@@ -656,6 +691,27 @@ function seedTrainingRecords(db, students, rng) {
         gameSeq += 1
         sessionSeq += 1
       }
+    }
+
+    // ---- 情绪模块报告（report_record type='emotional'，每生 1 条，仿 emotional-api 语义）----
+    if (lastEmotionTrainingRecordId !== null) {
+      db.run(
+        `INSERT INTO report_record (student_id, report_type, training_record_id, title, class_id, class_name, module_code, created_at, updated_at)
+         VALUES (${student.id}, 'emotional', ${lastEmotionTrainingRecordId},
+                 ${quote(`${student.name} - 情绪行为调节训练报告`)},
+                 ${student.class_id}, ${quote(className)}, 'emotional', ${quote(nowSql())}, ${quote(nowSql())})`,
+      )
+    }
+
+    // ---- 训练干预报告（report_record type='training'，每生 1 条，关联进行中计划）----
+    const activePlan = activePlanByStudent.get(student.id)
+    if (activePlan) {
+      db.run(
+        `INSERT INTO report_record (student_id, report_type, plan_id, training_record_id, title, class_id, class_name, module_code, created_at, updated_at)
+         VALUES (${student.id}, 'training', ${activePlan.planId}, ${recordSeq - 1},
+                 ${quote(`${student.name} - 训练干预报告`)},
+                 ${student.class_id}, ${quote(className)}, ${quote(activePlan.moduleCode)}, ${quote(nowSql())}, ${quote(nowSql())})`,
+      )
     }
   }
 
@@ -677,7 +733,7 @@ function runSeed(db, args) {
   checkTables(db, [
     'student', 'user', 'sys_class', 'student_class_history', 'sys_class_teachers', 'sys_academic_year',
     'sm_assess', 'weefim_assess', 'csirs_assess', 'cnbsr2016_assess', 'fine_motor_assess', 'crt_assess',
-    'srs2_assess', 'conners_psq_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess',
+    'srs2_assess', 'conners_psq_assess', 'conners_trs_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess',
     'report_record', 'sys_training_plan', 'sys_plan_resource_map', 'sys_training_resource',
     'training_records', 'equipment_training_records', 'emotional_training_session', 'game_emotion_records',
     'training_session',
@@ -692,8 +748,8 @@ function runSeed(db, args) {
     seedStudents(db, students)
     seedClassTeachers(db)
     const assessmentResults = seedAssessments(db, students, rng)
-    const planEnd = seedPlans(db, students, assessmentResults, rng)
-    const recordEnds = seedTrainingRecords(db, students, rng)
+    const { planEnd, plansInfo } = seedPlans(db, students, assessmentResults, rng)
+    const recordEnds = seedTrainingRecords(db, students, rng, plansInfo)
     db.run('COMMIT')
 
     const summary = {
@@ -730,7 +786,7 @@ const EXPORT_TABLES = [
   'student_class_history',
   'sys_class_teachers',
   'sm_assess', 'weefim_assess', 'csirs_assess', 'cnbsr2016_assess', 'fine_motor_assess', 'crt_assess',
-  'srs2_assess', 'conners_psq_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess',
+  'srs2_assess', 'conners_psq_assess', 'conners_trs_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess',
   'sm_assess_detail', 'weefim_assess_detail', 'csirs_assess_detail',
   'report_record',
   'sys_training_plan', 'sys_plan_resource_map',
@@ -821,7 +877,7 @@ function runImport(db, inPath, dryRun) {
       'student_class_history',
       'sys_class_teachers',
       'sm_assess', 'weefim_assess', 'csirs_assess', 'cnbsr2016_assess', 'fine_motor_assess', 'crt_assess',
-      'srs2_assess', 'conners_psq_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess',
+      'srs2_assess', 'conners_psq_assess', 'conners_trs_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess',
       'sm_assess_detail', 'weefim_assess_detail', 'csirs_assess_detail',
       'report_record',
       'sys_training_plan',

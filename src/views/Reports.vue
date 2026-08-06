@@ -468,7 +468,8 @@ function viewReport(report: any) {
   const routeMap: Record<string, string> = {
     emotional: `/emotional/report?studentId=${report.student_id}&reportId=${report.id}`,
     iep: `/games/report?recordId=${report.training_record_id}&studentId=${report.student_id}`,
-    training: `/training/plans/${report.plan_id}`,
+    // 训练报告跳转训练计划页（旧路由 /training/plans/:id 已不存在）
+    training: `/training-plan?fromReport=${report.id}`,
   }
 
   const target = routeMap[report.report_type]

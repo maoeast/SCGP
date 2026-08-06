@@ -37,8 +37,8 @@ export const ID_RANGES = Object.freeze({
 })
 
 export const ACADEMIC_YEARS = Object.freeze([
-  { academic_year: '2025-2026', start_date: '2025-09-01', end_date: '2026-07-31', is_active: 0 },
-  { academic_year: '2026-2027', start_date: '2026-09-01', end_date: '2027-07-31', is_active: 1 },
+  { academic_year: '2025-2026', start_date: '2025-09-01', end_date: '2026-07-31', is_active: 1 },
+  { academic_year: '2026-2027', start_date: '2026-09-01', end_date: '2027-07-31', is_active: 0 },
 ])
 
 // ============================================================================
@@ -106,24 +106,24 @@ export const CLASS_TEACHER_MAP = Object.freeze({
 // ============================================================================
 
 export const CLASSES = Object.freeze([
-  { id: 20001, name: '大班', grade_level: 3, class_number: 1, academic_year: '2026-2027', max_students: 12 },
-  { id: 20002, name: '一年级1班', grade_level: 4, class_number: 1, academic_year: '2026-2027', max_students: 12 },
-  { id: 20003, name: '二年级1班', grade_level: 5, class_number: 1, academic_year: '2026-2027', max_students: 12 },
-  { id: 20004, name: '三年级1班', grade_level: 6, class_number: 1, academic_year: '2026-2027', max_students: 12 },
-  { id: 20005, name: '初一1班', grade_level: 10, class_number: 1, academic_year: '2026-2027', max_students: 12 },
-  { id: 20006, name: '初二1班', grade_level: 11, class_number: 1, academic_year: '2026-2027', max_students: 12 },
-  { id: 20007, name: '初三1班', grade_level: 12, class_number: 1, academic_year: '2026-2027', max_students: 12 },
+  { id: 20001, name: '大班', grade_level: 3, class_number: 1, academic_year: '2025-2026', max_students: 12 },
+  { id: 20002, name: '一年级1班', grade_level: 4, class_number: 1, academic_year: '2025-2026', max_students: 12 },
+  { id: 20003, name: '二年级1班', grade_level: 5, class_number: 1, academic_year: '2025-2026', max_students: 12 },
+  { id: 20004, name: '三年级1班', grade_level: 6, class_number: 1, academic_year: '2025-2026', max_students: 12 },
+  { id: 20005, name: '初一1班', grade_level: 10, class_number: 1, academic_year: '2025-2026', max_students: 12 },
+  { id: 20006, name: '初二1班', grade_level: 11, class_number: 1, academic_year: '2025-2026', max_students: 12 },
+  { id: 20007, name: '初三1班', grade_level: 12, class_number: 1, academic_year: '2025-2026', max_students: 12 },
 ])
 
 // ============================================================================
 // 学生（22 人：男 15 / 女 7，符合年龄段的常见姓名）
-// 诊断集中于 学习障碍/言语障碍/多重障碍，补充 自闭症谱系障碍/智力障碍
+// 诊断集中于 学习障碍/言语障碍/多重障碍，补充 孤独症谱系障碍/智力障碍
 // ============================================================================
 
 export const STUDENTS = Object.freeze([
   { id: 10001, name: '陈昊宇', gender: '男', birthday: '2020-09-15', student_no: 'ST10001', disorder: '言语障碍', class_id: 20001 },
   { id: 10002, name: '李欣妍', gender: '女', birthday: '2021-03-22', student_no: 'ST10002', disorder: '多重障碍', class_id: 20001 },
-  { id: 10003, name: '王梓豪', gender: '男', birthday: '2020-11-08', student_no: 'ST10003', disorder: '自闭症谱系障碍', class_id: 20001 },
+  { id: 10003, name: '王梓豪', gender: '男', birthday: '2020-11-08', student_no: 'ST10003', disorder: '孤独症谱系障碍', class_id: 20001 },
   { id: 10004, name: '张子睿', gender: '男', birthday: '2019-07-12', student_no: 'ST10004', disorder: '学习障碍', class_id: 20002 },
   { id: 10005, name: '刘宇泽', gender: '男', birthday: '2019-10-30', student_no: 'ST10005', disorder: '学习障碍', class_id: 20002 },
   { id: 10006, name: '赵雨桐', gender: '女', birthday: '2019-12-05', student_no: 'ST10006', disorder: '言语障碍', class_id: 20002 },
@@ -136,7 +136,7 @@ export const STUDENTS = Object.freeze([
   { id: 10013, name: '沈嘉豪', gender: '男', birthday: '2013-05-16', student_no: 'ST10013', disorder: '学习障碍', class_id: 20005 },
   { id: 10014, name: '韩天翊', gender: '男', birthday: '2013-09-02', student_no: 'ST10014', disorder: '学习障碍', class_id: 20005 },
   { id: 10015, name: '曹梦洁', gender: '女', birthday: '2014-01-27', student_no: 'ST10015', disorder: '言语障碍', class_id: 20005 },
-  { id: 10016, name: '许婉宁', gender: '女', birthday: '2013-12-19', student_no: 'ST10016', disorder: '自闭症谱系障碍', class_id: 20005 },
+  { id: 10016, name: '许婉宁', gender: '女', birthday: '2013-12-19', student_no: 'ST10016', disorder: '孤独症谱系障碍', class_id: 20005 },
   { id: 10017, name: '丁宇航', gender: '男', birthday: '2012-04-11', student_no: 'ST10017', disorder: '学习障碍', class_id: 20006 },
   { id: 10018, name: '程俊杰', gender: '男', birthday: '2012-07-23', student_no: 'ST10018', disorder: '多重障碍', class_id: 20006 },
   { id: 10019, name: '罗一鸣', gender: '男', birthday: '2012-10-15', student_no: 'ST10019', disorder: '多重障碍', class_id: 20006 },
@@ -162,6 +162,7 @@ export const DIAGNOSIS_PROFILES = Object.freeze({
     crt: -13,
     srs2: { awareness: 6, cognition: 5, communication: 7, motivation: 4, repetitive: 4 },
     conners: { conduct: 3, learning: 11, psychosomatic: 2, impulsivity_hyperactivity: 7, anxiety: 3, hyperactivity_index: 6 },
+    connersTrs: { conduct: 2, hyperactivity: 6, inattention_passivity: 11, hyperactivity_index: 6 },
     sdq: { emotional: 2, conduct: 2, hyperactivity: 5, peer: 3, prosocial: -1 },
     cbcl: { internalizing: 6, externalizing: 4 },
     brief: { inhibit: 8, shift: 6, emotional_control: 5, working_memory: 12, plan_organize: 11, monitor: 6, task_monitor: 8, organize_materials: 7, initiate: 9 },
@@ -176,6 +177,7 @@ export const DIAGNOSIS_PROFILES = Object.freeze({
     crt: -5,
     srs2: { awareness: 8, cognition: 8, communication: 14, motivation: 8, repetitive: 5 },
     conners: { conduct: 2, learning: 6, psychosomatic: 2, impulsivity_hyperactivity: 3, anxiety: 4, hyperactivity_index: 3 },
+    connersTrs: { conduct: 2, hyperactivity: 3, inattention_passivity: 6, hyperactivity_index: 3 },
     sdq: { emotional: 3, conduct: 1, hyperactivity: 2, peer: 6, prosocial: -2 },
     cbcl: { internalizing: 8, externalizing: 2 },
     brief: { inhibit: 3, shift: 5, emotional_control: 4, working_memory: 6, plan_organize: 4, monitor: 4, task_monitor: 4, organize_materials: 3, initiate: 5 },
@@ -189,12 +191,13 @@ export const DIAGNOSIS_PROFILES = Object.freeze({
     fmda: { hand_grasp: 0.22, finger_dexterity: 0.28, bilateral_coordination: 0.26, vmi: 0.24, pre_writing: 0.26, self_care: 0.28 },
     crt: -22,
     srs2: { awareness: 12, cognition: 14, communication: 16, motivation: 12, repetitive: 14 },
+    connersTrs: { conduct: 7, hyperactivity: 10, inattention_passivity: 12, hyperactivity_index: 10 },
     conners: { conduct: 6, learning: 12, psychosomatic: 6, impulsivity_hyperactivity: 10, anxiety: 6, hyperactivity_index: 10 },
     sdq: { emotional: 4, conduct: 4, hyperactivity: 6, peer: 6, prosocial: -3 },
     cbcl: { internalizing: 10, externalizing: 8 },
     brief: { inhibit: 10, shift: 10, emotional_control: 9, working_memory: 12, plan_organize: 11, monitor: 9, task_monitor: 10, organize_materials: 10, initiate: 11 },
   },
-  自闭症谱系障碍: {
+  孤独症谱系障碍: {
     sm: -3,
     weefim: -10,
     weefimCognitive: -10,
@@ -202,6 +205,7 @@ export const DIAGNOSIS_PROFILES = Object.freeze({
     cnbsr: { gm: -3, fm: -6, ad: -10, la: -12, sb: -20 },
     fmda: { hand_grasp: 0.04, finger_dexterity: 0.08, bilateral_coordination: 0.06, vmi: 0.08, pre_writing: 0.08, self_care: 0.12 },
     crt: -4,
+    connersTrs: { conduct: 2, hyperactivity: 5, inattention_passivity: 7, hyperactivity_index: 5 },
     srs2: { awareness: 16, cognition: 15, communication: 22, motivation: 18, repetitive: 24 },
     conners: { conduct: 2, learning: 5, psychosomatic: 3, impulsivity_hyperactivity: 5, anxiety: 7, hyperactivity_index: 5 },
     sdq: { emotional: 4, conduct: 2, hyperactivity: 3, peer: 10, prosocial: -4 },
@@ -215,6 +219,7 @@ export const DIAGNOSIS_PROFILES = Object.freeze({
     csirs: { learning: -14, executive: -16, vestibular: -13, tactile: -13, proprioception: -15 },
     cnbsr: { gm: -16, fm: -18, ad: -20, la: -20, sb: -18 },
     fmda: { hand_grasp: 0.22, finger_dexterity: 0.3, bilateral_coordination: 0.28, vmi: 0.3, pre_writing: 0.32, self_care: 0.3 },
+    connersTrs: { conduct: 4, hyperactivity: 6, inattention_passivity: 12, hyperactivity_index: 6 },
     crt: -30,
     srs2: { awareness: 10, cognition: 14, communication: 12, motivation: 10, repetitive: 12 },
     conners: { conduct: 4, learning: 12, psychosomatic: 4, impulsivity_hyperactivity: 6, anxiety: 4, hyperactivity_index: 6 },
@@ -253,13 +258,13 @@ const PRIMARY_EXTRA = {
   智力障碍: ['crt'],
 }
 
-/** 初中补充量表（按诊断/年龄） */
+/** 初中补充量表（按诊断/年龄；学习障碍补 Conners 教师问卷 + BRIEF 认知相关） */
 const MIDDLE_EXTRA = {
-  学习障碍: ['conners-psq', 'cbcl'],
+  学习障碍: ['conners-psq', 'conners-trs', 'brief'],
   言语障碍: ['sdq', 'cbcl'],
   多重障碍: ['cbcl', 'sdq'],
-  自闭症谱系障碍: ['cbcl', 'sdq'],
-  智力障碍: ['cbcl', 'sdq'],
+  孤独症谱系障碍: ['cbcl', 'sdq'],
+  智力障碍: ['brief', 'sdq'],
 }
 
 /**
@@ -292,20 +297,20 @@ export function buildAssessmentPlan(student, rng) {
   } else {
     scales.push({ scale: 'weefim', times: rng.rand() < 0.45 ? 2 : 1 })
     scales.push({ scale: 'crt', times: rng.rand() < 0.5 ? 2 : 1 })
-    const socialDisorders = ['自闭症谱系障碍', '言语障碍', '多重障碍']
+    const socialDisorders = ['孤独症谱系障碍', '言语障碍', '多重障碍']
     if (socialDisorders.includes(disorder)) {
       scales.push({ scale: 'srs2', times: rng.rand() < 0.5 ? 2 : 1 })
     }
-    if (isScaleAgeOk('sm', ageMonths) && rng.rand() < 0.5) {
+    if (isScaleAgeOk('sm', ageMonths) && rng.rand() < 0.35) {
       scales.push({ scale: 'sm', times: 1 })
     }
     const extras = MIDDLE_EXTRA[disorder] || []
     for (const code of extras) {
-      if (scales.length >= 4) break
+      if (scales.length >= 5) break
       if (!isScaleAgeOk(code, ageMonths)) continue
       if (scales.some((s) => s.scale === code)) continue
       scales.push({ scale: code, times: rng.rand() < 0.35 ? 2 : 1 })
-      break
+      // 不 break：学习障碍等可补多个（conners-psq + conners-trs + brief），总量受 scales.length>=5 限制
     }
   }
 
@@ -330,6 +335,7 @@ const SCALE_AGE_MAX = Object.freeze({
   crt: 198, // 5.5-16.5岁
   srs2: 216, // 6-18岁
   'conners-psq': 204, // 3-17岁
+  'conners-trs': 204, // 3-17岁
   sdq: 204, // 4-17岁
   cbcl: 192, // 4-16岁
   brief: 216, // 2-18岁
@@ -344,6 +350,7 @@ const SCALE_AGE_MIN = Object.freeze({
   crt: 66,
   srs2: 72,
   'conners-psq': 36,
+  'conners-trs': 36,
   sdq: 48,
   cbcl: 48,
   brief: 24,
@@ -919,6 +926,57 @@ export function makeConnersPsqAssessment(student, rng, { date, improvement }) {
   }
 }
 
+const CONNERS_TRS_DIMENSIONS = Object.freeze([
+  { code: 'conduct', name: '品行问题' },
+  { code: 'hyperactivity', name: '多动' },
+  { code: 'inattention_passivity', name: '注意不集中-被动' },
+  { code: 'hyperactivity_index', name: '多动指数' },
+])
+
+/** Conners-TRS 等级（同 PSQ：多动指数 T <60 正常、60-69 边缘、≥70 临床） */
+export function makeConnersTrsAssessment(student, rng, { date, improvement }) {
+  const profile = DIAGNOSIS_PROFILES[student.disorder] || {}
+  const dimOffsets = profile.connersTrs || {}
+  const base = 52 + rng.float(-3, 3)
+  const tScores = {}
+  const dimensionScores = {}
+  for (const dim of CONNERS_TRS_DIMENSIONS) {
+    const offset = (dimOffsets[dim.code] || 0) * improvement
+    const t = clamp(Math.round(base + offset + (improvement < 1 ? -rng.int(3, 7) : rng.float(-2, 2))), 40, 85)
+    tScores[dim.code] = t
+    dimensionScores[dim.code] = {
+      rawScore: clamp(Math.round((t - 30) * 0.35), 0, 20),
+      isValid: true,
+      missingCount: 0,
+    }
+  }
+  const hyperactivityIndex = tScores.hyperactivity_index
+  const level = connersLevelFromT(hyperactivityIndex)
+  const rawScores = {}
+  for (let q = 1; q <= 28; q += 1) {
+    rawScores[q] = rng.int(0, 3)
+  }
+  return {
+    table: 'conners_trs_assess',
+    row: {
+      student_id: student.id,
+      gender: student.gender === '男' ? 'male' : 'female',
+      age_months: student.ageMonths,
+      raw_scores: JSON.stringify(rawScores),
+      dimension_scores: JSON.stringify(dimensionScores),
+      t_scores: JSON.stringify(tScores),
+      pi_score: clamp(hyperactivityIndex - rng.int(0, 3), 40, 80),
+      ni_score: clamp(hyperactivityIndex - rng.int(2, 6), 40, 80),
+      is_valid: 1,
+      invalid_reason: null,
+      hyperactivity_index: hyperactivityIndex,
+      level,
+      start_time: `${toIso(date)} ${String(rng.int(8, 17)).padStart(2, '0')}:${String(rng.int(0, 59)).padStart(2, '0')}:00`,
+      end_time: `${toIso(date)} ${String(rng.int(9, 18)).padStart(2, '0')}:${String(rng.int(0, 59)).padStart(2, '0')}:00`,
+    },
+  }
+}
+
 const SDQ_DIMENSIONS = Object.freeze([
   { code: 'emotional', name: '情绪症状' },
   { code: 'conduct', name: '品行问题' },
@@ -1138,6 +1196,7 @@ export const SCALE_GENERATORS = Object.freeze({
   crt: makeCrtAssessment,
   srs2: makeSrs2Assessment,
   'conners-psq': makeConnersPsqAssessment,
+  'conners-trs': makeConnersTrsAssessment,
   sdq: makeSdqAssessment,
   cbcl: makeCbclAssessment,
   brief: makeBriefAssessment,
@@ -1153,6 +1212,7 @@ export const SCALE_REPORT_MODULE = Object.freeze({
   crt: 'cognitive',
   srs2: 'social',
   'conners-psq': 'emotional',
+  'conners-trs': 'emotional',
   sdq: 'emotional',
   cbcl: 'emotional',
   brief: 'cognitive',
@@ -1167,6 +1227,7 @@ export const SCALE_TITLES = Object.freeze({
   crt: '瑞文CRT图形推理',
   srs2: 'SRS-2社交反应量表',
   'conners-psq': 'Conners父母问卷',
+  'conners-trs': 'Conners教师问卷',
   sdq: 'SDQ长处和困难问卷',
   cbcl: 'CBCL儿童行为量表',
   brief: 'BRIEF执行功能问卷',
@@ -1286,7 +1347,43 @@ export function buildPlansForStudent(student, rng, assessments) {
 export const GAME_CODES_BY_STAGE = Object.freeze({
   preschool: ['G01_BALLOON', 'G04_WIPE_ICE', 'G08_ENERGY_BALL', 'F01_CLOUD_ERASE', 'F05_BALLOONS', 'C02_PUDDLE', 'C03_XYLOPHONE'],
   primary: ['G01_BALLOON', 'G03_FOREST', 'G04_WIPE_ICE', 'G07_MONSTER', 'G08_ENERGY_BALL', 'F02_STAR_TRACE', 'F04_TRACK_BUILD', 'K01_MEMORY_MATCH', 'K06_SIZE_ORDER'],
-  middle: ['G03_FOREST', 'G07_MONSTER', 'G09_EXPRESSION_DETECTIVE', 'F03_RECYCLING', 'F04_TRACK_BUILD', 'K03_PATTERN_NEXT', 'K04_ODD_ONE_OUT', 'K07_SPOT_DIFF', 'K08_MAZE_RUN', 'S01_BURGER', 'S03_STORY_SEQ'],
+  middle: ['G03_FOREST', 'G07_MONSTER', 'G09_EXPRESSION_DETECTIVE', 'F03_RECYCLING', 'F04_TRACK_BUILD', 'K03_PATTERN_NEXT', 'K04_ODD_ONE_OUT', 'K07_SPOT_DIFF', 'K08_MAZE_RUN', 'S01_BURGER', 'S03_STORY_SEQ', 'L08_TOWEL_TWIST', 'L09_HOME_SOUND', 'L10_MARKET_PAY'],
+})
+
+/**
+ * 游戏 code 前缀 → 训练入口 code（与 custom-game-registry.ts 的 trainingEntryCode 一致）：
+ * G=情绪调节、F=精细动作、C=安抚教具、K=认知发展、S=社交沟通、L=生活自理。
+ * 注意：sensory-integration 入口无注册游戏（该入口以器材训练为主）。
+ */
+export const GAME_ENTRY_BY_PREFIX = Object.freeze({
+  G: 'emotional-regulation',
+  F: 'fine-motor',
+  C: 'soothing-aids',
+  K: 'cognitive',
+  S: 'social-communication',
+  L: 'life-skills',
+})
+
+/** 训练入口 code → 模块 code（与 training-entry.ts TRAINING_ENTRY_DEFINITIONS 一致） */
+export const MODULE_BY_ENTRY = Object.freeze({
+  'sensory-integration': 'sensory',
+  'emotional-regulation': 'emotional',
+  'social-communication': 'social',
+  'fine-motor': 'sensory',
+  'soothing-aids': 'emotional',
+  'life-skills': 'life_skills',
+  cognitive: 'cognitive',
+})
+
+/** 资源模块 code → 训练入口 code（器材记录 entry_code 用） */
+export const ENTRY_BY_MODULE = Object.freeze({
+  sensory: 'sensory-integration',
+  emotional: 'emotional-regulation',
+  social: 'social-communication',
+  cognitive: 'cognitive',
+  life_skills: 'life-skills',
+  self_care: 'life-skills',
+  fine_motor: 'fine-motor',
 })
 
 export function stageOf(student) {
