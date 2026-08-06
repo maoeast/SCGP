@@ -56,7 +56,7 @@
           </thead>
           <tbody>
             <tr
-              v-for="student in filteredStudents"
+              v-for="student in pagedStudents"
               :key="student.id"
               @click="selectStudent(student)"
               class="student-row"
@@ -86,6 +86,16 @@
             </tr>
           </tbody>
         </table>
+
+        <div v-if="filteredStudents.length > PAGE_SIZE" class="student-selector-pagination">
+          <el-pagination
+            layout="prev, pager, next, total"
+            :total="filteredStudents.length"
+            :page-size="PAGE_SIZE"
+            :current-page="currentPage"
+            @current-change="handlePageChange"
+          />
+        </div>
       </div>
     </div>
 
@@ -98,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -174,6 +184,24 @@ const filteredStudents = computed(() => {
       s.student_no?.toLowerCase().includes(search)
   )
 })
+
+// 分页：每页 10 个学生
+const PAGE_SIZE = 10
+const currentPage = ref(1)
+
+const pagedStudents = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredStudents.value.slice(start, start + PAGE_SIZE)
+})
+
+// 搜索或学生列表变化时回到第一页
+watch(filteredStudents, () => {
+  currentPage.value = 1
+})
+
+function handlePageChange(page: number) {
+  currentPage.value = page
+}
 
 // 添加学生对话框
 const addDialogVisible = ref(false)

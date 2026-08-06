@@ -264,7 +264,7 @@ function formatDuration(seconds: number) {
   const remainingSeconds = safeSeconds % 60
 
   if (minutes > 0) {
-    return `${minutes}分 ${remainingSeconds}秒`
+    return remainingSeconds > 0 ? `${minutes}分 ${remainingSeconds}秒` : `${minutes}分钟`
   }
 
   return `${remainingSeconds}秒`

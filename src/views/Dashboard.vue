@@ -256,7 +256,7 @@
 
         <div v-else class="schedule-list">
           <article
-            v-for="item in snapshot.schedule"
+            v-for="item in displayedSchedule"
             :key="item.planId"
             class="schedule-item"
           >
@@ -516,6 +516,9 @@ const metrics = computed(() => ([
 ]))
 
 const displayedAnomalies = computed(() => snapshot.value.anomalies.slice(0, 4))
+
+// 今日训练日程最多展示 5 条，避免列表过长
+const displayedSchedule = computed(() => snapshot.value.schedule.slice(0, 5))
 const displayedAssessmentAlerts = computed(() => snapshot.value.assessmentAlerts.slice(0, 4))
 const accessibleModuleCount = computed(() =>
   ['sensory', 'emotional', 'social', 'cognitive', 'life_skills']

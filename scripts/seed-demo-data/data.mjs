@@ -1386,6 +1386,70 @@ export const ENTRY_BY_MODULE = Object.freeze({
   fine_motor: 'fine-motor',
 })
 
+/**
+ * 器材资源 category → 训练入口 code（与 training-entry.ts 器材目录组归属一致）：
+ * fine-motor 类 → 精细动作、soothing-aids 类 → 安抚教具、daily-living → 生活自理；
+ * 感统相关类（视觉/听觉/触觉/本体/前庭/嗅觉/味觉/整合）→ 感官统合。
+ */
+export const EQUIPMENT_ENTRY_BY_CATEGORY = Object.freeze({
+  'fine-motor': 'fine-motor',
+  'soothing-aids': 'soothing-aids',
+  'emotional-regulation': 'emotional-regulation',
+  'social-communication': 'social-communication',
+  'daily-living': 'life-skills',
+  cognitive: 'sensory-integration',
+  visual: 'sensory-integration',
+  auditory: 'sensory-integration',
+  tactile: 'sensory-integration',
+  olfactory: 'sensory-integration',
+  gustatory: 'sensory-integration',
+  proprioceptive: 'sensory-integration',
+  vestibular: 'sensory-integration',
+  integration: 'sensory-integration',
+})
+
+/** 自定义游戏 code → 游戏资源中文名（与 custom-game-registry.ts 的 name 一致，用于关联 sys_training_resource 取任务名） */
+export const GAME_RESOURCE_NAME_MAP = Object.freeze({
+  G01_BALLOON: '深呼吸热气球',
+  G03_FOREST: '音量魔法森林',
+  G04_WIPE_ICE: '擦亮坏心情',
+  G07_MONSTER: '喂食情绪小怪兽',
+  G08_ENERGY_BALL: '表情能量球',
+  G09_EXPRESSION_DETECTIVE: '表情侦探',
+  F01_CLOUD_ERASE: '云朵擦擦擦',
+  F02_STAR_TRACE: '连线小星座',
+  F03_RECYCLING: '分拣小能手',
+  F04_TRACK_BUILD: '轨道修补匠',
+  F05_BALLOONS: '刺破慢气球',
+  S01_BURGER: '合作造汉堡',
+  S02_EMOTION_MIRROR: '表情猜猜乐',
+  S03_STORY_SEQ: '故事接龙板',
+  S04_GIFT_MATCH: '礼物分享派对',
+  S05_ECHO_PARROT: '动物传声筒',
+  S06_EXPRESSION_DUEL: '双人表情擂台',
+  C01_DANDELION: '吹蒲公英',
+  C02_PUDDLE: '水塘波纹',
+  C03_XYLOPHONE: '星空八音盒',
+  C04_HOURGLASS: '魔法沙漏',
+  C05_MOOD_METER: '我的情绪温度计',
+  L06_STEADY_SPOON: '稳稳送一勺',
+  L07_BODY_SIGNAL: '身体信号小灯塔',
+  L08_TOWEL_TWIST: '毛巾拧拧工坊',
+  L09_HOME_SOUND: '家里声音小侦探',
+  L10_MARKET_PAY: '超市付款小能手',
+  L12_POUR_WATER: '倒水小帮手',
+  K01_MEMORY_MATCH: '记忆翻牌',
+  K02_MISSING_ITEM: '少了什么',
+  K03_PATTERN_NEXT: '图形找规律',
+  K04_ODD_ONE_OUT: '哪个不同类',
+  K05_NUMBER_SENSE: '数感小铺',
+  K06_SIZE_ORDER: '排排队',
+  K07_SPOT_DIFF: '找不同',
+  K08_MAZE_RUN: '小迷宫',
+  K09_ECHO_SEQ: '序列复现',
+  K10_STORY_ORDER: '故事排序',
+})
+
 export function stageOf(student) {
   return PRIMARY_GRADE[student.gradeLevel] || 'primary'
 }
