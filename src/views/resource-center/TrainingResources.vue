@@ -94,7 +94,6 @@
       <el-table
         :data="filteredResources"
         v-loading="loading"
-        stripe
         highlight-current-row
         @row-click="handleRowClick"
         class="resource-table"

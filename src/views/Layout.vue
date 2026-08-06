@@ -458,7 +458,7 @@ onMounted(() => {
 .layout-container {
   display: flex;
   height: 100vh;
-  background: #f5f7fa;
+  background: var(--scgp-bg);
 }
 
 .layout-container.is-immersive {
