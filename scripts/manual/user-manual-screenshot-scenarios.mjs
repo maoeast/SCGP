@@ -310,11 +310,11 @@ S177|/dashboard|either|ai|auto|read-only|drawer|展开输入区工具列|AI 生�
 S178|/dashboard|either|ai|assisted|demo-write|drawer|用脚本化响应执行一次报告工具|工具执行状态、回答内容和导出结果可见
 S179|/system?tab=ai-agent|admin|ai|auto|read-only|main|使用管理员账号进入 AI 智能体设置并停留上部|模型服务基础配置字段可见；密钥已掩码
 S180|/system?tab=ai-agent|admin|ai|auto|demo-write|dialog|定位模型列表并打开一个演示模型编辑|模型清单、模型字段和保存操作可见
-S181|/system?tab=ai-agent|admin|ai|auto|read-only|main|滚动到服务配置下部|AI 开关、额度、连接测试和边界提示可见
+S181|/system?tab=ai-agent|admin|ai|auto|read-only|main|定位「全局用量与风控」卡|AI 总开关、每月额度、超额阻断、用量进度和保存操作可见
 S182|/system?tab=ai-agent|admin|ai|auto|demo-write|main|滚动到智能体管理区|智能体网格、启停状态和标题栏新增按钮可见
 S183|/system?tab=ai-agent|admin|ai|auto|demo-write|dialog|打开一个自定义智能体编辑|名称、角色、技能选择和保存操作可见
 S184|/system?tab=ai-agent|admin|ai|auto|demo-write|dialog|在智能体编辑中切换到知识与提示词区域|知识引用资料、系统提示词和边界说明可见
-S185|/system?tab=ai-agent|admin|ai|auto|read-only|main|滚动到管理员会话审计并打开预览|审计列表、账号、时间和会话预览可见
+S185|/system?tab=ai-sessions|admin|ai|auto|read-only|main|进入 AI 会话记录标签|会话列表、搜索、分页和查看删除操作可见
 S186|/system?tab=users|admin|system|auto|read-only|main|进入系统管理用户标签|账号表格、角色、状态和操作列可见
 S187|/system?tab=users|admin|system|auto|demo-write|dialog|点击新建用户|用户名、姓名、角色、密码和保存操作可见
 S188|/system?tab=users|admin|system|auto|demo-write|dialog|对演示教师账号点击编辑|用户名禁用、可编辑资料回填和保存入口可见

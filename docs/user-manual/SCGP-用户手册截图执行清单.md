@@ -329,11 +329,11 @@ node scripts/manual/capture-user-manual-screenshots.mjs --ids S017 --run-id audi
 | **S178** | P1 / 待采集 | AI 报告工具执行结果 | `/dashboard` | 教师或管理员 | `ai` | 用脚本化响应执行一次报告工具 | 工具执行状态、回答内容和导出结果可见 | Electron 辅助 | 演示写入 | `drawer` | `S178.png` → `[图 S178]` |
 | **S179** | P0 / 待采集 | 模型服务基础配置 | `/system?tab=ai-agent` | 管理员 | `ai` | 使用管理员账号进入 AI 智能体设置并停留上部 | 模型服务基础配置字段可见；密钥已掩码 | Electron 自动 | 只读 | `main` | `S179.png` → `[图 S179]` |
 | **S180** | P0 / 待采集 | 模型清单与模型编辑 | `/system?tab=ai-agent` | 管理员 | `ai` | 定位模型列表并打开一个演示模型编辑 | 模型清单、模型字段和保存操作可见 | Electron 自动 | 演示写入 | `dialog` | `S180.png` → `[图 S180]` |
-| **S181** | P0 / 待采集 | AI 开关、额度与连接测试 | `/system?tab=ai-agent` | 管理员 | `ai` | 滚动到服务配置下部 | AI 开关、额度、连接测试和边界提示可见 | Electron 自动 | 只读 | `main` | `S181.png` → `[图 S181]` |
+| **S181** | P0 / 待采集 | AI 开关、额度与连接测试 | `/system?tab=ai-agent` | 管理员 | `ai` | 进入 AI 智能体设置并定位「全局用量与风控」卡 | AI 总开关、每月额度、超额阻断、用量进度和保存操作可见 | Electron 自动 | 只读 | `main` | `S181.png` → `[图 S181]` |
 | **S182** | P0 / 待采集 | 智能体网格与启停 | `/system?tab=ai-agent` | 管理员 | `ai` | 滚动到智能体管理区 | 智能体网格、启停状态和标题栏新增按钮可见 | Electron 自动 | 演示写入 | `main` | `S182.png` → `[图 S182]` |
 | **S183** | P0 / 待采集 | 自定义智能体编辑与技能 | `/system?tab=ai-agent` | 管理员 | `ai` | 打开一个自定义智能体编辑 | 名称、角色、技能选择和保存操作可见 | Electron 自动 | 演示写入 | `dialog` | `S183.png` → `[图 S183]` |
 | **S184** | P1 / 待采集 | 知识引用资料与提示词 | `/system?tab=ai-agent` | 管理员 | `ai` | 在智能体编辑中切换到知识与提示词区域 | 知识引用资料、系统提示词和边界说明可见 | Electron 自动 | 演示写入 | `dialog` | `S184.png` → `[图 S184]` |
-| **S185** | P1 / 待采集 | 管理员会话审计 | `/system?tab=ai-agent` | 管理员 | `ai` | 滚动到管理员会话审计并打开预览 | 审计列表、账号、时间和会话预览可见 | Electron 自动 | 只读 | `main` | `S185.png` → `[图 S185]` |
+| **S185** | P1 / 待采集 | AI 会话记录 | `/system?tab=ai-sessions` | 管理员 | `ai` | 进入系统管理 AI 会话记录标签 | 会话列表、搜索、分页和查看删除操作可见 | Electron 自动 | 只读 | `main` | `S185.png` → `[图 S185]` |
 
 ### 第 16 章
 

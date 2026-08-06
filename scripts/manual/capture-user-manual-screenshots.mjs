@@ -4548,7 +4548,7 @@ async function prepareS179(page, scenario, fixture) {
   await expectText(configCard, '模型服务配置')
   await expectText(configCard, '已配置 Key')
   await configCard.locator('input[type="password"]').waitFor({ state: 'visible', timeout: 20_000 })
-  await configCard.getByText('API Key 加密存储于本地数据库', { exact: false })
+  await configCard.getByText('重新输入可更新', { exact: false })
     .waitFor({ state: 'visible', timeout: 20_000 })
   await configCard.getByText('默认模型', { exact: true }).waitFor({ state: 'visible', timeout: 20_000 })
 }
@@ -4570,14 +4570,18 @@ async function prepareS180(page, scenario, fixture) {
 
 async function prepareS181(page, scenario, fixture) {
   const configuration = await openAiAgentConfiguration(page, scenario, fixture)
-  const configCard = configuration.locator('.config-card').first()
-  await configCard.getByText('AI 总开关', { exact: true }).scrollIntoViewIfNeeded()
-  await expectText(configCard, '月度额度')
-  await expectText(configCard, '超预算截断')
-  await expectText(configCard, 'AI 总开关')
-  await configCard.getByRole('button', { name: '保存配置' }).waitFor({ state: 'visible', timeout: 20_000 })
-  await configCard.getByRole('button', { name: '测试连接' }).waitFor({ state: 'visible', timeout: 20_000 })
-  await expectText(configCard, '每位教师首次向 AI 发送内容前会弹出')
+  // 新版两列布局：AI 总开关 / 每月额度 / 超预算截断位于「全局用量与风控」卡
+  const globalCard = configuration.locator('.config-card').filter({ hasText: '全局用量与风控' }).first()
+  await globalCard.scrollIntoViewIfNeeded()
+  await globalCard.waitFor({ state: 'visible', timeout: 20_000 })
+  await expectText(globalCard, 'AI 总开关')
+  await expectText(globalCard, '每月额度')
+  await expectText(globalCard, '超预算截断')
+  await globalCard.getByRole('button', { name: '保存配置' }).waitFor({ state: 'visible', timeout: 20_000 })
+  // 连接测试已移到「模型服务配置」卡 API Key 行内
+  const providerCard = configuration.locator('.config-card').first()
+  await providerCard.getByRole('button', { name: '测试连接' }).waitFor({ state: 'visible', timeout: 20_000 })
+  await expectText(providerCard, '重新输入可更新')
 }
 
 async function prepareS182(page, scenario, fixture) {
@@ -4630,13 +4634,17 @@ async function prepareS184(page, scenario, fixture) {
 }
 
 async function prepareS185(page, scenario, fixture) {
-  const configuration = await openAiAgentConfiguration(page, scenario, fixture)
-  const sessionCard = configuration.locator('.config-card').filter({
-    hasText: '全部会话（管理员视图）',
-  }).first()
-  await sessionCard.scrollIntoViewIfNeeded()
-  await sessionCard.waitFor({ state: 'visible', timeout: 20_000 })
-  const row = sessionCard.locator('.el-table__body tr').filter({ hasText: '资源教室训练安排' }).first()
+  // AI 会话记录已从 AI 智能体配置拆分到独立 tab。
+  // 注意：System.vue 的 activeTab 仅挂载时读取一次 query，改 hash 不会切 tab，须模拟点击。
+  await navigateHash(page, '/system?tab=ai-agent')
+  await closeVisibleResourceDialogs(page)
+  const tab = page.locator('.el-tabs__item').filter({ hasText: 'AI 会话记录' }).first()
+  await tab.waitFor({ state: 'visible', timeout: 30_000 })
+  await tab.click()
+  const panel = page.locator('.ai-sessions-panel')
+  await panel.waitFor({ state: 'visible', timeout: 30_000 })
+  await expectText(panel, 'AI 会话记录')
+  const row = panel.locator('.el-table__body tr').filter({ hasText: '资源教室训练安排' }).first()
   await row.waitFor({ state: 'visible', timeout: 30_000 })
   await expectText(row, 'admin')
   await row.getByRole('button', { name: '查看' }).click()
