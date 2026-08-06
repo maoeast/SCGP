@@ -16,7 +16,8 @@ export const TREND_SUPPORTED_CATALOG = ASSESSMENT_SCALE_CATALOG.filter((item) =>
 
 // 纯元数据（path/name/meta）：jiti 可加载，供契约测试断言 name 集合，不触碰 .vue 编译
 export const assessmentTrendRouteRecords = TREND_SUPPORTED_CATALOG.map((item) => ({
-  path: `assessment/${item.urlSlug}/trend/:studentId`,
+  // slug 用参数段（:urlSlug）：AssessmentTrendPage 按 route.params.urlSlug 反查 catalog code
+  path: `assessment/:urlSlug/trend/:studentId`,
   name: item.trendRouteName!,
   meta: {
     title: `${item.title}纵向趋势`,

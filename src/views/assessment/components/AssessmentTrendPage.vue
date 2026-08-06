@@ -28,7 +28,7 @@
             <el-col :span="6">
               <div class="info-item">
                 <span class="label">性别：</span>
-                <span class="value">{{ student.gender === 'M' ? '男' : '女' }}</span>
+                <span class="value">{{ student.gender === '男' || student.gender === 'M' ? '男' : '女' }}</span>
               </div>
             </el-col>
             <el-col :span="6">

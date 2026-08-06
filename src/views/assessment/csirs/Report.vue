@@ -162,7 +162,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, Download, Clock } from '@element-plus/icons-vue'
@@ -557,6 +557,12 @@ const cleanup = () => {
 
 // 组件挂载时加载数据
 onMounted(() => {
+  loadAssessment()
+})
+
+// 同路由参数变化（报告页内切换历史记录）时重新加载
+watch(assessId, () => {
+  cleanup()
   loadAssessment()
 })
 
