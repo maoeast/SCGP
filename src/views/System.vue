@@ -117,6 +117,12 @@
         </div>
       </el-tab-pane>
 
+      <el-tab-pane label="AI 会话记录" name="ai-sessions">
+        <div class="system-tab-panel scgp-tab-panel">
+          <AiSessionsPanel />
+        </div>
+      </el-tab-pane>
+
       <el-tab-pane v-if="isDevMode" label="开发者调试" name="devtools">
         <div class="system-tab-panel scgp-tab-panel">
           <div class="scgp-content-toolbar">
@@ -297,6 +303,7 @@ import UserManagement from './system/UserManagement.vue'
 import SystemSettings from './system/SystemSettings.vue'
 import ResourceHealthCheck from './system/ResourceHealthCheck.vue'
 import AiAgentConfig from './system/AiAgentConfig.vue'
+import AiSessionsPanel from './system/AiSessionsPanel.vue'
 import AiSkillLibrary from './system/AiSkillLibrary.vue'
 import UpdatePanel from './updates/UpdatePanel.vue'
 

@@ -1,6 +1,6 @@
 <template>
   <div class="update-panel">
-    <el-card header="软件更新">
+    <el-card header="软件更新" shadow="never" class="update-panel-card">
       <!-- 版本信息 -->
       <el-descriptions :column="2" border class="version-info">
         <el-descriptions-item label="当前版本">
@@ -274,6 +274,13 @@ watch(() => updateState.downloadProgress, (progress) => {
 <style scoped>
 .update-panel {
   padding: 0;
+}
+
+/* 与系统管理其他卡片统一：圆角矩形 + 柔和投影 */
+.update-panel-card {
+  border: 1px solid var(--scgp-border, #e6ebf2);
+  border-radius: var(--scgp-radius-xl, 22px);
+  box-shadow: var(--scgp-shadow-soft, 0 18px 44px rgba(143, 169, 204, 0.12));
 }
 
 .version-info {

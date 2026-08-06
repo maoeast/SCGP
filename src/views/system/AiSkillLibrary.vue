@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { useAiStore } from '@/stores/ai'
 import type { AiSkill } from '@/database/ai-api'
 
@@ -105,7 +106,7 @@ async function remove(skill: AiSkill) {
           <span>知识技能库</span>
           <div class="header-hint">内置技能由项目文件维护；本地技能可在此创建、编辑与启停。</div>
         </div>
-        <el-button type="primary" size="small" @click="openCreate">新增本地知识技能</el-button>
+        <el-button class="skill-create-button" type="primary" :icon="Plus" @click="openCreate">新增</el-button>
       </div>
     </template>
 
@@ -184,7 +185,15 @@ async function remove(skill: AiSkill) {
 
 <style scoped>
 .skill-library-card {
-  border: 1px solid var(--el-border-color-light, #ebeef5);
+  border: 1px solid var(--scgp-border, #e6ebf2);
+  border-radius: var(--scgp-radius-xl, 22px);
+  box-shadow: var(--scgp-shadow-soft, 0 18px 44px rgba(143, 169, 204, 0.12));
+}
+
+/* 新增按钮与「智能体管理 → 新增」同规格（min-height 32px + 内边距 14px） */
+.skill-create-button {
+  min-height: 32px;
+  padding-inline: 14px;
 }
 
 .card-header {

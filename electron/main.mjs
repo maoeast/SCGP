@@ -98,6 +98,8 @@ if (isDev) {
   // 开发环境：忽略自签名证书错误（用于 HTTPS 开发服务器）
   app.commandLine.appendSwitch('ignore-certificate-errors')
   app.commandLine.appendSwitch('allow-insecure-localhost', 'true')
+  // 开发环境：CSP 的 unsafe-eval 是 Vite HMR 所需，屏蔽 Electron 安全警告（打包后无此警告）
+  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 }
 
 function shouldEmitRuntimeLogs() {

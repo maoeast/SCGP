@@ -214,9 +214,8 @@ export const useAiStore = defineStore('ai', () => {
       if (!currentAgentCode.value && enabledAgents.value.length > 0) {
         currentAgentCode.value = enabledAgents.value[0]?.code || ''
       }
-      // 恢复当前用户的历史会话（无活动会话则默认选中最近一条）；admin 额外加载全部会话
+      // 恢复当前用户的历史会话（无活动会话则默认选中最近一条）
       await loadSessions()
-      if (isAdmin()) allSessions.value = a.listAllSessions()
     } catch (e) {
       console.error('[aiStore] 加载 AI 配置失败:', e)
     } finally {
@@ -344,26 +343,44 @@ export const useAiStore = defineStore('ai', () => {
     return deleted
   }
 
-  /** 测试当前模型连接（用已配置的密文 Key 调一次最小问答，明文 Key 不进渲染进程） */
-  async function testConnection(): Promise<{ ok: boolean; message: string }> {
+  /** 测试当前模型连接（用已配置的密文 Key 调一次最小问答，明文 Key 不进渲染进程）。
+   * 可选 override：传表单未保存的临时值（apiKeyPlain/baseUrl/defaultModel）直测「配完即测」；
+   * 不传则用已保存配置。apiKeyPlain 现场经 protectAiApiKey 加密，仅存在于本次调用。 */
+  async function testConnection(override?: {
+    apiKeyPlain?: string
+    baseUrl?: string
+    defaultModel?: string
+  }): Promise<{ ok: boolean; message: string }> {
     testing.value = true
     try {
       await ensureDb()
       const cfg = api().getProviderConfig()
-      if (!cfg.apiKeyEnc) {
+      let encKey = cfg.apiKeyEnc
+      const plainKey = override?.apiKeyPlain?.trim()
+      if (plainKey) {
+        const protectedKey = await window.electronAPI.protectAiApiKey(plainKey)
+        if (!protectedKey.success || !protectedKey.keyEnc) {
+          lastTestResult.value = { ok: false, message: protectedKey.error || 'API Key 加密失败' }
+          return lastTestResult.value
+        }
+        encKey = protectedKey.keyEnc
+      }
+      const baseUrl = override?.baseUrl !== undefined ? override.baseUrl : cfg.baseUrl
+      const model = override?.defaultModel !== undefined ? override.defaultModel : cfg.defaultModel
+      if (!encKey) {
         lastTestResult.value = { ok: false, message: '尚未配置 API Key，请先填写并保存。' }
         return lastTestResult.value
       }
-      if (!cfg.defaultModel) {
+      if (!model) {
         lastTestResult.value = { ok: false, message: '尚未选择可用模型，请先配置并启用模型。' }
         return lastTestResult.value
       }
       const res = await window.electronAPI.aiChat({
-        encKey: cfg.apiKeyEnc,
+        encKey,
         messages: [{ role: 'user', content: '请回复"连接正常"四个字。' }],
         systemPrompt: '你是连通性测试助手，请极简回复。',
-        model: cfg.defaultModel,
-        baseUrl: cfg.baseUrl,
+        model,
+        baseUrl,
         supportsThinking: cfg.supportsThinking,
         providerName: cfg.providerName,
       })
@@ -509,10 +526,13 @@ export const useAiStore = defineStore('ai', () => {
     created_at: string
     updated_at: string
   }
-  type AllSessionRow = SessionRow & { user_id: number | null; username: string | null; role: string | null }
   const sessions = ref<SessionRow[]>([])
   const sessionTotal = ref(0)
-  const allSessions = ref<AllSessionRow[]>([])
+  /** admin 审计：全部会话分页（AiSessionsPanel 用；服务端分页 + 关键字过滤） */
+  type AdminSessionRow = SessionRow & { user_id: number | null; username: string | null; role: string | null }
+  const sessionPage = ref<AdminSessionRow[]>([])
+  const sessionPageTotal = ref(0)
+  const sessionPageLoading = ref(false)
 
   function currentUserId(): number {
     return useAuthStore().user?.id || 0
@@ -640,7 +660,6 @@ export const useAiStore = defineStore('ai', () => {
         currentMessages.value = []
       }
       await loadSessions()
-      if (isAdmin()) allSessions.value = a.listAllSessions()
       monthUsage.value = a.getMonthUsage()
       return { failedAttachments }
     } catch (error) {
@@ -661,9 +680,23 @@ export const useAiStore = defineStore('ai', () => {
       currentMessages.value = []
     }
     await loadSessions()
-    if (isAdmin()) allSessions.value = a.listAllSessions()
     monthUsage.value = a.getMonthUsage()
     return { failedAttachments }
+  }
+
+  /** admin 审计分页：加载全部会话的一页（服务端分页 + 关键字过滤） */
+  async function loadSessionPage(opts: { offset: number; limit: number; keyword?: string }): Promise<void> {
+    try {
+      await ensureDb()
+      sessionPageLoading.value = true
+      const a = api()
+      sessionPage.value = a.listAllSessions(opts.limit, opts.offset, opts.keyword || '')
+      sessionPageTotal.value = a.countAllSessions(opts.keyword || '')
+    } catch (e) {
+      console.error('[aiStore] 加载全部会话分页失败:', e)
+    } finally {
+      sessionPageLoading.value = false
+    }
   }
 
   /** admin 审计：读取任意会话的完整消息（只读，不影响当前会话状态） */
@@ -813,7 +846,6 @@ export const useAiStore = defineStore('ai', () => {
       currentMessages.value = a.listMessagesForUser(sessionId, uid)
       monthUsage.value = a.getMonthUsage()
       await loadSessions()
-      if (isAdmin()) allSessions.value = a.listAllSessions()
     } else {
       // 入库 user 消息并加入当前列表（DB content 存纯文本，attachments 列存元信息）
       const userMessageId = a.saveMessage({
@@ -936,7 +968,6 @@ export const useAiStore = defineStore('ai', () => {
         })
         monthUsage.value = a.getMonthUsage()
         await loadSessions()
-        if (isAdmin()) allSessions.value = a.listAllSessions()
         // M2：assistant 已 completed → 触发记忆总结（fire-and-forget，不阻塞返回）
         void finalizeAssistantTurn(sessionId)
         return { ok: true }
@@ -980,7 +1011,6 @@ export const useAiStore = defineStore('ai', () => {
         })
         monthUsage.value = a.getMonthUsage()
         await loadSessions()
-        if (isAdmin()) allSessions.value = a.listAllSessions()
         // M2：流式路径 assistant 已 completed → 触发记忆总结（fire-and-forget）
         void finalizeAssistantTurn(sessionId)
         return { ok: true }
@@ -1326,7 +1356,10 @@ export const useAiStore = defineStore('ai', () => {
     // 会话隔离与历史
     sessions,
     sessionTotal,
-    allSessions,
+    sessionPage,
+    sessionPageTotal,
+    sessionPageLoading,
+    loadSessionPage,
     loadSessions,
     selectSession,
     loadMySessionHistory,

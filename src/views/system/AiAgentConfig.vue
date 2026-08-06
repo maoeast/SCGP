@@ -3,17 +3,13 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { useAiStore } from '@/stores/ai'
-import { useAuthStore } from '@/stores/auth'
-import type { AiAgent, AiAgentSkillBinding, AiChatMessage, AiProviderModel, AiSkill } from '@/database/ai-api'
+import type { AiAgent, AiAgentSkillBinding, AiProviderModel, AiSkill } from '@/database/ai-api'
 import type { ProviderModelOption } from '@/stores/ai'
 import { getBuiltinAgentPreset, isBuiltinAgentCode } from '@/data/ai-agent-presets'
 import AiAgentAvatar from '@/features/ai/components/AiAgentAvatar.vue'
-import AiChatTranscript from '@/features/ai/components/AiChatTranscript.vue'
 import { formatTokenCount } from '@/features/ai/usage-format'
 
 const aiStore = useAiStore()
-const authStore = useAuthStore()
-const isAdmin = computed(() => authStore.isAdmin)
 const MAX_MONTHLY_BUDGET_TOKENS = 10_000_000
 
 onMounted(() => {
@@ -240,14 +236,21 @@ async function clearApiKey() {
   }
 }
 
+/** 测试连接：优先用表单未保存的临时配置（新 Key / 新地址）直测，未填则用已保存配置 */
 async function testConnection() {
-  const res = await aiStore.testConnection()
+  const res = await aiStore.testConnection({
+    apiKeyPlain: configForm.apiKeyInput.trim() || undefined,
+    baseUrl: configForm.baseUrl.trim() || undefined,
+  })
   if (res.ok) {
     ElMessage.success(res.message)
   } else {
     ElMessage.error(res.message)
   }
 }
+
+/** 测试连接可用性：已配置 Key 或表单新填了 Key 即可测 */
+const canTestConnection = computed(() => aiStore.isConfigured || configForm.apiKeyInput.trim() !== '')
 
 /** 管理员：重置所有教师的「AI 外发隐私告知」确认（清除 ai:privacy_ack:user:* KV）。 */
 async function resetPrivacyAck() {
@@ -264,15 +267,18 @@ async function resetPrivacyAck() {
   ElMessage.success(n > 0 ? `已重置 ${n} 位教师的告知确认` : '当前没有任何已确认记录')
 }
 
-// ===== 用量展示 =====
+// ===== 用量展示（进度条基于表单额度即时反映，保存后与已生效额度一致） =====
+/** 表单中的额度（防 NaN/负数，供进度条与文案展示） */
+const budgetFormValue = computed(() => Math.max(0, Number(configForm.monthlyBudgetTokens) || 0))
+
 const budgetPercent = computed(() => {
-  const budget = aiStore.providerConfig?.monthlyBudgetTokens || 0
+  const budget = budgetFormValue.value
   if (budget <= 0) return 0
   return Math.min(100, Math.round((aiStore.monthUsage.totalTokens / budget) * 100))
 })
 
 const budgetUsageRatio = computed(() => {
-  const budget = aiStore.providerConfig?.monthlyBudgetTokens || 0
+  const budget = budgetFormValue.value
   if (budget <= 0) return 0
   return aiStore.monthUsage.totalTokens / budget
 })
@@ -289,6 +295,17 @@ const budgetProgressStatus = computed(() => {
   if (budgetPercent.value >= 90) return 'warning'
   return undefined
 })
+
+/** 千分位显示（el-input-number formatter） */
+function formatBudgetInput(value: number | undefined): string {
+  if (value === undefined || value === null || Number.isNaN(value)) return ''
+  return Number(value).toLocaleString('en-US')
+}
+
+/** 解析输入（去千分位逗号，el-input-number parser） */
+function parseBudgetInput(text: string): number {
+  return Number(String(text).replace(/,/g, ''))
+}
 
 // ===== 智能体管理 =====
 const dialogVisible = ref(false)
@@ -475,56 +492,23 @@ function openAgentDetail(agent: AiAgent) {
   selectedAgentId.value = agent.id
   detailDialogVisible.value = true
 }
-
-function getRoleLabel(role?: string): string {
-  if (role === 'admin') return '管理员'
-  if (role === 'teacher') return '教师'
-  return role || ''
-}
-
-function getRoleTagType(role?: string): 'danger' | 'success' | 'info' {
-  if (role === 'admin') return 'danger'
-  if (role === 'teacher') return 'success'
-  return 'info'
-}
-
-// ===== 全部会话管理（仅 admin）=====
-const sessionMsgVisible = ref(false)
-const sessionMessages = ref<AiChatMessage[]>([])
-const sessionDialogTitle = ref('会话消息')
-
-async function viewSession(id: number) {
-  try {
-    const msgs = await aiStore.getViewMessages(id)
-    const session = aiStore.allSessions.find((item) => item.id === id)
-    sessionDialogTitle.value = session?.title || '会话消息'
-    sessionMessages.value = msgs
-    sessionMsgVisible.value = true
-  } catch (e) {
-    ElMessage.error('加载会话消息失败：' + (e instanceof Error ? e.message : String(e)))
-  }
-}
-
-async function removeSession(id: number) {
-  try {
-    await ElMessageBox.confirm('确定删除该会话吗？', '删除确认', { type: 'warning' })
-    await aiStore.deleteSession(id)
-    ElMessage.success('已删除')
-  } catch {
-    /* 取消 */
-  }
-}
 </script>
 
 <template>
   <div class="ai-agent-config">
-    <!-- 模型服务配置 -->
+    <!-- 卡片 1：模型服务配置（供应商） -->
     <el-card shadow="never" class="config-card">
       <template #header>
-        <div class="card-header">
-          <span>模型服务配置</span>
-          <el-tag v-if="aiStore.isConfigured" type="success" size="small">已配置 Key</el-tag>
-          <el-tag v-else type="info" size="small">未配置 Key</el-tag>
+        <div class="card-header provider-card-header">
+          <div class="provider-card-title">
+            <span>模型服务配置</span>
+            <el-tag v-if="aiStore.isConfigured" type="success" size="small">已配置 Key</el-tag>
+            <el-tag v-else type="info" size="small">未配置 Key</el-tag>
+          </div>
+          <div class="provider-card-switch">
+            <span class="provider-card-switch-label" title="保存配置后生效">启用此服务</span>
+            <el-switch v-model="configForm.providerEnabled" />
+          </div>
         </div>
       </template>
 
@@ -552,7 +536,7 @@ async function removeSession(id: number) {
           </el-col>
           <el-col :xs="24" :sm="12">
             <el-form-item label="接口地址">
-              <el-input v-model="configForm.baseUrl" placeholder="https://api.deepseek.com" />
+              <el-input v-model="configForm.baseUrl" placeholder="https://api.deepseek.com" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -564,35 +548,45 @@ async function removeSession(id: number) {
                 v-model="configForm.apiKeyInput"
                 type="password"
                 show-password
+                style="width: 100%"
                 :placeholder="apiKeyPlaceholder"
-              />
-              <el-button v-if="aiStore.isConfigured" link type="danger" size="small" @click="clearApiKey">
-                清除 Key
-              </el-button>
+              >
+                <template #append>
+                  <el-button
+                    :loading="aiStore.testing"
+                    :disabled="!canTestConnection"
+                    @click="testConnection"
+                  >
+                    测试连接
+                  </el-button>
+                </template>
+              </el-input>
+              <div class="field-hint" v-if="aiStore.isConfigured">
+                <span>重新输入可更新，留空保存则不变。</span>
+                <el-button link type="danger" size="small" @click="clearApiKey">清除 Key</el-button>
+              </div>
             </el-form-item>
           </el-col>
           <el-col :xs="24" :sm="12">
             <el-form-item label="默认模型">
-              <div class="default-model-row">
-                <el-select
-                  v-model="activeModelCode"
-                  placeholder="选择当前用于对话的模型"
-                  :disabled="aiStore.providerModels.length === 0"
+              <el-select
+                v-model="activeModelCode"
+                placeholder="选择当前用于对话的模型"
+                style="width: 100%"
+                :disabled="aiStore.providerModels.length === 0"
+              >
+                <el-option
+                  v-for="model in aiStore.providerModels"
+                  :key="model.code"
+                  :label="`${model.name}（${model.modelId}）`"
+                  :value="model.code"
+                  :disabled="!model.enabled"
                 >
-                  <el-option
-                    v-for="model in aiStore.providerModels"
-                    :key="model.code"
-                    :label="`${model.name}（${model.modelId}）`"
-                    :value="model.code"
-                    :disabled="!model.enabled"
-                  >
-                    <span>{{ model.name }}</span>
-                    <span class="model-option-id">{{ model.modelId }}</span>
-                    <el-tag v-if="!model.enabled" size="small" type="info">未启用</el-tag>
-                  </el-option>
-                </el-select>
-                <el-button @click="openCreateModel">新增模型</el-button>
-              </div>
+                  <span>{{ model.name }}</span>
+                  <span class="model-option-id">{{ model.modelId }}</span>
+                  <el-tag v-if="!model.enabled" size="small" type="info">未启用</el-tag>
+                </el-option>
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
@@ -623,55 +617,112 @@ async function removeSession(id: number) {
         </el-form-item>
         -->
 
-        <el-form-item label="模型清单">
-          <el-table :data="aiStore.providerModels" size="small" border class="model-table" empty-text="暂无模型">
-            <el-table-column prop="name" label="名称" min-width="140" show-overflow-tooltip />
-            <el-table-column prop="modelId" label="模型 ID / 接入点" min-width="220" show-overflow-tooltip />
-            <el-table-column label="能力" min-width="180">
-              <template #default="{ row }">
-                <el-tag v-if="row.supportsVision" size="small" type="success">图片</el-tag>
-                <el-tag v-if="row.supportsToolCalls" size="small" type="warning">工具</el-tag>
-                <el-tag v-if="row.supportsThinking" size="small" type="info">思考</el-tag>
-                <span v-if="!row.supportsVision && !row.supportsToolCalls && !row.supportsThinking">—</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="状态" width="90">
-              <template #default="{ row }">
-                <span class="model-status" :class="{ 'model-status--enabled': row.enabled }">
-                  <span class="model-status__dot" aria-hidden="true"></span>
-                  {{ row.enabled ? '启用' : '停用' }}
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="130" fixed="right">
-              <template #default="{ row }">
-                <el-button link type="primary" size="small" @click="openEditModel(row)">编辑</el-button>
-                <el-button link type="danger" size="small" @click="removeModel(row)">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+        <!-- 模型清单（新增模型为表格右上角卡片操作） -->
+        <div class="model-list-section">
+          <div class="model-list-head">
+            <span class="model-list-title">模型清单</span>
+            <el-button class="agent-create-button" type="primary" :icon="Plus" @click="openCreateModel">新增</el-button>
+          </div>
+          <div class="model-table-wrap">
+            <el-table :data="aiStore.providerModels" size="small" class="model-table" empty-text="暂无模型">
+              <el-table-column label="名称" min-width="150" show-overflow-tooltip>
+                <template #default="{ row }">
+                  <span class="model-name">{{ row.name }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="模型 ID / 接入点" min-width="240" show-overflow-tooltip>
+                <template #default="{ row }">
+                  <code class="model-id-code">{{ row.modelId }}</code>
+                </template>
+              </el-table-column>
+              <el-table-column label="能力" min-width="210">
+                <template #default="{ row }">
+                  <div class="model-capability">
+                    <el-tag
+                      size="small"
+                      :type="row.supportsVision ? 'primary' : 'info'"
+                      :effect="row.supportsVision ? 'light' : 'plain'"
+                    >
+                      图片
+                    </el-tag>
+                    <el-tag
+                      size="small"
+                      :type="row.supportsToolCalls ? 'success' : 'info'"
+                      :effect="row.supportsToolCalls ? 'light' : 'plain'"
+                    >
+                      工具
+                    </el-tag>
+                    <el-tag
+                      size="small"
+                      :type="row.supportsThinking ? 'warning' : 'info'"
+                      :effect="row.supportsThinking ? 'light' : 'plain'"
+                    >
+                      思考
+                    </el-tag>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="状态" width="90" align="center">
+                <template #default="{ row }">
+                  <span class="model-status" :class="{ 'model-status--enabled': row.enabled }">
+                    <span class="model-status__dot" aria-hidden="true"></span>
+                    {{ row.enabled ? '启用' : '停用' }}
+                  </span>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="140" align="center" fixed="right">
+                <template #default="{ row }">
+                  <div class="model-actions">
+                    <el-button link type="primary" size="small" @click="openEditModel(row)">编辑</el-button>
+                    <el-button link type="danger" size="small" @click="removeModel(row)">删除</el-button>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
+
+        <el-form-item class="save-row">
+          <el-button type="primary" :loading="saving" @click="saveConfig">保存配置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <!-- 卡片 2 + 3：全局用量与风控 | 业务与合规（两列并排，窄屏自动折叠单列） -->
+    <div class="config-card-grid">
+    <el-card shadow="never" class="config-card">
+      <template #header><span>全局用量与风控</span></template>
+      <el-form label-width="100px" label-position="right">
+        <el-form-item label="AI 总开关">
+          <el-switch v-model="configForm.enabled" />
+          <span class="field-hint-inline">全局关闭后所有模型服务不可用</span>
         </el-form-item>
 
-        <el-form-item label="启用此服务">
-          <el-switch v-model="configForm.providerEnabled" />
-          <span class="field-hint-inline">关闭后该服务不可用于对话（与下方「AI 总开关」独立）</span>
-        </el-form-item>
-
-        <el-form-item label="月度额度">
-          <el-input
-            v-model.number="configForm.monthlyBudgetTokens"
+        <el-form-item label="每月额度">
+          <el-input-number
+            v-model="configForm.monthlyBudgetTokens"
             class="budget-token-input"
-            type="number"
-            min="0"
+            :min="0"
             :max="MAX_MONTHLY_BUDGET_TOKENS"
-            step="100000"
-          >
-            <template #append>Tokens</template>
-          </el-input>
-          <span class="field-hint-inline">
-            额度 {{ formatTokenCount(configForm.monthlyBudgetTokens) }} Tokens，本月已用
-            {{ formatTokenCount(aiStore.monthUsage.totalTokens) }} Tokens
-          </span>
+            :step="100000"
+            :formatter="formatBudgetInput"
+            :parser="parseBudgetInput"
+            controls-position="right"
+          />
+          <span class="field-hint-inline">Tokens</span>
+        </el-form-item>
+
+        <el-form-item label="本月用量">
+          <div class="usage-row">
+            <el-progress :percentage="budgetPercent" :status="budgetProgressStatus" />
+            <div class="usage-text" :class="{ 'usage-text--overage': isBudgetExceeded }">
+              <span>
+                已用 {{ formatTokenCount(aiStore.monthUsage.totalTokens) }} /
+                {{ formatTokenCount(budgetFormValue) }} Tokens · {{ aiStore.monthUsage.assistantCount }} 次回复
+              </span>
+              <strong v-if="isBudgetExceeded">已超额 {{ budgetOveragePercent }}%</strong>
+            </div>
+          </div>
         </el-form-item>
 
         <el-form-item label="超预算截断">
@@ -679,57 +730,52 @@ async function removeSession(id: number) {
           <span class="field-hint-inline">开启后，本月 Token 用量超额度时阻止继续提问</span>
         </el-form-item>
 
-        <el-form-item label="AI 总开关">
-          <el-switch v-model="configForm.enabled" />
-          <span class="field-hint-inline">全局关闭后所有模型服务不可用</span>
-        </el-form-item>
-
-        <el-form-item label="学生长期记忆">
-          <el-switch
-            :model-value="aiStore.memoryEnabled"
-            @change="(v: string | number | boolean) => aiStore.setMemoryEnabled(Boolean(v))"
-          />
-          <span class="field-hint-inline">
-            启用后：绑定学生的会话将自动总结为「待确认记忆」，教师确认后注入后续对话（记忆外发前会脱敏姓名与敏感信息）
-          </span>
-        </el-form-item>
-
-        <el-form-item>
+        <el-form-item class="save-row">
           <el-button type="primary" :loading="saving" @click="saveConfig">保存配置</el-button>
-          <el-button :loading="aiStore.testing" :disabled="!aiStore.isConfigured" @click="testConnection">
-            测试连接
-          </el-button>
-        </el-form-item>
-
-        <el-form-item label="隐私告知">
-          <div class="field-hint">
-            每位教师首次向 AI 发送内容前会弹出「外发隐私告知」，确认后按账号记忆、不再重复弹出。
-          </div>
-          <div class="field-hint">
-            <el-button link type="warning" size="small" @click="resetPrivacyAck">
-              重置全部教师的告知确认
-            </el-button>
-            <span class="field-hint-inline">用于更新告知文案或合规复查后，让所有人下次发送重新确认</span>
-          </div>
         </el-form-item>
       </el-form>
     </el-card>
 
-    <!-- 用量 -->
+    <!-- 卡片 3：业务与合规 -->
     <el-card shadow="never" class="config-card">
-      <template #header><span>本月用量</span></template>
-      <div class="usage-row">
-        <div class="usage-text" :class="{ 'usage-text--overage': isBudgetExceeded }">
-          <span>
-            {{ formatTokenCount(aiStore.monthUsage.totalTokens) }} /
-            {{ formatTokenCount(aiStore.providerConfig?.monthlyBudgetTokens) }} Tokens
-            · {{ aiStore.monthUsage.assistantCount }} 次回复
-          </span>
-          <strong v-if="isBudgetExceeded">已超额 {{ budgetOveragePercent }}%</strong>
+      <template #header>
+        <div class="card-header">
+          <span>业务与合规</span>
         </div>
-        <el-progress :percentage="budgetPercent" :status="budgetProgressStatus" />
+      </template>
+      <!-- 两栏布局：左栏固定 120px 标签 + 右栏自适应内容；两项之间分隔线 -->
+      <div class="compliance-list">
+        <div class="compliance-item">
+          <div class="compliance-label">学生长期记忆</div>
+          <div class="compliance-content">
+            <el-switch
+              :model-value="aiStore.memoryEnabled"
+              @change="(v: string | number | boolean) => aiStore.setMemoryEnabled(Boolean(v))"
+            />
+            <p class="compliance-hint">
+              开启后，系统自动提炼绑定学生的对话并生成「待确认记忆」，经教师确认后生效。（外发请求前系统将自动脱敏姓名及敏感信息）
+            </p>
+          </div>
+        </div>
+
+        <div class="compliance-divider"></div>
+
+        <div class="compliance-item">
+          <div class="compliance-label">隐私告知</div>
+          <div class="compliance-content">
+            <p class="compliance-hint">
+              教师首次使用 AI 服务前将弹出《外发隐私告知》，确认后该账号不再重复提示。
+            </p>
+            <div class="compliance-reset-row">
+              <el-button type="warning" plain size="small" @click="resetPrivacyAck">
+                重置隐私确认状态
+              </el-button>
+            </div>
+          </div>
+        </div>
       </div>
     </el-card>
+    </div>
 
     <!-- 智能体管理 -->
     <el-card shadow="never" class="config-card agent-management-card">
@@ -795,46 +841,6 @@ async function removeSession(id: number) {
         </article>
       </div>
       <el-empty v-else description="暂无智能体" :image-size="72" />
-    </el-card>
-
-    <!-- 全部会话管理（仅 admin） -->
-    <el-card v-if="isAdmin" shadow="never" class="config-card">
-      <template #header>
-        <div class="card-header"><span>全部会话（管理员视图）</span></div>
-      </template>
-      <el-table :data="aiStore.allSessions" stripe size="small" empty-text="暂无会话">
-        <el-table-column label="标题" min-width="220" show-overflow-tooltip>
-          <template #default="{ row }">
-            <span class="session-title" :title="row.title">{{ row.title }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="所属用户" width="150">
-          <template #default="{ row }">
-            <span class="session-user">{{ row.username || '—' }}</span>
-            <el-tag v-if="row.role" size="small" :type="getRoleTagType(row.role)" effect="plain" style="margin-left: 6px">
-              {{ getRoleLabel(row.role) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="智能体" min-width="180" show-overflow-tooltip>
-          <template #default="{ row }">
-            <span>{{ row.agent_name || row.agent_code }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="message_count" label="消息数" width="80" />
-        <el-table-column label="Token 总量" width="130">
-          <template #default="{ row }">
-            {{ formatTokenCount(row.total_tokens) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="updated_at" label="最后更新" width="160" />
-        <el-table-column label="操作" width="140" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="viewSession(row.id)">查看</el-button>
-            <el-button link type="danger" size="small" @click="removeSession(row.id)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
     </el-card>
 
     <!-- 智能体详情 -->
@@ -1039,13 +1045,6 @@ async function removeSession(id: number) {
       </template>
     </el-dialog>
 
-    <!-- 会话消息查看对话框（admin） -->
-    <el-dialog v-model="sessionMsgVisible" :title="sessionDialogTitle" width="760px">
-      <div class="session-msg-list">
-        <AiChatTranscript :messages="sessionMessages" />
-        <div v-if="sessionMessages.length === 0" class="session-msg-empty">无消息</div>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
@@ -1056,14 +1055,52 @@ async function removeSession(id: number) {
   gap: 16px;
 }
 
+/* 卡片 2+3 两列并排（全局用量与风控 | 业务与合规）：
+   等高拉伸；容器变窄时自动折叠为单列 */
+.config-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.config-card-grid > .config-card {
+  height: 100%;
+}
+
 .config-card {
-  border: 1px solid var(--el-border-color-light, #ebeef5);
+  border: 1px solid var(--scgp-border, #e6ebf2);
+  border-radius: var(--scgp-radius-xl, 22px);
+  box-shadow: var(--scgp-shadow-soft, 0 18px 44px rgba(143, 169, 204, 0.12));
 }
 
 .card-header {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* 供应商卡 header：标题 + Key 状态在左，启用开关在右 */
+.provider-card-header {
+  justify-content: space-between;
+}
+
+.provider-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.provider-card-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.provider-card-switch-label {
+  font-size: 13px;
+  color: var(--el-text-color-regular, #606266);
+  cursor: help;
 }
 
 .agent-management-header {
@@ -1090,35 +1127,136 @@ async function removeSession(id: number) {
   color: var(--el-text-color-secondary, #909399);
 }
 
-.model-table {
-  width: 100%;
-}
-
-/* 默认模型行：下拉框自适应 + 新增模型按钮固定右侧（flex 防换行） */
-.default-model-row {
+/* 业务与合规：两栏布局（左栏固定 120px 标签 + 右栏自适应内容） */
+.compliance-list {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
+  flex-direction: column;
 }
 
-.default-model-row .el-select {
+.compliance-item {
+  display: flex;
+  gap: 16px;
+  padding: 2px 0 6px;
+}
+
+.compliance-label {
+  width: 120px;
+  flex-shrink: 0;
+  text-align: left;
+  padding-right: 12px;
+  font-size: 14px;
+  line-height: 32px; /* 与 Switch 行高对齐，保证标签起点一致 */
+  color: var(--el-text-color-regular, #606266);
+}
+
+.compliance-content {
   flex: 1;
   min-width: 0;
 }
 
-.default-model-row .el-button {
-  flex-shrink: 0;
+.compliance-hint {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--el-text-color-secondary, #909399);
+}
+
+/* 两项之间的极浅分隔线 */
+.compliance-divider {
+  border-top: 1px solid #f0f0f0;
+  margin: 8px 0 16px;
+}
+
+/* 重置操作行：按钮独立行（弹窗内含确认说明，行内不再重复文案） */
+.compliance-reset-row {
+  margin-top: 10px;
+}
+
+.model-table {
+  width: 100%;
+}
+
+/* 表格容器：细边框 + 微圆角，表头贴合圆角 */
+.model-table-wrap {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 表头：浅灰蓝背景 + 次级灰文字 + 加大内边距 */
+.model-table :deep(.el-table__header th) {
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  padding: 10px 0;
+}
+
+/* 行：加大高度 + 极细分隔线 + 最后一行去边框 + hover 高亮 */
+.model-table :deep(.el-table__body td) {
+  padding: 11px 0;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.model-table :deep(.el-table__body tr:last-child td) {
+  border-bottom: none;
+}
+
+.model-table :deep(.el-table__body tr:hover > td.el-table__cell) {
+  background: #f8fafc;
+}
+
+/* 名称列：加粗 */.model-name {
+  font-weight: 500;
+}
+
+/* 模型 ID：等宽字体代码块卡片 */
+.model-id-code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  background: #f1f5f9;
+  color: #475569;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* 能力列：微胶囊 Tag 组（开启 = 浅色实底，未支持 = 灰色描边） */
+.model-capability {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 操作列：按钮组间距 */
+.model-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* 模型清单区块：标题 + 新增按钮（表格右上角操作） */
+.model-list-section {
+  margin-bottom: 18px;
+}
+
+.model-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.model-list-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary, #303133);
 }
 
 .model-option-id {
   margin-left: 8px;
   color: var(--el-text-color-secondary, #909399);
   font-size: 12px;
-}
-
-.model-table :deep(.el-tag + .el-tag) {
-  margin-left: 4px;
 }
 
 .model-status {
@@ -1145,7 +1283,13 @@ async function removeSession(id: number) {
 }
 
 .budget-token-input {
-  width: 260px;
+  width: 100%;
+  max-width: 240px;
+}
+
+/* 卡片底部保存按钮：去掉 el-form-item 默认下边距 */
+.save-row {
+  margin-bottom: 0;
 }
 
 .reference-selection-list {
@@ -1370,18 +1514,6 @@ async function removeSession(id: number) {
   opacity: 0.68;
 }
 
-.session-title {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.session-user {
-  color: var(--el-text-color-primary, #303133);
-  font-weight: 500;
-}
-
 .agent-detail__header {
   display: flex;
   padding-right: 28px;
@@ -1538,18 +1670,5 @@ async function removeSession(id: number) {
   .agent-detail__footer {
     align-items: flex-start;
   }
-}
-
-.session-msg-list {
-  display: flex;
-  flex-direction: column;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.session-msg-empty {
-  text-align: center;
-  color: var(--el-text-color-secondary, #909399);
-  padding: 24px;
 }
 </style>

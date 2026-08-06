@@ -1169,8 +1169,13 @@ export class AIApi extends DatabaseAPI {
     return (row as AiChatSession | undefined) || null
   }
 
-  /** admin 视角：全部会话（LEFT JOIN user 带用户名/角色），不过滤 user_id */
-  listAllSessions(limit = 200): Array<{
+  /** admin 视角：全部会话（LEFT JOIN user 带用户名/角色），不过滤 user_id。
+   * 分页 + 关键字过滤（标题 / 用户名 LIKE）；offset 用于服务端分页。 */
+  listAllSessions(
+    limit = 200,
+    offset = 0,
+    keyword = '',
+  ): Array<{
     id: number
     user_id: number | null
     username: string | null
@@ -1183,6 +1188,14 @@ export class AIApi extends DatabaseAPI {
     created_at: string
     updated_at: string
   }> {
+    const kw = keyword?.trim()
+    const params: Array<string | number> = []
+    let where = ''
+    if (kw) {
+      const like = `%${kw}%`
+      where = 'WHERE s.title LIKE ? OR u.username LIKE ?'
+      params.push(like, like)
+    }
     return this.query(
       `SELECT s.id, s.user_id, u.username, u.role, s.agent_code, a.name AS agent_name, s.title,
               s.student_id,
@@ -1194,10 +1207,31 @@ export class AIApi extends DatabaseAPI {
        FROM ai_chat_session s
        LEFT JOIN user u ON u.id = s.user_id
        LEFT JOIN ai_agent a ON a.code = s.agent_code
+       ${where}
        ORDER BY s.updated_at DESC
-       LIMIT ?`,
-      [limit],
+       LIMIT ? OFFSET ?`,
+      [...params, limit, offset],
     )
+  }
+
+  /** admin 视角：全部会话总数（与 listAllSessions 同过滤条件，供分页） */
+  countAllSessions(keyword = ''): number {
+    const kw = keyword?.trim()
+    const params: Array<string | number> = []
+    let where = ''
+    if (kw) {
+      const like = `%${kw}%`
+      where = 'WHERE s.title LIKE ? OR u.username LIKE ?'
+      params.push(like, like)
+    }
+    const row = this.queryOne(
+      `SELECT COUNT(*) AS total
+       FROM ai_chat_session s
+       LEFT JOIN user u ON u.id = s.user_id
+       ${where}`,
+      params,
+    )
+    return Number(row?.total || 0)
   }
 
   updateSessionTitle(id: number, title: string): void {
