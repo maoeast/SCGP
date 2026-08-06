@@ -465,6 +465,9 @@ export async function dispatchTool(
         // 与 get_assessment（报告列表摘要）互补——本工具返回可量化分数，支撑纵向分析。
         if (!args.student_id) return fail('缺少参数 student_id')
         if (!args.scale_code) return fail('缺少参数 scale_code')
+        // 教师数据隔离：先校验学生可见性（非任教班级学生返回未找到）
+        const scopedStudent = await new StudentAPI().getStudentById(Number(args.student_id))
+        if (!scopedStudent) return fail(`未找到 id=${args.student_id} 的学生或无权访问该学生`)
         const scaleCode = String(args.scale_code)
         const adapter = SCORE_ADAPTERS[scaleCode]
         if (!adapter) {

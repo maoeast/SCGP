@@ -10,6 +10,7 @@
  */
 
 import { DatabaseAPI } from './api'
+import { getCurrentTeacherStudentScope } from './teacher-scope-auth'
 import type { TrainingPlanStoredModuleCode } from '@/utils/training-plan-module'
 
 // ========== 类型定义 ==========
@@ -157,15 +158,18 @@ export class PlanAPI extends DatabaseAPI {
 
   /**
    * 根据 ID 获取计划（不含资源）
+   * 权限控制：老师只能获取自己任教班级学生的计划（否则返回 null）
    */
   getPlanById(id: number): TrainingPlan | null {
-    return this.queryOne(
+    const scope = getCurrentTeacherStudentScope('s')
+    const plan = this.queryOne(
       `SELECT tp.*, s.name as student_name
        FROM sys_training_plan tp
        LEFT JOIN student s ON tp.student_id = s.id
-       WHERE tp.id = ? AND tp.is_active = 1`,
-      [id]
+       WHERE tp.id = ? AND tp.is_active = 1${scope.sql}`,
+      [id, ...scope.params]
     ) as TrainingPlan | null
+    return plan
   }
 
   /**
@@ -203,16 +207,17 @@ export class PlanAPI extends DatabaseAPI {
   }
 
   /**
-   * 获取学生的所有计划
+   * 获取学生的所有计划（教师数据隔离：非任教班级学生返回空列表）
    */
   getStudentPlans(studentId: number): TrainingPlan[] {
+    const scope = getCurrentTeacherStudentScope('s')
     return this.query(
       `SELECT tp.*, s.name as student_name
        FROM sys_training_plan tp
        LEFT JOIN student s ON tp.student_id = s.id
-       WHERE tp.student_id = ? AND tp.is_active = 1
+       WHERE tp.student_id = ? AND tp.is_active = 1${scope.sql}
        ORDER BY tp.created_at DESC`,
-      [studentId]
+      [studentId, ...scope.params]
     ) as TrainingPlan[]
   }
 
@@ -225,13 +230,14 @@ export class PlanAPI extends DatabaseAPI {
     limit?: number
     offset?: number
   }): TrainingPlan[] {
+    const scope = getCurrentTeacherStudentScope('s')
     let sql = `
       SELECT tp.*, s.name as student_name
       FROM sys_training_plan tp
       LEFT JOIN student s ON tp.student_id = s.id
-      WHERE tp.is_active = 1
+      WHERE tp.is_active = 1${scope.sql}
     `
-    const params: any[] = []
+    const params: any[] = [...scope.params]
 
     if (options?.status) {
       sql += ` AND tp.status = ?`
@@ -539,17 +545,20 @@ export class PlanAPI extends DatabaseAPI {
   /**
    * 获取今日已完成的训练资源
    * 返回学生ID和资源ID的组合集合
+   * 教师数据隔离：仅统计任教班级学生的完成记录
    */
   getTodayCompletedResources(): Set<string> {
     const today = new Date().toISOString().split('T')[0]
+    const scope = getCurrentTeacherStudentScope('s')
     const completedSet = new Set<string>()
 
     try {
       const records = this.query(`
-        SELECT DISTINCT student_id, equipment_id as resource_id
-        FROM equipment_training_records
-        WHERE date(training_date) = date(?)
-      `, [today]) as Array<{ student_id: number; resource_id: number }>
+        SELECT DISTINCT tr.student_id, tr.equipment_id as resource_id
+        FROM equipment_training_records tr
+        LEFT JOIN student s ON tr.student_id = s.id
+        WHERE date(tr.training_date) = date(?)${scope.sql}
+      `, [today, ...scope.params]) as Array<{ student_id: number; resource_id: number }>
 
       for (const record of records) {
         completedSet.add(`${record.student_id}-${record.resource_id}`)

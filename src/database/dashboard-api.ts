@@ -1,4 +1,5 @@
 import { DatabaseAPI } from './api'
+import { getCurrentTeacherStudentScope } from './teacher-scope-auth'
 import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import { getTrainingPlanModuleLabel } from '@/utils/training-plan-module'
 
@@ -154,31 +155,37 @@ export class DashboardAPI extends DatabaseAPI {
   }
 
   async getStudentCount(): Promise<number> {
+    const scope = getCurrentTeacherStudentScope('s')
     const row = await this.queryOneAsync(`
       SELECT COUNT(*) AS count
-      FROM student
-    `)
+      FROM student s
+      WHERE 1=1${scope.sql}
+    `, scope.params)
 
     return normalizeNumber(row?.count)
   }
 
   async getCompletedPlanCount(): Promise<number> {
+    const scope = getCurrentTeacherStudentScope('s')
     const row = await this.queryOneAsync(`
       SELECT COUNT(*) AS count
-      FROM sys_training_plan
-      WHERE status = 'completed'
-    `)
+      FROM sys_training_plan tp
+      LEFT JOIN student s ON s.id = tp.student_id
+      WHERE tp.status = 'completed'${scope.sql}
+    `, scope.params)
 
     return normalizeNumber(row?.count)
   }
 
   async getRecentStudents(): Promise<DashboardRecentStudent[]> {
+    const scope = getCurrentTeacherStudentScope('s')
     const rows = await this.queryAsync(`
       SELECT id, name, student_no, avatar_path, created_at
-      FROM student
+      FROM student s
+      WHERE 1=1${scope.sql}
       ORDER BY created_at DESC
       LIMIT 5
-    `)
+    `, scope.params)
 
     return rows.map((row) => ({
       id: normalizeNumber(row.id),
@@ -191,17 +198,19 @@ export class DashboardAPI extends DatabaseAPI {
 
   async getWeeklyTrainingTrend(): Promise<DashboardTrendPoint[]> {
     const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000
+    const scope = getCurrentTeacherStudentScope('s')
     const rows = await this.queryAsync(
       `
         SELECT strftime('%Y-%m-%d', timestamp / 1000, 'unixepoch', 'localtime') AS date,
                COUNT(*) AS count,
                SUM(duration) AS total_duration
-        FROM training_records
-        WHERE timestamp >= ?
+        FROM training_records tr
+        LEFT JOIN student s ON s.id = tr.student_id
+        WHERE tr.timestamp >= ?${scope.sql}
         GROUP BY date
         ORDER BY date ASC
       `,
-      [cutoff],
+      [cutoff, ...scope.params],
     )
 
     const byDate = new Map<string, DashboardTrendPoint>()
@@ -231,6 +240,7 @@ export class DashboardAPI extends DatabaseAPI {
 
   async getTodaySchedule(): Promise<DashboardScheduleItem[]> {
     const today = formatDate(new Date())
+    const scope = getCurrentTeacherStudentScope('s')
     const rows = await this.queryAsync(
       `
         SELECT
@@ -289,7 +299,7 @@ export class DashboardAPI extends DatabaseAPI {
         WHERE tp.is_active = 1
           AND tp.status = 'active'
           AND date(tp.start_date) <= date(?)
-          AND date(tp.end_date) >= date(?)
+          AND date(tp.end_date) >= date(?)${scope.sql}
         GROUP BY
           tp.id,
           tp.name,
@@ -301,7 +311,7 @@ export class DashboardAPI extends DatabaseAPI {
           s.avatar_path
         ORDER BY date(tp.end_date) ASC, datetime(tp.updated_at) DESC
       `,
-      [today, today],
+      [today, today, ...scope.params],
     )
 
     return rows.map((row) => ({
@@ -325,6 +335,7 @@ export class DashboardAPI extends DatabaseAPI {
 
   async getWeeklyAnomalies(): Promise<DashboardAnomalyItem[]> {
     const since = formatDateTime(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+    const scope = getCurrentTeacherStudentScope('s')
     const rows = await this.queryAsync(
       `
         WITH emotional_anomalies AS (
@@ -342,7 +353,7 @@ export class DashboardAPI extends DatabaseAPI {
           FROM emotional_training_session ets
           INNER JOIN student s ON s.id = ets.student_id
           LEFT JOIN emotional_training_detail etd ON etd.session_id = ets.id
-          WHERE datetime(ets.created_at) >= datetime(?)
+          WHERE datetime(ets.created_at) >= datetime(?)${scope.sql}
           GROUP BY
             ets.id,
             ets.student_id,
@@ -370,7 +381,7 @@ export class DashboardAPI extends DatabaseAPI {
         INNER JOIN student s ON s.id = tr.student_id
         WHERE datetime(tr.created_at) >= datetime(?)
           AND COALESCE(tr.module_code, 'sensory') != 'emotional'
-          AND tr.accuracy_rate < 0.5
+          AND tr.accuracy_rate < 0.5${scope.sql}
 
         UNION ALL
 
@@ -394,7 +405,7 @@ export class DashboardAPI extends DatabaseAPI {
 
         ORDER BY created_at DESC
       `,
-      [since, since],
+      [since, ...scope.params, since, ...scope.params],
     )
 
     return rows.map((row) => ({
@@ -421,6 +432,7 @@ export class DashboardAPI extends DatabaseAPI {
     const cutoffDate = new Date()
     cutoffDate.setMonth(cutoffDate.getMonth() - 6)
     const cutoff = formatDateTime(cutoffDate)
+    const scope = getCurrentTeacherStudentScope('s')
     const rows = await this.queryAsync(
       `
         WITH assessment_union AS (
@@ -455,14 +467,14 @@ export class DashboardAPI extends DatabaseAPI {
           la.last_assessment_at
         FROM student s
         LEFT JOIN latest_assessment la ON la.student_id = s.id
-        WHERE la.last_assessment_at IS NULL
-           OR datetime(la.last_assessment_at) < datetime(?)
+        WHERE (la.last_assessment_at IS NULL
+           OR datetime(la.last_assessment_at) < datetime(?))${scope.sql}
         ORDER BY
           CASE WHEN la.last_assessment_at IS NULL THEN 0 ELSE 1 END ASC,
           datetime(la.last_assessment_at) ASC,
           datetime(s.created_at) DESC
       `,
-      [cutoff],
+      [cutoff, ...scope.params],
     )
 
     return rows.map((row) => {

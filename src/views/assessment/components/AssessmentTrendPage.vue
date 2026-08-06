@@ -135,7 +135,7 @@ import { ArrowLeft } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { ASSESSMENT_SCALE_CATALOG } from '@/features/assessment/assessment-scale-catalog'
 import { SCORE_ADAPTERS, type ScoreSnapshot } from '@/services/assessment-score-adapters'
-import { getDatabase } from '@/database/init'
+import { StudentAPI } from '@/database/api'
 import { buildAssessmentReportRoute } from '@/features/assessment/report-routes'
 
 // urlSlug → scaleCode 映射（catalog code 可能含下划线，urlSlug 可能含连字符，二者不总是相同）
@@ -336,11 +336,11 @@ async function loadData() {
       return
     }
 
-    // 加载学生信息
-    const db = getDatabase()
-    const studentResult = db.get('SELECT name, gender FROM student WHERE id = ?', [id])
+    // 加载学生信息（教师数据隔离：getStudentById 已按任教班级过滤，不可见学生直接返回未找到）
+    const studentAPI = new StudentAPI()
+    const studentResult = await studentAPI.getStudentById(id)
     if (!studentResult) {
-      ElMessage.error('学生不存在')
+      ElMessage.error('学生不存在或无权访问')
       router.push('/assessment')
       return
     }

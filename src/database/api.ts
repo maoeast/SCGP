@@ -8,6 +8,7 @@ import type {
 import { resolveTrainingEntryCode, resolveTrainingEntryCodeFromResource } from '@/utils/training-entry';
 import { hashPasswordV1, verifyPasswordRecord } from '@/utils/password-security';
 import { TrainingSessionWriter } from './training-session-writer';
+import { getCurrentTeacherStudentScope } from './teacher-scope-auth';
 import { FINE_MOTOR_QUESTIONS } from './fine-motor-questions';
 import { CNBSR2016_QUESTIONS } from './cnbsr2016-questions';
 import { GMFM_QUESTIONS } from './gmfm88-questions';
@@ -651,6 +652,7 @@ export class StudentAPI extends DatabaseAPI {
   // ==================== 异步方法（Plan B: 主线程防抖保存） ====================
   // 获取所有学生
   async getAllStudents(): Promise<any[]> {
+    const scope = getCurrentTeacherStudentScope('s')
     const result = await this.queryAsync(`
       SELECT
         id,
@@ -664,16 +666,21 @@ export class StudentAPI extends DatabaseAPI {
         current_class_name,
         created_at,
         updated_at
-      FROM student
+      FROM student s
+      WHERE 1=1${scope.sql}
       ORDER BY created_at DESC
-    `);
+    `, scope.params);
     console.log('从数据库查询到的学生:', result)
     return result;
   }
 
-  // 根据ID获取学生
+  // 根据ID获取学生（教师数据隔离：非任教班级学生的档案不可见）
   async getStudentById(id: number): Promise<any | null> {
-    return await this.queryOneAsync('SELECT * FROM student WHERE id = ?', [id]);
+    const scope = getCurrentTeacherStudentScope('s')
+    return await this.queryOneAsync(`
+      SELECT * FROM student s
+      WHERE s.id = ?${scope.sql}
+    `, [id, ...scope.params]);
   }
 
   // 添加学生
@@ -715,6 +722,7 @@ export class StudentAPI extends DatabaseAPI {
 
   // 搜索学生
   async searchStudents(keyword: string): Promise<any[]> {
+    const scope = getCurrentTeacherStudentScope('s')
     return await this.queryAsync(`
       SELECT
         id,
@@ -728,10 +736,10 @@ export class StudentAPI extends DatabaseAPI {
         current_class_name,
         created_at,
         updated_at
-      FROM student
-      WHERE name LIKE ? OR disorder LIKE ? OR student_no LIKE ?
+      FROM student s
+      WHERE (name LIKE ? OR disorder LIKE ? OR student_no LIKE ?)${scope.sql}
       ORDER BY name
-    `, [`%${keyword}%`, `%${keyword}%`, `%${keyword}%`]);
+    `, [`%${keyword}%`, `%${keyword}%`, `%${keyword}%`, ...scope.params]);
   }
 }
 
@@ -2983,6 +2991,7 @@ export class ReportAPI extends DatabaseAPI {
     limit?: number
     offset?: number
   }): any[] {
+    const scope = getCurrentTeacherStudentScope('s')
     let sql = `
       SELECT
         r.*,
@@ -2991,9 +3000,9 @@ export class ReportAPI extends DatabaseAPI {
         s.birthday as student_birthday
       FROM report_record r
       LEFT JOIN student s ON r.student_id = s.id
-      WHERE 1=1
+      WHERE 1=1${scope.sql}
     `
-    const params: any[] = []
+    const params: any[] = [...scope.params]
 
     if (filters?.student_id) {
       sql += ' AND r.student_id = ?'
@@ -3087,11 +3096,13 @@ export class ReportAPI extends DatabaseAPI {
     iep_count: number
     training_count: number
   } {
-    let sql = 'SELECT report_type, COUNT(*) as count FROM report_record'
-    const params: any[] = []
+    let sql = 'SELECT report_type, COUNT(*) as count FROM report_record r'
+    const scope = getCurrentTeacherStudentScope('s')
+    sql += ` LEFT JOIN student s ON r.student_id = s.id WHERE 1=1${scope.sql}`
+    const params: any[] = [...scope.params]
 
     if (studentId) {
-      sql += ' WHERE student_id = ?'
+      sql += ' AND r.student_id = ?'
       params.push(studentId)
     }
 
@@ -3604,6 +3615,7 @@ export class GameTrainingAPI extends DatabaseAPI {
    * 获取最近的训练记录
    */
   getRecentTrainingRecords(limit: number = 10): any[] {
+    const scope = getCurrentTeacherStudentScope('s')
     const records = this.query(`
       SELECT
         tr.id,
@@ -3617,9 +3629,10 @@ export class GameTrainingAPI extends DatabaseAPI {
         tr.created_at
       FROM training_records tr
       LEFT JOIN student s ON tr.student_id = s.id
+      WHERE 1=1${scope.sql}
       ORDER BY tr.timestamp DESC
       LIMIT ?
-    `, [limit])
+    `, [...scope.params, limit])
 
     return records
   }
@@ -3676,6 +3689,7 @@ export class TrainingSessionAPI extends DatabaseAPI {
     limit?: number
     offset?: number
   } = {}): TrainingSessionRecord[] {
+    const scope = getCurrentTeacherStudentScope('s')
     let sql = `
       SELECT
         ts.*,
@@ -3684,9 +3698,9 @@ export class TrainingSessionAPI extends DatabaseAPI {
       FROM training_session ts
       LEFT JOIN student s ON ts.student_id = s.id
       LEFT JOIN sys_training_resource r ON ts.resource_id = r.id
-      WHERE 1 = 1
+      WHERE 1 = 1${scope.sql}
     `
-    const params: any[] = []
+    const params: any[] = [...scope.params]
 
     if (options.studentId !== undefined) {
       sql += ' AND ts.student_id = ?'

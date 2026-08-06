@@ -272,13 +272,30 @@ export class ClassAPI {
 
   /**
    * 获取班级信息
+   * 权限控制：老师只能获取自己负责的班级（非任教班级返回 null）
    */
   getClass(id: number): ClassInfo | null {
     const row = this.db.get(`
       SELECT * FROM sys_class WHERE id = ?
     `, [id])
 
-    return row ? this.mapToClassInfo(row) : null
+    if (!row) return null
+
+    // 教师数据隔离：非任教班级对 teacher 不可见
+    try {
+      const authStore = useAuthStore()
+      if (authStore.isTeacher && authStore.user) {
+        const assigned = this.db.get(
+          'SELECT 1 FROM sys_class_teachers WHERE class_id = ? AND teacher_id = ?',
+          [id, authStore.user.id]
+        )
+        if (!assigned) return null
+      }
+    } catch {
+      // auth store 可能不可用（如初始化阶段），跳过权限检查
+    }
+
+    return this.mapToClassInfo(row)
   }
 
   /**
