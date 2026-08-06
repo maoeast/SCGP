@@ -41,17 +41,6 @@ const apiKeyPlaceholder = computed(() => {
   return `请输入 ${cfg?.providerName || '模型服务'} API Key`
 })
 
-// 能力位（只读标识，来自 provider 行）
-const capabilityTags = computed(() => {
-  const cfg = aiStore.providerConfig
-  const tags: Array<{ label: string; type: 'success' | 'warning' | 'info' }> = []
-  if (!cfg) return tags
-  if (cfg.supportsVision) tags.push({ label: '支持图片', type: 'success' })
-  if (cfg.supportsToolCalls) tags.push({ label: '工具调用', type: 'warning' })
-  if (cfg.supportsThinking) tags.push({ label: '思考模式', type: 'info' })
-  return tags
-})
-
 // 豆包等火山方舟 provider 的 model 是「接入点 ID」（ep-xxx），与 DeepSeek 模型名不同
 const isDoubao = computed(() => aiStore.providerConfig?.activeProviderCode === 'doubao')
 
@@ -540,31 +529,33 @@ async function removeSession(id: number) {
       </template>
 
       <el-form label-width="120px" label-position="right">
-        <el-form-item label="模型服务">
-          <el-select
-            v-model="configForm.activeProviderCode"
-            placeholder="选择模型服务"
-            style="width: 280px"
-            @change="onProviderChange"
-          >
-            <el-option
-              v-for="p in aiStore.providers"
-              :key="p.code"
-              :label="p.name"
-              :value="p.code"
-            >
-              <span>{{ p.name }}</span>
-              <el-tag v-if="!p.enabled" size="small" type="info" style="margin-left: 8px">未启用</el-tag>
-            </el-option>
-          </el-select>
-          <div class="field-hint" style="margin-top: 4px; margin-left: 0">
-            <span>能力：</span>
-            <el-tag v-for="t in capabilityTags" :key="t.label" :type="t.type" size="small" style="margin-right: 6px">
-              {{ t.label }}
-            </el-tag>
-            <span v-if="capabilityTags.length === 0">—</span>
-          </div>
-        </el-form-item>
+        <el-row :gutter="16">
+          <el-col :xs="24" :sm="12">
+            <el-form-item label="模型服务">
+              <el-select
+                v-model="configForm.activeProviderCode"
+                placeholder="选择模型服务"
+                style="width: 100%"
+                @change="onProviderChange"
+              >
+                <el-option
+                  v-for="p in aiStore.providers"
+                  :key="p.code"
+                  :label="p.name"
+                  :value="p.code"
+                >
+                  <span>{{ p.name }}</span>
+                  <el-tag v-if="!p.enabled" size="small" type="info" style="margin-left: 8px">未启用</el-tag>
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="12">
+            <el-form-item label="接口地址">
+              <el-input v-model="configForm.baseUrl" placeholder="https://api.deepseek.com" />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
         <el-row :gutter="16">
           <el-col :xs="24" :sm="12">
@@ -575,17 +566,33 @@ async function removeSession(id: number) {
                 show-password
                 :placeholder="apiKeyPlaceholder"
               />
-              <div class="field-hint">
-                API Key 加密存储于本地数据库，仅在本机解密使用。
-                <el-button v-if="aiStore.isConfigured" link type="danger" size="small" @click="clearApiKey">
-                  清除 Key
-                </el-button>
-              </div>
+              <el-button v-if="aiStore.isConfigured" link type="danger" size="small" @click="clearApiKey">
+                清除 Key
+              </el-button>
             </el-form-item>
           </el-col>
           <el-col :xs="24" :sm="12">
-            <el-form-item label="接口地址">
-              <el-input v-model="configForm.baseUrl" placeholder="https://api.deepseek.com" />
+            <el-form-item label="默认模型">
+              <div class="default-model-row">
+                <el-select
+                  v-model="activeModelCode"
+                  placeholder="选择当前用于对话的模型"
+                  :disabled="aiStore.providerModels.length === 0"
+                >
+                  <el-option
+                    v-for="model in aiStore.providerModels"
+                    :key="model.code"
+                    :label="`${model.name}（${model.modelId}）`"
+                    :value="model.code"
+                    :disabled="!model.enabled"
+                  >
+                    <span>{{ model.name }}</span>
+                    <span class="model-option-id">{{ model.modelId }}</span>
+                    <el-tag v-if="!model.enabled" size="small" type="info">未启用</el-tag>
+                  </el-option>
+                </el-select>
+                <el-button @click="openCreateModel">新增模型</el-button>
+              </div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -615,28 +622,6 @@ async function removeSession(id: number) {
           <span class="field-hint-inline">{{ keyRotationHint }}</span>
         </el-form-item>
         -->
-
-        <el-form-item label="默认模型">
-          <el-select
-            v-model="activeModelCode"
-            placeholder="选择当前用于对话的模型"
-            style="width: 360px"
-            :disabled="aiStore.providerModels.length === 0"
-          >
-            <el-option
-              v-for="model in aiStore.providerModels"
-              :key="model.code"
-              :label="`${model.name}（${model.modelId}）`"
-              :value="model.code"
-              :disabled="!model.enabled"
-            >
-              <span>{{ model.name }}</span>
-              <span class="model-option-id">{{ model.modelId }}</span>
-              <el-tag v-if="!model.enabled" size="small" type="info">未启用</el-tag>
-            </el-option>
-          </el-select>
-          <el-button style="margin-left: 8px" @click="openCreateModel">新增模型</el-button>
-        </el-form-item>
 
         <el-form-item label="模型清单">
           <el-table :data="aiStore.providerModels" size="small" border class="model-table" empty-text="暂无模型">
@@ -697,6 +682,16 @@ async function removeSession(id: number) {
         <el-form-item label="AI 总开关">
           <el-switch v-model="configForm.enabled" />
           <span class="field-hint-inline">全局关闭后所有模型服务不可用</span>
+        </el-form-item>
+
+        <el-form-item label="学生长期记忆">
+          <el-switch
+            :model-value="aiStore.memoryEnabled"
+            @change="(v: string | number | boolean) => aiStore.setMemoryEnabled(Boolean(v))"
+          />
+          <span class="field-hint-inline">
+            启用后：绑定学生的会话将自动总结为「待确认记忆」，教师确认后注入后续对话（记忆外发前会脱敏姓名与敏感信息）
+          </span>
         </el-form-item>
 
         <el-form-item>
@@ -1097,6 +1092,23 @@ async function removeSession(id: number) {
 
 .model-table {
   width: 100%;
+}
+
+/* 默认模型行：下拉框自适应 + 新增模型按钮固定右侧（flex 防换行） */
+.default-model-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.default-model-row .el-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.default-model-row .el-button {
+  flex-shrink: 0;
 }
 
 .model-option-id {

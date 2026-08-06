@@ -6,6 +6,7 @@ import { Close, Paperclip, Promotion, Setting, Tickets } from '@element-plus/ico
 import type { AiAttachmentRef } from '@/database/ai-api'
 import type { ToolArtifact } from '@/services/ai-tools'
 import { useAiStore } from '@/stores/ai'
+import { useStudentStore } from '@/stores/student'
 import { getBuiltinAgentPreset } from '@/data/ai-agent-presets'
 import AiAgentAvatar from '@/features/ai/components/AiAgentAvatar.vue'
 import AiAssistantFloatingButton from '@/features/ai/components/AiAssistantFloatingButton.vue'
@@ -21,6 +22,7 @@ import {
 const router = useRouter()
 const route = useRoute()
 const aiStore = useAiStore()
+const studentStore = useStudentStore()
 
 const drawerVisible = ref(false)
 const inputText = ref('')
@@ -61,6 +63,51 @@ const budgetPercent = computed(() => {
   if (budget <= 0) return 0
   return Math.min(100, Math.round((aiStore.monthUsage.totalTokens / budget) * 100))
 })
+
+// ===== 会话绑定学生（M4/M5：长期记忆） =====
+const boundStudentId = ref<number | null>(null)
+const sessionLocked = ref(false)
+
+/** 学生下拉选项（服务团队视角：全校学生，绑定后记忆权限在 store 层过滤） */
+const studentOptions = computed(() =>
+  (studentStore.students || []).map((s) => ({
+    id: s.id,
+    label: `${s.name}${s.current_class_name ? `（${s.current_class_name}）` : ''}`,
+  })),
+)
+
+/** 当前会话绑定的学生（刷新时从 store 读） */
+function refreshBoundStudent() {
+  const sid = aiStore.currentSessionId
+  if (!sid) {
+    boundStudentId.value = null
+    sessionLocked.value = false
+    return
+  }
+  boundStudentId.value = aiStore.getSessionStudentId(sid)
+  // 锁定条件：存在任一消息（库级绑定也按此拒绝）
+  sessionLocked.value = aiStore.currentMessages.length > 0
+}
+
+function handleBindStudent(value: number | '' | null | undefined) {
+  const sid = aiStore.currentSessionId
+  if (!sid) return
+  const studentId = value == null || value === '' ? null : Number(value)
+  if (studentId == null) return // 解绑不开放（库级语义：可绑定不可解绑），保持现状
+  if (aiStore.bindSessionStudent(sid, studentId)) {
+    boundStudentId.value = studentId
+    ElMessage.success('已绑定学生，后续对话将自动总结为该学生的长期记忆')
+  } else {
+    ElMessage.warning('该会话已有消息，绑定已锁定；如需改绑请新建会话')
+    refreshBoundStudent()
+  }
+}
+
+// 会话切换/新建时刷新绑定状态
+watch(
+  () => [aiStore.currentSessionId, aiStore.currentMessages.length],
+  () => refreshBoundStudent(),
+)
 
 const supportsVision = computed(() => !!aiStore.providerConfig?.supportsVision)
 const enabledModels = computed(() => aiStore.providerModels.filter((model) => model.enabled))
@@ -145,6 +192,7 @@ watch(
 
 async function openDrawer(agentCode?: string, sessionId?: number) {
   if (!aiStore.providerConfig || aiStore.agents.length === 0) await aiStore.loadAll()
+  if (studentStore.students.length === 0) await studentStore.loadStudents()
   if (sessionId) {
     await aiStore.selectSession(sessionId)
   } else if (agentCode) {
@@ -156,6 +204,7 @@ async function openDrawer(agentCode?: string, sessionId?: number) {
     aiStore.selectAgent(agentCode)
   }
   drawerVisible.value = true
+  refreshBoundStudent()
   scrollToBottom()
 }
 
@@ -492,6 +541,29 @@ async function confirmDeleteSession(id: number) {
           </div>
         </el-collapse-item>
       </el-collapse>
+
+      <!-- 会话绑定学生（M4/M5：绑定后记忆自动总结注入；已有消息后锁定） -->
+      <div v-if="aiStore.currentSessionId && aiStore.memoryEnabled" class="ai-memory-bindbar">
+        <el-select
+          :model-value="boundStudentId"
+          placeholder="绑定学生（启用长期记忆）"
+          size="small"
+          clearable
+          filterable
+          :disabled="sessionLocked"
+          style="width: 100%"
+          @change="handleBindStudent"
+        >
+          <el-option
+            v-for="stu in studentOptions"
+            :key="stu.id"
+            :label="stu.label"
+            :value="stu.id"
+          />
+        </el-select>
+        <span v-if="sessionLocked" class="ai-memory-bindbar__lock">已有消息，绑定已锁定（如需改绑请新建会话）</span>
+        <span v-else class="ai-memory-bindbar__hint">绑定后，对话将自动总结为该学生的长期记忆</span>
+      </div>
 
       <!-- 消息列表 -->
       <el-scrollbar ref="scrollRef" class="ai-msg-scroll">
@@ -837,6 +909,31 @@ async function confirmDeleteSession(id: number) {
   flex-direction: column;
   height: 100%;
   min-height: 0;
+}
+
+.ai-memory-bindbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter, #e4e7ed);
+  background: var(--el-fill-color-light, #f5f7fa);
+}
+
+.ai-memory-bindbar__lock,
+.ai-memory-bindbar__hint {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--el-text-color-secondary, #909399);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.ai-memory-bindbar__lock {
+  color: var(--el-color-warning, #e6a23c);
 }
 
 .ai-session-collapse {

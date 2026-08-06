@@ -100,6 +100,61 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
   const crtApi = new CRTAssessmentAPI()
   const cognitiveSelfApi = new CognitiveSelfAssessmentAPI()
 
+  // ===== 量表级 level_code 英文键 → 中文标签（避免技术术语直出；delayed 等键各量表语义不同须局部映射） =====
+  // cognitive_self（视知觉图形匹配筛查）
+  const COGNITIVE_SELF_LEVEL_LABELS: Record<string, string> = {
+    stable: '整体稳定',
+    boundary: '较难题目吃力',
+    inconsistent: '表现不稳定',
+    unreadable: '结果不参考',
+    floor_risk: '基础未完成',
+    ceiling_risk: '上限未测出',
+  }
+  // CRT（瑞文推理）：中文标签取自 crt-data 的 level 字段
+  const CRT_LEVEL_LABELS: Record<string, string> = {
+    delayed: '明显落后',
+    borderline: '边缘水平',
+    average: '典型水平',
+    high_average: '中上水平',
+    superior: '优秀',
+    very_superior: '极优秀',
+  }
+  // BRIEF（执行功能）：中文标签取自 brief-data 的 level 字段
+  const BRIEF_LEVEL_LABELS: Record<string, string> = {
+    typical: '良好',
+    slightly_elevated: '轻度风险',
+    elevated: '中度风险',
+    clinically_significant: '显著风险',
+  }
+  // TGMD-3（粗大动作）：中文标签取自 feedbackConfig 的 title 字段
+  const TGMD3_LEVEL_LABELS: Record<string, string> = {
+    emerging_skills: '技能萌芽期',
+    developing_skills: '稳步成长期',
+    proficient_skills: '展翅飞跃期',
+  }
+  function formatMappedLevel(value: unknown, map: Record<string, string>): string {
+    if (!value) return '-'
+    const normalized = String(value)
+    return map[normalized] || normalized
+  }
+  function formatCognitiveSelfLevel(value: unknown): string {
+    return formatMappedLevel(value, COGNITIVE_SELF_LEVEL_LABELS)
+  }
+  function formatCognitiveSelfAccuracy(value: unknown): string {
+    const number = Number(value)
+    if (Number.isNaN(number)) return String(value)
+    // 库内为 0~1 小数；防御：若已存百分数（>1）则直接用
+    const percent = number <= 1 ? Math.round(number * 100) : Math.round(number)
+    return `${percent}%`
+  }
+  function formatCognitiveSelfRt(value: unknown): string {
+    const number = Number(value)
+    if (Number.isNaN(number)) return String(value)
+    // 库内为毫秒；防御：若已存秒（<1 或明显偏小）则直接用
+    const seconds = number >= 100 ? number / 1000 : number
+    return `${seconds.toFixed(1)}s`
+  }
+
   const smRecords = smApi.getStudentAssessments(studentId).map((record: any) => ({
     id: `sm-${record.id}`,
     studentId,
@@ -259,7 +314,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     scaleType: 'tgmd_3' as const,
     scaleLabel: SCALE_LABEL_MAP.tgmd_3,
     scoreText: `总分 ${formatNullableNumber(record.total_score)} / 常模 ${formatNullableNumber(record.total_level)}级`,
-    levelText: formatLevel(record.level_code || record.level),
+    levelText: formatMappedLevel(record.level_code || record.level, TGMD3_LEVEL_LABELS),
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))
 
@@ -270,7 +325,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     scaleType: 'brief' as const,
     scaleLabel: SCALE_LABEL_MAP.brief,
     scoreText: `原始 ${formatNullableNumber(record.total_raw_score)} / T ${formatNullableNumber(record.total_t_score)}`,
-    levelText: formatLevel(record.level_code || record.level),
+    levelText: formatMappedLevel(record.level_code || record.level, BRIEF_LEVEL_LABELS),
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))
 
@@ -281,7 +336,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     scaleType: 'crt' as const,
     scaleLabel: SCALE_LABEL_MAP.crt,
     scoreText: `原始 ${formatNullableNumber(record.total_raw_score)}/${formatNullableNumber(record.total_questions)} / IQ ${formatNullableNumber(record.iq_estimate)}`,
-    levelText: formatLevel(record.level_code || record.level),
+    levelText: formatMappedLevel(record.level_code || record.level, CRT_LEVEL_LABELS),
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))
 
@@ -291,8 +346,8 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     assessId: record.id,
     scaleType: 'cognitive_self' as const,
     scaleLabel: SCALE_LABEL_MAP.cognitive_self,
-    scoreText: `正确率 ${formatNullableNumber(record.accuracy_rate)}% / 反应时 ${formatNullableNumber(record.avg_response_time)}ms`,
-    levelText: formatLevel(record.level_code || record.level),
+    scoreText: `正确率 ${formatCognitiveSelfAccuracy(record.accuracy_rate)} / 反应时 ${formatCognitiveSelfRt(record.avg_response_time)}`,
+    levelText: formatCognitiveSelfLevel(record.level_code || record.level),
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))
 

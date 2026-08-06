@@ -95,7 +95,7 @@ test('AI 悬浮入口使用独立组件提供固定圆形表情和左侧提示',
   assert.match(assistantSource, /import AiAssistantFloatingButton from '@\/features\/ai\/components\/AiAssistantFloatingButton\.vue'/)
   assert.match(
     assistantSource,
-    /<AiAssistantFloatingButton v-if="!drawerVisible" @open="openDrawer\(\)" \/>/,
+    /<AiAssistantFloatingButton v-if="!drawerVisible && !isImmersiveRoute" @open="openDrawer\(\)" \/>/,
   )
   assert.doesNotMatch(assistantSource, /class="ai-fab"/)
 

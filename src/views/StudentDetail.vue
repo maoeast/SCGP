@@ -66,6 +66,17 @@
             <span class="fact-card__label">学号</span>
             <StudentId class="fact-card__value fact-card__value--mono" :id="student?.student_no" :full="true" />
           </article>
+
+          <!-- AI 记忆（服务团队共享；管理员启用后显示；内嵌确认流） -->
+          <article v-if="aiStore.memoryEnabled" class="fact-card fact-card--wide fact-card--memory">
+            <div class="fact-card__memory-head">
+              <span class="fact-card__label">AI 记忆</span>
+              <span class="fact-card__memory-count">
+                待确认 {{ memoryPendingCount }} · 已确认 {{ memoryConfirmedCount }}
+              </span>
+            </div>
+            <StudentMemoryPanel :student-id="student?.id ?? 0" compact />
+          </article>
         </div>
       </article>
 
@@ -161,11 +172,6 @@
               @view-detail="viewGameRecord"
             />
           </el-tab-pane>
-
-          <!-- M4：AI 记忆（服务团队共享，权限在组件内门控） -->
-          <el-tab-pane label="AI 记忆" name="memory" lazy>
-            <StudentMemoryPanel :student-id="student.id" />
-          </el-tab-pane>
         </el-tabs>
       </div>
     </section>
@@ -201,7 +207,7 @@ import EquipmentRecordsPanel from '@/views/training-records/components/Equipment
 import GameRecordsPanel from '@/views/training-records/components/GameRecordsPanel.vue'
 import StudentMemoryPanel from '@/views/student-detail/components/StudentMemoryPanel.vue'
 
-type DetailTab = 'assessments' | 'equipment' | 'games' | 'memory'
+type DetailTab = 'assessments' | 'equipment' | 'games'
 
 const TAB_META: Record<DetailTab, { title: string; badge: string; description: string }> = {
   assessments: {
@@ -219,16 +225,12 @@ const TAB_META: Record<DetailTab, { title: string; badge: string; description: s
     badge: '游戏训练',
     description: '查看游戏或情绪训练中的正确率、平均响应时间与训练详情。',
   },
-  memory: {
-    title: 'AI 记忆',
-    badge: 'AI 记忆',
-    description: '确认 AI 总结的学生事实候选，管理与查看已确认的长期记忆。',
-  },
 }
 
 const router = useRouter()
 const route = useRoute()
 const studentStore = useStudentStore()
+const aiStore = useAiStore()
 
 const loading = ref(false)
 const student = ref<Student | null>(null)
@@ -239,6 +241,7 @@ const assessmentCount = ref(0)
 const equipmentCount = ref(0)
 const gameCount = ref(0)
 const memoryPendingCount = ref(0)
+const memoryConfirmedCount = ref(0)
 
 const currentClassLabel = computed(() => student.value?.current_class_name || '未分班')
 const detailFacts = computed(() => [
@@ -271,14 +274,6 @@ const detailMetrics = computed(() => [
     hint: '游戏表现与情绪会话',
     glyph: '游',
     tone: 'games',
-  },
-  {
-    key: 'memory' as const,
-    label: 'AI 记忆',
-    value: memoryPendingCount.value,
-    hint: '待确认的 AI 记忆候选',
-    glyph: '忆',
-    tone: 'memory',
   },
 ])
 const activeTabMeta = computed(() => TAB_META[activeTab.value])
@@ -395,14 +390,14 @@ async function loadStudentDetail() {
       gameCount.value = 0
     }
 
-    // M4：AI 记忆待确认数（仅服务团队可见；权限在 store 层过滤）
+    // AI 记忆计数（待确认/已确认；仅服务团队可见；权限在 store 层过滤）
     try {
-      const aiStore = useAiStore()
-      const pending = aiStore.listStudentMemories(studentId, ['pending'])
-      memoryPendingCount.value = pending.length
+      memoryPendingCount.value = aiStore.listStudentMemories(studentId, ['pending']).length
+      memoryConfirmedCount.value = aiStore.listStudentMemories(studentId, ['confirmed']).length
     } catch (error) {
       console.error('加载 AI 记忆计数失败:', error)
       memoryPendingCount.value = 0
+      memoryConfirmedCount.value = 0
     }
   } catch (error) {
     console.error('加载学生详情失败:', error)
@@ -603,6 +598,24 @@ watch(
 
 .fact-card--wide {
   grid-column: 1 / -1;
+}
+
+.fact-card--memory {
+  background: linear-gradient(180deg, #f6f9ff 0%, #fbfcfe 100%);
+  border-color: var(--detail-border);
+}
+
+.fact-card__memory-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fact-card__memory-count {
+  font-size: 12px;
+  color: var(--detail-soft);
+  white-space: nowrap;
 }
 
 .fact-card__label {

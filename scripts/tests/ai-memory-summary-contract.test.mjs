@@ -99,7 +99,7 @@ test('记忆注入：confirmed + 未过期 + 排序 + 安全声明', () => {
   assert.match(block, /不向用户复述记忆全文/)
 })
 
-test('sendChat 接入：总结触发 + 注入 + 开关默认关', () => {
+test('sendChat 接入：总结触发 + 注入 + 开关默认开', () => {
   const src = readProjectFile('src/stores/ai.ts')
   // 两处触发（tool + 流式）
   const triggers = (src.match(/void finalizeAssistantTurn\(sessionId\)/g) || []).length
@@ -107,8 +107,8 @@ test('sendChat 接入：总结触发 + 注入 + 开关默认关', () => {
   // 注入进 systemPrompt
   assert.match(src, /const memoryInjection = buildMemoryInjection\(sessionId\)/)
   assert.match(src, /systemPrompt = memoryInjection \?/)
-  // 开关默认关闭
-  assert.match(src, /const memoryEnabled = ref\(false\)/)
+  // 开关默认开启（管理员可关闭）
+  assert.match(src, /const memoryEnabled = ref\(true\)/)
 })
 
 // ==================== 3. store 导出 ====================

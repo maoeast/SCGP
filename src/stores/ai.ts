@@ -1000,8 +1000,8 @@ export const useAiStore = defineStore('ai', () => {
 
   // ==================== 学生级长期记忆 · 总结与注入（M2，v4.1 §6/§7） ====================
 
-  /** 学校级记忆总开关（系统管理可配；默认关闭，管理员启用，v4.1 §8） */
-  const memoryEnabled = ref(false)
+  /** 学校级记忆总开关（系统管理可配；默认开启，管理员可关闭，v4.1 §8） */
+  const memoryEnabled = ref(true)
 
   /**
    * finalizeAssistantTurn：assistant 消息 completed 后的记忆总结入口（v4.1 §6.1）。
@@ -1173,8 +1173,35 @@ export const useAiStore = defineStore('ai', () => {
         )
         await finalizeAssistantTurn(sid)
       }
+      // M5：治理随补偿任务运行（归档/配额/清理）
+      runMemoryGovernance()
     } catch (e) {
       console.warn('[AIMemory] runMemoryCompensation 失败:', e)
+    }
+  }
+
+  /**
+   * 记忆治理任务（v4.1 §11/§13，M5）：随补偿任务运行。
+   * - pending 30 天自动归档；
+   * - confirmed 分类配额淘汰（关键项保护）；
+   * - 非有效状态 365 天 / 每生 500 条清理；
+   * - 总结批次保留清理（cancelled 30 / failed 90 / done 180 或每会话 20 批）。
+   */
+  function runMemoryGovernance(): void {
+    try {
+      if (!memoryEnabled.value) return
+      const a = api()
+      const archived = a.archiveStalePending(30)
+      const quotaArchived = a.enforceConfirmedQuota()
+      const purged = a.purgeInactiveMemories(365, 500)
+      const batchesPurged = a.purgeSummaryBatches()
+      if (archived + quotaArchived + purged + batchesPurged > 0) {
+        console.info(
+          `[AIMemory] 治理完成：pending 归档 ${archived}，配额淘汰 ${quotaArchived}，历史清理 ${purged}，批次清理 ${batchesPurged}`,
+        )
+      }
+    } catch (e) {
+      console.warn('[AIMemory] runMemoryGovernance 失败:', e)
     }
   }
 
@@ -1278,6 +1305,7 @@ export const useAiStore = defineStore('ai', () => {
     },
     finalizeAssistantTurn,
     runMemoryCompensation,
+    runMemoryGovernance,
     bindSessionStudent: (sessionId: number, studentId: number) => api().bindSessionStudent(sessionId, studentId),
     getSessionStudentId: (sessionId: number) => api().getSessionStudentId(sessionId),
     listStudentMemories: (studentId: number, statuses?: AiMemoryStatus[]) => {

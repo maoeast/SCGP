@@ -105,6 +105,44 @@ test('6. G 源 student-detail 覆盖所有 catalog 量表的 builder（含补齐
   assert.ok(/ASSESSMENT_SCALE_CATALOG\s*\.flatMap/.test(source), 'G 源未用 catalog flatMap 合并')
 })
 
+test('6a. cognitive_self 关键信息：正确率 ×100 / 反应时转秒 / 结论中文化（防回归）', () => {
+  const source = readFileSync(resolve(projectRoot, 'src/views/student-detail/assessment-records.ts'), 'utf8')
+  // 正确率：0~1 小数转百分数（×100），不再直接拼 %
+  assert.match(source, /const percent = number <= 1 \? Math\.round\(number \* 100\) : Math\.round\(number\)/)
+  assert.doesNotMatch(source, /formatNullableNumber\(record\.accuracy_rate\)%/)
+  // 反应时：毫秒转秒（÷1000），单位 s
+  assert.match(source, /const seconds = number >= 100 \? number \/ 1000 : number/)
+  assert.doesNotMatch(source, /avg_response_time\)\}ms/)
+  // 结论：英文判定键 → 中文标签（Ceiling/inconsistent 等不直出）
+  assert.match(source, /ceiling_risk: '上限未测出'/)
+  assert.match(source, /inconsistent: '表现不稳定'/)
+  assert.match(source, /floor_risk: '基础未完成'/)
+  assert.match(source, /formatCognitiveSelfLevel\(record\.level_code \|\| record\.level\)/)
+})
+
+test('6b. CRT/BRIEF/TGMD-3 结论中文化（high_average/typical/emerging_skills 等不直出）', () => {
+  const source = readFileSync(resolve(projectRoot, 'src/views/student-detail/assessment-records.ts'), 'utf8')
+  // CRT：6 级全映射 + delayed 用 CRT 语义（非通用"智力发育障碍"）
+  assert.match(source, /high_average: '中上水平'/)
+  assert.match(source, /superior: '优秀'/)
+  assert.match(source, /very_superior: '极优秀'/)
+  assert.match(source, /delayed: '明显落后'/)
+  assert.match(source, /average: '典型水平'/)
+  // BRIEF：4 级全映射
+  assert.match(source, /typical: '良好'/)
+  assert.match(source, /slightly_elevated: '轻度风险'/)
+  assert.match(source, /elevated: '中度风险'/)
+  assert.match(source, /clinically_significant: '显著风险'/)
+  // TGMD-3：3 级全映射
+  assert.match(source, /emerging_skills: '技能萌芽期'/)
+  assert.match(source, /developing_skills: '稳步成长期'/)
+  assert.match(source, /proficient_skills: '展翅飞跃期'/)
+  // 三个 builder 均走局部映射，不再用通用 formatLevel 直出 level_code
+  assert.match(source, /levelText: formatMappedLevel\(record\.level_code \|\| record\.level, CRT_LEVEL_LABELS\)/)
+  assert.match(source, /levelText: formatMappedLevel\(record\.level_code \|\| record\.level, BRIEF_LEVEL_LABELS\)/)
+  assert.match(source, /levelText: formatMappedLevel\(record\.level_code \|\| record\.level, TGMD3_LEVEL_LABELS\)/)
+})
+
 test('7. 报告路由 name 集合 === catalog reportRouteName 集合，CSIRSHistory 不在生成集', () => {
   const { catalog, assessmentReportRoutes } = loadModules()
   const recordNames = assessmentReportRoutes.assessmentReportRouteRecords.map((r) => r.name).sort()

@@ -13,7 +13,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAiStore } from '@/stores/ai'
 import type { AiStudentMemory, AiMemoryStatus } from '@/database/ai-api'
 
-const props = defineProps<{ studentId: number }>()
+const props = defineProps<{ studentId: number; compact?: boolean }>()
 
 const aiStore = useAiStore()
 
@@ -148,11 +148,49 @@ watch(() => props.studentId, load)
 </script>
 
 <template>
-  <div class="student-memory-panel" v-loading="loading">
+  <div class="student-memory-panel" v-loading="loading" :class="{ 'student-memory-panel--compact': props.compact }">
     <!-- 无权限（非服务团队） -->
     <el-empty v-if="!canAccess" description="您不是该学生的服务团队教师，无权查看 AI 记忆" />
 
-    <!-- 有权限 -->
+    <!-- 有权限：紧凑模式（左侧学生信息卡片内嵌） -->
+    <template v-else-if="props.compact">
+      <div v-if="filtered.length === 0" class="memory-empty memory-empty--compact">
+        <span class="memory-empty__text">
+          {{ pendingCount === 0 ? '暂无待确认记忆' : '加载中…' }}
+        </span>
+      </div>
+      <div v-else class="memory-list memory-list--compact">
+        <div
+          v-for="memory in filtered"
+          :key="memory.id"
+          class="memory-item memory-item--compact"
+        >
+          <div class="memory-item__head">
+            <el-tag :type="categoryTagType(memory.category)" size="small">
+              {{ CATEGORY_LABELS[memory.category] ?? memory.category }}
+            </el-tag>
+            <el-tag v-if="memory.priority !== 'normal'" :type="priorityTagType(memory.priority)" size="small" effect="dark">
+              {{ memory.priority === 'safety_critical' ? '关键' : '置顶' }}
+            </el-tag>
+            <el-tag v-if="memory.confidence === 'assumed'" size="small" type="warning" effect="plain">推断</el-tag>
+          </div>
+          <p class="memory-item__content">{{ memory.content }}</p>
+          <div class="memory-item__actions">
+            <template v-if="memory.status === 'pending'">
+              <el-button type="success" size="small" @click="confirmMemory(memory, 'confirmed')">确认</el-button>
+              <el-button type="info" size="small" @click="confirmMemory(memory, 'rejected')">拒绝</el-button>
+            </template>
+            <template v-else-if="memory.status === 'confirmed'">
+              <el-button size="small" @click="markPriority(memory, 'pinned')">置顶</el-button>
+              <el-button size="small" @click="markPriority(memory, 'safety_critical')">标记关键</el-button>
+              <el-button type="danger" size="small" plain @click="deleteMemory(memory)">删除</el-button>
+            </template>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- 有权限：完整模式（原 tab 版） -->
     <template v-else>
       <div class="memory-toolbar">
         <el-radio-group v-model="activeStatus" size="small" @change="load">
@@ -226,6 +264,33 @@ watch(() => props.studentId, load)
 <style scoped>
 .student-memory-panel {
   min-height: 200px;
+}
+
+.student-memory-panel--compact {
+  min-height: 0;
+  margin-top: 8px;
+}
+
+.memory-empty--compact {
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--el-text-color-secondary, #909399);
+}
+
+.memory-list--compact {
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.memory-item--compact {
+  padding: 8px 10px;
+}
+
+.memory-item--compact .memory-item__content {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .memory-toolbar {

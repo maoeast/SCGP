@@ -1667,13 +1667,154 @@ export class AIApi extends DatabaseAPI {
     return map
   }
 
-  /** 学校级记忆总开关（v4.1 §8，M4）：system_config KV，默认关闭，管理员启用 */
+  /**
+   * 学校级记忆总开关（v4.1 §8，M4）：system_config KV，默认开启，管理员可关闭。
+   * 未配置（新部署）与 '1' → 开；显式 '0'（管理员关闭过）→ 关。
+   */
   getMemoryEnabled(): boolean {
-    return this.getConfig('ai:memory_enabled') === '1'
+    return this.getConfig('ai:memory_enabled') !== '0'
   }
 
   setMemoryEnabled(enabled: boolean): void {
     this.setConfig('ai:memory_enabled', enabled ? '1' : '0')
+  }
+
+  // ==================== 治理任务（v4.1 §11/§13，M5） ====================
+
+  /**
+   * pending 30 天未处理自动归档（v4.1 §11）：
+   * 返回归档条数。超期 pending → archived（可回溯，不删除）。
+   */
+  archiveStalePending(days = 30): number {
+    return this.execute(
+      `UPDATE ai_student_memory SET status = 'archived', updated_at = CURRENT_TIMESTAMP
+       WHERE status = 'pending' AND deleted_at IS NULL
+         AND created_at < datetime('now', ?)`,
+      [`-${days} days`],
+    )
+  }
+
+  /**
+   * confirmed 配额淘汰（v4.1 §11）：按分类配额，超限时淘汰最旧（archived/superseded/rejected 优先清理已在
+   * 单独步骤；此处处理 confirmed 超配额：safety_critical/pinned 保护不淘汰）。
+   * 返回淘汰条数。
+   */
+  enforceConfirmedQuota(quotas: Record<string, number> = {
+    observation: 100,
+    preference: 50,
+    advice_given: 50,
+    follow_up: 50,
+  }): number {
+    let total = 0
+    for (const [category, quota] of Object.entries(quotas)) {
+      // 按学生分组：同生同分类 confirmed 超配额 → 取最旧（排除关键项）降级为 archived
+      const rows = this.query(
+        `SELECT id FROM ai_student_memory
+         WHERE student_id IN (
+           SELECT student_id FROM ai_student_memory
+           WHERE status = 'confirmed' AND deleted_at IS NULL AND category = ? AND priority = 'normal'
+           GROUP BY student_id HAVING COUNT(*) > ?
+         )
+           AND status = 'confirmed' AND deleted_at IS NULL AND category = ? AND priority = 'normal'
+         ORDER BY effective_at ASC`,
+        [category, quota, category],
+      )
+      // 每生保留最近 quota 条；超出部分（按时间最旧）归档
+      const kept: Record<number, number> = {}
+      for (const row of rows) {
+        const sid = Number(row.student_id)
+        kept[sid] = (kept[sid] ?? 0) + 1
+      }
+      const toArchive = rows.filter((row) => {
+        const sid = Number(row.student_id)
+        if ((kept[sid] ?? 0) <= quota) return false
+        kept[sid]!--
+        return true
+      })
+      for (const row of toArchive) {
+        this.execute(
+          `UPDATE ai_student_memory SET status = 'archived', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+          [row.id],
+        )
+        total++
+      }
+    }
+    return total
+  }
+
+  /**
+   * 非有效状态清理（v4.1 §11）：rejected/superseded/archived 保留 365 天或每生历史 ≤500 条，
+   * 超限物理清理（审计保留）。
+   */
+  purgeInactiveMemories(days = 365, perStudentCap = 500): number {
+    // 超期清理
+    const expired = this.execute(
+      `DELETE FROM ai_student_memory
+       WHERE status IN ('rejected', 'superseded', 'archived')
+         AND updated_at < datetime('now', ?)`,
+      [`-${days} days`],
+    )
+    // 每生历史超 500 条：删最旧非有效（保留最近 500）
+    let overflow = 0
+    const students = this.query(
+      `SELECT student_id FROM ai_student_memory
+       WHERE status IN ('rejected', 'superseded', 'archived')
+       GROUP BY student_id HAVING COUNT(*) > ?`,
+      [perStudentCap],
+    )
+    for (const row of students) {
+      const sid = Number(row.student_id)
+      const excess = this.query(
+        `SELECT id FROM ai_student_memory
+         WHERE student_id = ? AND status IN ('rejected', 'superseded', 'archived')
+         ORDER BY updated_at DESC LIMIT -1 OFFSET ?`,
+        [sid, perStudentCap],
+      )
+      for (const r of excess) {
+        this.execute('DELETE FROM ai_student_memory WHERE id = ?', [r.id])
+        overflow++
+      }
+    }
+    return expired + overflow
+  }
+
+  /**
+   * 批次保留清理（v4.1 §6.2）：cancelled 30 天 / failed 90 天 / done 180 天或每会话最近 20 批。
+   * 返回清理条数（done 保留最近 20 批，其余按时间）。
+   */
+  purgeSummaryBatches(): number {
+    let total = 0
+    total += this.execute(
+      `DELETE FROM ai_memory_summary_batch
+       WHERE state = 'cancelled' AND updated_at < datetime('now', '-30 days')`,
+    )
+    total += this.execute(
+      `DELETE FROM ai_memory_summary_batch
+       WHERE state = 'failed' AND updated_at < datetime('now', '-90 days')`,
+    )
+    total += this.execute(
+      `DELETE FROM ai_memory_summary_batch
+       WHERE state = 'done' AND updated_at < datetime('now', '-180 days')`,
+    )
+    // 每会话最近 20 批之外的 done 也清理
+    const sessions = this.query(
+      `SELECT session_id FROM ai_memory_summary_batch
+       WHERE state = 'done' GROUP BY session_id HAVING COUNT(*) > 20`,
+    )
+    for (const row of sessions) {
+      const sid = Number(row.session_id)
+      const excess = this.query(
+        `SELECT id FROM ai_memory_summary_batch
+         WHERE session_id = ? AND state = 'done'
+         ORDER BY updated_at DESC LIMIT -1 OFFSET 20`,
+        [sid],
+      )
+      for (const r of excess) {
+        this.execute('DELETE FROM ai_memory_summary_batch WHERE id = ?', [r.id])
+        total++
+      }
+    }
+    return total
   }
 
   private writeMemoryAudit(
