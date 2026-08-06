@@ -128,7 +128,7 @@ const mockData: MockTableData = {
     { id: 1, key: 'system_name', value: '星愿能力发展训练系统', description: '系统名称' },
     { id: 2, key: 'system_version', value: '1.0.1', description: '系统版本' },
     { id: 3, key: 'login_theme_variant', value: 'calm-blue', description: '登录页主题预设' },
-    { id: 4, key: 'theme_primary_color', value: '#4FB3BF', description: '登录页主色' },
+    { id: 4, key: 'theme_primary_color', value: '#3C9BA6', description: '登录页主色' },
     { id: 5, key: 'login_logo_path', value: '', description: '登录页 Logo' },
     { id: 6, key: 'brand_panel_description', value: '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。', description: '登录页品牌说明' },
     { id: 7, key: 'login_theme_backgrounds', value: '{"warm-glow":{"image":"resource://login-backgrounds/warm-glow/background.jpg","video":"resource://login-backgrounds/warm-glow/background.mp4"},"calm-blue":{"image":"resource://login-backgrounds/calm-blue/background.jpg","video":"resource://login-backgrounds/calm-blue/background.mp4"},"lush-green":{"image":"resource://login-backgrounds/lush-green/background.jpg","video":"resource://login-backgrounds/lush-green/background.mp4"},"custom":{"image":"","video":""}}', description: '登录页主题背景媒体' },

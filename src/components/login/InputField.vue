@@ -112,8 +112,8 @@ defineExpose({
 
 .input-field__input:focus {
   outline: none;
-  border-color: var(--login-primary, #4FB3BF);
-  box-shadow: 0 0 0 4px var(--login-primary-ring, rgba(79, 179, 191, 0.18));
+  border-color: var(--login-primary, #3C9BA6);
+  box-shadow: 0 0 0 4px var(--login-primary-ring, rgba(60, 155, 166, 0.18));
   background: var(--login-surface, #ffffff);
 }
 

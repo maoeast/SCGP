@@ -49,7 +49,7 @@ export interface LoginThemeConfig {
 }
 
 export const DEFAULT_LOGIN_THEME_VARIANT: LoginThemeVariant = 'calm-blue'
-export const DEFAULT_LOGIN_PRIMARY_COLOR = '#4FB3BF'
+export const DEFAULT_LOGIN_PRIMARY_COLOR = '#3C9BA6'
 
 export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = {
   'warm-glow': {
@@ -82,29 +82,29 @@ export const LOGIN_THEME_PRESETS: Record<LoginThemeVariant, LoginThemePreset> = 
   },
   'calm-blue': {
     label: '静蓝',
-    primary: '#4FB3BF',
-    primaryGradientStart: '#4FB3BF',
-    primaryGradientEnd: '#3A98A3',
-    brandStart: '#3A98A3',
-    brandEnd: '#4FB3BF',
+    primary: '#3C9BA6',
+    primaryGradientStart: '#3C9BA6',
+    primaryGradientEnd: '#2F838C',
+    brandStart: '#2F838C',
+    brandEnd: '#3C9BA6',
     brandSoft: '#DFF4F6',
     pageBg: '#EDF5F7',
-    badgeBackground: 'rgba(79, 179, 191, 0.18)',
+    badgeBackground: 'rgba(60, 155, 166, 0.18)',
     badgeText: '#1A4A50',
     shellBg: '#D6ECF0',
     shellVeil:
-      'radial-gradient(circle at 20% 14%, rgba(79, 179, 191, 0.12), transparent 18%), radial-gradient(circle at 84% 18%, rgba(166, 221, 224, 0.15), transparent 14%), linear-gradient(135deg, rgba(214, 236, 240, 0.08) 0%, rgba(79, 179, 191, 0.18) 100%)',
+      'radial-gradient(circle at 20% 14%, rgba(60, 155, 166, 0.12), transparent 18%), radial-gradient(circle at 84% 18%, rgba(166, 221, 224, 0.15), transparent 14%), linear-gradient(135deg, rgba(214, 236, 240, 0.08) 0%, rgba(60, 155, 166, 0.18) 100%)',
     layoutBg: 'rgba(255, 255, 255, 0.62)',
-    layoutBorder: 'rgba(79, 179, 191, 0.28)',
-    layoutShadow: '0 36px 100px rgba(58, 152, 163, 0.22)',
+    layoutBorder: 'rgba(60, 155, 166, 0.28)',
+    layoutShadow: '0 36px 100px rgba(47, 131, 140, 0.22)',
     brandPanelBg:
-      'radial-gradient(circle at 18% 78%, rgba(166, 221, 224, 0.5), transparent 24%), radial-gradient(circle at 82% 18%, rgba(123, 198, 185, 0.4), transparent 18%), linear-gradient(160deg, #3A98A3 0%, #4FB3BF 50%, #7BC6B9 100%)',
+      'radial-gradient(circle at 18% 78%, rgba(166, 221, 224, 0.5), transparent 24%), radial-gradient(circle at 82% 18%, rgba(123, 198, 185, 0.4), transparent 18%), linear-gradient(160deg, #2F838C 0%, #3C9BA6 50%, #7BC6B9 100%)',
     brandPanelText: '#ffffff',
     brandBadgeText: '#1A4A50',
     brandTagline: 'rgba(255, 255, 255, 0.85)',
     formPaneBg:
-      'radial-gradient(circle at left center, rgba(79, 179, 191, 0.1), transparent 24%), linear-gradient(180deg, rgba(244, 250, 251, 0.94) 0%, rgba(255, 255, 255, 0.98) 100%)',
-    buttonShadow: 'rgba(58, 152, 163, 0.35)',
+      'radial-gradient(circle at left center, rgba(60, 155, 166, 0.1), transparent 24%), linear-gradient(180deg, rgba(244, 250, 251, 0.94) 0%, rgba(255, 255, 255, 0.98) 100%)',
+    buttonShadow: 'rgba(47, 131, 140, 0.35)',
     buttonDisabledStart: '#b0cdd2',
     buttonDisabledEnd: '#98bfc4',
   },

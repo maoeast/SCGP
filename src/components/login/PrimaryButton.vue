@@ -39,8 +39,8 @@ withDefaults(defineProps<Props>(), {
   border-radius: 24px;
   background: linear-gradient(
     135deg,
-    var(--login-primary-gradient-start, #4FB3BF),
-    var(--login-primary-gradient-end, #3A98A3)
+    var(--login-primary-gradient-start, #3C9BA6),
+    var(--login-primary-gradient-end, #2F838C)
   );
   color: #ffffff;
   font-size: 15px;
@@ -58,10 +58,10 @@ withDefaults(defineProps<Props>(), {
 .primary-button.is-active:not(:disabled) {
   background: linear-gradient(
     135deg,
-    var(--login-primary-gradient-start, #4FB3BF),
-    var(--login-primary-gradient-end, #3A98A3)
+    var(--login-primary-gradient-start, #3C9BA6),
+    var(--login-primary-gradient-end, #2F838C)
   );
-  box-shadow: 0 8px 28px var(--login-button-shadow, rgba(58, 152, 163, 0.4));
+  box-shadow: 0 8px 28px var(--login-button-shadow, rgba(47, 131, 140, 0.4));
   animation: btn-breathe 2.4s ease-in-out infinite;
 }
 

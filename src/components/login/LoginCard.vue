@@ -210,7 +210,7 @@ defineExpose({
 .login-card__check input {
   width: 16px;
   height: 16px;
-  accent-color: var(--login-primary, #4FB3BF);
+  accent-color: var(--login-primary, #3C9BA6);
 }
 
 .login-card__error {

@@ -1464,6 +1464,21 @@ export async function initDatabase(): Promise<any> {
       console.warn('⚠️  [Phase 1.3] Schema 迁移跳过:', migrationError)
     }
 
+    // 登录页默认主色升级：旧种子色 #4FB3BF → #3C9BA6
+    // 仅当配置值仍是旧种子色（用户未在设置页自定义过）时覆盖，避免覆盖用户自定义
+    try {
+      const themeRows = rawDb.exec(
+        `SELECT COUNT(*) AS c FROM system_config WHERE key = 'theme_primary_color' AND value = '#4FB3BF'`,
+      )
+      const staleCount = themeRows.length > 0 && themeRows[0].values.length > 0 ? themeRows[0].values[0][0] : 0
+      if (Number(staleCount) > 0) {
+        rawDb.run(`UPDATE system_config SET value = '#3C9BA6' WHERE key = 'theme_primary_color' AND value = '#4FB3BF'`)
+        console.log('✅ [InitDatabase] 登录页默认主色已升级: #4FB3BF → #3C9BA6')
+      }
+    } catch (themeMigrationError) {
+      console.warn('⚠️  [InitDatabase] 登录页主色升级跳过:', themeMigrationError)
+    }
+
     console.log('使用SQL.js数据库成功')
 
     // 设置全局 db 引用（用于应用退出前保存）
@@ -1730,7 +1745,7 @@ async function insertInitialDataToDB(database: any, options: { tasks?: boolean; 
       ('system_name', '星愿能力发展训练系统', '系统名称'),
       ('system_version', '1.0.1', '系统版本'),
        ('login_theme_variant', 'calm-blue', '登录页主题预设'),
-       ('theme_primary_color', '#4FB3BF', '登录页主色'),
+       ('theme_primary_color', '#3C9BA6', '登录页主色'),
        ('login_logo_path', '', '登录页 Logo'),
        ('brand_panel_description', '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。', '登录页品牌说明'),
        ('login_theme_backgrounds', '{"warm-glow":{"image":"resource://login-backgrounds/warm-glow/background.jpg","video":"resource://login-backgrounds/warm-glow/background.mp4"},"calm-blue":{"image":"resource://login-backgrounds/calm-blue/background.jpg","video":"resource://login-backgrounds/calm-blue/background.mp4"},"lush-green":{"image":"resource://login-backgrounds/lush-green/background.jpg","video":"resource://login-backgrounds/lush-green/background.mp4"},"custom":{"image":"","video":""}}', '登录页主题背景媒体'),
@@ -1932,7 +1947,7 @@ async function insertInitialData() {
       ('system_name', '星愿能力发展训练系统', '系统名称'),
       ('system_version', '1.0.1', '系统版本'),
        ('login_theme_variant', 'calm-blue', '登录页主题预设'),
-       ('theme_primary_color', '#4FB3BF', '登录页主色'),
+       ('theme_primary_color', '#3C9BA6', '登录页主色'),
        ('login_logo_path', '', '登录页 Logo'),
        ('brand_panel_description', '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。', '登录页品牌说明'),
        ('login_theme_backgrounds', '{"warm-glow":{"image":"resource://login-backgrounds/warm-glow/background.jpg","video":"resource://login-backgrounds/warm-glow/background.mp4"},"calm-blue":{"image":"resource://login-backgrounds/calm-blue/background.jpg","video":"resource://login-backgrounds/calm-blue/background.mp4"},"lush-green":{"image":"resource://login-backgrounds/lush-green/background.jpg","video":"resource://login-backgrounds/lush-green/background.mp4"},"custom":{"image":"","video":""}}', '登录页主题背景媒体'),

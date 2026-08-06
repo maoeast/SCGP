@@ -445,7 +445,7 @@ async function createSchemaAndData(db: any): Promise<void> {
       ('system_name', '星愿能力发展训练系统', '系统名称'),
       ('system_version', '1.0.1', '系统版本'),
        ('login_theme_variant', 'calm-blue', '登录页主题预设'),
-       ('theme_primary_color', '#4FB3BF', '登录页主色'),
+       ('theme_primary_color', '#3C9BA6', '登录页主色'),
        ('login_logo_path', '', '登录页 Logo'),
        ('brand_panel_description', '从能力基线到情绪感知，用智能化的数据记录，守护孩子点滴进步。', '登录页品牌说明'),
        ('login_theme_backgrounds', '{"warm-glow":{"image":"resource://login-backgrounds/warm-glow/background.jpg","video":"resource://login-backgrounds/warm-glow/background.mp4"},"calm-blue":{"image":"resource://login-backgrounds/calm-blue/background.jpg","video":"resource://login-backgrounds/calm-blue/background.mp4"},"lush-green":{"image":"resource://login-backgrounds/lush-green/background.jpg","video":"resource://login-backgrounds/lush-green/background.mp4"},"custom":{"image":"","video":""}}', '登录页主题背景媒体'),
