@@ -1800,3 +1800,26 @@
 - 授权差异处理：工具只聚合有评估记录的量表（未授权量表前端测不了→DB 无记录→自动跳过），未测项在 `untestedScales` 透明列出，不引入工具层授权参数。
 - get_student_profile 已挂载到 3 个 agent（一人一策/成长看得见/稳健训练）；营销文档 docs/marketing/2026-08-05-scgp-ai-agent-marketing.md（正式版+口语版+短篇文案）已落库。
 
+## 98. 2026-08-06 学生级长期记忆 M1-M5 全部落地（v4.1 设计，四轮 ChatGPT 审核）
+- 完整闭环：会话绑定学生（AiAssistant 抽屉选择器，已有消息库级锁定不可改绑）→ 对话自动总结（脱敏姓名/手机号→[STUDENT]/[REDACTED]，≤4000 字符）→ pending 候选（AI 生成，指纹去重 + 3-gram 仅提示 possible_duplicate_of）→ 教师确认（学生详情左侧信息区「AI 记忆」卡片，compact 确认流）→ 注入下轮对话（守卫层后，非指令声明）。
+- 数据层：三表 `ai_student_memory` / `ai_memory_summary_batch` / `ai_student_memory_audit` + 消息表 `delivery_status`/`message_kind` + 会话表 `student_id`/`memory_watermark`；批次两段式短事务（createSummaryBatch → 模型调用 → CAS commitSummaryBatch 推进水位）；迁移防回灌（历史会话水位=最大消息 id）。
+- 权限 = 服务团队共享：`canAccessStudentMemory` admin 全量 / teacher 仅同班（student.current_class_id JOIN sys_class_teachers），**每次现算不存快照**；确认不撤销（confirmed_by_user_id/confirmed_at 留痕）。
+- 治理随补偿任务运行（runMemoryCompensation → runMemoryGovernance）：pending 30 天归档、confirmed 分类配额淘汰（100/50/50/50，关键项保护）、非有效状态 365 天/每生 500、批次保留（cancelled 30/failed 90/done 180+20）。
+- 学校级开关 `ai:memory_enabled`（system_config KV）：**默认开启**（`!== '0'`），管理员在系统设置→AI 智能体可关。
+- 评估记录列表中文化：cognitive_self 正确率 0~1→×100、反应时 ms→s；CRT/BRIEF/TGMD-3 level_code 英文键（high_average/typical/emerging_skills 等）→ 中文（局部映射，CRT delayed 用"明显落后"避免与 CNBSR 的"智力发育障碍"串扰）。
+- 提交：fb93040（M1）/ c67109c（M2）/ f60c7f6（M3+M4）/ 1da7ffd（M5+修复）；契约测试 AI+评估共 112 条全过。
+- 路线C（AI 对话内嵌评估趋势图）富产物机制已在 §97 落地；剩余可选：趋势图持久化到独立 DB 表（当前存消息表 tool_artifacts JSON）。
+
+## 99. 2026-08-06 路线C 调研结论：趋势图独立 DB 表不做（路线C 关闭）
+## 100. 2026-08-06 AI 会话记录独立 tab + AI 配置页 UI 重构 + 告警修复
+- AI 会话记录独立 tab：System.vue 新增「AI 会话记录」（AiSessionsPanel：标题/用户名搜索 + 服务端分页 20/页 + 查看对话框 + 删除）；ai-api `listAllSessions(limit, offset, keyword)` 加 offset 与 LIKE 过滤 + 新增 `countAllSessions`；store 删 `allSessions` 全量刷新（6 处）改 `sessionPage`/`loadSessionPage`；修复旧版 limit 200 无翻页的审计盲区。
+- AI 智能体配置页多轮重构：3 卡拆分（模型服务配置 / 全局用量与风控 / 业务与合规，后两卡 grid 两列并排 auto-fit 折叠）+ 每卡就近保存按钮（全局 sticky footer 方案被否决）+ `testConnection(override)` 表单未保存 Key/地址直测（protectAiApiKey 现场加密）+「每月额度」千分位 el-input-number + 隐私告知两栏布局（固定 120px label）与新文案 + 模型清单卡片表格（表头浅底、模型 ID 代码块、能力胶囊开启/未支持对比、操作列居中）+「新增」按钮统一规格。
+- 卡片风格统一：AiAgentConfig / AiSkillLibrary / UpdatePanel 对齐 scgp-surface（--scgp-radius-xl 22px + --scgp-shadow-soft）。
+- 告警修复：TOOL_SKILL_SEED 补 `tool_get_student_profile`（§97 新增工具时漏同步，AI_TOOLS 10 工具已全覆盖）；electron main dev 分支屏蔽 CSP 警告（ELECTRON_DISABLE_SECURITY_WARNINGS，unsafe-eval 为 Vite HMR 必需）。
+- 验证：type-check / AI 契约 21-29 条 / build:web 全过；提交已推送。
+
+- 调研结论：趋势图持久化到独立 DB 表**不做**。理由：① 趋势快照是评估记录的派生视图（`getLongitudinalScores` 纯函数实时计算，评估记录表即持久化源头），独立表=双写双源+漂移风险；② 唯一新增价值（按 student/scale 可查询的 AI 产物历史）当前无消费方——对话回看走 `tool_artifacts` JSON 列已覆盖，独立趋势页 `AssessmentTrendPage.vue` 直接走评估记录；③ 双写一致/删除级联/表膨胀治理的代价无收益。
+- 未来触发条件：出现「AI 产物历史中心」页面需求 → 届时做**登记表**（`ai_artifact`：message_id 外键 + kind + student_id + scale_code + payload JSON 镜像，写入时镜像、删除消息级联），不做快照归一化表。
+- 路线C 全链路闭环确认：工具（get_assessment_trend）→ 富产物（ToolArtifact）→ 对话内嵌渲染（AiTrendChart.vue）→ 消息表持久化（tool_artifacts，历史回看可用）→ 独立趋势页（AssessmentTrendPage.vue，评估记录实时算），无未完成遗留。
+
+
