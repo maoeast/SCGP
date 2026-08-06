@@ -272,6 +272,8 @@ export interface AiChatSession {
   agent_code: string
   agent_name: string | null
   title: string
+  /** 绑定的学生（M4：会话-学生绑定；无绑定为 null/缺省） */
+  studentId?: number | null
   message_count: number
   total_tokens: number
   created_at: string
@@ -1073,7 +1075,7 @@ export class AIApi extends DatabaseAPI {
 
   /** 当前用户视角：只列自己的会话（按 updated_at 倒序，带消息数） */
   listSessions(userId: number, limit = 50): AiChatSession[] {
-    return this.query(
+    const rows = this.query(
       `SELECT s.*,
               a.name AS agent_name,
               (SELECT COUNT(*) FROM ai_chat_message m WHERE m.session_id = s.id) AS message_count,
@@ -1087,6 +1089,10 @@ export class AIApi extends DatabaseAPI {
        LIMIT ?`,
       [userId, limit],
     )
+    return rows.map((r: any) => ({
+      ...r,
+      studentId: r.student_id ?? null,
+    }))
   }
 
   countSessions(userId: number): number {
@@ -1179,6 +1185,7 @@ export class AIApi extends DatabaseAPI {
   }> {
     return this.query(
       `SELECT s.id, s.user_id, u.username, u.role, s.agent_code, a.name AS agent_name, s.title,
+              s.student_id,
               (SELECT COUNT(*) FROM ai_chat_message m WHERE m.session_id = s.id) AS message_count,
               (SELECT COALESCE(SUM(COALESCE(NULLIF(m.tokens_total, 0), COALESCE(m.tokens_prompt, 0) + COALESCE(m.tokens_completion, 0))), 0)
                  FROM ai_chat_message m
@@ -1619,6 +1626,54 @@ export class AIApi extends DatabaseAPI {
     const row = this.queryOne('SELECT student_id FROM ai_chat_session WHERE id = ?', [sessionId])
     const v = row?.student_id
     return v == null ? null : Number(v)
+  }
+
+  /**
+   * 学生记忆实时权限（v4.1 §9，M3）：
+   * - admin：全量可见；
+   * - teacher：仅当该学生当前班级（student.current_class_id）在本人任教班级
+   *   （sys_class_teachers.teacher_id = 当前用户 id）内时可见。
+   * 每次查询实时计算，不保存权限快照；转班/撤权立即失效。
+   */
+  canAccessStudentMemory(userId: number, studentId: number): boolean {
+    const user = this.queryOne('SELECT role FROM user WHERE id = ?', [userId])
+    if (!user) return false
+    if (user.role === 'admin') return true
+    const row = this.queryOne(
+      `SELECT 1
+       FROM student s
+       JOIN sys_class_teachers ct ON ct.class_id = s.current_class_id AND ct.teacher_id = ?
+       WHERE s.id = ?`,
+      [userId, studentId],
+    )
+    return !!row
+  }
+
+  /** 教师名映射（确认来源展示，M3）：返回 id → name 记录 */
+  getMemoryConfirmerNames(memoryIds: number[]): Record<number, string> {
+    if (memoryIds.length === 0) return {}
+    const placeholders = memoryIds.map(() => '?').join(',')
+    const rows = this.query(
+      `SELECT DISTINCT m.id AS memory_id, u.name AS teacher_name
+       FROM ai_student_memory m
+       LEFT JOIN user u ON u.id = m.confirmed_by_user_id
+       WHERE m.id IN (${placeholders})`,
+      memoryIds,
+    )
+    const map: Record<number, string> = {}
+    for (const r of rows) {
+      map[Number(r.memory_id)] = r.teacher_name ? String(r.teacher_name) : ''
+    }
+    return map
+  }
+
+  /** 学校级记忆总开关（v4.1 §8，M4）：system_config KV，默认关闭，管理员启用 */
+  getMemoryEnabled(): boolean {
+    return this.getConfig('ai:memory_enabled') === '1'
+  }
+
+  setMemoryEnabled(enabled: boolean): void {
+    this.setConfig('ai:memory_enabled', enabled ? '1' : '0')
   }
 
   private writeMemoryAudit(

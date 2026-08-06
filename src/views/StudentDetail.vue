@@ -161,6 +161,11 @@
               @view-detail="viewGameRecord"
             />
           </el-tab-pane>
+
+          <!-- M4：AI 记忆（服务团队共享，权限在组件内门控） -->
+          <el-tab-pane label="AI 记忆" name="memory" lazy>
+            <StudentMemoryPanel :student-id="student.id" />
+          </el-tab-pane>
         </el-tabs>
       </div>
     </section>
@@ -187,14 +192,16 @@ import { EquipmentTrainingAPI, GameTrainingAPI } from '@/database/api'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
 import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import { useStudentStore, type Student } from '@/stores/student'
+import { useAiStore } from '@/stores/ai'
 import { formatStudentDate, getStudentAge } from '@/utils/student-display'
 import { getTrainingEntry } from '@/utils/training-entry'
 import AssessmentRecordsPanel from '@/views/student-detail/components/AssessmentRecordsPanel.vue'
 import { getStudentAssessmentRecords } from '@/views/student-detail/assessment-records'
 import EquipmentRecordsPanel from '@/views/training-records/components/EquipmentRecordsPanel.vue'
 import GameRecordsPanel from '@/views/training-records/components/GameRecordsPanel.vue'
+import StudentMemoryPanel from '@/views/student-detail/components/StudentMemoryPanel.vue'
 
-type DetailTab = 'assessments' | 'equipment' | 'games'
+type DetailTab = 'assessments' | 'equipment' | 'games' | 'memory'
 
 const TAB_META: Record<DetailTab, { title: string; badge: string; description: string }> = {
   assessments: {
@@ -212,6 +219,11 @@ const TAB_META: Record<DetailTab, { title: string; badge: string; description: s
     badge: '游戏训练',
     description: '查看游戏或情绪训练中的正确率、平均响应时间与训练详情。',
   },
+  memory: {
+    title: 'AI 记忆',
+    badge: 'AI 记忆',
+    description: '确认 AI 总结的学生事实候选，管理与查看已确认的长期记忆。',
+  },
 }
 
 const router = useRouter()
@@ -226,6 +238,7 @@ const showEditDialog = ref(false)
 const assessmentCount = ref(0)
 const equipmentCount = ref(0)
 const gameCount = ref(0)
+const memoryPendingCount = ref(0)
 
 const currentClassLabel = computed(() => student.value?.current_class_name || '未分班')
 const detailFacts = computed(() => [
@@ -258,6 +271,14 @@ const detailMetrics = computed(() => [
     hint: '游戏表现与情绪会话',
     glyph: '游',
     tone: 'games',
+  },
+  {
+    key: 'memory' as const,
+    label: 'AI 记忆',
+    value: memoryPendingCount.value,
+    hint: '待确认的 AI 记忆候选',
+    glyph: '忆',
+    tone: 'memory',
   },
 ])
 const activeTabMeta = computed(() => TAB_META[activeTab.value])
@@ -372,6 +393,16 @@ async function loadStudentDetail() {
     } catch (error) {
       console.error('加载游戏训练记录失败:', error)
       gameCount.value = 0
+    }
+
+    // M4：AI 记忆待确认数（仅服务团队可见；权限在 store 层过滤）
+    try {
+      const aiStore = useAiStore()
+      const pending = aiStore.listStudentMemories(studentId, ['pending'])
+      memoryPendingCount.value = pending.length
+    } catch (error) {
+      console.error('加载 AI 记忆计数失败:', error)
+      memoryPendingCount.value = 0
     }
   } catch (error) {
     console.error('加载学生详情失败:', error)

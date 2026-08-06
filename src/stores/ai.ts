@@ -208,6 +208,8 @@ export const useAiStore = defineStore('ai', () => {
       allKnowledgeSkills.value = a.listAllKnowledgeSkills()
       providerConfig.value = a.getProviderConfig()
       monthUsage.value = a.getMonthUsage()
+      // M4：加载学校级记忆开关（默认关闭）
+      memoryEnabled.value = a.getMemoryEnabled()
       // 默认选中第一个启用智能体
       if (!currentAgentCode.value && enabledAgents.value.length > 0) {
         currentAgentCode.value = enabledAgents.value[0]?.code || ''
@@ -1272,17 +1274,27 @@ export const useAiStore = defineStore('ai', () => {
     memoryEnabled,
     setMemoryEnabled: (v: boolean) => {
       memoryEnabled.value = v
+      api().setMemoryEnabled(v)
     },
     finalizeAssistantTurn,
     runMemoryCompensation,
     bindSessionStudent: (sessionId: number, studentId: number) => api().bindSessionStudent(sessionId, studentId),
     getSessionStudentId: (sessionId: number) => api().getSessionStudentId(sessionId),
-    listStudentMemories: (studentId: number, statuses?: AiMemoryStatus[]) => api().listStudentMemories(studentId, statuses),
+    listStudentMemories: (studentId: number, statuses?: AiMemoryStatus[]) => {
+      const uid = currentUserId()
+      if (!uid || !api().canAccessStudentMemory(uid, studentId)) return []
+      return api().listStudentMemories(studentId, statuses)
+    },
     confirmStudentMemory: (memoryId: number, status: 'confirmed' | 'rejected' | 'disputed') =>
       api().confirmStudentMemory(memoryId, currentUserId() ?? 0, status),
     deleteStudentMemory: (memoryId: number) => api().deleteStudentMemory(memoryId, currentUserId() ?? 0),
     markMemoryPriority: (memoryId: number, priority: 'pinned' | 'safety_critical', note: string) =>
       api().markMemoryPriority(memoryId, currentUserId() ?? 0, priority, note),
+    canAccessStudentMemory: (studentId: number) => {
+      const uid = currentUserId()
+      return !!uid && api().canAccessStudentMemory(uid, studentId)
+    },
+    getMemoryConfirmerNames: (memoryIds: number[]) => api().getMemoryConfirmerNames(memoryIds),
     // 会话隔离与历史
     sessions,
     sessionTotal,
