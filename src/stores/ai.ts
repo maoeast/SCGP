@@ -1336,7 +1336,7 @@ export const useAiStore = defineStore('ai', () => {
     finalizeAssistantTurn,
     runMemoryCompensation,
     runMemoryGovernance,
-    bindSessionStudent: (sessionId: number, studentId: number) => api().bindSessionStudent(sessionId, studentId),
+    bindSessionStudent: (sessionId: number, studentId: number | null) => api().bindSessionStudent(sessionId, studentId),
     getSessionStudentId: (sessionId: number) => api().getSessionStudentId(sessionId),
     listStudentMemories: (studentId: number, statuses?: AiMemoryStatus[]) => {
       const uid = currentUserId()

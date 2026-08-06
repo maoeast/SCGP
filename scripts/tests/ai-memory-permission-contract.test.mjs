@@ -110,10 +110,10 @@ test('StudentDetail 接入 AI 记忆卡片（左侧学生信息区，学号下�
 
 test('系统设置提供学生长期记忆开关（管理员）', () => {
   const src = readProjectFile('src/views/system/AiAgentConfig.vue')
-  assert.match(src, /label="学生长期记忆"/)
+  assert.match(src, /学生长期记忆/)
   assert.match(src, /aiStore\.memoryEnabled/)
   assert.match(src, /aiStore\.setMemoryEnabled\(Boolean\(v\)\)/)
-  assert.match(src, /脱敏姓名与敏感信息/)
+  assert.match(src, /脱敏姓名及敏感信息/)
 })
 
 test('StudentMemoryPanel 支持 compact 内嵌模式', () => {

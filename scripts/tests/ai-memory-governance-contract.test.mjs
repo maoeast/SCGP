@@ -94,14 +94,16 @@ test('runMemoryGovernance 随补偿任务运行并导出', () => {
 
 // ==================== 3. 绑定 UI（AiAssistant.vue） ====================
 
-test('AI 抽屉会话绑定选择器：绑定 + 锁定提示 + 学生加载', () => {
+test('AI 抽屉会话绑定选择器：选择学生 + 可随时更换 + 学生加载', () => {
   const src = readProjectFile('src/features/ai/components/AiAssistant.vue')
   assert.match(src, /ai-memory-bindbar/)
-  assert.match(src, /placeholder="绑定学生（启用长期记忆）"/)
-  assert.match(src, /:disabled="sessionLocked"/)
-  assert.match(src, /绑定已锁定（如需改绑请新建会话）/)
+  assert.match(src, /placeholder="选择本次对话的学生"/)
+  assert.match(src, /不选择也能对话（不会记录长期记忆）/)
   assert.match(src, /bindSessionStudent\(sid, studentId\)/)
   assert.match(src, /getSessionStudentId\(sid\)/)
   assert.match(src, /studentStore\.loadStudents\(\)/)
   assert.match(src, /refreshBoundStudent\(\)/)
+  // v4.2：不再有「有消息即锁定」的 UI 状态（下拉始终可操作）
+  assert.ok(!/sessionLocked/.test(src), '不应残留 sessionLocked 锁定逻辑')
+  assert.ok(!/绑定已锁定/.test(src), '不应残留「绑定已锁定」文案')
 })

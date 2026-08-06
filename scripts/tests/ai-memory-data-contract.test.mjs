@@ -109,10 +109,12 @@ test('记忆 CRUD 与批次两段式存在', () => {
   assert.match(src, /writeMemoryAudit\(/)
 })
 
-test('绑定锁定：存在任一消息即拒绝（库级）', () => {
+test('绑定/更换学生：整理中（活动批次或未总结消息）拒绝，整理完可改绑（库级）', () => {
   const src = readProjectFile('src/database/ai-api.ts')
   assert.match(src, /bindSessionStudent\(/)
-  assert.match(src, /NOT EXISTS \(SELECT 1 FROM ai_chat_message WHERE session_id = \?\)/)
+  assert.match(src, /state IN \('pending', 'summarizing'\)/)
+  assert.match(src, /m\.id > \(/)
+  assert.match(src, /memory_watermark FROM ai_chat_session/)
 })
 
 test('saveMessage 默认落 completed/final（兼容既有调用）', () => {

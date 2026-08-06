@@ -64,9 +64,14 @@ const budgetPercent = computed(() => {
   return Math.min(100, Math.round((aiStore.monthUsage.totalTokens / budget) * 100))
 })
 
-// ===== 会话绑定学生（M4/M5：长期记忆） =====
+// ===== 会话绑定学生（M4/M5：长期记忆；v4.2 整理完可随时更换） =====
 const boundStudentId = ref<number | null>(null)
-const sessionLocked = ref(false)
+
+/** 当前绑定学生的展示名（下拉选中态展示用） */
+const boundStudentLabel = computed(() => {
+  const sid = boundStudentId.value
+  return sid == null ? '' : (studentOptions.value.find((s) => s.id === sid)?.label ?? '')
+})
 
 /** 学生下拉选项（服务团队视角：全校学生，绑定后记忆权限在 store 层过滤） */
 const studentOptions = computed(() =>
@@ -81,24 +86,25 @@ function refreshBoundStudent() {
   const sid = aiStore.currentSessionId
   if (!sid) {
     boundStudentId.value = null
-    sessionLocked.value = false
     return
   }
   boundStudentId.value = aiStore.getSessionStudentId(sid)
-  // 锁定条件：存在任一消息（库级绑定也按此拒绝）
-  sessionLocked.value = aiStore.currentMessages.length > 0
 }
 
 function handleBindStudent(value: number | '' | null | undefined) {
   const sid = aiStore.currentSessionId
   if (!sid) return
   const studentId = value == null || value === '' ? null : Number(value)
-  if (studentId == null) return // 解绑不开放（库级语义：可绑定不可解绑），保持现状
+  const targetLabel = studentId == null ? '' : (studentOptions.value.find((s) => s.id === studentId)?.label ?? '')
   if (aiStore.bindSessionStudent(sid, studentId)) {
     boundStudentId.value = studentId
-    ElMessage.success('已绑定学生，后续对话将自动总结为该学生的长期记忆')
+    if (studentId == null) {
+      ElMessage.success('已取消关联，此后的对话不再记录长期记忆；此前的对话仍记入原学生')
+    } else {
+      ElMessage.success(`已关联「${targetLabel}」，此后的对话将自动记入其长期记忆`)
+    }
   } else {
-    ElMessage.warning('该会话已有消息，绑定已锁定；如需改绑请新建会话')
+    ElMessage.warning('该对话还有内容正在整理，请稍后再更换学生')
     refreshBoundStudent()
   }
 }
@@ -542,16 +548,15 @@ async function confirmDeleteSession(id: number) {
         </el-collapse-item>
       </el-collapse>
 
-      <!-- 会话绑定学生（M4/M5：绑定后记忆自动总结注入；已有消息后锁定） -->
+      <!-- 会话绑定学生（M4/M5：绑定后记忆自动总结注入；v4.2 整理完可随时更换） -->
       <div v-if="aiStore.currentSessionId && aiStore.memoryEnabled" class="ai-memory-bindbar">
         <el-select
           :model-value="boundStudentId"
-          placeholder="绑定学生（启用长期记忆）"
+          placeholder="选择本次对话的学生"
           size="small"
           clearable
           filterable
-          :disabled="sessionLocked"
-          style="width: 100%"
+          style="width: 200px; flex-shrink: 0"
           @change="handleBindStudent"
         >
           <el-option
@@ -561,8 +566,8 @@ async function confirmDeleteSession(id: number) {
             :value="stu.id"
           />
         </el-select>
-        <span v-if="sessionLocked" class="ai-memory-bindbar__lock">已有消息，绑定已锁定（如需改绑请新建会话）</span>
-        <span v-else class="ai-memory-bindbar__hint">绑定后，对话将自动总结为该学生的长期记忆</span>
+        <span v-if="boundStudentId" class="ai-memory-bindbar__hint">已关联「{{ boundStudentLabel }}」，可随时更换；更换后此前的对话仍记入原学生</span>
+        <span v-else class="ai-memory-bindbar__hint">不选择也能对话（不会记录长期记忆）；选择学生后，对话将自动记入该学生的长期记忆</span>
       </div>
 
       <!-- 消息列表 -->
@@ -921,19 +926,12 @@ async function confirmDeleteSession(id: number) {
   background: var(--el-fill-color-light, #f5f7fa);
 }
 
-.ai-memory-bindbar__lock,
 .ai-memory-bindbar__hint {
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
   font-size: 11px;
+  line-height: 1.5;
   color: var(--el-text-color-secondary, #909399);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;
-}
-
-.ai-memory-bindbar__lock {
-  color: var(--el-color-warning, #e6a23c);
 }
 
 .ai-session-collapse {

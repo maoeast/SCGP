@@ -123,15 +123,33 @@ safeAddColumn(rawDb, 'ai_chat_session', 'memory_watermark INTEGER NOT NULL DEFAU
 
 **水位语义（v4.1 明确）**：`memory_watermark` 是**扫描游标**（已检查到的最大消息 id），不是"已成功总结"的位置。user-only 取消轮次总结后，水位推进到 cancelled assistant 行 id（避免反复扫描）；cancelled 正文不进入输入。
 
-**库级防竞态（v4 新增）**：绑定锁定的判断在**事务内**完成（`SELECT ... FOR UPDATE` 语义不可用，SQL.js 单线程——用"写前先读 + 事务内 UPDATE 条件化"实现）：
+**库级防竞态（v4 新增；v4.2 放宽为「整理完可改绑」）**：绑定/更换学生的判断在**事务内**完成（`SELECT ... FOR UPDATE` 语义不可用，SQL.js 单线程——用"写前先读 + 事务内 UPDATE 条件化"实现）：
 
 ```sql
--- 绑定/改绑操作统一走一条事务 SQL：
+-- 绑定/更换学生统一走一条事务 SQL（v4.2）：
 UPDATE ai_chat_session SET student_id = ?
 WHERE id = ?
-  AND NOT EXISTS (SELECT 1 FROM ai_chat_message WHERE session_id = ?)
--- 受影响行数 = 0 表示已有消息，绑定被拒绝（事务级原子，无应用层竞态）
+  AND NOT EXISTS (
+    SELECT 1 FROM ai_memory_summary_batch
+    WHERE session_id = ? AND state IN ('pending', 'summarizing')
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM ai_chat_message m
+    WHERE m.session_id = ? AND m.id > (
+      SELECT memory_watermark FROM ai_chat_session WHERE id = ?
+    )
+      AND (m.role = 'user' OR (m.role = 'assistant' AND m.delivery_status = 'completed'))
+  )
+-- 受影响行数 = 0 表示「记忆整理中」（活动批次或未总结消息），更换被拒绝（事务级原子，无应用层竞态）
 ```
+
+**v4.2 变更说明（2026-08-06，教师真实使用反馈）**：v4.1 的「存在任一消息即锁定」与教师「一个对话窗口连续分析多个学生」的习惯冲突（锁死后只能新建会话；未显式绑定时对话不产生记忆，老师误以为聊过就算记录）。放宽为：
+
+- **整理完可随时绑定/更换/解绑**：水位已追平（每轮对话正常总结后）即可操作；整理中（活动批次 pending/summarizing 或水位后有未总结消息）拒绝，稍后重试。解绑（student_id 置 NULL）后消息不再总结记忆，与「从未绑定」会话语义一致，已总结记忆仍归原学生。
+- **归属不串档**：批次创建时快照 `student_id`（§4.4），改绑/解绑不影响已创建批次；操作前未总结消息必然已被批次覆盖或触发拒绝——「操作前消息归原学生、操作后消息归新学生（或不再记录）」。
+- **未绑定仍可对话**：AI 分析学生走工具（list_students/get_student 等）不依赖绑定；绑定只决定是否总结记忆及归属。
+- **串档缓解**：总结提示词（§6.5）增加「对话涉及绑定学生以外的学生时一律忽略」规则，降低老师忘记换人的错档风险。
+- UI 同步：绑定下拉不再锁定，未绑定提示「不选择也能对话（不会记录长期记忆）」。
 
 ### 4.4 新表 `ai_memory_summary_batch`（v4：总结批次状态机）
 

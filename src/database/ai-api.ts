@@ -1644,14 +1644,39 @@ export class AIApi extends DatabaseAPI {
     }
   }
 
-  /** 绑定学生（库级防竞态：存在任一消息即拒绝，v4 §4.3） */
-  bindSessionStudent(sessionId: number, studentId: number): boolean {
+  /**
+   * 绑定/更换/解绑学生（v4.2：整理完可改绑，v4.1 §4.3 的「有消息即锁定」放宽）。
+   *
+   * studentId 传 null 表示解绑（不关联任何学生）：解绑后消息不再总结记忆，
+   * 与「从未绑定」的会话语义一致；已总结记忆仍归原学生（批次快照）。
+   *
+   * 拒绝条件（返回 false）：
+   * - 存在活动总结批次（pending/summarizing）——记忆整理中；
+   * - 存在未总结消息（水位之后有 user 或 completed assistant 消息）——先整理再换人。
+   *
+   * 允许条件：水位已追平（每轮对话正常总结后），可随时绑定/更换/解绑。
+   *
+   * 归属安全：批次创建时快照 student_id（createSummaryBatch），改绑/解绑不影响已创建批次；
+   * 未总结消息在操作前必然已被批次覆盖或触发拒绝，因此「操作前消息归原学生、
+   * 操作后消息归新学生（或不再记录）」，不会串档。
+   */
+  bindSessionStudent(sessionId: number, studentId: number | null): boolean {
     return (
       this.execute(
         `UPDATE ai_chat_session SET student_id = ?
          WHERE id = ?
-           AND NOT EXISTS (SELECT 1 FROM ai_chat_message WHERE session_id = ?)`,
-        [studentId, sessionId, sessionId],
+           AND NOT EXISTS (
+             SELECT 1 FROM ai_memory_summary_batch
+             WHERE session_id = ? AND state IN ('pending', 'summarizing')
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM ai_chat_message m
+             WHERE m.session_id = ? AND m.id > (
+               SELECT memory_watermark FROM ai_chat_session WHERE id = ?
+             )
+               AND (m.role = 'user' OR (m.role = 'assistant' AND m.delivery_status = 'completed'))
+           )`,
+        [studentId, sessionId, sessionId, sessionId, sessionId],
       ) > 0
     )
   }

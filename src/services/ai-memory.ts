@@ -92,7 +92,7 @@ export function trigramSimilarity(a: string, b: string): number {
 
 // ==================== 总结提示词（v4.1 §6.5/§8 主体锚定） ====================
 
-export const MEMORY_SUMMARY_PROMPT_VERSION = 'memory-summary-v1'
+export const MEMORY_SUMMARY_PROMPT_VERSION = 'memory-summary-v2'
 
 /** 专用总结提示词：主体锚定 + 结构化输出约束（不入对话 tool loop） */
 export function buildMemorySummaryPrompt(): string {
@@ -109,6 +109,7 @@ export function buildMemorySummaryPrompt(): string {
 - advice_given：本次给出的建议（供下次复盘）；
 - follow_up：待跟进事项（写清期限，如「2 周后复盘」）；
 - 只写有明确依据的事实；不确定的用 assumed；
+- 对话若涉及绑定学生以外的学生，其信息一律忽略，不写入任何记忆；
 - 没有值得记住的新事实时输出 {"facts": []}；
 - 不得写入诊断结论、姓名（用 [STUDENT]）、证件号、联系方式等敏感信息。`
 }
