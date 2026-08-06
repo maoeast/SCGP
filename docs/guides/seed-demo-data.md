@@ -29,6 +29,22 @@ node scripts/seed-demo-data.mjs import --db <路径> --in demo-data.json
 | 训练记录 | 2026-04 ~ 2026-07：游戏 8-14 条 + 器材 3-6 条 + 情绪场景 3-5 条 + 情绪游戏 1-3 条；**entry_code 全部使用训练入口 code**（sensory-integration 等，与 TrainingRecordsMenu 统计一致）；同步写入 `training_session` 统一主表 |
 | 报告 | 评估报告（130 次）+ 情绪模块报告（12 条）+ 训练干预报告（22 条，关联进行中计划） |
 
+## 客户端分发包（推荐）
+
+客户体验无需 Node 环境，直接用**整库替换**：
+
+```bash
+node scripts/build-demo-dist.mjs
+```
+
+产物：`output/SCGP演示数据包-<日期>.zip`（`database.sqlite` + `导入说明.md`）。
+
+流程：客户安装应用 → 启动一次后退出 → 备份原库 → 用包内 `database.sqlite` 覆盖
+`C:\Users\<用户名>\AppData\Roaming\scgp\database.sqlite` → 重启登录（admin/admin123）。
+
+包内为**纯净演示库**（仅 22 名演示学生，无 fixture 数据），从应用初始化 + 全量资源的
+fixture 库生成，校验通过后打包。schema 需与安装版本配套（升级应用后重新生成分发包）。
+
 ## 设计要点
 
 - **报告符合学生状态**：每个诊断类型配有「量表画像」（如学习障碍 → csirs 视听知觉维度 T 分偏低、crt 中低；言语障碍 → srs2 社交沟通偏高），评估分数按画像生成，level 字段与分数严格对应各 driver 的官方判定规则，报告页文字自然与诊断呼应。
