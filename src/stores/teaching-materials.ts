@@ -16,6 +16,7 @@ import {
   type TeachingMaterialDimensionCode,
 } from '@/utils/resource-center-business'
 import { teachingMaterialFileManager } from '@/utils/teaching-material-file-manager'
+import { compareTeachingMaterials } from '@/utils/teaching-material-sort'
 
 export const useTeachingMaterialsStore = defineStore('teaching-materials', () => {
   const authStore = useAuthStore()
@@ -91,7 +92,9 @@ export const useTeachingMaterialsStore = defineStore('teaching-materials', () =>
       })
     }
 
-    return result
+    // 排序：业务维度顺序（TEACHING_MATERIAL_DIMENSION_CODES）→ 序号升序 → id 升序；
+    // 拷贝后再排序，避免原地修改 store 数据
+    return [...result].sort(compareTeachingMaterials)
   })
 
   async function loadMaterials() {

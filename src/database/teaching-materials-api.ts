@@ -90,9 +90,9 @@ export class TeachingMaterialsAPI extends DatabaseAPI {
       params.push(pattern, pattern, pattern, pattern)
     }
 
-    // 排序优先级：sequence_order（数值步骤序号，降序）> updated_at（更新时间）> id
+    // 排序优先级：sequence_order（数值步骤序号，升序）> updated_at（更新时间）> id
     // sequence_order 为 NULL 的记录（无步骤序号的辅助资料）排在最后
-    sql += ' ORDER BY tm.sequence_order DESC NULLS LAST, tm.updated_at DESC, tm.id DESC'
+    sql += ' ORDER BY tm.sequence_order ASC NULLS LAST, tm.updated_at ASC, tm.id ASC'
 
     return this.query(sql, params).map((row) => this.mapRow(row))
   }
