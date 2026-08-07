@@ -48,6 +48,8 @@ __screenshots__/
 .superpowers/
 .codex/
 .learnings/
+.baoyu-skills/
+.workbuddy/
 AGENTS.rar
 .thincoder/*
 !.thincoder/skills/
