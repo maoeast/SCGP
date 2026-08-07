@@ -39,9 +39,12 @@ withDefaults(defineProps<Props>(), {
   border-radius: 24px;
   background: linear-gradient(
     135deg,
-    var(--login-primary-gradient-start, #3C9BA6),
-    var(--login-primary-gradient-end, #2F838C)
+    var(--login-primary-gradient-start, #3C9BA6) 0%,
+    var(--login-primary, #3C9BA6) 46%,
+    var(--login-primary-gradient-end, #2F838C) 100%
   );
+  background-size: 180% 180%;
+  background-position: 0% 50%;
   color: #ffffff;
   font-size: 15px;
   font-weight: 600;
@@ -55,15 +58,18 @@ withDefaults(defineProps<Props>(), {
     transform 0.18s ease,
     box-shadow 0.3s ease,
     filter 0.25s ease,
-    background 0.4s ease;
+    background-position 0.6s ease;
 }
 
 .primary-button.is-active:not(:disabled) {
   background: linear-gradient(
     135deg,
-    var(--login-primary-gradient-start, #3C9BA6),
-    var(--login-primary-gradient-end, #2F838C)
+    var(--login-primary-gradient-start, #3C9BA6) 0%,
+    var(--login-primary, #3C9BA6) 46%,
+    var(--login-primary-gradient-end, #2F838C) 100%
   );
+  background-size: 180% 180%;
+  background-position: 0% 50%;
   box-shadow:
     0 8px 28px var(--login-button-shadow, rgba(47, 131, 140, 0.4)),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -73,12 +79,14 @@ withDefaults(defineProps<Props>(), {
 .primary-button:hover:not(:disabled) {
   transform: translateY(-2px);
   filter: brightness(1.1);
+  background-position: 92% 50%;
   box-shadow:
     0 14px 36px var(--login-button-shadow, rgba(58, 152, 163, 0.45)),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .primary-button.is-active:hover:not(:disabled) {
+  background-position: 92% 50%;
   box-shadow:
     0 14px 40px var(--login-button-shadow, rgba(58, 152, 163, 0.55)),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
@@ -101,6 +109,8 @@ withDefaults(defineProps<Props>(), {
     var(--login-button-disabled-start, #d4c9a8),
     var(--login-button-disabled-end, #c9b896)
   );
+  background-size: 100% 100%;
+  background-position: 0 50%;
   color: #ffffff;
   cursor: not-allowed;
   box-shadow: none;

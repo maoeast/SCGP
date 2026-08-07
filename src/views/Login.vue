@@ -27,6 +27,7 @@
             :loading="isLogging"
             :submit-disabled="isLoginButtonDisabled"
             :error-message="loginError"
+            :app-version="appVersion"
             @submit="handleLogin"
           />
           <component
@@ -74,12 +75,23 @@ const loginForm = ref({
 const isLogging = ref(false)
 const loginError = ref('')
 const isLoginButtonDisabled = ref(true)
+const appVersion = ref('')
 type LoginCardExpose = {
   focusUsernameInput: () => boolean
 }
 
 const loginCardRef = ref<LoginCardExpose | null>(null)
 let loginFocusTimerIds: number[] = []
+
+const loadAppVersion = async () => {
+  try {
+    if (window.electronAPI?.invoke) {
+      appVersion.value = (await window.electronAPI.invoke('update:get-current-version')) as string
+    }
+  } catch (error) {
+    console.warn('获取软件版本号失败:', error)
+  }
+}
 
 const restoreRememberedUsername = () => {
   const rememberedUsername = localStorage.getItem(REMEMBERED_USERNAME_KEY)
@@ -192,6 +204,7 @@ onMounted(async () => {
   await nextTick()
   recoverLoginInteraction()
   void systemConfigStore.loadConfig()
+  void loadAppVersion()
 
   const hasStartedTyping = loginForm.value.username !== '' || loginForm.value.password !== ''
 
@@ -242,10 +255,11 @@ onBeforeUnmount(() => {
 .login-layout {
   position: relative;
   z-index: 1;
-  width: min(1200px, 100%);
+  width: min(1000px, 100%);
   min-height: min(736px, calc(100vh - 36px));
   display: grid;
-  grid-template-columns: minmax(400px, 45fr) minmax(440px, 55fr);
+  /* 左右比例接近黄金分割（约 1.1 : 1）：右列 470px 封顶，左列品牌区 1.1fr 占剩余 */
+  grid-template-columns: minmax(0, 1.1fr) minmax(400px, 470px);
   border: 1px solid var(--login-layout-border, rgba(255, 255, 255, 0.16));
   border-radius: 32px;
   overflow: hidden;
@@ -264,13 +278,13 @@ onBeforeUnmount(() => {
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding: clamp(32px, 4.8vw, 60px) clamp(32px, 4.8vw, 64px) clamp(32px, 4.8vw, 60px) clamp(28px, 4vw, 48px);
+  justify-content: center;
+  padding: clamp(32px, 4.2vw, 54px) clamp(22px, 3vw, 40px);
   /* 不再叠加独立背景层：由外层 .login-layout 统一承载毛玻璃，让背景视频/图片透出 */
 }
 
 .login-layout__form-stack {
-  width: min(464px, 100%);
+  width: min(360px, 100%);
   display: flex;
   flex-direction: column;
   gap: 14px;

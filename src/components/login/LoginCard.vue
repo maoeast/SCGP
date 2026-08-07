@@ -50,6 +50,14 @@
         loading-text="登录中..."
       />
     </form>
+
+    <footer class="login-card__footer">
+      <span class="login-card__status">
+        <i class="login-card__status-dot" aria-hidden="true"></i>
+        系统就绪 · 数据加密存储于本地设备
+      </span>
+      <span v-if="appVersion" class="login-card__version">版本 {{ appVersion }}</span>
+    </footer>
   </section>
 </template>
 
@@ -65,6 +73,7 @@ interface Props {
   loading?: boolean
   submitDisabled?: boolean
   errorMessage?: string
+  appVersion?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -113,10 +122,10 @@ defineExpose({
 <style scoped>
 .login-card {
   /* 去除独立卡片外壳：无边框/圆角/背景/阴影/模糊，由外层 .login-layout 统一承载毛玻璃质感 */
-  width: min(464px, 100%);
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 24px;
   box-sizing: border-box;
 }
 
@@ -145,7 +154,7 @@ defineExpose({
 .login-card__form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .login-card__meta {
@@ -177,6 +186,44 @@ defineExpose({
   color: #8b3c36;
   font-size: 13px;
   line-height: 1.6;
+}
+
+.login-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 2px;
+  /* 桌面软件质感：等宽字体 + 11px + slate-500（中文无等宽字形时自动回退系统字体） */
+  font-family: ui-monospace, 'SFMono-Regular', 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #64748b;
+  letter-spacing: 0.01em;
+}
+
+.login-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.login-card__status-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--login-primary, #3C9BA6);
+  box-shadow: 0 0 0 3px var(--login-primary-ring, rgba(60, 155, 166, 0.18));
+}
+
+.login-card__version {
+  flex: none;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
