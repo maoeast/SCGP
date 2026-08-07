@@ -208,15 +208,18 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { useStudentStore } from '@/stores/student'
+import { useAuthStore } from '@/stores/auth'
 import { ReportAPI } from '@/database/api'
 import { buildAssessmentReportRoute } from '@/features/assessment/report-routes'
 import {
   ASSESSMENT_REPORT_CATALOG,
   deriveAssessmentReportCounts,
   getAssessmentReportCatalogItem,
+  getAuthorizedAssessmentReportCatalog,
   isAssessmentReportScaleType,
   type AssessmentReportCounts,
 } from '@/features/assessment/report-center-catalog'
+import type { AssessmentScaleCode } from '@/features/assessment/assessment-scale-catalog'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 
 interface ReportTypeOption {
@@ -256,6 +259,7 @@ const QUICK_RANGE_OPTIONS = [
 
 const router = useRouter()
 const studentStore = useStudentStore()
+const authStore = useAuthStore()
 const standardDateRangePickerProps = STANDARD_DATE_RANGE_PICKER_PROPS
 
 const filters = ref({
@@ -272,7 +276,25 @@ const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(10)
 
-const reportTypeOptions = REPORT_TYPE_OPTIONS
+// 报告类型下拉只展示已授权量表（entitlement-first，与评估入口/路由守卫同源）；
+// reportTypeMap 仍用完整目录构建，保证历史记录（含授权缩水前的记录）类型名可解析
+const authorizedAssessmentReportCatalog = computed(() =>
+  getAuthorizedAssessmentReportCatalog(
+    (moduleCode) => authStore.hasModuleAccess(moduleCode),
+    (entitlementCode) => authStore.hasEntitlementAccess(entitlementCode),
+  ),
+)
+
+function hasAssessmentScaleAccess(code: AssessmentScaleCode): boolean {
+  return authorizedAssessmentReportCatalog.value.some((item) => item.code === code)
+}
+
+const reportTypeOptions = computed(() =>
+  REPORT_TYPE_OPTIONS.filter((option) =>
+    option.category === 'intervention'
+    || hasAssessmentScaleAccess(option.value as AssessmentScaleCode),
+  ),
+)
 const reportTypeMap = new Map(REPORT_TYPE_OPTIONS.map((item) => [item.value, item]))
 
 const statistics = computed<ReportStatistics>(() => deriveReportStatistics(reportList.value))
@@ -281,7 +303,7 @@ const pagedReportList = computed(() => {
   return reportList.value.slice(start, start + pageSize.value)
 })
 const assessmentReportCount = computed(() =>
-  Object.values(statistics.value.assessment).reduce((total, count) => total + count, 0),
+  assessmentTypeCards.value.reduce((total, card) => total + card.value, 0),
 )
 const interventionReportCount = computed(() =>
   statistics.value.emotional_count
@@ -290,7 +312,7 @@ const interventionReportCount = computed(() =>
 )
 
 const assessmentTypeCards = computed(() =>
-  ASSESSMENT_REPORT_CATALOG.map((item) => ({
+  authorizedAssessmentReportCatalog.value.map((item) => ({
     key: item.code,
     label: item.cardLabel,
     tone: item.tone,

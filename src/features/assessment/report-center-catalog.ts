@@ -1,4 +1,10 @@
 import { ASSESSMENT_SCALE_CATALOG } from '@/features/assessment/assessment-scale-catalog'
+import {
+  getAssessmentScaleCatalogItem,
+  isAssessmentScaleAuthorized,
+  type AssessmentEntitlementAccessChecker,
+  type AssessmentModuleAccessChecker,
+} from '@/features/assessment/assessment-scale-catalog'
 import type {
   AssessmentScaleCode,
   AssessmentReportTone,
@@ -43,6 +49,21 @@ export function getAssessmentReportCatalogItem(
   code: AssessmentScaleCode,
 ): AssessmentReportCatalogItem {
   return ASSESSMENT_REPORT_CATALOG_MAP.get(code)!
+}
+
+/**
+ * 按激活授权过滤报告目录（entitlement-first，与评估入口/路由守卫同源）。
+ * 所有量表均声明 accessEntitlementsAnyOf；未传 hasEntitlementAccess 时一律不可见。
+ */
+export function getAuthorizedAssessmentReportCatalog(
+  hasModuleAccess: AssessmentModuleAccessChecker,
+  hasEntitlementAccess?: AssessmentEntitlementAccessChecker,
+): ReadonlyArray<AssessmentReportCatalogItem> {
+  return ASSESSMENT_REPORT_CATALOG.filter((item) => {
+    const scaleItem = getAssessmentScaleCatalogItem(item.code)
+    return scaleItem !== null
+      && isAssessmentScaleAuthorized(scaleItem, hasModuleAccess, hasEntitlementAccess)
+  })
 }
 
 export function createEmptyAssessmentReportCounts(): AssessmentReportCounts {
