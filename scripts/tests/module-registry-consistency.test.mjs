@@ -101,11 +101,9 @@ test('removed module-specific legacy routes do not reappear', () => {
   )
 })
 
-test('social and cognitive stay experimental; the rest stay active', () => {
+test('all six modules stay active', () => {
   const statusByCode = new Map(moduleBlocks.map((m) => [m.code, m.status]))
-  assert.equal(statusByCode.get('SOCIAL'), 'experimental', 'SOCIAL 必须保持 experimental')
-  assert.equal(statusByCode.get('COGNITIVE'), 'experimental', 'COGNITIVE 必须保持 experimental')
-  for (const code of ['SENSORY', 'EMOTIONAL', 'LIFE_SKILLS', 'RESOURCE']) {
+  for (const code of EXPECTED_MODULE_CODES) {
     assert.equal(statusByCode.get(code), 'active', `${code} 必须为 active`)
   }
 })
