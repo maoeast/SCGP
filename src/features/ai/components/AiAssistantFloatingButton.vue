@@ -51,6 +51,7 @@ function handleClick() {
     aria-describedby="ai-floating-button-tooltip"
     @click="handleClick"
   >
+    <span class="ai-floating-button__shadow" aria-hidden="true"></span>
     <span class="ai-floating-button__motion">
       <svg
         class="ai-floating-button__shape"
@@ -122,6 +123,23 @@ function handleClick() {
   border-radius: 50%;
 }
 
+.ai-floating-button__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 46px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(31, 96, 132, 0.45) 0%,
+    rgba(31, 96, 132, 0.2) 55%,
+    rgba(31, 96, 132, 0) 75%
+  );
+  pointer-events: none;
+  animation: ai-floating-button-shadow 2.6s ease-in-out infinite;
+}
+
 .ai-floating-button__motion {
   --ai-floating-face-color: #596273;
 
@@ -129,7 +147,9 @@ function handleClick() {
   display: block;
   width: 60px;
   height: 60px;
-  filter: drop-shadow(0 8px 16px rgba(43, 128, 174, 0.26));
+  filter:
+    drop-shadow(0 4px 8px rgba(43, 128, 174, 0.22))
+    drop-shadow(0 12px 24px rgba(43, 128, 174, 0.36));
   animation: ai-floating-button-float 2.6s ease-in-out infinite;
 }
 
@@ -246,7 +266,19 @@ function handleClick() {
 
   50% {
     opacity: 1;
-    transform: translateY(-4px);
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes ai-floating-button-shadow {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.95;
+  }
+
+  50% {
+    transform: translateX(-50%) scale(0.78);
+    opacity: 0.5;
   }
 }
 
@@ -294,6 +326,7 @@ function handleClick() {
 @media (prefers-reduced-motion: reduce) {
   .ai-floating-button,
   .ai-floating-button__motion,
+  .ai-floating-button__shadow,
   .ai-floating-button__tooltip,
   .ai-floating-button__face,
   .ai-floating-button__eye-dot,
