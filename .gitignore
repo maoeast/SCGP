@@ -49,7 +49,9 @@ __screenshots__/
 .codex/
 .learnings/
 AGENTS.rar
-.thincoder/
+.thincoder/*
+!.thincoder/skills/
+!.thincoder/skills/**
 
 # Local generated image workspace
 AIimages/

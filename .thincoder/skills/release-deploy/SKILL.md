@@ -7,8 +7,6 @@ description: SCGP Windows 新版打包 + 发布到自动更新服务器的完整
 
 把新版 Windows 安装包发布到自动更新服务器，让已安装的老用户能自动升级。
 
-> 本文件与 `.thincoder/skills/release-deploy/SKILL.md` 内容一致（单一事实源，改流程两处同步）。
-
 ## 环境约定（单人项目固定值，环境变更时只改这里）
 
 | 项 | 值 |
