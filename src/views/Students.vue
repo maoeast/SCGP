@@ -69,30 +69,81 @@
             />
           </el-select>
         </div>
+
+        <div class="view-switcher" role="group" aria-label="视图切换">
+          <button
+            type="button"
+            class="view-switcher__btn"
+            :class="{ 'is-active': viewMode === 'grid' }"
+            title="网格视图"
+            aria-label="网格视图"
+            @click="viewMode = 'grid'"
+          >
+            <el-icon><Grid /></el-icon>
+          </button>
+          <button
+            type="button"
+            class="view-switcher__btn"
+            :class="{ 'is-active': viewMode === 'table' }"
+            title="表格视图"
+            aria-label="表格视图"
+            @click="viewMode = 'table'"
+          >
+            <el-icon><List /></el-icon>
+          </button>
+        </div>
       </div>
     </section>
 
     <section class="stats-row scgp-stats-row" aria-label="学生统计概览">
       <article class="summary-card scgp-summary-card">
-        <div class="summary-card__label">学生总数</div>
-        <div class="summary-card__value">{{ summaryStats.total }}</div>
+        <div class="summary-card__inner">
+          <span class="summary-card__icon summary-card__icon--total" aria-hidden="true">
+            <el-icon><User /></el-icon>
+          </span>
+          <div class="summary-card__text">
+            <div class="summary-card__label">学生总数</div>
+            <div class="summary-card__value">{{ summaryStats.total }}</div>
+          </div>
+        </div>
       </article>
       <article class="summary-card scgp-summary-card">
-        <div class="summary-card__label">已分班</div>
-        <div class="summary-card__value">{{ summaryStats.assigned }}</div>
+        <div class="summary-card__inner">
+          <span class="summary-card__icon summary-card__icon--assigned" aria-hidden="true">
+            <el-icon><School /></el-icon>
+          </span>
+          <div class="summary-card__text">
+            <div class="summary-card__label">已分班</div>
+            <div class="summary-card__value">{{ summaryStats.assigned }}</div>
+          </div>
+        </div>
       </article>
       <article class="summary-card scgp-summary-card">
-        <div class="summary-card__label">未分班</div>
-        <div class="summary-card__value">{{ summaryStats.unassigned }}</div>
+        <div class="summary-card__inner">
+          <span class="summary-card__icon summary-card__icon--unassigned" aria-hidden="true">
+            <el-icon><UserFilled /></el-icon>
+          </span>
+          <div class="summary-card__text">
+            <div class="summary-card__label">未分班</div>
+            <div class="summary-card__value">{{ summaryStats.unassigned }}</div>
+          </div>
+        </div>
       </article>
       <article class="summary-card scgp-summary-card">
-        <div class="summary-card__label">本月新增</div>
-        <div class="summary-card__value">{{ summaryStats.newThisMonth }}</div>
+        <div class="summary-card__inner">
+          <span class="summary-card__icon summary-card__icon--new" aria-hidden="true">
+            <el-icon><Calendar /></el-icon>
+          </span>
+          <div class="summary-card__text">
+            <div class="summary-card__label">本月新增</div>
+            <div class="summary-card__value">{{ summaryStats.newThisMonth }}</div>
+          </div>
+        </div>
       </article>
     </section>
 
     <div class="main-content scgp-page-panel" v-loading="studentStore.loading">
-      <div v-if="filteredStudents.length > 0" class="students-grid">
+      <div v-if="filteredStudents.length > 0 && viewMode === 'grid'" class="students-grid">
         <article v-for="student in filteredStudents" :key="student.id" class="student-card">
           <div class="student-card__top">
               <div class="student-card__identity">
@@ -108,7 +159,15 @@
                 <div class="student-card__meta">
                   <span>{{ student.gender }}</span>
                   <span>{{ getAge(student.birthday) }}岁</span>
-                  <StudentId :id="student.student_no" />
+                  <span class="student-card__id-wrap">
+                    <el-tooltip
+                      :content="student.student_no || '未设置学号'"
+                      placement="top"
+                      :disabled="!student.student_no"
+                    >
+                      <StudentId :id="student.student_no" :full="true" />
+                    </el-tooltip>
+                  </span>
                 </div>
               </div>
             </div>
@@ -149,12 +208,78 @@
           </div>
 
           <div class="student-card__footer">
-            <span class="student-card__supporting">完整学号在详情页展示</span>
             <router-link :to="`/students/${student.id}`" class="student-primary-action">
               查看详情
             </router-link>
           </div>
         </article>
+      </div>
+
+      <div v-else-if="filteredStudents.length > 0 && viewMode === 'table'" class="students-table-wrap">
+        <el-table :data="pagedStudents" class="students-table" row-key="id">
+          <el-table-column label="学号" width="180">
+            <template #default="{ row }">
+              <StudentId :id="row.student_no" :full="true" />
+            </template>
+          </el-table-column>
+          <el-table-column label="学生姓名" min-width="140">
+            <template #default="{ row }">
+              <div class="table-student-name">
+                <StudentAvatar
+                  :name="row.name"
+                  :gender="row.gender"
+                  :avatar-url="row.avatar_path"
+                  size="sm"
+                />
+                <span>{{ row.name }}</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="性别 / 年龄" width="110">
+            <template #default="{ row }">
+              {{ row.gender }} / {{ getAge(row.birthday) }} 岁
+            </template>
+          </el-table-column>
+          <el-table-column label="诊断类型" min-width="130">
+            <template #default="{ row }">
+              <DiagnosisTag :type="row.disorder" />
+            </template>
+          </el-table-column>
+          <el-table-column label="所属班级" min-width="150">
+            <template #default="{ row }">
+              <span
+                class="student-class-badge"
+                :class="row.current_class_id ? 'is-assigned' : 'is-unassigned'"
+              >
+                {{ row.current_class_name || '未分班' }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="创建时间" width="130">
+            <template #default="{ row }">
+              {{ formatDate(row.created_at) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="200" fixed="right">
+            <template #default="{ row }">
+              <div class="table-student-actions">
+                <el-button link type="primary" @click="goDetail(row)">查看详情</el-button>
+                <el-button link type="primary" @click="editStudent(row)">编辑</el-button>
+                <el-button link type="danger" @click="deleteStudent(row)">删除</el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <div v-if="filteredStudents.length > TABLE_PAGE_SIZE" class="students-table-pagination">
+          <el-pagination
+            layout="prev, pager, next, total"
+            :total="filteredStudents.length"
+            :page-size="TABLE_PAGE_SIZE"
+            :current-page="tableCurrentPage"
+            @current-change="handleTablePageChange"
+          />
+        </div>
       </div>
 
       <div v-else class="students-empty-state">
@@ -227,9 +352,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { MoreFilled, Plus, Search, Upload } from '@element-plus/icons-vue'
+import {
+  Calendar,
+  Grid,
+  List,
+  MoreFilled,
+  Plus,
+  School,
+  Search,
+  Upload,
+  User,
+  UserFilled,
+} from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 import AddStudentDialog from '@/components/AddStudentDialog.vue'
@@ -239,6 +376,7 @@ import StudentId from '@/components/student/StudentId.vue'
 import { classAPI } from '@/database/class-api'
 import { useStudentStore, type Student } from '@/stores/student'
 import type { ClassInfo } from '@/types/class'
+import { persistViewMode, restoreViewMode } from '@/utils/view-mode'
 import {
   DIAGNOSIS_OPTIONS,
   type DiagnosisType,
@@ -283,6 +421,9 @@ const filterDiagnosis = ref<DiagnosisFilter>('')
 const filterClass = ref('')
 const showAddModal = ref(false)
 const showImportModal = ref(false)
+const viewMode = ref<'grid' | 'table'>(restoreViewMode('students'))
+const TABLE_PAGE_SIZE = 10
+const tableCurrentPage = ref(1)
 const selectedFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const importingStudents = ref(false)
@@ -323,6 +464,30 @@ const filteredStudents = computed(() => {
       || currentClassName.includes(keyword)
     )
   })
+})
+
+const pagedStudents = computed(() => {
+  const start = (tableCurrentPage.value - 1) * TABLE_PAGE_SIZE
+  return filteredStudents.value.slice(start, start + TABLE_PAGE_SIZE)
+})
+
+watch([searchKeyword, filterGender, filterDiagnosis, filterClass], () => {
+  tableCurrentPage.value = 1
+})
+
+watch(filteredStudents, () => {
+  const maxPage = Math.max(1, Math.ceil(filteredStudents.value.length / TABLE_PAGE_SIZE))
+  if (tableCurrentPage.value > maxPage) {
+    tableCurrentPage.value = maxPage
+  }
+})
+
+function handleTablePageChange(page: number) {
+  tableCurrentPage.value = page
+}
+
+watch(viewMode, value => {
+  persistViewMode('students', value)
 })
 
 const summaryStats = computed(() => {
@@ -426,6 +591,12 @@ async function handleStudentSaved() {
 function editStudent(student: StudentListItem) {
   editingStudent.value = student
   showAddModal.value = true
+}
+
+const router = useRouter()
+
+function goDetail(student: StudentListItem) {
+  router.push(`/students/${student.id}`)
 }
 
 function handleStudentMenuCommand(student: StudentListItem, command: string | number | object) {
@@ -654,7 +825,7 @@ onMounted(async () => {
 }
 
 .student-search {
-  width: 220px;
+  width: 320px;
   flex-shrink: 0;
 }
 
@@ -738,6 +909,42 @@ onMounted(async () => {
   box-shadow: 0 0 0 1px rgba(220, 223, 230, 0.9) inset;
 }
 
+.view-switcher {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 12px;
+  background: #f2f4f7;
+  border: 1px solid #e4e7ed;
+  flex-shrink: 0;
+}
+
+.view-switcher__btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #909399;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-switcher__btn:hover {
+  color: #2f74d0;
+  background: rgba(102, 168, 255, 0.1);
+}
+
+.view-switcher__btn.is-active {
+  color: #2f74d0;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -747,25 +954,67 @@ onMounted(async () => {
 }
 
 .summary-card {
-  padding: 20px 22px;
-  min-height: 116px;
+  padding: 18px 20px;
+  min-height: 104px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
   border-radius: 8px;
   background: var(--color-background-secondary, #ffffff);
   border: none;
   box-shadow: none;
 }
 
+.summary-card__inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.summary-card__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.summary-card__icon--total {
+  background: rgba(102, 168, 255, 0.14);
+  color: #2f74d0;
+}
+
+.summary-card__icon--assigned {
+  background: rgba(42, 160, 113, 0.12);
+  color: #2aa071;
+}
+
+.summary-card__icon--unassigned {
+  background: rgba(230, 162, 60, 0.14);
+  color: #c47d1c;
+}
+
+.summary-card__icon--new {
+  background: rgba(150, 102, 255, 0.12);
+  color: #7c5ce0;
+}
+
+.summary-card__text {
+  min-width: 0;
+}
+
 .summary-card__label {
   color: var(--cm-muted);
   font-size: 14px;
+  margin-bottom: 6px;
 }
 
 .summary-card__value {
   color: var(--cm-text);
-  font-size: 40px;
+  font-size: 32px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -827,7 +1076,7 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 10px;
-  color: #606266;
+  color: #475569;
   font-size: 13px;
 }
 
@@ -845,6 +1094,28 @@ onMounted(async () => {
   border-radius: 999px;
   background: #c0c4cc;
   transform: translateY(-50%);
+}
+
+.student-card__id-wrap {
+  max-width: 130px;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.student-card__id-wrap :deep(.el-tooltip__trigger) {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.student-card__id-wrap :deep(.student-id) {
+  color: #64748b;
 }
 
 .student-card__menu-button {
@@ -895,7 +1166,7 @@ onMounted(async () => {
 
 .student-created-at {
   font-size: 12px;
-  color: #909399;
+  color: #64748b;
 }
 
 .student-card__footer {
@@ -904,13 +1175,8 @@ onMounted(async () => {
   border-top: 1px solid #ebeef5;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
-}
-
-.student-card__supporting {
-  color: #909399;
-  font-size: 12px;
 }
 
 .student-primary-action {
@@ -941,6 +1207,45 @@ onMounted(async () => {
 :deep(.student-card__menu-dropdown .student-card__menu-item--danger:hover) {
   color: #f56c6c;
   background: #fef0f0;
+}
+
+.students-table-wrap {
+  border-radius: 8px;
+  background: #fff;
+  border: 0.5px solid #e4e7ed;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.students-table :deep(.el-table__header th) {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+}
+
+.students-table :deep(.el-table__body td) {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.table-student-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.table-student-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.students-table-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 16px 4px;
 }
 
 .students-empty-state {
@@ -1160,6 +1465,10 @@ onMounted(async () => {
 
   .compact-selects :deep(.el-select) {
     width: 100%;
+  }
+
+  .view-switcher {
+    margin-left: auto;
   }
 }
 
