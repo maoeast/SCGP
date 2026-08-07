@@ -65,7 +65,12 @@ class TeachingMaterialFileManager {
   }
 
   getFileUrl(relativePath: string): string {
-    return `resource://${normalizeRelativePath(relativePath)}`
+    // resource:// 协议的两级查找根（userData/resources、presetRoot=assets/resources）
+    // 已覆盖 assets/ 语义：预置视频 seed 的 filePath 带 assets/resources/ 前缀，
+    // 直接拼接会与 presetRoot 重复（assets/resources/assets/resources/...）→ 404 静默失败。
+    // 这里剥离 assets/resources/ 前缀：预置 → resource://videos/...（presetRoot 命中）；
+    // 托管（teaching-materials/... 无前缀）→ 原样（userDataRoot 命中）。
+    return `resource://${normalizeRelativePath(relativePath).replace(/^assets\/resources\//, '')}`
   }
 
   async resolveManagedAbsolutePath(relativePath: string): Promise<string> {

@@ -418,12 +418,25 @@
       append-to-body
       @closed="videoPreviewMaterial = null"
     >
+      <div v-if="videoError" class="material-video-error">
+        <el-icon :size="28"><WarningFilled /></el-icon>
+        <p>{{ videoError }}</p>
+        <el-button
+          v-if="videoPreviewMaterial"
+          type="primary"
+          plain
+          @click="openMaterial(videoPreviewMaterial)"
+        >
+          改用系统播放器打开
+        </el-button>
+      </div>
       <video
-        v-if="videoPreviewUrl"
+        v-else-if="videoPreviewUrl"
         :src="videoPreviewUrl"
         class="material-video-player"
         controls
         autoplay
+        @error="handleVideoError"
       />
     </el-dialog>
   </div>
@@ -654,11 +667,17 @@ const videoPreviewUrl = computed(() => {
     ? teachingMaterialFileManager.getFileUrl(videoPreviewMaterial.value.filePath)
     : ''
 })
+const videoError = ref('')
 
 function handleThumbnailClick(material: TeachingMaterialItem) {
   if (isVideoMaterial(material)) {
+    videoError.value = ''
     videoPreviewMaterial.value = material
   }
+}
+
+function handleVideoError() {
+  videoError.value = '视频加载失败：文件不存在或编码不受支持。可改用系统播放器打开。'
 }
 
 function getFileIcon(type: string) {
@@ -828,9 +847,23 @@ async function toggleFavorite(material: TeachingMaterialItem) {
   await materialsStore.toggleFavorite(material.id)
 }
 
+// 打开资料防连点：同一资料 1.5s 内忽略重复触发（系统播放器/外部应用不能弹多个窗口）；
+// 打开失败立即解锁，允许用户马上重试
+const OPEN_MATERIAL_REPEAT_WINDOW_MS = 1500
+const recentlyOpenedMaterialAt = new Map<number, number>()
+
 async function openMaterial(material: TeachingMaterialItem) {
+  const now = Date.now()
+  const lastOpenedAt = recentlyOpenedMaterialAt.get(material.id) || 0
+  if (now - lastOpenedAt < OPEN_MATERIAL_REPEAT_WINDOW_MS) {
+    return
+  }
+
+  recentlyOpenedMaterialAt.set(material.id, now)
+
   const success = await materialsStore.openMaterial(material)
   if (!success) {
+    recentlyOpenedMaterialAt.delete(material.id)
     ElMessage.error('打开资料失败')
   }
 }
@@ -1061,6 +1094,24 @@ defineExpose({
   max-height: 70vh;
   background: #000;
   border-radius: 8px;
+}
+
+.material-video-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 48px 24px;
+  border-radius: 8px;
+  background: #fdf6f6;
+  color: #8b3c36;
+}
+
+.material-video-error p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  text-align: center;
 }
 
 .thumbnail-image {
