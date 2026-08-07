@@ -14,65 +14,146 @@
           <el-icon><DocumentCopy /></el-icon>
           批量创建
         </el-button>
-        <el-button type="primary" @click="showCreateDialog">
-          <el-icon><Plus /></el-icon>
-          新建班级
-        </el-button>
       </div>
     </div>
 
     <div class="class-management-content">
       <section class="filter-section scgp-filter-surface class-filter-section">
         <div class="filter-toolbar">
-          <div class="grade-pill-list" role="tablist" aria-label="年级筛选">
+          <div class="stage-pill-list" role="tablist" aria-label="学段筛选">
             <button
-              v-for="tab in gradeTabs"
+              v-for="tab in stageTabs"
               :key="tab.key"
               type="button"
-              class="grade-pill"
-              :class="{ 'is-active': filterGrade === tab.value }"
-              @click="setGradeFilter(tab.value)"
+              class="stage-pill"
+              :class="{ 'is-active': filterStage === tab.value }"
+              @click="setStageFilter(tab.value)"
             >
               {{ tab.label }}
             </button>
           </div>
+
           <div class="filter-toolbar__divider" aria-hidden="true" />
-          <div class="year-filter">
+
+          <div class="filter-selects">
+            <el-select
+              :model-value="filterGrade"
+              clearable
+              placeholder="年级"
+              class="grade-filter-select"
+              @change="setGradeFilter"
+            >
+              <el-option label="全部年级" value="" />
+              <el-option
+                v-for="option in gradeFilterOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
             <span class="year-filter__label">学年</span>
             <el-select :model-value="filterYear" clearable placeholder="全部学年" @change="handleAcademicYearChange">
               <el-option v-for="year in academicYearFilterOptions" :key="year" :label="year" :value="year" />
             </el-select>
+          </div>
+
+          <div class="filter-actions">
+            <div class="view-switcher" role="group" aria-label="视图切换">
+              <button
+                type="button"
+                class="view-switcher__btn"
+                :class="{ 'is-active': viewMode === 'grid' }"
+                title="网格视图"
+                aria-label="网格视图"
+                @click="viewMode = 'grid'"
+              >
+                <el-icon><Grid /></el-icon>
+              </button>
+              <button
+                type="button"
+                class="view-switcher__btn"
+                :class="{ 'is-active': viewMode === 'table' }"
+                title="表格视图"
+                aria-label="表格视图"
+                @click="viewMode = 'table'"
+              >
+                <el-icon><List /></el-icon>
+              </button>
+            </div>
+            <el-button type="primary" @click="showCreateDialog">
+              <el-icon><Plus /></el-icon>
+              新建班级
+            </el-button>
           </div>
         </div>
       </section>
 
       <section class="stats-row scgp-stats-row" aria-label="班级统计概览">
         <article class="summary-card scgp-summary-card">
-          <div class="summary-card__label">总训练次数</div>
-          <div class="summary-card__value">{{ totalTrainingCount }}</div>
+          <div class="summary-card__inner">
+            <span class="summary-card__icon summary-card__icon--training" aria-hidden="true">
+              <el-icon><TrendCharts /></el-icon>
+            </span>
+            <div class="summary-card__text">
+              <div class="summary-card__label">总训练次数</div>
+              <div class="summary-card__value">{{ totalTrainingCount }}</div>
+            </div>
+          </div>
         </article>
         <article class="summary-card scgp-summary-card">
-          <div class="summary-card__label">总评估次数</div>
-          <div class="summary-card__value">{{ totalAssessmentCount }}</div>
+          <div class="summary-card__inner">
+            <span class="summary-card__icon summary-card__icon--assessment" aria-hidden="true">
+              <el-icon><Document /></el-icon>
+            </span>
+            <div class="summary-card__text">
+              <div class="summary-card__label">总评估次数</div>
+              <div class="summary-card__value">{{ totalAssessmentCount }}</div>
+            </div>
+          </div>
         </article>
         <article class="summary-card scgp-summary-card">
-          <div class="summary-card__label">平均分</div>
-          <div class="summary-card__value">{{ displayAverageScore }}</div>
+          <div class="summary-card__inner">
+            <span class="summary-card__icon summary-card__icon--score" aria-hidden="true">
+              <el-icon><Histogram /></el-icon>
+            </span>
+            <div class="summary-card__text">
+              <div class="summary-card__label">平均分</div>
+              <div class="summary-card__value">{{ displayAverageScore }}</div>
+            </div>
+          </div>
         </article>
         <article class="summary-card scgp-summary-card">
-          <div class="summary-card__label">活跃班级</div>
-          <div class="summary-card__value">{{ activeClassesCount }}</div>
+          <div class="summary-card__inner">
+            <span class="summary-card__icon summary-card__icon--active" aria-hidden="true">
+              <el-icon><School /></el-icon>
+            </span>
+            <div class="summary-card__text">
+              <div class="summary-card__label">活跃班级</div>
+              <div class="summary-card__value">{{ activeClassesCount }}</div>
+            </div>
+          </div>
         </article>
       </section>
 
       <div class="main-content scgp-page-panel class-management-main">
-        <TransitionGroup name="stage-section" tag="div" class="class-stage-list">
+        <TransitionGroup v-if="viewMode === 'grid'" name="stage-section" tag="div" class="class-stage-list">
           <section v-for="group in stageGroups" :key="group.stage" class="class-stage">
-            <div class="class-stage__header">
-              <h2>{{ group.label }}</h2>
-              <span>{{ group.classes.length }} 个班级</span>
-            </div>
-            <TransitionGroup name="class-card" tag="div" class="class-grid">
+            <button
+              type="button"
+              class="class-stage__header"
+              :aria-expanded="!collapsedStages.has(group.stage)"
+              @click="toggleStageCollapse(group.stage)"
+            >
+              <span class="class-stage__title">
+                <el-icon class="class-stage__chevron">
+                  <ArrowDown v-if="!collapsedStages.has(group.stage)" />
+                  <ArrowRight v-else />
+                </el-icon>
+                <h2>{{ group.label }}</h2>
+              </span>
+              <span class="class-stage__count">{{ group.classes.length }} 个班级</span>
+            </button>
+            <TransitionGroup v-if="!collapsedStages.has(group.stage)" name="class-card" tag="div" class="class-grid">
               <article
                 v-for="cls in group.classes"
                 :key="cls.id"
@@ -104,11 +185,13 @@
                   </div>
                 </div>
                 <div class="class-card__middle">
-                  <div class="class-card__enrollment">在籍 {{ cls.currentEnrollment }}/{{ cls.maxStudents }} 人</div>
-                  <div class="capacity-progress" aria-hidden="true">
+                  <div class="class-card__enrollment-row">
+                    <span class="class-card__enrollment">在籍 {{ cls.currentEnrollment }}/{{ cls.maxStudents }} 人</span>
+                    <span class="class-card__capacity">{{ getEnrollmentPercent(cls) }}%</span>
+                  </div>
+                  <div class="capacity-progress" :class="getCapacityTone(cls)" aria-hidden="true">
                     <div class="capacity-progress__fill" :style="{ width: `${getEnrollmentPercent(cls)}%` }" />
                   </div>
-                  <div class="class-card__capacity">{{ getEnrollmentPercent(cls) }}% 满员率</div>
                 </div>
                 <div class="class-card__actions">
                   <el-button class="card-action-button" round @click="viewClassStudents(cls)">学生</el-button>
@@ -119,6 +202,59 @@
             </TransitionGroup>
           </section>
         </TransitionGroup>
+
+        <div v-else class="classes-table-wrap">
+          <el-table :data="classes" class="classes-table" row-key="id">
+            <el-table-column label="班级名称" min-width="150">
+              <template #default="{ row }">
+                <div class="table-class-name">
+                  <span class="status-dot" :class="getClassStatusClass(row.status)" />
+                  <span>{{ row.name }}</span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column label="所属学段 / 年级" min-width="170">
+              <template #default="{ row }">
+                {{ formatStageLabel(row.gradeLevel) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="负责教师" min-width="150">
+              <template #default="{ row }">
+                {{ formatClassTeachers(row) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="在籍学生数" width="120">
+              <template #default="{ row }">
+                {{ row.currentEnrollment }} / {{ row.maxStudents }} 人
+              </template>
+            </el-table-column>
+            <el-table-column label="班级满员率" min-width="170">
+              <template #default="{ row }">
+                <div class="table-capacity">
+                  <div class="capacity-progress capacity-progress--sm" :class="getCapacityTone(row)">
+                    <div class="capacity-progress__fill" :style="{ width: `${getEnrollmentPercent(row)}%` }" />
+                  </div>
+                  <span class="table-capacity__value">{{ getEnrollmentPercent(row) }}%</span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column label="累计训练次数" width="120">
+              <template #default="{ row }">
+                {{ getClassTrainingCount(row) }}
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="240" fixed="right">
+              <template #default="{ row }">
+                <div class="table-class-actions">
+                  <el-button link type="primary" @click="viewClassStudents(row)">学生列表</el-button>
+                  <el-button v-if="isAdmin" link type="primary" @click="manageClassTeachers(row)">分配教师</el-button>
+                  <el-button link type="primary" @click="editClass(row)">编辑</el-button>
+                  <el-button link type="danger" @click="deleteClass(row)">删除</el-button>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
 
         <div v-if="stageGroups.length === 0" class="class-empty-state">
           <el-empty description="当前筛选条件下暂无班级" />
@@ -293,11 +429,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
-import { Calendar, DocumentCopy, MoreFilled, Plus } from '@element-plus/icons-vue'
+import { ArrowDown, ArrowRight, Calendar, Document, DocumentCopy, Grid, Histogram, List, MoreFilled, Plus, School, TrendCharts } from '@element-plus/icons-vue'
 import { classAPI } from '@/database/class-api'
+import { persistViewMode, restoreViewMode } from '@/utils/view-mode'
 import { DEFAULT_GRADE_LEVEL, GRADE_LEVELS, type AcademicYear, type AcademicYearInfo, type ClassInfo, type ClassNumber, type ClassStudentItem, type ClassTeacher, type CreateAcademicYearParams, type CreateClassParams, type GradeLevel, type UnifiedClassStatistics, type UpdateAcademicYearParams, type UpdateClassParams } from '@/types/class'
 import { useAuthStore } from '@/stores/auth'
 
@@ -335,6 +472,10 @@ const router = useRouter()
 const authStore = useAuthStore()
 const filterYear = ref<AcademicYear | ''>('')
 const filterGrade = ref<GradeLevel | ''>('')
+const filterStage = ref<GradeStage | ''>('')
+const viewMode = ref<'grid' | 'table'>(restoreViewMode('classes'))
+const collapsedStages = ref<Set<GradeStage>>(new Set())
+const classTeachersMap = ref<Map<number, ClassTeacher[]>>(new Map())
 const classes = ref<ClassInfo[]>([])
 const statistics = ref<UnifiedClassStatistics[]>([])
 const academicYears = ref<AcademicYearInfo[]>([])
@@ -360,7 +501,16 @@ const academicYearFilterOptions = computed<AcademicYear[]>(() => academicYearOpt
 const preferredAcademicYear = computed<AcademicYear>(() => academicYears.value.find(item => item.isActive)?.academicYear || academicYearFilterOptions.value[0] || getCurrentAcademicYear())
 const isAdmin = computed(() => authStore.isAdmin)
 const classNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as ClassNumber[]
-const gradeTabs = computed(() => [{ key: 'all', label: '全部', value: '' as const }, ...GRADE_OPTIONS.map(option => ({ key: `grade-${option.value}`, label: option.label, value: option.value }))])
+const stageTabs = computed(() => [
+  { key: 'all', label: '全部', value: '' as const },
+  { key: 'kindergarten', label: GRADE_STAGE_LABELS.kindergarten, value: 'kindergarten' as const },
+  { key: 'primary', label: GRADE_STAGE_LABELS.primary, value: 'primary' as const },
+  { key: 'junior', label: GRADE_STAGE_LABELS.junior, value: 'junior' as const },
+])
+const gradeFilterOptions = computed(() => {
+  const options = GRADE_OPTIONS.filter(option => !filterStage.value || option.stage === filterStage.value)
+  return options.map(option => ({ label: option.label, value: option.value }))
+})
 const generatedClassName = computed(() => `${getGradeLabel(classForm.value.gradeLevel)}${classForm.value.classNumber}班`)
 const totalClasses = computed(() => classes.value.length)
 const totalTrainingCount = computed(() => statistics.value.reduce((sum, item) => sum + item.totalTrainingCount, 0))
@@ -450,9 +600,21 @@ function loadData() {
     if (filterGrade.value !== '') options.gradeLevel = filterGrade.value
     classes.value = classAPI.getClasses(options)
     loadStatistics()
+    loadClassTeachersMap()
   } catch (error: any) {
     ElMessage.error(`加载班级列表失败: ${error.message}`)
   }
+}
+function loadClassTeachersMap() {
+  const map = new Map<number, ClassTeacher[]>()
+  for (const cls of classes.value) {
+    try {
+      map.set(cls.id, classAPI.getClassTeachers(cls.id))
+    } catch {
+      map.set(cls.id, [])
+    }
+  }
+  classTeachersMap.value = map
 }
 function loadStatistics() {
   try {
@@ -465,15 +627,45 @@ function loadStatistics() {
     statistics.value = []
   }
 }
-function setGradeFilter(grade: GradeLevel | '') {
-  filterGrade.value = grade
+function setStageFilter(stage: GradeStage | '') {
+  filterStage.value = stage
+  if (stage && filterGrade.value !== '' && getGradeStage(filterGrade.value) !== stage) {
+    filterGrade.value = ''
+  }
   loadData()
+}
+function setGradeFilter(grade: GradeLevel | '' | undefined) {
+  filterGrade.value = grade ?? ''
+  loadData()
+}
+function toggleStageCollapse(stage: GradeStage) {
+  const next = new Set(collapsedStages.value)
+  if (next.has(stage)) {
+    next.delete(stage)
+  } else {
+    next.add(stage)
+  }
+  collapsedStages.value = next
+}
+function formatStageLabel(gradeLevel: number): string {
+  return `${GRADE_STAGE_LABELS[getGradeStage(gradeLevel)]} · ${getGradeLabel(gradeLevel)}`
+}
+function formatClassTeachers(cls: ClassInfo): string {
+  const teachers = classTeachersMap.value.get(cls.id) ?? []
+  return teachers.length > 0 ? teachers.map(teacher => teacher.teacherName).join('、') : '—'
+}
+function getClassTrainingCount(cls: ClassInfo): number {
+  return statistics.value.find(item => item.classId === cls.id)?.totalTrainingCount ?? 0
 }
 function handleClassMenuCommand(cls: ClassInfo, command: string | number | object) {
   if (command === 'delete') {
     void deleteClass(cls)
   }
 }
+
+watch(viewMode, value => {
+  persistViewMode('classes', value)
+})
 function handleAcademicYearChange(value?: AcademicYear) {
   filterYear.value = value ?? ''
   loadData()
@@ -617,6 +809,12 @@ function getEnrollmentPercent(cls: ClassInfo): number {
   if (!cls.maxStudents) return 0
   return Math.max(0, Math.min(100, Math.round((cls.currentEnrollment / cls.maxStudents) * 100)))
 }
+function getCapacityTone(cls: ClassInfo): string {
+  const percent = getEnrollmentPercent(cls)
+  if (percent >= 90) return 'is-high'
+  if (percent >= 60) return 'is-mid'
+  return 'is-low'
+}
 function getClassStatusText(status: number): string {
   if (status === ACTIVE_CLASS_STATUS) return '启用中'
   if (status === GRADUATED_CLASS_STATUS) return '已毕业'
@@ -734,7 +932,7 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 
-.grade-pill-list {
+.stage-pill-list {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -744,16 +942,16 @@ onMounted(() => {
   padding: 2px 0;
 }
 
-.grade-pill-list::-webkit-scrollbar {
+.stage-pill-list::-webkit-scrollbar {
   height: 6px;
 }
 
-.grade-pill-list::-webkit-scrollbar-thumb {
+.stage-pill-list::-webkit-scrollbar-thumb {
   background: rgba(164, 157, 146, 0.55);
   border-radius: 999px;
 }
 
-.grade-pill {
+.stage-pill {
   border: 1px solid var(--cm-border-strong);
   background: rgba(255, 255, 255, 0.88);
   color: var(--cm-muted);
@@ -766,13 +964,13 @@ onMounted(() => {
   transition: all 0.22s ease;
 }
 
-.grade-pill:hover {
+.stage-pill:hover {
   color: var(--cm-text);
   border-color: #afcfff;
   transform: translateY(-1px);
 }
 
-.grade-pill.is-active {
+.stage-pill.is-active {
   color: #2f74d0;
   border-color: var(--cm-primary);
   background: var(--cm-primary-soft);
@@ -786,27 +984,71 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.year-filter {
+.filter-selects {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.filter-selects :deep(.el-select) {
+  width: 150px;
+}
+
+.filter-selects :deep(.el-select__wrapper) {
+  min-height: 40px;
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px rgba(220, 223, 230, 0.9) inset;
+}
+
+.filter-actions {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-left: auto;
+  flex-shrink: 0;
+}
+
+.view-switcher {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 12px;
+  background: #f2f4f7;
+  border: 1px solid #e4e7ed;
+  flex-shrink: 0;
+}
+
+.view-switcher__btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #909399;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-switcher__btn:hover {
+  color: #2f74d0;
+  background: rgba(102, 168, 255, 0.1);
+}
+
+.view-switcher__btn.is-active {
+  color: #2f74d0;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
 }
 
 .year-filter__label {
   color: var(--cm-muted);
   font-size: 13px;
   white-space: nowrap;
-}
-
-.year-filter :deep(.el-select) {
-  width: 180px;
-}
-
-.year-filter :deep(.el-input__wrapper) {
-  border-radius: 14px;
-  box-shadow: 0 0 0 1px rgba(207, 199, 185, 0.85) inset;
-  background: rgba(255, 255, 255, 0.95);
 }
 
 .stats-row {
@@ -816,25 +1058,67 @@ onMounted(() => {
 }
 
 .summary-card {
-  padding: 20px 22px;
+  padding: 18px 20px;
   border-radius: 8px;
   background: #fff;
   border: 1px solid #ebeef5;
-  min-height: 116px;
+  min-height: 104px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.summary-card__inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.summary-card__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.summary-card__icon--training {
+  background: rgba(102, 168, 255, 0.14);
+  color: #2f74d0;
+}
+
+.summary-card__icon--assessment {
+  background: rgba(42, 160, 113, 0.12);
+  color: #2aa071;
+}
+
+.summary-card__icon--score {
+  background: rgba(150, 102, 255, 0.12);
+  color: #7c5ce0;
+}
+
+.summary-card__icon--active {
+  background: rgba(230, 162, 60, 0.14);
+  color: #c47d1c;
+}
+
+.summary-card__text {
+  min-width: 0;
 }
 
 .summary-card__label {
   color: var(--cm-muted);
   font-size: 14px;
+  margin-bottom: 6px;
 }
 
 .summary-card__value {
-  color: var(--cm-text);
-  font-size: 40px;
+  color: #2f74d0;
+  font-size: 32px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.04em;
@@ -857,19 +1141,44 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 2px;
+  padding: 8px 10px;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease;
 }
 
-.class-stage__header h2 {
+.class-stage__header:hover {
+  background: #f5f7fa;
+}
+
+.class-stage__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.class-stage__chevron {
+  color: var(--cm-muted);
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.class-stage__title h2 {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
   color: var(--cm-text);
 }
 
-.class-stage__header span {
+.class-stage__count {
   font-size: 13px;
-  color: var(--cm-muted);
+  color: #64748b;
 }
 
 .class-grid {
@@ -945,15 +1254,27 @@ onMounted(() => {
   gap: 10px;
 }
 
+.class-card__enrollment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .class-card__enrollment,
 .class-card__capacity {
-  color: #606266;
+  color: #334155;
   font-size: 14px;
+}
+
+.class-card__capacity {
+  color: #64748b;
+  font-weight: 600;
 }
 
 .capacity-progress {
   width: 100%;
-  height: 4px;
+  height: 6px;
   background: #ebeef5;
   border-radius: 999px;
   overflow: hidden;
@@ -964,6 +1285,20 @@ onMounted(() => {
   border-radius: inherit;
   background: linear-gradient(90deg, #79bbff 0%, #409eff 100%);
   transition: width 0.24s ease;
+}
+
+.capacity-progress.is-mid .capacity-progress__fill {
+  background: linear-gradient(90deg, #f0c36d 0%, #e6a23c 100%);
+}
+
+.capacity-progress.is-high .capacity-progress__fill {
+  background: linear-gradient(90deg, #f48b8b 0%, #f56c6c 100%);
+}
+
+.capacity-progress--sm {
+  height: 5px;
+  width: 110px;
+  flex-shrink: 0;
 }
 
 .class-card__actions {
@@ -984,7 +1319,7 @@ onMounted(() => {
   border-radius: 999px;
   border-color: #dcdfe6;
   background: #fff;
-  color: #606266;
+  color: #334155;
   font-weight: 500;
   font-size: 13px;
   padding-inline: 10px;
@@ -1003,6 +1338,52 @@ onMounted(() => {
 :deep(.class-card__menu-dropdown .class-card__menu-item--danger:hover) {
   background: #fef0f0;
   color: #f56c6c;
+}
+
+.classes-table-wrap {
+  border-radius: 8px;
+  background: #fff;
+  border: 0.5px solid #e4e7ed;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.classes-table :deep(.el-table__header th) {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+}
+
+.classes-table :deep(.el-table__body td) {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.table-class-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #303133;
+}
+
+.table-capacity {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.table-capacity__value {
+  color: #64748b;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.table-class-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 .class-empty-state {
@@ -1069,8 +1450,10 @@ onMounted(() => {
   .header-right :deep(.el-button) { flex: 1 1 calc(50% - 8px); }
   .filter-toolbar { align-items: stretch; }
   .filter-toolbar__divider { display: none; }
-  .year-filter { width: 100%; justify-content: space-between; }
-  .year-filter :deep(.el-select) { width: 100%; }
+  .stage-pill-list { width: 100%; }
+  .filter-selects { width: 100%; flex-wrap: wrap; }
+  .filter-selects :deep(.el-select) { width: 100%; }
+  .filter-actions { width: 100%; justify-content: space-between; margin-left: 0; }
   .stats-row { grid-template-columns: 1fr; }
   .class-grid { grid-template-columns: 1fr; }
   .class-card__actions { flex-wrap: wrap; }
