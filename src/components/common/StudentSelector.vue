@@ -41,51 +41,67 @@
         element-loading-text="加载中..."
         class="student-table-shell"
       >
-        <table class="student-table">
-          <thead>
-            <tr>
-              <th>照片</th>
-              <th>姓名</th>
-              <th>学号</th>
-              <th>性别</th>
-              <th>出生日期</th>
-              <th>年龄</th>
-              <th>诊断类型</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="student in pagedStudents"
-              :key="student.id"
-              @click="selectStudent(student)"
-              class="student-row"
-            >
-              <td class="student-table__avatar-cell">
+        <el-table
+          :data="pagedStudents"
+          row-key="id"
+          class="students-table"
+          @row-click="selectStudent"
+        >
+          <el-table-column label="学号" width="180">
+            <template #default="{ row }">
+              <StudentId :id="row.student_no" :full="true" />
+            </template>
+          </el-table-column>
+
+          <el-table-column label="学生姓名" min-width="150">
+            <template #default="{ row }">
+              <div class="student-name-cell">
                 <StudentAvatar
-                  :name="student.name"
-                  :gender="student.gender"
-                  :avatar-url="student.avatar_path"
+                  :name="row.name"
+                  :gender="row.gender"
+                  :avatar-url="row.avatar_path"
                   size="sm"
                 />
-              </td>
-              <td>{{ student.name }}</td>
-              <td><StudentId :id="student.student_no" :full="true" /></td>
-              <td>{{ student.gender }}</td>
-              <td>{{ formatStudentDate(student.birthday) }}</td>
-              <td>{{ getStudentAge(student.birthday) }}岁</td>
-              <td><DiagnosisTag :type="student.disorder" /></td>
-              <td>
-                <el-button
-                  type="primary"
-                  :icon="Right"
-                  circle
-                  @click.stop="selectStudent(student)"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                <span class="student-name">{{ row.name }}</span>
+              </div>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="性别 / 年龄" width="110">
+            <template #default="{ row }">
+              {{ row.gender }} / {{ getStudentAge(row.birthday) }} 岁
+            </template>
+          </el-table-column>
+
+          <el-table-column label="出生日期" width="120">
+            <template #default="{ row }">
+              {{ formatStudentDate(row.birthday) }}
+            </template>
+          </el-table-column>
+
+          <el-table-column label="诊断类型" min-width="130">
+            <template #default="{ row }">
+              <DiagnosisTag :type="row.disorder" />
+            </template>
+          </el-table-column>
+
+          <el-table-column label="所属班级" min-width="150">
+            <template #default="{ row }">
+              <span
+                class="student-class-badge"
+                :class="row.current_class_name ? 'is-assigned' : 'is-unassigned'"
+              >
+                {{ row.current_class_name || '未分班' }}
+              </span>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="操作" width="90" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" @click.stop="selectStudent(row)">选择</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
 
         <div v-if="filteredStudents.length > PAGE_SIZE" class="student-selector-pagination">
           <el-pagination
@@ -114,8 +130,7 @@ import { ElMessage } from 'element-plus'
 import {
   ArrowLeft,
   Search,
-  Plus,
-  Right
+  Plus
 } from '@element-plus/icons-vue'
 import { useStudentStore } from '@/stores/student'
 import AddStudentDialog from '@/components/AddStudentDialog.vue'
@@ -133,6 +148,8 @@ interface Student {
   student_no?: string
   disorder?: string
   avatar_path?: string
+  current_class_id?: number | null
+  current_class_name?: string | null
   created_at: string
   updated_at: string
 }
@@ -313,49 +330,70 @@ onMounted(async () => {
 
 .student-table-shell {
   overflow: auto;
-  border: 1px solid #e6ebf2;
-  border-radius: 18px;
+  border: 0.5px solid #e4e7ed;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.student-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-
-.student-table th {
-  background-color: #fbfcfe;
-  padding: 12px;
-  text-align: left;
+.students-table :deep(.el-table__header th) {
+  background: #f8fafc;
+  color: #475569;
   font-weight: 600;
-  color: #303133;
-  border-bottom: 1px solid #ebeef5;
 }
 
-.student-table td {
-  padding: 12px;
-  border-bottom: 1px solid #ebeef5;
+.students-table :deep(.el-table__body td) {
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
-.student-row {
+.students-table :deep(.el-table__row) {
   cursor: pointer;
-  transition: background-color 0.2s;
 }
 
-.student-row:hover {
-  background-color: #f5f7fa;
+.student-name-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.student-name {
+  color: #303133;
+  font-weight: 500;
+}
+
+.student-class-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.student-class-badge.is-unassigned {
+  background: #f4f4f5;
+  color: #909399;
+  border-color: #e4e7ed;
+}
+
+.student-class-badge.is-assigned {
+  background: rgba(42, 160, 113, 0.12);
+  color: #2aa071;
+  border-color: rgba(42, 160, 113, 0.18);
 }
 
 .student-selector-empty {
   min-height: 320px;
 }
 
-.student-row:last-child td {
-  border-bottom: none;
-}
-
-.student-table__avatar-cell {
-  width: 68px;
+.student-selector-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 16px 4px;
 }
 
 @media (max-width: 768px) {

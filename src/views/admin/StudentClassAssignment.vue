@@ -85,7 +85,7 @@
                 :indeterminate="partiallySelected"
                 @change="toggleSelectAll"
               >
-                全选
+                全选当前页
               </el-checkbox>
 
               <el-button
@@ -94,37 +94,48 @@
                 :disabled="selectedStudents.length === 0"
                 @click="showBatchAssignDialog"
               >
-                批量分班
+                批量分班 ({{ selectedStudents.length }})
               </el-button>
             </div>
 
             <el-table
               ref="studentTableRef"
-              :data="students"
-              stripe
+              :data="pagedStudents"
+              row-key="id"
+              class="students-table"
               @selection-change="handleSelectionChange"
             >
-              <el-table-column type="selection" width="52" />
+              <el-table-column type="selection" width="52" reserve-selection />
 
-              <el-table-column label="姓名" min-width="180">
+              <el-table-column label="学号" width="180">
+                <template #default="{ row }">
+                  <StudentId :id="row.studentNo" :full="true" />
+                </template>
+              </el-table-column>
+
+              <el-table-column label="学生姓名" min-width="140">
                 <template #default="{ row }">
                   <div class="student-name-cell">
-                    <span
-                      class="student-avatar"
-                      :class="getStudentAvatarClass(row.gender)"
-                    >
-                      {{ getStudentInitial(row.name) }}
-                    </span>
+                    <StudentAvatar
+                      :name="row.name"
+                      :gender="row.gender"
+                      :avatar-url="row.avatarPath"
+                      size="sm"
+                    />
                     <span class="student-name">{{ row.name }}</span>
                   </div>
                 </template>
               </el-table-column>
 
-              <el-table-column prop="gender" label="性别" width="70" />
-
-              <el-table-column label="年龄" width="80">
+              <el-table-column label="性别 / 年龄" width="110">
                 <template #default="{ row }">
-                  {{ calculateAge(row.birthday) }}岁
+                  {{ row.gender }} / {{ calculateAge(row.birthday) }} 岁
+                </template>
+              </el-table-column>
+
+              <el-table-column label="诊断类型" min-width="130">
+                <template #default="{ row }">
+                  <DiagnosisTag :type="row.disorder" />
                 </template>
               </el-table-column>
 
@@ -139,28 +150,27 @@
                 </template>
               </el-table-column>
 
-              <el-table-column label="操作" min-width="210">
+              <el-table-column label="操作" width="200" fixed="right">
                 <template #default="{ row }">
                   <div class="row-actions">
-                    <el-button
-                      class="assign-action-button"
-                      round
-                      @click="showAssignDialog(row)"
-                    >
+                    <el-button link type="primary" @click="showAssignDialog(row)">
                       {{ row.currentClassName ? '调班' : '分班' }}
                     </el-button>
-
-                    <button
-                      type="button"
-                      class="student-history-link"
-                      @click="viewClassHistory(row)"
-                    >
-                      班级历史
-                    </button>
+                    <el-button link @click="viewClassHistory(row)">班级历史</el-button>
                   </div>
                 </template>
               </el-table-column>
             </el-table>
+
+            <div v-if="students.length > TABLE_PAGE_SIZE" class="students-table-pagination">
+              <el-pagination
+                layout="prev, pager, next, total"
+                :total="students.length"
+                :page-size="TABLE_PAGE_SIZE"
+                :current-page="tableCurrentPage"
+                @current-change="handleTablePageChange"
+              />
+            </div>
           </el-card>
         </el-tab-pane>
 
@@ -369,6 +379,9 @@ import {
   type TableInstance
 } from 'element-plus'
 import { Plus, Top } from '@element-plus/icons-vue'
+import StudentAvatar from '@/components/student/StudentAvatar.vue'
+import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
+import StudentId from '@/components/student/StudentId.vue'
 import { classAPI } from '@/database/class-api'
 import { LAST_GRADE_LEVEL } from '@/types/class'
 import type {
@@ -389,6 +402,9 @@ interface StudentRecord {
   name: string
   gender: string
   birthday: string
+  studentNo?: string | null
+  disorder?: string | null
+  avatarPath?: string | null
   currentClassId?: number | null
   currentClassName?: string | null
 }
@@ -439,6 +455,8 @@ const activeTab = ref<'assign' | 'classes'>('assign')
 const filterStatus = ref<StudentFilterStatus>('')
 const filterClass = ref<string | number>('')
 const viewYear = ref<AcademicYear>(getCurrentAcademicYear())
+const TABLE_PAGE_SIZE = 10
+const tableCurrentPage = ref(1)
 
 const students = ref<StudentRecord[]>([])
 const allClasses = ref<ClassInfo[]>([])
@@ -495,12 +513,25 @@ const availableClasses = computed(() => {
   return allClasses.value.filter(cls => cls.academicYear === assignForm.value.academicYear)
 })
 
-const allStudentsSelected = computed(() =>
-  students.value.length > 0 && selectedStudents.value.length === students.value.length
-)
-const partiallySelected = computed(() =>
-  selectedStudents.value.length > 0 && selectedStudents.value.length < students.value.length
-)
+const allStudentsSelected = computed(() => {
+  const page = pagedStudents.value
+  return page.length > 0 && page.every(student => selectedStudents.value.some(selected => selected.id === student.id))
+})
+const partiallySelected = computed(() => {
+  const page = pagedStudents.value
+  if (page.length === 0) return false
+  const selectedOnPage = page.filter(student => selectedStudents.value.some(selected => selected.id === student.id)).length
+  return selectedOnPage > 0 && selectedOnPage < page.length
+})
+
+const pagedStudents = computed(() => {
+  const start = (tableCurrentPage.value - 1) * TABLE_PAGE_SIZE
+  return students.value.slice(start, start + TABLE_PAGE_SIZE)
+})
+
+function handleTablePageChange(page: number) {
+  tableCurrentPage.value = page
+}
 
 const classViewGroups = computed<ClassViewGroup[]>(() => {
   const grouped = new Map<GradeStage, ClassInfo[]>()
@@ -578,14 +609,6 @@ function calculateAge(birthday: string): number {
   return age
 }
 
-function getStudentInitial(name: string): string {
-  return name?.trim().charAt(0) || '?'
-}
-
-function getStudentAvatarClass(gender: string): string {
-  return gender === '女' ? 'is-female' : 'is-male'
-}
-
 function getEnrollmentPercent(cls: ClassInfo): number {
   if (!cls.maxStudents) return 0
   return Math.max(0, Math.min(100, Math.round((cls.currentEnrollment / cls.maxStudents) * 100)))
@@ -611,6 +634,9 @@ async function loadStudents() {
         name,
         gender,
         birthday,
+        student_no AS studentNo,
+        disorder,
+        avatar_path AS avatarPath,
         current_class_id AS currentClassId,
         current_class_name AS currentClassName
       FROM student
@@ -632,6 +658,7 @@ async function loadStudents() {
     sql += ' ORDER BY name'
 
     students.value = db.all(sql, params)
+    tableCurrentPage.value = 1
     selectedStudents.value = []
     await nextTick()
     studentTableRef.value?.clearSelection()
@@ -660,13 +687,10 @@ function handleSelectionChange(selection: StudentRecord[]) {
 function toggleSelectAll(checked: boolean | string | number) {
   if (!studentTableRef.value) return
 
-  studentTableRef.value.clearSelection()
-
-  if (checked) {
-    students.value.forEach(student => {
-      studentTableRef.value?.toggleRowSelection(student, true)
-    })
-  }
+  // 「全选」作用于当前页（跨页选择由 reserve-selection 保留）
+  pagedStudents.value.forEach(student => {
+    studentTableRef.value?.toggleRowSelection(student, Boolean(checked))
+  })
 }
 
 function showAssignDialog(student: StudentRecord) {
@@ -960,28 +984,8 @@ onMounted(() => {
 .student-name-cell {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-.student-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.student-avatar.is-male {
-  background: #e6f1fb;
-  color: #185fa5;
-}
-
-.student-avatar.is-female {
-  background: #fbeaf0;
-  color: #993556;
+  gap: 8px;
+  min-width: 0;
 }
 
 .student-name {
@@ -1010,29 +1014,27 @@ onMounted(() => {
 }
 
 .row-actions {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
+  white-space: nowrap;
 }
 
-.assign-action-button {
-  min-height: 34px;
-  padding-inline: 16px;
-  border-radius: 999px;
+.students-table :deep(.el-table__header th) {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
 }
 
-.student-history-link {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: #909399;
-  font-size: 13px;
-  padding: 0;
-  cursor: pointer;
+.students-table :deep(.el-table__body td) {
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
-.student-history-link:hover {
-  color: #606266;
+.students-table-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 0 4px;
 }
 
 .class-stage-list {
