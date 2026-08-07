@@ -1839,3 +1839,11 @@
 - v1.1.1 已打包部署（版本号不变，覆盖 1.1.0 前的源）：`/home/lighthouse/scgp/win/` 两源 curl 验证 `version: 1.1.1` 通过。**同版本覆盖不触发老客户端自动升级**（electron-updater 同版本视为最新），仅新装/手动更新生效。
 - release-deploy 流程已固化为项目 skill：`.thincoder/skills/release-deploy/SKILL.md` + `.claude/skills/release-deploy/SKILL.md` 双处同步（04d7124）；`.gitignore` 放行 `.thincoder/skills/`（其余 `.thincoder/` 仍忽略）。
 
+## 103. 2026-08-07 报告中心授权过滤 + 登录页重构 + 教学视频播放修复 + 两次 v1.1.1 覆盖部署
+
+- 报告中心授权过滤闭环：评估报告卡片/类型下拉/总数口径按激活授权过滤（`getAuthorizedAssessmentReportCatalog` 复用 `isAssessmentScaleAuthorized`，entitlement-first，与评估入口/路由守卫同源）；仅感官授权 → 4 个量表卡片（csirs/tgmd_3/gmfm_88/cnbsr2016），真实感官能力包 +FMDA 共 5 个（299bea4，含 tests/report-center-catalog.test.ts）。
+- 登录页重构：卡片总宽 1200→1000px，左右比例 1.1:1（grid `minmax(0,1.1fr) minmax(400px,470px)`）；表单区 464→360px；新增桌面 Footer（●系统就绪·数据加密存储于本地设备 + 版本号经 `update:get-current-version` IPC）；按钮三段渐变+hover 流光（全部走 --login-* 变量，四主题兼容）（e937056）。
+- 教学视频内嵌播放器修复（根因是协议层事实，后续开发资源路径时必读）：**resource:// 协议 presetRoot 已是 `assets/resources`，凡 filePath 带 `assets/resources/` 前缀的路径必须剥离前缀再拼 URL**，否则双重拼接 → 404 静默黑屏（系统播放器路径 resolveAbsolutePath 无此问题，故两入口行为不一致）。修复：`getFileUrl` 剥离前缀（9767ac4，含 tests/teaching-material-file-manager.test.ts）；视频加载失败弹窗提示 + 「改用系统播放器打开」兜底；openMaterial 加 1.5s 同资料防连点。
+- 部署：v1.1.1 同版本覆盖两次部署（10:08 登录+报告中心、11:27 教学视频修复），两源 curl `version: 1.1.1` 通过。**已装 1.1.1 客户端不会自动升级**，本次修复需等下次升 1.1.2 才到达老用户。
+- 打包坑：electron-builder 偶发 `release/win-unpacked/resources/app.asar` 被进程瞬时锁定（非 scgp 进程，疑似 Defender 扫描），重试即过，无需杀进程。
+
