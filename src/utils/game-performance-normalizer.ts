@@ -86,7 +86,7 @@ interface GameExtractionRule {
 
 // ========== gameCode → 提取规则表 ==========
 //
-// Phase 填充：Tier 1（F03 等）+ Tier 2（F04 等，用 accuracyDerived 派生正确率）+ Tier 3 生活自理（L06–L10、L12）；
+// Phase 填充：Tier 1（F03 等）+ Tier 2（F04 等，用 accuracyDerived 派生正确率）+ Tier 3 生活自理（L06–L10）；
 // Phase 3 补 Tier 3 三游戏（F02/F01/F05，近似指标口径；F05 用 reactionArrayField 取数组反应时均值）。
 // social 六个 code 共享同一条遗留规则，行为与原 runSocialIepChain 的手写提取保持一致（不破坏社交闭环）。
 // cognitive K01-K10 十条规则：correct/total 计数，无反应时，时长走会话兜底。
@@ -121,7 +121,7 @@ const GAME_EXTRACTION_RULES: Record<string, GameExtractionRule> = {
     duration: { kind: 'session' },
   },
 
-  // ===== Tier 3：生活自理（L06–L10、L12） =====
+  // ===== Tier 3：生活自理（L06–L10） =====
   L06_STEADY_SPOON: {
     // 稳稳送一勺：stable_motion_ratio(0-1) 稳定采样占比 + average_delivery_ms + total_duration_seconds(秒)
     realityFields: ['stable_motion_ratio', 'delivered_scoops'],
@@ -168,14 +168,6 @@ const GAME_EXTRACTION_RULES: Record<string, GameExtractionRule> = {
       wrongFields: ['incorrect_payment_checks'],
     },
     reactionFields: ['average_payment_ms'],
-    duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
-  },
-  L12_POUR_WATER: {
-    // 倒水小帮手：fill_accuracy_ratio 直接 ratio + average_fill_time_ms + total_duration_seconds
-    realityFields: ['fill_accuracy_ratio', 'filled_cups'],
-    accuracyFields: ['fill_accuracy_ratio'],
-    accuracyScale: 'ratio',
-    reactionFields: ['average_fill_time_ms'],
     duration: { kind: 'seconds', fields: ['total_duration_seconds'] },
   },
 

@@ -1437,7 +1437,6 @@ export const GAME_RESOURCE_NAME_MAP = Object.freeze({
   L08_TOWEL_TWIST: '毛巾拧拧工坊',
   L09_HOME_SOUND: '家里声音小侦探',
   L10_MARKET_PAY: '超市付款小能手',
-  L12_POUR_WATER: '倒水小帮手',
   K01_MEMORY_MATCH: '记忆翻牌',
   K02_MISSING_ITEM: '少了什么',
   K03_PATTERN_NEXT: '图形找规律',

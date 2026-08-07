@@ -705,13 +705,6 @@ const metricCards = computed<DetailRow[]>(() => {
         { label: '多付核对', value: formatNullableNumber(raw.overpayment_checks, '次') },
         { label: '平均付款', value: formatResponseTime(raw.average_payment_ms as number) },
       ]
-    case 'L12_POUR_WATER':
-      return [
-        { label: '完成杯数', value: formatCountPair(raw.filled_cups, raw.target_cups, '杯') },
-        { label: '溢出次数', value: formatNullableNumber(raw.overflow_events, '次') },
-        { label: '填充精度', value: formatPercent(raw.fill_accuracy_ratio) },
-        { label: '平均倒水', value: formatResponseTime(raw.average_fill_time_ms as number) },
-      ]
     case 'G07_MONSTER':
       return [
         { label: '正确投喂', value: formatNullableNumber(raw.correct_drops, '次') },
@@ -973,17 +966,6 @@ const rawRows = computed<DetailRow[]>(() => {
         { label: '提示次数', value: formatNullableNumber(raw.hint_count, '次') },
         { label: '各次付款', value: formatResponseTimeList(raw.payment_times_ms, '次') },
         { label: '平均付款', value: formatResponseTime(raw.average_payment_ms as number) },
-        { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
-      ]
-    case 'L12_POUR_WATER':
-      return [
-        { label: '目标杯数', value: formatNullableNumber(raw.target_cups, '杯') },
-        { label: '完成杯数', value: formatNullableNumber(raw.filled_cups, '杯') },
-        { label: '溢出次数', value: formatNullableNumber(raw.overflow_count, '次') },
-        { label: '注水精度', value: formatPercent(raw.fill_accuracy_ratio) },
-        { label: '各杯精度', value: formatResponseTimeList(raw.cup_fill_ratios, '杯') },
-        { label: '平均注水', value: formatResponseTime(raw.average_fill_time_ms as number) },
-        { label: '各杯用时', value: formatResponseTimeList(raw.fill_times_ms, '次') },
         { label: '总耗时', value: formatNullableNumber(raw.total_duration_seconds, '秒') },
       ]
     case 'G07_MONSTER':

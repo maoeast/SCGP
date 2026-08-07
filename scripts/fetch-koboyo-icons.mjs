@@ -58,7 +58,6 @@ export const GAME_ICON_SLUGS = {
   L08_TOWEL_TWIST: 'chubby-towel',
   L09_HOME_SOUND: 'alarm-bell',
   L10_MARKET_PAY: 'coin',
-  L12_POUR_WATER: 'chubby-jug-water',
   K01_MEMORY_MATCH: 'deck-cards-2',
   K02_MISSING_ITEM: 'person-magnifier-finding-nothing',
   K03_PATTERN_NEXT: 'chubby-shapes',

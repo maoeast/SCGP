@@ -52,7 +52,6 @@ import L07BodySignalIcon from '@/assets/icons/games/L07_BODY_SIGNAL.svg?no-inlin
 import L08TowelTwistIcon from '@/assets/icons/games/L08_TOWEL_TWIST.svg?no-inline'
 import L09HomeSoundIcon from '@/assets/icons/games/L09_HOME_SOUND.svg?no-inline'
 import L10MarketPayIcon from '@/assets/icons/games/L10_MARKET_PAY.svg?no-inline'
-import L12PourWaterIcon from '@/assets/icons/games/L12_POUR_WATER.svg?no-inline'
 import K01MemoryMatchIcon from '@/assets/icons/games/K01_MEMORY_MATCH.svg?no-inline'
 import K02MissingItemIcon from '@/assets/icons/games/K02_MISSING_ITEM.svg?no-inline'
 import K03PatternNextIcon from '@/assets/icons/games/K03_PATTERN_NEXT.svg?no-inline'
@@ -116,7 +115,6 @@ export const GAME_ICON_SVGS: Record<string, string> = {
   L08_TOWEL_TWIST: L08TowelTwistIcon,
   L09_HOME_SOUND: L09HomeSoundIcon,
   L10_MARKET_PAY: L10MarketPayIcon,
-  L12_POUR_WATER: L12PourWaterIcon,
   K01_MEMORY_MATCH: K01MemoryMatchIcon,
   K02_MISSING_ITEM: K02MissingItemIcon,
   K03_PATTERN_NEXT: K03PatternNextIcon,

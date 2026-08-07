@@ -73,7 +73,6 @@ const BodySignalPage = () => import('@/views/emotional/games/BodySignalPage.vue'
 const TowelTwistPage = () => import('@/views/emotional/games/TowelTwistPage.vue')
 const HomeSoundPage = () => import('@/views/emotional/games/HomeSoundPage.vue')
 const MarketPayPage = () => import('@/views/emotional/games/MarketPayPage.vue')
-const PourWaterPage = () => import('@/views/emotional/games/PourWaterPage.vue')
 const EmotionMonsterPage = () => import('@/views/emotional/games/EmotionMonsterPage.vue')
 const EmotionMirrorPage = () => import('@/views/emotional/games/EmotionMirrorPage.vue')
 const StorySequencePage = () => import('@/views/emotional/games/StorySequencePage.vue')
@@ -662,17 +661,6 @@ const router = createRouter({
           component: MarketPayPage,
           meta: {
             title: '超市付款小能手',
-            hideInMenu: true,
-            roles: ['admin', 'teacher'],
-            immersiveShell: true,
-          }
-        },
-        {
-          path: 'life-skills/games/pour-water',
-          name: 'PourWaterGame',
-          component: PourWaterPage,
-          meta: {
-            title: '倒水小帮手',
             hideInMenu: true,
             roles: ['admin', 'teacher'],
             immersiveShell: true,

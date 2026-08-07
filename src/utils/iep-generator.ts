@@ -180,7 +180,7 @@ export class IEPGenerator {
   // ==========================================
 
   /**
-   * 生成已接入生活自理游戏 IEP 报告（L06–L10、L12）
+   * 生成已接入生活自理游戏 IEP 报告（L06–L10）
    */
   static generateLifeSkillsReport(
     studentName: string,
@@ -751,7 +751,6 @@ export class IEPGenerator {
       L08_TOWEL_TWIST: '毛巾拧拧工坊',
       L09_HOME_SOUND: '家里声音小侦探',
       L10_MARKET_PAY: '超市付款小能手',
-      L12_POUR_WATER: '倒水小帮手',
     }
     return names[gameCode] || '生活自理训练'
   }
@@ -929,38 +928,6 @@ export class IEPGenerator {
         suggestions: [
           '先用 1 元硬币练习数量对应，再逐步加入 2 元、5 元，让面值组合循序渐进。',
           '少付或多付时，引导孩子自己再加一枚或退回一枚，而不是直接告诉他正确答案。'
-        ]
-      })
-    } else if (gameCode === 'L12_POUR_WATER') {
-      // 倒水小帮手：倒水精度 + 角度旋转控制
-      const pourPerformance = !metrics.hasRealData
-        ? '本次未采集到量化指标，建议在后续训练中关注孩子是否能控制倾斜角度把水倒到目标水位。'
-        : hasAccuracy && (accuracy as number) >= 0.7
-          ? '能较精准地控制倾斜角度把水倒到目标水位附近，手腕旋转与释放控制发展良好。'
-          : hasAccuracy
-            ? '能参与倒水动作，但水位控制偶尔不准（溢出或不够），需要更多"慢慢倾斜、看准松手"的练习。'
-            : '本次能完成倒水交互，建议在后续训练中持续记录填充精度以评估手腕控制。'
-
-      sections.push({
-        category: '倒水精度',
-        performance: hasAccuracy
-          ? this.buildAccuracyPerformance('倒水', accuracy as number, true)
-          : '本次未采集到量化指标，建议在后续训练中持续记录倒水精度以支撑评估。',
-        behavior: hasReaction
-          ? `本次平均每杯水从开始倒到完成用时约 ${((reaction as number) / 1000).toFixed(1)} 秒。`
-          : '',
-        suggestions: [
-          '在真实倒水时先从小容器和慢速开始，让孩子练习"慢慢倾斜、看刻度、停手"的三步操作。',
-          '用彩色标记线贴在杯子外侧，给孩子一个清晰的"到这里就停"的视觉提示。',
-          '当孩子倒水接近目标水位时，描述他控制的动作（倾斜角度变化、松手时机），强化精准释放。'
-        ]
-      })
-      sections.push({
-        category: '角度旋转与手腕控制',
-        performance: pourPerformance,
-        suggestions: [
-          '先用空杯子做"假装倒水"的手腕旋转练习，再逐步过渡到真实水壶。',
-          '选择有把手的轻量水壶或杯子，降低重量对手腕控制的干扰。'
         ]
       })
     } else {

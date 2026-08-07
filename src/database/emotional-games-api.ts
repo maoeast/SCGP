@@ -370,19 +370,6 @@ function deriveAccuracyRate(
       }
       break
     }
-    case 'L12_POUR_WATER': {
-      const fillAccuracy = Number(performanceData.fill_accuracy_ratio)
-      if (Number.isFinite(fillAccuracy) && fillAccuracy >= 0) {
-        return Math.max(0, Math.min(1, fillAccuracy))
-      }
-
-      const filledCups = Number(performanceData.filled_cups || 0)
-      const targetCups = Number(performanceData.target_cups || 0)
-      if (targetCups > 0) {
-        return Math.max(0, Math.min(1, filledCups / targetCups))
-      }
-      break
-    }
     case 'G07_MONSTER': {
       const correctDrops = Number(performanceData.correct_drops || 0)
       const wrongDrops = Number(performanceData.wrong_drops || 0)
@@ -516,11 +503,6 @@ function deriveAvgResponseTime(
       return averageNumericValues(performanceData.payment_times_ms)
         ?? (Number.isFinite(Number(performanceData.average_payment_ms))
           ? Number(performanceData.average_payment_ms)
-          : null)
-    case 'L12_POUR_WATER':
-      return averageNumericValues(performanceData.fill_times_ms)
-        ?? (Number.isFinite(Number(performanceData.average_fill_time_ms))
-          ? Number(performanceData.average_fill_time_ms)
           : null)
     case 'S03_STORY_SEQ':
       return averageNumericValues(performanceData.response_times_ms)
