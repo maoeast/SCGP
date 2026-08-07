@@ -1688,7 +1688,7 @@
 - feature route 从 7 条不存在的模块专属旧路径（`/sensory/training-records`、`/sensory/assessment`、`/sensory/iep`、`/emotional/relaxation`、`/emotional/recognition`、`/social/conversation`、`/social/stories`）改为 5 个真实通用入口（`/games/menu`、`/equipment/menu`、`/training-records/menu`、`/assessment`、`/resource-center`，均已在 `router/index.ts` 核实存在）。
 - feature 用**精细口径**：每模块只声明当前真实接入的通用入口（sensory/emotional/life_skills 三大训练入口 active，social/cognitive coming_soon，resource 仅 resource-center）；`fine-motor`/`soothing-aids` 是训练入口（`training-entry.ts`）不进 registry feature——registry 只到模块层。
 - registry 收敛为「模块元数据 + 开发诊断」单一职责：模块元数据**生产消费方=0**（`iep-generator.ts` 仅 import、其策略链属 C10），唯一消费方是 dev-only 的 `ModuleDevTools.vue`（C08 已隔离出生产构建，`features` 在其中只作 `el-table` 纯文本诊断展示，不导航）。授权继续读 entitlement，导航/路由继续读现有 catalog 与静态路由——C09 对生产路由/授权/catalog 零影响。
-- 源码审计账本 `doc/tendering/source-audit-v1.0/03_源码证据账本.md` E-066 失真点由此闭合。
+- 源码审计账本 `docs/archive/tendering/source-audit-v1.0/03_源码证据账本.md` E-066 失真点由此闭合。
 - 边界测试：新增 `scripts/tests/module-registry-consistency.test.mjs`（源码契约层——4 断言：6 模块全覆盖无重复、route ∈ 5 通用入口白名单、旧路径黑名单零回归、social·cognitive experimental），沿用 C08 源码解析范式（`readFileSync` 正则，不 jiti 运行时加载以避开单例构造调 `localStorage`），挂进 `test:core:node`。
 - 验证：`npm run type-check` EXIT=0；`npm run verify:core`（test:core:node 58/58 含新测试 4 项 + test:core:ts 3/3）；`npm run build:web` 39.42s。
 - 范围外：`ModuleRegistryImpl` 的 strategy Map/API 未动（C10 清理 IEP 策略试验链）；C08 遗留的 `dev-route-production-boundary.test.mjs` 仍未挂进 `verify:core`（用户确认不做）。
