@@ -1823,3 +1823,11 @@
 - 路线C 全链路闭环确认：工具（get_assessment_trend）→ 富产物（ToolArtifact）→ 对话内嵌渲染（AiTrendChart.vue）→ 消息表持久化（tool_artifacts，历史回看可用）→ 独立趋势页（AssessmentTrendPage.vue，评估记录实时算），无未完成遗留。
 
 
+
+## 101. 2026-08-07 登录页重构 + 背景修复 + 图片 WebP 化 + L12 移除 + 仓库清理
+- 登录页：主卡片去双层嵌套（LoginCard 降级为纯内容区，.login-layout 统一毛玻璃 blur 20px）、slogan 提亮、输入框 focus 光环、按钮科技感（颜色仍走 --login-* 主题变量，四套主题兼容）。
+- 登录背景 bug 根因：electron/main.mjs 未在 app.ready 前调 protocol.registerSchemesAsPrivileged 声明 resource:// 为 standard+secure，Electron dev（https 页面）下 <img>/<video> 跨协议加载被 Chromium 拦截。已声明（standard/secure/supportFetchAPI/corsEnabled）+ Login.vue 调 getLoginBackgroundUrl 环境适配 + vite dev-only middleware 服务 /assets/resources/。
+- 图片优化：736 张预置图 PNG/JPG->WebP（cwebp -q85，250MB->25MB）。采用「协议层兜底」不改后缀：resource:// 与 vite middleware 在 .png/.jpg/.jpeg 找不到时回退同名 .webp——源码/seed/DB 路径不变，已部署客户端零迁移。cwebp 工具在 C:/Users/maoea/scgp-tools（项目外）。
+- L12_POUR_WATER 倒水小帮手已移除（组件/注册表/路由/指标提取/IEP/图标/演示数据 16 文件，14ae94f）。
+- 清理：.archive/gsd-agents/test-sdq-e2e.py 删除；tendering 审计文档归档至 docs/archive/tendering/。
+- 已知遗留：module-registry-consistency.test.mjs 断言 SOCIAL=experimental 失败（module-registry.ts:401 实为 active，0d0716d 菜单重排后遗留），下一会话处理。
