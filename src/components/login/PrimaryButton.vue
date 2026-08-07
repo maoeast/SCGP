@@ -48,10 +48,13 @@ withDefaults(defineProps<Props>(), {
   letter-spacing: 0.01em;
   cursor: pointer;
   overflow: hidden;
-  box-shadow: 0 8px 24px var(--login-button-shadow, rgba(58, 152, 163, 0.3));
+  box-shadow:
+    0 8px 24px var(--login-button-shadow, rgba(58, 152, 163, 0.3)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
   transition:
     transform 0.18s ease,
     box-shadow 0.3s ease,
+    filter 0.25s ease,
     background 0.4s ease;
 }
 
@@ -61,18 +64,30 @@ withDefaults(defineProps<Props>(), {
     var(--login-primary-gradient-start, #3C9BA6),
     var(--login-primary-gradient-end, #2F838C)
   );
-  box-shadow: 0 8px 28px var(--login-button-shadow, rgba(47, 131, 140, 0.4));
+  box-shadow:
+    0 8px 28px var(--login-button-shadow, rgba(47, 131, 140, 0.4)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
   animation: btn-breathe 2.4s ease-in-out infinite;
 }
 
 .primary-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.08);
-  box-shadow: 0 12px 32px var(--login-button-shadow, rgba(58, 152, 163, 0.4));
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow:
+    0 14px 36px var(--login-button-shadow, rgba(58, 152, 163, 0.45)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .primary-button.is-active:hover:not(:disabled) {
-  box-shadow: 0 12px 36px var(--login-button-shadow, rgba(58, 152, 163, 0.5));
+  box-shadow:
+    0 14px 40px var(--login-button-shadow, rgba(58, 152, 163, 0.55)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* 点击反馈：按下轻微缩放 */
+.primary-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+  filter: brightness(1.04);
 }
 
 .primary-button:focus-visible {
@@ -114,10 +129,14 @@ withDefaults(defineProps<Props>(), {
 
 @keyframes btn-breathe {
   0%, 100% {
-    box-shadow: 0 8px 28px var(--login-button-shadow, rgba(58, 152, 163, 0.35));
+    box-shadow:
+      0 8px 28px var(--login-button-shadow, rgba(58, 152, 163, 0.35)),
+      inset 0 1px 0 rgba(255, 255, 255, 0.28);
   }
   50% {
-    box-shadow: 0 12px 36px var(--login-button-shadow, rgba(58, 152, 163, 0.5));
+    box-shadow:
+      0 14px 40px var(--login-button-shadow, rgba(58, 152, 163, 0.5)),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
   }
 }
 

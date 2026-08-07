@@ -95,7 +95,7 @@ const descriptionText = computed(() => {
   right: 40px;
   width: 180px;
   height: 180px;
-  opacity: 0.54;
+  opacity: 0.7;
   background:
     radial-gradient(circle at 18px 22px, rgba(255, 252, 239, 0.92) 0 1.2px, transparent 1.3px),
     radial-gradient(circle at 88px 30px, rgba(255, 236, 179, 0.8) 0 1.6px, transparent 1.8px),
@@ -230,10 +230,12 @@ const descriptionText = computed(() => {
 .school-panel__tagline {
   margin: 2px 0 0;
   width: min(100%, 280px);
-  color: var(--login-brand-tagline, rgba(255, 255, 255, 0.72));
-  font-size: 13px;
+  color: var(--login-brand-tagline, rgba(255, 255, 255, 0.92));
+  font-size: 14px;
+  font-weight: 500;
   line-height: 1.72;
   text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
   white-space: normal;
 }
 
