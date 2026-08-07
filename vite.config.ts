@@ -19,12 +19,114 @@ function canEnableVueDevTools() {
   }
 }
 
+const MIME_BY_EXT: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.ogg': 'video/ogg',
+}
+
+/**
+ * Dev-only：把 /assets/resources/** 请求映射到项目根 assets/resources/。
+ * 生产构建走 electron-builder extraResources + resource:// 协议，不依赖此中间件。
+ * 解决 npm run dev 浏览器环境下登录页预置背景（login-backgrounds）等静态资源无法访问的问题。
+ */
+function servePresetResourcesPlugin(): PluginOption {
+  const rootDir = path.resolve(projectRoot, 'assets', 'resources')
+  const urlPrefix = '/assets/resources/'
+
+  return {
+    name: 'scgp:serve-preset-resources',
+    apply: 'serve',
+    configureServer(server) {
+      // 查找文件；.png 找不到时回退同名 .webp。返回 { filePath, stat } 或 null。
+      const resolveFile = (rootDir: string, relPath: string, cb: (result: { filePath: string; stat: fs.Stats } | null) => void) => {
+        const primary = path.resolve(rootDir, relPath)
+        if (!primary.startsWith(rootDir)) {
+          cb(null)
+          return
+        }
+        fs.stat(primary, (err, stat) => {
+          if (!err && stat.isFile()) {
+            cb({ filePath: primary, stat })
+            return
+          }
+          // 光栅图 → .webp 兜底（.png/.jpg/.jpeg）
+          const lower = primary.toLowerCase()
+          if (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+            const dotIndex = primary.lastIndexOf('.')
+            const webp = primary.slice(0, dotIndex) + '.webp'
+            if (webp.startsWith(rootDir)) {
+              fs.stat(webp, (e2, s2) => {
+                if (!e2 && s2.isFile()) {
+                  cb({ filePath: webp, stat: s2 })
+                } else {
+                  cb(null)
+                }
+              })
+              return
+            }
+          }
+          cb(null)
+        })
+      }
+
+      server.middlewares.use((req, res, next) => {
+        const url = req.url || ''
+        if (req.method !== 'GET' || !url.startsWith(urlPrefix)) {
+          next()
+          return
+        }
+
+        // 去掉 query/hash，解码 URL 编码
+        const relativePath = decodeURIComponent(url.split('?')[0].split('#')[0].slice(urlPrefix.length))
+
+        // 路径穿越防护
+        if (relativePath.includes('..') || path.isAbsolute(relativePath)) {
+          res.statusCode = 400
+          res.end()
+          return
+        }
+
+        resolveFile(rootDir, relativePath, (result) => {
+          if (!result) {
+            res.statusCode = 404
+            res.end()
+            return
+          }
+          const { filePath: resolved, stat } = result
+          const ext = path.extname(resolved).toLowerCase()
+          res.setHeader('Content-Type', MIME_BY_EXT[ext] || 'application/octet-stream')
+          res.setHeader('Content-Length', stat.size)
+          res.setHeader('Cache-Control', 'no-cache')
+          const stream = fs.createReadStream(resolved)
+          stream.on('error', () => {
+            if (!res.headersSent) {
+              res.statusCode = 500
+            }
+            res.end()
+          })
+          stream.pipe(res)
+        })
+      })
+    },
+  }
+}
+
 async function resolvePlugins(isProductionBuild: boolean) {
   const plugins: PluginOption[] = [vue()]
 
   if (isProductionBuild) {
     return plugins
   }
+
+  // dev only：服务预置静态资源（登录页背景等）
+  plugins.push(servePresetResourcesPlugin())
 
   if (!canEnableVueDevTools()) {
     console.warn('[vite] Skip vite-plugin-vue-devtools: missing optional dependency @babel/core')

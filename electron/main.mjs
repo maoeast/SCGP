@@ -102,6 +102,24 @@ if (isDev) {
   process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 }
 
+// ========== resource:// 协议特权声明 ==========
+// 必须在 app.ready 之前调用，且仅调用一次。
+// dev 下渲染进程加载 https://localhost:5173，未声明特权的 resource:// 会被当作
+// 非安全/非标准协议，<img>/<video> 跨协议加载被 Chromium 阻止，导致登录页背景等资源显示失败。
+// 声明为 standard（支持相对/绝对 URL 解析）+ secure（https 页面下不当作混合内容拦截）+
+// supportFetchAPI（fetch 可用）+ corsEnabled。
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'resource',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+    },
+  },
+])
+
 function shouldEmitRuntimeLogs() {
   return isDev || process.env.SCGP_ENABLE_PROD_LOGS === '1'
 }
@@ -543,6 +561,7 @@ app.whenReady().then(async () => {
   // 支持 resource:// 协议，按以下优先级查找文件：
   // 1. userData/resources/ - 用户上传的资源
   // 2. assets/resources/ - 系统预置资源
+  // PNG/JPG→WebP 兜底：请求 .png/.jpg/.jpeg 找不到时自动找同名 .webp（源码/DB 路径保持原后缀不变）
   protocol.registerFileProtocol('resource', async (request, callback) => {
     const rawPath = request.url.slice(10) // 去掉 'resource://'
 
@@ -566,46 +585,59 @@ app.whenReady().then(async () => {
       return
     }
 
+    // 在指定根目录下查找文件；.png/.jpg/.jpeg 找不到时回退同名 .webp
+    const resolveWithFallback = async (rootDir, relPath) => {
+      const resolvedRoot = path.resolve(rootDir)
+      const primaryPath = path.resolve(path.join(rootDir, relPath))
+      if (!primaryPath.startsWith(resolvedRoot)) {
+        return null
+      }
+      try {
+        await fs.access(primaryPath)
+        return primaryPath
+      } catch {
+        // 光栅图 → .webp 兜底（.png/.jpg/.jpeg）
+        const lower = primaryPath.toLowerCase()
+        if (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+          const dotIndex = primaryPath.lastIndexOf('.')
+          const webpPath = primaryPath.slice(0, dotIndex) + '.webp'
+          if (webpPath.startsWith(resolvedRoot)) {
+            try {
+              await fs.access(webpPath)
+              return webpPath
+            } catch {
+              /* webp 也不存在 */
+            }
+          }
+        }
+        return null
+      }
+    }
+
     // 优先查找用户数据目录
     const userDataRoot = getResourceRoot()
-    const userDataPath = path.join(userDataRoot, cleanPath)
-    const resolvedUserDataPath = path.resolve(userDataPath)
-
-    // 安全检查：确保路径不超出根目录
-    if (resolvedUserDataPath.startsWith(userDataRoot)) {
-      try {
-        await fs.access(resolvedUserDataPath)
-        resourcePathCache.set(cleanPath, {
-          resolvedPath: resolvedUserDataPath,
-          expiresAt: Date.now() + RESOURCE_PATH_CACHE_TTL_MS,
-        })
-        pruneResourcePathCache()
-        callback({ path: resolvedUserDataPath })
-        return
-      } catch {
-        // 文件不存在，继续查找预置资源
-      }
+    const foundUserData = await resolveWithFallback(userDataRoot, cleanPath)
+    if (foundUserData) {
+      resourcePathCache.set(cleanPath, {
+        resolvedPath: foundUserData,
+        expiresAt: Date.now() + RESOURCE_PATH_CACHE_TTL_MS,
+      })
+      pruneResourcePathCache()
+      callback({ path: foundUserData })
+      return
     }
 
     // 查找系统预置资源
     const presetRoot = getPresetResourceRoot()
-    const presetPath = path.join(presetRoot, cleanPath)
-    const resolvedPresetPath = path.resolve(presetPath)
-
-    // 安全检查：确保路径不超出预置资源目录
-    if (resolvedPresetPath.startsWith(presetRoot)) {
-      try {
-        await fs.access(resolvedPresetPath)
-        resourcePathCache.set(cleanPath, {
-          resolvedPath: resolvedPresetPath,
-          expiresAt: Date.now() + RESOURCE_PATH_CACHE_TTL_MS,
-        })
-        pruneResourcePathCache()
-        callback({ path: resolvedPresetPath })
-        return
-      } catch {
-        // 预置资源也不存在
-      }
+    const foundPreset = await resolveWithFallback(presetRoot, cleanPath)
+    if (foundPreset) {
+      resourcePathCache.set(cleanPath, {
+        resolvedPath: foundPreset,
+        expiresAt: Date.now() + RESOURCE_PATH_CACHE_TTL_MS,
+      })
+      pruneResourcePathCache()
+      callback({ path: foundPreset })
+      return
     }
 
     // 两个位置都没找到

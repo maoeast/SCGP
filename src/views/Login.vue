@@ -2,8 +2,8 @@
   <div class="login-shell">
     <GalaxyBackground
       class="login-shell__background"
-      :background-image="systemConfigStore.activeLoginBackground.image"
-      :background-video="systemConfigStore.activeLoginBackground.video"
+      :background-image="getLoginBackgroundUrl(systemConfigStore.activeLoginBackground.image)"
+      :background-video="getLoginBackgroundUrl(systemConfigStore.activeLoginBackground.video)"
     />
     <div class="login-shell__veil"></div>
 
@@ -46,6 +46,7 @@ import { useRouter } from 'vue-router'
 import GalaxyBackground from '@/components/login/GalaxyBackground.vue'
 import LoginCard from '@/components/login/LoginCard.vue'
 import SchoolPanel from '@/components/login/SchoolPanel.vue'
+import { getLoginBackgroundUrl } from '@/utils/login-background'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemConfigStore } from '@/stores/systemConfig'
 import { cancelLoginFocusRecovery, scheduleLoginFocusRecovery } from '@/utils/auth-ui'
@@ -249,7 +250,8 @@ onBeforeUnmount(() => {
   border-radius: 32px;
   overflow: hidden;
   background: var(--login-layout-bg, rgba(13, 7, 24, 0.34));
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
   box-shadow: var(--login-layout-shadow, 0 36px 100px rgba(2, 6, 23, 0.42));
 }
 
@@ -264,10 +266,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: flex-start;
   padding: clamp(32px, 4.8vw, 60px) clamp(32px, 4.8vw, 64px) clamp(32px, 4.8vw, 60px) clamp(28px, 4vw, 48px);
-  background: var(--login-form-pane-bg,
-    radial-gradient(circle at left center, rgba(255, 216, 131, 0.08), transparent 24%),
-    linear-gradient(180deg, rgba(255, 251, 246, 0.92) 0%, rgba(255, 255, 255, 0.97) 100%)
-  );
+  /* 不再叠加独立背景层：由外层 .login-layout 统一承载毛玻璃，让背景视频/图片透出 */
 }
 
 .login-layout__form-stack {
