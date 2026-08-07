@@ -1831,3 +1831,11 @@
 - L12_POUR_WATER 倒水小帮手已移除（组件/注册表/路由/指标提取/IEP/图标/演示数据 16 文件，14ae94f）。
 - 清理：.archive/gsd-agents/test-sdq-e2e.py 删除；tendering 审计文档归档至 docs/archive/tendering/。
 - 已知遗留：module-registry-consistency.test.mjs 断言 SOCIAL=experimental 失败（module-registry.ts:401 实为 active，0d0716d 菜单重排后遗留），下一会话处理。
+
+## 102. 2026-08-07 SOCIAL 断言修复 + 悬浮球动效 + v1.1.1 部署 + release-deploy skill 固化
+
+- SOCIAL 断言修复（§101 已知遗留已闭环）：SOCIAL/COGNITIVE 升 active 是 cb73017（commit message 明示）的显式决策，测试为源码契约层应跟随代码事实——**改测试不改 registry**，断言同步为「全部 6 模块 active」（3faa345）；悬浮球动效（地面反相阴影+双层投影，0381feb）。
+- 部署通道变更（§87 的 tailscale 路径已过时）：tailscale（100.114.108.86）relay 异常 + 打洞失败实测不可用；**当前部署主路径 = 公网直连 `124.220.104.199`**；SSH/SCP **必须用 Git Bash**（`C:/Program Files/Git/usr/bin/ssh.exe` / `scp.exe`）——Windows OpenSSH 因 `openclaw.pem` 权限含 Authenticated Users 读权限拒载（icacls 修复需管理员，开发机无）。上传分文件传（exe 单独传，中断删残缺重传并核对字节数）。
+- v1.1.1 已打包部署（版本号不变，覆盖 1.1.0 前的源）：`/home/lighthouse/scgp/win/` 两源 curl 验证 `version: 1.1.1` 通过。**同版本覆盖不触发老客户端自动升级**（electron-updater 同版本视为最新），仅新装/手动更新生效。
+- release-deploy 流程已固化为项目 skill：`.thincoder/skills/release-deploy/SKILL.md` + `.claude/skills/release-deploy/SKILL.md` 双处同步（04d7124）；`.gitignore` 放行 `.thincoder/skills/`（其余 `.thincoder/` 仍忽略）。
+
