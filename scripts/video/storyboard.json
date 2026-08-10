@@ -1,0 +1,85 @@
+{
+  "project": {
+    "name": "管理员：班级与学生管理",
+    "title": "星愿能力发展平台 · 班级与学生管理",
+    "voice": "zh-CN-XiaoxiaoNeural",
+    "ffmpeg": "C:/Program Files/FFmpeg/bin/ffmpeg.exe"
+  },
+  "scenes": [
+    {
+      "id": "s1-student-list",
+      "name": "学生管理总览",
+      "route": "/students",
+      "wait": 1500,
+      "narration": "这里是学生管理页，可以搜索、筛选学生档案，顶部卡片展示学生统计概况，点击学生可查看详情。",
+      "actions": [
+        { "type": "focus", "selector": "input[placeholder*=\"搜索学生\"]", "wait": 1500 },
+        { "type": "hover", "selector": ".summary-card >> nth=0", "wait": 1200 },
+        { "type": "scroll", "value": 260, "wait": 1400 },
+        { "type": "hover", "selector": ".student-card, .el-table__row >> nth=1", "wait": 1200 },
+        { "type": "scroll", "value": -260, "wait": 1200 }
+      ]
+    },
+    {
+      "id": "s2-add-student",
+      "name": "新增学生",
+      "route": "/students",
+      "wait": 1000,
+      "narration": "点击添加学生，填写姓名、出生日期等基本信息，选择性别，保存后新学生就建档了。",
+      "actions": [
+        { "type": "click", "selector": "button:has-text(\"添加学生\")", "wait": 1200 },
+        { "type": "fill", "selector": "#name", "value": "张欣怡", "wait": 300 },
+        { "type": "select", "selector": "#gender", "value": "女", "wait": 300 },
+        { "type": "pickDate", "selector": "#birthday", "value": "2019-03-15", "wait": 800 },
+        { "type": "click", "selector": "button:has-text(\"保存\")", "wait": 1600 }
+      ]
+    },
+    {
+      "id": "s3-add-class",
+      "name": "新建班级",
+      "route": "/class-management",
+      "wait": 1000,
+      "narration": "进入班级管理，点击新建班级，选择学年与年级，填入班级名称，保存即可完成建班。",
+      "actions": [
+        { "type": "click", "selector": "button:has-text(\"新建班级\")", "wait": 1200 },
+        { "type": "click", "selector": ".el-dialog .el-select >> nth=0", "wait": 500 },
+        { "type": "click", "selector": ".el-select-dropdown__item:visible >> nth=0", "wait": 500 },
+        { "type": "click", "selector": ".el-dialog .el-select >> nth=1", "wait": 500 },
+        { "type": "click", "selector": ".el-select-dropdown__item:visible >> nth=3", "wait": 500 },
+        { "type": "click", "selector": ".el-dialog .el-select >> nth=2", "wait": 500 },
+        { "type": "click", "selector": ".el-select-dropdown__item:visible >> nth=1", "wait": 500 },
+        { "type": "click", "selector": ".el-dialog .el-checkbox", "wait": 500 },
+        { "type": "fill", "selector": "input[placeholder=\"请输入自定义班级名称\"]", "value": "一年级2班", "wait": 400 },
+        { "type": "click", "selector": ".el-dialog button:has-text(\"确定\")", "wait": 1600 }
+      ]
+    },
+    {
+      "id": "s4-assign-class",
+      "name": "学生分班",
+      "route": "/student-class-assignment",
+      "wait": 1000,
+      "narration": "在学生分班页找到张欣怡，选择一年级2班，点击确定，分班就完成了。",
+      "actions": [
+        { "type": "click", "selector": "tr:has-text(\"张欣怡\") button:has-text(\"分班\")", "wait": 1200 },
+        { "type": "click", "selector": ".el-dialog .el-select >> nth=0", "wait": 500 },
+        { "type": "click", "selector": ".el-select-dropdown__item:visible:has-text(\"2026-2027\")", "wait": 500 },
+        { "type": "click", "selector": ".el-dialog .el-select >> nth=1", "wait": 500 },
+        { "type": "click", "selector": ".el-select-dropdown__item:visible:has-text(\"一年级2班\")", "wait": 500 },
+        { "type": "click", "selector": ".el-dialog button:has-text(\"确定\")", "wait": 1800 },
+        { "type": "hover", "selector": "tr:has-text(\"张欣怡\")", "wait": 1200 }
+      ]
+    },
+    {
+      "id": "s5-verify",
+      "name": "收尾验证",
+      "route": "/students",
+      "wait": 1000,
+      "narration": "回到学生管理，按班级筛选一年级2班，张欣怡已经出现在班级成员中。",
+      "actions": [
+        { "type": "click", "selector": ".compact-select >> nth=1", "wait": 600 },
+        { "type": "click", "selector": ".el-select-dropdown__item:visible:has-text(\"一年级2班\")", "wait": 1400 },
+        { "type": "hover", "selector": ".el-table__row:has-text(\"张欣怡\"), .student-card:has-text(\"张欣怡\")", "wait": 1500 }
+      ]
+    }
+  ]
+}

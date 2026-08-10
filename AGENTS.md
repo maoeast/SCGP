@@ -112,7 +112,7 @@ Handoff：`.continue-here.md` 记当前唯一下一步（优先更新）；`HAND
 - 简洁直接少空话；不要"Great question!"之类废话；回复用中文，代码注释随周边；路径用 `path:line`
 - 先给方案再写代码；不确定时列选项不猜测；重大变更先问，小优化可直接执行
 - 输出说三态：已实现 / 未实现 / 过渡态，不把目标态写成现状
-- 交接优先紧凑 restart artifact 而非长总结：先更新 `.continue-here.md`，必要时补 `HANDOFF.md`；内容压成 Current State / Next Action / Blockers / Key Decisions / Relevant Files
+- 交接优先紧凑 restart artifact 而非长总结：先更新 `.continue-here.md`，必要时补 `HANDOFF.md`；内容压成 Current State / Next Action / Blockers / Dead Ends / Key Decisions / Relevant Files
 - 用户要"下个会话 prompt"时给可复制短 prompt，不长篇回顾
 
 ---
