@@ -265,6 +265,7 @@ export class SMDriver extends BaseDriver {
     })
 
     console.log('[SMDriver] S-M 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('sm_assess', assessId, context)
     return { assessId, reportId }
   }
 

@@ -835,6 +835,9 @@ export class SMAssessmentAPI extends DatabaseAPI {
         a.level,
         a.start_time,
         a.end_time,
+        a.total_duration,
+        a.avg_response_time,
+        a.quality_note,
         a.created_at
       FROM sm_assess a
       WHERE a.id = ?
@@ -906,6 +909,9 @@ export class WeeFIMAPI extends DatabaseAPI {
         a.level,
         a.start_time,
         a.end_time,
+        a.total_duration,
+        a.avg_response_time,
+        a.quality_note,
         a.created_at
       FROM weefim_assess a
       WHERE a.id = ?
@@ -1223,6 +1229,9 @@ export class FineMotorAssessmentAPI extends DatabaseAPI {
         a.iep_targets,
         a.start_time,
         a.end_time,
+        a.total_duration,
+        a.avg_response_time,
+        a.quality_note,
         a.created_at,
         s.name as student_name,
         s.gender as student_gender,
@@ -1393,6 +1402,9 @@ export class Cnbsr2016AssessmentAPI extends DatabaseAPI {
         a.expert_clinical,
         a.start_time,
         a.end_time,
+        a.total_duration,
+        a.avg_response_time,
+        a.quality_note,
         a.created_at,
         s.name as student_name,
         s.gender as student_gender,
@@ -1563,6 +1575,9 @@ export class Gmfm88AssessmentAPI extends DatabaseAPI {
         a.overall_rule,
         a.start_time,
         a.end_time,
+        a.total_duration,
+        a.avg_response_time,
+        a.quality_note,
         a.created_at,
         s.name as student_name,
         s.gender as student_gender,
@@ -1746,6 +1761,9 @@ export class Tgmd3AssessmentAPI extends DatabaseAPI {
         a.overall_rule,
         a.start_time,
         a.end_time,
+        a.total_duration,
+        a.avg_response_time,
+        a.quality_note,
         a.created_at,
         s.name as student_name,
         s.gender as student_gender,

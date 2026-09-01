@@ -41,6 +41,10 @@ export interface SRS2AssessRecord {
   raw_answers: string  // JSON string
   age_months: number
   gender: string
+  // 质量追踪列（宽松质控；旧记录为 null）
+  total_duration?: number | null
+  avg_response_time?: number | null
+  quality_note?: string | null
 }
 
 /**

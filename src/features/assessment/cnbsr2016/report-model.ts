@@ -93,6 +93,10 @@ export interface Cnbsr2016AssessmentRecord {
   expert_clinical?: ExpertClinical | null
   start_time?: string
   end_time?: string
+  /** 质量追踪列（宽松质控；旧记录为 null） */
+  total_duration?: number | null
+  avg_response_time?: number | null
+  quality_note?: string | null
   created_at?: string
 }
 

@@ -130,6 +130,10 @@
         </p>
       </div>
     </el-card>
+      <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
+    <AssessmentTimingInfo
+      :total-duration="assessData?.total_duration"
+    />
   </div>
 </template>
 
@@ -141,6 +145,7 @@ import { ArrowLeft, WarningFilled, ChatDotRound } from '@element-plus/icons-vue'
 import { CognitiveSelfAssessmentAPI } from '@/database/api'
 import { COGNITIVE_SELF_LAYER_PLAIN } from '@/database/cognitive-self-data'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const route = useRoute()
 const router = useRouter()

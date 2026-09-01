@@ -219,6 +219,11 @@
 
     <!-- 加载状态 -->
     <el-empty v-else description="加载中..." />
+      <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
+    <AssessmentTimingInfo
+      :total-duration="assessment?.total_duration"
+      :avg-response-time="assessment?.avg_response_time"
+    />
   </div>
 </template>
 
@@ -264,6 +269,7 @@ const LEVEL_TEXTS: Record<string, string> = {
   clinical: '临床显著'
 }
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const router = useRouter()
 const route = useRoute()

@@ -76,6 +76,9 @@ CREATE TABLE IF NOT EXISTS sm_assess (
   level TEXT NOT NULL,
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -121,6 +124,9 @@ CREATE TABLE IF NOT EXISTS weefim_assess (
   level TEXT NOT NULL,
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -152,6 +158,9 @@ CREATE TABLE IF NOT EXISTS fine_motor_assess (
   iep_targets TEXT NOT NULL DEFAULT '[]',
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -189,6 +198,9 @@ CREATE TABLE IF NOT EXISTS cnbsr2016_assess (
   expert_clinical TEXT,
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -226,6 +238,9 @@ CREATE TABLE IF NOT EXISTS gmfm_88_assess (
   overall_rule TEXT,
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -271,6 +286,9 @@ CREATE TABLE IF NOT EXISTS tgmd_3_assess (
   overall_rule TEXT,
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -485,6 +503,9 @@ CREATE TABLE IF NOT EXISTS csirs_assess (
   flags TEXT,
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -517,6 +538,9 @@ CREATE TABLE IF NOT EXISTS brief_assess (
   extra_data TEXT,                    -- JSON: 复合分（gec/bri/eri/cri 或 isci/flex/emc）
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,             -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,             -- 平均每题用时（秒）
+  quality_note TEXT,                  -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -541,6 +565,9 @@ CREATE TABLE IF NOT EXISTS crt_assess (
   extra_data TEXT,                    -- JSON: { draftNorm, iq, percentile }
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,             -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,             -- 平均每题用时（秒）
+  quality_note TEXT,                  -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -567,6 +594,8 @@ CREATE TABLE IF NOT EXISTS cognitive_self_assess (
   extra_data TEXT,                    -- JSON: { draftNorm, iq, percentile, accuracyAvailable, reactionAvailable, hasRealData }
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,             -- 评估总用时（秒，墙钟；宽松质控记录；平均每题由 avg_response_time 承载）
+  quality_note TEXT,                  -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -591,6 +620,9 @@ CREATE TABLE IF NOT EXISTS conners_psq_assess (
   level TEXT,
   start_time TEXT NOT NULL,
   end_time TEXT NOT NULL,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -612,6 +644,9 @@ CREATE TABLE IF NOT EXISTS conners_trs_assess (
   level TEXT,
   start_time TEXT NOT NULL,
   end_time TEXT NOT NULL,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -629,6 +664,9 @@ CREATE TABLE IF NOT EXISTS sdq_assess (
   is_valid INTEGER DEFAULT 1,
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -646,6 +684,9 @@ CREATE TABLE IF NOT EXISTS srs2_assess (
   total_level TEXT NOT NULL CHECK(total_level IN ('normal', 'mild', 'moderate', 'severe')),
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -684,6 +725,9 @@ CREATE TABLE IF NOT EXISTS cbcl_assess (
   -- Metadata
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (student_id) REFERENCES student(id)
@@ -704,6 +748,9 @@ CREATE TABLE IF NOT EXISTS abc_assess (
   level TEXT NOT NULL CHECK(level IN ('normal', 'borderline', 'mild', 'moderate', 'severe')),
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -722,6 +769,9 @@ CREATE TABLE IF NOT EXISTS atec_assess (
   level TEXT NOT NULL CHECK(level IN ('minimal', 'mild', 'moderate', 'severe')),
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -1258,6 +1308,7 @@ export async function initDatabase(): Promise<any> {
     // 创建表结构
     db.run(schemaSQL)
     initializeTrainingSessionTables(rawDb)
+    ensureAssessmentQualityColumns(rawDb)
 
     // 数据迁移：为现有表添加新字段或修改表结构
     if (!isNewDb) {
@@ -3121,6 +3172,50 @@ function safeAddColumn(database: any, tableName: string, columnDef: string): voi
     }
   }
 }
+
+/**
+ * 评估质量追踪列（宽松质控：只记录，不打扰）
+ *
+ * 17 个评估量表主表统一增加三列：
+ * - total_duration INTEGER  总用时（秒，墙钟）
+ * - avg_response_time REAL  平均每题用时（秒）
+ * - quality_note TEXT       'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
+ *
+ * 例外：cognitive_self_assess 已有 avg_response_time（真反应时 ms 语义），
+ * 只补 total_duration / quality_note，避免语义冲突与 duplicate column。
+ *
+ * 全部走 safeAddColumn 幂等加列：新库 CREATE TABLE 已含、旧库自动补齐、
+ * 重复执行安全。旧记录三列保持 NULL（向后兼容，报告页对 NULL 不渲染）。
+ */
+function ensureAssessmentQualityColumns(rawDb: any): void {
+  const tablesWithAvg = [
+    'sm_assess',
+    'weefim_assess',
+    'fine_motor_assess',
+    'cnbsr2016_assess',
+    'gmfm_88_assess',
+    'tgmd_3_assess',
+    'csirs_assess',
+    'brief_assess',
+    'crt_assess',
+    'conners_psq_assess',
+    'conners_trs_assess',
+    'sdq_assess',
+    'srs2_assess',
+    'cbcl_assess',
+    'abc_assess',
+    'atec_assess',
+  ]
+  for (const table of tablesWithAvg) {
+    safeAddColumn(rawDb, table, 'total_duration INTEGER')
+    safeAddColumn(rawDb, table, 'avg_response_time REAL')
+    safeAddColumn(rawDb, table, 'quality_note TEXT')
+  }
+  // cognitive_self_assess：平均每题由既有 avg_response_time（ms）承载
+  safeAddColumn(rawDb, 'cognitive_self_assess', 'total_duration INTEGER')
+  safeAddColumn(rawDb, 'cognitive_self_assess', 'quality_note TEXT')
+}
+
 
 function tableSqlContains(database: any, tableName: string, expectedSqlFragment: string): boolean {
   try {

@@ -328,6 +328,58 @@ export interface ScaleInfo {
 // ============================================================
 
 /**
+ * 评估作答质量指标（宽松质控：只记录，不打扰）
+ *
+ * 由容器在 completeAssessment 时按墙钟时间统一计算，随 PersistContext 下发给 Driver。
+ * 阈值：平均每题 < 3 秒 → very_fast；< 5 秒 → fast；否则 null。
+ * 仅作后台管理数据，报告页只客观展示用时，不做价值判断。
+ */
+export interface AssessmentQualityMetrics {
+  /** 总用时（秒，墙钟） */
+  totalDuration: number
+  /** 平均每题用时（秒，= totalDuration / 已答题数） */
+  avgResponseTime: number
+  /** 质量备注：'very_fast' | 'fast' | null */
+  qualityNote: string | null
+}
+
+/** 平均每题用时（秒）低于该值标记 very_fast */
+export const QUALITY_NOTE_VERY_FAST_THRESHOLD_SEC = 3
+/** 平均每题用时（秒）低于该值标记 fast */
+export const QUALITY_NOTE_FAST_THRESHOLD_SEC = 5
+
+/**
+ * 计算评估作答质量指标（纯函数，供容器与测试复用）
+ *
+ * @param startTime 开始时刻（Date.now() 毫秒时间戳）
+ * @param endTime 结束时刻（Date.now() 毫秒时间戳）
+ * @param answeredCount 已答题数
+ * @returns 质量指标；answeredCount <= 0 时返回 null（无法定义平均用时）
+ */
+export function computeAssessmentQualityMetrics(
+  startTime: number | undefined,
+  endTime: number | undefined,
+  answeredCount: number
+): AssessmentQualityMetrics | null {
+  if (typeof startTime !== 'number' || typeof endTime !== 'number') return null
+  if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) return null
+  if (endTime < startTime) return null
+  if (answeredCount <= 0) return null
+
+  const totalDuration = (endTime - startTime) / 1000
+  const avgResponseTime = totalDuration / answeredCount
+
+  let qualityNote: string | null = null
+  if (avgResponseTime < QUALITY_NOTE_VERY_FAST_THRESHOLD_SEC) {
+    qualityNote = 'very_fast'
+  } else if (avgResponseTime < QUALITY_NOTE_FAST_THRESHOLD_SEC) {
+    qualityNote = 'fast'
+  }
+
+  return { totalDuration, avgResponseTime, qualityNote }
+}
+
+/**
  * 持久化上下文 —— 从容器传递给 Driver 的写库必须信息
  */
 export interface PersistContext {
@@ -341,6 +393,8 @@ export interface PersistContext {
   startTime: string
   /** 评估结束时间（ISO 字符串） */
   endTime: string
+  /** 作答质量指标（容器计算；可选字段，旧调用方不带时 Driver 不写质量列） */
+  quality?: AssessmentQualityMetrics
 }
 
 /**

@@ -14,6 +14,7 @@ import {
   ATEC_LEVEL_NAMES
 } from '@/database/atec-questions'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -154,6 +155,10 @@ async function loadAssessment() {
       start_time: row[7],
       end_time: row[8],
       created_at: row[9],
+      // 质量追踪列（宽松质控；旧记录为 NULL）
+      total_duration: row[10] ?? null,
+      avg_response_time: row[11] ?? null,
+      quality_note: row[12] ?? null,
     }
 
     // 加载学生信息
@@ -413,6 +418,11 @@ onMounted(() => {
         </div>
       </div>
     </el-card>
+      <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
+    <AssessmentTimingInfo
+      :total-duration="assessData?.total_duration"
+      :avg-response-time="assessData?.avg_response_time"
+    />
   </div>
 </template>
 

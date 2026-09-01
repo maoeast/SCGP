@@ -199,6 +199,11 @@
         </ul>
       </div>
     </el-card>
+      <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
+    <AssessmentTimingInfo
+      :total-duration="assessData?.total_duration"
+      :avg-response-time="assessData?.avg_response_time"
+    />
   </div>
 </template>
 
@@ -215,6 +220,7 @@ import { SDQDriver } from '@/strategies/assessment/SDQDriver'
 import { buildSDQWordPayload } from '@/utils/assessment-word-builders'
 import { exportWordDocument } from '@/utils/export-word'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 // Props
 const route = useRoute()

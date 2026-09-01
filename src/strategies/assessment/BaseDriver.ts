@@ -308,6 +308,50 @@ export abstract class BaseDriver implements ScaleDriver {
   }
 
   /**
+   * 保存评估质量追踪数据（宽松质控：只记录，不打扰）
+   *
+   * 在 persistAssessment 插入主记录后调用，把容器计算好的质量指标
+   * UPDATE 到对应量表主表的 total_duration / avg_response_time / quality_note 列。
+   *
+   * 设计约束：
+   * - context.quality 缺失（旧调用方）时直接跳过，不写任何列
+   * - 质量列写入失败只告警不抛错，绝不阻断主评估记录的保存流程
+   * - tableName 由各 Driver 显式传入，避免在基类维护量表→表名映射
+   *
+   * @param tableName 量表主表名（如 'abc_assess'）
+   * @param assessId 主记录 ID
+   * @param context 持久化上下文（读取 quality 字段）
+   * @param options.skipAvgResponseTime 跳过 avg_response_time 写入
+   *   （cognitive_self_assess 的同名列是"真反应时 ms"语义，由其 Driver 在
+   *   INSERT 时自行写入，此处只补 total_duration / quality_note）
+   */
+  protected saveQualityMetrics(
+    tableName: string,
+    assessId: number,
+    context: PersistContext,
+    options: { skipAvgResponseTime?: boolean } = {}
+  ): void {
+    const { quality } = context
+    if (!quality || !assessId) return
+    try {
+      const { getDatabase } = require('@/database/init')
+      const db = getDatabase()
+      const assignments = ['total_duration = ?', 'quality_note = ?']
+      const params: any[] = [Math.round(quality.totalDuration), quality.qualityNote]
+      if (!options.skipAvgResponseTime) {
+        assignments.push('avg_response_time = ?')
+        params.push(quality.avgResponseTime)
+      }
+      params.push(assessId)
+      db.run(`UPDATE ${tableName} SET ${assignments.join(', ')} WHERE id = ?`, params)
+    } catch (error) {
+      // 质量数据是增强信息，写失败不影响评估主记录
+      console.warn(`[BaseDriver] 保存质量指标失败(${tableName}#${assessId}):`, error)
+    }
+  }
+
+
+  /**
    * 获取数据库最后插入的记录 ID
    *
    * 供子类在直接使用 db.run 后获取 ID（过渡期工具，最终各量表应使用 API 类）

@@ -275,6 +275,9 @@ export class ABCDriver extends BaseDriver {
     const rows = db.all(selectSql)
     const assessId = rows[0]?.id as number
 
+    // 保存质量追踪数据（宽松质控，quality 缺失时跳过）
+    this.saveQualityMetrics('abc_assess', assessId, context)
+
     // 创建报告记录（供报告中心展示）
     const reportId = this.createReportRecord({
       studentId: student.id,

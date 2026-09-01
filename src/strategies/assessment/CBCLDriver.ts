@@ -1020,6 +1020,7 @@ export class CBCLDriver extends BaseDriver {
     })
 
     console.log('[CBCLDriver] CBCL 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('cbcl_assess', assessId, context)
     return { assessId, reportId }
   }
 

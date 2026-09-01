@@ -308,6 +308,11 @@
     <el-card v-else class="loading-card">
       <el-empty description="报告数据加载中" />
     </el-card>
+      <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
+    <AssessmentTimingInfo
+      :total-duration="assessment?.total_duration"
+      :avg-response-time="assessment?.avg_response_time"
+    />
   </div>
 </template>
 
@@ -329,6 +334,7 @@ import {
   type OverallRule,
 } from '@/features/assessment/cnbsr2016/report-model'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -471,6 +471,7 @@ export class Gmfm88Driver extends BaseDriver {
     })
 
     console.log('[Gmfm88Driver] GMFM-88 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('gmfm_88_assess', assessId, context)
     return { assessId, reportId }
   }
 }

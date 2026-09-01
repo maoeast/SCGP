@@ -8,6 +8,7 @@ import { getDatabase } from '@/database/init'
 import type { ABCLevel } from '@/database/abc-questions'
 import { ABC_DIMENSION_NAMES, getABCLevel, ABC_LEVEL_NAMES } from '@/database/abc-questions'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -364,6 +365,12 @@ onMounted(() => {
         </div>
       </div>
     </el-card>
+
+    <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
+    <AssessmentTimingInfo
+      :total-duration="assessData?.total_duration"
+      :avg-response-time="assessData?.avg_response_time"
+    />
   </div>
 </template>
 

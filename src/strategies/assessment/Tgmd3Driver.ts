@@ -579,6 +579,7 @@ export class Tgmd3Driver extends BaseDriver {
     })
 
     console.log('[Tgmd3Driver] TGMD-3 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('tgmd_3_assess', assessId, context)
     return { assessId, reportId }
   }
 }

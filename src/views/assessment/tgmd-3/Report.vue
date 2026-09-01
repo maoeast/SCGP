@@ -244,6 +244,11 @@
     <el-card v-else class="loading-card">
       <el-empty description="报告数据加载中" />
     </el-card>
+      <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
+    <AssessmentTimingInfo
+      :total-duration="assessment?.total_duration"
+      :avg-response-time="assessment?.avg_response_time"
+    />
   </div>
 </template>
 
@@ -339,8 +344,13 @@ interface Tgmd3AssessmentRecord {
   flags?: Tgmd3ReportFlag[]
   norm_summary?: Tgmd3NormSummary | null
   start_time: string
+  // 质量追踪列（宽松质控；旧记录为 null）
+  total_duration?: number | null
+  avg_response_time?: number | null
+  quality_note?: string | null
 }
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const route = useRoute()
 const router = useRouter()

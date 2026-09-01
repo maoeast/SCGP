@@ -262,6 +262,11 @@
       <el-button @click="goBack">返回</el-button>
       <el-button type="primary" @click="exportWord">导出Word</el-button>
     </div>
+      <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
+    <AssessmentTimingInfo
+      :total-duration="assessData?.total_duration"
+      :avg-response-time="assessData?.avg_response_time"
+    />
   </div>
 </template>
 
@@ -317,8 +322,13 @@ interface CBCLAssessRecord {
   summary_level: string
   start_time: string
   end_time: string
+  // 质量追踪列（宽松质控；旧记录为 null）
+  total_duration?: number | null
+  avg_response_time?: number | null
+  quality_note?: string | null
 }
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const route = useRoute()
 const router = useRouter()

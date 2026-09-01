@@ -384,6 +384,7 @@ export class BRIEFDriver extends BaseDriver {
     })
 
     console.log('[BRIEFDriver] BRIEF 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('brief_assess', assessId, context)
     return { assessId, reportId }
   }
 }

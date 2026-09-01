@@ -147,6 +147,7 @@
       :student="student"
       :assessment-id="assessId || undefined"
       :scale-name="scaleDisplayName"
+      :quality="qualityMetrics"
       @view-report="handleViewReport"
       @exit="handleExit"
     />
@@ -171,9 +172,10 @@ import type {
   ScaleAnswer,
   AssessmentState,
   ScoreResult,
-  AssessmentFeedback
+  AssessmentFeedback,
+  AssessmentQualityMetrics
 } from '@/types/assessment'
-import { calculateAgeInMonths } from '@/types/assessment'
+import { calculateAgeInMonths, computeAssessmentQualityMetrics } from '@/types/assessment'
 import {
   getCnbsr2016UnsupportedAgeMessage,
   isCnbsr2016AgeSupported,
@@ -240,6 +242,8 @@ const state = ref<AssessmentState>({
 const scoreResult = ref<ScoreResult | null>(null)
 const feedback = ref<AssessmentFeedback | null>(null)
 const assessId = ref<number | null>(null)
+// 质量指标（宽松质控：只记录；null 表示无法计算，CompleteDialog 不提示）
+const qualityMetrics = ref<AssessmentQualityMetrics | null>(null)
 
 // 量表中文名（推荐引擎计划名 + 徽标）
 const scaleDisplayName = computed(() => {
@@ -682,6 +686,13 @@ async function completeAssessment() {
   state.value.isComplete = true
   state.value.endTime = Date.now()
 
+  // 质量指标（墙钟）：答完 0 题或时间异常时为 null，Driver 侧跳过写入
+  qualityMetrics.value = computeAssessmentQualityMetrics(
+    state.value.startTime,
+    state.value.endTime,
+    Object.keys(state.value.answers).length
+  )
+
   try {
     // 1. 计算评分
     scoreResult.value = driver.value.calculateScore(
@@ -725,6 +736,7 @@ async function saveAssessmentToDatabase() {
       scoreResult: scoreResult.value,
       startTime,
       endTime,
+      quality: qualityMetrics.value ?? undefined,
     })
     assessId.value = result.assessId
     console.log(`[AssessmentContainer] ${scaleCode.value} 评估通过 Driver 持久化成功, ID:`, result.assessId)

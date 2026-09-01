@@ -424,6 +424,7 @@ export class SRS2Driver extends BaseDriver {
     })
 
     console.log('[SRS2Driver] SRS-2 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('srs2_assess', assessId, context)
     return { assessId, reportId }
   }
 

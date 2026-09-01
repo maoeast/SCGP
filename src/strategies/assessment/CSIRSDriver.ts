@@ -321,6 +321,7 @@ export class CSIRSDriver extends BaseDriver {
     })
 
     console.log('[CSIRSDriver] CSIRS 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('csirs_assess', assessId, context)
     return { assessId, reportId }
   }
 

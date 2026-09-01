@@ -542,6 +542,7 @@ export class ConnersPSQDriver extends BaseDriver {
     })
 
     console.log('[ConnersPSQDriver] Conners PSQ 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('conners_psq_assess', assessId, context)
     return { assessId, reportId }
   }
 

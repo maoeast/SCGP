@@ -134,6 +134,12 @@ export interface ConnersPSQAssessment {
   start_time: string;
   /** 结束时间 */
   end_time: string;
+  /** 评估总用时（秒，墙钟；宽松质控记录，旧记录无） */
+  total_duration?: number | null;
+  /** 平均每题用时（秒；旧记录无） */
+  avg_response_time?: number | null;
+  /** 质量备注：'very_fast' / 'fast' / null（仅后台管理用，报告不展示） */
+  quality_note?: string | null;
   /** 创建时间 */
   created_at: string;
 }
@@ -172,6 +178,12 @@ export interface ConnersTRSAssessment {
   start_time: string;
   /** 结束时间 */
   end_time: string;
+  /** 评估总用时（秒，墙钟；宽松质控记录，旧记录无） */
+  total_duration?: number | null;
+  /** 平均每题用时（秒；旧记录无） */
+  avg_response_time?: number | null;
+  /** 质量备注：'very_fast' / 'fast' / null（仅后台管理用，报告不展示） */
+  quality_note?: string | null;
   /** 创建时间 */
   created_at: string;
 }

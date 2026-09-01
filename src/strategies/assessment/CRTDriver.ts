@@ -288,6 +288,7 @@ export class CRTDriver extends BaseDriver {
     })
 
     console.log('[CRTDriver] CRT 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('crt_assess', assessId, context)
     return { assessId, reportId }
   }
 }

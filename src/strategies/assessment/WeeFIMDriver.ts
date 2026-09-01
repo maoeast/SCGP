@@ -466,6 +466,7 @@ export class WeeFIMDriver extends BaseDriver {
     })
 
     console.log('[WeeFIMDriver] WeeFIM 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('weefim_assess', assessId, context)
     return { assessId, reportId }
   }
 

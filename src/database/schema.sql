@@ -60,6 +60,9 @@ CREATE TABLE IF NOT EXISTS sm_assess (
   level TEXT NOT NULL,
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,
+  avg_response_time REAL,
+  quality_note TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
@@ -105,6 +108,9 @@ CREATE TABLE IF NOT EXISTS weefim_assess (
   level TEXT NOT NULL,
   start_time TEXT NOT NULL,
   end_time TEXT,
+  total_duration INTEGER,
+  avg_response_time REAL,
+  quality_note TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (student_id) REFERENCES student(id)
 );

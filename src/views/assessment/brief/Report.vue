@@ -52,6 +52,11 @@
         </p>
       </div>
     </el-card>
+      <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
+    <AssessmentTimingInfo
+      :total-duration="assessData?.total_duration"
+      :avg-response-time="assessData?.avg_response_time"
+    />
   </div>
 </template>
 
@@ -62,6 +67,7 @@ import { ElMessage } from 'element-plus'
 import { ArrowLeft, WarningFilled, Clock } from '@element-plus/icons-vue'
 import { BRIEFAssessmentAPI } from '@/database/api'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const route = useRoute()
 const router = useRouter()

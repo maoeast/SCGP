@@ -70,6 +70,17 @@
         </div>
         <p class="feedback-text">{{ feedback.summary }}</p>
       </div>
+
+      <!-- 极端快速作答的温和提示（宽松质控：仅 info 级，不阻断任何操作） -->
+      <el-alert
+        v-if="isVeryFastAssessment"
+        type="info"
+        :closable="false"
+        show-icon
+        class="fast-hint"
+      >
+        本次评估用时较短，如有需要可重新评估以确保准确性。
+      </el-alert>
     </div>
 
     <template #footer>
@@ -92,7 +103,7 @@
 import { computed } from 'vue'
 import { CircleCheck, ChatLineRound } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import type { ScoreResult, AssessmentFeedback, StudentContext } from '@/types/assessment'
+import type { ScoreResult, AssessmentFeedback, StudentContext, AssessmentQualityMetrics } from '@/types/assessment'
 import { useRecommendationStore } from '@/stores/recommendation'
 
 interface Props {
@@ -104,6 +115,8 @@ interface Props {
   assessmentId?: number | string
   /** 量表中文名（计划名 + 徽标） */
   scaleName?: string
+  /** 作答质量指标（可选；旧数据/无法计算时不提示） */
+  quality?: AssessmentQualityMetrics | null
 }
 
 const props = defineProps<Props>()
@@ -171,6 +184,16 @@ const avgTimeLabel = computed(() => {
   const rt = extra?.overallMedianRt
   if (typeof rt !== 'number') return ''
   return `${(rt / 1000).toFixed(1)} 秒`
+})
+
+/**
+ * 极端快速作答判定：平均每题 < 2 秒（秒，墙钟口径）。
+ * 仅此时显示温和提示；'fast'（2-5 秒）和正常作答都不打扰。
+ */
+const FAST_HINT_THRESHOLD_SEC = 2
+const isVeryFastAssessment = computed(() => {
+  const avg = props.quality?.avgResponseTime
+  return typeof avg === 'number' && avg > 0 && avg < FAST_HINT_THRESHOLD_SEC
 })
 
 // 推荐入口文案：正常/优秀 → 能力巩固推荐；否则 → 器材推荐
@@ -301,6 +324,11 @@ function handleRecommend() {
   line-height: 1.7;
   color: #606266;
   word-break: break-word;
+}
+
+/* ====== 极端快速作答温和提示 ====== */
+.fast-hint {
+  margin-top: 16px;
 }
 
 /* ====== Footer 按钮统一三态 ====== */

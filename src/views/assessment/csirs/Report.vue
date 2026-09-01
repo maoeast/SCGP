@@ -158,6 +158,11 @@
 
     <!-- 加载状态 -->
     <el-empty v-else description="加载中..." />
+      <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
+    <AssessmentTimingInfo
+      :total-duration="assessment?.total_duration"
+      :avg-response-time="assessment?.avg_response_time"
+    />
   </div>
 </template>
 
@@ -184,6 +189,7 @@ const COLOR_GREEN = '#67C23A'
 const COLOR_ORANGE = '#E6A23C'
 const COLOR_RED = '#F56C6C'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -543,6 +549,10 @@ const loadAssessment = async () => {
       level: result.level,
       start_time: result.start_time,
       end_time: result.end_time,
+      // 质量追踪列（宽松质控；旧记录为 NULL）
+      total_duration: result.total_duration ?? null,
+      avg_response_time: result.avg_response_time ?? null,
+      quality_note: result.quality_note ?? null,
       answers: []
     }
 

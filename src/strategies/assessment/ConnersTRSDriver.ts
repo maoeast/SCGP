@@ -503,6 +503,7 @@ export class ConnersTRSDriver extends BaseDriver {
     })
 
     console.log('[ConnersTRSDriver] Conners TRS 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('conners_trs_assess', assessId, context)
     return { assessId, reportId }
   }
 

@@ -152,6 +152,11 @@
         </p>
       </div>
     </el-card>
+      <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
+    <AssessmentTimingInfo
+      :total-duration="assessData?.total_duration"
+      :avg-response-time="assessData?.avg_response_time"
+    />
   </div>
 </template>
 
@@ -181,6 +186,10 @@ interface SRS2AssessRecord {
   raw_answers: string  // JSON
   age_months: number
   gender: string
+  // 质量追踪列（宽松质控；旧记录为 null）
+  total_duration?: number | null
+  avg_response_time?: number | null
+  quality_note?: string | null
 }
 
 // Props
@@ -275,6 +284,7 @@ function getTotalLevelClass(severity: 'success' | 'warning' | 'danger' | undefin
   return 'level-label-success'
 }
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const goBack = () => {
   router.back()

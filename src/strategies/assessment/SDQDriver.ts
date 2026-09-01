@@ -528,6 +528,7 @@ export class SDQDriver extends BaseDriver {
     })
 
     console.log('[SDQDriver] SDQ 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('sdq_assess', assessId, context)
     return { assessId, reportId }
   }
 

@@ -512,6 +512,7 @@ export class Cnbsr2016Driver extends BaseDriver {
     })
 
     console.log('[Cnbsr2016Driver] CNBS-R2016 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('cnbsr2016_assess', assessId, context)
     return { assessId, reportId }
   }
 

@@ -778,6 +778,7 @@ export class FineMotorDriver extends BaseDriver {
     })
 
     console.log('[FineMotorDriver] Fine Motor 评估持久化成功, assessId:', assessId)
+    this.saveQualityMetrics('fine_motor_assess', assessId, context)
     return { assessId, reportId }
   }
 

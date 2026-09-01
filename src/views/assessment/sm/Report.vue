@@ -223,6 +223,11 @@
         </el-row>
       </div>
     </div>
+      <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
+    <AssessmentTimingInfo
+      :total-duration="reportData?.total_duration"
+      :avg-response-time="reportData?.avg_response_time"
+    />
   </div>
 </template>
 
@@ -251,6 +256,7 @@ use([
   TooltipComponent
 ])
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const route = useRoute()
 const router = useRouter()

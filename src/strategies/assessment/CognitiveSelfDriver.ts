@@ -529,6 +529,9 @@ export class CognitiveSelfDriver extends BaseDriver {
     })
 
     console.log('[CognitiveSelfDriver] 视知觉图形匹配筛查持久化成功, assessId:', assessId)
+    // cognitive_self_assess.avg_response_time 是"真反应时 ms"语义（上方 INSERT 已写），
+    // 质量列只补 total_duration / quality_note，不覆盖平均反应时
+    this.saveQualityMetrics('cognitive_self_assess', assessId, context, { skipAvgResponseTime: true })
     return { assessId, reportId }
   }
 }
