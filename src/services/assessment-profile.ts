@@ -49,6 +49,8 @@ export const SCALE_DOMAIN_MAP: Record<string, DevelopmentDomain> = {
   // 社交沟通
   srs2: 'social',
   sdq: 'social',
+  abc: 'social',
+  atec: 'social',
   // 认知发展
   brief: 'cognitive',
   // 生活自理

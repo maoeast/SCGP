@@ -6,6 +6,7 @@
           <h2>S-M量表评估报告</h2>
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
+            <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
             <el-button type="primary" :icon="Download" @click="exportWord">
               导出Word
             </el-button>
@@ -229,7 +230,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Download, Clock } from '@element-plus/icons-vue'
+import { Download, Clock, ChatDotRound } from '@element-plus/icons-vue'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { RadarChart } from 'echarts/charts'
@@ -249,6 +250,7 @@ use([
   LegendComponent,
   TooltipComponent
 ])
+import { openAiAssistant } from '@/features/ai/assistant-launcher'
 
 const route = useRoute()
 const router = useRouter()
@@ -267,6 +269,21 @@ const viewHistory = () => {
     router.push(`/assessment/sm/trend/${studentId.value}`)
   }
 }
+
+
+const openAiInterpretation = () => {
+  if (!reportData.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+
+  openAiAssistant('special_ed_teacher')
+
+  setTimeout(() => {
+    ElMessage.success('AI助手已打开，你可以询问"解读这名学生的S-M评估结果"')
+  }, 500)
+}
+
 
 // 学生信息
 const student = computed(() =>

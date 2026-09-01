@@ -193,12 +193,53 @@ export class ABCDriver extends BaseDriver {
     }
   }
 
+  /**
+   * 获取欢迎对话框内容
+   */
+  getWelcomeContent() {
+    return {
+      title: '孤独症儿童行为评定量表 (ABC)',
+      intro: '经典的孤独症初筛工具，适用于识别儿童是否存在孤独症倾向。建议在初次筛查时使用，通过观察儿童日常行为特征，快速识别可能的孤独症谱系障碍（ASD）表现。ABC量表采用加权计分，重点关注感觉、交往、躯体运动、语言等核心领域。',
+      sections: [
+        {
+          icon: '👨‍🏫',
+          title: '给专业人员的评估要点',
+          items: [
+            'ABC是初筛工具，用于"发现"而非"追踪"：当您怀疑一个孩子可能有孤独症倾向时，ABC是首选的快速筛查工具。如果筛查阳性（≥49分），应转介专业机构进行诊断性评估（如ADOS、ADI-R）。',
+            '基于观察而非推测：ABC的57道题都应基于您对孩子近期（1-3个月）的实际观察。如果某个行为您从未见过，请标记"不符合"，而不是凭印象猜测。',
+            '加权计分的意义：ABC对不同题目赋予1-4分的权重，权重越高表示该行为对孤独症诊断的特异性越强。例如"对人缺乏目光接触"比"喜欢旋转物体"权重更高。',
+            '筛查分界值说明：总分≥57分为传统筛查分界值，≥67分为诊断参考值。但近期研究建议49分以上即应引起关注，建议结合临床观察综合判断。',
+            '维度分析的价值：ABC包含5个维度（感觉、交往、躯体运动、语言、生活自理），各维度得分可以帮助识别孩子的核心困难领域，为后续干预提供方向。',
+            'ABC vs ATEC：初筛用ABC，康复追踪用ATEC。确诊后的孩子如需监测康复进展，应改用ATEC量表（建议每3个月评估一次）。',
+          ],
+        },
+        {
+          icon: '❤️',
+          title: '给家长的填表指南',
+          items: [
+            'ABC是用来"发现问题"的初筛工具：如果您担心孩子可能有孤独症倾向（如不爱说话、不和小朋友玩、刻板重复行为等），ABC可以帮您做初步筛查。这是第一次评估时使用的工具。',
+            '回忆孩子最真实的样子：请回想孩子在家中、公园、商场等不同场景下的实际表现。有些行为可能在学校不明显，但在家里很突出，都需要如实填写。',
+            '不要因为焦虑而夸大：有的家长担心"分数不够高就得不到干预资源"而倾向于选择更严重的选项。请相信，准确的评估才能得到真正适合的帮助。',
+            '"不符合"不代表孩子优秀：ABC的题目是负向描述（如"不理人""刻板行为"），选择"不符合"只是说明孩子没有这个困难，不必为选了很多"不符合"而内疚。',
+            '量表只是起点，不是终点：无论分数高低，ABC只是筛查工具，最终诊断需要专业医生综合判断。如果孩子已确诊并开始康复训练，后续请使用ATEC量表（每3个月一次）来追踪康复效果。',
+          ],
+        },
+      ],
+      reminder: {
+        icon: '⚠️',
+        title: '重要提醒',
+        content:
+          'ABC量表是孤独症初筛工具，建议在怀疑孩子有孤独症倾向时首次使用。如果总分≥49分，建议尽快前往儿童精神科、发育行为科或儿保科进行专业诊断性评估。确诊后如需追踪康复效果，请使用ATEC量表（建议每3个月评估一次）。ABC不适合用于追踪康复进展。',
+      },
+    }
+  }
+
   // ========== 持久化 ==========
 
   /**
    * 保存评估结果
    */
-  async saveAssessment(context: PersistContext): Promise<PersistResult> {
+  async persistAssessment(context: PersistContext): Promise<PersistResult> {
     const db = getDatabase()
     const { student, scoreResult, startTime, endTime } = context
 
@@ -218,7 +259,7 @@ export class ABCDriver extends BaseDriver {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `
 
-    db.exec(sql, [
+    db.run(sql, [
       student.id,
       student.ageInMonths,
       JSON.stringify(scoreResult.rawAnswers),
@@ -231,13 +272,20 @@ export class ABCDriver extends BaseDriver {
 
     // 获取插入的ID
     const selectSql = 'SELECT last_insert_rowid() as id'
-    const rows = db.exec(selectSql)
-    const assessId = rows[0]?.values[0][0] as number
+    const rows = db.all(selectSql)
+    const assessId = rows[0]?.id as number
 
-    console.log('ABC 评估已保存，ID:', assessId)
+    // 创建报告记录（供报告中心展示）
+    const reportId = this.createReportRecord({
+      studentId: student.id,
+      reportType: 'abc',
+      assessId,
+      title: `${student.name} - ABC孤独症行为评定量表报告`
+    })
 
     return {
       assessId,
+      reportId,
     }
   }
 }

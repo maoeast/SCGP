@@ -716,9 +716,9 @@ CREATE TABLE IF NOT EXISTS atec_assess (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
   age_months INTEGER NOT NULL,
-  raw_answers TEXT NOT NULL, -- JSON: { "atec_1": 0, "atec_2": 1, "atec_3": 2, ... } (0-2分)
+  raw_answers TEXT NOT NULL, -- JSON: { "atec_1": 0, "atec_2": 1, "atec_3": 2, ... } (各分量表评分不同，详见文档)
   subscale_scores TEXT NOT NULL, -- JSON: { "speech": 10, "sociability": 15, "sensory": 12, "health": 20 }
-  total_score INTEGER NOT NULL, -- 总分 (0-154)
+  total_score INTEGER NOT NULL, -- 总分 (0-179)
   level TEXT NOT NULL CHECK(level IN ('minimal', 'mild', 'moderate', 'severe')),
   start_time TEXT NOT NULL,
   end_time TEXT,

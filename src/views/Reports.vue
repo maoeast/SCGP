@@ -131,7 +131,7 @@
         </div>
         <div class="reports-table-header__summary">
           <span>当前结果</span>
-          <strong>{{ reportList.length }} 条</strong>
+          <strong>{{ filteredReportList.length }} 条</strong>
         </div>
       </div>
 
@@ -183,19 +183,19 @@
         </el-table-column>
       </el-table>
 
-      <div v-if="reportList.length > 0" class="reports-pagination">
+      <div v-if="filteredReportList.length > 0" class="reports-pagination">
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
           :page-sizes="[10, 20, 30, 40]"
-          :total="reportList.length"
+          :total="filteredReportList.length"
           layout="total, sizes, prev, pager, next"
           background
         />
       </div>
 
       <el-empty
-        v-if="!loading && reportList.length === 0"
+        v-if="!loading && filteredReportList.length === 0"
         description="当前筛选条件下暂无报告记录"
       />
     </section>
@@ -297,10 +297,27 @@ const reportTypeOptions = computed(() =>
 )
 const reportTypeMap = new Map(REPORT_TYPE_OPTIONS.map((item) => [item.value, item]))
 
-const statistics = computed<ReportStatistics>(() => deriveReportStatistics(reportList.value))
+// 过滤已授权的报告记录（评估量表按 entitlement 过滤；干预报告全部保留）
+const filteredReportList = computed(() =>
+  reportList.value.filter((record) => {
+    const reportType = record.report_type
+    // 干预类报告（emotional/iep/training）全部保留
+    if (reportType === 'emotional' || reportType === 'iep' || reportType === 'training') {
+      return true
+    }
+    // 评估量表报告：仅保留已授权的
+    if (isAssessmentReportScaleType(reportType)) {
+      return hasAssessmentScaleAccess(reportType)
+    }
+    // 未知类型保留（避免历史数据丢失）
+    return true
+  }),
+)
+
+const statistics = computed<ReportStatistics>(() => deriveReportStatistics(filteredReportList.value))
 const pagedReportList = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
-  return reportList.value.slice(start, start + pageSize.value)
+  return filteredReportList.value.slice(start, start + pageSize.value)
 })
 const assessmentReportCount = computed(() =>
   assessmentTypeCards.value.reduce((total, card) => total + card.value, 0),

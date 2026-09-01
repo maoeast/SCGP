@@ -10,6 +10,7 @@
           </div>
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
+            <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
             <el-button type="primary" :icon="Download" @click="exportWord">导出Word</el-button>
           </div>
         </div>
@@ -158,7 +159,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Download, WarningFilled, Clock } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, WarningFilled, Clock, ChatDotRound } from '@element-plus/icons-vue'
 import { getDatabase } from '@/database/init'
 import type { ScoreResult } from '@/types/assessment'
 import type { SRS2DimensionDetail, SRS2StructuredFeedback } from '@/types/srs2'
@@ -273,6 +274,7 @@ function getTotalLevelClass(severity: 'success' | 'warning' | 'danger' | undefin
   if (severity === 'warning') return 'level-label-warning'
   return 'level-label-success'
 }
+import { openAiAssistant } from '@/features/ai/assistant-launcher'
 
 const goBack = () => {
   router.back()
@@ -283,6 +285,21 @@ const viewHistory = () => {
     router.push(`/assessment/srs2/trend/${assessData.value.student_id}`)
   }
 }
+
+
+const openAiInterpretation = () => {
+  if (!assessData.value || !studentInfo.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+
+  openAiAssistant('special_ed_teacher')
+
+  setTimeout(() => {
+    ElMessage.success('AI助手已打开，你可以询问"解读这名学生的SRS2评估结果"')
+  }, 500)
+}
+
 
 const exportWord = async () => {
   if (!assessData.value || !studentInfo.value || !feedback.value) {

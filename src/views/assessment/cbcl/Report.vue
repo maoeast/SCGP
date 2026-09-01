@@ -10,6 +10,7 @@
           </div>
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
+            <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
             <el-button type="primary" :icon="Download" @click="exportWord">导出Word</el-button>
           </div>
         </div>
@@ -268,7 +269,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Download, Clock } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, Clock, ChatDotRound } from '@element-plus/icons-vue'
 import { getDatabase } from '@/database/init'
 import * as echarts from 'echarts'
 import { CBCLDriver } from '@/strategies/assessment/CBCLDriver'
@@ -317,6 +318,7 @@ interface CBCLAssessRecord {
   start_time: string
   end_time: string
 }
+import { openAiAssistant } from '@/features/ai/assistant-launcher'
 
 const route = useRoute()
 const router = useRouter()
@@ -651,6 +653,21 @@ const viewHistory = () => {
     router.push(`/assessment/cbcl/trend/${assessData.value.student_id}`)
   }
 }
+
+
+const openAiInterpretation = () => {
+  if (!assessData.value || !studentInfo.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+
+  openAiAssistant('special_ed_teacher')
+
+  setTimeout(() => {
+    ElMessage.success('AI助手已打开，你可以询问"解读这名学生的CBCL评估结果"')
+  }, 500)
+}
+
 
 const exportWord = async () => {
   if (!assessData.value || !studentInfo.value || !feedback.value) {

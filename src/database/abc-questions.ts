@@ -45,77 +45,76 @@ export interface ABCQuestion {
 
 /**
  * ABC 完整题库（57题）
- * 注意：以下题目内容为示例框架，需要根据实际ABC量表填充完整题目
+ * 题目来源：孤独症（自闭症）行为量表（ABC量表），Krug 1978
+ * 本版本对原始题目表述进行了现代化优化，使其更易于当代教师和家长理解
+ * 计分说明：回答"是"得题目权重分数，回答"不是"得0分
+ * 总分：0-158分，筛查分57分，诊断分67分
  */
 export const ABC_QUESTIONS: ABCQuestion[] = [
-  // 感觉维度 (Sensory) - 约15题
-  { id: 'abc_1', text: '对某些声音表现出异常反应（如捂住耳朵）', dimension: 'sensory', weight: 3 },
-  { id: 'abc_2', text: '对疼痛的反应异常（反应过度或反应不足）', dimension: 'sensory', weight: 2 },
-  { id: 'abc_3', text: '旋转物体或自己旋转', dimension: 'sensory', weight: 4 },
-  { id: 'abc_4', text: '对某些质地或材料表现出异常反应', dimension: 'sensory', weight: 2 },
-  { id: 'abc_5', text: '奇怪的触摸或嗅闻物品的方式', dimension: 'sensory', weight: 3 },
+  // 感觉维度 (Sensory) - 共14题
+  { id: 'abc_1', text: '喜欢原地转圈，或长时间让自己旋转', dimension: 'sensory', weight: 4 },
+  { id: 'abc_6', text: '难以分辨物体的特征（如大小、颜色、位置等）', dimension: 'sensory', weight: 2 },
+  { id: 'abc_10', text: '叫他时常常没反应，好像听不见似的', dimension: 'sensory', weight: 3 },
+  { id: 'abc_13', text: '伸手去拿东西时，经常够不到（对距离判断不准）', dimension: 'sensory', weight: 2 },
+  { id: 'abc_21', text: '对很大的声音（如鞭炮、关门声）没有吃惊反应', dimension: 'sensory', weight: 3 },
+  { id: 'abc_26', text: '摔倒、受伤或打针时，好像不觉得疼', dimension: 'sensory', weight: 3 },
+  { id: 'abc_34', text: '强光照眼睛时也不眨眼', dimension: 'sensory', weight: 1 },
+  { id: 'abc_39', text: '在嘈杂环境中常常捂住耳朵', dimension: 'sensory', weight: 4 },
+  { id: 'abc_44', text: '在正常光线下会眯眼、闭眼或皱眉', dimension: 'sensory', weight: 3 },
+  { id: 'abc_49', text: '对周围环境缺乏警觉，不注意潜在危险', dimension: 'sensory', weight: 2 },
+  { id: 'abc_51', text: '喜欢闻、摸或用嘴尝周围的东西', dimension: 'sensory', weight: 3 },
+  { id: 'abc_52', text: '陌生人来了也不看一眼', dimension: 'sensory', weight: 3 },
+  { id: 'abc_55', text: '2岁前就发现发育比同龄孩子慢', dimension: 'sensory', weight: 1 },
+  { id: 'abc_57', text: '会长时间盯着一个地方发呆', dimension: 'sensory', weight: 4 },
 
-  // 交往维度 (Relating) - 约12题
-  { id: 'abc_6', text: '不能建立眼神接触', dimension: 'relating', weight: 4 },
-  { id: 'abc_7', text: '对他人漠不关心，似乎不知道他人存在', dimension: 'relating', weight: 4 },
-  { id: 'abc_8', text: '不会主动与其他儿童一起玩', dimension: 'relating', weight: 3 },
-  { id: 'abc_9', text: '不会用手势或表情表达需求', dimension: 'relating', weight: 3 },
-  { id: 'abc_10', text: '不喜欢被拥抱或触摸', dimension: 'relating', weight: 2 },
+  // 交往维度 (Relating) - 共12题
+  { id: 'abc_3', text: '很少主动与人接触或交流', dimension: 'relating', weight: 4 },
+  { id: 'abc_7', text: '不会对人微笑、点头或打招呼', dimension: 'relating', weight: 2 },
+  { id: 'abc_15', text: '和别人在一起时，叫他名字也没反应', dimension: 'relating', weight: 2 },
+  { id: 'abc_17', text: '看不懂别人的面部表情（如高兴、生气等）', dimension: 'relating', weight: 3 },
+  { id: 'abc_24', text: '主动避开与别人的眼神接触', dimension: 'relating', weight: 4 },
+  { id: 'abc_25', text: '不喜欢被人接触或拥抱', dimension: 'relating', weight: 4 },
+  { id: 'abc_33', text: '玩游戏时不会模仿其他小朋友', dimension: 'relating', weight: 3 },
+  { id: 'abc_38', text: '无法与其他小朋友建立友谊', dimension: 'relating', weight: 4 },
+  { id: 'abc_47', text: '会一直盯着人看，眼神很专注', dimension: 'relating', weight: 4 },
+  { id: 'abc_2', text: '刚学会的简单事情很快就忘了', dimension: 'relating', weight: 2 },
+  { id: 'abc_4', text: '听不懂简单的指令（如"坐下""过来"等）', dimension: 'relating', weight: 1 },
+  { id: 'abc_20', text: '听不懂带方位词的指令（如"把球放在盒子上/里"）', dimension: 'relating', weight: 1 },
 
-  // 躯体运动维度 (Body and Object Use) - 约12题
-  { id: 'abc_11', text: '手部拍打、扭转或其他重复性动作', dimension: 'body_object', weight: 4 },
-  { id: 'abc_12', text: '摇晃身体', dimension: 'body_object', weight: 3 },
-  { id: 'abc_13', text: '踮着脚尖走路', dimension: 'body_object', weight: 2 },
-  { id: 'abc_14', text: '玩弄手指或物品的特殊方式', dimension: 'body_object', weight: 3 },
-  { id: 'abc_15', text: '对物品的排列或位置有强迫性要求', dimension: 'body_object', weight: 3 },
+  // 躯体运动维度 (Body and Object Use) - 共18题
+  { id: 'abc_5', text: '不会正常玩玩具（只会转动、乱扔或揉捏）', dimension: 'body_object', weight: 2 },
+  { id: 'abc_9', text: '长时间手里拿着某样东西不放', dimension: 'body_object', weight: 3 },
+  { id: 'abc_12', text: '长时间地前后摇晃身体', dimension: 'body_object', weight: 4 },
+  { id: 'abc_16', text: '经常出现前冲、转圈、踮脚走路、手指轻弹等重复动作', dimension: 'body_object', weight: 4 },
+  { id: 'abc_22', text: '经常拍打自己的手', dimension: 'body_object', weight: 4 },
+  { id: 'abc_27', text: '身体很僵硬，抱起来很费劲', dimension: 'body_object', weight: 3 },
+  { id: 'abc_28', text: '抱着他时感觉肌肉很松软，不会往你身上靠', dimension: 'body_object', weight: 2 },
+  { id: 'abc_29', text: '想要什么东西时，只会用手势比划，不用语言表达', dimension: 'body_object', weight: 2 },
+  { id: 'abc_30', text: '经常踮着脚尖走路', dimension: 'body_object', weight: 2 },
+  { id: 'abc_31', text: '会咬人、撞人或踢人', dimension: 'body_object', weight: 2 },
+  { id: 'abc_35', text: '会撞头、咬自己的手等自我伤害行为', dimension: 'body_object', weight: 2 },
+  { id: 'abc_40', text: '经常旋转或撞击物体', dimension: 'body_object', weight: 4 },
+  { id: 'abc_50', text: '特别喜欢单调重复的活动（如反复走来走去、蹦跳、拍打）', dimension: 'body_object', weight: 4 },
+  { id: 'abc_53', text: '有固定的仪式行为，必须按特定顺序做事（如必须走固定路线，东西必须摆在固定位置，否则就不配合）', dimension: 'body_object', weight: 4 },
+  { id: 'abc_54', text: '经常把玩具或家里的东西弄坏', dimension: 'body_object', weight: 2 },
+  { id: 'abc_14', text: '改变熟悉的环境或作息时，反应特别强烈', dimension: 'body_object', weight: 3 },
+  { id: 'abc_23', text: '容易发脾气，经常情绪失控', dimension: 'body_object', weight: 3 },
+  { id: 'abc_36', text: '想要什么东西完全等不了，必须马上得到', dimension: 'body_object', weight: 2 },
 
-  // 语言维度 (Language) - 约13题
-  { id: 'abc_16', text: '无语言或语言发育明显延迟', dimension: 'language', weight: 4 },
-  { id: 'abc_17', text: '重复别人的话（鹦鹉学舌）', dimension: 'language', weight: 3 },
-  { id: 'abc_18', text: '人称代词混淆（如用"你"指代"我"）', dimension: 'language', weight: 3 },
-  { id: 'abc_19', text: '不会用"是"或"否"回答问题', dimension: 'language', weight: 2 },
-  { id: 'abc_20', text: '声调、节奏或语速异常', dimension: 'language', weight: 2 },
-
-  // 生活自理维度 (Social and Self-Help) - 约5题
-  { id: 'abc_21', text: '不会适当地使用玩具或物品', dimension: 'social_self_help', weight: 2 },
-  { id: 'abc_22', text: '不会模仿成人的行为', dimension: 'social_self_help', weight: 3 },
-  { id: 'abc_23', text: '不会遵守简单的社交规则', dimension: 'social_self_help', weight: 2 },
-  { id: 'abc_24', text: '不会参与假装游戏或想象性游戏', dimension: 'social_self_help', weight: 3 },
-  { id: 'abc_25', text: '对日常生活技能的学习困难', dimension: 'social_self_help', weight: 2 },
-
-  // 以下为占位题目，实际应用时需要替换为完整的57题
-  { id: 'abc_26', text: '[题目26 - 待补充]', dimension: 'sensory', weight: 2 },
-  { id: 'abc_27', text: '[题目27 - 待补充]', dimension: 'sensory', weight: 2 },
-  { id: 'abc_28', text: '[题目28 - 待补充]', dimension: 'relating', weight: 2 },
-  { id: 'abc_29', text: '[题目29 - 待补充]', dimension: 'relating', weight: 2 },
-  { id: 'abc_30', text: '[题目30 - 待补充]', dimension: 'body_object', weight: 2 },
-  { id: 'abc_31', text: '[题目31 - 待补充]', dimension: 'body_object', weight: 2 },
-  { id: 'abc_32', text: '[题目32 - 待补充]', dimension: 'language', weight: 2 },
-  { id: 'abc_33', text: '[题目33 - 待补充]', dimension: 'language', weight: 2 },
-  { id: 'abc_34', text: '[题目34 - 待补充]', dimension: 'sensory', weight: 2 },
-  { id: 'abc_35', text: '[题目35 - 待补充]', dimension: 'sensory', weight: 2 },
-  { id: 'abc_36', text: '[题目36 - 待补充]', dimension: 'relating', weight: 2 },
-  { id: 'abc_37', text: '[题目37 - 待补充]', dimension: 'relating', weight: 2 },
-  { id: 'abc_38', text: '[题目38 - 待补充]', dimension: 'body_object', weight: 2 },
-  { id: 'abc_39', text: '[题目39 - 待补充]', dimension: 'body_object', weight: 2 },
-  { id: 'abc_40', text: '[题目40 - 待补充]', dimension: 'language', weight: 2 },
-  { id: 'abc_41', text: '[题目41 - 待补充]', dimension: 'language', weight: 2 },
-  { id: 'abc_42', text: '[题目42 - 待补充]', dimension: 'sensory', weight: 2 },
-  { id: 'abc_43', text: '[题目43 - 待补充]', dimension: 'sensory', weight: 2 },
-  { id: 'abc_44', text: '[题目44 - 待补充]', dimension: 'relating', weight: 2 },
-  { id: 'abc_45', text: '[题目45 - 待补充]', dimension: 'relating', weight: 2 },
-  { id: 'abc_46', text: '[题目46 - 待补充]', dimension: 'body_object', weight: 2 },
-  { id: 'abc_47', text: '[题目47 - 待补充]', dimension: 'body_object', weight: 2 },
-  { id: 'abc_48', text: '[题目48 - 待补充]', dimension: 'language', weight: 2 },
-  { id: 'abc_49', text: '[题目49 - 待补充]', dimension: 'language', weight: 2 },
-  { id: 'abc_50', text: '[题目50 - 待补充]', dimension: 'sensory', weight: 2 },
-  { id: 'abc_51', text: '[题目51 - 待补充]', dimension: 'sensory', weight: 2 },
-  { id: 'abc_52', text: '[题目52 - 待补充]', dimension: 'relating', weight: 2 },
-  { id: 'abc_53', text: '[题目53 - 待补充]', dimension: 'body_object', weight: 2 },
-  { id: 'abc_54', text: '[题目54 - 待补充]', dimension: 'language', weight: 2 },
-  { id: 'abc_55', text: '[题目55 - 待补充]', dimension: 'language', weight: 2 },
-  { id: 'abc_56', text: '[题目56 - 待补充]', dimension: 'social_self_help', weight: 2 },
-  { id: 'abc_57', text: '[题目57 - 待补充]', dimension: 'social_self_help', weight: 2 },
+  // 语言维度 (Language) - 共13题
+  { id: 'abc_8', text: '人称代词用混了（你我不分）', dimension: 'language', weight: 3 },
+  { id: 'abc_11', text: '说话没有抑扬顿挫，语调平平或怪异', dimension: 'language', weight: 4 },
+  { id: 'abc_18', text: '说话时很少用"是""我"这类词', dimension: 'language', weight: 2 },
+  { id: 'abc_19', text: '在某方面有特殊能力（如记忆力、计算等），与整体发展不匹配', dimension: 'language', weight: 4 },
+  { id: 'abc_32', text: '反复说同样的短句', dimension: 'language', weight: 3 },
+  { id: 'abc_37', text: '说不出5个以上常见物品的名称', dimension: 'language', weight: 1 },
+  { id: 'abc_42', text: '一天主动提出的要求不超过5次', dimension: 'language', weight: 2 },
+  { id: 'abc_43', text: '容易受惊或经常焦虑不安', dimension: 'language', weight: 3 },
+  { id: 'abc_46', text: '反复发出同样的声音或说同样的词', dimension: 'language', weight: 3 },
+  { id: 'abc_48', text: '像鹦鹉学舌一样重复别人的话', dimension: 'language', weight: 4 },
+  { id: 'abc_56', text: '日常交流只用15-30个短句（不到15句也算）', dimension: 'language', weight: 3 },
+  { id: 'abc_41', text: '大小便训练很困难，难以学会自己控制', dimension: 'language', weight: 1 },
+  { id: 'abc_45', text: '没人帮忙就不会自己穿衣服', dimension: 'language', weight: 1 },
 ]
 
 /**

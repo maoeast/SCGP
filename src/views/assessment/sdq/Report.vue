@@ -10,6 +10,7 @@
           </div>
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
+            <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
             <el-button type="primary" :icon="Download" @click="exportWord">导出Word</el-button>
           </div>
         </div>
@@ -205,7 +206,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Download, Clock } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, Clock, ChatDotRound } from '@element-plus/icons-vue'
 import { getDatabase } from '@/database/init'
 import type { SDQAssessRecord, SDQDimensionDetail, SDQStructuredFeedback } from '@/types/sdq'
 import type { ScoreResult } from '@/types/assessment'
@@ -213,6 +214,7 @@ import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
 import { SDQDriver } from '@/strategies/assessment/SDQDriver'
 import { buildSDQWordPayload } from '@/utils/assessment-word-builders'
 import { exportWordDocument } from '@/utils/export-word'
+import { openAiAssistant } from '@/features/ai/assistant-launcher'
 
 // Props
 const route = useRoute()
@@ -394,6 +396,19 @@ const viewHistory = () => {
   if (assessData.value?.student_id) {
     router.push(`/assessment/sdq/trend/${assessData.value.student_id}`)
   }
+}
+
+const openAiInterpretation = () => {
+  if (!assessData.value || !studentInfo.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+
+  openAiAssistant('special_ed_teacher')
+
+  setTimeout(() => {
+    ElMessage.success('AI助手已打开，你可以询问"解读这名学生的SDQ评估结果"')
+  }, 500)
 }
 
 const exportWord = async () => {

@@ -6,6 +6,7 @@
         <div class="header-content">
           <div class="header-left">
             <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
+            <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
             <h2>瑞文图形推理测验（CRT）评估报告</h2>
           </div>
         </div>
@@ -142,8 +143,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, WarningFilled, Check, Warning } from '@element-plus/icons-vue'
+import { ArrowLeft, WarningFilled, Check, Warning, ChatDotRound } from '@element-plus/icons-vue'
 import { CRTAssessmentAPI, StudentAPI } from '@/database/api'
+import { openAiAssistant } from '@/features/ai/assistant-launcher'
 
 const route = useRoute()
 const router = useRouter()
@@ -278,6 +280,20 @@ function getResultDescription(): string {
 
 function goBack() {
   router.back()
+}
+
+
+const openAiInterpretation = () => {
+  if (!assessData.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+
+  openAiAssistant('special_ed_teacher')
+
+  setTimeout(() => {
+    ElMessage.success('AI助手已打开，你可以询问"解读这名学生的CRT评估结果"')
+  }, 500)
 }
 
 onMounted(() => {

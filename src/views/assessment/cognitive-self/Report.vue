@@ -15,6 +15,7 @@
         <div class="header-content">
           <div class="header-left">
             <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
+            <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
             <h2>视知觉图形匹配筛查（DRAFT）评估报告<el-tag size="small" type="warning" class="draft-tag">自编 DRAFT</el-tag></h2>
           </div>
         </div>
@@ -136,9 +137,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, WarningFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, WarningFilled, ChatDotRound } from '@element-plus/icons-vue'
 import { CognitiveSelfAssessmentAPI } from '@/database/api'
 import { COGNITIVE_SELF_LAYER_PLAIN } from '@/database/cognitive-self-data'
+import { openAiAssistant } from '@/features/ai/assistant-launcher'
 
 const route = useRoute()
 const router = useRouter()
@@ -244,6 +246,20 @@ function getRateColor(rate: number): string {
 
 function goBack() {
   router.back()
+}
+
+
+const openAiInterpretation = () => {
+  if (!assessData.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+
+  openAiAssistant('special_ed_teacher')
+
+  setTimeout(() => {
+    ElMessage.success('AI助手已打开，你可以询问"解读这名学生的视知觉图形匹配评估结果"')
+  }, 500)
 }
 
 onMounted(() => {

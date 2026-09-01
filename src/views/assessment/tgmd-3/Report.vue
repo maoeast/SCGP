@@ -340,6 +340,7 @@ interface Tgmd3AssessmentRecord {
   norm_summary?: Tgmd3NormSummary | null
   start_time: string
 }
+import { openAiAssistant } from '@/features/ai/assistant-launcher'
 
 const route = useRoute()
 const router = useRouter()
@@ -387,6 +388,21 @@ const viewHistory = () => {
     router.push(`/assessment/tgmd_3/trend/${assessment.value.student_id}`)
   }
 }
+
+
+const openAiInterpretation = () => {
+  if (!assessment.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+
+  openAiAssistant('special_ed_teacher')
+
+  setTimeout(() => {
+    ElMessage.success('AI助手已打开，你可以询问"解读这名学生的TGMD-3评估结果"')
+  }, 500)
+}
+
 
 function getDomainFeedback(code: string) {
   return assessment.value?.domain_feedback?.find((item) => item.code === code) || null
