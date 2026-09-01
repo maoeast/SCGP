@@ -514,6 +514,8 @@ export const useAiStore = defineStore('ai', () => {
   const lastError = ref('')
   /** 本次 sendChat 的工具调用步骤（仅 sending 期间有值，供 UI 展示气泡；不入库） */
   const toolSteps = ref<ToolStep[]>([])
+  /** 当前可取消请求的标识（stopGeneration 经 abortAiChat 通知主进程中断） */
+  let activeRequestId: string | null = null
 
   // ==================== 会话隔离（按登录用户）====================
   type SessionRow = {
@@ -917,6 +919,10 @@ export const useAiStore = defineStore('ai', () => {
     lastError.value = ''
     toolSteps.value = []
 
+    // 「停止生成」标识：本次发送的整个生命周期（含工具循环每一轮）共用同一个 requestId
+    const requestId = `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    activeRequestId = requestId
+
     // Phase 5B：把该 agent 挂载的知识型技能（专业方法论 Markdown）注入 systemPrompt
     const knowledgePrompt = a.getAgentKnowledgePrompt(currentAgent.value.id)
     // AI 守卫层：安全指令置于 systemPrompt 最前，对内置 + 自定义智能体统一生效
@@ -936,6 +942,7 @@ export const useAiStore = defineStore('ai', () => {
           providerName: providerConfig.value.providerName,
           messages: history,
           tools: filterTools(a.getAgentToolCodes(currentAgent.value.id)),
+          requestId,
           onToolStep: (step) => {
             toolSteps.value.push(step)
           },
@@ -983,6 +990,7 @@ export const useAiStore = defineStore('ai', () => {
         stream: true,
         supportsThinking: providerConfig.value.supportsThinking,
         providerName: providerConfig.value.providerName,
+        requestId,
       })
 
       if (res.success) {
@@ -1016,16 +1024,59 @@ export const useAiStore = defineStore('ai', () => {
         return { ok: true }
       }
 
+      if (!res.success && res.errorKind === 'aborted') {
+        // 用户主动停止：保留已生成的部分内容（有内容才入库，不触发记忆总结）
+        const partial = streamingContent.value
+        if (partial.trim()) {
+          const assistantMessageId = a.saveMessage({
+            sessionId,
+            role: 'assistant',
+            content: partial,
+            usage: null,
+          })
+          currentMessages.value.push({
+            id: assistantMessageId,
+            sessionId,
+            role: 'assistant',
+            content: partial,
+            attachments: null,
+            toolArtifacts: null,
+            deliveryStatus: 'completed',
+            messageKind: 'final',
+            tokensTotal: 0,
+            tokensPrompt: 0,
+            tokensCompletion: 0,
+            estCostYuan: 0,
+            createdAt: new Date().toISOString(),
+          })
+          monthUsage.value = a.getMonthUsage()
+          await loadSessions()
+        }
+        return { ok: true }
+      }
+
       lastError.value = res.error || '请求失败'
       return { ok: false, error: res.error }
     } catch (e) {
+      // 用户主动停止（工具循环中间轮 abort）：静默结束，不弹错误
+      if ((e as { errorKind?: string } | null)?.errorKind === 'aborted') {
+        return { ok: true }
+      }
       const msg = e instanceof Error ? e.message : String(e)
       lastError.value = msg
       return { ok: false, error: msg }
     } finally {
       streamingContent.value = ''
       sending.value = false
+      if (activeRequestId === requestId) activeRequestId = null
     }
+  }
+
+  /** 「停止生成」：取消当前发送中的 AI 请求（流式 / 工具循环通用）。
+   * 主进程中断后 sendChat 返回 ok:true（流式路径保留已生成部分内容），不弹错误。 */
+  function stopGeneration() {
+    if (!activeRequestId) return
+    void window.electronAPI.abortAiChat(activeRequestId)
   }
 
   // ==================== 学生级长期记忆 · 总结与注入（M2，v4.1 §6/§7） ====================
@@ -1327,6 +1378,7 @@ export const useAiStore = defineStore('ai', () => {
     newChat,
     onChunk,
     sendChat,
+    stopGeneration,
     // M2：学生级长期记忆
     memoryEnabled,
     setMemoryEnabled: (v: boolean) => {

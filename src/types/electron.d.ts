@@ -13,6 +13,7 @@ export interface ElectronAPI {
    * @returns Promise<string> - 系统路径
    */
   getPath: (name: string) => Promise<string>
+  getAppPath: () => Promise<string>
 
   // ========== 文件操作 ==========
   /**
@@ -21,7 +22,14 @@ export interface ElectronAPI {
    * @param buffer - 文件内容（Uint8Array）
    * @returns Promise<boolean> - 是否成功
    */
-  saveFile: (filePath: string, buffer: Uint8Array) => Promise<boolean>
+  saveFile: (filePath: string, buffer: ArrayBuffer | Uint8Array) => Promise<boolean>
+
+  /**
+   * 读取文本文件
+   * @param filePath - 文件路径
+   * @returns Promise<string> - 文件文本内容
+   */
+  readFile: (filePath: string) => Promise<string>
 
   /**
    * 读取文件为 Base64
@@ -266,6 +274,8 @@ export interface ElectronAPI {
     supportsThinking?: boolean
     providerName?: string
     tools?: Array<{ type: 'function'; function: { name: string; description?: string; parameters?: Record<string, any> } }>
+    /** 「停止生成」标识：传了才可被 abortAiChat 取消 */
+    requestId?: string
   }) => Promise<{
     success: boolean
     content?: string
@@ -280,6 +290,22 @@ export interface ElectronAPI {
     errorKind?: string
     httpStatus?: number
     toolCalls?: Array<{ id: string; type: 'function'; function: { name: string; arguments: string } }>
+  }>
+
+  /** 「停止生成」：取消一次带 requestId 的 aiChat 请求（对应 invoke 返回 errorKind:'aborted'） */
+  abortAiChat: (requestId: string) => Promise<{ success: boolean; error?: string }>
+
+  /** 拉取 provider 的 OpenAI 兼容模型清单（GET {baseUrl}/models；明文 Key 仅 Main 解密用） */
+  aiListModels: (payload: {
+    encKey: string
+    baseUrl?: string
+    providerName?: string
+  }) => Promise<{
+    success: boolean
+    models?: Array<Record<string, any>>
+    error?: string
+    errorKind?: string
+    httpStatus?: number
   }>
 
   /**

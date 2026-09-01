@@ -156,6 +156,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   migrateAiApiKey: (encKey) => ipcRenderer.invoke('ai:migrate-api-key', encKey),
   // payload: { encKey(密文), messages, systemPrompt, model, baseUrl }；明文 Key 不进渲染进程
   aiChat: (payload) => getManualScreenshotAiReportResponse() || ipcRenderer.invoke('ai:chat', payload),
+  // 「停止生成」：取消一次带 requestId 的 aiChat 请求（流式/非流式通用）
+  abortAiChat: (requestId) => ipcRenderer.invoke('ai:abort', requestId),
   // payload: { encKey(密文), baseUrl, providerName } → 拉取 OpenAI 兼容 /models 清单（明文 Key 仅 Main 解密用）
   aiListModels: (payload) => ipcRenderer.invoke('ai:list-models', payload),
 
@@ -274,6 +276,7 @@ if (!process.contextIsolated) {
     protectAiApiKey: (plainKey) => Promise.resolve({ success: false, error: 'mock', errorKind: 'mock' }),
     migrateAiApiKey: (encKey) => Promise.resolve({ success: true, keyEnc: encKey || '', migrated: false }),
     aiChat: (payload) => Promise.resolve({ success: false, error: 'mock', errorKind: 'mock' }),
+    abortAiChat: (requestId) => Promise.resolve({ success: true }),
     aiListModels: (payload) => Promise.resolve({ success: false, error: 'mock', errorKind: 'mock' }),
     // Phase 4 文档抽取模拟
     extractDocumentText: (filePath) => Promise.resolve({ success: false, error: 'mock' })

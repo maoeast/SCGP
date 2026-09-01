@@ -20,6 +20,25 @@ import { AIStreamTimeoutError, consumeAIStream } from './ai-stream.mjs'
 const DEFAULT_BASE_URL = 'https://api.deepseek.com'
 const REQUEST_TIMEOUT_MS = 60_000
 
+// 可取消请求注册表：requestId → { controller, aborted }
+// 渲染层「停止生成」经 ai:abort 传入 requestId，此处仅取消用户主动中止的请求；
+// 超时/网络错误仍保持原有 errorKind 语义。
+const activeAiRequests = new Map()
+// 已中止但请求尚未注册的 requestId（工具循环本地执行间隙点停止 → 下一次注册时立即中止）
+const abortedRequestIds = new Set()
+
+/** 注册可取消请求；若该 requestId 已被停止标记，则注册后立即中止 */
+function registerAiRequest(requestId, entry) {
+  if (!requestId) return
+  if (abortedRequestIds.has(requestId)) {
+    abortedRequestIds.delete(requestId)
+    entry.aborted = true
+    entry.controller.abort()
+    return
+  }
+  activeAiRequests.set(requestId, entry)
+}
+
 // Phase 4：文档文本抽取上限（字符数）。超长截断，防 token 预算爆炸。
 const MAX_EXTRACT_CHARS = 20_000
 
@@ -95,80 +114,92 @@ function buildMessages(messages, systemPrompt) {
 }
 
 /** 流式调用：边收边 event.sender.send('ai:chunk')，最终 invoke 返回完整结果（与 done 事件一致） */
-async function streamChat(event, apiKey, apiBase, model, messages, systemPrompt, supportsThinking, providerName) {
+async function streamChat(event, apiKey, apiBase, model, messages, systemPrompt, supportsThinking, providerName, requestId) {
   const controller = new AbortController()
-  const requestTimer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
-
-  let response
+  const entry = { controller, aborted: false }
+  registerAiRequest(requestId, entry)
   try {
-    // The request timeout ends when headers arrive. Stream consumption has a
-    // separate idle watchdog so a long-running response is not cut off by a
-    // total-duration timer.
-    response = await fetch(`${apiBase}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: buildMessages(messages, systemPrompt),
-        stream: true,
-        stream_options: { include_usage: true },
-        ...(supportsThinking ? { thinking: { type: 'disabled' } } : {}),
-      }),
-      signal: controller.signal,
-    })
-  } catch (networkError) {
-    clearTimeout(requestTimer)
-    if (networkError?.name === 'AbortError') {
-      return { success: false, errorKind: 'timeout', error: `请求超时（${REQUEST_TIMEOUT_MS / 1000}s），请稍后重试。` }
-    }
-    return { success: false, errorKind: 'network', error: `网络请求失败：${networkError?.message || String(networkError)}` }
-  }
-  clearTimeout(requestTimer)
+    const requestTimer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
-  if (!response.ok) {
-    const errBody = await response.text().catch(() => '')
-    const info = describeHttpError(response.status, errBody, providerName)
+    let response
     try {
-      event?.sender?.send('ai:error', { errorKind: info.kind, error: info.message })
-    } catch {
-      /* sender 不可用时忽略 */
-    }
-    return { success: false, errorKind: info.kind, error: info.message, httpStatus: response.status }
-  }
-
-  try {
-    const { content, usage } = await consumeAIStream({
-      response,
-      controller,
-      mapUsage,
-      onDelta: (delta) => {
-        try {
-          event?.sender?.send('ai:chunk', { delta })
-        } catch {
-          /* ignore */
+      // The request timeout ends when headers arrive. Stream consumption has a
+      // separate idle watchdog so a long-running response is not cut off by a
+      // total-duration timer.
+      response = await fetch(`${apiBase}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: buildMessages(messages, systemPrompt),
+          stream: true,
+          stream_options: { include_usage: true },
+          ...(supportsThinking ? { thinking: { type: 'disabled' } } : {}),
+        }),
+        signal: controller.signal,
+      })
+    } catch (networkError) {
+      clearTimeout(requestTimer)
+      if (networkError?.name === 'AbortError') {
+        if (entry.aborted) {
+          return { success: false, errorKind: 'aborted', error: '已停止生成。' }
         }
-      },
-      idleTimeoutMs: REQUEST_TIMEOUT_MS,
-    })
+        return { success: false, errorKind: 'timeout', error: `请求超时（${REQUEST_TIMEOUT_MS / 1000}s），请稍后重试。` }
+      }
+      return { success: false, errorKind: 'network', error: `网络请求失败：${networkError?.message || String(networkError)}` }
+    }
+    clearTimeout(requestTimer)
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '')
+      const info = describeHttpError(response.status, errBody, providerName)
+      try {
+        event?.sender?.send('ai:error', { errorKind: info.kind, error: info.message })
+      } catch {
+        /* sender 不可用时忽略 */
+      }
+      return { success: false, errorKind: info.kind, error: info.message, httpStatus: response.status }
+    }
 
     try {
-      event?.sender?.send('ai:done', { content, usage })
-    } catch {
-      /* ignore */
+      const { content, usage } = await consumeAIStream({
+        response,
+        controller,
+        mapUsage,
+        onDelta: (delta) => {
+          try {
+            event?.sender?.send('ai:chunk', { delta })
+          } catch {
+            /* ignore */
+          }
+        },
+        idleTimeoutMs: REQUEST_TIMEOUT_MS,
+      })
+
+      try {
+        event?.sender?.send('ai:done', { content, usage })
+      } catch {
+        /* ignore */
+      }
+      return { success: true, content, usage }
+    } catch (streamError) {
+      if (entry.aborted) {
+        return { success: false, errorKind: 'aborted', error: '已停止生成。' }
+      }
+      if (streamError instanceof AIStreamTimeoutError) {
+        return { success: false, errorKind: 'timeout', error: streamError.message }
+      }
+      return {
+        success: false,
+        errorKind: 'network',
+        error: `流式响应失败：${streamError?.message || String(streamError)}`,
+      }
     }
-    return { success: true, content, usage }
-  } catch (streamError) {
-    if (streamError instanceof AIStreamTimeoutError) {
-      return { success: false, errorKind: 'timeout', error: streamError.message }
-    }
-    return {
-      success: false,
-      errorKind: 'network',
-      error: `流式响应失败：${streamError?.message || String(streamError)}`,
-    }
+  } finally {
+    if (requestId) activeAiRequests.delete(requestId)
   }
 }
 
@@ -240,7 +271,7 @@ export function initAIHandlers(ipcMain) {
 
   ipcMain.handle('ai:chat', async (event, payload) => {
     try {
-      const { encKey, messages, systemPrompt, model, baseUrl, stream, supportsThinking, providerName, tools } = payload || {}
+      const { encKey, messages, systemPrompt, model, baseUrl, stream, supportsThinking, providerName, tools, requestId } = payload || {}
       const label = providerName || '模型服务'
 
       if (!encKey) {
@@ -267,11 +298,13 @@ export function initAIHandlers(ipcMain) {
       const useModel = model || 'deepseek-v4-flash'
 
       if (stream) {
-        return await streamChat(event, apiKey, apiBase, useModel, messages, systemPrompt, supportsThinking, providerName)
+        return await streamChat(event, apiKey, apiBase, useModel, messages, systemPrompt, supportsThinking, providerName, requestId)
       }
 
-      // 非流式（用于连接测试等）
+      // 非流式（用于连接测试等；带 requestId 时同样支持「停止生成」中断）
       const controller = new AbortController()
+      const requestEntry = { controller, aborted: false }
+      registerAiRequest(requestId, requestEntry)
       const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
       try {
         const response = await fetch(`${apiBase}/chat/completions`, {
@@ -307,11 +340,15 @@ export function initAIHandlers(ipcMain) {
         }
       } catch (networkError) {
         if (networkError?.name === 'AbortError') {
+          if (requestEntry.aborted) {
+            return { success: false, errorKind: 'aborted', error: '已停止生成。' }
+          }
           return { success: false, errorKind: 'timeout', error: `请求超时（${REQUEST_TIMEOUT_MS / 1000}s），请稍后重试。` }
         }
         return { success: false, errorKind: 'network', error: `网络请求失败：${networkError?.message || String(networkError)}` }
       } finally {
         clearTimeout(timer)
+        if (requestId) activeAiRequests.delete(requestId)
       }
     } catch (error) {
       console.error('[AI] ai:chat 处理异常:', error)
@@ -321,6 +358,24 @@ export function initAIHandlers(ipcMain) {
         error: error instanceof Error ? error.message : String(error),
       }
     }
+  })
+
+  // 渲染层「停止生成」：按 requestId 取消正在进行的 ai:chat 请求（流式/非流式通用）。
+  // 取消后对应 invoke 返回 { success:false, errorKind:'aborted' }，由渲染层决定如何收尾。
+  ipcMain.handle('ai:abort', (_event, requestId) => {
+    if (!requestId || typeof requestId !== 'string') {
+      return { success: false, error: '缺少请求标识。' }
+    }
+    const entry = activeAiRequests.get(requestId)
+    if (!entry) {
+      // 请求已结束，或正处于工具循环本地执行间隙：登记中止意图，
+      // 同 requestId 的下一次请求注册时立即中止（registerAiRequest 消费）
+      abortedRequestIds.add(requestId)
+      return { success: true }
+    }
+    entry.aborted = true
+    entry.controller.abort()
+    return { success: true }
   })
 
   // 拉取 provider 的 OpenAI 兼容模型清单（GET {baseUrl}/models）。明文 Key 仅在 Main 解密后使用，不回传渲染。

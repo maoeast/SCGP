@@ -324,6 +324,13 @@ function cancelMessageEdit() {
   inputText.value = ''
 }
 
+/** Enter 发送；发送中 / 输入法候选确认时允许换行（send 内部有 sending 守卫） */
+function onEnterKey(e: KeyboardEvent) {
+  if (e.isComposing || aiStore.sending) return
+  e.preventDefault()
+  void send()
+}
+
 /** 「生成报告」快捷按钮：发一句引导语，由 AI 自行调用 generate_report 工具导出 Word */
 async function generateReport() {
   if (aiStore.sending) return
@@ -655,41 +662,77 @@ async function confirmDeleteSession(id: number) {
           </div>
         </div>
         <div class="ai-composer">
-          <div class="composer-utility-actions">
+          <div class="ai-composer-main">
+            <el-input
+              ref="inputRef"
+              v-model="inputText"
+              type="textarea"
+              :autosize="{ minRows: 2, maxRows: 8 }"
+              resize="none"
+              :placeholder="editingMessageId !== null ? '修改消息内容' : '输入问题…'"
+              @keydown.enter.exact="onEnterKey"
+            />
             <el-tooltip
-              v-if="canGenerateReport && editingMessageId === null"
-              content="生成报告（导出 Word）"
+              :content="aiStore.sending
+                ? '停止生成'
+                : editingMessageId !== null
+                  ? '保存并重新生成'
+                  : '发送'"
               placement="top"
             >
               <button
-                class="composer-btn"
+                class="composer-btn composer-send"
+                :class="{ 'composer-stop': aiStore.sending }"
                 type="button"
-                :disabled="aiStore.sending"
-                aria-label="生成报告"
-                @click="generateReport"
+                :disabled="!aiStore.sending && !canSend"
+                :aria-label="aiStore.sending
+                  ? '停止生成'
+                  : editingMessageId !== null ? '保存并重新生成' : '发送'"
+                @click="aiStore.sending ? aiStore.stopGeneration() : send()"
               >
-                <el-icon><Tickets /></el-icon>
+                <span v-if="aiStore.sending" class="composer-stop-icon" aria-hidden="true"></span>
+                <el-icon v-else><Promotion /></el-icon>
               </button>
             </el-tooltip>
-            <el-tooltip
-              :content="editingMessageId !== null
-                ? '编辑消息时不能新增附件'
-                : supportsVision
-                  ? '添加图片 / 文档'
-                  : '添加文档（当前模型不支持图片）'"
-              placement="top"
-            >
-              <button
-                class="composer-btn composer-attach"
-                type="button"
-                :disabled="aiStore.sending || editingMessageId !== null"
-                aria-label="添加图片或文档"
-                @click="triggerPickFile"
+          </div>
+          <div class="ai-composer-toolbar">
+            <div class="ai-composer-tools">
+              <el-tooltip
+                v-if="canGenerateReport && editingMessageId === null"
+                content="生成报告（导出 Word）"
+                placement="top"
               >
-                <el-icon><Paperclip /></el-icon>
-                <span>附件</span>
-              </button>
-            </el-tooltip>
+                <button
+                  class="composer-btn"
+                  type="button"
+                  :disabled="aiStore.sending"
+                  aria-label="生成报告"
+                  @click="generateReport"
+                >
+                  <el-icon><Tickets /></el-icon>
+                </button>
+              </el-tooltip>
+              <el-tooltip
+                :content="editingMessageId !== null
+                  ? '编辑消息时不能新增附件'
+                  : supportsVision
+                    ? '添加图片 / 文档'
+                    : '添加文档（当前模型不支持图片）'"
+                placement="top"
+              >
+                <button
+                  class="composer-btn composer-attach"
+                  type="button"
+                  :disabled="aiStore.sending || editingMessageId !== null"
+                  aria-label="添加图片或文档"
+                  @click="triggerPickFile"
+                >
+                  <el-icon><Paperclip /></el-icon>
+                  <span>附件</span>
+                </button>
+              </el-tooltip>
+            </div>
+            <span class="ai-composer-hint">Enter 发送 · Shift+Enter 换行</span>
           </div>
           <input
             ref="fileInputRef"
@@ -699,29 +742,6 @@ async function confirmDeleteSession(id: number) {
             class="ai-file-input"
             @change="onFileChange"
           />
-          <el-input
-            ref="inputRef"
-            v-model="inputText"
-            type="textarea"
-            :rows="3"
-            resize="none"
-            :placeholder="editingMessageId !== null
-              ? '修改消息内容'
-              : '输入问题，Enter 发送 / Shift+Enter 换行'"
-            :disabled="aiStore.sending"
-            @keydown.enter.exact.prevent="send"
-          />
-          <el-tooltip :content="editingMessageId !== null ? '保存并重新生成' : '发送'" placement="top">
-            <button
-              class="composer-btn composer-send"
-              type="button"
-              :disabled="!canSend || aiStore.sending"
-              :aria-label="editingMessageId !== null ? '保存并重新生成' : '发送'"
-              @click="send"
-            >
-              <el-icon><Promotion /></el-icon>
-            </button>
-          </el-tooltip>
         </div>
         <p class="ai-composer-disclaimer">由 AI 助手提供服务，回答仅供参考</p>
       </div>
@@ -1099,12 +1119,12 @@ async function confirmDeleteSession(id: number) {
   cursor: not-allowed;
   opacity: 0.45;
 }
-/* ===== 输入框容器：报告 / 附件纵向工具列、textarea、发送 同处一个圆角容器 ===== */
+/* ===== 输入框容器：textarea + 发送/停止 一行，工具列 + 快捷键提示 一行 ===== */
 .ai-composer {
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
   gap: 4px;
-  padding: 6px 6px 6px 8px;
+  padding: 8px 8px 6px 12px;
   border: 1.5px solid var(--el-border-color, #dcdfe6);
   border-radius: 16px;
   background: var(--el-bg-color, #fff);
@@ -1112,6 +1132,11 @@ async function confirmDeleteSession(id: number) {
 }
 .ai-composer:focus-within {
   border-color: var(--el-color-primary, #409eff);
+}
+.ai-composer-main {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
 }
 .ai-composer :deep(.el-textarea) {
   flex: 1;
@@ -1139,12 +1164,23 @@ async function confirmDeleteSession(id: number) {
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
-.composer-utility-actions {
+.ai-composer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+}
+.ai-composer-tools {
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 2px;
+}
+.ai-composer-hint {
+  font-size: 12px;
+  color: var(--el-text-color-placeholder, #a8abb2);
+  white-space: nowrap;
 }
 .composer-attach {
   width: auto;
@@ -1174,6 +1210,21 @@ async function confirmDeleteSession(id: number) {
 .composer-send:disabled {
   background: var(--el-fill-color-dark, #e9e9eb);
   color: var(--el-text-color-placeholder, #a8abb2);
+}
+.composer-stop {
+  background: var(--el-color-danger, #f56c6c);
+  color: #fff;
+}
+.composer-stop:hover:not(:disabled) {
+  background: var(--el-color-danger-light-3, #f89898);
+  color: #fff;
+}
+.composer-stop-icon {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: currentColor;
 }
 .ai-composer-disclaimer {
   margin: 6px 4px 0;

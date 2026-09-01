@@ -43,6 +43,8 @@ export interface RunToolLoopParams {
   tools?: AiToolDef[]
   /** 每次工具调用完成时回调（供 UI 展示 tool 气泡） */
   onToolStep?: (step: ToolStep) => void
+  /** 「停止生成」标识（透传给每次 aiChat；中止则当前轮抛错 errorKind:'aborted'） */
+  requestId?: string
 }
 
 export interface RunToolLoopResult {
@@ -99,6 +101,7 @@ export async function runToolLoop(params: RunToolLoopParams): Promise<RunToolLoo
       supportsThinking: params.supportsThinking,
       providerName: params.providerName,
       tools: activeTools,
+      requestId: params.requestId,
     })
 
     if (!res.success) {
