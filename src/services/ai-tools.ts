@@ -148,7 +148,7 @@ export const AI_TOOLS: AiToolDef[] = [
     type: 'function',
     function: {
       name: 'get_assessment_trend',
-      description: '获取某学生「同一量表历次评估」的纵向分数序列（按时间升序），用于纵向对比分析。返回每次的日期、年龄、代表性总分、评定等级与各维度分数。区别于 get_assessment（只返回报告列表摘要）：本工具返回可量化的分数，能支撑「进步/退步维度」「趋势解读」类分析。支持 13 个标准化量表：csirs / conners_psq / conners_trs / srs2 / sdq / cbcl / brief / weefim / cnbsr2016 / fine_motor / gmfm_88 / tgmd_3 / sm。不支持 crt / cognitive_self（实验性占位常模，纵向对比会误导）。',
+      description: '获取某学生「同一量表历次评估」的纵向分数序列（按时间升序），用于纵向对比分析。返回每次的日期、年龄、代表性总分、评定等级与各维度分数。区别于 get_assessment（只返回报告列表摘要）：本工具返回可量化的分数，能支撑「进步/退步维度」「趋势解读」类分析。支持 15 个量表：csirs / conners_psq / conners_trs / srs2 / sdq / cbcl / brief / weefim / cnbsr2016 / fine_motor / gmfm_88 / tgmd_3 / sm / abc / atec。不支持 crt / cognitive_self（实验性占位常模，纵向对比会误导）。',
       parameters: {
         type: 'object',
         properties: {

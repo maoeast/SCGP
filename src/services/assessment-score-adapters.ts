@@ -32,6 +32,7 @@ import {
   Tgmd3AssessmentAPI,
   SMAssessmentAPI,
 } from '@/database/api'
+import { getDatabase } from '@/database/init'
 import {
   normalizeCsirs,
   normalizeConners,
@@ -319,6 +320,53 @@ const smAdapter: ScoreAdapter = {
   },
 }
 
+// ---------- ABC（孤独症行为量表）：dimension_scores 是 { 维度code: 原始分 } ----------
+// ABC/ATEC 无独立 API 类（Driver 直接 SQL 写入），适配器内直接查库（db.all 返回对象数组）。
+const abcConfig: NormalizeConfig = {
+  scaleCode: 'abc',
+  totalScoreField: 'total_score',
+  levelField: 'level',
+  dimensionScoresField: 'dimension_scores',
+  dimensionMode: 'flat-number', // { sensory: 15, relating: 20, ... }
+}
+const abcAdapter: ScoreAdapter = {
+  scaleCode: 'abc',
+  scaleName: '孤独症行为量表（ABC）',
+  scoreNote:
+    '总分（total_score，0–157）为加权原始分，分越高孤独症相关行为越突出：≥67 筛查界值、总分配套 normal/borderline/mild/moderate/severe。五维度 key 对照：sensory=感觉、relating=交往、body_object=躯体运动、language=语言、social_self_help=生活自理，各维度分越高该类行为越突出。',
+  getLongitudinalScores(studentId: number): ScoreSnapshot[] {
+    const db = getDatabase()
+    const rows = db.all(
+      'SELECT id, student_id, age_months, dimension_scores, total_score, level, created_at FROM abc_assess WHERE student_id = ? ORDER BY created_at ASC',
+      [studentId]
+    ) ?? []
+    return rows.map((r: any) => normalizeByConfig(r, abcConfig)).sort(byDateAsc)
+  },
+}
+
+// ---------- ATEC（孤独症治疗评估量表）：subscale_scores 是 { 分量表code: 原始分 } ----------
+const atecConfig: NormalizeConfig = {
+  scaleCode: 'atec',
+  totalScoreField: 'total_score',
+  levelField: 'level',
+  dimensionScoresField: 'subscale_scores',
+  dimensionMode: 'flat-number', // { speech: 10, sociability: 15, ... }
+}
+const atecAdapter: ScoreAdapter = {
+  scaleCode: 'atec',
+  scaleName: '孤独症治疗评估量表（ATEC）',
+  scoreNote:
+    '总分（total_score，0–179）为四分量表原始分之和，分越高症状越重（干预后总分下降=改善）：≤30 minimal、31–50 mild、51–80 moderate、>80 severe。四分量表 key 对照：speech=表达/语言沟通、sociability=社交能力、sensory=感知/认知能力、health=健康/生理/行为，各分越高该领域症状越重。适合干预前后纵向对比。',
+  getLongitudinalScores(studentId: number): ScoreSnapshot[] {
+    const db = getDatabase()
+    const rows = db.all(
+      'SELECT id, student_id, age_months, subscale_scores, total_score, level, created_at FROM atec_assess WHERE student_id = ? ORDER BY created_at ASC',
+      [studentId]
+    ) ?? []
+    return rows.map((r: any) => normalizeByConfig(r, atecConfig)).sort(byDateAsc)
+  },
+}
+
 // ==================== 适配器注册表 ====================
 
 /** 适配器注册表。新增量表在此注册即可被 get_assessment_trend 工具发现。 */
@@ -336,6 +384,8 @@ export const SCORE_ADAPTERS: Record<string, ScoreAdapter> = {
   gmfm_88: gmfm88Adapter,
   tgmd_3: tgmd3Adapter,
   sm: smAdapter,
+  abc: abcAdapter,
+  atec: atecAdapter,
 }
 
 /** 当前已支持纵向读取的量表代码列表（供工具 schema enum 用）。 */

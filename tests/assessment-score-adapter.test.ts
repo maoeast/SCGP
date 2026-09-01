@@ -282,4 +282,65 @@ assert.deepEqual(safeParseJsonRecord('{"x":2}'), { x: 2 })
   assert.equal(snap.extra, undefined, '无 extraFields 时 extra 应 undefined')
 }
 
-console.log('assessment-score-adapter test passed (11 场景)')
+// ---------- 12. ABC/ATEC flat-number 模式（适配器 config 与 DB 行形状）----------
+{
+  const { normalizeByConfig } = await import('../src/services/assessment-score-normalize.ts')
+  // 模拟 ABC 行：dimension_scores 是 { 维度code: rawScore }
+  const abcRow = {
+    id: 301,
+    age_months: 68,
+    dimension_scores: JSON.stringify({ sensory: 15, relating: 20, body_object: 8, language: 11, social_self_help: 10 }),
+    total_score: 64,
+    level: 'borderline',
+    created_at: '2026-08-01T00:00:00Z',
+  }
+  const abcSnap = normalizeByConfig(abcRow, {
+    scaleCode: 'abc',
+    totalScoreField: 'total_score',
+    levelField: 'level',
+    dimensionScoresField: 'dimension_scores',
+    dimensionMode: 'flat-number',
+  })
+  assert.equal(abcSnap.totalScore, 64)
+  assert.equal(abcSnap.level, 'borderline')
+  assert.equal(abcSnap.dimensionScores.sensory, 15)
+  assert.equal(abcSnap.dimensionScores.social_self_help, 10)
+  assert.equal(Object.keys(abcSnap.dimensionScores).length, 5)
+
+  // 模拟 ATEC 行：subscale_scores 是 { 分量表code: rawScore }
+  const atecRow = {
+    id: 302,
+    age_months: 68,
+    subscale_scores: JSON.stringify({ speech: 10, sociability: 15, sensory: 12, health: 20 }),
+    total_score: 57,
+    level: 'moderate',
+    created_at: '2026-09-01T00:00:00Z',
+  }
+  const atecSnap = normalizeByConfig(atecRow, {
+    scaleCode: 'atec',
+    totalScoreField: 'total_score',
+    levelField: 'level',
+    dimensionScoresField: 'subscale_scores',
+    dimensionMode: 'flat-number',
+  })
+  assert.equal(atecSnap.totalScore, 57)
+  assert.equal(atecSnap.dimensionScores.speech, 10)
+  assert.equal(atecSnap.dimensionScores.health, 20)
+  assert.equal(Object.keys(atecSnap.dimensionScores).length, 4)
+}
+
+// ---------- 13. 适配器注册表包含 abc/atec（AI 工具 enum 跟进）----------
+{
+  // adapters 文件 import @/database/*（jiti 不解析别名，无法直接 import），
+  // 对注册表做源码断言：abc/atec 适配器已定义并注册。
+  const src = (await import('node:fs')).readFileSync(
+    (await import('node:path')).resolve(import.meta.dirname, '../src/services/assessment-score-adapters.ts'),
+    'utf8'
+  )
+  assert.ok(/const abcAdapter: ScoreAdapter/.test(src), 'abcAdapter 应已定义')
+  assert.ok(/const atecAdapter: ScoreAdapter/.test(src), 'atecAdapter 应已定义')
+  assert.ok(/^\s{2}abc: abcAdapter,$/m.test(src), 'abc 应注册进 SCORE_ADAPTERS')
+  assert.ok(/^\s{2}atec: atecAdapter,$/m.test(src), 'atec 应注册进 SCORE_ADAPTERS')
+}
+
+console.log('assessment-score-adapter test passed (13 场景)')
