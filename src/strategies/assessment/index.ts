@@ -25,6 +25,8 @@ import { Tgmd3Driver } from './Tgmd3Driver'
 import { BRIEFDriver } from './BRIEFDriver'
 import { CRTDriver } from './CRTDriver'
 import { CognitiveSelfDriver } from './CognitiveSelfDriver'
+import { ABCDriver } from './ABCDriver'
+import { ATECDriver } from './ATECDriver'
 
 // 导出基类供其他驱动器继承
 export { BaseDriver } from './BaseDriver'
@@ -47,6 +49,8 @@ const driverRegistry = {
   'brief': BRIEFDriver,
   'crt': CRTDriver,
   'cognitive_self': CognitiveSelfDriver,
+  'abc': ABCDriver,
+  'atec': ATECDriver,
 } as const satisfies Record<AssessmentScaleCode, new () => ScaleDriver>
 
 // 驱动器实例缓存
@@ -144,3 +148,5 @@ export { Tgmd3Driver } from './Tgmd3Driver'
 export { BRIEFDriver } from './BRIEFDriver'
 export { CRTDriver } from './CRTDriver'
 export { CognitiveSelfDriver } from './CognitiveSelfDriver'
+export { ABCDriver } from './ABCDriver'
+export { ATECDriver } from './ATECDriver'

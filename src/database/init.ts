@@ -693,6 +693,42 @@ CREATE TABLE IF NOT EXISTS cbcl_assess (
 CREATE INDEX IF NOT EXISTS idx_cbcl_assess_student ON cbcl_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_cbcl_assess_created ON cbcl_assess(created_at DESC);
 
+-- ABC 孤独症儿童行为评定量表 (57题)
+CREATE TABLE IF NOT EXISTS abc_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,
+  raw_answers TEXT NOT NULL, -- JSON: { "abc_1": 0, "abc_2": 3, ... } (0或权重分)
+  dimension_scores TEXT NOT NULL, -- JSON: { "sensory": 15, "relating": 20, ... }
+  total_score INTEGER NOT NULL, -- 加权总分 (0-158)
+  level TEXT NOT NULL CHECK(level IN ('normal', 'borderline', 'mild', 'moderate', 'severe')),
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_abc_assess_student ON abc_assess(student_id);
+CREATE INDEX IF NOT EXISTS idx_abc_assess_created ON abc_assess(created_at DESC);
+
+-- ATEC 孤独症治疗评估量表 (77题)
+CREATE TABLE IF NOT EXISTS atec_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,
+  raw_answers TEXT NOT NULL, -- JSON: { "atec_1": 0, "atec_2": 1, "atec_3": 2, ... } (0-2分)
+  subscale_scores TEXT NOT NULL, -- JSON: { "speech": 10, "sociability": 15, "sensory": 12, "health": 20 }
+  total_score INTEGER NOT NULL, -- 总分 (0-154)
+  level TEXT NOT NULL CHECK(level IN ('minimal', 'mild', 'moderate', 'severe')),
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_atec_assess_student ON atec_assess(student_id);
+CREATE INDEX IF NOT EXISTS idx_atec_assess_created ON atec_assess(created_at DESC);
+
 -- SRS-2评估表索引
 CREATE INDEX IF NOT EXISTS idx_srs2_assess_student ON srs2_assess(student_id);
 CREATE INDEX IF NOT EXISTS idx_srs2_assess_created ON srs2_assess(created_at DESC);

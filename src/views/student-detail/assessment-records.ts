@@ -368,6 +368,8 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     brief: briefRecords,
     crt: crtRecords,
     cognitive_self: cognitiveSelfRecords,
+    abc: [], // TODO: 实现 ABC 记录查询
+    atec: [], // TODO: 实现 ATEC 记录查询
   }
 
   return ASSESSMENT_SCALE_CATALOG
