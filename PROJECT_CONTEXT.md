@@ -1851,3 +1851,11 @@
 
 - 新增开发工具链 `scripts/video/`：分镜驱动，采用 Playwright Electron 录制真实界面、`msedge-tts` 生成旁白、ffmpeg 烧录字幕并合成 MP4；不新增产品运行时依赖。首支样片为 `output/videos/管理员：班级与学生管理.mp4`（1280×800、H.264 + AAC、50.96s），流程验收通过；下一会话仅需分流“清晰度不足”与“试听无声”是编码问题还是播放器/系统音频输出问题。
 
+## 105. 2026-09-01 评估质量追踪（Phase 1-3）+ ATEC 真机三连修 + 全局约束补充
+
+- 17 张 `*_assess` 表新增 `total_duration` / `avg_response_time` / `quality_note`（宽松质控：只记录不打扰；`cognitive_self_assess` 的 avg_response_time 是"真反应时 ms"语义特例，只补另两列）。管理看板 `/system/quality`（admin-only）+ 随机作答检测（仅 crt/cognitive_self，三信号，检出追加 `+suspicious` 入库不弹窗）。commit `84cb587` / `39ecde4`。
+- **全局约束（影响后续所有写查询代码）**：`getDatabase()` 返回 SQLWrapper，其 `exec(sql)` 是 DDL 专用——无参数、无返回值；查询一律 `db.all(sql, params)`（对象数组）/ `db.get`。需要 sql.js 原生形态时显式 `(db as any).getRawDB()`。视图层 `db.exec` 读返回值 = 崩溃（ABC/ATEC Report.vue 同款坑）。
+- **全局约束（新增量表必修）**：`report_record` 的 report_type CHECK 约束必须在 3 处同步（init.ts 建表、migrate-report-constraints.ts 重建表 + needsMigration 检测），漏了旧库启动时靠约束迁移自动重建（commit `ac687ae`）。新增量表完整 7 处同步清单已存长期记忆。
+- AI 工具 `get_assessment_trend` 现支持 15 量表（abc/atec 适配器已注册，commit `ab70953`）；新增模型对话框改为顶部快捷拉取工具栏 + 自动派生编号（commit `3e98981`）。
+
+
