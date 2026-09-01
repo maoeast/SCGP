@@ -92,10 +92,19 @@ function refreshBoundStudent() {
 }
 
 function handleBindStudent(value: number | '' | null | undefined) {
-  const sid = aiStore.currentSessionId
-  if (!sid) return
   const studentId = value == null || value === '' ? null : Number(value)
   const targetLabel = studentId == null ? '' : (studentOptions.value.find((s) => s.id === studentId)?.label ?? '')
+  // 支持先选学生再开始对话：无活动会话时自动创建一个（标题「新对话」）
+  let sid = aiStore.currentSessionId
+  if (!sid) {
+    if (studentId == null) return // 无会话且未选学生（如点清除）：无关联可取消
+    sid = aiStore.ensureSession()
+    if (!sid) {
+      ElMessage.warning('未获取到登录用户，请重新登录后再试。')
+      return
+    }
+    refreshBoundStudent()
+  }
   if (aiStore.bindSessionStudent(sid, studentId)) {
     boundStudentId.value = studentId
     if (studentId == null) {
@@ -141,6 +150,79 @@ const canSend = computed(
     pendingImages.value.length > 0 ||
     pendingDocuments.value.length > 0,
 )
+
+// ===== 斜杠命令面板：/ 开头弹出当前智能体常用模板，插入输入框后可编辑 =====
+interface AiCommandItem {
+  key: string
+  label: string
+  prompt: string
+}
+const commandOpen = ref(false)
+const commandQuery = ref('')
+const commandIndex = ref(0)
+
+const commandItems = computed<AiCommandItem[]>(() => {
+  const items: AiCommandItem[] = []
+  if (canGenerateReport.value) {
+    items.push({
+      key: '/报告',
+      label: '生成评估报告（Word 导出）',
+      prompt:
+        '请帮我生成一份 Word 报告。如需指定学生或报告类型请先与我确认，再调用 generate_report 工具导出。',
+    })
+  }
+  starterPrompts.value.forEach((p, i) => {
+    if (!p.trim()) return
+    items.push({
+      key: `/开场${i + 1}`,
+      label: `开场问题 · ${p.slice(0, 18)}${p.length > 18 ? '…' : ''}`,
+      prompt: p,
+    })
+  })
+  return items
+})
+
+const filteredCommands = computed(() => {
+  const q = commandQuery.value.trim().slice(1).toLowerCase()
+  const items = commandItems.value
+  if (!q) return items
+  return items.filter(
+    (c) => c.key.toLowerCase().includes(q) || c.label.toLowerCase().includes(q),
+  )
+})
+
+const activeCommandIndex = computed(() =>
+  Math.min(commandIndex.value, Math.max(0, filteredCommands.value.length - 1)),
+)
+
+watch(inputText, (val) => {
+  if (editingMessageId.value !== null) {
+    commandOpen.value = false
+    return
+  }
+  if (val.startsWith('/') && !val.includes('\n')) {
+    commandQuery.value = val
+    commandIndex.value = 0
+    commandOpen.value = filteredCommands.value.length > 0
+  } else {
+    commandOpen.value = false
+  }
+})
+
+function insertCommand(item: AiCommandItem | undefined) {
+  if (!item) return
+  inputText.value = item.prompt
+  commandOpen.value = false
+  commandQuery.value = ''
+  commandIndex.value = 0
+  nextTick(() => {
+    const ta = (inputRef.value as unknown as { textarea?: HTMLTextAreaElement } | null)?.textarea
+    if (!ta) return
+    ta.focus()
+    const len = ta.value.length
+    ta.setSelectionRange(len, len)
+  })
+}
 
 const MAX_VISIBLE_MESSAGES = 60
 const showAllMessages = ref(false)
@@ -249,27 +331,86 @@ function triggerPickFile() {
   if (aiStore.sending || editingMessageId.value !== null) return
   fileInputRef.value?.click()
 }
-async function onFileChange(e: Event) {
-  const target = e.target as HTMLInputElement
-  const files = target.files
-  if (!files) return
+/** 文件分流入口：选文件 / 拖拽 / 粘贴 统一处理（图片 → 预览 chip；文档 → 文档 chip） */
+async function addFiles(files: File[]) {
+  if (aiStore.sending || editingMessageId.value !== null) return
   const allowedDoc = new Set(['pdf', 'docx', 'xlsx'])
-  for (const f of Array.from(files)) {
+  let warnedUnsupported = false
+  let warnedVision = false
+  for (const f of files) {
     const ext = (f.name.split('.').pop() || '').toLowerCase()
     if (f.type.startsWith('image/')) {
       if (!supportsVision.value) {
-        ElMessage.warning(`当前模型不支持图片，已跳过：${f.name}`)
+        if (!warnedVision) {
+          ElMessage.warning('当前模型不支持图片，已跳过图片附件')
+          warnedVision = true
+        }
         continue
       }
       const previewUrl = await readFileAsDataUrl(f)
       pendingImages.value.push({ file: f, previewUrl })
     } else if (allowedDoc.has(ext)) {
       pendingDocuments.value.push({ file: f })
-    } else {
+    } else if (!warnedUnsupported) {
       ElMessage.warning(`不支持的文件：${f.name}（仅支持图片 / PDF / Word / Excel）`)
+      warnedUnsupported = true
     }
   }
+}
+
+async function onFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  const files = target.files
+  if (!files) return
+  await addFiles(Array.from(files))
   target.value = '' // 允许重复选同一文件
+}
+
+// ===== 拖拽 / 粘贴附件 =====
+const isDragOver = ref(false)
+let dragDepth = 0
+
+function onDragEnter(e: DragEvent) {
+  e.preventDefault()
+  if (!e.dataTransfer?.types.includes('Files')) return
+  dragDepth++
+  isDragOver.value = true
+}
+function onDragOver(e: DragEvent) {
+  e.preventDefault()
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
+}
+function onDragLeave(e: DragEvent) {
+  e.preventDefault()
+  dragDepth = Math.max(0, dragDepth - 1)
+  if (dragDepth === 0) isDragOver.value = false
+}
+async function onDrop(e: DragEvent) {
+  e.preventDefault()
+  dragDepth = 0
+  isDragOver.value = false
+  if (aiStore.sending || editingMessageId.value !== null) return
+  const files = e.dataTransfer?.files
+  if (!files || files.length === 0) return
+  await addFiles(Array.from(files))
+}
+
+/** @paste：只收剪贴板中的图片（文本粘贴走默认行为） */
+async function onPaste(e: ClipboardEvent) {
+  if (aiStore.sending || editingMessageId.value !== null) return
+  const items = e.clipboardData?.items
+  if (!items) return
+  const files: File[] = []
+  for (const item of Array.from(items)) {
+    if (item.kind === 'file' && item.type.startsWith('image/')) {
+      const file = item.getAsFile()
+      if (file) files.push(file)
+    }
+  }
+  if (files.length > 0) {
+    e.preventDefault()
+    await addFiles(files)
+  }
 }
 function removePendingImage(idx: number) {
   pendingImages.value.splice(idx, 1)
@@ -324,11 +465,38 @@ function cancelMessageEdit() {
   inputText.value = ''
 }
 
-/** Enter 发送；发送中 / 输入法候选确认时允许换行（send 内部有 sending 守卫） */
-function onEnterKey(e: KeyboardEvent) {
-  if (e.isComposing || aiStore.sending) return
-  e.preventDefault()
-  void send()
+/** 输入框键盘：
+ * 命令面板开启 → ↑↓ 选择、Enter 插入模板、Esc 关闭；
+ * 否则 Enter（无修饰、非输入法确认）发送，Shift+Enter / 输入法确认时换行（send 内部有 sending 守卫） */
+function onTextareaKeydown(e: KeyboardEvent) {
+  if (commandOpen.value) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      commandIndex.value = Math.min(activeCommandIndex.value + 1, filteredCommands.value.length - 1)
+      return
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      commandIndex.value = Math.max(0, activeCommandIndex.value - 1)
+      return
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault()
+      commandOpen.value = false
+      commandQuery.value = ''
+      return
+    }
+    if (e.key === 'Enter' && !e.isComposing) {
+      e.preventDefault()
+      insertCommand(filteredCommands.value[activeCommandIndex.value])
+      return
+    }
+    return
+  }
+  if (e.key === 'Enter' && !e.isComposing && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault()
+    void send()
+  }
 }
 
 /** 「生成报告」快捷按钮：发一句引导语，由 AI 自行调用 generate_report 工具导出 Word */
@@ -555,29 +723,8 @@ async function confirmDeleteSession(id: number) {
         </el-collapse-item>
       </el-collapse>
 
-      <!-- 会话绑定学生（M4/M5：绑定后记忆自动总结注入；v4.2 整理完可随时更换） -->
-      <div v-if="aiStore.currentSessionId && aiStore.memoryEnabled" class="ai-memory-bindbar">
-        <el-select
-          :model-value="boundStudentId"
-          placeholder="选择本次对话的学生"
-          size="small"
-          clearable
-          filterable
-          style="width: 200px; flex-shrink: 0"
-          @change="handleBindStudent"
-        >
-          <el-option
-            v-for="stu in studentOptions"
-            :key="stu.id"
-            :label="stu.label"
-            :value="stu.id"
-          />
-        </el-select>
-        <span v-if="boundStudentId" class="ai-memory-bindbar__hint">已关联「{{ boundStudentLabel }}」，可随时更换；更换后此前的对话仍记入原学生</span>
-        <span v-else class="ai-memory-bindbar__hint">不选择也能对话（不会记录长期记忆）；选择学生后，对话将自动记入该学生的长期记忆</span>
-      </div>
-
       <!-- 消息列表 -->
+
       <el-scrollbar ref="scrollRef" class="ai-msg-scroll">
         <div v-if="displayMessages.length === 0" class="ai-empty ai-welcome">
           <AiAgentAvatar
@@ -661,7 +808,39 @@ async function confirmDeleteSession(id: number) {
             <el-button class="ai-pending-del" link size="small" @click="removePendingDocument(idx)">×</el-button>
           </div>
         </div>
-        <div class="ai-composer">
+        <!-- 绑定学生（始终显示，输入框正上方；未开始对话也可先选，选后自动建会话） -->
+        <div class="ai-memory-bindbar">
+          <el-select
+            :model-value="boundStudentId"
+            placeholder="选择本次对话的学生"
+            size="small"
+            clearable
+            filterable
+            style="width: 200px; flex-shrink: 0"
+            @change="handleBindStudent"
+          >
+            <el-option
+              v-for="stu in studentOptions"
+              :key="stu.id"
+              :label="stu.label"
+              :value="stu.id"
+            />
+          </el-select>
+          <span v-if="!aiStore.memoryEnabled" class="ai-memory-bindbar__hint">学校记忆功能已关闭，学生关联仅作对话标记，不会记录长期记忆</span>
+          <span v-else-if="boundStudentId" class="ai-memory-bindbar__hint">已关联「{{ boundStudentLabel }}」，可随时更换；更换后此前的对话仍记入原学生</span>
+          <span v-else class="ai-memory-bindbar__hint">不选择也能对话（不会记录长期记忆）；选择学生后，对话将自动记入该学生的长期记忆</span>
+        </div>
+
+        <div
+          class="ai-composer"
+          :class="{ 'is-drag-over': isDragOver }"
+          @dragenter="onDragEnter"
+          @dragover="onDragOver"
+          @dragleave="onDragLeave"
+          @drop="onDrop"
+          @dragend="dragDepth = 0; isDragOver = false"
+          @paste="onPaste"
+        >
           <div class="ai-composer-main">
             <el-input
               ref="inputRef"
@@ -670,7 +849,7 @@ async function confirmDeleteSession(id: number) {
               :autosize="{ minRows: 2, maxRows: 8 }"
               resize="none"
               :placeholder="editingMessageId !== null ? '修改消息内容' : '输入问题…'"
-              @keydown.enter.exact="onEnterKey"
+              @keydown="onTextareaKeydown"
             />
             <el-tooltip
               :content="aiStore.sending
@@ -734,6 +913,24 @@ async function confirmDeleteSession(id: number) {
             </div>
             <span class="ai-composer-hint">Enter 发送 · Shift+Enter 换行</span>
           </div>
+          <!-- 斜杠命令面板：/ 开头弹出常用模板（插入输入框后可编辑） -->
+          <transition name="ai-command-fade">
+            <div v-if="commandOpen && filteredCommands.length > 0" class="ai-command-panel">
+              <button
+                v-for="(cmd, idx) in filteredCommands"
+                :key="cmd.key"
+                type="button"
+                class="ai-command-item"
+                :class="{ active: idx === activeCommandIndex }"
+                @mouseenter="commandIndex = idx"
+                @click="insertCommand(cmd)"
+              >
+                <span class="ai-command-key">{{ cmd.key }}</span>
+                <span class="ai-command-label">{{ cmd.label }}</span>
+              </button>
+            </div>
+          </transition>
+
           <input
             ref="fileInputRef"
             type="file"
@@ -941,9 +1138,9 @@ async function confirmDeleteSession(id: number) {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 16px;
-  border-bottom: 1px solid var(--el-border-color-lighter, #e4e7ed);
-  background: var(--el-fill-color-light, #f5f7fa);
+  padding: 6px 4px;
+  border-bottom: none;
+  background: transparent;
 }
 
 .ai-memory-bindbar__hint {
@@ -1121,6 +1318,7 @@ async function confirmDeleteSession(id: number) {
 }
 /* ===== 输入框容器：textarea + 发送/停止 一行，工具列 + 快捷键提示 一行 ===== */
 .ai-composer {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1128,10 +1326,15 @@ async function confirmDeleteSession(id: number) {
   border: 1.5px solid var(--el-border-color, #dcdfe6);
   border-radius: 16px;
   background: var(--el-bg-color, #fff);
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 .ai-composer:focus-within {
   border-color: var(--el-color-primary, #409eff);
+}
+.ai-composer.is-drag-over {
+  border-color: var(--el-color-primary, #409eff);
+  border-style: dashed;
+  background: var(--el-color-primary-light-9, #ecf5ff);
 }
 .ai-composer-main {
   display: flex;
@@ -1176,6 +1379,58 @@ async function confirmDeleteSession(id: number) {
   display: flex;
   align-items: center;
   gap: 2px;
+}
+.ai-command-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 6px);
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--el-border-color-light, #e4e7ed);
+  border-radius: 12px;
+  background: var(--el-bg-color, #fff);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+  z-index: 30;
+}
+.ai-command-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--el-text-color-regular, #606266);
+}
+.ai-command-item:hover,
+.ai-command-item.active {
+  background: var(--el-fill-color-light, #f0f2f5);
+}
+.ai-command-key {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--el-color-primary, #409eff);
+}
+.ai-command-label {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ai-command-fade-enter-active,
+.ai-command-fade-leave-active {
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+.ai-command-fade-enter-from,
+.ai-command-fade-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
 }
 .ai-composer-hint {
   font-size: 12px;

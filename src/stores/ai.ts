@@ -575,6 +575,18 @@ export const useAiStore = defineStore('ai', () => {
     lastError.value = ''
   }
 
+  /** 确保存在活动会话（无则用当前智能体创建一个空会话），返回会话 id 或 null */
+  function ensureSession(): number | null {
+    const uid = currentUserId()
+    const agent = currentAgent.value
+    if (!uid || !agent?.code) return null
+    if (!currentSessionId.value) {
+      const a = api()
+      currentSessionId.value = a.createSession(agent.code, uid, '新对话')
+    }
+    return currentSessionId.value
+  }
+
   /** 加载当前用户的会话列表；无活动会话且有历史时，默认恢复最近一条 */
   async function loadSessions() {
     try {
@@ -1376,6 +1388,7 @@ export const useAiStore = defineStore('ai', () => {
     overBudget,
     selectAgent,
     newChat,
+    ensureSession,
     onChunk,
     sendChat,
     stopGeneration,
