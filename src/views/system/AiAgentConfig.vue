@@ -137,7 +137,8 @@ const fetchedModels = ref<ProviderModelOption[]>([])
 const pickedModelId = ref('')
 const chatModels = computed(() =>
   fetchedModels.value.filter(
-    (m) => m.isChatModel && ALLOWED_MODEL_PREFIXES.some((p) => m.id.startsWith(p)),
+    // 只展示可用聊天模型：厂商白名单内 + 未下线（Retiring 的模型即将不可用，不展示避免误选）
+    (m) => m.isChatModel && m.status !== 'Retiring' && ALLOWED_MODEL_PREFIXES.some((p) => m.id.startsWith(p)),
   ),
 )
 
@@ -190,7 +191,25 @@ function onPickModel(id: string) {
   modelForm.supportsVision = model.supportsVision
   modelForm.supportsToolCalls = model.supportsToolCalls
   modelForm.supportsThinking = model.supportsThinking
-  ElMessage.success('已回填模型 ID、名称与能力位')
+  // 快速添加：自动派生本地编号（仅新增模式；编辑模式不动已保存编号）
+  if (!modelEditing.value) {
+    modelForm.code = deriveModelCode(model.id, aiStore.providerModels.map((m) => m.code))
+  }
+  ElMessage.success('已回填模型 ID、名称与能力位，本地编号已自动生成')
+}
+
+/**
+ * 由模型 ID 派生本地编号（零手填）：小写化 + 非 [a-z0-9_-] 字符转下划线 + 压缩连续下划线；
+ * 与已有编号冲突时追加 _2 / _3 …（DB 层 ai_provider_model 有 UNIQUE(provider_code, code) 强约束）。
+ */
+function deriveModelCode(modelId: string, existingCodes: string[]): string {
+  let base = modelId.toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '')
+  if (!base) base = 'model'
+  const used = new Set(existingCodes)
+  if (!used.has(base)) return base
+  let i = 2
+  while (used.has(`${base}_${i}`)) i++
+  return `${base}_${i}`
 }
 
 async function saveModel() {
@@ -905,67 +924,71 @@ function openAgentDetail(agent: AiAgent) {
       </template>
     </el-dialog>
 
-    <!-- 编辑对话框 -->
+    <!-- 模型编辑对话框 -->
     <el-dialog v-model="modelDialogVisible" :title="modelEditing ? '编辑模型' : '新增模型'" width="560px">
-      <el-form label-width="120px">
-        <el-form-item label="模型编号">
-          <el-input v-model="modelForm.code" placeholder="如 doubao_seed_vision" />
-          <div class="field-hint">本地编号，仅支持小写字母、数字、下划线和连字符。</div>
-        </el-form-item>
-        <el-form-item label="显示名称">
-          <el-input v-model="modelForm.name" placeholder="如 豆包 Seed Vision" />
-        </el-form-item>
-        <el-form-item :label="isDoubao ? '接入点 / 模型 ID' : '模型 ID'">
+      <!-- 顶部快捷工具栏：拉取 → 选择 一步到位（新增/编辑模式共用） -->
+      <div class="quick-toolbar">
+        <el-button
+          type="primary"
+          plain
+          :loading="aiStore.fetchingModels"
+          :disabled="!aiStore.isConfigured"
+          @click="fetchModelList"
+        >
+          拉取模型列表
+        </el-button>
+        <el-select
+          v-model="pickedModelId"
+          :disabled="fetchedModels.length === 0"
+          filterable
+          clearable
+          placeholder="从拉取列表选择填充（自动回填全部字段）"
+          class="quick-toolbar__picker"
+          @change="onPickModel"
+        >
+          <el-option
+            v-for="m in chatModels"
+            :key="m.id"
+            :label="`${m.name}（${m.id}）`"
+            :value="m.id"
+          >
+            <span>{{ m.name }}</span>
+            <el-tag v-if="m.supportsVision" size="small" type="success" style="margin-left: 6px">图片</el-tag>
+            <el-tag v-if="m.supportsThinking" size="small" type="info" style="margin-left: 6px">思考</el-tag>
+          </el-option>
+        </el-select>
+        <span v-if="!aiStore.isConfigured" class="quick-toolbar__warn">需先在「模型服务配置」填写并保存 API Key</span>
+      </div>
+      <div class="quick-toolbar__divider"><span>或手动填写下方配置</span></div>
+
+      <!-- 手动配置表单：Label 顶对齐，字段按 模型ID → 名称 → 编号 → 能力 → 配置行 排列 -->
+      <el-form label-position="top" class="model-form">
+        <el-form-item :label="isDoubao ? '接入点 / 模型 ID' : '模型 ID'" required>
           <el-input
             v-model="modelForm.modelId"
             :placeholder="isDoubao ? 'doubao-seed-1-6-250615 或 ep-xxx' : 'deepseek-v4-flash'"
           />
-          <div class="field-hint">
-            <el-button
-              link
-              type="primary"
-              size="small"
-              :loading="aiStore.fetchingModels"
-              :disabled="!aiStore.isConfigured"
-              @click="fetchModelList"
-            >
-              拉取模型列表
-            </el-button>
-            <span v-if="!aiStore.isConfigured">需先配置并保存 API Key</span>
-          </div>
-          <el-select
-            v-if="fetchedModels.length > 0"
-            v-model="pickedModelId"
-            filterable
-            clearable
-            placeholder="从拉取的列表选择（自动回填名称与能力位）"
-            style="width: 100%; margin-top: 8px"
-            @change="onPickModel"
-          >
-            <el-option
-              v-for="m in chatModels"
-              :key="m.id"
-              :label="`${m.name}（${m.id}）`"
-              :value="m.id"
-            >
-              <span>{{ m.name }}</span>
-              <el-tag v-if="m.status === 'Retiring'" size="small" type="info" style="margin-left: 6px">将下线</el-tag>
-              <el-tag v-if="m.supportsVision" size="small" type="success" style="margin-left: 6px">图片</el-tag>
-              <el-tag v-if="m.supportsThinking" size="small" type="info" style="margin-left: 6px">思考</el-tag>
-            </el-option>
-          </el-select>
         </el-form-item>
-        <el-form-item label="能力">
+        <el-form-item label="显示名称" required>
+          <el-input v-model="modelForm.name" placeholder="豆包 Seed Vision" />
+        </el-form-item>
+        <el-form-item label="模型编号 / 标识">
+          <el-input v-model="modelForm.code" placeholder="doubao_seed_vision" />
+          <div class="field-hint">仅支持小写字母、数字、下划线及连字符</div>
+        </el-form-item>
+        <el-form-item label="模型能力">
           <el-checkbox v-model="modelForm.supportsVision">支持图片</el-checkbox>
           <el-checkbox v-model="modelForm.supportsToolCalls">支持工具调用</el-checkbox>
           <el-checkbox v-model="modelForm.supportsThinking">支持思考字段</el-checkbox>
         </el-form-item>
-        <el-form-item label="启用">
-          <el-switch v-model="modelForm.enabled" />
-        </el-form-item>
-        <el-form-item label="排序">
-          <el-input-number v-model="modelForm.sort" :min="0" controls-position="right" />
-        </el-form-item>
+        <div class="model-form__footer-row">
+          <el-form-item label="排序">
+            <el-input-number v-model="modelForm.sort" :min="0" controls-position="right" />
+          </el-form-item>
+          <el-form-item label="启用状态">
+            <el-switch v-model="modelForm.enabled" active-text="启用" />
+          </el-form-item>
+        </div>
       </el-form>
       <template #footer>
         <el-button @click="modelDialogVisible = false">取消</el-button>
@@ -1670,5 +1693,55 @@ function openAgentDetail(agent: AiAgent) {
   .agent-detail__footer {
     align-items: flex-start;
   }
+}
+
+/* ====== 模型对话框：顶部快捷工具栏（拉取 + 选择 一行） ====== */
+.quick-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.quick-toolbar__picker {
+  flex: 1;
+  min-width: 220px;
+}
+
+.quick-toolbar__warn {
+  width: 100%;
+  font-size: 12px;
+  color: #909399;
+}
+
+.quick-toolbar__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 6px;
+  color: #909399;
+  font-size: 12px;
+}
+
+.quick-toolbar__divider::before,
+.quick-toolbar__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e4e7ed;
+}
+
+/* ====== 模型对话框：手动配置表单（Label 顶对齐，垂直节奏统一） ====== */
+.model-form .el-form-item {
+  margin-bottom: 16px;
+}
+
+.model-form__footer-row {
+  display: flex;
+  gap: 24px;
+}
+
+.model-form__footer-row .el-form-item {
+  flex: 1;
 }
 </style>
