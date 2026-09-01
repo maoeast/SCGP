@@ -175,7 +175,7 @@ import type {
   AssessmentFeedback,
   AssessmentQualityMetrics
 } from '@/types/assessment'
-import { calculateAgeInMonths, computeAssessmentQualityMetrics } from '@/types/assessment'
+import { calculateAgeInMonths, computeAssessmentQualityMetrics, detectRandomPattern, mergeSuspiciousNote, RANDOM_PATTERN_SCALE_CODES } from '@/types/assessment'
 import {
   getCnbsr2016UnsupportedAgeMessage,
   isCnbsr2016AgeSupported,
@@ -692,6 +692,17 @@ async function completeAssessment() {
     state.value.endTime,
     Object.keys(state.value.answers).length
   )
+
+  // 随机作答模式检测（Phase 3）：仅儿童自答测验类启用；检出只追加标记入库，不弹窗
+  if (qualityMetrics.value && RANDOM_PATTERN_SCALE_CODES.includes(scaleCode.value)) {
+    const pattern = detectRandomPattern(Object.values(state.value.answers))
+    if (pattern.suspicious) {
+      qualityMetrics.value = {
+        ...qualityMetrics.value,
+        qualityNote: mergeSuspiciousNote(qualityMetrics.value.qualityNote),
+      }
+    }
+  }
 
   try {
     // 1. 计算评分

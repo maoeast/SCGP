@@ -33,6 +33,7 @@ const Assessment = () => import('@/views/Assessment.vue')
 const Resources = () => import('@/views/Resources.vue')
 const Reports = () => import('@/views/Reports.vue')
 const System = () => import('@/views/System.vue')
+const AssessmentQualityBoard = () => import('@/views/system/AssessmentQualityBoard.vue')
 const Activation = () => import('@/views/Activation.vue')
 const StudentDetail = () => import('@/views/StudentDetail.vue')
 const Profile = () => import('@/views/Profile.vue')
@@ -1021,6 +1022,16 @@ const router = createRouter({
           meta: {
             title: '系统管理',
             icon: 'gear',
+            roles: ['admin']
+          }
+        },
+        {
+          path: 'system/quality',
+          name: 'AssessmentQualityBoard',
+          component: AssessmentQualityBoard,
+          meta: {
+            title: '评估质量看板',
+            icon: 'chart-bar',
             roles: ['admin']
           }
         },

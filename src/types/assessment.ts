@@ -348,6 +348,135 @@ export const QUALITY_NOTE_VERY_FAST_THRESHOLD_SEC = 3
 /** 平均每题用时（秒）低于该值标记 fast */
 export const QUALITY_NOTE_FAST_THRESHOLD_SEC = 5
 
+/** quality_note 中的疑似随机作答标记（与其他标记用 '+' 组合，如 'very_fast+suspicious'） */
+export const QUALITY_NOTE_SUSPICIOUS = 'suspicious'
+
+/**
+ * 随机作答模式检测结果
+ *
+ * 仅对「儿童本人自答的测验类」（CRT / cognitive_self）启用：
+ * - 操作类（GMFM/TGMD-3 等）是施测者打分，无自答节奏可言
+ * - 问卷类（SDQ/SRS-2/Conners 等）是家长/老师填写，作答节奏波动属正常
+ */
+export interface RandomPatternSignals {
+  /** 后半程/前半程平均 rt 比值（< 0.5 视为「赶进度」漂移；无有效 rt 时为 null） */
+  rtDriftRatio: number | null
+  /** 连续 8 题滑窗内答案序列与上一窗口完全一致的窗口占比（>0.3 视为重复模式） */
+  repeatedWindowRate: number | null
+  /** 全部题目选同一选项的占比（>=0.95 且题数>=20 视为直线作答） */
+  sameAnswerRate: number | null
+}
+
+export interface RandomPatternResult {
+  suspicious: boolean
+  signals: RandomPatternSignals
+}
+
+/** 启用随机作答检测的量表（儿童本人自答的测验类） */
+export const RANDOM_PATTERN_SCALE_CODES: readonly string[] = ['crt', 'cognitive_self']
+
+/**
+ * 随机作答模式检测（纯函数，宽松口径：多信号任一命中即标记，宁漏勿滥中取平衡）
+ *
+ * 输入是已答题目序列（按答题时间戳升序）。三个信号：
+ * 1. rt 漂移：后半程明显快于前半程（比值 < 0.5 且整体偏快）——典型「赶进度」模式
+ * 2. 滑窗重复：连续 8 题答案模式与上一窗口完全相同（占比 > 0.3）——典型「无脑循环」
+ * 3. 直线作答：>= 20 题全部同选项——典型「一路选 A」
+ *
+ * 数据不足（题数 < 10 或无有效 rt/score）时各信号为 null，不参与判定。
+ * 检出只标记入库（quality_note 追加 '+suspicious'），不弹窗不打扰（宽松质控原则）。
+ */
+export function detectRandomPattern(
+  answers: Array<{ value: string | number | boolean; responseTime?: number; timestamp?: number }>,
+  options: {
+    rtDriftThreshold?: number
+    repeatedWindowThreshold?: number
+    sameAnswerThreshold?: number
+    windowSize?: number
+  } = {}
+): RandomPatternResult {
+  const {
+    rtDriftThreshold = 2,
+    repeatedWindowThreshold = 0.3,
+    sameAnswerThreshold = 0.95,
+    windowSize = 8,
+  } = options
+
+  const n = answers.length
+  const signals: RandomPatternSignals = {
+    rtDriftRatio: null,
+    repeatedWindowRate: null,
+    sameAnswerRate: null,
+  }
+  if (n < 10) return { suspicious: false, signals }
+
+  // 按时间戳升序（缺时间戳保持原序在前）
+  const seq = [...answers].sort((a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0))
+
+  // —— 信号 1：rt 漂移 ——
+  const rts = seq.map((a) => (typeof a.responseTime === 'number' && a.responseTime > 0 ? a.responseTime : null))
+  const validRts = rts.filter((r): r is number => r !== null)
+  if (validRts.length >= n * 0.5) {
+    const half = Math.floor(n / 2)
+    const firstHalf = seq.slice(0, half).map((a) => a.responseTime).filter((r): r is number => typeof r === 'number' && r > 0)
+    const secondHalf = seq.slice(half).map((a) => a.responseTime).filter((r): r is number => typeof r === 'number' && r > 0)
+    if (firstHalf.length > 0 && secondHalf.length > 0) {
+      const mean = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length
+      const m1 = mean(firstHalf)
+      const m2 = mean(secondHalf)
+      if (m1 > 0) signals.rtDriftRatio = m2 / m1
+    }
+  }
+
+  // —— 信号 2：滑窗重复 ——
+  const values = seq.map((a) => String(a.value))
+  if (n >= windowSize * 2) {
+    let windows = 0
+    let repeated = 0
+    for (let i = windowSize; i + windowSize <= n; i++) {
+      windows++
+      let same = true
+      for (let j = 0; j < windowSize; j++) {
+        if (values[i + j] !== values[i - windowSize + j]) {
+          same = false
+          break
+        }
+      }
+      if (same) repeated++
+    }
+    if (windows > 0) signals.repeatedWindowRate = repeated / windows
+  }
+
+  // —— 信号 3：直线作答 ——
+  const counts = new Map<string, number>()
+  for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1)
+  const maxCount = Math.max(...counts.values())
+  signals.sameAnswerRate = maxCount / n
+
+  // —— 综合判定 ——
+  // 漂移信号：rtDriftRatio = 后半均值 / 前半均值。「赶进度」= 后半明显更快 → 比值明显 < 1；
+  // 比值 > 2（越做越慢）不典型于随机作答，不参与判定。
+  const driftSuspicious =
+    signals.rtDriftRatio !== null &&
+    signals.rtDriftRatio < 1 / rtDriftThreshold &&
+    validRts.length > 0 &&
+    // 整体均值也偏快才视为「赶进度」（纯快而稳定的作答不算）
+    validRts.reduce((s, x) => s + x, 0) / validRts.length < 5000
+  const suspicious =
+    driftSuspicious ||
+    (signals.repeatedWindowRate !== null && signals.repeatedWindowRate > repeatedWindowThreshold) ||
+    (signals.sameAnswerRate !== null && n >= 20 && signals.sameAnswerRate >= sameAnswerThreshold)
+
+  return { suspicious, signals }
+}
+
+/** 将疑似标记合并进既有 qualityNote（'very_fast' + suspicious → 'very_fast+suspicious'） */
+export function mergeSuspiciousNote(qualityNote: string | null): string | null {
+  if (!qualityNote) return QUALITY_NOTE_SUSPICIOUS
+  if (qualityNote.split('+').includes(QUALITY_NOTE_SUSPICIOUS)) return qualityNote
+  return `${qualityNote}+${QUALITY_NOTE_SUSPICIOUS}`
+}
+
 /**
  * 计算评估作答质量指标（纯函数，供容器与测试复用）
  *
