@@ -22,6 +22,7 @@ import type {
   PersistResult
 } from '@/types/assessment'
 import { ReportAPI } from '@/database/api'
+import { getDatabase } from '@/database/init'
 
 /**
  * 量表驱动器抽象基类
@@ -334,7 +335,6 @@ export abstract class BaseDriver implements ScaleDriver {
     const { quality } = context
     if (!quality || !assessId) return
     try {
-      const { getDatabase } = require('@/database/init')
       const db = getDatabase()
       const assignments = ['total_duration = ?', 'quality_note = ?']
       const params: any[] = [Math.round(quality.totalDuration), quality.qualityNote]

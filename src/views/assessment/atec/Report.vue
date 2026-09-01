@@ -134,42 +134,42 @@ async function loadAssessment() {
   try {
     const db = getDatabase()
 
-    // 加载评估记录
+    // 加载评估记录（db.all 返回对象数组；此前误用无返回值的 db.exec 导致报告页崩溃）
     const assessSql = 'SELECT * FROM atec_assess WHERE id = ?'
-    const assessRows = db.exec(assessSql, [assessId.value])
+    const assessRows = db.all(assessSql, [assessId.value])
 
-    if (!assessRows[0]?.values[0]) {
+    if (!assessRows[0]) {
       ElMessage.error('未找到评估记录')
       return
     }
 
-    const row = assessRows[0].values[0]
+    const row = assessRows[0]
     assessData.value = {
-      id: row[0],
-      student_id: row[1],
-      age_months: row[2],
-      raw_answers: row[3],
-      subscale_scores: row[4],
-      total_score: row[5],
-      level: row[6],
-      start_time: row[7],
-      end_time: row[8],
-      created_at: row[9],
+      id: row.id,
+      student_id: row.student_id,
+      age_months: row.age_months,
+      raw_answers: row.raw_answers,
+      subscale_scores: row.subscale_scores,
+      total_score: row.total_score,
+      level: row.level,
+      start_time: row.start_time,
+      end_time: row.end_time,
+      created_at: row.created_at,
       // 质量追踪列（宽松质控；旧记录为 NULL）
-      total_duration: row[10] ?? null,
-      avg_response_time: row[11] ?? null,
-      quality_note: row[12] ?? null,
+      total_duration: row.total_duration ?? null,
+      avg_response_time: row.avg_response_time ?? null,
+      quality_note: row.quality_note ?? null,
     }
 
     // 加载学生信息
     const studentSql = 'SELECT id, name FROM student WHERE id = ?'
-    const studentRows = db.exec(studentSql, [assessData.value.student_id])
+    const studentRows = db.all(studentSql, [assessData.value.student_id])
 
-    if (studentRows[0]?.values[0]) {
-      const studentRow = studentRows[0].values[0]
+    if (studentRows[0]) {
+      const studentRow = studentRows[0]
       studentInfo.value = {
-        id: studentRow[0],
-        name: studentRow[1],
+        id: studentRow.id,
+        name: studentRow.name,
         ageMonths: assessData.value.age_months,
       }
     }

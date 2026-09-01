@@ -193,9 +193,11 @@ async function runTest() {
   const classAPI = new ClassAPI()
   const studentAPI = new StudentAPI()
   const equipmentAPI = new EquipmentTrainingAPI()
-  const db = getDatabase()
-  // 获取原始数据库对象（一次性声明，整个测试中复用）
-  const rawDb = (db as any).getRawDB ? (db as any).getRawDB() : (db as any)._db || db
+  // db 直接指向底层 sql.js Database：本页按原生形态使用 db.exec（返回 [{columns,values}]），
+  // 而 SQLWrapper.exec 无返回值——此前误用导致 exec 结果恒为 undefined（读返回值处直接崩溃）。
+  // db.get / db.run 在原生 Database 上签名兼容（get 返回对象、run(sql, params)），原用法不变。
+  const db = (getDatabase() as any).getRawDB()
+  const rawDb = db
 
   let testClassId: number | null = null
   let newClassId: number | null = null
