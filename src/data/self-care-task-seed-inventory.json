@@ -173,7 +173,7 @@
       "coverImage": "images/tasks/DRINK_WATER_001_cover.jpg",
       "categoryId": 15,
       "abilityItem": "feed_02",
-      "stepCount": 8,
+      "stepCount": 7,
       "steps": [
         {
           "id": "legacy_step_3001",
@@ -218,7 +218,7 @@
         {
           "id": "legacy_step_3006",
           "seq": 6,
-          "text": "感觉到水流入口中小口啜饮",
+          "text": "小口啜饮，吞咽口水",
           "imagePath": "images/tasks/DRINK_WATER_001/6.png",
           "videoPath": null,
           "audioPath": null
@@ -226,16 +226,8 @@
         {
           "id": "legacy_step_3007",
           "seq": 7,
-          "text": "吞咽口水",
+          "text": "将杯身回正，平稳放回桌面",
           "imagePath": "images/tasks/DRINK_WATER_001/7.png",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_3008",
-          "seq": 8,
-          "text": "将杯身回正平稳放回桌面",
-          "imagePath": "images/tasks/DRINK_WATER_001_cover.jpg",
           "videoPath": null,
           "audioPath": null
         }
@@ -424,12 +416,12 @@
       "coverImage": "images/tasks/BRUSH_TEETH_001_cover.jpg",
       "categoryId": 41,
       "abilityItem": "hygiene_01",
-      "stepCount": 8,
+      "stepCount": 9,
       "steps": [
         {
           "id": "legacy_step_6001",
           "seq": 1,
-          "text": "杯子接水含一口润湿口腔后吐掉",
+          "text": "用杯子接水，含一口水润湿口腔",
           "imagePath": "images/tasks/BRUSH_TEETH_001/1.png",
           "videoPath": null,
           "audioPath": null
@@ -437,7 +429,7 @@
         {
           "id": "legacy_step_6002",
           "seq": 2,
-          "text": "刷上排牙齿外侧",
+          "text": "低头把水吐进水池",
           "imagePath": "images/tasks/BRUSH_TEETH_001/2.png",
           "videoPath": null,
           "audioPath": null
@@ -445,7 +437,7 @@
         {
           "id": "legacy_step_6003",
           "seq": 3,
-          "text": "刷下排牙齿外侧",
+          "text": "刷上排牙齿外侧",
           "imagePath": "images/tasks/BRUSH_TEETH_001/3.png",
           "videoPath": null,
           "audioPath": null
@@ -453,7 +445,7 @@
         {
           "id": "legacy_step_6004",
           "seq": 4,
-          "text": "张大嘴刷上排牙齿内侧",
+          "text": "刷下排牙齿外侧",
           "imagePath": "images/tasks/BRUSH_TEETH_001/4.png",
           "videoPath": null,
           "audioPath": null
@@ -461,7 +453,7 @@
         {
           "id": "legacy_step_6005",
           "seq": 5,
-          "text": "刷下排牙齿内侧",
+          "text": "张大嘴刷上排牙齿内侧",
           "imagePath": "images/tasks/BRUSH_TEETH_001/5.png",
           "videoPath": null,
           "audioPath": null
@@ -469,7 +461,7 @@
         {
           "id": "legacy_step_6006",
           "seq": 6,
-          "text": "刷大牙的咀嚼面",
+          "text": "刷下排牙齿内侧",
           "imagePath": "images/tasks/BRUSH_TEETH_001/6.png",
           "videoPath": null,
           "audioPath": null
@@ -477,7 +469,7 @@
         {
           "id": "legacy_step_6007",
           "seq": 7,
-          "text": "含水漱口鼓动腮部至少3次",
+          "text": "仔细刷大牙的咀嚼面",
           "imagePath": "images/tasks/BRUSH_TEETH_001/7.png",
           "videoPath": null,
           "audioPath": null
@@ -485,8 +477,16 @@
         {
           "id": "legacy_step_6008",
           "seq": 8,
-          "text": "吐出漱口水清洗牙刷并归位",
-          "imagePath": "images/tasks/BRUSH_TEETH_001/8.png",
+          "text": "含水漱口鼓动腮部几次，吐出漱口水，清洗牙刷",
+          "imagePath": "images/tasks/BRUSH_TEETH_001/9.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_6009",
+          "seq": 9,
+          "text": "把牙杯和牙刷放回原处",
+          "imagePath": "images/tasks/BRUSH_TEETH_001/10.png",
           "videoPath": null,
           "audioPath": null
         }
@@ -837,61 +837,37 @@
       "coverImage": "images/tasks/WEAR_SHIRT_001_cover.jpg",
       "categoryId": 21,
       "abilityItem": "dress_01",
-      "stepCount": 7,
+      "stepCount": 4,
       "steps": [
         {
           "id": "legacy_step_11001",
           "seq": 1,
-          "text": "拿起衣服找到领口确认正反",
-          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
+          "text": "把要穿的干净衣服放在面前",
+          "imagePath": "images/tasks/WEAR_SHIRT_001/1.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_11002",
           "seq": 2,
-          "text": "双手从衣摆伸入撑开衣服",
-          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
+          "text": "抓住衣服，分清前后",
+          "imagePath": "images/tasks/WEAR_SHIRT_001/2.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_11003",
           "seq": 3,
-          "text": "低头将头钻出领口",
-          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
+          "text": "双手把衣服举过头顶准备穿上",
+          "imagePath": "images/tasks/WEAR_SHIRT_001/3.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_11004",
           "seq": 4,
-          "text": "将右臂伸进右袖筒用力伸出",
-          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_11005",
-          "seq": 5,
-          "text": "将左臂伸进左袖筒用力伸出",
-          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_11006",
-          "seq": 6,
-          "text": "双手向下拉平衣身",
-          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_11007",
-          "seq": 7,
-          "text": "整理领口和下摆",
-          "imagePath": "images/tasks/WEAR_SHIRT_001_cover.jpg",
+          "text": "把双臂伸进袖子，穿好衣服",
+          "imagePath": "images/tasks/WEAR_SHIRT_001/4.png",
           "videoPath": null,
           "audioPath": null
         }
@@ -983,61 +959,37 @@
       "coverImage": "images/tasks/WEAR_PANTS_001_cover.jpg",
       "categoryId": 22,
       "abilityItem": "dress_02",
-      "stepCount": 7,
+      "stepCount": 4,
       "steps": [
         {
           "id": "legacy_step_13001",
           "seq": 1,
-          "text": "分辨裤子的前后",
-          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
+          "text": "拿起裤子，分清前后",
+          "imagePath": "images/tasks/WEAR_PANTS_001/1.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_13002",
           "seq": 2,
-          "text": "坐在椅子或床边",
-          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
+          "text": "坐在椅子或床边，把双脚依次伸进裤腿",
+          "imagePath": "images/tasks/WEAR_PANTS_001/2.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_13003",
           "seq": 3,
-          "text": "双手握住裤腰整理好裤管口",
-          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
+          "text": "站起来，把裤腰拉到腰部",
+          "imagePath": "images/tasks/WEAR_PANTS_001/3.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_13004",
           "seq": 4,
-          "text": "抬起一条腿伸入同侧裤管",
-          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_13005",
-          "seq": 5,
-          "text": "抬起另一条腿伸入另一侧裤管",
-          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_13006",
-          "seq": 6,
-          "text": "站起来双手用力将裤腰提至腰部",
-          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_13007",
-          "seq": 7,
-          "text": "调整裤腰松紧整理裤腿",
-          "imagePath": "images/tasks/WEAR_PANTS_001_cover.jpg",
+          "text": "整理裤腰和裤腿，穿好裤子",
+          "imagePath": "images/tasks/WEAR_PANTS_001/4.png",
           "videoPath": null,
           "audioPath": null
         }
@@ -1059,60 +1011,40 @@
       "stepCount": 7,
       "steps": [
         {
-          "id": "legacy_step_14001",
+          "id": "step_1",
           "seq": 1,
           "text": "解开纽扣或拉链",
-          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001/1.png"
         },
         {
-          "id": "legacy_step_14002",
+          "id": "step_2",
           "seq": 2,
           "text": "双手抓住裤腰两侧推至膝盖处",
-          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001/2.png"
         },
         {
-          "id": "legacy_step_14003",
+          "id": "step_3",
           "seq": 3,
           "text": "坐在椅子或床边",
-          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001/3.png"
         },
         {
-          "id": "legacy_step_14004",
+          "id": "step_4",
           "seq": 4,
           "text": "弯腰将裤子推至脚踝处",
-          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001/4.png"
         },
         {
-          "id": "legacy_step_14005",
+          "id": "step_5",
           "seq": 5,
-          "text": "一只手扶住裤脚一只脚抽出",
-          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
+          "text": "双脚依次从裤管里退出，双手把裤子拿好",
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001/5.png"
         },
         {
-          "id": "legacy_step_14006",
+          "id": "step_6",
           "seq": 6,
-          "text": "另一只脚抽出",
-          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_14007",
-          "seq": 7,
-          "text": "拿起裤子放好",
-          "imagePath": "images/tasks/TAKE_OFF_PANTS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
+          "text": "将裤子放好",
+          "imagePath": "images/tasks/TAKE_OFF_PANTS_001/6.png"
         }
       ]
     },
@@ -1202,61 +1134,45 @@
       "coverImage": "images/tasks/WEAR_SHOES_001_cover.jpg",
       "categoryId": 24,
       "abilityItem": "dress_03",
-      "stepCount": 7,
+      "stepCount": 5,
       "steps": [
         {
           "id": "legacy_step_16001",
           "seq": 1,
-          "text": "将鞋子摆在脚前检查左右",
-          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
+          "text": "把鞋子摆在脚前，分清左右",
+          "imagePath": "images/tasks/WEAR_SHOES_001/selfcare-shoes-m6-step1.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_16002",
           "seq": 2,
-          "text": "解开魔术贴把鞋舌尽量拉开",
-          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
+          "text": "拉开魔术贴，让鞋口张开",
+          "imagePath": "images/tasks/WEAR_SHOES_001/selfcare-shoes-m6-step2.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_16003",
           "seq": 3,
-          "text": "脚尖探入鞋内",
-          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
+          "text": "脚尖伸进鞋口，脚跟放进鞋后跟",
+          "imagePath": "images/tasks/WEAR_SHOES_001/selfcare-shoes-m6-step3.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_16004",
           "seq": 4,
-          "text": "手指勾住鞋后跟处脚用力踩入",
-          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
+          "text": "拉紧魔术贴，轻轻按平贴好",
+          "imagePath": "images/tasks/WEAR_SHOES_001/selfcare-shoes-m6-step4.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_16005",
           "seq": 5,
-          "text": "整理鞋舌使其平整贴合脚背",
-          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_16006",
-          "seq": 6,
-          "text": "拉紧魔术贴并粘好",
-          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_16007",
-          "seq": 7,
-          "text": "跺跺脚确认舒适",
-          "imagePath": "images/tasks/WEAR_SHOES_001_cover.jpg",
+          "text": "站起来跺跺脚，检查穿好",
+          "imagePath": "images/tasks/WEAR_SHOES_001/selfcare-shoes-m6-step6.png",
           "videoPath": null,
           "audioPath": null
         }
@@ -1421,12 +1337,12 @@
       "coverImage": "images/tasks/EXPRESS_TOILET_001_cover.jpg",
       "categoryId": 31,
       "abilityItem": "toilet_01",
-      "stepCount": 6,
+      "stepCount": 5,
       "steps": [
         {
           "id": "legacy_step_19001",
           "seq": 1,
-          "text": "觉察到身体信号",
+          "text": "感觉到想上厕所时，先停下安静感受",
           "imagePath": "images/tasks/EXPRESS_TOILET_001/1.png",
           "videoPath": null,
           "audioPath": null
@@ -1442,7 +1358,7 @@
         {
           "id": "legacy_step_19003",
           "seq": 3,
-          "text": "寻找老师或家长",
+          "text": "找到老师或家长，指一指厕所方向",
           "imagePath": "images/tasks/EXPRESS_TOILET_001/3.png",
           "videoPath": null,
           "audioPath": null
@@ -1450,7 +1366,7 @@
         {
           "id": "legacy_step_19004",
           "seq": 4,
-          "text": "用语言或手势图片卡表达",
+          "text": "得到允许后，自己走进厕所",
           "imagePath": "images/tasks/EXPRESS_TOILET_001/4.png",
           "videoPath": null,
           "audioPath": null
@@ -1458,16 +1374,8 @@
         {
           "id": "legacy_step_19005",
           "seq": 5,
-          "text": "得到允许后走向厕所",
+          "text": "脱下裤子，坐在马桶上",
           "imagePath": "images/tasks/EXPRESS_TOILET_001/5.png",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_19006",
-          "seq": 6,
-          "text": "进入厕所",
-          "imagePath": "images/tasks/EXPRESS_TOILET_001_cover.jpg",
           "videoPath": null,
           "audioPath": null
         }
@@ -1486,12 +1394,12 @@
       "coverImage": "images/tasks/BOY_URINATE_001_cover.jpg",
       "categoryId": 32,
       "abilityItem": "toilet_02",
-      "stepCount": 7,
+      "stepCount": 8,
       "steps": [
         {
           "id": "legacy_step_20001",
           "seq": 1,
-          "text": "走到便池前站稳位置",
+          "text": "走进卫生间，打开门",
           "imagePath": "images/tasks/BOY_URINATE_001/1.png",
           "videoPath": null,
           "audioPath": null
@@ -1499,7 +1407,7 @@
         {
           "id": "legacy_step_20002",
           "seq": 2,
-          "text": "双手配合将裤子褪至大腿处",
+          "text": "掀起马桶座圈",
           "imagePath": "images/tasks/BOY_URINATE_001/2.png",
           "videoPath": null,
           "audioPath": null
@@ -1507,7 +1415,7 @@
         {
           "id": "legacy_step_20003",
           "seq": 3,
-          "text": "手扶私处对准便池内部",
+          "text": "低头看一看马桶里面",
           "imagePath": "images/tasks/BOY_URINATE_001/3.png",
           "videoPath": null,
           "audioPath": null
@@ -1515,7 +1423,7 @@
         {
           "id": "legacy_step_20004",
           "seq": 4,
-          "text": "放松排尿",
+          "text": "站好，对准马桶中心排尿",
           "imagePath": "images/tasks/BOY_URINATE_001/4.png",
           "videoPath": null,
           "audioPath": null
@@ -1523,7 +1431,7 @@
         {
           "id": "legacy_step_20005",
           "seq": 5,
-          "text": "排完后轻轻抖动排净余尿",
+          "text": "站着放松排尿",
           "imagePath": "images/tasks/BOY_URINATE_001/5.png",
           "videoPath": null,
           "audioPath": null
@@ -1531,7 +1439,7 @@
         {
           "id": "legacy_step_20006",
           "seq": 6,
-          "text": "将私处收回提起裤子",
+          "text": "排完后回头看，确认尿在马桶里",
           "imagePath": "images/tasks/BOY_URINATE_001/6.png",
           "videoPath": null,
           "audioPath": null
@@ -1539,8 +1447,16 @@
         {
           "id": "legacy_step_20007",
           "seq": 7,
-          "text": "按冲水按钮去洗手",
+          "text": "按压冲水按钮，把马桶冲干净",
           "imagePath": "images/tasks/BOY_URINATE_001/7.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_20008",
+          "seq": 8,
+          "text": "用洗手液把手洗干净",
+          "imagePath": "images/tasks/BOY_URINATE_001/8.png",
           "videoPath": null,
           "audioPath": null
         }
@@ -1559,12 +1475,12 @@
       "coverImage": "images/tasks/GIRL_URINATE_001_cover.jpg",
       "categoryId": 32,
       "abilityItem": "toilet_02",
-      "stepCount": 8,
+      "stepCount": 10,
       "steps": [
         {
           "id": "legacy_step_21001",
           "seq": 1,
-          "text": "进入隔间关好门",
+          "text": "进入隔间，关好门",
           "imagePath": "images/tasks/GIRL_URINATE_001/1.png",
           "videoPath": null,
           "audioPath": null
@@ -1572,7 +1488,7 @@
         {
           "id": "legacy_step_21002",
           "seq": 2,
-          "text": "将裤子褪至膝盖以下",
+          "text": "掀起马桶盖",
           "imagePath": "images/tasks/GIRL_URINATE_001/2.png",
           "videoPath": null,
           "audioPath": null
@@ -1580,7 +1496,7 @@
         {
           "id": "legacy_step_21003",
           "seq": 3,
-          "text": "坐在马桶圈上",
+          "text": "脱下裤子",
           "imagePath": "images/tasks/GIRL_URINATE_001/3.png",
           "videoPath": null,
           "audioPath": null
@@ -1588,7 +1504,7 @@
         {
           "id": "legacy_step_21004",
           "seq": 4,
-          "text": "放松排尿",
+          "text": "坐在马桶圈上",
           "imagePath": "images/tasks/GIRL_URINATE_001/4.png",
           "videoPath": null,
           "audioPath": null
@@ -1596,7 +1512,7 @@
         {
           "id": "legacy_step_21005",
           "seq": 5,
-          "text": "取适量手纸",
+          "text": "闭上眼睛，放松排尿",
           "imagePath": "images/tasks/GIRL_URINATE_001/5.png",
           "videoPath": null,
           "audioPath": null
@@ -1604,7 +1520,7 @@
         {
           "id": "legacy_step_21006",
           "seq": 6,
-          "text": "从前往后轻轻擦拭私处",
+          "text": "伸手取适量手纸",
           "imagePath": "images/tasks/GIRL_URINATE_001/6.png",
           "videoPath": null,
           "audioPath": null
@@ -1612,7 +1528,7 @@
         {
           "id": "legacy_step_21007",
           "seq": 7,
-          "text": "丢弃手纸站起提裤子",
+          "text": "从纸卷上撕下足够长度",
           "imagePath": "images/tasks/GIRL_URINATE_001/7.png",
           "videoPath": null,
           "audioPath": null
@@ -1620,8 +1536,24 @@
         {
           "id": "legacy_step_21008",
           "seq": 8,
-          "text": "冲水去洗手",
+          "text": "把手纸丢进马桶",
           "imagePath": "images/tasks/GIRL_URINATE_001/8.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_21009",
+          "seq": 9,
+          "text": "按压冲水按钮，把马桶冲干净",
+          "imagePath": "images/tasks/GIRL_URINATE_001/9.png",
+          "videoPath": null,
+          "audioPath": null
+        },
+        {
+          "id": "legacy_step_21010",
+          "seq": 10,
+          "text": "用洗手液把手洗干净",
+          "imagePath": "images/tasks/GIRL_URINATE_001/10.png",
           "videoPath": null,
           "audioPath": null
         }
@@ -1729,13 +1661,13 @@
       "coverImage": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
       "categoryId": 51,
       "abilityItem": "home_01",
-      "stepCount": 8,
+      "stepCount": 6,
       "steps": [
         {
           "id": "legacy_step_23001",
           "seq": 1,
           "text": "将书包内的东西全部拿出清空",
-          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001/1.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -1743,7 +1675,7 @@
           "id": "legacy_step_23002",
           "seq": 2,
           "text": "拿出课程表或物品清单",
-          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001/2.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -1751,7 +1683,7 @@
           "id": "legacy_step_23003",
           "seq": 3,
           "text": "按清单找到课本和作业本装入大层",
-          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001/3.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -1759,39 +1691,23 @@
           "id": "legacy_step_23004",
           "seq": 4,
           "text": "检查文具盒装入书包",
-          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001/4.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_23005",
           "seq": 5,
-          "text": "检查水杯是否拧紧装入侧袋",
-          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "text": "拉好所有拉链",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001/5.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_23006",
           "seq": 6,
-          "text": "放入纸巾或其他杂物",
-          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_23007",
-          "seq": 7,
-          "text": "拉好所有拉链",
-          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_23008",
-          "seq": 8,
           "text": "将书包放在门口指定位置",
-          "imagePath": "images/tasks/PACK_SCHOOLBAG_001_cover.jpg",
+          "imagePath": "images/tasks/PACK_SCHOOLBAG_001/6.png",
           "videoPath": null,
           "audioPath": null
         }
@@ -1889,7 +1805,7 @@
           "id": "legacy_step_25001",
           "seq": 1,
           "text": "将抹布打湿并用力拧干",
-          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "imagePath": "images/tasks/WIPE_TABLE_001/1.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -1897,7 +1813,7 @@
           "id": "legacy_step_25002",
           "seq": 2,
           "text": "将桌上的物品全部移到另一处",
-          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "imagePath": "images/tasks/WIPE_TABLE_001/2.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -1905,7 +1821,7 @@
           "id": "legacy_step_25003",
           "seq": 3,
           "text": "先沿着桌子的四条边擦一圈",
-          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "imagePath": "images/tasks/WIPE_TABLE_001/3.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -1913,7 +1829,7 @@
           "id": "legacy_step_25004",
           "seq": 4,
           "text": "从左上角开始走Z字形擦拭",
-          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "imagePath": "images/tasks/WIPE_TABLE_001/4.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -1921,7 +1837,7 @@
           "id": "legacy_step_25005",
           "seq": 5,
           "text": "遇到顽固污渍用力抠擦",
-          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "imagePath": "images/tasks/WIPE_TABLE_001/5.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -1929,7 +1845,7 @@
           "id": "legacy_step_25006",
           "seq": 6,
           "text": "清洗抹布拧干挂好",
-          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "imagePath": "images/tasks/WIPE_TABLE_001/6.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -1937,7 +1853,7 @@
           "id": "legacy_step_25007",
           "seq": 7,
           "text": "将物品放回原处",
-          "imagePath": "images/tasks/WIPE_TABLE_001_cover.jpg",
+          "imagePath": "images/tasks/WIPE_TABLE_001/7.png",
           "videoPath": null,
           "audioPath": null
         }
@@ -1956,13 +1872,13 @@
       "coverImage": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
       "categoryId": 53,
       "abilityItem": "home_02",
-      "stepCount": 8,
+      "stepCount": 7,
       "steps": [
         {
           "id": "legacy_step_26001",
           "seq": 1,
           "text": "双手握住扫把柄",
-          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001/1.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -1970,7 +1886,7 @@
           "id": "legacy_step_26002",
           "seq": 2,
           "text": "眼睛寻找地面的垃圾",
-          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001/2.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -1978,47 +1894,39 @@
           "id": "legacy_step_26003",
           "seq": 3,
           "text": "从房间四周向中间扫",
-          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001/3.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_26004",
           "seq": 4,
-          "text": "拿来簸箕平贴地面放置",
-          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "text": "用扫把将垃圾扫入簸箕内部",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001/4.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_26005",
           "seq": 5,
-          "text": "用扫把将垃圾扫入簸箕内部",
-          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "text": "提起簸箕保持平稳",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001/5.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_26006",
           "seq": 6,
-          "text": "提起簸箕保持平稳",
-          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "text": "走到垃圾桶旁将垃圾倒入",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001/6.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_26007",
           "seq": 7,
-          "text": "走到垃圾桶旁将垃圾倒入",
-          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_26008",
-          "seq": 8,
-          "text": "将工具放回原处",
-          "imagePath": "images/tasks/SWEEP_FLOOR_001_cover.jpg",
+          "text": "将扫把和簸箕放回墙角归位",
+          "imagePath": "images/tasks/SWEEP_FLOOR_001/7.png",
           "videoPath": null,
           "audioPath": null
         }
@@ -2040,60 +1948,34 @@
       "stepCount": 7,
       "steps": [
         {
-          "id": "legacy_step_27001",
+          "id": "step_1",
           "seq": 1,
-          "text": "将衣服正面朝下平铺",
-          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
+          "text": "在平坦的桌面上把T恤铺平，抚平褶皱",
+          "imagePath": "images/tasks/FOLD_CLOTHES_001/1.png"
         },
         {
-          "id": "legacy_step_27002",
+          "id": "step_2",
           "seq": 2,
-          "text": "用手掌抚平衣服上的皱褶",
-          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
+          "text": "将左边袖子沿肩膀中点向中心折叠",
+          "imagePath": "images/tasks/FOLD_CLOTHES_001/2.png"
         },
         {
-          "id": "legacy_step_27003",
+          "id": "step_3",
           "seq": 3,
-          "text": "将左侧袖子和衣身向内折叠",
-          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
+          "text": "将左边领口到下缘的垂线作为中线，再次折叠",
+          "imagePath": "images/tasks/FOLD_CLOTHES_001/3.png"
         },
         {
-          "id": "legacy_step_27004",
+          "id": "step_4",
           "seq": 4,
-          "text": "将右侧袖子和衣身向内折叠",
-          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
+          "text": "在T恤右半部分重复以上操作，叠成长方形",
+          "imagePath": "images/tasks/FOLD_CLOTHES_001/4.png"
         },
         {
-          "id": "legacy_step_27005",
+          "id": "step_5",
           "seq": 5,
-          "text": "双手捏住衣摆底部",
-          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_27006",
-          "seq": 6,
-          "text": "向上对折",
-          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_27007",
-          "seq": 7,
-          "text": "翻转过来整理平整",
-          "imagePath": "images/tasks/FOLD_CLOTHES_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
+          "text": "从下至上将T恤对称折叠，整理平整",
+          "imagePath": "images/tasks/FOLD_CLOTHES_001/5.png"
         }
       ]
     },
@@ -2115,7 +1997,7 @@
         {
           "id": "legacy_step_28001",
           "seq": 1,
-          "text": "进超市取购物车或购物篮",
+          "text": "进超市，取好购物篮或购物车",
           "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/1.png",
           "videoPath": null,
           "audioPath": null
@@ -2123,7 +2005,7 @@
         {
           "id": "legacy_step_28002",
           "seq": 2,
-          "text": "拿出购物清单",
+          "text": "拿出购物清单，核对要买的物品",
           "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/2.png",
           "videoPath": null,
           "audioPath": null
@@ -2131,7 +2013,7 @@
         {
           "id": "legacy_step_28003",
           "seq": 3,
-          "text": "走到对应货架区",
+          "text": "走到货架区，挑选需要的商品放入购物篮",
           "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/3.png",
           "videoPath": null,
           "audioPath": null
@@ -2139,7 +2021,7 @@
         {
           "id": "legacy_step_28004",
           "seq": 4,
-          "text": "找到目标商品检查保质期",
+          "text": "到称重台称重，看清楚价格标签",
           "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/4.png",
           "videoPath": null,
           "audioPath": null
@@ -2147,7 +2029,7 @@
         {
           "id": "legacy_step_28005",
           "seq": 5,
-          "text": "查看价格标签放入购物车",
+          "text": "继续按清单购买其他商品",
           "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/5.png",
           "videoPath": null,
           "audioPath": null
@@ -2155,7 +2037,7 @@
         {
           "id": "legacy_step_28006",
           "seq": 6,
-          "text": "确认买齐后推车去收银台排队",
+          "text": "拿齐物品后，到收银台排队等待",
           "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/6.png",
           "videoPath": null,
           "audioPath": null
@@ -2163,7 +2045,7 @@
         {
           "id": "legacy_step_28007",
           "seq": 7,
-          "text": "将商品拿出放在传送带上",
+          "text": "出示付款码，完成支付",
           "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/7.png",
           "videoPath": null,
           "audioPath": null
@@ -2171,7 +2053,7 @@
         {
           "id": "legacy_step_28008",
           "seq": 8,
-          "text": "付款将商品装入袋子",
+          "text": "提好购物袋，离开超市",
           "imagePath": "images/tasks/SUPERMARKET_SHOPPING_001/8.png",
           "videoPath": null,
           "audioPath": null
@@ -2197,7 +2079,7 @@
           "id": "legacy_step_29001",
           "seq": 1,
           "text": "在站台黄线内排队候车",
-          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "imagePath": "images/tasks/TAKE_BUS_001/1.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -2205,7 +2087,7 @@
           "id": "legacy_step_29002",
           "seq": 2,
           "text": "车停稳后等待车门完全打开",
-          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "imagePath": "images/tasks/TAKE_BUS_001/2.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -2213,7 +2095,7 @@
           "id": "legacy_step_29003",
           "seq": 3,
           "text": "先让车上的人下车再从前门上车",
-          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "imagePath": "images/tasks/TAKE_BUS_001/3.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -2221,7 +2103,7 @@
           "id": "legacy_step_29004",
           "seq": 4,
           "text": "刷公交卡或投币",
-          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "imagePath": "images/tasks/TAKE_BUS_001/4.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -2229,7 +2111,7 @@
           "id": "legacy_step_29005",
           "seq": 5,
           "text": "寻找空座位坐下",
-          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "imagePath": "images/tasks/TAKE_BUS_001/5.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -2237,7 +2119,7 @@
           "id": "legacy_step_29006",
           "seq": 6,
           "text": "注意听广播报站",
-          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "imagePath": "images/tasks/TAKE_BUS_001/6.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -2245,7 +2127,7 @@
           "id": "legacy_step_29007",
           "seq": 7,
           "text": "快到站时提前按铃",
-          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "imagePath": "images/tasks/TAKE_BUS_001/7.png",
           "videoPath": null,
           "audioPath": null
         },
@@ -2253,7 +2135,7 @@
           "id": "legacy_step_29008",
           "seq": 8,
           "text": "车停稳后从后门下车",
-          "imagePath": "images/tasks/TAKE_BUS_001_cover.jpg",
+          "imagePath": "images/tasks/TAKE_BUS_001/8.png",
           "videoPath": null,
           "audioPath": null
         }
@@ -2272,7 +2154,7 @@
       "coverImage": "images/tasks/CROSS_ROAD_001_cover.jpg",
       "categoryId": 61,
       "abilityItem": "community_01",
-      "stepCount": 8,
+      "stepCount": 6,
       "steps": [
         {
           "id": "legacy_step_30001",
@@ -2293,7 +2175,7 @@
         {
           "id": "legacy_step_30003",
           "seq": 3,
-          "text": "如果是红灯原地等待",
+          "text": "如果是红灯，站在原地等待",
           "imagePath": "images/tasks/CROSS_ROAD_001/3.png",
           "videoPath": null,
           "audioPath": null
@@ -2301,7 +2183,7 @@
         {
           "id": "legacy_step_30004",
           "seq": 4,
-          "text": "变绿灯后先向左看再向右看",
+          "text": "绿灯亮起，面向马路对面准备通行",
           "imagePath": "images/tasks/CROSS_ROAD_001/4.png",
           "videoPath": null,
           "audioPath": null
@@ -2309,7 +2191,7 @@
         {
           "id": "legacy_step_30005",
           "seq": 5,
-          "text": "确认车辆都已停下",
+          "text": "举起一只手示意，快速走过斑马线",
           "imagePath": "images/tasks/CROSS_ROAD_001/5.png",
           "videoPath": null,
           "audioPath": null
@@ -2317,24 +2199,8 @@
         {
           "id": "legacy_step_30006",
           "seq": 6,
-          "text": "举起一只手",
+          "text": "到达马路对面，安全通过",
           "imagePath": "images/tasks/CROSS_ROAD_001/6.png",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_30007",
-          "seq": 7,
-          "text": "快速走过斑马线",
-          "imagePath": "images/tasks/CROSS_ROAD_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_30008",
-          "seq": 8,
-          "text": "保持警惕直到到达对面",
-          "imagePath": "images/tasks/CROSS_ROAD_001_cover.jpg",
           "videoPath": null,
           "audioPath": null
         }
@@ -2353,12 +2219,12 @@
       "coverImage": "images/tasks/ASK_DIRECTIONS_001_cover.jpg",
       "categoryId": 64,
       "abilityItem": "community_03",
-      "stepCount": 7,
+      "stepCount": 5,
       "steps": [
         {
           "id": "legacy_step_31001",
           "seq": 1,
-          "text": "发现迷路先原地站好深呼吸",
+          "text": "发现迷路后先走到安全处原地站好",
           "imagePath": "images/tasks/ASK_DIRECTIONS_001/1.png",
           "videoPath": null,
           "audioPath": null
@@ -2366,7 +2232,7 @@
         {
           "id": "legacy_step_31002",
           "seq": 2,
-          "text": "环顾四周寻找穿制服的人",
+          "text": "环顾四周，寻找穿制服的警察",
           "imagePath": "images/tasks/ASK_DIRECTIONS_001/2.png",
           "videoPath": null,
           "audioPath": null
@@ -2374,7 +2240,7 @@
         {
           "id": "legacy_step_31003",
           "seq": 3,
-          "text": "走上前去保持一臂距离",
+          "text": "走上前去，看着警察的眼睛大声说出“请帮帮我”",
           "imagePath": "images/tasks/ASK_DIRECTIONS_001/3.png",
           "videoPath": null,
           "audioPath": null
@@ -2382,7 +2248,7 @@
         {
           "id": "legacy_step_31004",
           "seq": 4,
-          "text": "看着对方眼睛大声说请帮帮我",
+          "text": "拿出紧急联系卡，递给警察说明情况",
           "imagePath": "images/tasks/ASK_DIRECTIONS_001/4.png",
           "videoPath": null,
           "audioPath": null
@@ -2390,24 +2256,8 @@
         {
           "id": "legacy_step_31005",
           "seq": 5,
-          "text": "拿出紧急联系卡递给对方",
+          "text": "等待警察联系家人来接",
           "imagePath": "images/tasks/ASK_DIRECTIONS_001/5.png",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_31006",
-          "seq": 6,
-          "text": "说出需求",
-          "imagePath": "images/tasks/ASK_DIRECTIONS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_31007",
-          "seq": 7,
-          "text": "等待家长来接",
-          "imagePath": "images/tasks/ASK_DIRECTIONS_001_cover.jpg",
           "videoPath": null,
           "audioPath": null
         }

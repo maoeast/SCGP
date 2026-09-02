@@ -1,5 +1,5 @@
 import taskSeedInventory from './self-care-task-seed-inventory.json';
-import { normalizeTaskTrainingEditorModel } from '@/features/self-care/task-training-contract';
+import { normalizeTaskTrainingEditorModel, type TaskTrainingResourceMeta } from '@/features/self-care/task-training-contract';
 
 export type SelfCareTaskSeedMode = 'overwrite' | 'preserve' | 'missing-only';
 
@@ -66,22 +66,30 @@ const DIRECT_MEDIA_URL_RE = /^(?:https?:|data:|blob:|resource:\/\/)/i;
 const PRESET_RESOURCE_PREFIXES = ['images/', 'videos/', 'audio/', 'docs/'];
 
 const TASK_STEP_IMAGE_MAPPINGS: Record<string, Array<number | null>> = {
-  ASK_DIRECTIONS_001: [1, 2, 3, 4, 5, null, null],
+  ASK_DIRECTIONS_001: [1, 2, 3, 4, 5],
   BLOW_NOSE_001: [1, 2, 3, 4, 5, 6, 7, 8],
-  BOY_URINATE_001: [1, 2, 3, 4, 5, 6, 7],
-  BRUSH_TEETH_001: [1, 2, 3, 4, 5, 6, 7, 8],
+  FOLD_CLOTHES_001: [1, 2, 3, 4, 5],
+  TAKE_OFF_PANTS_001: [1, 2, 3, 4, 5, 6],
+  BOY_URINATE_001: [1, 2, 3, 4, 5, 6, 7, 8],
+  BRUSH_TEETH_001: [1, 2, 3, 4, 5, 6, 7, 9, 10],
   COMB_HAIR_001: [1, 2, 3, 4, 5, 6, 7],
-  CROSS_ROAD_001: [1, 2, 3, 4, 5, 6, null, null],
-  DRINK_WATER_001: [1, 2, 3, 4, 5, 6, 7, null],
+  CROSS_ROAD_001: [1, 2, 3, 4, 5, 6],
+  DRINK_WATER_001: [1, 2, 3, 4, 5, 6, 7],
   EAT_CHOPSTICKS_001: [1, 2, 3, 4, 5, 6, 7],
   EAT_SPOON_001: [1, 2, 3, 4, 5, 6, 7, 8],
-  EXPRESS_TOILET_001: [1, 2, 3, 4, 5, null],
-  GIRL_URINATE_001: [1, 2, 3, 4, 5, 6, 7, 8],
+  EXPRESS_TOILET_001: [1, 2, 3, 4, 5],
+  GIRL_URINATE_001: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  PACK_SCHOOLBAG_001: [1, 2, 3, 4, 5, 6],
   SQUEEZE_TOOTHPASTE_001: [1, 2, 3, 4, 5, 6, 7],
   SUPERMARKET_SHOPPING_001: [1, 2, 3, 4, 5, 6, 7, 8],
+  SWEEP_FLOOR_001: [1, 2, 3, 4, 5, 6, 7],
+  TAKE_BUS_001: [1, 2, 3, 4, 5, 6, 7, 8],
   TAKE_SHOWER_001: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   WASH_FACE_001: [1, 2, 3, 4, 5, 6, 7, 8],
   WASH_HANDS_001: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  WEAR_PANTS_001: [1, 2, 3, 4],
+  WEAR_SHIRT_001: [1, 2, 3, 4],
+  WIPE_TABLE_001: [1, 2, 3, 4, 5, 6, 7],
 };
 
 function isPresetResourcePath(value: string): boolean {
@@ -278,3 +286,90 @@ export function resolveSelfCareTaskSeedMode(
   }
   return import.meta.env.DEV ? 'overwrite' : 'missing-only';
 }
+
+/**
+ * 步骤图缺图补全：老库（生产 missing-only 模式跳过更新）中步骤 imagePath 仍是
+ * 封面占位（空 / *_cover.jpg）而 seed 已提供编号真图时，仅替换 imagePath 字段，
+ * 其余步骤字段（text / videoPath / audioPath 等）保持不变，避免覆盖用户改动。
+ *
+ * 返回补全后的 meta_data JSON；若无变化或输入不可解析返回 null。
+ */
+export function upgradeSeedTaskStepsImagePaths(
+  existingMetaJson: string | null,
+  seedMeta: TaskTrainingResourceMeta,
+  legacyTaskCode: string,
+): string | null {
+  if (!existingMetaJson) {
+    return null
+  }
+
+  let existingMeta: unknown
+  try {
+    existingMeta = JSON.parse(existingMetaJson)
+  } catch {
+    return null
+  }
+
+  const candidate = existingMeta as { steps?: unknown } | null
+  if (!candidate || !Array.isArray(candidate.steps)) {
+    return null
+  }
+
+  // 步骤数变化（如文案重组：叠衣服 7 步 → 5 步）：仅当现有步骤全部由 seed 管理
+  // （封面占位 或 seed 编号路径 {CODE}/{n}.png，即 seed 写入的布局）时，steps 结构与
+  // 文本整体替换为 seed 权威版本；若任一步骤存在用户内容路径（上传/自定义），不动。
+  // 仅适用于内置 seed 任务（is_custom=0），用户自定义资源不经过本函数
+  if (candidate.steps.length !== seedMeta.steps.length) {
+    const seedManagedPattern = new RegExp(`/tasks/${legacyTaskCode}/\\d+\\.(?:png|jpg|jpeg|webp)$`, 'i')
+    const allSeedManaged = candidate.steps.every((step) => {
+      const rawStep = step as Record<string, unknown> | null
+      const image = rawStep && typeof rawStep.imagePath === 'string' ? rawStep.imagePath.trim() : ''
+      if (!image || image.includes(`${legacyTaskCode}_cover`)) {
+        return true
+      }
+      return seedManagedPattern.test(image)
+    })
+    if (!allSeedManaged) {
+      return null
+    }
+    return JSON.stringify({
+      ...candidate,
+      steps: seedMeta.steps,
+      trainingMode: seedMeta.trainingMode,
+      trainingEntryCode: seedMeta.trainingEntryCode,
+      legacyTaskCode: seedMeta.legacyTaskCode,
+    })
+  }
+
+  const seedImagePrefix = `/tasks/${legacyTaskCode}/`
+  let changed = false
+  const upgradedSteps = candidate.steps.map((step, index) => {
+    const rawStep = step as Record<string, unknown> | null
+    if (!rawStep || typeof rawStep !== 'object') {
+      return step
+    }
+
+    const seedImage = seedMeta.steps[index]?.imagePath
+    if (!seedImage || !seedImage.includes(seedImagePrefix)) {
+      // seed 该步骤未提供编号真图（如部分步骤仍用封面）→ 不动
+      return step
+    }
+
+    const existingImage = typeof rawStep.imagePath === 'string' ? rawStep.imagePath.trim() : ''
+    const isCoverPlaceholder = !existingImage || existingImage.includes(`${legacyTaskCode}_cover`)
+    if (!isCoverPlaceholder) {
+      // 已有真实图像（用户配置或此前已补）→ 不动
+      return step
+    }
+
+    changed = true
+    return { ...rawStep, imagePath: seedImage }
+  })
+
+  if (!changed) {
+    return null
+  }
+
+  return JSON.stringify({ ...candidate, steps: upgradedSteps })
+}
+

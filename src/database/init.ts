@@ -7,6 +7,7 @@ import {
   resolveSelfCareTaskSeedMode,
   SELF_CARE_TASK_SEED_RESOURCES,
   SELF_CARE_TASK_SEED_SUMMARY,
+  upgradeSeedTaskStepsImagePaths,
   type SelfCareTaskSeedMode,
 } from '@/data/self-care-task-seed'
 import { BUILTIN_KNOWLEDGE_SKILLS } from '@/data/skills'
@@ -1937,7 +1938,21 @@ async function upsertSelfCareTaskSeedResources(database: any): Promise<void> {
     }
 
     if (mode === 'missing-only' || mode === 'preserve') {
-      skipped += 1
+      // 老库补全：步骤只有封面占位、seed 已提供编号真图时，仅升级 imagePath
+      const upgradedMetaJson = upgradeSeedTaskStepsImagePaths(
+        existing.meta_data,
+        task.metadata,
+        task.legacyTaskCode,
+      )
+      if (upgradedMetaJson !== null) {
+        database.run(
+          'UPDATE sys_training_resource SET meta_data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          [upgradedMetaJson, existing.id],
+        )
+        updated += 1
+      } else {
+        skipped += 1
+      }
       continue
     }
 

@@ -1858,4 +1858,26 @@
 - **全局约束（新增量表必修）**：`report_record` 的 report_type CHECK 约束必须在 3 处同步（init.ts 建表、migrate-report-constraints.ts 重建表 + needsMigration 检测），漏了旧库启动时靠约束迁移自动重建（commit `ac687ae`）。新增量表完整 7 处同步清单已存长期记忆。
 - AI 工具 `get_assessment_trend` 现支持 15 量表（abc/atec 适配器已注册，commit `ab70953`）；新增模型对话框改为顶部快捷拉取工具栏 + 自动派生编号（commit `3e98981`）。
 
+## 106. 2026-09-01 AI 助手输入区 P0/P1 + window.electronAPI 类型单一化
+
+- AI 助手输入区 P0（commit `92a22e2`）：`ai:abort` IPC 通道（流式/非流式通用，按 requestId 取消；工具循环轮次间隙停止经 abortedRequestIds 标记下一轮注册即中止）、停止后保留已生成部分内容、textarea autosize、两行布局。P1（commit `5384fd8`）：斜杠命令面板（/报告、/开场N，插入可编辑）、拖拽/粘贴附件统一 addFiles 分流、绑定学生入口移到输入框上方且始终显示（无会话时 ensureSession 自动建"新对话"）。
+- **全局事实（影响后续 electron API 类型）**：`window.electronAPI` 类型只认 `src/types/electron.d.ts` 单一声明源；`env.d.ts` 中的旧内联副本已删除（历史上两份分叉维护过：env.d.ts 缺新成员、electron.d.ts 缺 readFile/getAppPath/aiListModels，已补齐）。新增 IPC 方法只改 preload.mjs + electron.d.ts（+ mock 分支）。
+- **提交纪律（git 工具行为）**：git 工具 `commit`（不带 path）会自动 stage 全部未跟踪文件——曾把 `.agents/`、`thincoder-main.zip`、`aac.html` 带进提交（已 soft reset 修正）。提交前用 `.git/info/exclude` 临时忽略无关杂物（提交后恢复），或逐个 `git add` 精确文件。
+
+## 107. 2026-09-01 生活自理训练缺图补齐首批（叠衣服 + 脱裤子，14 张）
+
+- **任务**：自理训练库 31 任务中 15 个任务（105 步）步骤图只有封面占位；本次为试点任务「叠衣服 FOLD_CLOTHES_001 + 脱裤子 TAKE_OFF_PANTS_001」生成步骤图并入库。
+- **生成链路**：G:\SCGP_Rec\AIimages 工作区 + apimart 中继 `gpt-image-2`（batch-json，size 16:9 / resolution 2k）单步生成（非母图切分）；步骤 1 先出图，经确认后作为**固定锚点参考图**（image_paths）供 2-N 步引用——不做链式参考（避免噪声/色偏累积，用户 2026-09-01 明确指出此坑）。
+- **安全审核实测结论（关键）**：「脱裤子＋安全裤/边缘/隐约露出/不出现裸露」等组合措辞被 content safety 过滤；改写为正面教学措辞（「学习解开裤腰纽扣」「浅灰色打底短裤与长裤重叠穿着，是普通儿童的日常着装」「衣着完整得体」）后一次通过。**局部特写边界（2026-09-02 实测）**：下半身局部（大腿中部→双脚）+ 脱裤管组合**仍被过滤**（复现 5 月「禁只拍下半身」），步 4-6 必须用已验证的全身中景；可行的局部 = 非下装区（如脱裤子第 7 步床头纯物品场景、未做的穿袜/穿鞋脚部特写）。措辞模板固定为脱裤子/大便系列后续范本。
+- **验收返工（2026-09-02 用户复核）**：叠衣服按用户 5 步连贯折叠法重做（原 7 步方案步 3/4 不连贯），步骤文案同步改为用户 5 步（inventory）；脱裤子 step4（裤管必须堆脚踝，严禁停在膝盖）、step7（改为床头纯物品场景，不出现人物）重做。**脱裤子最终 6 步方案**（用户 2026-09-02 拍板：7 步改 6 步，中间态不可靠）：①解扣 ②推到膝盖 ③坐床边 ④推到脚踝（fix2 ✓）⑤双脚退出+站立拿裤（B 方案稳定态：与 step1 同站姿、双手捧叠好的裤、双腿只剩打底短裤+白袜——**稳定态构图**）⑥放好（床头纯物品）。**翻车教训**：图 5（只画两条裤管符号、裤子主体消失）与图 6（双脚仍在裤管里）证明 gpt-image-2 对"一只脚抽出另一只还在"的**中间态**不可靠；特教分解卡改为**每步呈现完成稳定态**（不画中间态）。终审必须看**原图**（640px 拼贴缩略曾误判 step6 "裤管堆脚边"→ 实际是双脚还在裤里）。
+- **入库**：`assets/resources/images/tasks/FOLD_CLOTHES_001/{1..5}.webp`（5 步方案）、`TAKE_OFF_PANTS_001/{1..6}.webp`（6 步方案，step5 站立拿裤、step6 床头纯物品）（1408x768、q90、55-105KB，与既有 task webp 同规格；DB 路径保持 .png 引用，resource:// 协议 png→webp 兜底）。
+- **数据源**：`self-care-task-seed-inventory.json` 叠衣服 5 步新文案 + 脱裤子 6 步合并文案 + 两任务 imagePath 真图；`self-care-task-seed.ts` `TASK_STEP_IMAGE_MAPPINGS`（FOLD_CLOTHES_001=[1..5]、TAKE_OFF_PANTS_001=[1..6]）。
+- **老库升级机制（新增）**：`upgradeSeedTaskStepsImagePaths()`（seed.ts，init.ts missing-only/preserve 分支调用）：
+  1. 步骤数相同：仅当现有 imagePath 为占位（空/cover）+ seed 提供真图时替换 imagePath，保留 text 等（尊重用户改动）；
+  2. 步骤数不同（文案重组）：仅当现有步骤全部由 seed 管理（cover 占位 或 seed 编号路径 {CODE}/{n}.png）时整体替换 steps 为 seed 权威版本；存在用户上传路径（uploaded/自定义）→ 不动（用户内容保护）。
+- **验证**：`npx jiti scripts/tests/self-care-task-seed.test.mjs`（3/3，含升级行为+用户保护用例）、`npx jiti scripts/tests/self-care-task-init.test.mjs`（2/2）、`npm run type-check` 通过；开发库已离线升级到最终态（叠衣服 5 步、脱裤子 6 步全真图且与 seed 一致）；真机 UI 待重启验证。
+- **教训（重要）**：seed/init 只在应用**启动时**执行——改 seed/图片后必须**重启应用**（刷新页面不生效）；用户库验证路径 = 读 `%APPDATA%\scgp\database.sqlite` 的 `sys_training_resource.meta_data` 对比 seed。
+- **下一步**：剩余 A 类 13 任务（扫地/擦桌子/整理床铺/收拾书包/乘车/系鞋带/扣解纽扣/穿袜子/穿鞋子/穿裤子/穿上衣/脱上衣/大便，共 91 步）+ B 类 5 步（喝水 8、表达如厕 6、过马路 7-8、问路 6-7）按同模板批量生成；敏感措辞/局部边界已实测固化。
+
+
 
