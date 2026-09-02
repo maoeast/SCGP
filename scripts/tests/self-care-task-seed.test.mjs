@@ -278,6 +278,17 @@ test('wave1 四任务步骤图入库对齐（书包6/扫地7/擦桌7/乘车8）'
   assert.equal(bus.metadata.steps[7]?.imagePath, 'resource://images/tasks/TAKE_BUS_001/8.png');
 });
 
+test('WEAR_SOCKS 4 步（v2 全新生成入库）', () => {
+  const { SELF_CARE_TASK_SEED_RESOURCES } = loadSeedModule();
+  const socks = SELF_CARE_TASK_SEED_RESOURCES.find((item) => item.legacyTaskCode === 'WEAR_SOCKS_001');
+  assert.ok(socks);
+  assert.equal(socks.metadata.steps.length, 4);
+  assert.equal(socks.metadata.steps[0]?.text, '找到袜子，分清左右和前后，袜跟朝脚跟');
+  assert.equal(socks.metadata.steps[2]?.text, '套入脚尖，把袜跟拉到包住脚后跟');
+  assert.equal(socks.metadata.steps[3]?.imagePath, 'resource://images/tasks/WEAR_SOCKS_001/4.png');
+});
+
+
 
 
 

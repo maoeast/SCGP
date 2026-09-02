@@ -1061,61 +1061,37 @@
       "coverImage": "images/tasks/WEAR_SOCKS_001_cover.jpg",
       "categoryId": 23,
       "abilityItem": "dress_03",
-      "stepCount": 7,
+      "stepCount": 4,
       "steps": [
         {
           "id": "legacy_step_15001",
           "seq": 1,
-          "text": "拿起袜子找到袜跟位置",
-          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
+          "text": "找到袜子，分清左右和前后，袜跟朝脚跟",
+          "imagePath": "images/tasks/WEAR_SOCKS_001/1.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_15002",
           "seq": 2,
-          "text": "双手大拇指伸入袜筒",
-          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
+          "text": "双手撑开袜口，把袜子叠缩到脚尖",
+          "imagePath": "images/tasks/WEAR_SOCKS_001/2.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_15003",
           "seq": 3,
-          "text": "将袜子叠缩到脚尖处",
-          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
+          "text": "套入脚尖，把袜跟拉到包住脚后跟",
+          "imagePath": "images/tasks/WEAR_SOCKS_001/3.png",
           "videoPath": null,
           "audioPath": null
         },
         {
           "id": "legacy_step_15004",
           "seq": 4,
-          "text": "套入脚尖",
-          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_15005",
-          "seq": 5,
-          "text": "用力向后上方拉使袜跟包裹脚后跟",
-          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_15006",
-          "seq": 6,
-          "text": "向上拉平袜筒",
-          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
-          "videoPath": null,
-          "audioPath": null
-        },
-        {
-          "id": "legacy_step_15007",
-          "seq": 7,
-          "text": "调整袜头缝线使其平整",
-          "imagePath": "images/tasks/WEAR_SOCKS_001_cover.jpg",
+          "text": "向上拉平袜筒，穿好袜子并检查平整",
+          "imagePath": "images/tasks/WEAR_SOCKS_001/4.png",
           "videoPath": null,
           "audioPath": null
         }

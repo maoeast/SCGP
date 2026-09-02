@@ -89,6 +89,7 @@ const TASK_STEP_IMAGE_MAPPINGS: Record<string, Array<number | null>> = {
   WASH_HANDS_001: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   WEAR_PANTS_001: [1, 2, 3, 4],
   WEAR_SHIRT_001: [1, 2, 3, 4],
+  WEAR_SOCKS_001: [1, 2, 3, 4],
   WIPE_TABLE_001: [1, 2, 3, 4, 5, 6, 7],
 };
 
