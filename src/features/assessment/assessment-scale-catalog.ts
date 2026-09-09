@@ -36,6 +36,7 @@ export const ASSESSMENT_SCALE_CODES = [
   'cognitive_self',
   'abc',
   'atec',
+  'cpep_3',
 ] as const
 
 export type AssessmentScaleCode = typeof ASSESSMENT_SCALE_CODES[number]
@@ -694,6 +695,40 @@ export const ASSESSMENT_SCALE_CATALOG: AssessmentScaleCatalogItem[] = [
     isDraft: false,
     trendSupported: true,
     trendRouteName: 'ATECTrend',
+  },
+  {
+    code: 'cpep_3',
+    title: 'PEP-3 心理教育量表',
+    subtitle: '(中文修订版)',
+    icon: Cpu,
+    buttonType: 'primary',
+    iconClass: 'cpep3-icon',
+    ageRange: '2-7岁（常模覆盖 2-7.5 岁）',
+    questionCount: '139题',
+    dimensions: '评估维度：模仿、知觉、精细动作、粗大动作、手眼协调、认知表现、口语认知（发展能区）；情感、人际关系、物品喜好、感觉、语言（适应不良行为能区）',
+    timeEstimate: '约45-60分钟',
+    studentSelectorTitle: '选择评估学生 - PEP-3心理教育量表',
+    studentSelectorTag: {
+      type: 'primary',
+      label: 'PEP-3 心理教育',
+      description: '评估孤独症谱系及相关发育障碍儿童的发展水平与适应不良行为',
+    },
+    entryTabs: ['social-communication', 'emotional-regulation', 'sensory-integration'],
+    accessEntitlementsAnyOf: ['social_communication', 'emotional', 'sensory_integration'],
+    accessModulesAnyOf: ['social', 'emotional', 'sensory'],
+    urlSlug: 'cpep_3',
+    reportRouteName: 'Cpep3Report',
+    reportPathParamStyle: 'params',
+    reportComponentFolder: 'cpep-3',
+    reportMetaTitle: 'PEP-3心理教育量表评估报告',
+    reportTone: 'blue',
+    reportTagType: 'primary',
+    reportSelectLabel: 'PEP-3 评估报告',
+    reportCardLabel: 'PEP-3',
+    recordsLabel: 'PEP-3心理教育量表',
+    isDraft: false,
+    trendSupported: true,
+    trendRouteName: 'Cpep3Trend',
   },
 ]
 

@@ -51,24 +51,24 @@ function byEntitlements(codes: EntitlementCode[]) {
   )
 }
 
-// 2. 仅 sensory_integration → csirs/tgmd_3/gmfm_88/cnbsr2016（4 个）
+// 2. 仅 sensory_integration → 感官 4 + abc/atec/cpep_3（三族孤独症系量表均声明 sensory_integration）= 7 个
 {
   const result = getAuthorizedAssessmentReportCatalog(allowAllModules, byEntitlements(['sensory_integration']))
   assert.deepEqual(
     result.map((item) => item.code).sort(),
-    ['csirs', 'tgmd_3', 'gmfm_88', 'cnbsr2016'].sort(),
-    '仅 sensory_integration 授权应只显示感官统合 4 个量表',
+    ['csirs', 'tgmd_3', 'gmfm_88', 'cnbsr2016', 'abc', 'atec', 'cpep_3'].sort(),
+    '仅 sensory_integration 授权应显示感官 4 量表 + abc/atec/cpep_3',
   )
 }
 
-// 3. 真实感官 bundle（legacy sensory → sensory_integration + fine_motor）→ 5 个（+ FMDA）
+// 3. 真实感官 bundle（legacy sensory → sensory_integration + fine_motor）→ 8 个（+ FMDA + abc/atec/cpep_3）
 {
   const bundle = resolveEffectiveEntitlementDetails(['sensory'])
   const result = getAuthorizedAssessmentReportCatalog(allowAllModules, byEntitlements(bundle.effectiveEntitlements))
   assert.deepEqual(
     result.map((item) => item.code).sort(),
-    ['csirs', 'tgmd_3', 'gmfm_88', 'cnbsr2016', 'fine_motor'].sort(),
-    '感官能力包授权应显示感官 4 量表 + FMDA',
+    ['csirs', 'tgmd_3', 'gmfm_88', 'cnbsr2016', 'fine_motor', 'abc', 'atec', 'cpep_3'].sort(),
+    '感官能力包授权应显示感官 4 量表 + FMDA + abc/atec/cpep_3',
   )
 }
 

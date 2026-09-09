@@ -792,6 +792,15 @@ onBeforeUnmount(() => {
   background: white;
 }
 
+/* 长选项文案（如 CPEP-3 评分标准 >47 字）必须能换行：
+   el-radio 根组件默认 white-space: nowrap，会把 flex 子项撑出容器产生横向溢出（真机截图实证），
+   这里解锁换行并让 label 行高兼容多行文本 */
+.vertical-options :deep(.el-radio) {
+  white-space: normal;
+  height: auto;
+  align-items: flex-start;
+}
+
 .vertical-options .option-item:hover {
   border-color: #409eff;
   background: #f5f9ff;
@@ -812,6 +821,8 @@ onBeforeUnmount(() => {
   gap: 16px;
   padding-left: 12px;
   width: 100%;
+  /* label 长文本换行后 radio 圆点与文本首行对齐 */
+  min-width: 0;
 }
 
 .vertical-options :deep(.el-radio__input) {
@@ -822,8 +833,12 @@ onBeforeUnmount(() => {
   font-size: 16px;
   font-weight: 600;
   color: #303133;
-  white-space: nowrap;
+  /* 长文案自动换行（nowrap 是横向溢出根因，真机 2560×1440 @125% 实证） */
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.6;
   min-width: 100px;
+  flex: 1;
 }
 
 .vertical-options .option-desc {

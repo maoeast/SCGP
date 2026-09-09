@@ -59,7 +59,7 @@ export async function migrateReportRecordConstraints(): Promise<{ success: boole
       CREATE TABLE report_record_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_id INTEGER NOT NULL,
-        report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88', 'tgmd_3', 'brief', 'crt', 'cognitive_self', 'abc', 'atec')),
+        report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88', 'tgmd_3', 'brief', 'crt', 'cognitive_self', 'abc', 'atec', 'cpep_3')),
         assess_id INTEGER,
         plan_id INTEGER,
         training_record_id INTEGER,
@@ -194,6 +194,7 @@ export function needsMigration(): boolean {
       || !sql.includes("'cognitive_self'")
       || !sql.includes("'abc'")
       || !sql.includes("'atec'")
+      || !sql.includes("'cpep_3'")
       || sql.includes('FOREIGN KEY (assess_id) REFERENCES sm_assess(id)')
   } catch (error) {
     // 如果查询失败，保守地认为不需要迁移

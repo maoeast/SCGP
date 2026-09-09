@@ -2954,8 +2954,8 @@ export class ReportAPI extends DatabaseAPI {
       return 'cognitive'
     }
 
-    // ABC/ATEC 跨社交/情绪/感官三模块（catalog accessModulesAnyOf），主归属记 social
-    if (reportType === 'abc' || reportType === 'atec') {
+    // ABC/ATEC/CPEP-3 跨社交/情绪/感官三模块（catalog accessModulesAnyOf），主归属记 social
+    if (reportType === 'abc' || reportType === 'atec' || reportType === 'cpep_3') {
       return 'social'
     }
 
@@ -2967,7 +2967,7 @@ export class ReportAPI extends DatabaseAPI {
    */
   saveReportRecord(record: {
     student_id: number
-    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional' | 'fine_motor' | 'cnbsr2016' | 'gmfm_88' | 'tgmd_3' | 'brief' | 'crt' | 'cognitive_self' | 'abc' | 'atec'
+    report_type: 'sm' | 'weefim' | 'training' | 'csirs' | 'conners-psq' | 'conners-trs' | 'iep' | 'sdq' | 'srs2' | 'cbcl' | 'emotional' | 'fine_motor' | 'cnbsr2016' | 'gmfm_88' | 'tgmd_3' | 'brief' | 'crt' | 'cognitive_self' | 'abc' | 'atec' | 'cpep_3'
     assess_id?: number
     plan_id?: number
     training_record_id?: number

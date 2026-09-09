@@ -22,11 +22,12 @@ function loadModules() {
   }
 }
 
-// 历史路由名（router/index.ts 原手写值），防 catalog reportRouteName 回归
+// 历史路由名（router/index.ts 原手写值 + abc/atec/cpep_3 接入扩展），防 catalog reportRouteName 回归
 const EXPECTED_REPORT_ROUTE_NAMES = [
   'SMReport', 'WeeFIMReport', 'CSIRSReport', 'ConnersPSQReport', 'ConnersTRSReport',
   'SDQReport', 'SRS2Report', 'CBCLReport', 'FineMotorReport', 'Cnbsr2016Report',
   'Gmfm88Report', 'Tgmd3Report', 'BRIEFReport', 'CRTReport', 'CognitiveSelfReport',
+  'ABCReport', 'ATECReport', 'Cpep3Report',
 ]
 
 const REQUIRED_REPORT_FIELDS = [
@@ -35,9 +36,9 @@ const REQUIRED_REPORT_FIELDS = [
   'reportCardLabel', 'recordsLabel', 'isDraft',
 ]
 
-test('1. catalog 每条量表含全部报告派生字段（15 条）', () => {
+test('1. catalog 每条量表含全部报告派生字段（18 条）', () => {
   const { catalog } = loadModules()
-  assert.equal(catalog.ASSESSMENT_SCALE_CATALOG.length, 15)
+  assert.equal(catalog.ASSESSMENT_SCALE_CATALOG.length, 18)
   for (const item of catalog.ASSESSMENT_SCALE_CATALOG) {
     for (const field of REQUIRED_REPORT_FIELDS) {
       assert.ok(field in item, `${item.code} 缺字段 ${field}`)
@@ -157,8 +158,8 @@ test('7. 报告路由 name 集合 === catalog reportRouteName 集合，CSIRSHist
 test('8. 趋势路由：仅 trendSupported 量表生成，name === trendRouteName，crt/cognitive_self 排除', () => {
   const { catalog, assessmentTrendRoutes } = loadModules()
   const trendItems = catalog.ASSESSMENT_SCALE_CATALOG.filter((i) => i.trendSupported)
-  // 支持纵向的量表恰好 13 个
-  assert.equal(trendItems.length, 13, 'trendSupported 量表应为 13 个')
+  // 支持纵向的量表恰好 16 个（18 量表 - crt/cognitive_self 两个 UNSUPPORTED）
+  assert.equal(trendItems.length, 16, 'trendSupported 量表应为 16 个')
   // 每个支持的量表必须有 trendRouteName
   for (const item of trendItems) {
     assert.ok(item.trendRouteName, `${item.code} trendSupported=true 但缺 trendRouteName`)
@@ -167,9 +168,9 @@ test('8. 趋势路由：仅 trendSupported 量表生成，name === trendRouteNam
   const routeNames = assessmentTrendRoutes.assessmentTrendRouteRecords.map((r) => r.name).sort()
   const catalogNames = trendItems.map((i) => i.trendRouteName).sort()
   assert.deepEqual(routeNames, catalogNames, '趋势路由 name 集合与 catalog 不一致')
-  // 路径形态：assessment/{urlSlug}/trend/:studentId
+  // 路径形态：assessment/{urlSlug}/trend/:studentId（urlSlug 段是参数化设计 d2e7139：趋势页按 params.urlSlug 反查 catalog，全量表共用一条动态路径）
   for (const r of assessmentTrendRoutes.assessmentTrendRouteRecords) {
-    assert.match(r.path, /^assessment\/[\w-]+\/trend\/:studentId$/, `${r.name} path 异常: ${r.path}`)
+    assert.match(r.path, /^assessment\/:?[\w-]+\/trend\/:studentId$/, `${r.name} path 异常: ${r.path}`)
   }
   // crt / cognitive_self 必须被排除
   const unsupported = catalog.ASSESSMENT_SCALE_CATALOG.filter((i) => !i.trendSupported).map((i) => i.code)

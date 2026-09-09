@@ -27,6 +27,7 @@ import { CRTDriver } from './CRTDriver'
 import { CognitiveSelfDriver } from './CognitiveSelfDriver'
 import { ABCDriver } from './ABCDriver'
 import { ATECDriver } from './ATECDriver'
+import { Cpep3Driver } from './Cpep3Driver'
 
 // 导出基类供其他驱动器继承
 export { BaseDriver } from './BaseDriver'
@@ -51,6 +52,7 @@ const driverRegistry = {
   'cognitive_self': CognitiveSelfDriver,
   'abc': ABCDriver,
   'atec': ATECDriver,
+  'cpep_3': Cpep3Driver,
 } as const satisfies Record<AssessmentScaleCode, new () => ScaleDriver>
 
 // 驱动器实例缓存
@@ -150,3 +152,4 @@ export { CRTDriver } from './CRTDriver'
 export { CognitiveSelfDriver } from './CognitiveSelfDriver'
 export { ABCDriver } from './ABCDriver'
 export { ATECDriver } from './ATECDriver'
+export { Cpep3Driver } from './Cpep3Driver'

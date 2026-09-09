@@ -14,6 +14,7 @@ import {
   Tgmd3AssessmentAPI,
   WeeFIMAPI,
 } from '@/database/api'
+import { Cpep3AssessmentAPI } from '@/database/cpep3-api'
 import { getDatabase } from '@/database/init'
 import {
   ASSESSMENT_SCALE_CATALOG,
@@ -99,6 +100,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
   const briefApi = new BRIEFAssessmentAPI()
   const crtApi = new CRTAssessmentAPI()
   const cognitiveSelfApi = new CognitiveSelfAssessmentAPI()
+  const cpep3Api = new Cpep3AssessmentAPI()
 
   // ===== 量表级 level_code 英文键 → 中文标签（避免技术术语直出；delayed 等键各量表语义不同须局部映射） =====
   // cognitive_self（视知觉图形匹配筛查）
@@ -351,6 +353,70 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))
 
+  // ABC / ATEC 无 API 类（Driver 直接 SQL），此处同用裸查询（与 adapters :332-368 查询口径一致）
+  const abcRecords = db.all(
+    `
+      SELECT
+        id,
+        student_id,
+        total_score,
+        level,
+        start_time,
+        end_time,
+        created_at
+      FROM abc_assess
+      WHERE student_id = ?
+      ORDER BY created_at DESC
+    `,
+    [studentId],
+  ).map((record: any) => ({
+    id: `abc-${record.id}`,
+    studentId,
+    assessId: record.id,
+    scaleType: 'abc' as const,
+    scaleLabel: SCALE_LABEL_MAP.abc,
+    scoreText: `总分 ${formatNullableNumber(record.total_score)}`,
+    levelText: formatLevel(record.level),
+    createdAt: record.end_time || record.created_at || record.start_time || '',
+  }))
+
+  const atecRecords = db.all(
+    `
+      SELECT
+        id,
+        student_id,
+        total_score,
+        level,
+        start_time,
+        end_time,
+        created_at
+      FROM atec_assess
+      WHERE student_id = ?
+      ORDER BY created_at DESC
+    `,
+    [studentId],
+  ).map((record: any) => ({
+    id: `atec-${record.id}`,
+    studentId,
+    assessId: record.id,
+    scaleType: 'atec' as const,
+    scaleLabel: SCALE_LABEL_MAP.atec,
+    scoreText: `总分 ${formatNullableNumber(record.total_score)}`,
+    levelText: formatLevel(record.level),
+    createdAt: record.end_time || record.created_at || record.start_time || '',
+  }))
+
+  const cpep3Records = cpep3Api.getStudentAssessments(studentId).map((record: any) => ({
+    id: `cpep_3-${record.id}`,
+    studentId,
+    assessId: record.id,
+    scaleType: 'cpep_3' as const,
+    scaleLabel: SCALE_LABEL_MAP.cpep_3,
+    scoreText: `通过 ${formatNullableNumber(record.total_pass_count)}/95 · 总发展当量 ${formatNullableNumber(record.total_month_range)}月`,
+    levelText: record.scoring_version ? 'v2 计分' : '旧版记录',
+    createdAt: record.end_time || record.created_at || record.start_time || '',
+  }))
+
   // catalog 驱动合并：迭代顺序跟随 catalog；加量表须在 recordsByScale 补 builder
   const recordsByScale: Record<AssessmentScaleCode, StudentAssessmentRecord[]> = {
     sm: smRecords,
@@ -368,8 +434,9 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     brief: briefRecords,
     crt: crtRecords,
     cognitive_self: cognitiveSelfRecords,
-    abc: [], // TODO: 实现 ABC 记录查询
-    atec: [], // TODO: 实现 ATEC 记录查询
+    abc: abcRecords,
+    atec: atecRecords,
+    cpep_3: cpep3Records,
   }
 
   return ASSESSMENT_SCALE_CATALOG

@@ -63,6 +63,9 @@ AIimages/
 /scripts/database.sqlite
 /scripts/teaching-materials-export.json
 
+# 量表源数据本地资料（老库 db + CPEP-3/ABLLS-R/PDMS-2 原始导出，量大且非仓库事实来源）
+/export/
+
 # License generator HTML artifact (embeds the signing private key — never commit)
 license-generator-dist/scgp-license-generator.html
 

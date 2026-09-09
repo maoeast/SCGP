@@ -206,6 +206,55 @@ CREATE TABLE IF NOT EXISTS cnbsr2016_assess (
   FOREIGN KEY (student_id) REFERENCES student(id)
 );
 
+-- CPEP-3（PEP-3 心理教育量表·中文修订版）评估主表
+-- 发展能区 7（施测 P/E/F）+ 适应不良行为能区 5（观察 A/M/S）；
+-- 不设总 DQ 列（任务书 §23 禁总 DQ/总发展商，见 docs/legacy-dq-audit.md）；能区派生 DQ 仅存于 domain_results JSON 并带标注
+CREATE TABLE IF NOT EXISTS cpep3_assess (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id INTEGER NOT NULL,
+  age_months INTEGER NOT NULL,             -- CA 精确月龄（12*year+month+day/30 取整列存整数部分）
+  ca_year INTEGER NOT NULL,
+  ca_month INTEGER NOT NULL,
+  ca_day INTEGER NOT NULL,
+  ca_months_decimal REAL NOT NULL,         -- DQ 计算用连续月龄
+  total_pass_count INTEGER NOT NULL,       -- 总通过项目数 ΣP（0-95，常模换算输入）
+  total_emerging_count INTEGER NOT NULL,   -- 总萌发技能数 ΣE（scoreLevel='E'，不计通过数）
+  total_mental_age REAL NOT NULL,          -- 总发展当量月龄（gn 区间中值，派生估计）
+  total_month_range TEXT NOT NULL,         -- 总发展当量月龄区间原文（如 "16-20"）
+  domain_results TEXT NOT NULL,            -- JSON: Cpep3DomainResult[]（7 发展区通过/萌发/DA 区间 + 5 适应不良行为区 A/M/S 计数/严重度分）
+  report_snapshot TEXT,                    -- JSON: Cpep3ReportSnapshot（不可变报告快照，任务书 §二十）
+  report_version TEXT,                     -- 如 'cpep3-report-v1.0'（无快照旧行 NULL）
+  scoring_version TEXT,                    -- 如 'cpep3-scoring-v1.0'
+  start_time TEXT NOT NULL,
+  end_time TEXT,
+  total_duration INTEGER,          -- 评估总用时（秒，墙钟；宽松质控记录）
+  avg_response_time REAL,          -- 平均每题用时（秒）
+  quality_note TEXT,               -- 质量备注：'very_fast'(<3s/题) / 'fast'(<5s/题) / NULL
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student(id)
+);
+
+-- CPEP-3评估详情表（每题一行；score: 施测 P=2/E=1/F=0，观察 A=0/M=1/S=2）
+-- level 与 score 双存（任务书 §2.2：禁止只存数值而丢失 P/E/F 原始语义）
+CREATE TABLE IF NOT EXISTS cpep3_assess_detail (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  assess_id INTEGER NOT NULL,
+  question_id INTEGER NOT NULL,            -- CPEP3_QUESTIONS.id
+  code_no TEXT NOT NULL,                   -- 题号（含 * 前缀原样）
+  dimension TEXT NOT NULL,                 -- 能区 code（A-L）
+  item_type TEXT NOT NULL CHECK(item_type IN ('administered', 'rated')),
+  level TEXT NOT NULL CHECK(level IN ('P', 'E', 'F', 'A', 'M', 'S')),
+  score INTEGER NOT NULL CHECK(score IN (0, 1, 2)),
+  answer_time INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (assess_id) REFERENCES cpep3_assess(id)
+);
+
+-- CPEP-3评估表索引
+CREATE INDEX IF NOT EXISTS idx_cpep3_assess_student ON cpep3_assess(student_id);
+CREATE INDEX IF NOT EXISTS idx_cpep3_assess_created ON cpep3_assess(created_at DESC);
+
+
 -- CNBS-R2016评估详情表
 CREATE TABLE IF NOT EXISTS cnbsr2016_assess_detail (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -472,7 +521,7 @@ CREATE INDEX IF NOT EXISTS idx_login_log_time ON login_log(login_time DESC);
 CREATE TABLE IF NOT EXISTS report_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   student_id INTEGER NOT NULL,
-  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88', 'tgmd_3', 'brief', 'crt', 'cognitive_self', 'abc', 'atec')),
+  report_type TEXT NOT NULL CHECK(report_type IN ('sm', 'weefim', 'training', 'iep', 'csirs', 'conners-psq', 'conners-trs', 'sdq', 'srs2', 'cbcl', 'emotional', 'fine_motor', 'cnbsr2016', 'gmfm_88', 'tgmd_3', 'brief', 'crt', 'cognitive_self', 'abc', 'atec', 'cpep_3')),
   assess_id INTEGER,
   plan_id INTEGER,
   training_record_id INTEGER,
@@ -1310,6 +1359,7 @@ export async function initDatabase(): Promise<any> {
     db.run(schemaSQL)
     initializeTrainingSessionTables(rawDb)
     ensureAssessmentQualityColumns(rawDb)
+    ensureCpep3ReportColumns(rawDb)
 
     // 数据迁移：为现有表添加新字段或修改表结构
     if (!isNewDb) {
@@ -3220,6 +3270,7 @@ function ensureAssessmentQualityColumns(rawDb: any): void {
     'cbcl_assess',
     'abc_assess',
     'atec_assess',
+    'cpep3_assess',
   ]
   for (const table of tablesWithAvg) {
     safeAddColumn(rawDb, table, 'total_duration INTEGER')
@@ -3229,6 +3280,35 @@ function ensureAssessmentQualityColumns(rawDb: any): void {
   // cognitive_self_assess：平均每题由既有 avg_response_time（ms）承载
   safeAddColumn(rawDb, 'cognitive_self_assess', 'total_duration INTEGER')
   safeAddColumn(rawDb, 'cognitive_self_assess', 'quality_note TEXT')
+}
+
+/**
+ * CPEP-3 报告快照列迁移（docs/cpep3-report-schema-plan.md §2）：
+ * 旧 dev 库（2026-09-09 之前建表，含 dq REAL NOT NULL 列、无快照列）幂等补三列；新装库建表语句已含，safeAddColumn 内部跳过。
+ * 旧列 dq 必须 DROP：任务书 §23 禁总 DQ，新 INSERT 不再写 dq，而旧表的 NOT NULL 约束会让插入失败
+ * （真机 bug 2026-09-09：NOT NULL constraint failed: cpep3_assess.dq——「不删除不写入」对 NOT NULL 列不成立）。
+ * SQLite 3.35+ / sql.js 1.8+ 支持 ALTER TABLE DROP COLUMN（项目 sql.js 1.14.0 已实测支持）；
+ * DROP 失败（极旧内核）时不阻断启动、仅警告：此时旧表仍带 dq NOT NULL 约束，CPEP-3 保存会继续报
+ * NOT NULL constraint failed，需升级 sql.js 后重启（迁移幂等，启动即重试）。
+ * 持久化说明：本迁移经 rawDb（与 SQLWrapper 同一 sql.js 实例）执行 DDL，不直接触发防抖保存；
+ * 保存由迁移后的首次数据写入（INSERT/UPDATE/DELETE → wrapper 防抖全量镜像 export）落盘，
+ * 或在零写入退出场景下由下次启动的幂等重跑自愈。
+ */
+function ensureCpep3ReportColumns(rawDb: any): void {
+  safeAddColumn(rawDb, 'cpep3_assess', 'report_snapshot TEXT')
+  safeAddColumn(rawDb, 'cpep3_assess', 'report_version TEXT')
+  safeAddColumn(rawDb, 'cpep3_assess', 'scoring_version TEXT')
+
+  // 移除遗留 dq 列（含其 NOT NULL 约束）——仅对旧库存在该列的表执行，幂等
+  if (columnExists(rawDb, 'cpep3_assess', 'dq')) {
+    try {
+      rawDb.run('ALTER TABLE cpep3_assess DROP COLUMN dq')
+      console.log('[InitDatabase] cpep3_assess 遗留 dq 列已移除（任务书 §23 禁总 DQ）')
+    } catch (error) {
+      // sql.js 内核过旧不支持 DROP COLUMN 时不中断启动；插入仍会撞 NOT NULL，需升级 sql.js 或删库重测
+      console.warn('[InitDatabase] cpep3_assess.dq 列移除失败（内核可能不支持 DROP COLUMN）:', error)
+    }
+  }
 }
 
 

@@ -55,6 +55,9 @@ export {
   type NormalizeConfig,
 }
 
+import { Cpep3AssessmentAPI } from '@/database/cpep3-api'
+import type { Cpep3DomainResult } from '@/types/cpep_3'
+
 // ==================== 适配器接口 ====================
 
 /** 量表分数适配器。 */
@@ -367,6 +370,53 @@ const atecAdapter: ScoreAdapter = {
   },
 }
 
+// ---------- 专用函数：CPEP-3（总通过数锚点 + 数组形 domain_results）----------
+const cpep3Adapter: ScoreAdapter = {
+  scaleCode: 'cpep_3',
+  scaleName: 'PEP-3 心理教育量表（中文修订版）',
+  scoreNote:
+    '代表性分数为总通过项目数（total_pass_count，0-95，施测题 P 计数），同量表跨次直接可比，分越高发展越好。' +
+    '注意：CPEP-3 无「总发展商数/总 DQ」官方指标，系统按规范禁用该派生指标（历史记录中的旧 DQ 值不再用于对比）。' +
+    '各能区维度分提供「能区派生 DQ（DA/CA×100，DA 取常模月龄区间中值，系统派生指标非官方规范分数）」' +
+    '与通过数（passCount）、萌发技能数（emergingCount，不计入通过数）。' +
+    '被评者年龄超出常模范围（约 2-7.5 岁）时存在天花板效应，纵向解读请以总通过数与总发展当量月龄（total_mental_age）为主。',
+  getLongitudinalScores(studentId: number): ScoreSnapshot[] {
+    const rows = new Cpep3AssessmentAPI().getStudentAssessments(studentId) ?? []
+    return rows
+      .map((r: any) => {
+        let domainResults: Cpep3DomainResult[] = []
+        try {
+          const parsed = typeof r.domain_results === 'string' ? JSON.parse(r.domain_results) : r.domain_results
+          if (Array.isArray(parsed)) domainResults = parsed.filter((item: any) => item?.dataType !== 'assessment_status')
+        } catch {
+          // domain_results 解析失败按空处理
+        }
+        const dimensionScores: Record<string, number | null> = {}
+        for (const d of domainResults) {
+          if (d.kind !== 'developmental') continue
+          const label = d.domainName || d.domainCode
+          dimensionScores[`${label} DQ`] = d.dq ?? null
+          dimensionScores[`${label} 通过`] = d.passCount ?? null
+          dimensionScores[`${label} 萌发`] = d.emergingCount ?? null
+        }
+        return {
+          assessId: r.id,
+          date: r.created_at,
+          ageMonths: Number(r.age_months) || 0,
+          totalScore: Number(r.total_pass_count) || 0,
+          level: `总发展当量 ${r.total_month_range ?? '-'}月`,
+          dimensionScores,
+          extra: {
+            总通过数: Number(r.total_pass_count) || 0,
+            总萌发技能数: Number(r.total_emerging_count) || 0,
+            总发展当量月中值: Number(r.total_mental_age) || 0,
+          },
+        } satisfies ScoreSnapshot
+      })
+      .sort(byDateAsc)
+  },
+}
+
 // ==================== 适配器注册表 ====================
 
 /** 适配器注册表。新增量表在此注册即可被 get_assessment_trend 工具发现。 */
@@ -386,6 +436,7 @@ export const SCORE_ADAPTERS: Record<string, ScoreAdapter> = {
   sm: smAdapter,
   abc: abcAdapter,
   atec: atecAdapter,
+  cpep_3: cpep3Adapter,
 }
 
 /** 当前已支持纵向读取的量表代码列表（供工具 schema enum 用）。 */
