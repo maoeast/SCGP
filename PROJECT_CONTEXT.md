@@ -1890,6 +1890,13 @@
 - 验证：`node --test scripts/tests/self-care-task-seed.test.mjs` 9/9、`npm run type-check` 通过；4 提交在本地 main 未 push。
 - 后续可用模板：系鞋带/扣纽扣/大便等敏感任务 → "手部+物品"安全构图（参照穿袜子/封面验证模式）；每次改 inventory 后必跑 seed 测试。
 
+## 109. 2026-09-09 CPEP-3（PEP-3 心理教育量表·中文修订版）接入 + 量表口径更新
+
+- 评估量表 **15→18**（catalog 单一真源新增 abc/atec/cpep_3 后的当前全集口径）；质量列 `tablesWithAvg` 现 **17 表**（cognitive_self_assess 仍例外）。旧条目中「15 量表」「16 表」为历史口径。
+- CPEP-3（code `cpep_3`）已完整接入：139 题（7 发展能区 P/E/F + 5 病理能区 A/M/S）、协康会中文版 pg/gn 常模查发展当量、派生 DQ（非官方分数，不分级）、CA 89/90 月常模边界常量化（`CPEP3_MAX_NORM_CA_MONTHS`）。设计文档 `docs/planning/2026-09-09-cpep3-assessment-integration-plan.md`。
+- 数据源 `export/CPEP-3/`（QDDBUser.db 导出）含四类录入事故，转换脚本 `scripts/convert-cpep3-data.mjs` 内修正 + verifier 门禁：能区错别字 / 28 题 NA 指示语剥离（PEP-3 官方计分无 NA/prorating）/ 4 题缺档人工补录 / 37 条截断描述补全。改题库必跑：`node scripts/convert-cpep3-data.mjs && node scripts/verify-cpep3-item-bank.mjs`。
+- 全局约束：新增量表接入清单实证 **8 处**（比旧 7 处多 student-detail builder）；jiti 单测不能加载完整 Driver 链（api.ts→init.ts→.sql），计分测试走「纯函数模块 + 纯数据题库」路线。
+
 
 
 
