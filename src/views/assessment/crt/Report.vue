@@ -7,6 +7,7 @@
           <div class="header-left">
             <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
             <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
+            <el-button type="primary" :icon="Download" :disabled="!assessData" @click="exportWord">导出Word</el-button>
             <h2>瑞文图形推理测验（CRT）评估报告</h2>
           </div>
         </div>
@@ -148,8 +149,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, WarningFilled, Check, Warning, ChatDotRound } from '@element-plus/icons-vue'
+import { ArrowLeft, WarningFilled, Check, Warning, ChatDotRound, Download } from '@element-plus/icons-vue'
 import { CRTAssessmentAPI, StudentAPI } from '@/database/api'
+import { buildCrtWordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
 import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
@@ -300,6 +303,46 @@ const openAiInterpretation = () => {
   setTimeout(() => {
     ElMessage.success('AI助手已打开，你可以询问"解读这名学生的CRT评估结果"')
   }, 500)
+}
+
+// 导出 Word（IQ/百分位/五组明细/能力分析/训练建议）
+async function exportWord() {
+  if (!assessData.value || !student.value) {
+    ElMessage.warning('报告数据尚未加载完成')
+    return
+  }
+
+  try {
+    const payload = buildCrtWordPayload({
+      studentName: student.value?.name || '未命名学生',
+      gender: student.value?.gender || '未知',
+      assessmentDate: assessDate.value,
+      ageText: studentAge.value,
+      iqEstimate: assessData.value.iq_estimate ?? 100,
+      percentileRank: assessData.value.percentile_rank ?? 50,
+      totalRawScore: assessData.value.total_raw_score ?? 0,
+      totalQuestions: assessData.value.total_questions ?? 60,
+      level: assessData.value.level ?? '典型水平',
+      resultDescription: getResultDescription(),
+      unitRows: unitRows.value.map((u) => ({
+        name: u.name,
+        correct: u.correct,
+        total: u.total,
+        rate: u.rate,
+        description: u.description,
+      })),
+      strengths: strengths.value,
+      weaknesses: weaknesses.value,
+      recommendations: recommendations.value,
+      trainingFocus: trainingFocus.value,
+    })
+
+    await exportWordDocument(payload)
+    ElMessage.success('Word 文档导出成功')
+  } catch (error: any) {
+    console.error('导出 Word 失败:', error)
+    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+  }
 }
 
 onMounted(() => {

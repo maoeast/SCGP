@@ -9,6 +9,8 @@
           </div>
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
+            <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
+            <el-button type="primary" :icon="Download" :disabled="!assessment" @click="exportWord">导出Word</el-button>
           </div>
         </div>
       </template>
@@ -219,9 +221,11 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Clock } from '@element-plus/icons-vue'
+import { ArrowLeft, ChatDotRound, Clock, Download } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { FineMotorAssessmentAPI } from '@/database/api'
+import { buildFineMotorWordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 import {
   FINE_MOTOR_DIMENSIONS,
   FINE_MOTOR_QUESTIONS,
@@ -493,6 +497,65 @@ function formatRichText(text: string) {
     .replace(/\[儿童姓名\]/g, studentName)
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br>')
+}
+
+/** Word 导出用纯文本清洗：去 HTML/Markdown + [儿童姓名] 占位符替换（与页面 formatRichText 口径一致） */
+function formatPlainText(text: string): string {
+  const studentName = studentInfo.value?.name || '该儿童'
+  return String(text || '')
+    .replace(/\[儿童姓名\]/g, studentName)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\r/g, '')
+    .trim()
+}
+
+// 导出 Word（总体水平/六维度/IEP 目标）
+const exportWord = async () => {
+  if (!assessment.value || !overallReport.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+
+  try {
+    const payload = buildFineMotorWordPayload({
+      studentName: studentInfo.value?.name || '未命名学生',
+      gender: studentInfo.value?.gender || '-',
+      assessmentDate: formatDate(assessment.value.start_time),
+      ageText: formatAge(studentInfo.value?.ageMonths),
+      totalScore: overallReport.value.totalScore,
+      totalMaxScore: overallReport.value.totalMaxScore,
+      masteryPercent: overallReport.value.masteryPercent,
+      overallTitle: overallReport.value.title,
+      overallSummary: formatPlainText(overallReport.value.summary),
+      overallAdvice: formatPlainText(overallReport.value.expertAdvice),
+      domainRows: domainReports.value.map((d) => ({
+        name: d.name,
+        rawScore: d.rawScore,
+        maxScore: d.maxScore,
+        masteryPercent: d.masteryPercent,
+        statusLabel: statusLabelMap[d.status],
+        title: d.title,
+        summary: formatPlainText(d.summary),
+        expertAdvice: formatPlainText(d.expertAdvice),
+      })),
+      iepTargets: iepTargets.value.map((t) => ({
+        title: t.title,
+        dimensionName: t.dimensionName,
+        priorityLabel: t.priority === 1 ? '优先突破（萌发）' : '重点支持（未掌握）',
+        iepGoal: formatPlainText(t.iepGoal || ''),
+        expertAdvice: formatPlainText(t.expertAdvice || ''),
+      })),
+    })
+
+    await exportWordDocument(payload)
+    ElMessage.success('Word 导出成功')
+  } catch (error) {
+    console.error('导出Word失败:', error)
+    ElMessage.error('Word导出失败，请重试')
+  }
 }
 
 function getLevelCardClass(severity: SeverityType) {

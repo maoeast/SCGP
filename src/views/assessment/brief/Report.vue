@@ -10,6 +10,8 @@
           </div>
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
+            <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
+            <el-button type="primary" :icon="Download" :disabled="!assessData" @click="exportWord">导出Word</el-button>
           </div>
         </div>
       </template>
@@ -64,8 +66,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, WarningFilled, Clock } from '@element-plus/icons-vue'
+import { ArrowLeft, ChatDotRound, Clock, Download, WarningFilled } from '@element-plus/icons-vue'
+import { getDatabase } from '@/database/init'
 import { BRIEFAssessmentAPI } from '@/database/api'
+import { buildBriefWordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
 import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
@@ -128,6 +133,47 @@ const openAiInterpretation = () => {
   setTimeout(() => {
     ElMessage.success('AI助手已打开，你可以询问"解读这名学生的BRIEF评估结果"')
   }, 500)
+}
+
+// 导出 Word（总分/维度 T 分；DRAFT 量表附草稿版声明）
+async function exportWord() {
+  if (!assessData.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+
+  try {
+    // 页面未展示学生姓名（brief_assess 无 student_name 列），从 student 表补查
+    let studentName = '未命名学生'
+    if (assessData.value.student_id) {
+      const db = getDatabase()
+      const studentRow = db.get('SELECT name FROM student WHERE id = ?', [assessData.value.student_id]) as any
+      if (studentRow?.name) studentName = studentRow.name
+    }
+
+    const payload = buildBriefWordPayload({
+      studentName,
+      gender: assessData.value.gender || '',
+      assessmentDate: assessData.value.start_time || assessData.value.created_at || '',
+      ageMonths: assessData.value.age_months || 0,
+      versionLabel: versionLabel.value,
+      totalTScore: assessData.value.total_t_score ?? 50,
+      totalRawScore: assessData.value.total_raw_score ?? 0,
+      level: assessData.value.level || '-',
+      dimensionRows: dimensionRows.value.map((d) => ({
+        name: d.name,
+        rawScore: d.rawScore,
+        tScore: d.tScore,
+        levelName: d.levelName,
+      })),
+    })
+
+    await exportWordDocument(payload)
+    ElMessage.success('Word 文档导出成功')
+  } catch (error: any) {
+    console.error('导出 Word 失败:', error)
+    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+  }
 }
 
 

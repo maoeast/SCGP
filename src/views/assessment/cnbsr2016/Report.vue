@@ -12,6 +12,8 @@
           </el-tag>
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
+            <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
+            <el-button type="primary" :icon="Download" :disabled="!assessment" @click="exportWord">导出Word</el-button>
           </div>
         </div>
       </template>
@@ -320,7 +322,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Clock } from '@element-plus/icons-vue'
+import { ArrowLeft, ChatDotRound, Clock, Download } from '@element-plus/icons-vue'
 import { Cnbsr2016AssessmentAPI } from '@/database/api'
 import {
   buildCnbsr2016ReportViewModel,
@@ -334,6 +336,8 @@ import {
   type OverallRule,
 } from '@/features/assessment/cnbsr2016/report-model'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
+import { buildCnbsr2016WordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const route = useRoute()
@@ -462,6 +466,88 @@ const openAiInterpretation = () => {
   setTimeout(() => {
     ElMessage.success('AI助手已打开，你可以询问"解读这名学生的CNBSR-2016评估结果"')
   }, 500)
+}
+
+/** Word 导出用纯文本清洗：去 HTML 标记 + [儿童姓名] 占位符替换（与页面 formatRichText 的替换口径一致） */
+function formatPlainText(text: string, studentName?: string): string {
+  return text
+    .replace(/\[儿童姓名\]/g, studentName || '该儿童')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\r/g, '')
+    .trim()
+}
+
+// 导出 Word（reportViewModel 组装；超龄记录同样可导出，含常模范围说明段）
+const exportWord = async () => {
+  if (!assessment.value || !reportViewModel.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+  try {
+    const payload = buildCnbsr2016WordPayload({
+      studentName: studentInfo.value?.name || '未命名学生',
+      gender: studentInfo.value?.gender || '-',
+      assessmentDate: assessment.value.start_time || assessment.value.created_at || '',
+      ageMonths: Number(assessment.value.age_months || 0),
+      ageBracketLabel: ageBracketLabel.value,
+      supportedAgeRangeText: supportedAgeRangeText.value,
+      isAgeSupported: isAgeSupported.value,
+      domainRows: domainRows.value.map((r) => ({
+        name: r.name,
+        mentalAge: formatScore(r.mentalAge),
+        dq: formatScore(r.dq),
+        level: r.level || getDqStatusLabel(r.dqStatus),
+        passedCount: r.passedCount,
+        failedCount: r.failedCount,
+        manualFailedCount: r.manualFailedCount,
+        autoFilledFailedCount: r.autoFilledFailedCount,
+        content: formatPlainText(r.content || '', studentInfo.value?.name),
+        advice: (r.advice || []).map((a) => ({ tag: a.tag, text: formatPlainText(a.text, studentInfo.value?.name) })),
+      })),
+      overallSummary: formatPlainText(overallRule.value?.summary || '', studentInfo.value?.name),
+      overallStrengths: formatPlainText(overallRule.value?.strengths || '', studentInfo.value?.name),
+      overallSuggestions: formatPlainText(overallRule.value?.suggestions || '', studentInfo.value?.name),
+      expertClinical: expertClinical.value
+        ? ([
+            { label: '临床提示', text: formatPlainText(expertClinical.value.clinical || '', studentInfo.value?.name) },
+            { label: '风险提示', text: formatPlainText(expertClinical.value.risk || '', studentInfo.value?.name) },
+            { label: '随访建议', text: formatPlainText(expertClinical.value.followup || '', studentInfo.value?.name) },
+            { label: '转诊建议', text: formatPlainText(expertClinical.value.referral || '', studentInfo.value?.name) },
+          ] as Array<{ label: string; text: string }>).filter((c) => c.text)
+        : [],
+      overallConclusionLabel: overallConclusionLabel.value,
+      interventions: interventions.value.map((item) => ({
+        domainName: item.domainName,
+        dqStatusLabel: getDqStatusLabel(item.dqStatus),
+        short: formatPlainText(item.intervention.short || '', studentInfo.value?.name),
+        long: formatPlainText(item.intervention.long || '', studentInfo.value?.name),
+        freq: item.intervention.freq || '',
+        methods: (item.intervention.methods || []).map((m) => formatPlainText(m, studentInfo.value?.name)),
+        home: (item.intervention.home || []).map((m) => formatPlainText(m, studentInfo.value?.name)),
+      })),
+      dqStatusLabel: getDqStatusLabel(assessment.value.dq_status),
+      totalMentalAge: formatScore(assessment.value.total_mental_age),
+      dq: formatScore(assessment.value.dq),
+      manualIepTargets: manualIepTargets.value.map((t) => ({
+        name: t.itemCode ? `${t.itemCode} ${t.title}` : t.title,
+        description: formatPlainText(t.prompt || '', studentInfo.value?.name),
+        status: formatPlainText(t.passCriteria || '', studentInfo.value?.name),
+      })),
+      autoFilledFailedItems: autoFilledFailedItems.value.map((t) =>
+        t.autoFillReason
+          ? `${t.title}（${t.autoFillReason === 'basal' ? '基础线' : '上限规则'}自动补记，不计入 IEP 目标）`
+          : t.title,
+      ),
+    })
+    await exportWordDocument(payload)
+    ElMessage.success('Word 导出成功')
+  } catch (error) {
+    console.error('导出Word失败:', error)
+    ElMessage.error('Word导出失败，请重试')
+  }
 }
 
 

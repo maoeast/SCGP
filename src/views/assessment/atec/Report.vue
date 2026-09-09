@@ -13,6 +13,8 @@ import {
   getATECLevel,
   ATEC_LEVEL_NAMES
 } from '@/database/atec-questions'
+import { buildAtecWordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
 import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
@@ -128,6 +130,24 @@ function getHighScoreSubscales() {
   })
 }
 
+/** Word 导出用等级分档解释（与页面评估说明文案同源） */
+function buildAtecLevelSummary(level: ATECLevel, totalScore: number): string {
+  const highSubs = getHighScoreSubscales()
+  const focusText = highSubs.length > 0
+    ? `干预重点：${highSubs.map(sub => `${sub.name}（${sub.score}/${sub.maxScore}）`).join('、')}得分较高，建议重点关注该领域的干预训练。`
+    : '各分量表得分相对均衡，建议继续当前的干预方案，保持治疗效果。'
+  switch (level) {
+    case 'minimal':
+      return `总分 ${totalScore}/${ATEC_TOTAL_MAX_SCORE} 分，无明显孤独症症状或症状极轻微。${focusText}`
+    case 'mild':
+      return `总分 ${totalScore}/${ATEC_TOTAL_MAX_SCORE} 分，提示轻度孤独症症状。${focusText}`
+    case 'moderate':
+      return `总分 ${totalScore}/${ATEC_TOTAL_MAX_SCORE} 分，提示中度孤独症症状。${focusText}`
+    default:
+      return `总分 ${totalScore}/${ATEC_TOTAL_MAX_SCORE} 分，提示重度孤独症症状。${focusText}`
+  }
+}
+
 // 加载评估数据
 async function loadAssessment() {
   loading.value = true
@@ -193,9 +213,43 @@ function viewHistory() {
   }
 }
 
-// 导出 Word
-function exportWord() {
-  ElMessage.info('Word 导出功能开发中')
+// 导出 Word（总分/等级/分量表明细/解释建议）
+async function exportWord() {
+  if (!assessData.value || !studentInfo.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+
+  try {
+    const payload = buildAtecWordPayload({
+      studentName: studentInfo.value.name,
+      assessmentDate: assessData.value.start_time || assessData.value.created_at || '',
+      ageMonths: assessData.value.age_months || 0,
+      totalScore: assessData.value.total_score || 0,
+      totalMaxScore: ATEC_TOTAL_MAX_SCORE,
+      levelText: severityText.value,
+      subscaleRows: subscaleScores.value.map((sub) => ({
+        name: sub.name,
+        score: sub.score,
+        maxScore: sub.maxScore,
+        percentage: String(sub.percentage),
+        description: sub.description,
+        scoringNote: sub.scoringNote,
+      })),
+      summary: buildAtecLevelSummary(severityLevel.value, assessData.value.total_score || 0),
+      recommendations: [
+        'ATEC 用于孤独症康复进展追踪，建议每 3 个月复测一次',
+        '关注各分量表得分的变化趋势，动态调整干预方案',
+        '本量表结果请结合专业医生的临床判断综合使用',
+      ],
+    })
+
+    await exportWordDocument(payload)
+    ElMessage.success('Word 文档导出成功')
+  } catch (error: any) {
+    console.error('导出 Word 失败:', error)
+    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+  }
 }
 
 // AI 解读

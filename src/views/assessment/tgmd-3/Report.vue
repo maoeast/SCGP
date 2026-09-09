@@ -12,6 +12,8 @@
           </el-tag>
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
+            <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
+            <el-button type="primary" :icon="Download" :disabled="!assessment" @click="exportWord">导出Word</el-button>
           </div>
         </div>
       </template>
@@ -256,8 +258,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Clock } from '@element-plus/icons-vue'
+import { ArrowLeft, ChatDotRound, Clock, Download } from '@element-plus/icons-vue'
 import { Tgmd3AssessmentAPI } from '@/database/api'
+import { buildTgmd3WordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 
 interface Tgmd3ReportRule {
   id: string
@@ -413,6 +417,71 @@ const openAiInterpretation = () => {
   }, 500)
 }
 
+// 导出 Word（总体判定/分测验/能区反馈/IEP 目标/预警/明细）
+const exportWord = async () => {
+  if (!assessment.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+
+  try {
+    const a = assessment.value
+    const payload = buildTgmd3WordPayload({
+      studentName: a.student_name || '未命名学生',
+      gender: a.student_gender || '-',
+      assessmentDate: formatDate(a.start_time),
+      ageText: formatAge(a.age_months),
+      totalScore: a.total_score || 0,
+      level: a.level || '-',
+      overallTitle: a.overall_rule?.title || '',
+      overallSummary: a.overall_rule?.summary || '',
+      overallAdvice: a.overall_rule?.advice || [],
+      domainRows: (a.domain_results || []).map((d) => ({
+        name: d.name,
+        rawScore: d.rawScore,
+        maxScore: d.maxScore,
+        percentage: d.percentage,
+        normLabel: d.normLabel || '',
+        level: d.level,
+      })),
+      domainFeedback: (a.domain_feedback || []).map((fb) => ({
+        title: fb.title,
+        label: fb.label,
+        content: fb.content,
+        advice: fb.advice,
+      })),
+      iepTargets: (a.iep_targets || []).map((t) => ({
+        itemCode: t.itemCode,
+        title: t.title,
+        dimensionName: t.dimensionName,
+        priorityLabel: priorityLabelMap[t.priority],
+        rationale: t.rationale,
+        advice: t.advice,
+      })),
+      flags: (a.flags || []).map((f) => ({
+        title: f.title,
+        severityLabel: f.severity === 'error' ? '高风险' : '提醒',
+        content: f.content,
+        advice: f.advice,
+      })),
+      detailRows: details.value.map((d) => ({
+        itemCode: d.item_code,
+        dimensionName: d.dimension_name,
+        title: d.title,
+        scoreText: `${d.score} / ${d.max_score}`,
+        equipment: d.equipment || '',
+        guidance: d.guidance || '',
+      })),
+    })
+
+    await exportWordDocument(payload)
+    ElMessage.success('Word 导出成功')
+  } catch (error: any) {
+    console.error('导出Word失败:', error)
+    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+  }
+}
+
 
 function getDomainFeedback(code: string) {
   return assessment.value?.domain_feedback?.find((item) => item.code === code) || null
@@ -434,7 +503,7 @@ function formatDate(value: string) {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString('zh-CN')
+  return date.toLocaleDateString('zh-CN')
 }
 
 function formatAge(months: number) {

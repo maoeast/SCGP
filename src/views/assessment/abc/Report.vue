@@ -7,6 +7,8 @@ import { ElMessage } from 'element-plus'
 import { getDatabase } from '@/database/init'
 import type { ABCLevel } from '@/database/abc-questions'
 import { ABC_DIMENSION_NAMES, getABCLevel, ABC_LEVEL_NAMES } from '@/database/abc-questions'
+import { buildAbcWordPayload } from '@/utils/assessment-word-builders'
+import { exportWordDocument } from '@/utils/export-word'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
 import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
@@ -100,6 +102,22 @@ function getHighScoreDimensions() {
   })
 }
 
+/** Word 导出用等级分档解释（与页面评估说明文案同源） */
+function buildAbcLevelSummary(level: ABCLevel, totalScore: number): string {
+  switch (level) {
+    case 'normal':
+      return `总分 ${totalScore} 分，低于筛查分界值（49分），属于正常范围。孤独症相关行为表现不明显，整体发展良好。`
+    case 'borderline':
+      return `总分 ${totalScore} 分，处于边缘范围（49-61分）。建议进一步观察和评估，必要时咨询专业医生进行诊断性评估。`
+    case 'mild':
+      return `总分 ${totalScore} 分，提示轻度孤独症症状（62-79分）。建议尽快启动早期干预，重点关注评分较高的维度。`
+    case 'moderate':
+      return `总分 ${totalScore} 分，提示中度孤独症症状（80-99分）。需要系统性的专业干预，建议制定个别化教育计划（IEP）。`
+    default:
+      return `总分 ${totalScore} 分，提示重度孤独症症状（≥100分）。需要密集的专业干预和支持，建议转介专业机构进行综合评估和治疗。`
+  }
+}
+
 // 加载评估数据
 async function loadAssessment() {
   loading.value = true
@@ -160,9 +178,42 @@ function viewHistory() {
   }
 }
 
-// 导出 Word
-function exportWord() {
-  ElMessage.info('Word 导出功能开发中')
+// 导出 Word（总分/等级/维度明细/解释建议）
+async function exportWord() {
+  if (!assessData.value || !studentInfo.value) {
+    ElMessage.warning('评估数据未加载完成')
+    return
+  }
+
+  try {
+    const payload = buildAbcWordPayload({
+      studentName: studentInfo.value.name,
+      assessmentDate: assessData.value.start_time || assessData.value.created_at || '',
+      ageMonths: assessData.value.age_months || 0,
+      totalScore: assessData.value.total_score || 0,
+      totalMaxScore: 158,
+      levelText: severityText.value,
+      dimensionRows: dimensionScores.value.map((dim) => ({
+        name: dim.name,
+        score: dim.score,
+        maxScore: dim.maxScore,
+        percentage: String(dim.percentage),
+        description: dim.description,
+      })),
+      summary: buildAbcLevelSummary(severityLevel.value, assessData.value.total_score || 0),
+      recommendations: [
+        '本量表为筛查工具，最终诊断需由专业医生结合临床观察、发育史等综合判断',
+        '如评分显示异常，建议尽快到专业机构进行全面评估',
+        '早期发现、早期干预对孤独症儿童的发展至关重要',
+      ],
+    })
+
+    await exportWordDocument(payload)
+    ElMessage.success('Word 文档导出成功')
+  } catch (error: any) {
+    console.error('导出 Word 失败:', error)
+    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+  }
 }
 
 // AI 解读
