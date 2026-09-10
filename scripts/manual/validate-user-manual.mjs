@@ -79,10 +79,8 @@ async function main() {
   // 2026-09-10 起截图清单不再在手册第 18 章，改从内部基线文档读取
   const baselinePath = path.join(manualDir, 'SCGP-用户手册截图采集与维护基线.md')
   const baseline = fs.readFileSync(baselinePath, 'utf8')
-  const bodySource = markdown
-  const screenshotSection = baseline
-  const bodyScreenshotIds = [...bodySource.matchAll(/^>\s*\[图 (S\d{3})\]/gmu)].map((match) => match[1])
-  const screenshotRows = [...screenshotSection.matchAll(
+  const bodyScreenshotIds = [...markdown.matchAll(/^>\s*\[图 (S\d{3})\]/gmu)].map((match) => match[1])
+  const screenshotRows = [...baseline.matchAll(
     /^\| (S\d{3}) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| (P[012]) \/ 待采集 \|$/gmu,
   )]
   const listScreenshotIds = screenshotRows.map((match) => match[1])

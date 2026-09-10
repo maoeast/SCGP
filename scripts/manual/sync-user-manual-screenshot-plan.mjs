@@ -46,28 +46,23 @@ function reindexManualCallouts(source) {
 }
 
 function rebuildBaselineTable(source) {
+  const headingIndex = source.indexOf('## 3.')
   const startIndex = source.indexOf(tableStartMark)
   const endIndex = source.indexOf(tableEndMark)
+  if (headingIndex < 0) {
+    throw new Error('Baseline document section-3 heading is missing')
+  }
   if (startIndex < 0 || endIndex < startIndex) {
     throw new Error('Baseline document table markers are missing or out of order')
   }
 
-  const priorities = userManualScreenshotPlan.reduce((counts, scene) => {
-    counts[scene.priority] = (counts[scene.priority] || 0) + 1
-    return counts
-  }, {})
-
   const rows = userManualScreenshotPlan
     .map((scene) => `| ${scene.id} | ${scene.chapter} | ${scene.title} | ${scene.role} | ${scene.crop} | ${scene.priority} / ${scene.status} |`)
     .join('\n')
-  const intro = source
-    .slice(source.indexOf('## 3.'), startIndex)
-    .split('\n\n')
-    .filter((block) => block.startsWith('>'))
-    .join('\n\n')
 
+  // 引言块只保留在标记区间之外（本函数不复制、不搬运），表内不重复注入
   const header = `| 编号 | 章节 | 页面或状态 | 角色 | 建议范围 | 优先级 / 状态 |\n|---|---|---|---|---|---|`
-  const nextTable = `${intro}\n\n${header}\n${rows}\n`
+  const nextTable = `${header}\n${rows}\n`
 
   return `${source.slice(0, startIndex)}${tableStartMark}\n\n${nextTable}${source.slice(endIndex)}`
 }
