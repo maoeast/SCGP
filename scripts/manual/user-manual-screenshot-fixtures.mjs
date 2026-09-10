@@ -20,10 +20,10 @@ export const USER_MANUAL_SCREENSHOT_PILOT_IDS = Object.freeze([
   'S017',
   'S023',
   'S057',
-  'S123',
-  'S174',
-  'S197',
-  'S209',
+  'S125',
+  'S178',
+  'S202',
+  'S215',
 ])
 
 export const USER_MANUAL_SCREENSHOT_ROUTE_VALUES = Object.freeze({
@@ -47,6 +47,8 @@ export const USER_MANUAL_SCREENSHOT_ROUTE_VALUES = Object.freeze({
   briefAssessId: 9113,
   crtAssessId: 9114,
   cognitiveAssessId: 9115,
+  cpep3AssessId: 9116,
+  cpep3LegacyAssessId: 9117,
 })
 
 const USER_MANUAL_SCREENSHOT_SCENARIO_ROUTE_VALUE_OVERRIDES = Object.freeze({

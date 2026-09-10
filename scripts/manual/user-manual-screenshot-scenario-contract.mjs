@@ -37,6 +37,8 @@ const ROUTE_VARIABLES = new Set([
   'briefAssessId',
   'crtAssessId',
   'cognitiveAssessId',
+  'cpep3AssessId',
+  'cpep3LegacyAssessId',
 ])
 const PRODUCTION_ROUTE_PATTERNS = [
   /^\/(?:activation|login|dashboard|profile|assessment|reports|resource-center|training-plan|system|class-management|student-class-assignment)$/u,
