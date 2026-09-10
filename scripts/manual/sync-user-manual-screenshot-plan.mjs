@@ -1,4 +1,4 @@
-/** Reindex screenshot callouts and rebuild the manual appendix from the audited plan. */
+/** Reindex screenshot callouts in the manual and rebuild the internal baseline table from the audited plan. */
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -16,20 +16,19 @@ const manualPath = path.join(
   'user-manual',
   'SCGP-星愿能力发展平台用户使用手册.md',
 )
-const appendixHeading = '## 18.2 截图清单'
-const nextHeading = '## 18.3 截图采集验收标准'
+// 2026-09-10 起截图清单不再进对外手册第 18 章，改维护在内部基线文档的标记区间内
+const baselinePath = path.join(
+  repoRoot,
+  'docs',
+  'user-manual',
+  'SCGP-用户手册截图采集与维护基线.md',
+)
+const tableStartMark = '<!-- SCREENSHOT_TABLE_START -->'
+const tableEndMark = '<!-- SCREENSHOT_TABLE_END -->'
 
-function main() {
-  const source = fs.readFileSync(manualPath, 'utf8').replace(/\r\n/gu, '\n')
-  const appendixIndex = source.indexOf(appendixHeading)
-  const nextIndex = source.indexOf(nextHeading)
-  if (appendixIndex < 0 || nextIndex < appendixIndex) {
-    throw new Error('Manual screenshot appendix markers are missing or out of order')
-  }
-
-  const body = source.slice(0, appendixIndex)
+function reindexManualCallouts(source) {
   let calloutIndex = 0
-  const reindexedBody = body.replace(
+  const reindexed = source.replace(
     /^(>\s*\[图 )S\d{3}(\])/gmu,
     (_match, prefix, suffix) => {
       const scene = userManualScreenshotPlan[calloutIndex]
@@ -43,19 +42,57 @@ function main() {
       `Expected ${USER_MANUAL_SCREENSHOT_COUNT} body callouts, found ${calloutIndex}`,
     )
   }
+  return reindexed
+}
+
+function rebuildBaselineTable(source) {
+  const startIndex = source.indexOf(tableStartMark)
+  const endIndex = source.indexOf(tableEndMark)
+  if (startIndex < 0 || endIndex < startIndex) {
+    throw new Error('Baseline document table markers are missing or out of order')
+  }
 
   const priorities = userManualScreenshotPlan.reduce((counts, scene) => {
     counts[scene.priority] = (counts[scene.priority] || 0) + 1
     return counts
   }, {})
+
   const rows = userManualScreenshotPlan
     .map((scene) => `| ${scene.id} | ${scene.chapter} | ${scene.title} | ${scene.role} | ${scene.crop} | ${scene.priority} / ${scene.status} |`)
     .join('\n')
-  const appendix = `${appendixHeading}\n\n正文结构稳定后统一采集。本版经逐项代码审核，按用户任务和单一可复现界面状态拆分为 **${USER_MANUAL_SCREENSHOT_COUNT} 张**：\`P0\` 为跟随操作必需截图，\`P1\` 为补充说明截图，\`P2\` 为异常、风险或过渡态截图。当前分布为 P0 ${priorities.P0 || 0} 张、P1 ${priorities.P1 || 0} 张、P2 ${priorities.P2 || 0} 张。所有截图应使用脱敏演示数据，隐藏真实姓名、电话、证件、诊断详情、API Key、激活码和机器码。业务截图优先使用已激活 Electron 生产式环境；不得把 404、开发者调试页或与正文无关的未授权页误作业务截图。\n\n| 编号 | 章节 | 页面或状态 | 角色 | 建议范围 | 优先级 / 状态 |\n|---|---|---|---|---|---|\n${rows}\n\n`
+  const intro = source
+    .slice(source.indexOf('## 3.'), startIndex)
+    .split('\n\n')
+    .filter((block) => block.startsWith('>'))
+    .join('\n\n')
 
-  const next = `${reindexedBody}${appendix}${source.slice(nextIndex)}`
-  fs.writeFileSync(manualPath, next, 'utf8')
-  console.log(`Synchronized ${USER_MANUAL_SCREENSHOT_COUNT} screenshot callouts and appendix rows`)
+  const header = `| 编号 | 章节 | 页面或状态 | 角色 | 建议范围 | 优先级 / 状态 |\n|---|---|---|---|---|---|`
+  const nextTable = `${intro}\n\n${header}\n${rows}\n`
+
+  return `${source.slice(0, startIndex)}${tableStartMark}\n\n${nextTable}${source.slice(endIndex)}`
+}
+
+function main() {
+  const manual = fs.readFileSync(manualPath, 'utf8').replace(/\r\n/gu, '\n')
+  const reindexed = reindexManualCallouts(manual)
+  if (reindexed !== manual) {
+    fs.writeFileSync(manualPath, reindexed, 'utf8')
+    console.log(`Reindexed body callouts in manual (${USER_MANUAL_SCREENSHOT_COUNT})`)
+  } else {
+    console.log(`Manual callouts already match the plan (${USER_MANUAL_SCREENSHOT_COUNT})`)
+  }
+
+  const baseline = fs.readFileSync(baselinePath, 'utf8').replace(/\r\n/gu, '\n')
+  const rebuilt = rebuildBaselineTable(baseline)
+  fs.writeFileSync(baselinePath, rebuilt, 'utf8')
+
+  const priorities = userManualScreenshotPlan.reduce((counts, scene) => {
+    counts[scene.priority] = (counts[scene.priority] || 0) + 1
+    return counts
+  }, {})
+  console.log(
+    `Rebuilt baseline table: ${USER_MANUAL_SCREENSHOT_COUNT} rows (P0 ${priorities.P0 || 0} / P1 ${priorities.P1 || 0} / P2 ${priorities.P2 || 0})`,
+  )
 }
 
 main()

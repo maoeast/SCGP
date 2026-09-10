@@ -76,8 +76,11 @@ async function main() {
   const roleCount = (text.match(/适用角色：/gu) ?? []).length
   assert(roleCount >= 18, `Expected at least 18 role annotations, found ${roleCount}`)
 
-  const bodySource = markdown.split('## 18.2 截图清单')[0]
-  const screenshotSection = markdown.split('## 18.2 截图清单')[1]?.split('## 18.3 截图采集验收标准')[0] ?? ''
+  // 2026-09-10 起截图清单不再在手册第 18 章，改从内部基线文档读取
+  const baselinePath = path.join(manualDir, 'SCGP-用户手册截图采集与维护基线.md')
+  const baseline = fs.readFileSync(baselinePath, 'utf8')
+  const bodySource = markdown
+  const screenshotSection = baseline
   const bodyScreenshotIds = [...bodySource.matchAll(/^>\s*\[图 (S\d{3})\]/gmu)].map((match) => match[1])
   const screenshotRows = [...screenshotSection.matchAll(
     /^\| (S\d{3}) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| (P[012]) \/ 待采集 \|$/gmu,
