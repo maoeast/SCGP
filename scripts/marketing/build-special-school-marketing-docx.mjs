@@ -1,8 +1,8 @@
 /**
- * 特校营销文案全集 → 5 份 DOCX（复用 generate-user-manual 同款 docx 库与样式基调）
+ * 特校营销文案全集 → 5 份 DOCX（复用项目 docx 库；样式为简化版，非 generate-user-manual 全套）
  *
  * 源：docs/marketing/2026-09-10-scgp-special-school-marketing.md
- * 切分：按一级标题（# 第X部分 / # SCGP 星愿…）切成 5 份；末尾「事实校对说明」不单独出 docx（内部用）。
+ * 切分：按「# 第X部分」一级标题切成 5 份；「## 事实校对说明」及其后内容为内部用，不进任何 docx。
  * 输出：output/scgp-marketing-docx-20260910/
  */
 import fs from 'node:fs'
@@ -27,15 +27,26 @@ function textRun(text, { bold = false } = {}) {
   return new TextRun({ text, bold, font: { ascii: 'Calibri', eastAsia: CJK_FONT }, size: 22 })
 }
 
+function headingRun(text, level) {
+  // 标题同样锁定中文字体，避免回落到 Word 默认主题字体
+  return new Paragraph({
+    heading: level,
+    children: [new TextRun({ text, bold: true, font: { ascii: 'Calibri', eastAsia: CJK_FONT } })],
+  })
+}
+
 function addRich(children, text) {
+  // 行内加粗累进到单个 Paragraph（句中加粗不得拆段）
+  const runs = []
   for (const part of text.split(/(\*\*.+?\*\*)/)) {
     if (!part) continue
     if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
-      children.push(new Paragraph({ children: [textRun(part.slice(2, -2), { bold: true })] }))
+      runs.push(textRun(part.slice(2, -2), { bold: true }))
     } else {
-      children.push(new Paragraph({ children: [textRun(part)] }))
+      runs.push(textRun(part))
     }
   }
+  children.push(new Paragraph({ children: runs }))
 }
 
 function addTable(children, rows) {
@@ -67,6 +78,8 @@ function markdownToDocx(mdText) {
   }
   for (const raw of mdText.split('\n')) {
     const s = raw.trim()
+    // markdown 分隔线不渲染为字面文本
+    if (/^-{3,}$/.test(s)) continue
     if (s.startsWith('|')) {
       const cells = s.replace(/^\||\|$/g, '').split('|').map((c) => c.trim())
       if (cells.every((c) => /^:?-+:?$/.test(c) || c === '')) continue
@@ -75,10 +88,10 @@ function markdownToDocx(mdText) {
     }
     flushTable()
     if (s === '') continue
-    if (s.startsWith('#### ')) children.push(new Paragraph({ text: s.slice(5), heading: HeadingLevel.HEADING_4 }))
-    else if (s.startsWith('### ')) children.push(new Paragraph({ text: s.slice(4), heading: HeadingLevel.HEADING_3 }))
-    else if (s.startsWith('## ')) children.push(new Paragraph({ text: s.slice(3), heading: HeadingLevel.HEADING_2 }))
-    else if (s.startsWith('# ')) children.push(new Paragraph({ text: s.slice(2), heading: HeadingLevel.HEADING_1 }))
+    if (s.startsWith('#### ')) children.push(headingRun(s.slice(5), HeadingLevel.HEADING_4))
+    else if (s.startsWith('### ')) children.push(headingRun(s.slice(4), HeadingLevel.HEADING_3))
+    else if (s.startsWith('## ')) children.push(headingRun(s.slice(3), HeadingLevel.HEADING_2))
+    else if (s.startsWith('# ')) children.push(headingRun(s.slice(2), HeadingLevel.HEADING_1))
     else if (/^\d+\.\s/.test(s)) addRich(children, s)
     else if (s.startsWith('- ') || s.startsWith('* ')) {
       const inner = s.slice(2).trim()
@@ -105,11 +118,15 @@ function markdownToDocx(mdText) {
   return new Document({ sections: [{ children }] })
 }
 
+async function main() {
 const source = fs.readFileSync(srcPath, 'utf8')
-// 切分：一级标题处断开
+// 切分：一级标题处断开；「事实校对说明」（H2，内部用）及之后内容直接截断不进任何 docx
+const INTERNAL_HEADING = '## 事实校对说明'
+const cutIndex = source.indexOf(INTERNAL_HEADING)
+const bodySource = cutIndex >= 0 ? source.slice(0, cutIndex) : source
 const sections = []
 let current = null
-for (const line of source.split('\n')) {
+for (const line of bodySource.split('\n')) {
   if (/^# 第.+部分/.test(line)) {
     if (current) sections.push(current)
     current = { title: line.slice(2).trim(), lines: [line] }
@@ -120,13 +137,8 @@ for (const line of source.split('\n')) {
 if (current) sections.push(current)
 
 fs.mkdirSync(outDir, { recursive: true })
-const SKIP = ['事实校对说明']
 let count = 0
 for (const section of sections) {
-  if (SKIP.some((k) => section.title.includes(k))) {
-    console.log('skip (internal):', section.title)
-    continue
-  }
   const name = section.title
     .replace(/^第[一二三四五六七八九十]+部分\s*·\s*/, '')
     .replace(/[（(].*?[)）]/g, '')
@@ -140,3 +152,9 @@ for (const section of sections) {
   console.log(`saved: ${path.relative(repoRoot, outPath)} (${(buf.length / 1024).toFixed(0)} KB)`)
 }
 console.log('ALL DONE:', count, 'files')
+}
+
+main().catch((error) => {
+  console.error('生成失败:', error)
+  process.exit(1)
+})
