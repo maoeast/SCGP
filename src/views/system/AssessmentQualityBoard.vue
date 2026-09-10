@@ -3,7 +3,7 @@
   评估质量统计看板（Phase 2，admin-only）
 
   宽松质控配套的管理侧出口：
-  - 汇总卡：17 量表的评估数 / 已追踪数 / very_fast / fast / suspicious 计数
+  - 汇总卡：18 量表的评估数 / 已追踪数 / very_fast / fast / suspicious 计数
   - 疑似明细：quality_note 非空的记录清单，可跳转对应报告页
   - 只读，不做任何处置动作（数据供管理者人工研判）
 

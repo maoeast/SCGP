@@ -4,17 +4,16 @@
 
 ## 1. 执行基线
 
-- 总场景：212；P0 117，P1 74，P2 21。
-- 采集方式：Electron 自动 187，Electron 辅助 24，原生人工 1。
-- 安全分级：只读 122，演示写入 64，隔离状态 26。
+- 总场景：211；P0 117，P1 74，P2 20。
+- 采集方式：Electron 自动 186，Electron 辅助 24，原生人工 1。
+- 安全分级：只读 122，演示写入 64，隔离状态 25。
 - 固定视口：1920×1080，DPR 1。
 - 每项只允许生成一个同名文件；不得把同一图片复制到多个编号。
 - `auto` 使用 Playwright Electron 自动导航与截图；`assisted` 允许人工完成设备、文件选择、长流程或脚本化响应准备，再由 Playwright 截图；`native` 使用 Windows 桌面级截图。
 - `demo-write` 只能写入可丢弃演示数据库；`isolated-state` 必须使用独立 `userData`、临时资源和受控状态，禁止触碰当前开发数据、正式更新源或真实安装流程。
 - 路由模板中的 `{studentId}`、`{taskId}`、`{...AssessId}` 等变量由对应数据配置加载后解析，不得硬编码正式业务数据。
 - 图片写入 `docs/user-manual/screenshots/Sxxx.png`，正文生成时按唯一的 `[图 Sxxx]` 锚点替换，不依赖模糊标题匹配。
-- 当前 `capture-user-manual-screenshots.mjs` 只实现 S001、S003、S005、S017、S023、S057、S123、S173、S196、S208 的实际处理器；其余场景需按优先级逐批补齐处理器后再执行。
-- 现有 `screenshot-scenes.mjs` 与 `capture-*-screenshots.mjs` 属旧说明书脚本，不得作为本清单的当前执行器。
+- 当前 `capture-user-manual-screenshots.mjs` 只实现 S001、S003、S005、S017、S023、S057、S123、S174、S197、S209 的实际处理器；其余场景需按优先级逐批补齐处理器后再执行。
 
 ## 2. 运行命令与产物
 
@@ -117,7 +116,7 @@ node scripts/manual/capture-user-manual-screenshots.mjs --ids S017 --run-id audi
 | **S021** | P1 / 待采集 | 新增学生补充字段 | `/students` | 教师或管理员 | `students` | 滚动新增学生表单到下半部 | 诊断类型、所属班级、头像和保存按钮可见 | Electron 自动 | 演示写入 | `form` | `S021.png` → `[图 S021]` |
 | **S022** | P0 / 待采集 | 编辑学生 | `/students` | 教师或管理员 | `students` | 从学生卡片进入编辑并等待资料回填 | 已有资料、头像和保存入口完整可见 | Electron 自动 | 演示写入 | `form` | `S022.png` → `[图 S022]` |
 | **S023** | P2 / 待采集 | 删除学生确认 | `/students` | 教师或管理员 | `students` | 对可删除演示学生触发删除操作 | 学生标识、风险说明、取消和确认按钮可见 | Electron 自动 | 隔离状态 | `dialog` | `S023.png` → `[图 S023]` |
-| **S024** | P2 / 待采集 | 批量导入占位界面 | `/students` | 教师或管理员 | `students` | 点击批量导入并停留在占位界面 | 模板下载和文件选择可见；不得呈现导入成功状态 | Electron 自动 | 只读 | `dialog` | `S024.png` → `[图 S024]` |
+| **S024** | P2 / 待采集 | 批量导入学生 | `/students` | 教师或管理员 | `students` | 点击批量导入学生 | 模板下载、文件选择和开始导入入口可见 | Electron 自动 | 只读 | `dialog` | `S024.png` → `[图 S024]` |
 
 ### 第 5 章
 
@@ -329,11 +328,11 @@ node scripts/manual/capture-user-manual-screenshots.mjs --ids S017 --run-id audi
 | **S178** | P1 / 待采集 | AI 报告工具执行结果 | `/dashboard` | 教师或管理员 | `ai` | 用脚本化响应执行一次报告工具 | 工具执行状态、回答内容和导出结果可见 | Electron 辅助 | 演示写入 | `drawer` | `S178.png` → `[图 S178]` |
 | **S179** | P0 / 待采集 | 模型服务基础配置 | `/system?tab=ai-agent` | 管理员 | `ai` | 使用管理员账号进入 AI 智能体设置并停留上部 | 模型服务基础配置字段可见；密钥已掩码 | Electron 自动 | 只读 | `main` | `S179.png` → `[图 S179]` |
 | **S180** | P0 / 待采集 | 模型清单与模型编辑 | `/system?tab=ai-agent` | 管理员 | `ai` | 定位模型列表并打开一个演示模型编辑 | 模型清单、模型字段和保存操作可见 | Electron 自动 | 演示写入 | `dialog` | `S180.png` → `[图 S180]` |
-| **S181** | P0 / 待采集 | AI 开关、额度与连接测试 | `/system?tab=ai-agent` | 管理员 | `ai` | 进入 AI 智能体设置并定位「全局用量与风控」卡 | AI 总开关、每月额度、超额阻断、用量进度和保存操作可见 | Electron 自动 | 只读 | `main` | `S181.png` → `[图 S181]` |
+| **S181** | P0 / 待采集 | AI 开关、额度与连接测试 | `/system?tab=ai-agent` | 管理员 | `ai` | 定位「全局用量与风控」卡 | AI 总开关、每月额度、超额阻断、用量进度和保存操作可见 | Electron 自动 | 只读 | `main` | `S181.png` → `[图 S181]` |
 | **S182** | P0 / 待采集 | 智能体网格与启停 | `/system?tab=ai-agent` | 管理员 | `ai` | 滚动到智能体管理区 | 智能体网格、启停状态和标题栏新增按钮可见 | Electron 自动 | 演示写入 | `main` | `S182.png` → `[图 S182]` |
 | **S183** | P0 / 待采集 | 自定义智能体编辑与技能 | `/system?tab=ai-agent` | 管理员 | `ai` | 打开一个自定义智能体编辑 | 名称、角色、技能选择和保存操作可见 | Electron 自动 | 演示写入 | `dialog` | `S183.png` → `[图 S183]` |
 | **S184** | P1 / 待采集 | 知识引用资料与提示词 | `/system?tab=ai-agent` | 管理员 | `ai` | 在智能体编辑中切换到知识与提示词区域 | 知识引用资料、系统提示词和边界说明可见 | Electron 自动 | 演示写入 | `dialog` | `S184.png` → `[图 S184]` |
-| **S185** | P1 / 待采集 | AI 会话记录 | `/system?tab=ai-sessions` | 管理员 | `ai` | 进入系统管理 AI 会话记录标签 | 会话列表、搜索、分页和查看删除操作可见 | Electron 自动 | 只读 | `main` | `S185.png` → `[图 S185]` |
+| **S185** | P1 / 待采集 | AI 会话记录 | `/system?tab=ai-sessions` | 管理员 | `ai` | 进入 AI 会话记录标签 | 会话列表、搜索、分页和查看删除操作可见 | Electron 自动 | 只读 | `main` | `S185.png` → `[图 S185]` |
 
 ### 第 16 章
 

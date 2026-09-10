@@ -123,6 +123,12 @@
         </div>
       </el-tab-pane>
 
+      <el-tab-pane label="评估质量" lazy name="quality">
+        <div class="system-tab-panel scgp-tab-panel">
+          <AssessmentQualityBoard />
+        </div>
+      </el-tab-pane>
+
       <el-tab-pane v-if="isDevMode" label="开发者调试" name="devtools">
         <div class="system-tab-panel scgp-tab-panel">
           <div class="scgp-content-toolbar">
@@ -304,6 +310,7 @@ import SystemSettings from './system/SystemSettings.vue'
 import ResourceHealthCheck from './system/ResourceHealthCheck.vue'
 import AiAgentConfig from './system/AiAgentConfig.vue'
 import AiSessionsPanel from './system/AiSessionsPanel.vue'
+import AssessmentQualityBoard from './system/AssessmentQualityBoard.vue'
 import AiSkillLibrary from './system/AiSkillLibrary.vue'
 import UpdatePanel from './updates/UpdatePanel.vue'
 

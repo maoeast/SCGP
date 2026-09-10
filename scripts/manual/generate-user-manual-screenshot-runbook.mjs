@@ -141,7 +141,6 @@ function main() {
     '- 路由模板中的 `{studentId}`、`{taskId}`、`{...AssessId}` 等变量由对应数据配置加载后解析，不得硬编码正式业务数据。',
     '- 图片写入 `docs/user-manual/screenshots/Sxxx.png`，正文生成时按唯一的 `[图 Sxxx]` 锚点替换，不依赖模糊标题匹配。',
     '- 当前 `capture-user-manual-screenshots.mjs` 只实现 S001、S003、S005、S017、S023、S057、S123、S174、S197、S209 的实际处理器；其余场景需按优先级逐批补齐处理器后再执行。',
-    '- 现有 `screenshot-scenes.mjs` 与 `capture-*-screenshots.mjs` 属旧说明书脚本，不得作为本清单的当前执行器。',
     '',
     '## 2. 运行命令与产物',
     '',

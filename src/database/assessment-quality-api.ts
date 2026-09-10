@@ -1,7 +1,7 @@
 /**
  * 评估质量追踪统计 API（Phase 2 管理看板专用）
  *
- * 只读聚合 17 张 *_assess 表的 total_duration / avg_response_time / quality_note：
+ * 只读聚合 18 张 *_assess 表的 total_duration / avg_response_time / quality_note：
  * - 汇总：各量表评估总数、有质量数据记录数、very_fast/fast/suspicious 计数与占比
  * - 明细钻取：疑似记录清单（学生、日期、用时、平均每题、quality_note），可跳报告页
  *
@@ -9,7 +9,7 @@
  * - 纯只读（SELECT），不写任何表——宽松质控原则，看板是质量数据唯一出口
  * - quality_note 值域：'very_fast'(<3s/题) | 'fast'(<5s/题) | 'suspicious'（Phase 3 追加，
  *   标记组合形态如 'very_fast+suspicious'）| NULL（正常或旧记录）
- * - 表名清单硬编码（17 张表与 catalog 同源），不走外部输入拼接，无注入面
+ * - 表名清单硬编码（18 张表与 catalog 同源），不走外部输入拼接，无注入面
  */
 
 import { DatabaseAPI } from './api'
@@ -23,7 +23,7 @@ export function isSuspiciousNote(note: string | null | undefined): boolean {
   return note.split('+').includes(SUSPICIOUS_MARKER)
 }
 
-/** 17 张量表主表 → catalog 量表码（表名 = `${code}_assess`，个别历史不一致单列） */
+/** 18 张量表主表 → catalog 量表码（表名 = `${code}_assess`，个别历史不一致单列） */
 const QUALITY_TABLES: ReadonlyArray<{ table: string; code: string }> = [
   { table: 'sm_assess', code: 'sm' },
   { table: 'weefim_assess', code: 'weefim' },
@@ -42,6 +42,7 @@ const QUALITY_TABLES: ReadonlyArray<{ table: string; code: string }> = [
   { table: 'cognitive_self_assess', code: 'cognitive_self' },
   { table: 'abc_assess', code: 'abc' },
   { table: 'atec_assess', code: 'atec' },
+  { table: 'cpep3_assess', code: 'cpep_3' },
 ]
 
 /** 单量表质量汇总 */
@@ -77,7 +78,7 @@ export interface QualityFlagRow {
 
 export class AssessmentQualityAPI extends DatabaseAPI {
   /**
-   * 17 张表逐一聚合（表结构一致但表名不同，SQL 端 UNION 不可维护，应用层循环聚合）。
+   * 18 张表逐一聚合（表结构一致但表名不同，SQL 端 UNION 不可维护，应用层循环聚合）。
    * 单表聚合行数 = 表内记录数，量级为百~千级，性能无压力。
    */
   getQualitySummary(): ScaleQualitySummary[] {
