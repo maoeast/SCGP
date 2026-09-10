@@ -67,7 +67,7 @@
           <template #default="{ row }">{{ formatDuration(row.avgTotalDuration) }}</template>
         </el-table-column>
         <el-table-column label="平均每题" width="100" align="right">
-          <template #default="{ row }">{{ formatSeconds(row.avgResponseTimeMean) }}</template>
+          <template #default="{ row }">{{ formatAvgResponseTime(row.scaleCode, row.avgResponseTimeMean) }}</template>
         </el-table-column>
       </el-table>
     </el-card>
@@ -88,7 +88,7 @@
           <template #default="{ row }">{{ formatDuration(row.totalDuration) }}</template>
         </el-table-column>
         <el-table-column label="平均每题" width="100" align="right">
-          <template #default="{ row }">{{ formatSeconds(row.avgResponseTime) }}</template>
+          <template #default="{ row }">{{ formatAvgResponseTime(row.scaleCode, row.avgResponseTime) }}</template>
         </el-table-column>
         <el-table-column label="标记" width="150">
           <template #default="{ row }">
@@ -185,6 +185,18 @@ function formatDuration(seconds: number | null | undefined): string {
 function formatSeconds(seconds: number | null | undefined): string {
   if (typeof seconds !== 'number' || !Number.isFinite(seconds)) return '-'
   return `${seconds.toFixed(1)}秒`
+}
+
+/**
+ * cognitive_self_assess.avg_response_time 是「真反应时 ms」语义（CognitiveSelfDriver INSERT 直写，
+ * saveQualityMetrics 用 skipAvgResponseTime 跳过覆盖），其余量表均为秒。
+ * 展示层按量表换算，勿在 SQL 聚合层处理（同一列语义不一致）。
+ */
+const MS_UNIT_SCALE_CODES = new Set(['cognitive_self'])
+
+function formatAvgResponseTime(code: string, value: number | null | undefined): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '-'
+  return formatSeconds(MS_UNIT_SCALE_CODES.has(code) ? value / 1000 : value)
 }
 
 function formatDateTime(iso: string): string {
