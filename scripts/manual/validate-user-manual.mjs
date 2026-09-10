@@ -43,7 +43,8 @@ const requiredBoundaryText = [
   '批量导入支持 .xlsx 和 .xls 文件',
   '尚未接入可验证的定时备份执行主链',
   'BRIEF 和综合认知自测的报告页面明确标为 DRAFT',
-  '不要承诺所有 15 项评估都能直接导出 Word',
+  '当前 18 项评估量表的报告页均提供“导出 Word”',
+  '其中 15 项报告页另提供“AI 解读”按钮（CSIRS、Conners PSQ、Conners TRS 暂无',
   '训练资源收藏尚未接入资源中心页面',
   '备份不包含 AI 模型服务 API Key',
 ]
