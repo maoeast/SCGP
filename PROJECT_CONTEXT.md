@@ -1898,5 +1898,9 @@
 - 全局约束：新增量表接入清单实证 **8 处**（比旧 7 处多 student-detail builder）；jiti 单测不能加载完整 Driver 链（api.ts→init.ts→.sql），计分测试走「纯函数模块 + 纯数据题库」路线。
 
 
+## 110. 2026-09-10/11 手册 v1.3 同步 + 质量看板双修 + 截图专项 217 张 + 营销文案 v2.0
 
-
+- 评估量表口径 15→**18**（新增 ABC/ATEC/PEP-3）；「AI 解读」按钮实测 **15/18**（CSIRS/Conners PSQ/Conners TRS 无），validate 门禁固化为两条精确子串——对外表述禁止写「18 项均提供 AI 解读」。
+- 质量看板补 CPEP-3 汇总（QUALITY_TABLES 曾漏 cpep3_assess 真 bug）+ 系统管理「评估质量」tab 入口；cognitive_self 的 avg_response_time 是 ms 语义，看板展示层按量表换算（MS_UNIT_SCALE_CODES）。
+- 手册第 18 章瘦身：对外版只留 18.1 盘点+18.2 术语；截图清单（217 行）等内部资料在 docs/user-manual/SCGP-用户手册截图采集与维护基线.md，sync/validate 改读基线文档。
+- 截图 211→217：插行编号漂移 138 处全量重映射（capture handler/approvals/正文占位三方）；新场景种子必须挂对应 fixture 家族（AI 记忆挂 hasSeed('ai')）。营销文案 v2.0（docs/marketing/2026-09-10，五种形态）替代 08-05 版对外口径。
