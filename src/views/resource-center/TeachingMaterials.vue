@@ -46,7 +46,7 @@
           <el-button
             :type="materialsStore.showFavoritesOnly ? 'warning' : 'default'"
             :icon="Star"
-            @click="materialsStore.toggleFavoritesView"
+            @click="handleToggleFavorites"
           >
             {{ materialsStore.showFavoritesOnly ? '全部资料' : '我的收藏' }}
           </el-button>
@@ -107,12 +107,13 @@
         <el-button type="primary" @click="materialsStore.clearError()">关闭</el-button>
       </div>
 
-      <div v-else-if="filteredMaterials.length > 0" class="material-grid scgp-card-grid">
-        <article
-          v-for="material in filteredMaterials"
-          :key="material.id"
-          class="material-card"
-        >
+      <div v-else-if="filteredMaterials.length > 0" class="material-list-block">
+        <div ref="materialGridRef" class="material-grid scgp-card-grid">
+          <article
+            v-for="material in paginatedMaterials"
+            :key="material.id"
+            class="material-card"
+          >
           <div
             class="material-thumbnail"
             :class="{ 'is-video': isVideoMaterial(material) }"
@@ -208,6 +209,19 @@
             </el-button>
           </div>
         </article>
+        </div>
+
+        <!-- 分页：与训练资源标签同款，前端切片；每页固定 12 个（用户约定 2026-09-11） -->
+        <div class="pagination-container">
+          <el-pagination
+            v-model:current-page="currentPage"
+            :total="totalMaterials"
+            :page-size="MATERIALS_PAGE_SIZE"
+            layout="total, prev, pager, next, jumper"
+            background
+            @current-change="resetGridScroll"
+          />
+        </div>
       </div>
 
       <div v-else class="state-panel empty-state scgp-state-panel">
@@ -443,7 +457,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Delete,
@@ -488,6 +502,32 @@ const materialsStore = useTeachingMaterialsStore()
 const readOnly = computed(() => props.readOnly)
 
 const filteredMaterials = computed(() => materialsStore.filteredMaterials)
+
+// 分页：每页固定 12 个（用户约定）；筛选/搜索/切维度后回到第 1 页，
+// 删除或过滤收紧导致当前页越界时钳制到最后一页
+const MATERIALS_PAGE_SIZE = 12
+const currentPage = ref(1)
+const totalMaterials = computed(() => filteredMaterials.value.length)
+const paginatedMaterials = computed(() => {
+  const start = (currentPage.value - 1) * MATERIALS_PAGE_SIZE
+  return filteredMaterials.value.slice(start, start + MATERIALS_PAGE_SIZE)
+})
+watch(totalMaterials, (total) => {
+  const maxPage = Math.max(1, Math.ceil(total / MATERIALS_PAGE_SIZE))
+  if (currentPage.value > maxPage) {
+    currentPage.value = maxPage
+  }
+})
+function resetToFirstPage() {
+  currentPage.value = 1
+}
+
+// 翻页后回到网格顶部，避免新页内容从旧滚动位置开始（看不到页首卡片）
+const materialGridRef = ref<HTMLElement>()
+function resetGridScroll() {
+  materialGridRef.value?.scrollTo({ top: 0 })
+}
+
 const fileCategoryOptions = TEACHING_MATERIAL_FILE_CATEGORY_CODES
 const showUploadDialog = ref(false)
 const showBatchImportDialog = ref(false)
@@ -557,16 +597,24 @@ function getCurrentDescription(): string {
 }
 
 function selectDimension(dimensionCode: TeachingMaterialDimensionCode | null) {
+  resetToFirstPage()
   materialsStore.setDimension(dimensionCode)
 }
 
 function selectFileCategory(categoryCode: string | number | boolean) {
+  resetToFirstPage()
   materialsStore.setFileCategory(categoryCode as TeachingMaterialFileCategoryCode)
 }
 
-function handleSearch(event: Event) {
-  const target = event.target as HTMLInputElement
-  materialsStore.setSearchKeyword(target.value)
+function handleSearch(value: string) {
+  // el-input 的 input 事件载荷是字符串值（非原生 Event），直接接值避免读 event.target 报错
+  resetToFirstPage()
+  materialsStore.setSearchKeyword(value)
+}
+
+function handleToggleFavorites() {
+  resetToFirstPage()
+  materialsStore.toggleFavoritesView()
 }
 
 function getMaterialCountByDimension(dimensionCode: TeachingMaterialDimensionCode): number {
@@ -790,6 +838,8 @@ async function handleUpload() {
     ElMessage.success('教学资料上传成功')
     showUploadDialog.value = false
     resetUploadForm()
+    resetToFirstPage()
+    resetGridScroll()
   } catch (uploadError) {
     console.error('[TeachingMaterials] upload failed:', uploadError)
     ElMessage.error('上传资料失败')
@@ -828,6 +878,8 @@ async function handleBatchImport() {
 
     if (result.success > 0) {
       await materialsStore.loadMaterials()
+      resetToFirstPage()
+      resetGridScroll()
     }
 
     if (result.failed === 0) {
@@ -1031,6 +1083,24 @@ defineExpose({
 
 .material-grid {
   min-height: 0;
+}
+
+.material-list-block {
+  /* 弹性列容器：恢复被包裹层打断的滚动链，
+     让 .scgp-card-grid 的 flex:1 + overflow-y:auto 继续生效，
+     避免卡片+分页栏超出面板高度时被 .main-content 的 overflow:hidden 裁剪 */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid #ebeef5;
+  margin-top: 16px;
 }
 
 .material-card {
