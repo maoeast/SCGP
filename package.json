@@ -54,7 +54,7 @@
       "buildResources": "build"
     },
     "extraMetadata": {
-      "scgpDebugDevtools": true
+      "scgpDebugDevtools": false
     },
     "extraResources": [
       {
