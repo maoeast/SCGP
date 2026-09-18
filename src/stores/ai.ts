@@ -1102,7 +1102,8 @@ export const useAiStore = defineStore('ai', () => {
    * 两段式事务：
    *  阶段A（短事务）：createSummaryBatch（每会话单飞）+ 组装脱敏输入
    *  阶段B（模型调用，无锁）：专用总结接口（非流式，不入 tool loop）
-   *  阶段C（短事务，CAS）：写 pending 候选 + commitSummaryBatch 推进水位
+   *  阶段C（CAS）：commitSummaryBatch 推进水位后，事务外逐条写 pending 候选
+   *  （原子性窗口说明见 ai-api commitSummaryBatch jsdoc）
    *
    * 失败不抛错（记忆是附加能力，不阻塞对话）；由补偿任务或下次会话重试。
    */
@@ -1141,11 +1142,25 @@ export const useAiStore = defineStore('ai', () => {
       if (!a.createSummaryBatch({ sessionId, batchId, studentId, fromMessageId, toMessageId, inputHash })) {
         return // 已有活动批次（每会话单飞）
       }
+      // 阶段 B 前：pending → summarizing（v4.1 §6.2 状态机）。
+      // 缺了这步 commitSummaryBatch 的 CAS（仅接受 summarizing）恒败，批次永远卡 pending、
+      // 单飞索引拖死后续总结与改绑学生（2026-09-18 排查结论，历史 bug）
+      if (!a.markBatchSummarizing(batchId)) {
+        // 极端并发：批次已被他人推进/取消；释放本次占位，避免死占单飞坑位
+        a.failSummaryBatch(batchId, 'markBatchSummarizing 失败：批次已被并发转移')
+        return
+      }
 
       // 阶段 B：模型调用（专用总结接口，非流式）
       const provider = providerConfig.value
       if (!provider?.apiKeyEnc || !provider.defaultModel) {
         a.failSummaryBatch(batchId, 'provider 未配置')
+        return
+      }
+      // 成本闸门（advisor #1）：学校开启超预算硬截断时，总结调用与对话同样被拦，
+      // 避免补偿任务绕过月度额度反复调模型
+      if (provider.blockOnOverage && overBudget.value) {
+        a.failSummaryBatch(batchId, '本月 AI 用量已达额度上限，记忆总结暂停')
         return
       }
       const res = await window.electronAPI.aiChat({
@@ -1171,7 +1186,7 @@ export const useAiStore = defineStore('ai', () => {
         return
       }
 
-      // 阶段 C：CAS 提交（写候选 + 推进水位同一事务）
+      // 阶段 C：CAS 提交（仅推进水位+批次 done；候选写入在提交后逐条进行，见 ai-api commitSummaryBatch 注释的原子性窗口说明）
       const uid = currentUserId()
       const committed = a.commitSummaryBatch(batchId, toMessageId)
       if (!committed) return // CAS 失败：批次已 cancelled，丢弃结果
@@ -1230,6 +1245,13 @@ export const useAiStore = defineStore('ai', () => {
     try {
       if (!memoryEnabled.value) return
       const a = api()
+      // 先恢复卡死批次（2026-09-18 存量修复 + 超时自愈）：
+      // 正常总结秒级完成，活动批次（pending/summarizing）超 10 分钟必是死批次，
+      // 不释放会拖死该会话的后续总结与改绑学生。恢复后下方扫描会自动重总结。
+      const recovered = a.recoverStaleActiveBatches(10)
+      if (recovered > 0) {
+        console.info(`[AIMemory] 已恢复 ${recovered} 个卡死的总结批次，对应会话将重新总结`)
+      }
       // 候选：绑定学生 + 水位之后存在 user 或 completed 消息的会话（按水位最旧优先）
       const rows = a.query(
         `SELECT s.id AS session_id
@@ -1258,10 +1280,16 @@ export const useAiStore = defineStore('ai', () => {
          ORDER BY updated_at ASC LIMIT 3`,
       )
       for (const row of failed) {
-        // failed 批次重试：清状态后走同一入口
+        // advisor #6/#7：failed 态不在单飞 partial 索引内（仅 pending/summarizing 占坑），
+        // 置 cancelled 让位即可重建批次；不覆盖 last_error（保留原失败原因供回溯）。
+        // 注意：让位后的行归入 cancelled 30 天清理（非 failed 90 天）。重试走同一入口
         const sid = Number(row.session_id)
         a.execute(
-          `UPDATE ai_memory_summary_batch SET state = 'pending' WHERE session_id = ? AND state = 'failed'`,
+          `UPDATE ai_memory_summary_batch
+           SET state = 'cancelled',
+               last_error = 'failed 重试让位重建；原错误：' || last_error,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE session_id = ? AND state = 'failed'`,
           [sid],
         )
         await finalizeAssistantTurn(sid)

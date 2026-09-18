@@ -1588,7 +1588,13 @@ export class AIApi extends DatabaseAPI {
     )
   }
 
-  /** 阶段 C：CAS 提交（写候选由调用方在同一事务完成；此处推进水位 + 批次 done） */
+  /**
+   * 阶段 C：CAS 提交（推进水位 + 批次 done 同一事务）。
+   *
+   * ⚠️ 已知原子性窗口（advisor #2）：pending 候选由调用方在本方法 COMMIT 之后逐条写入
+   * （并非设计 §6.2 要求的同一事务）——若提交与候选写入之间应用退出，
+   * 水位已推进而候选丢失，且不再补总结。窗口极窄，待后续版本把候选写入纳入事务后消除。
+   */
   commitSummaryBatch(batchId: string, watermarkTo: number): boolean {
     const batch = this.getSummaryBatch(batchId)
     if (!batch || batch.state !== 'summarizing') return false
@@ -1624,10 +1630,11 @@ export class AIApi extends DatabaseAPI {
     }
   }
 
-  /** 失败重试：attempt_count +1；达上限（3）置 failed */
+  /** 失败重试：attempt_count +1；达上限（3）置 failed。仅活动态可转，防把已 cancelled 的批次复活成 pending 重新占坑 */
   failSummaryBatch(batchId: string, error: string): void {
     const batch = this.getSummaryBatch(batchId)
     if (!batch) return
+    if (batch.state !== 'pending' && batch.state !== 'summarizing') return
     const attempts = batch.attemptCount + 1
     if (attempts >= 3) {
       this.execute(
@@ -1874,6 +1881,30 @@ export class AIApi extends DatabaseAPI {
       }
     }
     return total
+  }
+
+  /**
+   * 恢复卡死的活动批次（2026-09-18 存量修复 + 通用超时自愈）。
+   *
+   * 背景：历史版本 finalizeAssistantTurn 从不调 markBatchSummarizing，批次永远停在
+   * pending → commit CAS 恒败 → 记忆永不写入；且唯一索引（每会话单飞）被死批次占用，
+   * 该会话后续总结全部被挡、bindSessionStudent 永远拒绝（"内容正在整理"）。
+   *
+   * 策略：pending/summarizing 超过 staleMinutes（默认 10 分钟，正常总结秒级完成）
+   * 视为死批次 → cancelled（非删除，保留 last_error 供回溯）；对应会话补偿任务会自动重总结。
+   *
+   * 返回恢复条数。由 runMemoryCompensation 每轮调用。
+   */
+  recoverStaleActiveBatches(staleMinutes = 10): number {
+    return this.execute(
+      `UPDATE ai_memory_summary_batch
+       SET state = 'cancelled',
+           last_error = 'stale batch recovered: 超时未完成，已释放单飞坑位',
+           updated_at = CURRENT_TIMESTAMP
+       WHERE state IN ('pending', 'summarizing')
+         AND updated_at < datetime('now', ?)`,
+      [`-${Math.max(1, staleMinutes)} minutes`],
+    )
   }
 
   private writeMemoryAudit(

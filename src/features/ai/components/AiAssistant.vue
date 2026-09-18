@@ -25,6 +25,12 @@ const aiStore = useAiStore()
 const studentStore = useStudentStore()
 
 const drawerVisible = ref(false)
+
+// 记忆补偿任务调度（见 onMounted）：5 分钟节流 + 防重入
+const MEMORY_COMPENSATION_INTERVAL_MS = 5 * 60 * 1000
+const memoryCompensationTimer = ref<number | null>(null)
+const memoryCompensationRunning = ref(false)
+const isMounted = ref(true)
 const inputText = ref('')
 const inputRef = ref<{ focus: () => void } | null>(null)
 const editingMessageId = ref<number | null>(null)
@@ -50,12 +56,38 @@ onMounted(async () => {
   window.electronAPI.on('ai:error', errorHandler)
   window.addEventListener(AI_ASSISTANT_OPEN_EVENT, assistantOpenHandler)
   await aiStore.loadAll()
+  if (!isMounted.value) return // advisor #4：await 期间已卸载则不再注册定时器（防泄漏）
+  // 记忆补偿任务调度入口（v4.1 §6.4 设计承诺，2026-09-18 接线）：
+  // AiAssistant 随登录全局挂载（App.vue），启动跑一次修复存量卡死批次，
+  // 之后定时器节流扫描；首轮与定时轮均走 running 防重入
+  memoryCompensationRunning.value = true
+  void aiStore
+    .runMemoryCompensation()
+    .catch(() => {})
+    .finally(() => {
+      memoryCompensationRunning.value = false
+    })
+  memoryCompensationTimer.value = window.setInterval(() => {
+    if (memoryCompensationRunning.value) return
+    memoryCompensationRunning.value = true
+    void aiStore
+      .runMemoryCompensation()
+      .catch(() => {})
+      .finally(() => {
+        memoryCompensationRunning.value = false
+      })
+  }, MEMORY_COMPENSATION_INTERVAL_MS)
 })
 
 onUnmounted(() => {
+  isMounted.value = false
   window.electronAPI.off('ai:chunk', chunkHandler)
   window.electronAPI.off('ai:error', errorHandler)
   window.removeEventListener(AI_ASSISTANT_OPEN_EVENT, assistantOpenHandler)
+  if (memoryCompensationTimer.value != null) {
+    window.clearInterval(memoryCompensationTimer.value)
+    memoryCompensationTimer.value = null
+  }
 })
 
 const budgetPercent = computed(() => {
