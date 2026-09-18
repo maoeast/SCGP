@@ -13,11 +13,12 @@
  */
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, resolve, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createRequire } from 'node:module'
+import { after } from 'node:test'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const projectRoot = resolve(__dirname, '..', '..')
@@ -91,6 +92,15 @@ export { ExtractedAIApi }
 `
 writeFileSync(generatedPath, generatedCode)
 const { ExtractedAIApi } = await import(pathToFileURL(generatedPath).href)
+
+// 评审卫生项：测试结束后清理本次运行的临时目录（rmSync 失败不阻塞退出，交由 OS 兒底）
+after(() => {
+  try {
+    rmSync(tmpFixtureDir, { recursive: true, force: true })
+  } catch {
+    /* 忽略：tmp 清理失败无碍 */
+  }
+})
 
 // ---------- 1. sql.js 内存库与最小宿主 ----------
 
