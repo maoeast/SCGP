@@ -411,7 +411,7 @@ export class ClassAPI {
     academicYear: AcademicYear,
     enrollmentDate: string
   ): Promise<number> {
-    // 检查班级容量
+    // 检查班级容量（调班/分班共用；同班重复判断在前置 existing 检查内已优先处理）
     const classInfo = this.getClass(classId)
     if (!classInfo) {
       throw new Error('班级不存在')
@@ -421,14 +421,47 @@ export class ClassAPI {
       throw new Error('班级人数已达上限')
     }
 
-    // 检查学生是否已在当前学年的班级中
+    // 检查学生是否已在当前学年的班级中：已有记录 → 同学年内调班（学年中途调班功能，2026-09-19）
+    // 查询不限 is_current：命中已关闭行（如毕业后回炉）时改写重开，避免 INSERT 撞 UNIQUE 约束
     const existing = this.db.get(`
-      SELECT id FROM student_class_history
+      SELECT id, class_id, is_current FROM student_class_history
       WHERE student_id = ? AND academic_year = ?
     `, [studentId, academicYear])
 
     if (existing) {
-      throw new Error('学生已在本学年班级中')
+      if (existing.is_current === 1 && existing.class_id === classId) {
+        throw new Error('学生已在该班级中')
+      }
+      // 同学年内调班：表约束 UNIQUE(student_id, academic_year) = 每人每学年仅一行，无法关旧插新
+      // （changeStudentClass 的关旧插新仅适用于跨学年升级），此处 UPDATE 现有行的班级指向。
+      // ⚠️ 人数对账：真实 schema 触发器只盖 INSERT 与 UPDATE OF is_current，不盖 UPDATE OF class_id，
+      // 必须在此显式对账源班/目标班人数（class-schema.sql trg_class_enrollment_* 不覆盖本分支）。
+      // 源班 -1 仅在行仍为 current 时执行：已关闭行（is_current=0）的人数在关闭时已由
+      // decrement 触发器扣减，再扣即幻影减（round-2 评审 #1）
+      if (existing.is_current === 1) {
+        this.db.run(`
+          UPDATE sys_class SET current_enrollment = current_enrollment - 1
+          WHERE id = ? AND current_enrollment > 0
+        `, [existing.class_id])
+      }
+      this.db.run(`
+        UPDATE sys_class SET current_enrollment = current_enrollment + 1
+        WHERE id = ?
+      `, [classId])
+      this.db.run(`
+        UPDATE student_class_history
+        SET class_id = ?, class_name = ?, enrollment_date = ?,
+            is_current = 1, leave_date = NULL, leave_reason = NULL
+        WHERE id = ?
+      `, [classId, classInfo.name, enrollmentDate, existing.id])
+      this.db.run(`
+        UPDATE student
+        SET current_class_id = ?, current_class_name = ?
+        WHERE id = ?
+      `, [classId, classInfo.name, studentId])
+      // 立即落盘，防止数据丢失
+      await this.forceSave()
+      return existing.id
     }
 
     // 获取班级信息

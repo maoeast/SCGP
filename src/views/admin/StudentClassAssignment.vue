@@ -273,6 +273,15 @@
           </el-select>
         </el-form-item>
 
+        <!-- 月龄-年级对应性软提示：单个学生分班时，跳级（年龄未达常规）≥1 级即提示、留级 ≥2 级才提示（特教延迟入学属正常仅作核对） -->
+        <el-alert
+          v-if="!isBatchAssign && assignGradeAgeHint"
+          :title="assignGradeAgeHint"
+          type="warning"
+          :closable="false"
+          style="margin-bottom: 20px"
+        />
+
         <el-form-item label="入班日期" prop="enrollmentDate">
           <el-date-picker
             v-model="assignForm.enrollmentDate"
@@ -383,7 +392,10 @@ import StudentAvatar from '@/components/student/StudentAvatar.vue'
 import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
 import StudentId from '@/components/student/StudentId.vue'
 import { classAPI } from '@/database/class-api'
-import { LAST_GRADE_LEVEL } from '@/types/class'
+import {
+  LAST_GRADE_LEVEL,
+  checkGradeAgeMatch
+} from '@/types/class'
 import type {
   AcademicYear,
   AcademicYearInfo,
@@ -511,6 +523,18 @@ const preferredNextAcademicYear = computed<AcademicYear>(() =>
 
 const availableClasses = computed(() => {
   return allClasses.value.filter(cls => cls.academicYear === assignForm.value.academicYear)
+})
+
+// 月龄-年级对应性软提示（单个学生分班时；不对称阈值——跳级 ≥1 级即提示、留级 ≥2 级才提示）
+const assignGradeAgeHint = computed(() => {
+  if (isBatchAssign.value || !currentStudent.value?.birthday || !assignForm.value.classId) return ''
+  const selectedClass = availableClasses.value.find(cls => cls.id === assignForm.value.classId)
+  if (!selectedClass) return ''
+  return checkGradeAgeMatch(
+    currentStudent.value.birthday,
+    selectedClass.gradeLevel,
+    assignForm.value.academicYear
+  ).message
 })
 
 const allStudentsSelected = computed(() => {
@@ -725,22 +749,28 @@ async function confirmAssign() {
     try {
       if (isBatchAssign.value) {
         const studentIds = selectedStudents.value.map(student => student.id)
-        classAPI.assignStudentsBatch({
+        const historyIds = await classAPI.assignStudentsBatch({
           studentIds,
           classId: assignForm.value.classId,
           academicYear: assignForm.value.academicYear,
           enrollmentDate: assignForm.value.enrollmentDate ?? new Date().toISOString().slice(0, 10)
         })
-        ElMessage.success(`成功为 ${studentIds.length} 名学生分班`)
+        // 按实际成功数提示（assignStudentsBatch 逐生 try/catch，失败的学生不计入）
+        if (historyIds.length === studentIds.length) {
+          ElMessage.success(`成功为 ${studentIds.length} 名学生分班`)
+        } else {
+          ElMessage.warning(`分班完成：成功 ${historyIds.length} 名，失败 ${studentIds.length - historyIds.length} 名（详情见控制台）`)
+        }
       } else if (currentStudent.value) {
-        classAPI.assignStudentToClass(
+        // 单个场景：无本学年记录 = 首次分班；已有记录 = 学年中途调班（assignStudentToClass 内部自动分流到调班链路）
+        await classAPI.assignStudentToClass(
           currentStudent.value.id,
           currentStudent.value.name,
           assignForm.value.classId,
           assignForm.value.academicYear,
           assignForm.value.enrollmentDate ?? new Date().toISOString().slice(0, 10)
         )
-        ElMessage.success(currentStudent.value.currentClassName ? '调班成功' : '分班成功')
+        ElMessage.success('操作成功')
       }
 
       assignDialogVisible.value = false

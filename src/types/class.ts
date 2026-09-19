@@ -311,6 +311,97 @@ export function isValidGradeLevel(value: number): value is GradeLevel {
   return GRADE_LEVELS.includes(value as GradeLevel)
 }
 
+// ══════════════════════════════════════════════════════════════════
+// 月龄-年级对应性核对（软提示，非校验阻断）
+// 规则依据：中国《义务教育法》第十一条——年满 6 周岁入学（截止当年 8 月
+// 31 日，9 月 1 日入读一年级）。特教场景留级/延迟入学属常态，跳级（年龄不够读高年级）
+// 则几乎不会发生——阈值不对称（用户 2026-09-19 拍板）：跳级 ≥1 级即提示，留级 ≥2 级才提示。
+// 仅软提示，不阻断任何操作。
+// ══════════════════════════════════════════════════════════════════
+
+/** 义务教育法定入学年龄（周岁） */
+export const COMPULSORY_EDUCATION_ENTRY_AGE = 6
+
+/**
+ * 计算学生入学资格日（学年前一年 8 月 31 日截止口径）的周岁年龄
+ * 法定语义：截至当年 8 月 31 日年满 6 周岁方可入读一年级（9 月 1 日开学）
+ * @param birthday 生日 "YYYY-MM-DD"
+ * @param academicYear 学年 "2024-2025"
+ * @returns 周岁年龄（8/31 截止口径）；生日无效返回 null
+ */
+export function getAgeAtAcademicYearStart(birthday: string, academicYear: AcademicYear): number | null {
+  const { startYear } = parseAcademicYear(academicYear)
+  const birth = new Date(birthday)
+  if (Number.isNaN(birth.getTime()) || !birthday) return null
+  let age = startYear - birth.getFullYear()
+  // 生日在 9 月及之后 → 截至 8/31 资格日还没过生日，周岁减一
+  // （月份按生日字符串第 6-7 位取，避免 new Date 对 "YYYY-MM-DD" 的 UTC 解析在负时区下月份漂移；非标格式回退 Date 取月）
+  const birthMonth = Number(birthday.slice(5, 7))
+  if ((Number.isNaN(birthMonth) ? birth.getMonth() + 1 : birthMonth) >= 9) age -= 1
+  return age
+}
+
+/**
+ * 按义务教育入学规则推算学生当前"应读"年级（GRADE_OPTIONS 的 value 口径，
+ * 4 = 一年级，12 = 九年级）
+ * @returns 应读年级 value；生日无效返回 null
+ */
+export function getExpectedGradeLevel(birthday: string, academicYear: AcademicYear): GradeLevel | null {
+  const ageAtYearStart = getAgeAtAcademicYearStart(birthday, academicYear)
+  if (ageAtYearStart === null) return null
+  // 一年级常规入学 = 满 6 周岁 → 应读年级 value = 4 + (年龄 - 6)
+  const expected = 4 + (ageAtYearStart - COMPULSORY_EDUCATION_ENTRY_AGE)
+  if (expected < 1) {
+    // 未到幼儿园小班常规年龄
+    return 1
+  }
+  return Math.min(expected, 12) as GradeLevel
+}
+
+export interface GradeAgeCheckResult {
+  /** 偏差级数：正数 = 在读高于应读（学生偏小/提前入学），负数 = 低于应读（偏大/延迟入学），0 = 相符 */
+  gap: number
+  /** 是否达到提示阈值（跳级 gap≥+1 或留级 gap≤-2，不对称） */
+  shouldWarn: boolean
+  /** 提示文案；不需要提示时为空字符串 */
+  message: string
+}
+
+/**
+ * 月龄-年级对应性核对（软提示，阈值不对称——用户 2026-09-19 拍板）：
+ * 跳级（年龄不够读了高年级，gap ≥ +1）任何偏差都提示；
+ * 留级（年龄到了还在低年级，gap ≤ -2）才提示，留 1 级属特教常态不提示。
+ * @param birthday 学生生日 "YYYY-MM-DD"
+ * @param currentGradeLevel 在读年级（GRADE_OPTIONS value 口径，4 = 一年级）
+ * @param academicYear 所在学年，缺省用当前学年
+ */
+export function checkGradeAgeMatch(
+  birthday: string,
+  currentGradeLevel: number | null | undefined,
+  academicYear?: AcademicYear
+): GradeAgeCheckResult {
+  const year = academicYear || getCurrentAcademicYear()
+  const expectedGrade = getExpectedGradeLevel(birthday, year)
+  if (expectedGrade === null || !currentGradeLevel) {
+    return { gap: 0, shouldWarn: false, message: '' }
+  }
+  const gap = currentGradeLevel - expectedGrade
+  // 不对称阈值：跳级 gap ≥ +1 即提示；留级要 gap ≤ -2 才提示（-1 属常态）
+  const isSkipping = gap >= 1
+  const isRetained = gap <= -2
+  if (!isSkipping && !isRetained) {
+    return { gap, shouldWarn: false, message: '' }
+  }
+  const message = isSkipping
+    ? `按常规学龄（年满 6 周岁入学，截至 8 月 31 日），该生目前宜读${getGradeLabel(expectedGrade)}，在读${getGradeLabel(currentGradeLevel)}——年龄未达常规，疑似跳级，请核对`
+    : `按常规学龄（年满 6 周岁入学，截至 8 月 31 日），该生目前宜读${getGradeLabel(expectedGrade)}，在读${getGradeLabel(currentGradeLevel)}低于常规 ${Math.abs(gap)} 级——特教场景延迟入学/按能力分班属正常，仅作核对提示`
+  return {
+    gap,
+    shouldWarn: true,
+    message
+  }
+}
+
 /**
  * 工具函数：解析学年
  */

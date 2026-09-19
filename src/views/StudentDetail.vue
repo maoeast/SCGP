@@ -51,6 +51,11 @@
                 {{ currentClassLabel }}
               </span>
             </div>
+            <!-- 月龄-年级对应性软提示：跳级（年龄未达常规）≥1 级即出现；留级≥2 级才出现（特教延迟入学属正常仅作核对） -->
+            <p v-if="gradeAgeHint" class="grade-age-hint" role="note">
+              <el-icon><WarningFilled /></el-icon>
+              {{ gradeAgeHint }}
+            </p>
           </div>
         </div>
 
@@ -226,13 +231,15 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Calendar, DataLine, Edit } from '@element-plus/icons-vue'
+import { ArrowLeft, Calendar, DataLine, Edit, WarningFilled } from '@element-plus/icons-vue'
 import AddStudentDialog from '@/components/AddStudentDialog.vue'
 import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
 import StudentAvatar from '@/components/student/StudentAvatar.vue'
 import StudentId from '@/components/student/StudentId.vue'
 import { EquipmentTrainingAPI, GameTrainingAPI, TrainingSessionAPI } from '@/database/api'
+import { classAPI } from '@/database/class-api'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
+import { checkGradeAgeMatch } from '@/types/class'
 import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import { useStudentStore, type Student } from '@/stores/student'
 import { useAiStore } from '@/stores/ai'
@@ -289,6 +296,33 @@ const trainingTimestamps = ref<string[]>([])
 const latestAssessmentRecord = ref<{ id: string; scaleLabel: string; createdAt: string } | null>(null)
 
 const currentClassLabel = computed(() => student.value?.current_class_name || '未分班')
+
+// 月龄-年级对应性软提示（不对称阈值——跳级 gap≥+1 即提示、留级 gap≤-2 才提示）：
+// 年级数字经班级 API 按 current_class_id 反查
+// （Student 类型含 current_class_id，getAllStudents 已查询该列；按 id 匹配比按名可靠——自定义班级名无全局唯一校验）
+const currentClassGradeLevel = ref<number | null>(null)
+const currentClassAcademicYear = ref<string | null>(null)
+const gradeAgeHint = computed(() => {
+  if (!student.value?.birthday || !student.value?.current_class_name) return ''
+  return checkGradeAgeMatch(
+    student.value.birthday,
+    currentClassGradeLevel.value,
+    currentClassAcademicYear.value ?? undefined
+  ).message
+})
+function resolveCurrentClassGradeLevel() {
+  currentClassGradeLevel.value = null
+  currentClassAcademicYear.value = null
+  if (!student.value?.current_class_id) return
+  try {
+    // 按学生表的 current_class_id 精确匹配（比按名反查可靠）；老师权限看不到该班级时降级为无提示
+    const matched = classAPI.getClasses().find((cls) => cls.id === student.value?.current_class_id)
+    currentClassGradeLevel.value = matched?.gradeLevel ?? null
+    currentClassAcademicYear.value = matched?.academicYear ?? null
+  } catch (error) {
+    console.error('反查班级年级失败（年级核对提示降级跳过）:', error)
+  }
+}
 const detailFacts = computed(() => [
   { label: '性别', value: student.value?.gender || '未设置' },
   { label: '年龄', value: student.value?.birthday ? `${getStudentAge(student.value.birthday)}岁` : '-' },
@@ -497,6 +531,9 @@ async function loadStudentDetail() {
       router.back()
       return
     }
+
+    // 月龄-年级核对提示需要年级数字，按班级 id 反查（失败降级跳过，不影响页面）
+    resolveCurrentClassGradeLevel()
 
     assessmentRecords.value = getStudentAssessmentRecords(studentId)
     assessmentCount.value = assessmentRecords.value.length
@@ -747,6 +784,21 @@ watch(
   border-color: #e4e7ed;
   background: #f4f4f5;
   color: #909399;
+}
+
+/* 月龄-年级对应性软提示：小字警示，不阻断 */
+.grade-age-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 0 0;
+  color: #b8860b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.grade-age-hint .el-icon {
+  flex-shrink: 0;
 }
 
 .profile-card__facts {
