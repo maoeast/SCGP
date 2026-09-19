@@ -18,6 +18,8 @@
       </div>
 
       <div class="header-right">
+        <el-button :icon="Calendar" @click="goAssessment">发起评估</el-button>
+        <el-button :icon="DataLine" @click="goEquipmentRecord">记训练</el-button>
         <el-button type="primary" :icon="Edit" @click="editStudent">
           编辑信息
         </el-button>
@@ -62,7 +64,25 @@
             <strong class="fact-card__value">{{ fact.value }}</strong>
           </article>
 
-          <!-- 学号已在姓名下方 StudentId 徽章展示，此处不再重复（用户 2026-09-19 约定） -->
+          <!-- AI 记忆置顶摘要：展示已确认置顶/关键记忆，教师无需翻面板即可看到关键信息（用户 2026-09-19 约定） -->
+          <div
+            v-if="aiStore.memoryEnabled && pinnedMemories.length > 0"
+            class="memory-highlights fact-card--wide"
+          >
+            <div
+              v-for="memory in pinnedMemories"
+              :key="memory.id"
+              class="memory-highlights__item"
+            >
+              <span
+                class="memory-highlights__badge"
+                :class="{ 'memory-highlights__badge--safety': memory.priority === 'safety_critical' }"
+              >
+                {{ memory.priority === 'safety_critical' ? '关键' : '置顶' }}
+              </span>
+              <span class="memory-highlights__content">{{ memory.content }}</span>
+            </div>
+          </div>
 
           <!-- AI 记忆（服务团队共享；管理员启用后显示；数量卡入口，点击切到下方相关记录的 AI 记忆标签） -->
           <article
@@ -123,6 +143,24 @@
         </div>
 
         <!-- 所属班级/诊断类型/使用方式三卡已删（用户 2026-09-19 约定）：班级与诊断已在左侧学生信息区展示，使用方式自明 -->
+
+        <!-- 训练画像摘要条（用户 2026-09-19 约定）：最近活动一屏可见 -->
+        <div class="activity-strip">
+          <span class="activity-strip__item">
+            <span class="activity-strip__label">最近评估</span>
+            <strong class="activity-strip__value">{{ latestAssessmentLabel }}</strong>
+          </span>
+          <span class="activity-strip__divider" aria-hidden="true"></span>
+          <span class="activity-strip__item">
+            <span class="activity-strip__label">最近训练</span>
+            <strong class="activity-strip__value">{{ latestTrainingLabel }}</strong>
+          </span>
+          <span class="activity-strip__divider" aria-hidden="true"></span>
+          <span class="activity-strip__item">
+            <span class="activity-strip__label">本月训练</span>
+            <strong class="activity-strip__value">{{ monthlyTrainingCount }} 次</strong>
+          </span>
+        </div>
       </article>
     </section>
 
@@ -188,12 +226,12 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Edit } from '@element-plus/icons-vue'
+import { ArrowLeft, Calendar, DataLine, Edit } from '@element-plus/icons-vue'
 import AddStudentDialog from '@/components/AddStudentDialog.vue'
 import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
 import StudentAvatar from '@/components/student/StudentAvatar.vue'
 import StudentId from '@/components/student/StudentId.vue'
-import { EquipmentTrainingAPI, GameTrainingAPI } from '@/database/api'
+import { EquipmentTrainingAPI, GameTrainingAPI, TrainingSessionAPI } from '@/database/api'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
 import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import { useStudentStore, type Student } from '@/stores/student'
@@ -246,6 +284,9 @@ const equipmentCount = ref(0)
 const gameCount = ref(0)
 const memoryPendingCount = ref(0)
 const memoryConfirmedCount = ref(0)
+const assessmentRecords = ref<ReturnType<typeof getStudentAssessmentRecords>>([])
+const trainingTimestamps = ref<string[]>([])
+const latestAssessmentRecord = ref<{ id: string; scaleLabel: string; createdAt: string } | null>(null)
 
 const currentClassLabel = computed(() => student.value?.current_class_name || '未分班')
 const detailFacts = computed(() => [
@@ -286,6 +327,66 @@ const activeTabCount = computed(() => {
   return detailMetrics.value.find((metric) => metric.key === activeTab.value)?.value ?? 0
 })
 
+// AI 记忆置顶摘要：已确认的置顶/关键记忆（最多 2 条，安全关键优先）
+// 依赖 memoryVersion：面板内确认/置顶操作后强制重算（DB 查询非响应式）
+// 排序直接依赖 listStudentMemories 的 DB 返回顺序（safety_critical 优先），不再 JS 重排
+const pinnedMemories = computed(() => {
+  void memoryVersion.value
+  try {
+    return aiStore
+      .listStudentMemories(student.value?.id ?? 0, ['confirmed'])
+      .filter((m) => m.priority === 'pinned' || m.priority === 'safety_critical')
+      .slice(0, 2)
+  } catch {
+    return []
+  }
+})
+
+// ===== 训练画像摘要条（用户 2026-09-19 约定）：最近评估/最近训练/本月训练 =====
+
+function formatRelativeDay(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '-'
+  const days = Math.floor((Date.now() - date.getTime()) / 86_400_000)
+  if (days <= 0) return '今天'
+  if (days === 1) return '昨天'
+  if (days < 30) return `${days} 天前`
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+const latestAssessmentLabel = computed(() =>
+  latestAssessmentRecord.value
+    ? `${latestAssessmentRecord.value.scaleLabel} · ${formatRelativeDay(latestAssessmentRecord.value.createdAt)}`
+    : '暂无',
+)
+
+const latestTrainingLabel = computed(() => {
+  const timestamps = trainingTimestamps.value.filter(Boolean).sort()
+  const latest = timestamps[timestamps.length - 1]
+  return latest ? formatRelativeDay(latest) : '暂无'
+})
+
+const monthlyTrainingCount = computed(() => {
+  const now = new Date()
+  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  return trainingTimestamps.value.filter((iso) => typeof iso === 'string' && iso.startsWith(monthPrefix)).length
+})
+
+// ===== 快捷操作（用户 2026-09-19 约定）：发起评估 / 记训练（问 AI 已删——右下角有全局 AI 助手悬浮窗，避免重复入口） =====
+
+function goAssessment() {
+  if (!student.value?.id) return
+  // 走既有“先选量表→再选学生”流程（advisor：select-student 页需 scale 参数且无量表入口，直接跳会死胡同）
+  router.push({ path: '/assessment' })
+}
+
+function goEquipmentRecord() {
+  if (!student.value?.id) return
+  router.push({
+    path: `/equipment/records/${student.value.id}`,
+  })
+}
+
 // AI 记忆数量卡点击：切到 memory 标签并滚动到相关记录区（advisor #2 跳转补齐）
 const recordsSectionRef = ref<HTMLElement>()
 function openMemoryTab() {
@@ -294,11 +395,14 @@ function openMemoryTab() {
 }
 
 // 面板内确认/拒绝/删除后刷新数量卡（advisor #1 计数同步）
+// memoryVersion 供 pinnedMemories 依赖以在置顶/确认操作后重算摘要（advisor r1 #3）
+const memoryVersion = ref(0)
 function refreshMemoryCounts() {
   if (!student.value?.id) return
   try {
     memoryPendingCount.value = aiStore.listStudentMemories(student.value.id, ['pending']).length
     memoryConfirmedCount.value = aiStore.listStudentMemories(student.value.id, ['confirmed']).length
+    memoryVersion.value += 1
   } catch (error) {
     console.error('刷新 AI 记忆计数失败:', error)
   }
@@ -394,11 +498,34 @@ async function loadStudentDetail() {
       return
     }
 
-    assessmentCount.value = getStudentAssessmentRecords(studentId).length
+    assessmentRecords.value = getStudentAssessmentRecords(studentId)
+    assessmentCount.value = assessmentRecords.value.length
 
+    // 最近评估：取时间最新的一条（源函数已按时间降序返回，直接取首条）
+    const latest = assessmentRecords.value.find((r) => r.createdAt) || null
+    if (latest) {
+      latestAssessmentRecord.value = {
+        id: latest.id,
+        scaleLabel: latest.scaleLabel,
+        createdAt: latest.createdAt,
+      }
+    } else {
+      latestAssessmentRecord.value = null
+    }
+
+    // 最近训练/本月训练：四路全量口径（用户 2026-09-19 拍板方案 a）——器材（训练日期优先于创建时间，
+    // 补录语义正确）+ 游戏 + 情绪游戏 + 认知游戏统一会话。
+    // ⚠️ 口径说明：相关记录的「游戏训练」标签列表在详情页嵌入时不显示认知会话（GameRecordsPanel 需
+    // entryCode='cognitive' 才聚合该路），故页头计数可能高于标签列表行数——属已知取舍，非缺陷。
+    const timestamps: string[] = []
     try {
       const equipmentApi = new EquipmentTrainingAPI()
-      equipmentCount.value = equipmentApi.getStudentRecords(studentId).length
+      const equipmentRecords = equipmentApi.getStudentRecords(studentId)
+      for (const record of equipmentRecords) {
+        const semanticTime = record.training_date || record.created_at
+        if (semanticTime) timestamps.push(semanticTime)
+      }
+      equipmentCount.value = equipmentRecords.length
     } catch (error) {
       console.error('加载器材训练记录失败:', error)
       equipmentCount.value = 0
@@ -407,11 +534,31 @@ async function loadStudentDetail() {
     try {
       const gameApi = new GameTrainingAPI()
       const emotionalGamesApi = new EmotionalGamesAPI()
-      gameCount.value = gameApi.getStudentTrainingRecords(studentId).length + emotionalGamesApi.getStudentRecords(studentId).length
+      const trainingSessionApi = new TrainingSessionAPI()
+      const gameRecords = gameApi.getStudentTrainingRecords(studentId)
+      const emotionalRecords = emotionalGamesApi.getStudentRecords(studentId)
+      // 认知游戏统一会话（与 GameRecordsPanel 同源，仅该模块存 training_sessions）
+      const cognitiveSessions = trainingSessionApi.listSessions({
+        studentId,
+        sessionFamily: 'cognitive_game',
+        limit: 200,
+      })
+      gameCount.value =
+        gameRecords.length + emotionalRecords.length + cognitiveSessions.length
+      for (const record of gameRecords) {
+        if (record.created_at) timestamps.push(record.created_at)
+      }
+      for (const record of emotionalRecords) {
+        if (record.created_at) timestamps.push(record.created_at)
+      }
+      for (const session of cognitiveSessions) {
+        if (session.created_at) timestamps.push(session.created_at)
+      }
     } catch (error) {
       console.error('加载游戏训练记录失败:', error)
       gameCount.value = 0
     }
+    trainingTimestamps.value = timestamps
 
     // AI 记忆计数（待确认/已确认；仅服务团队可见；权限在 store 层过滤）
     try {
@@ -689,6 +836,82 @@ watch(
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
+}
+
+/* 训练画像摘要条：最近评估/最近训练/本月训练 一屏可见 */
+.activity-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--detail-border);
+  background: #fbfcfe;
+}
+
+.activity-strip__item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.activity-strip__label {
+  font-size: 12px;
+  color: var(--detail-soft);
+  white-space: nowrap;
+}
+
+.activity-strip__value {
+  font-size: 14px;
+  color: var(--detail-text);
+  white-space: nowrap;
+}
+
+.activity-strip__divider {
+  width: 1px;
+  height: 18px;
+  background: var(--detail-border);
+}
+
+/* AI 记忆置顶摘要：关键记忆在左侧信息区直接可见 */
+.memory-highlights {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.memory-highlights__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--detail-blue-soft);
+  background: var(--detail-blue-soft);
+}
+
+.memory-highlights__badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--detail-blue);
+  background: #ffffff;
+  border: 1px solid var(--detail-blue);
+}
+
+.memory-highlights__badge--safety {
+  color: #d03050;
+  border-color: #f3c2cb;
+  background: #fdf1f3;
+}
+
+.memory-highlights__content {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--detail-text);
 }
 
 .overview-card__copy {
