@@ -62,10 +62,7 @@
             <strong class="fact-card__value">{{ fact.value }}</strong>
           </article>
 
-          <article class="fact-card fact-card--wide">
-            <span class="fact-card__label">学号</span>
-            <StudentId class="fact-card__value fact-card__value--mono" :id="student?.student_no" :full="true" />
-          </article>
+          <!-- 学号已在姓名下方 StudentId 徽章展示，此处不再重复（用户 2026-09-19 约定） -->
 
           <!-- AI 记忆（服务团队共享；管理员启用后显示；数量卡入口，点击切到下方相关记录的 AI 记忆标签） -->
           <article
@@ -125,22 +122,7 @@
           </button>
         </div>
 
-        <div class="overview-card__notes">
-          <article class="overview-note">
-            <span class="overview-note__label">所属班级</span>
-            <strong class="overview-note__value">{{ currentClassLabel }}</strong>
-          </article>
-
-          <article class="overview-note">
-            <span class="overview-note__label">诊断类型</span>
-            <DiagnosisTag class="overview-note__tag" :type="student?.disorder" />
-          </article>
-
-          <article class="overview-note">
-            <span class="overview-note__label">使用方式</span>
-            <strong class="overview-note__value">点击上方概览卡或下方标签切换记录视图</strong>
-          </article>
-        </div>
+        <!-- 所属班级/诊断类型/使用方式三卡已删（用户 2026-09-19 约定）：班级与诊断已在左侧学生信息区展示，使用方式自明 -->
       </article>
     </section>
 
@@ -695,11 +677,6 @@ watch(
   line-height: 1.35;
 }
 
-.fact-card__value--mono {
-  font-size: 13px;
-  line-height: 1.5;
-}
-
 .overview-card {
   display: flex;
   flex-direction: column;
@@ -865,39 +842,6 @@ watch(
   box-shadow: 0 18px 32px rgba(47, 159, 147, 0.15);
 }
 
-.overview-card__notes {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.overview-note {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 8px;
-  min-height: 92px;
-  padding: 16px 18px;
-  border-radius: 16px;
-  border: 1px solid var(--detail-border);
-  background: #fbfcfe;
-}
-
-.overview-note__label {
-  color: var(--detail-soft);
-  font-size: 12px;
-}
-
-.overview-note__value {
-  color: var(--detail-text);
-  font-size: 15px;
-  line-height: 1.5;
-}
-
-.overview-note__tag {
-  width: fit-content;
-}
-
 .student-detail-main {
   padding: 24px;
   border-radius: 22px;
@@ -992,8 +936,7 @@ watch(
     grid-template-columns: 1fr;
   }
 
-  .stats-grid,
-  .overview-card__notes {
+  .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1046,8 +989,7 @@ watch(
   }
 
   .profile-card__facts,
-  .stats-grid,
-  .overview-card__notes {
+  .stats-grid {
     grid-template-columns: 1fr;
   }
 
