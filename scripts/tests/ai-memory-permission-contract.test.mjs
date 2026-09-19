@@ -93,15 +93,19 @@ test('StudentMemoryPanel 提供 pending 确认流 + priority 依据 + 删除', (
   assert.match(src, /您不是该学生的服务团队教师/)
 })
 
-test('StudentDetail 接入 AI 记忆卡片（左侧学生信息区，学号下方）', () => {
+test('StudentDetail 接入 AI 记忆：左侧数量卡入口 + 相关记录完整面板', () => {
   const src = readProjectFile('src/views/StudentDetail.vue')
   assert.match(src, /StudentMemoryPanel/)
-  // 不在记录 tab 区（无 memory tab-pane）
-  assert.doesNotMatch(src, /name="memory" lazy/)
-  assert.match(src, /type DetailTab = 'assessments' \| 'equipment' \| 'games'/)
-  // 学号下方内嵌卡片
+  // 完整面板在相关记录区（memory tab-pane，含计数标签）
+  assert.match(src, /name="memory" lazy/)
+  assert.match(src, /type DetailTab = 'assessments' \| 'equipment' \| 'games' \| 'memory'/)
+  // 左侧为纯数量卡（无内嵌 compact 确认流），点击/键盘切换到 memory 标签并滚动定位
+  assert.doesNotMatch(src, /StudentMemoryPanel :student-id="student\?\.id \?\? 0" compact/)
   assert.match(src, /fact-card--memory/)
-  assert.match(src, /StudentMemoryPanel :student-id="student\?\.id \?\? 0" compact/)
+  assert.match(src, /fact-card__memory-total/)
+  assert.match(src, /@click="openMemoryTab"/)
+  assert.match(src, /scrollIntoView\(\{ behavior: 'smooth'/)
+  assert.match(src, /@updated="refreshMemoryCounts"/)
   assert.match(src, /memoryPendingCount/)
   assert.match(src, /memoryConfirmedCount/)
   assert.match(src, /listStudentMemories\(studentId, \['pending'\]\)/)

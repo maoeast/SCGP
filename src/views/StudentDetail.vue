@@ -67,15 +67,24 @@
             <StudentId class="fact-card__value fact-card__value--mono" :id="student?.student_no" :full="true" />
           </article>
 
-          <!-- AI 记忆（服务团队共享；管理员启用后显示；内嵌确认流） -->
-          <article v-if="aiStore.memoryEnabled" class="fact-card fact-card--wide fact-card--memory">
+          <!-- AI 记忆（服务团队共享；管理员启用后显示；数量卡入口，点击切到下方相关记录的 AI 记忆标签） -->
+          <article
+            v-if="aiStore.memoryEnabled"
+            class="fact-card fact-card--wide fact-card--memory"
+            role="button"
+            tabindex="0"
+            @click="openMemoryTab"
+            @keydown.enter.prevent="openMemoryTab"
+            @keydown.space.prevent="openMemoryTab"
+          >
             <div class="fact-card__memory-head">
               <span class="fact-card__label">AI 记忆</span>
-              <span class="fact-card__memory-count">
-                待确认 {{ memoryPendingCount }} · 已确认 {{ memoryConfirmedCount }}
-              </span>
+              <span class="fact-card__memory-link">点击查看 →</span>
             </div>
-            <StudentMemoryPanel :student-id="student?.id ?? 0" compact />
+            <strong class="fact-card__memory-total">{{ memoryPendingCount + memoryConfirmedCount }}</strong>
+            <span class="fact-card__memory-count">
+              待确认 {{ memoryPendingCount }} · 已确认 {{ memoryConfirmedCount }}
+            </span>
           </article>
         </div>
       </article>
@@ -135,12 +144,16 @@
       </article>
     </section>
 
-    <section v-if="student?.id" class="main-content student-detail-main">
+    <section
+      v-if="student?.id"
+      ref="recordsSectionRef"
+      class="main-content student-detail-main"
+    >
       <div class="records-shell">
         <div class="records-shell__header">
           <div class="records-shell__title">
             <h2>相关记录</h2>
-            <p>按学生维度查看评估、器材训练和游戏训练历史，支持直接跳转到明细页。</p>
+            <p>按学生维度查看评估、器材训练、游戏训练历史与 AI 记忆，支持直接跳转到明细页。</p>
           </div>
 
           <div class="records-shell__summary">
@@ -171,6 +184,10 @@
               :table-max-height="520"
               @view-detail="viewGameRecord"
             />
+          </el-tab-pane>
+
+          <el-tab-pane v-if="aiStore.memoryEnabled" :label="`AI 记忆 (${memoryPendingCount + memoryConfirmedCount})`" name="memory" lazy>
+            <StudentMemoryPanel :student-id="student.id" @updated="refreshMemoryCounts" />
           </el-tab-pane>
         </el-tabs>
       </div>
@@ -207,7 +224,7 @@ import EquipmentRecordsPanel from '@/views/training-records/components/Equipment
 import GameRecordsPanel from '@/views/training-records/components/GameRecordsPanel.vue'
 import StudentMemoryPanel from '@/views/student-detail/components/StudentMemoryPanel.vue'
 
-type DetailTab = 'assessments' | 'equipment' | 'games'
+type DetailTab = 'assessments' | 'equipment' | 'games' | 'memory'
 
 const TAB_META: Record<DetailTab, { title: string; badge: string; description: string }> = {
   assessments: {
@@ -224,6 +241,11 @@ const TAB_META: Record<DetailTab, { title: string; badge: string; description: s
     title: '游戏训练记录',
     badge: '游戏训练',
     description: '查看游戏或情绪训练中的正确率、平均响应时间与训练详情。',
+  },
+  memory: {
+    title: 'AI 记忆',
+    badge: 'AI 记忆',
+    description: '查看 AI 总结的学生记忆候选，确认后注入后续对话；支持优先级标记与删除。',
   },
 }
 
@@ -277,9 +299,28 @@ const detailMetrics = computed(() => [
   },
 ])
 const activeTabMeta = computed(() => TAB_META[activeTab.value])
-const activeTabCount = computed(() =>
-  detailMetrics.value.find((metric) => metric.key === activeTab.value)?.value ?? 0,
-)
+const activeTabCount = computed(() => {
+  if (activeTab.value === 'memory') return memoryPendingCount.value + memoryConfirmedCount.value
+  return detailMetrics.value.find((metric) => metric.key === activeTab.value)?.value ?? 0
+})
+
+// AI 记忆数量卡点击：切到 memory 标签并滚动到相关记录区（advisor #2 跳转补齐）
+const recordsSectionRef = ref<HTMLElement>()
+function openMemoryTab() {
+  activeTab.value = 'memory'
+  recordsSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// 面板内确认/拒绝/删除后刷新数量卡（advisor #1 计数同步）
+function refreshMemoryCounts() {
+  if (!student.value?.id) return
+  try {
+    memoryPendingCount.value = aiStore.listStudentMemories(student.value.id, ['pending']).length
+    memoryConfirmedCount.value = aiStore.listStudentMemories(student.value.id, ['confirmed']).length
+  } catch (error) {
+    console.error('刷新 AI 记忆计数失败:', error)
+  }
+}
 
 function goBack() {
   router.back()
@@ -603,6 +644,15 @@ watch(
 .fact-card--memory {
   background: linear-gradient(180deg, #f6f9ff 0%, #fbfcfe 100%);
   border-color: var(--detail-border);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.fact-card--memory:hover,
+.fact-card--memory:focus-visible {
+  border-color: var(--detail-blue, #4a7dff);
+  box-shadow: 0 4px 12px rgba(74, 125, 255, 0.12);
+  outline: none;
 }
 
 .fact-card__memory-head {
@@ -612,7 +662,23 @@ watch(
   gap: 8px;
 }
 
+.fact-card__memory-link {
+  font-size: 12px;
+  color: var(--detail-blue, #4a7dff);
+  white-space: nowrap;
+}
+
+.fact-card__memory-total {
+  display: block;
+  margin-top: 6px;
+  color: var(--detail-text);
+  font-size: 28px;
+  line-height: 1.2;
+}
+
 .fact-card__memory-count {
+  display: block;
+  margin-top: 4px;
   font-size: 12px;
   color: var(--detail-soft);
   white-space: nowrap;

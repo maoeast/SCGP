@@ -15,6 +15,9 @@ import type { AiStudentMemory, AiMemoryStatus } from '@/database/ai-api'
 
 const props = defineProps<{ studentId: number; compact?: boolean }>()
 
+// 记忆列表变更（确认/拒绝/删除/加载）后通知父组件，供其刷新数量卡计数
+const emit = defineEmits<{ updated: [] }>()
+
 const aiStore = useAiStore()
 
 const loading = ref(false)
@@ -59,6 +62,7 @@ async function load() {
     if (ids.length > 0) confirmerNames.value = aiStore.getMemoryConfirmerNames(ids)
   } finally {
     loading.value = false
+    emit('updated')
   }
 }
 
