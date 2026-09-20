@@ -54,7 +54,7 @@
       </div>
     </section>
 
-    <section ref="panelRefs.agent.value" class="dashboard-surface scgp-surface" v-loading="aiStore.loading">
+    <section :ref="panelRefs.agent" class="dashboard-surface scgp-surface" v-loading="aiStore.loading">
       <div class="dashboard-section-header">
         <div>
           <h2>AI 助手</h2>
@@ -241,7 +241,7 @@
     </section>
 
     <section class="dashboard-board">
-      <article ref="panelRefs.schedule.value" class="dashboard-surface scgp-surface schedule-panel">
+      <article :ref="panelRefs.schedule" class="dashboard-surface scgp-surface schedule-panel">
         <div class="dashboard-panel-header">
           <div>
             <h2>今日训练日程</h2>
@@ -302,7 +302,7 @@
       </article>
 
       <div class="dashboard-board__stack">
-        <article ref="panelRefs.anomaly.value" class="dashboard-surface scgp-surface alert-panel">
+        <article :ref="panelRefs.anomaly" class="dashboard-surface scgp-surface alert-panel">
           <div class="dashboard-panel-header">
             <div>
               <h2>本周异常预警</h2>
@@ -353,7 +353,7 @@
           </div>
         </article>
 
-        <article ref="panelRefs.assessment.value" class="dashboard-surface scgp-surface alert-panel">
+        <article :ref="panelRefs.assessment" class="dashboard-surface scgp-surface alert-panel">
           <div class="dashboard-panel-header">
             <div>
               <h2>智能特教助理</h2>
@@ -653,11 +653,8 @@ const panelRefs = {
 
 function handlePrimaryAction() {
   const el = panelRefs[primaryAction.value.target]?.value
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    return
-  }
-  // agent 面板无独立锚点（AI 助手区），兜底跳系统设置下的 AI 入口不存在时静默
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 function pickRandomQuote(list: string[]) {

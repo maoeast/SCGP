@@ -11,6 +11,7 @@
 - 欢迎语称呼取 `authStore.user.name`，缺失时按角色兜底（teacher→老师，其余→系统管理员）
 - 卡片组仍是真实聚合数据（`DashboardAPI.getSnapshot().overview`），仅栅格改为 `repeat(auto-fit, minmax(200px, 1fr))`
 - `.dashboard-hero` 类名保留（用户手册截图脚本 `scripts/manual/capture-user-manual-screenshots.mjs` 按它等待首屏渲染）
+- 修复：主行动按钮的 4 个滚动锚点原写成静态点路径 ref（`ref="panelRefs.x.value"`），Vue 运行时只把它登记为 `$refs` 的键、不会写回 `panelRefs`，点击是静默空操作；已改为动态绑定 `:ref="panelRefs.x"`（实测绑定成功）
 
 ## [2026-09-11] 资源中心-教学资料列表分页（12 个/页）
 - `src/views/resource-center/TeachingMaterials.vue` 教学资料卡片列表从全量渲染改为前端切片分页：每页固定 12 个（用户约定），不再一次渲染全部视频/图片/文档卡片
