@@ -4,6 +4,17 @@
 
 ---
 
+## [2026-09-20] 技术债：verify:core 陈旧契约断言对齐源码语义（含 2 条被短路隐藏的断言）
+- `scripts/tests/ai-message-edit-contract.test.mjs`：「生成报告入口位于附件按钮上方」的 `<div class="ai-composer">` 改为 `/<div\s+class="ai-composer"/`（class 现已与 `:class`/`@drag*`/`@paste` 同处一个多行标签）；同测试 `composer-utility-actions` 改为 `ai-composer-tools`——92a22e2（输入区两行布局重构）后旧 class 已不存在，此前被同测试前一条断言短路掩盖
+- `scripts/tests/login-theme-background.test.mjs`：
+  - 静蓝主色期望 `#4FB3BF` → `#3C9BA6`（3 处，含 `DEFAULT_LOGIN_PRIMARY_COLOR`），对齐 65eee05「静蓝默认主色」变更
+  - `valuesForKey` 从「行内第二个单引号串」收紧为「紧跟 key 的那一个值」（兼容 INSERT 元组 `('key', 'value'` 与对象字面量 `key: 'x', value: 'y'` 两种写法）：不再被 `init.ts` 的主色迁移 SQL（`WHERE key = '…' AND value = '#4FB3BF'`）污染出 key 名/旧色假值；`>=4` 数量断言与「4 处默认值一致」语义不变
+  - `Login.vue` 背景断言放行 `getLoginBackgroundUrl(...)` 包裹（fb1b683 起登录页经 URL 解析器传值），核心仍是 `activeLoginBackground` 的 image/video 传入背景组件
+- `scripts/tests/production-debug-boundary.test.mjs`：`devTools:\s*isDev` 改为 `let devToolsEnabled = isDev` + `pkg.scgpDebugDevtools === true` + `devTools:\s*devToolsEnabled`；`devtools-opened` 断言改为「F12 切换监听整体包在 `devToolsEnabled` 内」——0381d47 已用 webPreferences 层禁用取代运行时自动关闭监听，旧断言此前被同测试前一条断言短路掩盖
+- 定性：4 处源码重构（65eee05 主色、fb1b683 背景 URL 解析、0381d47 DevTools 开关、92a22e2 输入区布局）均有独立提交且语义正确，属**断言滞后**而非回归，故一律改测试、未动业务源码
+- 验证：`npm run verify:core` 全绿——type-check 0 error；`test:core:node` 132 tests / 132 pass / 0 fail（修前 6 fail）；`test:core:ts` 5/5 passed
+- 独立评审加固（advisor 单轮 pass，3 条 🔵 全部采纳）：①「生成报告/附件」顺序断言补存在性前置检查（原 `indexOf` 比较在锚点缺失时返回 -1，断言会空洞通过）；②`Login.vue` 背景断言在仍要求「`getLoginBackgroundUrl(...)` 包裹 + `activeLoginBackground.image/video` 作为实参」的前提下允许接收者表达式变化，避免良性重构误红；③`valuesForKey` 注释补「key 与 value 必须同行」的边界说明
+
 ## [2026-09-20] 修复康复训练支持专家头像契约断言（PNG→WebP 兜底）
 - `scripts/tests/ai-builtin-agent-presets-contract.test.mjs`：头像断言由「`康复训练支持专家.png` 必须存在」改为「`.png` 或同名 `.webp` 存在其一」
 - 背景：该批头像已在 4a6468b（预置图片 PNG→WebP 优化）转为 `.webp`，运行时由 `electron/main.mjs:564-609` 与 `vite.config.ts:47-67` 的 .png→.webp 兜底解析，源码/DB 路径仍写 `.png`；断言未同步，自 4a6468b 起长期红并导致 `npm run verify:core` 无法全绿

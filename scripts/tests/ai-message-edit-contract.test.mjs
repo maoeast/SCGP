@@ -65,12 +65,14 @@ test('开启报告导出的智能体可直接导出单条已完成回答', () =>
 test('生成报告入口位于附件按钮上方', () => {
   const assistantSource = readProjectFile('src/features/ai/components/AiAssistant.vue')
 
-  assert.match(assistantSource, /<div class="ai-composer">/)
-  assert.match(assistantSource, /class="composer-utility-actions"/)
-  assert.ok(
-    assistantSource.indexOf('aria-label="生成报告"') < assistantSource.indexOf('aria-label="添加图片或文档"'),
-    '生成报告应排在附件按钮上方',
-  )
+  // 输入区容器 class 与 :class/@drag*/@paste 监听同处一个多行标签，只锚定 div + 该 class
+  assert.match(assistantSource, /<div\s+class="ai-composer"/)
+  assert.match(assistantSource, /class="ai-composer-tools"/)
+  // 先用存在性断言守住两个锚点再做顺序比较：锚点若被删，indexOf 返回 -1 会使比较空洞通过
+  const reportEntryIndex = assistantSource.indexOf('aria-label="生成报告"')
+  const attachEntryIndex = assistantSource.indexOf('aria-label="添加图片或文档"')
+  assert.ok(reportEntryIndex >= 0 && attachEntryIndex >= 0, '生成报告与附件入口都必须存在')
+  assert.ok(reportEntryIndex < attachEntryIndex, '生成报告应排在附件按钮上方')
 })
 
 test('聊天输入区下方显示 AI 回答参考提示', () => {

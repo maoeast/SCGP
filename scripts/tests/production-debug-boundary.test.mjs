@@ -42,9 +42,18 @@ test('production sanitizer strips debug blocks and fails closed on debug residue
 })
 
 test('Electron production disables DevTools surface and common console shortcuts', () => {
-  assert.match(electronMainSource, /devTools:\s*isDev/)
+  // 生产默认关闭 DevTools：devToolsEnabled 初值取 isDev，仅当打包时显式设置
+  // package.json 的 build.extraMetadata.scgpDebugDevtools = true 才允许打开
+  assert.match(electronMainSource, /let devToolsEnabled = isDev/)
+  assert.match(electronMainSource, /pkg\.scgpDebugDevtools === true/)
+  assert.match(electronMainSource, /devTools:\s*devToolsEnabled/)
   assert.match(electronMainSource, /mainWindow\.removeMenu\(\)/)
-  assert.match(electronMainSource, /devtools-opened/)
+  // 原 'devtools-opened' 自动关闭监听已移除：生产禁用在 webPreferences.devTools 层完成；
+  // F12 切换监听整体包在 devToolsEnabled（仅调试打包）里，生产构建根本不注册。
+  assert.match(
+    electronMainSource,
+    /if \(devToolsEnabled\) \{\s*mainWindow\.webContents\.on\('before-input-event'/,
+  )
   assert.match(electronMainSource, /closeDevTools\(\)/)
   assert.match(electronMainSource, /function isDeveloperToolsShortcut/)
   assert.match(electronMainSource, /key === 'f12'/)

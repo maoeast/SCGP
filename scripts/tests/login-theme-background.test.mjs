@@ -28,7 +28,7 @@ const {
 
 test('login theme presets own their primary colors while custom keeps its configured color', () => {
   assert.equal(getEffectiveLoginPrimaryColor('warm-glow', '#000000'), '#E6B93C')
-  assert.equal(getEffectiveLoginPrimaryColor('calm-blue', '#E6B93C'), '#4FB3BF')
+  assert.equal(getEffectiveLoginPrimaryColor('calm-blue', '#E6B93C'), '#3C9BA6')
   assert.equal(getEffectiveLoginPrimaryColor('lush-green', '#E6B93C'), '#72BE2F')
   assert.equal(getEffectiveLoginPrimaryColor('lush-green', '#123456', true), '#123456')
   assert.equal(getEffectiveLoginPrimaryColor('custom', '#123456'), '#123456')
@@ -36,12 +36,12 @@ test('login theme presets own their primary colors while custom keeps its config
 
 test('default login theme is calm-blue with its primary color', () => {
   assert.equal(DEFAULT_LOGIN_THEME_VARIANT, 'calm-blue')
-  assert.equal(DEFAULT_LOGIN_PRIMARY_COLOR, '#4FB3BF')
+  assert.equal(DEFAULT_LOGIN_PRIMARY_COLOR, '#3C9BA6')
   // 无配置 / 非法配置时回退到 calm-blue，而不是暖黄
   assert.equal(normalizeLoginThemeVariant(undefined), 'calm-blue')
   assert.equal(normalizeLoginThemeVariant(''), 'calm-blue')
   assert.equal(normalizeLoginThemeVariant('not-a-theme'), 'calm-blue')
-  assert.equal(getEffectiveLoginPrimaryColor('calm-blue', null), '#4FB3BF')
+  assert.equal(getEffectiveLoginPrimaryColor('calm-blue', null), '#3C9BA6')
 })
 
 test('database and settings defaults use calm-blue as the initial theme', () => {
@@ -54,12 +54,13 @@ test('database and settings defaults use calm-blue as the initial theme', () => 
 
   // login_theme_backgrounds JSON 里含 "warm-glow" 变体属于按主题存储的媒体配置，
   // 因此这里只匹配 login_theme_variant / theme_primary_color 两个 key 的默认值。
-  // 按行提取第二个单引号字符串（第一是 key 自身），避免 case 分支/赋值行误匹配。
+  // 只取「紧跟 key 的那个值」，兼容两种写法：INSERT 元组 ('key', 'value' …)
+  // 与对象字面量 key: 'k', value: 'v'。迁移 SQL（WHERE key = '…' AND value = '…'）
+  // 与 case 分支/赋值行不再误命中。注意：按行匹配，key 与 value 必须同行才会被计入。
   const valuesForKey = (source, key) =>
     source
       .split('\n')
-      .filter((line) => line.includes(key))
-      .map((line) => [...line.matchAll(/'([^'\n]+)'/g)][1]?.[1])
+      .map((line) => line.match(new RegExp(`'${key}'\\s*,\\s*(?:value:\\s*)?'([^']+)'`))?.[1])
       .filter(Boolean)
   const variantValues = Object.values(sources).flatMap((source) => valuesForKey(source, 'login_theme_variant'))
   const colorValues = Object.values(sources).flatMap((source) => valuesForKey(source, 'theme_primary_color'))
@@ -68,7 +69,7 @@ test('database and settings defaults use calm-blue as the initial theme', () => 
   assert.ok(variantValues.length >= 4, '应覆盖 init.ts×2 + mock-data + sqljs-init 的默认值')
   assert.deepEqual([...new Set(variantValues)], ['calm-blue'])
   assert.ok(colorValues.length >= 4, '应覆盖 init.ts×2 + mock-data + sqljs-init 的默认值')
-  assert.deepEqual([...new Set(colorValues)], ['#4FB3BF'])
+  assert.deepEqual([...new Set(colorValues)], ['#3C9BA6'])
   assert.equal(settingsInitial?.[1], 'calm-blue')
 })
 
@@ -143,9 +144,11 @@ test('login background rendering keeps video -> image fallback chain (no procedu
   assert.doesNotMatch(backgroundSource, /StarfieldTunnel/)
   assert.doesNotMatch(backgroundSource, /videoReady/)
 
-  // 4. 登录页把 store 的图片/视频引用传入背景组件
-  assert.match(loginSource, /:background-image="systemConfigStore\.activeLoginBackground\.image"/)
-  assert.match(loginSource, /:background-video="systemConfigStore\.activeLoginBackground\.video"/)
+  // 4. 登录页把 store 的图片/视频引用传入背景组件；值经 getLoginBackgroundUrl 解析
+  //    （resource:// → url 归一化 + 免 Electron 兜底），契约核心是 activeLoginBackground 的
+  //    image/video 必须作为 getLoginBackgroundUrl 的实参传入（接收者表达式允许变化）
+  assert.match(loginSource, /:background-image="getLoginBackgroundUrl\([^"]*activeLoginBackground\.image\)"/)
+  assert.match(loginSource, /:background-video="getLoginBackgroundUrl\([^"]*activeLoginBackground\.video\)"/)
 })
 
 test('login background rendering and resource archive keep the fallback contract', () => {
