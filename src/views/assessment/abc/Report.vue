@@ -6,7 +6,13 @@ import { ArrowLeft, Clock, Download, ChatDotRound } from '@element-plus/icons-vu
 import { ElMessage } from 'element-plus'
 import { getDatabase } from '@/database/init'
 import type { ABCLevel } from '@/database/abc-questions'
-import { ABC_DIMENSION_NAMES, getABCLevel, ABC_LEVEL_NAMES } from '@/database/abc-questions'
+import {
+  ABC_DIMENSION_NAMES,
+  ABC_LEVEL_NAMES,
+  ABC_SUBSCALE_MAX_SCORES,
+  ABC_TOTAL_MAX_SCORE,
+  normalizeABCDimensionScores,
+} from '@/database/abc-questions'
 import { buildAbcWordPayload } from '@/utils/assessment-word-builders'
 import { exportWordDocument } from '@/utils/export-word'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
@@ -21,24 +27,29 @@ const assessData = ref<any>(null)
 const studentInfo = ref<any>(null)
 const loading = ref(true)
 
-// 计算维度得分
+// 计算维度得分（满分取题库派生的 ABC_SUBSCALE_MAX_SCORES；历史对象形状由 normalizeABCDimensionScores 兜底）
 const dimensionScores = computed(() => {
   if (!assessData.value?.dimension_scores) return []
 
-  const scores = JSON.parse(assessData.value.dimension_scores)
+  const scores = normalizeABCDimensionScores(JSON.parse(assessData.value.dimension_scores))
   const dimensionData = [
-    { code: 'sensory', name: '感觉', maxScore: 60, description: '对感觉刺激的异常反应' },
-    { code: 'relating', name: '交往', maxScore: 48, description: '社交互动和关系建立能力' },
-    { code: 'body_object', name: '躯体运动', maxScore: 72, description: '刻板行为和运动模式' },
-    { code: 'language', name: '语言', maxScore: 52, description: '语言理解和表达能力' },
-    { code: 'social_self_help', name: '生活自理', maxScore: 0, description: '日常生活自理能力' },
-  ]
+    { code: 'sensory', name: ABC_DIMENSION_NAMES.sensory, maxScore: ABC_SUBSCALE_MAX_SCORES.sensory, description: '对感觉刺激的异常反应' },
+    { code: 'relating', name: ABC_DIMENSION_NAMES.relating, maxScore: ABC_SUBSCALE_MAX_SCORES.relating, description: '社交互动和关系建立能力' },
+    { code: 'body_object', name: ABC_DIMENSION_NAMES.body_object, maxScore: ABC_SUBSCALE_MAX_SCORES.body_object, description: '刻板行为和运动模式' },
+    { code: 'language', name: ABC_DIMENSION_NAMES.language, maxScore: ABC_SUBSCALE_MAX_SCORES.language, description: '语言理解和表达能力' },
+    { code: 'social_self_help', name: ABC_DIMENSION_NAMES.social_self_help, maxScore: ABC_SUBSCALE_MAX_SCORES.social_self_help, description: '日常生活自理能力' },
+  ] as const
 
-  return dimensionData.map(dim => ({
-    ...dim,
-    score: scores[dim.code] || 0,
-    percentage: dim.maxScore > 0 ? ((scores[dim.code] || 0) / dim.maxScore * 100).toFixed(1) : '0',
-  })).filter(dim => dim.maxScore > 0) // 过滤掉还没有题目的维度
+  return dimensionData
+    .filter(dim => dim.maxScore > 0) // 过滤掉题库里还没有题目的维度（生活自理）
+    .map(dim => {
+      const score = scores[dim.code]
+      return {
+        ...dim,
+        score,
+        percentage: ((score / dim.maxScore) * 100).toFixed(1),
+      }
+    })
 })
 
 // 严重程度
@@ -191,7 +202,7 @@ async function exportWord() {
       assessmentDate: assessData.value.start_time || assessData.value.created_at || '',
       ageMonths: assessData.value.age_months || 0,
       totalScore: assessData.value.total_score || 0,
-      totalMaxScore: 158,
+      totalMaxScore: ABC_TOTAL_MAX_SCORE,
       levelText: severityText.value,
       dimensionRows: dimensionScores.value.map((dim) => ({
         name: dim.name,
@@ -284,7 +295,7 @@ onMounted(() => {
           <div class="score-item total" :class="getSeverityClass(severityLevel)">
             <div class="score-label">总分</div>
             <div class="score-value">{{ assessData?.total_score ?? 0 }}</div>
-            <div class="score-range">(满分 158)</div>
+            <div class="score-range">(满分 {{ ABC_TOTAL_MAX_SCORE }})</div>
             <div class="score-level">
               <el-tag :type="getSeverityType(severityLevel)" size="large">
                 {{ severityText }}

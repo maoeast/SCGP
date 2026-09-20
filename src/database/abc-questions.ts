@@ -129,6 +129,63 @@ export const ABC_DIMENSION_QUESTIONS: Record<ABCDimensionCode, string[]> = {
 }
 
 /**
+ * ABC 各维度满分（由题库权重派生，勿手写）：
+ * 感觉 38 / 交往 34 / 躯体运动 52 / 语言 34 = 158；题库暂无「生活自理」题目，恒为 0。
+ * 报告页「维度分数详情」的满分与得分占比、Word 导出均以此为准。
+ */
+export const ABC_SUBSCALE_MAX_SCORES: Record<ABCDimensionCode, number> = (() => {
+  const maxScores: Record<ABCDimensionCode, number> = {
+    sensory: 0,
+    relating: 0,
+    body_object: 0,
+    language: 0,
+    social_self_help: 0,
+  }
+  for (const question of ABC_QUESTIONS) {
+    maxScores[question.dimension] += question.weight
+  }
+  return maxScores
+})()
+
+/** ABC 总分满分（各维度满分之和：158） */
+export const ABC_TOTAL_MAX_SCORE = Object.values(ABC_SUBSCALE_MAX_SCORES).reduce(
+  (sum, score) => sum + score,
+  0,
+)
+
+/** 单维度取值兜底：数字直用；历史对象形状取 rawScore/score；其余记 0 */
+function toDimensionScore(value: unknown): number {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  if (value && typeof value === 'object') {
+    const legacy = value as { rawScore?: unknown; score?: unknown }
+    const raw = Number(legacy.rawScore ?? legacy.score)
+    return Number.isFinite(raw) ? raw : 0
+  }
+  return 0
+}
+
+/**
+ * 归一化 dimension_scores 的 JSON 解析结果 → { 维度code: 原始分 }。
+ * 现行写入形状就是数字（ABCDriver.persistAssessment / 演示数据）；
+ * 对象形状（{ name: '感觉', rawScore: 17 }）是 2026-09 前演示数据的遗留写入——
+ * 直接当数字用会在报告页把对象渲染成 JSON、占比算出 NaN。
+ */
+export function normalizeABCDimensionScores(parsed: unknown): Record<ABCDimensionCode, number> {
+  const scores: Record<ABCDimensionCode, number> = {
+    sensory: 0,
+    relating: 0,
+    body_object: 0,
+    language: 0,
+    social_self_help: 0,
+  }
+  if (!parsed || typeof parsed !== 'object') return scores
+  for (const code of Object.keys(scores) as ABCDimensionCode[]) {
+    scores[code] = toDimensionScore((parsed as Record<string, unknown>)[code])
+  }
+  return scores
+}
+
+/**
  * ABC 严重程度等级
  */
 export type ABCLevel = 'normal' | 'borderline' | 'mild' | 'moderate' | 'severe'

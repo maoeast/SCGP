@@ -369,7 +369,7 @@ export const DIAGNOSIS_PROFILES = Object.freeze({
     cbcl: { internalizing: 10, externalizing: 3 },
     brief: { inhibit: 6, shift: 12, emotional_control: 10, working_memory: 8, plan_organize: 9, monitor: 8, task_monitor: 8, organize_materials: 9, initiate: 8 },
     // ABC/ATEC（孤独症族量表：诊断核心呼应，分数为维度加分偏移）
-    abc: { sensory: 10, relating: 14, body_object: 9, language: 12, social_self_help: 11 },
+    abc: { sensory: 10, relating: 14, body_object: 9, language: 12 },
     atec: { speech: 22, sociability: 24, sensory: 16, health: 10 },
   },
   智力障碍: {
@@ -402,7 +402,7 @@ export const DIAGNOSIS_PROFILES = Object.freeze({
     cbcl: { internalizing: 5, externalizing: 3 },
     brief: { inhibit: 4, shift: 4, emotional_control: 5, working_memory: 7, plan_organize: 6, monitor: 4, task_monitor: 5, organize_materials: 4, initiate: 6 },
     // ABC/ATEC/CPEP-3（孤独症族量表，发育迟缓轻度呼应）
-    abc: { sensory: 4, relating: 8, body_object: 5, language: 9, social_self_help: 8 },
+    abc: { sensory: 4, relating: 8, body_object: 5, language: 9 },
     atec: { speech: 14, sociability: 16, sensory: 10, health: 8 },
   },
 })
@@ -1415,12 +1415,23 @@ export function makeBriefAssessment(student, rng, { date, improvement }) {
 // ABC 孤独症行为评定量表（57 题加权 0-158；getABCLevel 判级）
 // ============================================================================
 
+/**
+ * ABC 各维度满分（题库权重求和值；须与 src/database/abc-questions.ts 的
+ * ABC_SUBSCALE_MAX_SCORES 一致——tests/abc-dimension-rows.test.ts 会比对两处防漂移）。
+ * 题库暂无「生活自理」题目，演示数据也不生成该维度（报告页对满分 0 的维度同样过滤）。
+ */
+export const ABC_SUBSCALE_MAXES = Object.freeze({
+  sensory: 38,
+  relating: 34,
+  body_object: 52,
+  language: 34,
+})
+
 const ABC_DIMENSIONS = Object.freeze([
-  { code: 'sensory', name: '感觉' },
-  { code: 'relating', name: '交往' },
-  { code: 'body_object', name: '躯体运动' },
-  { code: 'language', name: '语言' },
-  { code: 'social_self_help', name: '生活自理' },
+  { code: 'sensory', name: '感觉', max: ABC_SUBSCALE_MAXES.sensory },
+  { code: 'relating', name: '交往', max: ABC_SUBSCALE_MAXES.relating },
+  { code: 'body_object', name: '躯体运动', max: ABC_SUBSCALE_MAXES.body_object },
+  { code: 'language', name: '语言', max: ABC_SUBSCALE_MAXES.language },
 ])
 
 export function abcLevelFromTotal(total) {
@@ -1438,8 +1449,10 @@ export function makeAbcAssessment(student, rng, { date, improvement }) {
   let totalScore = 0
   for (const dim of ABC_DIMENSIONS) {
     const offset = (dimOffsets[dim.code] || 0) * improvement
-    const raw = clamp(Math.round(6 + offset + rng.float(-2, 2)), 0, 38)
-    dimensionScores[dim.code] = { name: dim.name, rawScore: raw }
+    const raw = clamp(Math.round(6 + offset + rng.float(-2, 2)), 0, dim.max)
+    // 契约形状：{ 维度code: 原始分 }（与 ABCDriver.persistAssessment 一致；
+    // 对象形状 { name, rawScore } 会被报告页当数字渲染成 JSON、占比算出 NaN）
+    dimensionScores[dim.code] = raw
     totalScore += raw
   }
   const level = abcLevelFromTotal(totalScore)

@@ -100,6 +100,24 @@ export function normalizeByConfig(row: any, config: NormalizeConfig): ScoreSnaps
   }
 }
 
+/**
+ * flat-number 模式的单值兜底：数字直用；历史对象形状（{ name, rawScore } / { score }）
+ * 取其分数；无法解析（null / 非数字 / 非有限数）记 null，语义为「无该维度分」——
+ * 不再产出 NaN（NaN 经 JSON 序列化会变 null，AI 纵向趋势里表现成数据缺失）。
+ */
+function toFlatDimensionScore(value: unknown): number | null {
+  if (value != null && typeof value === 'object') {
+    const legacy = value as { rawScore?: unknown; score?: unknown }
+    if (legacy.rawScore != null || legacy.score != null) {
+      const raw = Number(legacy.rawScore ?? legacy.score)
+      return Number.isFinite(raw) ? raw : null
+    }
+  }
+  if (value == null) return null
+  const num = Number(value)
+  return Number.isFinite(num) ? num : null
+}
+
 /** 从维度 JSON 按模式提取维度分。 */
 function extractDimensions(
   dimRaw: Record<string, any>,
@@ -107,9 +125,9 @@ function extractDimensions(
 ): Record<string, number | null> {
   const result: Record<string, number | null> = {}
   if (config.dimensionMode === 'flat-number') {
-    // JSON 是 { 维度名: number }
+    // JSON 是 { 维度名: number }；兼容历史对象形状（见 toFlatDimensionScore）
     for (const [key, val] of Object.entries(dimRaw)) {
-      result[key] = val == null ? null : Number(val)
+      result[key] = toFlatDimensionScore(val)
     }
     return result
   }

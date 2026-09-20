@@ -15,6 +15,8 @@
  *  9. normalizeByConfig flat-number 模式（CBCL：factor_t_scores 是 {因子名:tScore} + 宽带 extra）
  * 10. normalizeByConfig 原始分模式（SDQ：dimension_scores 是 {dimCode:{rawScore,name}}）
  * 11. normalizeByConfig 缺失维度补 null（脏/部分数据不报错）
+ * 12. ABC/ATEC flat-number 模式（DB 行形状 + 历史对象形状 { name, rawScore } 归一为数字、脏值记 null，均不产 NaN）
+ * 13. 适配器注册表包含 abc/atec（源码断言）
  */
 import assert from 'node:assert/strict'
 import {
@@ -327,6 +329,54 @@ assert.deepEqual(safeParseJsonRecord('{"x":2}'), { x: 2 })
   assert.equal(atecSnap.dimensionScores.speech, 10)
   assert.equal(atecSnap.dimensionScores.health, 20)
   assert.equal(Object.keys(atecSnap.dimensionScores).length, 4)
+
+  // 历史演示数据形状（2026-09 前）：{ 维度code: { name, rawScore } }
+  // —— 必须归一为数字，不能是 NaN（NaN 序列化成 null，AI 趋势会显示成数据缺失）
+  const legacyAbcRow = {
+    id: 303,
+    age_months: 74,
+    dimension_scores: JSON.stringify({
+      sensory: { name: '感觉', rawScore: 17 },
+      relating: { name: '交往', rawScore: 21 },
+      body_object: { name: '躯体运动', rawScore: 15 },
+      language: { name: '语言', rawScore: 18 },
+      social_self_help: { name: '生活自理', rawScore: 17 },
+    }),
+    total_score: 88,
+    level: 'moderate',
+    created_at: '2026-08-21T00:00:00Z',
+  }
+  const legacySnap = normalizeByConfig(legacyAbcRow, {
+    scaleCode: 'abc',
+    totalScoreField: 'total_score',
+    levelField: 'level',
+    dimensionScoresField: 'dimension_scores',
+    dimensionMode: 'flat-number',
+  })
+  assert.equal(legacySnap.dimensionScores.sensory, 17, '历史对象形状应取 rawScore')
+  assert.equal(legacySnap.dimensionScores.relating, 21)
+  assert.equal(legacySnap.dimensionScores.social_self_help, 17)
+  for (const [key, value] of Object.entries(legacySnap.dimensionScores)) {
+    assert.equal(Number.isNaN(value as number), false, `${key} 不应是 NaN`)
+  }
+
+  // 脏值兜底：无可用分数的对象 / 非数字字符串 → null（不是 NaN）
+  const dirtySnap = normalizeByConfig(
+    {
+      ...legacyAbcRow,
+      id: 304,
+      dimension_scores: JSON.stringify({ sensory: { foo: 1 }, relating: 'abc' }),
+    },
+    {
+      scaleCode: 'abc',
+      totalScoreField: 'total_score',
+      levelField: 'level',
+      dimensionScoresField: 'dimension_scores',
+      dimensionMode: 'flat-number',
+    },
+  )
+  assert.equal(dirtySnap.dimensionScores.sensory, null, '无可用分数的对象应为 null')
+  assert.equal(dirtySnap.dimensionScores.relating, null, '非数字字符串应为 null')
 }
 
 // ---------- 13. 适配器注册表包含 abc/atec（AI 工具 enum 跟进）----------
