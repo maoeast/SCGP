@@ -25,7 +25,7 @@
 - 表格截图保留列名和至少两条有代表性的脱敏数据。
 - 删除、恢复、更新、迁移、清理等高风险状态，只能在可丢弃的演示数据库、临时资源或受控模拟状态中采集。
 - 原生系统提示、Toast 和更新状态采用对应的专项采集方法；不得为截图执行真实重启、安装或覆盖正式数据。
-- 采集完成后经人工审批写入 `docs/user-manual/screenshot-approvals.json`，再由 `promote-user-manual-screenshots.mjs` 校验 SHA-256 后落 `docs/user-manual/screenshots/`；正文占位编号保持不变。
+- 采集完成后经人工审批写入 `docs/user-manual/screenshot-approvals.json`，再由 `promote-user-manual-screenshots.mjs` 校验 SHA-256 后落 `docs/user-manual/screenshots/`（**目标同名但哈希不一致时拒绝覆盖**，见 `promote-user-manual-screenshots.mjs` 的 `Destination already differs` 守卫；重拍落盘前需先删旧图）；正文占位编号保持不变。
 
 ## 3. 截图清单（217 张）
 
