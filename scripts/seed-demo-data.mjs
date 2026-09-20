@@ -60,6 +60,9 @@ import {
   pickTrainingDate,
   stageOf,
   toIso,
+  SM_QUESTIONS,
+  TGMD_SKILLS,
+  FINE_MOTOR_DIMENSIONS,
 } from './seed-demo-data/data.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -411,6 +414,150 @@ function seedAssessmentDetails(db, scale, assessId, student, rng) {
          VALUES (${assessId}, ${qid}, ${score}, ${rng.int(1000, 6000)})`,
       )
     }
+  } else if (scale === 'sm') {
+    seedSmDetails(db, assessId, student, rng)
+  } else if (scale === 'fine_motor') {
+    seedFineMotorDetails(db, assessId, rng)
+  } else if (scale === 'cnbsr2016') {
+    seedCnbsrDetails(db, assessId, rng)
+  } else if (scale === 'gmfm_88') {
+    seedGmfmDetails(db, assessId, rng)
+  } else if (scale === 'tgmd_3') {
+    seedTgmdDetails(db, assessId, rng)
+  }
+}
+
+/**
+ * S-M 明细：按 age_stage 筛题 + 阶段基线规则生成 0/1 通过明细，
+ * 通过题数与主行 raw_score 对齐（raw = 阶段基础分 + 基线后通过数，sm-logic.ts calculateSMRawScoreFromAnswers）。
+ * 诊断画像加权维度通过率（弱维度显著低），保证雷达图有真实形状。
+ */
+function seedSmDetails(db, assessId, student, rng) {
+  const row = db.exec(`SELECT age_stage, raw_score FROM sm_assess WHERE id = ${assessId}`)
+  if (!row.length) return
+  const [ageStage, rawScore] = row[0].values[0]
+  const stageQuestions = SM_QUESTIONS.filter((q) => q.age_stage <= ageStage)
+  if (!stageQuestions.length) return
+  const baseScores = {}
+  let acc = 0
+  for (const stage of [...new Set(SM_QUESTIONS.map((q) => q.age_stage))].sort((a, b) => a - b)) {
+    baseScores[stage] = acc
+    acc += SM_QUESTIONS.filter((q) => q.age_stage === stage).length
+  }
+  const totalPassNeeded = clampInt(0, stageQuestions.length, Number(rawScore) - (baseScores[ageStage] ?? 0))
+  const profile = DIAGNOSIS_PROFILES[student.disorder] || {}
+  const dimWeights = profile.smDimensions || {}
+  // 按维度权重分配通过名额（弱维度权重低 → 分到的通过名额少）
+  const dims = [...new Set(stageQuestions.map((q) => q.dimension))]
+  const dimQuota = {}
+  const weightSum = dims.reduce((s, d) => s + (dimWeights[d] ?? 1), 0)
+  let allocated = 0
+  dims.forEach((dim, i) => {
+    if (i === dims.length - 1) {
+      dimQuota[dim] = totalPassNeeded - allocated
+    } else {
+      dimQuota[dim] = Math.round(totalPassNeeded * ((dimWeights[dim] ?? 1) / weightSum))
+      allocated += dimQuota[dim]
+    }
+  })
+  const startTime = Date.now()
+  for (const q of stageQuestions) {
+    const quota = dimQuota[q.dimension] ?? 0
+    // 通过率 = 名额/题数，加随机扰动；靠前的题（低月龄技能）通过率上调
+    const passRate = clampInt(2, 97, (0.05 + (quota / Math.max(1, stageQuestions.filter((x) => x.dimension === q.dimension).length)) + (q.age_max < student.ageMonths ? 0.3 : 0)) * 100) / 100
+    const score = rng.rand() < passRate ? 1 : 0
+    db.run(
+      `INSERT INTO sm_assess_detail (assess_id, question_id, score, answer_time)
+       VALUES (${assessId}, ${q.id}, ${score}, ${startTime - rng.int(60000, 600000)})`,
+    )
+  }
+}
+
+/**
+ * FMDA 明细：按 domain_results 各维度 masteryRate 生成 0/1/2 分（未掌握/部分/掌握），
+ * 明细 sum 与主行 total_score 对齐；itemCode 沿用 fine_motor_NNN。
+ */
+function seedFineMotorDetails(db, assessId, rng) {
+  const row = db.exec(`SELECT domain_results FROM fine_motor_assess WHERE id = ${assessId}`)
+  if (!row.length) return
+  const domains = JSON.parse(row[0].values[0][0])
+  const startTime = Date.now()
+  let qid = 0
+  for (const domain of domains) {
+    const itemCount = Math.round((domain.maxScore) / 2) // 每题满分 2 分
+    for (let i = 0; i < itemCount; i += 1) {
+      qid += 1
+      const targetRaw = Math.round(domain.rawScore * (i + 1) / itemCount) - Math.round(domain.rawScore * i / itemCount)
+      const score = clampInt(0, 2, targetRaw)
+      const isAutoFilled = score === 0 ? 1 : 0
+      // auto_fill_reason 受 CHECK 约束（'basal'/'ceiling'/NULL）——演示数据用 'basal' 表示未观察项
+      const fillReason = isAutoFilled ? 'basal' : null
+      db.run(
+        `INSERT INTO fine_motor_assess_detail (assess_id, question_id, dimension, score, answer_time, is_auto_filled, auto_fill_reason)
+         VALUES (${assessId}, ${qid}, ${quote(domain.code)}, ${score}, ${startTime - rng.int(60000, 400000)}, ${isAutoFilled}, ${fillReason === null ? 'NULL' : quote(fillReason)})`,
+      )
+    }
+  }
+}
+
+/**
+ * 儿心量表Ⅱ明细：按 domain_results 各域 passedCount/failedCount 精确生成 0/1 明细，
+ * 题号按每域 itemCount 均分区间（12 题/域×5 域=60 题）。
+ */
+function seedCnbsrDetails(db, assessId, rng) {
+  const row = db.exec(`SELECT domain_results, age_bracket FROM cnbsr2016_assess WHERE id = ${assessId}`)
+  if (!row.length) return
+  const domains = JSON.parse(row[0].values[0][0])
+  // age_group_months 列为 INTEGER NOT NULL——存月龄数值而非 age_bracket 字符串
+  //（初版误写 'a4' 导致 report-model.ts:231 Number('a4')=NaN，IEP 目标区显示 "NaN月龄组"）
+  const ageMonths = db.exec(`SELECT age_months FROM cnbsr2016_assess WHERE id = ${assessId}`)[0].values[0][0]
+  const startTime = Date.now()
+  let qid = 0
+  for (const domain of domains) {
+    const order = [...Array(domain.passedCount).fill(1), ...Array(domain.failedCount).fill(0)]
+    for (const score of order) {
+      qid += 1
+      const isAutoFilled = score === 0 ? 1 : 0
+      db.run(
+        `INSERT INTO cnbsr2016_assess_detail (assess_id, question_id, dimension, age_group_months, score_weight, score, answer_time, is_auto_filled, auto_fill_reason)
+         VALUES (${assessId}, ${qid}, ${quote(domain.code)}, ${Number(ageMonths) || 0}, 1, ${score}, ${startTime - rng.int(60000, 300000)}, ${isAutoFilled}, ${isAutoFilled ? quote('basal') : 'NULL'})`,
+      )
+    }
+  }
+}
+
+/** GMFM-88 明细：按 domain_results 各区 percentage 生成 0-3 分逐项（0=未起始…3=完成），sum 与 rawScore 对齐 */
+function seedGmfmDetails(db, assessId, rng) {
+  const row = db.exec(`SELECT domain_results FROM gmfm_88_assess WHERE id = ${assessId}`)
+  if (!row.length) return
+  const domains = JSON.parse(row[0].values[0][0])
+  const startTime = Date.now()
+  let qid = 0
+  for (const domain of domains) {
+    for (let i = 0; i < domain.itemCount; i += 1) {
+      qid += 1
+      // 均摊目标分差值法保证 sum=rawScore；得分取 0-3 且倾向中段（有起始/部分完成更常见）
+      const targetRaw = Math.round(domain.rawScore * (i + 1) / domain.itemCount) - Math.round(domain.rawScore * i / domain.itemCount)
+      const score = clampInt(0, 3, targetRaw)
+      db.run(
+        `INSERT INTO gmfm_88_assess_detail (assess_id, question_id, item_code, dimension, score, raw_value, is_nt, answer_time)
+         VALUES (${assessId}, ${qid}, ${quote(`GMFM_${String(qid).padStart(3, '0')}`)}, ${quote(domain.code)}, ${score}, ${score}, 0, ${startTime - rng.int(60000, 300000)})`,
+      )
+    }
+  }
+}
+
+/** TGMD-3 明细：skill_results JSON 已含每技能得分（qid/itemCode/score），直接落 13 行明细 */
+function seedTgmdDetails(db, assessId, rng) {
+  const row = db.exec(`SELECT skill_results FROM tgmd_3_assess WHERE id = ${assessId}`)
+  if (!row.length) return
+  const skills = JSON.parse(row[0].values[0][0])
+  const startTime = Date.now()
+  for (const skill of skills) {
+    db.run(
+      `INSERT INTO tgmd_3_assess_detail (assess_id, question_id, item_code, dimension, score, max_score, raw_value, criteria_snapshot, answer_time)
+       VALUES (${assessId}, ${skill.questionId}, ${quote(skill.itemCode)}, ${quote(TGMD_SKILLS.find((k) => k.code === skill.itemCode).dim)}, ${skill.score}, ${skill.maxScore}, ${skill.score}, ${quote(JSON.stringify(skill.criteria))}, ${startTime - rng.int(60000, 300000)})`,
+    )
   }
 }
 
@@ -1069,7 +1216,9 @@ const EXPORT_TABLES = [
   'sm_assess', 'weefim_assess', 'csirs_assess', 'cnbsr2016_assess', 'fine_motor_assess', 'crt_assess',
   'srs2_assess', 'conners_psq_assess', 'conners_trs_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess',
   'abc_assess', 'atec_assess', 'cpep3_assess', 'gmfm_88_assess', 'tgmd_3_assess',
-  'sm_assess_detail', 'weefim_assess_detail', 'csirs_assess_detail', 'cpep3_assess_detail',
+  'sm_assess_detail', 'weefim_assess_detail', 'csirs_assess_detail',
+  'cnbsr2016_assess_detail', 'fine_motor_assess_detail', 'gmfm_88_assess_detail', 'tgmd_3_assess_detail',
+  'cpep3_assess_detail',
   'report_record',
   'sys_training_plan', 'sys_plan_resource_map',
   'training_records', 'equipment_training_records', 'emotional_training_session', 'game_emotion_records',
@@ -1117,7 +1266,9 @@ function runExport(db, outPath) {
       sql = `SELECT * FROM game_emotion_records WHERE id ${between(ID_RANGES.gameRecord)}`
     } else if (table === 'training_session') {
       sql = `SELECT * FROM training_session WHERE id ${between(ID_RANGES.trainingSession)} OR student_id ${studentBetween}`
-    } else if (table === 'sm_assess_detail' || table === 'weefim_assess_detail' || table === 'csirs_assess_detail' || table === 'cpep3_assess_detail') {
+    } else if (table === 'sm_assess_detail' || table === 'weefim_assess_detail' || table === 'csirs_assess_detail'
+      || table === 'cnbsr2016_assess_detail' || table === 'fine_motor_assess_detail'
+      || table === 'gmfm_88_assess_detail' || table === 'tgmd_3_assess_detail' || table === 'cpep3_assess_detail') {
       sql = `SELECT * FROM ${table} WHERE assess_id ${between(ID_RANGES.assess)}`
     } else if (table === 'ai_chat_session') {
       sql = `SELECT * FROM ai_chat_session WHERE id ${between(ID_RANGES.aiChatSession)}`
@@ -1167,7 +1318,9 @@ function runImport(db, inPath, dryRun) {
       'sm_assess', 'weefim_assess', 'csirs_assess', 'cnbsr2016_assess', 'fine_motor_assess', 'crt_assess',
       'srs2_assess', 'conners_psq_assess', 'conners_trs_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess',
       'abc_assess', 'atec_assess', 'cpep3_assess', 'gmfm_88_assess', 'tgmd_3_assess',
-      'sm_assess_detail', 'weefim_assess_detail', 'csirs_assess_detail', 'cpep3_assess_detail',
+      'sm_assess_detail', 'weefim_assess_detail', 'csirs_assess_detail',
+      'cnbsr2016_assess_detail', 'fine_motor_assess_detail', 'gmfm_88_assess_detail', 'tgmd_3_assess_detail',
+      'cpep3_assess_detail',
       'report_record',
       'sys_training_plan',
       'sys_plan_resource_map',
