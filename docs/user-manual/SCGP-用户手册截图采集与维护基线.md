@@ -284,3 +284,14 @@
 - 校验：217/217 槽位内容哈希 == 由 `3e871e6~1` 推导的期望值；`verify-user-manual-approved-screenshots.mjs` = 217 通过；`manual:screenshots:check` = 217 场景 / 0 pending。
 - 遗留（继承自修复前）：① S020/S021、S187/S188、S207/S208、S211/S213 四组相邻编号图片字节相同，与 §2「同一张图片不得重复用于多个编号」冲突，待专项甄别重拍；② 重编号条目的 runId 仅为溯源标签，旧 run 工件目录不可机械复核，**approvals 的 sha256 是与落盘图对齐的唯一锚点**；③ `promote-user-manual-screenshots.mjs` 必须带 `--ids` 运行，勿全表重放。
 - 推导过程与一次性脚本归档：`docs/archive/manual-screenshot-renumber-20260920/`。
+
+### 4.2 2026-09-20 首页族重拍（页头移除 + 静默自动刷新）
+
+受 `0866c42`（首页移除页头、主标题改品牌色、改静默自动刷新）影响，重拍 8 张：
+
+| run | 编号 | 说明 |
+|---|---|---|
+| `dashboard-refresh-20260920` | S001 / S007 / S168 | S007 是「用户菜单浮层」场景：**必须与其它场景分批采集**——同会话中它会把浮层残留在后续场景画面里（首批 S008 即被污染，已拆分重跑） |
+| `dashboard-refresh-2-20260920` | S002 / S008 / S009 / S010 / S011 | 拆分重跑批次 |
+
+落盘：`promote-user-manual-screenshots.mjs --ids … --allow-formal-output`；重拍前先删除同名旧图（promote 对「同名但哈希不同」拒绝覆盖，见 §2 防覆盖设计）。

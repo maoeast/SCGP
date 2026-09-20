@@ -4,6 +4,12 @@
 
 ---
 
+## [2026-09-20] 手册首页族截图重拍 + 自动刷新文案同步（首页看板重构收尾）
+- `docs/user-manual/screenshots/`：重拍 8 张受 `0866c42`（移除页头 + 静默自动刷新 + 主标题品牌色）影响的图——S001/S002/S007/S008/S009/S010/S011/S168；旧图画面中仍带已删除的「首页看板」页头与「刷新数据」按钮，已作废
+- 采集：run `dashboard-refresh-20260920`（S001/S007/S168）与 `dashboard-refresh-2-20260920`（S002/S008/S009/S010/S011）；后者为拆分重跑——同会话先采 S007（用户菜单浮层）会把浮层留在后续场景画面里（首批 S008 即被污染）
+- 落盘：`promote-user-manual-screenshots.mjs --ids … --allow-formal-output`（重拍前需先删同名旧图：promote 对「同名但哈希不同」会拒绝覆盖）；approvals 8 条 sha256/runId 已更新，全量 217 条校验通过
+- `SCGP-星愿能力发展平台用户使用手册.md:143`：「手动刷新当前首页数据」改为自动刷新语义（切回本页立即刷新 + 停留期间每 3 分钟静默更新）
+
 ## [2026-09-20] 技术债：verify:core 陈旧契约断言对齐源码语义（含 2 条被短路隐藏的断言）
 - `scripts/tests/ai-message-edit-contract.test.mjs`：「生成报告入口位于附件按钮上方」的 `<div class="ai-composer">` 改为 `/<div\s+class="ai-composer"/`（class 现已与 `:class`/`@drag*`/`@paste` 同处一个多行标签）；同测试 `composer-utility-actions` 改为 `ai-composer-tools`——92a22e2（输入区两行布局重构）后旧 class 已不存在，此前被同测试前一条断言短路掩盖
 - `scripts/tests/login-theme-background.test.mjs`：

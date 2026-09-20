@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-20T07:40:54.204Z",
+  "updatedAt": "2026-09-20T08:02:38.452Z",
   "approvals": [
     {
       "id": "S001",
-      "runId": "live-shell-admin-20260729",
-      "sha256": "a5fa2e44294f27746ee78ae5809dbac7a1c7415a3deba93a5459d0e20e1dcd0d"
+      "runId": "dashboard-refresh-20260920",
+      "sha256": "3b4e97256d24318af1817bd20a0a1d408eba0bcf2de3bfb3a143f373caf057d4"
     },
     {
       "id": "S002",
-      "runId": "live-s002-teacher-20260729",
-      "sha256": "dc51637f46131247f2e66bca3cac402660e3b6203ce21dd7ed4bc5b47e5517c7"
+      "runId": "dashboard-refresh-2-20260920",
+      "sha256": "2d9027728fa08eb254bbf1195e3b34138c8e00e3770748afdf476e213f3af8f3"
     },
     {
       "id": "S003",
@@ -34,28 +34,28 @@
     },
     {
       "id": "S007",
-      "runId": "live-s007-recheck-20260729",
-      "sha256": "eca22aabb10ee6f4a02da37a2d826cc22b0c560898cbf811166de08be160fec1"
+      "runId": "dashboard-refresh-20260920",
+      "sha256": "14b3d56a9ea3bfca28496a6fcb5363f07a2a4e2ecaf3c51e67af709ac7ddadb7"
     },
     {
       "id": "S008",
-      "runId": "live-shell-admin-menu-dashboard-20260729",
-      "sha256": "4c55fe224b06300c5fbdcc2ca839defa46869005ddc2458546af54b74fc48a1a"
+      "runId": "dashboard-refresh-2-20260920",
+      "sha256": "0f0c9034fb740472cdad372777018ee8483dfe5a1645d40b40487f29d0c40774"
     },
     {
       "id": "S009",
-      "runId": "live-s009-framing-20260729",
-      "sha256": "8180b197bbee4648eb65bb7b0b8aeba823af1cb3797a09da2f4602580ae36d26"
+      "runId": "dashboard-refresh-2-20260920",
+      "sha256": "5ad03bd2965324526ec191e0dc75801deb3274ac4f8c5c0114db2804b014f500"
     },
     {
       "id": "S010",
-      "runId": "live-s010-recheck-20260729",
-      "sha256": "27c369aecceb6525a1c2406908295d48a59f7e54fbd86f771dceb6223ee61c99"
+      "runId": "dashboard-refresh-2-20260920",
+      "sha256": "64a07014db21175f8459dcb0ffcdc72367e0df194b948fa58e2c72662b236715"
     },
     {
       "id": "S011",
-      "runId": "live-s011-recheck-20260729",
-      "sha256": "2ca100396e18d80e37a458832aec229518a2d6370f6f0cc962fc3000d9e6f31a"
+      "runId": "dashboard-refresh-2-20260920",
+      "sha256": "ca06b25a3964d1f3b62d185da39d417f7a67beaab4e92ae8ea6db5c12b06c2a5"
     },
     {
       "id": "S012",
@@ -839,8 +839,8 @@
     },
     {
       "id": "S168",
-      "runId": "live-ai-s167-s171-final-20260730",
-      "sha256": "a966d585f623d974abadf3f38fb23339a7aecef9c1fcea4e685504703003fadf"
+      "runId": "dashboard-refresh-20260920",
+      "sha256": "3e20d6489e917580600f9a1462101b117dacde9bec7239d15ba68983c0cf7752"
     },
     {
       "id": "S169",
