@@ -4,6 +4,19 @@
 
 ---
 
+## [2026-09-20] 修复康复训练支持专家头像契约断言（PNG→WebP 兜底）
+- `scripts/tests/ai-builtin-agent-presets-contract.test.mjs`：头像断言由「`康复训练支持专家.png` 必须存在」改为「`.png` 或同名 `.webp` 存在其一」
+- 背景：该批头像已在 4a6468b（预置图片 PNG→WebP 优化）转为 `.webp`，运行时由 `electron/main.mjs:564-609` 与 `vite.config.ts:47-67` 的 .png→.webp 兜底解析，源码/DB 路径仍写 `.png`；断言未同步，自 4a6468b 起长期红并导致 `npm run verify:core` 无法全绿
+
+## [2026-09-20] 首页看板移除页头 + 静默自动刷新（替代手动刷新）
+- `src/views/Dashboard.vue`：删除页头（`首页看板` 标题、副标题、右上「刷新数据」按钮）及随之失效的 `RefreshRight` 图标导入与 `.dashboard-header` 样式，首屏直接是 Hero Banner
+- 新增静默自动刷新：`onMounted` 起 3 分钟 `setInterval` 定时刷新，回调内 `document.visibilityState === 'hidden'` 时跳过（开关页不空跑请求）；`visibilitychange` 监听在窗口重新可见时立即刷新
+- `loadDashboard({ silent })`：静默模式不触发全屏加载遮罩（否则每 3 分钟闪一次），失败仍只记日志不打扰
+- `onUnmounted` 严格清理：`clearInterval` + `removeEventListener`（新引入 `onUnmounted`；已确认布局层无 keep-alive，卸载钩子正常触发）
+- 依赖同步：`scripts/manual/capture-user-manual-screenshots.mjs` 登录就绪闸门（`.dashboard-hero` 可见）＋ 5 处 dashboard 断言（S001/S002/S007/prepareDashboard/S012）由「首页看板」文本改为「学生总数」
+- `docs/planning/2026-08-16-教师-系统首页看板录制包.md` 标注为**已作废（历史）**：镜头 2/5 依赖已删除的页头与刷新按钮
+- Banner 主标题 `您好，{姓名}！` 改用品牌主色 `var(--scgp-primary)`（#5f89d9，字号/字重不变），与下方柔和蓝灰语录拉开视觉层级
+
 ## [2026-09-20] 首页看板上半部分重构：上下分层 Hero Banner + 卡片组 + 每日语录
 - `src/views/Dashboard.vue` 上半部分放弃左右分栏，改为上下分层：全宽 Hero Banner（白底 surface）+ 下方 5 张数据卡片平铺在页面底色上
 - Banner 左：`您好，{登录用户姓名}！`主标题 + 每日暖心语录副标题；右：核心待办提示 + 主行动按钮，两者紧凑横排并保持原有的 `focusPanel` 优先级平滑滚动
