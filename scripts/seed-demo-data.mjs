@@ -12,8 +12,10 @@
  *   演示数据使用固定高段位 id（见 data.mjs ID_RANGES），可重复执行（先清理旧演示数据）。
  * - export：从 DB 导出演示数据（按 id 区间识别）为 JSON 文件，供跨环境导入。
  * - import：把导出的 JSON 导入到另一台机器的 DB。
- * - 数据规模：22 名学生 / 7 个班（大班~初三）/ 5 名教师 / 每生 2-4 个量表评估
- *   （含纵向前后测体现训练进步）/ 训练计划 / 近 3 个月训练记录。
+ * - 数据规模（v2，2026-2027 学年）：42 名学生 / 19 个班（当前学年 12 + 历史班 7）/ 5 名教师 /
+ *   每生 2-5 个量表（17 个量表全覆盖，含纵向前后测体现训练进步）/ 训练计划 /
+ *   上学期+9 月开学训练记录（含生活自理任务 task_training）/ AI 助手对话与学生记忆。
+ *   写盘采用临时文件 + rename 原子替换，避免中断损坏目标库。
  */
 
 import fs from 'node:fs'
@@ -23,8 +25,13 @@ import { fileURLToPath } from 'node:url'
 
 import {
   ACADEMIC_YEARS,
+  AI_CHAT_MESSAGES,
+  AI_CHAT_SESSIONS,
+  AI_STUDENT_MEMORIES,
+  CLASS_HISTORY_UPGRADES,
   CLASSES,
   CLASS_TEACHER_MAP,
+  CURRENT_YEAR,
   DEMO_DATE,
   DIAGNOSIS_PROFILES,
   ENTRY_BY_MODULE,
@@ -38,6 +45,7 @@ import {
   ID_RANGES,
   MODULE_BY_ENTRY,
   PLAN_TEMPLATES,
+  PREV_YEAR,
   SCALE_GENERATORS,
   SCALE_REPORT_MODULE,
   SCALE_TITLES,
@@ -95,7 +103,7 @@ async function initSql() {
 
 function openDb(sql, dbPath) {
   if (!fs.existsSync(dbPath)) {
-    throw new Error(`数据库文件不存在: ${dbPath}\n请先启动应用完成初始化，或用截图系统的 fixture 生成一份空库。`)
+    throw new Error(`数据库文件不存在: ${dbPath}\n请先启动应用完成初始化，或用 node scripts/build-demo-dist.mjs 生成一份底库。`)
   }
   const buffer = fs.readFileSync(dbPath)
   return new sql.Database(buffer)
@@ -103,7 +111,11 @@ function openDb(sql, dbPath) {
 
 function closeDb(db, dbPath) {
   const data = db.export()
-  fs.writeFileSync(dbPath, Buffer.from(data))
+  // 原子替换：先写临时文件再 rename，避免中断半写损坏目标库
+  //（目标可能是用户真实 %APPDATA% 库，advisor 2026-09-20 #5）
+  const tmpPath = `${dbPath}.seed-tmp`
+  fs.writeFileSync(tmpPath, Buffer.from(data))
+  fs.renameSync(tmpPath, dbPath)
   db.close()
 }
 
@@ -189,7 +201,7 @@ function between(ids) {
 // 幂等清理（先子表后主表；只清演示 id 区间）
 // ============================================================================
 
-function clearDemoData(db, rng) {
+function clearDemoData(db) {
   const studentIds = demoIdIn(ID_RANGES.student)
   const studentBetween = between(ID_RANGES.student)
   const plans = between(ID_RANGES.plan)
@@ -202,26 +214,36 @@ function clearDemoData(db, rng) {
   const emotion = between(ID_RANGES.emotionSession)
   const games = between(ID_RANGES.gameRecord)
   const sessions = between(ID_RANGES.trainingSession)
+  // 训练三表用 id 区间 OR student_id 双条件：id 区间覆盖正常行，
+  // student_id 兜底历史越界残留行（v1 区间过小时曾产生 id 超界的孤儿，advisor 2026-09-20 #1）
+  const recordOrStudent = `WHERE id ${records} OR student_id ${studentBetween}`
+  const sessionOrStudent = `WHERE id ${sessions} OR student_id ${studentBetween}`
+  const equipmentOrStudent = `WHERE id ${equipment} OR student_id ${studentBetween}`
 
   // 训练链路
-  db.run(`DELETE FROM training_session WHERE id ${sessions}`)
+  db.run(`DELETE FROM training_session ${sessionOrStudent}`)
   db.run(`DELETE FROM game_session_participants WHERE student_id ${studentBetween}`)
-  db.run(`DELETE FROM game_emotion_records WHERE id ${games}`)
-  db.run(`DELETE FROM emotional_training_detail WHERE session_id IN (SELECT id FROM emotional_training_session WHERE id ${emotion})`)
-  db.run(`DELETE FROM emotional_training_session WHERE id ${emotion}`)
-  db.run(`DELETE FROM equipment_training_records WHERE id ${equipment}`)
-  db.run(`DELETE FROM training_records WHERE id ${records}`)
+  db.run(`DELETE FROM game_emotion_records WHERE id ${games} OR student_id ${studentBetween}`)
+  db.run(`DELETE FROM emotional_training_detail WHERE session_id IN (SELECT id FROM emotional_training_session WHERE id ${emotion} OR student_id ${studentBetween})`)
+  db.run(`DELETE FROM emotional_training_session WHERE id ${emotion} OR student_id ${studentBetween}`)
+  db.run(`DELETE FROM equipment_training_records ${equipmentOrStudent}`)
+  db.run(`DELETE FROM training_records ${recordOrStudent}`)
 
   // 报告与评估
   db.run(`DELETE FROM report_record WHERE id ${reports} OR student_id ${studentBetween}`)
-  const detailTables = ['sm_assess_detail', 'weefim_assess_detail', 'csirs_assess_detail', 'cnbsr2016_assess_detail', 'fine_motor_assess_detail']
+  const detailTables = ['sm_assess_detail', 'weefim_assess_detail', 'csirs_assess_detail', 'cnbsr2016_assess_detail', 'fine_motor_assess_detail', 'cpep3_assess_detail', 'gmfm_88_assess_detail', 'tgmd_3_assess_detail']
   for (const detailTable of detailTables) {
     db.run(`DELETE FROM ${detailTable} WHERE assess_id ${assesses}`)
   }
-  const assessTables = ['sm_assess', 'weefim_assess', 'csirs_assess', 'cnbsr2016_assess', 'fine_motor_assess', 'crt_assess', 'srs2_assess', 'conners_psq_assess', 'conners_trs_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess']
+  const assessTables = ['sm_assess', 'weefim_assess', 'csirs_assess', 'cnbsr2016_assess', 'fine_motor_assess', 'crt_assess', 'srs2_assess', 'conners_psq_assess', 'conners_trs_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess', 'abc_assess', 'atec_assess', 'cpep3_assess', 'gmfm_88_assess', 'tgmd_3_assess']
   for (const table of assessTables) {
     db.run(`DELETE FROM ${table} WHERE id ${assesses} OR student_id ${studentBetween}`)
   }
+
+  // AI 助手（先消息后会话；记忆独立）
+  db.run(`DELETE FROM ai_chat_message WHERE id ${between(ID_RANGES.aiChatMessage)} OR session_id ${between(ID_RANGES.aiChatSession)}`)
+  db.run(`DELETE FROM ai_student_memory WHERE id ${between(ID_RANGES.aiMemory)} OR student_id ${studentBetween}`)
+  db.run(`DELETE FROM ai_chat_session WHERE id ${between(ID_RANGES.aiChatSession)}`)
 
   // 计划
   db.run(`DELETE FROM sys_plan_resource_map WHERE plan_id ${plans}`)
@@ -229,12 +251,15 @@ function clearDemoData(db, rng) {
 
   // 班级与学生
   db.run(`DELETE FROM student_class_history WHERE student_id ${studentBetween}`)
-  db.run(`DELETE FROM sys_class_teachers WHERE class_id ${classes}`)
+  // 教师映射与班级同用 v1 历史宽区间，防止幽灵班的映射残留孤儿（advisor R2 N3）
+  db.run(`DELETE FROM sys_class_teachers WHERE (class_id >= 20001 AND class_id < ${ID_RANGES.assess[0]}) OR teacher_id ${users}`)
   db.run(`DELETE FROM student WHERE id ${studentBetween}`)
-  db.run(`DELETE FROM sys_class WHERE id ${classes}`)
+  // 班级清理用 v1 历史上界（v1 曾占 20001-20043）而非 ID_RANGES.class：
+  // v2 区间外的 v1 幽灵班若不清理会永久残留（advisor 2026-09-20 R1#5）
+  db.run(`DELETE FROM sys_class WHERE id >= 20001 AND id < ${ID_RANGES.assess[0]}`)
   db.run(`DELETE FROM user WHERE id ${users}`)
 
-  // 学年：INSERT OR IGNORE 保幂等，不清理（避免误伤其他学年数据）
+  // 学年：UPSERT 保幂等，不清理（避免误伤其他学年数据）
 }
 
 // ============================================================================
@@ -243,11 +268,23 @@ function clearDemoData(db, rng) {
 
 function seedAcademicYears(db) {
   for (const year of ACADEMIC_YEARS) {
+    // UPSERT 而非 INSERT OR IGNORE：旧库（v1 演示数据）已有学年行，OR IGNORE 会保留
+    // 旧 is_active（2025-2026 active），v2 的 2026-2027 active 翻转会丢失
     db.run(
-      `INSERT OR IGNORE INTO sys_academic_year (academic_year, start_date, end_date, is_active)
-       VALUES (${quote(year.academic_year)}, ${quote(year.start_date)}, ${quote(year.end_date)}, ${year.is_active})`,
+      `INSERT INTO sys_academic_year (academic_year, start_date, end_date, is_active)
+       VALUES (${quote(year.academic_year)}, ${quote(year.start_date)}, ${quote(year.end_date)}, ${year.is_active})
+       ON CONFLICT(academic_year) DO UPDATE SET
+         start_date = excluded.start_date,
+         end_date = excluded.end_date,
+         is_active = excluded.is_active,
+         updated_at = CURRENT_TIMESTAMP`,
     )
   }
+  // 单 active 不变量归一化：应用激活学年前会全表置 0（class-api.ts:136 激活前全表置 0），
+  // 库里若存在演示学年之外的 active 行（真实自建年份）会多 active（advisor 2026-09-20 R1#6）
+  const activeYear = ACADEMIC_YEARS.find((y) => y.is_active === 1)
+  db.run(`UPDATE sys_academic_year SET is_active = CASE WHEN academic_year = ${quote(activeYear.academic_year)} THEN 1 ELSE 0 END,
+          updated_at = CURRENT_TIMESTAMP`)
 }
 
 function seedClasses(db) {
@@ -265,9 +302,9 @@ function seedUsers(db) {
     const salt = randomSaltHex()
     const passwordHash = hashPassword('admin123', salt)
     db.run(
-      `INSERT INTO user (id, username, password_hash, salt, role, name, email, is_active, created_at, updated_at)
+      `INSERT INTO user (id, username, password_hash, salt, role, name, email, avatar_path, is_active, created_at, updated_at)
        VALUES (${teacher.id}, ${quote(teacher.username)}, ${quote(passwordHash)}, ${quote(salt)}, 'teacher',
-               ${quote(teacher.name)}, ${quote(teacher.email)}, 1, ${quote(nowSql())}, ${quote(nowSql())})`,
+               ${quote(teacher.name)}, ${quote(teacher.email)}, ${quote(teacher.avatar_path || null)}, 1, ${quote(nowSql())}, ${quote(nowSql())})`,
     )
   }
 }
@@ -279,15 +316,26 @@ function seedStudents(db, students) {
       `INSERT INTO student (id, name, gender, birthday, student_no, disorder, avatar_path,
                             current_class_id, current_class_name, created_at, updated_at)
        VALUES (${student.id}, ${quote(student.name)}, ${quote(student.gender)}, ${quote(student.birthday)},
-               ${quote(student.student_no)}, ${quote(student.disorder)}, NULL,
+               ${quote(student.student_no)}, ${quote(student.disorder)}, ${quote(student.avatar_path || null)},
                ${classRow.id}, ${quote(classRow.name)}, ${quote(nowSql())}, ${quote(nowSql())})`,
     )
-    // 入班（触发器自动更新 current_enrollment）
+    // 当前入班行（触发器自动更新 current_enrollment）
     db.run(
       `INSERT INTO student_class_history (student_id, student_name, class_id, class_name, academic_year, enrollment_date, is_current)
        VALUES (${student.id}, ${quote(student.name)}, ${classRow.id}, ${quote(classRow.name)},
                ${quote(classRow.academic_year)}, '2026-09-01', 1)`,
     )
+    // 上一学年历史行（升级/调班演示；is_current=0 不影响在籍人数）
+    const upgrade = CLASS_HISTORY_UPGRADES.find((u) => u.studentId === student.id)
+    if (upgrade) {
+      const prevClass = CLASSES.find((c) => c.id === upgrade.prevClassId)
+      db.run(
+        `INSERT INTO student_class_history (student_id, student_name, class_id, class_name, academic_year,
+                                            enrollment_date, leave_date, leave_reason, is_current)
+         VALUES (${student.id}, ${quote(student.name)}, ${prevClass.id}, ${quote(prevClass.name)},
+                 ${quote(prevClass.academic_year)}, '2025-09-01', '2026-07-10', ${quote(upgrade.leaveReason || 'upgrade')}, 0)`,
+      )
+    }
   }
 }
 
@@ -356,6 +404,16 @@ function seedAssessmentDetails(db, scale, assessId, student, rng) {
   }
 }
 
+/** CPEP-3 详情写入（generator 返回 details 数组，与主行一起产出） */
+function insertCpep3Details(db, assessId, details) {
+  for (const d of details) {
+    db.run(
+      `INSERT INTO cpep3_assess_detail (assess_id, question_id, code_no, dimension, item_type, level, score, answer_time)
+       VALUES (${assessId}, ${d.question_id}, ${quote(d.code_no)}, ${quote(d.dimension)}, ${quote(d.item_type)}, ${quote(d.level)}, ${d.score}, ${900 + d.score * 60})`,
+    )
+  }
+}
+
 function clampInt(min, max, value) {
   return Math.min(max, Math.max(min, Math.round(value)))
 }
@@ -382,6 +440,9 @@ function seedAssessments(db, students, rng) {
         const row = { id: assessSeq, ...generated.row }
         insertRow(db, generated.table, row)
         seedAssessmentDetails(db, scale, assessSeq, student, rng)
+        if (scale === 'cpep_3' && generated.details) {
+          insertCpep3Details(db, assessSeq, generated.details)
+        }
         const moduleCode = SCALE_REPORT_MODULE[scale]
         const classRow = CLASSES.find((c) => c.id === student.class_id)
         db.run(
@@ -462,7 +523,7 @@ function pickResourcesByModule(db, modules, limit = 30) {
   return result[0].values.map(([id, name, module]) => ({ id, name, module }))
 }
 
-const PLAN_RESOURCE_TYPES = ['equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene', 'self_care_task']
+const PLAN_RESOURCE_TYPES = ['equipment', 'game', 'flashcard', 'emotion_scene', 'care_scene', 'self_care_task', 'task_training']
 
 const PLAN_NOTES = [
   '训练时先示范，再辅助完成，逐步撤除辅助',
@@ -524,6 +585,7 @@ function seedTrainingRecords(db, students, rng, plansInfo) {
   let emotionSeq = ID_RANGES.emotionSession[0]
   let gameSeq = ID_RANGES.gameRecord[0]
   let sessionSeq = ID_RANGES.trainingSession[0]
+  let taskTrainingCount = 0 // 仅 task_training 写入计数（advisor 2026-09-20 R1#3：此前误用总游标）
   const activePlanByStudent = new Map(
     (plansInfo || []).filter((p) => p.status === 'active').map((p) => [p.studentId, p]),
   )
@@ -542,6 +604,8 @@ function seedTrainingRecords(db, students, rng, plansInfo) {
   const emotionScenePool = pickResourcesByType(db, ['emotion_scene', 'care_scene'], 40)
   const sensoryGamePool = pickResourcesByTypeAndModule(db, ['game'], ['sensory'], 11)
   const gameResourceIdMap = buildGameResourceIdMap(db)
+  // 生活自理任务资源（底库预置 31 个；无则跳过该训练族）
+  const taskTrainingPool = pickResourcesByType(db, ['task_training'], 31)
 
   for (const student of students) {
     const stage = stageOf(student)
@@ -773,6 +837,65 @@ function seedTrainingRecords(db, students, rng, plansInfo) {
       }
     }
 
+    // ---- 生活自理任务训练（training_records + training_session，session_family='task_training'）----
+    // 写入形态对齐 SelfCareTrainingAPI（scripts/tests/self-care-training-api.test.mjs）：
+    // resource_type/session_type='task_training'、entry 'life-skills'、raw_data 含 completionBreakdown/stepResults。
+    // 幼儿园/小学为主（初中也有部分基础自理训练），资源取底库预置 task_training 资源。
+    const taskPool = taskTrainingPool.length ? taskTrainingPool : []
+    if (taskPool.length) {
+      const taskCount = rng.int(2, 4)
+      for (let i = 0; i < taskCount; i += 1) {
+        const { date, iso, timestampMs } = pickTrainingDate(rng)
+        const task = rng.pick(taskPool)
+        const stepCount = rng.int(4, 8)
+        const completed = Math.max(2, stepCount - rng.int(0, 2))
+        const completionBreakdown = { independent: 0, prompt: 0, assist: 0, unable: 0 }
+        for (let s = 0; s < stepCount; s += 1) {
+          completionBreakdown[rng.pick(['independent', 'prompt', 'assist'])] += 1
+        }
+        const accuracy = completed / stepCount
+        const durationSec = rng.int(8, 20) * 60
+        // 时间口径统一：session started/ended 从 training_records.timestamp 派生（advisor 2026-09-20 #10）；
+        // 日期段用本地年月日（toIso 是 UTC 口径，+08 下 00-07 点会错位一天——advisor round2 New#2）
+        const startedAt = new Date(timestampMs)
+        const endedAt = new Date(timestampMs + durationSec * 1000)
+        const toSqlTime = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`
+        const rawData = {
+          trainingMode: 'step_task',
+          stepCount,
+          completedStepCount: completed,
+          errorType: rng.int(0, 3),
+          teacherNotes: null,
+          completionBreakdown,
+          stepResults: [],
+        }
+        const trainingRecordId = recordSeq
+        db.run(
+          `INSERT INTO training_records (id, student_id, task_id, resource_id, resource_type, session_type,
+                                         entry_code, timestamp, duration, accuracy_rate, avg_response_time, raw_data,
+                                         class_id, class_name, module_code, created_at)
+           VALUES (${recordSeq}, ${student.id}, NULL, ${task.id}, 'task_training', 'task_training', 'life-skills',
+                   ${timestampMs}, ${durationSec}, ${accuracy.toFixed(4)}, ${Math.floor(durationSec * 1000 / stepCount)},
+                   ${quote(JSON.stringify(rawData))}, ${student.class_id}, ${quote(className)}, 'life_skills', ${quote(nowSql())})`,
+        )
+        db.run(
+          `INSERT INTO training_session (id, student_id, module_code, entry_code, session_family, resource_id, resource_type,
+                                         task_id, task_name_snapshot, class_id, class_name, started_at, ended_at, duration_ms,
+                                         completion_status, accuracy_rate, avg_response_time_ms, summary_payload,
+                                         source_table, source_record_id, created_at, updated_at)
+           VALUES (${sessionSeq}, ${student.id}, 'life_skills', 'life-skills', 'task_training', ${task.id}, 'task_training',
+                   NULL, ${quote(task.name)}, ${student.class_id}, ${quote(className)},
+                   ${quote(toSqlTime(startedAt))}, ${quote(toSqlTime(endedAt))}, ${durationSec * 1000},
+                   'completed', ${accuracy.toFixed(4)}, ${Math.floor(durationSec * 1000 / stepCount)},
+                   ${quote(JSON.stringify(rawData))}, 'training_records', ${trainingRecordId},
+                   ${quote(nowSql())}, ${quote(nowSql())})`,
+        )
+        recordSeq += 1
+        sessionSeq += 1
+        taskTrainingCount += 1
+      }
+    }
+
     // ---- 情绪模块报告（report_record type='emotional'，每生 1 条，仿 emotional-api 语义）----
     if (lastEmotionTrainingRecordId !== null) {
       db.run(
@@ -795,11 +918,55 @@ function seedTrainingRecords(db, students, rng, plansInfo) {
     }
   }
 
-  return { recordSeq, equipmentSeq, emotionSeq, gameSeq, sessionSeq }
+  return { recordSeq, equipmentSeq, emotionSeq, gameSeq, sessionSeq, taskCount: taskTrainingCount }
 }
 
 function clampNumber(min, max, value) {
   return Math.min(max, Math.max(min, value))
+}
+
+// ============================================================================
+// AI 助手演示数据（会话 + 消息 + 学生记忆）
+// ============================================================================
+
+function seedAiData(db) {
+  // 会话（固定 id，memory_watermark 初始化为该会话最后一条消息 id——防回灌语义）
+  for (const session of AI_CHAT_SESSIONS) {
+    db.run(
+      `INSERT INTO ai_chat_session (id, user_id, agent_code, title, student_id, memory_watermark, created_at, updated_at)
+       VALUES (${session.id}, ${session.user_id}, ${quote(session.agent_code)}, ${quote(session.title)},
+               ${session.student_id ?? 'NULL'}, 0, ${quote(session.created_at)}, ${quote(session.updated_at)})`,
+    )
+  }
+  // 消息（id 固定；写完后回填会话水位 = 会话内最大消息 id）
+  for (const msg of AI_CHAT_MESSAGES) {
+    db.run(
+      `INSERT INTO ai_chat_message (id, session_id, role, content, tokens_total, tokens_prompt, tokens_completion,
+                                    est_cost_yuan, delivery_status, message_kind, created_at)
+       VALUES (${msg.id}, ${msg.session_id}, ${quote(msg.role)}, ${quote(msg.content)}, ${msg.tokens_total || 0},
+               ${msg.tokens_prompt || 0}, ${msg.tokens_completion || 0}, ${msg.est_cost_yuan || 0},
+               ${quote(msg.delivery_status || 'completed')}, ${quote(msg.message_kind || 'final')}, ${quote(msg.created_at)})`,
+    )
+  }
+  for (const session of AI_CHAT_SESSIONS) {
+    const row = db.exec(`SELECT COALESCE(MAX(id), 0) FROM ai_chat_message WHERE session_id = ${session.id}`)
+    const watermark = row[0]?.values?.[0]?.[0] ?? 0
+    db.run(`UPDATE ai_chat_session SET memory_watermark = ${watermark} WHERE id = ${session.id}`)
+  }
+  // 学生记忆（已确认状态，指纹用内容哈希模拟）
+  for (const mem of AI_STUDENT_MEMORIES) {
+    const fingerprint = crypto.createHash('sha256').update(`${mem.student_id}:${mem.content}`).digest('hex').slice(0, 32)
+    db.run(
+      `INSERT INTO ai_student_memory (id, student_id, user_id, created_by_type, agent_code, session_id, source_type,
+                                      category, content, confidence, status, priority, priority_note,
+                                      fingerprint, confirmed_by_user_id, confirmed_at, effective_at)
+       VALUES (${mem.id}, ${mem.student_id}, ${mem.user_id}, ${quote(mem.created_by_type)}, ${quote(mem.agent_code || '')},
+               ${mem.session_id ?? 'NULL'}, ${quote(mem.source_type)}, ${quote(mem.category)}, ${quote(mem.content)},
+               ${quote(mem.confidence)}, ${quote(mem.status)}, ${quote(mem.priority || 'normal')},
+               ${quote(mem.priority_note || '')}, ${quote(fingerprint)}, ${mem.confirmed_by_user_id ?? 'NULL'},
+               ${mem.confirmed_at ? quote(mem.confirmed_at) : 'NULL'}, ${quote(mem.effective_at)})`,
+    )
+  }
 }
 
 // ============================================================================
@@ -814,9 +981,10 @@ function runSeed(db, args) {
     'student', 'user', 'sys_class', 'student_class_history', 'sys_class_teachers', 'sys_academic_year',
     'sm_assess', 'weefim_assess', 'csirs_assess', 'cnbsr2016_assess', 'fine_motor_assess', 'crt_assess',
     'srs2_assess', 'conners_psq_assess', 'conners_trs_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess',
+    'abc_assess', 'atec_assess', 'cpep3_assess', 'gmfm_88_assess', 'tgmd_3_assess',
     'report_record', 'sys_training_plan', 'sys_plan_resource_map', 'sys_training_resource',
     'training_records', 'equipment_training_records', 'emotional_training_session', 'game_emotion_records',
-    'training_session',
+    'training_session', 'ai_chat_session', 'ai_chat_message', 'ai_student_memory',
   ])
 
   db.run('BEGIN')
@@ -830,6 +998,25 @@ function runSeed(db, args) {
     const assessmentResults = seedAssessments(db, students, rng)
     const { planEnd, plansInfo } = seedPlans(db, students, assessmentResults, rng)
     const recordEnds = seedTrainingRecords(db, students, rng, plansInfo)
+    seedAiData(db)
+    // ID 区间守卫：越界会使 BETWEEN 清理/导出漏行（advisor 2026-09-20 #1），越界即失败而非静默残留
+    // plan/assess 一并纳入（plan 理论最坏 42×2=84 > 区间 80，advisor R1#4）。
+    // 守卫必须在 COMMIT 前抛出：若在 COMMIT 后抛出，catch 里的 ROLLBACK 会因无活跃事务
+    // 抛错并掩盖原始越界信息（advisor R2 N1）
+    const rangeChecks = [
+      ['plan', planEnd - 1, ID_RANGES.plan[1]],
+      ['assess', assessmentResults.reduce((max, r) => Math.max(max, ...r.assessments.map((a) => a.assessId)), ID_RANGES.assess[0]), ID_RANGES.assess[1]],
+      ['trainingRecord', recordEnds.recordSeq - 1, ID_RANGES.trainingRecord[1]],
+      ['equipmentRecord', recordEnds.equipmentSeq - 1, ID_RANGES.equipmentRecord[1]],
+      ['emotionSession', recordEnds.emotionSeq - 1, ID_RANGES.emotionSession[1]],
+      ['gameRecord', recordEnds.gameSeq - 1, ID_RANGES.gameRecord[1]],
+      ['trainingSession', recordEnds.sessionSeq - 1, ID_RANGES.trainingSession[1]],
+    ]
+    for (const [name, lastId, maxId] of rangeChecks) {
+      if (lastId > maxId) {
+        throw new Error(`演示数据 ID 越界：${name} 已用到 ${lastId}，超出区间上限 ${maxId}——请扩容 ID_RANGES.${name}`)
+      }
+    }
     db.run('COMMIT')
 
     const summary = {
@@ -845,7 +1032,11 @@ function runSeed(db, args) {
       equipmentRecords: recordEnds.equipmentSeq - ID_RANGES.equipmentRecord[0],
       emotionSessions: recordEnds.emotionSeq - ID_RANGES.emotionSession[0],
       gameRecords: recordEnds.gameSeq - ID_RANGES.gameRecord[0],
+      taskTrainingRecords: recordEnds.taskCount,
       trainingSessions: recordEnds.sessionSeq - ID_RANGES.trainingSession[0],
+      aiChatSessions: countTable(db, 'ai_chat_session'),
+      aiChatMessages: countTable(db, 'ai_chat_message'),
+      aiMemories: countTable(db, 'ai_student_memory'),
     }
     return summary
   } catch (error) {
@@ -867,11 +1058,13 @@ const EXPORT_TABLES = [
   'sys_class_teachers',
   'sm_assess', 'weefim_assess', 'csirs_assess', 'cnbsr2016_assess', 'fine_motor_assess', 'crt_assess',
   'srs2_assess', 'conners_psq_assess', 'conners_trs_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess',
-  'sm_assess_detail', 'weefim_assess_detail', 'csirs_assess_detail',
+  'abc_assess', 'atec_assess', 'cpep3_assess', 'gmfm_88_assess', 'tgmd_3_assess',
+  'sm_assess_detail', 'weefim_assess_detail', 'csirs_assess_detail', 'cpep3_assess_detail',
   'report_record',
   'sys_training_plan', 'sys_plan_resource_map',
   'training_records', 'equipment_training_records', 'emotional_training_session', 'game_emotion_records',
   'training_session',
+  'ai_chat_session', 'ai_chat_message', 'ai_student_memory',
 ]
 
 function selectRows(db, sql) {
@@ -913,9 +1106,15 @@ function runExport(db, outPath) {
     } else if (table === 'game_emotion_records') {
       sql = `SELECT * FROM game_emotion_records WHERE id ${between(ID_RANGES.gameRecord)}`
     } else if (table === 'training_session') {
-      sql = `SELECT * FROM training_session WHERE id ${between(ID_RANGES.trainingSession)}`
-    } else if (table === 'sm_assess_detail' || table === 'weefim_assess_detail' || table === 'csirs_assess_detail') {
+      sql = `SELECT * FROM training_session WHERE id ${between(ID_RANGES.trainingSession)} OR student_id ${studentBetween}`
+    } else if (table === 'sm_assess_detail' || table === 'weefim_assess_detail' || table === 'csirs_assess_detail' || table === 'cpep3_assess_detail') {
       sql = `SELECT * FROM ${table} WHERE assess_id ${between(ID_RANGES.assess)}`
+    } else if (table === 'ai_chat_session') {
+      sql = `SELECT * FROM ai_chat_session WHERE id ${between(ID_RANGES.aiChatSession)}`
+    } else if (table === 'ai_chat_message') {
+      sql = `SELECT * FROM ai_chat_message WHERE id ${between(ID_RANGES.aiChatMessage)} OR session_id ${between(ID_RANGES.aiChatSession)}`
+    } else if (table === 'ai_student_memory') {
+      sql = `SELECT * FROM ai_student_memory WHERE id ${between(ID_RANGES.aiMemory)} OR student_id ${studentBetween}`
     } else {
       // 量表评估表：id 区间或学生维度
       sql = `SELECT * FROM ${table} WHERE id ${between(ID_RANGES.assess)} OR student_id ${studentBetween}`
@@ -945,10 +1144,9 @@ function runImport(db, inPath, dryRun) {
     return { dryRun: true, totalRows: total, tables: Object.keys(tables).length }
   }
   // 幂等：先按主键区间清理（与 seed 清理逻辑一致）
-  const rng = createRng(20260806)
   db.run('BEGIN')
   try {
-    clearDemoData(db, rng)
+    clearDemoData(db)
     const order = [
       'sys_academic_year',
       'sys_class',
@@ -958,7 +1156,8 @@ function runImport(db, inPath, dryRun) {
       'sys_class_teachers',
       'sm_assess', 'weefim_assess', 'csirs_assess', 'cnbsr2016_assess', 'fine_motor_assess', 'crt_assess',
       'srs2_assess', 'conners_psq_assess', 'conners_trs_assess', 'sdq_assess', 'cbcl_assess', 'brief_assess',
-      'sm_assess_detail', 'weefim_assess_detail', 'csirs_assess_detail',
+      'abc_assess', 'atec_assess', 'cpep3_assess', 'gmfm_88_assess', 'tgmd_3_assess',
+      'sm_assess_detail', 'weefim_assess_detail', 'csirs_assess_detail', 'cpep3_assess_detail',
       'report_record',
       'sys_training_plan',
       'sys_plan_resource_map',
@@ -967,19 +1166,32 @@ function runImport(db, inPath, dryRun) {
       'emotional_training_session',
       'game_emotion_records',
       'training_session',
+      'ai_chat_session',
+      'ai_chat_message',
+      'ai_student_memory',
     ]
     for (const table of order) {
       const rows = tables[table]
       if (!rows?.length) continue
       if (table === 'sys_academic_year') {
-        // 学年是全局配置表：剥离主键、按 academic_year 唯一约束去重（幂等）
+        // 学年是全局配置表：剥离主键、按 academic_year 唯一约束 UPSERT（幂等）。
+        // 与 seedAcademicYears 同为 UPSERT：OR IGNORE 在旧库上会保留旧 is_active（advisor R1#2）
         for (const row of rows) {
           const { id: _ignored, ...rest } = row
           const keys = Object.keys(rest)
+          const updates = keys.filter((k) => k !== 'academic_year').map((k) => `${k} = excluded.${k}`)
           db.run(
-            `INSERT OR IGNORE INTO sys_academic_year (${keys.join(', ')})
-             VALUES (${keys.map((k) => quote(rest[k])).join(', ')})`,
+            `INSERT INTO sys_academic_year (${keys.join(', ')})
+             VALUES (${keys.map((k) => quote(rest[k])).join(', ')})
+             ON CONFLICT(academic_year) DO UPDATE SET ${updates.join(', ')}`,
           )
+        }
+        // 单 active 归一化与 seed 路径对齐（advisor R2 N2）：目标库自建的
+        // 非 payload 学年若为 active，会在导入后造成多 active
+        const exportedActive = rows.find((r) => r.is_active === 1)
+        if (exportedActive) {
+          db.run(`UPDATE sys_academic_year SET is_active = CASE WHEN academic_year = ${quote(exportedActive.academic_year)} THEN 1 ELSE 0 END,
+                  updated_at = CURRENT_TIMESTAMP`)
         }
         continue
       }
@@ -1000,15 +1212,16 @@ function runImport(db, inPath, dryRun) {
 // main
 // ============================================================================
 
-function printSummary(summary, db) {
+function printSummary(summary) {
   console.log('模拟演示数据生成完成：')
   console.log(`  班级: ${summary.classes}（含演示 ${ID_RANGES.class[1] - ID_RANGES.class[0] + 1} 个）`)
   console.log(`  教师: ${summary.users}（演示教师 ${TEACHERS.length} 人，密码 admin123）`)
   console.log(`  学生: ${summary.students}（演示 ${ID_RANGES.student[1] - ID_RANGES.student[0] + 1} 人）`)
   console.log(`  评估: ${summary.assessments} 次（报告 ${summary.reports} 条，含纵向前后测）`)
   console.log(`  计划: ${summary.plans} 个（关联资源 ${summary.planResourceMaps} 条）`)
-  console.log(`  训练记录: 感官 ${summary.trainingRecords} + 器材 ${summary.equipmentRecords} + 情绪 ${summary.emotionSessions} + 游戏 ${summary.gameRecords}`)
+  console.log(`  训练记录: 感官 ${summary.trainingRecords} + 器材 ${summary.equipmentRecords} + 情绪 ${summary.emotionSessions} + 游戏 ${summary.gameRecords} + 自理任务 ${summary.taskTrainingRecords}`)
   console.log(`  统一训练主表: ${summary.trainingSessions} 条`)
+  console.log(`  AI 助手: 会话 ${summary.aiChatSessions} 条 / 消息 ${summary.aiChatMessages} 条 / 学生记忆 ${summary.aiMemories} 条`)
 }
 
 async function main() {
@@ -1031,11 +1244,11 @@ async function main() {
       if (args.dryRun) {
         console.log(`[dry-run] 目标库: ${args.db}（不写入）`)
         const summary = runSeed(db, args)
-        printSummary(summary, db)
+        printSummary(summary)
       } else {
         const summary = runSeed(db, args)
         closeDb(db, args.db)
-        printSummary(summary, db)
+        if (args.summary) printSummary(summary)
         console.log(`\n已写入: ${args.db}`)
       }
     } else if (args.command === 'export') {

@@ -20,25 +20,30 @@
 // 常量
 // ============================================================================
 
-export const DEMO_DATE = '2026-08-05' // 演示时间基准（生日/记录日期围绕它）
+export const DEMO_DATE = '2026-09-15' // 演示时间基准（2026-2027 学年开学第三周）
 
 export const ID_RANGES = Object.freeze({
   user: [9001, 9005],
-  student: [10001, 10022],
-  class: [20001, 20007],
-  plan: [30001, 30050],
-  assess: [40001, 40200],
-  report: [41001, 41200],
-  trainingRecord: [50001, 50400],
-  equipmentRecord: [51001, 51200],
+  student: [10001, 10042],
+  class: [20001, 20019], // 20001-20012 当前学年 12 班 + 20013-20019 上一学年历史 7 班
+  plan: [30001, 30080],
+  assess: [40001, 40400],
+  report: [41001, 41400],
+  // ⚠️ 容量按 v2 生成量设计（42 生默认种子实测：训练记录 810、session 1047、器材 194；
+  // 理论最坏值更高——越界由 runSeed 末尾的断言显式报错兜底，扩容请同步改这里）（advisor 2026-09-20 #1）
+  trainingRecord: [50001, 50950],
+  equipmentRecord: [51001, 51300],
   emotionSession: [52001, 52200],
   gameRecord: [53001, 53200],
-  trainingSession: [54001, 54500],
+  trainingSession: [54001, 55200],
+  aiChatSession: [61001, 61010],
+  aiChatMessage: [61101, 61300],
+  aiMemory: [61301, 61360],
 })
 
 export const ACADEMIC_YEARS = Object.freeze([
-  { academic_year: '2025-2026', start_date: '2025-09-01', end_date: '2026-07-31', is_active: 1 },
-  { academic_year: '2026-2027', start_date: '2026-09-01', end_date: '2027-07-31', is_active: 0 },
+  { academic_year: '2025-2026', start_date: '2025-09-01', end_date: '2026-07-31', is_active: 0 },
+  { academic_year: '2026-2027', start_date: '2026-09-01', end_date: '2027-07-31', is_active: 1 },
 ])
 
 // ============================================================================
@@ -83,66 +88,186 @@ export function clamp(value, min, max) {
 // ============================================================================
 
 export const TEACHERS = Object.freeze([
-  { id: 9001, username: 'teacher01', name: '陈慧敏', email: 'chenhuimin@example.invalid' },
-  { id: 9002, username: 'teacher02', name: '王志远', email: 'wangzhiyuan@example.invalid' },
-  { id: 9003, username: 'teacher03', name: '林晓芳', email: 'linxiaofang@example.invalid' },
-  { id: 9004, username: 'teacher04', name: '刘建华', email: 'liujianhua@example.invalid' },
-  { id: 9005, username: 'teacher05', name: '周雨桐', email: 'zhouyutong@example.invalid' },
+  { id: 9001, username: 'teacher01', name: '陈慧敏', email: 'chenhuimin@example.invalid', avatar_path: 'images/user-avatars/Young_Female_Teacher.png' },
+  { id: 9002, username: 'teacher02', name: '王志远', email: 'wangzhiyuan@example.invalid', avatar_path: 'images/user-avatars/Young_Male_Teacher.png' },
+  { id: 9003, username: 'teacher03', name: '林晓芳', email: 'linxiaofang@example.invalid', avatar_path: 'images/user-avatars/MiddleAged_Female_Teacher.png' },
+  { id: 9004, username: 'teacher04', name: '刘建华', email: 'liujianhua@example.invalid', avatar_path: 'images/user-avatars/MiddleAged_Male_Teacher.png' },
+  { id: 9005, username: 'teacher05', name: '周雨桐', email: 'zhouyutong@example.invalid', avatar_path: 'images/user-avatars/Senior_Female_Teacher.png' },
 ])
 
 // 班级 → 教师分配（sys_class_teachers）
 export const CLASS_TEACHER_MAP = Object.freeze({
-  20001: [9001], // 大班
-  20002: [9001, 9005], // 一年级
-  20003: [9002], // 二年级
-  20004: [9002, 9005], // 三年级
-  20005: [9003], // 初一
-  20006: [9004], // 初二
-  20007: [9003, 9004], // 初三
+  20001: [9001],
+  20002: [9001, 9005],
+  20003: [9002],
+  20004: [9002, 9005],
+  20005: [9003],
+  20006: [9003, 9004],
+  20007: [9004],
+  20008: [9001],
+  20009: [9002],
+  20010: [9005],
+  20011: [9004],
+  20012: [9003],
+  20013: [9001], // 历史班
+  20014: [9002],
+  20015: [9003],
+  20016: [9004],
+  20017: [9005],
+  20018: [9001, 9003],
+  20019: [9002, 9004],
 })
 
 // ============================================================================
-// 班级（7 个，覆盖 幼儿园大班 / 小学1-3年级 / 初中1-3年级）
+// 班级（当前学年 12 个 + 上一学年历史 7 个）
+// 当前学年：幼儿园小/中/大班 + 小学一~六年级 + 初中一~三年级（grade_level 1-12）
+// 历史班（2025-2026）：仅用于演示「学年升级/调班历史」与跨学年训练记录归属，
+// 2025-2026 的旧班按 grade_level -1 存放（如 一年级1班历史 = grade 4 行），
+// 学生历史行通过 student_class_history 关联（is_current=0）。
 // ============================================================================
 
+export const CURRENT_YEAR = '2026-2027'
+export const PREV_YEAR = '2025-2026'
+
 export const CLASSES = Object.freeze([
-  { id: 20001, name: '大班', grade_level: 3, class_number: 1, academic_year: '2025-2026', max_students: 12 },
-  { id: 20002, name: '一年级1班', grade_level: 4, class_number: 1, academic_year: '2025-2026', max_students: 12 },
-  { id: 20003, name: '二年级1班', grade_level: 5, class_number: 1, academic_year: '2025-2026', max_students: 12 },
-  { id: 20004, name: '三年级1班', grade_level: 6, class_number: 1, academic_year: '2025-2026', max_students: 12 },
-  { id: 20005, name: '初一1班', grade_level: 10, class_number: 1, academic_year: '2025-2026', max_students: 12 },
-  { id: 20006, name: '初二1班', grade_level: 11, class_number: 1, academic_year: '2025-2026', max_students: 12 },
-  { id: 20007, name: '初三1班', grade_level: 12, class_number: 1, academic_year: '2025-2026', max_students: 12 },
+  // 当前学年 12 班
+  { id: 20001, name: '小班', grade_level: 1, class_number: 1, academic_year: CURRENT_YEAR, max_students: 12 },
+  { id: 20002, name: '中班', grade_level: 2, class_number: 1, academic_year: CURRENT_YEAR, max_students: 12 },
+  { id: 20003, name: '大班', grade_level: 3, class_number: 1, academic_year: CURRENT_YEAR, max_students: 12 },
+  { id: 20004, name: '一年级1班', grade_level: 4, class_number: 1, academic_year: CURRENT_YEAR, max_students: 12 },
+  { id: 20005, name: '二年级1班', grade_level: 5, class_number: 1, academic_year: CURRENT_YEAR, max_students: 12 },
+  { id: 20006, name: '三年级1班', grade_level: 6, class_number: 1, academic_year: CURRENT_YEAR, max_students: 12 },
+  { id: 20007, name: '四年级1班', grade_level: 7, class_number: 1, academic_year: CURRENT_YEAR, max_students: 12 },
+  { id: 20008, name: '五年级1班', grade_level: 8, class_number: 1, academic_year: CURRENT_YEAR, max_students: 12 },
+  { id: 20009, name: '六年级1班', grade_level: 9, class_number: 1, academic_year: CURRENT_YEAR, max_students: 12 },
+  { id: 20010, name: '初一1班', grade_level: 10, class_number: 1, academic_year: CURRENT_YEAR, max_students: 12 },
+  { id: 20011, name: '初二1班', class_number: 1, grade_level: 11, academic_year: CURRENT_YEAR, max_students: 12 },
+  { id: 20012, name: '初三1班', grade_level: 12, class_number: 1, academic_year: CURRENT_YEAR, max_students: 12 },
+  // 上一学年历史班（is_current=0 的 student_class_history 引用它们；不挂当前学生）
+  { id: 20013, name: '大班', grade_level: 3, class_number: 1, academic_year: PREV_YEAR, max_students: 12 },
+  { id: 20014, name: '一年级1班', grade_level: 4, class_number: 1, academic_year: PREV_YEAR, max_students: 12 },
+  { id: 20015, name: '二年级1班', grade_level: 5, class_number: 1, academic_year: PREV_YEAR, max_students: 12 },
+  { id: 20016, name: '三年级1班', grade_level: 6, class_number: 1, academic_year: PREV_YEAR, max_students: 12 },
+  { id: 20017, name: '初一1班', grade_level: 10, class_number: 1, academic_year: PREV_YEAR, max_students: 12 },
+  { id: 20018, name: '初二1班', grade_level: 11, class_number: 1, academic_year: PREV_YEAR, max_students: 12 },
+  { id: 20019, name: '初三1班', grade_level: 12, class_number: 1, academic_year: PREV_YEAR, max_students: 12 },
 ])
 
 // ============================================================================
-// 学生（22 人：男 15 / 女 7，符合年龄段的常见姓名）
-// 诊断集中于 学习障碍/言语障碍/多重障碍，补充 孤独症谱系障碍/智力障碍
+// 学生（42 人：男 23 / 女 19，幼儿园~初三 12 班每班 3-4 人）
+// 生日按 2026-2027 学年 8/31 资格日口径反推（getExpectedGradeLevel: 应读年级 = 4 + (年龄-6)），
+// 常规学生 gap=0 或 -1（留 1 级属特教常态不提示）；
+// 3 个刻意演示案例（2026-09-19 拍板的月龄-年级核对软提示）：
+//   10030 跳级 gap=+2（六年级在读，年龄应读四年级）
+//   10033 跳级 gap=+1（初一在读，年龄应读六年级）
+//   10039 留级 gap=-3（初三在读，年龄应读六年级，特教延迟入学）
+// 诊断分布：学习障碍10 / 言语障碍8 / 发育迟缓7 / 孤独症谱系7 / 智力障碍6 / 多重障碍4
+// 头像按学段+性别用 6 张预置头像（src/utils/avatar-presets.ts 路径约定）
 // ============================================================================
 
-export const STUDENTS = Object.freeze([
-  { id: 10001, name: '陈昊宇', gender: '男', birthday: '2020-09-15', student_no: 'ST10001', disorder: '言语障碍', class_id: 20001 },
-  { id: 10002, name: '李欣妍', gender: '女', birthday: '2021-03-22', student_no: 'ST10002', disorder: '多重障碍', class_id: 20001 },
-  { id: 10003, name: '王梓豪', gender: '男', birthday: '2020-11-08', student_no: 'ST10003', disorder: '孤独症谱系障碍', class_id: 20001 },
-  { id: 10004, name: '张子睿', gender: '男', birthday: '2019-07-12', student_no: 'ST10004', disorder: '学习障碍', class_id: 20002 },
-  { id: 10005, name: '刘宇泽', gender: '男', birthday: '2019-10-30', student_no: 'ST10005', disorder: '学习障碍', class_id: 20002 },
-  { id: 10006, name: '赵雨桐', gender: '女', birthday: '2019-12-05', student_no: 'ST10006', disorder: '言语障碍', class_id: 20002 },
-  { id: 10007, name: '孙浩轩', gender: '男', birthday: '2018-06-18', student_no: 'ST10007', disorder: '学习障碍', class_id: 20003 },
-  { id: 10008, name: '周子墨', gender: '男', birthday: '2018-09-25', student_no: 'ST10008', disorder: '多重障碍', class_id: 20003 },
-  { id: 10009, name: '吴语彤', gender: '女', birthday: '2018-04-14', student_no: 'ST10009', disorder: '言语障碍', class_id: 20003 },
-  { id: 10010, name: '郑博文', gender: '男', birthday: '2017-05-30', student_no: 'ST10010', disorder: '学习障碍', class_id: 20004 },
-  { id: 10011, name: '冯俊熙', gender: '男', birthday: '2017-08-21', student_no: 'ST10011', disorder: '言语障碍', class_id: 20004 },
-  { id: 10012, name: '蒋诗涵', gender: '女', birthday: '2017-11-09', student_no: 'ST10012', disorder: '智力障碍', class_id: 20004 },
-  { id: 10013, name: '沈嘉豪', gender: '男', birthday: '2013-05-16', student_no: 'ST10013', disorder: '学习障碍', class_id: 20005 },
-  { id: 10014, name: '韩天翊', gender: '男', birthday: '2013-09-02', student_no: 'ST10014', disorder: '学习障碍', class_id: 20005 },
-  { id: 10015, name: '曹梦洁', gender: '女', birthday: '2014-01-27', student_no: 'ST10015', disorder: '言语障碍', class_id: 20005 },
-  { id: 10016, name: '许婉宁', gender: '女', birthday: '2013-12-19', student_no: 'ST10016', disorder: '孤独症谱系障碍', class_id: 20005 },
-  { id: 10017, name: '丁宇航', gender: '男', birthday: '2012-04-11', student_no: 'ST10017', disorder: '学习障碍', class_id: 20006 },
-  { id: 10018, name: '程俊杰', gender: '男', birthday: '2012-07-23', student_no: 'ST10018', disorder: '多重障碍', class_id: 20006 },
-  { id: 10019, name: '罗一鸣', gender: '男', birthday: '2012-10-15', student_no: 'ST10019', disorder: '多重障碍', class_id: 20006 },
-  { id: 10020, name: '潘志强', gender: '男', birthday: '2011-03-08', student_no: 'ST10020', disorder: '多重障碍', class_id: 20007 },
-  { id: 10021, name: '董思颖', gender: '女', birthday: '2011-06-19', student_no: 'ST10021', disorder: '言语障碍', class_id: 20007 },
-  { id: 10022, name: '梁文昊', gender: '男', birthday: '2011-09-27', student_no: 'ST10022', disorder: '智力障碍', class_id: 20007 },
+const AVATAR = Object.freeze({
+  kindergarten: { male: 'images/user-avatars/Kindergarten_Male_Student.png', female: 'images/user-avatars/Kindergarten_Female_Student.png' },
+  elementary: { male: 'images/user-avatars/Elementary_Male_Student.png', female: 'images/user-avatars/Elementary_Female_Student.png' },
+  middleSchool: { male: 'images/user-avatars/MiddleSchool_Male_Student.png', female: 'images/user-avatars/MiddleSchool_Female_Student.png' },
+})
+
+function studentAvatar(classId, gender) {
+  if (classId <= 20003) return AVATAR.kindergarten[gender === '男' ? 'male' : 'female']
+  if (classId <= 20009) return AVATAR.elementary[gender === '男' ? 'male' : 'female']
+  return AVATAR.middleSchool[gender === '男' ? 'male' : 'female']
+}
+
+const STUDENT_ROWS = Object.freeze([
+  // 小班 20001（3-4 岁）
+  { id: 10001, name: '陈沐阳', gender: '男', birthday: '2022-11-18', disorder: '发育迟缓', class_id: 20001 },
+  { id: 10002, name: '林若汐', gender: '女', birthday: '2023-03-05', disorder: '言语障碍', class_id: 20001 },
+  { id: 10003, name: '徐一诺', gender: '男', birthday: '2022-09-26', disorder: '发育迟缓', class_id: 20001 },
+  // 中班 20002（4-5 岁）
+  { id: 10004, name: '苏艺涵', gender: '女', birthday: '2022-01-14', disorder: '言语障碍', class_id: 20002 },
+  { id: 10005, name: '何宇宸', gender: '男', birthday: '2021-10-22', disorder: '孤独症谱系障碍', class_id: 20002 },
+  { id: 10006, name: '高沐辰', gender: '男', birthday: '2022-06-09', disorder: '发育迟缓', class_id: 20002 },
+  // 大班 20003（5-6 岁）
+  { id: 10007, name: '郭芊羽', gender: '女', birthday: '2021-02-17', disorder: '发育迟缓', class_id: 20003 },
+  { id: 10008, name: '唐奕辰', gender: '男', birthday: '2020-12-03', disorder: '孤独症谱系障碍', class_id: 20003 },
+  { id: 10009, name: '邓芯语', gender: '女', birthday: '2020-10-28', disorder: '言语障碍', class_id: 20003 },
+  { id: 10010, name: '冯浩然', gender: '男', birthday: '2021-05-16', disorder: '智力障碍', class_id: 20003 },
+  // 一年级 20004（6-7 岁）
+  { id: 10011, name: '曹一诺', gender: '男', birthday: '2020-03-11', disorder: '学习障碍', class_id: 20004 },
+  { id: 10012, name: '潘语桐', gender: '女', birthday: '2019-11-27', disorder: '言语障碍', class_id: 20004 },
+  { id: 10013, name: '袁梓睿', gender: '男', birthday: '2020-06-30', disorder: '孤独症谱系障碍', class_id: 20004 },
+  { id: 10014, name: '蔡欣玥', gender: '女', birthday: '2019-09-14', disorder: '发育迟缓', class_id: 20004 },
+  // 二年级 20005（7-8 岁）
+  { id: 10015, name: '蒋浩宇', gender: '男', birthday: '2019-01-08', disorder: '学习障碍', class_id: 20005 },
+  { id: 10016, name: '沈依诺', gender: '女', birthday: '2018-12-19', disorder: '言语障碍', class_id: 20005 },
+  { id: 10017, name: '韩梓萱', gender: '女', birthday: '2019-04-25', disorder: '发育迟缓', class_id: 20005 },
+  { id: 10018, name: '杨子墨', gender: '男', birthday: '2018-10-06', disorder: '智力障碍', class_id: 20005 },
+  // 三年级 20006（8-9 岁）
+  { id: 10019, name: '赵雨泽', gender: '男', birthday: '2018-02-13', disorder: '学习障碍', class_id: 20006 },
+  { id: 10020, name: '孙梦瑶', gender: '女', birthday: '2017-12-01', disorder: '言语障碍', class_id: 20006 },
+  { id: 10021, name: '吴欣怡', gender: '女', birthday: '2018-05-21', disorder: '孤独症谱系障碍', class_id: 20006 },
+  // 四年级 20007（9-10 岁）
+  { id: 10022, name: '郑宇轩', gender: '男', birthday: '2017-03-30', disorder: '学习障碍', class_id: 20007 },
+  { id: 10023, name: '王若曦', gender: '女', birthday: '2016-11-15', disorder: '孤独症谱系障碍', class_id: 20007 },
+  { id: 10024, name: '李明轩', gender: '男', birthday: '2017-07-04', disorder: '智力障碍', class_id: 20007 },
+  // 五年级 20008（10-11 岁）
+  { id: 10025, name: '张子涵', gender: '男', birthday: '2016-04-18', disorder: '学习障碍', class_id: 20008 },
+  { id: 10026, name: '刘诗琪', gender: '女', birthday: '2015-10-09', disorder: '发育迟缓', class_id: 20008 },
+  { id: 10027, name: '陈梓豪', gender: '男', birthday: '2016-01-27', disorder: '多重障碍', class_id: 20008 },
+  // 六年级 20009（11-12 岁；10030 = 跳级演示案例）
+  { id: 10028, name: '黄雅雯', gender: '女', birthday: '2015-03-22', disorder: '学习障碍', class_id: 20009 },
+  { id: 10029, name: '周俊杰', gender: '男', birthday: '2014-12-08', disorder: '智力障碍', class_id: 20009 },
+  { id: 10030, name: '吴思彤', gender: '女', birthday: '2016-12-05', disorder: '学习障碍', class_id: 20009 },
+  { id: 10031, name: '徐浩轩', gender: '男', birthday: '2015-06-14', disorder: '言语障碍', class_id: 20009 },
+  // 初一 20010（12-13 岁；10033 = 跳级演示案例）
+  { id: 10032, name: '朱子豪', gender: '男', birthday: '2014-05-19', disorder: '多重障碍', class_id: 20010 },
+  { id: 10033, name: '胡欣妍', gender: '女', birthday: '2014-10-21', disorder: '学习障碍', class_id: 20010 },
+  { id: 10034, name: '高一鸣', gender: '男', birthday: '2013-12-30', disorder: '孤独症谱系障碍', class_id: 20010 },
+  { id: 10035, name: '林诗涵', gender: '女', birthday: '2014-02-16', disorder: '学习障碍', class_id: 20010 },
+  // 初二 20011（13-14 岁）
+  { id: 10036, name: '何雨桐', gender: '女', birthday: '2013-06-07', disorder: '言语障碍', class_id: 20011 },
+  { id: 10037, name: '罗天佑', gender: '男', birthday: '2012-11-24', disorder: '多重障碍', class_id: 20011 },
+  { id: 10038, name: '郑文博', gender: '男', birthday: '2013-03-13', disorder: '智力障碍', class_id: 20011 },
+  // 初三 20012（14-15 岁；10039 = 留级演示案例，大龄延迟入学）
+  { id: 10039, name: '马志强', gender: '男', birthday: '2014-11-09', disorder: '多重障碍', class_id: 20012 },
+  { id: 10040, name: '谢雨欣', gender: '女', birthday: '2012-02-05', disorder: '孤独症谱系障碍', class_id: 20012 },
+  { id: 10041, name: '宋佳琪', gender: '女', birthday: '2011-10-17', disorder: '智力障碍', class_id: 20012 },
+  { id: 10042, name: '唐一帆', gender: '男', birthday: '2012-05-29', disorder: '学习障碍', class_id: 20012 },
+])
+
+export const STUDENTS = Object.freeze(
+  STUDENT_ROWS.map((s) => ({ ...s, student_no: `ST${s.id}`, avatar_path: studentAvatar(s.class_id, s.gender) })),
+)
+
+// ============================================================================
+// 跨学年班级历史（student_class_history 的 is_current=0 行）
+// 语义：2025-2026 学年读历史班（20013-20019），2026 年 7 月升级离班，9 月入当前班。
+// 其中 10036 额外演示「学年中途调班」：历史行 leave_reason='adjust'
+// （同学年调班在业务层是 UPDATE 现有行，库中只留终态班级，用 leave_reason 表达调整痕迹）。
+// 未列出的学生只有当前学年一行（enrollment 2026-09-01）。
+// ============================================================================
+
+export const CLASS_HISTORY_UPGRADES = Object.freeze([
+  // { studentId, prevClassId }：prevClassId = 2025-2026 学年所在历史班
+  { studentId: 10011, prevClassId: 20013 }, // 大班历史 → 一年级
+  { studentId: 10012, prevClassId: 20013 },
+  { studentId: 10014, prevClassId: 20013 },
+  { studentId: 10015, prevClassId: 20014 }, // 一年级历史 → 二年级
+  { studentId: 10016, prevClassId: 20014 },
+  { studentId: 10017, prevClassId: 20014 },
+  { studentId: 10019, prevClassId: 20015 }, // 二年级历史 → 三年级
+  { studentId: 10020, prevClassId: 20015 },
+  { studentId: 10021, prevClassId: 20015 },
+  { studentId: 10022, prevClassId: 20016 }, // 三年级历史 → 四年级
+  { studentId: 10025, prevClassId: 20016 },
+  { studentId: 10028, prevClassId: 20016 },
+  { studentId: 10032, prevClassId: 20017 }, // 初一历史 → 初二
+  { studentId: 10033, prevClassId: 20017 },
+  { studentId: 10034, prevClassId: 20017 },
+  { studentId: 10036, prevClassId: 20018, leaveReason: 'adjust' }, // 初二历史（学年中调班后升学）
+  { studentId: 10037, prevClassId: 20018 },
+  { studentId: 10039, prevClassId: 20019 }, // 初三历史 → 毕业留校复读（初三无更高班，语义=升级失败复读）
+  { studentId: 10040, prevClassId: 20019 },
+  { studentId: 10041, prevClassId: 20019 },
 ])
 
 // ============================================================================
@@ -211,6 +336,9 @@ export const DIAGNOSIS_PROFILES = Object.freeze({
     sdq: { emotional: 4, conduct: 2, hyperactivity: 3, peer: 10, prosocial: -4 },
     cbcl: { internalizing: 10, externalizing: 3 },
     brief: { inhibit: 6, shift: 12, emotional_control: 10, working_memory: 8, plan_organize: 9, monitor: 8, task_monitor: 8, organize_materials: 9, initiate: 8 },
+    // ABC/ATEC（孤独症族量表：诊断核心呼应，分数为维度加分偏移）
+    abc: { sensory: 10, relating: 14, body_object: 9, language: 12, social_self_help: 11 },
+    atec: { speech: 22, sociability: 24, sensory: 16, health: 10 },
   },
   智力障碍: {
     sm: -5,
@@ -227,6 +355,24 @@ export const DIAGNOSIS_PROFILES = Object.freeze({
     cbcl: { internalizing: 8, externalizing: 5 },
     brief: { inhibit: 8, shift: 10, emotional_control: 8, working_memory: 14, plan_organize: 13, monitor: 8, task_monitor: 10, organize_materials: 9, initiate: 12 },
   },
+  发育迟缓: {
+    sm: -3,
+    weefim: -18,
+    weefimCognitive: -10,
+    csirs: { learning: -8, executive: -9, vestibular: -6, tactile: -5, proprioception: -7 },
+    cnbsr: { gm: -8, fm: -10, ad: -12, la: -14, sb: -10 },
+    fmda: { hand_grasp: 0.1, finger_dexterity: 0.14, bilateral_coordination: 0.12, vmi: 0.14, pre_writing: 0.16, self_care: 0.14 },
+    crt: -10,
+    srs2: { awareness: 5, cognition: 6, communication: 8, motivation: 5, repetitive: 4 },
+    conners: { conduct: 2, learning: 6, psychosomatic: 2, impulsivity_hyperactivity: 4, anxiety: 3, hyperactivity_index: 3 },
+    connersTrs: { conduct: 2, hyperactivity: 3, inattention_passivity: 6, hyperactivity_index: 3 },
+    sdq: { emotional: 2, conduct: 1, hyperactivity: 3, peer: 4, prosocial: -1 },
+    cbcl: { internalizing: 5, externalizing: 3 },
+    brief: { inhibit: 4, shift: 4, emotional_control: 5, working_memory: 7, plan_organize: 6, monitor: 4, task_monitor: 5, organize_materials: 4, initiate: 6 },
+    // ABC/ATEC/CPEP-3（孤独症族量表，发育迟缓轻度呼应）
+    abc: { sensory: 4, relating: 8, body_object: 5, language: 9, social_self_help: 8 },
+    atec: { speech: 14, sociability: 16, sensory: 10, health: 8 },
+  },
 })
 
 // ============================================================================
@@ -240,11 +386,17 @@ export const SCALE_ORDER = Object.freeze({
   middle: ['weefim', 'crt', 'srs2'],
 })
 
+/** 年级 → 学段（grade_level 1-12 全覆盖；1-3 幼儿园、4-9 小学、10-12 初中） */
 export const PRIMARY_GRADE = Object.freeze({
+  1: 'preschool',
+  2: 'preschool',
   3: 'preschool',
   4: 'primary',
   5: 'primary',
   6: 'primary',
+  7: 'primary',
+  8: 'primary',
+  9: 'primary',
   10: 'middle',
   11: 'middle',
   12: 'middle',
@@ -254,7 +406,9 @@ export const PRIMARY_GRADE = Object.freeze({
 const PRIMARY_EXTRA = {
   学习障碍: ['crt'],
   言语障碍: ['srs2'],
+  发育迟缓: ['cnbsr2016'],
   多重障碍: ['crt'],
+  孤独症谱系障碍: ['abc'],
   智力障碍: ['crt'],
 }
 
@@ -262,18 +416,19 @@ const PRIMARY_EXTRA = {
 const MIDDLE_EXTRA = {
   学习障碍: ['conners-psq', 'conners-trs', 'brief'],
   言语障碍: ['sdq', 'cbcl'],
+  发育迟缓: ['sdq', 'srs2'],
   多重障碍: ['cbcl', 'sdq'],
-  孤独症谱系障碍: ['cbcl', 'sdq'],
+  孤独症谱系障碍: ['abc', 'atec', 'cbcl', 'sdq'],
   智力障碍: ['brief', 'sdq'],
 }
 
 /**
  * 计算某学生的评估计划：
  * { scale, times: 1|2 }[]，times=2 表示做前测+后测（体现训练进步）
- * 规则（每生 2-4 个量表，总量表数不超 4）：
- * - 大班：cnbsr2016（必做且纵向）+ fine_motor + sm + weefim(50%)
- * - 小学：sm + weefim + csirs + 按诊断补充 1 个（crt/srs2）
- * - 初中：weefim + crt + 按诊断 srs2/sm + 补充 1 个（cbcl/sdq/conners）
+ * 规则（每生 2-5 个量表，总量表数不超 5）：
+ * - 幼儿园(1-3)：cnbsr2016（必做且纵向）+ fine_motor + sm + weefim(50%)；发育迟缓/孤独症加 abc
+ * - 小学(4-9)：sm + weefim + csirs + 按诊断补充（crt/srs2/abc/cnbsr 低龄）
+ * - 初中(10-12)：weefim + crt + 按诊断 srs2/sm + 补充（abc/atec/cbcl/sdq/conners）
  */
 export function buildAssessmentPlan(student, rng) {
   const ageMonths = student.ageMonths
@@ -286,13 +441,36 @@ export function buildAssessmentPlan(student, rng) {
     scales.push({ scale: 'fine_motor', times: rng.rand() < 0.4 ? 2 : 1 })
     scales.push({ scale: 'sm', times: rng.rand() < 0.4 ? 2 : 1 })
     if (rng.rand() < 0.5) scales.push({ scale: 'weefim', times: 1 })
+    // 孤独症/发育迟缓幼儿补 ABC 初筛（3 岁以上）
+    if (['孤独症谱系障碍', '发育迟缓'].includes(disorder) && ageMonths >= 36 && scales.length < 5) {
+      scales.push({ scale: 'abc', times: rng.rand() < 0.5 ? 2 : 1 })
+    }
+    // 孤独症幼儿补 CPEP-3（2-7 岁常模窗）
+    if (disorder === '孤独症谱系障碍' && scales.length < 5) {
+      scales.push({ scale: 'cpep_3', times: 2 })
+    }
+    // 运动发育落后幼儿补 TGMD-3（3-10 岁）
+    if (['发育迟缓', '多重障碍', '智力障碍'].includes(disorder) && ageMonths >= 36 && scales.length < 5) {
+      scales.push({ scale: 'tgmd_3', times: rng.rand() < 0.5 ? 2 : 1 })
+    }
   } else if (stage === 'primary') {
     scales.push({ scale: 'sm', times: rng.rand() < 0.5 ? 2 : 1 })
     scales.push({ scale: 'weefim', times: rng.rand() < 0.4 ? 2 : 1 })
     scales.push({ scale: 'csirs', times: rng.rand() < 0.5 ? 2 : 1 })
-    const extra = PRIMARY_EXTRA[disorder]?.[0]
-    if (extra && isScaleAgeOk(extra, ageMonths) && rng.rand() < 0.6) {
-      scales.push({ scale: extra, times: rng.rand() < 0.4 ? 2 : 1 })
+    const extras = PRIMARY_EXTRA[disorder] || []
+    for (const extra of extras) {
+      if (scales.length >= 5) break
+      if (!isScaleAgeOk(extra, ageMonths)) continue
+      if (scales.some((s) => s.scale === extra)) continue
+      scales.push({ scale: extra, times: rng.rand() < 0.5 ? 2 : 1 })
+    }
+    // 低龄小学生补 TGMD-3（3-10 岁，运动协调）
+    if (['发育迟缓', '多重障碍', '智力障碍'].includes(disorder) && ageMonths <= 120 && scales.length < 5) {
+      scales.push({ scale: 'tgmd_3', times: rng.rand() < 0.5 ? 2 : 1 })
+    }
+    // 运动障碍向学生补 GMFM-88（粗大运动，5 月-16 岁）
+    if (['多重障碍', '智力障碍'].includes(disorder) && scales.length < 5) {
+      scales.push({ scale: 'gmfm_88', times: rng.rand() < 0.5 ? 2 : 1 })
     }
   } else {
     scales.push({ scale: 'weefim', times: rng.rand() < 0.45 ? 2 : 1 })
@@ -303,6 +481,10 @@ export function buildAssessmentPlan(student, rng) {
     }
     if (isScaleAgeOk('sm', ageMonths) && rng.rand() < 0.35) {
       scales.push({ scale: 'sm', times: 1 })
+    }
+    // 初中运动障碍学生补 GMFM-88
+    if (['多重障碍', '智力障碍'].includes(disorder) && scales.length < 5) {
+      scales.push({ scale: 'gmfm_88', times: rng.rand() < 0.5 ? 2 : 1 })
     }
     const extras = MIDDLE_EXTRA[disorder] || []
     for (const code of extras) {
@@ -336,9 +518,12 @@ const SCALE_AGE_MAX = Object.freeze({
   srs2: 216, // 6-18岁
   'conners-psq': 204, // 3-17岁
   'conners-trs': 204, // 3-17岁
-  sdq: 204, // 4-17岁
+  sdq: 192, // 3-16岁（catalog 3-16）
   cbcl: 192, // 4-16岁
   brief: 216, // 2-18岁
+  abc: 240, // 3岁以上（演示数据保守上限 20 岁）
+  atec: 240, // 2岁以上
+  cpep_3: 90, // 2-7岁（常模覆盖 2-7.5 岁；超龄拒测）
 })
 
 const SCALE_AGE_MIN = Object.freeze({
@@ -351,9 +536,12 @@ const SCALE_AGE_MIN = Object.freeze({
   srs2: 72,
   'conners-psq': 36,
   'conners-trs': 36,
-  sdq: 48,
+  sdq: 36,
   cbcl: 48,
   brief: 24,
+  abc: 36, // 3 岁以上
+  atec: 24, // 2 岁以上
+  cpep_3: 24, // 2-7 岁
 })
 
 export function isScaleAgeOk(scale, ageMonths) {
@@ -383,7 +571,12 @@ export function addDays(date, days) {
   return copy
 }
 
-/** 评估时间：前测 2026-03-01~04-30；单次评估 2026-03-01~07-20；后测 2026-07-15~08-05 */
+/**
+ * 评估时间（2026-2027 学年时间轴）：
+ * - 纵向前测：2026-03-01~04-30（上学期下段，训练前基线）
+ * - 纵向后测：2026-07-15~08-05（上学期末，训练后复评 → 趋势页进步曲线）
+ * - 单次评估：2026-03-01~09-12（含 9 月开学新评估，看板「本周评估」有数据）
+ */
 export function pickAssessmentDate(rng, { longitudinal, isFollowUp }) {
   const start = longitudinal
     ? isFollowUp
@@ -394,14 +587,17 @@ export function pickAssessmentDate(rng, { longitudinal, isFollowUp }) {
     ? isFollowUp
       ? isoToDate('2026-08-05')
       : isoToDate('2026-04-30')
-    : isoToDate('2026-07-20')
+    : isoToDate('2026-09-12')
   const span = Math.floor((end - start) / 86400000)
   return addDays(start, rng.int(0, Math.max(0, span)))
 }
 
+/** 训练时间：上学期训练 2026-04-15~07-30 + 本学期开学 2026-09-01~09-14（看板「今天」有数据） */
 export function pickTrainingDate(rng) {
-  const start = isoToDate('2026-04-15')
-  const end = isoToDate('2026-07-30')
+  // 70% 落上学期训练期，30% 落本学期开学两周（保证 9 月新鲜记录）
+  const inSeptember = rng.rand() < 0.3
+  const start = inSeptember ? isoToDate('2026-09-01') : isoToDate('2026-04-15')
+  const end = inSeptember ? isoToDate('2026-09-14') : isoToDate('2026-07-30')
   const span = Math.floor((end - start) / 86400000)
   const date = addDays(start, rng.int(0, span))
   return {
@@ -416,10 +612,10 @@ export function pickTrainingDate(rng) {
 // 每个生成器返回 { table, row }[]（主表 + 可能的从表），row 的 id 由调用方分配
 // ============================================================================
 
-/** 根据标准分求 S-M 等级（SMDriver.getLevelCode 规则） */
+/** 根据标准分求 S-M 等级（SMDriver.getLevelCode 规则：src/strategies/assessment/SMDriver.ts:431-440） */
 export function smLevelFromSq(sq) {
   if (sq <= 5) return '极重度'
-  if (sq === 6) return '极重度'
+  if (sq === 6) return '重度'
   if (sq === 7) return '中度'
   if (sq === 8) return '轻度'
   if (sq === 9) return '边缘'
@@ -1184,6 +1380,386 @@ export function makeBriefAssessment(student, rng, { date, improvement }) {
 }
 
 // ============================================================================
+// ABC 孤独症行为评定量表（57 题加权 0-158；getABCLevel 判级）
+// ============================================================================
+
+const ABC_DIMENSIONS = Object.freeze([
+  { code: 'sensory', name: '感觉' },
+  { code: 'relating', name: '交往' },
+  { code: 'body_object', name: '躯体运动' },
+  { code: 'language', name: '语言' },
+  { code: 'social_self_help', name: '生活自理' },
+])
+
+export function abcLevelFromTotal(total) {
+  if (total < 49) return 'normal'
+  if (total < 62) return 'borderline'
+  if (total < 80) return 'mild'
+  if (total < 100) return 'moderate'
+  return 'severe'
+}
+
+export function makeAbcAssessment(student, rng, { date, improvement }) {
+  const profile = DIAGNOSIS_PROFILES[student.disorder] || {}
+  const dimOffsets = profile.abc || {}
+  const dimensionScores = {}
+  let totalScore = 0
+  for (const dim of ABC_DIMENSIONS) {
+    const offset = (dimOffsets[dim.code] || 0) * improvement
+    const raw = clamp(Math.round(6 + offset + rng.float(-2, 2)), 0, 38)
+    dimensionScores[dim.code] = { name: dim.name, rawScore: raw }
+    totalScore += raw
+  }
+  const level = abcLevelFromTotal(totalScore)
+  const rawAnswers = {}
+  for (let q = 1; q <= 57; q += 1) {
+    // 加权题：70% 不符合(0)，其余按维度权重 1-4
+    rawAnswers[`abc_${q}`] = rng.rand() < 0.7 ? 0 : rng.int(1, 4)
+  }
+  return {
+    table: 'abc_assess',
+    row: {
+      student_id: student.id,
+      age_months: student.ageMonths,
+      raw_answers: JSON.stringify(rawAnswers),
+      dimension_scores: JSON.stringify(dimensionScores),
+      total_score: totalScore,
+      level,
+      start_time: `${toIso(date)} ${String(rng.int(8, 17)).padStart(2, '0')}:${String(rng.int(0, 59)).padStart(2, '0')}:00`,
+      end_time: `${toIso(date)} ${String(rng.int(9, 18)).padStart(2, '0')}:${String(rng.int(0, 59)).padStart(2, '0')}:00`,
+    },
+  }
+}
+
+// ============================================================================
+// ATEC 孤独症治疗评估量表（77 题 0-179；getATECLevel 判级；分数越低越好）
+// ============================================================================
+
+const ATEC_SUBSCALES = Object.freeze([
+  { code: 'speech', name: '语言/沟通', max: 28 },
+  { code: 'sociability', name: '社交能力', max: 40 },
+  { code: 'sensory', name: '感知/认知', max: 42 },
+  { code: 'health', name: '健康/行为', max: 75 },
+])
+
+export function atecLevelFromTotal(total) {
+  if (total < 40) return 'minimal'
+  if (total < 70) return 'mild'
+  if (total < 120) return 'moderate'
+  return 'severe'
+}
+
+export function makeAtecAssessment(student, rng, { date, improvement }) {
+  const profile = DIAGNOSIS_PROFILES[student.disorder] || {}
+  const dimOffsets = profile.atec || {}
+  const subscaleScores = {}
+  let totalScore = 0
+  for (const sub of ATEC_SUBSCALES) {
+    const offset = (dimOffsets[sub.code] || 0) * improvement
+    const raw = clamp(Math.round(8 + offset + (improvement < 1 ? -rng.int(2, 6) : rng.float(-2, 2))), 0, sub.max)
+    subscaleScores[sub.code] = raw
+    totalScore += raw
+  }
+  const level = atecLevelFromTotal(totalScore)
+  const rawAnswers = {}
+  for (let q = 1; q <= 77; q += 1) {
+    rawAnswers[`atec_${q}`] = rng.rand() < 0.6 ? 0 : rng.int(1, 3)
+  }
+  return {
+    table: 'atec_assess',
+    row: {
+      student_id: student.id,
+      age_months: student.ageMonths,
+      raw_answers: JSON.stringify(rawAnswers),
+      subscale_scores: JSON.stringify(subscaleScores),
+      total_score: totalScore,
+      level,
+      start_time: `${toIso(date)} ${String(rng.int(8, 17)).padStart(2, '0')}:${String(rng.int(0, 59)).padStart(2, '0')}:00`,
+      end_time: `${toIso(date)} ${String(rng.int(9, 18)).padStart(2, '0')}:${String(rng.int(0, 59)).padStart(2, '0')}:00`,
+    },
+  }
+}
+
+// ============================================================================
+// CPEP-3（PEP-3 心理教育量表）：91 题静态确定性判分 → 旧记录形态（无 report_snapshot，
+// 报告页 normalizeLegacyDomainResult 只读重算，与 capture 脚本 9117 样例同构）
+// ============================================================================
+
+const CPEP3_DOMAINS = Object.freeze([
+  { code: 'A', name: '模仿', kind: 'developmental', maxPass: 10 },
+  { code: 'B', name: '知觉', kind: 'developmental', maxPass: 11 },
+  { code: 'C', name: '精细动作', kind: 'developmental', maxPass: 10 },
+  { code: 'D', name: '大动作', kind: 'developmental', maxPass: 11 },
+  { code: 'E', name: '手眼协调', kind: 'developmental', maxPass: 14 },
+  { code: 'F', name: '认知语言', kind: 'developmental', maxPass: 20 },
+  { code: 'G', name: '认知表达', kind: 'developmental', maxPass: 19 },
+  { code: 'H', name: '情感表达', kind: 'behavioral', max: 6 },
+  { code: 'I', name: '社会交往', kind: 'behavioral', max: 7 },
+  { code: 'J', name: '感觉模式', kind: 'behavioral', max: 6 },
+  { code: 'K', name: '语言模式', kind: 'behavioral', max: 14 },
+  { code: 'L', name: '行为模式', kind: 'behavioral', max: 11 },
+])
+
+/**
+ * 按画像强度给发展能区 P/E/F 分布：offset 越负（能力越弱）→ P 比例越低。
+ * 展示层用 passCount/emergingCount/severityScore，与快照无关 → 无需 import 真实常模。
+ */
+export function makeCpep3Assessment(student, rng, { date, improvement }) {
+  const profile = DIAGNOSIS_PROFILES[student.disorder] || {}
+  const weakFactor = clamp(0.22 + ((profile.crt || 0) * -0.006), 0.15, 0.55) // crt 负偏移越大 → 越弱
+  const domainResults = []
+  const details = []
+  let questionSeq = 0
+  for (const domain of CPEP3_DOMAINS) {
+    const count = domain.kind === 'developmental' ? domain.maxPass : domain.max
+    let passCount = 0
+    let emergingCount = 0
+    let severityScore = 0
+    for (let i = 1; i <= count; i += 1) {
+      questionSeq += 1
+      const roll = rng.rand()
+      if (domain.kind === 'developmental') {
+        const passRate = clamp(1 - weakFactor - rng.float(0, 0.15), 0.2, 0.9)
+        let level
+        if (roll < passRate) { level = 'P'; passCount += 1 }
+        else if (roll < passRate + 0.18) { level = 'E'; emergingCount += 1 }
+        else { level = 'F' }
+        const score = level === 'P' ? 2 : level === 'E' ? 1 : 0
+        details.push({ question_id: questionSeq, code_no: `${domain.code}${i}`, dimension: domain.code, item_type: 'administered', level, score })
+      } else {
+        const severeRate = clamp(weakFactor - 0.05 + rng.float(0, 0.2), 0.05, 0.6)
+        let level
+        if (roll < 1 - severeRate - 0.2) { level = 'A'; }
+        else if (roll < 1 - 0.2) { level = 'M'; severityScore += 1 }
+        else { level = 'S'; severityScore += 2 }
+        const score = level === 'A' ? 0 : level === 'M' ? 1 : 2
+        details.push({ question_id: questionSeq, code_no: `${domain.code}${i}`, dimension: domain.code, item_type: 'rated', level, score })
+      }
+    }
+    domainResults.push({
+      domainCode: domain.code,
+      domainName: domain.name,
+      passCount,
+      emergingCount,
+      severityScore,
+      itemCount: count,
+    })
+  }
+  const totalPassCount = details.filter((d) => d.item_type === 'administered' && d.level === 'P').length
+  const totalEmergingCount = details.filter((d) => d.item_type === 'administered' && d.level === 'E').length
+  const totalMentalAge = clamp(Math.round(student.ageMonths * (0.55 + rng.float(-0.05, 0.1))), 12, 90)
+  return {
+    table: 'cpep3_assess',
+    row: {
+      student_id: student.id,
+      age_months: student.ageMonths,
+      ca_year: Math.floor(student.ageMonths / 12),
+      ca_month: student.ageMonths % 12,
+      ca_day: 0,
+      ca_months_decimal: Number(student.ageMonths.toFixed(1)),
+      total_pass_count: totalPassCount,
+      total_emerging_count: totalEmergingCount,
+      total_mental_age: totalMentalAge,
+      total_month_range: `${totalMentalAge - 2}-${totalMentalAge + 2}`,
+      domain_results: JSON.stringify(domainResults),
+      start_time: `${toIso(date)} ${String(rng.int(8, 17)).padStart(2, '0')}:${String(rng.int(0, 59)).padStart(2, '0')}:00`,
+      end_time: `${toIso(date)} ${String(rng.int(9, 18)).padStart(2, '0')}:${String(rng.int(0, 59)).padStart(2, '0')}:00`,
+    },
+    details,
+  }
+}
+
+// ============================================================================
+// GMFM-88 粗大运动（88 题 264 分；5 能区 percentage + 描述性 level）
+// ============================================================================
+
+const GMFM_DOMAINS = Object.freeze([
+  { code: 'A', name: '卧位与翻身', max: 51, itemCount: 17 },
+  { code: 'B', name: '坐位', max: 60, itemCount: 20 },
+  { code: 'C', name: '爬与跪', max: 42, itemCount: 14 },
+  { code: 'D', name: '站立', max: 39, itemCount: 13 },
+  { code: 'E', name: '走、跑、跳', max: 72, itemCount: 24 },
+])
+
+function gmfmLevelFromPercentage(pct) {
+  if (pct >= 80) return { level: '表现稳定', levelCode: 'stable', severity: 'success' }
+  if (pct >= 65) return { level: '继续巩固', levelCode: 'consolidate', severity: 'success' }
+  if (pct >= 45) return { level: '需要支持', levelCode: 'support', severity: 'warning' }
+  return { level: '显著迟缓', levelCode: 'delayed', severity: 'danger' }
+}
+
+export function makeGmfm88Assessment(student, rng, { date, improvement }) {
+  const profile = DIAGNOSIS_PROFILES[student.disorder] || {}
+  const weakFactor = clamp(0.2 + ((profile.cnbsr?.gm || 0) * -0.008), 0.12, 0.55)
+  const domainResults = GMFM_DOMAINS.map((domain) => {
+    const pct = clamp(100 - weakFactor * 100 + rng.float(-8, 10) + (improvement < 1 ? rng.float(2, 6) : 0), 18, 96)
+    const { level, levelCode, severity } = gmfmLevelFromPercentage(pct)
+    return {
+      code: domain.code,
+      name: domain.name,
+      rawScore: Math.round(domain.max * pct / 100),
+      maxScore: domain.max,
+      percentage: Number(pct.toFixed(1)),
+      ntCount: 0,
+      itemCount: domain.itemCount,
+      level,
+      severity,
+    }
+  })
+  const rawTotal = domainResults.reduce((s, d) => s + d.rawScore, 0)
+  const totalMax = domainResults.reduce((s, d) => s + d.maxScore, 0)
+  const totalScore = Number((rawTotal / totalMax * 100).toFixed(1))
+  const overall = gmfmLevelFromPercentage(totalScore)
+  return {
+    table: 'gmfm_88_assess',
+    row: {
+      student_id: student.id,
+      age_months: student.ageMonths,
+      total_score: totalScore,
+      raw_total_score: rawTotal,
+      total_max_score: totalMax,
+      level: `${overall.level}`,
+      level_code: overall.levelCode,
+      domain_results: JSON.stringify(domainResults),
+      domain_feedback: JSON.stringify(domainResults.map((d) => ({
+        code: d.code,
+        title: `${d.name}（${d.level}）`,
+        label: '结果解读',
+        content: `${d.name}能区得分率 ${d.percentage}%。${d.severity === 'success' ? '整体动作模式稳定，可增加变化情境练习。' : '建议将动作分解练习并逐步增加连续性要求。'}`,
+        advice: d.severity === 'success' ? '保持现有训练节奏并定期复评。' : '每周安排 2-3 次专项动作训练，配合游戏化任务。',
+      }))),
+      iep_targets: JSON.stringify([]),
+      flags: JSON.stringify([]),
+      overall_rule: JSON.stringify({
+        id: 'gmfm-demo',
+        title: '总体运动能力',
+        severity: overall.severity,
+        summary: `粗大运动总体得分率 ${totalScore}%（${overall.level}）。`,
+        content: '建议以动态平衡、重心转移和动作衔接为近期训练重点。',
+        advice: ['每周安排 2-3 次平衡与移动路线练习。'],
+      }),
+      start_time: `${toIso(date)} ${String(rng.int(8, 17)).padStart(2, '0')}:${String(rng.int(0, 59)).padStart(2, '0')}:00`,
+      end_time: `${toIso(date)} ${String(rng.int(9, 18)).padStart(2, '0')}:${String(rng.int(0, 59)).padStart(2, '0')}:00`,
+    },
+  }
+}
+
+// ============================================================================
+// TGMD-3 大肌肉动作发展（13 技能项；位移/球类 2 能区）
+// ============================================================================
+
+const TGMD_SKILLS = Object.freeze([
+  { qid: 1, code: 'A1', dim: 'locomotor', dimName: '位移技能', name: '快速跑', max: 8 },
+  { qid: 2, code: 'A2', dim: 'locomotor', dimName: '位移技能', name: '马步跳', max: 8 },
+  { qid: 3, code: 'A3', dim: 'locomotor', dimName: '位移技能', name: '单脚连续跳', max: 6 },
+  { qid: 4, code: 'A4', dim: 'locomotor', dimName: '位移技能', name: '跨步跳', max: 8 },
+  { qid: 5, code: 'A5', dim: 'locomotor', dimName: '位移技能', name: '立定跳远', max: 8 },
+  { qid: 6, code: 'A6', dim: 'locomotor', dimName: '位移技能', name: '侧滑步', max: 8 },
+  { qid: 7, code: 'B1', dim: 'ball_skills', dimName: '球类技能', name: '双手持棒击定位球', max: 8 },
+  { qid: 8, code: 'B2', dim: 'ball_skills', dimName: '球类技能', name: '单手持拍击反弹球', max: 8 },
+  { qid: 9, code: 'B3', dim: 'ball_skills', dimName: '球类技能', name: '单手原地拍球', max: 8 },
+  { qid: 10, code: 'B4', dim: 'ball_skills', dimName: '球类技能', name: '双手接球', max: 6 },
+  { qid: 11, code: 'B5', dim: 'ball_skills', dimName: '球类技能', name: '踢定位球', max: 8 },
+  { qid: 12, code: 'B6', dim: 'ball_skills', dimName: '球类技能', name: '过肩投球', max: 8 },
+  { qid: 13, code: 'B7', dim: 'ball_skills', dimName: '球类技能', name: '下手抛球', max: 8 },
+])
+
+function tgmdNormLabel(pct) {
+  if (pct >= 80) return { level: 3, label: '平均水平（稳步发展）', descLevel: '发展良好', severity: 'success' }
+  if (pct >= 60) return { level: 2, label: '中度偏差（需关注与支持）', descLevel: '需要支持', severity: 'warning' }
+  return { level: 1, label: '显著偏差（需重点干预）', descLevel: '显著迟缓', severity: 'danger' }
+}
+
+export function makeTgmd3Assessment(student, rng, { date, improvement }) {
+  const profile = DIAGNOSIS_PROFILES[student.disorder] || {}
+  const weakFactor = clamp(0.2 + ((profile.cnbsr?.gm || 0) * -0.008), 0.12, 0.55)
+  const skillResults = TGMD_SKILLS.map((skill) => {
+    const pct = clamp(1 - weakFactor + rng.float(-0.12, 0.12) + (improvement < 1 ? 0.04 : 0), 0.2, 0.98)
+    const score = Math.round(skill.max * pct)
+    return {
+      questionId: skill.qid,
+      itemCode: skill.code,
+      dimensionName: skill.dimName,
+      name: skill.name,
+      score,
+      maxScore: skill.max,
+      percentage: Number((score / skill.max * 100).toFixed(1)),
+      criteria: ['动作模式基本协调', '完成过程保持稳定'],
+    }
+  })
+  const domainResults = ['locomotor', 'ball_skills'].map((code) => {
+    const skills = skillResults.filter((s) => TGMD_SKILLS.find((k) => k.code === s.itemCode).dim === code)
+    const raw = skills.reduce((sum, s) => sum + s.score, 0)
+    const max = skills.reduce((sum, s) => sum + s.maxScore, 0)
+    const pct = Number((raw / max * 100).toFixed(1))
+    const norm = tgmdNormLabel(pct)
+    return {
+      code,
+      name: code === 'locomotor' ? '位移技能' : '球类技能',
+      rawScore: raw,
+      maxScore: max,
+      percentage: pct,
+      normLevel: norm.level,
+      normLabel: norm.label,
+      level: norm.descLevel,
+      severity: norm.severity,
+    }
+  })
+  const totalRaw = domainResults.reduce((s, d) => s + d.rawScore, 0)
+  const totalMax = domainResults.reduce((s, d) => s + d.maxScore, 0)
+  const totalPct = Number((totalRaw / totalMax * 100).toFixed(1))
+  const totalNorm = tgmdNormLabel(totalPct)
+  return {
+    table: 'tgmd_3_assess',
+    row: {
+      student_id: student.id,
+      age_months: student.ageMonths,
+      gender: student.gender === '男' ? 'male' : 'female',
+      locomotor_score: domainResults[0].rawScore,
+      locomotor_percent: domainResults[0].percentage,
+      locomotor_level: domainResults[0].normLevel,
+      ball_skills_score: domainResults[1].rawScore,
+      ball_skills_percent: domainResults[1].percentage,
+      ball_skills_level: domainResults[1].normLevel,
+      total_score: totalRaw,
+      total_percent: totalPct,
+      total_level: totalNorm.level,
+      level: totalNorm.descLevel,
+      level_code: `level_${totalNorm.level}`,
+      domain_results: JSON.stringify(domainResults),
+      domain_feedback: JSON.stringify(domainResults.map((d) => ({
+        code: d.code,
+        title: `${d.name}（${d.level}）`,
+        label: '结果解读',
+        content: `${d.name}得分率 ${d.percentage}%，常模定位：${d.normLabel}。`,
+        advice: d.severity === 'success' ? '继续多样化动作组合练习。' : '从单项分解动作开始，逐步过渡到连续组合动作。',
+      }))),
+      skill_results: JSON.stringify(skillResults),
+      norm_summary: JSON.stringify({
+        locomotorLevel: domainResults[0].normLevel,
+        locomotorLabel: domainResults[0].normLabel,
+        ballLevel: domainResults[1].normLevel,
+        ballLabel: domainResults[1].normLabel,
+        totalLevel: totalNorm.level,
+        totalLabel: totalNorm.label,
+      }),
+      iep_targets: JSON.stringify([]),
+      flags: JSON.stringify([]),
+      overall_rule: JSON.stringify({
+        id: 'tgmd3-demo',
+        title: '总体运动能力',
+        severity: totalNorm.severity,
+        summary: `总体动作发展得分率 ${totalPct}%（${totalNorm.descLevel}）。`,
+        content: '建议在安全、可预测的运动情境中增加重复练习。',
+        advice: ['每周安排 2-3 次球类协调练习。'],
+      }),
+      start_time: `${toIso(date)} ${String(rng.int(8, 17)).padStart(2, '0')}:${String(rng.int(0, 59)).padStart(2, '0')}:00`,
+      end_time: `${toIso(date)} ${String(rng.int(9, 18)).padStart(2, '0')}:${String(rng.int(0, 59)).padStart(2, '0')}:00`,
+    },
+  }
+}
+
+// ============================================================================
 // 生成器注册表
 // ============================================================================
 
@@ -1200,9 +1776,14 @@ export const SCALE_GENERATORS = Object.freeze({
   sdq: makeSdqAssessment,
   cbcl: makeCbclAssessment,
   brief: makeBriefAssessment,
+  abc: makeAbcAssessment,
+  atec: makeAtecAssessment,
+  cpep_3: makeCpep3Assessment,
+  gmfm_88: makeGmfm88Assessment,
+  tgmd_3: makeTgmd3Assessment,
 })
 
-/** report_type → module_code（与 catalog 模块归属一致） */
+/** report_type → module_code（与 catalog accessModulesAnyOf 首选模块一致） */
 export const SCALE_REPORT_MODULE = Object.freeze({
   sm: 'life_skills',
   weefim: 'life_skills',
@@ -1216,6 +1797,11 @@ export const SCALE_REPORT_MODULE = Object.freeze({
   sdq: 'emotional',
   cbcl: 'emotional',
   brief: 'cognitive',
+  abc: 'social',
+  atec: 'social',
+  cpep_3: 'social',
+  gmfm_88: 'sensory',
+  tgmd_3: 'sensory',
 })
 
 export const SCALE_TITLES = Object.freeze({
@@ -1231,6 +1817,11 @@ export const SCALE_TITLES = Object.freeze({
   sdq: 'SDQ长处和困难问卷',
   cbcl: 'CBCL儿童行为量表',
   brief: 'BRIEF执行功能问卷',
+  abc: 'ABC孤独症行为量表',
+  atec: 'ATEC孤独症治疗评估量表',
+  cpep_3: 'PEP-3心理教育量表',
+  gmfm_88: 'GMFM-88粗大运动',
+  tgmd_3: 'TGMD-3大肌肉动作发展',
 })
 
 // ============================================================================
@@ -1318,21 +1909,21 @@ export function buildPlansForStudent(student, rng, assessments) {
   const planTemplate = PLAN_TEMPLATES.find((t) => t.module_code === moduleByScale) || PLAN_TEMPLATES[0]
   const secondTemplate = PLAN_TEMPLATES.find((t) => t.module_code !== moduleByScale && t.module_code !== 'social')
   const plans = []
-  // 进行中计划
+  // 进行中计划（本学期新开：9 月中开始）
   plans.push({
     status: 'active',
     template: planTemplate,
-    start_date: '2026-05-20',
-    end_date: '2026-12-31',
+    start_date: '2026-09-07',
+    end_date: '2027-01-30',
     source_assessment_id: assessments.find((a) => SCALE_REPORT_MODULE[a.scale] === moduleByScale)?.assessId ?? null,
   })
-  // 1/3 学生有历史完成计划
+  // 1/3 学生有历史完成计划（上学期）
   if (rng.rand() < 0.33) {
     plans.push({
       status: 'completed',
       template: secondTemplate || planTemplate,
-      start_date: '2026-01-15',
-      end_date: '2026-04-30',
+      start_date: '2026-03-09',
+      end_date: '2026-07-10',
       source_assessment_id: null,
     })
   }
@@ -1469,3 +2060,89 @@ export const TRAINING_COMMENTS = Object.freeze([
 export const EQUIPMENT_ENVIRONMENTS = Object.freeze(['感统训练室', '个训室', '教室', '资源教室'])
 
 export const EMOTION_SCENE_SUB_MODULES = Object.freeze(['emotion_scene', 'care_scene'])
+
+// ============================================================================
+// AI 助手演示数据（会话 + 消息 + 学生记忆）
+// agent_code 用内置智能体 code（src/data/ai-agent-presets.ts）：
+// special_ed_teacher=一人一策 / scgp_builtin_growth_observer=成长看得见 /
+// scgp_builtin_communication_support=沟通有方 / scgp_builtin_wellbeing_support=心晴陪伴
+// 记忆内容 ≤200 字符（ai_student_memory CHECK），[STUDENT] 为脱敏占位（记忆注入语义）
+// ============================================================================
+
+export const AI_CHAT_SESSIONS = Object.freeze([
+  {
+    id: 61001,
+    user_id: 9001,
+    agent_code: 'special_ed_teacher',
+    title: '【学生】的感觉统合训练调整',
+    student_id: 10019,
+    memory_watermark: 0,
+    created_at: '2026-09-08 10:20:00',
+    updated_at: '2026-09-08 10:32:00',
+  },
+  {
+    id: 61002,
+    user_id: 9001,
+    agent_code: 'scgp_builtin_growth_observer',
+    title: '【学生】进步复盘与家长沟通',
+    student_id: 10019,
+    memory_watermark: 0,
+    created_at: '2026-09-10 15:05:00',
+    updated_at: '2026-09-10 15:26:00',
+  },
+  {
+    id: 61003,
+    user_id: 9002,
+    agent_code: 'scgp_builtin_communication_support',
+    title: '语言表达训练的家庭配合',
+    student_id: 10016,
+    memory_watermark: 0,
+    created_at: '2026-09-09 11:40:00',
+    updated_at: '2026-09-09 11:58:00',
+  },
+  {
+    id: 61004,
+    user_id: 9003,
+    agent_code: 'scgp_builtin_wellbeing_support',
+    title: '课堂情绪爆发的应对策略',
+    student_id: 10023,
+    memory_watermark: 0,
+    created_at: '2026-09-11 14:12:00',
+    updated_at: '2026-09-11 14:35:00',
+  },
+])
+
+export const AI_CHAT_MESSAGES = Object.freeze([
+  // 会话 61001：一人一策 × 感统训练
+  { id: 61101, session_id: 61001, role: 'user', content: '赵雨泽最近上课坐不住，写作业时手部动作很笨拙，感觉统合训练计划需要怎么调整？', tokens_total: 38, tokens_prompt: 0, tokens_completion: 38, est_cost_yuan: 0, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-08 10:20:00' },
+  { id: 61102, session_id: 61001, role: 'assistant', content: '从他的 CSIRS 前测结果看，前庭觉调节（T=41 偏低）和执行功能（T=44 偏低）是两个主要薄弱点，「坐不住」与前庭觉寻求活动不足有关，「手部笨拙」则指向本体觉输入不足。建议做三个调整：\n\n1. **训练顺序**：把前庭类活动（秋千、旋转木马类）放在训练开头 10 分钟，满足感觉寻求后，后面精细任务的配合度会明显提升；\n2. **增加负重任务**：写作业前先做 3-5 分钟「推重物/螃蟹走」，本体觉输入能改善手部控制；\n3. **课堂即时策略**：允许他坐平衡气垫，用「身体动一动」的合法出口替代随意离座。\n\n按当前训练记录，他每周感统训练 3 次，建议维持频次、把上述调整落进本周计划，两周后用 CSIRS 复评观察 T 分变化。', tokens_total: 356, tokens_prompt: 618, tokens_completion: 356, est_cost_yuan: 0.002, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-08 10:22:00' },
+  { id: 61103, session_id: 61001, role: 'user', content: '课堂上的平衡气垫会不会影响其他同学注意力？', tokens_total: 22, tokens_prompt: 0, tokens_completion: 22, est_cost_yuan: 0, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-08 10:28:00' },
+  { id: 61104, session_id: 61001, role: 'assistant', content: '前期可能有短暂好奇，但一般 3-5 天后就会适应。有两个经验做法：一是提前用班会形式向全班说明「这是帮助注意力的小工具」，把特殊器械正常化；二是让赵雨泽参与气垫的充放气管理，赋予「责任人」角色反而减少他人围观。如果两周后仍有干扰，可以换成静音的坐垫式或改为课间集中训练。', tokens_total: 148, tokens_prompt: 986, tokens_completion: 148, est_cost_yuan: 0.001, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-08 10:32:00' },
+  // 会话 61002：成长看得见 × 进步复盘
+  { id: 61105, session_id: 61002, role: 'user', content: '帮我把赵雨泽上学期的训练进步总结一下，下周家长会要用。', tokens_total: 28, tokens_prompt: 0, tokens_completion: 28, est_cost_yuan: 0, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-10 15:05:00' },
+  { id: 61106, session_id: 61002, role: 'assistant', content: '根据他的纵向评估数据，上学期（3-7 月）的进步可以概括为三条线：\n\n**感觉统合（CSIRS）**：总分 T 从 41 → 49，视听知觉与学业表现维度改善最明显（+11），课堂专注时长从约 8 分钟提升到 15 分钟以上；\n\n**认知推理（CRT）**：图形推理正确率从 42% 提升到 55%，跨过了「比较推理」这一关，抽象推理还在萌芽；\n\n**日常能力（WeeFIM）**：总分从 82 → 96，从「中度依赖」进入「轻度依赖」，最亮眼的是穿衣和进食两项已能独立完成。\n\n给家长的建议表述：不横向比较，用「他自己和 3 月比」的进步曲线讲，家长接受度更高。需要我把这份总结生成 Word 报告吗？', tokens_total: 412, tokens_prompt: 702, tokens_completion: 412, est_cost_yuan: 0.002, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-10 15:12:00' },
+  { id: 61107, session_id: 61002, role: 'user', content: '好的，帮我生成一份 Word 版。', tokens_total: 16, tokens_prompt: 0, tokens_completion: 16, est_cost_yuan: 0, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-10 15:24:00' },
+  { id: 61108, session_id: 61002, role: 'assistant', content: '已为你生成《赵雨泽-学期训练进步总结.docx》，包含评估对比表、三个维度的进步曲线图和家校配合建议，可直接用于家长会。生成报告已保存到下载目录。', tokens_total: 76, tokens_prompt: 1102, tokens_completion: 76, est_cost_yuan: 0.001, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-10 15:26:00' },
+  // 会话 61003：沟通有方 × 言语训练
+  { id: 61109, session_id: 61003, role: 'user', content: '沈依诺在家不肯开口说话，在学校却愿意跟读，家长很着急，怎么跟家长解释？', tokens_total: 40, tokens_prompt: 0, tokens_completion: 40, est_cost_yuan: 0, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-09 11:40:00' },
+  { id: 61110, session_id: 61003, role: 'assistant', content: '这是言语障碍儿童很典型的「场景性缄默」表现——学校有同伴示范和结构化轮流机制，家庭对话则常常是「一对一追问」，压力反而更大。可以这样向家长解释：\n\n1. **先安抚**：「孩子在学校已经具备开口能力，说明语言基础在建立，这不是能力问题，是环境压力问题」；\n2. **给方法**：请家长把「问句」换成「选择句」——不说「你今天学了什么？」，而说「今天玩了滑梯还是秋千呀？」，降低开口的认知负担；\n3. **定小目标**：每天固定一个 5 分钟的「游戏对话时间」，只聊天不纠错，先积累「开口=愉快」的经验。\n\n两周后请家长记录孩子每天主动开口的次数，我们再一起看数据。', tokens_total: 386, tokens_prompt: 655, tokens_completion: 386, est_cost_yuan: 0.002, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-09 11:52:00' },
+  { id: 61111, session_id: 61003, role: 'user', content: '明白了，选择句这个方法我会在家长群里再说明一次。', tokens_total: 25, tokens_prompt: 0, tokens_completion: 25, est_cost_yuan: 0, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-09 11:58:00' },
+  // 会话 61004：心晴陪伴 × 情绪爆发
+  { id: 61112, session_id: 61004, role: 'user', content: '王若曦这周在课堂上情绪爆发两次，哭闹超过 20 分钟，安抚无效，我该怎么办？', tokens_total: 38, tokens_prompt: 0, tokens_completion: 38, est_cost_yuan: 0, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-11 14:12:00' },
+  { id: 61113, session_id: 61004, role: 'assistant', content: '先做记录分析：两次爆发分别发生在什么环节？如果都集中在「任务转换」或「被纠正」之后，就说明触发点在可控范围。当前阶段的处理原则：\n\n**爆发时**：不讲道理、不追问原因，撤掉围观（带离或疏散同学），提供低刺激安静角，等情绪曲线自然回落（通常 15-25 分钟）；\n\n**平静后**：不追究「刚才为什么哭」，改用选择式复盘「下次觉得心里着急，你想用卡片告诉老师，还是先去安静角？」；\n\n**预防面**：她的 CBCL 内化分偏高（焦虑倾向），建议在课表里加入可预期的「预告环节」——活动转换前 2 分钟给视觉提示卡，焦虑降低后爆发频率通常会先降一半。\n\n⚠️ 如果持续两周每天爆发且伴随自伤，请同步告知家长考虑专业心理支持转介。', tokens_total: 402, tokens_prompt: 690, tokens_completion: 402, est_cost_yuan: 0.002, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-11 14:28:00' },
+  { id: 61114, session_id: 61004, role: 'user', content: '两次都是数学课的任务转换环节，我明天就开始用预告卡。', tokens_total: 28, tokens_prompt: 0, tokens_completion: 28, est_cost_yuan: 0, delivery_status: 'completed', message_kind: 'final', created_at: '2026-09-11 14:35:00' },
+])
+
+export const AI_STUDENT_MEMORIES = Object.freeze([
+  // 学生 10019 赵雨泽（学习障碍，配会话 61001/61002）
+  { id: 61301, student_id: 10019, user_id: 9001, created_by_type: 'ai', agent_code: 'special_ed_teacher', session_id: 61001, source_type: 'chat', category: 'observation', content: '课堂坐立不安与手部动作笨拙并存，前庭觉输入不足与本体觉寻求并存', confidence: 'assumed', status: 'confirmed', priority: 'normal', confirmed_by_user_id: 9001, confirmed_at: '2026-09-08 11:00:00', effective_at: '2026-09-08 10:22:00' },
+  { id: 61302, student_id: 10019, user_id: 9001, created_by_type: 'teacher', agent_code: '', session_id: 61001, source_type: 'manual', category: 'advice_given', content: '训练课已加入开头 10 分钟前庭活动 + 写作业前负重任务，课堂试点平衡气垫', confidence: 'observed', status: 'confirmed', priority: 'pinned', priority_note: '训练方案调整决定，需两周后复评验证', confirmed_by_user_id: 9001, confirmed_at: '2026-09-08 11:01:00', effective_at: '2026-09-08 11:00:00' },
+  { id: 61303, student_id: 10019, user_id: 9001, created_by_type: 'ai', agent_code: 'scgp_builtin_growth_observer', session_id: 61002, source_type: 'chat', category: 'follow_up', content: '上学期三线进步（CSIRS T41→49 / CRT 42%→55% / WeeFIM 82→96），家长会已做进步复盘', confidence: 'observed', status: 'confirmed', priority: 'normal', confirmed_by_user_id: 9001, confirmed_at: '2026-09-10 16:00:00', effective_at: '2026-09-10 15:12:00' },
+  { id: 61304, student_id: 10019, user_id: 9001, created_by_type: 'ai', agent_code: 'special_ed_teacher', session_id: 61001, source_type: 'chat', category: 'follow_up', content: '计划两周后用 CSIRS 复评验证训练调整效果，观察前庭觉与执行功能 T 分变化', confidence: 'observed', status: 'confirmed', priority: 'normal', confirmed_by_user_id: 9001, confirmed_at: '2026-09-08 11:02:00', effective_at: '2026-09-08 10:32:00' },
+  // 学生 10016 沈依诺（言语障碍，配会话 61003）
+  { id: 61305, student_id: 10016, user_id: 9002, created_by_type: 'ai', agent_code: 'scgp_builtin_communication_support', session_id: 61003, source_type: 'chat', category: 'observation', content: '典型的场景性缄默表现：在校能跟读、在家拒绝开口，提示环境压力型而非能力型', confidence: 'assumed', status: 'confirmed', priority: 'normal', confirmed_by_user_id: 9002, confirmed_at: '2026-09-09 12:30:00', effective_at: '2026-09-09 11:52:00' },
+  { id: 61306, student_id: 10016, user_id: 9002, created_by_type: 'teacher', agent_code: '', session_id: 61003, source_type: 'manual', category: 'advice_given', content: '已指导家长改用选择句提问 + 每天 5 分钟游戏对话时间，两周后统计主动开口次数', confidence: 'observed', status: 'confirmed', priority: 'normal', confirmed_by_user_id: 9002, confirmed_at: '2026-09-09 12:31:00', effective_at: '2026-09-09 12:00:00' },
+  // 学生 10023 王若曦（孤独症谱系，配会话 61004）
+  { id: 61307, student_id: 10023, user_id: 9003, created_by_type: 'ai', agent_code: 'scgp_builtin_wellbeing_support', session_id: 61004, source_type: 'chat', category: 'observation', content: '情绪爆发集中出现在任务转换环节（本周 2 次，均超 20 分钟），触发点可预期', confidence: 'observed', status: 'confirmed', priority: 'safety_critical', priority_note: '涉及课堂情绪安全，需持续追踪爆发频率', confirmed_by_user_id: 9003, confirmed_at: '2026-09-11 15:00:00', effective_at: '2026-09-11 14:28:00' },
+  { id: 61308, student_id: 10023, user_id: 9003, created_by_type: 'teacher', agent_code: '', session_id: 61004, source_type: 'manual', category: 'advice_given', content: '数学课任务转换前 2 分钟使用视觉预告卡，平静后用选择式复盘替代追问', confidence: 'observed', status: 'confirmed', priority: 'pinned', priority_note: '若两周后无改善需启动转介评估', confirmed_by_user_id: 9003, confirmed_at: '2026-09-11 15:01:00', effective_at: '2026-09-11 15:00:00' },
+])
