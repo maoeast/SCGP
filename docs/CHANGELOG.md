@@ -4,6 +4,21 @@
 
 ---
 
+## [2026-09-20] 修复 ABC 报告「维度分数详情」维度分渲染成 JSON、占比 NaN
+- 现象：ABC 报告页维度表「得分」列显示 `{"name":"感觉","rawScore":17}`、「占比」列 NaN%（用户 2026-09-20 截图报告）
+- 根因①（数据形状）：演示数据把维度分写成对象 `{ name, rawScore }`（真实写入端 `ABCDriver.persistAssessment` 写的是数字 `{ 维度code: 原始分 }`，`init.ts` schema 注释与 `assessment-score-adapters.ts` 同此契约），报告页 `scores[dim.code]` 直接当数字用 → 对象进 `{{ }}` 渲染成 JSON、`对象/数字` 得 NaN；Word 导出与 AI 纵向趋势（`assessment-score-normalize.ts` flat-number 模式）同样受累
+- 根因②（满分错误）：报告页硬编码满分 60/48/72/52 实为 GMFM-88 表的值，与 ABC 题库权重真值不符 —— 真值为 感觉 38 / 交往 34 / 躯体运动 52 / 语言 34 = 158（与页面「满分 158」一致；库中真实评估行各维分数恰好顶到 38/34/34 反证）；占比分母被放大，真实评估也算错，「重点关注」判定（阈值 50%）随之中招
+- 根因③（虚维度）：演示数据生成题库里没有题目的「生活自理」维度并计入总分，导致表内四维之和 ≠ 报告总分
+- `src/database/abc-questions.ts`：新增 `ABC_SUBSCALE_MAX_SCORES`（由题库权重派生，勿手写）、`ABC_TOTAL_MAX_SCORE`、`normalizeABCDimensionScores`（数字直用；历史对象形状取 `rawScore`/`score`；脏数据记 0）
+- `src/views/assessment/abc/Report.vue`：满分改题库派生常量、维度分走归一化（历史对象形状兼容 → 已入库旧数据无需重导）、总分满分与 Word `totalMaxScore` 同源（`(满分 158)` 文案同步）；删除未使用的 `getABCLevel` 导入
+- `scripts/seed-demo-data/data.mjs`：ABC 维度分改存数字（契约形状）+ 按各维真实满分钳制 + 去除「生活自理」维度及其 `DIAGNOSIS_PROFILES` 偏移；新增导出 `ABC_SUBSCALE_MAXES`
+- 新增 `tests/abc-dimension-rows.test.ts`（已接入 `npm run test:core:ts`）：满分派生正确性、两种历史形状归一化、脏数据兜底、占比复算（真实库行）、演示生成器与题库满分一致（防两处漂移）、生成结果为数字/不超满分/总分等于各维之和
+- `src/services/assessment-score-normalize.ts`：flat-number 模式新增单值兜底 `toFlatDimensionScore`（数字直用；历史对象形状取 `rawScore`/`score`；无法解析记 `null` 而非 `NaN`）——同根因的 AI 纵向趋势（`get_assessment_trend`）不再把老演示行的维度分显示成缺失
+- `tests/assessment-score-adapter.test.ts`：第 12 组补历史对象形状与脏值兜底断言（断言不产 NaN），覆盖清单同步至 13 组
+- 新增 `scripts/fix-legacy-abc-dimension-scores.ts`：存量演示行一次性修正（默认 dry-run；`--apply` 前自动备份且要求应用已关闭；幂等，真实评估行不动）；dry-run 实测 18 行扫描 / **15 行待修**（10013：88→71、moderate→mild），真实行（#1/#2/#3）零改动
+- 验证：`npm run verify:core` 全绿（type-check 0 error；`test:core:node` 132/132；`test:core:ts` 6/6）；以真实库行复算——学生 1 → 38/34/48/34（100%/100%/92.3%/100%，四维和 = 总分 154）；学生 10013 袁梓睿 → 17/21/15/18（44.7%/61.8%/28.8%/52.9%）
+- 存量数据：修正脚本已备且 dry-run 通过，**落库待执行**（`npx jiti scripts/fix-legacy-abc-dimension-scores.ts --apply`，需先关闭 SCGP 应用）；`output/SCGP演示数据包-20260920.zip` 仍是旧数据，重打时用修好的生成器
+
 ## [2026-09-20] 手册首页族截图重拍 + 自动刷新文案同步（首页看板重构收尾）
 - `docs/user-manual/screenshots/`：重拍 8 张受 `0866c42`（移除页头 + 静默自动刷新 + 主标题品牌色）影响的图——S001/S002/S007/S008/S009/S010/S011/S168；旧图画面中仍带已删除的「首页看板」页头与「刷新数据」按钮，已作废
 - 采集：run `dashboard-refresh-20260920`（S001/S007/S168）与 `dashboard-refresh-2-20260920`（S002/S008/S009/S010/S011）；后者为拆分重跑——同会话先采 S007（用户菜单浮层）会把浮层留在后续场景画面里（首批 S008 即被污染）
