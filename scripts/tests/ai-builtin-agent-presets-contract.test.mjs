@@ -138,8 +138,14 @@ test('康复训练支持专家仅绑定最小必要工具、全部康复资料�
     assert.match(preset, new RegExp(`'${reference}'`))
   }
 
-  const avatarPath = 'assets/resources/images/ai-agent-avatars/康复训练支持专家.png'
-  assert.equal(existsSync(resolve(projectRoot, avatarPath)), true, `${avatarPath} 应存在`)
+  // 头像素材自 4a6468b 起批量转为 .webp，运行时按 .png→.webp 兜底解析（electron/main.mjs / vite.config.ts）
+  const avatarBase = 'assets/resources/images/ai-agent-avatars/康复训练支持专家'
+  const avatarCandidates = [`${avatarBase}.png`, `${avatarBase}.webp`]
+  assert.equal(
+    avatarCandidates.some((candidate) => existsSync(resolve(projectRoot, candidate))),
+    true,
+    `${avatarBase}.png（或同名 .webp 兜底）应存在`,
+  )
   const avatarSource = readProjectFile('src/features/ai/ai-agent-avatar-assets.ts')
   assert.match(
     avatarSource,
