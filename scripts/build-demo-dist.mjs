@@ -218,7 +218,7 @@ function packZip() {
   const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '')
   const zipPath = path.join(repoRoot, 'output', `SCGP演示数据包-${stamp}.zip`)
   if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath)
-  const ps = `Compress-Archive -Path '${WORK_DIR}\\database.sqlite','${WORK_DIR}\\导入说明.md' -DestinationPath '${zipPath}' -Force`
+  const ps = `Compress-Archive -Path '${WORK_DIR}\\database.sqlite','${WORK_DIR}\\一键导入演示数据.bat','${WORK_DIR}\\导入说明.md' -DestinationPath '${zipPath}' -Force`
   const zip = spawnSync('powershell.exe', ['-NoProfile', '-Command', ps], { encoding: 'utf8' })
   if (zip.status !== 0) {
     console.error('打包失败:', zip.stderr)
@@ -230,15 +230,22 @@ function packZip() {
 
 function main() {
   fs.mkdirSync(WORK_DIR, { recursive: true })
+  // 一键导入脚本存放在 scripts/demo-dist-assets/（GBK 编码二进制，入库存源）
+  const batSource = path.join(repoRoot, 'scripts', 'demo-dist-assets', '一键导入演示数据.bat')
+  if (!fs.existsSync(batSource)) {
+    console.error(`缺少一键导入脚本: ${batSource}`)
+    process.exit(1)
+  }
   buildBaseDatabase()
     .then(() => {
       inspectBaseDb()
       seedDemoData()
       verifyCleanDb()
       writeReadme()
+      fs.copyFileSync(batSource, path.join(WORK_DIR, '一键导入演示数据.bat'))
       packZip()
       fs.rmSync(BASE_USER_DATA, { recursive: true, force: true })
-      console.log('完成。包内容: database.sqlite + 导入说明.md')
+      console.log('完成。包内容: database.sqlite + 一键导入演示数据.bat + 导入说明.md')
     })
     .catch((error) => {
       console.error('[build-demo-dist] 失败:', error.message)
@@ -251,7 +258,16 @@ const README_CONTENT = `# SCGP 星愿能力发展平台 · 演示数据包
 本包包含一份**完整的演示数据库**（42 名学生、12 个班级、17 个评估量表全覆盖、AI 助手对话与学生记忆、上学期+本学期训练记录），
 安装应用后按以下步骤导入即可体验全部功能。
 
-## 导入步骤
+## 一键导入（推荐，Windows）
+
+1. 解压本包，得到 \`database.sqlite\` 与 \`一键导入演示数据.bat\`（两文件需在同一文件夹）。
+2. 安装 SCGP 应用并启动一次后**完全退出**（若未退出，脚本会自动检测并关闭）。
+3. 双击 \`一键导入演示数据.bat\` —— 脚本自动完成：检测/关闭 SCGP → **自动备份原库**（到 \`%APPDATA%\\scgp\\backups\\\`）→ 替换为演示库。
+4. 重新启动应用，使用下方演示账号登录。
+
+恢复学校真实数据：退出 SCGP，把 \`%APPDATA%\\scgp\\backups\\\` 里的备份文件复制回 \`%APPDATA%\\scgp\\database.sqlite\`。
+
+## 手动导入（备用 / macOS·Linux）
 
 1. **安装并启动一次应用**，进入登录页后退出（首次启动会创建数据目录）。
 2. 按系统类型找到数据库文件，**先备份原文件**（复制一份改名保存）：
