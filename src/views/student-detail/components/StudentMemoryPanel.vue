@@ -196,6 +196,24 @@ watch(() => props.studentId, load)
 
     <!-- 有权限：完整模式（原 tab 版） -->
     <template v-else>
+      <!-- 摘要卡组（2026-09-20 用户确认）：与评估/器材/游戏面板同构（顶部统计卡 → 筛选器 → 列表），
+           消除切 Tab 时视觉重心下坠。数值绑定面板真实计数（memories/pendingCount/confirmedCount），
+           不引入 mock——本面板已有实时数据源，mock 会在生产显示假数字 -->
+      <section class="stats-row scgp-stats-grid memory-summary" aria-label="AI 记忆统计概览">
+        <article class="summary-card scgp-summary-card">
+          <div class="summary-card__label">总记忆条数</div>
+          <div class="summary-card__value">{{ memories.length }}</div>
+        </article>
+        <article class="summary-card scgp-summary-card memory-summary-card--warning">
+          <div class="summary-card__label">待确认记忆</div>
+          <div class="summary-card__value">{{ pendingCount }}</div>
+        </article>
+        <article class="summary-card scgp-summary-card memory-summary-card--success">
+          <div class="summary-card__label">已确认记忆</div>
+          <div class="summary-card__value">{{ confirmedCount }}</div>
+        </article>
+      </section>
+
       <div class="memory-toolbar">
         <el-radio-group v-model="activeStatus" size="small" @change="load">
           <el-radio-button value="pending">待确认 ({{ pendingCount }})</el-radio-button>
@@ -302,6 +320,29 @@ watch(() => props.studentId, load)
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+}
+
+/* 摘要卡组：复用全局 scgp-summary-card 基底（与评估/器材/游戏面板同源），此处仅补 3 列布局与语义色 */
+.memory-summary {
+  margin-bottom: 14px;
+}
+
+.memory-summary.scgp-stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.memory-summary-card--warning .summary-card__value {
+  color: var(--el-color-warning, #e6a23c);
+}
+
+.memory-summary-card--success .summary-card__value {
+  color: var(--el-color-success, #67c23a);
+}
+
+@media (max-width: 1100px) {
+  .memory-summary.scgp-stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .memory-empty {

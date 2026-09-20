@@ -26,10 +26,14 @@
       </div>
     </div>
 
-    <section class="detail-hero">
-      <article class="profile-card">
-        <div class="profile-card__hero">
-          <div class="profile-card__avatar-shell">
+    <!-- 2026-09-20 上下分层重构（用户确认）：废弃左右分栏，改为「全宽档案 Hero + 下方相关记录 Tab 区」。
+         原 overview-card 三统计卡与「当前查看」摘要块已删——类型与条数由 Tab 标签承载，汇总由各面板自带，不再重复。
+         原 activity-strip（2026-09-19 约定「最近活动一屏可见」）不属冗余，迁入档案区底部保留。 -->
+    <article class="profile-hero">
+      <div class="profile-hero__main">
+        <!-- 左侧焦点：头像 + 姓名 + 身份标签 + 健康安全警示 -->
+        <div class="profile-hero__identity">
+          <div class="profile-hero__avatar-shell">
             <StudentAvatar
               :name="student?.name"
               :gender="student?.gender"
@@ -38,10 +42,10 @@
             />
           </div>
 
-          <div class="profile-card__identity">
+          <div class="profile-hero__who">
             <h2>{{ student?.name || '未命名' }}</h2>
 
-            <div class="profile-card__meta">
+            <div class="profile-hero__tags">
               <StudentId :id="student?.student_no" :full="true" />
               <DiagnosisTag :type="student?.disorder" />
               <span
@@ -51,185 +55,116 @@
                 {{ currentClassLabel }}
               </span>
             </div>
+
             <!-- 月龄-年级对应性软提示：跳级（年龄未达常规）≥1 级即出现；留级≥2 级才出现（特教延迟入学属正常仅作核对） -->
             <p v-if="gradeAgeHint" class="grade-age-hint" role="note">
               <el-icon><WarningFilled /></el-icon>
               {{ gradeAgeHint }}
             </p>
+
+            <!-- 健康安全警示条（2026-09-20 用户拍板·降级方案）：healthNotes 自由文本完整透出，紧跟姓名下方，
+                 不在前端对自由文本做拆分；后续若引入结构化字段（care_instructions 照护要求 / healthNotes 医学状态）
+                 再升级为「医学状态 + 照护要求」分段展示 -->
+            <div v-if="healthNotes" class="health-alert" role="alert">
+              <el-icon class="health-alert__icon"><WarningFilled /></el-icon>
+              <p class="health-alert__text">
+                <strong>健康警示</strong>
+                <span>{{ healthNotes }}</span>
+              </p>
+            </div>
           </div>
         </div>
 
-        <div class="profile-card__facts">
-          <article
-            v-for="fact in detailFacts"
-            :key="fact.label"
-            class="fact-card"
-          >
-            <span class="fact-card__label">{{ fact.label }}</span>
-            <strong class="fact-card__value">{{ fact.value }}</strong>
-          </article>
-
-          <!-- 监护人信息（2026-09-20 档案补全）：家长沟通与紧急联系 -->
-          <article v-if="guardianInfo" class="fact-card fact-card--wide">
-            <span class="fact-card__label">监护人</span>
-            <strong class="fact-card__value">{{ guardianInfo.name }} · {{ guardianInfo.phone }}</strong>
-          </article>
-
-          <!-- 健康备注（训练安全须知：既往病史/过敏/用药） -->
-          <div v-if="healthNotes" class="memory-highlights fact-card--wide">
-            <div class="memory-highlights__item">
-              <span class="fact-card__label">健康备注</span>
-              <strong class="fact-card__value">{{ healthNotes }}</strong>
-            </div>
-          </div>
-
-          <!-- AI 记忆置顶摘要：展示已确认置顶/关键记忆，教师无需翻面板即可看到关键信息（用户 2026-09-19 约定） -->
+        <!-- 右侧元数据紧凑网格：3 列（创建时间等次要信息置灰）；监护人信息（2026-09-20 档案补全）并入网格 -->
+        <dl class="profile-hero__meta">
           <div
-            v-if="aiStore.memoryEnabled && pinnedMemories.length > 0"
-            class="memory-highlights fact-card--wide"
+            v-for="item in heroMeta"
+            :key="item.label"
+            class="meta-item"
+            :class="{ 'meta-item--muted': item.muted }"
           >
-            <div
-              v-for="memory in pinnedMemories"
-              :key="memory.id"
-              class="memory-highlights__item"
-            >
-              <span
-                class="memory-highlights__badge"
-                :class="{ 'memory-highlights__badge--safety': memory.priority === 'safety_critical' }"
-              >
-                {{ memory.priority === 'safety_critical' ? '关键' : '置顶' }}
-              </span>
-              <span class="memory-highlights__content">{{ memory.content }}</span>
-            </div>
+            <dt class="meta-item__label">{{ item.label }}</dt>
+            <dd class="meta-item__value">{{ item.value }}</dd>
           </div>
-
-          <!-- AI 记忆（服务团队共享；管理员启用后显示；数量卡入口，点击切到下方相关记录的 AI 记忆标签） -->
-          <article
-            v-if="aiStore.memoryEnabled"
-            class="fact-card fact-card--wide fact-card--memory"
-            role="button"
-            tabindex="0"
-            @click="openMemoryTab"
-            @keydown.enter.prevent="openMemoryTab"
-            @keydown.space.prevent="openMemoryTab"
-          >
-            <div class="fact-card__memory-head">
-              <span class="fact-card__label">AI 记忆</span>
-              <span class="fact-card__memory-link">点击查看 →</span>
-            </div>
-            <strong class="fact-card__memory-total">{{ memoryPendingCount + memoryConfirmedCount }}</strong>
-            <span class="fact-card__memory-count">
-              待确认 {{ memoryPendingCount }} · 已确认 {{ memoryConfirmedCount }}
-            </span>
-          </article>
-        </div>
-      </article>
-
-      <article class="overview-card">
-        <div class="overview-card__intro">
-          <div class="overview-card__copy">
-            <h2>{{ activeTabMeta.title }}</h2>
-            <p>{{ activeTabMeta.description }}</p>
-          </div>
-
-          <div class="overview-card__focus">
-            <span class="overview-card__focus-label">当前查看</span>
-            <strong class="overview-card__focus-value">{{ activeTabMeta.badge }}</strong>
-            <span class="overview-card__focus-meta">{{ activeTabCount }} 条记录</span>
-          </div>
-        </div>
-
-        <div class="stats-grid">
-          <button
-            v-for="metric in detailMetrics"
-            :key="metric.key"
-            type="button"
-            :class="[
-              'stat-card',
-              `stat-card--${metric.tone}`,
-              { 'is-active': activeTab === metric.key },
-            ]"
-            @click="activeTab = metric.key"
-          >
-            <div class="stat-card__top">
-              <span class="stat-card__glyph">{{ metric.glyph }}</span>
-              <span class="stat-card__action">点击查看</span>
-            </div>
-            <div class="stat-card__number">{{ metric.value }}</div>
-            <div class="stat-card__label">{{ metric.label }}</div>
-            <div class="stat-card__hint">{{ metric.hint }}</div>
-          </button>
-        </div>
-
-        <!-- 所属班级/诊断类型/使用方式三卡已删（用户 2026-09-19 约定）：班级与诊断已在左侧学生信息区展示，使用方式自明 -->
-
-        <!-- 训练画像摘要条（用户 2026-09-19 约定）：最近活动一屏可见 -->
-        <div class="activity-strip">
-          <span class="activity-strip__item">
-            <span class="activity-strip__label">最近评估</span>
-            <strong class="activity-strip__value">{{ latestAssessmentLabel }}</strong>
-          </span>
-          <span class="activity-strip__divider" aria-hidden="true"></span>
-          <span class="activity-strip__item">
-            <span class="activity-strip__label">最近训练</span>
-            <strong class="activity-strip__value">{{ latestTrainingLabel }}</strong>
-          </span>
-          <span class="activity-strip__divider" aria-hidden="true"></span>
-          <span class="activity-strip__item">
-            <span class="activity-strip__label">本月训练</span>
-            <strong class="activity-strip__value">{{ monthlyTrainingCount }} 次</strong>
-          </span>
-        </div>
-      </article>
-    </section>
-
-    <section
-      v-if="student?.id"
-      ref="recordsSectionRef"
-      class="main-content student-detail-main"
-    >
-      <div class="records-shell">
-        <div class="records-shell__header">
-          <div class="records-shell__title">
-            <h2>相关记录</h2>
-            <p>按学生维度查看评估、器材训练、游戏训练历史与 AI 记忆，支持直接跳转到明细页。</p>
-          </div>
-
-          <div class="records-shell__summary">
-            <span class="records-shell__summary-label">当前查看</span>
-            <strong class="records-shell__summary-value">{{ activeTabMeta.badge }}</strong>
-            <span class="records-shell__summary-meta">{{ activeTabCount }} 条记录</span>
-          </div>
-        </div>
-
-        <el-tabs v-model="activeTab" class="records-tabs" stretch>
-          <el-tab-pane :label="`评估记录 (${assessmentCount})`" name="assessments" lazy>
-            <AssessmentRecordsPanel :student-id="student.id" :table-max-height="520" />
-          </el-tab-pane>
-
-          <el-tab-pane :label="`器材训练 (${equipmentCount})`" name="equipment" lazy>
-            <EquipmentRecordsPanel
-              :student-id="student.id"
-              :hide-student-filter="true"
-              :table-max-height="520"
-              @view-detail="viewEquipmentRecord"
-            />
-          </el-tab-pane>
-
-          <el-tab-pane :label="`游戏训练 (${gameCount})`" name="games" lazy>
-            <GameRecordsPanel
-              :student-id="student.id"
-              :hide-student-filter="true"
-              :table-max-height="520"
-              @view-detail="viewGameRecord"
-            />
-          </el-tab-pane>
-
-          <el-tab-pane v-if="aiStore.memoryEnabled" :label="`AI 记忆 (${memoryPendingCount + memoryConfirmedCount})`" name="memory" lazy>
-            <StudentMemoryPanel :student-id="student.id" @updated="refreshMemoryCounts" />
-          </el-tab-pane>
-        </el-tabs>
+        </dl>
       </div>
+
+      <div class="profile-hero__aside">
+        <!-- AI 记忆置顶摘要：展示已确认置顶/关键记忆，教师无需翻面板即可看到关键信息（用户 2026-09-19 约定） -->
+        <div
+          v-if="aiStore.memoryEnabled && pinnedMemories.length > 0"
+          class="memory-highlights"
+        >
+          <div
+            v-for="memory in pinnedMemories"
+            :key="memory.id"
+            class="memory-highlights__item"
+          >
+            <span
+              class="memory-highlights__badge"
+              :class="{ 'memory-highlights__badge--safety': memory.priority === 'safety_critical' }"
+            >
+              {{ memory.priority === 'safety_critical' ? '关键' : '置顶' }}
+            </span>
+            <span class="memory-highlights__content">{{ memory.content }}</span>
+          </div>
+        </div>
+
+        <div class="profile-hero__aside-row">
+          <!-- 训练画像摘要条（用户 2026-09-19 约定）：最近评估/最近训练/本月训练 一屏可见（随 2026-09-20 重构迁入档案区） -->
+          <div class="activity-strip">
+            <span class="activity-strip__item">
+              <span class="activity-strip__label">最近评估</span>
+              <strong class="activity-strip__value">{{ latestAssessmentLabel }}</strong>
+            </span>
+            <span class="activity-strip__divider" aria-hidden="true"></span>
+            <span class="activity-strip__item">
+              <span class="activity-strip__label">最近训练</span>
+              <strong class="activity-strip__value">{{ latestTrainingLabel }}</strong>
+            </span>
+            <span class="activity-strip__divider" aria-hidden="true"></span>
+            <span class="activity-strip__item">
+              <span class="activity-strip__label">本月训练</span>
+              <strong class="activity-strip__value">{{ monthlyTrainingCount }} 次</strong>
+            </span>
+          </div>
+
+          <!-- AI 记忆快捷入口卡已删（2026-09-20 用户确认：与下方「AI 记忆」Tab 重复，Tab 标签自带计数）；
+               置顶/关键记忆摘要（上方 memory-highlights）保留 -->
+        </div>
+      </div>
+    </article>
+
+    <section v-if="student?.id" class="main-content student-detail-main">
+      <!-- 「相关记录」标题与「当前查看」摘要块已删（2026-09-20 用户确认）：Tab 标签自带类型与条数，
+           摘要信息与档案区/面板内汇总重复 -->
+      <el-tabs v-model="activeTab" class="records-tabs" stretch>
+        <el-tab-pane :label="`评估记录 (${assessmentCount})`" name="assessments" lazy>
+          <AssessmentRecordsPanel :student-id="student.id" :table-max-height="520" />
+        </el-tab-pane>
+
+        <el-tab-pane :label="`器材训练 (${equipmentCount})`" name="equipment" lazy>
+          <EquipmentRecordsPanel
+            :student-id="student.id"
+            :hide-student-filter="true"
+            :table-max-height="520"
+            @view-detail="viewEquipmentRecord"
+          />
+        </el-tab-pane>
+
+        <el-tab-pane :label="`游戏训练 (${gameCount})`" name="games" lazy>
+          <GameRecordsPanel
+            :student-id="student.id"
+            :hide-student-filter="true"
+            :table-max-height="520"
+            @view-detail="viewGameRecord"
+          />
+        </el-tab-pane>
+
+        <el-tab-pane v-if="aiStore.memoryEnabled" :label="`AI 记忆 (${memoryPendingCount + memoryConfirmedCount})`" name="memory" lazy>
+          <StudentMemoryPanel :student-id="student.id" @updated="refreshMemoryCounts" />
+        </el-tab-pane>
+      </el-tabs>
     </section>
 
     <AddStudentDialog
@@ -266,29 +201,6 @@ import GameRecordsPanel from '@/views/training-records/components/GameRecordsPan
 import StudentMemoryPanel from '@/views/student-detail/components/StudentMemoryPanel.vue'
 
 type DetailTab = 'assessments' | 'equipment' | 'games' | 'memory'
-
-const TAB_META: Record<DetailTab, { title: string; badge: string; description: string }> = {
-  assessments: {
-    title: '评估与量表记录',
-    badge: '评估记录',
-    description: '集中查看量表结果、评估时间与报告入口，快速回顾学生的发展基线。',
-  },
-  equipment: {
-    title: '器材训练记录',
-    badge: '器材训练',
-    description: '回顾器材训练中的得分、提示等级、训练时长与评语表现。',
-  },
-  games: {
-    title: '游戏训练记录',
-    badge: '游戏训练',
-    description: '查看游戏或情绪训练中的正确率、平均响应时间与训练详情。',
-  },
-  memory: {
-    title: 'AI 记忆',
-    badge: 'AI 记忆',
-    description: '查看 AI 总结的学生记忆候选，确认后注入后续对话；支持优先级标记与删除。',
-  },
-}
 
 const router = useRouter()
 const route = useRoute()
@@ -337,13 +249,7 @@ function resolveCurrentClassGradeLevel() {
     console.error('反查班级年级失败（年级核对提示降级跳过）:', error)
   }
 }
-const detailFacts = computed(() => [
-  { label: '性别', value: student.value?.gender || '未设置' },
-  { label: '年龄', value: student.value?.birthday ? `${getStudentAge(student.value.birthday)}岁` : '-' },
-  { label: '出生日期', value: formatStudentDate(student.value?.birthday) },
-  { label: '学籍号', value: student.value?.registry_no || '-' },
-  { label: '创建时间', value: formatStudentDate(student.value?.created_at) },
-])
+
 // 监护人信息：有任一字段即展示（监护人/健康备注是训练安全与家长沟通的关键档案）
 const guardianInfo = computed(() => {
   const s = student.value
@@ -351,38 +257,24 @@ const guardianInfo = computed(() => {
   const relation = s.guardian_relation ? `（${s.guardian_relation}）` : ''
   return { name: `${s.guardian_name || '未填写'}${relation}`, phone: s.guardian_phone || '未填写' }
 })
-const healthNotes = computed(() => student.value?.health_notes?.trim() || '')
-const detailMetrics = computed(() => [
-  {
-    key: 'assessments' as const,
-    label: '评估记录',
-    value: assessmentCount.value,
-    hint: '量表结果与报告回顾',
-    glyph: '评',
-    tone: 'assessment',
-  },
-  {
-    key: 'equipment' as const,
-    label: '器材训练',
-    value: equipmentCount.value,
-    hint: '器材使用与训练反馈',
-    glyph: '器',
-    tone: 'equipment',
-  },
-  {
-    key: 'games' as const,
-    label: '游戏训练',
-    value: gameCount.value,
-    hint: '游戏表现与情绪会话',
-    glyph: '游',
-    tone: 'games',
-  },
-])
-const activeTabMeta = computed(() => TAB_META[activeTab.value])
-const activeTabCount = computed(() => {
-  if (activeTab.value === 'memory') return memoryPendingCount.value + memoryConfirmedCount.value
-  return detailMetrics.value.find((metric) => metric.key === activeTab.value)?.value ?? 0
+
+const guardianDisplay = computed(() => {
+  const guardian = guardianInfo.value
+  return guardian ? `${guardian.name} · ${guardian.phone}` : '未填写'
 })
+
+// 顶部档案区元数据网格（2026-09-20 重构，替代原 detailFacts 纵向堆叠 + 监护人/健康宽卡）：
+// 6 项 3 列紧凑排布；创建时间为次要信息置灰展示；健康备注独立为姓名下方警示条（见模板）
+const heroMeta = computed(() => [
+  { label: '性别', value: student.value?.gender || '未设置', muted: false },
+  { label: '年龄', value: student.value?.birthday ? `${getStudentAge(student.value.birthday)}岁` : '-', muted: false },
+  { label: '出生日期', value: formatStudentDate(student.value?.birthday), muted: false },
+  { label: '学籍号', value: student.value?.registry_no || '-', muted: false },
+  { label: '创建时间', value: formatStudentDate(student.value?.created_at), muted: true },
+  { label: '监护人', value: guardianDisplay.value, muted: false },
+])
+
+const healthNotes = computed(() => student.value?.health_notes?.trim() || '')
 
 // AI 记忆置顶摘要：已确认的置顶/关键记忆（最多 2 条，安全关键优先）
 // 依赖 memoryVersion：面板内确认/置顶操作后强制重算（DB 查询非响应式）
@@ -444,12 +336,7 @@ function goEquipmentRecord() {
   })
 }
 
-// AI 记忆数量卡点击：切到 memory 标签并滚动到相关记录区（advisor #2 跳转补齐）
-const recordsSectionRef = ref<HTMLElement>()
-function openMemoryTab() {
-  activeTab.value = 'memory'
-  recordsSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
+// AI 记忆快捷入口卡已删（2026-09-20 用户确认：与下方「AI 记忆」Tab 重复）——openMemoryTab / recordsSectionRef 随之移除
 
 // 面板内确认/拒绝/删除后刷新数量卡（advisor #1 计数同步）
 // memoryVersion 供 pinnedMemories 依赖以在置顶/确认操作后重算摘要（advisor r1 #3）
@@ -574,9 +461,10 @@ async function loadStudentDetail() {
     }
 
     // 最近训练/本月训练：四路全量口径（用户 2026-09-19 拍板方案 a）——器材（训练日期优先于创建时间，
-    // 补录语义正确）+ 游戏 + 情绪游戏 + 认知游戏统一会话。
-    // ⚠️ 口径说明：相关记录的「游戏训练」标签列表在详情页嵌入时不显示认知会话（GameRecordsPanel 需
-    // entryCode='cognitive' 才聚合该路），故页头计数可能高于标签列表行数——属已知取舍，非缺陷。
+    // 补录语义正确）+ 游戏 + 情绪游戏 + 认知游戏统一会话，全部进活动条时间戳
+    // （认知会话查询上限 200 条、按最新优先，对"最近/本月"计数无实际影响——advisor r3 #1）
+    // gameCount（Tab 标签计数）另用口径（T25 用户 2026-09-20 确认方案 a）：只数「游戏 + 情绪游戏」两路，
+    // 与嵌入 GameRecordsPanel 的可见行数严格一致（认知会话不在该面板表格展示）——标签数 = 行数，不再出现对不上。
     const timestamps: string[] = []
     try {
       const equipmentApi = new EquipmentTrainingAPI()
@@ -597,14 +485,14 @@ async function loadStudentDetail() {
       const trainingSessionApi = new TrainingSessionAPI()
       const gameRecords = gameApi.getStudentTrainingRecords(studentId)
       const emotionalRecords = emotionalGamesApi.getStudentRecords(studentId)
-      // 认知游戏统一会话（与 GameRecordsPanel 同源，仅该模块存 training_sessions）
+      // 认知游戏统一会话：仅进活动条时间戳（最近训练/本月训练），不计入 gameCount（T25 方案 a：
+      // GameRecordsPanel 未传 entryCode 时不聚合该路，标签计数须与表格可见行数一致）
       const cognitiveSessions = trainingSessionApi.listSessions({
         studentId,
         sessionFamily: 'cognitive_game',
         limit: 200,
       })
-      gameCount.value =
-        gameRecords.length + emotionalRecords.length + cognitiveSessions.length
+      gameCount.value = gameRecords.length + emotionalRecords.length
       for (const record of gameRecords) {
         if (record.created_at) timestamps.push(record.created_at)
       }
@@ -642,9 +530,12 @@ onMounted(async () => {
   await loadStudentDetail()
 })
 
+// 仅响应同路由换学生（/students/:id → 另一个 id）；离开本页（目标路由无 id 参数）时
+// pre-watcher 理论上会被父级重渲染卸载跳过，但显式判空短路更稳，不依赖调度细节（advisor r1 #3）
 watch(
   () => route.params.id,
-  async () => {
+  async (newId) => {
+    if (!newId) return
     await loadStudentDetail()
   },
 )
@@ -655,15 +546,15 @@ watch(
   --detail-text: #303133;
   --detail-muted: #606266;
   --detail-soft: #909399;
+  --detail-faint: #a8abb2;
   --detail-border: #e6ebf2;
   --detail-panel: #ffffff;
   --detail-shadow: 0 18px 44px rgba(143, 169, 204, 0.12);
   --detail-blue: #5f89d9;
   --detail-blue-soft: #edf4ff;
-  --detail-coral: #da8166;
-  --detail-coral-soft: #fff1ea;
-  --detail-teal: #2f9f93;
-  --detail-teal-soft: #e8f7f4;
+  --detail-danger: #d03050;
+  --detail-danger-soft: #fdf1f3;
+  --detail-danger-border: #f3c2cb;
   gap: 20px;
   background:
     radial-gradient(circle at top right, rgba(102, 168, 255, 0.15), transparent 28%),
@@ -707,83 +598,73 @@ watch(
   color: var(--detail-text);
 }
 
-.detail-hero {
-  display: grid;
-  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
-  gap: 20px;
-}
-
-.profile-card,
-.overview-card {
+/* ═══ 2026-09-20 重构：全宽档案 Hero（原 detail-hero 左右分栏已废弃） ═══ */
+.profile-hero {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
   border-radius: 22px;
   background: var(--detail-panel);
   box-shadow: var(--detail-shadow);
   overflow: hidden;
 }
 
-.profile-card::before,
-.overview-card::before {
+.profile-hero::before {
   content: '';
   position: absolute;
   pointer-events: none;
-  inset: auto auto 100% 100%;
-}
-
-.profile-card::before {
   top: -100px;
   right: -40px;
   width: 220px;
   height: 220px;
-  background: radial-gradient(circle, rgba(95, 137, 217, 0.18), rgba(95, 137, 217, 0));
+  background: radial-gradient(circle, rgba(95, 137, 217, 0.14), rgba(95, 137, 217, 0));
 }
 
-.overview-card::before {
-  top: -120px;
-  right: -70px;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(47, 159, 147, 0.16), rgba(47, 159, 147, 0));
+.profile-hero__main {
+  display: grid;
+  grid-template-columns: minmax(320px, 5fr) minmax(0, 6fr);
+  gap: 24px;
+  align-items: start;
 }
 
-.profile-card__hero {
+/* —— 左侧焦点：头像 + 姓名 + 标签 + 警示 —— */
+.profile-hero__identity {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 18px;
-  padding: 24px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.94) 0%, rgba(237, 244, 255, 0.88) 60%, rgba(255, 241, 234, 0.9) 100%);
-  border-bottom: 1px solid rgba(230, 235, 242, 0.8);
+  min-width: 0;
 }
 
-.profile-card__avatar-shell {
+.profile-hero__avatar-shell {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   width: 104px;
   height: 104px;
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(237, 244, 255, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.88);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(10px);
 }
 
-.profile-card__identity {
+.profile-hero__who {
   display: flex;
   flex-direction: column;
   gap: 10px;
   min-width: 0;
 }
 
-.profile-card__identity h2 {
+.profile-hero__who h2 {
   margin: 0;
   color: var(--detail-text);
-  font-size: 28px;
-  line-height: 1.1;
+  font-size: 26px;
+  line-height: 1.15;
 }
 
-.profile-card__meta {
+.profile-hero__tags {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -814,7 +695,7 @@ watch(
   display: flex;
   align-items: center;
   gap: 4px;
-  margin: 6px 0 0;
+  margin: 0;
   color: #b8860b;
   font-size: 12px;
   line-height: 1.5;
@@ -824,133 +705,100 @@ watch(
   flex-shrink: 0;
 }
 
-.profile-card__facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding: 20px 24px 24px;
-}
-
-.fact-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px 18px;
-  border-radius: 16px;
-  border: 1px solid var(--detail-border);
-  background: #fbfcfe;
-}
-
-.fact-card--wide {
-  grid-column: 1 / -1;
-}
-
-.fact-card--memory {
-  background: linear-gradient(180deg, #f6f9ff 0%, #fbfcfe 100%);
-  border-color: var(--detail-border);
-  cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.fact-card--memory:hover,
-.fact-card--memory:focus-visible {
-  border-color: var(--detail-blue, #4a7dff);
-  box-shadow: 0 4px 12px rgba(74, 125, 255, 0.12);
-  outline: none;
-}
-
-.fact-card__memory-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.fact-card__memory-link {
-  font-size: 12px;
-  color: var(--detail-blue, #4a7dff);
-  white-space: nowrap;
-}
-
-.fact-card__memory-total {
-  display: block;
-  margin-top: 6px;
-  color: var(--detail-text);
-  font-size: 28px;
-  line-height: 1.2;
-}
-
-.fact-card__memory-count {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--detail-soft);
-  white-space: nowrap;
-}
-
-.fact-card__label {
-  color: var(--detail-soft);
-  font-size: 12px;
-}
-
-.fact-card__value {
-  color: var(--detail-text);
-  font-size: 16px;
-  line-height: 1.35;
-}
-
-.overview-card {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 24px;
-}
-
-.overview-card__intro {
+/* 健康安全警示条（2026-09-20 用户拍板）：姓名下方高优先级展示，红色高亮 */
+.health-alert {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--detail-danger-border);
+  border-left: 4px solid var(--detail-danger);
+  background: var(--detail-danger-soft);
 }
 
-/* 训练画像摘要条：最近评估/最近训练/本月训练 一屏可见 */
-.activity-strip {
+.health-alert__icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--detail-danger);
+  font-size: 18px;
+}
+
+.health-alert__text {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 10px 18px;
-  padding: 12px 18px;
+  align-items: baseline;
+  gap: 2px 6px;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.health-alert__text strong {
+  color: var(--detail-danger);
+  font-weight: 700;
+}
+
+.health-alert__text span {
+  color: #9f3a4d;
+}
+
+/* —— 右侧元数据紧凑网格：3 列，次要信息置灰 —— */
+.profile-hero__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 14px;
   border-radius: 14px;
   border: 1px solid var(--detail-border);
   background: #fbfcfe;
 }
 
-.activity-strip__item {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-
-.activity-strip__label {
-  font-size: 12px;
+.meta-item__label {
   color: var(--detail-soft);
-  white-space: nowrap;
+  font-size: 12px;
 }
 
-.activity-strip__value {
-  font-size: 14px;
+.meta-item__value {
+  margin: 0;
   color: var(--detail-text);
-  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
-.activity-strip__divider {
-  width: 1px;
-  height: 18px;
-  background: var(--detail-border);
+/* 次要信息（创建时间等）置灰 */
+.meta-item--muted .meta-item__value {
+  color: var(--detail-faint);
+  font-weight: 500;
 }
 
-/* AI 记忆置顶摘要：关键记忆在左侧信息区直接可见 */
+/* —— 档案区底部：置顶记忆 + 最近活动 + AI 记忆入口 —— */
+.profile-hero__aside {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--detail-border);
+}
+
+.profile-hero__aside-row {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* AI 记忆置顶摘要：关键记忆在档案区直接可见 */
 .memory-highlights {
   display: flex;
   flex-direction: column;
@@ -989,208 +837,52 @@ watch(
   color: var(--detail-text);
 }
 
-.overview-card__copy {
+/* 训练画像摘要条：最近评估/最近训练/本月训练（2026-09-19 约定，随重构迁入档案区） */
+.activity-strip {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: 1 1 320px;
+  gap: 10px 18px;
+  min-width: 0;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--detail-border);
+  background: #fbfcfe;
+}
+
+.activity-strip__item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   min-width: 0;
 }
 
-.overview-card__copy h2 {
-  margin: 0;
-  color: var(--detail-text);
-  font-size: 28px;
-  line-height: 1.1;
-}
-
-.overview-card__copy p {
-  margin: 0;
-  max-width: 660px;
-  color: var(--detail-muted);
-  line-height: 1.6;
-}
-
-.overview-card__focus {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 152px;
-  padding: 16px 18px;
-  border-radius: 18px;
-  background: #f7fafc;
-  border: 1px solid var(--detail-border);
-}
-
-.overview-card__focus-label,
-.records-shell__summary-label {
-  color: var(--detail-soft);
+.activity-strip__label {
   font-size: 12px;
-}
-
-.overview-card__focus-value,
-.records-shell__summary-value {
-  color: var(--detail-text);
-  font-size: 20px;
-  line-height: 1.2;
-}
-
-.overview-card__focus-meta,
-.records-shell__summary-meta {
-  color: var(--detail-muted);
-  font-size: 13px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.stat-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 170px;
-  padding: 18px;
-  border-radius: 18px;
-  border: 1px solid var(--detail-border);
-  background: #ffffff;
-  text-align: left;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-}
-
-.stat-card__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.stat-card__glyph {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.stat-card__action {
   color: var(--detail-soft);
-  font-size: 12px;
+  white-space: nowrap;
 }
 
-.stat-card__number {
+.activity-strip__value {
+  font-size: 14px;
   color: var(--detail-text);
-  font-size: clamp(34px, 3.2vw, 46px);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.04em;
+  white-space: nowrap;
 }
 
-.stat-card__label {
-  color: var(--detail-text);
-  font-size: 15px;
-  font-weight: 600;
+.activity-strip__divider {
+  width: 1px;
+  height: 18px;
+  background: var(--detail-border);
 }
 
-.stat-card__hint {
-  color: var(--detail-muted);
-  font-size: 13px;
-  line-height: 1.5;
-}
+/* AI 记忆数量入口卡样式已随元素删除（2026-09-20 用户确认：与下方 AI 记忆 Tab 重复） */
 
-.stat-card--assessment .stat-card__glyph {
-  background: var(--detail-blue-soft);
-  color: var(--detail-blue);
-}
-
-.stat-card--equipment .stat-card__glyph {
-  background: var(--detail-coral-soft);
-  color: var(--detail-coral);
-}
-
-.stat-card--games .stat-card__glyph {
-  background: var(--detail-teal-soft);
-  color: var(--detail-teal);
-}
-
-.stat-card--assessment.is-active {
-  border-color: #cbd8fb;
-  background: linear-gradient(180deg, #f3f7ff 0%, #ffffff 100%);
-  box-shadow: 0 18px 32px rgba(95, 137, 217, 0.16);
-}
-
-.stat-card--equipment.is-active {
-  border-color: #f4ccb9;
-  background: linear-gradient(180deg, #fff5f1 0%, #ffffff 100%);
-  box-shadow: 0 18px 32px rgba(218, 129, 102, 0.14);
-}
-
-.stat-card--games.is-active {
-  border-color: #bfe8e2;
-  background: linear-gradient(180deg, #eefbf8 0%, #ffffff 100%);
-  box-shadow: 0 18px 32px rgba(47, 159, 147, 0.15);
-}
-
+/* ═══ 相关记录 Tab 区（2026-09-20 重构：紧贴档案区，标题/摘要块已删） ═══ */
 .student-detail-main {
   padding: 24px;
   border-radius: 22px;
   box-shadow: var(--detail-shadow);
-}
-
-.records-shell {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.records-shell__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-}
-
-.records-shell__title {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.records-shell__title h2 {
-  margin: 0;
-  color: var(--detail-text);
-  font-size: 24px;
-  line-height: 1.15;
-}
-
-.records-shell__title p {
-  margin: 0;
-  color: var(--detail-muted);
-  line-height: 1.6;
-}
-
-.records-shell__summary {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 152px;
-  padding: 16px 18px;
-  border-radius: 18px;
-  background: #f7fafc;
-  border: 1px solid var(--detail-border);
-}
-
-.records-tabs {
-  margin-top: 2px;
 }
 
 .records-tabs :deep(.el-tabs__header) {
@@ -1230,12 +922,8 @@ watch(
 }
 
 @media (max-width: 1200px) {
-  .detail-hero {
+  .profile-hero__main {
     grid-template-columns: 1fr;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1265,45 +953,29 @@ watch(
   }
 
   .header-copy h1,
-  .profile-card__identity h2,
-  .overview-card__copy h2 {
+  .profile-hero__who h2 {
     font-size: 24px;
   }
 
-  .profile-card__hero,
-  .overview-card,
-  .student-detail-main {
+  .profile-hero {
     padding: 18px;
   }
 
-  .profile-card__hero {
+  .profile-hero__identity {
     flex-direction: column;
-    align-items: flex-start;
   }
 
-  .profile-card__avatar-shell {
+  .profile-hero__avatar-shell {
     width: 96px;
     height: 96px;
   }
 
-  .profile-card__facts,
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .profile-hero__meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .profile-card__facts {
-    padding: 18px;
-  }
-
-  .overview-card__intro,
-  .records-shell__header {
+  .profile-hero__aside-row {
     flex-direction: column;
-  }
-
-  .overview-card__focus,
-  .records-shell__summary {
-    width: 100%;
-    min-width: 0;
   }
 
   .records-tabs :deep(.el-tabs__item) {
