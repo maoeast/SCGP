@@ -735,6 +735,8 @@ const getLevelText = (level: string) => {
 
 // 获取等级样式类
 const getLevelClass = (level: string) => {
+  // 数据库 level 存中文（sm-norms.ts SMEvaluationLevels 原样落库），映射表必须同时覆盖中文与英文键，
+  // 否则查表失败返回空 class，等级文字只剩白色无背景（浅灰卡上不可读）
   const classMap: Record<string, string> = {
     'extremely_severe': 'level-extremely-severe',
     'severe': 'level-severe',
@@ -744,7 +746,18 @@ const getLevelClass = (level: string) => {
     'normal': 'level-normal',
     'good': 'level-good',
     'excellent': 'level-excellent',
-    'outstanding': 'level-outstanding'
+    'outstanding': 'level-outstanding',
+    // 数据库实际存储的中文等级——与 SMReportTemplate 等级键对齐（常模表 SMEvaluationLevels 实际 8 档，'非常优秀' 为模板侧超集键）
+    '极重度': 'level-extremely-severe',
+    '重度': 'level-severe',
+    '中度': 'level-moderate',
+    '轻度': 'level-mild',
+    '边缘': 'level-borderline',
+    '正常': 'level-normal',
+    '高常': 'level-good',
+    '优秀': 'level-excellent',
+    '非常优秀': 'level-outstanding',
+    // '未知'（getEvaluationLevel 对未命中分数的兜底值）走 .level-badge 默认蓝色，可读
   }
   return classMap[level] || ''
 }
@@ -1242,20 +1255,22 @@ onMounted(async () => {
 }
 
 .level-badge {
-  padding: 10px 20px;
-  border-radius: 20px;
-  color: white;
+  /* 与粗分/标准分同构的彩色文字展示（原白字药丸在浅灰卡上不可读，且等级间无区分） */
+  padding: 0;
+  border-radius: 0;
+  color: #409eff; /* 未匹配等级时的兜底色 */
 }
 
-.level-extremely-severe { background: #f56c6c; }
-.level-severe { background: #e65d6e; }
-.level-moderate { background: #e6a23c; }
-.level-mild { background: #eebc54; color: #333; }
-.level-borderline { background: #f1e05a; color: #333; }
-.level-normal { background: #b3e19d; color: #333; }
-.level-good { background: #67c23a; }
-.level-excellent { background: #30b08f; }
-.level-outstanding { background: #13ce66; }
+/* 评定等级按等级区分配色（深色调保证浅灰卡底上可读：红→橙→黄→绿 对应 严重→优秀） */
+.level-extremely-severe { color: #a83232; }
+.level-severe { color: #d04a4a; }
+.level-moderate { color: #d97a00; }
+.level-mild { color: #b08a00; }
+.level-borderline { color: #8f8a1f; }
+.level-normal { color: #529b2e; }
+.level-good { color: #2a9d8a; }
+.level-excellent { color: #0f9e6e; }
+.level-outstanding { color: #0c8a5f; }
 
 .result-description h4 {
   margin: 0 0 10px 0;
