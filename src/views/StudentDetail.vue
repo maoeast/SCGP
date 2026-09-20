@@ -69,6 +69,20 @@
             <strong class="fact-card__value">{{ fact.value }}</strong>
           </article>
 
+          <!-- 监护人信息（2026-09-20 档案补全）：家长沟通与紧急联系 -->
+          <article v-if="guardianInfo" class="fact-card fact-card--wide">
+            <span class="fact-card__label">监护人</span>
+            <strong class="fact-card__value">{{ guardianInfo.name }} · {{ guardianInfo.phone }}</strong>
+          </article>
+
+          <!-- 健康备注（训练安全须知：既往病史/过敏/用药） -->
+          <div v-if="healthNotes" class="memory-highlights fact-card--wide">
+            <div class="memory-highlights__item">
+              <span class="fact-card__label">健康备注</span>
+              <strong class="fact-card__value">{{ healthNotes }}</strong>
+            </div>
+          </div>
+
           <!-- AI 记忆置顶摘要：展示已确认置顶/关键记忆，教师无需翻面板即可看到关键信息（用户 2026-09-19 约定） -->
           <div
             v-if="aiStore.memoryEnabled && pinnedMemories.length > 0"
@@ -327,8 +341,17 @@ const detailFacts = computed(() => [
   { label: '性别', value: student.value?.gender || '未设置' },
   { label: '年龄', value: student.value?.birthday ? `${getStudentAge(student.value.birthday)}岁` : '-' },
   { label: '出生日期', value: formatStudentDate(student.value?.birthday) },
+  { label: '学籍号', value: student.value?.registry_no || '-' },
   { label: '创建时间', value: formatStudentDate(student.value?.created_at) },
 ])
+// 监护人信息：有任一字段即展示（监护人/健康备注是训练安全与家长沟通的关键档案）
+const guardianInfo = computed(() => {
+  const s = student.value
+  if (!s?.guardian_name && !s?.guardian_phone) return null
+  const relation = s.guardian_relation ? `（${s.guardian_relation}）` : ''
+  return { name: `${s.guardian_name || '未填写'}${relation}`, phone: s.guardian_phone || '未填写' }
+})
+const healthNotes = computed(() => student.value?.health_notes?.trim() || '')
 const detailMetrics = computed(() => [
   {
     key: 'assessments' as const,

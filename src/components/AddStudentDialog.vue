@@ -80,6 +80,41 @@
           </div>
         </div>
 
+        <div class="form-row">
+          <div class="form-group">
+            <label for="guardian_name">监护人姓名</label>
+            <input id="guardian_name" v-model="studentForm.guardian_name" type="text" placeholder="如：陈爱国" />
+          </div>
+          <div class="form-group">
+            <label for="guardian_relation">与学生关系</label>
+            <select id="guardian_relation" v-model="studentForm.guardian_relation">
+              <option value="">请选择</option>
+              <option v-for="rel in GUARDIAN_RELATIONS" :key="rel" :value="rel">{{ rel }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="guardian_phone">监护人电话</label>
+            <input id="guardian_phone" v-model="studentForm.guardian_phone" type="tel" placeholder="用于家长沟通与紧急联系" />
+          </div>
+          <div class="form-group">
+            <label for="registry_no">学籍号</label>
+            <input id="registry_no" v-model="studentForm.registry_no" type="text" placeholder="全国学籍号（G 开头 19 位）" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="health_notes">健康备注</label>
+          <textarea
+            id="health_notes"
+            v-model="studentForm.health_notes"
+            rows="2"
+            placeholder="既往病史 / 过敏史 / 用药情况等训练安全须知（选填）"
+          ></textarea>
+        </div>
+
         <div class="form-group">
           <label>头像</label>
           <AvatarPicker
@@ -141,6 +176,11 @@ interface EditableStudent {
   avatar_path?: string
   current_class_id?: number | null
   current_class_name?: string | null
+  guardian_name?: string | null
+  guardian_relation?: string | null
+  guardian_phone?: string | null
+  health_notes?: string | null
+  registry_no?: string | null
 }
 
 interface StudentFormState {
@@ -150,6 +190,11 @@ interface StudentFormState {
   student_no: string
   disorder: string
   classId: number | null
+  guardian_name: string
+  guardian_relation: string
+  guardian_phone: string
+  health_notes: string
+  registry_no: string
 }
 
 const props = defineProps<{
@@ -160,6 +205,7 @@ const studentStore = useStudentStore()
 const standardDatePickerProps = STANDARD_DATE_PICKER_PROPS
 const diagnosisOptions = DIAGNOSIS_OPTIONS
 const studentAvatarPresets = STUDENT_AVATAR_PRESETS
+const GUARDIAN_RELATIONS = ['父亲', '母亲', '祖父', '祖母', '外祖父', '外祖母', '其他亲属', '监护人']
 
 const saving = ref(false)
 const avatarPreview = ref('')
@@ -184,7 +230,12 @@ function createEmptyStudentForm(): StudentFormState {
     birthday: '',
     student_no: '',
     disorder: '',
-    classId: null
+    classId: null,
+    guardian_name: '',
+    guardian_relation: '',
+    guardian_phone: '',
+    health_notes: '',
+    registry_no: ''
   }
 }
 
@@ -213,7 +264,12 @@ const studentForm = ref<StudentFormState>({
   birthday: '',
   student_no: '',
   disorder: '',
-  classId: null as number | null
+  classId: null as number | null,
+  guardian_name: '',
+  guardian_relation: '',
+  guardian_phone: '',
+  health_notes: '',
+  registry_no: ''
 })
 
 const submitStudentForm = async () => {
@@ -345,7 +401,12 @@ const initializeForm = () => {
       birthday: props.editingStudent.birthday || '',
       student_no: props.editingStudent.student_no || '',
       disorder: normalizeDiagnosisValue(props.editingStudent.disorder),
-      classId: props.editingStudent.current_class_id ?? null
+      classId: props.editingStudent.current_class_id ?? null,
+      guardian_name: props.editingStudent.guardian_name || '',
+      guardian_relation: props.editingStudent.guardian_relation || '',
+      guardian_phone: props.editingStudent.guardian_phone || '',
+      health_notes: props.editingStudent.health_notes || '',
+      registry_no: props.editingStudent.registry_no || ''
     }
     avatarPreview.value = props.editingStudent.avatar_path || ''
     // 学年由 resolveEditingEnrollmentYear 在班级列表加载后解析（initializeForm 时列表未加载，
@@ -458,16 +519,20 @@ onMounted(() => {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
   padding: 10px 15px;
   border: 1px solid #ddd;
   border-radius: 5px;
   font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
 }
 
 .form-group input:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: #4CAF50;
 }

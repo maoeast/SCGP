@@ -11,6 +11,11 @@ export interface Student {
   avatar_path?: string
   current_class_id?: number | null
   current_class_name?: string | null
+  guardian_name?: string | null
+  guardian_relation?: string | null
+  guardian_phone?: string | null
+  health_notes?: string | null
+  registry_no?: string | null
   created_at: string
   updated_at: string
 }

@@ -24,6 +24,11 @@ CREATE TABLE IF NOT EXISTS student (
   student_no TEXT UNIQUE,
   disorder TEXT,
   avatar_path TEXT,
+  guardian_name TEXT,
+  guardian_relation TEXT,
+  guardian_phone TEXT,
+  health_notes TEXT,
+  registry_no TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
@@ -4917,6 +4922,12 @@ async function initializeClassTables(rawDb: any): Promise<void> {
   // 7. ALTER TABLE 语句（使用 safeAddColumn 检查列是否存在）
   safeAddColumn(rawDb, 'student', 'current_class_id INTEGER')
   safeAddColumn(rawDb, 'student', 'current_class_name TEXT')
+  // 学生档案补全（2026-09-20）：监护人三件套 + 健康备注 + 学籍号；新库建表已含，旧库幂等补列
+  safeAddColumn(rawDb, 'student', 'guardian_name TEXT')
+  safeAddColumn(rawDb, 'student', 'guardian_relation TEXT')
+  safeAddColumn(rawDb, 'student', 'guardian_phone TEXT')
+  safeAddColumn(rawDb, 'student', 'health_notes TEXT')
+  safeAddColumn(rawDb, 'student', 'registry_no TEXT')
   safeAddColumn(rawDb, 'training_records', 'class_id INTEGER')
   safeAddColumn(rawDb, 'training_records', 'class_name TEXT')
   safeAddColumn(rawDb, 'train_log', 'class_id INTEGER')

@@ -177,6 +177,33 @@ function studentAvatar(classId, gender) {
   return AVATAR.middleSchool[gender === '男' ? 'male' : 'female']
 }
 
+// 监护人演示数据池（姓氏与学生姓氏刻意不完全一致——真实家庭里学生随父/母姓皆有；
+// 电话用 13x 段虚构号；健康备注部分学生留空、部分给训练安全相关的真实感内容）
+function guardianFor(index, disorder) {
+  const surnames = ['陈', '林', '徐', '苏', '何', '高', '郭', '唐', '邓', '冯', '曹', '潘', '袁', '蔡', '蒋', '沈', '韩', '杨', '赵', '孙', '吴', '郑', '王', '李', '张', '刘', '黄', '周', '吴', '郑', '王', '李', '张', '刘', '黄', '周', '吴', '郑', '王', '李', '张', '刘']
+  const givenNames = ['建国', '秀兰', '志强', '丽华', '国栋', '桂芳', '永刚', '玉梅', '文斌', '淑芬', '建军', '雅琴', '伟东', '春燕', '洪波', '雪梅', '立新', '海燕', '向阳', '慧珍']
+  const relations = ['父亲', '母亲']
+  const healthByDisorder = {
+    '孤独症谱系障碍': '对噪音敏感，感统训练时避免强声设备',
+    '发育迟缓': '',
+    '言语障碍': '',
+    '智力障碍': '轻度贫血，注意运动强度',
+    '学习障碍': '',
+    '多重障碍': '癫痫史（药物控制中），训练需监护人陪同',
+  }
+  return {
+    guardian_name: surnames[index % surnames.length] + givenNames[index % givenNames.length],
+    guardian_relation: relations[index % relations.length],
+    // 138/139 段交替（父/母），后 8 位由 index 线性递推保证唯一
+    guardian_phone: index % 2 === 0
+      ? `138${String(74000000 + index * 137).padStart(8, '0').slice(0, 8)}`
+      : `139${String(74000000 + index * 211).padStart(8, '0').slice(0, 8)}`,
+    health_notes: healthByDisorder[disorder] ?? '',
+    // 全国学籍号口径：G + 18 位 = 19 位（与弹窗占位提示一致）；BigInt 避免 >MAX_SAFE_INTEGER 精度损失
+    registry_no: `G24${(43010000000000000n + BigInt(index) * 7919n).toString().slice(0, 16).padStart(16, '0')}`,
+  }
+}
+
 const STUDENT_ROWS = Object.freeze([
   // 小班 20001（3-4 岁）
   { id: 10001, name: '陈沐阳', gender: '男', birthday: '2022-11-18', disorder: '发育迟缓', class_id: 20001 },
@@ -235,7 +262,12 @@ const STUDENT_ROWS = Object.freeze([
 ])
 
 export const STUDENTS = Object.freeze(
-  STUDENT_ROWS.map((s) => ({ ...s, student_no: `ST${s.id}`, avatar_path: studentAvatar(s.class_id, s.gender) })),
+  STUDENT_ROWS.map((s, index) => ({
+    ...s,
+    student_no: `ST${s.id}`,
+    avatar_path: studentAvatar(s.class_id, s.gender),
+    ...guardianFor(index, s.disorder),
+  })),
 )
 
 // ============================================================================

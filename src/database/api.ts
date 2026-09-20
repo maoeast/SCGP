@@ -662,6 +662,11 @@ export class StudentAPI extends DatabaseAPI {
         student_no,
         disorder,
         avatar_path,
+        guardian_name,
+        guardian_relation,
+        guardian_phone,
+        health_notes,
+        registry_no,
         current_class_id,
         current_class_name,
         created_at,
@@ -687,9 +692,12 @@ export class StudentAPI extends DatabaseAPI {
   async addStudent(student: any): Promise<number> {
     console.log('正在添加学生:', student);
     await this.executeAsync(`
-      INSERT INTO student (name, gender, birthday, student_no, disorder, avatar_path)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `, [student.name, student.gender, student.birthday, student.student_no, student.disorder, student.avatar_path || null]);
+      INSERT INTO student (name, gender, birthday, student_no, disorder, avatar_path,
+                           guardian_name, guardian_relation, guardian_phone, health_notes, registry_no)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [student.name, student.gender, student.birthday, student.student_no, student.disorder, student.avatar_path || null,
+        student.guardian_name || null, student.guardian_relation || null, student.guardian_phone || null,
+        student.health_notes || null, student.registry_no || null]);
 
     // 通过查询获取刚插入的学生ID
     const result = await this.queryOneAsync('SELECT last_insert_rowid() as id');
@@ -707,9 +715,13 @@ export class StudentAPI extends DatabaseAPI {
   async updateStudent(id: number, student: any): Promise<boolean> {
     const rowsAffected = await this.executeAsync(`
       UPDATE student
-      SET name = ?, gender = ?, birthday = ?, student_no = ?, disorder = ?, avatar_path = ?, updated_at = CURRENT_TIMESTAMP
+      SET name = ?, gender = ?, birthday = ?, student_no = ?, disorder = ?, avatar_path = ?,
+          guardian_name = ?, guardian_relation = ?, guardian_phone = ?, health_notes = ?, registry_no = ?,
+          updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `, [student.name, student.gender, student.birthday, student.student_no, student.disorder, student.avatar_path || null, id]);
+    `, [student.name, student.gender, student.birthday, student.student_no, student.disorder, student.avatar_path || null,
+        student.guardian_name || null, student.guardian_relation || null, student.guardian_phone || null,
+        student.health_notes || null, student.registry_no || null, id]);
 
     return rowsAffected > 0;
   }
@@ -732,6 +744,11 @@ export class StudentAPI extends DatabaseAPI {
         student_no,
         disorder,
         avatar_path,
+        guardian_name,
+        guardian_relation,
+        guardian_phone,
+        health_notes,
+        registry_no,
         current_class_id,
         current_class_name,
         created_at,

@@ -127,6 +127,13 @@ function checkTables(db, tableNames) {
   if (missing.length) {
     throw new Error(`目标库缺少表: ${missing.join(', ')}\n请确认 --db 指向的是 SCGP 应用初始化过的 database.sqlite。`)
   }
+  // 学生档案新列探测（2026-09-20 监护人/健康备注/学籍号）——旧 schema 库给出可读错误而非裸 SQL 报错
+  const studentCols = (db.exec("PRAGMA table_info(student)")[0]?.values ?? []).map((r) => r[1])
+  const missingCols = ['guardian_name', 'guardian_relation', 'guardian_phone', 'health_notes', 'registry_no']
+    .filter((c) => !studentCols.includes(c))
+  if (missingCols.length) {
+    throw new Error(`目标库 student 表缺少列: ${missingCols.join(', ')}\n目标库 schema 过旧——请先用新版应用启动一次完成迁移，再执行 seed。`)
+  }
 }
 
 // ============================================================================
@@ -314,9 +321,12 @@ function seedStudents(db, students) {
     const classRow = CLASSES.find((c) => c.id === student.class_id)
     db.run(
       `INSERT INTO student (id, name, gender, birthday, student_no, disorder, avatar_path,
+                            guardian_name, guardian_relation, guardian_phone, health_notes, registry_no,
                             current_class_id, current_class_name, created_at, updated_at)
        VALUES (${student.id}, ${quote(student.name)}, ${quote(student.gender)}, ${quote(student.birthday)},
                ${quote(student.student_no)}, ${quote(student.disorder)}, ${quote(student.avatar_path || null)},
+               ${quote(student.guardian_name || null)}, ${quote(student.guardian_relation || null)}, ${quote(student.guardian_phone || null)},
+               ${quote(student.health_notes || null)}, ${quote(student.registry_no || null)},
                ${classRow.id}, ${quote(classRow.name)}, ${quote(nowSql())}, ${quote(nowSql())})`,
     )
     // 当前入班行（触发器自动更新 current_enrollment）
