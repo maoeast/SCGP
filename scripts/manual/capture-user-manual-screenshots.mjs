@@ -2211,7 +2211,7 @@ async function loginFixture(page, fixture) {
   await page.locator('input[autocomplete="current-password"]').fill(fixture.credentials.password)
   await page.getByRole('button', { name: '登录系统' }).click()
   await page.waitForURL(/#\/dashboard(?:$|\?)/u, { timeout: 30_000 })
-  await page.getByText('首页看板', { exact: false }).first().waitFor({ state: 'visible', timeout: 30_000 })
+  await page.locator('.dashboard-hero').waitFor({ state: 'visible', timeout: 30_000 })
 }
 
 async function launchFixtureSession(viteUrl, workspace, fixtureName, actor) {
@@ -2269,13 +2269,13 @@ async function expectText(page, textValue, timeout = 20_000) {
 
 async function prepareS001(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
-  await expectText(page, '首页看板')
+  await expectText(page, '学生总数')
   await page.locator('.ai-floating-button').waitFor({ state: 'visible', timeout: 20_000 })
 }
 
 async function prepareS002(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
-  await expectText(page, '首页看板')
+  await expectText(page, '学生总数')
   await page.locator('.user-role').filter({ hasText: '教师' }).waitFor({ state: 'visible', timeout: 20_000 })
   await page.locator('.sidebar-nav .nav-item').filter({ hasText: '学生管理' }).first()
     .waitFor({ state: 'visible', timeout: 20_000 })
@@ -2311,7 +2311,7 @@ async function prepareS006(page, scenario, fixture) {
 
 async function prepareS007(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
-  await expectText(page, '首页看板')
+  await expectText(page, '学生总数')
   await page.getByRole('button', { name: '打开用户菜单' }).click()
   await page.getByText('个人资料', { exact: true }).waitFor({ state: 'visible', timeout: 20_000 })
   await page.getByText('AI 聊天记录', { exact: true }).waitFor({ state: 'visible', timeout: 20_000 })
@@ -2320,7 +2320,7 @@ async function prepareS007(page, scenario, fixture) {
 
 async function prepareDashboard(page, scenario, fixture) {
   await navigateHash(page, interpolateUserManualScreenshotRoute(scenario, fixture.routeValues))
-  await expectText(page, '首页看板')
+  await expectText(page, '学生总数')
 }
 
 async function prepareS008(page, scenario, fixture) {
@@ -2354,7 +2354,7 @@ async function prepareS011(page, scenario, fixture) {
 
 async function prepareS012(page, scenario, fixture) {
   await navigateHash(page, '/dashboard')
-  await expectText(page, '首页看板')
+  await expectText(page, '学生总数')
   await page.getByRole('button', { name: '打开用户菜单' }).click()
   await page.getByText('个人资料', { exact: true }).click()
   await page.waitForURL(/#\/profile(?:$|\?)/u, { timeout: 20_000 })

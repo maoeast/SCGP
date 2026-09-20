@@ -1,18 +1,5 @@
 <template>
   <div class="page-container scgp-admin-page dashboard-page" v-loading="loading">
-    <div class="page-header dashboard-header">
-      <div class="header-left">
-        <h1>首页看板</h1>
-        <p class="subtitle">聚焦今天要做的评估、训练与干预提醒，用真实业务数据支持一线决策。</p>
-      </div>
-      <div class="header-right">
-        <el-button @click="loadDashboard">
-          <el-icon><RefreshRight /></el-icon>
-          刷新数据
-        </el-button>
-      </div>
-    </div>
-
     <!-- 看板上半部分：上下分层（Banner 全宽白色 surface + 下方 5 张数据卡片平铺在页面底色上） -->
     <section class="dashboard-hero">
       <div class="dashboard-hero__banner scgp-surface">
@@ -409,7 +396,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -417,7 +404,6 @@ import {
   Calendar,
   EditPen,
   Finished,
-  RefreshRight,
   VideoPlay,
   Warning,
   UserFilled,
@@ -750,30 +736,54 @@ function formatDateTime(value: string) {
   return `${date.getMonth() + 1}月${date.getDate()}日 ${hours}:${minutes}`
 }
 
-async function loadDashboard() {
+// 自动刷新：每 3 分钟静默拉取一次看板数据（已无手动刷新入口）
+const AUTO_REFRESH_INTERVAL_MS = 180_000
+const AUTO_REFRESH_HIDDEN_SKIP = 'hidden'
+let autoRefreshTimer: ReturnType<typeof setInterval> | undefined
+
+async function loadDashboard({ silent = false } = {}) {
   try {
-    loading.value = true
+    if (!silent) loading.value = true
     snapshot.value = await dashboardApi.getSnapshot()
   } catch (error) {
     console.error('加载首页看板失败:', error)
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
+  }
+}
+
+// 定时刷新：页面不可见时直接跳过，避免后台空跑请求
+function handleAutoRefreshTick() {
+  if (document.visibilityState === AUTO_REFRESH_HIDDEN_SKIP) return
+  void loadDashboard({ silent: true })
+}
+
+// 焦点唤醒刷新：从其他窗口/标签切回时立即拉一次
+function handleVisibilityChange() {
+  if (document.visibilityState === 'visible') {
+    void loadDashboard({ silent: true })
   }
 }
 
 onMounted(() => {
-  loadDashboard()
+  void loadDashboard()
   currentQuote.value = pickRandomQuote(quotes)
+  autoRefreshTimer = setInterval(handleAutoRefreshTick, AUTO_REFRESH_INTERVAL_MS)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+})
+
+onUnmounted(() => {
+  if (autoRefreshTimer !== undefined) {
+    clearInterval(autoRefreshTimer)
+    autoRefreshTimer = undefined
+  }
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 </script>
 
 <style scoped>
 .dashboard-page {
   gap: 20px;
-}
-
-.dashboard-header {
-  margin-bottom: 0;
 }
 
 .dashboard-hero__banner,
@@ -806,7 +816,7 @@ onMounted(() => {
 
 .dashboard-hero__greeting h2 {
   margin: 0;
-  color: var(--scgp-text);
+  color: var(--scgp-primary);
   font-size: clamp(28px, 2.7vw, 36px);
   font-weight: 700;
   line-height: 1.12;
