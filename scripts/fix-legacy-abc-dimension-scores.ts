@@ -30,9 +30,13 @@ type SqlDatabase = { exec: (sql: string) => any[]; run: (sql: string, params: an
 const args = process.argv.slice(2)
 const apply = args.includes('--apply')
 const dbArg = args.find((arg) => arg.startsWith('--db='))
+const dbArgValue = dbArg ? dbArg.slice('--db='.length).trim() : ''
+if (dbArg && !dbArgValue) {
+  console.error('✗ --db= 参数为空；请写完整路径，或去掉该参数使用默认库')
+  process.exit(1)
+}
 const dbPath =
-  (dbArg ? dbArg.slice('--db='.length) : '') ||
-  join(process.env.APPDATA ?? '', 'scgp', 'database.sqlite')
+  dbArgValue || join(process.env.APPDATA ?? '', 'scgp', 'database.sqlite')
 
 /** 题库里真实存在题目的维度（满分 > 0）；满分 0 的维度视为已下线，不写回 */
 const BANK_CODES = (Object.keys(ABC_SUBSCALE_MAX_SCORES) as ABCDimensionCode[]).filter(
@@ -138,7 +142,8 @@ async function main() {
     return
   }
 
-  const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15)
+  // 备份名时间戳取 UTC（toISOString）：本地为 UTC+8 时，文件名小时 = 本地小时 - 8
+  const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14) // YYYYMMDDHHMMSS（UTC）
   const backupPath = `${dbPath}.bak-${stamp}`
   copyFileSync(dbPath, backupPath)
   console.log(`\n已备份：${backupPath}`)
