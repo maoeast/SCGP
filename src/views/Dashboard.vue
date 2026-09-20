@@ -13,13 +13,20 @@
       </div>
     </div>
 
-    <section class="dashboard-hero scgp-surface">
-      <div class="dashboard-hero__main">
-        <h2>{{ focusPanel.title }}</h2>
-        <p>{{ focusPanel.description }}</p>
+    <!-- 看板上半部分：上下分层（Banner 全宽白色 surface + 下方 5 张数据卡片平铺在页面底色上） -->
+    <section class="dashboard-hero">
+      <div class="dashboard-hero__banner scgp-surface">
+        <div class="dashboard-hero__greeting">
+          <h2>{{ greeting }}</h2>
+          <p v-if="currentQuote" class="dashboard-hero__quote">{{ currentQuote }}</p>
+        </div>
 
-        <!-- 主行动按钮：按 focusPanel 优先级引导到对应区块（2026-09-20 看板去冗余：左侧不再重复右侧统计卡） -->
-        <div class="dashboard-hero__actions">
+        <!-- 主行动按钮：按 focusPanel 优先级引导到对应区块（今日日程 > 预警 > 待评估 > AI 助手） -->
+        <div class="dashboard-hero__action">
+          <div class="dashboard-hero__focus">
+            <strong class="dashboard-hero__focus-title">{{ focusPanel.title }}</strong>
+            <span class="dashboard-hero__focus-desc">{{ focusPanel.description }}</span>
+          </div>
           <el-button type="primary" size="large" round @click="handlePrimaryAction">
             {{ primaryAction.label }}
           </el-button>
@@ -429,6 +436,7 @@ import {
   BUILTIN_AGENT_PRESETS,
   type BuiltinAgentPreset,
 } from '@/data/ai-agent-presets'
+import quotes from '@/data/quotes.json'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -463,6 +471,19 @@ const snapshot = ref<DashboardSnapshot>({
   weeklyTrend: [],
 })
 
+// 每日暖心语录：进入首页时从 src/data/quotes.json 随机抽取一条
+const currentQuote = ref('')
+
+// 欢迎语称呼：优先登录用户姓名，缺失时按角色名兜底
+const displayName = computed(() => {
+  const user = authStore.user
+  const name = (user?.name || '').trim()
+  if (name) return name
+  return user?.role === 'teacher' ? '老师' : '系统管理员'
+})
+
+const greeting = computed(() => `您好，${displayName.value}！`)
+
 const moduleLabelMap: Record<string, string> = {
   all: '综合训练',
   sensory: '感官训练',
@@ -476,7 +497,7 @@ const metrics = computed(() => ([
   {
     label: '学生总数',
     value: snapshot.value.overview.studentCount,
-    hint: '当前系统内在册学生',
+    hint: '当前系统内注册学生',
     icon: UserFilled,
     tone: 'blue' as DashboardTone,
   },
@@ -639,6 +660,11 @@ function handlePrimaryAction() {
   // agent 面板无独立锚点（AI 助手区），兜底跳系统设置下的 AI 入口不存在时静默
 }
 
+function pickRandomQuote(list: string[]) {
+  if (list.length === 0) return ''
+  return list[Math.floor(Math.random() * list.length)] ?? ''
+}
+
 function getModuleLabel(moduleCode: string) {
   return moduleLabelMap[moduleCode] || moduleCode || '训练模块'
 }
@@ -740,6 +766,7 @@ async function loadDashboard() {
 
 onMounted(() => {
   loadDashboard()
+  currentQuote.value = pickRandomQuote(quotes)
 })
 </script>
 
@@ -752,54 +779,90 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-.dashboard-hero,
+.dashboard-hero__banner,
 .dashboard-surface {
   padding: 24px;
 }
 
+/* 看板上半部分：Banner 与卡片组上下分层（不再左右分栏） */
 .dashboard-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.95fr);
-  gap: 22px;
-}
-
-.dashboard-hero__main {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
 }
 
-.dashboard-hero__main h2 {
+/* Hero Banner：100% 宽度、左右两端对齐 */
+.dashboard-hero__banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.dashboard-hero__greeting {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-hero__greeting h2 {
   margin: 0;
   color: var(--scgp-text);
   font-size: clamp(28px, 2.7vw, 36px);
+  font-weight: 700;
   line-height: 1.12;
   letter-spacing: -0.03em;
 }
 
-.dashboard-hero__main p {
+/* 每日语录：柔和的次级文本色（带微弱主题蓝的灰），弱于主标题但不抢眼 */
+.dashboard-hero__quote {
   margin: 0;
-  max-width: 620px;
-  color: var(--scgp-muted);
-  font-size: 15px;
-  line-height: 1.75;
+  max-width: 720px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.7;
 }
 
-.dashboard-hero__actions {
-  margin-top: 20px;
+/* 行动区：核心待办提示 + 主行动按钮紧凑横排 */
+.dashboard-hero__action {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.dashboard-hero__actions .el-button {
+.dashboard-hero__focus {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 420px;
+}
+
+.dashboard-hero__focus-title {
+  color: var(--scgp-text);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.dashboard-hero__focus-desc {
+  color: var(--scgp-subtle);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.dashboard-hero__action .el-button {
   font-weight: 600;
   letter-spacing: 1px;
 }
 
+/* 数据卡片组：Banner 下方平铺（直接落在页面底色上） */
 .dashboard-hero__metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
 }
 
 .hero-metric-card {
@@ -1372,7 +1435,6 @@ onMounted(() => {
 }
 
 @media (max-width: 1280px) {
-  .dashboard-hero,
   .dashboard-board {
     grid-template-columns: 1fr;
   }
@@ -1388,12 +1450,23 @@ onMounted(() => {
     padding: 16px;
   }
 
-  .dashboard-hero,
+  .dashboard-hero__banner,
   .dashboard-surface {
     padding: 18px;
   }
 
-  .dashboard-hero__actions,
+  /* 窄屏 Banner 改为上下堆叠，行动区同样竖排 */
+  .dashboard-hero__banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-hero__action {
+    align-items: flex-start;
+    flex-direction: column;
+    width: 100%;
+  }
+
   .dashboard-hero__metrics,
   .home-agent-grid {
     grid-template-columns: 1fr;
