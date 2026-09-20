@@ -4,6 +4,14 @@
 
 ---
 
+## [2026-09-20] 首页看板上半部分重构：上下分层 Hero Banner + 卡片组 + 每日语录
+- `src/views/Dashboard.vue` 上半部分放弃左右分栏，改为上下分层：全宽 Hero Banner（白底 surface）+ 下方 5 张数据卡片平铺在页面底色上
+- Banner 左：`您好，{登录用户姓名}！`主标题 + 每日暖心语录副标题；右：核心待办提示 + 主行动按钮，两者紧凑横排并保持原有的 `focusPanel` 优先级平滑滚动
+- 新增 `src/data/quotes.json`（60 条特教语录）：`currentQuote` 在 `onMounted` 随机抽取一条，每次进入首页刷新
+- 欢迎语称呼取 `authStore.user.name`，缺失时按角色兜底（teacher→老师，其余→系统管理员）
+- 卡片组仍是真实聚合数据（`DashboardAPI.getSnapshot().overview`），仅栅格改为 `repeat(auto-fit, minmax(200px, 1fr))`
+- `.dashboard-hero` 类名保留（用户手册截图脚本 `scripts/manual/capture-user-manual-screenshots.mjs` 按它等待首屏渲染）
+
 ## [2026-09-11] 资源中心-教学资料列表分页（12 个/页）
 - `src/views/resource-center/TeachingMaterials.vue` 教学资料卡片列表从全量渲染改为前端切片分页：每页固定 12 个（用户约定），不再一次渲染全部视频/图片/文档卡片
 - 分页栏与训练资源标签同款（`el-pagination`：总数/上下页/页码/跳页）；切维度、切资料类型、搜索、切收藏视图时自动回到第 1 页
