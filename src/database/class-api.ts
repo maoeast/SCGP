@@ -574,6 +574,30 @@ export class ClassAPI {
   }
 
   /**
+   * 学生退出班级（转学/删除场景；历史行关闭而非删除，保留学籍轨迹）
+   * 复用 upgradeGrade 毕业分支的写入形态（is_current=0 + leave_date/reason + student 清空）
+   */
+  async removeStudentFromClass(studentId: number, reason: ClassChangeReason = ClassChangeReason.TRANSFER): Promise<boolean> {
+    // 本地日期而非 UTC（toISOString 在 +08 时区 08:00 前会记前一天——评审 R2 #6 残留）
+    const now = new Date()
+    const changeDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    this.db.run(`
+      UPDATE student_class_history
+      SET is_current = 0, leave_date = ?, leave_reason = ?
+      WHERE student_id = ? AND is_current = 1
+    `, [changeDate, reason, studentId])
+
+    this.db.run(`
+      UPDATE student
+      SET current_class_id = NULL, current_class_name = NULL
+      WHERE id = ?
+    `, [studentId])
+
+    await this.forceSave()
+    return true
+  }
+
+  /**
    * 学年升级（批量）（异步 + 立即保存）
    */
   async upgradeGrade(request: GradeUpgradeRequest): Promise<number> {

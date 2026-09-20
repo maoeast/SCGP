@@ -113,10 +113,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useStudentStore } from '@/stores/student'
 import { classAPI } from '@/database/class-api'
-import { getCurrentAcademicYear } from '@/types/class'
+import { ClassChangeReason, getCurrentAcademicYear } from '@/types/class'
 import type { ClassInfo } from '@/types/class'
 import { STANDARD_DATE_PICKER_PROPS, disableFutureDates } from '@/utils/date-picker'
 import StudentAvatar from '@/components/student/StudentAvatar.vue'
@@ -139,6 +139,8 @@ interface EditableStudent {
   student_no?: string
   disorder?: string
   avatar_path?: string
+  current_class_id?: number | null
+  current_class_name?: string | null
 }
 
 interface StudentFormState {
@@ -162,6 +164,18 @@ const studentAvatarPresets = STUDENT_AVATAR_PRESETS
 const saving = ref(false)
 const avatarPreview = ref('')
 const availableClasses = ref<ClassInfo[]>([])
+// 编辑打开时学生当前班级所属学年（调班按该学年写历史行）。
+// 由 loadAvailableClasses 完成后调用 resolveEditingEnrollmentYear 填充；
+// 若学生停留在往年班级（不在当前学年班级列表），置 null 表示「跨学年调班需走学生分班页」
+const editingEnrollmentYear = ref<string | null>(getCurrentAcademicYear())
+
+/** 编辑模式下解析学生当前班级的学年；返回 null 表示跨学年场景，弹窗不支持调班 */
+const resolveEditingEnrollmentYear = (): string | null => {
+  if (!props.editingStudent?.current_class_id) return getCurrentAcademicYear()
+  const currentClass = availableClasses.value.find((c) => c.id === props.editingStudent?.current_class_id)
+  // 学生所在班不在当前学年列表（往年班/已停用）→ 跨学年场景
+  return currentClass ? currentClass.academicYear : null
+}
 
 function createEmptyStudentForm(): StudentFormState {
   return {
@@ -230,12 +244,63 @@ const submitStudentForm = async () => {
     const finalAvatarPath = avatarPreview.value
 
     if (props.editingStudent) {
+      // 编辑模式调班前置检查（必须在 updateStudent 之前——确认框取消/阻断时不得已落库基础字段）
+      const originalClassId = props.editingStudent.current_class_id ?? null
+      const newClassId = studentForm.value.classId
+      const classChanged = newClassId !== originalClassId
+      if (classChanged && editingEnrollmentYear.value === null) {
+        // 学生停留在往年班级（跨学年）：弹窗只支持同学年调班，学年升级/跨学年调班走学生分班页
+        alert('该学生当前班级属于往一学年，调班请到「学生分班」页完成学年升级或跨学年调班操作。')
+        return
+      }
+      if (classChanged && !newClassId) {
+        // 从有班改为「暂不分班」：退出班级是破坏性操作，先确认（未确认前不落库任何字段）
+        try {
+          await ElMessageBox.confirm(
+            `确定将学生从「${props.editingStudent.current_class_name ?? '当前班级'}」退出吗？该学生的班级历史将关闭。`,
+            '暂不分班',
+            { confirmButtonText: '确定退出', cancelButtonText: '取消', type: 'warning' }
+          )
+        } catch {
+          return // 用户取消，不保存任何改动
+        }
+      }
+
       const { classId: _classId, ...studentData } = studentForm.value
       await studentStore.updateStudent(props.editingStudent.id, {
         ...studentData,
         gender: normalizedGender,
         avatar_path: finalAvatarPath || '',
       })
+
+      // 编辑模式调班：与学生分班页同走 assignStudentToClass
+      //（同学年内 = UPDATE 现有历史行 + 显式人数对账；跨学年场景已在上方阻断）
+      if (classChanged && props.editingStudent.name) {
+        const today = new Date()
+        const enrollmentDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+        const studentName = studentForm.value.name // 用表单最新姓名，改名+调班同次保存时历史行不写旧名（R2 N1）
+        if (!newClassId) {
+          try {
+            await classAPI.removeStudentFromClass(props.editingStudent.id, ClassChangeReason.ADJUST)
+          } catch (error: unknown) {
+            console.warn('退出班级失败:', error)
+            alert('学生信息已保存，但退出班级失败：' + getErrorMessage(error))
+          }
+        } else {
+          try {
+            await classAPI.assignStudentToClass(
+              props.editingStudent.id,
+              studentName,
+              newClassId,
+              editingEnrollmentYear.value as string,
+              enrollmentDate
+            )
+          } catch (error: unknown) {
+            console.warn('调班失败:', error)
+            alert('学生信息已保存，但调班失败：' + getErrorMessage(error))
+          }
+        }
+      }
     } else {
       const { classId, ...studentData } = studentForm.value
       const studentId = await studentStore.addStudent({
@@ -273,15 +338,18 @@ const submitStudentForm = async () => {
 
 const initializeForm = () => {
   if (props.editingStudent) {
+    // 回显学生当前班级（编辑前下拉为空的根因：此前硬编码 classId: null）
     studentForm.value = {
       name: props.editingStudent.name || '',
       gender: props.editingStudent.gender || '',
       birthday: props.editingStudent.birthday || '',
       student_no: props.editingStudent.student_no || '',
       disorder: normalizeDiagnosisValue(props.editingStudent.disorder),
-      classId: null
+      classId: props.editingStudent.current_class_id ?? null
     }
     avatarPreview.value = props.editingStudent.avatar_path || ''
+    // 学年由 resolveEditingEnrollmentYear 在班级列表加载后解析（initializeForm 时列表未加载，
+    // 在这里查 availableClasses 永远落空——评审 R1#1 的时序缺陷）
   } else {
     studentForm.value = createEmptyStudentForm()
   }
@@ -305,6 +373,8 @@ const loadAvailableClasses = () => {
 onMounted(() => {
   initializeForm()
   loadAvailableClasses()
+  // 学年解析必须在班级列表加载之后（评审 R1#1：initializeForm 时列表为空，find 恒落空）
+  editingEnrollmentYear.value = resolveEditingEnrollmentYear()
 })
 </script>
 
