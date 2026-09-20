@@ -18,15 +18,11 @@
         <h2>{{ focusPanel.title }}</h2>
         <p>{{ focusPanel.description }}</p>
 
-        <div class="dashboard-highlight-grid">
-          <article
-            v-for="highlight in heroHighlights"
-            :key="highlight.label"
-            class="dashboard-highlight"
-          >
-            <span class="dashboard-highlight__label">{{ highlight.label }}</span>
-            <strong class="dashboard-highlight__value">{{ highlight.value }}</strong>
-          </article>
+        <!-- 主行动按钮：按 focusPanel 优先级引导到对应区块（2026-09-20 看板去冗余：左侧不再重复右侧统计卡） -->
+        <div class="dashboard-hero__actions">
+          <el-button type="primary" size="large" round @click="handlePrimaryAction">
+            {{ primaryAction.label }}
+          </el-button>
         </div>
       </div>
 
@@ -51,7 +47,7 @@
       </div>
     </section>
 
-    <section class="dashboard-surface scgp-surface" v-loading="aiStore.loading">
+    <section ref="panelRefs.agent.value" class="dashboard-surface scgp-surface" v-loading="aiStore.loading">
       <div class="dashboard-section-header">
         <div>
           <h2>AI 助手</h2>
@@ -238,7 +234,7 @@
     </section>
 
     <section class="dashboard-board">
-      <article class="dashboard-surface scgp-surface schedule-panel">
+      <article ref="panelRefs.schedule.value" class="dashboard-surface scgp-surface schedule-panel">
         <div class="dashboard-panel-header">
           <div>
             <h2>今日训练日程</h2>
@@ -299,7 +295,7 @@
       </article>
 
       <div class="dashboard-board__stack">
-        <article class="dashboard-surface scgp-surface alert-panel">
+        <article ref="panelRefs.anomaly.value" class="dashboard-surface scgp-surface alert-panel">
           <div class="dashboard-panel-header">
             <div>
               <h2>本周异常预警</h2>
@@ -350,7 +346,7 @@
           </div>
         </article>
 
-        <article class="dashboard-surface scgp-surface alert-panel">
+        <article ref="panelRefs.assessment.value" class="dashboard-surface scgp-surface alert-panel">
           <div class="dashboard-panel-header">
             <div>
               <h2>智能特教助理</h2>
@@ -445,7 +441,6 @@ use([CanvasRenderer, LineChart, GridComponent, TooltipComponent])
 
 type DashboardTone = 'blue' | 'amber' | 'green' | 'coral'
 
-const BUSINESS_MODULE_TOTAL = 5
 
 const router = useRouter()
 const dashboardApi = new DashboardAPI()
@@ -520,11 +515,6 @@ const displayedAnomalies = computed(() => snapshot.value.anomalies.slice(0, 4))
 // 今日训练日程最多展示 5 条，避免列表过长
 const displayedSchedule = computed(() => snapshot.value.schedule.slice(0, 5))
 const displayedAssessmentAlerts = computed(() => snapshot.value.assessmentAlerts.slice(0, 4))
-const accessibleModuleCount = computed(() =>
-  ['sensory', 'emotional', 'social', 'cognitive', 'life_skills']
-    .filter((moduleCode) => authStore.hasModuleAccess(moduleCode))
-    .length
-)
 const agentDetailVisible = ref(false)
 const selectedHomeAgentCode = ref('')
 const homeAgents = computed(() =>
@@ -617,24 +607,37 @@ const focusPanel = computed(() => {
   }
 })
 
-const heroHighlights = computed(() => ([
-  {
-    label: '当前学生',
-    value: `${snapshot.value.overview.studentCount} 名`,
-  },
-  {
-    label: '已授权能力包映射模块',
-    value: `${accessibleModuleCount.value}/${BUSINESS_MODULE_TOTAL}`,
-  },
-  {
-    label: '待评估',
-    value: `${snapshot.value.overview.pendingAssessmentCount} 条`,
-  },
-  {
-    label: '本周预警',
-    value: `${snapshot.value.overview.weeklyAnomalyCount} 条`,
-  },
-]))
+// 主行动按钮：与 focusPanel 同优先级联动（今日日程 > 预警 > 待评估 > AI 助手）
+const primaryAction = computed(() => {
+  const overview = snapshot.value.overview
+  if (overview.todayTaskCount > 0) {
+    return { label: '进入今日日程', target: 'schedule' as const }
+  }
+  if (overview.weeklyAnomalyCount > 0) {
+    return { label: '查看异常预警', target: 'anomaly' as const }
+  }
+  if (overview.pendingAssessmentCount > 0) {
+    return { label: '查看待评估提醒', target: 'assessment' as const }
+  }
+  return { label: '咨询 AI 助手', target: 'agent' as const }
+})
+
+// 锚点滚动：引导到 focusPanel 对应的面板区块
+const panelRefs = {
+  schedule: ref<HTMLElement | null>(null),
+  anomaly: ref<HTMLElement | null>(null),
+  assessment: ref<HTMLElement | null>(null),
+  agent: ref<HTMLElement | null>(null),
+}
+
+function handlePrimaryAction() {
+  const el = panelRefs[primaryAction.value.target]?.value
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return
+  }
+  // agent 面板无独立锚点（AI 助手区），兜底跳系统设置下的 AI 入口不存在时静默
+}
 
 function getModuleLabel(moduleCode: string) {
   return moduleLabelMap[moduleCode] || moduleCode || '训练模块'
@@ -782,32 +785,15 @@ onMounted(() => {
   line-height: 1.75;
 }
 
-.dashboard-highlight-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 4px;
-}
-
-.dashboard-highlight {
+.dashboard-hero__actions {
+  margin-top: 20px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 16px 18px;
-  border-radius: 16px;
-  border: 1px solid var(--scgp-border);
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  gap: 12px;
 }
 
-.dashboard-highlight__label {
-  color: var(--scgp-subtle);
-  font-size: 12px;
-}
-
-.dashboard-highlight__value {
-  color: var(--scgp-text);
-  font-size: 18px;
-  line-height: 1.3;
+.dashboard-hero__actions .el-button {
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 
 .dashboard-hero__metrics {
@@ -1407,7 +1393,7 @@ onMounted(() => {
     padding: 18px;
   }
 
-  .dashboard-highlight-grid,
+  .dashboard-hero__actions,
   .dashboard-hero__metrics,
   .home-agent-grid {
     grid-template-columns: 1fr;
