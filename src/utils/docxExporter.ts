@@ -6,9 +6,11 @@
 import {
   Document, Paragraph, TextRun, Table, TableCell, TableRow,
   HeadingLevel, AlignmentType, BorderStyle, WidthType,
-  convertInchesToTwip, Packer, Header, Footer, PageNumber
+  convertInchesToTwip, Packer, Header
 } from 'docx'
 import { saveAs } from 'file-saver'
+import { initDatabase } from '@/database/init'
+import { REPORT_HEADER_KEY } from './report-export'
 
 // ===== 类型定义 =====
 
@@ -234,6 +236,34 @@ function createInfoRow(label: string, value: string): TableRow {
   })
 }
 
+/** 读取报告页眉设置（report_header）；空值/加载失败返回空串（不渲染页眉） */
+async function readReportHeaderText(): Promise<string> {
+  try {
+    const db = await initDatabase()
+    const row = db.get('SELECT value FROM system_config WHERE key = ?', [REPORT_HEADER_KEY]) as
+      | { value?: string | null }
+      | undefined
+    return (row?.value ?? '').trim()
+  } catch {
+    return ''
+  }
+}
+
+/** 报告页眉：小号灰字居中 + 底部分隔线（与 export-word.ts 同款观感） */
+function createLegacyReportHeader(text: string): Header {
+  return new Header({
+    children: [
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC' } },
+        children: [
+          new TextRun({ text, font: STYLES.small.font, size: STYLES.small.size, color: STYLES.small.color })
+        ]
+      })
+    ]
+  })
+}
+
 function createSignatureSection(): Paragraph[] {
   return [
     new Paragraph({ spacing: { before: 600 } }),
@@ -284,6 +314,7 @@ export async function exportSMToWord(data: SMExportData, filename: string): Prom
     group_activity: '集体活动'
   }
 
+  const headerText = await readReportHeaderText()
   const doc = new Document({
     sections: [{
       properties: {
@@ -296,6 +327,8 @@ export async function exportSMToWord(data: SMExportData, filename: string): Prom
           }
         }
       },
+      // 页眉文字为空不注入 header（不产生空页眉）
+      headers: headerText ? { default: createLegacyReportHeader(headerText) } : undefined,
       children: [
         createTitle('婴儿-初中生社会生活能力量表评估报告'),
 
@@ -374,6 +407,7 @@ export async function exportSMToWord(data: SMExportData, filename: string): Prom
 // ===== WeeFIM 量表导出 =====
 
 export async function exportWeeFIMToWord(data: WeeFIMExportData, filename: string): Promise<void> {
+  const headerText = await readReportHeaderText()
   const doc = new Document({
     sections: [{
       properties: {
@@ -386,6 +420,8 @@ export async function exportWeeFIMToWord(data: WeeFIMExportData, filename: strin
           }
         }
       },
+      // 页眉文字为空不注入 header（不产生空页眉）
+      headers: headerText ? { default: createLegacyReportHeader(headerText) } : undefined,
       children: [
         createTitle('改良儿童功能独立性评估量表报告'),
 
@@ -486,6 +522,7 @@ export async function exportCSIRSToWord(data: CSIRSExportData, filename: string)
     '严重偏低': 'F56C6C'
   }
 
+  const headerText = await readReportHeaderText()
   const doc = new Document({
     sections: [{
       properties: {
@@ -498,6 +535,8 @@ export async function exportCSIRSToWord(data: CSIRSExportData, filename: string)
           }
         }
       },
+      // 页眉文字为空不注入 header（不产生空页眉）
+      headers: headerText ? { default: createLegacyReportHeader(headerText) } : undefined,
       children: [
         createTitle('CSIRS 感觉统合评估报告'),
 
@@ -605,6 +644,7 @@ export async function exportConnersToWord(data: ConnersExportData, filename: str
     clinical: '临床显著'
   }
 
+  const headerText = await readReportHeaderText()
   const doc = new Document({
     sections: [{
       properties: {
@@ -617,6 +657,8 @@ export async function exportConnersToWord(data: ConnersExportData, filename: str
           }
         }
       },
+      // 页眉文字为空不注入 header（不产生空页眉）
+      headers: headerText ? { default: createLegacyReportHeader(headerText) } : undefined,
       children: [
         createTitle(`Conners 儿童行为问卷评估报告`),
         new Paragraph({
@@ -760,6 +802,7 @@ export async function exportEquipmentIEPToWord(data: EquipmentIEPExportData, fil
     })
   }
 
+  const headerText = await readReportHeaderText()
   const doc = new Document({
     sections: [{
       properties: {
@@ -772,6 +815,8 @@ export async function exportEquipmentIEPToWord(data: EquipmentIEPExportData, fil
           }
         }
       },
+      // 页眉文字为空不注入 header（不产生空页眉）
+      headers: headerText ? { default: createLegacyReportHeader(headerText) } : undefined,
       children: [
         createTitle('器材训练 IEP 评估报告'),
 

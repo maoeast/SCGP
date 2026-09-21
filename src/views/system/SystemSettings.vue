@@ -239,9 +239,9 @@
         <div class="system-settings-section__body">
           <el-form :model="settings" label-width="150px" class="settings-form">
             <el-form-item label="默认报告格式">
-              <el-radio-group v-model="settings.defaultReportFormat">
-                <el-radio value="pdf">PDF</el-radio>
+              <el-radio-group v-model="settings.defaultReportFormat" @change="persistReportSettings">
                 <el-radio value="word">Word</el-radio>
+                <el-radio value="html">HTML</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item label="包含学生头像">
@@ -249,10 +249,11 @@
                 v-model="settings.includeStudentAvatar"
                 active-text="是"
                 inactive-text="否"
+                @change="persistReportSettings"
               />
             </el-form-item>
             <el-form-item label="报告页眉">
-              <el-input v-model="settings.reportHeader" placeholder="请输入报告页眉文字" />
+              <el-input v-model="settings.reportHeader" placeholder="请输入报告页眉文字" @change="persistReportSettings" />
             </el-form-item>
           </el-form>
         </div>
@@ -267,6 +268,7 @@ import { ElMessage } from 'element-plus'
 import { Check } from '@element-plus/icons-vue'
 import { initDatabase } from '@/database/init'
 import { useSystemConfigStore } from '@/stores/systemConfig'
+import { normalizeReportExportFormat } from '@/utils/report-export'
 import {
   DEFAULT_LOGIN_PRIMARY_COLOR,
   LOGIN_THEME_PRESETS,
@@ -348,7 +350,7 @@ const settings = reactive({
   loginCardBgOpacity: 92,
   autoBackup: true,
   backupInterval: 7,
-  defaultReportFormat: 'pdf',
+  defaultReportFormat: 'word',
   includeStudentAvatar: true,
   reportHeader: '',
 })
@@ -441,7 +443,8 @@ const loadSettings = async () => {
           settings.backupInterval = parseInt(value) || 7
           break
         case 'default_report_format':
-          settings.defaultReportFormat = value || 'pdf'
+          // 存量 'pdf' 值兼容读作 word（DB 值不改；word/html 之外的值一律归 word）
+          settings.defaultReportFormat = normalizeReportExportFormat(value)
           break
         case 'include_student_avatar':
           settings.includeStudentAvatar = value === 'true'
@@ -484,6 +487,45 @@ const loadSettings = async () => {
     // colors are not replaced by a preset default after the async load.
     await nextTick()
     isHydratingSettings.value = false
+  }
+}
+
+// 报告设置即时持久化：选项变更即写库并显式落盘（不等全局保存按钮；2026-09-21 用户报告切页/刷新后设置回退的修复）
+const persistingReport = ref(false)
+const persistReportSettings = async () => {
+  if (persistingReport.value) return
+  persistingReport.value = true
+  try {
+    const db = await initDatabase()
+    const configMap: Record<string, string> = {
+      default_report_format: settings.defaultReportFormat,
+      include_student_avatar: settings.includeStudentAvatar.toString(),
+      report_header: settings.reportHeader,
+    }
+    for (const [key, value] of Object.entries(configMap)) {
+      const existing = db.get('SELECT id FROM system_config WHERE key = ?', [key])
+
+      if (existing) {
+        db.run('UPDATE system_config SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?', [
+          value,
+          key,
+        ])
+      } else {
+        db.run(
+          'INSERT INTO system_config (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)',
+          [key, value],
+        )
+      }
+    }
+    // SQLWrapper 为防抖保存（2s）；立即刷盘，避免用户在防抖窗口内刷新页面丢失设置
+    if (db.saveNow) {
+      await db.saveNow()
+    }
+  } catch (error) {
+    console.error('保存报告设置失败:', error)
+    ElMessage.error('报告设置保存失败，请重试')
+  } finally {
+    persistingReport.value = false
   }
 }
 
@@ -565,8 +607,9 @@ const handleSave = async () => {
       }
     }
 
-    if (db.saveToStorage) {
-      await db.saveToStorage()
+    // SQLWrapper 只有 saveNow（saveToStorage 从不存在，原写法是静默空操作）——立即刷盘确保设置即刻持久化
+    if (db.saveNow) {
+      await db.saveNow()
       console.log('✅ 数据库已显式保存')
     }
 

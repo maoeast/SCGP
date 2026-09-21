@@ -15,7 +15,7 @@
       </div>
       <div class="header-right">
         <el-button type="primary" :icon="Download" :disabled="!reportPayload" @click="exportWord">
-          导出Word
+          导出报告
         </el-button>
         <el-select v-model="selectedStudentId" placeholder="选择学生" style="width: 220px" @change="loadReport">
           <el-option
@@ -107,7 +107,8 @@ import EmotionAccuracyTrendChart from '@/components/emotional/charts/EmotionAccu
 import EmotionPerformanceBarChart from '@/components/emotional/charts/EmotionPerformanceBarChart.vue'
 import SceneMasteryRadarChart from '@/components/emotional/charts/SceneMasteryRadarChart.vue'
 import { EmotionalTrainingAPI, type EmotionalStudentReportPayload } from '@/database/emotional-api'
-import { exportWordDocument, type WordExportPayload } from '@/utils/export-word'
+import type { WordExportPayload } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
 
 const route = useRoute()
 const api = new EmotionalTrainingAPI()
@@ -239,7 +240,7 @@ function buildEmotionalWordPayload(payload: EmotionalStudentReportPayload): Word
 
   return {
     title: '情绪行为模块报告',
-    subtitle: '训练表现汇总 Word 导出版',
+    subtitle: '训练表现汇总报告',
     filename: buildFilename('情绪行为模块报告', payload.studentName),
     meta: [
       { label: '学生姓名', value: payload.studentName },
@@ -273,11 +274,11 @@ async function exportWord() {
 
   try {
     const payload = buildEmotionalWordPayload(reportPayload.value)
-    await exportWordDocument(payload)
-    ElMessage.success('Word导出成功')
+    await exportReport(payload, { studentId: selectedStudentId.value })
+    ElMessage.success('报告导出成功')
   } catch (error) {
-    console.error('导出Word失败:', error)
-    ElMessage.error('Word导出失败，请重试')
+    console.error('报告导出失败:', error)
+    ElMessage.error('报告导出失败，请重试')
   }
 }
 

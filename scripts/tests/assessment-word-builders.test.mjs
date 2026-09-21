@@ -54,7 +54,7 @@ function assertCommon(name, payload) {
 
 test('buildAbcWordPayload：等级分档解释 + 维度明细 + 工具说明', () => {
   const p = builders.buildAbcWordPayload({
-    studentName: '测试儿童', assessmentDate: '2026-09-10T10:00:00Z', ageMonths: 48,
+    studentName: '测试儿童', gender: '男', assessmentDate: '2026-09-10T10:00:00Z', ageMonths: 48,
     totalScore: 70, totalMaxScore: 158, levelText: '轻度',
     dimensionRows: [{ name: '感觉', score: 30, maxScore: 60, percentage: '50.0', description: '对感觉刺激的异常反应' }],
     summary: '总分 70 分，提示轻度孤独症症状（62-79分）。建议尽快启动早期干预，重点关注评分较高的维度。',
@@ -68,11 +68,13 @@ test('buildAbcWordPayload：等级分档解释 + 维度明细 + 工具说明', (
   // 等级分档解释须含分档区间（非一行套话）
   const summary = p.sections.find((s) => s.heading === '结果解释').paragraphs[0]
   assert.ok(summary.includes('62-79'), 'ABC 结果解释应含等级分档区间')
+  // 基本信息须含性别（2026-09-21 补：此前导出无性别栏）
+  assert.ok(p.meta.some((m) => m.label === '性别' && m.value === '男'), 'ABC meta 缺性别')
 })
 
 test('buildAtecWordPayload：分量表明细含计分方向 + 等级分档解释', () => {
   const p = builders.buildAtecWordPayload({
-    studentName: '测试儿童', assessmentDate: '2026-09-10T10:00:00Z', ageMonths: 48,
+    studentName: '测试儿童', gender: '女', assessmentDate: '2026-09-10T10:00:00Z', ageMonths: 48,
     totalScore: 80, totalMaxScore: 179, levelText: '中度',
     subscaleRows: [{ name: '社交能力', score: 40, maxScore: 60, percentage: '66.7', description: '社交互动', scoringNote: '正向计分：分数越高表示问题越多' }],
     summary: '总分 80/179 分，提示中度孤独症症状。干预重点：社交能力（40/60）得分较高。',
@@ -83,6 +85,7 @@ test('buildAtecWordPayload：分量表明细含计分方向 + 等级分档解释
   assert.ok(subscale.columns.includes('计分方向'), 'ATEC 分量表表须含计分方向列')
   const summary = p.sections.find((s) => s.heading === '结果解释').paragraphs[0]
   assert.ok(summary.includes('179'), 'ATEC 结果解释应含满分')
+  assert.ok(p.meta.some((m) => m.label === '性别' && m.value === '女'), 'ATEC meta 缺性别')
 })
 
 test('buildCrtWordPayload：IQ/百分位/五组明细/免责', () => {
@@ -160,6 +163,42 @@ test('buildCognitiveSelfWordPayload：用时单位为秒（非毫秒）', () => 
   assert.ok(rtRow, 'CognitiveSelf 缺答对平均用时行')
   const seconds = Number(String(rtRow.value).replace(/[^0-9.]/g, ''))
   assert.ok(seconds > 0 && seconds < 60, `CognitiveSelf 用时疑似毫秒未换算: ${rtRow.value}`)
+  // 未传性别时基本信息显示「未填写」（而非空值/未知）
+  assert.ok(p.meta.some((m) => m.label === '性别' && m.value === '未填写'), 'CognitiveSelf 缺性别占位')
+})
+
+test('buildSDQWordPayload：性别 meta 透传', () => {
+  const p = builders.buildSDQWordPayload({
+    studentName: '测试儿童', gender: '女', ageMonths: 60, assessmentDate: '2026-09-10T10:00:00Z',
+    totalDifficultiesScore: 10, totalLevelText: '正常', prosocialScore: 7, prosocialLevelText: '正常',
+    feedback: { overallSummary: [], overallAdvice: [], expertRecommendations: [] },
+    dimensionDetails: [], structuredAdvice: {},
+  })
+  assertCommon('SDQ', p)
+  assert.ok(p.meta.some((m) => m.label === '性别' && m.value === '女'), 'SDQ meta 缺性别')
+})
+
+test('buildConnersWordPayload：性别英文存储归一为中文', () => {
+  const p = builders.buildConnersWordPayload({
+    student: { name: '测试儿童', gender: 'male', age: 5, birthday: '' },
+    assessment: { id: 1, date: '2026-09-10', scaleType: 'psq', pi_score: 0, ni_score: 0, is_valid: true, invalid_reason: '' },
+    totalScore: 50, summary: '总体说明', dimensions: [], advice: [],
+  })
+  assertCommon('Conners', p)
+  assert.ok(p.meta.some((m) => m.label === '性别' && m.value === '男'), 'Conners male 应归一为「男」')
+})
+
+test('formatGenderLabel：男/女、male/female、M/F 归一，空值「未填写」', async () => {
+  const { formatGenderLabel } = await jiti.import(join(projectRoot, 'src/utils/student-display.ts'))
+  assert.equal(formatGenderLabel('男'), '男')
+  assert.equal(formatGenderLabel('女'), '女')
+  assert.equal(formatGenderLabel('male'), '男')
+  assert.equal(formatGenderLabel('female'), '女')
+  assert.equal(formatGenderLabel('M'), '男')
+  assert.equal(formatGenderLabel('F'), '女')
+  assert.equal(formatGenderLabel(''), '未填写')
+  assert.equal(formatGenderLabel(null), '未填写')
+  assert.equal(formatGenderLabel(undefined), '未填写')
 })
 
 test('buildCpep3WordPayload（回归）：meta 并入基本信息、无重复段', () => {
@@ -187,6 +226,7 @@ test('buildCnbsr2016WordPayload（回归）：干预段仅常模内、超龄含�
   const inNorm = builders.buildCnbsr2016WordPayload({ ...base, isAgeSupported: true })
   assertCommon('CNBSR', inNorm)
   assert.ok(inNorm.sections.some((s) => s.heading?.startsWith('重点干预建议：大运动')), 'CNBSR 常模内缺干预段')
+  assert.ok(inNorm.meta.some((m) => m.label === '性别' && m.value === '女'), 'CNBSR meta 缺性别')
 
   const overAge = builders.buildCnbsr2016WordPayload({ ...base, isAgeSupported: false, ageMonths: 90 })
   assert.ok(!overAge.sections.some((s) => s.heading?.startsWith('重点干预建议')), 'CNBSR 超龄不应有干预段')

@@ -9,7 +9,7 @@
           </div>
           <div class="header-actions">
             <el-button type="primary" :icon="Download" @click="exportWord">
-              导出Word
+              导出报告
             </el-button>
             <el-button :icon="Clock" @click="viewHistory">
               查看历史
@@ -178,7 +178,7 @@ import { getDatabase } from '@/database/init'
 import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
 import type { CSIRSAssessment, CSIRSDimension } from '@/types/csirs'
 import { buildCSIRSWordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
 
 // T分阈值常量
 const TSCORE_EXCELLENT_THRESHOLD = 40
@@ -328,15 +328,19 @@ const goBack = () => {
   router.back()
 }
 
-// 导出Word
+// 导出报告
 const exportWord = async () => {
+  if (!assessment.value) {
+    ElMessage.warning('评估数据未加载完成，暂不能导出')
+    return
+  }
   try {
     const reportContent = {
       student: {
         name: assessment.value?.student_name || '',
-        gender: '未知',
+        gender: assessment.value?.student_gender || '未知',
         age: studentAge.value,
-        birthday: ''
+        birthday: assessment.value?.student_birthday || ''
       },
       assessment: {
         id: assessId.value,
@@ -361,11 +365,11 @@ const exportWord = async () => {
       reportContent,
       `CSIRS评估报告_${assessment.value?.student_name}_${new Date().toLocaleDateString()}`
     )
-    await exportWordDocument(payload)
-    ElMessage.success('Word导出成功')
+    await exportReport(payload, { studentId: assessment.value?.student_id })
+    ElMessage.success('报告导出成功')
   } catch (error) {
-    console.error('导出Word失败:', error)
-    ElMessage.error('Word导出失败，请重试')
+    console.error('报告导出失败:', error)
+    ElMessage.error('报告导出失败，请重试')
   }
 }
 
@@ -511,7 +515,7 @@ const loadAssessment = async () => {
     }
 
     const result = db.get(
-      `SELECT a.*, s.name as student_name
+      `SELECT a.*, s.name as student_name, s.gender as student_gender, s.birthday as student_birthday
        FROM csirs_assess a
        JOIN student s ON a.student_id = s.id
        WHERE a.id = ?`,
@@ -542,6 +546,8 @@ const loadAssessment = async () => {
       id: result.id,
       student_id: result.student_id,
       student_name: result.student_name,
+      student_gender: result.student_gender ?? null,
+      student_birthday: result.student_birthday ?? null,
       age_months: result.age_months,
       raw_scores: rawScores,
       t_scores: tScores,

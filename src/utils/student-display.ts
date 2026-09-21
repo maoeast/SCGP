@@ -84,6 +84,18 @@ export function normalizeStudentGender(gender?: string | null): StudentAvatarTon
   return 'neutral'
 }
 
+/**
+ * 性别中文标签：兼容 男/女（student 表）与 male/female、M/F（量表评估表）两种存储格式。
+ * 空值显示「未填写」；未知值原样返回（便于暴露脏数据）。
+ */
+export function formatGenderLabel(gender?: string | null): string {
+  const raw = gender?.trim() || ''
+  if (!raw) return '未填写'
+  if (raw === '男' || raw === 'male' || raw === 'M') return '男'
+  if (raw === '女' || raw === 'female' || raw === 'F') return '女'
+  return raw
+}
+
 export function formatStudentId(id?: string | null, full = false): string {
   const normalized = id?.trim()
   if (!normalized) return '未设置学号'

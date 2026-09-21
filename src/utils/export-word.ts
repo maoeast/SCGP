@@ -2,7 +2,11 @@ import {
   AlignmentType,
   BorderStyle,
   Document,
+  Header,
   HeadingLevel,
+  HorizontalPositionAlign,
+  HorizontalPositionRelativeFrom,
+  ImageRun,
   Packer,
   Paragraph,
   ShadingType,
@@ -10,6 +14,9 @@ import {
   TableCell,
   TableRow,
   TextRun,
+  TextWrappingSide,
+  TextWrappingType,
+  VerticalPositionRelativeFrom,
   WidthType,
   convertInchesToTwip,
 } from 'docx'
@@ -58,11 +65,17 @@ export interface WordExportPayload {
   filename: string
   meta?: WordMetaItem[]
   sections: WordSection[]
+  /** 报告页眉文字（来自系统设置 report_header；空值不渲染页眉） */
+  headerText?: string
+  /** 学生头像图片 URL（已过 resolveStudentAvatarUrl 过滤；导出层负责取字节嵌入，失败静默跳过） */
+  avatarUrl?: string
 }
 
-type WordExportReceiver = (blob: Blob, fileName: string) => void | Promise<void>
+export type WordExportReceiver = (blob: Blob, fileName: string) => void | Promise<void>
 
-function getWordExportReceiver(): WordExportReceiver | null {
+/** 手册截图拦截钩子（window.__SCGP_MANUAL_CAPTURE_EXPORT_WORD__）；HTML 导出与测试复用同一钩子 */
+export function getWordExportReceiver(): WordExportReceiver | null {
+  if (typeof window === 'undefined') return null
   const captureWindow = window as Window & {
     __SCGP_MANUAL_CAPTURE_EXPORT_WORD__?: WordExportReceiver
   }
@@ -82,7 +95,7 @@ const BORDER = {
   color: 'CCCCCC',
 }
 
-function cleanText(text: string | undefined): string {
+export function cleanText(text: string | undefined): string {
   if (!text) return ''
 
   return text
@@ -147,6 +160,66 @@ function createCellParagraphs(
   }))
 }
 
+// 头像证件照尺寸：2.5cm 宽（94px @96dpi），1 寸照比例 25:35
+const AVATAR_WIDTH_PX = 94
+const AVATAR_HEIGHT_PX = 132
+
+function detectImageType(bytes: Uint8Array): 'png' | 'jpg' | null {
+  if (bytes.length < 4) return null
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return 'png'
+  if (bytes[0] === 0xff && bytes[1] === 0xd8) return 'jpg'
+  return null
+}
+
+async function loadImageBytes(url: string): Promise<Uint8Array | null> {
+  try {
+    const response = await fetch(url)
+    if (!response.ok) return null
+    return new Uint8Array(await response.arrayBuffer())
+  } catch {
+    return null
+  }
+}
+
+/** 取头像字节并构建右浮证件照 ImageRun；任何一步失败（无 URL/加载失败/非图片）都静默跳过 */
+async function createAvatarImageRun(url?: string): Promise<ImageRun | null> {
+  const trimmed = url?.trim() || ''
+  if (!trimmed) return null
+  const bytes = await loadImageBytes(trimmed)
+  if (!bytes) return null
+  const type = detectImageType(bytes)
+  if (!type) return null
+  return new ImageRun({
+    type,
+    data: bytes,
+    transformation: { width: AVATAR_WIDTH_PX, height: AVATAR_HEIGHT_PX },
+    floating: {
+      horizontalPosition: {
+        relative: HorizontalPositionRelativeFrom.MARGIN,
+        align: HorizontalPositionAlign.RIGHT,
+      },
+      verticalPosition: {
+        relative: VerticalPositionRelativeFrom.MARGIN,
+        offset: 0,
+      },
+      wrap: { type: TextWrappingType.SQUARE, side: TextWrappingSide.LEFT },
+    },
+  })
+}
+
+/** 报告页眉：小号灰字居中 + 底部分隔线（页眉文字为空时调用方不注入 header） */
+function createDocumentHeader(text: string) {
+  return new Header({
+    children: [
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC' } },
+        children: [new TextRun({ text, font: FONT_FAMILY, size: 18, color: MUTED_COLOR })],
+      }),
+    ],
+  })
+}
+
 function createMetaTable(rows: WordMetaItem[]) {
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -197,18 +270,23 @@ function createTable(section: WordTableSection) {
 
 export async function exportWordDocument(payload: WordExportPayload): Promise<void> {
   const children: Array<Paragraph | Table> = []
+  const headerText = cleanText(payload.headerText || '')
+  const avatarRun = await createAvatarImageRun(payload.avatarUrl)
 
   children.push(new Paragraph({
     heading: HeadingLevel.TITLE,
     alignment: AlignmentType.CENTER,
     spacing: { after: 240 },
-    children: [new TextRun({
-      text: cleanText(payload.title),
-      bold: true,
-      font: FONT_FAMILY,
-      size: 34,
-      color: TEXT_COLOR,
-    })],
+    children: [
+      new TextRun({
+        text: cleanText(payload.title),
+        bold: true,
+        font: FONT_FAMILY,
+        size: 34,
+        color: TEXT_COLOR,
+      }),
+      ...(avatarRun ? [avatarRun] : []),
+    ],
   }))
 
   if (payload.subtitle) {
@@ -291,6 +369,8 @@ export async function exportWordDocument(payload: WordExportPayload): Promise<vo
             },
           },
         },
+        // 页眉文字为空不注入 header（不产生空页眉）
+        headers: headerText ? { default: createDocumentHeader(headerText) } : undefined,
         children,
       },
     ],

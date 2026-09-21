@@ -458,7 +458,10 @@ async function createSchemaAndData(db: any): Promise<void> {
        ('login_theme_backgrounds_preset_version', '1', '登录页主题背景预置版本'),
       ('auto_backup', 'true', '是否自动备份'),
       ('backup_interval', '7', '备份间隔（天）'),
-      ('trial_days', '7', '试用天数');
+      ('trial_days', '7', '试用天数'),
+      ('default_report_format', 'word', '默认报告格式（word/html）'),
+      ('include_student_avatar', 'true', '报告是否包含学生头像'),
+      ('report_header', '', '自定义报告页眉（空则不渲染）');
     `)
 
     console.log('初始数据插入成功')

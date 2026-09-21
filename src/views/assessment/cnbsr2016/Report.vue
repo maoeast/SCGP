@@ -13,7 +13,7 @@
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
-            <el-button type="primary" :icon="Download" :disabled="!assessment" @click="exportWord">导出Word</el-button>
+            <el-button type="primary" :icon="Download" :disabled="!assessment" @click="exportWord">导出报告</el-button>
           </div>
         </div>
       </template>
@@ -337,7 +337,8 @@ import {
 } from '@/features/assessment/cnbsr2016/report-model'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
 import { buildCnbsr2016WordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
+import { formatGenderLabel } from '@/utils/student-display'
 import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
 const route = useRoute()
@@ -357,7 +358,7 @@ const studentInfo = computed(() => {
 
   return {
     name: assessment.value.student_name || '未命名学生',
-    gender: assessment.value.student_gender || '-',
+    gender: formatGenderLabel(assessment.value.student_gender),
     ageMonths: Number(assessment.value.age_months || 0),
   }
 })
@@ -480,7 +481,7 @@ function formatPlainText(text: string, studentName?: string): string {
     .trim()
 }
 
-// 导出 Word（reportViewModel 组装；超龄记录同样可导出，含常模范围说明段）
+// 导出报告（reportViewModel 组装；超龄记录同样可导出，含常模范围说明段）
 const exportWord = async () => {
   if (!assessment.value || !reportViewModel.value) {
     ElMessage.warning('评估数据未加载完成')
@@ -542,11 +543,11 @@ const exportWord = async () => {
           : t.title,
       ),
     })
-    await exportWordDocument(payload)
-    ElMessage.success('Word 导出成功')
+    await exportReport(payload, { studentId: assessment.value?.student_id })
+    ElMessage.success('报告导出成功')
   } catch (error) {
-    console.error('导出Word失败:', error)
-    ElMessage.error('Word导出失败，请重试')
+    console.error('报告导出失败:', error)
+    ElMessage.error('报告导出失败，请重试')
   }
 }
 

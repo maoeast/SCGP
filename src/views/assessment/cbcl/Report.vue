@@ -11,7 +11,7 @@
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
-            <el-button type="primary" :icon="Download" @click="exportWord">导出Word</el-button>
+            <el-button type="primary" :icon="Download" @click="exportWord">导出报告</el-button>
           </div>
         </div>
       </template>
@@ -260,7 +260,7 @@
     <!-- Actions -->
     <div class="report-actions">
       <el-button @click="goBack">返回</el-button>
-      <el-button type="primary" @click="exportWord">导出Word</el-button>
+      <el-button type="primary" @click="exportWord">导出报告</el-button>
     </div>
       <!-- 评估用时信息（旧记录无数据时整卡不渲染） -->
     <AssessmentTimingInfo
@@ -281,7 +281,7 @@ import { CBCLDriver } from '@/strategies/assessment/CBCLDriver'
 import type { CBCLSocialCompetenceResult, CBCLFactorScore } from '@/strategies/assessment/CBCLDriver'
 import type { DimensionScore, ScoreResult } from '@/types/assessment'
 import { buildCBCLWordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
 
 // CBCL 因子名称映射 (中文 -> 英文代码)
 // 用于匹配 feedbackConfig.js 中的 dimensions 配置
@@ -727,11 +727,11 @@ const exportWord = async () => {
         : null,
     })
 
-    await exportWordDocument(payload)
-    ElMessage.success('Word 文档导出成功')
+    await exportReport(payload, { studentId: assessData.value?.student_id })
+    ElMessage.success('报告导出成功')
   } catch (error: any) {
-    console.error('导出 Word 失败:', error)
-    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+    console.error('报告导出失败:', error)
+    ElMessage.error(`报告导出失败: ${error?.message || '未知错误'}`)
   }
 }
 

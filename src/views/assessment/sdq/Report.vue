@@ -11,7 +11,7 @@
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
-            <el-button type="primary" :icon="Download" @click="exportWord">导出Word</el-button>
+            <el-button type="primary" :icon="Download" @click="exportWord">导出报告</el-button>
           </div>
         </div>
       </template>
@@ -218,7 +218,7 @@ import type { ScoreResult } from '@/types/assessment'
 import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
 import { SDQDriver } from '@/strategies/assessment/SDQDriver'
 import { buildSDQWordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
 import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
@@ -228,7 +228,7 @@ const router = useRouter()
 
 // 响应式数据
 const assessData = ref<SDQAssessRecord | null>(null)
-const studentInfo = ref<{ name: string; ageMonths: number } | null>(null)
+const studentInfo = ref<{ name: string; ageMonths: number; gender?: string } | null>(null)
 const feedback = ref<SDQStructuredFeedback | null>(null)
 
 // 计算属性：维度分数（直接从 feedback 获取）
@@ -426,6 +426,7 @@ const exportWord = async () => {
   try {
     const payload = buildSDQWordPayload({
       studentName: studentInfo.value.name,
+      gender: studentInfo.value.gender || '',
       ageMonths: studentInfo.value.ageMonths,
       assessmentDate: assessData.value.start_time,
       totalDifficultiesScore: assessData.value.total_difficulties_score,
@@ -437,11 +438,11 @@ const exportWord = async () => {
       structuredAdvice: structuredAdvice.value,
     })
 
-    await exportWordDocument(payload)
-    ElMessage.success('Word 文档导出成功')
+    await exportReport(payload, { studentId: assessData.value?.student_id })
+    ElMessage.success('报告导出成功')
   } catch (error: any) {
-    console.error('导出 Word 失败:', error)
-    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+    console.error('报告导出失败:', error)
+    ElMessage.error(`报告导出失败: ${error?.message || '未知错误'}`)
   }
 }
 
@@ -479,7 +480,8 @@ const loadAssessData = async () => {
     if (student) {
       studentInfo.value = {
         name: student.name,
-        ageMonths: record.age_months
+        ageMonths: record.age_months,
+        gender: student.gender || ''
       }
     }
 

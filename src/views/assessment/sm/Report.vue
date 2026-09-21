@@ -8,7 +8,7 @@
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
             <el-button type="primary" :icon="Download" @click="exportWord">
-              导出Word
+              导出报告
             </el-button>
           </div>
         </div>
@@ -245,7 +245,7 @@ import { useStudentStore } from '@/stores/student'
 import { SMAssessmentAPI } from '@/database/api'
 import { SMReportTemplate } from '@/utils/reportTemplates'
 import { buildSMWordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
 
 // 注册ECharts组件
 use([
@@ -1015,7 +1015,7 @@ const getQuestionsByDimension = (dimension: string) => {
   return result
 }
 
-// 导出Word
+// 导出报告
 const exportWord = async () => {
   try {
     const { SMReportTemplate } = await import('@/utils/reportTemplates')
@@ -1065,11 +1065,11 @@ const exportWord = async () => {
       reportContent,
       `S-M评估报告_${student.value?.name}_${new Date().toLocaleDateString()}`
     )
-    await exportWordDocument(payload)
-    ElMessage.success('Word导出成功')
+    await exportReport(payload, { studentId: studentId.value })
+    ElMessage.success('报告导出成功')
   } catch (error) {
-    console.error('导出Word失败:', error)
-    ElMessage.error('Word导出失败，请重试')
+    console.error('报告导出失败:', error)
+    ElMessage.error('报告导出失败，请重试')
   }
 }
 

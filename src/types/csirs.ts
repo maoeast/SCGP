@@ -93,6 +93,10 @@ export interface CSIRSAssessment {
   student_id: number;
   /** 学生姓名 */
   student_name: string;
+  /** 学生性别（男/女；JOIN student 表取） */
+  student_gender?: string | null;
+  /** 学生生日（YYYY-MM-DD；JOIN student 表取） */
+  student_birthday?: string | null;
   /** 学生年龄(月) */
   age_months: number;
   /** 各维度原始分 */

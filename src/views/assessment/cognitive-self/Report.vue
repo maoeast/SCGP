@@ -16,7 +16,7 @@
           <div class="header-left">
             <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
             <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
-            <el-button type="primary" :icon="Download" :disabled="!assessData" @click="exportWord">导出Word</el-button>
+            <el-button type="primary" :icon="Download" :disabled="!assessData" @click="exportWord">导出报告</el-button>
             <h2>视知觉图形匹配筛查（DRAFT）评估报告<el-tag size="small" type="warning" class="draft-tag">自编 DRAFT</el-tag></h2>
           </div>
         </div>
@@ -147,7 +147,7 @@ import { getDatabase } from '@/database/init'
 import { CognitiveSelfAssessmentAPI } from '@/database/api'
 import { COGNITIVE_SELF_LAYER_PLAIN } from '@/database/cognitive-self-data'
 import { buildCognitiveSelfWordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
 import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
@@ -271,7 +271,7 @@ const openAiInterpretation = () => {
   }, 500)
 }
 
-// 导出 Word（描述性结果/层级表现/错误分布；DRAFT 量表附草稿版声明）
+// 导出报告（描述性结果/层级表现/错误分布；DRAFT 量表附草稿版声明）
 async function exportWord() {
   if (!assessData.value) {
     ElMessage.warning('评估数据未加载完成')
@@ -281,14 +281,17 @@ async function exportWord() {
   try {
     // cognitive_self_assess 无 student_name 冗余列，从 student 表补查
     let studentName = '未命名学生'
+    let studentGender = ''
     if (assessData.value.student_id) {
       const db = getDatabase()
-      const studentRow = db.get('SELECT name FROM student WHERE id = ?', [assessData.value.student_id]) as any
+      const studentRow = db.get('SELECT name, gender FROM student WHERE id = ?', [assessData.value.student_id]) as any
       if (studentRow?.name) studentName = studentRow.name
+      studentGender = studentRow?.gender || ''
     }
 
     const payload = buildCognitiveSelfWordPayload({
       studentName,
+      gender: studentGender,
       assessmentDate: assessData.value.start_time || assessData.value.created_at || '',
       ageMonths: assessData.value.age_months || 0,
       totalRawScore: assessData.value.total_raw_score ?? 0,
@@ -314,11 +317,11 @@ async function exportWord() {
       })),
     })
 
-    await exportWordDocument(payload)
-    ElMessage.success('Word 文档导出成功')
+    await exportReport(payload, { studentId: assessData.value?.student_id })
+    ElMessage.success('报告导出成功')
   } catch (error: any) {
-    console.error('导出 Word 失败:', error)
-    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+    console.error('报告导出失败:', error)
+    ElMessage.error(`报告导出失败: ${error?.message || '未知错误'}`)
   }
 }
 

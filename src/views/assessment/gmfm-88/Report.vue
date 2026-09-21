@@ -11,7 +11,7 @@
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
             <el-button type="primary" :icon="Download" :disabled="!assessment" @click="exportWord">
-              导出Word
+              导出报告
             </el-button>
           </div>
         </div>
@@ -218,7 +218,7 @@ import { ElMessage } from 'element-plus'
 import { ArrowLeft, Download, Clock, ChatDotRound } from '@element-plus/icons-vue'
 import { Gmfm88AssessmentAPI } from '@/database/api'
 import { buildGmfm88WordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
 
 type FlagSeverity = 'error' | 'warning'
 
@@ -390,11 +390,11 @@ async function exportWord() {
       flags: flags.value,
       details: details.value,
     })
-    await exportWordDocument(payload)
-    ElMessage.success('Word导出成功')
+    await exportReport(payload, { studentId: assessment.value?.student_id })
+    ElMessage.success('报告导出成功')
   } catch (error) {
-    console.error('导出Word失败:', error)
-    ElMessage.error('Word导出失败，请重试')
+    console.error('报告导出失败:', error)
+    ElMessage.error('报告导出失败，请重试')
   }
 }
 

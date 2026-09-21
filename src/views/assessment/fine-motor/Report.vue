@@ -10,7 +10,7 @@
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
-            <el-button type="primary" :icon="Download" :disabled="!assessment" @click="exportWord">导出Word</el-button>
+            <el-button type="primary" :icon="Download" :disabled="!assessment" @click="exportWord">导出报告</el-button>
           </div>
         </div>
       </template>
@@ -225,7 +225,7 @@ import { ArrowLeft, ChatDotRound, Clock, Download } from '@element-plus/icons-vu
 import * as echarts from 'echarts'
 import { FineMotorAssessmentAPI } from '@/database/api'
 import { buildFineMotorWordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
 import {
   FINE_MOTOR_DIMENSIONS,
   FINE_MOTOR_QUESTIONS,
@@ -512,7 +512,7 @@ function formatPlainText(text: string): string {
     .trim()
 }
 
-// 导出 Word（总体水平/六维度/IEP 目标）
+// 导出报告（总体水平/六维度/IEP 目标）
 const exportWord = async () => {
   if (!assessment.value || !overallReport.value) {
     ElMessage.warning('评估数据未加载完成')
@@ -550,11 +550,11 @@ const exportWord = async () => {
       })),
     })
 
-    await exportWordDocument(payload)
-    ElMessage.success('Word 导出成功')
+    await exportReport(payload, { studentId: assessment.value?.student_id })
+    ElMessage.success('报告导出成功')
   } catch (error) {
-    console.error('导出Word失败:', error)
-    ElMessage.error('Word导出失败，请重试')
+    console.error('报告导出失败:', error)
+    ElMessage.error('报告导出失败，请重试')
   }
 }
 

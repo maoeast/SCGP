@@ -8,9 +8,12 @@ import type {
   WeeFIMExportData,
 } from './docxExporter'
 import type { WordExportPayload } from './export-word'
+import { formatGenderLabel } from './student-display'
 
 interface SDQWordReportInput {
   studentName: string
+  /** 学生性别（男/女；空值导出显示「未填写」） */
+  gender?: string
   ageMonths: number
   assessmentDate: string
   totalDifficultiesScore: number
@@ -250,6 +253,7 @@ export function buildSDQWordPayload(input: SDQWordReportInput): WordExportPayloa
     filename: buildFilename('SDQ评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
+      { label: '性别', value: formatGenderLabel(input.gender) },
       { label: '年龄', value: formatAgeMonths(input.ageMonths) },
       { label: '评估日期', value: formatDate(input.assessmentDate) },
     ],
@@ -587,7 +591,7 @@ export function buildConnersWordPayload(data: ConnersExportData, filename?: stri
     filename: filename || buildFilename(data.assessment.scaleType === 'psq' ? 'Conners-PSQ评估报告' : 'Conners-TRS评估报告', data.student.name),
     meta: [
       { label: '学生姓名', value: data.student.name },
-      { label: '性别', value: data.student.gender },
+      { label: '性别', value: formatGenderLabel(data.student.gender) },
       { label: '年龄', value: `${data.student.age}岁` },
       { label: '评估日期', value: data.assessment.date },
       { label: 'PI', value: `${data.assessment.pi_score}` },
@@ -1066,6 +1070,7 @@ export function buildCnbsr2016WordPayload(input: Cnbsr2016WordReportInput): Word
     filename: buildFilename('儿心量表Ⅱ评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
+      { label: '性别', value: formatGenderLabel(input.gender) },
       { label: '评估日期', value: formatDate(input.assessmentDate) },
     ],
     sections,
@@ -1076,6 +1081,8 @@ export function buildCnbsr2016WordPayload(input: Cnbsr2016WordReportInput): Word
 
 export interface AbcWordReportInput {
   studentName: string
+  /** 学生性别（男/女；空值导出显示「未填写」） */
+  gender?: string
   assessmentDate: string
   ageMonths: number
   totalScore: number
@@ -1113,6 +1120,7 @@ export function buildAbcWordPayload(input: AbcWordReportInput): WordExportPayloa
     filename: buildFilename('ABC评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
+      { label: '性别', value: formatGenderLabel(input.gender) },
       { label: '评估日期', value: formatDate(input.assessmentDate) },
       { label: '评估月龄', value: formatAgeMonths(input.ageMonths) },
     ],
@@ -1124,6 +1132,8 @@ export function buildAbcWordPayload(input: AbcWordReportInput): WordExportPayloa
 
 export interface AtecWordReportInput {
   studentName: string
+  /** 学生性别（男/女；空值导出显示「未填写」） */
+  gender?: string
   assessmentDate: string
   ageMonths: number
   totalScore: number
@@ -1160,6 +1170,7 @@ export function buildAtecWordPayload(input: AtecWordReportInput): WordExportPayl
     filename: buildFilename('ATEC评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
+      { label: '性别', value: formatGenderLabel(input.gender) },
       { label: '评估日期', value: formatDate(input.assessmentDate) },
       { label: '评估月龄', value: formatAgeMonths(input.ageMonths) },
     ],
@@ -1489,6 +1500,8 @@ export function buildBriefWordPayload(input: BriefWordReportInput): WordExportPa
 
 export interface CognitiveSelfWordReportInput {
   studentName: string
+  /** 学生性别（男/女；空值导出显示「未填写」） */
+  gender?: string
   assessmentDate: string
   ageMonths: number
   totalRawScore: number
@@ -1564,6 +1577,7 @@ export function buildCognitiveSelfWordPayload(input: CognitiveSelfWordReportInpu
     filename: buildFilename('视知觉筛查评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
+      { label: '性别', value: formatGenderLabel(input.gender) },
       { label: '评估日期', value: formatDate(input.assessmentDate) },
       { label: '评估月龄', value: formatAgeMonths(input.ageMonths) },
     ],

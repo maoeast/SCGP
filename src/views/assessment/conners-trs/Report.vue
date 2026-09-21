@@ -10,7 +10,7 @@
           </div>
           <div class="header-actions">
             <el-button type="primary" :icon="Download" @click="exportWord">
-              导出Word
+              导出报告
             </el-button>
             <el-button :icon="Clock" @click="viewHistory">
               查看历史
@@ -37,7 +37,7 @@
             <el-col :span="6">
               <div class="info-item">
                 <span class="label">性别：</span>
-                <span class="value">{{ assessment.gender }}</span>
+                <span class="value">{{ genderLabel }}</span>
               </div>
             </el-col>
             <el-col :span="6">
@@ -239,7 +239,8 @@ import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
 import type { ConnersExportData } from '@/utils/docxExporter'
 import type { ConnersTRSAssessment } from '@/types/conners'
 import { buildConnersWordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
+import { formatGenderLabel } from '@/utils/student-display'
 
 interface ConnersTRSReportAssessment extends ConnersTRSAssessment {
   student_name: string
@@ -291,6 +292,8 @@ const assessId = computed(() => {
 })
 
 // 学生年龄（岁）
+const genderLabel = computed(() => formatGenderLabel(assessment.value?.gender))
+
 const studentAge = computed(() => {
   if (!assessment.value?.age_months) return 0
   return Math.floor(assessment.value.age_months / 12)
@@ -444,13 +447,13 @@ const goBack = () => {
   router.back()
 }
 
-// 导出Word
+// 导出报告
 const exportWord = async () => {
   try {
     const reportContent: ConnersExportData = {
       student: {
         name: assessment.value?.student_name || '',
-        gender: assessment.value?.gender || '未知',
+        gender: assessment.value?.gender || '',
         age: studentAge.value,
         birthday: ''
       },
@@ -482,11 +485,11 @@ const exportWord = async () => {
       reportContent,
       `Conners-TRS评估报告_${assessment.value?.student_name}_${new Date().toLocaleDateString()}`
     )
-    await exportWordDocument(payload)
-    ElMessage.success('Word导出成功')
+    await exportReport(payload, { studentId: assessment.value?.student_id })
+    ElMessage.success('报告导出成功')
   } catch (error) {
-    console.error('导出Word失败:', error)
-    ElMessage.error('Word导出失败，请重试')
+    console.error('报告导出失败:', error)
+    ElMessage.error('报告导出失败，请重试')
   }
 }
 

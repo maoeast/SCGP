@@ -11,7 +11,7 @@
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
-            <el-button type="primary" :icon="Download" :disabled="!assessData" @click="exportWord">导出Word</el-button>
+            <el-button type="primary" :icon="Download" :disabled="!assessData" @click="exportWord">导出报告</el-button>
           </div>
         </div>
       </template>
@@ -70,7 +70,7 @@ import { ArrowLeft, ChatDotRound, Clock, Download, WarningFilled } from '@elemen
 import { getDatabase } from '@/database/init'
 import { BRIEFAssessmentAPI } from '@/database/api'
 import { buildBriefWordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
 import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
@@ -135,7 +135,7 @@ const openAiInterpretation = () => {
   }, 500)
 }
 
-// 导出 Word（总分/维度 T 分；DRAFT 量表附草稿版声明）
+// 导出报告（总分/维度 T 分；DRAFT 量表附草稿版声明）
 async function exportWord() {
   if (!assessData.value) {
     ElMessage.warning('评估数据未加载完成')
@@ -168,11 +168,11 @@ async function exportWord() {
       })),
     })
 
-    await exportWordDocument(payload)
-    ElMessage.success('Word 文档导出成功')
+    await exportReport(payload, { studentId: assessData.value?.student_id })
+    ElMessage.success('报告导出成功')
   } catch (error: any) {
-    console.error('导出 Word 失败:', error)
-    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+    console.error('报告导出失败:', error)
+    ElMessage.error(`报告导出失败: ${error?.message || '未知错误'}`)
   }
 }
 

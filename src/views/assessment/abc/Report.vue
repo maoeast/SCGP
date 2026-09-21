@@ -14,7 +14,7 @@ import {
   normalizeABCDimensionScores,
 } from '@/database/abc-questions'
 import { buildAbcWordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
 import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
@@ -159,13 +159,14 @@ async function loadAssessment() {
     }
 
     // 加载学生信息
-    const studentSql = 'SELECT id, name FROM student WHERE id = ?'
+    const studentSql = 'SELECT id, name, gender FROM student WHERE id = ?'
     const studentRows = db.all(studentSql, [assessData.value.student_id])
 
     if (studentRows[0]) {
       studentInfo.value = {
         id: studentRows[0].id,
         name: studentRows[0].name,
+        gender: studentRows[0].gender || '',
         ageMonths: assessData.value.age_months,
       }
     }
@@ -189,7 +190,7 @@ function viewHistory() {
   }
 }
 
-// 导出 Word（总分/等级/维度明细/解释建议）
+// 导出报告（总分/等级/维度明细/解释建议）
 async function exportWord() {
   if (!assessData.value || !studentInfo.value) {
     ElMessage.warning('评估数据未加载完成')
@@ -199,6 +200,7 @@ async function exportWord() {
   try {
     const payload = buildAbcWordPayload({
       studentName: studentInfo.value.name,
+      gender: studentInfo.value.gender || '',
       assessmentDate: assessData.value.start_time || assessData.value.created_at || '',
       ageMonths: assessData.value.age_months || 0,
       totalScore: assessData.value.total_score || 0,
@@ -219,11 +221,11 @@ async function exportWord() {
       ],
     })
 
-    await exportWordDocument(payload)
-    ElMessage.success('Word 文档导出成功')
+    await exportReport(payload, { studentId: assessData.value?.student_id })
+    ElMessage.success('报告导出成功')
   } catch (error: any) {
-    console.error('导出 Word 失败:', error)
-    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+    console.error('报告导出失败:', error)
+    ElMessage.error(`报告导出失败: ${error?.message || '未知错误'}`)
   }
 }
 
@@ -261,7 +263,7 @@ onMounted(() => {
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
-            <el-button type="primary" :icon="Download" @click="exportWord">导出Word</el-button>
+            <el-button type="primary" :icon="Download" @click="exportWord">导出报告</el-button>
           </div>
         </div>
       </template>

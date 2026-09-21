@@ -13,7 +13,7 @@
           <div class="header-actions">
             <el-button :icon="Clock" @click="viewHistory">查看历史</el-button>
             <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
-            <el-button type="primary" :icon="Download" :disabled="!assessment" @click="exportWord">导出Word</el-button>
+            <el-button type="primary" :icon="Download" :disabled="!assessment" @click="exportWord">导出报告</el-button>
           </div>
         </div>
       </template>
@@ -261,7 +261,7 @@ import { ElMessage } from 'element-plus'
 import { ArrowLeft, ChatDotRound, Clock, Download } from '@element-plus/icons-vue'
 import { Tgmd3AssessmentAPI } from '@/database/api'
 import { buildTgmd3WordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
 
 interface Tgmd3ReportRule {
   id: string
@@ -417,7 +417,7 @@ const openAiInterpretation = () => {
   }, 500)
 }
 
-// 导出 Word（总体判定/分测验/能区反馈/IEP 目标/预警/明细）
+// 导出报告（总体判定/分测验/能区反馈/IEP 目标/预警/明细）
 const exportWord = async () => {
   if (!assessment.value) {
     ElMessage.warning('评估数据未加载完成')
@@ -474,11 +474,11 @@ const exportWord = async () => {
       })),
     })
 
-    await exportWordDocument(payload)
-    ElMessage.success('Word 导出成功')
+    await exportReport(payload, { studentId: assessment.value?.student_id })
+    ElMessage.success('报告导出成功')
   } catch (error: any) {
-    console.error('导出Word失败:', error)
-    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+    console.error('报告导出失败:', error)
+    ElMessage.error(`报告导出失败: ${error?.message || '未知错误'}`)
   }
 }
 

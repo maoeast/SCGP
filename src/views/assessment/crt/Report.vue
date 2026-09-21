@@ -7,7 +7,7 @@
           <div class="header-left">
             <el-button :icon="ArrowLeft" @click="goBack">返回</el-button>
             <el-button :icon="ChatDotRound" @click="openAiInterpretation">AI解读</el-button>
-            <el-button type="primary" :icon="Download" :disabled="!assessData" @click="exportWord">导出Word</el-button>
+            <el-button type="primary" :icon="Download" :disabled="!assessData" @click="exportWord">导出报告</el-button>
             <h2>瑞文图形推理测验（CRT）评估报告</h2>
           </div>
         </div>
@@ -152,7 +152,7 @@ import { ElMessage } from 'element-plus'
 import { ArrowLeft, WarningFilled, Check, Warning, ChatDotRound, Download } from '@element-plus/icons-vue'
 import { CRTAssessmentAPI, StudentAPI } from '@/database/api'
 import { buildCrtWordPayload } from '@/utils/assessment-word-builders'
-import { exportWordDocument } from '@/utils/export-word'
+import { exportReport } from '@/utils/report-export'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
 import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 
@@ -305,7 +305,7 @@ const openAiInterpretation = () => {
   }, 500)
 }
 
-// 导出 Word（IQ/百分位/五组明细/能力分析/训练建议）
+// 导出报告（IQ/百分位/五组明细/能力分析/训练建议）
 async function exportWord() {
   if (!assessData.value || !student.value) {
     ElMessage.warning('报告数据尚未加载完成')
@@ -337,11 +337,11 @@ async function exportWord() {
       trainingFocus: trainingFocus.value,
     })
 
-    await exportWordDocument(payload)
-    ElMessage.success('Word 文档导出成功')
+    await exportReport(payload, { studentId: assessData.value?.student_id })
+    ElMessage.success('报告导出成功')
   } catch (error: any) {
-    console.error('导出 Word 失败:', error)
-    ElMessage.error(`导出 Word 失败: ${error?.message || '未知错误'}`)
+    console.error('报告导出失败:', error)
+    ElMessage.error(`报告导出失败: ${error?.message || '未知错误'}`)
   }
 }
 
