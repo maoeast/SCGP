@@ -7,7 +7,7 @@
 
 ## 1. 文档维护基线
 
-对外手册编写时主要核对了生产路由、侧边导航、角色元数据、评估量表目录、训练入口目录、资源中心、AI 智能体、系统管理和当前有效上下文。后续功能变化时，应优先重新核对当前代码，再更新手册 Markdown 并重新生成 Word；不要从历史《系统使用说明书》直接复制未验证内容。
+对外手册编写时主要核对了生产路由、侧边导航、角色元数据、评估量表目录、训练入口目录、资源中心、AI 智能体、系统管理和当前有效上下文。后续功能变化时，应优先重新核对当前代码，再更新手册 Markdown；不要从历史《系统使用说明书》直接复制未验证内容。**Word 成品不由工具链重新生成**——当前 docx 的封面/封底是用户手工编辑的版本（2026-09-21 确认），`generate-user-manual.mjs` 生成链会覆盖它们；需要刷新成品时先与用户确认保护方式，确认前只更新 Markdown 与截图。
 
 截图计划的唯一事实来源为 `scripts/manual/user-manual-screenshot-plan.mjs`（217 行，行序即编号序）。正文新增、删除或调整截图占位后，应先运行 `node scripts/manual/sync-user-manual-screenshot-plan.mjs` 同步编号，再生成 Word。
 
@@ -318,4 +318,17 @@
 
 - 采集：`node scripts/manual/capture-user-manual-screenshots.mjs --ids S008,S009,S010,S011 --run-id dashboard-board5-20260921 --allow-isolated-state` → 4 张全部成功（0 失败）。
 - 迭代留痕（同任务内共 5 轮）：`dashboard-board-20260921` / `dashboard-board2-20260921` 因 S011 断言失败（日程面板重构丢了契约类名 `schedule-panel`）作废——该断言在此暴露了真实回归；`dashboard-board3-20260921` 补类名后 4/4 通过；`dashboard-board4-20260921` 修「查看全部」按钮换行；`dashboard-board5-20260921` 去面板头部说明文字，为最终批准批次。
+- 复核：`verify-user-manual-approved-screenshots.mjs` = 217 条 approvals 逐条哈希校验通过；`manual:screenshots:check` = 217 场景 / 0 pending。
+
+### 4.5 2026-09-21 首页族数据漂移重拍（S001 / S002 / S007）
+
+首页族三张「顶部锚定整窗」截图（S001 管理员首页 / S002 教师首页 / S007 用户菜单浮层）画面不含看板下半部，但含 hero 与指标卡——其待办数字随演示数据与待办口径演进已与当前不符（旧图 hero 为「当前有 3 条待评估提醒」，当前数据为「4 条（其中 4 条需优先处理）」）。重拍 3 张：
+
+| run | 编号 | 说明 |
+|---|---|---|
+| `dashboard-top-20260921` | S001 / S002 | 管理员 / 教师首页顶部整窗 |
+| `dashboard-usermenu-20260921` | S007 | 「用户菜单浮层」场景：**单独成批**（同会话会把浮层残留在后续场景画面里，见 §4.2 先例） |
+
+- 采集：`--ids S001,S002 --run-id dashboard-top-20260921` 与 `--ids S007 --run-id dashboard-usermenu-20260921`（均 `--allow-isolated-state`），3 张全部成功。
+- 目视核对：S001 / S007 hero 已显示当前数字，S007 浮层完整未污染；S002 教师视图正确（无「系统管理」入口、scope 内 0 学生）。
 - 复核：`verify-user-manual-approved-screenshots.mjs` = 217 条 approvals 逐条哈希校验通过；`manual:screenshots:check` = 217 场景 / 0 pending。
