@@ -7,7 +7,7 @@
 
 ## 1. 文档维护基线
 
-对外手册编写时主要核对了生产路由、侧边导航、角色元数据、评估量表目录、训练入口目录、资源中心、AI 智能体、系统管理和当前有效上下文。后续功能变化时，应优先重新核对当前代码，再更新手册 Markdown；不要从历史《系统使用说明书》直接复制未验证内容。**Word 成品不由工具链重新生成**——当前 docx 的封面/封底是用户手工编辑的版本（2026-09-21 确认），`generate-user-manual.mjs` 生成链会覆盖它们；需要刷新成品时先与用户确认保护方式，确认前只更新 Markdown 与截图。
+对外手册编写时主要核对了生产路由、侧边导航、角色元数据、评估量表目录、训练入口目录、资源中心、AI 智能体、系统管理和当前有效上下文。后续功能变化时，应优先重新核对当前代码，再更新手册 Markdown；不要从历史《系统使用说明书》直接复制未验证内容。**Word 成品不由工具链重新生成**——当前 docx 的封面/封底是用户手工编辑的版本（2026-09-21 确认），`generate-user-manual.mjs` 生成链会覆盖它们；需要刷新成品时先与用户确认保护方式，确认前只更新 Markdown 与截图。**成品内嵌截图就地刷新流程（2026-09-21 首次使用，保住手改封面）**：① 先在同目录留 `.bak-<日期>` 备份（docx 不入 git，无版本兜底）；② 只替换 docx 内 `word/media/` 中对应截图的字节——目标文件按「旧批准哈希」定位（哈希取自当时 approvals），逐张确认新旧图像素尺寸一致后才替换；③ 其余 zip 条目零改动，封面/封底与正文 XML 天然不受影响；④ 换后用 `node scripts/manual/verify-user-manual-approved-screenshots.mjs --docx <docx>` 校验「approvals = embedded」（本次 217/217）。PDF 成品无仓库脚本，由人工在 Word 导出。
 
 截图计划的唯一事实来源为 `scripts/manual/user-manual-screenshot-plan.mjs`（217 行，行序即编号序）。正文新增、删除或调整截图占位后，应先运行 `node scripts/manual/sync-user-manual-screenshot-plan.mjs` 同步编号，再生成 Word。
 
