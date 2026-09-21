@@ -8,6 +8,11 @@ import {
   type ScaleLatestSnapshot,
   type StudentAssessmentInsight,
 } from '@/services/assessment-gap-analysis'
+import {
+  ANOMALY_WINDOW_DAYS,
+  anomalySeverityRank,
+  evaluateTrainingAnomaly,
+} from './training-anomaly-rules'
 import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import { getTrainingPlanModuleLabel } from '@/utils/training-plan-module'
 
@@ -56,15 +61,20 @@ export interface DashboardScheduleItem {
 
 export interface DashboardAnomalyItem {
   id: string
-  source: 'training' | 'emotional'
+  /** 统一主表来源（追溯用：training_records / equipment_training_records / game_emotion_records …） */
+  source: string
   studentId: number
   studentName: string
   avatarPath: string | null
   moduleCode: string
   moduleLabel: string
   sessionLabel: string
+  /** 正确率（仅答对率语义家族；器材/情绪游戏的得分率不透出，避免误读） */
   accuracyRate: number | null
-  averageHintLevel: number | null
+  /** 平均每题提示次数（情绪场景会话级口径） */
+  hintRatio: number | null
+  /** 器材训练提示层级（1 独立完成 … 5 身体辅助） */
+  promptLevel: number | null
   createdAt: string
   reason: string
 }
@@ -99,6 +109,13 @@ function formatDateTime(date: Date): string {
 function normalizeNumber(value: unknown): number {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : 0
+}
+
+/** 可空数值：脏数据/缺字段一律给 null（不猜 0，避免把「无数据」当「异常」） */
+function toNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
 }
 
 const LAUNCHABLE_TRAINING_RESOURCE_TYPES = [
@@ -334,99 +351,92 @@ export class DashboardAPI extends DatabaseAPI {
     }))
   }
 
+  /**
+   * 本周异常预警（首页看板面板）。
+   *
+   * 数据源：统一训练主表 `training_session`（统一训练记录计划 Phase B 双写产物）。
+   * 旧实现直扫 `training_records` + `emotional_training_session` 两张旧表，有两个缺陷：
+   *   ① 只写统一主表的入口（如 cognitive_game_inline）完全不进扫描（实测 20 条）；
+   *   ② 器材 / 情绪游戏的「得分率」被当「答对率」套阀值（实测 55 条器材行会被误标）。
+   * SQL 只负责取窗口内的原始行（含教师隔离），是否异常由纯函数 evaluateTrainingAnomaly
+   * 判定——规则单一真源见 `training-anomaly-rules`。
+   */
   async getWeeklyAnomalies(): Promise<DashboardAnomalyItem[]> {
-    const since = formatDateTime(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+    const since = formatDateTime(new Date(Date.now() - ANOMALY_WINDOW_DAYS * 24 * 60 * 60 * 1000))
     const scope = getCurrentTeacherStudentScope('s')
     const rows = await this.queryAsync(
       `
-        WITH emotional_anomalies AS (
-          SELECT
-            ets.id AS id,
-            'emotional' AS source,
-            ets.student_id,
-            s.name AS student_name,
-            s.avatar_path,
-            ets.module_code,
-            ets.sub_module AS session_label,
-            ets.accuracy_rate,
-            ROUND(COALESCE(AVG(etd.hint_level), 0), 2) AS average_hint_level,
-            ets.created_at
-          FROM emotional_training_session ets
-          INNER JOIN student s ON s.id = ets.student_id
-          LEFT JOIN emotional_training_detail etd ON etd.session_id = ets.id
-          WHERE datetime(ets.created_at) >= datetime(?)${scope.sql}
-          GROUP BY
-            ets.id,
-            ets.student_id,
-            s.name,
-            s.avatar_path,
-            ets.module_code,
-            ets.sub_module,
-            ets.accuracy_rate,
-            ets.created_at
-          HAVING ets.accuracy_rate < 0.5 OR COALESCE(AVG(etd.hint_level), 0) > 2
-        )
         SELECT
-          'training-' || tr.id AS item_id,
-          'training' AS source,
-          tr.student_id,
+          ts.id AS id,
+          ts.source_table,
+          ts.session_family,
+          ts.module_code,
+          ts.student_id,
           s.name AS student_name,
           s.avatar_path,
-          tr.module_code,
-          COALESCE(tr.session_type, tr.resource_type, '训练任务') AS session_label,
-          tr.accuracy_rate,
-          NULL AS average_hint_level,
-          tr.created_at,
-          '正确率低于 50%' AS reason
-        FROM training_records tr
-        INNER JOIN student s ON s.id = tr.student_id
-        WHERE datetime(tr.created_at) >= datetime(?)
-          AND COALESCE(tr.module_code, 'sensory') != 'emotional'
-          AND tr.accuracy_rate < 0.5${scope.sql}
-
-        UNION ALL
-
-        SELECT
-          'emotional-' || ea.id AS item_id,
-          ea.source,
-          ea.student_id,
-          ea.student_name,
-          ea.avatar_path,
-          ea.module_code,
-          ea.session_label,
-          ea.accuracy_rate,
-          ea.average_hint_level,
-          ea.created_at,
+          ts.task_name_snapshot,
+          ts.entry_code,
+          ts.accuracy_rate,
+          ts.completion_status,
+          ts.created_at,
+          ets.hint_count AS hint_count,
+          ets.question_count AS question_count,
           CASE
-            WHEN ea.accuracy_rate < 0.5 AND ea.average_hint_level > 2 THEN '正确率偏低且提示依赖较高'
-            WHEN ea.accuracy_rate < 0.5 THEN '正确率低于 50%'
-            ELSE '平均提示层级高于 2'
-          END AS reason
-        FROM emotional_anomalies ea
-
-        ORDER BY created_at DESC
+            WHEN json_valid(ts.summary_payload) THEN json_extract(ts.summary_payload, '$.promptLevel')
+          END AS prompt_level
+        FROM training_session ts
+        INNER JOIN student s ON s.id = ts.student_id
+        LEFT JOIN emotional_training_session ets
+          ON ts.source_table = 'training_records'
+         AND ets.training_record_id = ts.source_record_id
+        WHERE datetime(ts.created_at) >= datetime(?)${scope.sql}
+        ORDER BY ts.created_at DESC
       `,
-      [since, ...scope.params, since, ...scope.params],
+      [since, ...scope.params],
     )
 
-    return rows.map((row) => ({
-      id: row.item_id,
-      source: row.source,
-      studentId: normalizeNumber(row.student_id),
-      studentName: row.student_name || `学生 #${row.student_id}`,
-      avatarPath: row.avatar_path || null,
-      moduleCode: row.module_code || 'sensory',
-      moduleLabel: this.getModuleLabel(row.module_code || 'sensory'),
-      sessionLabel: this.getSessionLabel(row.module_code || 'sensory', row.session_label || ''),
-      accuracyRate: row.accuracy_rate === null || row.accuracy_rate === undefined
-        ? null
-        : Number(row.accuracy_rate),
-      averageHintLevel: row.average_hint_level === null || row.average_hint_level === undefined
-        ? null
-        : Number(row.average_hint_level),
-      createdAt: row.created_at || '',
-      reason: row.reason || '发现需要关注的训练波动',
-    }))
+    const items: Array<{ item: DashboardAnomalyItem; severity: number }> = []
+    for (const row of rows) {
+      const verdict = evaluateTrainingAnomaly({
+        sessionFamily: row.session_family || null,
+        accuracyRate: toNullableNumber(row.accuracy_rate),
+        completionStatus: row.completion_status || null,
+        hintCount: toNullableNumber(row.hint_count),
+        questionCount: toNullableNumber(row.question_count),
+        promptLevel: toNullableNumber(row.prompt_level),
+      })
+      if (!verdict) continue
+
+      const moduleCode = row.module_code || 'sensory'
+      const sessionLabel = row.task_name_snapshot || row.entry_code || '训练任务'
+      items.push({
+        severity: anomalySeverityRank(verdict.kinds),
+        item: {
+        id: `session-${row.id}`,
+        source: row.source_table || 'training_session',
+        studentId: normalizeNumber(row.student_id),
+        studentName: row.student_name || `学生 #${row.student_id}`,
+        avatarPath: row.avatar_path || null,
+        moduleCode,
+        moduleLabel: this.getModuleLabel(moduleCode),
+        sessionLabel: this.getSessionLabel(moduleCode, sessionLabel),
+        accuracyRate: verdict.accuracyRate,
+        hintRatio: verdict.hintRatio,
+        promptLevel: verdict.promptLevel,
+        createdAt: row.created_at || '',
+        reason: verdict.reason,
+        },
+      })
+    }
+
+    // 严重度优先（中断 > 低正确率 > 提示依赖 > 器材高辅助），同级按时间倒序：
+    // 器材高辅助在该群体里是常态，不能让它把真正紧急的条目挤出面板前 4 条。
+    return items
+      .sort((a, b) => {
+        if (a.severity !== b.severity) return a.severity - b.severity
+        return (b.item.createdAt || '').localeCompare(a.item.createdAt || '')
+      })
+      .map((entry) => entry.item)
   }
 
   /**

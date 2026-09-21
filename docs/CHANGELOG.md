@@ -4,6 +4,19 @@
 
 ---
 
+## [2026-09-21] 首页看板「本周异常预警」口径重做：扫描切到统一训练主表 + 修死规则 + 补信号
+- 问题①（漏扫）：旧实现直扫 `training_records` + `emotional_training_session` 两张旧表 → 只写统一主表 `training_session` 的入口（实测 `cognitive_game_inline` 20 条）完全不进扫描；近 7 天另有 217 条 emotional 训练被「排除 emotional」的分支与情绪分支同时漏掉
+- 问题②（死规则）：「提示依赖」取 `emotional_training_detail.hint_level` 均值 > 2，而该明细表在演示库 0 行 → 恒不触发（真库近 7 天命中 0 条，面板必然空态）
+- 问题③（错误归因）：`equipment_training_records` / `game_emotion_records` 源表没有 `accuracy_rate` 列，统一行里的值是得分率；旧口径若扩到全家族会把 55 条器材行误标为「正确率低于 50%」
+- 新增 `src/database/training-anomaly-rules.ts`（纯函数 + 常量，零依赖）：`evaluateTrainingAnomaly()` 判定四类信号——低正确率（仅答对率语义家族白名单）、提示依赖（`hint_count/question_count > 0.5`）、器材高辅助（`promptLevel >= 4`，等级语义取自器材记录页的 1 独立…5 身体辅助）、训练中断（`completion_status ∈ {interrupted,aborted,cancelled}`）
+- `src/database/dashboard-api.ts`：`getWeeklyAnomalies` 改为单查 `training_session`（+ 情绪会话 LEFT JOIN + `json_valid/json_extract` 取器材提示层级），SQL 只取数、异常判定交给纯函数；`DashboardAnomalyItem` 字段 `averageHintLevel` → `hintRatio` 并新增 `promptLevel`，`accuracyRate` 仅在答对率家族透出
+- `src/views/Dashboard.vue`：异常面板条目可点击进学生详情（Enter/Space）+ 超 4 条时「查看全部」弹窗；元信息按家族显示（正确率 / 平均每题提示 / 提示层级）；共用样式类名 `assessment-insight-*` → `dashboard-insight-*`（两个面板共用）
+- 新增 `scripts/tests/dashboard-anomaly-rules.test.mjs`（`test:core:node`，4 条契约）+ `tests/training-anomaly-rules.test.ts`（`test:core:ts`，7 场景）
+- 真库只读复算：覆盖对账四张 legacy 表 0 缺失；窗口内 1019 行 → 86 条异常（旧实现 0 条）：器材高辅助 76、提示依赖 10
+- 已知取舍：器材高辅助按该群体是常态（186 条器材会话里 76 条 ≥4 档）→ 本轮不动阈值，改为**严重度排序**（`ANOMALY_SEVERITY_RANK`：中断 > 低正确率 > 提示依赖 > 器材高辅助，同级按时间倒序），避免前 4 条全是器材；更聚焦的两条路（阈值升到 5 / 相对基线）记在专题档 §5，未排期
+- 明确不做：趋势与基线偏离判定（需独立设计）、器材与情绪游戏的得分率阈值（口径需产品定）、演示数据修订（`session_family` 口径不一致等，属演示包重建）
+
+
 ## [2026-09-21] 首页看板「智能特教助理」面板做实：评估缺口与优先建议（含 18 量表覆盖修复）
 - 问题①（覆盖缺口）：面板数据源 `DashboardAPI.getAssessmentAlerts` 的 UNION 只列 8 张量表主表（2026-03-19 写入），此后新增的 ABC/ATEC/PEP-3 等 10 个量表从未同步；真库实测：只在 ABC/ATEC/CRT/认知自我建过基线的学生被误报「尚无评估记录」（43 名学生中 1 例）
 - 问题②（名不副实）：原文案「根据真实评估缺口提供优先干预建议」实际只有一条「超过 6 个月未评估」阈值 + 两条模板句，不读任何分数、维度或缺口

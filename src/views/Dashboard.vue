@@ -164,36 +164,36 @@
     <el-dialog
       v-model="assessmentInsightDrawerVisible"
       width="720px"
-      class="assessment-insight-dialog"
+      class="dashboard-insight-dialog"
       destroy-on-close
       append-to-body
       title="评估缺口与优先建议"
     >
-      <p class="assessment-insight-dialog__hint">
+      <p class="dashboard-insight-dialog__hint">
         按优先级排序（明显偏弱 &gt; 尚无评估 &gt; 偏弱需关注 &gt; 评估缺口 &gt; 超期未复评），点击条目进入学生详情。
       </p>
 
-      <div class="assessment-insight-dialog__list">
+      <div class="dashboard-insight-dialog__list">
         <article
           v-for="item in snapshot.assessmentInsights"
           :key="item.studentId"
-          class="assessment-insight-row"
+          class="dashboard-insight-row"
           role="button"
           tabindex="0"
           @click="goToStudentDetail(item.studentId)"
           @keydown.enter.prevent="goToStudentDetail(item.studentId)"
           @keydown.space.prevent="goToStudentDetail(item.studentId)"
         >
-          <div class="assessment-insight-row__topline">
+          <div class="dashboard-insight-row__topline">
             <h3>{{ item.studentName }}</h3>
-            <span class="assessment-insight-row__time">
+            <span class="dashboard-insight-row__time">
               {{ item.lastAssessmentAt ? `最近评估：${formatDate(item.lastAssessmentAt)}` : '尚无评估记录' }}
             </span>
           </div>
 
-          <p class="assessment-insight-row__desc">{{ item.suggestion }}</p>
+          <p class="dashboard-insight-row__desc">{{ item.suggestion }}</p>
 
-          <div class="assessment-insight-row__tags">
+          <div class="dashboard-insight-row__tags">
             <span v-if="item.disorder" class="alert-item__tag alert-item__tag--never">
               {{ item.disorder }}
             </span>
@@ -204,6 +204,53 @@
               :class="`alert-item__tag--${tag.kind}`"
             >
               {{ tag.label }}
+            </span>
+          </div>
+        </article>
+      </div>
+    </el-dialog>
+
+    <el-dialog
+      v-model="anomalyDialogVisible"
+      width="720px"
+      class="dashboard-insight-dialog"
+      destroy-on-close
+      append-to-body
+      title="本周异常预警（全部）"
+    >
+      <p class="dashboard-insight-dialog__hint">
+        近 7 天滚动窗口；低正确率仅对「答对率」语义的训练生效，器材训练按提示层级判定。点击条目进入学生详情。
+      </p>
+
+      <div class="dashboard-insight-dialog__list">
+        <article
+          v-for="item in snapshot.anomalies"
+          :key="item.id"
+          class="dashboard-insight-row"
+          role="button"
+          tabindex="0"
+          @click="goToStudentDetail(item.studentId)"
+          @keydown.enter.prevent="goToStudentDetail(item.studentId)"
+          @keydown.space.prevent="goToStudentDetail(item.studentId)"
+        >
+          <div class="dashboard-insight-row__topline">
+            <h3>{{ item.studentName }}</h3>
+            <span class="dashboard-insight-row__time">{{ formatDateTime(item.createdAt) }}</span>
+          </div>
+
+          <p class="dashboard-insight-row__desc">
+            {{ item.moduleLabel }} / {{ item.sessionLabel }} · {{ item.reason }}
+          </p>
+
+          <div class="dashboard-insight-row__tags">
+            <span v-if="item.accuracyRate !== null" class="alert-item__tag alert-item__tag--gap">
+              正确率 {{ formatPercent(item.accuracyRate) }}
+            </span>
+            <span v-if="item.hintRatio !== null" class="alert-item__tag alert-item__tag--overdue">
+              平均每题提示 {{ item.hintRatio.toFixed(2) }} 次
+            </span>
+            <span v-if="item.promptLevel !== null" class="alert-item__tag alert-item__tag--watch">
+              提示层级 {{ item.promptLevel }}（{{ formatPromptLevel(item.promptLevel) }}）
             </span>
           </div>
         </article>
@@ -342,12 +389,20 @@
           <div class="dashboard-panel-header">
             <div>
               <h2>本周异常预警</h2>
-              <p>过去 7 天内需要关注的训练波动，优先查看低正确率与高提示依赖。</p>
+              <p>过去 7 天内的训练波动：低正确率、提示依赖偏高、器材高辅助与训练中断。</p>
             </div>
             <div class="dashboard-panel-header__side">
               <span class="dashboard-panel-count dashboard-panel-count--danger">
                 {{ snapshot.overview.weeklyAnomalyCount }} 条
               </span>
+              <button
+                v-if="snapshot.anomalies.length > displayedAnomalies.length"
+                type="button"
+                class="dashboard-panel-header__action"
+                @click="anomalyDialogVisible = true"
+              >
+                查看全部
+              </button>
             </div>
           </div>
 
@@ -360,7 +415,12 @@
             <article
               v-for="item in displayedAnomalies"
               :key="item.id"
-              class="alert-item alert-item--danger"
+              class="alert-item alert-item--danger alert-item--clickable"
+              role="button"
+              tabindex="0"
+              @click="goToStudentDetail(item.studentId)"
+              @keydown.enter.prevent="goToStudentDetail(item.studentId)"
+              @keydown.space.prevent="goToStudentDetail(item.studentId)"
             >
               <span class="alert-item__accent"></span>
 
@@ -382,7 +442,8 @@
 
                 <div class="alert-item__meta">
                   <span v-if="item.accuracyRate !== null">正确率 {{ formatPercent(item.accuracyRate) }}</span>
-                  <span v-if="item.averageHintLevel !== null">平均提示 {{ item.averageHintLevel.toFixed(1) }}</span>
+                  <span v-if="item.hintRatio !== null">平均每题提示 {{ item.hintRatio.toFixed(2) }} 次</span>
+                  <span v-if="item.promptLevel !== null">提示层级 {{ item.promptLevel }}（{{ formatPromptLevel(item.promptLevel) }}）</span>
                 </div>
               </div>
             </article>
@@ -484,6 +545,7 @@ import {
   type DashboardScheduleItem,
   type DashboardSnapshot,
 } from '@/database/dashboard-api'
+import { PROMPT_LEVEL_LABELS } from '@/database/training-anomaly-rules'
 import { resolveTrainingLaunch } from '@/utils/training-launch'
 import { useAuthStore } from '@/stores/auth'
 import { useAiStore } from '@/stores/ai'
@@ -501,6 +563,10 @@ import type { EChartsOption } from 'echarts'
 import VChart from 'vue-echarts'
 
 use([CanvasRenderer, LineChart, GridComponent, TooltipComponent])
+
+function formatPromptLevel(level: number): string {
+  return PROMPT_LEVEL_LABELS[level] || '高辅助'
+}
 
 type DashboardTone = 'blue' | 'amber' | 'green' | 'coral'
 
@@ -589,6 +655,8 @@ const metrics = computed(() => ([
 ]))
 
 const displayedAnomalies = computed(() => snapshot.value.anomalies.slice(0, 4))
+/** 「查看全部」异常预警弹窗（面板只展示前 4 条） */
+const anomalyDialogVisible = ref(false)
 
 // 今日训练日程最多展示 5 条，避免列表过长
 const displayedSchedule = computed(() => snapshot.value.schedule.slice(0, 5))
@@ -1598,61 +1666,61 @@ onUnmounted(() => {
   outline-offset: 2px;
 }
 
-.assessment-insight-dialog__hint {
+.dashboard-insight-dialog__hint {
   margin: 0 0 12px;
   color: var(--scgp-muted);
   font-size: 13px;
   line-height: 1.7;
 }
 
-.assessment-insight-dialog__list {
+.dashboard-insight-dialog__list {
   max-height: min(58vh, 560px);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
-.assessment-insight-row {
+.dashboard-insight-row {
   padding: 14px 8px;
   cursor: pointer;
   border-radius: 12px;
   transition: background-color 0.18s ease;
 }
 
-.assessment-insight-row:hover {
+.dashboard-insight-row:hover {
   background: rgba(64, 158, 255, 0.06);
 }
 
-.assessment-insight-row + .assessment-insight-row {
+.dashboard-insight-row + .dashboard-insight-row {
   border-top: 1px dashed rgba(217, 226, 238, 0.92);
 }
 
-.assessment-insight-row__topline {
+.dashboard-insight-row__topline {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
 }
 
-.assessment-insight-row__topline h3 {
+.dashboard-insight-row__topline h3 {
   margin: 0;
   color: var(--scgp-text);
   font-size: 15px;
 }
 
-.assessment-insight-row__time {
+.dashboard-insight-row__time {
   color: var(--scgp-subtle);
   font-size: 12px;
   white-space: nowrap;
 }
 
-.assessment-insight-row__desc {
+.dashboard-insight-row__desc {
   margin: 6px 0 8px;
   color: var(--scgp-muted);
   font-size: 13px;
   line-height: 1.7;
 }
 
-.assessment-insight-row__tags {
+.dashboard-insight-row__tags {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
