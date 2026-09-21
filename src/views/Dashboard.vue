@@ -323,84 +323,97 @@
       />
     </section>
 
-    <section class="dashboard-board">
-      <article :ref="panelRefs.schedule" class="dashboard-surface scgp-surface schedule-panel">
-        <div class="dashboard-panel-header">
-          <div>
-            <h2>今日训练日程</h2>
-            <p>当前处于执行周期内的真实训练计划，可直接从这里发起训练。</p>
+    <div class="dashboard-board-host">
+      <section class="dashboard-board">
+        <!-- 面板一：今日训练日程 —— 紧凑行列表 + 底部今日训练进度 -->
+        <article :ref="panelRefs.schedule" class="dashboard-surface scgp-surface board-panel board-panel--schedule schedule-panel">
+          <div class="dashboard-panel-header">
+            <div>
+              <h2>今日训练日程</h2>
+            </div>
+            <div class="dashboard-panel-header__side">
+              <span class="dashboard-panel-count">{{ snapshot.overview.todayTaskCount }} 项</span>
+            </div>
           </div>
-          <div class="dashboard-panel-header__side">
-            <span class="dashboard-panel-count">{{ snapshot.overview.todayTaskCount }} 项</span>
-          </div>
-        </div>
 
-        <el-empty
-          v-if="snapshot.schedule.length === 0"
-          description="今日暂无训练安排"
-        />
+          <div class="board-panel__body">
+            <el-empty
+              v-if="snapshot.schedule.length === 0"
+              class="board-panel__empty"
+              description="今日暂无训练安排"
+            />
 
-        <div v-else class="schedule-list">
-          <article
-            v-for="item in displayedSchedule"
-            :key="item.planId"
-            class="schedule-item"
-          >
-            <!-- 上半区：左侧头像 + 中间「姓名+标签」「计划名称」两行 -->
-            <div class="schedule-item__head">
-              <StudentAvatar
-                :name="item.studentName"
-                :avatar-url="item.avatarPath || undefined"
-                size="md"
-              />
+            <div v-else class="schedule-list">
+              <article
+                v-for="item in snapshot.schedule"
+                :key="item.planId"
+                class="schedule-item"
+              >
+                <StudentAvatar
+                  :name="item.studentName"
+                  :avatar-url="item.avatarPath || undefined"
+                  size="sm"
+                />
 
-              <div class="schedule-item__content">
-                <div class="schedule-item__topline">
-                  <h3>{{ item.studentName }}</h3>
-                  <el-tag size="small" effect="plain">{{ getModuleLabel(item.moduleCode) }}</el-tag>
+                <div class="schedule-item__main">
+                  <div class="schedule-item__line">
+                    <h3>{{ item.studentName }}</h3>
+                    <el-tag size="small" effect="plain">{{ getModuleLabel(item.moduleCode) }}</el-tag>
+                    <p class="schedule-item__plan">{{ item.planName }}</p>
+                  </div>
+
+                  <div class="schedule-item__line schedule-item__line--meta">
+                    <div class="schedule-item__meta">
+                      <span>周期：{{ formatDateRange(item.startDate, item.endDate) }}</span>
+                      <span>资源：{{ item.resourceCount }} 项</span>
+                      <span v-if="item.launchResourceName">首项：{{ item.launchResourceName }}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <p class="schedule-item__plan">{{ item.planName }}</p>
-              </div>
+                <div class="schedule-item__actions">
+                  <el-button
+                    type="primary"
+                    plain
+                    size="small"
+                    :disabled="!item.launchResourceId || !item.launchResourceType"
+                    @click="openPlanModule(item)"
+                  >
+                    <el-icon><VideoPlay /></el-icon>
+                    开始训练
+                  </el-button>
+                </div>
+              </article>
             </div>
+          </div>
 
-            <!-- 底部区：次要信息（周期/资源/首项）浅色小字，主按钮右对齐 -->
-            <div class="schedule-item__foot">
-              <div class="schedule-item__meta">
-                <span>周期：{{ formatDateRange(item.startDate, item.endDate) }}</span>
-                <span>资源：{{ item.resourceCount }} 项</span>
-                <span v-if="item.launchResourceName">首项：{{ item.launchResourceName }}</span>
-              </div>
-
-              <div class="schedule-item__actions">
-                <el-button
-                  type="primary"
-                  plain
-                  :disabled="!item.launchResourceId || !item.launchResourceType"
-                  @click="openPlanModule(item)"
-                >
-                  <el-icon><VideoPlay /></el-icon>
-                  开始训练
-                </el-button>
-              </div>
+          <!-- 底部：今日训练进度（分子 = 今日训练记录数，分母 = 今日计划数） -->
+          <div class="board-panel__foot schedule-progress">
+            <div class="schedule-progress__label">
+              <span>今日已完成训练 <strong>{{ todayTrainingCount }}</strong> 次</span>
+              <span>计划 {{ snapshot.overview.todayTaskCount }} 项</span>
             </div>
-          </article>
-        </div>
-      </article>
+            <div class="schedule-progress__track">
+              <span
+                class="schedule-progress__fill"
+                :style="{ width: `${Math.round(todayProgressRatio * 100)}%` }"
+              ></span>
+            </div>
+          </div>
+        </article>
 
-      <div class="dashboard-board__stack">
-        <article :ref="panelRefs.anomaly" class="dashboard-surface scgp-surface alert-panel alert-panel--anomaly">
+        <!-- 面板二：本周异常预警 —— 一行摘要（完整信息在「查看全部」弹层） -->
+        <article :ref="panelRefs.anomaly" class="dashboard-surface scgp-surface board-panel board-panel--anomaly">
           <div class="dashboard-panel-header">
             <div>
               <h2>本周异常预警</h2>
-              <p>过去 7 天内的训练波动：低正确率、提示依赖偏高、器材高辅助与训练中断。</p>
             </div>
             <div class="dashboard-panel-header__side">
               <span class="dashboard-panel-count dashboard-panel-count--danger">
                 {{ snapshot.overview.weeklyAnomalyCount }} 条
               </span>
               <button
-                v-if="snapshot.anomalies.length > displayedAnomalies.length"
+                v-if="snapshot.anomalies.length > 0"
                 type="button"
                 class="dashboard-panel-header__action"
                 @click="anomalyDialogVisible = true"
@@ -410,65 +423,58 @@
             </div>
           </div>
 
-          <!-- 空态：紧凑横幅（约 88px 高），不占固定大高度 -->
-          <div v-if="snapshot.anomalies.length === 0" class="alert-empty">
-            <span class="alert-empty__badge">
-              <el-icon :size="22"><CircleCheck /></el-icon>
-            </span>
-            <p class="alert-empty__text">本周干预数据平稳</p>
-          </div>
+          <div class="board-panel__body">
+            <!-- 空态：紧凑横幅，在固定高度内垂直居中 -->
+            <div v-if="snapshot.anomalies.length === 0" class="alert-empty">
+              <span class="alert-empty__badge">
+                <el-icon :size="22"><CircleCheck /></el-icon>
+              </span>
+              <p class="alert-empty__text">本周干预数据平稳</p>
+            </div>
 
-          <div v-else class="alert-list">
-            <article
-              v-for="item in displayedAnomalies"
-              :key="item.id"
-              class="alert-item alert-item--danger alert-item--clickable"
-              role="button"
-              tabindex="0"
-              @click="goToStudentDetail(item.studentId)"
-              @keydown.enter.prevent="goToStudentDetail(item.studentId)"
-              @keydown.space.prevent="goToStudentDetail(item.studentId)"
-            >
-              <span class="alert-item__accent"></span>
+            <div v-else class="alert-list">
+              <article
+                v-for="item in snapshot.anomalies"
+                :key="item.id"
+                class="alert-item alert-item--danger alert-item--clickable"
+                role="button"
+                tabindex="0"
+                :title="`${item.moduleLabel} / ${item.sessionLabel} · ${formatDateTime(item.createdAt)}`"
+                @click="goToStudentDetail(item.studentId)"
+                @keydown.enter.prevent="goToStudentDetail(item.studentId)"
+                @keydown.space.prevent="goToStudentDetail(item.studentId)"
+              >
+                <span class="alert-item__accent"></span>
 
-              <StudentAvatar
-                :name="item.studentName"
-                :avatar-url="item.avatarPath || undefined"
-                size="md"
-              />
+                <StudentAvatar
+                  :name="item.studentName"
+                  :avatar-url="item.avatarPath || undefined"
+                  size="sm"
+                />
 
-              <div class="alert-item__body">
-                <div class="alert-item__topline">
+                <div class="alert-item__body">
                   <h3>{{ item.studentName }}</h3>
-                  <span class="alert-item__time">{{ formatDateTime(item.createdAt) }}</span>
+                  <p class="alert-item__desc">{{ item.reason }}</p>
                 </div>
 
-                <p class="alert-item__desc">
-                  {{ item.moduleLabel }} / {{ item.sessionLabel }} · {{ item.reason }}
-                </p>
-
-                <div class="alert-item__meta">
-                  <span v-if="item.accuracyRate !== null">正确率 {{ formatPercent(item.accuracyRate) }}</span>
-                  <span v-if="item.hintRatio !== null">平均每题提示 {{ item.hintRatio.toFixed(2) }} 次</span>
-                  <span v-if="item.promptLevel !== null">提示层级 {{ item.promptLevel }}（{{ formatPromptLevel(item.promptLevel) }}）</span>
-                </div>
-              </div>
-            </article>
+                <span class="alert-item__metric">{{ anomalyMetricText(item) }}</span>
+              </article>
+            </div>
           </div>
         </article>
 
-        <article :ref="panelRefs.assessment" class="dashboard-surface scgp-surface alert-panel alert-panel--assistant">
+        <!-- 面板三：智能特教助理 —— 一行摘要（完整标签与建议在「查看全部」弹层） -->
+        <article :ref="panelRefs.assessment" class="dashboard-surface scgp-surface board-panel board-panel--assistant">
           <div class="dashboard-panel-header">
             <div>
               <h2>智能特教助理</h2>
-              <p>基于本地评估记录梳理结果偏弱、评估缺口与复评超期，给出优先处理的学生与下一步建议。</p>
             </div>
             <div class="dashboard-panel-header__side">
               <span class="dashboard-panel-count dashboard-panel-count--warning">
                 {{ assessmentBadgeText }}
               </span>
               <button
-                v-if="snapshot.assessmentInsights.length > displayedAssessmentInsights.length"
+                v-if="snapshot.assessmentInsights.length > 0"
                 type="button"
                 class="dashboard-panel-header__action"
                 @click="assessmentInsightDrawerVisible = true"
@@ -478,59 +484,45 @@
             </div>
           </div>
 
-          <el-empty
-            v-if="snapshot.assessmentInsights.length === 0"
-            description="当前没有需要优先处理的评估事项"
-          />
+          <div class="board-panel__body">
+            <el-empty
+              v-if="snapshot.assessmentInsights.length === 0"
+              class="board-panel__empty"
+              description="当前没有需要优先处理的评估事项"
+            />
 
-          <div v-else class="alert-list">
-            <article
-              v-for="item in displayedAssessmentInsights"
-              :key="item.studentId"
-              class="alert-item alert-item--warning alert-item--clickable"
-              role="button"
-              tabindex="0"
-              @click="goToStudentDetail(item.studentId)"
-              @keydown.enter.prevent="goToStudentDetail(item.studentId)"
-              @keydown.space.prevent="goToStudentDetail(item.studentId)"
-            >
-              <span class="alert-item__accent"></span>
+            <div v-else class="alert-list">
+              <article
+                v-for="item in snapshot.assessmentInsights"
+                :key="item.studentId"
+                class="alert-item alert-item--warning alert-item--clickable"
+                role="button"
+                tabindex="0"
+                :title="insightTooltip(item)"
+                @click="goToStudentDetail(item.studentId)"
+                @keydown.enter.prevent="goToStudentDetail(item.studentId)"
+                @keydown.space.prevent="goToStudentDetail(item.studentId)"
+              >
+                <span class="alert-item__accent"></span>
 
-              <StudentAvatar
-                :name="item.studentName"
-                :avatar-url="item.avatarPath || undefined"
-                size="md"
-              />
+                <StudentAvatar
+                  :name="item.studentName"
+                  :avatar-url="item.avatarPath || undefined"
+                  size="sm"
+                />
 
-              <div class="alert-item__body">
-                <div class="alert-item__topline">
+                <div class="alert-item__body">
                   <h3>{{ item.studentName }}</h3>
-                  <span class="alert-item__time">
-                    {{ item.lastAssessmentAt ? `最近评估：${formatDate(item.lastAssessmentAt)}` : '尚无评估记录' }}
-                  </span>
+                  <p class="alert-item__desc">{{ item.suggestion }}</p>
                 </div>
 
-                <p class="alert-item__desc">{{ item.suggestion }}</p>
-
-                <div class="alert-item__tags">
-                  <span v-if="item.disorder" class="alert-item__tag alert-item__tag--never">
-                    {{ item.disorder }}
-                  </span>
-                  <span
-                    v-for="tag in item.tags"
-                    :key="`${tag.kind}-${tag.label}`"
-                    class="alert-item__tag"
-                    :class="`alert-item__tag--${tag.kind}`"
-                  >
-                    {{ tag.label }}
-                  </span>
-                </div>
-              </div>
-            </article>
+                <span class="alert-item__metric">{{ assessmentMetricText(item) }}</span>
+              </article>
+            </div>
           </div>
         </article>
-      </div>
-    </section>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -663,13 +655,20 @@ const metrics = computed(() => ([
   },
 ]))
 
-const displayedAnomalies = computed(() => snapshot.value.anomalies.slice(0, 4))
-/** 「查看全部」异常预警弹窗（面板只展示前 4 条） */
+/** 「查看全部」异常预警弹窗（面板内为一行摘要，完整信息在弹层） */
 const anomalyDialogVisible = ref(false)
 
-// 今日训练日程最多展示 4 条：与异常预警 / 智能特教助理口径一致，双列网格正好 2×2 齐整
-const displayedSchedule = computed(() => snapshot.value.schedule.slice(0, 4))
-const displayedAssessmentInsights = computed(() => snapshot.value.assessmentInsights.slice(0, 4))
+// 今日训练进度：分子 = 与「训练进度概览」同源的今日训练记录数（weeklyTrend 末点即今天），分母 = 今日计划数
+const todayTrainingCount = computed(() => {
+  const trend = snapshot.value.weeklyTrend
+  const today = trend[trend.length - 1]
+  return today ? today.count : 0
+})
+const todayProgressRatio = computed(() => {
+  const plans = snapshot.value.overview.todayTaskCount
+  if (plans <= 0) return 0
+  return Math.min(1, todayTrainingCount.value / plans)
+})
 
 // 面板角标：待办总数接近学生总数时（特教群体常态），拆出「优先处理」档才有信息量
 // 优先 = 明显偏弱 or 尚无评估记录；无优先项时退回单纯总数
@@ -680,7 +679,7 @@ const assessmentBadgeText = computed(() => {
     : `${pendingAssessmentCount} 条`
 })
 const agentDetailVisible = ref(false)
-/** 「查看全部」评估建议弹窗（面板只展示前 4 条） */
+/** 「查看全部」评估建议弹窗（面板内为一行摘要，完整标签与建议在弹层） */
 const assessmentInsightDrawerVisible = ref(false)
 const selectedHomeAgentCode = ref('')
 const homeAgents = computed(() =>
@@ -868,6 +867,32 @@ function openPlanModule(item: DashboardScheduleItem) {
 
 function formatPercent(value: number) {
   return `${Math.round(value * 100)}%`
+}
+
+type DashboardAnomalyItem = DashboardSnapshot['anomalies'][number]
+type DashboardInsightItem = DashboardSnapshot['assessmentInsights'][number]
+
+/** 异常条目的一行关键指标：按语义家族取一个（得分率不透出的家族退回提示口径） */
+function anomalyMetricText(item: DashboardAnomalyItem) {
+  if (item.accuracyRate !== null) return `正确率 ${formatPercent(item.accuracyRate)}`
+  if (item.promptLevel !== null) return `提示 ${item.promptLevel} 级 ${formatPromptLevel(item.promptLevel)}`
+  if (item.hintRatio !== null) return `每题提示 ${item.hintRatio.toFixed(2)} 次`
+  return item.sessionLabel
+}
+
+/** 助理条目悬浮提示：病种名 + 能力标签（面板内为一行摘要，完整信息在「查看全部」弹层） */
+function insightTooltip(item: DashboardInsightItem) {
+  return [item.disorder, ...item.tags.map((tag) => tag.label)]
+    .filter((label) => Boolean(label))
+    .join(' · ')
+}
+
+/** 助理条目的一行关键指标：无评估记录 / 超期天数 / 距最近评估天数 */
+function assessmentMetricText(item: DashboardInsightItem) {
+  if (item.daysSinceLastAssessment === null) return '尚无评估记录'
+  return item.tags.some((tag) => tag.kind === 'overdue')
+    ? `超期 ${item.daysSinceLastAssessment} 天`
+    : `最近评估 ${item.daysSinceLastAssessment} 天前`
 }
 
 function formatDate(value: string) {
@@ -1115,8 +1140,7 @@ onUnmounted(() => {
   line-height: 1.15;
 }
 
-.dashboard-section-header p,
-.dashboard-panel-header p {
+.dashboard-section-header p {
   margin: 8px 0 0;
   color: var(--scgp-muted);
   font-size: 14px;
@@ -1126,6 +1150,8 @@ onUnmounted(() => {
 .dashboard-panel-header__side {
   display: flex;
   align-items: center;
+  /* 侧栏（角标 + 查看全部）不参与压缩，避免按钮文字被挤成竖排 */
+  flex-shrink: 0;
 }
 
 .dashboard-panel-count {
@@ -1461,52 +1487,84 @@ onUnmounted(() => {
   margin-top: 18px;
 }
 
+/* 下半部三面板宿主：容器查询宿主，降级阶梯按看板自身宽度判定 */
+.dashboard-board-host {
+  container-type: inline-size;
+  container-name: dashboard-board;
+}
+
 .dashboard-board {
   display: grid;
-  /* 65:35 —— 左栏要承载双列日程卡，需要更宽的横向空间；右栏保底 320px 防止被挤压 */
-  grid-template-columns: minmax(0, 65fr) minmax(320px, 35fr);
-  gap: 20px;
-}
-
-.dashboard-board__stack {
-  display: flex;
-  flex-direction: column;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(0, 0.95fr);
   gap: 16px;
-  /* 允许「智能特教助理」在剩余纵向空间内自我收敛并内部滚动 */
-  min-height: 0;
+  align-items: stretch;
 }
 
-/* 右栏面板：预警按内容自适应高度，特教助理占满剩余空间 */
-.alert-panel {
+/* 看板 800–1139px（视口约 1100–1440）：日程独占整行，预警 / 助理并排 */
+@container dashboard-board (max-width: 1139px) {
+  .dashboard-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .board-panel--schedule {
+    grid-column: 1 / -1;
+  }
+}
+
+/* 看板 < 800px：三面板单列堆叠 */
+@container dashboard-board (max-width: 799px) {
+  .dashboard-board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 三面板统一固定高度：页面高度不随数据量变化，内容超出由面板内部滚动承载 */
+.board-panel {
   display: flex;
+  min-width: 0;
   flex-direction: column;
+  height: 520px;
+  overflow: hidden;
 }
 
-.alert-panel--anomaly {
-  flex: 0 0 auto;
-}
-
-.alert-panel--assistant {
+.board-panel__body {
+  display: flex;
   flex: 1 1 auto;
   min-height: 0;
-}
-
-.alert-panel--assistant .alert-list {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex-direction: column;
+  margin-top: 18px;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 6px;
   margin-right: -6px;
 }
 
-/* 「本周异常预警」空态：紧凑横幅（约 88px），不用 el-empty 的大留白 */
+/* 空态在固定高度内垂直居中：用 flex 撑满滚动区（不用百分比，避免父级高度未定时塔陷） */
+.board-panel__empty {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.board-panel__foot {
+  flex: 0 0 auto;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(217, 226, 238, 0.92);
+}
+
+/* 「本周异常预警」空态：紧凑横幅，不用 el-empty 的大留白 */
 .alert-empty {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   min-height: 88px;
-  margin-top: 18px;
+  /* 紧凑横幅自身不被拉伸，只在滚动区内垂直居中 */
+  margin: auto 0;
   padding: 14px 18px;
   border: 1px dashed var(--scgp-border-strong);
   border-radius: 16px;
@@ -1532,124 +1590,156 @@ onUnmounted(() => {
   line-height: 1.6;
 }
 
-/* 左侧「今日训练日程」：双列卡片网格，容器查询宿主按面板宽度降级 */
+/* 今日训练日程：行内单行 / 两行随面板宽度切换（容器查询宿主） */
 .schedule-panel {
   container-type: inline-size;
   container-name: schedule-panel;
 }
 
-.schedule-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 18px;
+/* 面板底部：今日训练进度（分子 = 与「训练进度概览」同源的今日训练记录数） */
+.schedule-progress__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--scgp-muted);
+  font-size: 12px;
 }
 
-/* 面板宽度撑不起双列（每列不足 300px）时平滑降级为单列 */
-@container schedule-panel (max-width: 615px) {
-  .schedule-list {
-    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
-  }
+.schedule-progress__label strong {
+  color: var(--scgp-text);
+  font-size: 15px;
+}
+
+.schedule-progress__track {
+  height: 8px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(143, 169, 204, 0.18);
+}
+
+.schedule-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6fb7a4 0%, var(--scgp-success) 100%);
+  transition: width 0.3s ease;
+}
+
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .alert-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin-top: 18px;
+  gap: 6px;
 }
 
 .schedule-item {
   display: flex;
+  align-items: center;
+  gap: 12px;
   min-width: 0;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px;
-  border-radius: 18px;
+  padding: 10px 12px;
   border: 1px solid var(--scgp-border);
+  border-radius: 14px;
   background: linear-gradient(180deg, #ffffff 0%, #f9fbfe 100%);
 }
 
-.schedule-item__head {
+.schedule-item__main {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex: 1;
   min-width: 0;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.schedule-item__content {
-  min-width: 0;
-}
-
-.schedule-item__topline {
+.schedule-item__line {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
+  min-width: 0;
 }
 
-.schedule-item__topline h3 {
+.schedule-item__line h3 {
   margin: 0;
+  flex: 0 0 auto;
   color: var(--scgp-text);
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .schedule-item__plan {
   margin: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
   color: var(--scgp-text);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-/* 底部：次要信息浅色小字 + 主按钮右对齐（卡片等高时按钮贴底） */
-.schedule-item__foot {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px dashed rgba(217, 226, 238, 0.92);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .schedule-item__meta {
   display: flex;
   min-width: 0;
-  flex: 1;
-  flex-wrap: wrap;
-  gap: 2px 12px;
+  gap: 12px;
+  overflow: hidden;
   color: var(--scgp-subtle);
   font-size: 12px;
   line-height: 1.5;
+  white-space: nowrap;
+}
+
+.schedule-item__meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .schedule-item__actions {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
-  flex-shrink: 0;
 }
 
 .schedule-item__actions :deep(.el-button) {
   white-space: nowrap;
 }
 
-.alert-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px 0;
+/* 日程独占整行（面板 ≥820px）时，两行信息合并为单行 */
+@container schedule-panel (min-width: 820px) {
+  .schedule-item__main {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .schedule-item__line--meta {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 }
 
-.alert-item + .alert-item {
-  border-top: 1px dashed rgba(217, 226, 238, 0.92);
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--scgp-border);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbfe 100%);
 }
 
 .alert-item__accent {
-  width: 8px;
-  min-height: 54px;
+  flex: 0 0 3px;
+  align-self: stretch;
+  min-height: 30px;
   border-radius: 999px;
-  flex-shrink: 0;
+  background: linear-gradient(180deg, #f16f52 0%, #da8166 100%);
 }
 
 .alert-item--danger .alert-item__accent {
@@ -1660,68 +1750,62 @@ onUnmounted(() => {
   background: linear-gradient(180deg, #e5a53c 0%, #ba7517 100%);
 }
 
+/* 一行摘要：姓名 + 一句话结论（超长省略；完整信息在 title 与「查看全部」弹层） */
 .alert-item__body {
-  min-width: 0;
-  flex: 1;
-}
-
-.alert-item__topline {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
-.alert-item__topline h3 {
+.alert-item__body h3 {
   margin: 0;
+  flex: 0 0 auto;
   color: var(--scgp-text);
-  font-size: 15px;
+  font-size: 13px;
 }
 
-.alert-item__time {
-  color: var(--scgp-subtle);
+.alert-item__desc {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--scgp-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 每行只留一个关键指标 */
+.alert-item__metric {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(64, 158, 255, 0.12);
+  color: #2f6fd0;
   font-size: 12px;
   white-space: nowrap;
 }
 
-.alert-item__desc {
-  margin: 6px 0 8px;
-  color: var(--scgp-muted);
-  font-size: 13px;
-  line-height: 1.7;
+.alert-item--danger .alert-item__metric {
+  background: rgba(216, 106, 79, 0.14);
+  color: #b8502c;
 }
 
-.alert-item__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 10px;
-  color: var(--scgp-muted);
-  font-size: 12px;
-}
-
-/* 智能特教助理：建议句压缩行高、能力标签 6px 间距换行（右栏窄） */
-.alert-panel--assistant .alert-item__desc {
-  margin: 4px 0 6px;
-  line-height: 1.55;
-}
-
-.alert-item__tags {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  color: var(--scgp-muted);
-  font-size: 12px;
+.alert-item--warning .alert-item__metric {
+  background: rgba(229, 165, 60, 0.16);
+  color: #97620f;
 }
 
 .alert-item--clickable {
   cursor: pointer;
-  border-radius: 12px;
-  transition: background-color 0.18s ease;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
 }
 
 .alert-item--clickable:hover {
-  background: rgba(64, 158, 255, 0.06);
+  border-color: var(--scgp-border-strong);
+  background: rgba(64, 158, 255, 0.05);
 }
 
 .alert-item--clickable:focus-visible {
@@ -1772,6 +1856,7 @@ onUnmounted(() => {
   background: transparent;
   color: #2f6fd0;
   font-size: 13px;
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color 0.18s ease;
 }
@@ -1849,10 +1934,6 @@ onUnmounted(() => {
 }
 
 @media (max-width: 1280px) {
-  .dashboard-board {
-    grid-template-columns: 1fr;
-  }
-
   .home-agent-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1887,13 +1968,12 @@ onUnmounted(() => {
   }
 
   .dashboard-section-header,
-  .dashboard-panel-header,
-  .alert-item__topline {
+  .dashboard-panel-header {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .schedule-item__foot {
+  .schedule-item {
     align-items: stretch;
     flex-direction: column;
   }

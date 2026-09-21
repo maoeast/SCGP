@@ -307,3 +307,15 @@
 - 采集：`node scripts/manual/capture-user-manual-screenshots.mjs --ids S008,S009,S010,S011 --run-id dashboard-layout-20260921 --allow-isolated-state` → 4 张全部成功（0 失败）。
 - 审批：approvals 中 S008–S011 四条 runId/sha256 已更新为本次工件；落盘前按 §2 防覆盖设计先删除同名旧图。
 - 复核：`verify-user-manual-approved-screenshots.mjs` = 217 条 approvals 逐条哈希校验通过；`manual:screenshots:check` = 217 场景 / 0 pending。
+
+### 4.4 2026-09-21 首页看板下半部三栏重排重拍
+
+受首页看板下半部三栏重排影响（三面板同行 1.15 : 0.95 : 0.95、统一固定高度 520px + 面板内滚动、条目改一行摘要、日程面板底部新增今日训练进度、日程显示上限 4 条改为不截断），重拍 4 张：
+
+| run | 编号 | 说明 |
+|---|---|---|
+| `dashboard-board5-20260921` | S008 / S009 / S010 / S011 | 最终批准批次：三栏版面、紧凑空态横幅、一行摘要条目、日程底部进度条、面板头部去说明文字；S009 / S011（整页）承载版面，S008 / S010 采集区（首页上半部 / AI 智能体空态）不受影响，随批次同源重采 |
+
+- 采集：`node scripts/manual/capture-user-manual-screenshots.mjs --ids S008,S009,S010,S011 --run-id dashboard-board5-20260921 --allow-isolated-state` → 4 张全部成功（0 失败）。
+- 迭代留痕（同任务内共 5 轮）：`dashboard-board-20260921` / `dashboard-board2-20260921` 因 S011 断言失败（日程面板重构丢了契约类名 `schedule-panel`）作废——该断言在此暴露了真实回归；`dashboard-board3-20260921` 补类名后 4/4 通过；`dashboard-board4-20260921` 修「查看全部」按钮换行；`dashboard-board5-20260921` 去面板头部说明文字，为最终批准批次。
+- 复核：`verify-user-manual-approved-screenshots.mjs` = 217 条 approvals 逐条哈希校验通过；`manual:screenshots:check` = 217 场景 / 0 pending。
