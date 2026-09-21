@@ -4,6 +4,28 @@
 
 ---
 
+
+## [2026-09-21] 报告导出做实：自定义页眉 / 学生头像 / HTML 导出 / 默认格式（系统设置三项生效）+ 报告页性别修复
+- 背景：系统管理→报告设置的「默认报告格式 / 包含学生头像 / 报告页眉」三项**只存不用**——全 src 仅 `SystemSettings.vue` 读写这三个 key，导出链零消费，页眉与头像在报告中从未出现
+- 新增 `src/utils/report-export.ts`（统一分发层）：读设置三键 → 补全 payload（headerText/avatarUrl）→ 按默认格式路由 Word/HTML；`normalizeReportExportFormat` 把存量 `'pdf'` 读作 word（DB 值不动）；头像按 studentId 查 `avatar_path` 并过 `resolveStudentAvatarUrl` 过滤（legacy 生成头像不放行）
+- 新增 `src/utils/export-html.ts`：同一 `WordExportPayload` → 内联样式单文件 HTML（页眉条 / 基本信息表 / 表格配色对齐 Word 观感，头像转 data: URL 内嵌），复用 `__SCGP_MANUAL_CAPTURE_EXPORT_WORD__` 拦截钩子
+- `src/utils/export-word.ts`：payload 扩展 `headerText`/`avatarUrl`；docx `Header` 注入页眉（空值不渲染）；`ImageRun` 浮动证件照（右浮 94×132，取字节失败 / 非 png-jpg 静默跳过）
+- `src/utils/docxExporter.ts`：legacy 5 处 Document 构造同步注入页眉；`SystemSettings.vue`：格式选项 PDF/Word → **Word/HTML**，默认 word，读值复用归一化函数
+- 19 个 Report.vue（18 量表 + 情绪）统一换 `exportReport` 并补传 `studentId`；按钮文案「导出Word」→「导出报告」（默认格式可为 HTML，文案不再写死格式）；AI 链（`ai-tools.ts` / `AiAssistant.vue`）固定 Word，不受默认格式影响
+- 同轮修复的三个现存缺陷：① **报告设置不持久化**——`SystemSettings.vue` 的显式落盘调用 `db.saveToStorage()` 在 SQLWrapper 上从不存在（静默空操作），且保存只在全局按钮触发；改为三项变更即写库 + `saveNow()` 立即刷盘（真库取证：`default_report_format` 停在 `'pdf'`、`updated_at` 停在 2026-08-07）② **CSIRS 报告性别恒为「未知」**——导出 payload 写死字面量、SQL 未取性别；改为 JOIN 取 `s.gender` / `s.birthday` ③ **五张报告缺性别栏**（ABC / ATEC / 视知觉 / SDQ / 儿心Ⅱ）——补查询与 meta 行；Conners PSQ/TRS 的性别由英文存储（male/female）统一归一为中文
+- 新增共享助手 `formatGenderLabel()`（`student-display.ts`）：男/女、male/female、M/F → 中文，空值「未填写」；新库种子补报告设置三键默认行（init.ts ×2 + sqljs-init.ts）
+- 测试：新增 `tests/report-export.test.ts`（7 组断言，挂 `test:core:ts`）、`scripts/tests/assessment-word-builders.test.mjs` 扩性别断言（+3 用例）；`npm run verify:core` 全绿
+- 边界：equipment 器材 IEP 导出仍走 legacy 链（固定 Word、仅页眉，不带头像/默认格式）——范围裁剪已记录；`docxExporter` 四个无调用方函数待后续清理
+
+## [2026-09-21] electron:dev 终端中文乱码修复：Electron 主进程日志改经启动器转发
+- 现象：`npm run electron:dev` 时 Electron 主进程日志中的中文全部乱码（「运行模式」显示为「杩愯妯″紡」），而同一终端里启动脚本自身与 Vite 的中文正常
+- 根因：Windows 控制台按当前代码页（中文系统 GBK/936）解码「直连」进程写出的字节；Electron 主进程日志是 UTF-8 字节，旧实现 `stdio: 'inherit'` 让子进程直连控制台 → 整段中文被按 GBK 解码。Node 进程的 stdout 在 Windows 上走控制台宽字符写入，不受代码页影响（故启动脚本 / 经 pipe 转发的 Vite 输出正常）
+- 字节级复算：`new TextDecoder('gbk').decode(Buffer.from('资源根目录已创建', 'utf8'))` 恰为终端实际乱码「璧勬簮鏍圭洰褰曞凡鍒涘缓」（多组原文精确复现，其余组只差终端对孤立字节的 `?` 替换符）
+- 修复：`scripts/electron-dev-start.js` 启动 Electron 改 `stdio: ['inherit', 'pipe', 'pipe']`，并抽 `forwardChildOutput()`（先 `setEncoding('utf8')` 逐流解码、再写本进程 stdout/stderr）统一转发 Electron 与 Vite 输出——不切控制台代码页、无终端副作用，cmd / Windows Terminal / VS Code 终端行为一致
+- 转发引入的两个副作用已一并收口：①退出前有界等待转发管道落地（`waitForForwardedOutput()`，等流 end/close 或 300ms 超时），避免 `process.exit` 丢掉子进程最后几行日志；②`swallowBrokenPipe()` 同时挂在子进程读端与本进程 stdout/stderr，外层管道提前关闭（如 `| head`）不再因 EPIPE 崩溃
+- 验证：新增 `scripts/tests/electron-dev-console-output.test.mjs`（挂 `test:core:node`）——断言子进程不得 `stdio: inherit` 直连、两条子进程都必须走转发函数；`npm run test:core:node` 152/152 全绿；转发链字节无损复算通过（stdout/stderr 逐字节一致）
+- 边界与待复验：`npm run electron`（`electron .` 直连）等其它直连路径不在本次范围；终端实际显示需重启一次 `npm run electron:dev` 人工确认
+
 ## [2026-09-21] 首页看板「本周异常预警」口径重做：扫描切到统一训练主表 + 修死规则 + 补信号
 - 问题①（漏扫）：旧实现直扫 `training_records` + `emotional_training_session` 两张旧表 → 只写统一主表 `training_session` 的入口（实测 `cognitive_game_inline` 20 条）完全不进扫描；近 7 天另有 217 条 emotional 训练被「排除 emotional」的分支与情绪分支同时漏掉
 - 问题②（死规则）：「提示依赖」取 `emotional_training_detail.hint_level` 均值 > 2，而该明细表在演示库 0 行 → 恒不触发（真库近 7 天命中 0 条，面板必然空态）
