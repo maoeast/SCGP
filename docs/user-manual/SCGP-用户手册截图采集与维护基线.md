@@ -332,3 +332,19 @@
 - 采集：`--ids S001,S002 --run-id dashboard-top-20260921` 与 `--ids S007 --run-id dashboard-usermenu-20260921`（均 `--allow-isolated-state`），3 张全部成功。
 - 目视核对：S001 / S007 hero 已显示当前数字，S007 浮层完整未污染；S002 教师视图正确（无「系统管理」入口、scope 内 0 学生）。
 - 复核：`verify-user-manual-approved-screenshots.mjs` = 217 条 approvals 逐条哈希校验通过；`manual:screenshots:check` = 217 场景 / 0 pending。
+
+### 4.6 2026-09-21 首页「训练进度概览」卡片重做重拍（S009 / S011）
+
+卡片数据源从 legacy 表 `training_records` 切到统一主表 `training_session`，展示形态从「单线次数折线」升级为「窗口切换（近 7 / 30 天）+ KPI 行（次数 / 时长 / 参与学生 / 完成率，含环比）+ 次数-时长组合图 + 模块分布 + 当日明细弹层」，口径见 `docs/planning/2026-09-21-首页训练进度概览-判定口径.md`。重拍 2 张：
+
+| run | 编号 | 说明 |
+|---|---|---|
+| `dashboard-trend-20260921` | S009 / S011 | S009（整页）与 S011（整页）都承载看板，卡片在其上方同框；两图均为 1920×1080 |
+
+- **fixture 变更**：新增种子家族 `dashboard-trend`（`capture-user-manual-screenshots.mjs` 内），按**采集当天相对**生成近 14 个自然日 × 5 模块的训练会话（今天：`plans` 画像 1 条，`admin-no-schedule` 画像 0 条）；只挂到 `plans` 与 `admin-no-schedule` 两个画像，其余画像不受影响。种子行的 `created_at` 故意落在「本周异常预警」窗口（近 7 天）之外——它们只服务趋势卡片，不改动异常面板的演示状态（S009 / S011 的预警面板仍为「0 条 / 平稳」）。
+- 采集：`node scripts/manual/capture-user-manual-screenshots.mjs --ids S009,S011 --run-id dashboard-trend-20260921 --allow-isolated-state` → 2 张全部成功（0 失败）。
+- **画面刻度（重要）**：新版卡片比旧版高约 250px，**1080 视口内无法与 520px 看板同时完整入画**。两个场景的采集锚点仍是看板（`scrollIntoViewIfNeeded(.schedule-item / .schedule-panel)`），因此**卡片顶部（标题 + 窗口切换 + 摘要行）在画面之上**，图内可见卡片下部的 KPI 行、组合图与模块分布。若手册需要卡片的完整形态，须为其单独编号（走插行流程，会让后续编号整体漂移）——本轮未做。
+- 审批与落盘：approvals 中 S009 / S011 更新为本次 runId + sha256；落盘前按 §2 先删同名旧图，`promote-user-manual-screenshots.mjs --ids S009,S011 --allow-formal-output` 落盘 2 张。
+- docx 就地换图（§1 流程）：S009 → `word/media/image13.png`、S011 → `word/media/image15.png`（按**旧批准哈希**定位），新旧图像素尺寸一致（1920×1080）；换后自检「条目数 244 不变 + 除目标外 media 哈希不变 + 目标 = 新批准哈希」，`verify-user-manual-approved-screenshots.mjs --docx` = `approvals 217 / embedded 217`。备份：`SCGP-星愿能力发展平台用户使用手册.docx.20260921-trend.bak`。
+- 复核：`verify-user-manual-approved-screenshots.mjs` = 217 条 approvals 逐条哈希校验通过；`manual:screenshots:check` = 217 场景 / 0 pending。
+

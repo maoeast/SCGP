@@ -787,6 +787,115 @@ async function seedFixture(page, fixture) {
       )
     }
 
+    // 首页「训练进度概览」卡片 fixture：按采集当天**相对**生成近 14 个自然日的训练会话
+    //   · 当前窗口（近 7 天，含今天）与上一等长窗口（第 8–14 天）都有数据 → KPI 环比可见
+    //   · 5 个模块全覆盖，少量 interrupted → 完成率不是 100%
+    //   · created_at 故意放在「本周异常预警」窗口（近 7 天，按 created_at 过滤）之外：
+    //     这些行只服务趋势卡片，不改动异常面板的演示状态
+    //   · 今天：有当日计划的画像补 1 条（进度条读作 1/1），无日程画像不补（保持空安排语义）
+    if (hasSeed('dashboard-trend')) {
+      const trendTodaySessions = hasSeed('plans') ? 1 : 0
+      // [距今天数, 当日会话数, 首个会话的本地小时]
+      const trendDayPlan = [
+        [13, 2, 9], [12, 3, 10], [11, 3, 9], [10, 4, 14], [9, 3, 9], [8, 3, 15], [7, 2, 9],
+        [6, 3, 9], [5, 6, 10], [4, 4, 14], [3, 5, 9], [2, 7, 9], [1, 4, 10],
+      ]
+      const trendModuleRoster = [
+        ['sensory', 'sensory-integration', 'game', '感官游戏 · 视觉追踪', 12],
+        ['emotional', 'emotional-regulation', 'emotion_scene', '情绪场景 · 认识生气', 15],
+        ['cognitive', 'cognitive', 'cognitive_game', '认知游戏 · 图形找规律', 10],
+        ['social', 'social-communication', 'game', '社交游戏 · 轮流与等待', 12],
+        ['life_skills', 'life-skills', 'task_training', '生活自理 · 整理物品', 18],
+      ]
+      const trendStudents = [9001, 9002, 9003, 9004]
+      const trendStatusPattern = ['completed', 'completed', 'completed', 'completed', 'interrupted']
+      const trendCreatedAt = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 19)
+        .replace('T', ' ')
+      const trendBase = new Date()
+      trendBase.setHours(0, 0, 0, 0)
+
+      const insertTrendSession = (
+        sourceRecordId,
+        studentId,
+        moduleCode,
+        entryCode,
+        sessionFamily,
+        taskName,
+        startedAt,
+        durationMs,
+        completionStatus,
+      ) => {
+        db.run(
+          `INSERT INTO training_session (
+            student_id, module_code, entry_code, session_family,
+            resource_type, task_name_snapshot, class_id, class_name,
+            started_at, ended_at, duration_ms, completion_status,
+            source_table, source_record_id, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            studentId,
+            moduleCode,
+            entryCode,
+            sessionFamily,
+            'game',
+            taskName,
+            9201,
+            '星光一班',
+            startedAt.toISOString(),
+            new Date(startedAt.getTime() + durationMs).toISOString(),
+            durationMs,
+            completionStatus,
+            'manual_screenshot_trend',
+            sourceRecordId,
+            trendCreatedAt,
+          ],
+        )
+      }
+
+      let trendRecordId = 970000
+      for (const [daysAgo, sessions, startHour] of trendDayPlan) {
+        for (let index = 0; index < sessions; index += 1) {
+          const [moduleCode, entryCode, sessionFamily, taskName, minutes] =
+            trendModuleRoster[(daysAgo + index) % trendModuleRoster.length]
+          const startedAt = new Date(trendBase)
+          startedAt.setDate(startedAt.getDate() - daysAgo)
+          startedAt.setHours(startHour + index, 15 + (index % 3) * 10, 0, 0)
+          trendRecordId += 1
+          insertTrendSession(
+            trendRecordId,
+            trendStudents[(daysAgo * 3 + index) % trendStudents.length],
+            moduleCode,
+            entryCode,
+            sessionFamily,
+            taskName,
+            startedAt,
+            minutes * 60_000 + index * 15_000,
+            trendStatusPattern[(daysAgo + index) % trendStatusPattern.length],
+          )
+        }
+      }
+
+      for (let index = 0; index < trendTodaySessions; index += 1) {
+        const [moduleCode, entryCode, sessionFamily, taskName, minutes] = trendModuleRoster[0]
+        const startedAt = new Date(trendBase)
+        startedAt.setHours(9, 40 + index * 20, 0, 0)
+        trendRecordId += 1
+        insertTrendSession(
+          trendRecordId,
+          trendStudents[index % trendStudents.length],
+          moduleCode,
+          entryCode,
+          sessionFamily,
+          taskName,
+          startedAt,
+          minutes * 60_000,
+          'completed',
+        )
+      }
+    }
+
     if (hasSeed('assessments')) {
       const { smQuestions } = await import('/src/database/sm-questions.ts')
       smQuestions.forEach((question) => {
