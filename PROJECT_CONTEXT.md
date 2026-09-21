@@ -1909,3 +1909,9 @@
 - 质量看板补 CPEP-3 汇总（QUALITY_TABLES 曾漏 cpep3_assess 真 bug）+ 系统管理「评估质量」tab 入口；cognitive_self 的 avg_response_time 是 ms 语义，看板展示层按量表换算（MS_UNIT_SCALE_CODES）。
 - 手册第 18 章瘦身：对外版只留 18.1 盘点+18.2 术语；截图清单（217 行）等内部资料在 docs/user-manual/SCGP-用户手册截图采集与维护基线.md，sync/validate 改读基线文档。
 - 截图 211→217：插行编号漂移 138 处全量重映射（capture handler/approvals/正文占位三方）；新场景种子必须挂对应 fixture 家族（AI 记忆挂 hasSeed('ai')）。营销文案 v2.0（docs/marketing/2026-09-10，五种形态）替代 08-05 版对外口径。
+
+## 111. 2026-09-21 首页看板下半部三栏重排 + 手册截图/docx 同步
+
+- 首页看板下半部三面板改为**同一行三栏（1.15 : 0.95 : 0.95）+ 统一固定高度 520px + 面板内滚动**：条目不截断、条目收敛为紧凑摘要（预警/助理一行，日程信息行 + 次要行；明细进「查看全部」弹层与学生详情页），日程面板底部加今日训练进度条（分子 = 今日训练记录数、分母 = 今日计划数，**两者单位不同**故只以进度条表达比例、数字分列），面板头部去掉说明文字只留标题 + 角标。降级阶梯按**看板自身宽度**用容器查询判定（≥1140 三栏 / 800–1139 日程整行 + 两面板并排 / < 800 单列）。真源档 `docs/planning/2026-09-21-首页看板下半部-布局重排.md`；三个面板的判定口径与取数未动。
+- **新增全局约束（手册成品）**：`docs/user-manual/*.docx` 的封面/封底是**用户手工编辑**版本，**禁止**跑 `generate-user-manual.mjs` 整份重新生成；要刷新内嵌截图走「就地换图」流程（备份 `.bak` → 按旧批准哈希定位 `word/media` 目标 → 新旧图像素尺寸一致才换 → 其余 zip 条目零改动 → `verify-user-manual-approved-screenshots.mjs --docx` 校验 approvals = embedded）。流程已写入手册基线档 §1。PDF 无仓库脚本，由用户手动 Word 导出。
+- 遗留观察（未排期）：看板进度条分子沿用 `getWeeklyTrainingTrend`（仍读旧表 `training_records`），与已切统一主表 `training_session` 的异常面板口径可能不一致，存在少计可能。
