@@ -1,9 +1,10 @@
 /**
  * 学生 Excel 导入解析与校验
  *
- * 模板列（2026-09-20 扩展）：姓名* / 性别* / 出生日期* / 学号 / 诊断类型 /
- * 监护人姓名 / 与学生关系 / 监护人电话 / 健康备注 / 学籍号（后 5 列选填）
+ * 模板列（2026-09-21 T24 扩展）：姓名* / 性别* / 出生日期* / 学号 / 诊断类型 /
+ * 监护人姓名 / 与学生关系 / 监护人电话 / 医学状态 / 照护要求 / 学籍号（后 6 列选填）
  * 校验从宽：新列不做格式强校验（电话/学籍号仅 trim），录入界面有占位口径
+ * 旧文件兼容：「健康备注」表头按「医学状态」导入；缺「照护要求」列按空处理
  */
 import * as XLSX from 'xlsx'
 
@@ -18,6 +19,7 @@ export interface StudentImportRow {
   guardianRelation: unknown
   guardianPhone: unknown
   healthNotes: unknown
+  careInstructions: unknown
   registryNo: unknown
 }
 
@@ -31,6 +33,7 @@ export interface StudentImportInput {
   guardian_relation: string
   guardian_phone: string
   health_notes: string
+  care_instructions: string
   registry_no: string
 }
 
@@ -48,7 +51,8 @@ const STUDENT_IMPORT_COLUMNS = {
   guardianName: ['监护人姓名'],
   guardianRelation: ['与学生关系', '监护人关系'],
   guardianPhone: ['监护人电话'],
-  healthNotes: ['健康备注'],
+  healthNotes: ['健康备注', '医学状态'],
+  careInstructions: ['照护要求'],
   registryNo: ['学籍号'],
 } as const
 
@@ -64,7 +68,7 @@ function normalizeText(value: unknown): string {
 
 function isBlankRow(row: StudentImportRow): boolean {
   return [row.name, row.gender, row.birthday, row.studentNo, row.disorder,
-          row.guardianName, row.guardianRelation, row.guardianPhone, row.healthNotes, row.registryNo]
+          row.guardianName, row.guardianRelation, row.guardianPhone, row.healthNotes, row.careInstructions, row.registryNo]
     .every(value => normalizeText(value) === '')
 }
 
@@ -151,6 +155,7 @@ export function readStudentImportWorkbook(buffer: ArrayBuffer): StudentImportRow
     guardianRelation: getColumnIndex(headers, STUDENT_IMPORT_COLUMNS.guardianRelation),
     guardianPhone: getColumnIndex(headers, STUDENT_IMPORT_COLUMNS.guardianPhone),
     healthNotes: getColumnIndex(headers, STUDENT_IMPORT_COLUMNS.healthNotes),
+    careInstructions: getColumnIndex(headers, STUDENT_IMPORT_COLUMNS.careInstructions),
     registryNo: getColumnIndex(headers, STUDENT_IMPORT_COLUMNS.registryNo),
   }
 
@@ -166,6 +171,7 @@ export function readStudentImportWorkbook(buffer: ArrayBuffer): StudentImportRow
       guardianRelation: columnIndexes.guardianRelation >= 0 ? row[columnIndexes.guardianRelation] : '',
       guardianPhone: columnIndexes.guardianPhone >= 0 ? row[columnIndexes.guardianPhone] : '',
       healthNotes: columnIndexes.healthNotes >= 0 ? row[columnIndexes.healthNotes] : '',
+      careInstructions: columnIndexes.careInstructions >= 0 ? row[columnIndexes.careInstructions] : '',
       registryNo: columnIndexes.registryNo >= 0 ? row[columnIndexes.registryNo] : '',
     }))
     .filter(row => !isBlankRow(row))
@@ -204,11 +210,12 @@ export function validateStudentImportRow(
       birthday,
       student_no: studentNo,
       disorder: normalizeText(row.disorder),
-      // 监护人/健康备注/学籍号：选填、从宽校验（仅 trim），格式口径由录入界面占位提示约束
+      // 监护人/医学状态/照护要求/学籍号：选填、从宽校验（仅 trim），格式口径由录入界面占位提示约束
       guardian_name: normalizeText(row.guardianName),
       guardian_relation: normalizeText(row.guardianRelation),
       guardian_phone: normalizeText(row.guardianPhone),
       health_notes: normalizeText(row.healthNotes),
+      care_instructions: normalizeText(row.careInstructions),
       registry_no: normalizeText(row.registryNo),
     },
   }

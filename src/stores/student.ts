@@ -15,6 +15,7 @@ export interface Student {
   guardian_relation?: string | null
   guardian_phone?: string | null
   health_notes?: string | null
+  care_instructions?: string | null
   registry_no?: string | null
   created_at: string
   updated_at: string

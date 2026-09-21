@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS student (
   guardian_relation TEXT,
   guardian_phone TEXT,
   health_notes TEXT,
+  care_instructions TEXT,
   registry_no TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -4927,6 +4928,9 @@ async function initializeClassTables(rawDb: any): Promise<void> {
   safeAddColumn(rawDb, 'student', 'guardian_relation TEXT')
   safeAddColumn(rawDb, 'student', 'guardian_phone TEXT')
   safeAddColumn(rawDb, 'student', 'health_notes TEXT')
+  // T24 照护要求（2026-09-21）：照护行为指令（怎么做），与 health_notes（医学状态，医学事实）职责分离；
+  // 存量 health_notes 不迁移，原样继续当医学状态展示（用户拍板）
+  safeAddColumn(rawDb, 'student', 'care_instructions TEXT')
   safeAddColumn(rawDb, 'student', 'registry_no TEXT')
   safeAddColumn(rawDb, 'training_records', 'class_id INTEGER')
   safeAddColumn(rawDb, 'training_records', 'class_name TEXT')

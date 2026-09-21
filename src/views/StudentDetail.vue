@@ -62,15 +62,25 @@
               {{ gradeAgeHint }}
             </p>
 
-            <!-- 健康安全警示条（2026-09-20 用户拍板·降级方案）：healthNotes 自由文本完整透出，紧跟姓名下方，
-                 不在前端对自由文本做拆分；后续若引入结构化字段（care_instructions 照护要求 / healthNotes 医学状态）
-                 再升级为「医学状态 + 照护要求」分段展示 -->
-            <div v-if="healthNotes" class="health-alert" role="alert">
-              <el-icon class="health-alert__icon"><WarningFilled /></el-icon>
-              <p class="health-alert__text">
-                <strong>健康警示</strong>
-                <span>{{ healthNotes }}</span>
-              </p>
+            <!-- 医学状态 + 照护要求双警示条（2026-09-21 T24）：health_notes=医学状态（医学事实，红警示），
+                 care_instructions=照护要求（行为指令，琥珀色）；只填其一只显示那一段，都空整块不渲染。
+                 历史沿革：2026-09-20 用户拍板降级方案为 healthNotes 自由文本单条透出、不在前端拆分；
+                 本次引入结构化 care_instructions 列后升级为双段展示（原约定脉络保留于此） -->
+            <div v-if="healthNotes || careInstructions" class="health-alert-group">
+              <div v-if="healthNotes" class="health-alert health-alert--medical" role="alert">
+                <el-icon class="health-alert__icon"><WarningFilled /></el-icon>
+                <p class="health-alert__text">
+                  <strong>医学状态</strong>
+                  <span>{{ healthNotes }}</span>
+                </p>
+              </div>
+              <div v-if="careInstructions" class="health-alert health-alert--care" role="note">
+                <el-icon class="health-alert__icon"><Bell /></el-icon>
+                <p class="health-alert__text">
+                  <strong>照护要求</strong>
+                  <span>{{ careInstructions }}</span>
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -180,7 +190,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Calendar, DataLine, Edit, WarningFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, Bell, Calendar, DataLine, Edit, WarningFilled } from '@element-plus/icons-vue'
 import AddStudentDialog from '@/components/AddStudentDialog.vue'
 import DiagnosisTag from '@/components/student/DiagnosisTag.vue'
 import StudentAvatar from '@/components/student/StudentAvatar.vue'
@@ -250,7 +260,7 @@ function resolveCurrentClassGradeLevel() {
   }
 }
 
-// 监护人信息：有任一字段即展示（监护人/健康备注是训练安全与家长沟通的关键档案）
+// 监护人信息：有任一字段即展示（监护人/医学状态是训练安全与家长沟通的关键档案）
 const guardianInfo = computed(() => {
   const s = student.value
   if (!s?.guardian_name && !s?.guardian_phone) return null
@@ -264,7 +274,7 @@ const guardianDisplay = computed(() => {
 })
 
 // 顶部档案区元数据网格（2026-09-20 重构，替代原 detailFacts 纵向堆叠 + 监护人/健康宽卡）：
-// 6 项 3 列紧凑排布；创建时间为次要信息置灰展示；健康备注独立为姓名下方警示条（见模板）
+// 6 项 3 列紧凑排布；创建时间为次要信息置灰展示；医学状态/照护要求独立为姓名下方警示条（见模板）
 const heroMeta = computed(() => [
   { label: '性别', value: student.value?.gender || '未设置', muted: false },
   { label: '年龄', value: student.value?.birthday ? `${getStudentAge(student.value.birthday)}岁` : '-', muted: false },
@@ -275,6 +285,7 @@ const heroMeta = computed(() => [
 ])
 
 const healthNotes = computed(() => student.value?.health_notes?.trim() || '')
+const careInstructions = computed(() => student.value?.care_instructions?.trim() || '')
 
 // AI 记忆置顶摘要：已确认的置顶/关键记忆（最多 2 条，安全关键优先）
 // 依赖 memoryVersion：面板内确认/置顶操作后强制重算（DB 查询非响应式）
@@ -555,6 +566,11 @@ watch(
   --detail-danger: #d03050;
   --detail-danger-soft: #fdf1f3;
   --detail-danger-border: #f3c2cb;
+  /* T24 照护要求警示条：琥珀/橙色系（与医学状态红色区分） */
+  --detail-care: #d48806;
+  --detail-care-soft: #fdf6ec;
+  --detail-care-border: #f0d9a8;
+  --detail-care-text: #ad6800;
   gap: 20px;
   background:
     radial-gradient(circle at top right, rgba(102, 168, 255, 0.15), transparent 28%),
@@ -705,7 +721,13 @@ watch(
   flex-shrink: 0;
 }
 
-/* 健康安全警示条（2026-09-20 用户拍板）：姓名下方高优先级展示，红色高亮 */
+/* 健康警示双条（2026-09-21 T24）：医学状态红色警示 + 照护要求琥珀色，样式同骨架分色区分 */
+.health-alert-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .health-alert {
   display: flex;
   align-items: flex-start;
@@ -717,11 +739,22 @@ watch(
   background: var(--detail-danger-soft);
 }
 
+/* 照护要求段：琥珀/橙色系（与医学状态红色区分），沿用同一卡片骨架 */
+.health-alert--care {
+  border-color: var(--detail-care-border);
+  border-left-color: var(--detail-care);
+  background: var(--detail-care-soft);
+}
+
 .health-alert__icon {
   flex-shrink: 0;
   margin-top: 2px;
   color: var(--detail-danger);
   font-size: 18px;
+}
+
+.health-alert--care .health-alert__icon {
+  color: var(--detail-care);
 }
 
 .health-alert__text {
@@ -739,8 +772,16 @@ watch(
   font-weight: 700;
 }
 
+.health-alert--care .health-alert__text strong {
+  color: var(--detail-care-text);
+}
+
 .health-alert__text span {
   color: #9f3a4d;
+}
+
+.health-alert--care .health-alert__text span {
+  color: #8a5a16;
 }
 
 /* —— 右侧元数据紧凑网格：3 列，次要信息置灰 —— */

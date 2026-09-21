@@ -106,12 +106,22 @@
         </div>
 
         <div class="form-group">
-          <label for="health_notes">健康备注</label>
+          <label for="health_notes">医学状态</label>
           <textarea
             id="health_notes"
             v-model="studentForm.health_notes"
             rows="2"
-            placeholder="既往病史 / 过敏史 / 用药情况等训练安全须知（选填）"
+            placeholder="既往病史 / 过敏史 / 用药情况（选填）"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="care_instructions">照护要求</label>
+          <textarea
+            id="care_instructions"
+            v-model="studentForm.care_instructions"
+            rows="2"
+            placeholder="训练时该怎么做：如教室需常通风 / 避免剧烈运动 / 进食需一对一辅助（选填）"
           ></textarea>
         </div>
 
@@ -180,6 +190,7 @@ interface EditableStudent {
   guardian_relation?: string | null
   guardian_phone?: string | null
   health_notes?: string | null
+  care_instructions?: string | null
   registry_no?: string | null
 }
 
@@ -194,6 +205,7 @@ interface StudentFormState {
   guardian_relation: string
   guardian_phone: string
   health_notes: string
+  care_instructions: string
   registry_no: string
 }
 
@@ -235,6 +247,7 @@ function createEmptyStudentForm(): StudentFormState {
     guardian_relation: '',
     guardian_phone: '',
     health_notes: '',
+    care_instructions: '',
     registry_no: ''
   }
 }
@@ -269,6 +282,7 @@ const studentForm = ref<StudentFormState>({
   guardian_relation: '',
   guardian_phone: '',
   health_notes: '',
+  care_instructions: '',
   registry_no: ''
 })
 
@@ -406,6 +420,7 @@ const initializeForm = () => {
       guardian_relation: props.editingStudent.guardian_relation || '',
       guardian_phone: props.editingStudent.guardian_phone || '',
       health_notes: props.editingStudent.health_notes || '',
+      care_instructions: props.editingStudent.care_instructions || '',
       registry_no: props.editingStudent.registry_no || ''
     }
     avatarPreview.value = props.editingStudent.avatar_path || ''
