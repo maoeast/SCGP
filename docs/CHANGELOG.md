@@ -4,6 +4,24 @@
 
 ---
 
+## [2026-09-21] 首页看板「智能特教助理」面板做实：评估缺口与优先建议（含 18 量表覆盖修复）
+- 问题①（覆盖缺口）：面板数据源 `DashboardAPI.getAssessmentAlerts` 的 UNION 只列 8 张量表主表（2026-03-19 写入），此后新增的 ABC/ATEC/PEP-3 等 10 个量表从未同步；真库实测：只在 ABC/ATEC/CRT/认知自我建过基线的学生被误报「尚无评估记录」（43 名学生中 1 例）
+- 问题②（名不副实）：原文案「根据真实评估缺口提供优先干预建议」实际只有一条「超过 6 个月未评估」阈值 + 两条模板句，不读任何分数、维度或缺口
+- `src/database/assessment-quality-api.ts`：`QUALITY_TABLES` 导出为单一真源（18 张量表主表 = catalog 全量）
+- `src/services/assessment-score-adapters.ts`：`ScoreAdapter` 新增 `normalizeRow(row)`（与 `getLongitudinalScores` 同一归一化口径），16 个适配器全部实现（配置式抽 `xxxNormalizeRow`、内联式抽具名函数）——看板与 AI 纵向趋势从此不可能口径漂移
+- 新增 `src/services/assessment-gap-analysis.ts`（纯函数、零 DB 依赖）：四条信号 ①明显偏弱/偏弱需关注（按 5 大发展领域聚合各量表最近一次等级，复用画像口径后再按 danger/warning 分级）②评估缺口（缺 ≥3 个领域才算基线明显不完整）③从未评估 ④超期未复评（6 个月）；排序：明显偏弱 > 从未评估 > 偏弱需关注 > 评估缺口 > 超期；建议句由真实量表名 + 日期 + 等级拼装；crt/cognitive_self/cpep_3 只计覆盖不下强弱结论
+- `src/services/assessment-profile.ts`：导出 `strengthFromLevel`、新增 `aggregateStrengthFromLevels`（`aggregateDomainStrength` 改为调用它，行为不变）——跨量表画像与首页看板共用同一强弱判定
+- `src/database/dashboard-api.ts`：`getAssessmentAlerts` → `getAssessmentInsights`（逐表「每生最新一行」→ `SCORE_ADAPTERS[code].normalizeRow` → 纯函数）；`DashboardSnapshot.assessmentAlerts` → `assessmentInsights`；`overview.pendingAssessmentCount` 与面板同源
+- `src/views/Dashboard.vue`：面板渲染依据标签（明显偏弱/偏弱/未评估/尚无评估/超期）+ 建议句；条目可点击进学生详情（键盘 Enter/Space 可达）；超 4 条时新增「查看全部」弹窗列全量；副标题、指标卡 hint、hero 提醒文案改为与实际口径一致
+- 溯源与判定同源（评审 H1 修复）：建议句引用的「量表 + 日期 + 等级」必须是触发该判定的那条等级（`resolveDomainSeverity`），不再出现「明显偏弱（某量表 · 等级「正常」）」这类自相矛盾引用（真库复算 0 条）；危险词单独命中即判定明显偏弱，不再被聚合强弱门拦掉
+- 边界加固：超期截止点改为「先归一 1 号再减月 + clamp 目标月天数」（避免 JS 日期溢出）；从未评估学生不再重复追加缺口句（与「尚无任何评估记录」重复）
+- 新增 `scripts/tests/dashboard-assessment-coverage.test.mjs`（挂 `test:core:node`）：① 覆盖 catalog 全部 18 量表 ② 表清单必须由 `QUALITY_TABLES` 派生、dashboard-api 不得出现裸表名 ③ 每个量表要么注册适配器、要么显式声明仅计覆盖（防静默漏判）④ 表名白名单
+- 新增 `tests/assessment-gap-analysis.test.ts`（挂 `test:core:ts`）：10 组断言覆盖四级信号、cpep_3 仅计覆盖、同域多量表溯源归属、危险词单独命中、优先档拆分、优先级次序、无信号学生不入列
+- 真库复算（只读，`C:/Users/maoea/AppData/Roaming/scgp/database.sqlite`）：43 名学生 → 43 条待办，其中明显偏弱档 11、偏弱需关注档 32（特教群体「轻度/中度/边缘」是常态，故按严重度分级而不是一刀切）；学生 1 由「误报尚无评估记录」变为「社交沟通 明显偏弱 + 4 个领域未评估」（真实记录 ABC severe / ATEC moderate）
+- 已知取舍：本库 43 名学生全部被标为待办（人人有评估缺口或轻度偏弱）→ 指标卡显示 43（总数口径不变）；为让数字有信息量，新增拆分口径：`isPriorityInsight`（明显偏弱 or 尚无评估记录）+ `DashboardOverview.pendingPriorityCount` / `pendingBaselineCount`，面板角标改为「优先 11 · 共 43」、hero 文案带「（其中 11 条需优先处理）」；面板前 4 条为明显偏弱档，全量在「查看全部」中按优先级排序
+- 明确不做：器材推荐 / 一键生成计划（`severity` 未落库，推荐引擎无法从历史数据复现）；LLM 参与本面板（未配模型时必须照常工作）
+
+
 ## [2026-09-20] 修复 ABC 报告「维度分数详情」维度分渲染成 JSON、占比 NaN
 - 现象：ABC 报告页维度表「得分」列显示 `{"name":"感觉","rawScore":17}`、「占比」列 NaN%（用户 2026-09-20 截图报告）
 - 根因①（数据形状）：演示数据把维度分写成对象 `{ name, rawScore }`（真实写入端 `ABCDriver.persistAssessment` 写的是数字 `{ 维度code: 原始分 }`，`init.ts` schema 注释与 `assessment-score-adapters.ts` 同此契约），报告页 `scores[dim.code]` 直接当数字用 → 对象进 `{{ }}` 渲染成 JSON、`对象/数字` 得 NaN；Word 导出与 AI 纵向趋势（`assessment-score-normalize.ts` flat-number 模式）同样受累

@@ -107,7 +107,7 @@ export type DomainStrength = 'strong' | 'normal' | 'weak' | 'mixed'
  *
  * 这是保守的启发式：判不出时归 normal，宁可保守不夸大。
  */
-function strengthFromLevel(level: string): DomainStrength {
+export function strengthFromLevel(level: string): DomainStrength {
   const l = (level || '').toLowerCase()
   if (!l) return 'normal'
   // 明确正向
@@ -120,17 +120,27 @@ function strengthFromLevel(level: string): DomainStrength {
 }
 
 /**
- * 聚合领域强弱：取该领域各量表 strength 的「最差值」。
+ * 由等级文本列表聚合领域强弱（取「最差值」）。
+ *
  * 一个领域只要有一个量表偏弱，整体就标 weak/mixed（保守原则：不掩盖短板）。
+ * 跨量表画像（雷达图）与首页看板评估缺口分析共用此口径，避免两处判定不一致。
  */
-function aggregateDomainStrength(items: ProfileScaleItem[]): DomainStrength {
-  const strengths = items.map((i) => strengthFromLevel(i.latestSnapshot.level))
+export function aggregateStrengthFromLevels(levels: readonly string[]): DomainStrength {
+  const strengths = levels.map((level) => strengthFromLevel(level))
   const hasWeak = strengths.includes('weak')
   const hasStrong = strengths.includes('strong')
   if (hasWeak && hasStrong) return 'mixed'
   if (hasWeak) return 'weak'
   if (hasStrong) return 'strong'
   return 'normal'
+}
+
+/**
+ * 聚合领域强弱：取该领域各量表 strength 的「最差值」。
+ * 一个领域只要有一个量表偏弱，整体就标 weak/mixed（保守原则：不掩盖短板）。
+ */
+function aggregateDomainStrength(items: ProfileScaleItem[]): DomainStrength {
+  return aggregateStrengthFromLevels(items.map((i) => i.latestSnapshot.level))
 }
 
 /**

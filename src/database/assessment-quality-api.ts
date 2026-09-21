@@ -23,8 +23,14 @@ export function isSuspiciousNote(note: string | null | undefined): boolean {
   return note.split('+').includes(SUSPICIOUS_MARKER)
 }
 
-/** 18 张量表主表 → catalog 量表码（表名 = `${code}_assess`，个别历史不一致单列） */
-const QUALITY_TABLES: ReadonlyArray<{ table: string; code: string }> = [
+/**
+ * 18 张量表主表 → catalog 量表码（表名 = `${code}_assess`，个别历史不一致单列）。
+ *
+ * 单一真源：除本模块的质量统计外，首页看板的「待评估」聚合（dashboard-api.ts）也从这里派生。
+ * 新增量表只在此登记一次；覆盖度由 scripts/tests/assessment-quality-coverage.test.mjs
+ * 与 scripts/tests/dashboard-assessment-coverage.test.mjs 双守卫。
+ */
+export const QUALITY_TABLES: ReadonlyArray<{ table: string; code: string }> = [
   { table: 'sm_assess', code: 'sm' },
   { table: 'weefim_assess', code: 'weefim' },
   { table: 'csirs_assess', code: 'csirs' },

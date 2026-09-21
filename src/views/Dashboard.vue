@@ -161,6 +161,55 @@
       </template>
     </el-dialog>
 
+    <el-dialog
+      v-model="assessmentInsightDrawerVisible"
+      width="720px"
+      class="assessment-insight-dialog"
+      destroy-on-close
+      append-to-body
+      title="评估缺口与优先建议"
+    >
+      <p class="assessment-insight-dialog__hint">
+        按优先级排序（明显偏弱 &gt; 尚无评估 &gt; 偏弱需关注 &gt; 评估缺口 &gt; 超期未复评），点击条目进入学生详情。
+      </p>
+
+      <div class="assessment-insight-dialog__list">
+        <article
+          v-for="item in snapshot.assessmentInsights"
+          :key="item.studentId"
+          class="assessment-insight-row"
+          role="button"
+          tabindex="0"
+          @click="goToStudentDetail(item.studentId)"
+          @keydown.enter.prevent="goToStudentDetail(item.studentId)"
+          @keydown.space.prevent="goToStudentDetail(item.studentId)"
+        >
+          <div class="assessment-insight-row__topline">
+            <h3>{{ item.studentName }}</h3>
+            <span class="assessment-insight-row__time">
+              {{ item.lastAssessmentAt ? `最近评估：${formatDate(item.lastAssessmentAt)}` : '尚无评估记录' }}
+            </span>
+          </div>
+
+          <p class="assessment-insight-row__desc">{{ item.suggestion }}</p>
+
+          <div class="assessment-insight-row__tags">
+            <span v-if="item.disorder" class="alert-item__tag alert-item__tag--never">
+              {{ item.disorder }}
+            </span>
+            <span
+              v-for="tag in item.tags"
+              :key="`${tag.kind}-${tag.label}`"
+              class="alert-item__tag"
+              :class="`alert-item__tag--${tag.kind}`"
+            >
+              {{ tag.label }}
+            </span>
+          </div>
+        </article>
+      </div>
+    </el-dialog>
+
     <section class="dashboard-surface scgp-surface">
       <div class="dashboard-section-header">
         <div>
@@ -344,25 +393,38 @@
           <div class="dashboard-panel-header">
             <div>
               <h2>智能特教助理</h2>
-              <p>根据真实评估缺口提供优先干预建议，帮助尽快补齐学生评估基线。</p>
+              <p>基于本地评估记录梳理结果偏弱、评估缺口与复评超期，给出优先处理的学生与下一步建议。</p>
             </div>
             <div class="dashboard-panel-header__side">
               <span class="dashboard-panel-count dashboard-panel-count--warning">
-                {{ snapshot.assessmentAlerts.length }} 条
+                {{ assessmentBadgeText }}
               </span>
+              <button
+                v-if="snapshot.assessmentInsights.length > displayedAssessmentInsights.length"
+                type="button"
+                class="dashboard-panel-header__action"
+                @click="assessmentInsightDrawerVisible = true"
+              >
+                查看全部
+              </button>
             </div>
           </div>
 
           <el-empty
-            v-if="snapshot.assessmentAlerts.length === 0"
-            description="当前暂无待评估预警"
+            v-if="snapshot.assessmentInsights.length === 0"
+            description="当前没有需要优先处理的评估事项"
           />
 
           <div v-else class="alert-list">
             <article
-              v-for="item in displayedAssessmentAlerts"
+              v-for="item in displayedAssessmentInsights"
               :key="item.studentId"
-              class="alert-item alert-item--warning"
+              class="alert-item alert-item--warning alert-item--clickable"
+              role="button"
+              tabindex="0"
+              @click="goToStudentDetail(item.studentId)"
+              @keydown.enter.prevent="goToStudentDetail(item.studentId)"
+              @keydown.space.prevent="goToStudentDetail(item.studentId)"
             >
               <span class="alert-item__accent"></span>
 
@@ -376,7 +438,7 @@
                 <div class="alert-item__topline">
                   <h3>{{ item.studentName }}</h3>
                   <span class="alert-item__time">
-                    {{ item.lastAssessmentAt ? `上次评估：${formatDate(item.lastAssessmentAt)}` : '尚无评估记录' }}
+                    {{ item.lastAssessmentAt ? `最近评估：${formatDate(item.lastAssessmentAt)}` : '尚无评估记录' }}
                   </span>
                 </div>
 
@@ -384,7 +446,14 @@
 
                 <div class="alert-item__meta">
                   <span v-if="item.disorder">{{ item.disorder }}</span>
-                  <span v-if="item.daysSinceLastAssessment !== null">间隔 {{ item.daysSinceLastAssessment }} 天</span>
+                  <span
+                    v-for="tag in item.tags"
+                    :key="`${tag.kind}-${tag.label}`"
+                    class="alert-item__tag"
+                    :class="`alert-item__tag--${tag.kind}`"
+                  >
+                    {{ tag.label }}
+                  </span>
                 </div>
               </div>
             </article>
@@ -446,13 +515,15 @@ const snapshot = ref<DashboardSnapshot>({
   overview: {
     studentCount: 0,
     pendingAssessmentCount: 0,
+    pendingPriorityCount: 0,
+    pendingBaselineCount: 0,
     todayTaskCount: 0,
     weeklyAnomalyCount: 0,
     completedPlanCount: 0,
   },
   schedule: [],
   anomalies: [],
-  assessmentAlerts: [],
+  assessmentInsights: [],
   recentStudents: [],
   weeklyTrend: [],
 })
@@ -490,7 +561,7 @@ const metrics = computed(() => ([
   {
     label: '待评估提醒',
     value: snapshot.value.overview.pendingAssessmentCount,
-    hint: '超过 6 个月未评估或尚无评估记录',
+    hint: '结果偏弱、评估缺口或超过 6 个月未复评',
     icon: EditPen,
     tone: 'amber' as DashboardTone,
   },
@@ -521,8 +592,19 @@ const displayedAnomalies = computed(() => snapshot.value.anomalies.slice(0, 4))
 
 // 今日训练日程最多展示 5 条，避免列表过长
 const displayedSchedule = computed(() => snapshot.value.schedule.slice(0, 5))
-const displayedAssessmentAlerts = computed(() => snapshot.value.assessmentAlerts.slice(0, 4))
+const displayedAssessmentInsights = computed(() => snapshot.value.assessmentInsights.slice(0, 4))
+
+// 面板角标：待办总数接近学生总数时（特教群体常态），拆出「优先处理」档才有信息量
+// 优先 = 明显偏弱 or 尚无评估记录；无优先项时退回单纯总数
+const assessmentBadgeText = computed(() => {
+  const { pendingAssessmentCount, pendingPriorityCount } = snapshot.value.overview
+  return pendingPriorityCount > 0
+    ? `优先 ${pendingPriorityCount} · 共 ${pendingAssessmentCount}`
+    : `${pendingAssessmentCount} 条`
+})
 const agentDetailVisible = ref(false)
+/** 「查看全部」评估建议弹窗（面板只展示前 4 条） */
+const assessmentInsightDrawerVisible = ref(false)
 const selectedHomeAgentCode = ref('')
 const homeAgents = computed(() =>
   BUILTIN_AGENT_PRESETS.map((preset) => ({
@@ -602,9 +684,13 @@ const focusPanel = computed(() => {
   }
 
   if (overview.pendingAssessmentCount > 0) {
+    const priorityHint =
+      overview.pendingPriorityCount > 0
+        ? `（其中 ${overview.pendingPriorityCount} 条需优先处理）`
+        : ''
     return {
-      title: `当前有 ${overview.pendingAssessmentCount} 条待评估提醒`,
-      description: '建议优先补齐长期未评估或尚未建立基线的学生档案，避免干预决策缺少依据。',
+      title: `当前有 ${overview.pendingAssessmentCount} 条待评估提醒${priorityHint}`,
+      description: '建议优先处理评估结果偏弱、基线不完整或长期未复评的学生，避免干预决策缺少依据。',
     }
   }
 
@@ -1437,6 +1523,140 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 10px;
+  color: var(--scgp-muted);
+  font-size: 12px;
+}
+
+.alert-item--clickable {
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background-color 0.18s ease;
+}
+
+.alert-item--clickable:hover {
+  background: rgba(64, 158, 255, 0.06);
+}
+
+.alert-item--clickable:focus-visible {
+  outline: 2px solid rgba(64, 158, 255, 0.55);
+  outline-offset: 2px;
+}
+
+.alert-item__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.alert-item__tag--weak {
+  background: rgba(216, 106, 79, 0.14);
+  color: #b8502c;
+}
+
+.alert-item__tag--watch {
+  background: rgba(229, 165, 60, 0.16);
+  color: #97620f;
+}
+
+.alert-item__tag--gap {
+  background: rgba(64, 158, 255, 0.14);
+  color: #2f6fd0;
+}
+
+.alert-item__tag--never {
+  background: rgba(144, 147, 153, 0.16);
+  color: #5f6368;
+}
+
+.alert-item__tag--overdue {
+  background: rgba(229, 165, 60, 0.18);
+  color: #97620f;
+}
+
+.dashboard-panel-header__action {
+  margin-left: 12px;
+  padding: 4px 10px;
+  border: 1px solid rgba(64, 158, 255, 0.4);
+  border-radius: 999px;
+  background: transparent;
+  color: #2f6fd0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+
+.dashboard-panel-header__action:hover {
+  background: rgba(64, 158, 255, 0.1);
+}
+
+.dashboard-panel-header__action:focus-visible {
+  outline: 2px solid rgba(64, 158, 255, 0.55);
+  outline-offset: 2px;
+}
+
+.assessment-insight-dialog__hint {
+  margin: 0 0 12px;
+  color: var(--scgp-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.assessment-insight-dialog__list {
+  max-height: min(58vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.assessment-insight-row {
+  padding: 14px 8px;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: background-color 0.18s ease;
+}
+
+.assessment-insight-row:hover {
+  background: rgba(64, 158, 255, 0.06);
+}
+
+.assessment-insight-row + .assessment-insight-row {
+  border-top: 1px dashed rgba(217, 226, 238, 0.92);
+}
+
+.assessment-insight-row__topline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.assessment-insight-row__topline h3 {
+  margin: 0;
+  color: var(--scgp-text);
+  font-size: 15px;
+}
+
+.assessment-insight-row__time {
+  color: var(--scgp-subtle);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.assessment-insight-row__desc {
+  margin: 6px 0 8px;
+  color: var(--scgp-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.assessment-insight-row__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   color: var(--scgp-muted);
   font-size: 12px;
 }

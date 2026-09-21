@@ -1,11 +1,24 @@
 import { DatabaseAPI } from './api'
+import { QUALITY_TABLES } from './assessment-quality-api'
 import { getCurrentTeacherStudentScope } from './teacher-scope-auth'
+import { SCORE_ADAPTERS } from '@/services/assessment-score-adapters'
+import {
+  analyzeAssessmentGaps,
+  isPriorityInsight,
+  type ScaleLatestSnapshot,
+  type StudentAssessmentInsight,
+} from '@/services/assessment-gap-analysis'
 import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import { getTrainingPlanModuleLabel } from '@/utils/training-plan-module'
 
 export interface DashboardOverview {
   studentCount: number
+  /** 待办总数（= 面板清单长度） */
   pendingAssessmentCount: number
+  /** 其中「优先处理」条数（明显偏弱 or 尚无评估记录） */
+  pendingPriorityCount: number
+  /** 其中「待补齐基线」条数（偏弱需关注 / 评估缺口 / 超期未复评） */
+  pendingBaselineCount: number
   todayTaskCount: number
   weeklyAnomalyCount: number
   completedPlanCount: number
@@ -56,21 +69,12 @@ export interface DashboardAnomalyItem {
   reason: string
 }
 
-export interface DashboardAssessmentAlertItem {
-  studentId: number
-  studentName: string
-  avatarPath: string | null
-  disorder: string | null
-  lastAssessmentAt: string | null
-  daysSinceLastAssessment: number | null
-  suggestion: string
-}
-
 export interface DashboardSnapshot {
   overview: DashboardOverview
   schedule: DashboardScheduleItem[]
   anomalies: DashboardAnomalyItem[]
-  assessmentAlerts: DashboardAssessmentAlertItem[]
+  /** 评估缺口与优先建议（「智能特教助理」面板） */
+  assessmentInsights: StudentAssessmentInsight[]
   recentStudents: DashboardRecentStudent[]
   weeklyTrend: DashboardTrendPoint[]
 }
@@ -90,14 +94,6 @@ function formatDateTime(date: Date): string {
   const minutes = `${date.getMinutes()}`.padStart(2, '0')
   const seconds = `${date.getSeconds()}`.padStart(2, '0')
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-}
-
-function daysBetweenNow(dateText: string | null): number | null {
-  if (!dateText) return null
-  const target = new Date(dateText)
-  if (Number.isNaN(target.getTime())) return null
-  const diffMs = Date.now() - target.getTime()
-  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)))
 }
 
 function normalizeNumber(value: unknown): number {
@@ -123,7 +119,7 @@ export class DashboardAPI extends DatabaseAPI {
     const [
       schedule,
       anomalies,
-      assessmentAlerts,
+      assessmentInsights,
       studentCount,
       completedPlanCount,
       recentStudents,
@@ -131,24 +127,29 @@ export class DashboardAPI extends DatabaseAPI {
     ] = await Promise.all([
       this.getTodaySchedule(),
       this.getWeeklyAnomalies(),
-      this.getAssessmentAlerts(),
+      this.getAssessmentInsights(),
       this.getStudentCount(),
       this.getCompletedPlanCount(),
       this.getRecentStudents(),
       this.getWeeklyTrainingTrend(),
     ])
 
+    // 拆分口径：优先 = 明显偏弱 or 尚无评估记录（面板角标 / hero 文案用）
+    const pendingPriorityCount = assessmentInsights.filter(isPriorityInsight).length
+
     return {
       overview: {
         studentCount,
-        pendingAssessmentCount: assessmentAlerts.length,
+        pendingAssessmentCount: assessmentInsights.length,
+        pendingPriorityCount,
+        pendingBaselineCount: assessmentInsights.length - pendingPriorityCount,
         todayTaskCount: schedule.length,
         weeklyAnomalyCount: anomalies.length,
         completedPlanCount,
       },
       schedule,
       anomalies,
-      assessmentAlerts,
+      assessmentInsights,
       recentStudents,
       weeklyTrend,
     }
@@ -428,71 +429,80 @@ export class DashboardAPI extends DatabaseAPI {
     }))
   }
 
-  async getAssessmentAlerts(): Promise<DashboardAssessmentAlertItem[]> {
-    const cutoffDate = new Date()
-    cutoffDate.setMonth(cutoffDate.getMonth() - 6)
-    const cutoff = formatDateTime(cutoffDate)
+  /**
+   * 评估缺口与优先建议（「智能特教助理」面板的数据源）。
+   *
+   * 数据链：18 张量表主表各取「每生最新一行」→ 交 SCORE_ADAPTERS 归一化
+   * （与 AI 纵向趋势同一口径）取等级 → 由纯函数 analyzeAssessmentGaps 产出结论。
+   *
+   * 表清单来自 QUALITY_TABLES（单一真源）：新增量表自动进入覆盖度统计；是否具备
+   * 强弱语义取决于是否注册了适配器（crt / cognitive_self 为占位常模，只计覆盖）。
+   * 历史事故：本方法的前身硬编码过 8 张表，导致只在新增量表建过基线的学生被误判
+   * 「尚无评估记录」——覆盖度由 scripts/tests/dashboard-assessment-coverage.test.mjs 守卫。
+   */
+  async getAssessmentInsights(): Promise<StudentAssessmentInsight[]> {
     const scope = getCurrentTeacherStudentScope('s')
-    const rows = await this.queryAsync(
-      `
-        WITH assessment_union AS (
-          SELECT student_id, created_at FROM sm_assess
-          UNION ALL
-          SELECT student_id, created_at FROM weefim_assess
-          UNION ALL
-          SELECT student_id, created_at FROM csirs_assess
-          UNION ALL
-          SELECT student_id, created_at FROM conners_psq_assess
-          UNION ALL
-          SELECT student_id, created_at FROM conners_trs_assess
-          UNION ALL
-          SELECT student_id, created_at FROM sdq_assess
-          UNION ALL
-          SELECT student_id, created_at FROM srs2_assess
-          UNION ALL
-          SELECT student_id, created_at FROM cbcl_assess
-        ),
-        latest_assessment AS (
-          SELECT
-            student_id,
-            MAX(created_at) AS last_assessment_at
-          FROM assessment_union
-          GROUP BY student_id
-        )
-        SELECT
-          s.id AS student_id,
-          s.name AS student_name,
-          s.avatar_path,
-          s.disorder,
-          la.last_assessment_at
-        FROM student s
-        LEFT JOIN latest_assessment la ON la.student_id = s.id
-        WHERE (la.last_assessment_at IS NULL
-           OR datetime(la.last_assessment_at) < datetime(?))${scope.sql}
-        ORDER BY
-          CASE WHEN la.last_assessment_at IS NULL THEN 0 ELSE 1 END ASC,
-          datetime(la.last_assessment_at) ASC,
-          datetime(s.created_at) DESC
-      `,
-      [cutoff, ...scope.params],
+
+    const studentRows = await this.queryAsync(
+      `SELECT s.id, s.name, s.avatar_path, s.disorder, s.created_at
+         FROM student s
+        WHERE 1 = 1${scope.sql}
+        ORDER BY s.id ASC`,
+      [...scope.params],
     )
 
-    return rows.map((row) => {
-      const lastAssessmentAt = row.last_assessment_at || null
-      const daysSince = daysBetweenNow(lastAssessmentAt)
+    const snapshotsByStudent = new Map<number, ScaleLatestSnapshot[]>()
+    for (const { table, code } of QUALITY_TABLES) {
+      // 适配器键口径：catalog 用连字符（conners-psq），适配器与领域映射用下划线（conners_psq）
+      const scaleCode = code.replace(/-/g, '_')
+      const adapter = SCORE_ADAPTERS[scaleCode]
+      const rows = await this.queryAsync(
+        `SELECT t.*
+           FROM ${table} t
+           JOIN (
+             SELECT student_id, MAX(created_at) AS latest_at
+               FROM ${table}
+              GROUP BY student_id
+           ) latest
+             ON latest.student_id = t.student_id
+            AND latest.latest_at = t.created_at
+          WHERE EXISTS (SELECT 1 FROM student s WHERE s.id = t.student_id${scope.sql})`,
+        [...scope.params],
+      )
 
-      return {
-        studentId: normalizeNumber(row.student_id),
-        studentName: row.student_name || `学生 #${row.student_id}`,
-        avatarPath: row.avatar_path || null,
-        disorder: row.disorder || null,
-        lastAssessmentAt,
-        daysSinceLastAssessment: daysSince,
-        suggestion: lastAssessmentAt
-          ? `${row.student_name} 距离上次评估已超过 6 个月，建议安排复测。`
-          : `${row.student_name} 尚无评估记录，建议尽快建立基线评估。`,
+      const seen = new Set<number>()
+      for (const row of rows) {
+        const studentId = normalizeNumber(row.student_id)
+        // 同一 created_at 并列时可能返回多行：取首行即可（日期相同，结论等价）
+        if (!studentId || seen.has(studentId)) continue
+        seen.add(studentId)
+
+        const snapshot = adapter ? adapter.normalizeRow(row) : null
+        const item: ScaleLatestSnapshot = {
+          scaleCode,
+          scaleName: adapter?.scaleName,
+          date: String(snapshot?.date ?? row.created_at ?? ''),
+          level: String(snapshot?.level ?? ''),
+        }
+        const list = snapshotsByStudent.get(studentId)
+        if (list) list.push(item)
+        else snapshotsByStudent.set(studentId, [item])
       }
-    })
+    }
+
+    return analyzeAssessmentGaps(
+      studentRows.map((row) => {
+        const studentId = normalizeNumber(row.id)
+        return {
+          studentId,
+          studentName: row.name || `学生 #${studentId}`,
+          avatarPath: row.avatar_path || null,
+          disorder: row.disorder || null,
+          createdAt: row.created_at || null,
+          snapshots: snapshotsByStudent.get(studentId) ?? [],
+        }
+      }),
+    )
   }
 
   private getModuleLabel(moduleCode: string): string {
