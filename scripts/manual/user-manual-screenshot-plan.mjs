@@ -12,6 +12,7 @@ const rows = String.raw`
 3.2|今日工作与资源启动|全部|今日工作区|P0
 3.2|无可用 AI 智能体空状态|全部|AI 智能体区|P1
 3.2|无今日训练安排空状态|全部|今日工作区|P1
+3.2|训练进度概览与趋势查看|全部|训练进度卡片|P1|S011A
 3.3|个人资料与头像|全部|资料页上部|P0
 3.3|最近登录日志|全部|登录日志区|P1
 3.3|修改密码|全部|密码区域|P0
@@ -220,19 +221,68 @@ const rows = String.raw`
 16.7|已跳过版本与操作日志|管理员|跳过状态与日志|P2
 `.trim().split(/\r?\n/u)
 
-export const userManualScreenshotPlan = rows.map((row, index) => {
-  const parts = row.split('|')
-  if (parts.length !== 5) throw new Error(`Invalid screenshot plan row ${index + 1}: ${row}`)
-  const [chapter, title, role, crop, priority] = parts
-  return {
-    id: `S${String(index + 1).padStart(3, '0')}`,
-    chapter,
-    title,
-    role,
-    crop,
-    priority,
-    status: '待采集',
-  }
-})
+export const USER_MANUAL_SCREENSHOT_PLAN_ROWS = rows
+
+/** 显式 id：`Sxxx` + 单个大写字母后缀（新增图用「插入位置前一张的 id + 后缀」，零重编号） */
+const EXPLICIT_SCREENSHOT_ID_PATTERN = /^S\d{3}[A-Z]$/u
+
+/**
+ * 截图计划行 → 条目（id 单一真源）。
+ *
+ * 行格式：`章节|标题|角色|裁剪|优先级`（顺序号 id = 行序 S001…），
+ * 或 `章节|标题|角色|裁剪|优先级|id`（显式后缀 id，**不占用顺序号**）。
+ *
+ * 为何这样设计（2026-09-21 用户拍板，背景见基线档 §4.1 的错位事故）：手册图注、approvals、
+ * 物理文件名与 docx 内嵌图都以编号为键，中部插行重编号会同时动 217 处图注（docx 又是手改封面、
+ * 禁止整份重生成）→ 改用后缀编号：新图插在本章节末尾，只新增自己的编号与图，既有编号零改动。
+ */
+export function deriveScreenshotPlanEntries(planRows) {
+  const entries = []
+  let sequence = 0
+
+  planRows.forEach((row, index) => {
+    const parts = row.split('|')
+    const hasExplicitId = parts.length === 6
+    if (parts.length !== 5 && !hasExplicitId) {
+      throw new Error(`Invalid screenshot plan row ${index + 1}: ${row}`)
+    }
+
+    const [chapter, title, role, crop, priority] = parts
+    let id
+    if (hasExplicitId) {
+      id = parts[5].trim()
+      if (!EXPLICIT_SCREENSHOT_ID_PATTERN.test(id)) {
+        throw new Error(
+          `Invalid explicit screenshot id on row ${index + 1}: ${id}（约定：Sxxx + 单个大写字母后缀，如 S011A）`,
+        )
+      }
+    } else {
+      sequence += 1
+      id = `S${String(sequence).padStart(3, '0')}`
+    }
+
+    entries.push({ id, chapter, title, role, crop, priority, status: '待采集' })
+  })
+
+  const seen = new Set()
+  entries.forEach((entry, index) => {
+    if (seen.has(entry.id)) throw new Error(`Duplicate screenshot id: ${entry.id}`)
+    seen.add(entry.id)
+
+    if (!EXPLICIT_SCREENSHOT_ID_PATTERN.test(entry.id)) return
+    const baseId = entry.id.slice(0, 4)
+    const baseIndex = entries.findIndex((item) => item.id === baseId)
+    if (baseIndex < 0) {
+      throw new Error(`Explicit screenshot id ${entry.id} has no base row ${baseId}`)
+    }
+    if (baseIndex > index) {
+      throw new Error(`Explicit screenshot id ${entry.id} must come after its base row ${baseId}`)
+    }
+  })
+
+  return entries
+}
+
+export const userManualScreenshotPlan = deriveScreenshotPlanEntries(rows)
 
 export const USER_MANUAL_SCREENSHOT_COUNT = userManualScreenshotPlan.length

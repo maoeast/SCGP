@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "note": "已批准并落盘、但尚未人工插入 Word 成品的新图（docx 禁止整份重生成，新增图只能人工在 Word 里插入）。validate-user-manual.mjs 按「计划编号 - pending」校验 docx 图注数量与顺序；在 Word 里插入完成后，把该 id 从这里删除并重跑校验，否则校验会提示重复。",
+  "pending": [
+    "S011A"
+  ]
+}

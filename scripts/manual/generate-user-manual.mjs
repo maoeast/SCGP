@@ -388,7 +388,7 @@ function parseMarkdownBody(markdown, approvedScreenshots, screenshotDir) {
     }
 
     if (line.startsWith('>')) {
-      const calloutMatch = line.match(/^>\s*\[(图 (S\d{3}))\]\s*(.*)$/u)
+      const calloutMatch = line.match(/^>\s*\[(图 (S\d{3}[A-Z]?))\]\s*(.*)$/u)
       const approval = calloutMatch ? approvedScreenshots.get(calloutMatch[2]) : undefined
       if (calloutMatch && approval) {
         elements.push(...approvedScreenshotBlock(approval, calloutMatch[1], calloutMatch[3].trim(), screenshotDir))

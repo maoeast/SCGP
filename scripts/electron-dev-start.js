@@ -185,6 +185,61 @@ async function waitForDevServer() {
   throw new Error(`等待开发服务器超时: ${DEV_SERVER_URL}`)
 }
 
+/**
+ * 子进程输出统一经本进程 stdout/stderr 转发。
+ * Windows 控制台按系统代码页（中文系统为 GBK/936）解码直连进程写出的字节，
+ * 而 Electron 主进程输出的是 UTF-8 字节，stdio: 'inherit' 直连时会显示成乱码；
+ * 转发给 Node 进程后由 Node 走控制台宽字符写入，不受代码页影响。
+ */
+function forwardChildOutput(childProcess) {
+  childProcess.stdout?.setEncoding('utf8')
+  childProcess.stderr?.setEncoding('utf8')
+  childProcess.stdout?.on('data', (text) => process.stdout.write(text))
+  childProcess.stderr?.on('data', (text) => process.stderr.write(text))
+  swallowBrokenPipe(childProcess.stdout)
+  swallowBrokenPipe(childProcess.stderr)
+}
+
+/**
+ * 管道被提前关闭（如外层 `| head`）时忽略 EPIPE；其余流错误只记一行，不让启动器崩溃
+ */
+function swallowBrokenPipe(stream) {
+  stream?.on('error', (error) => {
+    if (error?.code === 'EPIPE') {
+      return
+    }
+
+    try {
+      process.stderr.write(`[ConsoleStream] 输出流异常: ${error?.message ?? error}\n`)
+    } catch {
+      // 次级写入失败时不再抛出
+    }
+  })
+}
+
+/**
+ * 等转发管道把剩余数据送完再退出：pipe 转发下直接 process.exit 会丢掉子进程
+ * 尚未送达的最后几行日志。有界等待（流 end/close 或超时），不会卡住退出。
+ */
+function waitForForwardedOutput(timeoutMs = 300) {
+  const streams = [electronProcess?.stdout, electronProcess?.stderr, viteProcess?.stdout, viteProcess?.stderr]
+    .filter((stream) => stream && !stream.readableEnded && !stream.destroyed)
+
+  if (streams.length === 0) {
+    return Promise.resolve()
+  }
+
+  const drained = streams.map((stream) => new Promise((resolve) => {
+    stream.once('end', resolve)
+    stream.once('close', resolve)
+  }))
+
+  return Promise.race([
+    Promise.all(drained),
+    new Promise((resolve) => setTimeout(resolve, timeoutMs)),
+  ])
+}
+
 function spawnViteProcess() {
   colorLog(`启动 Vite 开发服务器: ${DEV_SERVER_URL}`, 'green')
 
@@ -198,13 +253,7 @@ function spawnViteProcess() {
     stdio: ['ignore', 'pipe', 'pipe'],
   })
 
-  viteProcess.stdout?.on('data', (data) => {
-    process.stdout.write(data)
-  })
-
-  viteProcess.stderr?.on('data', (data) => {
-    process.stderr.write(data)
-  })
+  forwardChildOutput(viteProcess)
 
   viteProcess.on('exit', (code, signal) => {
     if (isShuttingDown) {
@@ -235,8 +284,10 @@ function spawnElectronProcess() {
       SCGP_DEV_SERVER_URL: DEV_SERVER_URL,
       ...(testUserDataDir ? { SCGP_TEST_USER_DATA_DIR: testUserDataDir } : {}),
     },
-    stdio: 'inherit',
+    stdio: ['inherit', 'pipe', 'pipe'],
   })
+
+  forwardChildOutput(electronProcess)
 
   electronProcess.on('exit', (code, signal) => {
     if (isShuttingDown) {
@@ -260,7 +311,7 @@ function terminateChild(childProcess) {
   }
 }
 
-function shutdown(exitCode = 0) {
+async function shutdown(exitCode = 0) {
   if (isShuttingDown) {
     process.exit(exitCode)
     return
@@ -269,6 +320,7 @@ function shutdown(exitCode = 0) {
   isShuttingDown = true
   terminateChild(electronProcess)
   terminateChild(viteProcess)
+  await waitForForwardedOutput()
   process.exit(exitCode)
 }
 
@@ -280,6 +332,10 @@ async function main() {
   colorLog(`开发服务器已就绪: ${DEV_SERVER_URL}`, 'green')
   spawnElectronProcess()
 }
+
+// 本进程输出被外层管道提前关闭时不因 EPIPE 崩溃（与主进程日志的取向一致）
+swallowBrokenPipe(process.stdout)
+swallowBrokenPipe(process.stderr)
 
 process.on('SIGINT', () => {
   colorLog('\n已停止 Electron 联调', 'yellow')

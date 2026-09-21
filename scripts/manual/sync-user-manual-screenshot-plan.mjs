@@ -29,7 +29,7 @@ const tableEndMark = '<!-- SCREENSHOT_TABLE_END -->'
 function reindexManualCallouts(source) {
   let calloutIndex = 0
   const reindexed = source.replace(
-    /^(>\s*\[图 )S\d{3}(\])/gmu,
+    /^(>\s*\[图 )S\d{3}[A-Z]?(\])/gmu,
     (_match, prefix, suffix) => {
       const scene = userManualScreenshotPlan[calloutIndex]
       if (!scene) throw new Error('Manual contains more screenshot callouts than the audited plan')

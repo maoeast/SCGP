@@ -81,7 +81,7 @@ function assert(condition, message) {
 function collectManualPlaceholders(markdown) {
   // 2026-09-10 起手册不再含截图清单表，全部 [图 Sxxx] 占位均在正文；直接全文计数。
   // （原以已删除的 `## 18.2 截图清单` 标题切分，标题消失后 split 静默失效为全文。）
-  return [...markdown.matchAll(/^>\s*\[图 (S\d{3})\]/gmu)].map((match) => match[1])
+  return [...markdown.matchAll(/^>\s*\[图 (S\d{3}[A-Z]?)\]/gmu)].map((match) => match[1])
 }
 
 function isKnownProductionRoute(route) {

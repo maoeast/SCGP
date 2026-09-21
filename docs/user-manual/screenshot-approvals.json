@@ -58,6 +58,11 @@
       "sha256": "b3aa731de3e0ca5610c12702db3b37ced7761cb6b60bc8270d04d40b32bf55fe"
     },
     {
+      "id": "S011A",
+      "runId": "dashboard-trend-card-20260921b",
+      "sha256": "a0660d978d50788c45d6ce5b1b2e8ac80b82c4ad3facc1eb32c9357ed31c154c"
+    },
+    {
       "id": "S012",
       "runId": "live-s012-s014-recheck-20260729",
       "sha256": "ee66c5944f6af4a6c46d341ff671736e7a9ce48381297efa58eebf4df96fdba2"

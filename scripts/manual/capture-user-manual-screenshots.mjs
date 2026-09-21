@@ -48,6 +48,7 @@ const SPECIALIZED_AUTOMATION_IDS = new Set([
   'S009',
   'S010',
   'S011',
+  'S011A',
   'S012',
   'S013',
   'S014',
@@ -2459,6 +2460,23 @@ async function prepareS011(page, scenario, fixture) {
   await schedulePanel.getByText('今日暂无训练安排').waitFor({ state: 'visible', timeout: 30_000 })
   await schedulePanel.scrollIntoViewIfNeeded()
   await page.locator('.dashboard-hero').waitFor({ state: 'visible', timeout: 20_000 })
+}
+
+// S011A：训练进度概览卡片完整形态。切到「近 30 天」再拍（与 S009/S011 的默认 7 天区分开）；
+// 卡片元素截图由 captureScenarioRegion 的 target 分支完成（target = training-card）
+async function prepareS011A(page, scenario, fixture) {
+  await prepareDashboard(page, scenario, fixture)
+  const card = page.locator('.training-progress').first()
+  await card.waitFor({ state: 'visible', timeout: 30_000 })
+  await card.getByText('近 30 天').click()
+  // 等窗口切换请求回来（卡片文本会出现「近 30 天」统计口径的长尾文案）
+  await page.waitForTimeout(2_000)
+  await card.getByText('查看全部训练记录').waitFor({ state: 'visible', timeout: 20_000 })
+  await card.scrollIntoViewIfNeeded()
+  await card.locator('canvas').first().waitFor({ state: 'visible', timeout: 20_000 })
+  // 浮动入口会叠在卡片右下角（元素截图会带入）——它不属于本图主题，采集前隐藏
+  await page.addStyleTag({ content: '.ai-floating-button { visibility: hidden !important; }' })
+  await page.waitForTimeout(200)
 }
 
 async function prepareS012(page, scenario, fixture) {
@@ -5547,6 +5565,7 @@ const prepareHandlers = new Map([
   ['S009', prepareS009],
   ['S010', prepareS010],
   ['S011', prepareS011],
+  ['S011A', prepareS011A],
   ['S012', prepareS012],
   ['S013', prepareS013],
   ['S014', prepareS014],

@@ -8,6 +8,13 @@ import { hashFile, loadScreenshotApprovals } from './user-manual-screenshot-appr
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const manualDir = path.join(repoRoot, 'docs', 'user-manual')
 
+/** 已批准并落盘、但尚未人工插入 Word 的新图（docx 禁止整份重生成；与 validate 同一份登记） */
+function readPendingDocxFigures() {
+  const registryPath = path.join(manualDir, 'docx-pending-figures.json')
+  if (!fs.existsSync(registryPath)) return []
+  return JSON.parse(fs.readFileSync(registryPath, 'utf8')).pending ?? []
+}
+
 function parseArgs(argv) {
   const options = { index: path.join(manualDir, 'screenshot-approvals.json'), screenshotDir: path.join(manualDir, 'screenshots'), docx: null }
   for (let index = 0; index < argv.length; index += 1) {
@@ -33,12 +40,15 @@ async function main() {
     const mediaHashes = new Set(await Promise.all(Object.values(zip.files)
       .filter((file) => /^word\/media\/.*\.png$/u.test(file.name))
       .map(async (file) => crypto.createHash('sha256').update(await file.async('nodebuffer')).digest('hex'))))
+    const pending = new Set(readPendingDocxFigures())
     for (const entry of approvals) {
+      // 待插入项尚未进 docx，跳过内嵌比对（validate 会提醒插入后从 pending 移除）
+      if (pending.has(entry.id)) continue
       if (!mediaHashes.has(entry.sha256)) throw new Error(`DOCX does not embed approved screenshot: ${entry.id}`)
+      embedded += 1
     }
-    embedded = approvals.length
   }
-  console.log(JSON.stringify({ approvals: approvals.length, embedded, docx: options.docx ? path.relative(repoRoot, options.docx) : null }, null, 2))
+  console.log(JSON.stringify({ approvals: approvals.length, embedded, pending: readPendingDocxFigures(), docx: options.docx ? path.relative(repoRoot, options.docx) : null }, null, 2))
 }
 
 main()

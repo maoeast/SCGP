@@ -105,6 +105,10 @@ test('4. 视图契约：换源字段、空态、进度条分子、柱状图注�
     /TRAINING_PROGRESS_WINDOW_OPTIONS/,
     '窗口切换选项必须来自规则模块常量',
   )
+  // 键盘可达：与「本周异常预警」条目的 Enter/Space 一致（图表可直接操作）
+  assert.match(view, /tabindex="0"/, '图表必须可键盘聚焦')
+  assert.match(view, /handleTrainingChartKeydown/, '图表必须有键盘事件处理（←/→ 选日、Enter/Space 开明细）')
+  assert.match(view, /aria-label="trainingChartAriaLabel"/, '图表必须给屏幕阅读器提供 aria-label')
   assert.doesNotMatch(
     view,
     /windowDays\s*[:=]\s*[73]\d*\b/,

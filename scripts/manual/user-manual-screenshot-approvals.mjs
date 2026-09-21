@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const idPattern = /^S\d{3}$/u
+const idPattern = /^S\d{3}[A-Z]?$/u
 const hashPattern = /^[a-f0-9]{64}$/u
 
 export function hashFile(filePath) {

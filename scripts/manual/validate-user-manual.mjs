@@ -79,14 +79,27 @@ async function main() {
   // 2026-09-10 起截图清单不再在手册第 18 章，改从内部基线文档读取
   const baselinePath = path.join(manualDir, 'SCGP-用户手册截图采集与维护基线.md')
   const baseline = fs.readFileSync(baselinePath, 'utf8')
-  const bodyScreenshotIds = [...markdown.matchAll(/^>\s*\[图 (S\d{3})\]/gmu)].map((match) => match[1])
+  const bodyScreenshotIds = [...markdown.matchAll(/^>\s*\[图 (S\d{3}[A-Z]?)\]/gmu)].map((match) => match[1])
   const screenshotRows = [...baseline.matchAll(
-    /^\| (S\d{3}) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| (P[012]) \/ 待采集 \|$/gmu,
+    /^\| (S\d{3}[A-Z]?) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \| (P[012]) \/ 待采集 \|$/gmu,
   )]
   const listScreenshotIds = screenshotRows.map((match) => match[1])
-  const screenshotIds = new Set(text.match(/S\d{3}/gu) ?? [])
-  const figureCaptionIds = [...text.matchAll(/(?:^|\n)图 (S\d{3})：/gu)].map((match) => match[1])
-  const screenshotPlaceholderCount = (text.match(/(?:^|\n)截图 S\d{3}：/gu) ?? []).length
+  const screenshotIds = new Set(text.match(/S\d{3}[A-Z]?/gu) ?? [])
+  const figureCaptionIds = [...text.matchAll(/(?:^|\n)图 (S\d{3}[A-Z]?)：/gu)].map((match) => match[1])
+  const screenshotPlaceholderCount = (text.match(/(?:^|\n)截图 S\d{3}[A-Z]?：/gu) ?? []).length
+
+  // 编号以计划为准（支持后缀编号），按位置比对——不得再用「第 N 个 = S{N}」的数字阶梯
+  const planIds = userManualScreenshotPlan.map((entry) => entry.id)
+
+  // docx 允许落后：已批准并落盘、但尚未人工插入 Word 的新图登记在 docx-pending-figures.json
+  // （docx 禁止整份重生成，新增图只能人工在 Word 插入；插入后从 pending 移除，此处会强制提醒）
+  const pendingDocxPath = path.join(manualDir, 'docx-pending-figures.json')
+  assert(fs.existsSync(pendingDocxPath), `Missing DOCX pending registry: ${pendingDocxPath}`)
+  const pendingDocxFigures = JSON.parse(fs.readFileSync(pendingDocxPath, 'utf8')).pending ?? []
+  for (const id of pendingDocxFigures) {
+    assert(planIds.includes(id), `Pending DOCX figure ${id} is not in the screenshot plan`)
+  }
+  const expectedDocxFigureIds = planIds.filter((id) => !pendingDocxFigures.includes(id))
 
   assert(bodyScreenshotIds.length === expectedScreenshotCount,
     `Expected ${expectedScreenshotCount} body screenshot placeholders, found ${bodyScreenshotIds.length}`)
@@ -94,27 +107,34 @@ async function main() {
     `Expected ${expectedScreenshotCount} screenshot-list rows, found ${listScreenshotIds.length}`)
   assert(new Set(bodyScreenshotIds).size === expectedScreenshotCount, 'Body screenshot IDs are not unique')
   assert(new Set(listScreenshotIds).size === expectedScreenshotCount, 'Screenshot-list IDs are not unique')
-  assert(figureCaptionIds.length === expectedScreenshotCount,
-    `Expected ${expectedScreenshotCount} DOCX figure captions, found ${figureCaptionIds.length}`)
+  assert(figureCaptionIds.length === expectedDocxFigureIds.length,
+    `Expected ${expectedDocxFigureIds.length} DOCX figure captions, found ${figureCaptionIds.length}`)
   assert(screenshotPlaceholderCount === 0,
     `DOCX still contains ${screenshotPlaceholderCount} screenshot description placeholders`)
   assert(!/\bS\d{2}\b/u.test(markdown), 'Manual still contains a legacy two-digit screenshot ID')
   assert(!markdown.includes('S000'), 'Manual still contains a temporary screenshot ID')
 
-  for (let index = 1; index <= expectedScreenshotCount; index += 1) {
-    const id = `S${String(index).padStart(3, '0')}`
-    assert(bodyScreenshotIds[index - 1] === id, `Manual body screenshot order mismatch at ${id}`)
-    assert(listScreenshotIds[index - 1] === id, `Screenshot list order mismatch at ${id}`)
-    assert(figureCaptionIds[index - 1] === id, `DOCX figure caption order mismatch at ${id}`)
-    assert(screenshotIds.has(id), `DOCX is missing screenshot ID ${id}`)
+  planIds.forEach((id, index) => {
+    assert(bodyScreenshotIds[index] === id, `Manual body screenshot order mismatch at ${id}`)
+    assert(listScreenshotIds[index] === id, `Screenshot list order mismatch at ${id}`)
 
-    const scene = userManualScreenshotPlan[index - 1]
-    const row = screenshotRows[index - 1]
+    const scene = userManualScreenshotPlan[index]
+    const row = screenshotRows[index]
     assert(row[2].trim() === scene.chapter, `Screenshot ${id} chapter mismatch`)
     assert(row[3].trim() === scene.title, `Screenshot ${id} title mismatch`)
     assert(row[4].trim() === scene.role, `Screenshot ${id} role mismatch`)
     assert(row[5].trim() === scene.crop, `Screenshot ${id} crop mismatch`)
     assert(row[6] === scene.priority, `Screenshot ${id} priority mismatch`)
+  })
+
+  // docx 图注顺序 = 计划去掉待插入项；已登记的待插入项若已出现在 docx，提醒移出 pending
+  expectedDocxFigureIds.forEach((id, index) => {
+    assert(figureCaptionIds[index] === id, `DOCX figure caption order mismatch at ${id}`)
+    assert(screenshotIds.has(id), `DOCX is missing screenshot ID ${id}`)
+  })
+  for (const id of pendingDocxFigures) {
+    assert(!screenshotIds.has(id),
+      `DOCX 已包含 ${id}，请把它从 docx-pending-figures.json 的 pending 中移除`)
   }
 
   const screenshotPriorities = screenshotRows.reduce((counts, row) => {

@@ -117,6 +117,7 @@ export const userManualScreenshotCaptureTargets = Object.freeze({
   main: { selector: 'main, .page-container, .main-content', description: '页面主内容区' },
   toolbar: { selector: '.toolbar, .filter-bar, .page-header', description: '工具栏及相邻结果区' },
   card: { selector: '.el-card, .resource-card, .student-card, .plan-card', description: '目标卡片及必要上下文' },
+  'training-card': { selector: '.training-progress', description: '首页训练进度概览卡片' },
   dialog: { selector: '.el-overlay:has(.el-dialog), .el-dialog', description: '完整应用内对话框' },
   drawer: { selector: '.el-drawer', description: '完整抽屉及其标题和操作区' },
   popover: { selector: '.el-popper:not([style*="display: none"])', description: '当前展开的菜单或浮层' },
@@ -141,6 +142,7 @@ S008|/dashboard|either|admin-full|auto|read-only|main|进入包含完整演示�
 S009|/dashboard|either|plans|auto|read-only|main|进入首页并定位今日工作区域|当天计划、训练资源名称和启动入口可见
 S010|/dashboard|either|admin-no-ai|auto|isolated-state|card|进入首页并定位 AI 智能体区域|无可用 AI 智能体空状态可见；页面无错误状态
 S011|/dashboard|either|admin-no-schedule|auto|isolated-state|card|进入首页并定位今日工作区域|无当天训练安排空状态可见；其他首页区域正常
+S011A|/dashboard|either|plans|auto|read-only|training-card|进入首页并定位训练进度概览卡片，切换到近 30 天|卡片窗口切换、训练次数与时长趋势、模块分布可见
 S012|/profile|either|admin-full|auto|read-only|main|从用户菜单进入个人资料页|基本资料、预设头像、上传和拍照入口可见
 S013|/profile|either|admin-full|auto|read-only|main|滚动到最近登录日志区域|日志字段和脱敏记录可见；最多展示范围说明可辨识
 S014|/profile|either|admin-full|auto|read-only|form|滚动到修改密码区域|旧密码、新密码、确认密码、规则和保存按钮可见

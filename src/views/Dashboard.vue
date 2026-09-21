@@ -424,12 +424,27 @@
       </div>
 
       <div v-else class="training-progress__body">
-        <VChart
+        <!-- 键盘可达（与「本周异常预警」条目的 Enter/Space 一致）：图表获焦后用 ←/→ 在「有训练的日期」间移动，
+             Enter/Space 打开当日明细；焦点环 + 图内角标给视觉反馈，角标绝对定位不改变卡片高度 -->
+        <div
           class="training-progress__chart"
-          :option="trainingProgressOption"
-          autoresize
-          @click="handleTrainingPointClick"
-        />
+          role="img"
+          tabindex="0"
+          :aria-label="trainingChartAriaLabel"
+          @keydown="handleTrainingChartKeydown"
+          @blur="selectedTrainingDayIndex = null"
+        >
+          <VChart
+            class="training-progress__chart-canvas"
+            :option="trainingProgressOption"
+            autoresize
+            @click="handleTrainingPointClick"
+          />
+          <span v-if="selectedTrainingDay" class="training-progress__chart-badge">
+            {{ formatTrainingDayLabel(selectedTrainingDay.date) }} · {{ selectedTrainingDay.count }} 次 ·
+            {{ formatCompactDuration(selectedTrainingDay.durationMs) }}
+          </span>
+        </div>
 
         <div class="training-progress__modules">
           <h3 class="training-progress__modules-title">模块分布</h3>
@@ -1072,7 +1087,13 @@ const trainingProgressOption = computed<EChartsOption>(() => {
         type: 'bar',
         barMaxWidth: 18,
         itemStyle: { color: '#409EFF', borderRadius: [4, 4, 0, 0] },
-        data: points.map((point) => point.count),
+        // 键盘选中日高亮（鼠标悬停有 tooltip，键盘靠颜色+角标给反馈）
+        data: points.map((point, index) => ({
+          value: point.count,
+          itemStyle: index === selectedTrainingDayIndex.value
+            ? { color: '#2f6fd0', borderRadius: [4, 4, 0, 0] }
+            : undefined,
+        })),
       },
       {
         name: '训练时长',
@@ -1137,8 +1158,68 @@ async function openTrainingDayDetail(dayKey: string) {
 function handleTrainingPointClick(params: ECElementEvent) {
   const point = trainingProgress.value.points[params.dataIndex]
   if (!point) return
+  selectedTrainingDayIndex.value = params.dataIndex
   void openTrainingDayDetail(point.date)
 }
+
+// 键盘可达：图表获焦后用 ←/→ 在「有训练的日期」间移动（与鼠标只能点到有柱的日期口径一致），Enter/Space 打开当日明细
+const selectedTrainingDayIndex = ref<number | null>(null)
+
+const selectedTrainingDay = computed(() => {
+  const index = selectedTrainingDayIndex.value
+  if (index === null) return null
+  return trainingProgress.value.points[index] ?? null
+})
+
+/** 有训练的日期索引（键盘导航的候选集） */
+const trainingDayIndexesWithSessions = computed(() =>
+  trainingProgress.value.points
+    .map((point, index) => (point.count > 0 ? index : -1))
+    .filter((index) => index >= 0),
+)
+
+const trainingChartAriaLabel = computed(() => {
+  const base =
+    `训练进度图表：近 ${trainingProgress.value.windowDays} 天每日训练次数与时长。`
+    + '用左右方向键选择日期，回车查看当日明细。'
+  const selected = selectedTrainingDay.value
+  if (!selected) return `${base}当前未选中日期。`
+  return `${base}当前选中 ${formatTrainingDayLabel(selected.date)}：${selected.count} 次训练，${formatHumanDuration(selected.durationMs)}。`
+})
+
+function handleTrainingChartKeydown(event: KeyboardEvent) {
+  const candidates = trainingDayIndexesWithSessions.value
+  if (candidates.length === 0) return
+
+  if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+    event.preventDefault()
+    const selected = selectedTrainingDay.value
+    if (selected) void openTrainingDayDetail(selected.date)
+    return
+  }
+
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+  event.preventDefault()
+
+  const current = selectedTrainingDayIndex.value
+  const position = current === null ? -1 : candidates.indexOf(current)
+  if (event.key === 'ArrowRight') {
+    const next = position < 0
+      ? candidates[0]
+      : candidates[Math.min(position + 1, candidates.length - 1)]
+    selectedTrainingDayIndex.value = next ?? null
+    return
+  }
+  const previous = position < 0
+    ? candidates[candidates.length - 1]
+    : candidates[Math.max(position - 1, 0)]
+  selectedTrainingDayIndex.value = previous ?? null
+}
+
+// 窗口切换/自动刷新后数据已换，键盘选中位重置（避免指向旧的日期索引）
+watch(trainingProgress, () => {
+  selectedTrainingDayIndex.value = null
+})
 
 /** 明细行点击：先关弹层再跳学生详情，避免返回首页时弹层残留 */
 function goToStudentFromDayDetail(studentId: number) {
@@ -2034,7 +2115,36 @@ onUnmounted(() => {
 }
 
 .training-progress__chart {
+  position: relative;
   height: 280px;
+}
+
+/* 键盘焦点环：与 .alert-item--clickable / .dashboard-panel-header__action 同一视觉语言 */
+.training-progress__chart:focus-visible {
+  outline: 2px solid rgba(64, 158, 255, 0.55);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+.training-progress__chart-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* 键盘选中日的角标：覆盖在图上（不占布局高度），位置避开右上角图例 */
+.training-progress__chart-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(64, 158, 255, 0.12);
+  color: #2f6fd0;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .training-progress__modules {

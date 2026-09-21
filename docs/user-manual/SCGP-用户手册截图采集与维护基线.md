@@ -9,7 +9,11 @@
 
 对外手册编写时主要核对了生产路由、侧边导航、角色元数据、评估量表目录、训练入口目录、资源中心、AI 智能体、系统管理和当前有效上下文。后续功能变化时，应优先重新核对当前代码，再更新手册 Markdown；不要从历史《系统使用说明书》直接复制未验证内容。**Word 成品不由工具链重新生成**——当前 docx 的封面/封底是用户手工编辑的版本（2026-09-21 确认），`generate-user-manual.mjs` 生成链会覆盖它们；需要刷新成品时先与用户确认保护方式，确认前只更新 Markdown 与截图。**成品内嵌截图就地刷新流程（2026-09-21 首次使用，保住手改封面）**：① 先在同目录留 `.bak-<日期>` 备份（docx 不入 git，无版本兜底）；② 只替换 docx 内 `word/media/` 中对应截图的字节——目标文件按「旧批准哈希」定位（哈希取自当时 approvals），逐张确认新旧图像素尺寸一致后才替换；③ 其余 zip 条目零改动，封面/封底与正文 XML 天然不受影响；④ 换后用 `node scripts/manual/verify-user-manual-approved-screenshots.mjs --docx <docx>` 校验「approvals = embedded」（本次 217/217）。PDF 成品无仓库脚本，由人工在 Word 导出。
 
-截图计划的唯一事实来源为 `scripts/manual/user-manual-screenshot-plan.mjs`（217 行，行序即编号序）。正文新增、删除或调整截图占位后，应先运行 `node scripts/manual/sync-user-manual-screenshot-plan.mjs` 同步编号，再生成 Word。
+截图计划的唯一事实来源为 `scripts/manual/user-manual-screenshot-plan.mjs`（**行序 = 正文占位序**）。**新增截图用后缀编号，零重编号（2026-09-21 用户拍板）**：新图插在**本章节末尾**，计划行末加显式 id = 插入位置前一张的 id + 单个大写字母后缀（如 `16.7|软件下载进度|管理员|下载进度|P1|S215A`），**该行不占用顺序号** → 既有编号、正文占位/图注、`screenshot-approvals.json`、`docs/user-manual/screenshots/*.png` 与 docx 内嵌图全部不动。**禁止在中部插入不带后缀的行**：那会顶掉其后全部编号，而图注、approvals、物理文件名与 docx 内嵌图都以编号为键——2026-09-10 的手工插行正是这样造成 S082 起「图注 ↔ 图片」整体错位（见 §4.1）。
+
+新增一张后缀图的操作序：① 计划行插在章节末尾（行末带显式 id）② 正文对应位置加 `> [图 S011A]` 占位与 `图 S011A：…` 图注 ③ `node scripts/manual/sync-user-manual-screenshot-plan.mjs`（校验占位序 = 计划序，并重建本文件 §3 的表）④ scenarios 文件加同 id 行（需要交互的再加 capture 的 prepare 映射）⑤ `npm run manual:screenshots:check` ⑥ 采集 → 审批写 approvals → `promote-user-manual-screenshots.mjs` 落盘。**docx 成品带不带新图要单独决定**：就地换图只能替换已存在的图，新增图无法用换图流程进 docx——需在 Word 里手工插入（或将来另定方案），在此之前 docx 会落后于 Markdown 与截图库，这是有意接受的取舍。
+
+守卫：`scripts/tests/manual-screenshot-id-contract.test.mjs`（`test:core:node`）——现有 217 个编号稳定、后缀行不占号、非法/重复/缺基号被拒、各消费方正则必须接受后缀 id（漏改一处即失败）。
 
 生成链固定顺序：sync → `node scripts/manual/generate-user-manual.mjs --include-approved-screenshots`（docx，gitignore 不入库）→ `node scripts/manual/validate-user-manual.mjs`（mammoth 抽 docx 文本断言）。
 
@@ -49,6 +53,7 @@
 | S009 | 3.2 | 今日工作与资源启动 | 全部 | 今日工作区 | P0 / 待采集 |
 | S010 | 3.2 | 无可用 AI 智能体空状态 | 全部 | AI 智能体区 | P1 / 待采集 |
 | S011 | 3.2 | 无今日训练安排空状态 | 全部 | 今日工作区 | P1 / 待采集 |
+| S011A | 3.2 | 训练进度概览与趋势查看 | 全部 | 训练进度卡片 | P1 / 待采集 |
 | S012 | 3.3 | 个人资料与头像 | 全部 | 资料页上部 | P0 / 待采集 |
 | S013 | 3.3 | 最近登录日志 | 全部 | 登录日志区 | P1 / 待采集 |
 | S014 | 3.3 | 修改密码 | 全部 | 密码区域 | P0 / 待采集 |
@@ -347,4 +352,22 @@
 - 审批与落盘：approvals 中 S009 / S011 更新为本次 runId + sha256；落盘前按 §2 先删同名旧图，`promote-user-manual-screenshots.mjs --ids S009,S011 --allow-formal-output` 落盘 2 张。
 - docx 就地换图（§1 流程）：S009 → `word/media/image13.png`、S011 → `word/media/image15.png`（按**旧批准哈希**定位），新旧图像素尺寸一致（1920×1080）；换后自检「条目数 244 不变 + 除目标外 media 哈希不变 + 目标 = 新批准哈希」，`verify-user-manual-approved-screenshots.mjs --docx` = `approvals 217 / embedded 217`。备份：`SCGP-星愿能力发展平台用户使用手册.docx.20260921-trend.bak`。
 - 复核：`verify-user-manual-approved-screenshots.mjs` = 217 条 approvals 逐条哈希校验通过；`manual:screenshots:check` = 217 场景 / 0 pending。
+
+### 4.7 2026-09-21 新增 S011A（后缀编号首次使用：训练进度概览卡片完整形态）
+
+背景：卡片改版后比旧版高约 250px，1080 视口放不下「卡片 + 520px 看板」，S009 / S011 里的卡片顶部（标题 + 窗口切换）被裁（§4.6）。用户拍板给卡片单独一张图，并按**后缀编号**约定做，不重编号（§1）。
+
+| 项 | 值 |
+|---|---|
+| 编号 / 位置 | `S011A`，插在 3.2 系统首页末尾（正文 `[图 S011]` 之后） |
+| 内容 | 「训练进度概览」卡片完整形态，**窗口切到「近 30 天」**再拍 |
+| 采集 | `--ids S011A --run-id dashboard-trend-card-20260921b`（首次 `dashboard-trend-card-20260921` 的图被浮动入口叠进卡片右下角，已给 `prepareS011A` 加「采集前隐藏 `.ai-floating-button`」并重拍） |
+| 尺寸 | 1564×515（卡片元素截图；capture target = `training-card` → 选择器 `.training-progress`） |
+| 审批 / 落盘 | approvals 追加 `S011A`（既有 217 条零改动）→ `promote-user-manual-screenshots.mjs --ids S011A --allow-formal-output` |
+| 正文 | §3.2 说明加一条「训练进度概览卡片…」；占位 `> [图 S011A] …` |
+| **docx 待插入** | 已登记进 `docx-pending-figures.json` 的 `pending: ["S011A"]`——新增图无法用「就地换图」进 docx，需人工在 Word 里插入（图片 = `docs/user-manual/screenshots/S011A.png`，图注文字 = 正文那行占位文本）。插入完成后把 `S011A` 从 pending 移除并重跑 `validate-user-manual`（否则校验会提示重复） |
+
+校验链配套调整（同批）：`validate-user-manual.mjs` 改为**按计划 id 列表**比对（去掉「第 N 个 = S{N}」的数字阶梯），docx 图注按「计划 − pending」校验；`verify-user-manual-approved-screenshots.mjs --docx` 对 pending 项跳过内嵌比对（本次输出 `approvals 218 / embedded 217 / pending ["S011A"]`）。
+
+- 复核：`manual:screenshots:check` = 218 场景 / 0 pending；`validate-user-manual` = 正文 218 / 清单 218 / docx 图注 217（= 218 − 1）；`scripts/tests/manual-screenshot-id-contract.test.mjs` 6 组守卫全绿。
 
