@@ -83,7 +83,7 @@ async function main() {
     [2],
   )
 
-  // 训练记录统计（getWeeklyTrainingTrend 同构）：teacher 7 仅统计 S1 的 1 条
+  // 训练记录统计（带 student_id 的聚合查询同构）：teacher 7 仅统计 S1 的 1 条
   sc = buildTeacherStudentScope('s', { role: 'teacher', userId: 7 })
   assert.equal(
     run(

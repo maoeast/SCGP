@@ -257,6 +257,58 @@
       </div>
     </el-dialog>
 
+    <el-dialog
+      v-model="trainingDayDetailVisible"
+      width="640px"
+      class="dashboard-insight-dialog"
+      destroy-on-close
+      append-to-body
+      :title="trainingDayDetailTitle"
+    >
+      <p class="dashboard-insight-dialog__hint">
+        共 {{ trainingDayDetailSummary.count }} 次训练 · 学生 {{ trainingDayDetailSummary.studentCount }} 名 ·
+        总时长 {{ trainingDayDetailSummary.durationLabel }}；点击条目进入学生详情。
+      </p>
+
+      <div class="dashboard-insight-dialog__list" v-loading="trainingDayDetailLoading">
+        <el-empty
+          v-if="!trainingDayDetailLoading && trainingDayDetailItems.length === 0"
+          description="当日没有训练记录"
+          :image-size="72"
+        />
+
+        <article
+          v-for="item in trainingDayDetailItems"
+          :key="item.sessionId"
+          class="dashboard-insight-row"
+          role="button"
+          tabindex="0"
+          @click="goToStudentFromDayDetail(item.studentId)"
+          @keydown.enter.prevent="goToStudentFromDayDetail(item.studentId)"
+          @keydown.space.prevent="goToStudentFromDayDetail(item.studentId)"
+        >
+          <div class="dashboard-insight-row__topline">
+            <h3>{{ item.studentName }}</h3>
+            <span class="dashboard-insight-row__time">
+              {{ item.startedAtLabel || '时间未知' }} ·
+              {{ formatCompactDuration(item.durationMs) }}
+            </span>
+          </div>
+
+          <p class="dashboard-insight-row__desc">{{ item.moduleLabel }} / {{ item.taskLabel }}</p>
+
+          <div class="dashboard-insight-row__tags">
+            <span
+              class="alert-item__tag"
+              :class="TRAINING_STATUS_TAGS[item.completionStatus].className"
+            >
+              {{ TRAINING_STATUS_TAGS[item.completionStatus].label }}
+            </span>
+          </div>
+        </article>
+      </div>
+    </el-dialog>
+
     <section class="dashboard-surface scgp-surface">
       <div class="dashboard-section-header">
         <div>
@@ -303,24 +355,110 @@
       </div>
     </section>
 
-    <section class="dashboard-surface scgp-surface">
+    <section class="dashboard-surface scgp-surface training-progress" v-loading="trainingProgressLoading">
       <div class="dashboard-section-header">
         <div>
           <h2>训练进度概览</h2>
-          <p>过去 7 天的主轴训练次数趋势，帮助快速判断近期训练强度变化。</p>
+        </div>
+
+        <div class="training-progress__controls">
+          <!-- 数据质量提示：时间戳无法解析的行已被跳过，低调说明不干扰主视觉 -->
+          <span
+            v-if="trainingProgress.skippedRowCount > 0"
+            class="training-progress__quality"
+            :title="`${trainingProgress.skippedRowCount} 条记录时间无法解析，已从统计中跳过`"
+          >
+            {{ trainingProgress.skippedRowCount }} 条记录时间无法解析
+          </span>
+
+          <!-- 窗口是固定枚举，必须用选项控件（禁止自由输入） -->
+          <el-radio-group v-model="trainingWindowDays" size="small">
+            <el-radio-button
+              v-for="days in TRAINING_PROGRESS_WINDOW_OPTIONS"
+              :key="days"
+              :value="days"
+            >
+              近 {{ days }} 天
+            </el-radio-button>
+          </el-radio-group>
+
+          <button
+            type="button"
+            class="dashboard-panel-header__action"
+            @click="goToTrainingRecords"
+          >
+            查看全部训练记录
+          </button>
         </div>
       </div>
 
-      <el-empty
-        v-if="snapshot.weeklyTrend.length === 0"
-        description="暂无训练数据"
-      />
-      <VChart
-        v-else
-        class="dashboard-trend-chart"
-        :option="trendOption"
-        autoresize
-      />
+      <!-- KPI 行：空态时照常展示（0 / —），让用户先看清当前窗口口径 -->
+      <div class="training-progress__kpi">
+        <article
+          v-for="kpi in trainingKpiItems"
+          :key="kpi.key"
+          class="training-progress__kpi-card"
+        >
+          <span class="training-progress__kpi-label">{{ kpi.label }}</span>
+          <strong class="training-progress__kpi-value">{{ kpi.value }}</strong>
+          <span class="training-progress__kpi-hint">{{ kpi.hint }}</span>
+          <span
+            v-if="kpi.delta"
+            class="training-progress__kpi-delta"
+            :class="`training-progress__kpi-delta--${kpi.delta.tone}`"
+          >
+            {{ kpi.delta.arrow }} {{ kpi.delta.text }}
+          </span>
+        </article>
+      </div>
+
+      <!-- 空态：紧凑横幅，图表与模块分布整体不渲染 -->
+      <div v-if="!trainingProgress.hasData" class="training-progress__empty">
+        <span class="training-progress__empty-badge">
+          <el-icon :size="22"><DataLine /></el-icon>
+        </span>
+        <div class="training-progress__empty-body">
+          <p class="training-progress__empty-title">暂无训练数据</p>
+          <p class="training-progress__empty-text">当前窗口内没有训练会话记录</p>
+        </div>
+      </div>
+
+      <div v-else class="training-progress__body">
+        <VChart
+          class="training-progress__chart"
+          :option="trainingProgressOption"
+          autoresize
+          @click="handleTrainingPointClick"
+        />
+
+        <div class="training-progress__modules">
+          <h3 class="training-progress__modules-title">模块分布</h3>
+          <div
+            class="training-progress__module-list"
+            :class="{ 'training-progress__module-list--scroll': trainingProgress.modules.length > 5 }"
+          >
+            <div
+              v-for="item in trainingProgress.modules"
+              :key="item.moduleCode"
+              class="training-progress__module"
+              :title="`${item.moduleLabel}：${item.count} 次 · ${formatCompactDuration(item.durationMs)} · 占比 ${Math.round(item.share * 100)}%`"
+            >
+              <div class="training-progress__module-topline">
+                <span class="training-progress__module-label">{{ item.moduleLabel }}</span>
+                <span class="training-progress__module-metric">
+                  {{ item.count }} 次 · {{ formatCompactDuration(item.durationMs) }}
+                </span>
+              </div>
+              <div class="training-progress__module-track">
+                <span
+                  class="training-progress__module-fill"
+                  :style="{ width: `${moduleShareWidth(item.share)}%` }"
+                ></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <div class="dashboard-board-host">
@@ -387,7 +525,7 @@
             </div>
           </div>
 
-          <!-- 底部：今日训练进度（分子 = 今日训练记录数，分母 = 今日计划数） -->
+          <!-- 底部：今日训练进度（分子 = 今日会话数，与「训练进度概览」同源；分母 = 今日计划数） -->
           <div class="board-panel__foot schedule-progress">
             <div class="schedule-progress__label">
               <span>今日已完成训练 <strong>{{ todayTrainingCount }}</strong> 次</span>
@@ -527,13 +665,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   ArrowRight,
   Calendar,
   CircleCheck,
+  DataLine,
   EditPen,
   Finished,
   VideoPlay,
@@ -546,8 +685,15 @@ import {
   DashboardAPI,
   type DashboardScheduleItem,
   type DashboardSnapshot,
+  type DashboardTrainingDayItem,
+  type DashboardTrainingProgress,
 } from '@/database/dashboard-api'
 import { PROMPT_LEVEL_LABELS } from '@/database/training-anomaly-rules'
+import {
+  DEFAULT_TRAINING_PROGRESS_WINDOW_DAYS,
+  TRAINING_PROGRESS_WINDOW_OPTIONS,
+  type TrainingProgressWindowDays,
+} from '@/database/training-progress-rules'
 import { resolveTrainingLaunch } from '@/utils/training-launch'
 import { useAuthStore } from '@/stores/auth'
 import { useAiStore } from '@/stores/ai'
@@ -557,14 +703,15 @@ import {
 } from '@/data/ai-agent-presets'
 import quotes from '@/data/quotes.json'
 import { openAiAssistant } from '@/features/ai/assistant-launcher'
-import { use } from 'echarts/core'
+// ECElementEvent 必须与 vue-echarts 同源（echarts/core）：根入口另有一份同名声明，两份 identity 不兼容
+import { use, type ECElementEvent } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { LineChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent } from 'echarts/components'
-import type { EChartsOption } from 'echarts'
+import { BarChart, LineChart } from 'echarts/charts'
+import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
+import type { EChartsOption, TooltipComponentFormatterCallbackParams } from 'echarts'
 import VChart from 'vue-echarts'
 
-use([CanvasRenderer, LineChart, GridComponent, TooltipComponent])
+use([CanvasRenderer, BarChart, LineChart, GridComponent, LegendComponent, TooltipComponent])
 
 function formatPromptLevel(level: number): string {
   return PROMPT_LEVEL_LABELS[level] || '高辅助'
@@ -578,6 +725,27 @@ const authStore = useAuthStore()
 const aiStore = useAiStore()
 
 const loading = ref(false)
+/** 训练进度概览的空态数据：初始值与快照默认值共用一份，避免两处字面量漂移 */
+function createEmptyTrainingProgress(): DashboardTrainingProgress {
+  return {
+    windowDays: DEFAULT_TRAINING_PROGRESS_WINDOW_DAYS,
+    points: [],
+    modules: [],
+    summary: {
+      sessionCount: 0,
+      durationMs: 0,
+      studentCount: 0,
+      completedCount: 0,
+      completionRate: null,
+      activeDayCount: 0,
+      todayCount: 0,
+      previous: null,
+    },
+    hasData: false,
+    skippedRowCount: 0,
+  }
+}
+
 const snapshot = ref<DashboardSnapshot>({
   overview: {
     studentCount: 0,
@@ -592,7 +760,7 @@ const snapshot = ref<DashboardSnapshot>({
   anomalies: [],
   assessmentInsights: [],
   recentStudents: [],
-  weeklyTrend: [],
+  trainingProgress: createEmptyTrainingProgress(),
 })
 
 // 每日暖心语录：进入首页时从 src/data/quotes.json 随机抽取一条
@@ -658,12 +826,8 @@ const metrics = computed(() => ([
 /** 「查看全部」异常预警弹窗（面板内为一行摘要，完整信息在弹层） */
 const anomalyDialogVisible = ref(false)
 
-// 今日训练进度：分子 = 与「训练进度概览」同源的今日训练记录数（weeklyTrend 末点即今天），分母 = 今日计划数
-const todayTrainingCount = computed(() => {
-  const trend = snapshot.value.weeklyTrend
-  const today = trend[trend.length - 1]
-  return today ? today.count : 0
-})
+// 今日训练进度：分子 = 与「训练进度概览」同源的今日会话数（summary.todayCount，与窗口无关），分母 = 今日计划数
+const todayTrainingCount = computed(() => snapshot.value.trainingProgress.summary.todayCount)
 const todayProgressRatio = computed(() => {
   const plans = snapshot.value.overview.todayTaskCount
   if (plans <= 0) return 0
@@ -692,55 +856,311 @@ const selectedHomeAgent = computed(() =>
   homeAgents.value.find((item) => item.preset.code === selectedHomeAgentCode.value) ?? null,
 )
 
-const trendOption = computed<EChartsOption>(() => ({
-  tooltip: {
-    trigger: 'axis',
-  },
-  grid: {
-    left: 24,
-    right: 24,
-    top: 24,
-    bottom: 24,
-    containLabel: true,
-  },
-  xAxis: {
-    type: 'category',
-    boundaryGap: false,
-    data: snapshot.value.weeklyTrend.map((point) => point.date),
-    axisLabel: {
-      color: '#909399',
-    },
-  },
-  yAxis: {
-    type: 'value',
-    minInterval: 1,
-    axisLabel: {
-      color: '#909399',
-    },
-    splitLine: {
-      lineStyle: {
-        color: '#ebeef5',
-      },
-    },
-  },
-  series: [
+// ==================== 训练进度概览卡片 ====================
+
+/**
+ * 卡片独立数据源：窗口由用户选择（7 / 30 天），不跟随 snapshot——
+ * 快照固定带默认窗口，直接消费快照会把用户的窗口选择重置回默认。
+ */
+const trainingWindowDays = ref<TrainingProgressWindowDays>(DEFAULT_TRAINING_PROGRESS_WINDOW_DAYS)
+const trainingProgress = ref<DashboardTrainingProgress>(createEmptyTrainingProgress())
+const trainingProgressLoading = ref(false)
+
+/** 窗口切换：只在用户主动切换时拉取（同窗口不动） */
+watch(trainingWindowDays, (days) => {
+  if (days === trainingProgress.value.windowDays) return
+  void loadTrainingProgress(days)
+})
+
+/** 在途请求令牌：只认最后一次发起的窗口请求，快速切换时旧响应不覆盖新窗口数据 */
+let trainingProgressRequestId = 0
+
+/** 指定窗口的进度数据；失败保留旧数据，只提示不清空 */
+async function loadTrainingProgress(days: TrainingProgressWindowDays, { silent = false } = {}) {
+  const requestId = (trainingProgressRequestId += 1)
+  try {
+    if (!silent) trainingProgressLoading.value = true
+    const progress = await dashboardApi.getTrainingProgress(days)
+    if (requestId !== trainingProgressRequestId) return
+    trainingProgress.value = progress
+  } catch (error) {
+    console.error('加载训练进度概览失败:', error)
+    ElMessage.error('训练进度数据加载失败，请稍后重试')
+  } finally {
+    if (requestId === trainingProgressRequestId) trainingProgressLoading.value = false
+  }
+}
+
+/**
+ * 快照更新后的同步：窗口一致时直接采用快照（省一次查询）；
+ * 用户已切到别的窗口时按当前窗口补拉一次，保证自动刷新不漏数据。
+ */
+function syncTrainingProgressFromSnapshot() {
+  if (trainingWindowDays.value === snapshot.value.trainingProgress.windowDays) {
+    trainingProgress.value = snapshot.value.trainingProgress
+    return
+  }
+  void loadTrainingProgress(trainingWindowDays.value, { silent: true })
+}
+
+/** 时长 → 人类可读（KPI / 弹层用）：≥1 小时「X 小时 Y 分」，否则「N 分钟」 */
+function formatHumanDuration(durationMs: number) {
+  const minutes = Math.max(0, Math.round(durationMs / 60_000))
+  if (minutes < 60) return `${minutes} 分钟`
+  const hours = Math.floor(minutes / 60)
+  const restMinutes = minutes % 60
+  return restMinutes > 0 ? `${hours} 小时 ${restMinutes} 分` : `${hours} 小时`
+}
+
+/** 时长 → 紧凑文案（模块分布 / 明细行用）：≥1 小时「6.4 小时」，否则「N 分钟」 */
+function formatCompactDuration(durationMs: number) {
+  const duration = Math.max(0, durationMs)
+  if (duration < 3_600_000) return `${Math.round(duration / 60_000)} 分钟`
+  return `${(duration / 3_600_000).toFixed(1)} 小时`
+}
+
+/** 「YYYY-MM-DD」本地日 key → 「9月21日」（不经过 Date 解析，避免 UTC 偏移） */
+function formatTrainingDayLabel(dayKey: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dayKey)
+  return match ? `${Number(match[2])}月${Number(match[3])}日` : dayKey
+}
+
+type TrainingDeltaTone = 'up' | 'down' | 'flat'
+
+interface TrainingDelta {
+  arrow: string
+  text: string
+  tone: TrainingDeltaTone
+}
+
+function deltaTone(value: number): TrainingDeltaTone {
+  if (value > 0) return 'up'
+  if (value < 0) return 'down'
+  return 'flat'
+}
+
+/** 环比百分比：上期缺失或为 0 时不显示（0 作分母只会得到无意义的数字） */
+function buildCountDelta(current: number, previous: number | null): TrainingDelta | null {
+  if (previous === null || previous <= 0) return null
+  const percent = ((current - previous) / previous) * 100
+  const magnitude = Math.abs(percent) >= 10 ? percent.toFixed(0) : percent.toFixed(1)
+  return {
+    arrow: percent > 0 ? '↑' : percent < 0 ? '↓' : '→',
+    text: `较上期 ${percent > 0 ? '+' : ''}${magnitude}%`,
+    tone: deltaTone(percent),
+  }
+}
+
+/** 完成率环比用百分点差值表达（两端都有值才算得出） */
+function buildRateDelta(current: number | null, previous: number | null): TrainingDelta | null {
+  if (current === null || previous === null) return null
+  const points = (current - previous) * 100
+  return {
+    arrow: points > 0 ? '↑' : points < 0 ? '↓' : '→',
+    text: `较上期 ${points > 0 ? '+' : ''}${points.toFixed(1)} 个百分点`,
+    tone: deltaTone(points),
+  }
+}
+
+interface TrainingKpiItem {
+  key: string
+  label: string
+  value: string
+  hint: string
+  delta: TrainingDelta | null
+}
+
+/** KPI 行：口径全部来自 summary；空态同样展示（0 / —），让用户看清当前窗口 */
+const trainingKpiItems = computed<TrainingKpiItem[]>(() => {
+  const { summary } = trainingProgress.value
+  const previous = summary.previous
+  const perStudentHint =
+    summary.studentCount > 0
+      ? `人均 ${(summary.sessionCount / summary.studentCount).toFixed(1)} 次`
+      : '人均 —'
+  const averageDuration =
+    summary.activeDayCount > 0 ? summary.durationMs / summary.activeDayCount : 0
+
+  return [
     {
-      type: 'line',
-      smooth: true,
-      data: snapshot.value.weeklyTrend.map((point) => point.count),
-      lineStyle: {
-        color: '#409EFF',
-        width: 3,
-      },
-      itemStyle: {
-        color: '#409EFF',
-      },
-      areaStyle: {
-        color: 'rgba(64, 158, 255, 0.14)',
+      key: 'sessions',
+      label: '训练次数',
+      value: `${summary.sessionCount} 次`,
+      hint: `窗口内 ${summary.activeDayCount} 天有训练`,
+      delta: previous ? buildCountDelta(summary.sessionCount, previous.sessionCount) : null,
+    },
+    {
+      key: 'duration',
+      label: '总时长',
+      value: formatHumanDuration(summary.durationMs),
+      hint: `日均 ${formatCompactDuration(averageDuration)}`,
+      delta: previous ? buildCountDelta(summary.durationMs, previous.durationMs) : null,
+    },
+    {
+      key: 'students',
+      label: '参与学生',
+      value: `${summary.studentCount} 名`,
+      hint: perStudentHint,
+      delta: previous ? buildCountDelta(summary.studentCount, previous.studentCount) : null,
+    },
+    {
+      key: 'completion',
+      label: '完成率',
+      value: summary.completionRate === null ? '—' : formatPercent(summary.completionRate),
+      hint: `完成 ${summary.completedCount} 次`,
+      delta: previous ? buildRateDelta(summary.completionRate, previous.completionRate) : null,
+    },
+  ]
+})
+
+/** 组合图：柱 = 每日次数（左轴），折线 = 每日时长/分（右轴）；点选柱 / 线下钻当日明细 */
+const trainingProgressOption = computed<EChartsOption>(() => {
+  const points = trainingProgress.value.points
+  // 30 天窗口点密：标签倾斜 + 隔位显示，避免日期互相重叠
+  const dense = points.length > 14
+
+  return {
+    legend: {
+      top: 0,
+      right: 0,
+      itemWidth: 14,
+      itemHeight: 8,
+      textStyle: { color: '#909399', fontSize: 12 },
+      data: ['训练次数', '训练时长'],
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      formatter: (params: TooltipComponentFormatterCallbackParams) => {
+        const list = Array.isArray(params) ? params : [params]
+        const point = points[list[0]?.dataIndex ?? -1]
+        if (!point) return ''
+        return `${formatTrainingDayLabel(point.date)}<br/>训练 ${point.count} 次 · ${formatHumanDuration(point.durationMs)}`
       },
     },
-  ],
+    grid: { left: 8, right: 8, top: 46, bottom: 4, containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: points.map((point) => point.date.slice(5)),
+      axisTick: { alignWithLabel: true },
+      axisLabel: {
+        color: '#909399',
+        interval: dense ? 1 : 0,
+        rotate: dense ? 45 : 0,
+      },
+    },
+    yAxis: [
+      {
+        type: 'value',
+        name: '次数',
+        minInterval: 1,
+        nameTextStyle: { color: '#909399', fontSize: 12 },
+        axisLabel: { color: '#909399' },
+        splitLine: { lineStyle: { color: '#ebeef5' } },
+      },
+      {
+        type: 'value',
+        name: '时长/分',
+        nameTextStyle: { color: '#909399', fontSize: 12 },
+        axisLabel: { color: '#909399' },
+        splitLine: { show: false },
+      },
+    ],
+    series: [
+      {
+        name: '训练次数',
+        type: 'bar',
+        barMaxWidth: 18,
+        itemStyle: { color: '#409EFF', borderRadius: [4, 4, 0, 0] },
+        data: points.map((point) => point.count),
+      },
+      {
+        name: '训练时长',
+        type: 'line',
+        smooth: true,
+        yAxisIndex: 1,
+        symbolSize: 6,
+        lineStyle: { color: '#6fb7a4', width: 3 },
+        itemStyle: { color: '#6fb7a4' },
+        data: points.map((point) => Number((point.durationMs / 60_000).toFixed(1))),
+      },
+    ],
+  }
+})
+
+/** 分布条宽度：按 share 换算百分比，最小 4% 保证极小占比也看得见 */
+function moduleShareWidth(share: number) {
+  return Math.max(4, Math.min(100, Math.round(share * 100)))
+}
+
+// 下钻弹层：点选图表上的某一天 → 当日会话明细（与卡片同源，含教师隔离）
+const trainingDayDetailVisible = ref(false)
+const trainingDayDetailLoading = ref(false)
+const trainingDayDetailDate = ref('')
+const trainingDayDetailItems = ref<DashboardTrainingDayItem[]>([])
+
+const trainingDayDetailTitle = computed(() =>
+  trainingDayDetailDate.value
+    ? `${formatTrainingDayLabel(trainingDayDetailDate.value)} 训练明细`
+    : '训练明细',
+)
+
+const trainingDayDetailSummary = computed(() => ({
+  count: trainingDayDetailItems.value.length,
+  studentCount: new Set(trainingDayDetailItems.value.map((item) => item.studentId)).size,
+  durationLabel: formatHumanDuration(
+    trainingDayDetailItems.value.reduce((total, item) => total + item.durationMs, 0),
+  ),
 }))
+
+/**
+ * 点选某日 → 先开弹层再请求（请求中可见 loading 遮罩）；
+ * 失败时关闭弹层并提示——不给用户留一个空弹层。
+ */
+async function openTrainingDayDetail(dayKey: string) {
+  trainingDayDetailDate.value = dayKey
+  trainingDayDetailItems.value = []
+  trainingDayDetailVisible.value = true
+  trainingDayDetailLoading.value = true
+  try {
+    trainingDayDetailItems.value = await dashboardApi.getTrainingDayDetail(dayKey)
+  } catch (error) {
+    console.error('加载当日训练明细失败:', error)
+    ElMessage.error('当日训练明细加载失败，请稍后重试')
+    trainingDayDetailVisible.value = false
+  } finally {
+    trainingDayDetailLoading.value = false
+  }
+}
+
+/** 图表点选：柱与折线共用同一 category 轴，dataIndex 直接对齐 points */
+function handleTrainingPointClick(params: ECElementEvent) {
+  const point = trainingProgress.value.points[params.dataIndex]
+  if (!point) return
+  void openTrainingDayDetail(point.date)
+}
+
+/** 明细行点击：先关弹层再跳学生详情，避免返回首页时弹层残留 */
+function goToStudentFromDayDetail(studentId: number) {
+  trainingDayDetailVisible.value = false
+  goToStudentDetail(studentId)
+}
+
+/** 完成态标签：中断 / 放弃 / 取消用警示色，已完成用信息色 */
+const TRAINING_STATUS_TAGS: Record<
+  DashboardTrainingDayItem['completionStatus'],
+  { label: string; className: string }
+> = {
+  completed: { label: '已完成', className: 'alert-item__tag--gap' },
+  interrupted: { label: '已中断', className: 'alert-item__tag--watch' },
+  aborted: { label: '已放弃', className: 'alert-item__tag--weak' },
+  cancelled: { label: '已取消', className: 'alert-item__tag--never' },
+}
+
+/** 卡片头部入口：完整训练记录（菜单页） */
+function goToTrainingRecords() {
+  router.push('/training-records/menu')
+}
 
 const focusPanel = computed(() => {
   const overview = snapshot.value.overview
@@ -933,6 +1353,8 @@ async function loadDashboard({ silent = false } = {}) {
   try {
     if (!silent) loading.value = true
     snapshot.value = await dashboardApi.getSnapshot()
+    // 快照固定带默认窗口：用户已切到别的窗口时按当前窗口补拉一次，自动刷新才不会漏数据
+    syncTrainingProgressFromSnapshot()
   } catch (error) {
     console.error('加载首页看板失败:', error)
   } finally {
@@ -1482,9 +1904,222 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.dashboard-trend-chart {
-  height: 300px;
+/* 「训练进度概览」卡片：容器查询宿主（≥1100px 图表 + 模块分布双栏，窄于此上下堆叠） */
+.training-progress {
+  container-type: inline-size;
+  container-name: training-progress;
+}
+
+/* 头部控件：窗口切换（固定枚举）+ 记录入口 + 数据质量提示 */
+.training-progress__controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 数据质量提示：低调小字，悬浮给出口径 */
+.training-progress__quality {
+  color: var(--scgp-subtle);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: help;
+  border-bottom: 1px dashed var(--scgp-border-strong);
+}
+
+/* KPI 行：紧凑卡，窄容器自动换行 */
+.training-progress__kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
   margin-top: 18px;
+}
+
+.training-progress__kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--scgp-border);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbfe 100%);
+}
+
+.training-progress__kpi-label {
+  color: var(--scgp-muted);
+  font-size: 13px;
+}
+
+.training-progress__kpi-value {
+  color: var(--scgp-text);
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.training-progress__kpi-hint {
+  color: var(--scgp-subtle);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.training-progress__kpi-delta {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.training-progress__kpi-delta--up {
+  color: var(--scgp-success);
+}
+
+.training-progress__kpi-delta--down {
+  color: var(--scgp-coral);
+}
+
+.training-progress__kpi-delta--flat {
+  color: var(--scgp-subtle);
+}
+
+/* 空态：紧凑横幅（同 .alert-empty 风格，本卡片自用；KPI 行仍展示 0 / —） */
+.training-progress__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 96px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 1px dashed var(--scgp-border-strong);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbf9 100%);
+}
+
+.training-progress__empty-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: var(--scgp-primary-soft);
+  color: var(--scgp-primary);
+}
+
+.training-progress__empty-body {
+  min-width: 0;
+}
+
+.training-progress__empty-title {
+  margin: 0;
+  color: var(--scgp-text);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.training-progress__empty-text {
+  margin: 4px 0 0;
+  color: var(--scgp-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* 主体：图表 + 模块分布（窄容器上下堆叠） */
+.training-progress__body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.training-progress__chart {
+  height: 280px;
+}
+
+.training-progress__modules {
+  min-width: 0;
+}
+
+.training-progress__modules-title {
+  margin: 0 0 10px;
+  color: var(--scgp-text);
+  font-size: 14px;
+}
+
+.training-progress__module-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 模块多于 5 个时列表内部滚动，卡片高度不随数据量增长 */
+.training-progress__module-list--scroll {
+  max-height: 264px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+  margin-right: -6px;
+}
+
+.training-progress__module {
+  min-width: 0;
+}
+
+.training-progress__module-topline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.training-progress__module-label {
+  overflow: hidden;
+  color: var(--scgp-text);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.training-progress__module-metric {
+  flex-shrink: 0;
+  color: var(--scgp-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.training-progress__module-track {
+  height: 8px;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(143, 169, 204, 0.18);
+}
+
+.training-progress__module-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6fb7a4 0%, var(--scgp-success) 100%);
+  transition: width 0.3s ease;
+}
+
+/* 卡片 ≥1100px：图表（1.6）与模块分布（1）并排 */
+@container training-progress (min-width: 1100px) {
+  .training-progress__body {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .training-progress__chart {
+    flex: 1.6;
+    min-width: 0;
+  }
+
+  .training-progress__modules {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 /* 下半部三面板宿主：容器查询宿主，降级阶梯按看板自身宽度判定 */

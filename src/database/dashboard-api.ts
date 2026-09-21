@@ -13,6 +13,21 @@ import {
   anomalySeverityRank,
   evaluateTrainingAnomaly,
 } from './training-anomaly-rules'
+import {
+  addLocalDays,
+  buildTrainingProgress,
+  COMPLETED_TRAINING_STATUS,
+  DEFAULT_TRAINING_PROGRESS_WINDOW_DAYS,
+  formatLocalTimeLabel,
+  normalizeTrainingCompletionStatus,
+  normalizeTrainingProgressWindowDays,
+  parseLocalDayKey,
+  resolveTrainingProgressWindow,
+  toSqlUtcDateTime,
+  type TrainingCompletionStatus,
+  type TrainingProgress,
+  type TrainingProgressModuleSlice,
+} from './training-progress-rules'
 import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import { getTrainingPlanModuleLabel } from '@/utils/training-plan-module'
 
@@ -35,12 +50,6 @@ export interface DashboardRecentStudent {
   student_no: string
   avatar_path: string | null
   created_at: string
-}
-
-export interface DashboardTrendPoint {
-  date: string
-  count: number
-  totalDurationMs: number
 }
 
 export interface DashboardScheduleItem {
@@ -79,6 +88,29 @@ export interface DashboardAnomalyItem {
   reason: string
 }
 
+export interface DashboardTrainingModuleSlice extends TrainingProgressModuleSlice {
+  /** 模块展示名（API 层按 training-plan-module 单一真源填充） */
+  moduleLabel: string
+}
+
+export interface DashboardTrainingProgress extends Omit<TrainingProgress, 'modules'> {
+  modules: DashboardTrainingModuleSlice[]
+}
+
+export interface DashboardTrainingDayItem {
+  sessionId: number
+  studentId: number
+  studentName: string
+  avatarPath: string | null
+  moduleCode: string
+  moduleLabel: string
+  taskLabel: string
+  durationMs: number
+  completionStatus: TrainingCompletionStatus
+  /** 本地时刻 HH:mm（无法解析时为空串） */
+  startedAtLabel: string
+}
+
 export interface DashboardSnapshot {
   overview: DashboardOverview
   schedule: DashboardScheduleItem[]
@@ -86,7 +118,8 @@ export interface DashboardSnapshot {
   /** 评估缺口与优先建议（「智能特教助理」面板） */
   assessmentInsights: StudentAssessmentInsight[]
   recentStudents: DashboardRecentStudent[]
-  weeklyTrend: DashboardTrendPoint[]
+  /** 训练进度概览（默认窗口；卡片内切换窗口时另行调用 getTrainingProgress） */
+  trainingProgress: DashboardTrainingProgress
 }
 
 function formatDate(date: Date): string {
@@ -140,7 +173,7 @@ export class DashboardAPI extends DatabaseAPI {
       studentCount,
       completedPlanCount,
       recentStudents,
-      weeklyTrend,
+      trainingProgress,
     ] = await Promise.all([
       this.getTodaySchedule(),
       this.getWeeklyAnomalies(),
@@ -148,7 +181,7 @@ export class DashboardAPI extends DatabaseAPI {
       this.getStudentCount(),
       this.getCompletedPlanCount(),
       this.getRecentStudents(),
-      this.getWeeklyTrainingTrend(),
+      this.getTrainingProgress(),
     ])
 
     // 拆分口径：优先 = 明显偏弱 or 尚无评估记录（面板角标 / hero 文案用）
@@ -168,7 +201,7 @@ export class DashboardAPI extends DatabaseAPI {
       anomalies,
       assessmentInsights,
       recentStudents,
-      weeklyTrend,
+      trainingProgress,
     }
   }
 
@@ -214,46 +247,121 @@ export class DashboardAPI extends DatabaseAPI {
     }))
   }
 
-  async getWeeklyTrainingTrend(): Promise<DashboardTrendPoint[]> {
-    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000
+  /**
+   * 训练进度概览（首页看板卡片）。
+   *
+   * 数据源：统一训练主表 `training_session`。旧实现直扫 legacy 表 `training_records`，
+   * 实测只覆盖约 77% 的会话（器材 / 情绪小游戏写自己的旧表，认知内联游戏只写统一主表）；
+   * 时长一律取 `duration_ms`（legacy `duration` 单位混杂：同列既有秒又有毫秒）。
+   * 窗口 = 最近 N 个本地自然日（含今天）＋ 上一等长窗口（环比）；分桶与聚合全部交给
+   * 纯函数 buildTrainingProgress（口径单一真源，见 training-progress-rules）。
+   */
+  async getTrainingProgress(
+    windowDays: number = DEFAULT_TRAINING_PROGRESS_WINDOW_DAYS,
+  ): Promise<DashboardTrainingProgress> {
+    const days = normalizeTrainingProgressWindowDays(windowDays)
+    const now = new Date()
+    const range = resolveTrainingProgressWindow(days, now)
+    const scope = getCurrentTeacherStudentScope('s')
+
+    const [windowRows, previousRows] = await Promise.all([
+      this.queryAsync(
+        `
+          SELECT ts.started_at, ts.duration_ms, ts.student_id, ts.module_code, ts.completion_status
+          FROM training_session ts
+          INNER JOIN student s ON s.id = ts.student_id
+          WHERE datetime(ts.started_at) >= datetime(?)
+            AND datetime(ts.started_at) < datetime(?)${scope.sql}
+          ORDER BY ts.started_at ASC
+        `,
+        [toSqlUtcDateTime(range.start), toSqlUtcDateTime(range.end), ...scope.params],
+      ),
+      this.queryAsync(
+        `
+          SELECT ts.duration_ms, ts.student_id, ts.completion_status
+          FROM training_session ts
+          INNER JOIN student s ON s.id = ts.student_id
+          WHERE datetime(ts.started_at) >= datetime(?)
+            AND datetime(ts.started_at) < datetime(?)${scope.sql}
+        `,
+        [
+          toSqlUtcDateTime(range.previousStart),
+          toSqlUtcDateTime(range.previousEnd),
+          ...scope.params,
+        ],
+      ),
+    ])
+
+    const progress = buildTrainingProgress({
+      windowRows: windowRows.map((row) => ({
+        startedAt: row.started_at,
+        durationMs: row.duration_ms,
+        studentId: row.student_id,
+        moduleCode: row.module_code,
+        completionStatus: row.completion_status,
+      })),
+      previousRows: previousRows.map((row) => ({
+        durationMs: row.duration_ms,
+        studentId: row.student_id,
+        completionStatus: row.completion_status,
+      })),
+      windowDays: days,
+      now,
+    })
+
+    return {
+      ...progress,
+      modules: progress.modules.map((slice) => ({
+        ...slice,
+        moduleLabel: this.getModuleLabel(slice.moduleCode),
+      })),
+    }
+  }
+
+  /**
+   * 某个本地自然日的训练会话明细（卡片日趋势下钻）。
+   * 日期参数为图表点上的 `YYYY-MM-DD` 本地日 key。
+   */
+  async getTrainingDayDetail(date: string): Promise<DashboardTrainingDayItem[]> {
+    const dayStart = parseLocalDayKey(date)
+    if (!dayStart) return []
+
     const scope = getCurrentTeacherStudentScope('s')
     const rows = await this.queryAsync(
       `
-        SELECT strftime('%Y-%m-%d', timestamp / 1000, 'unixepoch', 'localtime') AS date,
-               COUNT(*) AS count,
-               SUM(duration) AS total_duration
-        FROM training_records tr
-        LEFT JOIN student s ON s.id = tr.student_id
-        WHERE tr.timestamp >= ?${scope.sql}
-        GROUP BY date
-        ORDER BY date ASC
+        SELECT ts.id, ts.student_id, s.name AS student_name, s.avatar_path,
+               ts.module_code, ts.task_name_snapshot, ts.entry_code,
+               ts.duration_ms, ts.completion_status, ts.started_at
+        FROM training_session ts
+        INNER JOIN student s ON s.id = ts.student_id
+        WHERE datetime(ts.started_at) >= datetime(?)
+          AND datetime(ts.started_at) < datetime(?)${scope.sql}
+        ORDER BY ts.started_at ASC
       `,
-      [cutoff, ...scope.params],
+      [
+        toSqlUtcDateTime(dayStart),
+        toSqlUtcDateTime(addLocalDays(dayStart, 1)),
+        ...scope.params,
+      ],
     )
 
-    const byDate = new Map<string, DashboardTrendPoint>()
-    for (const row of rows) {
-      const date = row.date
-      if (!date) continue
-      byDate.set(date, {
-        date,
-        count: normalizeNumber(row.count),
-        totalDurationMs: normalizeNumber(row.total_duration) * 1000,
-      })
-    }
-
-    const points: DashboardTrendPoint[] = []
-    const now = new Date()
-    for (let offset = 6; offset >= 0; offset -= 1) {
-      const day = new Date(now)
-      day.setDate(now.getDate() - offset)
-      const date = formatDate(day)
-      points.push(
-        byDate.get(date) ?? { date, count: 0, totalDurationMs: 0 },
-      )
-    }
-
-    return points
+    return rows.map((row) => {
+      const moduleCode = row.module_code || 'sensory'
+      return {
+        sessionId: normalizeNumber(row.id),
+        studentId: normalizeNumber(row.student_id),
+        studentName: row.student_name || `学生 #${row.student_id}`,
+        avatarPath: row.avatar_path || null,
+        moduleCode,
+        moduleLabel: this.getModuleLabel(moduleCode),
+        taskLabel: row.task_name_snapshot || row.entry_code || '训练任务',
+        durationMs: normalizeNumber(row.duration_ms),
+        // 建表 CHECK 保证枚举合法；脏数据回退到默认完成态（与建表 DEFAULT 一致）
+        completionStatus: normalizeTrainingCompletionStatus(row.completion_status)
+          ?? COMPLETED_TRAINING_STATUS,
+        startedAtLabel: formatLocalTimeLabel(row.started_at),
+      }
+    })
   }
 
   async getTodaySchedule(): Promise<DashboardScheduleItem[]> {
