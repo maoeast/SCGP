@@ -295,3 +295,15 @@
 | `dashboard-refresh-2-20260920` | S002 / S008 / S009 / S010 / S011 | 拆分重跑批次 |
 
 落盘：`promote-user-manual-screenshots.mjs --ids … --allow-formal-output`；重拍前先删除同名旧图（promote 对「同名但哈希不同」拒绝覆盖，见 §2 防覆盖设计）。
+
+### 4.3 2026-09-21 首页看板下半部布局重排重拍
+
+受首页看板下半部布局重排影响（看板改 65:35 分栏、日程卡改双列网格、异常预警空态改紧凑横幅、日程显示上限 5 条改 4 条），重拍 4 张：
+
+| run | 编号 | 说明 |
+|---|---|---|
+| `dashboard-layout-20260921` | S008 / S009 / S010 / S011 | S009（整页）承载日程双列卡与预警空态横幅；S011（整页）承载日程空态；S008 采集区为首页上半部分、S010 为 AI 智能体空态，内容不受本次布局改动影响，随批次同源重采 |
+
+- 采集：`node scripts/manual/capture-user-manual-screenshots.mjs --ids S008,S009,S010,S011 --run-id dashboard-layout-20260921 --allow-isolated-state` → 4 张全部成功（0 失败）。
+- 审批：approvals 中 S008–S011 四条 runId/sha256 已更新为本次工件；落盘前按 §2 防覆盖设计先删除同名旧图。
+- 复核：`verify-user-manual-approved-screenshots.mjs` = 217 条 approvals 逐条哈希校验通过；`manual:screenshots:check` = 217 场景 / 0 pending。

@@ -346,7 +346,8 @@
             :key="item.planId"
             class="schedule-item"
           >
-            <div class="schedule-item__main">
+            <!-- 上半区：左侧头像 + 中间「姓名+标签」「计划名称」两行 -->
+            <div class="schedule-item__head">
               <StudentAvatar
                 :name="item.studentName"
                 :avatar-url="item.avatarPath || undefined"
@@ -360,32 +361,35 @@
                 </div>
 
                 <p class="schedule-item__plan">{{ item.planName }}</p>
-
-                <div class="schedule-item__meta">
-                  <span>周期：{{ formatDateRange(item.startDate, item.endDate) }}</span>
-                  <span>资源：{{ item.resourceCount }} 项</span>
-                  <span v-if="item.launchResourceName">首项：{{ item.launchResourceName }}</span>
-                </div>
               </div>
             </div>
 
-            <div class="schedule-item__actions">
-              <el-button
-                type="primary"
-                plain
-                :disabled="!item.launchResourceId || !item.launchResourceType"
-                @click="openPlanModule(item)"
-              >
-                <el-icon><VideoPlay /></el-icon>
-                开始训练
-              </el-button>
+            <!-- 底部区：次要信息（周期/资源/首项）浅色小字，主按钮右对齐 -->
+            <div class="schedule-item__foot">
+              <div class="schedule-item__meta">
+                <span>周期：{{ formatDateRange(item.startDate, item.endDate) }}</span>
+                <span>资源：{{ item.resourceCount }} 项</span>
+                <span v-if="item.launchResourceName">首项：{{ item.launchResourceName }}</span>
+              </div>
+
+              <div class="schedule-item__actions">
+                <el-button
+                  type="primary"
+                  plain
+                  :disabled="!item.launchResourceId || !item.launchResourceType"
+                  @click="openPlanModule(item)"
+                >
+                  <el-icon><VideoPlay /></el-icon>
+                  开始训练
+                </el-button>
+              </div>
             </div>
           </article>
         </div>
       </article>
 
       <div class="dashboard-board__stack">
-        <article :ref="panelRefs.anomaly" class="dashboard-surface scgp-surface alert-panel">
+        <article :ref="panelRefs.anomaly" class="dashboard-surface scgp-surface alert-panel alert-panel--anomaly">
           <div class="dashboard-panel-header">
             <div>
               <h2>本周异常预警</h2>
@@ -406,10 +410,13 @@
             </div>
           </div>
 
-          <el-empty
-            v-if="snapshot.anomalies.length === 0"
-            description="本周干预数据平稳"
-          />
+          <!-- 空态：紧凑横幅（约 88px 高），不占固定大高度 -->
+          <div v-if="snapshot.anomalies.length === 0" class="alert-empty">
+            <span class="alert-empty__badge">
+              <el-icon :size="22"><CircleCheck /></el-icon>
+            </span>
+            <p class="alert-empty__text">本周干预数据平稳</p>
+          </div>
 
           <div v-else class="alert-list">
             <article
@@ -450,7 +457,7 @@
           </div>
         </article>
 
-        <article :ref="panelRefs.assessment" class="dashboard-surface scgp-surface alert-panel">
+        <article :ref="panelRefs.assessment" class="dashboard-surface scgp-surface alert-panel alert-panel--assistant">
           <div class="dashboard-panel-header">
             <div>
               <h2>智能特教助理</h2>
@@ -505,8 +512,10 @@
 
                 <p class="alert-item__desc">{{ item.suggestion }}</p>
 
-                <div class="alert-item__meta">
-                  <span v-if="item.disorder">{{ item.disorder }}</span>
+                <div class="alert-item__tags">
+                  <span v-if="item.disorder" class="alert-item__tag alert-item__tag--never">
+                    {{ item.disorder }}
+                  </span>
                   <span
                     v-for="tag in item.tags"
                     :key="`${tag.kind}-${tag.label}`"
@@ -532,6 +541,7 @@ import { ElMessage } from 'element-plus'
 import {
   ArrowRight,
   Calendar,
+  CircleCheck,
   EditPen,
   Finished,
   VideoPlay,
@@ -569,7 +579,6 @@ function formatPromptLevel(level: number): string {
 }
 
 type DashboardTone = 'blue' | 'amber' | 'green' | 'coral'
-
 
 const router = useRouter()
 const dashboardApi = new DashboardAPI()
@@ -658,8 +667,8 @@ const displayedAnomalies = computed(() => snapshot.value.anomalies.slice(0, 4))
 /** 「查看全部」异常预警弹窗（面板只展示前 4 条） */
 const anomalyDialogVisible = ref(false)
 
-// 今日训练日程最多展示 5 条，避免列表过长
-const displayedSchedule = computed(() => snapshot.value.schedule.slice(0, 5))
+// 今日训练日程最多展示 4 条：与异常预警 / 智能特教助理口径一致，双列网格正好 2×2 齐整
+const displayedSchedule = computed(() => snapshot.value.schedule.slice(0, 4))
 const displayedAssessmentInsights = computed(() => snapshot.value.assessmentInsights.slice(0, 4))
 
 // 面板角标：待办总数接近学生总数时（特教群体常态），拆出「优先处理」档才有信息量
@@ -1454,17 +1463,95 @@ onUnmounted(() => {
 
 .dashboard-board {
   display: grid;
-  grid-template-columns: minmax(0, 1.18fr) minmax(340px, 0.92fr);
+  /* 65:35 —— 左栏要承载双列日程卡，需要更宽的横向空间；右栏保底 320px 防止被挤压 */
+  grid-template-columns: minmax(0, 65fr) minmax(320px, 35fr);
   gap: 20px;
 }
 
 .dashboard-board__stack {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  /* 允许「智能特教助理」在剩余纵向空间内自我收敛并内部滚动 */
+  min-height: 0;
 }
 
-.schedule-list,
+/* 右栏面板：预警按内容自适应高度，特教助理占满剩余空间 */
+.alert-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.alert-panel--anomaly {
+  flex: 0 0 auto;
+}
+
+.alert-panel--assistant {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.alert-panel--assistant .alert-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+  margin-right: -6px;
+}
+
+/* 「本周异常预警」空态：紧凑横幅（约 88px），不用 el-empty 的大留白 */
+.alert-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 88px;
+  margin-top: 18px;
+  padding: 14px 18px;
+  border: 1px dashed var(--scgp-border-strong);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbf9 100%);
+}
+
+.alert-empty__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: #eaf8f0;
+  color: var(--scgp-success);
+}
+
+.alert-empty__text {
+  margin: 0;
+  color: var(--scgp-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 左侧「今日训练日程」：双列卡片网格，容器查询宿主按面板宽度降级 */
+.schedule-panel {
+  container-type: inline-size;
+  container-name: schedule-panel;
+}
+
+.schedule-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+/* 面板宽度撑不起双列（每列不足 300px）时平滑降级为单列 */
+@container schedule-panel (max-width: 615px) {
+  .schedule-list {
+    grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  }
+}
+
 .alert-list {
   display: flex;
   flex-direction: column;
@@ -1474,21 +1561,20 @@ onUnmounted(() => {
 
 .schedule-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px;
   padding: 18px;
   border-radius: 18px;
   border: 1px solid var(--scgp-border);
   background: linear-gradient(180deg, #ffffff 0%, #f9fbfe 100%);
 }
 
-.schedule-item__main {
+.schedule-item__head {
   display: flex;
   align-items: center;
   gap: 14px;
   min-width: 0;
-  flex: 1;
 }
 
 .schedule-item__content {
@@ -1510,24 +1596,42 @@ onUnmounted(() => {
 }
 
 .schedule-item__plan {
-  margin: 0 0 8px;
+  margin: 0;
   color: var(--scgp-text);
   font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 底部：次要信息浅色小字 + 主按钮右对齐（卡片等高时按钮贴底） */
+.schedule-item__foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(217, 226, 238, 0.92);
 }
 
 .schedule-item__meta {
   display: flex;
+  min-width: 0;
+  flex: 1;
   flex-wrap: wrap;
-  gap: 8px 12px;
-  color: var(--scgp-muted);
+  gap: 2px 12px;
+  color: var(--scgp-subtle);
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .schedule-item__actions {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+}
+
+.schedule-item__actions :deep(.el-button) {
+  white-space: nowrap;
 }
 
 .alert-item {
@@ -1591,6 +1695,21 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 10px;
+  color: var(--scgp-muted);
+  font-size: 12px;
+}
+
+/* 智能特教助理：建议句压缩行高、能力标签 6px 间距换行（右栏窄） */
+.alert-panel--assistant .alert-item__desc {
+  margin: 4px 0 6px;
+  line-height: 1.55;
+}
+
+.alert-item__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
   color: var(--scgp-muted);
   font-size: 12px;
 }
@@ -1774,13 +1893,9 @@ onUnmounted(() => {
     align-items: flex-start;
   }
 
-  .schedule-item {
-    flex-direction: column;
+  .schedule-item__foot {
     align-items: stretch;
-  }
-
-  .schedule-item__main {
-    align-items: flex-start;
+    flex-direction: column;
   }
 
   .schedule-item__actions :deep(.el-button) {
