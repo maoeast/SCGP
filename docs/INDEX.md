@@ -107,6 +107,7 @@
 
 ### `docs/reports` — 工作报告、差距分析与复盘
 
+- [2026-10-16-v1.1.5-release-verification.md](./reports/2026-10-16-v1.1.5-release-verification.md) — 1.1.5 提交、构建、打包启动与服务器发布记录。
 - [2026-07-17-current-project-gap-and-recommendations.md](./reports/2026-07-17-current-project-gap-and-recommendations.md) — 当前项目功能完成度调查、未收口项与推进建议
 - [2026-03-13-scgp-prd-gap-analysis.md](./reports/2026-03-13-scgp-prd-gap-analysis.md)
 - [2026-03-11-assessment-cleanup.md](./reports/2026-03-11-assessment-cleanup.md)

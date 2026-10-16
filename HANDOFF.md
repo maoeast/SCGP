@@ -33,6 +33,10 @@ If those four files are not enough, then read `PROJECT_CONTEXT.md`.
 
 ## Current Focus
 
+- **1.1.5 已打包并发布服务器**，当前代码和交付资料已分类提交推送；发布记录 `docs/reports/2026-10-16-v1.1.5-release-verification.md`，唯一下一步见 `.continue-here.md`。用户要求停止额外哈希比较，已结束整包回读，不自动继续追加检查。
+
+### 历史培训与修复交接
+
 - 客户交付软件教程本轮 23《Conners 父母问卷与报告》、24《ABC 行为评定与报告》样片均已完成，01–24 样片已齐，待用户观看。实际成片、验证证据与产品缺口见 `.continue-here.md` 和 `designs/customer-training-videos/系列目录与制作状态.md`。
 - 当前已将教程实测问题整理为 `docs/plans/2026-10-15-training-video-product-issues-repair-handoff.md`，含修复顺序、证据、验收与视频复录矩阵。用户计划另开会话修复；先复现与最小方案，再实施和验收，之后才复录。此轮只改文档，不自动新增教程或修产品代码。
 - 资源包导入导出、自定义生活自理任务教程仍暂停。正式交付需先处理已列缺口并按发布版复核。
