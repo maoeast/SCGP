@@ -18,6 +18,7 @@
 
 - [../PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md)
 - [../重构实施技术规范.md](../重构实施技术规范.md)
+- [客户交付软件教程系列目录与制作状态](../designs/customer-training-videos/系列目录与制作状态.md)：01–24 操作样片、实际成片路径、验证证据、版本边界与交付前缺口。
 
 ### 文档治理
 
@@ -85,6 +86,8 @@
 
 ### `docs/plans` — 阶段实施计划与执行路线
 
+- [2026-10-15-training-video-product-issues-repair-handoff.md](./plans/2026-10-15-training-video-product-issues-repair-handoff.md) — 教程实测产品问题修复交接：已复现缺陷/覆盖缺口/数据问题/待核查项、优先顺序、证据、验收与受影响视频复录矩阵。
+- [2026-10-13-docx-exporter-debt-cleanup-plan.md](./plans/2026-10-13-docx-exporter-debt-cleanup-plan.md) — 技术债清理执行计划：docxExporter 废弃代码清理与器材 IEP 导出统一化（供 Codex 执行）
 - [2026-08-05-db-worker-execution-plan.md](./plans/2026-08-05-db-worker-execution-plan.md) — DB Worker 处理执行计划：先性能 profile 决策门，再按证据渐进接入；含双轨持久化前置、同步桥方案、回退开关
 - [2026-07-18-project-closeout-execution-plan.md](./plans/2026-07-18-project-closeout-execution-plan.md) — 基于当前代码事实的未完成项收口顺序、批次边界与验收门禁
 - [2026-03-13-scgp-executable-roadmap.md](./plans/2026-03-13-scgp-executable-roadmap.md)
@@ -136,6 +139,14 @@
 - `./user-manual/SCGP-星愿能力发展平台用户使用手册.docx` — 对应 Word 交付稿
 - [SCGP 用户手册截图执行清单](./user-manual/SCGP-用户手册截图执行清单.md) — 211 项逐项列明真实路由模板、角色、数据配置、操作、断言、裁切、采集模式、安全级别与正文锚点
 - `./user-manual/diagrams/` — 4 幅架构图与流程图的可编辑 SVG 源文件及 Word 嵌入用 PNG
+
+### `docs/bidding` — 招投标与商务技术规格
+
+- [SCGP-星愿能力发展平台-产品功能参数与采购选型说明书(教学实用版).md](./bidding/SCGP-星愿能力发展平台-产品功能参数与采购选型说明书(教学实用版).md) — 面向特教一线教师与负责采购校领导的教学实用版功能参数与选型价值说明（含 Word .docx）
+- [SCGP-星愿能力发展平台-投标技术参数与规格说明书(特教学校版).md](./bidding/SCGP-星愿能力发展平台-投标技术参数与规格说明书(特教学校版).md) — 面向特殊教育学校（教育口）政府采购与招标的完整技术参数、规格说明书、偏离表范本与核心控标点建议
+- [SCGP-星愿能力发展平台-投标技术规格偏离表.md](./bidding/SCGP-星愿能力发展平台-投标技术规格偏离表.md) — 独立的 70 项全量技术规格偏离表（范本），供商务投标直接装订盖章使用
+- [SCGP-星愿能力发展平台-设备分项投标技术参数(精炼条款版).md](./bidding/SCGP-星愿能力发展平台-设备分项投标技术参数(精炼条款版).md) — 无表格、纯段落标号的 17 条精炼核心参数，专为塞入大型综合采购标书设备清单单个单元格编制（含 Word .docx）
+- [SCGP-星愿能力发展平台-设备分项详细技术规范(无表格版).md](./bidding/SCGP-星愿能力发展平台-设备分项详细技术规范(无表格版).md) — 9大章节45条多级标号的纯条款详细技术规范，专为作为综合项目标书分项设备技术规范独立附件编制（含 Word .docx）
 
 ### `docs/tech-design` — 底层技术方案
 
