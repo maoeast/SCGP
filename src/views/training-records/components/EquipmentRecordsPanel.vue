@@ -210,7 +210,7 @@ interface Props {
 }
 
 type QuickRangeKey = 'all' | 'week' | 'month' | ''
-type PromptTone = 'independent' | 'verbal' | 'physical'
+type PromptTone = 'independent' | 'verbal' | 'physical' | 'unknown'
 
 const QUICK_RANGE_OPTIONS = [
   { key: 'all', label: '全部' },
@@ -356,17 +356,14 @@ function getEquipmentInitial(equipmentName?: string) {
 }
 
 function getPromptLevelMeta(level: number): { label: string; tone: PromptTone } {
-  const safeLevel = Number(level || 0)
-
-  if (safeLevel <= 1) {
-    return { label: '完全独立', tone: 'independent' }
+  const levels: Record<number, { label: string; tone: PromptTone }> = {
+    1: { label: '独立完成', tone: 'independent' },
+    2: { label: '口头提示', tone: 'verbal' },
+    3: { label: '视觉提示', tone: 'verbal' },
+    4: { label: '手触引导', tone: 'physical' },
+    5: { label: '身体辅助', tone: 'physical' },
   }
-
-  if (safeLevel <= 3) {
-    return { label: '语言提示', tone: 'verbal' }
-  }
-
-  return { label: '身体协助', tone: 'physical' }
+  return levels[Number(level)] || { label: '未记录', tone: 'unknown' }
 }
 
 function handleExportExcel() {
@@ -536,6 +533,12 @@ watch(
   background: #fcebeb;
   color: #791f1f;
   border-color: #f7c1c1;
+}
+
+.prompt-pill--unknown {
+  background: #f2f3f5;
+  color: #606266;
+  border-color: #dcdfe6;
 }
 
 .time-text {

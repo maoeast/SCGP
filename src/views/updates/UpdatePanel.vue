@@ -84,7 +84,7 @@
       </div>
 
       <!-- 已是最新版本 -->
-      <div v-if="!hasUpdate && updateState.latestVersion && !updateState.isChecking" class="up-to-date">
+      <div v-if="!hasUpdate && updateState.latestVersion && !updateState.isChecking && !updateState.error" class="up-to-date">
         <el-alert type="success" :closable="false" show-icon>
           当前已是最新版本
         </el-alert>
@@ -156,6 +156,7 @@ const {
 // 自动更新开关
 const autoUpdateEnabled = ref(updateState.autoUpdate)
 const isSettingAutoUpdate = ref(false)
+watch(() => updateState.autoUpdate, (enabled) => { autoUpdateEnabled.value = enabled })
 
 // 操作日志
 interface OperationLog {

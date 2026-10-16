@@ -57,41 +57,11 @@
       </el-card>
 
       <!-- 效度检查 -->
-      <el-card class="validity-card" v-if="validityData">
+      <el-card class="validity-card">
         <template #header>
           <h3>📊 问卷质量检查</h3>
         </template>
-        <div class="validity-content">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <div class="validity-item" :class="{ 'validity-warning': validityData.piStatus === 'warning' }">
-                <div class="validity-label">正向指标 (PI)</div>
-                <div class="validity-score">{{ validityData.piScore }}</div>
-                <el-tag :type="validityData.piStatus === 'warning' ? 'warning' : 'success'" size="small">
-                  {{ validityData.piStatus === 'warning' ? '需留意' : '正常' }}
-                </el-tag>
-                <div class="validity-desc" v-if="validityData.piStatus === 'warning'">
-                  评估者倾向于过分强调优点，建议结合访谈核实
-                </div>
-              </div>
-            </el-col>
-            <el-col :span="12">
-              <div class="validity-item" :class="{ 'validity-warning': validityData.niStatus === 'warning' }">
-                <div class="validity-label">负向指标 (NI)</div>
-                <div class="validity-score">{{ validityData.niScore }}</div>
-                <el-tag :type="validityData.niStatus === 'warning' ? 'danger' : 'success'" size="small">
-                  {{ validityData.niStatus === 'warning' ? '需留意' : '正常' }}
-                </el-tag>
-                <div class="validity-desc" v-if="validityData.niStatus === 'warning'">
-                  负向描述得分异常偏高，需立即关注或核实
-                </div>
-              </div>
-            </el-col>
-          </el-row>
-          <div class="validity-note" v-if="validityData.invalidReason">
-            <el-alert :title="'注意：' + validityData.invalidReason" type="warning" :closable="false" />
-          </div>
-        </div>
+        <el-alert title="PI、NI 与问卷效度未评估。本版问卷未计算这两项指标，历史记录中的 0 和有效标记也是占位值。" type="info" :closable="false" />
       </el-card>
 
       <!-- 评估结果总览 -->
@@ -169,28 +139,6 @@
         </div>
       </el-card>
 
-      <!-- 总结与展望 -->
-      <el-card class="summary-card" v-if="summaryConfig">
-        <template #header>
-          <h3>{{ summaryConfig.title }}</h3>
-        </template>
-        <div class="summary-content">
-          <div v-if="summaryConfig.principles" class="principles">
-            <div v-for="(principle, index) in summaryConfig.principles" :key="index" class="principle-item">
-              <div class="principle-name">{{ principle.name }}</div>
-              <div class="principle-description">{{ principle.description }}</div>
-            </div>
-          </div>
-        </div>
-      </el-card>
-
-      <!-- 专家寄语 -->
-      <el-card class="expert-card" v-if="expertMessage">
-        <template #header>
-          <h3>专家寄语</h3>
-        </template>
-        <div class="expert-content" v-html="formatContent(replacePlaceholders(expertMessage))"></div>
-      </el-card>
 
       <!-- 报告签名 -->
       <div class="report-signature">
@@ -235,8 +183,8 @@ import { ArrowLeft, Download, Clock } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { ConnersPSQAPI } from '@/database/api'
 import { getDatabase } from '@/database/init'
-import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
-import type { ConnersExportData } from '@/utils/docxExporter'
+import { getConnersDimensionText, getConnersLevel, getConnersOverview } from '@/utils/conners-report-interpretation'
+import type { ConnersExportData } from '@/utils/assessment-word-builders'
 import type { ConnersPSQAssessment } from '@/types/conners'
 import { buildConnersWordPayload } from '@/utils/assessment-word-builders'
 import { exportReport } from '@/utils/report-export'
@@ -277,8 +225,6 @@ import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 const router = useRouter()
 const route = useRoute()
 const db = getDatabase()
-// 获取Conners配置
-const connersConfig = ASSESSMENT_LIBRARY.conners
 
 // 响应式数据
 const assessment = ref<ConnersPSQReportAssessment | null>(null)
@@ -307,20 +253,6 @@ const assessDate = computed(() => {
   return new Date(assessment.value.start_time).toLocaleDateString()
 })
 
-// 效度数据
-const validityData = computed(() => {
-  if (!assessment.value) return null
-  return {
-    piScore: assessment.value.pi_score,
-    piThreshold: 2.5,
-    piStatus: assessment.value.pi_score > 2.5 ? 'warning' : 'pass',
-    niScore: assessment.value.ni_score,
-    niThreshold: 2.2,
-    niStatus: assessment.value.ni_score > 2.2 ? 'warning' : 'pass',
-    invalidReason: assessment.value.invalid_reason
-  }
-})
-
 // 总分（多动指数T分）- 从 t_scores JSON 中读取
 const totalTScore = computed(() => {
   if (!assessment.value) return 0
@@ -334,49 +266,25 @@ const dimensionScores = computed(() => {
 
   const rawScores = JSON.parse(assessment.value.raw_scores)
   const tScores = JSON.parse(assessment.value.t_scores)
-  // 优先从 t_scores JSON 中读取，确保与分维度数据一致
-  const hyperIndex = tScores.hyperactivity_index ?? assessment.value.hyperactivity_index ?? 0
-
-  // 判断总分是否异常
-  const isTotalScoreAbnormal = hyperIndex >= TSCORE_BORDERLINE_THRESHOLD
-
   return Object.keys(DIMENSION_NAMES).map(dimKey => {
-    const rawScore = rawScores[dimKey] || 0
-    const tScore = tScores[dimKey] || 50
+    const rawScore = rawScores[dimKey] ?? 0
+    const tScore = tScores[dimKey] ?? 50
     const isHigh = tScore >= TSCORE_BORDERLINE_THRESHOLD
-    const level = tScore < TSCORE_BORDERLINE_THRESHOLD ? 'normal' : tScore < TSCORE_CLINICAL_THRESHOLD ? 'borderline' : 'clinical'
-
-    // 获取维度反馈配置
-    const dimConfig = connersConfig.dimensions[dimKey]
-
-    // 根据 rawScore 从 levels 数组中查找匹配的等级
-    let matchedLevel = null
-    if (dimConfig?.levels) {
-      // 按照排序查找第一个满足 rawScore <= max 的等级
-      const sortedLevels = [...dimConfig.levels].sort((a, b) => a.max - b.max)
-      matchedLevel = sortedLevels.find(lvl => rawScore <= lvl.max) || sortedLevels[sortedLevels.length - 1]
-    }
-
-    // 分层筛选法：
-    // 1. 如果总分异常 → 显示所有维度建议
-    // 2. 如果总分正常：
-    //    - 所有子维度正常 → 不显示建议
-    //    - 有子维度异常 → 只显示异常维度的建议
-    const shouldShowAdvice = isTotalScoreAbnormal || (isHigh && !isTotalScoreAbnormal)
+    const level = getConnersLevel(tScore)
+    const name = DIMENSION_NAMES[dimKey] ?? dimKey
 
     return {
-      name: DIMENSION_NAMES[dimKey],
+      name,
       nameEn: dimKey,
       rawScore,
       tScore,
       level,
-      levelText: LEVEL_TEXTS[level],
-      label: matchedLevel?.title || (isHigh ? '需关注' : '正常'),
+      levelText: LEVEL_TEXTS[level] ?? level,
+      label: LEVEL_TEXTS[level] ?? level,
       isHigh,
-      shouldShowAdvice,
-      levelTitle: matchedLevel?.title || '',
-      levelContent: matchedLevel?.content || '',
-      levelAdvice: matchedLevel?.advice || ''
+      shouldShowAdvice: isHigh,
+      levelContent: getConnersDimensionText({ name, tScore, level }),
+      levelAdvice: isHigh ? '请结合访谈与日常观察核对该维度的具体表现。' : ''
     }
   })
 })
@@ -384,28 +292,7 @@ const dimensionScores = computed(() => {
 // 总分评定规则
 const totalScoreRule = computed(() => {
   if (!assessment.value) return null
-  // 优先从 t_scores JSON 中读取，确保与分维度数据一致
-  const tScores = JSON.parse(assessment.value.t_scores)
-  const hyperIndex = tScores.hyperactivity_index ?? assessment.value.hyperactivity_index ?? 0
-
-  // 查找匹配的规则
-  for (const rule of connersConfig.total_score_rules) {
-    const [min, max] = rule.range
-    if (hyperIndex >= min && hyperIndex <= max) {
-      return rule
-    }
-  }
-  return connersConfig.total_score_rules[0]
-})
-
-// 专家寄语（优先使用规则中指定的，否则使用默认的）
-const expertMessage = computed(() => {
-  return totalScoreRule.value?.expert_message || connersConfig.expert_message || ''
-})
-
-// 总结与展望（优先使用规则中指定的 specific_summary，否则使用全局的）
-const summaryConfig = computed(() => {
-  return totalScoreRule.value?.specific_summary || connersConfig.summary || null
+  return getConnersOverview(totalTScore.value, dimensionScores.value)
 })
 
 // 替换占位符
@@ -463,16 +350,13 @@ const exportWord = async () => {
         id: assessId.value,
         date: assessDate.value,
         scaleType: 'psq' as const,
-        pi_score: assessment.value?.pi_score || 0,
-        ni_score: assessment.value?.ni_score || 0,
-        is_valid: assessment.value?.is_valid !== 0,
-        invalid_reason: assessment.value?.invalid_reason
+        validityNote: '本版问卷未计算 PI、NI 或问卷效度。历史记录中的零值和有效标记为占位值。'
       },
       dimensions: dimensionScores.value.map(dim => ({
         name: dim.name || '',
         rawScore: dim.rawScore,
         tScore: dim.tScore,
-        level: dim.level,
+        level: dim.levelText,
         description: dim.levelContent || '',
         advice: dim.levelAdvice || ''
       })),

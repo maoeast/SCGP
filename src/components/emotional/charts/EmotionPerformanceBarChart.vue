@@ -31,7 +31,7 @@ const option = computed<EChartsOption>(() => ({
     formatter: (params: any) => {
       const item = props.points[params?.[0]?.dataIndex || 0]
       if (!item) return ''
-      return `${item.emotion}<br/>正确率：${item.accuracy}%<br/>平均提示等级：${item.averageHintLevel}`
+      return `${item.emotion}<br/>正确率：${item.accuracy}%<br/>平均提示等级：${item.averageHintLevel ?? '未评估'}`
     },
   },
   grid: {

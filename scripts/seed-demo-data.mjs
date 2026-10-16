@@ -1063,12 +1063,12 @@ function seedTrainingRecords(db, students, rng, plansInfo) {
       )
     }
 
-    // ---- 训练干预报告（report_record type='training'，每生 1 条，关联进行中计划）----
+    // ---- 训练干预报告（report_record.plan_id 仍指向旧 train_plan，不能写入 sys_training_plan.id）----
     const activePlan = activePlanByStudent.get(student.id)
     if (activePlan) {
       db.run(
-        `INSERT INTO report_record (student_id, report_type, plan_id, training_record_id, title, class_id, class_name, module_code, created_at, updated_at)
-         VALUES (${student.id}, 'training', ${activePlan.planId}, ${recordSeq - 1},
+        `INSERT INTO report_record (student_id, report_type, training_record_id, title, class_id, class_name, module_code, created_at, updated_at)
+         VALUES (${student.id}, 'training', ${recordSeq - 1},
                  ${quote(`${student.name} - 训练干预报告`)},
                  ${student.class_id}, ${quote(className)}, ${quote(activePlan.moduleCode)}, ${quote(nowSql())}, ${quote(nowSql())})`,
       )

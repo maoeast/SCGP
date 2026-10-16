@@ -1418,13 +1418,14 @@ export function makeBriefAssessment(student, rng, { date, improvement }) {
 /**
  * ABC 各维度满分（题库权重求和值；须与 src/database/abc-questions.ts 的
  * ABC_SUBSCALE_MAX_SCORES 一致——tests/abc-dimension-rows.test.ts 会比对两处防漂移）。
- * 题库暂无「生活自理」题目，演示数据也不生成该维度（报告页对满分 0 的维度同样过滤）。
+ * 当前五因子均有题目；演示数据只保存汇总，不生成与汇总不一致的逐题答案。
  */
 export const ABC_SUBSCALE_MAXES = Object.freeze({
-  sensory: 38,
-  relating: 34,
-  body_object: 52,
-  language: 34,
+  sensory: 26,
+  relating: 38,
+  body_object: 38,
+  language: 31,
+  social_self_help: 25,
 })
 
 const ABC_DIMENSIONS = Object.freeze([
@@ -1432,6 +1433,7 @@ const ABC_DIMENSIONS = Object.freeze([
   { code: 'relating', name: '交往', max: ABC_SUBSCALE_MAXES.relating },
   { code: 'body_object', name: '躯体运动', max: ABC_SUBSCALE_MAXES.body_object },
   { code: 'language', name: '语言', max: ABC_SUBSCALE_MAXES.language },
+  { code: 'social_self_help', name: '社会与生活自理', max: ABC_SUBSCALE_MAXES.social_self_help },
 ])
 
 export function abcLevelFromTotal(total) {
@@ -1456,17 +1458,12 @@ export function makeAbcAssessment(student, rng, { date, improvement }) {
     totalScore += raw
   }
   const level = abcLevelFromTotal(totalScore)
-  const rawAnswers = {}
-  for (let q = 1; q <= 57; q += 1) {
-    // 加权题：70% 不符合(0)，其余按维度权重 1-4
-    rawAnswers[`abc_${q}`] = rng.rand() < 0.7 ? 0 : rng.int(1, 4)
-  }
   return {
     table: 'abc_assess',
     row: {
       student_id: student.id,
       age_months: student.ageMonths,
-      raw_answers: JSON.stringify(rawAnswers),
+      raw_answers: '{}',
       dimension_scores: JSON.stringify(dimensionScores),
       total_score: totalScore,
       level,

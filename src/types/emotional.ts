@@ -134,6 +134,7 @@ export interface CareSceneResourceMeta {
   receiverName?: string
   emotionChips?: string[]
   comfortTip?: string
+  generatedFieldsInputSignature?: string
   emotionColorToken?: EmotionalColorToken
   emotionColorHex?: string
   emotionColorLabel?: string

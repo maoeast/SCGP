@@ -1,9 +1,9 @@
 <template>
   <el-card class="chart-card" shadow="never">
     <template #header>
-      <span>关心话术类型偏好</span>
+      <span>关心表达类型记录分布</span>
     </template>
-    <el-empty v-if="points.length === 0" description="暂无话术偏好数据" />
+    <el-empty v-if="points.length === 0" description="暂无可分类的关心表达记录" />
     <VChart v-else class="chart-view" :option="option" autoresize />
   </el-card>
 </template>
@@ -51,7 +51,7 @@ const option = computed<EChartsOption>(() => ({
         },
       })),
       label: {
-        formatter: '{b}\n{d}%',
+        formatter: '{b}\n{c}次',
       },
     },
   ],

@@ -184,6 +184,7 @@ import { Refresh } from '@element-plus/icons-vue'
 import { EmotionalTrainingAPI } from '@/database/emotional-api'
 import { EmotionalGamesAPI } from '@/database/emotional-games-api'
 import { GameTrainingAPI, StudentAPI, TrainingSessionAPI, type TrainingSessionRecord } from '@/database/api'
+import { TASK_TRAINING_RESOURCE_TYPE } from '@/features/self-care/task-training-contract'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
 import { getTrainingEntry, type TrainingEntryCode } from '@/utils/training-entry'
 import { exportGameRecordsExcel } from '../exportTrainingRecords'
@@ -491,7 +492,10 @@ function getUnifiedCognitiveGameRecords(studentId: number) {
 
 function getStudentGameRecords(studentId: number, studentName?: string) {
   const nextRecords = [
-    ...gameTrainingApi.getStudentTrainingRecords(studentId, undefined, undefined, props.entryCode),
+    ...gameTrainingApi.getStudentTrainingRecords(studentId, undefined, undefined, props.entryCode)
+      .map((record) => (record.resource_type === TASK_TRAINING_RESOURCE_TYPE || Array.isArray(record.raw_data?.trials))
+        ? { ...record, duration: Number(record.duration || 0) * 1000 }
+        : record),
     ...getCustomGameRecords(studentId),
     ...getUnifiedCognitiveGameRecords(studentId),
   ]

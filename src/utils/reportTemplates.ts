@@ -64,6 +64,17 @@ export interface WeeFIMReportData {
 /**
  * S-M量表评估报告模板
  */
+export const SM_REPORT_USE_GUIDANCE = {
+  focus: '请结合评估时年龄、已作答项目和日常观察核对结果；单一等级不能替代对具体生活情境的判断。',
+  suggestions: [
+    '查看本次已作答题目，区分实际通过、未通过和未施测项目。',
+    '需要制定支持目标时，由工作人员结合年龄、现场观察与机构采用的评估规范确定。',
+  ],
+  familyGuidance: [
+    '与照护者核对孩子在日常生活中的实际表现，记录具体情境和所需支持。',
+  ],
+} as const
+
 export const SMReportTemplate = {
   // 报告标题
   title: '婴儿-初中生社会生活能力量表评估报告',

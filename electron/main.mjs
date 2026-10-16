@@ -125,7 +125,7 @@ function shouldEmitRuntimeLogs() {
 }
 
 const testUserDataDir = process.env.SCGP_TEST_USER_DATA_DIR
-if (isDev && testUserDataDir) {
+if (testUserDataDir) {
   const resolvedTestUserDataDir = path.resolve(testUserDataDir)
   app.setPath('userData', resolvedTestUserDataDir)
   console.log('[Electron] 使用隔离 userData 目录:', resolvedTestUserDataDir)

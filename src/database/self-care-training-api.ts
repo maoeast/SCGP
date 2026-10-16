@@ -6,6 +6,7 @@ import {
   TASK_TRAINING_RESOURCE_TYPE,
   type TaskTrainingCompletionLevel,
   type TaskTrainingExecutionResult,
+  type TaskTrainingStepResult,
 } from '@/features/self-care/task-training-contract'
 
 type DbLike = {
@@ -40,6 +41,21 @@ export interface SaveSelfCareTrainingSessionInput {
 export interface SaveSelfCareTrainingSessionResult {
   trainingRecordId: number
   sessionId: number
+}
+
+export interface SelfCareTrainingRecordDetail {
+  id: number
+  studentId: number
+  studentName: string
+  resourceId: number
+  resourceName: string
+  timestamp: number
+  durationMs: number
+  stepCount: number
+  completedStepCount: number
+  completionBreakdown: Record<TaskTrainingCompletionLevel, number>
+  teacherNotes: string | null
+  stepResults: TaskTrainingStepResult[]
 }
 
 function getTransactionalDb(db: DbLike) {
@@ -151,6 +167,45 @@ export class SelfCareTrainingAPI {
     }
 
     return Number(this.db.get('SELECT last_insert_rowid() as id')?.id || 0)
+  }
+
+  getTrainingRecordDetail(recordId: number): SelfCareTrainingRecordDetail | null {
+    const row = this.queryOne(`
+      SELECT tr.id, tr.student_id, st.name AS student_name, tr.resource_id,
+        COALESCE(r.name, '原任务已不可用') AS resource_name, tr.timestamp,
+        tr.duration, tr.raw_data, ts.duration_ms
+      FROM training_records tr
+      INNER JOIN student st ON st.id = tr.student_id
+      LEFT JOIN sys_training_resource r ON r.id = tr.resource_id
+      LEFT JOIN training_session ts ON ts.source_table = 'training_records' AND ts.source_record_id = tr.id
+      WHERE tr.id = ? AND tr.resource_type = ?
+    `, [recordId, TASK_TRAINING_RESOURCE_TYPE])
+    if (!row) return null
+
+    let raw: Record<string, any>
+    try {
+      raw = JSON.parse(row.raw_data || '{}')
+    } catch {
+      throw new Error(`自理训练记录 ${recordId} 的历史步骤无法解析`)
+    }
+    const stepResults = Array.isArray(raw.stepResults)
+      ? [...raw.stepResults].sort((a, b) => Number(a.seq) - Number(b.seq)) as TaskTrainingStepResult[]
+      : []
+    const emptyBreakdown: Record<TaskTrainingCompletionLevel, number> = { independent: 0, prompt: 0, assist: 0, unable: 0 }
+    return {
+      id: Number(row.id),
+      studentId: Number(row.student_id),
+      studentName: String(row.student_name || ''),
+      resourceId: Number(row.resource_id),
+      resourceName: String(row.resource_name),
+      timestamp: Number(row.timestamp),
+      durationMs: Number(row.duration_ms ?? Number(row.duration || 0) * 1000),
+      stepCount: Number(raw.stepCount || stepResults.length),
+      completedStepCount: Number(raw.completedStepCount || 0),
+      completionBreakdown: { ...emptyBreakdown, ...(raw.completionBreakdown || {}) },
+      teacherNotes: typeof raw.teacherNotes === 'string' ? raw.teacherNotes : null,
+      stepResults,
+    }
   }
 
   async saveTrainingSession(

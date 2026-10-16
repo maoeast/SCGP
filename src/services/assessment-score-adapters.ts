@@ -33,6 +33,7 @@ import {
   SMAssessmentAPI,
 } from '@/database/api'
 import { getDatabase } from '@/database/init'
+import { resolveABCDimensionScores } from '@/database/abc-questions'
 import {
   normalizeCsirs,
   normalizeConners,
@@ -82,14 +83,14 @@ export interface ScoreAdapter {
 // ==================== 心理/行为量表（T 分/标准分，分高=问题突出）====================
 
 const connersScoreNote =
-  '多动指数（hyperactivity_index）为代表性 T 分，分越高问题越突出：>70 临床显著、66–70 临界、<66 正常范围。各维度同为 T 分。'
+  '多动指数（hyperactivity_index）为代表性 T 分。当前软件阈值：≥70 临床显著、60–69 临界偏高、<60 正常范围。其他维度应分别查看，PI/NI 效度未评估。'
 
 // ---------- 已有专用函数：CSIRS / Conners ----------
 const csirsAdapter: ScoreAdapter = {
   scaleCode: 'csirs',
   scaleName: '儿童感觉统合能力发展评估量表',
   scoreNote:
-    '总分（total_t_score）为 T 分，≥40 为优秀、30–39 正常、<30 偏低；分越高越好。各维度同为 T 分，含义一致。',
+    '总分（total_t_score）是已施测且有转换表维度的 T 分平均值。当前软件等级：40–60 正常、30–39 偏低、<30 严重偏低、61–70 优秀、≥71 非常优秀。10 岁以上执行功能维度使用原始分百分比，不参与总 T 分。',
   normalizeRow: normalizeCsirs,
   getLongitudinalScores(studentId: number): ScoreSnapshot[] {
     const rows = new CSIRSAPI().getStudentAssessments(studentId) ?? []
@@ -371,17 +372,25 @@ const abcConfig: NormalizeConfig = {
   dimensionScoresField: 'dimension_scores',
   dimensionMode: 'flat-number', // { sensory: 15, relating: 20, ... }
 }
-const abcNormalizeRow = (row: any): ScoreSnapshot => normalizeByConfig(row, abcConfig)
+const abcNormalizeRow = (row: any): ScoreSnapshot => {
+  const snapshot = normalizeByConfig(row, abcConfig)
+  snapshot.dimensionScores = resolveABCDimensionScores(
+    row.raw_answers,
+    row.dimension_scores,
+    row.total_score,
+  ) ?? {}
+  return snapshot
+}
 const abcAdapter: ScoreAdapter = {
   scaleCode: 'abc',
   scaleName: '孤独症行为量表（ABC）',
   scoreNote:
-    '总分（total_score，0–157）为加权原始分，分越高孤独症相关行为越突出：≥67 筛查界值、总分配套 normal/borderline/mild/moderate/severe。五维度 key 对照：sensory=感觉、relating=交往、body_object=躯体运动、language=语言、social_self_help=生活自理，各维度分越高该类行为越突出。',
+    '总分（total_score，0–158）为加权原始分。五因子为感觉、交往、躯体运动、语言、社会与生活自理；仅展示可由逐题答案核验或新五因子汇总核验的维度分，旧记录无法核验时维度为空。',
   normalizeRow: abcNormalizeRow,
   getLongitudinalScores(studentId: number): ScoreSnapshot[] {
     const db = getDatabase()
     const rows = db.all(
-      'SELECT id, student_id, age_months, dimension_scores, total_score, level, created_at FROM abc_assess WHERE student_id = ? ORDER BY created_at ASC',
+      'SELECT id, student_id, age_months, raw_answers, dimension_scores, total_score, level, created_at FROM abc_assess WHERE student_id = ? ORDER BY created_at ASC',
       [studentId]
     ) ?? []
     return rows.map(abcNormalizeRow).sort(byDateAsc)

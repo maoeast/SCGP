@@ -11,7 +11,7 @@
     <div class="page-header">
       <div class="header-left">
         <h1>模块报告</h1>
-        <p class="subtitle">按学生汇总情绪训练表现、话术偏好和场景掌握情况。</p>
+        <p class="subtitle">按学生汇总已存会话、可核验明细和关心表达记录。</p>
       </div>
       <div class="header-right">
         <el-button type="primary" :icon="Download" :disabled="!reportPayload" @click="exportWord">
@@ -54,17 +54,19 @@
           </el-col>
           <el-col :span="6">
             <el-card class="summary-card" shadow="never">
-              <span class="summary-label">平均正确率</span>
+              <span class="summary-label">会话平均正确率</span>
               <strong class="summary-value">{{ reportPayload.averageAccuracy }}%</strong>
             </el-card>
           </el-col>
           <el-col :span="6">
             <el-card class="summary-card" shadow="never">
-              <span class="summary-label">平均提示层级</span>
-              <strong class="summary-value">{{ reportPayload.averageHintLevel }}</strong>
+              <span class="summary-label">平均提示层级（明细）</span>
+              <strong class="summary-value">{{ reportPayload.averageHintLevel ?? '未评估' }}</strong>
             </el-card>
           </el-col>
         </el-row>
+
+        <el-alert type="info" :closable="false" show-icon title="统计覆盖范围" :description="reportPayload.coverageText" />
 
         <div class="chart-grid">
           <EmotionAccuracyTrendChart :points="reportPayload.trend" />
@@ -84,7 +86,7 @@
 
         <el-card class="suggestion-card" shadow="never">
           <template #header>
-            <span>教师 / 家长干预建议</span>
+            <span>统计解读与核对</span>
           </template>
           <ul class="suggestion-list">
             <li v-for="suggestion in reportPayload.suggestions" :key="suggestion">
@@ -139,10 +141,15 @@ function buildEmotionalWordPayload(payload: EmotionalStudentReportPayload): Word
       rows: [
         { label: '学生', value: payload.studentName },
         { label: '训练总次数', value: `${payload.totalSessions}` },
-        { label: '平均正确率', value: formatPercent(payload.averageAccuracy) },
-        { label: '平均提示层级', value: `${payload.averageHintLevel}` },
+        { label: '会话平均正确率', value: formatPercent(payload.averageAccuracy) },
+        { label: '平均提示层级（明细）', value: payload.averageHintLevel === null ? '未评估' : `${payload.averageHintLevel}` },
         { label: '累计训练时长', value: `${payload.totalDurationMinutes} 分钟` },
       ],
+    },
+    {
+      type: 'paragraph',
+      heading: '统计覆盖',
+      paragraphs: [payload.coverageText],
     },
   ]
 
@@ -171,7 +178,7 @@ function buildEmotionalWordPayload(payload: EmotionalStudentReportPayload): Word
       rows: payload.emotionPerformance.map((point) => [
         point.emotion,
         formatPercent(point.accuracy),
-        `${point.averageHintLevel}`,
+        point.averageHintLevel === null ? '未评估' : `${point.averageHintLevel}`,
       ]),
     })
   } else {
@@ -185,7 +192,7 @@ function buildEmotionalWordPayload(payload: EmotionalStudentReportPayload): Word
   if (payload.carePreference.length > 0) {
     sections.push({
       type: 'table',
-      heading: '关心话术类型偏好',
+      heading: '关心表达类型记录分布',
       columns: ['话术类型', '次数'],
       columnWidths: [60, 40],
       rows: payload.carePreference.map((point) => [point.name, `${point.value}`]),
@@ -193,8 +200,8 @@ function buildEmotionalWordPayload(payload: EmotionalStudentReportPayload): Word
   } else {
     sections.push({
       type: 'paragraph',
-      heading: '关心话术类型偏好',
-      paragraphs: ['暂无话术偏好数据。'],
+      heading: '关心表达类型记录分布',
+      paragraphs: ['暂无可分类的关心表达记录。'],
     })
   }
 
@@ -233,7 +240,7 @@ function buildEmotionalWordPayload(payload: EmotionalStudentReportPayload): Word
   if (payload.suggestions.length > 0) {
     sections.push({
       type: 'list',
-      heading: '教师 / 家长干预建议',
+      heading: '统计解读与核对',
       items: payload.suggestions,
     })
   }

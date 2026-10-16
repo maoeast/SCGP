@@ -114,11 +114,11 @@
               <div class="dimension-title">{{ dim.name }}</div>
               <div class="dimension-scores">
                 <span class="raw-score">原始分: {{ dim.rawScore }}</span>
-                <span class="t-score" :style="{ color: getTScoreColor(dim.tScore) }">
+                <span class="t-score" :style="{ color: dim.isExecutive ? '#909399' : getTScoreColor(dim.tScore) }">
                   {{ dim.isExecutive ? '百分制: ' : 'T分: ' }}{{ dim.tScore.toFixed(1) }}
                 </span>
                 <el-tag :type="getLevelTagType(dim.level)" size="small">{{ dim.level }}</el-tag>
-                <el-tag :type="dim.isLow ? 'danger' : 'success'" size="small">{{ dim.label }}</el-tag>
+                <el-tag :type="dim.isExecutive ? 'info' : dim.isLow ? 'danger' : 'success'" size="small">{{ dim.label }}</el-tag>
               </div>
             </div>
             <div class="dimension-feedback">
@@ -175,7 +175,6 @@ import * as echarts from 'echarts'
 import { csirsDimensions, getDimensionsByAge } from '@/database/csirs-questions'
 import { getEvaluationLevel as getEvalLevel } from '@/database/csirs-conversion'
 import { getDatabase } from '@/database/init'
-import { ASSESSMENT_LIBRARY } from '@/config/feedbackConfig'
 import type { CSIRSAssessment, CSIRSDimension } from '@/types/csirs'
 import { buildCSIRSWordPayload } from '@/utils/assessment-word-builders'
 import { exportReport } from '@/utils/report-export'
@@ -194,9 +193,6 @@ import AssessmentTimingInfo from '../components/AssessmentTimingInfo.vue'
 const router = useRouter()
 const route = useRoute()
 const db = getDatabase()
-
-// 获取CSIRS配置
-const csirsConfig = ASSESSMENT_LIBRARY.sensory_integration
 
 // 响应式数据
 const assessment = ref<CSIRSAssessment | null>(null)
@@ -244,23 +240,19 @@ const dimensionScores = computed(() => {
     let isLow: boolean
 
     if (isExecutive) {
-      // Executive维度：3题，满分15分，转换为百分制
+      // 该维度没有 T 分转换表，百分比仅展示本次原始分占比。
       tScore = (rawScore / 15) * 100
-      isLow = tScore < 40
+      isLow = false
       level = {
-        level: isLow ? '偏低' : '正常',
-        description: isLow ? '执行功能需要支持' : '执行功能发展良好'
+        level: '仅供参考',
+        description: '未配置该维度的 T 分转换表'
       }
     } else {
       // 其他维度：使用T分转换
-      tScore = assessmentData.t_scores[dim.name_en] || 50
+      tScore = assessmentData.t_scores[dim.name_en] ?? 50
       level = getEvalLevel(tScore)
       isLow = tScore < 40
     }
-
-    // 获取维度反馈配置
-    const dimConfig = csirsConfig.dimensions[dim.name_en as keyof typeof csirsConfig.dimensions]
-    const feedback = isLow ? dimConfig?.low : dimConfig?.high
 
     return {
       name: dim.name,
@@ -268,9 +260,11 @@ const dimensionScores = computed(() => {
       rawScore,
       tScore,
       level: level.level,
-      label: feedback?.label || (isLow ? '需支持' : '发展优'),
-      content: feedback?.content || '',
-      advice: feedback?.advice || '',
+      label: isExecutive ? '原始分占比' : level.level,
+      content: isExecutive
+        ? level.description
+        : `${dim.name}本次原始分 ${rawScore}、T 分 ${tScore.toFixed(1)}，按当前软件阈值属于${level.level}。`,
+      advice: isLow ? '请结合逐题作答与日常观察，核对该维度需要支持的具体情境。' : '',
       isLow,
       isExecutive // 标记是否为executive维度
     }
@@ -281,15 +275,15 @@ const dimensionScores = computed(() => {
 const totalScoreRule = computed(() => {
   if (!assessment.value) return null
   const tScore = assessment.value.total_t_score
-
-  // 查找匹配的规则
-  for (const rule of csirsConfig.total_score_rules) {
-    const [min, max] = rule.range
-    if (tScore >= min && tScore <= max) {
-      return rule
-    }
+  const level = getEvalLevel(tScore)
+  const scoredDimensions = dimensionScores.value.filter(dim => !dim.isExecutive).map(dim => dim.name)
+  return {
+    title: level.level,
+    severity: tScore < 40 ? 'warning' : tScore <= 60 ? 'success' : 'info',
+    summary: `本次总 T 分 ${tScore.toFixed(1)}，按当前软件阈值属于${level.level}。`,
+    content: `总 T 分仅汇总本次施测且有转换表的维度：${scoredDimensions.join('、')}。请结合各维度分数和逐题作答核对；未施测维度不参与本次结论。`,
+    advice: ['结合儿童年龄、实际观察与本次作答讨论适合的支持方式。'],
   }
-  return null
 })
 
 // 格式化建议内容（将markdown格式转换为HTML）

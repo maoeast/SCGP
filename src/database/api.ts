@@ -2370,9 +2370,9 @@ export class ConnersPSQAPI extends DatabaseAPI {
     raw_scores: string
     dimension_scores: string
     t_scores: string
-    pi_score: number
-    ni_score: number
-    is_valid: number
+    pi_score: number | null
+    ni_score: number | null
+    is_valid: number | null
     invalid_reason?: string
     hyperactivity_index: number
     level: string
@@ -2439,9 +2439,9 @@ export class ConnersTRSAPI extends DatabaseAPI {
     raw_scores: string
     dimension_scores: string
     t_scores: string
-    pi_score: number
-    ni_score: number
-    is_valid: number
+    pi_score: number | null
+    ni_score: number | null
+    is_valid: number | null
     invalid_reason?: string
     hyperactivity_index: number
     level: string

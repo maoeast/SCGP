@@ -1,6 +1,6 @@
 <!-- src/views/assessment/abc/Report.vue -->
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Clock, Download, ChatDotRound } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -11,7 +11,7 @@ import {
   ABC_LEVEL_NAMES,
   ABC_SUBSCALE_MAX_SCORES,
   ABC_TOTAL_MAX_SCORE,
-  normalizeABCDimensionScores,
+  resolveABCDimensionScores,
 } from '@/database/abc-questions'
 import { buildAbcWordPayload } from '@/utils/assessment-word-builders'
 import { exportReport } from '@/utils/report-export'
@@ -27,29 +27,36 @@ const assessData = ref<any>(null)
 const studentInfo = ref<any>(null)
 const loading = ref(true)
 
-// 计算维度得分（满分取题库派生的 ABC_SUBSCALE_MAX_SCORES；历史对象形状由 normalizeABCDimensionScores 兜底）
-const dimensionScores = computed(() => {
-  if (!assessData.value?.dimension_scores) return []
+// 旧记录仅在逐题加权答案与总分相符时按修正后的五因子重算。
+const verifiedDimensionScores = computed(() => {
+  if (!assessData.value) return null
+  return resolveABCDimensionScores(
+    assessData.value.raw_answers,
+    assessData.value.dimension_scores,
+    assessData.value.total_score,
+  )
+})
 
-  const scores = normalizeABCDimensionScores(JSON.parse(assessData.value.dimension_scores))
+// 满分取当前题库派生值；不能验证的旧四因子记录不套用新满分。
+const dimensionScores = computed(() => {
+  const scores = verifiedDimensionScores.value
+  if (!scores) return []
   const dimensionData = [
     { code: 'sensory', name: ABC_DIMENSION_NAMES.sensory, maxScore: ABC_SUBSCALE_MAX_SCORES.sensory, description: '对感觉刺激的异常反应' },
     { code: 'relating', name: ABC_DIMENSION_NAMES.relating, maxScore: ABC_SUBSCALE_MAX_SCORES.relating, description: '社交互动和关系建立能力' },
     { code: 'body_object', name: ABC_DIMENSION_NAMES.body_object, maxScore: ABC_SUBSCALE_MAX_SCORES.body_object, description: '刻板行为和运动模式' },
     { code: 'language', name: ABC_DIMENSION_NAMES.language, maxScore: ABC_SUBSCALE_MAX_SCORES.language, description: '语言理解和表达能力' },
-    { code: 'social_self_help', name: ABC_DIMENSION_NAMES.social_self_help, maxScore: ABC_SUBSCALE_MAX_SCORES.social_self_help, description: '日常生活自理能力' },
+    { code: 'social_self_help', name: ABC_DIMENSION_NAMES.social_self_help, maxScore: ABC_SUBSCALE_MAX_SCORES.social_self_help, description: '社会适应与日常生活自理相关行为' },
   ] as const
 
-  return dimensionData
-    .filter(dim => dim.maxScore > 0) // 过滤掉题库里还没有题目的维度（生活自理）
-    .map(dim => {
+  return dimensionData.map(dim => {
       const score = scores[dim.code]
       return {
         ...dim,
         score,
         percentage: ((score / dim.maxScore) * 100).toFixed(1),
       }
-    })
+  })
 })
 
 // 严重程度
@@ -117,7 +124,7 @@ function getHighScoreDimensions() {
 function buildAbcLevelSummary(level: ABCLevel, totalScore: number): string {
   switch (level) {
     case 'normal':
-      return `总分 ${totalScore} 分，低于筛查分界值（49分），属于正常范围。孤独症相关行为表现不明显，整体发展良好。`
+      return `总分 ${totalScore} 分，低于本软件当前筛查分界值（49分）。仍应查看各因子和具体行为，不能仅凭总分判断整体发展情况。`
     case 'borderline':
       return `总分 ${totalScore} 分，处于边缘范围（49-61分）。建议进一步观察和评估，必要时咨询专业医生进行诊断性评估。`
     case 'mild':
@@ -132,6 +139,8 @@ function buildAbcLevelSummary(level: ABCLevel, totalScore: number): string {
 // 加载评估数据
 async function loadAssessment() {
   loading.value = true
+  assessData.value = null
+  studentInfo.value = null
   try {
     const db = getDatabase()
 
@@ -213,7 +222,8 @@ async function exportWord() {
         percentage: String(dim.percentage),
         description: dim.description,
       })),
-      summary: buildAbcLevelSummary(severityLevel.value, assessData.value.total_score || 0),
+      summary: buildAbcLevelSummary(severityLevel.value, assessData.value.total_score || 0) +
+        (verifiedDimensionScores.value ? '' : ' 此历史记录的逐题答案无法与总分核对，五因子分数无法可靠重算，未展示维度明细。'),
       recommendations: [
         '本量表为筛查工具，最终诊断需由专业医生结合临床观察、发育史等综合判断',
         '如评分显示异常，建议尽快到专业机构进行全面评估',
@@ -245,9 +255,10 @@ function openAiInterpretation() {
   }, 500)
 }
 
-onMounted(() => {
+watch(() => route.params.assessId, (id) => {
+  assessId.value = Number(id)
   loadAssessment()
-})
+}, { immediate: true })
 </script>
 
 <template>
@@ -316,8 +327,8 @@ onMounted(() => {
           >
             <template #default>
               <p v-if="severityLevel === 'normal'">
-                总分 {{ assessData?.total_score }} 分，低于筛查分界值（49分），属于正常范围。
-                孤独症相关行为表现不明显，整体发展良好。
+                总分 {{ assessData?.total_score }} 分，低于本软件当前筛查分界值（49分）。
+                仍应查看各因子和具体行为，不能仅凭总分判断整体发展情况。
               </p>
               <p v-else-if="severityLevel === 'borderline'">
                 总分 {{ assessData?.total_score }} 分，处于边缘范围（49-61分）。
@@ -347,7 +358,14 @@ onMounted(() => {
         <h3>📈 维度分数详情</h3>
       </template>
 
-      <el-table :data="dimensionScores" style="width: 100%">
+      <el-alert
+        v-if="assessData && !verifiedDimensionScores"
+        title="此历史记录的逐题答案无法与总分核对，五因子分数无法可靠重算；原总分保留，维度明细不展示。"
+        type="warning"
+        :closable="false"
+        show-icon
+      />
+      <el-table v-else :data="dimensionScores" style="width: 100%">
         <el-table-column prop="name" label="维度" width="120">
           <template #default="{ row }">
             <strong>{{ row.name }}</strong>
@@ -401,7 +419,10 @@ onMounted(() => {
                 <strong>{{ dim.name }}维度</strong>得分较高（{{ dim.score }}/{{ dim.maxScore }}），
                 建议重点关注该领域的干预训练。
               </li>
-              <li v-if="getHighScoreDimensions().length === 0">
+              <li v-if="assessData && !verifiedDimensionScores">
+                五因子分数无法核验，暂无基于因子分数的干预重点建议。
+              </li>
+              <li v-if="verifiedDimensionScores && getHighScoreDimensions().length === 0">
                 各维度得分相对均衡，建议全面发展，保持良好状态。
               </li>
             </ul>

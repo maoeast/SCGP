@@ -2368,8 +2368,10 @@ export async function insertEmotionalResourceData(): Promise<void> {
       resource_type: string
       name: string
       meta_data: string | null
+      is_custom: number
+      legacy_source: string | null
     }>(`
-      SELECT id, resource_type, name, meta_data
+      SELECT id, resource_type, name, meta_data, is_custom, legacy_source
       FROM sys_training_resource
       WHERE module_code = 'emotional'
         AND resource_type IN ('emotion_scene', 'care_scene')
@@ -2377,6 +2379,9 @@ export async function insertEmotionalResourceData(): Promise<void> {
 
     const existingByStableKey = new Map<string, number>()
     const existingByName = new Map<string, number>()
+    const preservedResourceIds = new Set(existingRows
+      .filter((row) => row.is_custom === 1 || row.legacy_source === 'emotional_user_edited')
+      .map((row) => Number(row.id)))
     const rowsByStableKey = new Map<string, Array<{ id: number; resourceType: string; name: string }>>()
 
     const mergeDuplicateResourceIntoCanonical = (canonicalId: number, duplicateId: number) => {
@@ -2450,6 +2455,10 @@ export async function insertEmotionalResourceData(): Promise<void> {
 
       let resourceId = Number(existingId || 0)
       let didInsert = false
+
+      if (resourceId && preservedResourceIds.has(resourceId)) {
+        continue
+      }
 
       if (resourceId) {
         db.run(`

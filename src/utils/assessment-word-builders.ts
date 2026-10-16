@@ -1,14 +1,122 @@
 import type { SDQDimensionDetail, SDQStructuredFeedback } from '@/types/sdq'
 import type { CBCLStructuredFeedback } from '@/strategies/assessment/CBCLDriver'
 import type { SRS2DimensionDetail, SRS2StructuredFeedback } from '@/types/srs2'
-import type {
-  ConnersExportData,
-  CSIRSExportData,
-  SMExportData,
-  WeeFIMExportData,
-} from './docxExporter'
 import type { WordExportPayload } from './export-word'
 import { formatGenderLabel } from './student-display'
+
+interface StudentInfo {
+  name: string
+  gender: string
+  age: number
+  birthday: string
+}
+
+interface DimensionScore {
+  name: string
+  rawScore: number
+  tScore?: number
+  percentScore?: number
+  level: string
+  description?: string
+  advice?: string
+}
+
+export interface SMExportData {
+  student: StudentInfo
+  assessment: {
+    id: string
+    date: string
+    raw_score: number
+    sq_score: number
+    level: string
+    age_stage: string
+  }
+  dimensions: {
+    communication: { pass: number; total: number }
+    work: { pass: number; total: number }
+    movement: { pass: number; total: number }
+    independent_life: { pass: number; total: number }
+    self_management: { pass: number; total: number }
+    group_activity: { pass: number; total: number }
+  }
+  suggestions: string[]
+  guidance: string[]
+}
+
+export interface WeeFIMExportData {
+  student: StudentInfo
+  assessment: {
+    id: string
+    date: string
+    total_score: number
+    motor_score: number
+    cognitive_score: number
+    level: string
+  }
+  categories: Array<{
+    name: string
+    score: number
+    maxScore: number
+    items: Array<{ title: string; score: number; level: string }>
+  }>
+  suggestions: {
+    shortTerm: string[]
+    longTerm: string[]
+    training: string[]
+    environment: string[]
+  }
+}
+
+export interface CSIRSExportData {
+  student: StudentInfo
+  assessment: {
+    id: string
+    date: string
+    total_t_score: number
+    level: string
+  }
+  dimensions: DimensionScore[]
+  summary: string
+  advice: string[]
+}
+
+export interface ConnersExportData {
+  student: StudentInfo
+  assessment: {
+    id: string
+    date: string
+    scaleType: 'psq' | 'trs'
+    validityNote: string
+  }
+  dimensions: DimensionScore[]
+  totalScore: number
+  totalLevel: string
+  summary: string
+  advice: string[]
+}
+
+export interface EquipmentIEPRecordDetail {
+  equipmentName: string
+  equipmentCategory: string
+  score: number
+  promptLevel: number
+  duration?: number
+  date: string
+  remark?: string
+  performance: string
+  suggestions: string[]
+}
+
+export interface EquipmentIEPExportData {
+  student: Pick<StudentInfo, 'name' | 'gender' | 'age'>
+  reportDate: string
+  summary: {
+    totalRecords: number
+    categoryBreakdown: Record<string, number>
+    averageScore: number
+  }
+  records: EquipmentIEPRecordDetail[]
+}
 
 interface SDQWordReportInput {
   studentName: string
@@ -189,6 +297,116 @@ function getStructuredAdviceTitle(category: string): string {
   return titleMap[category] || category
 }
 
+export function buildEquipmentIepReportPayload(
+  data: EquipmentIEPExportData,
+  filename: string,
+): WordExportPayload {
+  const categoryNames: Record<string, string> = {
+    tactile: '触觉系统',
+    olfactory: '嗅觉系统',
+    visual: '视觉系统',
+    auditory: '听觉系统',
+    gustatory: '味觉系统',
+    proprioceptive: '本体觉系统',
+    integration: '感官综合箱',
+  }
+  const promptLevels: Record<number, string> = {
+    1: '独立完成',
+    2: '口头提示',
+    3: '视觉提示',
+    4: '手触引导',
+    5: '身体辅助',
+  }
+  const averageStars = Math.round(data.summary.averageScore)
+  const sections: WordExportPayload['sections'] = [
+    {
+      type: 'kv-table',
+      heading: '训练统计',
+      rows: [
+        { label: '总训练次数', value: `${data.summary.totalRecords}次` },
+        { label: '平均得分', value: data.summary.averageScore.toFixed(1) },
+        { label: '平均星级', value: `${'★'.repeat(averageStars)}${'☆'.repeat(5 - averageStars)}` },
+      ],
+    },
+    {
+      type: 'table',
+      heading: '分类统计',
+      columns: ['感官领域', '训练次数'],
+      columnWidths: [50, 50],
+      rows: Object.entries(data.summary.categoryBreakdown).map(([category, count]) => [
+        categoryNames[category] || category,
+        `${count}次`,
+      ]),
+    },
+  ]
+
+  data.records.forEach((record, index) => {
+    const stars = Math.round(record.score)
+    sections.push(
+      {
+        type: 'table',
+        heading: `记录 ${index + 1}：${record.equipmentName}`,
+        columns: ['器材名称', '感官领域', '训练日期', '训练时长', '评分', '辅助等级'],
+        rows: [[
+          record.equipmentName,
+          categoryNames[record.equipmentCategory] || record.equipmentCategory,
+          record.date,
+          record.duration === undefined ? '未记录' : `${record.duration}秒`,
+          `${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}`,
+          promptLevels[record.promptLevel] || `${record.promptLevel}`,
+        ]],
+      },
+      {
+        type: 'paragraph',
+        heading: '表现评估',
+        paragraphs: [record.performance],
+      },
+    )
+    if (record.remark) {
+      sections.push({ type: 'paragraph', heading: '训练备注', paragraphs: [record.remark] })
+    }
+    sections.push({ type: 'list', heading: '训练建议', items: record.suggestions })
+  })
+
+  const performance = data.summary.averageScore >= 4
+    ? '优异，各项能力发展良好'
+    : data.summary.averageScore >= 3
+      ? '稳定，具有一定进步潜力'
+      : '需要更多支持，建议加强针对性训练'
+  sections.push(
+    {
+      type: 'paragraph',
+      heading: '综合评估',
+      paragraphs: [`本次训练共计 ${data.summary.totalRecords} 项，平均得分 ${data.summary.averageScore.toFixed(1)} 分。学生整体表现${performance}。`],
+    },
+    {
+      type: 'list',
+      heading: '后续训练建议',
+      items: [
+        '针对得分较低的领域增加训练频率',
+        '逐步降低辅助等级，提升学生独立完成能力',
+        '定期评估并调整训练方案，确保训练效果',
+      ],
+    },
+    {
+      type: 'paragraph',
+      paragraphs: ['评估师签名：__________________', '日期：__________________', '机构盖章：__________________'],
+    },
+  )
+
+  return {
+    title: '器材训练 IEP 评估报告',
+    filename,
+    meta: [
+      { label: '姓名', value: data.student.name },
+      { label: '性别', value: data.student.gender },
+      { label: '年龄', value: `${data.student.age}岁` },
+      { label: '报告日期', value: data.reportDate },
+    ],
+    sections,
+  }
+}
+
 export function buildSDQWordPayload(input: SDQWordReportInput): WordExportPayload {
   const sections: WordExportPayload['sections'] = [
     {
@@ -249,7 +467,7 @@ export function buildSDQWordPayload(input: SDQWordReportInput): WordExportPayloa
 
   return {
     title: 'SDQ 长处和困难问卷评估报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('SDQ评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
@@ -365,7 +583,7 @@ export function buildCBCLWordPayload(input: CBCLWordReportInput): WordExportPayl
 
   return {
     title: 'CBCL 儿童行为量表评估报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('CBCL评估报告', input.studentName),
     meta,
     sections,
@@ -375,7 +593,7 @@ export function buildCBCLWordPayload(input: CBCLWordReportInput): WordExportPayl
 export function buildSRS2WordPayload(input: SRS2WordReportInput): WordExportPayload {
   return {
     title: 'SRS-2 社交反应量表评估报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('SRS2评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
@@ -528,7 +746,7 @@ export function buildGmfm88WordPayload(input: GmfmWordReportInput): WordExportPa
 
   return {
     title: 'GMFM-88 粗大运动功能评定量表报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('GMFM-88评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
@@ -543,7 +761,7 @@ export function buildGmfm88WordPayload(input: GmfmWordReportInput): WordExportPa
 export function buildCSIRSWordPayload(data: CSIRSExportData, filename?: string): WordExportPayload {
   return {
     title: 'CSIRS 感觉统合评估报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: filename || buildFilename('CSIRS评估报告', data.student.name),
     meta: [
       { label: '学生姓名', value: data.student.name },
@@ -587,16 +805,16 @@ export function buildConnersWordPayload(data: ConnersExportData, filename?: stri
 
   return {
     title: scaleLabel,
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: filename || buildFilename(data.assessment.scaleType === 'psq' ? 'Conners-PSQ评估报告' : 'Conners-TRS评估报告', data.student.name),
     meta: [
       { label: '学生姓名', value: data.student.name },
       { label: '性别', value: formatGenderLabel(data.student.gender) },
       { label: '年龄', value: `${data.student.age}岁` },
       { label: '评估日期', value: data.assessment.date },
-      { label: 'PI', value: `${data.assessment.pi_score}` },
-      { label: 'NI', value: `${data.assessment.ni_score}` },
-      { label: '效度状态', value: data.assessment.is_valid ? '有效' : '需留意' },
+      { label: 'PI', value: '未评估' },
+      { label: 'NI', value: '未评估' },
+      { label: '效度状态', value: '未评估' },
       { label: '多动指数 T分', value: `${data.totalScore}` },
     ],
     sections: [
@@ -605,7 +823,7 @@ export function buildConnersWordPayload(data: ConnersExportData, filename?: stri
         heading: '总体说明',
         paragraphs: [
           cleanText(data.summary),
-          data.assessment.invalid_reason ? `效度说明：${cleanText(data.assessment.invalid_reason)}` : '',
+          `效度说明：${cleanText(data.assessment.validityNote)}`,
         ].filter(Boolean),
       },
       {
@@ -643,7 +861,7 @@ export function buildSMWordPayload(data: SMExportData, filename?: string): WordE
 
   return {
     title: '婴儿-初中生社会生活能力量表评估报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: filename || buildFilename('S-M评估报告', data.student.name),
     meta: [
       { label: '学生姓名', value: data.student.name },
@@ -664,12 +882,12 @@ export function buildSMWordPayload(data: SMExportData, filename?: string): WordE
       },
       {
         type: 'list',
-        heading: '训练建议',
+        heading: '结果使用说明',
         items: data.suggestions.map(cleanText).filter(Boolean),
       },
       {
         type: 'list',
-        heading: '家庭训练指导',
+        heading: '家庭观察',
         items: data.guidance.map(cleanText).filter(Boolean),
       },
     ],
@@ -729,7 +947,7 @@ export function buildWeeFIMWordPayload(data: WeeFIMExportData, filename?: string
 
   return {
     title: '改良儿童功能独立性评估量表报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: filename || buildFilename('WeeFIM评估报告', data.student.name),
     meta: [
       { label: '学生姓名', value: data.student.name },
@@ -907,7 +1125,7 @@ export function buildCpep3WordPayload(input: Cpep3WordReportInput): WordExportPa
 
   return {
     title: 'C-PEP-3 儿童心理教育评估报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('CPEP3评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
@@ -1066,7 +1284,7 @@ export function buildCnbsr2016WordPayload(input: Cnbsr2016WordReportInput): Word
 
   return {
     title: '儿心量表Ⅱ（0-6岁儿童发育行为评估量表）评估报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('儿心量表Ⅱ评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
@@ -1116,7 +1334,7 @@ export function buildAbcWordPayload(input: AbcWordReportInput): WordExportPayloa
 
   return {
     title: 'ABC 孤独症儿童行为评定量表报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('ABC评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
@@ -1166,7 +1384,7 @@ export function buildAtecWordPayload(input: AtecWordReportInput): WordExportPayl
 
   return {
     title: 'ATEC 孤独症治疗评估量表报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('ATEC评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
@@ -1236,7 +1454,7 @@ export function buildCrtWordPayload(input: CrtWordReportInput): WordExportPayloa
 
   return {
     title: '瑞文图形推理测验（CRT）评估报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('CRT评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
@@ -1320,7 +1538,7 @@ export function buildFineMotorWordPayload(input: FineMotorWordReportInput): Word
 
   return {
     title: '学前儿童小肌肉功能发展评估报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('精细运动评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
@@ -1425,7 +1643,7 @@ export function buildTgmd3WordPayload(input: Tgmd3WordReportInput): WordExportPa
 
   return {
     title: 'TGMD-3 大肌肉动作发展测验报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('TGMD-3评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
@@ -1484,7 +1702,7 @@ export function buildBriefWordPayload(input: BriefWordReportInput): WordExportPa
 
   return {
     title: 'BRIEF 执行功能问卷评估报告（自编 DRAFT）',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('BRIEF评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },
@@ -1573,7 +1791,7 @@ export function buildCognitiveSelfWordPayload(input: CognitiveSelfWordReportInpu
 
   return {
     title: '视知觉图形匹配筛查（DRAFT）评估报告',
-    subtitle: '统一评估报告 Word 导出版',
+    subtitle: '统一评估报告',
     filename: buildFilename('视知觉筛查评估报告', input.studentName),
     meta: [
       { label: '学生姓名', value: input.studentName },

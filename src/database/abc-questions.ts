@@ -7,7 +7,7 @@
  * 2. 交往 (Relating)
  * 3. 躯体运动 (Body and Object Use)
  * 4. 语言 (Language)
- * 5. 生活自理 (Social and Self-Help)
+ * 5. 社会与生活自理 (Social and Self-Help)
  *
  * 计分方式：加权计分（不同题目权重1-4分不等）
  * 总分范围：0-158分
@@ -30,7 +30,7 @@ export const ABC_DIMENSION_NAMES: Record<ABCDimensionCode, string> = {
   relating: '交往',
   body_object: '躯体运动',
   language: '语言',
-  social_self_help: '生活自理',
+  social_self_help: '社会与生活自理',
 }
 
 /**
@@ -51,70 +51,67 @@ export interface ABCQuestion {
  * 总分：0-158分，筛查分57分，诊断分67分
  */
 export const ABC_QUESTIONS: ABCQuestion[] = [
-  // 感觉维度 (Sensory) - 共14题
-  { id: 'abc_1', text: '喜欢原地转圈，或长时间让自己旋转', dimension: 'sensory', weight: 4 },
+  // 保留既有作答顺序；以下 dimension 依据 JAMA Network Open 2025 补充材料附录 2 的 57 题因子列位。
+  { id: 'abc_1', text: '喜欢原地转圈，或长时间让自己旋转', dimension: 'body_object', weight: 4 },
   { id: 'abc_6', text: '难以分辨物体的特征（如大小、颜色、位置等）', dimension: 'sensory', weight: 2 },
   { id: 'abc_10', text: '叫他时常常没反应，好像听不见似的', dimension: 'sensory', weight: 3 },
-  { id: 'abc_13', text: '伸手去拿东西时，经常够不到（对距离判断不准）', dimension: 'sensory', weight: 2 },
+  { id: 'abc_13', text: '伸手去拿东西时，经常够不到（对距离判断不准）', dimension: 'relating', weight: 2 },
   { id: 'abc_21', text: '对很大的声音（如鞭炮、关门声）没有吃惊反应', dimension: 'sensory', weight: 3 },
   { id: 'abc_26', text: '摔倒、受伤或打针时，好像不觉得疼', dimension: 'sensory', weight: 3 },
   { id: 'abc_34', text: '强光照眼睛时也不眨眼', dimension: 'sensory', weight: 1 },
   { id: 'abc_39', text: '在嘈杂环境中常常捂住耳朵', dimension: 'sensory', weight: 4 },
   { id: 'abc_44', text: '在正常光线下会眯眼、闭眼或皱眉', dimension: 'sensory', weight: 3 },
-  { id: 'abc_49', text: '对周围环境缺乏警觉，不注意潜在危险', dimension: 'sensory', weight: 2 },
-  { id: 'abc_51', text: '喜欢闻、摸或用嘴尝周围的东西', dimension: 'sensory', weight: 3 },
+  { id: 'abc_49', text: '对周围环境缺乏警觉，不注意潜在危险', dimension: 'social_self_help', weight: 2 },
+  { id: 'abc_51', text: '喜欢闻、摸或用嘴尝周围的东西', dimension: 'body_object', weight: 3 },
   { id: 'abc_52', text: '陌生人来了也不看一眼', dimension: 'sensory', weight: 3 },
-  { id: 'abc_55', text: '2岁前就发现发育比同龄孩子慢', dimension: 'sensory', weight: 1 },
+  { id: 'abc_55', text: '2岁前就发现发育比同龄孩子慢', dimension: 'social_self_help', weight: 1 },
   { id: 'abc_57', text: '会长时间盯着一个地方发呆', dimension: 'sensory', weight: 4 },
 
-  // 交往维度 (Relating) - 共12题
   { id: 'abc_3', text: '很少主动与人接触或交流', dimension: 'relating', weight: 4 },
   { id: 'abc_7', text: '不会对人微笑、点头或打招呼', dimension: 'relating', weight: 2 },
-  { id: 'abc_15', text: '和别人在一起时，叫他名字也没反应', dimension: 'relating', weight: 2 },
+  { id: 'abc_15', text: '和别人在一起时，叫他名字也没反应', dimension: 'language', weight: 2 },
   { id: 'abc_17', text: '看不懂别人的面部表情（如高兴、生气等）', dimension: 'relating', weight: 3 },
   { id: 'abc_24', text: '主动避开与别人的眼神接触', dimension: 'relating', weight: 4 },
   { id: 'abc_25', text: '不喜欢被人接触或拥抱', dimension: 'relating', weight: 4 },
   { id: 'abc_33', text: '玩游戏时不会模仿其他小朋友', dimension: 'relating', weight: 3 },
   { id: 'abc_38', text: '无法与其他小朋友建立友谊', dimension: 'relating', weight: 4 },
   { id: 'abc_47', text: '会一直盯着人看，眼神很专注', dimension: 'relating', weight: 4 },
-  { id: 'abc_2', text: '刚学会的简单事情很快就忘了', dimension: 'relating', weight: 2 },
-  { id: 'abc_4', text: '听不懂简单的指令（如"坐下""过来"等）', dimension: 'relating', weight: 1 },
-  { id: 'abc_20', text: '听不懂带方位词的指令（如"把球放在盒子上/里"）', dimension: 'relating', weight: 1 },
+  { id: 'abc_2', text: '刚学会的简单事情很快就忘了', dimension: 'social_self_help', weight: 2 },
+  { id: 'abc_4', text: '听不懂简单的指令（如"坐下""过来"等）', dimension: 'language', weight: 1 },
+  { id: 'abc_20', text: '听不懂带方位词的指令（如"把球放在盒子上/里"）', dimension: 'language', weight: 1 },
 
-  // 躯体运动维度 (Body and Object Use) - 共18题
   { id: 'abc_5', text: '不会正常玩玩具（只会转动、乱扔或揉捏）', dimension: 'body_object', weight: 2 },
   { id: 'abc_9', text: '长时间手里拿着某样东西不放', dimension: 'body_object', weight: 3 },
   { id: 'abc_12', text: '长时间地前后摇晃身体', dimension: 'body_object', weight: 4 },
   { id: 'abc_16', text: '经常出现前冲、转圈、踮脚走路、手指轻弹等重复动作', dimension: 'body_object', weight: 4 },
   { id: 'abc_22', text: '经常拍打自己的手', dimension: 'body_object', weight: 4 },
-  { id: 'abc_27', text: '身体很僵硬，抱起来很费劲', dimension: 'body_object', weight: 3 },
-  { id: 'abc_28', text: '抱着他时感觉肌肉很松软，不会往你身上靠', dimension: 'body_object', weight: 2 },
-  { id: 'abc_29', text: '想要什么东西时，只会用手势比划，不用语言表达', dimension: 'body_object', weight: 2 },
+  { id: 'abc_27', text: '身体很僵硬，抱起来很费劲', dimension: 'relating', weight: 3 },
+  { id: 'abc_28', text: '抱着他时感觉肌肉很松软，不会往你身上靠', dimension: 'relating', weight: 2 },
+  { id: 'abc_29', text: '想要什么东西时，只会用手势比划，不用语言表达', dimension: 'language', weight: 2 },
   { id: 'abc_30', text: '经常踮着脚尖走路', dimension: 'body_object', weight: 2 },
-  { id: 'abc_31', text: '会咬人、撞人或踢人', dimension: 'body_object', weight: 2 },
+  { id: 'abc_31', text: '会咬人、撞人或踢人', dimension: 'social_self_help', weight: 2 },
   { id: 'abc_35', text: '会撞头、咬自己的手等自我伤害行为', dimension: 'body_object', weight: 2 },
   { id: 'abc_40', text: '经常旋转或撞击物体', dimension: 'body_object', weight: 4 },
-  { id: 'abc_50', text: '特别喜欢单调重复的活动（如反复走来走去、蹦跳、拍打）', dimension: 'body_object', weight: 4 },
+  { id: 'abc_50', text: '特别喜欢单调重复的活动（如反复走来走去、蹦跳、拍打）', dimension: 'social_self_help', weight: 4 },
   { id: 'abc_53', text: '有固定的仪式行为，必须按特定顺序做事（如必须走固定路线，东西必须摆在固定位置，否则就不配合）', dimension: 'body_object', weight: 4 },
   { id: 'abc_54', text: '经常把玩具或家里的东西弄坏', dimension: 'body_object', weight: 2 },
-  { id: 'abc_14', text: '改变熟悉的环境或作息时，反应特别强烈', dimension: 'body_object', weight: 3 },
-  { id: 'abc_23', text: '容易发脾气，经常情绪失控', dimension: 'body_object', weight: 3 },
-  { id: 'abc_36', text: '想要什么东西完全等不了，必须马上得到', dimension: 'body_object', weight: 2 },
+  { id: 'abc_14', text: '改变熟悉的环境或作息时，反应特别强烈', dimension: 'social_self_help', weight: 3 },
+  { id: 'abc_23', text: '容易发脾气，经常情绪失控', dimension: 'social_self_help', weight: 3 },
+  { id: 'abc_36', text: '想要什么东西完全等不了，必须马上得到', dimension: 'social_self_help', weight: 2 },
 
-  // 语言维度 (Language) - 共13题
   { id: 'abc_8', text: '人称代词用混了（你我不分）', dimension: 'language', weight: 3 },
   { id: 'abc_11', text: '说话没有抑扬顿挫，语调平平或怪异', dimension: 'language', weight: 4 },
   { id: 'abc_18', text: '说话时很少用"是""我"这类词', dimension: 'language', weight: 2 },
-  { id: 'abc_19', text: '在某方面有特殊能力（如记忆力、计算等），与整体发展不匹配', dimension: 'language', weight: 4 },
+  { id: 'abc_19', text: '在某方面有特殊能力（如记忆力、计算等），与整体发展不匹配', dimension: 'social_self_help', weight: 4 },
   { id: 'abc_32', text: '反复说同样的短句', dimension: 'language', weight: 3 },
   { id: 'abc_37', text: '说不出5个以上常见物品的名称', dimension: 'language', weight: 1 },
   { id: 'abc_42', text: '一天主动提出的要求不超过5次', dimension: 'language', weight: 2 },
-  { id: 'abc_43', text: '容易受惊或经常焦虑不安', dimension: 'language', weight: 3 },
+  { id: 'abc_43', text: '容易受惊或经常焦虑不安', dimension: 'relating', weight: 3 },
   { id: 'abc_46', text: '反复发出同样的声音或说同样的词', dimension: 'language', weight: 3 },
   { id: 'abc_48', text: '像鹦鹉学舌一样重复别人的话', dimension: 'language', weight: 4 },
   { id: 'abc_56', text: '日常交流只用15-30个短句（不到15句也算）', dimension: 'language', weight: 3 },
-  { id: 'abc_41', text: '大小便训练很困难，难以学会自己控制', dimension: 'language', weight: 1 },
-  { id: 'abc_45', text: '没人帮忙就不会自己穿衣服', dimension: 'language', weight: 1 },
+  { id: 'abc_41', text: '大小便训练很困难，难以学会自己控制', dimension: 'social_self_help', weight: 1 },
+  { id: 'abc_45', text: '没人帮忙就不会自己穿衣服', dimension: 'social_self_help', weight: 1 },
 ]
 
 /**
@@ -130,7 +127,7 @@ export const ABC_DIMENSION_QUESTIONS: Record<ABCDimensionCode, string[]> = {
 
 /**
  * ABC 各维度满分（由题库权重派生，勿手写）：
- * 感觉 38 / 交往 34 / 躯体运动 52 / 语言 34 = 158；题库暂无「生活自理」题目，恒为 0。
+ * 感觉 26 / 交往 38 / 躯体运动 38 / 语言 31 / 社会与生活自理 25 = 158。
  * 报告页「维度分数详情」的满分与得分占比、Word 导出均以此为准。
  */
 export const ABC_SUBSCALE_MAX_SCORES: Record<ABCDimensionCode, number> = (() => {
@@ -183,6 +180,74 @@ export function normalizeABCDimensionScores(parsed: unknown): Record<ABCDimensio
     scores[code] = toDimensionScore((parsed as Record<string, unknown>)[code])
   }
   return scores
+}
+
+/**
+ * 仅在 57 题原始加权答案齐全、单题分值合法且与已存总分一致时重算历史因子。
+ * 旧演示数据曾把随机逐题值与独立生成的维度分写入同一行，不能用它回填或推断答案。
+ */
+export function deriveABCDimensionScoresFromAnswers(
+  rawAnswers: unknown,
+  storedTotal: unknown,
+): Record<ABCDimensionCode, number> | null {
+  let parsed = rawAnswers
+  if (typeof rawAnswers === 'string') {
+    try {
+      parsed = JSON.parse(rawAnswers)
+    } catch {
+      return null
+    }
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
+  const answers = parsed as Record<string, unknown>
+  if (Object.keys(answers).length !== ABC_QUESTIONS.length) return null
+  const total = Number(storedTotal)
+  if (!Number.isFinite(total)) return null
+
+  const scores = normalizeABCDimensionScores(null)
+  let sum = 0
+  for (const question of ABC_QUESTIONS) {
+    const value = answers[question.id]
+    if (value !== 0 && value !== question.weight) return null
+    scores[question.dimension] += value
+    sum += value
+  }
+  return sum === total ? scores : null
+}
+
+/** 报告与趋势共用的五因子分数解析；不混用旧四因子汇总。 */
+export function resolveABCDimensionScores(
+  rawAnswers: unknown,
+  storedScores: unknown,
+  storedTotal: unknown,
+): Record<ABCDimensionCode, number> | null {
+  const fromAnswers = deriveABCDimensionScoresFromAnswers(rawAnswers, storedTotal)
+  if (fromAnswers) return fromAnswers
+  // 演示数据以空对象表示未提供逐题答案，不把不一致的逐题答案当作可靠依据。
+  let emptyAnswers = rawAnswers == null
+  if (rawAnswers === '{}') emptyAnswers = true
+  if (!emptyAnswers && typeof rawAnswers === 'object' && rawAnswers !== null && !Array.isArray(rawAnswers)) {
+    emptyAnswers = Object.keys(rawAnswers).length === 0
+  }
+  if (!emptyAnswers) return null
+  let parsed = storedScores
+  if (typeof storedScores === 'string') {
+    try {
+      parsed = JSON.parse(storedScores)
+    } catch {
+      return null
+    }
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
+  const codes = Object.keys(ABC_SUBSCALE_MAX_SCORES) as ABCDimensionCode[]
+  const values = parsed as Record<string, unknown>
+  if (Object.keys(values).length !== codes.length) return null
+  if (codes.some(code => typeof values[code] !== 'number' || !Number.isFinite(values[code]) ||
+    (values[code] as number) < 0 || (values[code] as number) > ABC_SUBSCALE_MAX_SCORES[code])) return null
+  const scores = normalizeABCDimensionScores(values)
+  return Object.values(scores).reduce((sum, score) => sum + score, 0) === Number(storedTotal)
+    ? scores
+    : null
 }
 
 /**

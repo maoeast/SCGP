@@ -119,11 +119,11 @@ export interface ConnersPSQAssessment {
   /** T分(JSON) */
   t_scores: string;
   /** PI得分 */
-  pi_score: number;
+  pi_score: number | null;
   /** NI得分 */
-  ni_score: number;
+  ni_score: number | null;
   /** 是否有效 */
-  is_valid: number;
+  is_valid: number | null;
   /** 无效原因 */
   invalid_reason?: string;
   /** 多动指数 */
@@ -163,11 +163,11 @@ export interface ConnersTRSAssessment {
   /** T分(JSON) */
   t_scores: string;
   /** PI得分 */
-  pi_score: number;
+  pi_score: number | null;
   /** NI得分 */
-  ni_score: number;
+  ni_score: number | null;
   /** 是否有效 */
-  is_valid: number;
+  is_valid: number | null;
   /** 无效原因 */
   invalid_reason?: string;
   /** 多动指数 */

@@ -196,7 +196,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     assessId: record.id,
     scaleType: 'conners-psq' as const,
     scaleLabel: SCALE_LABEL_MAP['conners-psq'],
-    scoreText: `PI ${formatNullableNumber(record.pi_score)} / NI ${formatNullableNumber(record.ni_score)}`,
+    scoreText: `多动指数 T 分 ${formatNullableNumber(record.hyperactivity_index)}；PI/NI 未评估`,
     levelText: formatLevel(record.level),
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))
@@ -207,7 +207,7 @@ export function getStudentAssessmentRecords(studentId: number): StudentAssessmen
     assessId: record.id,
     scaleType: 'conners-trs' as const,
     scaleLabel: SCALE_LABEL_MAP['conners-trs'],
-    scoreText: `PI ${formatNullableNumber(record.pi_score)} / NI ${formatNullableNumber(record.ni_score)}`,
+    scoreText: `多动指数 T 分 ${formatNullableNumber(record.hyperactivity_index)}；PI/NI 未评估`,
     levelText: formatLevel(record.level),
     createdAt: record.end_time || record.created_at || record.start_time || '',
   }))

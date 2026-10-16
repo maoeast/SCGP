@@ -165,7 +165,7 @@ export class ABCDriver extends BaseDriver {
     // 根据等级给出解释
     switch (level) {
       case 'normal':
-        summary += `当前评分在正常范围内（<49分），未显示显著的孤独症相关行为特征。`
+        summary += `总分低于本软件当前筛查分界值（49分）；仍需核对各因子和具体行为，不能仅凭总分判断整体发展情况。`
         break
       case 'borderline':
         summary += `当前评分在边缘范围（49-61分），建议进一步专业评估以明确诊断。`

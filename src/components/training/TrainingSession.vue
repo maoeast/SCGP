@@ -40,6 +40,9 @@ import SceneIntroStep from '@/components/training/SceneIntroStep.vue'
 import TeacherControlPanel from '@/components/training/TeacherControlPanel.vue'
 import TrainingLayout from '@/components/training/TrainingLayout.vue'
 import { useTrainingStore } from '@/stores/useTrainingStore'
+import { ResourceAPI } from '@/database/resource-api'
+import { compileEmotionSceneImmersive } from '@/features/emotional/immersive/compileEmotionSceneImmersive'
+import { normalizeEmotionSceneEditorModel } from '@/views/resource-center/editors/emotional-resource-contract'
 
 const route = useRoute()
 const router = useRouter()
@@ -48,14 +51,6 @@ const store = useTrainingStore()
 const isLoading = ref(false)
 const loadError = ref('')
 const isTeacherPanelVisible = ref(false)
-
-const sceneCode = computed(() => {
-  const raw = Array.isArray(route.query.sceneCode)
-    ? route.query.sceneCode[0]
-    : route.query.sceneCode
-
-  return typeof raw === 'string' ? raw.trim() : ''
-})
 
 const studentId = computed(() => {
   const raw = Array.isArray(route.query.studentId)
@@ -76,8 +71,8 @@ const resourceId = computed(() => {
 })
 
 async function hydrateScene(): Promise<void> {
-  if (!sceneCode.value) {
-    loadError.value = '缺少 sceneCode，当前无法从原型库加载情绪场景。请从场景选择页重新进入。'
+  if (!studentId.value || !resourceId.value) {
+    loadError.value = '缺少学生或场景资源，请从场景选择页重新进入。'
     return
   }
 
@@ -85,15 +80,17 @@ async function hydrateScene(): Promise<void> {
   loadError.value = ''
 
   try {
-    await store.loadScene(
-      sceneCode.value,
-      studentId.value && resourceId.value
-        ? {
-            studentId: studentId.value,
-            resourceId: resourceId.value,
-          }
-        : undefined,
-    )
+    const resource = new ResourceAPI().getResourceById(resourceId.value)
+    if (!resource || resource.resourceType !== 'emotion_scene') {
+      throw new Error('指定的情绪场景不存在或已停用，请返回选择页重新选择。')
+    }
+    const metadata = normalizeEmotionSceneEditorModel(resource.metadata, resource.name)
+    store.loadSessionPayload(compileEmotionSceneImmersive(metadata, {
+      studentId: studentId.value,
+      resourceId: resource.id,
+      resourceDescription: resource.description,
+      coverImage: resource.coverImage,
+    }))
   } catch (error) {
     console.error('Failed to hydrate immersive training scene:', error)
     loadError.value = error instanceof Error ? error.message : '训练场景加载失败。'
@@ -122,7 +119,7 @@ function goBackToSelector(): void {
   })
 }
 
-watch(() => [sceneCode.value, studentId.value, resourceId.value] as const, () => {
+watch(() => [studentId.value, resourceId.value] as const, () => {
   isTeacherPanelVisible.value = false
   void hydrateScene()
 })

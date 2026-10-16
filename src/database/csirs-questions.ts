@@ -523,22 +523,13 @@ export const csirsQuestions: CSIRSQuestion[] = [
 
 // 根据年龄获取题目
 export function getQuestionsByAge(ageInMonths: number): CSIRSQuestion[] {
-  const ageYears = Math.floor(ageInMonths / 12);
-
-  if (ageYears < 6) {
-    // 6岁以下: 只答前50题
-    return csirsQuestions.filter(q => q.id <= 50);
-  } else if (ageYears < 10) {
-    // 6-9岁: 答前55题
-    return csirsQuestions.filter(q => q.id <= 55);
-  } else {
-    // 10岁以上: 答全部58题
-    return csirsQuestions;
-  }
+  // 当前产品入口标为 3–12 岁，转换表也止于 12 岁。
+  if (ageInMonths < 36 || ageInMonths > 155) return [];
+  return csirsQuestions.filter(q => ageInMonths >= q.age_min && ageInMonths <= q.age_max);
 }
 
 // 获取适用的维度列表
 export function getDimensionsByAge(ageInMonths: number): CSIRSDimension[] {
-  const ageYears = Math.floor(ageInMonths / 12);
-  return csirsDimensions.filter(d => !d.min_age || ageYears >= d.min_age);
+  const applicableDimensions = new Set(getQuestionsByAge(ageInMonths).map(q => q.dimension_en));
+  return csirsDimensions.filter(d => applicableDimensions.has(d.name_en));
 }

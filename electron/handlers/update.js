@@ -245,8 +245,8 @@ ipcMain.handle('update:check-for-updates', async () => {
     const result = await autoUpdater.checkForUpdates()
     return {
       success: true,
-      updateAvailable: result !== null,
-      versionInfo: result ? result.updateInfo : null
+      updateAvailable: result?.isUpdateAvailable === true,
+      versionInfo: result?.updateInfo || null
     }
   } catch (error) {
     console.error('[Update] 检查更新失败:', error)

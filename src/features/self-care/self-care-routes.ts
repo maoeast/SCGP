@@ -9,11 +9,13 @@ export const SELF_CARE_TASK_NEW_PATH = '/self-care/tasks/new'
 export const SELF_CARE_TASK_EDIT_PATH = '/self-care/tasks/:taskId/edit'
 export const SELF_CARE_TASK_SELECT_STUDENT_PATH = '/self-care/tasks/:taskId/select-student'
 export const SELF_CARE_TASK_EXECUTE_PATH = '/self-care/execute/:taskId/:studentId'
+export const SELF_CARE_RECORD_DETAIL_PATH = '/self-care/records/:recordId'
 
 const SelfCareTaskList = () => import('@/views/self-care/TaskList.vue')
 const SelfCareTaskEditor = () => import('@/views/self-care/TaskEditor.vue')
 const SelfCareSelectStudent = () => import('@/views/self-care/SelectStudent.vue')
 const SelfCareTaskExecution = () => import('@/views/self-care/TaskExecution.vue')
+const SelfCareTrainingRecordDetail = () => import('@/views/self-care/TrainingRecordDetail.vue')
 
 export const selfCareRoutes: RouteRecordRaw[] = [
   {
@@ -66,6 +68,17 @@ export const selfCareRoutes: RouteRecordRaw[] = [
     component: SelfCareSelectStudent,
     meta: {
       title: '选择学生 - 自理训练',
+      hideInMenu: true,
+      roles: ['admin', 'teacher'],
+      moduleCode: SELF_CARE_MODULE_CODE,
+    },
+  },
+  {
+    path: 'self-care/records/:recordId',
+    name: 'SelfCareTrainingRecordDetail',
+    component: SelfCareTrainingRecordDetail,
+    meta: {
+      title: '自理训练历史详情',
       hideInMenu: true,
       roles: ['admin', 'teacher'],
       moduleCode: SELF_CARE_MODULE_CODE,

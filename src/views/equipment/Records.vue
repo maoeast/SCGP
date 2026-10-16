@@ -225,7 +225,8 @@ import { ArrowLeft, Delete, Document, Plus, Refresh, Switch, User } from '@eleme
 import type { EquipmentCategory, EquipmentTrainingRecordWithEquipment } from '@/types/equipment'
 import { EquipmentTrainingAPI, StudentAPI } from '@/database/api'
 import { IEPGenerator } from '@/utils/iep-generator'
-import { exportEquipmentIEPToWord, type EquipmentIEPExportData } from '@/utils/docxExporter'
+import { buildEquipmentIepReportPayload, type EquipmentIEPExportData } from '@/utils/assessment-word-builders'
+import { exportReport } from '@/utils/report-export'
 import { getEquipmentImageUrl } from '@/assets/images/equipment/images'
 import { useAuthStore } from '@/stores/auth'
 import { STANDARD_DATE_RANGE_PICKER_PROPS } from '@/utils/date-picker'
@@ -636,7 +637,6 @@ async function exportAllIEP() {
         name: studentInfo.value.name,
         gender: studentInfo.value.gender === '男' ? '男' : '女',
         age: calculateAge(studentInfo.value.birthday),
-        birthday: studentInfo.value.birthday,
       },
       reportDate: new Date().toLocaleDateString('zh-CN'),
       records: records.value.map((record) => {
@@ -652,11 +652,12 @@ async function exportAllIEP() {
 
         return {
           equipmentName: record.equipment_name,
-          categoryName: getCategoryLabel(record),
+          equipmentCategory: getCategoryLabel(record),
           score: record.score,
-          promptLevel: getPromptLevelLabel(record.prompt_level),
-          trainingDate: new Date(record.training_date).toLocaleDateString('zh-CN'),
-          notes: record.notes,
+          promptLevel: record.prompt_level,
+          duration: record.duration_seconds,
+          date: new Date(record.training_date).toLocaleDateString('zh-CN'),
+          remark: record.notes,
           performance: report.performance,
           suggestions: report.suggestions,
         }
@@ -671,7 +672,8 @@ async function exportAllIEP() {
     const entrySuffix = currentEntry.value ? `_${currentEntry.value.name}` : ''
     const filename = `${studentInfo.value.name}${entrySuffix}_器材训练IEP报告_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '-')}`
 
-    await exportEquipmentIEPToWord(exportData, filename)
+    const payload = buildEquipmentIepReportPayload(exportData, filename)
+    await exportReport(payload, { studentId: studentInfo.value.id })
     ElMessage.success('报告导出成功')
   } catch (error: any) {
     ElMessage.error('导出失败：' + error.message)

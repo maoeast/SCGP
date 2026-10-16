@@ -579,6 +579,12 @@ export class ResourceAPI extends DatabaseAPI {
       params.push(data.metadata ? JSON.stringify(data.metadata) : null)
     }
 
+    // 预置情绪资源经编辑器保存后保留本地修改；种子初始化仅更新未编辑的预置行。
+    if (existing.moduleCode === 'emotional' && existing.legacySource?.startsWith('emotional_full_seed_')) {
+      updates.push('legacy_source = ?')
+      params.push('emotional_user_edited')
+    }
+
     // 总是更新 updated_at
     updates.push("updated_at = datetime('now')")
 

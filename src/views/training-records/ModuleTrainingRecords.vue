@@ -151,10 +151,7 @@ const goBackToMenu = () => {
 const handleViewGameDetail = (record: any) => {
   if (record.resource_type === TASK_TRAINING_RESOURCE_TYPE) {
     router.push({
-      path: `/self-care/execute/${record.resource_id}/${record.student_id}`,
-      query: {
-        studentName: String(record.student_name || '').trim() || undefined,
-      }
+      path: `/self-care/records/${record.id}`,
     })
     return
   }

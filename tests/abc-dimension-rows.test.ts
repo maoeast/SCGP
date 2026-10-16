@@ -6,26 +6,28 @@
  * 背景（2026-09-20 修复）：报告页把 dimension_scores 的维度分当数字用，
  * 而演示数据曾写成对象 { name, rawScore }（真实 Driver 写的是数字），
  * 结果「得分」列把对象渲染成 JSON、「占比」列算出 NaN%。
- * 同时报告页硬编码的满分（60/48/72/52）与题库权重真值（38/34/52/34）不符，
+ * 同时报告页硬编码的满分（60/48/72/52）与当时题库权重不符，
  * 占比分母被放大——本次改为从题库派生。
  *
  * 覆盖：
- *  1. ABC_SUBSCALE_MAX_SCORES 由题库权重派生（38/34/52/34），总分满分 158
+ *  1. ABC 五因子归属、满分（26/38/38/31/25），总分满分 158
  *  2. normalizeABCDimensionScores：真实写入形状（数字）
  *  3. normalizeABCDimensionScores：历史演示数据形状（{ name, rawScore } 对象）
  *  4. 脏数据兜底（null / 字符串 / 缺维度）不抛出、不产生 NaN
- *  5. 占比计算：以真实库行（学生 10013 袁梓睿）为例，17/38 = 44.7%
- *  6. 演示数据生成器与题库满分两处一致（防漂移），且不再产出「生活自理」虚维度
- *  7. 演示数据生成结果：维度分为纯数字、不超满分、总分等于各维度之和
+ *  5. 旧汇总不能套用新满分；可验证逐题答案才能重算五因子
+ *  6. 演示数据生成器与题库满分两处一致
+ *  7. 演示数据生成结果：五因子汇总自洽，不伪造逐题答案
  *  8. 演示判级函数 abcLevelFromTotal 与源码 getABCLevel 阈值一致（防两处漂移）
  */
 import assert from 'node:assert/strict'
 import {
   ABC_QUESTIONS,
+  ABC_DIMENSION_QUESTIONS,
   ABC_SUBSCALE_MAX_SCORES,
   ABC_TOTAL_MAX_SCORE,
   getABCLevel,
   normalizeABCDimensionScores,
+  resolveABCDimensionScores,
 } from '../src/database/abc-questions.ts'
 import {
   ABC_SUBSCALE_MAXES,
@@ -44,11 +46,11 @@ const LEGACY_DEMO_JSON =
 // ---------- 1. 满分常量由题库权重派生 ----------
 {
   assert.deepEqual(ABC_SUBSCALE_MAX_SCORES, {
-    sensory: 38,
-    relating: 34,
-    body_object: 52,
-    language: 34,
-    social_self_help: 0,
+    sensory: 26,
+    relating: 38,
+    body_object: 38,
+    language: 31,
+    social_self_help: 25,
   })
   assert.equal(ABC_TOTAL_MAX_SCORE, 158)
 
@@ -65,23 +67,33 @@ const LEGACY_DEMO_JSON =
     )
   }
   assert.equal(ABC_QUESTIONS.length, 57, '题库应为 57 题')
+  assert.deepEqual(
+    Object.fromEntries(DIMENSION_CODES.map(code => [code, ABC_DIMENSION_QUESTIONS[code].map(id => Number(id.slice(4))).sort((a, b) => a - b)])),
+    {
+      sensory: [6, 10, 21, 26, 34, 39, 44, 52, 57],
+      relating: [3, 7, 13, 17, 24, 25, 27, 28, 33, 38, 43, 47],
+      body_object: [1, 5, 9, 12, 16, 22, 30, 35, 40, 51, 53, 54],
+      language: [4, 8, 11, 15, 18, 20, 29, 32, 37, 42, 46, 48, 56],
+      social_self_help: [2, 14, 19, 23, 31, 36, 41, 45, 49, 50, 55],
+    },
+  )
 }
 
 // ---------- 2. 真实写入形状：{ 维度code: 数字 } ----------
 {
   const scores = normalizeABCDimensionScores({
-    sensory: 38,
-    relating: 34,
-    body_object: 48,
-    language: 34,
-    social_self_help: 0,
+    sensory: 26,
+    relating: 38,
+    body_object: 35,
+    language: 31,
+    social_self_help: 25,
   })
   assert.deepEqual(scores, {
-    sensory: 38,
-    relating: 34,
-    body_object: 48,
-    language: 34,
-    social_self_help: 0,
+    sensory: 26,
+    relating: 38,
+    body_object: 35,
+    language: 31,
+    social_self_help: 25,
   })
 }
 
@@ -114,21 +126,12 @@ const LEGACY_DEMO_JSON =
   assert.equal(normalizeABCDimensionScores({ language: 12 }).sensory, 0)
 }
 
-// ---------- 5. 占比：以历史演示行（袁梓睿）为例 ----------
+// ---------- 5. 旧汇总不可套用新满分；合法逐题答案可重算 ----------
 {
-  const scores = normalizeABCDimensionScores(JSON.parse(LEGACY_DEMO_JSON))
-  const percentageOf = (code: (typeof DIMENSION_CODES)[number]) =>
-    ((scores[code] / ABC_SUBSCALE_MAX_SCORES[code]) * 100).toFixed(1)
-
-  assert.equal(percentageOf('sensory'), '44.7') // 17/38
-  assert.equal(percentageOf('relating'), '61.8') // 21/34
-  assert.equal(percentageOf('body_object'), '28.8') // 15/52
-  assert.equal(percentageOf('language'), '52.9') // 18/34
-  for (const code of DIMENSION_CODES.slice(0, 4)) {
-    assert.equal(Number.isNaN(Number(percentageOf(code))), false, `${code} 占比不应为 NaN`)
-  }
-  // 满分 0 的维度不该参与占比（报告页会把它过滤掉）
-  assert.equal(ABC_SUBSCALE_MAX_SCORES.social_self_help, 0)
+  assert.equal(resolveABCDimensionScores('{}', LEGACY_DEMO_JSON, 88), null)
+  const answers = Object.fromEntries(ABC_QUESTIONS.map(question => [question.id, question.id === 'abc_45' || question.id === 'abc_41' ? question.weight : 0]))
+  assert.equal(resolveABCDimensionScores(answers, '{}', 2)?.social_self_help, 2)
+  assert.equal(resolveABCDimensionScores(answers, '{}', 3), null)
 }
 
 // ---------- 6. 演示数据生成器与题库满分一致 ----------
@@ -138,12 +141,8 @@ const LEGACY_DEMO_JSON =
     relating: ABC_SUBSCALE_MAX_SCORES.relating,
     body_object: ABC_SUBSCALE_MAX_SCORES.body_object,
     language: ABC_SUBSCALE_MAX_SCORES.language,
+    social_self_help: ABC_SUBSCALE_MAX_SCORES.social_self_help,
   })
-  assert.equal(
-    'social_self_help' in ABC_SUBSCALE_MAXES,
-    false,
-    '演示数据不应再声明题库里没有题目的「生活自理」维度',
-  )
 }
 
 // ---------- 7. 演示数据生成结果：数字形状 + 不超满分 + 总分自洽 ----------
@@ -166,7 +165,10 @@ const LEGACY_DEMO_JSON =
     'language',
     'relating',
     'sensory',
+    'social_self_help',
   ])
+  assert.equal(row.raw_answers, '{}')
+  assert.deepEqual(resolveABCDimensionScores(row.raw_answers, row.dimension_scores, row.total_score), dimensionScores)
 
   let sum = 0
   for (const [code, value] of Object.entries(dimensionScores)) {

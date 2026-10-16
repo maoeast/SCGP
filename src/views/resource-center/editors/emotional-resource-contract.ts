@@ -531,6 +531,7 @@ export function normalizeCareSceneEditorModel(
     receiverName: authoredName || normalizeOptionalString(model?.receiverName),
     emotionChips: normalizeStringArray(model?.emotionChips, []),
     comfortTip: normalizeOptionalString(model?.comfortTip),
+    generatedFieldsInputSignature: normalizeOptionalString(model?.generatedFieldsInputSignature),
     speakerPerspectiveText: normalizeString(model?.speakerPerspectiveText, '请填写表达者视角文本'),
     receiverPerspectiveText: normalizeString(model?.receiverPerspectiveText, '请填写接收者视角文本'),
     utterances,

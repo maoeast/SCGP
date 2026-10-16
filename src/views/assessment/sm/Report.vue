@@ -177,21 +177,21 @@
         </template>
         <div class="suggestions-content">
           <div class="suggestion-item">
-            <h4>训练重点：</h4>
-            <p>{{ getLevelInfo(reportData?.level)?.trainingFocus || '暂无建议' }}</p>
+            <h4>结果使用说明：</h4>
+            <p>{{ SM_REPORT_USE_GUIDANCE.focus }}</p>
           </div>
           <div class="suggestion-item">
-            <h4>训练建议：</h4>
+            <h4>后续核对：</h4>
             <ul>
-              <li v-for="(suggestion, index) in getLevelSuggestions(reportData?.level)" :key="index">
+              <li v-for="(suggestion, index) in SM_REPORT_USE_GUIDANCE.suggestions" :key="index">
                 {{ suggestion }}
               </li>
             </ul>
           </div>
           <div class="suggestion-item">
-            <h4>家庭训练指导：</h4>
+            <h4>家庭观察：</h4>
             <ul>
-              <li v-for="(guidance, index) in getLevelGuidance(reportData?.level)" :key="index">
+              <li v-for="(guidance, index) in SM_REPORT_USE_GUIDANCE.familyGuidance" :key="index">
                 {{ guidance }}
               </li>
             </ul>
@@ -243,7 +243,7 @@ import { TitleComponent, LegendComponent, TooltipComponent } from 'echarts/compo
 import VChart from 'vue-echarts'
 import { useStudentStore } from '@/stores/student'
 import { SMAssessmentAPI } from '@/database/api'
-import { SMReportTemplate } from '@/utils/reportTemplates'
+import { SMReportTemplate, SM_REPORT_USE_GUIDANCE } from '@/utils/reportTemplates'
 import { buildSMWordPayload } from '@/utils/assessment-word-builders'
 import { exportReport } from '@/utils/report-export'
 
@@ -1018,22 +1018,6 @@ const getQuestionsByDimension = (dimension: string) => {
 // 导出报告
 const exportWord = async () => {
   try {
-    const { SMReportTemplate } = await import('@/utils/reportTemplates')
-
-    // 获取等级信息
-    const levelMap: Record<string, string> = {
-      '极重度': 'extremely_severe',
-      '重度': 'severe',
-      '中度': 'moderate',
-      '轻度': 'mild',
-      '边缘': 'borderline',
-      '正常': 'normal',
-      '良好': 'good',
-      '优秀': 'excellent',
-      '非常优秀': 'outstanding'
-    }
-    const levelKey = levelMap[reportData.value?.level] || 'normal'
-
     const reportContent = {
       student: {
         name: student.value?.name || '',
@@ -1046,7 +1030,7 @@ const exportWord = async () => {
         date: assessDate.value,
         raw_score: correctRawScore.value,
         sq_score: reportData.value?.sq_score || 0,
-        level: levelKey,
+        level: getLevelText(reportData.value?.level || ''),
         age_stage: reportData.value?.age_stage?.toString() || ''
       },
       dimensions: {
@@ -1057,8 +1041,8 @@ const exportWord = async () => {
         self_management: { pass: dimensionScores.value[4]?.passCount || 0, total: dimensionScores.value[4]?.totalCount || 0 },
         group_activity: { pass: dimensionScores.value[5]?.passCount || 0, total: dimensionScores.value[5]?.totalCount || 0 }
       },
-      suggestions: SMReportTemplate.trainingSuggestions[levelKey as keyof typeof SMReportTemplate.trainingSuggestions] || [],
-      guidance: SMReportTemplate.familyGuidance[levelKey as keyof typeof SMReportTemplate.familyGuidance] || []
+      suggestions: [SM_REPORT_USE_GUIDANCE.focus, ...SM_REPORT_USE_GUIDANCE.suggestions],
+      guidance: [...SM_REPORT_USE_GUIDANCE.familyGuidance]
     }
 
     const payload = buildSMWordPayload(

@@ -25,7 +25,7 @@ export interface EmotionalSessionRecordItem {
   accuracyRate: number
   hintCount: number
   retryCount: number
-  averageHintLevel: number
+  averageHintLevel: number | null
   completionStatus: 'completed' | 'cancelled' | 'interrupted'
   createdAt: string
 }
@@ -38,8 +38,18 @@ export interface EmotionalTrendPoint {
 export interface EmotionalPerformancePoint {
   emotion: string
   accuracy: number
-  averageHintLevel: number
+  averageHintLevel: number | null
   color: string
+}
+
+export interface EmotionalReportCoverage {
+  emotionSessions: number
+  emotionChoiceSamples: number
+  emotionChoiceMissing: number
+  hintSamples: number
+  careSessions: number
+  classifiedCareSessions: number
+  unclassifiedCareSessions: number
 }
 
 export interface EmotionalPreferencePoint {
@@ -57,8 +67,10 @@ export interface EmotionalStudentReportPayload {
   studentName: string
   totalSessions: number
   averageAccuracy: number
-  averageHintLevel: number
+  averageHintLevel: number | null
   totalDurationMinutes: number
+  coverage: EmotionalReportCoverage
+  coverageText: string
   trend: EmotionalTrendPoint[]
   emotionPerformance: EmotionalPerformancePoint[]
   carePreference: EmotionalPreferencePoint[]
@@ -414,11 +426,11 @@ export class EmotionalTrainingAPI {
         s.hint_count,
         s.retry_count,
         s.completion_status,
-        COALESCE((
+        (
           SELECT AVG(d.hint_level)
           FROM emotional_training_detail d
           WHERE d.session_id = s.id
-        ), 0) AS average_hint_level,
+        ) AS average_hint_level,
         s.created_at
       FROM emotional_training_session s
       INNER JOIN student st ON st.id = s.student_id
@@ -466,7 +478,9 @@ export class EmotionalTrainingAPI {
       accuracyRate: row.accuracy_rate || 0,
       hintCount: row.hint_count || 0,
       retryCount: row.retry_count || 0,
-      averageHintLevel: round(Number(row.average_hint_level || 0), 2),
+      averageHintLevel: row.average_hint_level === null || row.average_hint_level === undefined
+        ? null
+        : round(Number(row.average_hint_level), 2),
       completionStatus: row.completion_status || 'completed',
       createdAt: row.created_at,
     }))
@@ -491,8 +505,10 @@ export class EmotionalTrainingAPI {
         studentName: `学生 #${studentId}`,
         totalSessions: 0,
         averageAccuracy: 0,
-        averageHintLevel: 0,
+        averageHintLevel: null,
         totalDurationMinutes: 0,
+        coverage: { emotionSessions: 0, emotionChoiceSamples: 0, emotionChoiceMissing: 0, hintSamples: 0, careSessions: 0, classifiedCareSessions: 0, unclassifiedCareSessions: 0 },
+        coverageText: '当前没有可统计的情绪训练会话。',
         trend: [],
         emotionPerformance: [],
         carePreference: [],
@@ -504,7 +520,6 @@ export class EmotionalTrainingAPI {
 
     const studentName = records[0]?.studentName || `学生 #${studentId}`
     const averageAccuracy = round(records.reduce((sum, item) => sum + item.accuracyRate, 0) / records.length * 100, 1)
-    const averageHintLevel = round(records.reduce((sum, item) => sum + item.averageHintLevel, 0) / records.length, 2)
     const totalDurationMinutes = round(records.reduce((sum, item) => sum + item.durationMs, 0) / 60000, 1)
 
     const trend = records
@@ -527,28 +542,52 @@ export class EmotionalTrainingAPI {
       return { record, session, detailRows, metadata }
     })
 
-    const emotionAgg = new Map<ReportEmotionKey, { hits: number; total: number; hintSum: number; color: string }>()
+    const hintValues = sessionDetails.flatMap((item) => item.detailRows
+      .filter((detail: any) => detail.hint_level !== null && detail.hint_level !== undefined && Number.isFinite(Number(detail.hint_level)))
+      .map((detail: any) => Number(detail.hint_level)))
+    const averageHintLevel = hintValues.length > 0
+      ? round(hintValues.reduce((sum, value) => sum + value, 0) / hintValues.length, 2)
+      : null
+    const coverage: EmotionalReportCoverage = {
+      emotionSessions: records.filter((item) => item.subModule === 'emotion_scene').length,
+      emotionChoiceSamples: 0,
+      emotionChoiceMissing: 0,
+      hintSamples: hintValues.length,
+      careSessions: records.filter((item) => item.subModule === 'care_scene').length,
+      classifiedCareSessions: 0,
+      unclassifiedCareSessions: 0,
+    }
+
+    const emotionAgg = new Map<ReportEmotionKey, { hits: number; total: number; hintSum: number; hintCount: number; color: string }>()
     sessionDetails
       .filter((item) => item.record.subModule === 'emotion_scene')
       .forEach((item) => {
         const targetEmotion = normalizeReportEmotionKey(item.metadata?.targetEmotion)
         const detail = item.detailRows.filter((row: any) => row.step_type === 'emotion_choice').slice(-1)[0]
+        if (targetEmotion === 'unknown' || !detail || detail.is_correct === null || detail.is_correct === undefined
+          || ![0, 1].includes(Number(detail.is_correct))) return
+        coverage.emotionChoiceSamples += 1
         const bucket = emotionAgg.get(targetEmotion) || {
           hits: 0,
           total: 0,
           hintSum: 0,
+          hintCount: 0,
           color: item.metadata?.emotionColorHex || '#909399',
         }
         bucket.total += 1
-        bucket.hits += detail?.is_correct ? 1 : 0
-        bucket.hintSum += Number(detail?.hint_level || 0)
+        bucket.hits += Number(detail.is_correct)
+        if (detail.hint_level !== null && detail.hint_level !== undefined && Number.isFinite(Number(detail.hint_level))) {
+          bucket.hintSum += Number(detail.hint_level)
+          bucket.hintCount += 1
+        }
         emotionAgg.set(targetEmotion, bucket)
       })
+    coverage.emotionChoiceMissing = coverage.emotionSessions - coverage.emotionChoiceSamples
 
     const emotionPerformance = Array.from(emotionAgg.entries()).map(([emotion, stats]) => ({
       emotion: getReportEmotionLabel(emotion),
       accuracy: stats.total > 0 ? round((stats.hits / stats.total) * 100, 1) : 0,
-      averageHintLevel: stats.total > 0 ? round(stats.hintSum / stats.total, 2) : 0,
+      averageHintLevel: stats.hintCount > 0 ? round(stats.hintSum / stats.hintCount, 2) : null,
       color: stats.color,
     }))
 
@@ -561,6 +600,11 @@ export class EmotionalTrainingAPI {
           : null
         const parsed = summaryType ? JSON.parse(summaryType) : null
         const key = normalizeReportCareTypeKey(parsed?.dominantChoiceType)
+        if (key === 'unknown') {
+          coverage.unclassifiedCareSessions += 1
+          return
+        }
+        coverage.classifiedCareSessions += 1
         carePreferenceMap.set(key, (carePreferenceMap.get(key) || 0) + 1)
       })
 
@@ -568,6 +612,7 @@ export class EmotionalTrainingAPI {
       name: getReportCareTypeLabel(name),
       value,
     }))
+    const coverageText = `逐题情绪识别 ${coverage.emotionChoiceSamples}/${coverage.emotionSessions} 次可核验；提示明细 ${coverage.hintSamples} 条；关心表达 ${coverage.classifiedCareSessions}/${coverage.careSessions} 次可分类。缺失明细与未分类记录不计为错误、零提示或偏好；趋势与场景分布仍使用已存会话汇总。`
 
     const sceneMasteryMap = new Map<string, { total: number; accuracySum: number }>()
     records
@@ -602,21 +647,25 @@ export class EmotionalTrainingAPI {
     }))
 
     const weakestEmotion = emotionPerformance.slice().sort((a, b) => a.accuracy - b.accuracy)[0]
-    const highestHintEmotion = emotionPerformance.slice().sort((a, b) => b.averageHintLevel - a.averageHintLevel)[0]
+    const highestHintEmotion = emotionPerformance.filter((item) => item.averageHintLevel !== null)
+      .sort((a, b) => (b.averageHintLevel ?? 0) - (a.averageHintLevel ?? 0))[0]
     const preferredCare = carePreference.slice().sort((a, b) => b.value - a.value)[0]
 
     const suggestions: string[] = []
-    if (weakestEmotion) {
-      suggestions.push(`孩子在“${weakestEmotion.emotion}”情绪识别上的正确率约为 ${weakestEmotion.accuracy}%，建议结合真实情境做更多泛化练习。`)
+    if (coverage.emotionChoiceMissing > 0 || coverage.unclassifiedCareSessions > 0) {
+      suggestions.push('部分历史会话缺少可核验明细或关心类型，相关图表与偏好只使用已注明覆盖范围的数据。')
     }
-    if (highestHintEmotion && highestHintEmotion.averageHintLevel >= 1.5) {
-      suggestions.push(`“${highestHintEmotion.emotion}”相关任务平均仍需要 ${highestHintEmotion.averageHintLevel} 级提示，可先加强表情线索和场景线索配对。`)
+    if (weakestEmotion && weakestEmotion.accuracy < 80) {
+      suggestions.push(`在可核验的情绪识别明细中，“${weakestEmotion.emotion}”正确率为 ${weakestEmotion.accuracy}%；请结合具体题目和日常观察核对。`)
     }
-    if (preferredCare) {
-      suggestions.push(`当前孩子更常选择“${preferredCare.name}”式关心表达，后续可有意识补充其他表达方式的练习。`)
+    if (highestHintEmotion && highestHintEmotion.averageHintLevel !== null && highestHintEmotion.averageHintLevel >= 1.5) {
+      suggestions.push(`可核验的“${highestHintEmotion.emotion}”情绪识别明细平均提示层级为 ${highestHintEmotion.averageHintLevel}，请核对具体提示记录。`)
+    }
+    if (preferredCare && coverage.classifiedCareSessions >= 3) {
+      suggestions.push(`在 ${coverage.classifiedCareSessions} 次可分类关心会话中，“${preferredCare.name}”记录最多；该统计仅描述软件内选择。`)
     }
     if (suggestions.length === 0) {
-      suggestions.push('孩子在情绪模块中整体表现稳定，可以继续通过日常场景做自然巩固。')
+      suggestions.push('当前可核验的逐题样本不足以形成具体表现建议，请结合原始记录与日常观察。')
     }
 
     return {
@@ -626,6 +675,8 @@ export class EmotionalTrainingAPI {
       averageAccuracy,
       averageHintLevel,
       totalDurationMinutes,
+      coverage,
+      coverageText,
       trend,
       emotionPerformance,
       carePreference,

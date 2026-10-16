@@ -35,6 +35,7 @@ import {
 import {
   csirsEvaluationLevels,
   calculateTScore,
+  getConversionTable,
   getEvaluationLevel as getCSIRSEvaluationLevel
 } from '@/database/csirs-conversion'
 import type { CSIRSQuestion, CSIRSDimensionType } from '@/types/csirs'
@@ -49,7 +50,7 @@ export class CSIRSDriver extends BaseDriver {
   readonly scaleCode = 'csirs'
   readonly scaleName = '儿童感觉统合能力发展评定量表'
   readonly version = '2.0.0'
-  readonly ageRange = { min: 36, max: 156 }  // 3岁 - 13岁
+  readonly ageRange = { min: 36, max: 155 }  // 3岁至12岁11个月
   readonly totalQuestions = 58  // 最大题目数
 
   // CSIRS 维度
@@ -274,7 +275,7 @@ export class CSIRSDriver extends BaseDriver {
 
     for (const dim of dimensions) {
       rawScores[dim.code] = dim.rawScore || 0
-      tScores[dim.code] = dim.standardScore || 50
+      if (dim.standardScore !== undefined) tScores[dim.code] = dim.standardScore
     }
 
     // 1. 创建评估主记录
@@ -389,10 +390,11 @@ export class CSIRSDriver extends BaseDriver {
     ageYears: number
   ): Map<string, number> {
     const tScores = new Map<string, number>()
+    const conversionTable = getConversionTable(ageYears)
 
     for (const [dimensionName, rawScore] of dimensionRawScores) {
       const dimensionType = this.dimensionNameMap[dimensionName]
-      if (dimensionType) {
+      if (dimensionType && conversionTable?.dimensions[dimensionType]) {
         const tScore = calculateTScore(rawScore, ageYears, dimensionType)
         tScores.set(dimensionName, tScore)
       }
@@ -405,23 +407,9 @@ export class CSIRSDriver extends BaseDriver {
    * 计算平均 T 分（仅计算有转换表的维度）
    */
   private calculateAverageTScore(dimensionTScores: Map<string, number>): number {
-    // 排除 executive 维度（没有转换表）
-    const validDimensions = ['前庭觉调节与运动规划', '触觉调节与情绪行为', '身体感知与动作协调']
-
-    // 根据年龄添加 learning 维度
-    // learning 维度在6岁以上才有转换表
-
-    let totalTScore = 0
-    let count = 0
-
-    for (const [dimension, tScore] of dimensionTScores) {
-      if (validDimensions.includes(dimension) || dimension === '视听知觉与学业表现') {
-        totalTScore += tScore
-        count++
-      }
-    }
-
-    return count > 0 ? Math.round(totalTScore / count) : 50
+    const values = [...dimensionTScores.values()]
+    if (values.length === 0) throw new Error('CSIRS 当前年龄没有可用的 T 分转换维度')
+    return Math.round(values.reduce((sum, score) => sum + score, 0) / values.length)
   }
 
   /**
@@ -434,7 +422,7 @@ export class CSIRSDriver extends BaseDriver {
     const result: DimensionScore[] = []
 
     for (const [dimensionName, rawScore] of dimensionRawScores) {
-      const tScore = dimensionTScores.get(dimensionName) || 50
+      const tScore = dimensionTScores.get(dimensionName)
       const dimensionType = this.dimensionNameMap[dimensionName]
 
       // 获取该维度的题目数量
@@ -491,7 +479,7 @@ export class CSIRSDriver extends BaseDriver {
 
     // 找出最需要关注的维度
     const lowDimensions = dimensions
-      .filter(d => (d.standardScore || 50) < 40)
+      .filter(d => d.standardScore !== undefined && d.standardScore < 40)
       .map(d => d.name)
 
     let summary = `该儿童 CSIRS 平均 T 分为 ${avgTScore} 分，感觉统合能力等级为"${level}"。${description}`
@@ -514,7 +502,8 @@ export class CSIRSDriver extends BaseDriver {
     const weaknesses: string[] = []
 
     for (const dim of dimensions) {
-      const tScore = dim.standardScore || 50
+      const tScore = dim.standardScore
+      if (tScore === undefined) continue
       const dimensionName = dim.name
 
       if (tScore >= 60) {
@@ -578,12 +567,12 @@ export class CSIRSDriver extends BaseDriver {
     const focus: string[] = []
 
     // 按 T 分排序，找出最需要关注的维度
-    const sortedDimensions = [...dimensions].sort(
-      (a, b) => (a.standardScore || 50) - (b.standardScore || 50)
+    const sortedDimensions = dimensions.filter(dim => dim.standardScore !== undefined).sort(
+      (a, b) => (a.standardScore ?? 0) - (b.standardScore ?? 0)
     )
 
     for (const dim of sortedDimensions.slice(0, 3)) {
-      const tScore = dim.standardScore || 50
+      const tScore = dim.standardScore ?? 50
       if (tScore < 40) {
         if (dim.name.includes('前庭觉')) {
           focus.push('前庭觉训练')

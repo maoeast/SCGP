@@ -165,6 +165,8 @@ export async function checkForUpdates(): Promise<boolean> {
 
   state.isChecking = true
   state.error = null
+  state.updateAvailable = false
+  state.latestVersion = ''
 
   try {
     const result = await window.electronAPI.invoke('update:check-for-updates')

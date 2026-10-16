@@ -22,6 +22,7 @@ type CareSceneGeneratedFieldInput = Pick<
   emotionChips?: string[]
   comfortTip?: string
   description?: string
+  generatedFieldsInputSignature?: string
 }
 
 type CareSceneGeneratedFields = Pick<
@@ -254,13 +255,31 @@ export function buildCareSceneGeneratedFields(
 export function enrichCareSceneGeneratedFields<T extends Omit<CareSceneGeneratedFieldInput, 'description'>>(
   input: T,
   description = '',
-): T & CareSceneGeneratedFields {
+): T & CareSceneGeneratedFields & { generatedFieldsInputSignature: string } {
+  const signature = JSON.stringify({
+    name: input.name,
+    title: input.title,
+    speakerPerspectiveText: input.speakerPerspectiveText,
+    receiverPerspectiveText: input.receiverPerspectiveText,
+    receiverEmotion: input.receiverEmotion,
+    careType: input.careType,
+    specificEmotionLabel: input.specificEmotionLabel,
+    utterances: input.utterances,
+    preferredUtteranceIds: input.preferredUtteranceIds,
+    tags: input.tags,
+    description,
+  })
+  const inputsChanged = Boolean(input.generatedFieldsInputSignature && input.generatedFieldsInputSignature !== signature)
+  const hasPlaceholder = input.emotionChips?.some((chip) => chip.includes('请填写')) || false
   return {
     ...input,
     ...buildCareSceneGeneratedFields({
       ...input,
       description,
+      emotionChips: inputsChanged || hasPlaceholder ? [] : input.emotionChips,
+      comfortTip: inputsChanged ? '' : input.comfortTip,
     }),
+    generatedFieldsInputSignature: signature,
   }
 }
 

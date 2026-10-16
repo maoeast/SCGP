@@ -380,6 +380,8 @@ const itemMotionStyles = ref<Record<number, CSSProperties>>({})
 const woodTargetActive = ref(false)
 
 const trialStartTime = ref(0)
+const gameStartTime = ref(0)
+const gameEndTime = ref(0)
 const trials = ref<TrialData[]>([])
 const roundTimeout = ref<number | null>(null)
 const timerInterval = ref<number | null>(null)
@@ -576,9 +578,9 @@ const sessionData = computed<GameSessionData>(() => {
   return {
     taskId: props.taskId,
     studentId: props.studentId,
-    startTime: trials.value[0]?.timestamp || Date.now(),
-    endTime: Date.now(),
-    duration: props.timeLimit * props.rounds,
+    startTime: gameStartTime.value,
+    endTime: gameEndTime.value,
+    duration: Math.max(1, Math.round((gameEndTime.value - gameStartTime.value) / 1000)),
     trials: trials.value,
     totalTrials: trials.value.length,
     correctTrials: correct,
@@ -1021,6 +1023,7 @@ function showFeedback(type: 'success' | 'error', message: string) {
 function endGame() {
   if (gameEnded.value) return
 
+  gameEndTime.value = Date.now()
   gameEnded.value = true
   clearRoundTimer()
   clearFeedbackTimer()
@@ -1034,6 +1037,7 @@ function endGame() {
 }
 
 function startGame() {
+  gameStartTime.value = Date.now()
   startNewRound()
 
   timerInterval.value = window.setInterval(() => {
