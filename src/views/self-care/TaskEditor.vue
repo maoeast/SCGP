@@ -2,13 +2,11 @@
   <div class="page-container scgp-admin-page self-care-task-editor-page" v-loading="loading">
     <div class="page-header self-care-task-editor-header">
       <div class="header-left">
-        <h1>{{ isEditMode ? '编辑自理任务' : '新建自理任务' }}</h1>
-        <p class="subtitle">
-          任务资源继续保存到 `sys_training_resource`，授权继续挂接 `life_skills`。
-        </p>
+        <h1>{{ isEditMode ? '编辑任务' : '新建任务' }}</h1>
+        <p class="subtitle">填写任务内容，再按顺序添加步骤。</p>
       </div>
       <div class="header-right">
-        <el-button @click="goBack">返回任务列表</el-button>
+        <el-button @click="goBack">返回</el-button>
       </div>
     </div>
 
@@ -17,58 +15,77 @@
         ref="formRef"
         :model="form"
         :rules="rules"
-        label-width="110px"
+        label-width="80px"
         class="self-care-task-editor-form"
       >
         <el-card shadow="never" class="editor-card">
           <template #header>
             <div class="editor-card__header">
-              <span>资源基础信息</span>
-              <el-tag size="small" type="primary">{{ isEditMode ? '编辑模式' : '新建模式' }}</el-tag>
+              <span>基本信息</span>
+              <span class="editor-card__hint">先给任务起个名字</span>
             </div>
           </template>
 
           <el-row :gutter="16">
             <el-col :xs="24" :md="12">
-              <el-form-item label="任务名称" prop="name">
+              <el-form-item label="名称" prop="name">
                 <el-input
                   v-model="form.name"
                   maxlength="50"
                   show-word-limit
-                  placeholder="例如：使用勺子进食"
+                  placeholder="例如：用勺子吃饭"
                 />
               </el-form-item>
             </el-col>
 
             <el-col :xs="24" :md="12">
-              <el-form-item label="所属分类" prop="category">
-                <el-input
+              <el-form-item label="分类" prop="category">
+                <el-select
                   v-model="form.category"
-                  placeholder="例如：selfcare"
-                />
+                  filterable
+                  allow-create
+                  default-first-option
+                  placeholder="选一个分类"
+                >
+                  <el-option
+                    v-for="item in categoryOptions"
+                    :key="item.key"
+                    :label="item.label"
+                    :value="item.label"
+                  />
+                </el-select>
               </el-form-item>
             </el-col>
           </el-row>
 
-          <el-form-item label="任务描述">
+          <el-form-item label="说明">
             <el-input
               v-model="form.description"
               type="textarea"
               :rows="3"
               maxlength="500"
               show-word-limit
-              placeholder="补充教学目标、执行提示或适用说明"
+              placeholder="写下孩子要练习什么"
             />
           </el-form-item>
 
-          <el-form-item label="封面路径">
-            <el-input
-              v-model="form.coverImage"
-              placeholder="resource://images/self-care/cover.png"
-            />
+          <el-form-item label="文件夹">
+            <div class="file-field">
+              <el-input :model-value="mediaFolder || '未选择文件夹'" readonly />
+              <el-button @click="chooseMediaFolder">选文件夹</el-button>
+            </div>
+            <div class="field-hint">选文件时会从这里打开</div>
           </el-form-item>
 
-          <el-form-item label="能力标签">
+          <el-form-item label="封面">
+            <div class="file-field">
+              <el-input :model-value="coverFileName || (form.coverImage ? '已添加封面' : '未添加封面')" readonly />
+              <el-button :loading="choosingCover" @click="chooseCover">选图片</el-button>
+              <el-button v-if="form.coverImage" text @click="clearCover">移除</el-button>
+            </div>
+          </el-form-item>
+
+          <el-form-item label="标签">
             <div class="tag-editor">
               <div class="tag-editor__list">
                 <el-tag
@@ -80,16 +97,16 @@
                 >
                   {{ tag }}
                 </el-tag>
-                <span v-if="form.tags.length === 0" class="tag-editor__empty">暂无标签</span>
+                <span v-if="form.tags.length === 0" class="tag-editor__empty">还没添加标签</span>
               </div>
 
               <div class="tag-editor__actions">
                 <el-input
                   v-model="newTag"
-                  placeholder="输入标签后回车"
+                  placeholder="例如：手眼配合"
                   @keyup.enter="addTag"
                 />
-                <el-button plain @click="addTag">添加标签</el-button>
+                <el-button plain @click="addTag">添加</el-button>
               </div>
             </div>
           </el-form-item>
@@ -98,21 +115,24 @@
         <el-card shadow="never" class="editor-card">
           <template #header>
             <div class="editor-card__header">
-              <span>任务步骤配置</span>
-              <span class="editor-card__hint">与资源中心共用同一套任务元数据编辑器</span>
+              <span>操作步骤</span>
+              <span class="editor-card__hint">按实际操作顺序填写</span>
             </div>
           </template>
 
           <TaskTrainingEditor
             v-model="form.metadata"
             :resource-name="form.name"
+            :media-folder="mediaFolder"
+            :show-errors="showStepErrors"
+            simple-mode
           />
         </el-card>
 
         <div class="editor-actions">
           <el-button @click="goBack">取消</el-button>
           <el-button type="primary" :loading="saving" @click="handleSave">
-            {{ isEditMode ? '保存修改' : '创建任务' }}
+            {{ isEditMode ? '保存' : '创建' }}
           </el-button>
         </div>
       </el-form>
@@ -125,6 +145,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import { SelfCareTaskAPI } from '@/database/self-care-task-api'
+import { SELF_CARE_CATEGORY_FILTERS } from '@/features/self-care/task-gallery'
 import {
   createTaskTrainingEditorModel,
   normalizeTaskTrainingEditorModel,
@@ -135,6 +156,7 @@ import TaskTrainingEditor from '@/views/resource-center/editors/TaskTrainingEdit
 const router = useRouter()
 const route = useRoute()
 const api = new SelfCareTaskAPI()
+const categoryOptions = SELF_CARE_CATEGORY_FILTERS.filter((item) => item.key !== 'all')
 
 const taskId = computed(() => {
   const raw = Array.isArray(route.params.taskId) ? route.params.taskId[0] : route.params.taskId
@@ -147,6 +169,10 @@ const loading = ref(false)
 const saving = ref(false)
 const formRef = ref<FormInstance>()
 const newTag = ref('')
+const mediaFolder = ref('')
+const coverFileName = ref('')
+const choosingCover = ref(false)
+const showStepErrors = ref(false)
 
 const form = reactive({
   name: '',
@@ -159,16 +185,55 @@ const form = reactive({
 
 const rules: FormRules = {
   name: [
-    { required: true, message: '请输入任务名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '任务名称长度需为 2-50 个字符', trigger: 'blur' },
+    { required: true, message: '请填写名称', trigger: 'blur' },
+    { min: 2, max: 50, message: '名称请写 2 到 50 字', trigger: 'blur' },
   ],
   category: [
-    { required: true, message: '请输入任务分类', trigger: 'blur' },
+    { required: true, message: '请填写分类', trigger: 'blur' },
   ],
 }
 
 function goBack() {
   router.push('/self-care/tasks')
+}
+
+async function chooseMediaFolder() {
+  if (!window.electronAPI?.selectFolder) {
+    ElMessage.warning('当前无法选择文件夹')
+    return
+  }
+  try {
+    const selected = await window.electronAPI.selectFolder()
+    if (selected) mediaFolder.value = selected
+  } catch (error) {
+    console.error('[TaskEditor] 选择文件夹失败:', error)
+    ElMessage.error('选择文件夹失败')
+  }
+}
+
+async function chooseCover() {
+  if (!window.electronAPI?.selectSelfCareMedia) {
+    ElMessage.warning('请在桌面版中添加图片')
+    return
+  }
+  choosingCover.value = true
+  try {
+    const selected = await window.electronAPI.selectSelfCareMedia('image', mediaFolder.value)
+    if (selected) {
+      form.coverImage = selected.path
+      coverFileName.value = selected.fileName
+    }
+  } catch (error) {
+    console.error('[TaskEditor] 添加封面失败:', error)
+    ElMessage.error('添加封面失败')
+  } finally {
+    choosingCover.value = false
+  }
+}
+
+function clearCover() {
+  form.coverImage = ''
+  coverFileName.value = ''
 }
 
 function addTag() {
@@ -195,6 +260,7 @@ function applyTask(task: Awaited<ReturnType<SelfCareTaskAPI['getTaskById']>>) {
   form.category = task.category || ''
   form.description = task.description || ''
   form.coverImage = task.coverImage || ''
+  coverFileName.value = ''
   form.tags = [...(task.tags || [])]
   form.metadata = normalizeTaskTrainingEditorModel(task.metadata, task.name)
 }
@@ -209,7 +275,7 @@ async function loadTask() {
   try {
     const task = api.getTaskById(taskId.value)
     if (!task) {
-      ElMessage.error('未找到对应的自理任务')
+      ElMessage.error('找不到这个任务')
       goBack()
       return
     }
@@ -217,7 +283,7 @@ async function loadTask() {
     applyTask(task)
   } catch (error) {
     console.error('[TaskEditor] 加载任务失败:', error)
-    ElMessage.error('加载任务失败')
+    ElMessage.error('打开任务失败')
   } finally {
     loading.value = false
   }
@@ -225,6 +291,7 @@ async function loadTask() {
 
 async function handleSave() {
   if (!formRef.value) return
+  showStepErrors.value = true
 
   try {
     await formRef.value.validate()
@@ -233,40 +300,46 @@ async function handleSave() {
   }
 
   const normalizedMetadata = normalizeTaskTrainingEditorModel(form.metadata, form.name)
+  const missingStepIndex = normalizedMetadata.steps.findIndex((step) => !step.text.trim())
+  if (missingStepIndex !== -1) {
+    ElMessage.error(`请填写第 ${missingStepIndex + 1} 步`)
+    return
+  }
   const errors = validateTaskTrainingEditorModel(normalizedMetadata)
   if (errors.length > 0) {
-    ElMessage.error(errors[0] || '任务步骤配置未完成')
+    ElMessage.error(errors[0] || '请补全操作步骤')
     return
   }
 
   saving.value = true
   try {
     if (isEditMode.value && taskId.value !== null) {
-      api.updateTask(taskId.value, {
+      const updated = api.updateTask(taskId.value, {
         name: form.name,
         category: form.category,
         description: form.description || undefined,
-        coverImage: form.coverImage || undefined,
+        coverImage: form.coverImage,
         tags: form.tags,
         metadata: normalizedMetadata,
       })
-      ElMessage.success('任务已保存')
+      if (!updated) throw new Error('任务不存在')
+      ElMessage.success('已保存')
     } else {
       api.createTask({
         name: form.name,
         category: form.category,
         description: form.description || undefined,
-        coverImage: form.coverImage || undefined,
+        coverImage: form.coverImage,
         tags: form.tags,
         metadata: normalizedMetadata,
       })
-      ElMessage.success('任务已创建')
+      ElMessage.success('已创建')
     }
 
     goBack()
   } catch (error) {
     console.error('[TaskEditor] 保存任务失败:', error)
-    ElMessage.error('保存任务失败')
+    ElMessage.error('保存失败')
   } finally {
     saving.value = false
   }
@@ -311,6 +384,18 @@ onMounted(() => {
   width: 100%;
 }
 
+.file-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.field-hint {
+  color: #909399;
+  font-size: 12px;
+}
+
 .tag-editor__list {
   display: flex;
   flex-wrap: wrap;
@@ -346,6 +431,7 @@ onMounted(() => {
 
   .editor-card__header,
   .tag-editor__actions,
+  .file-field,
   .editor-actions {
     display: flex;
     flex-direction: column;

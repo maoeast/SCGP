@@ -45,7 +45,7 @@ export const selfCareRoutes: RouteRecordRaw[] = [
     name: 'SelfCareTaskCreate',
     component: SelfCareTaskEditor,
     meta: {
-      title: '新建自理任务',
+      title: '新建任务',
       hideInMenu: true,
       roles: ['admin', 'teacher'],
       moduleCode: SELF_CARE_MODULE_CODE,
@@ -56,7 +56,7 @@ export const selfCareRoutes: RouteRecordRaw[] = [
     name: 'SelfCareTaskEdit',
     component: SelfCareTaskEditor,
     meta: {
-      title: '编辑自理任务',
+      title: '编辑任务',
       hideInMenu: true,
       roles: ['admin', 'teacher'],
       moduleCode: SELF_CARE_MODULE_CODE,

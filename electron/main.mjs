@@ -1080,6 +1080,42 @@ ipcMain.handle('select-folder', async () => {
   return result.canceled ? null : result.filePaths[0]
 })
 
+// 自理任务素材：选中后复制到应用数据目录，保存可长期使用的资源地址。
+ipcMain.handle('select-self-care-media', async (_event, kind, defaultPath) => {
+  const extensions = {
+    image: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'],
+    video: ['mp4', 'webm'],
+    audio: ['mp3', 'wav', 'm4a', 'ogg'],
+  }
+  if (!Object.hasOwn(extensions, kind)) {
+    throw new Error('不支持的素材类型')
+  }
+
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    defaultPath: typeof defaultPath === 'string' && defaultPath ? defaultPath : undefined,
+    filters: [{ name: '可用文件', extensions: extensions[kind] }],
+  })
+  if (result.canceled || !result.filePaths[0]) return null
+
+  const sourcePath = result.filePaths[0]
+  const extension = path.extname(sourcePath).slice(1).toLowerCase()
+  if (!extensions[kind].includes(extension)) {
+    throw new Error('文件格式不支持')
+  }
+
+  const relativePath = `uploaded/self-care/${crypto.randomUUID()}.${extension}`
+  const destination = path.join(getResourceRoot(), relativePath)
+  try {
+    await fs.mkdir(path.dirname(destination), { recursive: true })
+    await fs.copyFile(sourcePath, destination)
+    return { path: `resource://${relativePath}`, fileName: path.basename(sourcePath) }
+  } catch (error) {
+    console.error('[SelfCare] 素材导入失败:', error)
+    throw new Error('文件添加失败')
+  }
+})
+
 // ========== 数据库备份专用接口 ==========
 
 // 获取用户数据目录

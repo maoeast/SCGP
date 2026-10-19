@@ -1,6 +1,7 @@
 <template>
   <div class="task-training-editor">
     <el-alert
+      v-if="!simpleMode"
       type="info"
       :closable="false"
       show-icon
@@ -9,7 +10,7 @@
     />
 
     <el-alert
-      v-if="validationErrors.length > 0"
+      v-if="!simpleMode && validationErrors.length > 0"
       type="warning"
       :closable="false"
       show-icon
@@ -28,7 +29,7 @@
       require-asterisk-position="right"
       class="editor-form"
     >
-      <el-card shadow="never" class="editor-card">
+      <el-card v-if="!simpleMode" shadow="never" class="editor-card">
         <template #header>
           <div class="card-header">
             <span>任务基础信息</span>
@@ -122,8 +123,8 @@
       <el-card shadow="never" class="editor-card">
         <template #header>
           <div class="card-header">
-            <span>任务步骤</span>
-            <el-button type="primary" plain @click="addStep">新增步骤</el-button>
+            <span v-if="!simpleMode">任务步骤</span>
+            <el-button type="primary" plain @click="addStep">加一步</el-button>
           </div>
         </template>
 
@@ -138,11 +139,11 @@
               <div class="card-header">
                 <span>步骤 {{ step.seq }}</span>
                 <div class="step-actions">
-                  <el-tag size="small" effect="plain">{{ step.id }}</el-tag>
+                  <el-tag v-if="!simpleMode" size="small" effect="plain">{{ step.id }}</el-tag>
                   <el-button
                     text
                     type="danger"
-                    :disabled="modelValue.steps.length <= 1"
+                    :disabled="modelValue.steps.length <= 1 || !!choosingMedia"
                     @click="removeStep(stepIndex)"
                   >
                     删除
@@ -152,7 +153,7 @@
             </template>
 
             <el-row :gutter="16">
-              <el-col :xs="24" :md="8">
+              <el-col v-if="!simpleMode" :xs="24" :md="8">
                 <el-form-item label="步骤 ID">
                   <el-input
                     :model-value="step.id"
@@ -162,18 +163,53 @@
                 </el-form-item>
               </el-col>
 
-              <el-col :xs="24" :md="16">
-                <el-form-item label="步骤说明" required :error="!step.text.trim() ? '请填写步骤说明' : ''">
+              <el-col :xs="24" :md="simpleMode ? 24 : 16">
+                <el-form-item
+                  :label="simpleMode ? '怎么做' : '步骤说明'"
+                  required
+                  :error="!step.text.trim() && (!simpleMode || showErrors || touchedSteps.has(step.id)) ? '请填写这一步' : ''"
+                >
                   <el-input
                     :model-value="step.text"
-                    placeholder="例如 拿起勺子"
+                    placeholder="例如：拿起勺子"
                     @update:model-value="updateStepField(stepIndex, 'text', $event)"
+                    @blur="markStepTouched(step.id)"
                   />
                 </el-form-item>
               </el-col>
             </el-row>
 
-            <el-row :gutter="16">
+            <el-row v-if="simpleMode" :gutter="16">
+              <el-col :xs="24" :md="8">
+                <el-form-item label="步骤图片">
+                  <div class="media-picker">
+                    <span class="media-picker__name">{{ selectedMediaNames[`${stepIndex}:imagePath`] || (step.imagePath ? '已添加图片' : '未添加图片') }}</span>
+                    <el-button :loading="choosingMedia === `${stepIndex}:imagePath`" @click="chooseStepMedia(stepIndex, 'imagePath', 'image')">选图片</el-button>
+                    <el-button v-if="step.imagePath" text @click="clearStepMedia(stepIndex, 'imagePath')">移除</el-button>
+                  </div>
+                </el-form-item>
+              </el-col>
+              <el-col :xs="24" :md="8">
+                <el-form-item label="示范视频">
+                  <div class="media-picker">
+                    <span class="media-picker__name">{{ selectedMediaNames[`${stepIndex}:videoPath`] || (step.videoPath ? '已添加视频' : '未添加视频') }}</span>
+                    <el-button :loading="choosingMedia === `${stepIndex}:videoPath`" @click="chooseStepMedia(stepIndex, 'videoPath', 'video')">选视频</el-button>
+                    <el-button v-if="step.videoPath" text @click="clearStepMedia(stepIndex, 'videoPath')">移除</el-button>
+                  </div>
+                </el-form-item>
+              </el-col>
+              <el-col :xs="24" :md="8">
+                <el-form-item label="语音提示">
+                  <div class="media-picker">
+                    <span class="media-picker__name">{{ selectedMediaNames[`${stepIndex}:audioPath`] || (step.audioPath ? '已添加语音' : '未添加语音') }}</span>
+                    <el-button :loading="choosingMedia === `${stepIndex}:audioPath`" @click="chooseStepMedia(stepIndex, 'audioPath', 'audio')">选音频</el-button>
+                    <el-button v-if="step.audioPath" text @click="clearStepMedia(stepIndex, 'audioPath')">移除</el-button>
+                  </div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-row v-else :gutter="16">
               <el-col :xs="24" :md="8">
                 <el-form-item label="图片路径">
                   <el-input
@@ -212,7 +248,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import type {
   TaskTrainingAbilityItemMeta,
   TaskTrainingCategoryMeta,
@@ -228,11 +265,21 @@ import { normalizePresetResourcePathForStorage } from '@/utils/preset-resource'
 interface Props {
   modelValue: TaskTrainingResourceMeta
   resourceName?: string
+  simpleMode?: boolean
+  mediaFolder?: string
+  showErrors?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   resourceName: '',
+  simpleMode: false,
+  mediaFolder: '',
+  showErrors: false,
 })
+
+const choosingMedia = ref('')
+const selectedMediaNames = ref<Record<string, string>>({})
+const touchedSteps = ref<Set<string>>(new Set())
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: TaskTrainingResourceMeta): void
@@ -342,6 +389,10 @@ function updateStepField<K extends keyof Pick<TaskTrainingStep, 'id' | 'text'>>(
   })
 }
 
+function markStepTouched(stepId: string) {
+  touchedSteps.value = new Set(touchedSteps.value).add(stepId)
+}
+
 function updateStepMediaField(
   stepIndex: number,
   key: keyof Pick<TaskTrainingStep, 'imagePath' | 'videoPath' | 'audioPath'>,
@@ -356,10 +407,46 @@ function updateStepMediaField(
   })
 }
 
+async function chooseStepMedia(
+  stepIndex: number,
+  key: keyof Pick<TaskTrainingStep, 'imagePath' | 'videoPath' | 'audioPath'>,
+  kind: 'image' | 'video' | 'audio',
+) {
+  if (!window.electronAPI?.selectSelfCareMedia) {
+    ElMessage.warning('请在桌面版中添加文件')
+    return
+  }
+  const selectionKey = `${stepIndex}:${key}`
+  choosingMedia.value = selectionKey
+  try {
+    const selected = await window.electronAPI.selectSelfCareMedia(kind, props.mediaFolder)
+    if (selected) {
+      updateStepMediaField(stepIndex, key, selected.path)
+      selectedMediaNames.value[selectionKey] = selected.fileName
+    }
+  } catch (error) {
+    console.error('[TaskTrainingEditor] 添加文件失败:', error)
+    ElMessage.error('添加文件失败')
+  } finally {
+    choosingMedia.value = ''
+  }
+}
+
+function clearStepMedia(
+  stepIndex: number,
+  key: keyof Pick<TaskTrainingStep, 'imagePath' | 'videoPath' | 'audioPath'>,
+) {
+  updateStepMediaField(stepIndex, key, '')
+  delete selectedMediaNames.value[`${stepIndex}:${key}`]
+}
+
 function addStep() {
+  const usedIds = new Set(props.modelValue.steps.map((step) => step.id))
+  let nextIndex = props.modelValue.steps.length
+  while (usedIds.has(`step_${nextIndex + 1}`)) nextIndex += 1
   emitModel({
     ...props.modelValue,
-    steps: [...props.modelValue.steps, createTaskTrainingStep(props.modelValue.steps.length)],
+    steps: [...props.modelValue.steps, createTaskTrainingStep(nextIndex)],
   })
 }
 
@@ -367,6 +454,7 @@ function removeStep(stepIndex: number) {
   if (props.modelValue.steps.length <= 1) return
   const nextSteps = [...props.modelValue.steps]
   nextSteps.splice(stepIndex, 1)
+  selectedMediaNames.value = {}
   emitModel({
     ...props.modelValue,
     steps: nextSteps,
@@ -422,12 +510,33 @@ function removeStep(stepIndex: number) {
   gap: 12px;
 }
 
+.media-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.media-picker__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #606266;
+}
+
 @media (max-width: 768px) {
   .card-header,
   .step-actions {
     display: flex;
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .media-picker {
+    flex-wrap: wrap;
   }
 }
 </style>

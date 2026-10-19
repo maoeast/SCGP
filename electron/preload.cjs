@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectFile: (filters) => ipcRenderer.invoke('select-file', filters),
   selectFiles: (filters) => ipcRenderer.invoke('select-files', filters),
   selectFolder: () => ipcRenderer.invoke('select-folder'),
+  selectSelfCareMedia: (kind, defaultPath) => ipcRenderer.invoke('select-self-care-media', kind, defaultPath),
 
   // 获取机器码（用于激活系统）
   getMachineId: () => ipcRenderer.invoke('get-machine-id'),
@@ -88,6 +89,7 @@ if (!process.contextIsolated) {
     selectFile: (filters) => Promise.resolve(null),
     selectFiles: (filters) => Promise.resolve([]),
     selectFolder: () => Promise.resolve(null),
+    selectSelfCareMedia: (kind, defaultPath) => Promise.resolve(null),
     getMachineId: () => Promise.resolve('mock-machine-id'),
     getAppVersion: () => Promise.resolve('0.0.0'),
     getElectronVersion: () => Promise.resolve('0.0.0'),

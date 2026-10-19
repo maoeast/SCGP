@@ -122,6 +122,10 @@ export interface ElectronAPI {
    * @returns Promise<string | null> - 文件夹路径或 null
    */
   selectFolder: () => Promise<string | null>
+  selectSelfCareMedia: (
+    kind: 'image' | 'video' | 'audio',
+    defaultPath?: string,
+  ) => Promise<{ path: string; fileName: string } | null>
 
   // ========== 系统信息 ==========
   /**
