@@ -1,6 +1,10 @@
+import emotionSceneCharacterNamesRaw from '../../../../docs/references/emotion-scene-character-names.json?raw'
+
 import { EMOTIONAL_BASE_EMOTION_META } from '@/features/emotional/emotion-catalog'
 import type { SceneData, StepData, TrainingSessionPayload, TrainingStepType } from '@/stores/useTrainingStore'
 import type { EmotionSceneResourceMeta } from '@/types/emotional'
+
+const characterNames = JSON.parse(emotionSceneCharacterNamesRaw) as Record<string, string>
 
 interface CompileEmotionSceneContext {
   studentId: number
@@ -25,7 +29,7 @@ export function compileEmotionSceneImmersive(
     description: context.resourceDescription || null,
     background_image_url: context.coverImage || meta.imageUrl || null,
     target_emotion: meta.targetEmotion,
-    character_name: '小朋友',
+    character_name: characterNames[meta.sceneCode]?.trim() || '小朋友',
     difficulty_level: meta.difficultyLevel,
     scene_domain: meta.sceneDomain || null,
     age_range: meta.ageRange || null,
