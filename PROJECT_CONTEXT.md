@@ -4,9 +4,10 @@
 > 何时阅读：读完 `AGENTS.md` 与 `.continue-here.md` 后，仍需要补全全局背景时。
 > 不负责：承担历史流水日志；历史内容应转入 `docs/logs/`、`docs/CHANGELOG.md` 或 git history。
 >
-> 用途：当前有效协作上下文摘要。
+> 用途：稳定架构事实与分日期阶段记录。后续历史段落不代表最新任务安排。
 > 读取策略：不再作为每次新会话默认首读文件。默认先读 `AGENTS.md`、`docs/planning/2026-03-23-scgp-context-bootstrap.md`、`README.md`；只有在需要延续工作背景时再读本文件。
 > 历史说明：旧版长篇工作日志与阶段流水已从高频入口移出，历史摘要见 `docs/logs/2026-03-26-project-context-archive.md`，更细节的完成项见 `docs/CHANGELOG.md` 或 git history。
+> 2026-10-19 校正：本文件后续按日期累积的“当前”“下一步”属于各自日期的阶段快照，不表示今天仍在执行。最新发布边界见 `.continue-here.md` 与 `docs/reports/2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md`；`docs/reports/2026-10-19-current-worktree-handoff.md` 是发布前快照。最终以代码和 Git 现场复核。
 
 ## 1. 当前项目事实
 
@@ -47,14 +48,14 @@
 
 ## 3. 当前已确认的重要变更
 
-### 3.0 里程碑状态更新
+### 3.0 2026-04-04 里程碑状态（历史快照）
 
 - `v1.6 Emotional Engine Refactoring` 已于 `2026-04-04` 完成归档
-- 当前活动里程碑已切换为：
+- 当时活动里程碑已切换为：
   - `v1.7 CNBS-R2016 Assessment Integration`
-- 当前 v1.7 主线目标：
+- 当时 v1.7 主线目标：
   - 将 `0-6岁儿童发育行为评估量表（儿心量表Ⅱ / CNBS-R2016）` 接入现有 `AssessmentContainer + ScaleDriver + per-scale table + report_record` 评估主链
-- 当前 v1.7 明确不纳入范围：
+- 当时 v1.7 明确不纳入范围：
   - FMDA runtime QA
   - unified training-record closeout
   - resource-center redesign
@@ -204,9 +205,9 @@
   - 尚未做 Electron 实机 smoke（已列为 2026-04-13 首要任务）
   - 尚未完成 `care_scene` 正式训练记录闭环接线与本地 DB 实写核验
   - 已完成“评估中心”页面布局重构计划（2026-04-13），详见 `docs/planning/2026-04-13-assessment-layout-refactor-plan.md`
-## 4. 当前活跃未完成主线
+## 4. 2026-04 阶段未完成主线（历史快照）
 
-当前下一条真正的大改动，不是单页修补，而是：
+当时计划的下一条大改动是：
 
 - 统一 `游戏训练 / 器材训练 / 训练记录`
 - 收口为同一套 6 个 internal training entries
@@ -251,11 +252,10 @@
 
 默认新会话：
 
-1. `HANDOFF.md`
-2. `AGENTS.md`
-3. `docs/planning/2026-03-23-scgp-context-bootstrap.md`
-4. `README.md`
-5. `.continue-here.md`
+1. `AGENTS.md`
+2. `docs/planning/2026-03-23-scgp-context-bootstrap.md`
+3. `README.md`
+4. 续接任务时读 `.continue-here.md`
 
 按需再读：
 
@@ -264,10 +264,10 @@
 8. `docs/reports/2026-03-13-scgp-prd-gap-analysis.md`
 9. `重构实施技术规范.md`
 
-## 7. 当前新增全局约束
+## 7. 2026-04-19 工作区约束记录（历史快照）
 
-- `2026-04-19` 起，在继续新的功能开发或运行进一步代码验证前，必须先对现有脏工作区做分桶基线与抽样审计。
-- 当前已知脏工作区规模为 `4061` 个文件；后续会话默认先参考 `docs/reports/2026-04-19-dirty-worktree-baseline.md` 再决定恢复、保留或归档策略。
+- 2026-04-19 当时约定：继续新的功能开发或运行进一步代码验证前，先对当时的脏工作区做分桶基线与抽样审计。
+- `4061` 个文件是 2026-04-19 的历史脏工作区规模，不代表现在；后续会话必须重新查看 Git 状态。旧基线见 `docs/reports/2026-04-19-dirty-worktree-baseline.md`。
 
 ### 3.3.2 2026-04-13 cross-entry custom games Phase 0 execution update
 

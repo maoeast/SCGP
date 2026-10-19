@@ -16,9 +16,12 @@
 
 ### 当前上下文
 
+- [2026-10-19 同版本发布报告](./reports/2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md) — 最新 1.1.5 代码、构建、部署和验证边界；Git 状态须现场重查
+- [2026-10-19 发布前仓库快照](./reports/2026-10-19-current-worktree-handoff.md) — 本轮提交前的工作区与验证范围，仅作历史参考
 - [../PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md)
 - [../重构实施技术规范.md](../重构实施技术规范.md)
 - [客户交付软件教程系列目录与制作状态](../designs/customer-training-videos/系列目录与制作状态.md)：01–24 操作样片、实际成片路径、验证证据、版本边界与交付前缺口。
+- 视频课堂源稿与发布记录在本地未跟踪的 `designs/scgp-video-library/README.md`；尚未纳入仓库，远端读者不能使用此路径
 
 ### 文档治理
 
@@ -47,11 +50,11 @@
 - [2026-04-08-care-scene-immersive-refactor-plan.md](./planning/2026-04-08-care-scene-immersive-refactor-plan.md)
 - [2026-04-13-cross-entry-custom-games-expansion-plan.md](./planning/2026-04-13-cross-entry-custom-games-expansion-plan.md)
 - [2026-04-19-wave1-auth-activation-hardening-plan.md](./planning/2026-04-19-wave1-auth-activation-hardening-plan.md)
-- [2026-05-08-self-care-training-module-implementation-plan.md](./planning/2026-05-08-self-care-training-module-implementation-plan.md)
+- [2026-05-08-self-care-training-module-implementation-plan.md](./planning/2026-05-08-self-care-training-module-implementation-plan.md) — 生活自理模块历史实施计划；当前新建/编辑与执行链路以代码和 2026-10-19 快照为准
 - [2026-05-20-entitlement-module-refactor-review-proposal.md](./planning/2026-05-20-entitlement-module-refactor-review-proposal.md)
 - [2026-05-28-air-conductor-implementation-plan.md](./planning/2026-05-28-air-conductor-implementation-plan.md)
 - [2026-07-17-resource-room-training-assistant-pilot.md](./planning/2026-07-17-resource-room-training-assistant-pilot.md) — 教师端 AI 资源教室训练助理 P0 试点问答与验收标准
-- [2026-07-19-assessment-entry-dynamicization-plan.md](./planning/2026-07-19-assessment-entry-dynamicization-plan.md) — 评估入口动态化（catalog 单一真源 + 报告路由派生）+ AGENTS §3 技术债清单校正，已批准待执行
+- [2026-07-19-assessment-entry-dynamicization-plan.md](./planning/2026-07-19-assessment-entry-dynamicization-plan.md) — 评估入口动态化的历史实施计划；catalog 单一真源与报告路由派生已闭环，当前实现以代码为准
 - [2026-09-21-首页智能特教助理-评估缺口与干预建议.md](./planning/2026-09-21-首页智能特教助理-评估缺口与干预建议.md) — 首页看板「智能特教助理」面板的数据来源、四类信号、优先级与阈值口径（含 18 量表覆盖契约与守卫测试）
 - [2026-09-21-首页本周异常预警-判定口径.md](./planning/2026-09-21-首页本周异常预警-判定口径.md) — 首页看板「本周异常预警」面板：统一训练主表数据源、四类信号与家族白名单、已知取舍（含覆盖对账与守卫测试）
 - [2026-09-21-首页训练进度概览-判定口径.md](./planning/2026-09-21-首页训练进度概览-判定口径.md) — 首页看板「训练进度概览」卡片：统一训练主表数据源、本地自然日窗口与分桶、KPI/组合图/模块分布/钻取口径、已知取舍（含真库覆盖对账 73.1%→100%）
@@ -86,8 +89,8 @@
 
 ### `docs/plans` — 阶段实施计划与执行路线
 
-- [2026-10-15-training-video-product-issues-repair-handoff.md](./plans/2026-10-15-training-video-product-issues-repair-handoff.md) — 教程实测产品问题修复交接：已复现缺陷/覆盖缺口/数据问题/待核查项、优先顺序、证据、验收与受影响视频复录矩阵。
-- [2026-10-13-docx-exporter-debt-cleanup-plan.md](./plans/2026-10-13-docx-exporter-debt-cleanup-plan.md) — 技术债清理执行计划：docxExporter 废弃代码清理与器材 IEP 导出统一化（供 Codex 执行）
+- [2026-10-15-training-video-product-issues-repair-handoff.md](./plans/2026-10-15-training-video-product-issues-repair-handoff.md) — 教程实测问题的分项历史交接；已完成项和待核查项需逐项回代码确认，不自动执行旧计划
+- [2026-10-13-docx-exporter-debt-cleanup-plan.md](./plans/2026-10-13-docx-exporter-debt-cleanup-plan.md) — docxExporter 清理与器材 IEP 导出统一化的已完成历史计划
 - [2026-08-05-db-worker-execution-plan.md](./plans/2026-08-05-db-worker-execution-plan.md) — DB Worker 处理执行计划：先性能 profile 决策门，再按证据渐进接入；含双轨持久化前置、同步桥方案、回退开关
 - [2026-07-18-project-closeout-execution-plan.md](./plans/2026-07-18-project-closeout-execution-plan.md) — 基于当前代码事实的未完成项收口顺序、批次边界与验收门禁
 - [2026-03-13-scgp-executable-roadmap.md](./plans/2026-03-13-scgp-executable-roadmap.md)
@@ -107,8 +110,11 @@
 
 ### `docs/reports` — 工作报告、差距分析与复盘
 
+- [2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md](./reports/2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md) — 最新 1.1.5 同版本覆盖发布记录
+- [2026-10-19-current-worktree-handoff.md](./reports/2026-10-19-current-worktree-handoff.md) — 发布前本地工作区、生活自理与情绪场景改动的时点快照
+- [2026-10-17-v1.1.5-activation-rebuild-release.md](./reports/2026-10-17-v1.1.5-activation-rebuild-release.md) — 上次 1.1.5 激活页同版本覆盖发布记录
 - [2026-10-16-v1.1.5-release-verification.md](./reports/2026-10-16-v1.1.5-release-verification.md) — 1.1.5 提交、构建、打包启动与服务器发布记录。
-- [2026-07-17-current-project-gap-and-recommendations.md](./reports/2026-07-17-current-project-gap-and-recommendations.md) — 当前项目功能完成度调查、未收口项与推进建议
+- [2026-07-15-unimplemented-gap.md](./reports/2026-07-15-unimplemented-gap.md) — 2026-07 阶段未实现项盘点与推进 backlog；具体状态需回到当前代码核对
 - [2026-03-13-scgp-prd-gap-analysis.md](./reports/2026-03-13-scgp-prd-gap-analysis.md)
 - [2026-03-11-assessment-cleanup.md](./reports/2026-03-11-assessment-cleanup.md)
 - [2026-03-20-emotion-games-layout-debug-lessons.md](./reports/2026-03-20-emotion-games-layout-debug-lessons.md)
@@ -116,6 +122,8 @@
 - [2026-04-19-code-review-comprehensive.md](./reports/2026-04-19-code-review-comprehensive.md)
 
 ### `docs/references` — 量表、评分引擎、导入源与资源规范
+
+- [emotion-scene-character-names.json](./references/emotion-scene-character-names.json) — 81 个预置情绪场景的主角姓名映射；当前训练编译按 `sceneCode` 读取
 
 临床量表与评分引擎（CBCL、Conners、FMDA、GMFM、SRS-2、TGMD-3、SDQ、儿心量表、CABR 等）及导入数据，**整体保留，按子目录组织**：
 
@@ -167,6 +175,7 @@
 
 ### `docs/logs` — 历史归档摘要与专题日志（非默认首读）
 
+- [2026-10-19-previous-continue-here.md](./logs/2026-10-19-previous-continue-here.md) — 交接入口整理前的完整历史快照，不作为当前事实来源
 - [2026-03-26-project-context-archive.md](./logs/2026-03-26-project-context-archive.md)
 - [2026-02-27-phase4.4-archived-files.md](./logs/2026-02-27-phase4.4-archived-files.md)
 - [font-awesome-6-upgrade-summary.md](./logs/font-awesome-6-upgrade-summary.md)

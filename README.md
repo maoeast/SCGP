@@ -16,6 +16,7 @@
 
 ## 当前状态
 
+- 截至 2026-10-19，已发布 Windows 安装包为 **1.1.5**，当日同版本重打包已纳入生活自理任务编辑、情绪场景姓名修复和 `public` 清理。已安装的 1.1.5 需手动下载安装；产物与部署证据见 [最新发布报告](./docs/reports/2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md)，续接以 [.continue-here.md](./.continue-here.md) 为准。
 - 项目处于持续开发和重构中
 - 核心评估模块已完成统一容器 + `ScaleDriver` 架构改造
 - 首页已重构为“首页看板”，使用本地 SQLite 的真实聚合数据展示日程、异常预警与待评估预警
@@ -130,6 +131,8 @@ npm run build:electron
 ## 文档入口
 
 - 交接入口：[HANDOFF.md](./HANDOFF.md)
+- 最新发布报告：[docs/reports/2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md](./docs/reports/2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md)
+- 发布前工作区快照：[docs/reports/2026-10-19-current-worktree-handoff.md](./docs/reports/2026-10-19-current-worktree-handoff.md)
 - 文档总索引：[docs/INDEX.md](./docs/INDEX.md)
 - 文档治理说明：[docs/DOCS_GUIDE.md](./docs/DOCS_GUIDE.md)
 - 文档目录总览 HTML：[docs/guides/2026-04-10-repo-document-catalog.html](./docs/guides/2026-04-10-repo-document-catalog.html)
@@ -150,19 +153,12 @@ npm run build:electron
 
 ## 当前最重要的文档
 
-- [HANDOFF.md](./HANDOFF.md)
 - [AGENTS.md](./AGENTS.md)
 - [docs/planning/2026-03-23-scgp-context-bootstrap.md](./docs/planning/2026-03-23-scgp-context-bootstrap.md)
-- [docs/planning/2026-03-13-scgp-current-prd.md](./docs/planning/2026-03-13-scgp-current-prd.md)
-- [docs/planning/2026-04-01-unified-training-record-schema-plan.md](./docs/planning/2026-04-01-unified-training-record-schema-plan.md)
-- [docs/planning/2026-04-13-cross-entry-custom-games-phase0-implementation-spec.md](./docs/planning/2026-04-13-cross-entry-custom-games-phase0-implementation-spec.md)
-- [docs/planning/2026-04-14-cross-entry-custom-games-wave1-prep-checklist.md](./docs/planning/2026-04-14-cross-entry-custom-games-wave1-prep-checklist.md)
-- [docs/plans/2026-03-13-scgp-executable-roadmap.md](./docs/plans/2026-03-13-scgp-executable-roadmap.md)
-- [docs/reports/2026-03-13-scgp-prd-gap-analysis.md](./docs/reports/2026-03-13-scgp-prd-gap-analysis.md)
-- [docs/reports/2026-03-11-assessment-cleanup.md](./docs/reports/2026-03-11-assessment-cleanup.md)
-- [docs/plans/2025-02-05-refactor-implementation-plan.md（历史实施计划）](./docs/plans/2025-02-05-refactor-implementation-plan.md)
-- [重构实施技术规范.md](./%E9%87%8D%E6%9E%84%E5%AE%9E%E6%96%BD%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83.md)
-- [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md)
+- [.continue-here.md](./.continue-here.md) 与 [最新发布报告](./docs/reports/2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md)
+- [HANDOFF.md](./HANDOFF.md) 与 [docs/INDEX.md](./docs/INDEX.md)
+
+专题 PRD、旧实施计划、技术规范和阶段报告从 `docs/INDEX.md` 按需查找；带日期的计划不能直接当作当前进度。
 
 ## 说明
 
@@ -177,4 +173,4 @@ npm run build:electron
 - `docs/guides/2026-04-10-repo-document-catalog.html`：可直接在浏览器打开的文档总览页，适合快速浏览每份入口/专题文档的大概内容、作用和位置。
 - `docs/planning/prd.md`：原始需求基线，主要反映“生活自理适应综合训练系统”阶段，不等同于当前 SCGP 平台范围。
 - `docs/guides/系统使用说明书.md`、`docs/guides/系统参数技术文档.md`：历史交付型文档，当前仅作为参考材料，不作为单一事实来源。
-- 如果你要快速理解当前项目，优先看 `HANDOFF.md`、`AGENTS.md`、`docs/planning/2026-03-23-scgp-context-bootstrap.md`、`README.md` 和 `.continue-here.md`，再按任务补读其他大文档。
+- 如果要快速理解当前项目，按 `AGENTS.md` → 启动上下文 → 本文阅读；续接任务再读 `.continue-here.md`，并重新检查 Git 现场。

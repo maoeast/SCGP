@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-10-15
+> last_updated: 2026-10-19
 > Responsibility: new-session handoff entry.
 > Read when: entering the repo or resuming work and needing the fastest route to current truth.
 > Not responsible for: replacing `AGENTS.md`, `.continue-here.md`, or `PROJECT_CONTEXT.md`.
@@ -33,13 +33,14 @@ If those four files are not enough, then read `PROJECT_CONTEXT.md`.
 
 ## Current Focus
 
-- **1.1.5 已打包并发布服务器**，当前代码和交付资料已分类提交推送；发布记录 `docs/reports/2026-10-16-v1.1.5-release-verification.md`，唯一下一步见 `.continue-here.md`。用户要求停止额外哈希比较，已结束整包回读，不自动继续追加检查。
+- **当前同版本发布已完成**：1.1.5 于 2026-10-19 重打包并覆盖服务器三件套，纳入生活自理编辑、情绪场景姓名与 `public` 清理。最新记录为 `docs/reports/2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md`。`designs/scgp-product-intro/` 和 `designs/scgp-video-library/` 仍为本地未跟踪目录，不在本轮提交内。
+- 当前没有已授权的下一项代码或发布任务。续接先读 `.continue-here.md`，然后重新检查 Git 现场；发布前快照在 `docs/reports/2026-10-19-current-worktree-handoff.md`，更早的交接明细在 `docs/logs/2026-10-19-previous-continue-here.md`。
 
-### 历史培训与修复交接
+### 历史培训与修复交接（2026-10-15 状态）
 
-- 客户交付软件教程本轮 23《Conners 父母问卷与报告》、24《ABC 行为评定与报告》样片均已完成，01–24 样片已齐，待用户观看。实际成片、验证证据与产品缺口见 `.continue-here.md` 和 `designs/customer-training-videos/系列目录与制作状态.md`。
-- 当前已将教程实测问题整理为 `docs/plans/2026-10-15-training-video-product-issues-repair-handoff.md`，含修复顺序、证据、验收与视频复录矩阵。用户计划另开会话修复；先复现与最小方案，再实施和验收，之后才复录。此轮只改文档，不自动新增教程或修产品代码。
-- 资源包导入导出、自定义生活自理任务教程仍暂停。正式交付需先处理已列缺口并按发布版复核。
+- 当时 01–24 操作样片已齐。后续视频课堂已于 2026-10-17 独立发布，当前本地源稿和验证边界见 `designs/scgp-video-library/README.md`，不要沿用“待发布”状态。
+- 当时实测的问题清单、修复顺序和视频复录矩阵见 `docs/plans/2026-10-15-training-video-product-issues-repair-handoff.md`；需要处理某项时先回代码核对现状，不把旧待办自动执行。
+- 当时资源包导入导出、自定义生活自理任务教程暂停；后续是否恢复由用户另行决定。
 
 ## Historical Focus (2026-08-05)
 
