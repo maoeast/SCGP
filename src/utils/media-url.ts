@@ -54,5 +54,5 @@ export function getMediaUrl(path: string): string {
  * @returns 默认封面图片路径
  */
 export function getDefaultCoverImage(): string {
-  return 'tasks/default-task-cover.jpg'
+  return `${import.meta.env.BASE_URL}tasks/default-task-cover.webp`
 }

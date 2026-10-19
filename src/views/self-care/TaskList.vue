@@ -282,6 +282,7 @@ import {
   type SelfCareCategoryFilterKey,
 } from '@/features/self-care/task-gallery'
 import { isDisplayImageLike, resolvePresetResourceUrl } from '@/utils/preset-resource'
+import { getDefaultCoverImage } from '@/utils/media-url'
 
 interface TaskGalleryItem extends SelfCareTaskListItem {
   categoryKey: SelfCareCategoryFilterKey
@@ -388,7 +389,7 @@ function resolveTaskCoverImage(task: SelfCareTaskListItem): string | undefined {
     }
   }
 
-  return undefined
+  return getDefaultCoverImage()
 }
 
 function handleCreate() {
