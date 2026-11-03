@@ -1,6 +1,6 @@
 # HANDOFF.md
 
-> last_updated: 2026-10-19
+> last_updated: 2026-11-04
 > Responsibility: new-session handoff entry.
 > Read when: entering the repo or resuming work and needing the fastest route to current truth.
 > Not responsible for: replacing `AGENTS.md`, `.continue-here.md`, or `PROJECT_CONTEXT.md`.
@@ -33,8 +33,8 @@ If those four files are not enough, then read `PROJECT_CONTEXT.md`.
 
 ## Current Focus
 
-- **当前同版本发布已完成**：1.1.5 于 2026-10-19 重打包并覆盖服务器三件套，纳入生活自理编辑、情绪场景姓名与 `public` 清理。最新记录为 `docs/reports/2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md`。`designs/scgp-product-intro/` 和 `designs/scgp-video-library/` 仍为本地未跟踪目录，不在本轮提交内。
-- 当前没有已授权的下一项代码或发布任务。续接先读 `.continue-here.md`，然后重新检查 Git 现场；发布前快照在 `docs/reports/2026-10-19-current-worktree-handoff.md`，更早的交接明细在 `docs/logs/2026-10-19-previous-continue-here.md`。
+- **当前为平板 APK 方案审查**：用户已确认现场训练首版范围、沿用 PC 视觉、一台 PC 局域网服务多台平板、两端共用教师账号并支持换账号。初稿见 [产品与技术方案](./docs/planning/2026-11-04-scgp-tablet-apk-draft.md)，配套 [审查提示词](./docs/planning/2026-11-04-scgp-tablet-review-prompt.md)。下一步接收 Claude / Gemini 审查意见并收敛方案，尚未授权直接实施 APK。
+- 历史发布：1.1.5 于 2026-10-19 重打包并部署，见 `docs/reports/2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md`。已有未跟踪的 `designs/` 目录及注册机文件保留；Git 现场续接时重查。
 
 ### 历史培训与修复交接（2026-10-15 状态）
 

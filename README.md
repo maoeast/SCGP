@@ -130,6 +130,7 @@ npm run build:electron
 
 ## 文档入口
 
+- 平板现场训练端：[产品与技术初稿](./docs/planning/2026-11-04-scgp-tablet-apk-draft.md) / [审查提示词](./docs/planning/2026-11-04-scgp-tablet-review-prompt.md)，待审查，尚未实现 APK。
 - 交接入口：[HANDOFF.md](./HANDOFF.md)
 - 最新发布报告：[docs/reports/2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md](./docs/reports/2026-10-19-v1.1.5-self-care-emotional-public-rebuild-release.md)
 - 发布前工作区快照：[docs/reports/2026-10-19-current-worktree-handoff.md](./docs/reports/2026-10-19-current-worktree-handoff.md)

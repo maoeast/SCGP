@@ -45,6 +45,7 @@
 
 专题方案（按需读，`docs/planning/` 目录另有更多中文命名 PRD 与 MediaPipe / 表情 / 生活自理等专题稿）：
 
+- [平板现场训练端产品与技术初稿](./planning/2026-11-04-scgp-tablet-apk-draft.md) 与 [Claude / Gemini 审查提示词](./planning/2026-11-04-scgp-tablet-review-prompt.md)：APK 首版范围、PC 视觉复用、局域网服务、多教师共用账号；待审查，尚未实施。
 - [2026-04-01-unified-training-record-schema-plan.md](./planning/2026-04-01-unified-training-record-schema-plan.md)
 - [2026-04-02-page-style-unification-todo.md](./planning/2026-04-02-page-style-unification-todo.md)
 - [2026-04-08-care-scene-immersive-refactor-plan.md](./planning/2026-04-08-care-scene-immersive-refactor-plan.md)
